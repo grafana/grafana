@@ -12,6 +12,7 @@ import {
   ValidateAndUpdateResult,
   VariableValue,
   VariableValueOption,
+  VariableValueCustom,
   VariableValueSingle,
 } from '../types';
 
@@ -20,6 +21,10 @@ export interface MultiValueVariableState extends SceneVariableState {
   text: VariableValue; // old current.value
   options: VariableValueOption[];
   isMulti?: boolean;
+  includeAll?: boolean;
+  defaultToAll?: boolean;
+  allValue?: string;
+  placeholder?: string;
 }
 
 export interface VariableGetOptionsArgs {
@@ -71,8 +76,9 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
 
       // If no valid values pick the first option
       if (validValues.length === 0) {
-        stateUpdate.value = [options[0].value];
-        stateUpdate.text = [options[0].label];
+        const defaultState = this.getDefaultMultiState(options);
+        stateUpdate.value = defaultState.value;
+        stateUpdate.text = defaultState.text;
       }
       // We have valid values, if it's different from current valid values update current values
       else if (!isEqual(validValues, this.state.value)) {
@@ -84,9 +90,14 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
       // Single valued variable
       const foundCurrent = options.find((x) => x.value === this.state.value);
       if (!foundCurrent) {
-        // Current value is not valid. Set to first of the available options
-        stateUpdate.value = options[0].value;
-        stateUpdate.text = options[0].label;
+        if (this.state.defaultToAll) {
+          stateUpdate.value = ALL_VARIABLE_VALUE;
+          stateUpdate.text = ALL_VARIABLE_TEXT;
+        } else {
+          // Current value is not valid. Set to first of the available options
+          stateUpdate.value = options[0].value;
+          stateUpdate.text = options[0].label;
+        }
       }
     }
 
@@ -104,6 +115,10 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
 
   public getValue(): VariableValue {
     if (this.hasAllValue()) {
+      if (this.state.allValue) {
+        return new CustomAllValue(this.state.allValue);
+      }
+
       return this.state.options.map((x) => x.value);
     }
 
@@ -127,22 +142,55 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
     return value === ALL_VARIABLE_VALUE || (Array.isArray(value) && value[0] === ALL_VARIABLE_VALUE);
   }
 
+  private getDefaultMultiState(options: VariableValueOption[]) {
+    if (this.state.defaultToAll) {
+      return { value: [ALL_VARIABLE_VALUE], text: [ALL_VARIABLE_TEXT] };
+    } else {
+      return { value: [options[0].value], text: [options[0].label] };
+    }
+  }
+
   /**
    * Change the value and publish SceneVariableValueChangedEvent event
    */
   public changeValueTo(value: VariableValue, text?: VariableValue) {
-    if (value !== this.state.value || text !== this.state.text) {
-      if (!text) {
-        if (Array.isArray(value)) {
-          text = value.map((v) => this.findLabelTextForValue(v));
-        } else {
-          text = this.findLabelTextForValue(value);
-        }
+    // Igore if there is no change
+    if (value === this.state.value && text === this.state.text) {
+      return;
+    }
+
+    if (!text) {
+      if (Array.isArray(value)) {
+        text = value.map((v) => this.findLabelTextForValue(v));
+      } else {
+        text = this.findLabelTextForValue(value);
+      }
+    }
+
+    if (Array.isArray(value)) {
+      // If we are a multi valued variable is cleared (empty array) we need to set the default empty state
+      if (value.length === 0) {
+        const state = this.getDefaultMultiState(this.state.options);
+        value = state.value;
+        text = state.text;
       }
 
-      this.setStateHelper({ value, text, loading: false });
-      this.publishEvent(new SceneVariableValueChangedEvent(this), true);
+      // If last value is the All value then replace all with it
+      if (value[value.length - 1] === ALL_VARIABLE_VALUE) {
+        value = [ALL_VARIABLE_VALUE];
+        text = [ALL_VARIABLE_TEXT];
+      }
+      // If the first value is the ALL value and we have other values, then remove the All value
+      else if (value[0] === ALL_VARIABLE_VALUE && value.length > 1) {
+        value.shift();
+        if (Array.isArray(text)) {
+          text.shift();
+        }
+      }
     }
+
+    this.setStateHelper({ value, text, loading: false });
+    this.publishEvent(new SceneVariableValueChangedEvent(this), true);
   }
 
   private findLabelTextForValue(value: VariableValueSingle): VariableValueSingle {
@@ -165,6 +213,36 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
   private setStateHelper(state: Partial<MultiValueVariableState>) {
     const test: SceneObject<MultiValueVariableState> = this;
     test.setState(state);
+  }
+
+  public getOptionsForSelect(): VariableValueOption[] {
+    let options = this.state.options;
+
+    if (this.state.includeAll) {
+      options = [{ value: ALL_VARIABLE_VALUE, label: ALL_VARIABLE_TEXT }, ...options];
+    }
+
+    if (!Array.isArray(this.state.value)) {
+      const current = options.find((x) => x.value === this.state.value);
+      if (!current) {
+        options = [{ value: this.state.value, label: String(this.state.text) }, ...options];
+      }
+    }
+
+    return options;
+  }
+}
+
+/**
+ * The custom allValue needs a special wrapping / handling to make it not be formatted / escaped like normal values
+ */
+class CustomAllValue implements VariableValueCustom {
+  public isCustomValue: true = true;
+
+  public constructor(private _value: string) {}
+
+  public toString() {
+    return this._value;
   }
 }
 

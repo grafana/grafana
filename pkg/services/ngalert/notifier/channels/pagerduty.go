@@ -19,6 +19,11 @@ import (
 )
 
 const (
+	// https://developer.pagerduty.com/docs/ZG9jOjExMDI5NTgx-send-an-alert-event - 1024 characters or runes.
+	pagerDutyMaxV2SummaryLenRunes = 1024
+)
+
+const (
 	pagerDutyEventTrigger = "trigger"
 	pagerDutyEventResolve = "resolve"
 
@@ -235,10 +240,11 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		},
 		as...)
 
-	if summary, truncated := notify.Truncate(msg.Payload.Summary, 1024); truncated {
-		pn.log.Debug("Truncated summary", "original", msg.Payload.Summary)
-		msg.Payload.Summary = summary
+	summary, truncated := TruncateInRunes(msg.Payload.Summary, pagerDutyMaxV2SummaryLenRunes)
+	if truncated {
+		pn.log.Warn("Truncated summary", "key", key, "runes", pagerDutyMaxV2SummaryLenRunes)
 	}
+	msg.Payload.Summary = summary
 
 	if tmplErr != nil {
 		pn.log.Warn("failed to template PagerDuty message", "error", tmplErr.Error())

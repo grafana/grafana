@@ -24,6 +24,8 @@ const (
 	OpsgenieSendTags    = "tags"
 	OpsgenieSendDetails = "details"
 	OpsgenieSendBoth    = "both"
+	// https://docs.opsgenie.com/docs/alert-api - 130 characters meaning runes.
+	opsGenieMaxMessageLenRunes = 130
 )
 
 var (
@@ -202,9 +204,9 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	var tmplErr error
 	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
 
-	message, truncated := notify.Truncate(tmpl(on.settings.Message), 130)
+	message, truncated := TruncateInRunes(tmpl(on.settings.Message), opsGenieMaxMessageLenRunes)
 	if truncated {
-		on.log.Debug("Truncated message", "originalMessage", message)
+		on.log.Warn("Truncated message", "alert", key, "max_runes", opsGenieMaxMessageLenRunes)
 	}
 
 	description := tmpl(on.settings.Description)

@@ -59,8 +59,8 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 
 type store interface {
 	GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error)
-	SearchUsersPermissions(ctx context.Context, orgID int64, option accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
-	GetUsersBasicRoles(ctx context.Context, orgID int64) (map[int64][]string, error)
+	SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
+	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
 }
 
@@ -264,7 +264,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, user *user.SignedI
 		}
 	}
 
-	usersRoles, err := s.store.GetUsersBasicRoles(ctx, orgID)
+	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -329,4 +329,88 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, user *user.SignedI
 	}
 
 	return res, nil
+}
+
+func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
+	defer timer.ObserveDuration()
+
+	if searchOptions.UserID == 0 {
+		return nil, fmt.Errorf("expected user ID to be specified")
+	}
+
+	if permissions, success := s.searchUserPermissionsFromCache(orgID, searchOptions); success {
+		return permissions, nil
+	}
+	return s.searchUserPermissions(ctx, orgID, searchOptions)
+}
+
+func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+	// Get permissions for user's basic roles from RAM
+	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{searchOptions.UserID}, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch basic roles for the user: %w", err)
+	}
+	var roles []string
+	var ok bool
+	if roles, ok = roleList[searchOptions.UserID]; !ok {
+		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", searchOptions.UserID, orgID)
+	}
+	permissions := make([]accesscontrol.Permission, 0)
+	for _, builtin := range roles {
+		if basicRole, ok := s.roles[builtin]; ok {
+			for _, permission := range basicRole.Permissions {
+				if PermissionMatchesSearchOptions(permission, searchOptions) {
+					permissions = append(permissions, permission)
+				}
+			}
+		}
+	}
+
+	// Get permissions from the DB
+	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, searchOptions)
+	if err != nil {
+		return nil, err
+	}
+	permissions = append(permissions, dbPermissions[searchOptions.UserID]...)
+
+	return permissions, nil
+}
+
+func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, bool) {
+	// Create a temp signed in user object to retrieve cache key
+	tempUser := &user.SignedInUser{
+		UserID: searchOptions.UserID,
+		OrgID:  orgID,
+	}
+	key, err := permissionCacheKey(tempUser)
+	if err != nil {
+		s.log.Debug("could not obtain cache key to search user permissions", "error", err.Error())
+		return nil, false
+	}
+
+	permissions, ok := s.cache.Get(key)
+	if !ok {
+		return nil, false
+	}
+
+	s.log.Debug("using cached permissions", "key", key)
+	filteredPermissions := make([]accesscontrol.Permission, 0)
+	for _, permission := range permissions.([]accesscontrol.Permission) {
+		if PermissionMatchesSearchOptions(permission, searchOptions) {
+			filteredPermissions = append(filteredPermissions, permission)
+		}
+	}
+
+	return filteredPermissions, true
+}
+
+func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchOptions accesscontrol.SearchOptions) bool {
+	if searchOptions.Scope != "" && permission.Scope != searchOptions.Scope {
+		return false
+	}
+	if searchOptions.Action != "" {
+		return permission.Action == searchOptions.Action
+	}
+	return strings.HasPrefix(permission.Action, searchOptions.ActionPrefix)
 }

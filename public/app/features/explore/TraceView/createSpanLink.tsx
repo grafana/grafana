@@ -455,7 +455,7 @@ function buildMetricsQuery(query: TraceToMetricQuery, tags: Array<KeyValue<strin
     }, [] as string[]);
 
     const labelsQuery = labels?.join(', ');
-    expr = expr.replace('$__tags', labelsQuery);
+    expr = expr.replace(/\$__tags/g, labelsQuery);
   }
 
   return expr;
