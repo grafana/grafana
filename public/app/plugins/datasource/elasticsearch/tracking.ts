@@ -1,5 +1,5 @@
 import { CoreApp, DashboardLoadedEvent, DataQueryResponse } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { variableRegex } from 'app/features/variables/utils';
 
 import { REF_ID_STARTER_LOG_VOLUME } from './datasource';
@@ -121,6 +121,7 @@ export function trackQuery(response: DataQueryResponse, queries: ElasticsearchQu
     }
     reportInteraction('grafana_elasticsearch_query_executed', {
       app,
+      grafana_version: config.buildInfo.version,
       with_lucene_query: query.query ? true : false,
       query_type: getQueryType(query),
       line_limit: getLineLimit(query),
