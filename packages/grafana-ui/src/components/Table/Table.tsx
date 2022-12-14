@@ -47,6 +47,7 @@ export interface Props {
   data: DataFrame;
   width: number;
   height: number;
+  maxHeight?: number;
   /** Minimal column width specified in pixels */
   columnMinWidth?: number;
   noHeader?: boolean;
@@ -133,6 +134,7 @@ export const Table = memo((props: Props) => {
     data,
     subData,
     height,
+    maxHeight,
     onCellFilterAdded,
     width,
     columnMinWidth = COLUMN_MIN_WIDTH,
@@ -288,6 +290,18 @@ export const Table = memo((props: Props) => {
   if (enablePagination) {
     listHeight -= tableStyles.cellHeight;
   }
+
+  // Make sure we have room to show the sub-table
+  if (expandedIndexes.size) {
+    const subTablesHeight = Array.from(expandedIndexes).reduce((sum, index) => {
+      const subLength = subData?.find((frame) => frame.meta?.custom?.parentRowIndex === index)?.length;
+      return subLength ? sum + tableStyles.rowHeight * (subLength + 1) : sum;
+    }, 0);
+    if (listHeight < subTablesHeight) {
+      listHeight = Math.min(listHeight + subTablesHeight, maxHeight || Number.MAX_SAFE_INTEGER);
+    }
+  }
+
   const pageSize = Math.round(listHeight / tableStyles.cellHeight) - 1;
   useEffect(() => {
     // Don't update the page size if it is less than 1
@@ -346,6 +360,7 @@ export const Table = memo((props: Props) => {
             position: 'absolute',
             bottom: 0,
           };
+
           return (
             <div style={subTableStyle}>
               <Table
