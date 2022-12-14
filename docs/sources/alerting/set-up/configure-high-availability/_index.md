@@ -88,7 +88,7 @@ env:
 
 4. Make sure your grafana deployment has the label matching the selector, e.g. `app:grafana`.
 
-5. Now add in the grafana.ini:
+5. Add in the grafana.ini:
 
   ```bash
   [unified_alerting]
