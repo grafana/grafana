@@ -208,7 +208,7 @@ func (cl *ConcreteLogger) FromContext(ctx context.Context) Logger {
 	return cl
 }
 
-func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
+func (cl *ConcreteLogger) New(ctx ...interface{}) Logger {
 	if len(ctx) == 0 {
 		root.New()
 	}
