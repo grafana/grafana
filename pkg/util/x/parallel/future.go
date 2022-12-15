@@ -114,6 +114,7 @@ func (f *Future[T]) Start() {
 
 		f.startTime = f.opts.Now()
 
+		defer finishFn()
 		if !f.opts.CrashOnPanic {
 			defer recoverFn()
 		}
@@ -123,8 +124,6 @@ func (f *Future[T]) Start() {
 			Value: val,
 			Error: err,
 		}
-
-		finishFn()
 
 		if span != nil {
 			if err != nil {
