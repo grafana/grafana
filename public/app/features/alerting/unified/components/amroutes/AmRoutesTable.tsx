@@ -4,12 +4,13 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, ConfirmModal, HorizontalGroup, IconButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import { FormAmRoute } from '../../types/amroutes';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
 import { prepareItems } from '../../utils/dynamicTable';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EmptyArea } from '../EmptyArea';
+import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 import { Matchers } from '../silences/Matchers';
 
 import { AmRoutesExpandedForm } from './AmRoutesExpandedForm';

@@ -20,7 +20,7 @@ import {
 } from '@grafana/ui';
 
 import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
-import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import { FormAmRoute } from '../../types/amroutes';
 import { matcherFieldOptions } from '../../utils/alertmanager';
 import {
   emptyArrayFieldMatcher,
@@ -32,6 +32,7 @@ import {
   commonGroupByOptions,
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
+import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { getFormStyles } from './formStyles';
 
