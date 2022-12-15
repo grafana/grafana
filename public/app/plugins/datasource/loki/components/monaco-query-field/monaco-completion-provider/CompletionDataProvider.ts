@@ -8,11 +8,12 @@ import { LokiQuery } from '../../../types';
 
 import { Label } from './situation';
 
+interface HistoryRef {
+  current: Array<HistoryItem<LokiQuery>>;
+}
+
 export class CompletionDataProvider {
-  private history: string[] = [];
-  constructor(private languageProvider: LanguageProvider, history: Array<HistoryItem<LokiQuery>> = []) {
-    this.setHistory(history);
-  }
+  constructor(private languageProvider: LanguageProvider, private historyRef: HistoryRef = { current: [] }) {}
 
   private buildSelector(labels: Label[]): string {
     const allLabelTexts = labels.map(
@@ -22,16 +23,12 @@ export class CompletionDataProvider {
     return `{${allLabelTexts.join(',')}}`;
   }
 
-  setHistory(history: Array<HistoryItem<LokiQuery>> = []) {
-    this.history = chain(history)
+  getHistory() {
+    return chain(this.historyRef.current)
       .map((history: HistoryItem<LokiQuery>) => history.query.expr)
       .filter()
       .uniq()
       .value();
-  }
-
-  getHistory() {
-    return this.history;
   }
 
   async getLabelNames(otherLabels: Label[] = []) {
@@ -55,8 +52,8 @@ export class CompletionDataProvider {
     return data[labelName] ?? [];
   }
 
-  async getParserAndLabelKeys(labels: Label[]) {
-    return await this.languageProvider.getParserAndLabelKeys(this.buildSelector(labels));
+  async getParserAndLabelKeys(logQuery: string) {
+    return await this.languageProvider.getParserAndLabelKeys(logQuery);
   }
 
   async getSeriesLabels(labels: Label[]) {

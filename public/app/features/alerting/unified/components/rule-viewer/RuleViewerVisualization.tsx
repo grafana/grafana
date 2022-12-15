@@ -136,7 +136,11 @@ function createExploreLink(settings: DataSourceInstanceSettings, query: AlertQue
   const queryParams = { ...rest, datasource: name };
 
   return urlUtil.renderUrl(`${config.appSubUrl}/explore`, {
-    left: JSON.stringify(['now-1h', 'now', name, queryParams]),
+    left: JSON.stringify({
+      datasource: name,
+      queries: [{ refId: 'A', datasource: name, expr: queryParams }],
+      range: { from: 'now-1h', to: 'now' },
+    }),
   });
 }
 

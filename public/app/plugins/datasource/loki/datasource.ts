@@ -170,7 +170,7 @@ export class LokiDatasource
       .map(getNormalizedLokiQuery) // "fix" the `.queryType` prop
       .map((q) => ({ ...q, maxLines: q.maxLines || this.maxLines })); // set maxLines if not set
 
-    const fixedRequest = {
+    const fixedRequest: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] } = {
       ...request,
       targets: queries,
     };
@@ -197,12 +197,13 @@ export class LokiDatasource
     if (fixedRequest.liveStreaming) {
       return this.runLiveQueryThroughBackend(fixedRequest);
     } else {
+      const startTime = new Date();
       return super.query(fixedRequest).pipe(
         // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
         map((response) =>
           transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
         ),
-        tap((response) => trackQuery(response, fixedRequest.targets, fixedRequest.app))
+        tap((response) => trackQuery(response, fixedRequest, startTime))
       );
     }
   }

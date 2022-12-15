@@ -543,14 +543,14 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 
 func (s *Service) nestedFolderCreate(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	if cmd.ParentUID != "" {
-		if err := s.validateParent(ctx, cmd.OrgID, cmd.ParentUID); err != nil {
+		if err := s.validateParent(ctx, cmd.OrgID, cmd.ParentUID, cmd.UID); err != nil {
 			return nil, err
 		}
 	}
 	return s.store.Create(ctx, *cmd)
 }
 
-func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID string) error {
+func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID string, UID string) error {
 	ancestors, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: parentUID, OrgID: orgID})
 	if err != nil {
 		return fmt.Errorf("failed to get parents: %w", err)
@@ -558,6 +558,18 @@ func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID str
 
 	if len(ancestors) == folder.MaxNestedFolderDepth {
 		return folder.ErrMaximumDepthReached
+	}
+
+	// Create folder under itself is not allowed
+	if parentUID == UID {
+		return folder.ErrCircularReference
+	}
+
+	// check there is no circular reference
+	for _, ancestor := range ancestors {
+		if ancestor.UID == UID {
+			return folder.ErrCircularReference
+		}
 	}
 
 	return nil
