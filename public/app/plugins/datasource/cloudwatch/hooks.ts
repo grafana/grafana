@@ -10,10 +10,10 @@ import { CloudWatchDatasource } from './datasource';
 import { GetDimensionKeysRequest, GetMetricsRequest } from './types';
 import { appendTemplateVariables } from './utils/utils';
 
-type FieldDataState = Pick<
-  SelectCommonProps<string>,
-  'options' | 'isLoading' | 'invalid' | 'isLoading' | 'isClearable'
->;
+interface FieldDataState
+  extends Pick<SelectCommonProps<string>, 'isLoading' | 'invalid' | 'isLoading' | 'isClearable'> {
+  options: Array<SelectableValue<string>>;
+}
 
 export const useRegions = (datasource: CloudWatchDatasource): [Array<SelectableValue<string>>, boolean] => {
   const [regionsIsLoading, setRegionsIsLoading] = useState<boolean>(false);
@@ -50,7 +50,10 @@ export const useNamespaces = (datasource: CloudWatchDatasource, currentNamespace
       .finally(() => setIsLoading(false));
   }, [datasource]);
 
-  const invalid = !isLoading && !namespaces.some((n) => n.value === currentNamespace);
+  const invalid =
+    !!currentNamespace &&
+    !isLoading &&
+    !namespaces.some((n) => n.value === datasource.templateSrv.replace(currentNamespace));
   return {
     isLoading,
     options: namespaces,
@@ -88,7 +91,10 @@ export const useMetrics = (
       .finally(() => setIsLoading(false));
   }, [datasource, region, namespace, accountId]);
 
-  const invalid = !isLoading && !metrics.some((metric) => metric.value === currentMetricName);
+  const invalid =
+    !!currentMetricName &&
+    !isLoading &&
+    !metrics.some((metric) => metric.value === datasource.templateSrv.replace(currentMetricName));
   return {
     isLoading,
     options: metrics,
@@ -175,7 +181,10 @@ export const useDimensionKeys2 = (
       .finally(() => setIsLoading(false));
   }, [datasource, namespace, region, metricName, accountId, dimensionFilters]);
 
-  const invalid = !isLoading && !dimensionKeys.some((dk) => dk.value === currentDimensionKey);
+  const invalid =
+    !!currentDimensionKey &&
+    !isLoading &&
+    !dimensionKeys.some((dk) => dk.value === datasource.templateSrv.replace(currentDimensionKey));
   return {
     isLoading,
     options: dimensionKeys,

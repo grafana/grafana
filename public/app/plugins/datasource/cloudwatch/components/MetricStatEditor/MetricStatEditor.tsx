@@ -63,18 +63,16 @@ export function MetricStatEditor({
               aria-label="Namespace"
               value={metricStat?.namespace && toOption(metricStat.namespace)}
               allowCustomValue
-              onChange={(option) => {
-                onChange({ ...metricStat, namespace: option?.value ?? '' });
-              }}
+              onChange={(option) => onChange({ ...metricStat, namespace: option?.value ?? '' })}
             />
           </EditorField>
-          <EditorField label="Metric name" width={16}>
+          <EditorField label="Metric name" width={16} error="test">
             <Select
               {...metricFieldState}
               aria-label="Metric name"
               value={metricStat?.metricName && toOption(metricStat.metricName)}
               allowCustomValue
-              onChange={({ value: metricName }) => metricName && onChange({ ...metricStat, metricName })}
+              onChange={(option) => onChange({ ...metricStat, metricName: option?.value })}
             />
           </EditorField>
 

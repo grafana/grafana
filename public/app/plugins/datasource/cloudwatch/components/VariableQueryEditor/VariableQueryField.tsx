@@ -9,7 +9,7 @@ const LABEL_WIDTH = 20;
 
 interface VariableQueryFieldProps<T> {
   onChange: (value: T) => void;
-  options: SelectableValue[];
+  options: Array<SelectableValue<T>>;
   value: T | null;
   label: string;
   inputId?: string;

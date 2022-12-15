@@ -81,8 +81,6 @@ export const FilterItem: FunctionComponent<Props> = ({
       });
   };
 
-  console.log('isValid', dimensionKeyFieldState.invalid);
-
   const [state, loadOptions] = useAsyncFn(loadDimensionValues, [
     filter.key,
     dimensions,

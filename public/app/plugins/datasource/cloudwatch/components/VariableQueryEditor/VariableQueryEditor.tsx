@@ -16,7 +16,7 @@ import { VariableTextField } from './VariableTextField';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData, VariableQuery>;
 
-const queryTypes: Array<{ value: string; label: string }> = [
+const queryTypes: Array<SelectableValue<VariableQueryType>> = [
   { value: VariableQueryType.Regions, label: 'Regions' },
   { value: VariableQueryType.Namespaces, label: 'Namespaces' },
   { value: VariableQueryType.Metrics, label: 'Metrics' },
