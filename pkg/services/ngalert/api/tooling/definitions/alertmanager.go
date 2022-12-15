@@ -48,7 +48,7 @@ import (
 //       200: GettableUserConfig
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/grafana/config/api/v1/alerts/successfully-applied alertmanager RouteGetGrafanaSuccessfullyAppliedAlertingConfigs
+// swagger:route GET /api/alertmanager/grafana/config/history alertmanager RouteGetGrafanaSuccessfullyAppliedAlertingConfigs
 //
 // gets Alerting configurations that were successfully applied in the past
 //
