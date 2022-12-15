@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/healthchecks"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -43,10 +44,10 @@ type Options struct {
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
-	userService user.Service, loginAttemptService loginattempt.Service,
+	userService user.Service, loginAttemptService loginattempt.Service, healthChecksService healthchecks.Service,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, userService, loginAttemptService)
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, userService, loginAttemptService, healthChecksService)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 }
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
-	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry, userService user.Service, loginAttemptService loginattempt.Service,
+	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry, userService user.Service, loginAttemptService loginattempt.Service, healthChecksService healthchecks.Service,
 ) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
@@ -81,6 +82,7 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 		backgroundServices:  backgroundServiceProvider.GetServices(),
 		userService:         userService,
 		loginAttemptService: loginAttemptService,
+		HealthCheckService:  healthChecksService,
 	}
 
 	return s, nil
@@ -109,6 +111,7 @@ type Server struct {
 	provisioningService provisioning.ProvisioningService
 	userService         user.Service
 	loginAttemptService loginattempt.Service
+	HealthCheckService  healthchecks.Service
 }
 
 // init initializes the server and its services.
@@ -174,7 +177,6 @@ func (s *Server) Run() error {
 			return nil
 		})
 	}
-
 	s.notifySystemd("READY=1")
 
 	s.log.Debug("Waiting on services...")
