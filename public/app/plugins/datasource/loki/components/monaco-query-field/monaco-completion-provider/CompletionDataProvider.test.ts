@@ -24,6 +24,13 @@ const history = [
     },
   },
   {
+    ts: 87654321,
+    query: {
+      refId: 'test-1',
+      expr: '{unit: test}',
+    },
+  },
+  {
     ts: 0,
     query: {
       refId: 'test-0',
@@ -81,7 +88,7 @@ describe('CompletionDataProvider', () => {
   });
 
   test('Returns the expected parser and label keys', async () => {
-    expect(await completionProvider.getParserAndLabelKeys([])).toEqual(parserAndLabelKeys);
+    expect(await completionProvider.getParserAndLabelKeys('')).toEqual(parserAndLabelKeys);
   });
 
   test('Returns the expected series labels', async () => {

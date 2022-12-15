@@ -9,7 +9,7 @@ import { getGridWithRowLayoutTest } from './gridWithRow';
 import { getNestedScene } from './nested';
 import { getQueryVariableDemo } from './queryVariableDemo';
 import { getSceneWithRows } from './sceneWithRows';
-import { getVariablesDemo } from './variablesDemo';
+import { getVariablesDemo, getVariablesDemoWithAll } from './variablesDemo';
 
 interface SceneDef {
   title: string;
@@ -27,6 +27,7 @@ export function getScenes(): SceneDef[] {
     { title: 'Grid with rows and different queries and time ranges', getScene: getGridWithMultipleTimeRanges },
     { title: 'Multiple grid layouts test', getScene: getMultipleGridLayoutTest },
     { title: 'Variables', getScene: getVariablesDemo },
+    { title: 'Variables with All values', getScene: getVariablesDemoWithAll },
     { title: 'Query variable', getScene: getQueryVariableDemo },
   ];
 }
