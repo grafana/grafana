@@ -3,6 +3,7 @@ package channels
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -11,7 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
@@ -210,8 +210,7 @@ func TestPushoverNotifier(t *testing.T) {
 		})
 
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
+			settingsJSON := json.RawMessage(c.settings)
 			secureSettings := make(map[string][]byte)
 
 			webhookSender := mockNotificationService()

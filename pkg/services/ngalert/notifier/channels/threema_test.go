@@ -2,10 +2,10 @@ package channels
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
@@ -118,8 +118,7 @@ func TestThreemaNotifier(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
+			settingsJSON := json.RawMessage(c.settings)
 			secureSettings := make(map[string][]byte)
 			webhookSender := mockNotificationService()
 			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
