@@ -125,8 +125,6 @@ export type ThresholdDefinitions = Record<
 
 /**
  * This function will retrieve threshold definitions for the given array of data and expression queries.
- *
- * The result of this function will include
  */
 export function getThresholdsForQueries(queries: AlertQuery[]) {
   const thresholds: ThresholdDefinitions = {};
@@ -153,23 +151,24 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
     query.model.conditions.forEach((condition, index) => {
       const threshold = condition.evaluator.params;
 
-      // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression` *sigh*
+      // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression`
       const refId = condition.query.params[0] ?? query.model.expression;
       const isRangeThreshold = isRangeCondition(condition);
 
       try {
-        // 1. create a DAG so we can find the origin of the current expression
+        // create a DAG so we can find the origin of the current expression
         const graph = createDagFromQueries(queries);
 
-        // 2. check if the origin is a data query
         const originRefIDs = getOriginOfRefId(refId, graph);
         const originQueries = queries.filter((query) => originRefIDs.includes(query.refId));
 
         originQueries.forEach((originQuery) => {
           const originRefID = originQuery.refId;
+
+          // check if the origin is a data query
           const originIsDataQuery = !isExpressionQuery(originQuery?.model);
 
-          // 3. if yes, add threshold config to the refId of the data Query
+          // if yes, add threshold config to the refId of the data Query
           const hasValidOrigin = Boolean(originIsDataQuery && originRefID);
 
           // create the initial data structure for this origin refId
@@ -261,7 +260,7 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
     }
 
     // now also sort the threshold values, if we don't then they will look weird in the time series panel
-    // this doesn't work for negative values for now, those need to be sorted inverse
+    // TODO this doesn't work for negative values for now, those need to be sorted inverse
     thresholds[refId].config.steps.sort((a, b) => a.value - b.value);
   }
 
