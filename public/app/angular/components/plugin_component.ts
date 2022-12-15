@@ -15,7 +15,12 @@ export function relativeTemplateUrlToCDN(templateUrl: string, baseUrl: string) {
     return undefined;
   }
 
-  // We are using a subdomain of 'plugin-cdn.(...)' instead of specifying the bucket in the path...
+  // the templateUrl may have already been updated with the hostname
+  if (templateUrl.startsWith(cdnHost)) {
+    return templateUrl;
+  }
+
+  // We are using a path of 'plugin-cdn.(...)' to specify loading via cdn...
   return `${baseUrl.replace('plugin-cdn/', `${cdnHost}/`)}/${templateUrl}`;
 }
 

@@ -67,7 +67,7 @@ grafanaRuntime.SystemJS.config({
   },
   paths: {},
   meta: {
-    'plugins/*': {
+    '/*': {
       esModule: true,
       authorization: true,
       loader: 'plugin-loader',
