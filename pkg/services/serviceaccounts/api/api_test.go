@@ -44,7 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-func TestServiceAccountsAPI_CreateServiceAccount2(t *testing.T) {
+func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	type TestCase struct {
 		desc         string
 		basicRole    org.RoleType
@@ -115,6 +115,44 @@ func TestServiceAccountsAPI_CreateServiceAccount2(t *testing.T) {
 	}
 }
 
+func TestServiceAccountsAPI_DeleteServiceAccount2(t *testing.T) {
+	type TestCase struct {
+		desc         string
+		id           int64
+		permissions  []accesscontrol.Permission
+		expectedCode int
+		expectedErr  error
+	}
+
+	tests := []TestCase{
+		{
+			desc:         "should be able to delete service account with correct permission",
+			id:           1,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionDelete, Scope: "serviceaccounts:id:1"}},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:         "should not ba able to delete with wrong permission",
+			id:           2,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionDelete, Scope: "serviceaccounts:id:1"}},
+			expectedCode: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := setupTests(t)
+			req := server.NewRequest(http.MethodDelete, fmt.Sprintf("/api/serviceaccounts/%d", tt.id), nil)
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			res, err := server.Send(req)
+			require.NoError(t, err)
+			defer res.Body.Close()
+
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+		})
+	}
+}
+
 func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Server {
 	t.Helper()
 	cfg := setting.NewCfg()
@@ -146,69 +184,6 @@ var (
 // which is not ideal
 // this is a bit of a hack to get the tests to pass until we refactor the tests
 // to use fakes as in the user service tests
-
-// test the accesscontrol endpoints
-// with permissions and without permissions
-func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
-	store := db.InitTestDB(t)
-	services := setupTestServices(t, store)
-
-	var requestResponse = func(server *web.Mux, httpMethod, requestpath string) *httptest.ResponseRecorder {
-		req, err := http.NewRequest(httpMethod, requestpath, nil)
-		require.NoError(t, err)
-		recorder := httptest.NewRecorder()
-		server.ServeHTTP(recorder, req)
-		return recorder
-	}
-	t.Run("should be able to delete serviceaccount for with permissions", func(t *testing.T) {
-		testcase := struct {
-			user         tests.TestUser
-			acmock       *accesscontrolmock.Mock
-			expectedCode int
-		}{
-
-			user: tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true},
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionDelete, Scope: serviceaccounts.ScopeAll}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusOK,
-		}
-		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
-			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
-			server, _ := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), testcase.acmock, store)
-			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, fmt.Sprint(createduser.ID))).Code
-			require.Equal(t, testcase.expectedCode, actual)
-		})
-	})
-
-	t.Run("should be forbidden to delete serviceaccount via accesscontrol on endpoint", func(t *testing.T) {
-		testcase := struct {
-			user         tests.TestUser
-			acmock       *accesscontrolmock.Mock
-			expectedCode int
-		}{
-			user: tests.TestUser{Login: "servicetest2@admin", IsServiceAccount: true},
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusForbidden,
-		}
-		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
-			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
-			server, _ := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), testcase.acmock, store)
-			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, createduser.ID)).Code
-			require.Equal(t, testcase.expectedCode, actual)
-		})
-	})
-}
 
 func serviceAccountRequestScenario(t *testing.T, httpMethod string, endpoint string, user *tests.TestUser, fn func(httpmethod string, endpoint string, user *tests.TestUser)) {
 	t.Helper()
@@ -526,4 +501,8 @@ type fakeService struct {
 
 func (f *fakeService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	return f.ExpectedServiceAccount, f.ExpectedErr
+}
+
+func (f *fakeService) DeleteServiceAccount(ctx context.Context, orgID, id int64) error {
+	return f.ExpectedErr
 }
