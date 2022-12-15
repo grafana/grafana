@@ -515,7 +515,7 @@ func getPipelineAggField(m *MetricAgg) string {
 	// In backend were originally using "PipelineAggregate" as pipelineAggField
 	// Therefore we are going to check Field first and then PipelineAggregate to ensure that we are not breaking anything
 	pipelineAggField := m.Field
-	
+
 	if pipelineAggField == "" {
 		pipelineAggField = m.PipelineAggregate
 	}
