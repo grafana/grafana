@@ -16,11 +16,17 @@ describe('getQueryHints', () => {
         },
       ],
     };
+
     it('suggest json parser when no parser in query', () => {
-      expect(getQueryHints('{job="grafana"', [jsonSeries])).toMatchObject([{ type: 'ADD_JSON_PARSER' }]);
+      expect(getQueryHints('{job="grafana"', [jsonSeries])).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_JSON_PARSER' })])
+      );
     });
+
     it('does not suggest parser when parser in query', () => {
-      expect(getQueryHints('{job="grafana" | json', [jsonSeries])).toEqual([]);
+      expect(getQueryHints('{job="grafana" | json', [jsonSeries])).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_JSON_PARSER' })])
+      );
     });
   });
 
@@ -39,10 +45,15 @@ describe('getQueryHints', () => {
     };
 
     it('suggest logfmt parser when no parser in query', () => {
-      expect(getQueryHints('{job="grafana"', [logfmtSeries])).toMatchObject([{ type: 'ADD_LOGFMT_PARSER' }]);
+      expect(getQueryHints('{job="grafana"', [logfmtSeries])).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_LOGFMT_PARSER' })])
+      );
     });
+
     it('does not suggest parser when parser in query', () => {
-      expect(getQueryHints('{job="grafana" | json', [logfmtSeries])).toEqual([]);
+      expect(getQueryHints('{job="grafana" | logfmt', [logfmtSeries])).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_LOGFMT_PARSER' })])
+      );
     });
   });
 
@@ -61,22 +72,32 @@ describe('getQueryHints', () => {
     };
 
     it('suggest logfmt parser when no parser in query', () => {
-      expect(getQueryHints('{job="grafana"', [jsonAndLogfmtSeries])).toMatchObject([
-        { type: 'ADD_JSON_PARSER' },
-        { type: 'ADD_LOGFMT_PARSER' },
-      ]);
+      expect(getQueryHints('{job="grafana"', [jsonAndLogfmtSeries])).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'ADD_JSON_PARSER' }),
+          expect.objectContaining({ type: 'ADD_LOGFMT_PARSER' }),
+        ])
+      );
     });
+
     it('does not suggest parser when parser in query', () => {
-      expect(getQueryHints('{job="grafana" | json', [jsonAndLogfmtSeries])).toEqual([]);
+      expect(getQueryHints('{job="grafana" | json', [jsonAndLogfmtSeries])).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'ADD_JSON_PARSER' }),
+          expect.objectContaining({ type: 'ADD_LOGFMT_PARSER' }),
+        ])
+      );
     });
   });
 
   describe('when series with level-like label', () => {
     const createSeriesWithLabel = (labelName?: string): DataFrame => {
       const labelVariable: { [key: string]: string } = { job: 'a' };
+
       if (labelName) {
         labelVariable[labelName] = 'error';
       }
+
       return {
         name: 'logs',
         length: 2,
@@ -98,17 +119,19 @@ describe('getQueryHints', () => {
     };
 
     it('suggest level renaming when no level label', () => {
-      expect(getQueryHints('{job="grafana"', [createSeriesWithLabel('lvl')])).toMatchObject([
-        { type: 'ADD_JSON_PARSER' },
-        { type: 'ADD_LOGFMT_PARSER' },
-        { type: 'ADD_LEVEL_LABEL_FORMAT' },
-      ]);
+      expect(getQueryHints('{job="grafana"', [createSeriesWithLabel('lvl')])).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'ADD_JSON_PARSER' }),
+          expect.objectContaining({ type: 'ADD_LOGFMT_PARSER' }),
+          expect.objectContaining({ type: 'ADD_LEVEL_LABEL_FORMAT' }),
+        ])
+      );
     });
+
     it('does not suggest level renaming if level label', () => {
-      expect(getQueryHints('{job="grafana"', [createSeriesWithLabel('level')])).toMatchObject([
-        { type: 'ADD_JSON_PARSER' },
-        { type: 'ADD_LOGFMT_PARSER' },
-      ]);
+      expect(getQueryHints('{job="grafana"', [createSeriesWithLabel('level')])).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_LEVEL_LABEL_FORMAT' })])
+      );
     });
   });
 });
