@@ -173,7 +173,7 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 	org.Updated = time.Now()
 
 	if org.Id != 0 {
-		if _, err := sess.InsertId(&org); err != nil {
+		if _, err := sess.InsertId(&org, ss.Dialect); err != nil {
 			return 0, err
 		}
 	} else {
