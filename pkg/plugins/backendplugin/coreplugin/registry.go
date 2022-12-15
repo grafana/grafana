@@ -145,6 +145,11 @@ func (l *logWrapper) Error(msg string, args ...interface{}) {
 	l.logger.Error(msg, args...)
 }
 
+// With creates a sub-logger that will always have the given key/value pairs.
+func (l *logWrapper) With(args ...interface{}) sdklog.Logger {
+	panic("TODO")
+}
+
 func (l *logWrapper) Level() sdklog.Level {
 	return sdklog.NoLevel
 }
