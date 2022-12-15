@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
@@ -77,7 +78,7 @@ func New(
 }
 
 func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	fromAlert := req.Headers["FromAlert"] == "true"
+	fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName] == "true"
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
