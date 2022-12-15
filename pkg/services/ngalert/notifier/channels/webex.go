@@ -9,8 +9,6 @@ import (
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const webexAPIURL = "https://webexapis.com/v1/messages"
@@ -19,7 +17,7 @@ const webexAPIURL = "https://webexapis.com/v1/messages"
 type WebexNotifier struct {
 	*Base
 	ns       WebhookSender
-	log      log.Logger
+	log      Logger
 	images   ImageStore
 	tmpl     *template.Template
 	orgID    int64
@@ -80,12 +78,10 @@ func buildWebexNotifier(factoryConfig FactoryConfig) (*WebexNotifier, error) {
 		return nil, err
 	}
 
-	logger := log.New("alerting.notifier.webex")
-
 	return &WebexNotifier{
 		Base:     NewBase(factoryConfig.Config),
 		orgID:    factoryConfig.Config.OrgID,
-		log:      logger,
+		log:      factoryConfig.Logger,
 		ns:       factoryConfig.NotificationService,
 		images:   factoryConfig.ImageStore,
 		tmpl:     factoryConfig.Template,

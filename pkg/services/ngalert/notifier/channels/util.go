@@ -22,7 +22,6 @@ import (
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -53,7 +52,7 @@ type forEachImageFunc func(index int, image Image) error
 
 // getImage returns the image for the alert or an error. It returns a nil
 // image if the alert does not have an image token or the image does not exist.
-func getImage(ctx context.Context, l log.Logger, imageStore ImageStore, alert types.Alert) (*Image, error) {
+func getImage(ctx context.Context, l Logger, imageStore ImageStore, alert types.Alert) (*Image, error) {
 	token := getTokenFromAnnotations(alert.Annotations)
 	if token == "" {
 		return nil, nil
@@ -80,7 +79,7 @@ func getImage(ctx context.Context, l log.Logger, imageStore ImageStore, alert ty
 // the error and not iterate the remaining alerts. A forEachFunc can return ErrImagesDone
 // to stop the iteration of remaining alerts if the intended image or maximum number of
 // images have been found.
-func withStoredImages(ctx context.Context, l log.Logger, imageStore ImageStore, forEachFunc forEachImageFunc, alerts ...*types.Alert) error {
+func withStoredImages(ctx context.Context, l Logger, imageStore ImageStore, forEachFunc forEachImageFunc, alerts ...*types.Alert) error {
 	for index, alert := range alerts {
 		logger := l.New("alert", alert.String())
 		img, err := getImage(ctx, logger, imageStore, *alert)
@@ -195,7 +194,7 @@ type httpCfg struct {
 
 // sendHTTPRequest sends an HTTP request.
 // Stubbable by tests.
-var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logger log.Logger) ([]byte, error) {
+var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logger Logger) ([]byte, error) {
 	var reader io.Reader
 	if len(cfg.body) > 0 {
 		reader = bytes.NewReader(cfg.body)
@@ -249,7 +248,7 @@ var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logge
 	return respBody, nil
 }
 
-func joinUrlPath(base, additionalPath string, logger log.Logger) string {
+func joinUrlPath(base, additionalPath string, logger Logger) string {
 	u, err := url.Parse(base)
 	if err != nil {
 		logger.Debug("failed to parse URL while joining URL", "url", base, "error", err.Error())

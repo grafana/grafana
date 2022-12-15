@@ -158,6 +158,7 @@ func TestSensuGoNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				Template:            tmpl,
 				DecryptFunc:         decryptFn,
+				Logger:              &FakeLogger{},
 			}
 
 			sn, err := NewSensuGoNotifier(fc)

@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,7 +18,7 @@ import (
 // alert notifications to Google chat.
 type GoogleChatNotifier struct {
 	*Base
-	log      log.Logger
+	log      Logger
 	ns       WebhookSender
 	images   ImageStore
 	tmpl     *template.Template
@@ -57,7 +56,7 @@ func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
 
 	return &GoogleChatNotifier{
 		Base:   NewBase(fc.Config),
-		log:    log.New("alerting.notifier.googlechat"),
+		log:    fc.Logger,
 		ns:     fc.NotificationService,
 		images: fc.ImageStore,
 		tmpl:   fc.Template,

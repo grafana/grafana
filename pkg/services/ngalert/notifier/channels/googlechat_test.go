@@ -477,6 +477,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 				ImageStore:          imageStore,
 				NotificationService: webhookSender,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			pn, err := newGoogleChatNotifier(fc)
