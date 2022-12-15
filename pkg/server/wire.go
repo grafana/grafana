@@ -66,6 +66,8 @@ import (
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	healthchecksApi "github.com/grafana/grafana/pkg/services/healthchecks/api"
+	healthchecksService "github.com/grafana/grafana/pkg/services/healthchecks/service"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -324,6 +326,8 @@ var wireBasicSet = wire.NewSet(
 	publicdashboardsStore.ProvideStore,
 	wire.Bind(new(publicdashboards.Store), new(*publicdashboardsStore.PublicDashboardStoreImpl)),
 	publicdashboardsApi.ProvideApi,
+	healthchecksApi.ProvideApi,
+	healthchecksService.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
 	statsimpl.ProvideService,

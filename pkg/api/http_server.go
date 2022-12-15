@@ -32,6 +32,7 @@ import (
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	healthchecks "github.com/grafana/grafana/pkg/services/healthchecks/api"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -194,6 +195,7 @@ type HTTPServer struct {
 	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
 	dashboardVersionService      dashver.Service
 	PublicDashboardsApi          *publicdashboardsApi.Api
+	healthchecksApi              *healthchecks.Api
 	starService                  star.Service
 	Kinds                        *corekind.Base
 	playlistService              playlist.Service
@@ -346,6 +348,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		apiKeyService:                apiKeyService,
 		kvStore:                      kvStore,
 		PublicDashboardsApi:          publicDashboardsApi,
+		healthchecksApi:
 		userService:                  userService,
 		tempUserService:              tempUserService,
 		dashboardThumbsService:       dashboardThumbsService,

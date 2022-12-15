@@ -29,7 +29,7 @@ type sqlThumbnailRepository struct {
 
 func (r *sqlThumbnailRepository) saveFromFile(ctx context.Context, filePath string, meta DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error) {
 	// the filePath variable is never set by the user. it refers to a temporary file created either in
-	//   1. thumbs/service.go, when user uploads a thumbnail
+	//   1. thumbs/heathchecks.go, when user uploads a thumbnail
 	//   2. the rendering service, when image-renderer returns a screenshot
 
 	if !filepath.IsAbs(filePath) {
