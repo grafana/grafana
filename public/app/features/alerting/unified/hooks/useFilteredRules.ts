@@ -14,17 +14,18 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
   const [queryParams] = useQueryParams();
   const filters = getFiltersFromUrlParams(queryParams);
 
-  return useMemo(() => {
-    const filteredNamespaces = namespaces
-      // Filter by data source
-      // TODO: filter by multiple data sources for grafana-managed alerts
+  return useMemo(() => filterRules(namespaces, filters), [namespaces, filters]);
+};
+
+export const filterRules = (namespaces: CombinedRuleNamespace[], filters: FilterState): CombinedRuleNamespace[] => {
+  return (
+    namespaces
       .filter(({ rulesSource }) =>
         filters.dataSource && isCloudRulesSource(rulesSource) ? rulesSource.name === filters.dataSource : true
       )
       // If a namespace and group have rules that match the rules filters then keep them.
-      .reduce(reduceNamespaces(filters), [] as CombinedRuleNamespace[]);
-    return filteredNamespaces;
-  }, [namespaces, filters]);
+      .reduce(reduceNamespaces(filters), [] as CombinedRuleNamespace[])
+  );
 };
 
 const reduceNamespaces = (filters: FilterState) => {
@@ -68,8 +69,6 @@ const reduceGroups = (filters: FilterState) => {
 
         if (!(doesNameContainsQueryString || doRuleLabelsMatchQuery || doAlertsContainMatchingLabels)) {
           return false;
-        } else {
-          console.log(rule.rulerRule);
         }
       }
       if (

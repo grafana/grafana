@@ -42,7 +42,11 @@ const RuleTypeOptions: SelectableValue[] = [
   },
 ];
 
-const RulesFilter = () => {
+interface RulesFilerProps {
+  onFilterCleared?: () => void;
+}
+
+const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
   const [queryParams, setQueryParams] = useQueryParams();
   // This key is used to force a rerender on the inputs when the filters are cleared
   const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
@@ -90,6 +94,11 @@ const RulesFilter = () => {
       dataSource: null,
       ruleType: null,
     });
+
+    if (onFilterCleared) {
+      onFilterCleared();
+    }
+
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
 
