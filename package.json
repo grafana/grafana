@@ -243,7 +243,7 @@
     "@daybrush/utils": "1.10.0",
     "@emotion/css": "11.10.5",
     "@emotion/react": "11.10.5",
-    "@grafana/aws-sdk": "0.0.37",
+    "@grafana/aws-sdk": "0.0.40",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/experimental": "1.0.1",
