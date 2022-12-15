@@ -52,40 +52,40 @@ func TestNewInstanceSettings(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
-		{
-			name: "creates an instance for customized cloud",
-			settings: backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cloudName":"customizedazuremonitor","customizedRoutes":{"Route":{"URL":"url"}},"azureAuthType":"clientsecret"}`),
-				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
-				ID:                      50,
-			},
-			expectedModel: types.DatasourceInfo{
-				Cloud: "AzureCustomizedCloud",
-				Credentials: &azcredentials.AzureClientSecretCredentials{
-					AzureCloud:   "AzureCustomizedCloud",
-					ClientSecret: "secret",
-				},
-				Settings: types.AzureMonitorSettings{},
-				Routes: map[string]types.AzRoute{
-					"Route": {
-						URL: "url",
-					},
-				},
-				JSONData: map[string]interface{}{
-					"azureAuthType": "clientsecret",
-					"cloudName":     "customizedazuremonitor",
-					"customizedRoutes": map[string]interface{}{
-						"Route": map[string]interface{}{
-							"URL": "url",
-						},
-					},
-				},
-				DatasourceID:            50,
-				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
-				Services:                map[string]types.DatasourceService{},
-			},
-			Err: require.NoError,
-		},
+		// {
+		// 	name: "creates an instance for customized cloud",
+		// 	settings: backend.DataSourceInstanceSettings{
+		// 		JSONData:                []byte(`{"cloudName":"customizedazuremonitor","customizedRoutes":{"Route":{"URL":"url"}},"azureAuthType":"clientsecret"}`),
+		// 		DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
+		// 		ID:                      50,
+		// 	},
+		// 	expectedModel: types.DatasourceInfo{
+		// 		Cloud: "AzureCustomizedCloud",
+		// 		Credentials: &azcredentials.AzureClientSecretCredentials{
+		// 			AzureCloud:   "AzureCustomizedCloud",
+		// 			ClientSecret: "secret",
+		// 		},
+		// 		Settings: types.AzureMonitorSettings{},
+		// 		Routes: map[string]types.AzRoute{
+		// 			"Route": {
+		// 				URL: "url",
+		// 			},
+		// 		},
+		// 		JSONData: map[string]interface{}{
+		// 			"azureAuthType": "clientsecret",
+		// 			"cloudName":     "customizedazuremonitor",
+		// 			"customizedRoutes": map[string]interface{}{
+		// 				"Route": map[string]interface{}{
+		// 					"URL": "url",
+		// 				},
+		// 			},
+		// 		},
+		// 		DatasourceID:            50,
+		// 		DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
+		// 		Services:                map[string]types.DatasourceService{},
+		// 	},
+		// 	Err: require.NoError,
+		// },
 	}
 
 	cfg := &setting.Cfg{
