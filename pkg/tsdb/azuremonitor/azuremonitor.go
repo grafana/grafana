@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -150,7 +151,7 @@ func getCustomizedCloudSettings(cloud string, jsonData json.RawMessage) (types.A
 }
 
 func getAzureRoutes(cloud string, jsonData json.RawMessage) (map[string]types.AzRoute, error) {
-	if _, has := routes[cloud]; !has {
+	if cloud == azsettings.AzureCustomized {
 		customizedCloudSettings, err := getCustomizedCloudSettings(cloud, jsonData)
 		if err != nil {
 			return nil, err

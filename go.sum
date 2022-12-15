@@ -1396,6 +1396,8 @@ github.com/grafana/grafana-azure-sdk-go v1.3.1 h1:xTgBmbDxUPj3X9Pl9vgIOgZoDdtxWl
 github.com/grafana/grafana-azure-sdk-go v1.3.1/go.mod h1:rgrnK9m6CgKlgx4rH3FFP/6dTdyRO6LYC2mVZov35yo=
 github.com/grafana/grafana-azure-sdk-go v1.5.0 h1:rPZGXjJVzdr6VsBprAYf9kjzran71PmkQhedVhvLmRo=
 github.com/grafana/grafana-azure-sdk-go v1.5.0/go.mod h1:OJJuBJ3MOoaq2mqD6xlPsArpL2R5j80TrDqPYr35Zak=
+github.com/grafana/grafana-azure-sdk-go v1.5.1 h1:d+wwqvWLYvPeGltxU50LNjvCykyJjoyd5exMYJW4nLM=
+github.com/grafana/grafana-azure-sdk-go v1.5.1/go.mod h1:OJJuBJ3MOoaq2mqD6xlPsArpL2R5j80TrDqPYr35Zak=
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58 h1:2ud7NNM7LrGPO4x0NFR8qLq68CqI4SmB7I2yRN2w9oE=
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=

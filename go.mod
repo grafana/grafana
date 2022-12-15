@@ -58,7 +58,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/grafana/cuetsy v0.1.1
 	github.com/grafana/grafana-aws-sdk v0.11.0
-	github.com/grafana/grafana-azure-sdk-go v1.5.0
+	github.com/grafana/grafana-azure-sdk-go v1.5.1
 	github.com/grafana/grafana-plugin-sdk-go v0.145.0
 	github.com/grafana/thema v0.0.0-20221113112305-b441ed85a1fd
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
