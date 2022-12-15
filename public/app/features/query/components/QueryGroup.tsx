@@ -564,23 +564,3 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
 }
 
 type QueriesTabStyles = ReturnType<typeof getStyles>;
-
-/**
- * Converts a string value to number by trying to parse it to date and then to number.
- * @param value the parsed value which is a string.
- * @returns number or null if string is not a number or date.
- */
-function getDateTimeNumber(value: string): number | null {
-  const dateAndTime = dateTimeParse(value);
-  if (dateAndTime.isValid()) {
-    return dateAndTime.valueOf();
-  }
-
-  const timeAsNumber = Number.parseInt(value, 10);
-
-  if (Number.isNaN(timeAsNumber)) {
-    return null;
-  } else {
-    return timeAsNumber;
-  }
-}

@@ -53,7 +53,6 @@ export function readSpreadsheet(file: ArrayBuffer): DataFrame[] {
   const wb = read(file, { type: 'buffer' });
   const sheetName = wb.SheetNames[0];
   const sheetJson = utils.sheet_to_json(wb.Sheets[sheetName]);
-  const dataFrame = new MutableDataFrame({ fields: [] });
 
   return [toDataFrame(sheetJson)];
 }
