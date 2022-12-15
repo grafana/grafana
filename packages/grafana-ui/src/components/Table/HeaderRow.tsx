@@ -21,7 +21,7 @@ export const HeaderRow = (props: HeaderRowProps) => {
   const tableStyles = useStyles2(getTableStyles);
 
   return (
-    <div role="rowgroup" className={tableStyles.headerRow}>
+    <div role="rowgroup">
       {headerGroups.map((headerGroup: HeaderGroup) => {
         const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
         return (
@@ -62,12 +62,9 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
               <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" className={tableStyles.typeIcon} />
             )}
             <div>{column.render('Header')}</div>
-            {column.isSorted &&
-              (column.isSortedDesc ? (
-                <Icon size="lg" name="arrow-down" className={tableStyles.sortIcon} />
-              ) : (
-                <Icon name="arrow-up" size="lg" className={tableStyles.sortIcon} />
-              ))}
+            <div>
+              {column.isSorted && (column.isSortedDesc ? <Icon name="arrow-down" /> : <Icon name="arrow-up" />)}
+            </div>
           </button>
           {column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
         </>
