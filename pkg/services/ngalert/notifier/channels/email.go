@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -23,7 +22,7 @@ type EmailNotifier struct {
 	SingleEmail bool
 	Message     string
 	Subject     string
-	log         log.Logger
+	log         Logger
 	ns          EmailSender
 	images      ImageStore
 	tmpl        *template.Template
@@ -45,7 +44,7 @@ func EmailFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewEmailNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
+	return NewEmailNotifier(cfg, fc.Logger, fc.NotificationService, fc.ImageStore, fc.Template), nil
 }
 
 func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
@@ -66,14 +65,14 @@ func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(config *EmailConfig, ns EmailSender, images ImageStore, t *template.Template) *EmailNotifier {
+func NewEmailNotifier(config *EmailConfig, l Logger, ns EmailSender, images ImageStore, t *template.Template) *EmailNotifier {
 	return &EmailNotifier{
 		Base:        NewBase(config.NotificationChannelConfig),
 		Addresses:   config.Addresses,
 		SingleEmail: config.SingleEmail,
 		Message:     config.Message,
 		Subject:     config.Subject,
-		log:         log.New("alerting.notifier.email"),
+		log:         l,
 		ns:          ns,
 		images:      images,
 		tmpl:        t,

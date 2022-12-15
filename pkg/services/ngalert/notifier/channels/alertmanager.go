@@ -11,8 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 // GetDecryptedValueFn is a function that returns the decrypted value of
@@ -63,18 +61,18 @@ func AlertmanagerFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewAlertmanagerNotifier(config, fc.ImageStore, nil, fc.DecryptFunc), nil
+	return NewAlertmanagerNotifier(config, fc.Logger, fc.ImageStore, nil, fc.DecryptFunc), nil
 }
 
 // NewAlertmanagerNotifier returns a new Alertmanager notifier.
-func NewAlertmanagerNotifier(config *AlertmanagerConfig, images ImageStore, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
+func NewAlertmanagerNotifier(config *AlertmanagerConfig, l Logger, images ImageStore, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
 	return &AlertmanagerNotifier{
 		Base:              NewBase(config.NotificationChannelConfig),
 		images:            images,
 		urls:              config.URLs,
 		basicAuthUser:     config.BasicAuthUser,
 		basicAuthPassword: config.BasicAuthPassword,
-		logger:            log.New("alerting.notifier.prometheus-alertmanager"),
+		logger:            l,
 	}
 }
 
@@ -86,7 +84,7 @@ type AlertmanagerNotifier struct {
 	urls              []*url.URL
 	basicAuthUser     string
 	basicAuthPassword string
-	logger            log.Logger
+	logger            Logger
 }
 
 // Notify sends alert notifications to Alertmanager.

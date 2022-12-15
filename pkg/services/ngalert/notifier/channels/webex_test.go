@@ -124,6 +124,7 @@ func TestWebexNotifier(t *testing.T) {
 				NotificationService: notificationService,
 				DecryptFunc:         decryptFn,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			n, err := buildWebexNotifier(fc)

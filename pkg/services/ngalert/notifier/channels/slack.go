@@ -22,7 +22,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -52,7 +51,7 @@ var (
 
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
-type sendFunc func(ctx context.Context, req *http.Request, logger log.Logger) (string, error)
+type sendFunc func(ctx context.Context, req *http.Request, logger Logger) (string, error)
 
 // https://api.slack.com/reference/messaging/attachments#legacy_fields - 1024, no units given, assuming runes or characters.
 const slackMaxTitleLenRunes = 1024
@@ -61,7 +60,7 @@ const slackMaxTitleLenRunes = 1024
 // alert notification to Slack.
 type SlackNotifier struct {
 	*Base
-	log           log.Logger
+	log           Logger
 	tmpl          *template.Template
 	images        ImageStore
 	webhookSender WebhookSender
@@ -161,7 +160,7 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 		images:        factoryConfig.ImageStore,
 		webhookSender: factoryConfig.NotificationService,
 		sendFn:        sendSlackRequest,
-		log:           log.New("alerting.notifier.slack"),
+		log:           factoryConfig.Logger,
 		tmpl:          factoryConfig.Template,
 	}, nil
 }
@@ -238,7 +237,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 
 // sendSlackRequest sends a request to the Slack API.
 // Stubbable by tests.
-var sendSlackRequest = func(ctx context.Context, req *http.Request, logger log.Logger) (string, error) {
+var sendSlackRequest = func(ctx context.Context, req *http.Request, logger Logger) (string, error) {
 	resp, err := slackClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to send request: %w", err)
@@ -270,7 +269,7 @@ var sendSlackRequest = func(ctx context.Context, req *http.Request, logger log.L
 	}
 }
 
-func handleSlackIncomingWebhookResponse(resp *http.Response, logger log.Logger) (string, error) {
+func handleSlackIncomingWebhookResponse(resp *http.Response, logger Logger) (string, error) {
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("failed to read response: %w", err)
@@ -314,7 +313,7 @@ func handleSlackIncomingWebhookResponse(resp *http.Response, logger log.Logger) 
 	return "", fmt.Errorf("failed incoming webhook: %s", string(b))
 }
 
-func handleSlackJSONResponse(resp *http.Response, logger log.Logger) (string, error) {
+func handleSlackJSONResponse(resp *http.Response, logger Logger) (string, error) {
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("failed to read response: %w", err)
