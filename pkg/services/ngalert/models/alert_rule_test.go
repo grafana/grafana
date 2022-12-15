@@ -146,18 +146,18 @@ func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
 			rule := AlertRuleGen(func(rule *AlertRule) {
-				rule.Annotations = testCase.annotations
+				rule.Annotations = tc.annotations
 				rule.DashboardUID = nil
 				rule.PanelID = nil
 			})()
 			err := rule.SetDashboardAndPanelFromAnnotations()
 
-			require.Equal(t, testCase.expectedError, err)
-			require.Equal(t, testCase.expectedDashboardUID, rule.GetDashboardUID())
-			require.Equal(t, testCase.expectedPanelID, rule.GetPanelID())
+			require.Equal(t, tc.expectedError, err)
+			require.Equal(t, tc.expectedDashboardUID, rule.GetDashboardUID())
+			require.Equal(t, tc.expectedPanelID, rule.GetPanelID())
 		})
 	}
 }

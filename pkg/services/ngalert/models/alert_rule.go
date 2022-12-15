@@ -232,7 +232,7 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 	return reporter.Diffs
 }
 
-// SetDashboardAndPanelFromAnnotations will set the DashboardUID and PanelID field be doing a lookup in the annotations.
+// SetDashboardAndPanelFromAnnotations will set the DashboardUID and PanelID field by doing a lookup in the annotations.
 // Errors when the found annotations are not valid.
 func (alertRule *AlertRule) SetDashboardAndPanelFromAnnotations() error {
 	if alertRule.Annotations == nil {
