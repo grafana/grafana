@@ -159,7 +159,19 @@ func (ss *SQLStore) Reset() error {
 		return nil
 	}
 
-	return ss.ensureMainOrgAndAdminUser()
+	return ss.ensureMainOrgAndAdminUser(false)
+}
+
+// TestReset resets database state. If default org and user creation is enabled,
+// it will be ensured they exist in the database. TestReset() is more permissive
+// than Reset in that it will create the user and org whether or not there are
+// already users in the database.
+func (ss *SQLStore) TestReset() error {
+	if ss.skipEnsureDefaultOrgAndUser {
+		return nil
+	}
+
+	return ss.ensureMainOrgAndAdminUser(true)
 }
 
 // Quote quotes the value in the used SQL dialect
@@ -187,19 +199,23 @@ func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 	return ss.sqlxsession
 }
 
-func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
+func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 	ctx := context.Background()
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		ss.log.Debug("Ensuring main org and admin user exist")
-		var stats models.SystemUserCountStats
-		// TODO: Should be able to rename "Count" to "count", for more standard SQL style
-		// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
-		rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
-		if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
-			return fmt.Errorf("could not determine if admin user exists: %w", err)
-		}
-		if stats.Count > 0 {
-			return nil
+
+		// If this is a test database, don't exit early when any user is found.
+		if !test {
+			var stats models.SystemUserCountStats
+			// TODO: Should be able to rename "Count" to "count", for more standard SQL style
+			// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
+			rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+			if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
+				return fmt.Errorf("could not determine if admin user exists: %w", err)
+			}
+			if stats.Count > 0 {
+				return nil
+			}
 		}
 
 		// ensure admin user
