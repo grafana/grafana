@@ -19,8 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -421,7 +419,6 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 			URL:   "https://www.example.com/test.png",
 		}},
 	}
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	notificationService := mockNotificationService()
 
 	c := FactoryConfig{
@@ -433,9 +430,11 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 		},
 		ImageStore:          images,
 		NotificationService: notificationService,
-		DecryptFunc:         secretsService.GetDecryptedValue,
-		Template:            tmpl,
-		Logger:              &FakeLogger{},
+		DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+			return fallback
+		},
+		Template: tmpl,
+		Logger:   &FakeLogger{},
 	}
 
 	sn, err := buildSlackNotifier(c)

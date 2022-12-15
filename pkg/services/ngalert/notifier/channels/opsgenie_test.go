@@ -7,9 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -235,8 +232,6 @@ func TestOpsgenieNotifier(t *testing.T) {
 
 			webhookSender := mockNotificationService()
 			webhookSender.Webhook.Body = "<not-sent>"
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
 
 			fc := FactoryConfig{
 				Config: &NotificationChannelConfig{
@@ -246,10 +241,12 @@ func TestOpsgenieNotifier(t *testing.T) {
 					SecureSettings: secureSettings,
 				},
 				NotificationService: webhookSender,
-				DecryptFunc:         decryptFn,
-				ImageStore:          &UnavailableImageStore{},
-				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				ImageStore: &UnavailableImageStore{},
+				Template:   tmpl,
+				Logger:     &FakeLogger{},
 			}
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")

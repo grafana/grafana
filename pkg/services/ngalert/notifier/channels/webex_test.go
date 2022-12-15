@@ -8,9 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -108,8 +105,6 @@ func TestWebexNotifier(t *testing.T) {
 			settingsJSON := json.RawMessage(c.settings)
 			secureSettings := make(map[string][]byte)
 
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
 			notificationService := mockNotificationService()
 
 			fc := FactoryConfig{
@@ -121,9 +116,11 @@ func TestWebexNotifier(t *testing.T) {
 				},
 				ImageStore:          images,
 				NotificationService: notificationService,
-				DecryptFunc:         decryptFn,
-				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				Template: tmpl,
+				Logger:   &FakeLogger{},
 			}
 
 			n, err := buildWebexNotifier(fc)
