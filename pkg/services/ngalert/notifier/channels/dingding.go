@@ -9,6 +9,8 @@ import (
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 const defaultDingdingMsgType = "link"
@@ -21,15 +23,19 @@ type dingDingSettings struct {
 }
 
 func buildDingDingSettings(fc FactoryConfig) (*dingDingSettings, error) {
-	URL := fc.Config.Settings.Get("url").MustString()
+	settings, err := simplejson.NewJson(fc.Config.Settings)
+	if err != nil {
+		return nil, err
+	}
+	URL := settings.Get("url").MustString()
 	if URL == "" {
 		return nil, errors.New("could not find url property in settings")
 	}
 	return &dingDingSettings{
 		URL:         URL,
-		MessageType: fc.Config.Settings.Get("msgType").MustString(defaultDingdingMsgType),
-		Title:       fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
-		Message:     fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
+		MessageType: settings.Get("msgType").MustString(defaultDingdingMsgType),
+		Title:       settings.Get("title").MustString(DefaultMessageTitleEmbed),
+		Message:     settings.Get("message").MustString(DefaultMessageEmbed),
 	}, nil
 }
 

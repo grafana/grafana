@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -48,7 +49,11 @@ func EmailFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
-	addressesString := config.Settings.Get("addresses").MustString()
+	settings, err := simplejson.NewJson(config.Settings)
+	if err != nil {
+		return nil, err
+	}
+	addressesString := settings.Get("addresses").MustString()
 	if addressesString == "" {
 		return nil, errors.New("could not find addresses in settings")
 	}
@@ -56,9 +61,9 @@ func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
 	addresses := util.SplitEmails(addressesString)
 	return &EmailConfig{
 		NotificationChannelConfig: config,
-		SingleEmail:               config.Settings.Get("singleEmail").MustBool(false),
-		Message:                   config.Settings.Get("message").MustString(),
-		Subject:                   config.Settings.Get("subject").MustString(DefaultMessageTitleEmbed),
+		SingleEmail:               settings.Get("singleEmail").MustBool(false),
+		Message:                   settings.Get("message").MustString(),
+		Subject:                   settings.Get("subject").MustString(DefaultMessageTitleEmbed),
 		Addresses:                 addresses,
 	}, nil
 }
