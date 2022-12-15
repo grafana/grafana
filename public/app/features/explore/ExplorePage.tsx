@@ -31,7 +31,7 @@ const styles = {
   `,
 };
 
-function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
+export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   useExplorePageTitle();
   const dispatch = useDispatch();
   const queryParams = props.queryParams;
@@ -173,5 +173,3 @@ const useExplorePageTitle = () => {
 
   document.title = `${navModel.main.text} - ${datasources.join(' | ')} - ${Branding.AppTitle}`;
 };
-
-export default Wrapper;

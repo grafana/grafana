@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import React, { ComponentProps } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { serializeStateToUrlParam } from '@grafana/data';
 import { locationService, config } from '@grafana/runtime';
@@ -27,13 +28,13 @@ jest.mock('app/core/core', () => {
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
-    default(props: any) {
-      return <div>{props.children({ width: 1000 })}</div>;
+    default(props: ComponentProps<typeof AutoSizer>) {
+      return <div>{props.children({ width: 1000, height: 1000 })}</div>;
     },
   };
 });
 
-describe('Wrapper', () => {
+describe('ExplorePage', () => {
   afterEach(() => {
     tearDown();
   });
@@ -261,7 +262,7 @@ describe('Wrapper', () => {
       // to work
       await screen.findByText(`loki Editor input: { label="value"}`);
 
-      store.dispatch(mainState.splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
+      store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', query: { expr: 'error', refId: 'A' } }));
 
       // Editor renders the new query
       await screen.findByText(`elastic Editor input: error`);
@@ -318,7 +319,7 @@ describe('Wrapper', () => {
       // to work
       await screen.findByText(`loki Editor input: { label="value"}`);
 
-      store.dispatch(mainState.splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
+      store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', query: { expr: 'error', refId: 'A' } }));
       await waitFor(() => expect(document.title).toEqual('Explore - loki | elastic - Grafana'));
     });
   });
