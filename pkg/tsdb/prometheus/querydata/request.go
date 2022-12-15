@@ -187,7 +187,7 @@ func (s *QueryData) trace(ctx context.Context, q *models.Query) (context.Context
 func sdkHeaderToHttpHeader(headers map[string]string) http.Header {
 	httpHeader := make(http.Header)
 	for key, val := range headers {
-		httpHeader[key] = []string{val}
+		httpHeader.Set(key, val)
 	}
 	return httpHeader
 }
