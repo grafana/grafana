@@ -203,8 +203,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	rules := make([]*models.AlertRule, len(group.Rules))
 	group = *syncGroupRuleFields(&group, orgID)
 	for i := range group.Rules {
-		err := group.Rules[i].SetDashboardAndPanelFromAnnotations()
-		if err != nil {
+		if err := group.Rules[i].SetDashboardAndPanelFromAnnotations(); err != nil {
 			return err
 		}
 		rules = append(rules, &group.Rules[i])
