@@ -4643,10 +4643,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/aws-sdk@npm:0.0.37":
-  version: 0.0.37
-  resolution: "@grafana/aws-sdk@npm:0.0.37"
-  checksum: 3994e78182dc181c9ba1b0595551480eb699c34531f582c52badec8da1d930a3198530145ef58a9543f77e424026c6a70a213097e0b56534f44894165db9c4d2
+"@grafana/aws-sdk@npm:0.0.40":
+  version: 0.0.40
+  resolution: "@grafana/aws-sdk@npm:0.0.40"
+  checksum: 23d20f8da262b7a80a13d0c60bbefa49760c5b1459c00646cbb4762d861003f8c3a32d8c6660902762c27ba136831b15d420291b105f4d72b971a04854d9027f
   languageName: node
   linkType: hard
 
@@ -5050,7 +5050,7 @@ __metadata:
     "@grafana/e2e-selectors": 9.4.0-pre
     "@grafana/schema": 9.4.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@leeoniya/ufuzzy": 0.8.0
+    "@leeoniya/ufuzzy": 0.9.0
     "@mdx-js/react": 1.6.22
     "@monaco-editor/react": 4.4.6
     "@popperjs/core": 2.11.6
@@ -6041,10 +6041,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@leeoniya/ufuzzy@npm:0.8.0":
-  version: 0.8.0
-  resolution: "@leeoniya/ufuzzy@npm:0.8.0"
-  checksum: 15c2c944beafcd97da8487ea7c0f5b59268ac080e492aa8ad6a53719f02164677725ef228211290433a13efaf4c1abd99b6f286c37c469872863e7e2fee90385
+"@leeoniya/ufuzzy@npm:0.9.0":
+  version: 0.9.0
+  resolution: "@leeoniya/ufuzzy@npm:0.9.0"
+  checksum: ee1b781530b3dbddd44eb0923f576028829209648c7b7283e5981f89527ac029c034d234ac2e98c9c25e99fe1d97e524d1e3ee0a79f5cbb92230d36e9cfa69d5
   languageName: node
   linkType: hard
 
@@ -15534,13 +15534,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:3.0.1":
-  version: 3.0.1
-  resolution: "centrifuge@npm:3.0.1"
+"centrifuge@npm:3.1.0":
+  version: 3.1.0
+  resolution: "centrifuge@npm:3.1.0"
   dependencies:
     events: ^3.3.0
     protobufjs: ^6.11.3
-  checksum: cf17b63fe9c684f121348a8597da0686a1f45fff2f85eaed6a3452504caeb1098c1524b10f197fe3811a11199214b88b75f5935ac86cb9753146fcc0d11f418c
+  checksum: 24bcf02ad896f66929b4c8f44632da708b6888c03bf09ed756940fda181e46197c28673b74680da33005ec3770725bd7f286c689bdf373cc25d1f10db4fb9fc5
   languageName: node
   linkType: hard
 
@@ -21861,7 +21861,7 @@ __metadata:
     "@emotion/css": 11.10.5
     "@emotion/eslint-plugin": 11.10.0
     "@emotion/react": 11.10.5
-    "@grafana/aws-sdk": 0.0.37
+    "@grafana/aws-sdk": 0.0.40
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
@@ -21879,7 +21879,7 @@ __metadata:
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 5.3.6
-    "@leeoniya/ufuzzy": 0.8.0
+    "@leeoniya/ufuzzy": 0.9.0
     "@lezer/common": 1.0.1
     "@lezer/highlight": 1.1.2
     "@lezer/lr": 1.2.3
@@ -21991,7 +21991,7 @@ __metadata:
     blob-polyfill: 7.0.20220408
     brace: 0.11.1
     calculate-size: 1.1.1
-    centrifuge: 3.0.1
+    centrifuge: 3.1.0
     classnames: 2.3.2
     comlink: 4.3.1
     common-tags: 1.8.2

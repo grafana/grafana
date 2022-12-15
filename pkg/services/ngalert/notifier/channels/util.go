@@ -49,11 +49,11 @@ var (
 	ErrImagesUnavailable = errors.New("alert screenshots are unavailable")
 )
 
-type forEachImageFunc func(index int, image models.Image) error
+type forEachImageFunc func(index int, image Image) error
 
 // getImage returns the image for the alert or an error. It returns a nil
 // image if the alert does not have an image token or the image does not exist.
-func getImage(ctx context.Context, l log.Logger, imageStore ImageStore, alert types.Alert) (*models.Image, error) {
+func getImage(ctx context.Context, l log.Logger, imageStore ImageStore, alert types.Alert) (*Image, error) {
 	token := getTokenFromAnnotations(alert.Annotations)
 	if token == "" {
 		return nil, nil
@@ -63,7 +63,7 @@ func getImage(ctx context.Context, l log.Logger, imageStore ImageStore, alert ty
 	defer cancelFunc()
 
 	img, err := imageStore.GetImage(ctx, token)
-	if errors.Is(err, models.ErrImageNotFound) || errors.Is(err, ErrImagesUnavailable) {
+	if errors.Is(err, ErrImageNotFound) || errors.Is(err, ErrImagesUnavailable) {
 		return nil, nil
 	} else if err != nil {
 		l.Warn("failed to get image with token", "token", token, "error", err)
@@ -107,7 +107,7 @@ func openImage(path string) (io.ReadCloser, error) {
 	fp := filepath.Clean(path)
 	_, err := os.Stat(fp)
 	if os.IsNotExist(err) || os.IsPermission(err) {
-		return nil, models.ErrImageNotFound
+		return nil, ErrImageNotFound
 	}
 
 	f, err := os.Open(fp)
@@ -128,7 +128,7 @@ func getTokenFromAnnotations(annotations model.LabelSet) string {
 type UnavailableImageStore struct{}
 
 // Get returns the image with the corresponding token, or ErrImageNotFound.
-func (u *UnavailableImageStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
+func (u *UnavailableImageStore) GetImage(ctx context.Context, token string) (*Image, error) {
 	return nil, ErrImagesUnavailable
 }
 

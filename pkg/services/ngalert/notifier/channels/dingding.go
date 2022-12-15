@@ -11,8 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const defaultDingdingMsgType = "link"
@@ -55,13 +53,7 @@ func newDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
 		return nil, err
 	}
 	return &DingDingNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		log:      log.New("alerting.notifier.dingding"),
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
@@ -73,7 +65,7 @@ func newDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
 type DingDingNotifier struct {
 	*Base
 	log      log.Logger
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	tmpl     *template.Template
 	settings dingDingSettings
 }
@@ -107,9 +99,9 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		u = dd.settings.URL
 	}
 
-	cmd := &models.SendWebhookSync{Url: u, Body: b}
+	cmd := &SendWebhookSettings{Url: u, Body: b}
 
-	if err := dd.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := dd.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to dingding: %w", err)
 	}
 
