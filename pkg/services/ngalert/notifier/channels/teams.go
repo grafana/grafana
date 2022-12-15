@@ -12,8 +12,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const (
@@ -264,13 +262,7 @@ func NewTeamsNotifier(fc FactoryConfig) (*TeamsNotifier, error) {
 		return nil, err
 	}
 	return &TeamsNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		log:      log.New("alerting.notifier.teams"),
 		ns:       fc.NotificationService,
 		images:   fc.ImageStore,
@@ -309,7 +301,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	var s AdaptiveCardImageSetItem
 	_ = withStoredImages(ctx, tn.log, tn.images,
-		func(_ int, image ngmodels.Image) error {
+		func(_ int, image Image) error {
 			if image.URL != "" {
 				s.AppendImage(AdaptiveCardImageItem{URL: image.URL})
 			}

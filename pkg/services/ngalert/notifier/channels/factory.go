@@ -1,13 +1,10 @@
 package channels
 
 import (
-	"context"
 	"errors"
 	"strings"
 
 	"github.com/prometheus/alertmanager/template"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type FactoryConfig struct {
@@ -17,10 +14,6 @@ type FactoryConfig struct {
 	ImageStore          ImageStore
 	// Used to retrieve image URLs for messages, or data for uploads.
 	Template *template.Template
-}
-
-type ImageStore interface {
-	GetImage(ctx context.Context, token string) (*models.Image, error)
 }
 
 func NewFactoryConfig(config *NotificationChannelConfig, notificationService NotificationSender,

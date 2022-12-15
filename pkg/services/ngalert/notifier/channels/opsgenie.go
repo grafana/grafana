@@ -16,8 +16,6 @@ import (
 	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const (
@@ -126,13 +124,7 @@ func NewOpsgenieNotifier(fc FactoryConfig) (*OpsgenieNotifier, error) {
 		return nil, err
 	}
 	return &OpsgenieNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		tmpl:     fc.Template,
 		log:      log.New("alerting.notifier.opsgenie"),
 		ns:       fc.NotificationService,
@@ -246,7 +238,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		}
 		var images []string
 		_ = withStoredImages(ctx, on.log, on.images,
-			func(_ int, image ngmodels.Image) error {
+			func(_ int, image Image) error {
 				if len(image.URL) == 0 {
 					return nil
 				}

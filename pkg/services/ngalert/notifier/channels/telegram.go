@@ -15,8 +15,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 var (
@@ -102,13 +100,7 @@ func NewTelegramNotifier(fc FactoryConfig) (*TelegramNotifier, error) {
 		return nil, err
 	}
 	return &TelegramNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		tmpl:     fc.Template,
 		log:      log.New("alerting.notifier.telegram"),
 		images:   fc.ImageStore,
@@ -144,7 +136,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	// Create the cmd to upload each image
-	_ = withStoredImages(ctx, tn.log, tn.images, func(index int, image ngmodels.Image) error {
+	_ = withStoredImages(ctx, tn.log, tn.images, func(index int, image Image) error {
 		cmd, err = tn.newWebhookSyncCmd("sendPhoto", func(w *multipart.Writer) error {
 			f, err := os.Open(image.Path)
 			if err != nil {

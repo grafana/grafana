@@ -14,8 +14,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const (
@@ -131,13 +129,7 @@ func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
 	}
 
 	return &PagerdutyNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		tmpl:     fc.Template,
 		log:      log.New("alerting.notifier." + fc.Config.Name),
 		ns:       fc.NotificationService,
@@ -231,7 +223,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	_ = withStoredImages(ctx, pn.log, pn.images,
-		func(_ int, image ngmodels.Image) error {
+		func(_ int, image Image) error {
 			if len(image.URL) != 0 {
 				msg.Images = append(msg.Images, pagerDutyImage{Src: image.URL})
 			}

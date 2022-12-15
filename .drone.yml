@@ -312,6 +312,7 @@ trigger:
     - go.mod
     - public/app/plugins/**/plugin.json
     - devenv/**
+    - .bingo/**
 type: docker
 volumes:
 - host:
@@ -6444,6 +6445,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 7045c606549d05fbe66b2e683b318c7063a4e875e1a94168d5f5b03bb7e319c6
+hmac: 232bd9c4601917826ebb8fcd50a19fa728a4d65264c20ee9d5d482fb86d6205e
 
 ...

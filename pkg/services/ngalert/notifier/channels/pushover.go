@@ -18,8 +18,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const (
@@ -148,14 +146,7 @@ func NewPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
 		return nil, err
 	}
 	return &PushoverNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-			SecureSettings:        fc.Config.SecureSettings,
-		}),
+		Base:     NewBase(fc.Config),
 		tmpl:     fc.Template,
 		log:      log.New("alerting.notifier.pushover"),
 		images:   fc.ImageStore,
@@ -316,7 +307,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 func (pn *PushoverNotifier) writeImageParts(ctx context.Context, w *multipart.Writer, as ...*types.Alert) {
 	// Pushover supports at most one image attachment with a maximum size of pushoverMaxFileSize.
 	// If the image is larger than pushoverMaxFileSize then return an error.
-	_ = withStoredImages(ctx, pn.log, pn.images, func(index int, image ngmodels.Image) error {
+	_ = withStoredImages(ctx, pn.log, pn.images, func(index int, image Image) error {
 		f, err := os.Open(image.Path)
 		if err != nil {
 			return fmt.Errorf("failed to open the image: %w", err)

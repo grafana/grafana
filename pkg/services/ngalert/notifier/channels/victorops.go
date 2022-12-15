@@ -14,8 +14,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -77,13 +75,7 @@ func NewVictoropsNotifier(fc FactoryConfig) (*VictoropsNotifier, error) {
 		return nil, err
 	}
 	return &VictoropsNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		log:      log.New("alerting.notifier.victorops"),
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
@@ -139,7 +131,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	}
 
 	_ = withStoredImages(ctx, vn.log, vn.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			if image.URL != "" {
 				bodyJSON["image_url"] = image.URL
 				return ErrImagesDone

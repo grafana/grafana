@@ -12,8 +12,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type SensuGoNotifier struct {
@@ -72,14 +70,7 @@ func NewSensuGoNotifier(fc FactoryConfig) (*SensuGoNotifier, error) {
 		return nil, err
 	}
 	return &SensuGoNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-			SecureSettings:        fc.Config.SecureSettings,
-		}),
+		Base:     NewBase(fc.Config),
 		log:      log.New("alerting.notifier.sensugo"),
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
@@ -127,7 +118,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	labels := make(map[string]string)
 
 	_ = withStoredImages(ctx, sn.log, sn.images,
-		func(_ int, image ngmodels.Image) error {
+		func(_ int, image Image) error {
 			// If there is an image for this alert and the image has been uploaded
 			// to a public URL then add it to the request. We cannot add more than
 			// one image per request.

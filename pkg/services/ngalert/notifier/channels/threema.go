@@ -13,8 +13,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 var (
@@ -96,13 +94,7 @@ func NewThreemaNotifier(fc FactoryConfig) (*ThreemaNotifier, error) {
 		return nil, err
 	}
 	return &ThreemaNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		log:      log.New("alerting.notifier.threema"),
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
@@ -158,7 +150,7 @@ func (tn *ThreemaNotifier) buildMessage(ctx context.Context, as ...*types.Alert)
 	}
 
 	_ = withStoredImages(ctx, tn.log, tn.images,
-		func(_ int, image ngmodels.Image) error {
+		func(_ int, image Image) error {
 			if image.URL != "" {
 				message += fmt.Sprintf("*Image:* %s\n", image.URL)
 			}

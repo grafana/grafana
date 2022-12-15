@@ -6,15 +6,13 @@ import { AccessControlAction } from 'app/types';
 
 import { useDataSourcesRoutes } from '../state';
 
-export function DataSourceAddButton() {
+export function DataSourceAddButton(): JSX.Element | null {
   const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const dataSourcesRoutes = useDataSourcesRoutes();
 
-  return (
-    canCreateDataSource && (
-      <LinkButton icon="plus" href={dataSourcesRoutes.New}>
-        Add new data source
-      </LinkButton>
-    )
-  );
+  return canCreateDataSource ? (
+    <LinkButton icon="plus" href={dataSourcesRoutes.New}>
+      Add new data source
+    </LinkButton>
+  ) : null;
 }
