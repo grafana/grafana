@@ -1,4 +1,4 @@
-import { CoreApp, DashboardLoadedEvent, DataQueryResponse } from '@grafana/data';
+import { CoreApp, DashboardLoadedEvent, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { variableRegex } from 'app/features/variables/utils';
 
@@ -110,7 +110,12 @@ const shouldNotReportBasedOnRefId = (refId: string): boolean => {
   return false;
 };
 
-export function trackQuery(response: DataQueryResponse, queries: ElasticsearchQuery[], app: string): void {
+export function trackQuery(
+  response: DataQueryResponse,
+  request: DataQueryRequest<ElasticsearchQuery> & { targets: ElasticsearchQuery[] },
+  startTime: Date
+): void {
+  const { targets: queries, app } = request;
   if (app === CoreApp.Dashboard || app === CoreApp.PanelViewer) {
     return;
   }
@@ -129,6 +134,9 @@ export function trackQuery(response: DataQueryResponse, queries: ElasticsearchQu
       has_error: response.error !== undefined,
       has_data: response.data.some((frame) => frame.length > 0),
       simultaneously_sent_query_count: queries.length,
+      time_range_from: request?.range?.from?.toISOString(),
+      time_range_to: request?.range?.to?.toISOString(),
+      time_taken: Date.now() - startTime.getTime(),
     });
   }
 }
