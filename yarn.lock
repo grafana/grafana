@@ -4643,10 +4643,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/aws-sdk@npm:0.0.37":
-  version: 0.0.37
-  resolution: "@grafana/aws-sdk@npm:0.0.37"
-  checksum: 3994e78182dc181c9ba1b0595551480eb699c34531f582c52badec8da1d930a3198530145ef58a9543f77e424026c6a70a213097e0b56534f44894165db9c4d2
+"@grafana/aws-sdk@npm:0.0.40":
+  version: 0.0.40
+  resolution: "@grafana/aws-sdk@npm:0.0.40"
+  checksum: 23d20f8da262b7a80a13d0c60bbefa49760c5b1459c00646cbb4762d861003f8c3a32d8c6660902762c27ba136831b15d420291b105f4d72b971a04854d9027f
   languageName: node
   linkType: hard
 
@@ -21861,7 +21861,7 @@ __metadata:
     "@emotion/css": 11.10.5
     "@emotion/eslint-plugin": 11.10.0
     "@emotion/react": 11.10.5
-    "@grafana/aws-sdk": 0.0.37
+    "@grafana/aws-sdk": 0.0.40
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
