@@ -358,8 +358,10 @@ export const ExploreToolbar = connector(UnConnectedExploreToolbar);
 
 const getStyles = () => {
   return {
-    iconButton: css`
-      scale: 1.5;
-    `,
+    iconButton: css({
+      '> div': {
+        scale: '1.5',
+      },
+    }),
   };
 };
