@@ -173,14 +173,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 					continue
 				}
 			} else {
-				// In frontend we are using "Field" as pipelineAggField
-				// In backend were originally using "PipelineAggregate" as pipelineAggField
-				// Therefore we are going to check Field first and then PipelineAggregate to ensure that we are not breaking anything
-				pipelineAggField := m.Field
-				if pipelineAggField == "" {
-					pipelineAggField = m.PipelineAggregate
-				}
-
+				pipelineAggField := getPipelineAggField(m)
 				if _, err := strconv.Atoi(pipelineAggField); err == nil {
 					var appliedAgg *MetricAgg
 					for _, pipelineMetric := range q.Metrics {
@@ -515,4 +508,16 @@ func (p *timeSeriesQueryParser) parseMetrics(model *simplejson.Json) ([]*MetricA
 		result = append(result, metric)
 	}
 	return result, nil
+}
+
+func getPipelineAggField(m *MetricAgg) string {
+	// In frontend we are using "Field" as pipelineAggField
+	// In backend were originally using "PipelineAggregate" as pipelineAggField
+	// Therefore we are going to check Field first and then PipelineAggregate to ensure that we are not breaking anything
+	pipelineAggField := m.Field
+	
+	if pipelineAggField == "" {
+		pipelineAggField = m.PipelineAggregate
+	}
+	return pipelineAggField
 }
