@@ -4,10 +4,8 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { LoadingState } from '@grafana/data';
-import { setDataSourceSrv, setQueryRunnerFactory } from '@grafana/runtime';
+import { setDataSourceSrv } from '@grafana/runtime';
 import { MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
-
-import { QueryRunner } from '../../query/state/QueryRunner';
 
 import { QueryEditorField } from './QueryEditorField';
 
