@@ -18,6 +18,7 @@ import {
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
 
+import { unescapeLabelValue } from './languageUtils';
 import { LokiQueryModeller } from './querybuilder/LokiQueryModeller';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 
@@ -42,7 +43,13 @@ export function addLabelToQuery(query: string, key: string, operator: string, va
   }
 
   const streamSelectorPositions = getStreamSelectorPositions(query);
-  const hasStreamSelectorMatchers = getMatcherInStreamPositions(query).length > 0;
+  const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
+  const everyStreamSelectorHasMatcher = streamSelectorPositions.every((streamSelectorPosition) =>
+    hasStreamSelectorMatchers.some(
+      (matcherPosition) =>
+        matcherPosition.from >= streamSelectorPosition.from && matcherPosition.to <= streamSelectorPosition.to
+    )
+  );
   const parserPositions = getParserPositions(query);
   const labelFilterPositions = getLabelFilterPositions(query);
   if (!streamSelectorPositions.length) {
@@ -51,7 +58,8 @@ export function addLabelToQuery(query: string, key: string, operator: string, va
 
   const filter = toLabelFilter(key, value, operator);
   // If we have non-empty stream selector and parser/label filter, we want to add a new label filter after the last one.
-  if (hasStreamSelectorMatchers && (labelFilterPositions.length || parserPositions.length)) {
+  // If some of the stream selectors don't have matchers, we want to add new matcher to the all stream selectors.
+  if (everyStreamSelectorHasMatcher && (labelFilterPositions.length || parserPositions.length)) {
     const positionToAdd = findLastPosition([...labelFilterPositions, ...parserPositions]);
     return addFilterAsLabelFilter(query, [positionToAdd], filter);
   } else {
@@ -322,7 +330,9 @@ function addFilterAsLabelFilter(
     const start = query.substring(prev, match.to);
     const end = isLast ? query.substring(match.to) : '';
 
-    const labelFilter = ` | ${filter.label}${filter.op}\`${filter.value}\``;
+    // we now unescape all escaped values again, because we are using backticks which can handle those cases.
+    // we also don't care about the operator here, because we need to unescape for both, regex and equal.
+    const labelFilter = ` | ${filter.label}${filter.op}\`${unescapeLabelValue(filter.value)}\``;
     newQuery += start + labelFilter + end;
     prev = match.to;
   }

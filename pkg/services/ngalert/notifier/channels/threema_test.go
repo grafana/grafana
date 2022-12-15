@@ -135,6 +135,7 @@ func TestThreemaNotifier(t *testing.T) {
 				ImageStore:          images,
 				Template:            tmpl,
 				DecryptFunc:         secretsService.GetDecryptedValue,
+				Logger:              &FakeLogger{},
 			}
 
 			pn, err := NewThreemaNotifier(fc)

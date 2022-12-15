@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -76,7 +75,7 @@ func TestDefaultTemplateString(t *testing.T) {
 	tmpl.ExternalURL = externalURL
 
 	var tmplErr error
-	l := log.New("default-template-test")
+	l := &FakeLogger{}
 	expand, _ := TmplText(context.Background(), tmpl, alerts, l, &tmplErr)
 
 	cases := []struct {

@@ -7,15 +7,17 @@ import (
 	"math"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	text_template "text/template"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/timestamp"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/template"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
 // templateCaptureValue represents each value in .Values in the annotations
@@ -66,8 +68,11 @@ func expandTemplate(ctx context.Context, name, text string, labels map[string]st
 			return ""
 		},
 	})
-
-	return expander.Expand()
+	result, resultErr = expander.Expand()
+	// Replace missing key value to one that does not look like an HTML tag. This can cause problems downstream in some notifiers.
+	// For example, Telegram in HTML mode rejects requests with unsupported tags.
+	result = strings.ReplaceAll(result, "<no value>", "[no value]")
+	return result, resultErr
 }
 
 func newTemplateCaptureValues(values map[string]eval.NumberValueCapture) map[string]templateCaptureValue {
@@ -102,7 +107,7 @@ func graphLink(rawQuery string) string {
 	escapedDatasource := url.QueryEscape(q.Datasource)
 
 	return fmt.Sprintf(
-		`/explore?left=["now-1h","now",%[1]q,{"datasource":%[1]q,"expr":%q,"instant":false,"range":true}]`, escapedDatasource, escapedExpression)
+		`/explore?left={"datasource":%[1]q,"queries":[{"datasource":%[1]q,"expr":%q,"instant":false,"range":true,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`, escapedDatasource, escapedExpression)
 }
 
 func tableLink(rawQuery string) string {
@@ -115,5 +120,5 @@ func tableLink(rawQuery string) string {
 	escapedDatasource := url.QueryEscape(q.Datasource)
 
 	return fmt.Sprintf(
-		`/explore?left=["now-1h","now",%[1]q,{"datasource":%[1]q,"expr":%q,"instant":true,"range":false}]`, escapedDatasource, escapedExpression)
+		`/explore?left={"datasource":%[1]q,"queries":[{"datasource":%[1]q,"expr":%q,"instant":true,"range":false,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`, escapedDatasource, escapedExpression)
 }

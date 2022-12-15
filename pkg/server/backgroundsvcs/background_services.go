@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	samanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -52,7 +52,7 @@ func ProvideBackgroundServiceRegistry(
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
-	_ *grpcserver.HealthService, _ object.ObjectStoreServer, _ *grpcserver.ReflectionService,
+	_ *grpcserver.HealthService, _ entity.EntityStoreServer, _ *grpcserver.ReflectionService,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,

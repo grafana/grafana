@@ -1400,7 +1400,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateUserQuotaCmd"
+              "$ref": "#/definitions/UpdateQuotaCmd"
             }
           },
           {
@@ -2442,6 +2442,21 @@
       }
     },
     "/api/v1/provisioning/alert-rules": {
+      "get": {
+        "tags": [
+          "provisioning"
+        ],
+        "summary": "Get all the alert rules.",
+        "operationId": "RouteGetAlertRules",
+        "responses": {
+          "200": {
+            "description": "ProvisionedAlertRules",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRules"
+            }
+          }
+        }
+      },
       "post": {
         "consumes": [
           "application/json"
@@ -2455,7 +2470,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
           },
           {
             "type": "string",
@@ -2521,12 +2538,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
-          },
-          {
-            "type": "string",
-            "name": "X-Disable-Provenance",
-            "in": "header"
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
           }
         ],
         "responses": {
@@ -6297,6 +6311,33 @@
         }
       }
     },
+    "/org/quotas": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).",
+        "tags": [
+          "getCurrentOrg"
+        ],
+        "summary": "Fetch Organization quota.",
+        "operationId": "getCurrentOrgQuota",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQuotaResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/org/users": {
       "get": {
         "description": "Returns all org users within the current organization. Accessible to users with org admin role.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
@@ -6820,7 +6861,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateOrgQuotaCmd"
+              "$ref": "#/definitions/UpdateQuotaCmd"
             }
           },
           {
@@ -10959,6 +11000,65 @@
         }
       }
     },
+    "ApiRuleNode": {
+      "type": "object",
+      "properties": {
+        "alert": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "expr": {
+          "type": "string"
+        },
+        "for": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "record": {
+          "type": "string"
+        }
+      }
+    },
+    "Authorization": {
+      "type": "object",
+      "title": "Authorization contains HTTP authorization credentials.",
+      "properties": {
+        "credentials": {
+          "$ref": "#/definitions/Secret"
+        },
+        "credentials_file": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "BasicAuth": {
+      "type": "object",
+      "title": "BasicAuth contains basic HTTP authentication credentials.",
+      "properties": {
+        "password": {
+          "$ref": "#/definitions/Secret"
+        },
+        "password_file": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
     "BrandingOptionsDTO": {
       "type": "object",
       "properties": {
@@ -11294,7 +11394,7 @@
         "description": {
           "type": "string"
         },
-        "parent_uid": {
+        "parentUid": {
           "type": "string"
         },
         "title": {
@@ -12460,7 +12560,7 @@
           "type": "integer",
           "format": "int64"
         },
-        "parent_uid": {
+        "parentUid": {
           "description": "only used if nested folders are enabled",
           "type": "string"
         },
@@ -12630,13 +12730,473 @@
         }
       ]
     },
-    "GettableAlertmanagers": {},
-    "GettableGrafanaRule": {},
-    "GettableNGalertConfig": {},
-    "GettableRuleGroupConfig": {},
-    "GettableStatus": {},
-    "GettableUserConfig": {},
-    "GettableUserConfigs": {},
+    "GettableAlertmanagers": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/AlertManagersResult"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "GettableApiAlertingConfig": {
+      "type": "object",
+      "properties": {
+        "global": {
+          "$ref": "#/definitions/GlobalConfig"
+        },
+        "inhibit_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InhibitRule"
+          }
+        },
+        "muteTimeProvenances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Provenance"
+          }
+        },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimeInterval"
+          }
+        },
+        "receivers": {
+          "description": "Override with our superset receiver type",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GettableApiReceiver"
+          }
+        },
+        "route": {
+          "$ref": "#/definitions/Route"
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "GettableApiReceiver": {
+      "type": "object",
+      "properties": {
+        "email_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailConfig"
+          }
+        },
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GettableGrafanaReceiver"
+          }
+        },
+        "name": {
+          "description": "A unique identifier for this receiver.",
+          "type": "string"
+        },
+        "opsgenie_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpsGenieConfig"
+          }
+        },
+        "pagerduty_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PagerdutyConfig"
+          }
+        },
+        "pushover_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PushoverConfig"
+          }
+        },
+        "slack_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SlackConfig"
+          }
+        },
+        "sns_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SNSConfig"
+          }
+        },
+        "telegram_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TelegramConfig"
+          }
+        },
+        "victorops_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VictorOpsConfig"
+          }
+        },
+        "webhook_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WebhookConfig"
+          }
+        },
+        "wechat_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WechatConfig"
+          }
+        }
+      }
+    },
+    "GettableExtendedRuleNode": {
+      "type": "object",
+      "properties": {
+        "alert": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "expr": {
+          "type": "string"
+        },
+        "for": {
+          "type": "string"
+        },
+        "grafana_alert": {
+          "$ref": "#/definitions/GettableGrafanaRule"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "record": {
+          "type": "string"
+        }
+      }
+    },
+    "GettableGrafanaReceiver": {
+      "type": "object",
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "secureFields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "GettableGrafanaReceivers": {
+      "type": "object",
+      "properties": {
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GettableGrafanaReceiver"
+          }
+        }
+      }
+    },
+    "GettableGrafanaRule": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          }
+        },
+        "exec_err_state": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "Alerting",
+            "Error"
+          ]
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "intervalSeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "namespace_id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "namespace_uid": {
+          "type": "string"
+        },
+        "no_data_state": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "rule_group": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "GettableNGalertConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanagers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "alertmanagersChoice": {
+          "type": "string",
+          "enum": [
+            "all",
+            "internal",
+            "external"
+          ]
+        }
+      }
+    },
+    "GettableRuleGroupConfig": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "name": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GettableExtendedRuleNode"
+          }
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "GettableStatus": {
+      "type": "object",
+      "required": [
+        "cluster",
+        "config",
+        "uptime",
+        "versionInfo"
+      ],
+      "properties": {
+        "cluster": {
+          "$ref": "#/definitions/clusterStatus"
+        },
+        "config": {
+          "$ref": "#/definitions/PostableApiAlertingConfig"
+        },
+        "uptime": {
+          "description": "uptime",
+          "type": "string",
+          "format": "date-time"
+        },
+        "versionInfo": {
+          "$ref": "#/definitions/versionInfo"
+        }
+      }
+    },
+    "GettableUserConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "$ref": "#/definitions/GettableApiAlertingConfig"
+        },
+        "template_file_provenances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Provenance"
+          }
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "GlobalConfig": {
+      "description": "GlobalConfig defines configuration parameters that are valid globally\nunless overwritten.",
+      "type": "object",
+      "properties": {
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "opsgenie_api_key": {
+          "$ref": "#/definitions/Secret"
+        },
+        "opsgenie_api_key_file": {
+          "type": "string"
+        },
+        "opsgenie_api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "pagerduty_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "resolve_timeout": {
+          "$ref": "#/definitions/Duration"
+        },
+        "slack_api_url": {
+          "$ref": "#/definitions/SecretURL"
+        },
+        "slack_api_url_file": {
+          "type": "string"
+        },
+        "smtp_auth_identity": {
+          "type": "string"
+        },
+        "smtp_auth_password": {
+          "$ref": "#/definitions/Secret"
+        },
+        "smtp_auth_password_file": {
+          "type": "string"
+        },
+        "smtp_auth_secret": {
+          "$ref": "#/definitions/Secret"
+        },
+        "smtp_auth_username": {
+          "type": "string"
+        },
+        "smtp_from": {
+          "type": "string"
+        },
+        "smtp_hello": {
+          "type": "string"
+        },
+        "smtp_require_tls": {
+          "type": "boolean"
+        },
+        "smtp_smarthost": {
+          "$ref": "#/definitions/HostPort"
+        },
+        "telegram_api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "victorops_api_key": {
+          "$ref": "#/definitions/Secret"
+        },
+        "victorops_api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "wechat_api_corp_id": {
+          "type": "string"
+        },
+        "wechat_api_secret": {
+          "$ref": "#/definitions/Secret"
+        },
+        "wechat_api_url": {
+          "$ref": "#/definitions/URL"
+        }
+      }
+    },
+    "HTTPClientConfig": {
+      "type": "object",
+      "title": "HTTPClientConfig configures an HTTP client.",
+      "properties": {
+        "authorization": {
+          "$ref": "#/definitions/Authorization"
+        },
+        "basic_auth": {
+          "$ref": "#/definitions/BasicAuth"
+        },
+        "bearer_token": {
+          "$ref": "#/definitions/Secret"
+        },
+        "bearer_token_file": {
+          "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
+          "type": "string"
+        },
+        "enable_http2": {
+          "description": "EnableHTTP2 specifies whether the client should configure HTTP2.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
+          "type": "boolean"
+        },
+        "follow_redirects": {
+          "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
+          "type": "boolean"
+        },
+        "oauth2": {
+          "$ref": "#/definitions/OAuth2"
+        },
+        "proxy_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "tls_config": {
+          "$ref": "#/definitions/TLSConfig"
+        }
+      }
+    },
     "Hit": {
       "type": "object",
       "properties": {
@@ -13260,10 +13820,39 @@
         }
       }
     },
-    "MultiStatus": {},
-    "MuteTimeInterval": {},
-    "MuteTimings": {},
-    "NamespaceConfigResponse": {},
+    "MultiStatus": {
+      "type": "object"
+    },
+    "MuteTimeInterval": {
+      "type": "object",
+      "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeInterval"
+          }
+        }
+      }
+    },
+    "MuteTimings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/MuteTimeInterval"
+      }
+    },
+    "NamespaceConfigResponse": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/GettableRuleGroupConfig"
+        }
+      }
+    },
     "NavLink": {
       "type": "object",
       "properties": {
@@ -13518,7 +14107,7 @@
         "homeDashboardUID": {
           "type": "string"
         },
-        "locale": {
+        "language": {
           "type": "string"
         },
         "navbar": {
@@ -13610,12 +14199,15 @@
           "format": "int64"
         },
         "interval": {
+          "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
           "type": "string"
         },
         "name": {
+          "description": "Name of the playlist.",
           "type": "string"
         },
         "uid": {
+          "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
           "type": "string"
         }
       }
@@ -13652,9 +14244,8 @@
       }
     },
     "PlaylistItem": {
-      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
       "type": "object",
-      "title": "PlaylistItem is the Go representation of a playlist.Item.",
+      "title": "PlaylistItem defines model for playlist.Item.",
       "properties": {
         "title": {
           "description": "Title is an unused property -- it will be removed in the future",
@@ -13670,7 +14261,6 @@
       }
     },
     "PlaylistItemType": {
-      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
       "type": "string",
       "title": "Type of the item."
     },
@@ -13735,10 +14325,272 @@
         }
       }
     },
-    "PostableGrafanaRule": {},
-    "PostableNGalertConfig": {},
-    "PostableRuleGroupConfig": {},
-    "PostableUserConfig": {},
+    "PostableApiAlertingConfig": {
+      "type": "object",
+      "properties": {
+        "global": {
+          "$ref": "#/definitions/GlobalConfig"
+        },
+        "inhibit_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InhibitRule"
+          }
+        },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimeInterval"
+          }
+        },
+        "receivers": {
+          "description": "Override with our superset receiver type",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostableApiReceiver"
+          }
+        },
+        "route": {
+          "$ref": "#/definitions/Route"
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "PostableApiReceiver": {
+      "type": "object",
+      "properties": {
+        "email_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailConfig"
+          }
+        },
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostableGrafanaReceiver"
+          }
+        },
+        "name": {
+          "description": "A unique identifier for this receiver.",
+          "type": "string"
+        },
+        "opsgenie_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpsGenieConfig"
+          }
+        },
+        "pagerduty_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PagerdutyConfig"
+          }
+        },
+        "pushover_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PushoverConfig"
+          }
+        },
+        "slack_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SlackConfig"
+          }
+        },
+        "sns_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SNSConfig"
+          }
+        },
+        "telegram_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TelegramConfig"
+          }
+        },
+        "victorops_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VictorOpsConfig"
+          }
+        },
+        "webhook_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WebhookConfig"
+          }
+        },
+        "wechat_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WechatConfig"
+          }
+        }
+      }
+    },
+    "PostableExtendedRuleNode": {
+      "type": "object",
+      "properties": {
+        "alert": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "expr": {
+          "type": "string"
+        },
+        "for": {
+          "type": "string"
+        },
+        "grafana_alert": {
+          "$ref": "#/definitions/PostableGrafanaRule"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "record": {
+          "type": "string"
+        }
+      }
+    },
+    "PostableGrafanaReceiver": {
+      "type": "object",
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "secureSettings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PostableGrafanaReceivers": {
+      "type": "object",
+      "properties": {
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostableGrafanaReceiver"
+          }
+        }
+      }
+    },
+    "PostableGrafanaRule": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          }
+        },
+        "exec_err_state": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "Alerting",
+            "Error"
+          ]
+        },
+        "no_data_state": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PostableNGalertConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanagers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "alertmanagersChoice": {
+          "type": "string",
+          "enum": [
+            "all",
+            "internal",
+            "external"
+          ]
+        }
+      }
+    },
+    "PostableRuleGroupConfig": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "name": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostableExtendedRuleNode"
+          }
+        }
+      }
+    },
+    "PostableUserConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "$ref": "#/definitions/PostableApiAlertingConfig"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "Prefs": {
       "type": "object",
       "properties": {
@@ -13749,7 +14601,7 @@
         "homeDashboardUID": {
           "type": "string"
         },
-        "locale": {
+        "language": {
           "type": "string"
         },
         "navbar": {
@@ -13780,6 +14632,196 @@
         },
         "remote_write_path": {
           "type": "string"
+        }
+      }
+    },
+    "Provenance": {
+      "type": "string"
+    },
+    "ProvisionedAlertRule": {
+      "type": "object",
+      "required": [
+        "orgID",
+        "folderUID",
+        "ruleGroup",
+        "title",
+        "condition",
+        "data",
+        "noDataState",
+        "execErrState",
+        "for"
+      ],
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "example": {
+            "runbook_url": "https://supercoolrunbook.com/page/13"
+          }
+        },
+        "condition": {
+          "type": "string",
+          "example": "A"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          },
+          "example": [
+            {
+              "datasourceUid": "-100",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0,
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": []
+                    },
+                    "reducer": {
+                      "params": [],
+                      "type": "avg"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "1 == 1",
+                "hide": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "A",
+                "type": "math"
+              },
+              "queryType": "",
+              "refId": "A",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              }
+            }
+          ]
+        },
+        "execErrState": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "Error",
+            "OK"
+          ]
+        },
+        "folderUID": {
+          "type": "string",
+          "example": "project_x"
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "example": {
+            "team": "sre-team-1"
+          }
+        },
+        "noDataState": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
+        },
+        "orgID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "ruleGroup": {
+          "type": "string",
+          "maxLength": 190,
+          "minLength": 1,
+          "example": "eval_group_1"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 190,
+          "minLength": 1,
+          "example": "Always firing"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        }
+      }
+    },
+    "PushoverConfig": {
+      "type": "object",
+      "properties": {
+        "expire": {
+          "type": "string"
+        },
+        "html": {
+          "type": "boolean"
+        },
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "message": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "string"
+        },
+        "retry": {
+          "type": "string"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "sound": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "token": {
+          "$ref": "#/definitions/Secret"
+        },
+        "url": {
+          "type": "string"
+        },
+        "url_title": {
+          "type": "string"
+        },
+        "user_key": {
+          "$ref": "#/definitions/Secret"
         }
       }
     },
@@ -13997,6 +15039,76 @@
         },
         "starred": {
           "type": "boolean"
+        }
+      }
+    },
+    "Receiver": {
+      "type": "object",
+      "title": "Receiver configuration provides configuration on how to contact a receiver.",
+      "properties": {
+        "email_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailConfig"
+          }
+        },
+        "name": {
+          "description": "A unique identifier for this receiver.",
+          "type": "string"
+        },
+        "opsgenie_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpsGenieConfig"
+          }
+        },
+        "pagerduty_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PagerdutyConfig"
+          }
+        },
+        "pushover_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PushoverConfig"
+          }
+        },
+        "slack_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SlackConfig"
+          }
+        },
+        "sns_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SNSConfig"
+          }
+        },
+        "telegram_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TelegramConfig"
+          }
+        },
+        "victorops_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VictorOpsConfig"
+          }
+        },
+        "webhook_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WebhookConfig"
+          }
+        },
+        "wechat_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WechatConfig"
+          }
         }
       }
     },
@@ -15146,6 +16258,9 @@
     "UpdateFolderCommand": {
       "type": "object",
       "properties": {
+        "description": {
+          "type": "string"
+        },
         "overwrite": {
           "type": "boolean"
         },
@@ -15188,18 +16303,6 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
-        }
-      }
-    },
-    "UpdateOrgQuotaCmd": {
-      "type": "object",
-      "properties": {
-        "limit": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "target": {
           "type": "string"
         }
       }
@@ -15249,7 +16352,7 @@
         "homeDashboardUID": {
           "type": "string"
         },
-        "locale": {
+        "language": {
           "type": "string"
         },
         "navbar": {
@@ -15273,6 +16376,18 @@
           ]
         },
         "weekStart": {
+          "type": "string"
+        }
+      }
+    },
+    "UpdateQuotaCmd": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "target": {
           "type": "string"
         }
       }
@@ -15365,18 +16480,6 @@
           "type": "string"
         },
         "theme": {
-          "type": "string"
-        }
-      }
-    },
-    "UpdateUserQuotaCmd": {
-      "type": "object",
-      "properties": {
-        "limit": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "target": {
           "type": "string"
         }
       }
@@ -15482,26 +16585,6 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
-        }
-      }
-    },
-    "UserQuotaDTO": {
-      "type": "object",
-      "properties": {
-        "limit": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "target": {
-          "type": "string"
-        },
-        "used": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "user_id": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -15616,9 +16699,35 @@
       "description": "Alert alert"
     },
     "alertGroup": {
-      "description": "AlertGroup alert group"
+      "type": "object",
+      "required": [
+        "alerts",
+        "labels",
+        "receiver"
+      ],
+      "properties": {
+        "alerts": {
+          "description": "alerts",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/gettableAlert"
+          }
+        },
+        "labels": {
+          "$ref": "#/definitions/labelSet"
+        },
+        "receiver": {
+          "$ref": "#/definitions/receiver"
+        }
+      }
     },
-    "alertGroups": {},
+    "alertGroups": {
+      "description": "AlertGroups alert groups",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/alertGroup"
+      }
+    },
     "alertStatus": {
       "description": "AlertStatus alert status"
     },
@@ -15636,10 +16745,90 @@
     },
     "gettableAlerts": {},
     "gettableSilence": {
-      "description": "GettableSilence gettable silence"
+      "type": "object",
+      "required": [
+        "comment",
+        "createdBy",
+        "endsAt",
+        "matchers",
+        "startsAt",
+        "id",
+        "status",
+        "updatedAt"
+      ],
+      "properties": {
+        "comment": {
+          "description": "comment",
+          "type": "string"
+        },
+        "createdBy": {
+          "description": "created by",
+          "type": "string"
+        },
+        "endsAt": {
+          "description": "ends at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "description": "id",
+          "type": "string"
+        },
+        "matchers": {
+          "$ref": "#/definitions/matchers"
+        },
+        "startsAt": {
+          "description": "starts at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "$ref": "#/definitions/silenceStatus"
+        },
+        "updatedAt": {
+          "description": "updated at",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     },
-    "gettableSilences": {},
-    "integration": {},
+    "gettableSilences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/gettableSilence"
+      }
+    },
+    "integration": {
+      "description": "Integration integration",
+      "type": "object",
+      "required": [
+        "name",
+        "sendResolved"
+      ],
+      "properties": {
+        "lastNotifyAttempt": {
+          "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastNotifyAttemptDuration": {
+          "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+          "type": "string"
+        },
+        "lastNotifyAttemptError": {
+          "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+          "type": "string"
+        },
+        "name": {
+          "description": "name",
+          "type": "string"
+        },
+        "sendResolved": {
+          "description": "send resolved",
+          "type": "boolean"
+        }
+      }
+    },
     "labelSet": {
       "description": "LabelSet label set"
     },
@@ -15659,8 +16848,69 @@
     "postableAlerts": {
       "description": "PostableAlerts postable alerts"
     },
-    "postableSilence": {},
-    "receiver": {},
+    "postableSilence": {
+      "type": "object",
+      "required": [
+        "comment",
+        "createdBy",
+        "endsAt",
+        "matchers",
+        "startsAt"
+      ],
+      "properties": {
+        "comment": {
+          "description": "comment",
+          "type": "string"
+        },
+        "createdBy": {
+          "description": "created by",
+          "type": "string"
+        },
+        "endsAt": {
+          "description": "ends at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "description": "id",
+          "type": "string"
+        },
+        "matchers": {
+          "$ref": "#/definitions/matchers"
+        },
+        "startsAt": {
+          "description": "starts at",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "receiver": {
+      "description": "Receiver receiver",
+      "type": "object",
+      "required": [
+        "active",
+        "integrations",
+        "name"
+      ],
+      "properties": {
+        "active": {
+          "description": "active",
+          "type": "boolean"
+        },
+        "integrations": {
+          "description": "integrations",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/integration"
+          }
+        },
+        "name": {
+          "description": "name",
+          "type": "string"
+        }
+      }
+    },
     "silence": {
       "description": "Silence silence"
     },
@@ -16348,7 +17598,7 @@
     "getPlaylistResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/Model"
+        "$ref": "#/definitions/Playlist"
       }
     },
     "getPreferencesResponse": {
@@ -16386,7 +17636,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/UserQuotaDTO"
+          "$ref": "#/definitions/QuotaDTO"
         }
       }
     },
@@ -16868,7 +18118,7 @@
     "updatePlaylistResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/Model"
+        "$ref": "#/definitions/Playlist"
       }
     },
     "updateServiceAccountResponse": {

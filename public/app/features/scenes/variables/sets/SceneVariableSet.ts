@@ -40,7 +40,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
     this.variablesToUpdate.clear();
 
     for (const update of this.updating.values()) {
-      update.subscription.unsubscribe();
+      update.subscription?.unsubscribe();
     }
   }
 
@@ -60,17 +60,24 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
         throw new Error('Variable added to variablesToUpdate but does not have validateAndUpdate');
       }
 
+      // Ignore it if it's already started
+      if (this.updating.has(variable)) {
+        continue;
+      }
+
       // Wait for variables that has dependencies that also needs updates
       if (this.hasDependendencyInUpdateQueue(variable)) {
         continue;
       }
 
-      this.updating.set(variable, {
+      const variableToUpdate: VariableUpdateInProgress = {
         variable,
-        subscription: variable.validateAndUpdate().subscribe({
-          next: () => this.validateAndUpdateCompleted(variable),
-          error: (err) => this.handleVariableError(variable, err),
-        }),
+      };
+
+      this.updating.set(variable, variableToUpdate);
+      variableToUpdate.subscription = variable.validateAndUpdate().subscribe({
+        next: () => this.validateAndUpdateCompleted(variable),
+        error: (err) => this.handleVariableError(variable, err),
       });
     }
   }
@@ -80,7 +87,7 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
    */
   private validateAndUpdateCompleted(variable: SceneVariable) {
     const update = this.updating.get(variable);
-    update?.subscription.unsubscribe();
+    update?.subscription?.unsubscribe();
 
     this.updating.delete(variable);
     this.variablesToUpdate.delete(variable);
@@ -92,6 +99,11 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
    * Not sure if this should be handled here on in MultiValueVariable
    */
   private handleVariableError(variable: SceneVariable, err: Error) {
+    const update = this.updating.get(variable);
+    update?.subscription?.unsubscribe();
+
+    this.updating.delete(variable);
+    this.variablesToUpdate.delete(variable);
     variable.setState({ loading: false, error: err });
   }
 
@@ -182,5 +194,5 @@ export class SceneVariableSet extends SceneObjectBase<SceneVariableSetState> imp
 
 export interface VariableUpdateInProgress {
   variable: SceneVariable;
-  subscription: Unsubscribable;
+  subscription?: Unsubscribable;
 }

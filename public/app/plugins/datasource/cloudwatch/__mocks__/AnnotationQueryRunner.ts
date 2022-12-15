@@ -8,7 +8,7 @@ import { CloudWatchAnnotationQueryRunner } from '../query-runner/CloudWatchAnnot
 import { CloudWatchQuery } from '../types';
 
 import { CloudWatchSettings, setupMockedTemplateService } from './CloudWatchDataSource';
-import { timeRange } from './timeRange';
+import { TimeRangeMock } from './timeRange';
 
 export function setupMockedAnnotationQueryRunner({ variables }: { variables?: CustomVariableModel[] }) {
   let templateService = new TemplateSrv();
@@ -25,7 +25,7 @@ export function setupMockedAnnotationQueryRunner({ variables }: { variables?: Cu
   });
 
   const request: DataQueryRequest<CloudWatchQuery> = {
-    range: timeRange,
+    range: TimeRangeMock,
     rangeRaw: { from: '1483228800', to: '1483232400' },
     targets: [],
     requestId: '',
@@ -37,5 +37,5 @@ export function setupMockedAnnotationQueryRunner({ variables }: { variables?: Cu
     startTime: 0,
   };
 
-  return { runner, fetchMock, templateService, request, timeRange };
+  return { runner, fetchMock, templateService, request, timeRange: TimeRangeMock };
 }

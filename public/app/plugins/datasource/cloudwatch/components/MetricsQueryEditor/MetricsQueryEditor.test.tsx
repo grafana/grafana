@@ -50,6 +50,7 @@ const setup = () => {
   datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
   datasource.api.getRegions = jest.fn().mockResolvedValue([]);
   datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
+  datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(false);
 
   const props: Props = {
     query: {
@@ -68,6 +69,8 @@ const setup = () => {
       metricQueryType: MetricQueryType.Search,
       metricEditorMode: MetricEditorMode.Builder,
     },
+    extraHeaderElementLeft: () => {},
+    extraHeaderElementRight: () => {},
     datasource,
     history: [],
     onChange: jest.fn(),
@@ -78,66 +81,6 @@ const setup = () => {
 };
 
 describe('QueryEditor', () => {
-  describe('should handle editor modes correctly', () => {
-    it('when metric query type is metric search and editor mode is builder', async () => {
-      await act(async () => {
-        const props = setup();
-        render(<MetricsQueryEditor {...props} />);
-
-        expect(screen.getByText('Metric Search')).toBeInTheDocument();
-        const radio = screen.getByLabelText('Builder');
-        expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
-      });
-    });
-
-    it('when metric query type is metric search and editor mode is raw', async () => {
-      await act(async () => {
-        const props = setup();
-        if (props.query.queryMode !== 'Metrics') {
-          fail(`expected props.query.queryMode to be 'Metrics', got '${props.query.queryMode}' instead`);
-        }
-        props.query.metricEditorMode = MetricEditorMode.Code;
-        render(<MetricsQueryEditor {...props} />);
-
-        expect(screen.getByText('Metric Search')).toBeInTheDocument();
-        const radio = screen.getByLabelText('Code');
-        expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
-      });
-    });
-
-    it('when metric query type is metric query and editor mode is builder', async () => {
-      await act(async () => {
-        const props = setup();
-        if (props.query.queryMode !== 'Metrics') {
-          fail(`expected props.query.queryMode to be 'Metrics', got '${props.query.queryMode}' instead`);
-        }
-        props.query.metricQueryType = MetricQueryType.Query;
-        props.query.metricEditorMode = MetricEditorMode.Builder;
-        render(<MetricsQueryEditor {...props} />);
-
-        expect(screen.getByText('Metric Query')).toBeInTheDocument();
-        const radio = screen.getByLabelText('Builder');
-        expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
-      });
-    });
-
-    it('when metric query type is metric query and editor mode is raw', async () => {
-      await act(async () => {
-        const props = setup();
-        if (props.query.queryMode !== 'Metrics') {
-          fail(`expected props.query.queryMode to be 'Metrics', got '${props.query.queryMode}' instead`);
-        }
-        props.query.metricQueryType = MetricQueryType.Query;
-        props.query.metricEditorMode = MetricEditorMode.Code;
-        render(<MetricsQueryEditor {...props} />);
-
-        expect(screen.getByText('Metric Query')).toBeInTheDocument();
-        const radio = screen.getByLabelText('Code');
-        expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
-      });
-    });
-  });
-
   describe('should handle expression options correctly', () => {
     it('should display match exact switch', async () => {
       const props = setup();

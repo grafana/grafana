@@ -10,6 +10,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -42,11 +43,13 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 		updatedBy := cmd.SignedInUser.UserID
 		createdBy := cmd.SignedInUser.UserID
 	*/
+	var lastInsertedID int64
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var sqlOrArgs []interface{}
+		var sql string
+		var args []interface{}
 		if cmd.ParentUID == "" {
-			sql := "INSERT INTO folder(org_id, uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?)"
-			sqlOrArgs = []interface{}{sql, cmd.OrgID, cmd.UID, cmd.Title, cmd.Description, time.Now(), time.Now()}
+			sql = "INSERT INTO folder(org_id, uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?)"
+			args = []interface{}{cmd.OrgID, cmd.UID, cmd.Title, cmd.Description, time.Now(), time.Now()}
 		} else {
 			if cmd.ParentUID != folder.GeneralFolderUID {
 				if _, err := ss.Get(ctx, folder.GetFolderQuery{
@@ -56,20 +59,18 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 					return folder.ErrFolderNotFound.Errorf("parent folder does not exist")
 				}
 			}
-			sql := "INSERT INTO folder(org_id, uid, parent_uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?, ?)"
-			sqlOrArgs = []interface{}{sql, cmd.OrgID, cmd.UID, cmd.ParentUID, cmd.Title, cmd.Description, time.Now(), time.Now()}
+			sql = "INSERT INTO folder(org_id, uid, parent_uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?, ?)"
+			args = []interface{}{cmd.OrgID, cmd.UID, cmd.ParentUID, cmd.Title, cmd.Description, time.Now(), time.Now()}
 		}
-		res, err := sess.Exec(sqlOrArgs...)
+
+		var err error
+		lastInsertedID, err = sess.WithReturningID(ss.db.GetDialect().DriverName(), sql, args)
 		if err != nil {
-			return folder.ErrDatabaseError.Errorf("failed to insert folder: %w", err)
-		}
-		id, err := res.LastInsertId()
-		if err != nil {
-			return folder.ErrDatabaseError.Errorf("failed to get last inserted id: %w", err)
+			return err
 		}
 
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
-			ID: &id,
+			ID: &lastInsertedID,
 		})
 		if err != nil {
 			return err
@@ -170,7 +171,7 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		}
 		return nil
 	})
-	foldr.Url = models.GetFolderUrl(foldr.UID, models.SlugifyTitle(foldr.Title))
+	foldr.Url = models.GetFolderUrl(foldr.UID, slugify.Slugify(foldr.Title))
 	return foldr, err
 }
 
@@ -201,6 +202,13 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 		}
 		return nil, err
 	}
+
+	if len(folders) < 1 {
+		// the query is expected to return at least the same folder
+		// if it's empty it means that the folder does not exist
+		return nil, folder.ErrFolderNotFound
+	}
+
 	return util.Reverse(folders[1:]), nil
 }
 
@@ -209,7 +217,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetTreeQuery) ([]*
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
-		sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=?"))
+		sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=? ORDER BY id"))
 
 		if q.Limit != 0 {
 			var offset int64 = 1
@@ -254,5 +262,32 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQu
 		}
 		return nil
 	})
-	return folders, err
+	return util.Reverse(folders), err
+}
+
+func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error) {
+	height := -1
+	queue := []string{foldrUID}
+	for len(queue) > 0 && height <= folder.MaxNestedFolderDepth {
+		length := len(queue)
+		height++
+		for i := 0; i < length; i++ {
+			ele := queue[0]
+			queue = queue[1:]
+			if parentUID != nil && *parentUID == ele {
+				return 0, folder.ErrCircularReference
+			}
+			folders, err := ss.GetChildren(ctx, folder.GetTreeQuery{UID: ele, OrgID: orgID})
+			if err != nil {
+				return 0, err
+			}
+			for _, f := range folders {
+				queue = append(queue, f.UID)
+			}
+		}
+	}
+	if height > folder.MaxNestedFolderDepth {
+		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", folder.MaxNestedFolderDepth)
+	}
+	return height, nil
 }

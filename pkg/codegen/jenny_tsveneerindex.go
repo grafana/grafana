@@ -48,15 +48,15 @@ func (gen *genTSVeneerIndex) Generate(decls ...*DeclForGen) (*codejen.File, erro
 
 		sch := decl.Lineage().Latest()
 		f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
-			RootName: decl.Meta.Common().Name,
-			Group:    decl.Meta.Common().LineageIsGroup,
+			RootName: decl.Properties.Common().Name,
+			Group:    decl.Properties.Common().LineageIsGroup,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", decl.Meta.Common().Name, err)
+			return nil, fmt.Errorf("%s: %w", decl.Properties.Common().Name, err)
 		}
 		elems, err := gen.extractTSIndexVeneerElements(decl, f)
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", decl.Meta.Common().Name, err)
+			return nil, fmt.Errorf("%s: %w", decl.Properties.Common().Name, err)
 		}
 		tsf.Nodes = append(tsf.Nodes, elems...)
 	}
@@ -66,7 +66,7 @@ func (gen *genTSVeneerIndex) Generate(decls ...*DeclForGen) (*codejen.File, erro
 
 func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *ast.File) ([]ast.Decl, error) {
 	lin := decl.Lineage()
-	comm := decl.Meta.Common()
+	comm := decl.Properties.Common()
 
 	// Check the root, then walk the tree
 	rootv := lin.Latest().Underlying()
@@ -131,7 +131,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *
 	}
 
 	vpath := fmt.Sprintf("v%v", thema.LatestVersion(lin)[0])
-	if decl.Meta.Common().Maturity.Less(kindsys.MaturityStable) {
+	if decl.Properties.Common().Maturity.Less(kindsys.MaturityStable) {
 		vpath = "x"
 	}
 
@@ -306,7 +306,7 @@ var allowedTSVeneers = map[string]bool{
 }
 
 func allowedTSVeneersString() string {
-	var list []string
+	list := make([]string, 0, len(allowedTSVeneers))
 	for tgt := range allowedTSVeneers {
 		list = append(list, tgt)
 	}

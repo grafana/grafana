@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { Unsubscribable } from 'rxjs';
+import { mergeMap, MonoTypeOperatorFunction, Unsubscribable, map, of } from 'rxjs';
 
 import {
   CoreApp,
@@ -7,10 +7,12 @@ import {
   DataQueryRequest,
   DataSourceApi,
   DataSourceRef,
+  DataTransformerConfig,
   PanelData,
   rangeUtil,
   ScopedVars,
   TimeRange,
+  transformDataFrame,
 } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
@@ -18,12 +20,13 @@ import { runRequest } from 'app/features/query/state/runRequest';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { sceneGraph } from '../core/sceneGraph';
-import { SceneObjectStatePlain } from '../core/types';
+import { SceneObject, SceneObjectStatePlain } from '../core/types';
 import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
 
 export interface QueryRunnerState extends SceneObjectStatePlain {
   data?: PanelData;
   queries: DataQueryExtended[];
+  transformations?: DataTransformerConfig[];
   datasource?: DataSourceRef;
   minInterval?: string;
   maxDataPoints?: number;
@@ -52,7 +55,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
     this._subs.add(
       timeRange.subscribeToState({
         next: (timeRange) => {
-          this.runWithTimeRange(timeRange);
+          this.runWithTimeRange(timeRange.value);
         },
       })
     );
@@ -88,7 +91,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
 
   public setContainerWidth(width: number) {
     // If we don't have a width we should run queries
-    if (!this._containerWidth) {
+    if (!this._containerWidth && width > 0) {
       this._containerWidth = width;
 
       // If we don't have maxDataPoints specifically set and maxDataPointsFromWidth is true
@@ -108,7 +111,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
 
   public runQueries() {
     const timeRange = sceneGraph.getTimeRange(this);
-    this.runWithTimeRange(timeRange.state);
+    this.runWithTimeRange(timeRange.state.value);
   }
 
   private getMaxDataPoints() {
@@ -158,9 +161,11 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      this._querySub = runRequest(ds, request).subscribe({
-        next: this.onDataReceived,
-      });
+      this._querySub = runRequest(ds, request)
+        .pipe(getTransformationsStream(this, this.state.transformations))
+        .subscribe({
+          next: this.onDataReceived,
+        });
     } catch (err) {
       console.error('PanelQueryRunner Error', err);
     }
@@ -177,3 +182,26 @@ async function getDataSource(datasource: DataSourceRef | undefined, scopedVars: 
   }
   return await getDatasourceSrv().get(datasource as string, scopedVars);
 }
+
+export const getTransformationsStream: (
+  sceneObject: SceneObject,
+  transformations?: DataTransformerConfig[]
+) => MonoTypeOperatorFunction<PanelData> = (sceneObject, transformations) => (inputStream) => {
+  return inputStream.pipe(
+    mergeMap((data) => {
+      if (!transformations || transformations.length === 0) {
+        return of(data);
+      }
+
+      const replace: (option?: string) => string = (option) => {
+        return sceneGraph.interpolate(sceneObject, option, data?.request?.scopedVars);
+      };
+
+      transformations.forEach((transform: DataTransformerConfig) => {
+        transform.replace = replace;
+      });
+
+      return transformDataFrame(transformations, data.series).pipe(map((series) => ({ ...data, series })));
+    })
+  );
+};

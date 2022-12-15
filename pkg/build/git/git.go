@@ -60,7 +60,7 @@ func NewGitHubClient(ctx context.Context, token string) *github.Client {
 }
 
 func PRCheckRegexp() *regexp.Regexp {
-	reBranch, err := regexp.Compile(`^pr-check-([0-9]+)\/(.+)$`)
+	reBranch, err := regexp.Compile(`^prc-([0-9]+)-([A-Za-z0-9]+)\/(.+)$`)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to compile regexp: %s", err))
 	}

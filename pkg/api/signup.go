@@ -56,7 +56,7 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(500, "Failed to generate random string", err)
 	}
-	cmd.RemoteAddr = c.Req.RemoteAddr
+	cmd.RemoteAddr = c.RemoteAddr()
 
 	if err := hs.tempUserService.CreateTempUser(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to create signup", err)
@@ -102,7 +102,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 		createUserCmd.EmailVerified = true
 	}
 
-	usr, err := hs.Login.CreateUser(createUserCmd)
+	usr, err := hs.userService.Create(c.Req.Context(), &createUserCmd)
 	if err != nil {
 		if errors.Is(err, user.ErrUserAlreadyExists) {
 			return response.Error(401, "User with same email address already exists", nil)

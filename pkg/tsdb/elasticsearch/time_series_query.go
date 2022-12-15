@@ -57,8 +57,7 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	rp := newResponseParser(res.Responses, queries, res.DebugInfo)
-	return rp.getTimeSeries()
+	return parseResponse(res.Responses, queries)
 }
 
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64,
@@ -68,27 +67,51 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		return err
 	}
 	interval := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval, q.MaxDataPoints)
+	defaultTimeField := e.client.GetTimeField()
 
 	b := ms.Search(interval)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)
-
-	if q.RawQuery != "" {
-		filters.AddQueryStringFilter(q.RawQuery, true)
-	}
+	filters.AddQueryStringFilter(q.RawQuery, true)
 
 	if len(q.BucketAggs) == 0 {
-		if len(q.Metrics) == 0 || q.Metrics[0].Type != "raw_document" {
+		// If no aggregations, only document and logs queries are valid
+		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == "raw_data" || q.Metrics[0].Type == "raw_document" || q.Metrics[0].Type == "logs") {
 			result.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
 			}
 			return nil
 		}
+
+		// Defaults for log and document queries
 		metric := q.Metrics[0]
+		b.SortDesc(e.client.GetTimeField(), "boolean")
+		b.SortDesc("_doc", "")
+		b.AddDocValueField(e.client.GetTimeField())
 		b.Size(metric.Settings.Get("size").MustInt(500))
-		b.SortDesc("@timestamp", "boolean")
-		b.AddDocValueField("@timestamp")
+
+		if metric.Type == "logs" {
+			// Add additional defaults for log query
+			b.Size(metric.Settings.Get("limit").MustInt(500))
+			b.AddHighlight()
+
+			// For log query, we add a date histogram aggregation
+			aggBuilder := b.Agg()
+			q.BucketAggs = append(q.BucketAggs, &BucketAgg{
+				Type:  dateHistType,
+				Field: e.client.GetTimeField(),
+				ID:    "1",
+				Settings: simplejson.NewFromAny(map[string]interface{}{
+					"interval": "auto",
+				}),
+			})
+			bucketAgg := q.BucketAggs[0]
+			bucketAgg.Settings = simplejson.NewFromAny(
+				bucketAgg.generateSettingsForDSL(),
+			)
+			_ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
+		}
 		return nil
 	}
 
@@ -101,7 +124,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		)
 		switch bucketAgg.Type {
 		case dateHistType:
-			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
+			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
 		case histogramType:
 			aggBuilder = addHistogramAgg(aggBuilder, bucketAgg)
 		case filtersType:
@@ -115,6 +138,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 	for _, m := range q.Metrics {
 		m := m
+
 		if m.Type == countType {
 			continue
 		}
@@ -227,17 +251,18 @@ func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface
 }
 
 func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
-	// TODO: This might also need to be applied to other bucket aggregations and other fields.
-	switch bucketAgg.Type {
-	case "date_histogram":
-		setIntPath(bucketAgg.Settings, "min_doc_count")
-	}
+	setIntPath(bucketAgg.Settings, "min_doc_count")
 
 	return bucketAgg.Settings.MustMap()
 }
 
-func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64) es.AggBuilder {
-	aggBuilder.DateHistogram(bucketAgg.ID, bucketAgg.Field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
+func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64, timeField string) es.AggBuilder {
+	// If no field is specified, use the time field
+	field := bucketAgg.Field
+	if field == "" {
+		field = timeField
+	}
+	aggBuilder.DateHistogram(bucketAgg.ID, field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
 		a.FixedInterval = bucketAgg.Settings.Get("interval").MustString("auto")
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
 		a.ExtendedBounds = &es.ExtendedBounds{Min: timeFrom, Max: timeTo}
@@ -454,7 +479,16 @@ func (p *timeSeriesQueryParser) parseMetrics(model *simplejson.Json) ([]*MetricA
 		metric.Hide = metricJSON.Get("hide").MustBool(false)
 		metric.ID = metricJSON.Get("id").MustString()
 		metric.PipelineAggregate = metricJSON.Get("pipelineAgg").MustString()
-		metric.Settings = simplejson.NewFromAny(metricJSON.Get("settings").MustMap())
+		// In legacy editors, we were storing empty settings values as "null"
+		// The new editor doesn't store empty strings at all
+		// We need to ensures backward compatibility with old queries and remove empty fields
+		settings := metricJSON.Get("settings").MustMap()
+		for k, v := range settings {
+			if v == "null" {
+				delete(settings, k)
+			}
+		}
+		metric.Settings = simplejson.NewFromAny(settings)
 		metric.Meta = simplejson.NewFromAny(metricJSON.Get("meta").MustMap())
 		metric.Type, err = metricJSON.Get("type").String()
 		if err != nil {

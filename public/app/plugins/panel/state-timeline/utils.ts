@@ -209,7 +209,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     }
 
     const field = frame.fields[i];
-    const config = field.config as FieldConfig<TimelineFieldConfig>;
+    const config: FieldConfig<TimelineFieldConfig> = field.config;
     const customConfig: TimelineFieldConfig = {
       ...defaultConfig,
       ...config.custom,
@@ -259,8 +259,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
           return true;
         },
       },
-      //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
-      scales: [xScaleKey, null as any],
+      scales: [xScaleKey, null],
     };
     builder.setSync();
     builder.setCursor(cursor);
@@ -284,9 +283,9 @@ export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
  * in:  1,        1,undefined,        1,2,        2,null,2,3
  * out: 1,undefined,undefined,undefined,2,undefined,null,2,3
  */
-export function unsetSameFutureValues(values: any[]): any[] | undefined {
+export function unsetSameFutureValues(values: unknown[]): unknown[] | undefined {
   let prevVal = values[0];
-  let clone: any[] | undefined = undefined;
+  let clone: unknown[] | undefined = undefined;
 
   for (let i = 1; i < values.length; i++) {
     let value = values[i];
@@ -479,10 +478,21 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
 
   const fmt = (v: number) => formattedValueToString(disp(v));
 
-  for (let i = 1; i <= steps.length; i++) {
-    const step = steps[i - 1];
+  for (let i = 0; i < steps.length; i++) {
+    let step = steps[i];
+    let value = step.value;
+    let pre = '';
+    let suf = '';
+
+    if (value === -Infinity && i < steps.length - 1) {
+      value = steps[i + 1].value;
+      pre = '< ';
+    } else {
+      suf = '+';
+    }
+
     items.push({
-      label: i === 1 ? `< ${fmt(step.value)}` : `${fmt(step.value)}+`,
+      label: `${pre}${fmt(value)}${suf}`,
       color: theme.visualization.getColorByName(step.color),
       yAxis: 1,
     });
@@ -511,10 +521,9 @@ export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLe
   const items: VizLegendItem[] = [];
   const fieldConfig = fields[0].config;
   const colorMode = fieldConfig.color?.mode ?? FieldColorModeId.Fixed;
-  const thresholds = fieldConfig.thresholds;
 
   // If thresholds are enabled show each step in the legend
-  if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
+  if (colorMode === FieldColorModeId.Thresholds) {
     return getThresholdItems(fieldConfig, theme);
   }
 

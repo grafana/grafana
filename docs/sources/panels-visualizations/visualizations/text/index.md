@@ -1,10 +1,9 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/text/
-  - /docs/grafana/latest/panels/visualizations/text-panel/
-  - /docs/grafana/latest/reference/alertlist/
-  - /docs/grafana/latest/visualizations/text-panel/
-  - /docs/grafana/latest/panels-visualizations/visualizations/text/
+  - ../../features/panels/text/
+  - ../../panels/visualizations/text-panel/
+  - ../../reference/alertlist/
+  - ../../visualizations/text-panel/
 keywords:
   - grafana
   - text

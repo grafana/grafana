@@ -1,5 +1,5 @@
 import { VizPanel } from '../components';
-import { Scene } from '../components/Scene';
+import { Scene, EmbeddedScene } from '../components/Scene';
 import { SceneCanvasText } from '../components/SceneCanvasText';
 import { SceneSubMenu } from '../components/SceneSubMenu';
 import { SceneTimePicker } from '../components/SceneTimePicker';
@@ -7,15 +7,14 @@ import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
-import { ConstantVariable } from '../variables/variants/ConstantVariable';
 import { CustomVariable } from '../variables/variants/CustomVariable';
 import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
 import { TestVariable } from '../variables/variants/TestVariable';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getVariablesDemo(): Scene {
-  const scene = new Scene({
+export function getVariablesDemo(standalone: boolean): Scene {
+  const state = {
     title: 'Variables',
     $variables: new SceneVariableSet({
       variables: [
@@ -45,36 +44,84 @@ export function getVariablesDemo(): Scene {
           text: '',
           options: [],
         }),
-        new ConstantVariable({
-          name: 'constant',
-          value: 'slow',
-        }),
         new CustomVariable({
-          name: 'Single Custom',
+          name: 'custom',
           query: 'A : 10,B : 20',
-        }),
-        new CustomVariable({
-          name: 'Multi Custom',
-          query: 'A : 10,B : 20',
-          isMulti: true,
         }),
         new DataSourceVariable({
-          name: 'DataSource',
+          name: 'ds',
           query: 'testdata',
         }),
-        new DataSourceVariable({
-          name: 'DataSource',
-          query: 'prometheus',
+      ],
+    }),
+    layout: new SceneFlexLayout({
+      direction: 'row',
+      children: [
+        new SceneFlexLayout({
+          children: [
+            new VizPanel({
+              pluginId: 'timeseries',
+              title: 'handler: $handler',
+              $data: getQueryRunnerWithRandomWalkQuery({
+                alias: 'handler: $handler',
+              }),
+            }),
+            new SceneCanvasText({
+              size: { width: '40%' },
+              text: 'server: ${server} pod:${pod}',
+              fontSize: 20,
+              align: 'center',
+            }),
+          ],
         }),
-        new DataSourceVariable({
-          name: 'DataSource multi',
-          query: 'prometheus',
+      ],
+    }),
+    $timeRange: new SceneTimeRange(),
+    actions: [new SceneTimePicker({})],
+    subMenu: new SceneSubMenu({
+      children: [new VariableValueSelectors({})],
+    }),
+  };
+
+  return standalone ? new Scene(state) : new EmbeddedScene(state);
+}
+
+export function getVariablesDemoWithAll(): Scene {
+  const scene = new Scene({
+    title: 'Variables with All values',
+    $variables: new SceneVariableSet({
+      variables: [
+        new TestVariable({
+          name: 'server',
+          query: 'A.*',
+          value: 'AA',
+          text: 'AA',
+          includeAll: true,
+          defaultToAll: true,
+          delayMs: 1000,
+          options: [],
+        }),
+        new TestVariable({
+          name: 'pod',
+          query: 'A.$server.*',
+          value: [],
+          delayMs: 1000,
           isMulti: true,
+          includeAll: true,
+          defaultToAll: true,
+          text: '',
+          options: [],
         }),
-        new DataSourceVariable({
-          name: 'Datasource w/ regex and using $constant',
-          query: 'prometheus',
-          regex: '.*$constant.*',
+        new TestVariable({
+          name: 'handler',
+          query: 'A.$server.$pod.*',
+          value: [],
+          delayMs: 1000,
+          includeAll: true,
+          defaultToAll: false,
+          isMulti: true,
+          text: '',
+          options: [],
         }),
       ],
     }),

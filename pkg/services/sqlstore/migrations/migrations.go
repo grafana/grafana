@@ -83,8 +83,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			addCommentMigrations(mg)
 		}
 
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagObjectStore) {
-			addObjectStorageMigrations(mg)
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagEntityStore) {
+			addEntityStoreMigrations(mg)
 		}
 	}
 

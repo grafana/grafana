@@ -12,7 +12,7 @@ import {
 import usePrevious from 'react-use/lib/usePrevious';
 import { VariableSizeList } from 'react-window';
 
-import { DataFrame, getFieldDisplayName, Field } from '@grafana/data';
+import { DataFrame, getFieldDisplayName, Field, ReducerID } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
@@ -150,13 +150,13 @@ export const Table = memo((props: Props) => {
   const variableSizeListScrollbarRef = useRef<HTMLDivElement>(null);
   const tableStyles = useStyles2(getTableStyles);
   const theme = useTheme2();
-  const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
+  const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
   const [expandedIndexes, setExpandedIndexes] = useState<Set<number>>(new Set());
   const prevExpandedIndexes = usePrevious(expandedIndexes);
 
   const footerHeight = useMemo(() => {
-    const EXTENDED_ROW_HEIGHT = 33;
+    const EXTENDED_ROW_HEIGHT = headerHeight;
     let length = 0;
 
     if (!footerItems) {
@@ -174,7 +174,7 @@ export const Table = memo((props: Props) => {
     }
 
     return EXTENDED_ROW_HEIGHT;
-  }, [footerItems]);
+  }, [footerItems, headerHeight]);
 
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
   // The cells use the field to look up values
@@ -188,10 +188,27 @@ export const Table = memo((props: Props) => {
     return Array(data.length).fill(0);
   }, [data]);
 
+  const isCountRowsSet = Boolean(
+    footerOptions?.countRows &&
+      footerOptions.reducer &&
+      footerOptions.reducer.length &&
+      footerOptions.reducer[0] === ReducerID.count
+  );
+
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, expandedIndexes, setExpandedIndexes, !!subData?.length, footerItems),
-    [data, width, columnMinWidth, footerItems, subData, expandedIndexes]
+    () =>
+      getColumns(
+        data,
+        width,
+        columnMinWidth,
+        expandedIndexes,
+        setExpandedIndexes,
+        !!subData?.length,
+        footerItems,
+        isCountRowsSet
+      ),
+    [data, width, columnMinWidth, footerItems, subData, expandedIndexes, isCountRowsSet]
   );
 
   // Internal react table state reducer
@@ -244,17 +261,24 @@ export const Table = memo((props: Props) => {
       return;
     }
 
-    if (footerOptions.show) {
-      setFooterItems(
-        getFooterItems(
-          headerGroups[0].headers as unknown as Array<{ field: Field }>,
-          createFooterCalculationValues(rows),
-          footerOptions,
-          theme
-        )
-      );
-    } else {
+    if (!footerOptions.show) {
       setFooterItems(undefined);
+      return;
+    }
+
+    const footerItems = getFooterItems(
+      headerGroups[0].headers as unknown as Array<{ field: Field }>,
+      createFooterCalculationValues(rows),
+      footerOptions,
+      theme
+    );
+
+    if (isCountRowsSet) {
+      const footerItemsCountRows: FooterItem[] = new Array(footerItems.length).fill(undefined);
+      footerItemsCountRows[0] = data.length.toString();
+      setFooterItems(footerItemsCountRows);
+    } else {
+      setFooterItems(footerItems);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [footerOptions, theme, state.filters, data]);
@@ -264,7 +288,9 @@ export const Table = memo((props: Props) => {
   if (enablePagination) {
     listHeight -= tableStyles.cellHeight;
   }
-  const pageSize = Math.round(listHeight / tableStyles.cellHeight) - 1;
+
+  const pageSize = Math.round(listHeight / tableStyles.rowHeight) - 1;
+
   useEffect(() => {
     // Don't update the page size if it is less than 1
     if (pageSize <= 0) {
@@ -304,6 +330,10 @@ export const Table = memo((props: Props) => {
       (tableScrollbarView as HTMLDivElement).append(listVerticalScrollbarHTML as Node);
     }
   });
+
+  useEffect(() => {
+    setExpandedIndexes(new Set());
+  }, [data, subData]);
 
   const renderSubTable = React.useCallback(
     (rowIndex: number) => {
@@ -445,7 +475,6 @@ export const Table = memo((props: Props) => {
           )}
           {footerItems && (
             <FooterRow
-              height={footerHeight}
               isPaginationVisible={Boolean(enablePagination)}
               footerValues={footerItems}
               footerGroups={footerGroups}

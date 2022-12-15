@@ -14,6 +14,7 @@ type UserProtectionService interface {
 type Store interface {
 	GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error
 	GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error
+	GetUserLabels(ctx context.Context, query models.GetUserLabelsQuery) (map[int64]string, error)
 	SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error
 	UpdateAuthInfoDate(ctx context.Context, authInfo *models.UserAuth) error
