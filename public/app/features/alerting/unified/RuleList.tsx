@@ -105,7 +105,7 @@ const RuleList = withErrorBoundary(
                     {expandAll ? 'Collapse all' : 'Expand all'}
                   </Button>
                 )}
-                <RuleStats showInactive={true} showRecording={true} namespaces={filteredNamespaces} />
+                <RuleStats namespaces={filteredNamespaces} includeTotal />
               </div>
               {(canCreateGrafanaRules || canCreateCloudRules) && (
                 <LinkButton

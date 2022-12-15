@@ -14,9 +14,11 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
+)
+
+const (
+	// https://developer.pagerduty.com/docs/ZG9jOjExMDI5NTgx-send-an-alert-event - 1024 characters or runes.
+	pagerDutyMaxV2SummaryLenRunes = 1024
 )
 
 const (
@@ -26,6 +28,7 @@ const (
 	defaultSeverity = "critical"
 	defaultClass    = "default"
 	defaultGroup    = "default"
+	defaultClient   = "Grafana"
 )
 
 var (
@@ -39,7 +42,7 @@ type PagerdutyNotifier struct {
 	*Base
 	tmpl     *template.Template
 	log      log.Logger
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	images   ImageStore
 	settings *pagerdutySettings
 }
@@ -52,6 +55,9 @@ type pagerdutySettings struct {
 	Component     string `json:"component,omitempty" yaml:"component,omitempty"`
 	Group         string `json:"group,omitempty" yaml:"group,omitempty"`
 	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Source        string `json:"source,omitempty" yaml:"source,omitempty"`
+	Client        string `json:"client,omitempty" yaml:"client,omitempty"`
+	ClientURL     string `json:"client_url,omitempty" yaml:"client_url,omitempty"`
 }
 
 func buildPagerdutySettings(fc FactoryConfig) (*pagerdutySettings, error) {
@@ -88,7 +94,19 @@ func buildPagerdutySettings(fc FactoryConfig) (*pagerdutySettings, error) {
 	if settings.Summary == "" {
 		settings.Summary = DefaultMessageTitleEmbed
 	}
-
+	if settings.Client == "" {
+		settings.Client = defaultClient
+	}
+	if settings.ClientURL == "" {
+		settings.ClientURL = "{{ .ExternalURL }}"
+	}
+	if settings.Source == "" {
+		source, err := os.Hostname()
+		if err != nil {
+			source = settings.Client
+		}
+		settings.Source = source
+	}
 	return &settings, nil
 }
 
@@ -111,13 +129,7 @@ func newPagerdutyNotifier(fc FactoryConfig) (*PagerdutyNotifier, error) {
 	}
 
 	return &PagerdutyNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		tmpl:     fc.Template,
 		log:      log.New("alerting.notifier." + fc.Config.Name),
 		ns:       fc.NotificationService,
@@ -145,7 +157,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	}
 
 	pn.log.Info("notifying Pagerduty", "event_type", eventType)
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        PagerdutyEventAPIURL,
 		Body:       string(body),
 		HttpMethod: "POST",
@@ -153,7 +165,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 			"Content-Type": "application/json",
 		},
 	}
-	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := pn.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Pagerduty: %w", err)
 	}
 
@@ -190,8 +202,8 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	msg := &pagerDutyMessage{
-		Client:      "Grafana",
-		ClientURL:   pn.tmpl.ExternalURL.String(),
+		Client:      tmpl(pn.settings.Client),
+		ClientURL:   tmpl(pn.settings.ClientURL),
 		RoutingKey:  pn.settings.Key,
 		EventAction: eventType,
 		DedupKey:    key.Hash(),
@@ -200,6 +212,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			Text: "External URL",
 		}},
 		Payload: pagerDutyPayload{
+			Source:        tmpl(pn.settings.Source),
 			Component:     tmpl(pn.settings.Component),
 			Summary:       tmpl(pn.settings.Summary),
 			Severity:      severity,
@@ -210,7 +223,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	_ = withStoredImages(ctx, pn.log, pn.images,
-		func(_ int, image ngmodels.Image) error {
+		func(_ int, image Image) error {
 			if len(image.URL) != 0 {
 				msg.Images = append(msg.Images, pagerDutyImage{Src: image.URL})
 			}
@@ -219,15 +232,11 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		},
 		as...)
 
-	if summary, truncated := notify.Truncate(msg.Payload.Summary, 1024); truncated {
-		pn.log.Debug("Truncated summary", "original", msg.Payload.Summary)
-		msg.Payload.Summary = summary
+	summary, truncated := TruncateInRunes(msg.Payload.Summary, pagerDutyMaxV2SummaryLenRunes)
+	if truncated {
+		pn.log.Warn("Truncated summary", "key", key, "runes", pagerDutyMaxV2SummaryLenRunes)
 	}
-
-	if hostname, err := os.Hostname(); err == nil {
-		// TODO: should this be configured like in Prometheus AM?
-		msg.Payload.Source = hostname
-	}
+	msg.Payload.Summary = summary
 
 	if tmplErr != nil {
 		pn.log.Warn("failed to template PagerDuty message", "error", tmplErr.Error())

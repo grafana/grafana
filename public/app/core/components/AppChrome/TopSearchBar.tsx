@@ -2,9 +2,11 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
+
+import { Branding } from '../Branding/Branding';
 
 import { NewsContainer } from './News/NewsContainer';
 import { OrganizationSwitcher } from './Organization/OrganizationSwitcher';
@@ -26,7 +28,7 @@ export function TopSearchBar() {
     <div className={styles.layout}>
       <TopSearchBarSection>
         <a className={styles.logo} href="/" title="Go to home">
-          <Icon name="grafana" size="xl" />
+          <Branding.MenuLogo className={styles.img} />
         </a>
         <OrganizationSwitcher />
       </TopSearchBarSection>
@@ -63,7 +65,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     gap: theme.spacing(1),
     alignItems: 'center',
-    padding: theme.spacing(0, 2),
+    padding: theme.spacing(0, 1, 0, 2),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
 
@@ -74,10 +76,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
       justifyContent: 'flex-start',
     },
   }),
+  img: css({
+    height: theme.spacing(3),
+    width: theme.spacing(3),
+  }),
   logo: css({
     display: 'flex',
   }),
   profileButton: css({
+    padding: theme.spacing(0, 0.25),
     img: {
       borderRadius: '50%',
       height: '24px',

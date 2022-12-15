@@ -122,7 +122,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 	})
 }
 
-func createUser(db sqlstore.Store, orgId int64, t *testing.T) int64 {
+func createUser(db db.DB, orgId int64, t *testing.T) int64 {
 	quotaService := quotaimpl.ProvideService(db, setting.NewCfg())
 	orgService, err := orgimpl.ProvideService(db, setting.NewCfg(), quotaService)
 	require.NoError(t, err)

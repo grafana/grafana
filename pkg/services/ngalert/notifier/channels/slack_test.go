@@ -21,7 +21,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
@@ -409,13 +408,14 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 	f, err := os.Create(t.TempDir() + "test.png")
 	require.NoError(t, err)
 	t.Cleanup(func() {
+		_ = f.Close()
 		if err := os.Remove(f.Name()); err != nil {
 			t.Logf("failed to delete test file: %s", err)
 		}
 	})
 
 	images := &fakeImageStore{
-		Images: []*models.Image{{
+		Images: []*Image{{
 			Token: "image-on-disk",
 			Path:  f.Name(),
 		}, {

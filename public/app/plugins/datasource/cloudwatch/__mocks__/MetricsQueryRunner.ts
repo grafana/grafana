@@ -8,7 +8,7 @@ import { CloudWatchMetricsQueryRunner } from '../query-runner/CloudWatchMetricsQ
 import { CloudWatchJsonData, CloudWatchQuery } from '../types';
 
 import { CloudWatchSettings, setupMockedTemplateService } from './CloudWatchDataSource';
-import { timeRange } from './timeRange';
+import { TimeRangeMock } from './timeRange';
 
 export function setupMockedMetricsQueryRunner({
   data = {
@@ -44,7 +44,7 @@ export function setupMockedMetricsQueryRunner({
   });
 
   const request: DataQueryRequest<CloudWatchQuery> = {
-    range: timeRange,
+    range: TimeRangeMock,
     rangeRaw: { from: '1483228800', to: '1483232400' },
     targets: [],
     requestId: '',
@@ -56,5 +56,5 @@ export function setupMockedMetricsQueryRunner({
     startTime: 0,
   };
 
-  return { runner, fetchMock, templateService, instanceSettings, request, timeRange };
+  return { runner, fetchMock, templateService, instanceSettings, request, timeRange: TimeRangeMock };
 }

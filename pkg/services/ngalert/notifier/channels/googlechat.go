@@ -12,9 +12,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -23,7 +20,7 @@ import (
 type GoogleChatNotifier struct {
 	*Base
 	log      log.Logger
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	images   ImageStore
 	tmpl     *template.Template
 	settings googleChatSettings
@@ -59,13 +56,7 @@ func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
 	}
 
 	return &GoogleChatNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:   NewBase(fc.Config),
 		log:    log.New("alerting.notifier.googlechat"),
 		ns:     fc.NotificationService,
 		images: fc.ImageStore,
@@ -160,7 +151,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        u,
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
@@ -169,7 +160,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		Body: string(body),
 	}
 
-	if err := gcn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := gcn.ns.SendWebhook(ctx, cmd); err != nil {
 		gcn.log.Error("Failed to send Google Hangouts Chat alert", "error", err, "webhook", gcn.Name)
 		return false, err
 	}
@@ -198,7 +189,7 @@ func (gcn *GoogleChatNotifier) buildScreenshotCard(ctx context.Context, alerts [
 	}
 
 	_ = withStoredImages(ctx, gcn.log, gcn.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			if len(image.URL) == 0 {
 				return nil
 			}
