@@ -50,7 +50,7 @@ export class SceneDataTransformer extends SceneObjectBase<SceneDataTransformerSt
   }
 
   private transformData(data: Observable<PanelData>) {
-    this._transformationsSub = data.pipe(getTransformationsStream(this.state.transformations)).subscribe({
+    this._transformationsSub = data.pipe(getTransformationsStream(this, this.state.transformations)).subscribe({
       next: (data) => {
         this.setState({ data });
       },

@@ -20,7 +20,7 @@ import { runRequest } from 'app/features/query/state/runRequest';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { sceneGraph } from '../core/sceneGraph';
-import { SceneObjectStatePlain } from '../core/types';
+import { SceneObject, SceneObjectStatePlain } from '../core/types';
 import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
 
 export interface QueryRunnerState extends SceneObjectStatePlain {
@@ -161,9 +161,11 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      this._querySub = runRequest(ds, request).pipe(getTransformationsStream(this.state.transformations)).subscribe({
-        next: this.onDataReceived,
-      });
+      this._querySub = runRequest(ds, request)
+        .pipe(getTransformationsStream(this, this.state.transformations))
+        .subscribe({
+          next: this.onDataReceived,
+        });
     } catch (err) {
       console.error('PanelQueryRunner Error', err);
     }
@@ -182,21 +184,22 @@ async function getDataSource(datasource: DataSourceRef | undefined, scopedVars: 
 }
 
 export const getTransformationsStream: (
+  sceneObject: SceneObject,
   transformations?: DataTransformerConfig[]
-) => MonoTypeOperatorFunction<PanelData> = (transformations) => (inputStream) => {
+) => MonoTypeOperatorFunction<PanelData> = (sceneObject, transformations) => (inputStream) => {
   return inputStream.pipe(
     mergeMap((data) => {
       if (!transformations || transformations.length === 0) {
         return of(data);
       }
 
-      // TODO: use scene interpolation
-      // const replace = (option: string): string => {
-      //   return getTemplateSrv().replace(option, data?.request?.scopedVars);
-      // };
-      // transformations.forEach((transform: any) => {
-      //   transform.replace = replace;
-      // });
+      const replace: (option?: string) => string = (option) => {
+        return sceneGraph.interpolate(sceneObject, option, data?.request?.scopedVars);
+      };
+
+      transformations.forEach((transform: DataTransformerConfig) => {
+        transform.replace = replace;
+      });
 
       return transformDataFrame(transformations, data.series).pipe(map((series) => ({ ...data, series })));
     })
