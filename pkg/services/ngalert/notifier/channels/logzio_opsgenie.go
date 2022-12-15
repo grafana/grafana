@@ -19,11 +19,12 @@ import (
 // LOGZ.IO GRAFANA CHANGE :: DEV-35483 - Add type for logzio Opsgenie integration
 
 const (
-	OpsGenieAlertUrl = "https://api.opsgenie.com/v1/json/logzio"
+	OpsGenieAlertUrlForLogzioIntegration = "https://api.opsgenie.com/v1/json/logzio"
 )
 
 type LogzioOpsgenieNotifier struct {
 	*Base
+	APIUrl string
 	APIKey string
 	log    log.Logger
 	tmpl   *template.Template
@@ -33,6 +34,7 @@ type LogzioOpsgenieNotifier struct {
 type LogzioOpsgenieConfig struct {
 	*NotificationChannelConfig
 	APIKey string
+	APIUrl string
 }
 
 func LogzioOpsgenieFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -51,10 +53,12 @@ func NewLogzioOpsgenieConfig(config *NotificationChannelConfig, decryptFunc GetD
 	if apiKey == "" {
 		return nil, errors.New("could not find api key property in settings")
 	}
+	apiUrl := config.Settings.Get("apiUrl").MustString(OpsGenieAlertUrlForLogzioIntegration)
 
 	return &LogzioOpsgenieConfig{
 		NotificationChannelConfig: config,
 		APIKey:                    apiKey,
+		APIUrl:                    apiUrl,
 	}, nil
 }
 
@@ -69,6 +73,7 @@ func NewLogzioOpsgenieNotifier(config *LogzioOpsgenieConfig, ns notifications.We
 			Settings:              config.Settings,
 		}),
 		APIKey: config.APIKey,
+		APIUrl: config.APIUrl,
 		tmpl:   t,
 		log:    log.New("alerting.notifier." + config.Name),
 		ns:     ns,
@@ -94,7 +99,7 @@ func (on *LogzioOpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	url := fmt.Sprintf("%s?apiKey=%s", OpsGenieAlertUrl, on.APIKey)
+	url := fmt.Sprintf("%s?apiKey=%s", on.APIUrl, on.APIKey)
 
 	cmd := &models.SendWebhookSync{
 		Url:        url,
