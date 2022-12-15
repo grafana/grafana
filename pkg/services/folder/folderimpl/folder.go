@@ -487,6 +487,14 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, err
 	}
 
+	g := guardian.New(ctx, foldr.ID, foldr.OrgID, cmd.SignedInUser)
+	if canSave, err := g.CanSave(); err != nil || !canSave {
+		if err != nil {
+			return nil, toFolderError(err)
+		}
+		return nil, dashboards.ErrFolderAccessDenied
+	}
+
 	// if the new parent is the same as the current parent, we don't need to do anything
 	if foldr.ParentUID == cmd.NewParentUID {
 		return foldr, nil
@@ -519,6 +527,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		UID:          foldr.UID,
 		OrgID:        foldr.OrgID,
 		NewParentUID: &cmd.NewParentUID,
+		SignedInUser: cmd.SignedInUser,
 	})
 }
 
