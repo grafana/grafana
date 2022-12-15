@@ -26,9 +26,9 @@ const intrinsics = ['duration', 'name', 'status', 'parent'];
 
 const scopes: string[] = ['resource', 'span'];
 
-const booleans = ['false', 'true'];
+const keywords = intrinsics.concat(scopes);
 
-const keywords = intrinsics.concat(scopes).concat(booleans);
+const statusValues = ['ok', 'unset', 'error', 'false', 'true'];
 
 export const language = {
   ignoreCase: false,
@@ -37,6 +37,7 @@ export const language = {
 
   keywords,
   operators,
+  statusValues,
 
   // we include these common regular expressions
   symbols: /[=><!~?:&|+\-*\/^%]+/,
@@ -62,6 +63,7 @@ export const language = {
         {
           cases: {
             '@keywords': 'type',
+            '@statusValues': 'type.identifier',
             '@default': 'identifier',
           },
         },
