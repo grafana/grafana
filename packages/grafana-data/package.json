@@ -54,6 +54,7 @@
     "tinycolor2": "1.4.2",
     "tslib": "2.4.1",
     "uplot": "1.6.23",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz",
     "xss": "1.0.14"
   },
   "devDependencies": {

@@ -1,10 +1,13 @@
 // Libraries
 import { defaults } from 'lodash';
+// eslint-disable-next-line import/order
 import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
 
 // Types
+import { read, utils } from 'xlsx';
+
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
-import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
+import { guessFieldTypeFromValue, toDataFrame } from '../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../field';
 import { DataFrame, Field, FieldConfig, FieldType } from '../types';
 import { formattedValueToString } from '../valueFormats';
@@ -44,6 +47,15 @@ export interface CSVOptions {
 
 export function readCSV(csv: string, options?: CSVOptions): MutableDataFrame[] {
   return new CSVReader(options).readCSV(csv);
+}
+
+export function readSpreadsheet(file: ArrayBuffer): DataFrame[] {
+  const wb = read(file, { type: 'buffer' });
+  const sheetName = wb.SheetNames[0];
+  const sheetJson = utils.sheet_to_json(wb.Sheets[sheetName]);
+  const dataFrame = new MutableDataFrame({ fields: [] });
+
+  return [toDataFrame(sheetJson)];
 }
 
 enum ParseState {

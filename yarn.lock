@@ -4354,6 +4354,7 @@ __metadata:
     tslib: 2.4.1
     typescript: 4.8.4
     uplot: 1.6.23
+    xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
     xss: 1.0.14
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
@@ -21753,6 +21754,7 @@ __metadata:
     webpack-manifest-plugin: 5.0.0
     webpack-merge: 5.8.0
     whatwg-fetch: 3.6.2
+    xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
   languageName: unknown
   linkType: soft
 
@@ -39158,6 +39160,15 @@ __metadata:
   bin:
     x-default-browser: bin/x-default-browser.js
   checksum: 9649fe6b4b91de93d5a48a5042b55a6e15c87d2514bc4f2e12582f8b25c1a6810fafc6f4c454fb531540e431e32a0a26ac130e418c0ce5c6ca892fb01945ea9e
+  languageName: node
+  linkType: hard
+
+"xlsx@https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz":
+  version: 0.19.1
+  resolution: "xlsx@https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
+  bin:
+    xlsx: ./bin/xlsx.njs
+  checksum: a7fa1b95dfc9a6923458e19f0dcd0c64d70ce49a5959c8f38c219fd232a4fdfd48d70115dbe01b0e58e80f336ce872495dcc3d12943c4d19b041c87f8eeb69c8
   languageName: node
   linkType: hard
 

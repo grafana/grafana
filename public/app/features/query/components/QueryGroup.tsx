@@ -15,7 +15,7 @@ import {
   GrafanaTheme2,
   LoadingState,
   PanelData,
-  readCSV,
+  readSpreadsheet,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
@@ -464,27 +464,15 @@ class UnThemedQueryGroup extends PureComponent<Props, State> {
 
     files.forEach((file) => {
       const reader = new FileReader();
-      reader.readAsText(file);
+      reader.readAsArrayBuffer(file);
       // TODO Add error and progress handling
       reader.onload = () => {
-        const result = reader.result?.toString();
+        const result = reader.result;
         if (result) {
-          // We only put one dataframe to the result
-          const dataFrame = readCSV(result)[0];
-
-          dataFrame.fields.forEach((f) => {
-            // if first value is number or date then parse every value
-            // TODO: Performance consideration?
-            const firstValue = getDateTimeNumber(f.values.get(0));
-            if (firstValue !== null) {
-              f.values.set(0, firstValue);
-              for (let i = 1; i < f.values.length; i++) {
-                const val = f.values.get(i);
-                const dateAndTime = getDateTimeNumber(val);
-                f.values.set(i, dateAndTime);
-              }
-            }
-          });
+          if (typeof result === 'string') {
+            return;
+          }
+          const dataFrame = readSpreadsheet(result)[0];
           const dataframeJson = dataFrameToJSON(dataFrame);
           snapshot.push(dataframeJson);
         }

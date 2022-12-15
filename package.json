@@ -397,7 +397,8 @@
     "uuid": "9.0.0",
     "vendor": "link:./public/vendor",
     "visjs-network": "4.25.0",
-    "whatwg-fetch": "3.6.2"
+    "whatwg-fetch": "3.6.2",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
   },
   "resolutions": {
     "underscore": "1.13.6",
