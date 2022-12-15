@@ -177,6 +177,10 @@ func (s *Server) Run() error {
 			return nil
 		})
 	}
+
+	if !s.HealthCheckService.AreCoreChecksImplemented(s.context) {
+		return errors.New("Missing core health checks")
+	}
 	s.notifySystemd("READY=1")
 
 	s.log.Debug("Waiting on services...")

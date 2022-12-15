@@ -111,7 +111,7 @@ func TestAddDashAlertMigration(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			mg := migrator.NewMigrator(x, tt.config)
+			mg := migrator.NewMigrator(x, tt.config, nil)
 
 			ualert.AddDashAlertMigration(mg)
 			require.Equal(t, tt.expected, mg.GetMigrationIDs(false))
@@ -561,7 +561,7 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	err = migrator.NewDialect(x).CleanDB()
 	require.NoError(t, err)
 
-	mg := migrator.NewMigrator(x, &setting.Cfg{})
+	mg := migrator.NewMigrator(x, &setting.Cfg{}, nil)
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
 
@@ -689,7 +689,7 @@ func runDashAlertMigrationTestRun(t *testing.T, x *xorm.Engine) {
 	_, errDeleteMig := x.Exec("DELETE FROM migration_log WHERE migration_id = ?", ualert.MigTitle)
 	require.NoError(t, errDeleteMig)
 
-	alertMigrator := migrator.NewMigrator(x, &setting.Cfg{})
+	alertMigrator := migrator.NewMigrator(x, &setting.Cfg{}, nil)
 	alertMigrator.AddMigration(ualert.RmMigTitle, &ualert.RmMigration{})
 	ualert.AddDashAlertMigration(alertMigrator)
 

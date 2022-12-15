@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/healthchecks"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -27,6 +29,7 @@ type Migrator struct {
 	Logger       log.Logger
 	Cfg          *setting.Cfg
 	isLocked     atomic.Bool
+	healthchecks healthchecks.Service
 }
 
 type MigrationLog struct {
@@ -38,7 +41,7 @@ type MigrationLog struct {
 	Timestamp   time.Time
 }
 
-func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
+func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg, healthchecks healthchecks.Service) *Migrator {
 	mg := &Migrator{}
 	mg.DBEngine = engine
 	mg.Logger = log.New("migrator")
@@ -46,6 +49,7 @@ func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
 	mg.migrationIds = make(map[string]struct{})
 	mg.Dialect = NewDialect(mg.DBEngine)
 	mg.Cfg = cfg
+	mg.healthchecks = healthchecks
 	return mg
 }
 
@@ -100,7 +104,13 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	return logMap, nil
 }
 
+func (mg *Migrator) CheckHealth(name string) (int, error) {
+	return 0, nil
+}
+
 func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int) (err error) {
+	_ = mg.healthchecks.RegisterHealthCheck(context.Background(), "migrations", mg)
+
 	if !isDatabaseLockingEnabled {
 		return mg.run()
 	}

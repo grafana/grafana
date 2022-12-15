@@ -208,7 +208,7 @@ func TestMigrations(t *testing.T) {
 			require.NoError(t, errDeleteMig)
 
 			// Run accesscontrol migration (permissions insertion should not have conflicted)
-			acmigrator := migrator.NewMigrator(x, tc.config)
+			acmigrator := migrator.NewMigrator(x, tc.config, nil)
 			acmig.AddTeamMembershipMigrations(acmigrator)
 
 			errRunningMig := acmigrator.Start(false, 0)
@@ -256,7 +256,7 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	err = migrator.NewDialect(x).CleanDB()
 	require.NoError(t, err)
 
-	mg := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
+	mg := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")}, nil)
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
 

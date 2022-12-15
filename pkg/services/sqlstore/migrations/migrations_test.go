@@ -33,7 +33,7 @@ func TestMigrations(t *testing.T) {
 	_, err = x.SQL(query).Get(&result)
 	require.Error(t, err)
 
-	mg := NewMigrator(x, &setting.Cfg{})
+	mg := NewMigrator(x, &setting.Cfg{}, nil)
 	migrations := &OSSMigrations{}
 	migrations.AddMigration(mg)
 	expectedMigrations := mg.GetMigrationIDs(true)
@@ -47,7 +47,7 @@ func TestMigrations(t *testing.T) {
 
 	checkStepsAndDatabaseMatch(t, mg, expectedMigrations)
 
-	mg = NewMigrator(x, &setting.Cfg{})
+	mg = NewMigrator(x, &setting.Cfg{}, nil)
 	migrations.AddMigration(mg)
 
 	err = mg.Start(false, 0)
@@ -167,7 +167,7 @@ func TestMigratorLocking(t *testing.T) {
 	err = NewDialect(x).CleanDB()
 	require.NoError(t, err)
 
-	mg := NewMigrator(x, &setting.Cfg{})
+	mg := NewMigrator(x, &setting.Cfg{}, nil)
 	migrations := &OSSMigrations{}
 	migrations.AddMigration(mg)
 
@@ -204,7 +204,7 @@ func TestDatabaseLocking(t *testing.T) {
 	err = NewDialect(x).CleanDB()
 	require.NoError(t, err)
 
-	mg1 := NewMigrator(x, &setting.Cfg{})
+	mg1 := NewMigrator(x, &setting.Cfg{}, nil)
 	migrations := &OSSMigrations{}
 	migrations.AddMigration(mg1)
 	reg := registry{
@@ -212,7 +212,7 @@ func TestDatabaseLocking(t *testing.T) {
 	}
 	reg.set(0, mg1)
 
-	mg2 := NewMigrator(x, &setting.Cfg{})
+	mg2 := NewMigrator(x, &setting.Cfg{}, nil)
 	migrations.AddMigration(mg2)
 	reg.set(1, mg2)
 

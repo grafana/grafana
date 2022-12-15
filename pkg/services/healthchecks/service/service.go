@@ -7,20 +7,31 @@ import (
 	"github.com/grafana/grafana/pkg/services/healthchecks"
 )
 
+// These are required checks for the server to start up. If you add a core check, but fail to register it at startup, the server will not start.
 var coreChecks = []string{
 	"migrations",
-	"database",
+	//"database",
 }
 
 type HealthChecksServiceImpl struct {
-	Store            healthchecks.Store
+	// Store            healthchecks.Store
 	CacheService     *localcache.CacheService
 	registeredChecks map[string]healthchecks.HealthChecker
 }
 
-func ProvideService(store healthchecks.Store, cache *localcache.CacheService) *HealthChecksServiceImpl {
+// func ProvideService(store healthchecks.Store, cache *localcache.CacheService) *HealthChecksServiceImpl {
+// 	service := &HealthChecksServiceImpl{
+// 		Store:            store,
+// 		CacheService:     cache,
+// 		registeredChecks: map[string]healthchecks.HealthChecker{},
+// 	}
+
+// 	return service
+// }
+
+func ProvideService(cache *localcache.CacheService) *HealthChecksServiceImpl {
 	service := &HealthChecksServiceImpl{
-		Store:            store,
+
 		CacheService:     cache,
 		registeredChecks: map[string]healthchecks.HealthChecker{},
 	}
@@ -63,8 +74,4 @@ func (hcs *HealthChecksServiceImpl) CheckDatabaseHealth(ctx context.Context) err
 	// hcs.CacheService.Set(cacheKey, true, time.Second*5)
 
 	return nil
-}
-
-func (hcs *HealthChecksServiceImpl) CheckDatabaseMigrations(ctx context.Context) bool {
-	return false
 }

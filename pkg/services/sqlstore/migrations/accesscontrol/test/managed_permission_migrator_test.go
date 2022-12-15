@@ -156,7 +156,7 @@ func TestManagedPermissionsMigration(t *testing.T) {
 			putTestPermissions(t, x, tc.putRolePerms)
 
 			// Run accesscontrol migration (permissions insertion should not have conflicted)
-			acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
+			acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")}, nil)
 			acmig.AddManagedPermissionsMigration(acmigrator, acmig.ManagedPermissionsMigrationID)
 
 			errRunningMig := acmigrator.Start(false, 0)
@@ -214,7 +214,7 @@ func TestManagedPermissionsMigrationRunTwice(t *testing.T) {
 				}
 
 				// Run accesscontrol migration (permissions insertion should not have conflicted)
-				acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
+				acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")}, nil)
 				acmig.AddManagedPermissionsMigration(acmigrator, acmig.ManagedPermissionsMigrationID+fmt.Sprint(i))
 
 				errRunningMig := acmigrator.Start(false, 0)

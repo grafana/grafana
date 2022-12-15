@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/healthchecks"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -49,6 +50,7 @@ type SQLStore struct {
 	Cfg          *setting.Cfg
 	sqlxsession  *session.SessionDB
 	CacheService *localcache.CacheService
+	healthchecks healthchecks.Service
 
 	bus                         bus.Bus
 	dbCfg                       DatabaseConfig
@@ -60,12 +62,12 @@ type SQLStore struct {
 	tracer                      tracing.Tracer
 }
 
-func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, healthchecks healthchecks.Service) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newSQLStore(cfg, cacheService, nil, migrations, bus, tracer)
+	s, err := newSQLStore(cfg, cacheService, nil, migrations, bus, tracer, healthchecks)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +97,7 @@ func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, er
 }
 
 func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine *xorm.Engine,
-	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
+	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, healthchecks healthchecks.Service, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
 		Cfg:                         cfg,
 		CacheService:                cacheService,
@@ -104,6 +106,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 		migrations:                  migrations,
 		bus:                         bus,
 		tracer:                      tracer,
+		healthchecks:                healthchecks,
 	}
 	for _, opt := range opts {
 		if !opt.EnsureDefaultOrgAndUser {
@@ -141,7 +144,7 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 		return nil
 	}
 
-	migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
+	migrator := migrator.NewMigrator(ss.engine, ss.Cfg, ss.healthchecks)
 	ss.migrations.AddMigration(migrator)
 
 	return migrator.Start(isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
@@ -589,7 +592,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		tracer := tracing.InitializeTracerForTest()
 		bus := bus.ProvideBus(tracer)
-		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), engine, migration, bus, tracer, opts...)
+		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), engine, migration, bus, tracer, nil, opts...)
 		if err != nil {
 			return nil, err
 		}

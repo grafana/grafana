@@ -59,7 +59,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) er
 
 		bus := bus.ProvideBus(tracer)
 
-		sqlStore, err := db.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
+		sqlStore, err := db.ProvideService(cfg, nil, &migrations.OSSMigrations{}, bus, tracer, nil)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize SQL store", err)
 		}

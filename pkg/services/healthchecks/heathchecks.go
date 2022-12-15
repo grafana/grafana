@@ -6,8 +6,8 @@ type Service interface {
 	RegisterHealthCheck(ctx context.Context, name string, checker HealthChecker) error
 	AreCoreChecksImplemented(ctx context.Context) bool
 
-	CheckDatabaseHealth(ctx context.Context) error
-	CheckDatabaseMigrations(ctx context.Context) error // TODO
+	// CheckDatabaseHealth(ctx context.Context) error
+	// CheckDatabaseMigrations(ctx context.Context) error // TODO
 }
 
 type HealthCheckStatus int
@@ -21,7 +21,7 @@ type HealthChecker interface {
 	CheckHealth(name string) (int, error)
 }
 
-type Store interface {
-	CheckDatabaseHealth(ctx context.Context) error
-	CheckDatabaseMigrations(ctx context.Context) error // TODO
-}
+// type Store interface {
+// 	CheckDatabaseHealth(ctx context.Context) error
+// 	CheckDatabaseMigrations(ctx context.Context) error // TODO
+// }

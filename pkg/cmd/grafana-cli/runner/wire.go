@@ -62,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	healthchecks "github.com/grafana/grafana/pkg/services/healthchecks"
 	healthchecksApi "github.com/grafana/grafana/pkg/services/healthchecks/api"
 	healthchecksService "github.com/grafana/grafana/pkg/services/healthchecks/service"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -292,6 +293,7 @@ var wireSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	healthchecksApi.ProvideApi,
 	healthchecksService.ProvideService,
+	wire.Bind(new(healthchecks.Service), new(*healthchecksService.HealthChecksServiceImpl)),
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
 	teamimpl.ProvideService,
