@@ -150,7 +150,7 @@ export const Table = memo((props: Props) => {
   const variableSizeListScrollbarRef = useRef<HTMLDivElement>(null);
   const tableStyles = useStyles2(getTableStyles);
   const theme = useTheme2();
-  const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
+  const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
   const [expandedIndexes, setExpandedIndexes] = useState<Set<number>>(new Set());
   const prevExpandedIndexes = usePrevious(expandedIndexes);

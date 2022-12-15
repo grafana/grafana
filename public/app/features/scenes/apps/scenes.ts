@@ -30,7 +30,7 @@ export function getHttpHandlerListScene(): EmbeddedScene {
     $data: httpHandlerQueries,
     pluginId: 'table',
     title: '',
-    displayMode: 'transparent',
+    //displayMode: 'transparent',
     options: {
       footer: {
         enablePagination: true,
