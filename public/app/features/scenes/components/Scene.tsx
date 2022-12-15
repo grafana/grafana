@@ -47,7 +47,6 @@ function EmbeddedSceneRenderer({ model }: SceneComponentProps<Scene>) {
         flexGrow: 1,
         display: 'flex',
         gap: '8px',
-        overflow: 'auto',
         minHeight: '100%',
         flexDirection: 'column',
       }}

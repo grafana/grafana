@@ -12,6 +12,7 @@ import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
 import { SceneRadioToggle } from './SceneRadioToggle';
+import { SceneSearchBox, SceneSearchFilterDataNode } from './SceneSearchBox';
 
 let sceneCache: Map<string, EmbeddedScene> = new Map();
 
@@ -22,12 +23,19 @@ export function getHttpHandlerListScene(): EmbeddedScene {
     return sceneCache.get(sceneKey)!;
   }
 
+  const searchBox = new SceneSearchBox({ value: '' });
+
   const httpHandlerQueries = getInstantQuery({
     expr: 'sort_desc(avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum[$__rate_interval]) * 1e3)) ',
   });
 
+  const httpHandlerQueriesFiltered = new SceneSearchFilterDataNode({
+    sourceData: httpHandlerQueries,
+    searchBox,
+  });
+
   const httpHandlersTable = new VizPanel({
-    $data: httpHandlerQueries,
+    $data: httpHandlerQueriesFiltered,
     pluginId: 'table',
     title: '',
     //displayMode: 'transparent',
@@ -81,47 +89,6 @@ export function getHttpHandlerListScene(): EmbeddedScene {
     },
   });
 
-  const graphsScene = getHttpHandlersGraphsScene();
-
-  const layout = new SceneFlexLayout({
-    children: [httpHandlersTable],
-  });
-
-  const sceneToggle = new SceneRadioToggle({
-    options: [
-      { value: 'table', label: 'Table' },
-      { value: 'graphs', label: 'Graphs' },
-    ],
-    value: 'table',
-    onChange: (value) => {
-      if (value === 'table') {
-        layout.setState({ children: [httpHandlersTable] });
-      } else {
-        layout.setState({ children: [graphsScene] });
-      }
-    },
-  });
-
-  const scene = new EmbeddedScene({
-    title: 'Grafana Monitoring',
-    $variables: getVariablesDefinitions(),
-    $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
-    subMenu: new SceneSubMenu({
-      children: [
-        new VariableValueSelectors({}),
-        new SceneSubMenuSpacer(),
-        sceneToggle,
-        new SceneTimePicker({ isOnCanvas: true }),
-      ],
-    }),
-    layout,
-  });
-
-  sceneCache.set(sceneKey, scene);
-  return scene;
-}
-
-export function getHttpHandlersGraphsScene() {
   const reqDurationTimeSeries = new SceneQueryRunner({
     datasource: { uid: 'gdev-prometheus' },
     queries: [
@@ -137,8 +104,13 @@ export function getHttpHandlersGraphsScene() {
     ],
   });
 
-  const graphs = new ScenePanelRepeater({
-    $data: reqDurationTimeSeries,
+  const reqDurationWithSearchFilter = new SceneSearchFilterDataNode({
+    sourceData: reqDurationTimeSeries,
+    searchBox,
+  });
+
+  const graphsScene = new ScenePanelRepeater({
+    $data: reqDurationWithSearchFilter,
     layout: new SceneFlexLayout({
       direction: 'column',
       children: [],
@@ -174,9 +146,6 @@ export function getHttpHandlersGraphsScene() {
             options: {
               graphMode: 'none',
               textMode: 'value',
-              //   text: {
-              //     titleSize: 14,
-              //   },
             },
           }),
         ],
@@ -184,7 +153,44 @@ export function getHttpHandlersGraphsScene() {
     },
   });
 
-  return graphs;
+  const layout = new SceneFlexLayout({
+    children: [httpHandlersTable],
+  });
+
+  const sceneToggle = new SceneRadioToggle({
+    options: [
+      { value: 'table', label: 'Table' },
+      { value: 'graphs', label: 'Graphs' },
+    ],
+    value: 'table',
+    onChange: (value) => {
+      if (value === 'table') {
+        layout.setState({ children: [httpHandlersTable] });
+      } else {
+        layout.setState({ children: [graphsScene] });
+      }
+    },
+  });
+
+  const scene = new EmbeddedScene({
+    title: 'Grafana Monitoring',
+    $variables: getVariablesDefinitions(),
+    $data: httpHandlerQueries,
+    $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
+    subMenu: new SceneSubMenu({
+      children: [
+        new VariableValueSelectors({}),
+        searchBox,
+        new SceneSubMenuSpacer(),
+        sceneToggle,
+        new SceneTimePicker({ isOnCanvas: true }),
+      ],
+    }),
+    layout,
+  });
+
+  sceneCache.set(sceneKey, scene);
+  return scene;
 }
 
 export function getHandlerDetailsScene(handler: string): EmbeddedScene {
