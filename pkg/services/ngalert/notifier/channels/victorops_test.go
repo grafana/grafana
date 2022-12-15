@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -229,10 +228,11 @@ func TestVictoropsNotifier(t *testing.T) {
 			require.NotEmpty(t, webhookSender.Webhook.Url)
 
 			// Remove the non-constant timestamp
-			j, err := simplejson.NewJson([]byte(webhookSender.Webhook.Body))
+			data := make(map[string]interface{})
+			err = json.Unmarshal([]byte(webhookSender.Webhook.Body), &data)
 			require.NoError(t, err)
-			j.Del("timestamp")
-			b, err := j.MarshalJSON()
+			delete(data, "timestamp")
+			b, err := json.Marshal(data)
 			require.NoError(t, err)
 			body := string(b)
 

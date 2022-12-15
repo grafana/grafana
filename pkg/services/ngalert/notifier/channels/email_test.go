@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -268,19 +267,18 @@ func TestEmailNotifierIntegration(t *testing.T) {
 func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns *emailSender) *EmailNotifier {
 	t.Helper()
 
-	jsonData := `{
-		"addresses": "someops@example.com;somedev@example.com",
-		"singleEmail": true
-	}`
-	settingsJSON, err := simplejson.NewJson([]byte(jsonData))
+	jsonData := map[string]interface{}{
+		"addresses":   "someops@example.com;somedev@example.com",
+		"singleEmail": true,
+	}
 	if messageTmpl != "" {
-		settingsJSON.Set("message", messageTmpl)
+		jsonData["message"] = messageTmpl
 	}
 
 	if subjectTmpl != "" {
-		settingsJSON.Set("subject", subjectTmpl)
+		jsonData["subject"] = subjectTmpl
 	}
-	bytes, err := settingsJSON.MarshalJSON()
+	bytes, err := json.Marshal(jsonData)
 	require.NoError(t, err)
 	cfg, err := NewEmailConfig(&NotificationChannelConfig{
 		Name:     "ops",
