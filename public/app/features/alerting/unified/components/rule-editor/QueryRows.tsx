@@ -3,7 +3,9 @@ import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
+  CoreApp,
   DataQuery,
+  DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
   PanelData,
@@ -96,21 +98,22 @@ export class QueryRows extends PureComponent<Props> {
     );
   };
 
-  onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
+  onChangeDataSource = async (settings: DataSourceInstanceSettings, index: number) => {
     const { queries, onQueriesChange } = this.props;
+    const dataSource = await getDataSourceSrv().get(settings.uid);
 
     const updatedQueries = queries.map((item, itemIndex) => {
       if (itemIndex !== index) {
         return item;
       }
 
-      const previousDs = this.getDataSourceSettings(item);
+      const previousSettings = this.getDataSourceSettings(item);
 
       // Copy model if changing to a datasource of same type.
-      if (settings.type === previousDs?.type) {
+      if (settings.type === previousSettings?.type) {
         return copyModel(item, settings.uid);
       }
-      return emptyModel(item, settings.uid);
+      return newModel(item, dataSource);
     });
 
     onQueriesChange(updatedQueries);
@@ -285,13 +288,14 @@ function copyModel(item: AlertQuery, uid: string): Omit<AlertQuery, 'datasource'
   };
 }
 
-function emptyModel(item: AlertQuery, uid: string): Omit<AlertQuery, 'datasource'> {
+function newModel(item: AlertQuery, ds: DataSourceApi): Omit<AlertQuery, 'datasource'> {
   return {
     refId: item.refId,
     relativeTimeRange: item.relativeTimeRange,
     queryType: '',
-    datasourceUid: uid,
+    datasourceUid: ds.uid,
     model: {
+      ...ds.getDefaultQuery?.(CoreApp.UnifiedAlerting),
       refId: item.refId,
       hide: false,
     },
