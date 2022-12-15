@@ -3,6 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Icon, LinkButton, useStyles2, useTheme2, Tooltip } from '@grafana/ui';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -12,7 +13,7 @@ export default function Home() {
   const styles = useStyles2(getWelcomePageStyles);
 
   return (
-    <AlertingPageWrapper pageId="alert-home">
+    <AlertingPageWrapper pageId={config.featureToggles.topnav ? 'alerting' : 'alert-home'}>
       <div className={styles.grid}>
         <WelcomeHeader className={styles.ctaContainer} />
         <ContentBox className={styles.flowBlock}>
