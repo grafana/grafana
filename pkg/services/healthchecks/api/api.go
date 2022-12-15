@@ -5,6 +5,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/healthchecks"
+	"github.com/grafana/grafana/pkg/web"
+	"net/http"
 )
 import "github.com/grafana/grafana/pkg/infra/log"
 
@@ -28,13 +30,16 @@ func (api *Api) RegisterApiEndpoints() {
 	// TODO figure out how to move the old health checks over here. They're awkward.
 	//api.RouteRegister.Get("/healthz/v2", routing.Wrap(api.Healthz))
 	//api.RouteRegister.Get("/api/health/v2", routing.Wrap(api.HealthHandler))
+	api.RouteRegister.Get("api/health/v2/:healthCheckName", routing.Wrap(api.GetHealthCheck))
 }
 
 func (api *Api) ListHealthChecks(ctx *models.ReqContext) response.Response {
 	return response.Success("THERE ARE NONE. SORRY!")
 }
 
-func (api *Api) GetHealthCheck(ctx *models.ReqContext, key string) response.Response {
-	// TODO
-	return response.Success("should get a single health check result")
+func (api *Api) GetHealthCheck(ctx *models.ReqContext) response.Response {
+	name := web.Params(ctx.Req)[":healthCheckName"]
+	res := api.HealthCheckService.GetHealthCheck(ctx.Req.Context(), name)
+
+	return response.JSON(http.StatusOK, res)
 }
