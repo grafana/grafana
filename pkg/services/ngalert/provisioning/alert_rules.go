@@ -84,7 +84,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		return models.AlertRule{}, err
 	}
 	rule.IntervalSeconds = interval
-	err = rule.SetDashboardAndPanel()
+	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
 		return models.AlertRule{}, err
 	}
@@ -203,6 +203,10 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	rules := make([]*models.AlertRule, len(group.Rules))
 	group = *syncGroupRuleFields(&group, orgID)
 	for i := range group.Rules {
+		err := group.Rules[i].SetDashboardAndPanelFromAnnotations()
+		if err != nil {
+			return err
+		}
 		rules = append(rules, &group.Rules[i])
 	}
 	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
@@ -288,7 +292,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
 	rule.IntervalSeconds = storedRule.IntervalSeconds
-	err = rule.SetDashboardAndPanel()
+	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
 		return models.AlertRule{}, err
 	}

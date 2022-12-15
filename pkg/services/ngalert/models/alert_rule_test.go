@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
@@ -80,6 +81,85 @@ func TestErrStateFromString(t *testing.T) {
 		require.Errorf(t, err, "expected error for input value [%s]", input)
 		require.Equal(t, ExecutionErrorState(""), actual)
 	})
+}
+
+func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		annotations          map[string]string
+		expectedError        error
+		expectedDashboardUID string
+		expectedPanelID      int64
+	}{
+		{
+			name:                 "annotations is empty",
+			annotations:          nil,
+			expectedError:        nil,
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:        "dashboardUID is not present",
+			annotations: map[string]string{PanelIDAnnotation: "1234567890"},
+			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
+				DashboardUIDAnnotation, PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:        "dashboardUID is present but empty",
+			annotations: map[string]string{DashboardUIDAnnotation: "", PanelIDAnnotation: "1234567890"},
+			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
+				DashboardUIDAnnotation, PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:        "panelID is not present",
+			annotations: map[string]string{DashboardUIDAnnotation: "cKy7f6Hk"},
+			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
+				DashboardUIDAnnotation, PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:        "panelID is present but empty",
+			annotations: map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: ""},
+			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
+				DashboardUIDAnnotation, PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:                 "dashboardUID and panelID are present but panelID is not a correct int64",
+			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: "fgh"},
+			expectedError:        fmt.Errorf("annotation %s must be a valid integer Panel ID", PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:                 "dashboardUID and panelID are present and correct",
+			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: "65"},
+			expectedError:        nil,
+			expectedDashboardUID: "cKy7f6Hk",
+			expectedPanelID:      65,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			rule := AlertRuleGen(func(rule *AlertRule) {
+				rule.Annotations = testCase.annotations
+				rule.DashboardUID = nil
+				rule.PanelID = nil
+			})()
+			err := rule.SetDashboardAndPanelFromAnnotations()
+
+			require.Equal(t, testCase.expectedError, err)
+			require.Equal(t, testCase.expectedDashboardUID, rule.GetDashboardUID())
+			require.Equal(t, testCase.expectedPanelID, rule.GetPanelID())
+		})
+	}
 }
 
 func TestPatchPartialAlertRule(t *testing.T) {
