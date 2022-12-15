@@ -64,7 +64,7 @@ func (q *PermissionFilter) logAccessDecision(decision bool, kind interface{}, id
 	}
 }
 
-func (q *PermissionFilter) canAccess(kind entityKind, id string) bool {
+func (q *PermissionFilter) canAccess(kind entityKind, id, location string) bool {
 	if !kind.supportsAuthzCheck() {
 		q.logAccessDecision(false, kind, id, "entityDoesNotSupportAuthz")
 		return false
@@ -78,9 +78,11 @@ func (q *PermissionFilter) canAccess(kind entityKind, id string) bool {
 			q.logAccessDecision(true, kind, id, "generalFolder")
 			return true
 		}
+		decision := q.filter(entityKindFolder, id, "")
+		q.logAccessDecision(decision, kind, id, "resourceFilter")
 		fallthrough
 	case entityKindDashboard:
-		decision := q.filter(id)
+		decision := q.filter(entityKindDashboard, id, location)
 		q.logAccessDecision(decision, kind, id, "resourceFilter")
 		return decision
 	case entityKindPanel:
@@ -93,7 +95,7 @@ func (q *PermissionFilter) canAccess(kind entityKind, id string) bool {
 		}
 
 		dashboardUid := matches[panelIdFieldDashboardUidSubmatchIndex]
-		decision := q.filter(dashboardUid)
+		decision := q.filter(entityKindDashboard, dashboardUid, location)
 
 		q.logAccessDecision(decision, kind, id, "resourceFilter", "dashboardUid", dashboardUid, "panelId", matches[panelIdFieldPanelIdSubmatchIndex])
 		return decision
@@ -111,12 +113,14 @@ func (q *PermissionFilter) Searcher(i search.Reader, options search.SearcherOpti
 
 	s, err := searcher.NewMatchAllSearcher(i, 1, similarity.ConstantScorer(1), options)
 	return searcher.NewFilteringSearcher(s, func(d *search.DocumentMatch) bool {
-		var kind, id string
+		var kind, id, location string
 		err := dvReader.VisitDocumentValues(d.Number, func(field string, term []byte) {
 			if field == documentFieldKind {
 				kind = string(term)
 			} else if field == documentFieldUID {
 				id = string(term)
+			} else if field == documentFieldLocation {
+				location = string(term)
 			}
 		})
 		if err != nil {
@@ -130,6 +134,6 @@ func (q *PermissionFilter) Searcher(i search.Reader, options search.SearcherOpti
 			return false
 		}
 
-		return q.canAccess(e, id)
+		return q.canAccess(e, id, location)
 	}), err
 }

@@ -6,13 +6,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // ResourceFilter checks if a given a uid (resource identifier) check if we have the requested permission
-type ResourceFilter func(uid string) bool
+type ResourceFilter func(kind entityKind, uid, parent string) bool
 
 // FutureAuthService eventually implemented by the security service
 type FutureAuthService interface {
@@ -45,6 +46,19 @@ func (a *simpleSQLAuthService) getDashboardTableAuthFilter(user *user.SignedInUs
 }
 
 func (a *simpleSQLAuthService) GetDashboardReadFilter(user *user.SignedInUser) (ResourceFilter, error) {
+	if !a.ac.IsDisabled() {
+
+		canReadDashboard, canReadFolder := accesscontrol.Checker(user, dashboards.ActionDashboardsRead), accesscontrol.Checker(user, dashboards.ActionFoldersRead)
+		return func(kind entityKind, uid, parent string) bool {
+			if kind == entityKindFolder {
+				return canReadFolder(dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid))
+			} else if kind == entityKindDashboard {
+				return canReadDashboard(dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid), dashboards.ScopeFoldersProvider.GetResourceScopeName(parent))
+			}
+			return false
+		}, nil
+	}
+
 	filter := a.getDashboardTableAuthFilter(user)
 	rows := make([]*dashIdQueryResult, 0)
 
@@ -72,7 +86,7 @@ func (a *simpleSQLAuthService) GetDashboardReadFilter(user *user.SignedInUser) (
 		uids[rows[i].UID] = true
 	}
 
-	return func(uid string) bool {
+	return func(_ entityKind, _, uid string) bool {
 		return uids[uid]
 	}, err
 }
