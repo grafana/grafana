@@ -34,6 +34,8 @@ export class SceneDataTransformer extends SceneObjectBase<SceneDataTransformerSt
         next: (data) => {
           if (data.data?.state === LoadingState.Done) {
             this.transformData(of(data.data));
+          } else {
+            this.setState({ data: data.data });
           }
         },
       })
