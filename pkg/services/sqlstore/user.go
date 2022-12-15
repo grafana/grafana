@@ -72,9 +72,9 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		Login:      args.Login,
 		IsAdmin:    args.IsAdmin,
 		OrgID:      orgID,
-		Created:    TimeNow(),
-		Updated:    TimeNow(),
-		LastSeenAt: TimeNow().AddDate(-10, 0, 0),
+		Created:    time.Now(),
+		Updated:    time.Now(),
+		LastSeenAt: time.Now().AddDate(-10, 0, 0),
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -114,8 +114,8 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		OrgId:   orgID,
 		UserId:  usr.ID,
 		Role:    org.RoleAdmin,
-		Created: TimeNow(),
-		Updated: TimeNow(),
+		Created: time.Now(),
+		Updated: time.Now(),
 	}
 
 	if ss.Cfg.AutoAssignOrg && !usr.IsAdmin {
@@ -131,21 +131,6 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 	}
 
 	return usr, nil
-}
-
-func UserDeletions() []string {
-	deletes := []string{
-		"DELETE FROM star WHERE user_id = ?",
-		"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
-		"DELETE FROM org_user WHERE user_id = ?",
-		"DELETE FROM dashboard_acl WHERE user_id = ?",
-		"DELETE FROM preferences WHERE user_id = ?",
-		"DELETE FROM team_member WHERE user_id = ?",
-		"DELETE FROM user_auth WHERE user_id = ?",
-		"DELETE FROM user_auth_token WHERE user_id = ?",
-		"DELETE FROM quota WHERE user_id = ?",
-	}
-	return deletes
 }
 
 func verifyExistingOrg(sess *DBSession, orgId int64) error {

@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -162,11 +162,11 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(
 	return updatedUser, err
 }
 
-func ServiceAccountDeletions() []string {
+func ServiceAccountDeletions(dialect migrator.Dialect) []string {
 	deletes := []string{
 		"DELETE FROM api_key WHERE service_account_id = ?",
 	}
-	deletes = append(deletes, sqlstore.UserDeletions()...)
+	deletes = append(deletes, userDeletions(dialect)...)
 	return deletes
 }
 
@@ -187,7 +187,7 @@ func (s *ServiceAccountsStoreImpl) deleteServiceAccount(sess *db.Session, orgId,
 	if !has {
 		return serviceaccounts.ErrServiceAccountNotFound
 	}
-	for _, sql := range ServiceAccountDeletions() {
+	for _, sql := range ServiceAccountDeletions(s.sqlStore.GetDialect()) {
 		_, err := sess.Exec(sql, user.ID)
 		if err != nil {
 			return err
@@ -529,4 +529,19 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64,
 		return fmt.Errorf("cannot revert token to API key: %w", err)
 	}
 	return nil
+}
+
+func userDeletions(dialect migrator.Dialect) []string {
+	deletes := []string{
+		"DELETE FROM star WHERE user_id = ?",
+		"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
+		"DELETE FROM org_user WHERE user_id = ?",
+		"DELETE FROM dashboard_acl WHERE user_id = ?",
+		"DELETE FROM preferences WHERE user_id = ?",
+		"DELETE FROM team_member WHERE user_id = ?",
+		"DELETE FROM user_auth WHERE user_id = ?",
+		"DELETE FROM user_auth_token WHERE user_id = ?",
+		"DELETE FROM quota WHERE user_id = ?",
+	}
+	return deletes
 }
