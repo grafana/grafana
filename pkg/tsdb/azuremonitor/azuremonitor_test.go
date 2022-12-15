@@ -55,7 +55,7 @@ func TestNewInstanceSettings(t *testing.T) {
 		{
 			name: "creates an instance for customized cloud",
 			settings: backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cloudName":"customizedazuremonitor","customizedRoutes":{"Route":{"URL":"url"}},"azureAuthType":"clientsecret"}`),
+				JSONData:                []byte(`{"cloudName":"AzureCustomizedCloud","customizedRoutes":{"Route":{"URL":"url"}},"azureAuthType":"clientsecret"}`),
 				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
 				ID:                      50,
 			},
@@ -73,7 +73,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				},
 				JSONData: map[string]interface{}{
 					"azureAuthType": "clientsecret",
-					"cloudName":     "customizedazuremonitor",
+					"cloudName":     "AzureCustomizedCloud",
 					"customizedRoutes": map[string]interface{}{
 						"Route": map[string]interface{}{
 							"URL": "url",

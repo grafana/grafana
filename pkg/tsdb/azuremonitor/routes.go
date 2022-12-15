@@ -69,9 +69,6 @@ var (
 			azureLogAnalytics:  azUSGovLogAnalytics,
 			azureResourceGraph: azUSGovManagement,
 		},
-		azsettings.AzureGermany: {
-			azureMonitor: azGermanyManagement,
-		},
 		azsettings.AzureChina: {
 			azureMonitor:       azChinaManagement,
 			azureLogAnalytics:  azChinaLogAnalytics,
