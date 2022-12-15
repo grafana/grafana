@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { lazy, PureComponent, RefObject, Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -137,7 +137,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       largerExploreId,
     } = this.props;
     const showSmallTimePicker = splitted || containerWidth < 1210;
-    const styles = getStyles();
+    const styles = getStyles(exploreId);
 
     const isLargerExploreId = largerExploreId === exploreId;
 
@@ -170,13 +170,9 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
             tooltip={`${isLargerExploreId ? 'Narrow' : 'Widen'} pane`}
             disabled={isLive}
             onClick={onClickResize}
-            icon={
-              (exploreId === 'left' && isLargerExploreId) || (exploreId === 'right' && !isLargerExploreId)
-                ? 'gf-movepane-left'
-                : 'gf-movepane-right'
-            }
+            icon={isLargerExploreId ? 'gf-movepane-right' : 'gf-movepane-left'}
             iconOnly={true}
-            className={styles.iconButton}
+            className={cx(styles.iconButton, styles.rotateIcon)}
           />
           <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
             Close
@@ -356,11 +352,16 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export const ExploreToolbar = connector(UnConnectedExploreToolbar);
 
-const getStyles = () => {
+const getStyles = (exploreId: ExploreId) => {
   return {
     iconButton: css({
       '> div': {
         scale: '1.5',
+      },
+    }),
+    rotateIcon: css({
+      '> div > svg': {
+        transform: exploreId === 'left' ? 'rotate(180deg)' : 'none',
       },
     }),
   };
