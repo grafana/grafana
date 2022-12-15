@@ -250,7 +250,10 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			return err
 		}
 
-		if rawQuery["metricQuery"] == nil {
+		if rawQuery["metricQuery"] == nil &&
+			rawQuery["timeSeriesQuery"] == nil &&
+			rawQuery["timeSeriesList"] == nil &&
+			rawQuery["sloQuery"] == nil {
 			// migrate legacy query
 			var mq timeSeriesList
 			err = json.Unmarshal(q.JSON, &mq)
