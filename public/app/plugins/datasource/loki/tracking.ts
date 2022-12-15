@@ -1,4 +1,4 @@
-import { CoreApp, DashboardLoadedEvent, DataFrame, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { CoreApp, DashboardLoadedEvent, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
 import { variableRegex } from 'app/features/variables/utils';
 
