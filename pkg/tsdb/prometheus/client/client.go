@@ -31,7 +31,7 @@ func NewClient(d doer, method, baseUrl string) *Client {
 	return &Client{doer: d, method: method, baseUrl: baseUrl}
 }
 
-func (c *Client) QueryRange(ctx context.Context, q *models.Query, headers http.Header) (*http.Response, error) {
+func (c *Client) QueryRange(ctx context.Context, q *models.Query) (*http.Response, error) {
 	tr := q.TimeRange()
 	u, err := c.createUrl("api/v1/query_range", map[string]string{
 		"query": q.Expr,
@@ -42,7 +42,7 @@ func (c *Client) QueryRange(ctx context.Context, q *models.Query, headers http.H
 	if err != nil {
 		return nil, err
 	}
-	req, err := createRequest(ctx, c.method, u, nil, headers)
+	req, err := createRequest(ctx, c.method, u, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (c *Client) QueryRange(ctx context.Context, q *models.Query, headers http.H
 	return c.doer.Do(req)
 }
 
-func (c *Client) QueryInstant(ctx context.Context, q *models.Query, headers http.Header) (*http.Response, error) {
+func (c *Client) QueryInstant(ctx context.Context, q *models.Query) (*http.Response, error) {
 	qs := map[string]string{"query": q.Expr}
 	tr := q.TimeRange()
 	if !tr.End.IsZero() {
@@ -61,7 +61,7 @@ func (c *Client) QueryInstant(ctx context.Context, q *models.Query, headers http
 	if err != nil {
 		return nil, err
 	}
-	req, err := createRequest(ctx, c.method, u, nil, headers)
+	req, err := createRequest(ctx, c.method, u, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (c *Client) QueryInstant(ctx context.Context, q *models.Query, headers http
 	return c.doer.Do(req)
 }
 
-func (c *Client) QueryExemplars(ctx context.Context, q *models.Query, headers http.Header) (*http.Response, error) {
+func (c *Client) QueryExemplars(ctx context.Context, q *models.Query) (*http.Response, error) {
 	tr := q.TimeRange()
 	u, err := c.createUrl("api/v1/query_exemplars", map[string]string{
 		"query": q.Expr,
@@ -80,7 +80,7 @@ func (c *Client) QueryExemplars(ctx context.Context, q *models.Query, headers ht
 		return nil, err
 	}
 
-	req, err := createRequest(ctx, c.method, u, nil, headers)
+	req, err := createRequest(ctx, c.method, u, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 
 	// We use method from the request, as for resources front end may do a fallback to GET if POST does not work
 	// nad we want to respect that.
-	httpRequest, err := createRequest(ctx, req.Method, u, req.Body, req.Headers)
+	httpRequest, err := createRequest(ctx, req.Method, u, req.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -128,16 +128,13 @@ func (c *Client) createUrl(endpoint string, qs map[string]string) (*url.URL, err
 	return finalUrl, nil
 }
 
-func createRequest(ctx context.Context, method string, u *url.URL, body []byte, header http.Header) (*http.Request, error) {
+func createRequest(ctx context.Context, method string, u *url.URL, body []byte) (*http.Request, error) {
 	bodyReader := bytes.NewReader(body)
 	request, err := http.NewRequestWithContext(ctx, method, u.String(), bodyReader)
 	if err != nil {
 		return nil, err
 	}
-	// request.Header is created empty from NewRequestWithContext so we can just replace it
-	if header != nil {
-		request.Header = header
-	}
+
 	if strings.ToUpper(method) == http.MethodPost {
 		// This may not be true but right now we don't have more information here and seems like we send just this type
 		// of encoding right now if it is a POST
