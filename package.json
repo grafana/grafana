@@ -417,8 +417,7 @@
     "@storybook/manager-webpack5/webpack": "5.74.0",
     "ngtemplate-loader/loader-utils": "^2.0.0",
     "node-fetch": "2.6.7",
-    "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch",
-    "storybook-dark-mode@1.1.2": "patch:storybook-dark-mode@npm%3A1.1.2#./.yarn/patches/storybook-dark-mode-npm-1.1.2-ecc4605688.patch"
+    "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch"
   },
   "workspaces": {
     "packages": [
