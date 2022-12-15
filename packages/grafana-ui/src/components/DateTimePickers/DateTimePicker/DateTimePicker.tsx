@@ -24,8 +24,6 @@ export interface Props {
   maxDate?: Date;
 }
 
-const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
-
 export const DateTimePicker: FC<Props> = ({ date, maxDate, label, onChange }) => {
   const [isOpen, setOpen] = useState(false);
 
@@ -85,10 +83,10 @@ export const DateTimePicker: FC<Props> = ({ date, maxDate, label, onChange }) =>
         ) : (
           <Portal>
             <ClickOutsideWrapper onClick={() => setOpen(false)}>
-              <div className={styles.modal} onClick={stopPropagation}>
+              <div className={styles.modal}>
                 <DateTimeCalendar date={date} onChange={onApply} isFullscreen={false} onClose={() => setOpen(false)} />
               </div>
-              <div className={modalBackdrop} onClick={stopPropagation} />
+              <div className={modalBackdrop} />
             </ClickOutsideWrapper>
           </Portal>
         )
@@ -162,14 +160,12 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <InlineField
         label={label}
-        onClick={stopPropagation}
         invalid={!!(internalDate.value && internalDate.invalid)}
         className={css`
           margin-bottom: 0;
         `}
       >
         <Input
-          onClick={stopPropagation}
           onChange={onChangeDate}
           addonAfter={icon}
           value={internalDate.value}
@@ -217,12 +213,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
     }, []);
 
     return (
-      <div
-        className={cx(styles.container, { [styles.fullScreen]: isFullscreen })}
-        style={style}
-        onClick={stopPropagation}
-        ref={ref}
-      >
+      <div className={cx(styles.container, { [styles.fullScreen]: isFullscreen })} style={style} ref={ref}>
         <Calendar
           next2Label={null}
           prev2Label={null}
