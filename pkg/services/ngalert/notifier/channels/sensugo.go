@@ -10,13 +10,11 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 type SensuGoNotifier struct {
 	*Base
-	log      log.Logger
+	log      Logger
 	images   ImageStore
 	ns       WebhookSender
 	tmpl     *template.Template
@@ -71,7 +69,7 @@ func NewSensuGoNotifier(fc FactoryConfig) (*SensuGoNotifier, error) {
 	}
 	return &SensuGoNotifier{
 		Base:     NewBase(fc.Config),
-		log:      log.New("alerting.notifier.sensugo"),
+		log:      fc.Logger,
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
