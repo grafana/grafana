@@ -878,3 +878,44 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 	}
 	return nil
 }
+
+func ExtractAlertmanagerConfigurationHistoryMigration(mg *migrator.Migrator) {
+	if !mg.Cfg.UnifiedAlerting.IsEnabled() {
+		return
+	}
+	mg.AddMigration("extract alertmanager configuration history to separate table", &extractAlertmanagerConfigurationHistory{})
+}
+
+type extractAlertmanagerConfigurationHistory struct {
+	migrator.MigrationBase
+}
+
+func (c extractAlertmanagerConfigurationHistory) SQL(migrator.Dialect) string {
+	return codeMigration
+}
+
+func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+	var orgs []int64
+	if err := sess.Table("alert_configuration").Distinct("org_id").Find(&orgs); err != nil {
+		return fmt.Errorf("failed to retrieve the organizations with alerting configurations: %w", err)
+	}
+
+	// Quote the column called "default" because it's a reserved keyword in SQL.
+	fields := fmt.Sprintf("org_id, alertmanager_configuration, configuration_hash, configuration_version, created_at, %s", migrator.Dialect.Quote("default"))
+	for _, orgID := range orgs {
+		_, err := sess.Exec(`
+			INSERT INTO alert_configuration_history (`+fields+`)
+			SELECT `+fields+`
+			FROM alert_configuration
+			WHERE org_id = ? AND id != (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?)`,
+			orgID, orgID)
+		if err != nil {
+			return fmt.Errorf("failed to move old configurations to history table: %w", err)
+		}
+		_, err = sess.Exec("DELETE FROM alert_configuration WHERE org_id = ? AND id != (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?)", orgID, orgID)
+		if err != nil {
+			return fmt.Errorf("failed to evict old configurations after moving to history table: %w", err)
+		}
+	}
+	return nil
+}
