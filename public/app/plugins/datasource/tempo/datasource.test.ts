@@ -13,7 +13,13 @@ import {
   MutableDataFrame,
   PluginType,
 } from '@grafana/data';
-import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import {
+  BackendDataSourceResponse,
+  FetchResponse,
+  setBackendSrv,
+  setDataSourceSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 import config from 'app/core/config';
 
 import {
@@ -49,7 +55,8 @@ describe('Tempo data source', () => {
   beforeEach(() => (console.error = consoleErrorMock));
 
   it('returns empty response when traceId is empty', async () => {
-    const ds = new TempoDatasource(defaultSettings);
+    const templateSrv: TemplateSrv = { replace: jest.fn() } as unknown as TemplateSrv;
+    const ds = new TempoDatasource(defaultSettings, templateSrv);
     const response = await lastValueFrom(
       ds.query({ targets: [{ refId: 'refid1', queryType: 'traceql', query: '' } as Partial<TempoQuery>] } as any),
       { defaultValue: 'empty' }

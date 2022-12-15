@@ -175,7 +175,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
     if (targets.traceql?.length) {
       try {
-        const queryValue = targets.traceql[0].query;
+        const appliedQuery = this.applyVariables(targets.traceql[0], options.scopedVars);
+        const queryValue = appliedQuery?.query || '';
         const hexOnlyRegex = /^[0-9A-Fa-f]*$/;
         // Check whether this is a trace ID or traceQL query by checking if it only contains hex characters
         if (queryValue.trim().match(hexOnlyRegex)) {
