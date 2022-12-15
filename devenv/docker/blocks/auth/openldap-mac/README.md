@@ -25,10 +25,10 @@ The following changes are needed at Grafana's configuration file.
 ```ini
 [auth.ldap]
 enabled = true
-config_file = conf/ldap_dev.toml
+config_file = conf/ldap.toml
 ```
 
-The configuration between Grafana and the OpenLDAP container is configured at [./conf/ldap.toml](../../../../conf/ldap.toml).
+The default configuration between Grafana and the OpenLDAP container is configured at [../../../../../conf/ldap.toml](../../../../../conf/ldap.toml).
 
 ## Available users and groups
 

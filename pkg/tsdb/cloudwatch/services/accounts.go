@@ -13,10 +13,10 @@ import (
 var ErrAccessDeniedException = errors.New("access denied. please check your IAM policy")
 
 type AccountsService struct {
-	models.OAMClientProvider
+	models.OAMAPIProvider
 }
 
-func NewAccountsService(oamClient models.OAMClientProvider) models.AccountsProvider {
+func NewAccountsService(oamClient models.OAMAPIProvider) models.AccountsProvider {
 	return &AccountsService{oamClient}
 }
 

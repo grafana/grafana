@@ -512,7 +512,7 @@ describe('createSpanLinkFactory', () => {
       splitOpenFn,
       traceToMetricsOptions: {
         datasourceUid: 'prom1Uid',
-        queries: [{ name: 'Named Query', query: 'metric{$__tags}[5m]' }],
+        queries: [{ name: 'Named Query', query: 'metric{$__tags, $__tags}[5m]' }],
         tags: [
           { key: 'job', value: '' },
           { key: 'k8s.pod', value: 'pod' },
@@ -535,7 +535,7 @@ describe('createSpanLinkFactory', () => {
     expect(links).toBeDefined();
     expect(links!.metricLinks![0]!.href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"metric{job=\\"tns/app\\", pod=\\"sample-pod\\"}[5m]","refId":"A"}],"panelsState":{}}'
+        '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"metric{job=\\"tns/app\\", pod=\\"sample-pod\\", job=\\"tns/app\\", pod=\\"sample-pod\\"}[5m]","refId":"A"}],"panelsState":{}}'
       )}`
     );
   });
