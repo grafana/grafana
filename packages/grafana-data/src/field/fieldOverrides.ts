@@ -450,12 +450,21 @@ export const getLinksSupplier =
         });
       }
 
-      let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
-      href = replaceVariables(href, variables);
-      href = locationUtil.processUrl(href);
+      let href = link.onBuildUrl
+        ? link.onBuildUrl({
+            origin: field,
+            replaceVariables,
+          })
+        : link.url;
+
+      if (href) {
+        locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
+        href = replaceVariables(href, variables);
+        href = locationUtil.processUrl(href);
+      }
 
       const info: LinkModel<Field> = {
-        href,
+        href: replaceVariables(href, variables),
         title: replaceVariables(link.title || '', variables),
         target: link.targetBlank ? '_blank' : undefined,
         origin: field,
