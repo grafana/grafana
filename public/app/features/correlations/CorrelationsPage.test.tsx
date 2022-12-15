@@ -7,17 +7,16 @@ import {
   within,
   Matcher,
   getByRole,
-  act,
 } from '@testing-library/react';
 import { merge, uniqueId } from 'lodash';
 import React from 'react';
 import { DeepPartial } from 'react-hook-form';
 import { Provider } from 'react-redux';
-import { Observable, Subscriber } from 'rxjs';
+import { Observable } from 'rxjs';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { DataSourcePluginMeta, getDefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
+import { DataSourcePluginMeta } from '@grafana/data';
 import {
   BackendSrv,
   FetchError,
@@ -228,19 +227,6 @@ const renderWithContext = async (
   return renderResult;
 };
 
-const mockRequestResponse = () => {
-  let emitter: { subscriber: Subscriber<PanelData> | undefined } = { subscriber: undefined };
-  new Observable((subscriber) => {
-    emitter.subscriber = subscriber;
-  });
-
-  // TODO: There is something missing here. Mock runRequest()?
-
-  return emitter;
-};
-
-let emit: { subscriber: Subscriber<PanelData> | undefined } = { subscriber: undefined };
-
 jest.mock('app/core/services/context_srv');
 
 const mocks = {
@@ -257,8 +243,6 @@ jest.mock('@grafana/runtime', () => ({
 
 beforeAll(() => {
   mocks.contextSrv.hasPermission.mockImplementation(() => true);
-  // TODO: Is this below the right way to initialise mockRequestResponse()?
-  emit = mockRequestResponse();
 });
 
 afterAll(() => {
@@ -320,7 +304,7 @@ describe('CorrelationsPage', () => {
       expect(screen.getByRole('button', { name: /add$/i })).toBeInTheDocument();
     });
 
-    it('validates query and correctly adds first correlation', async () => {
+    it('correctly adds first correlation', async () => {
       const CTAButton = screen.getByRole('button', { name: /add correlation/i });
       expect(CTAButton).toBeInTheDocument();
 
@@ -343,19 +327,6 @@ describe('CorrelationsPage', () => {
       fireEvent.change(screen.getByRole('textbox', { name: /target field/i }), { target: { value: 'Line' } });
 
       await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
-
-      // check query validation button and messages
-      fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
-
-      act(() => {
-        emit.subscriber({ series: [], timeRange: getDefaultTimeRange(), state: LoadingState.Error });
-      });
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-      //
-      // act(() => {
-      //   emit!.subscriber!.next({ series: [], timeRange: getDefaultTimeRange(), state: LoadingState.Done });
-      // });
-      // expect(screen.getByText('This query is valid.')).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole('button', { name: /add$/i }));
 
