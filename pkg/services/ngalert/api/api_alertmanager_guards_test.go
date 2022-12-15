@@ -1,16 +1,17 @@
 package api
 
 import (
+	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	amConfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestCheckRoute(t *testing.T) {
@@ -319,9 +320,9 @@ func defaultGettableReceiver(t *testing.T, uid string, provenance models.Provena
 					SecureFields: map[string]bool{
 						"url": true,
 					},
-					Settings: simplejson.NewFromAny(map[string]interface{}{
-						"hello": "world",
-					}),
+					Settings: json.RawMessage(`{
+						"hello": "world"
+					}`),
 				},
 			},
 		},
@@ -338,9 +339,9 @@ func defaultPostableReceiver(t *testing.T, uid string) *definitions.PostableApiR
 					Name:                  "yeah",
 					Type:                  "slack",
 					DisableResolveMessage: true,
-					Settings: simplejson.NewFromAny(map[string]interface{}{
-						"hello": "world",
-					}),
+					Settings: json.RawMessage(`{
+						"hello": "world"
+					}`),
 				},
 			},
 		},

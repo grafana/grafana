@@ -17,7 +17,6 @@ import (
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
@@ -969,7 +968,7 @@ type GettableGrafanaReceiver struct {
 	Name                  string            `json:"name"`
 	Type                  string            `json:"type"`
 	DisableResolveMessage bool              `json:"disableResolveMessage"`
-	Settings              *simplejson.Json  `json:"settings"`
+	Settings              json.RawMessage   `json:"settings,omitempty"`
 	SecureFields          map[string]bool   `json:"secureFields"`
 	Provenance            models.Provenance `json:"provenance,omitempty"`
 }
@@ -979,7 +978,7 @@ type PostableGrafanaReceiver struct {
 	Name                  string            `json:"name"`
 	Type                  string            `json:"type"`
 	DisableResolveMessage bool              `json:"disableResolveMessage"`
-	Settings              *simplejson.Json  `json:"settings"`
+	Settings              json.RawMessage   `json:"settings,omitempty"`
 	SecureSettings        map[string]string `json:"secureSettings"`
 }
 
