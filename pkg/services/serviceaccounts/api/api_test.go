@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -40,7 +41,99 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
+
+func TestServiceAccountsAPI_CreateServiceAccount2(t *testing.T) {
+	type TestCase struct {
+		desc         string
+		basicRole    org.RoleType
+		permissions  []accesscontrol.Permission
+		body         string
+		expectedCode int
+		expectedSA   *serviceaccounts.ServiceAccountDTO
+		expectedErr  error
+	}
+
+	tests := []TestCase{
+		{
+			desc:        "should be able to create service account with correct permission",
+			basicRole:   org.RoleViewer,
+			permissions: []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}},
+			body:        `{"name": "test", "isDisabled": false, "role": "Viewer"}`,
+			expectedSA: &serviceaccounts.ServiceAccountDTO{
+				Name:       "test",
+				OrgId:      1,
+				IsDisabled: false,
+				Role:       string(org.RoleViewer),
+			},
+			expectedCode: http.StatusCreated,
+		},
+		{
+			desc:         "should not be able to create service account without permission",
+			basicRole:    org.RoleViewer,
+			permissions:  []accesscontrol.Permission{{}},
+			body:         `{"name": "test", "isDisabled": false, "role": "Viewer"}`,
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:         "should not be able to create service account with role that has higher privilege than caller",
+			basicRole:    org.RoleViewer,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}},
+			body:         `{"name": "test", "isDisabled": false, "role": "Editor"}`,
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:         "should not be able to create service account with invalid role",
+			basicRole:    org.RoleViewer,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}},
+			body:         `{"name": "test", "isDisabled": false, "role": "random"}`,
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			desc:         "should not be able to create service account with missing name",
+			basicRole:    org.RoleViewer,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}},
+			body:         `{"name": "", "isDisabled": false, "role": "Viewer"}`,
+			expectedCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := setupTests(t, func(a *ServiceAccountsAPI) {
+				a.service = &fakeService{ExpectedServiceAccount: tt.expectedSA, ExpectedErr: tt.expectedErr}
+			})
+			req := server.NewRequest(http.MethodPost, "/api/serviceaccounts/", strings.NewReader(tt.body))
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			defer res.Body.Close()
+
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+		})
+	}
+}
+
+func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Server {
+	t.Helper()
+	cfg := setting.NewCfg()
+	api := &ServiceAccountsAPI{
+		cfg:                  cfg,
+		service:              &fakeService{},
+		accesscontrolService: &actest.FakeService{},
+		accesscontrol:        acimpl.ProvideAccessControl(cfg),
+		RouterRegister:       routing.NewRouteRegister(),
+		log:                  log.NewNopLogger(),
+		permissionService:    &actest.FakePermissionsService{},
+	}
+
+	for _, o := range opts {
+		o(api)
+	}
+	api.RegisterAPIEndpoints()
+	return webtest.NewServer(t, api.RouterRegister)
+}
 
 var (
 	serviceAccountPath   = "/api/serviceaccounts/"
@@ -53,167 +146,6 @@ var (
 // which is not ideal
 // this is a bit of a hack to get the tests to pass until we refactor the tests
 // to use fakes as in the user service tests
-
-func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
-	store := db.InitTestDB(t)
-	services := setupTestServices(t, store)
-
-	autoAssignOrg := store.Cfg.AutoAssignOrg
-	store.Cfg.AutoAssignOrg = true
-	defer func() {
-		store.Cfg.AutoAssignOrg = autoAssignOrg
-	}()
-
-	orgCmd := &org.CreateOrgCommand{Name: "Some Test Org"}
-	_, err := services.OrgService.CreateWithMember(context.Background(), orgCmd)
-	require.Nil(t, err)
-
-	type testCreateSATestCase struct {
-		desc         string
-		body         map[string]interface{}
-		expectedCode int
-		wantID       string
-		wantError    string
-		acmock       *accesscontrolmock.Mock
-	}
-	testCases := []testCreateSATestCase{
-		{
-			desc:   "should be ok to create service account with permissions",
-			body:   map[string]interface{}{"name": "New SA", "role": "Viewer", "is_disabled": "false"},
-			wantID: "sa-new-sa",
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusCreated,
-		},
-		{
-			desc:   "should fail to create a service account with higher privilege",
-			body:   map[string]interface{}{"name": "New SA HP", "role": "Admin"},
-			wantID: "sa-new-sa-hp",
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusForbidden,
-		},
-		{
-			desc:      "should fail to create a service account with invalid role",
-			body:      map[string]interface{}{"name": "New SA", "role": "Random"},
-			wantID:    "sa-new-sa",
-			wantError: "invalid role value: Random",
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusBadRequest,
-		},
-		{
-			desc:      "not ok - duplicate name",
-			body:      map[string]interface{}{"name": "New SA"},
-			wantError: "service account already exists",
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusBadRequest,
-		},
-		{
-			desc:      "not ok - missing name",
-			body:      map[string]interface{}{},
-			wantError: "required value Name must not be empty",
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionCreate}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusBadRequest,
-		},
-		{
-			desc: "should be forbidden to create service account if no permissions",
-			body: map[string]interface{}{},
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusForbidden,
-		},
-	}
-
-	var requestResponse = func(server *web.Mux, httpMethod, requestpath string, body io.Reader) *httptest.ResponseRecorder {
-		req, err := http.NewRequest(httpMethod, requestpath, body)
-		req.Header.Add("Content-Type", "application/json")
-		require.NoError(t, err)
-		recorder := httptest.NewRecorder()
-		server.ServeHTTP(recorder, req)
-		return recorder
-	}
-
-	testUser := &tests.TestUser{}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			serviceAccountRequestScenario(t, http.MethodPost, serviceAccountPath, testUser, func(httpmethod string, endpoint string, usr *tests.TestUser) {
-				server, api := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), tc.acmock, store)
-				marshalled, err := json.Marshal(tc.body)
-				require.NoError(t, err)
-
-				ioReader := bytes.NewReader(marshalled)
-
-				actual := requestResponse(server, httpmethod, endpoint, ioReader)
-
-				actualCode := actual.Code
-				actualBody := map[string]interface{}{}
-
-				err = json.Unmarshal(actual.Body.Bytes(), &actualBody)
-				require.NoError(t, err)
-				require.Equal(t, tc.expectedCode, actualCode, actualBody)
-
-				if actualCode == http.StatusCreated {
-					sa := serviceaccounts.ServiceAccountDTO{}
-					err = json.Unmarshal(actual.Body.Bytes(), &sa)
-					require.NoError(t, err)
-					assert.NotZero(t, sa.Id)
-					assert.Equal(t, tc.body["name"], sa.Name)
-					assert.Equal(t, tc.wantID, sa.Login)
-					tempUser := &user.SignedInUser{
-						OrgID:  1,
-						UserID: 1,
-						Permissions: map[int64]map[string][]string{
-							1: {
-								serviceaccounts.ActionRead:       []string{serviceaccounts.ScopeAll},
-								accesscontrol.ActionOrgUsersRead: []string{accesscontrol.ScopeUsersAll},
-							},
-						},
-					}
-					perms, err := api.permissionService.GetPermissions(context.Background(), tempUser, strconv.FormatInt(sa.Id, 10))
-					assert.NoError(t, err)
-					assert.Equal(t, 1, len(perms), "should have added managed permissions for SA creator")
-					assert.Equal(t, int64(1), perms[0].ID)
-					assert.Equal(t, int64(1), perms[0].UserId)
-				} else if actualCode == http.StatusBadRequest {
-					assert.Contains(t, tc.wantError, actualBody["error"].(string))
-				}
-			})
-		})
-	}
-}
 
 // test the accesscontrol endpoints
 // with permissions and without permissions
@@ -582,4 +514,16 @@ func setupTestServices(t *testing.T, db *sqlstore.SQLStore) services {
 		SAService:     svcmock,
 		APIKeyService: apiKeyService,
 	}
+}
+
+var _ service = new(fakeService)
+
+type fakeService struct {
+	service
+	ExpectedErr            error
+	ExpectedServiceAccount *serviceaccounts.ServiceAccountDTO
+}
+
+func (f *fakeService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+	return f.ExpectedServiceAccount, f.ExpectedErr
 }
