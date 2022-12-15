@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { ComponentProps } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourcePluginMeta, GrafanaTheme2, PageLayoutType } from '@grafana/data';
@@ -21,13 +21,14 @@ const topDatasources = [
   'grafana-azure-monitor-datasource',
 ];
 
-export function DatasourceOnboarding({
-  onNewDashboard,
-  loading = false,
-}: {
-  onNewDashboard?: () => void;
+interface Props extends Pick<ComponentProps<typeof Page>, 'navId' | 'pageNav'> {
+  title: string;
+  CTAText: string;
+  onCTAClick?: () => void;
   loading?: boolean;
-}) {
+}
+
+export function DatasourceOnboarding({ onCTAClick, loading = false, title, CTAText, navId, pageNav }: Props) {
   const styles = useStyles2(getStyles);
   const { value: datasources, loading: loadingDatasources } = useAsync(async () => {
     const datasourceMeta: DataSourcePluginMeta[] = await getBackendSrv().get('/api/plugins', {
@@ -50,13 +51,9 @@ export function DatasourceOnboarding({
   }
 
   return (
-    <Page
-      navId="dashboards/browse"
-      pageNav={{ text: t('dashboard', 'New dashboard'), url: '/dashboard/new' }}
-      layout={PageLayoutType.Canvas}
-    >
+    <Page navId={navId} pageNav={pageNav} layout={PageLayoutType.Canvas}>
       <div className={styles.wrapper}>
-        <h1 className={styles.title}>{t('datasource-onboarding.welcome', 'Welcome to Grafana dashboards!')}</h1>
+        <h1 className={styles.title}>{title}</h1>
         <div className={styles.description}>
           <h4 className={styles.explanation}>
             {t('datasource-onboarding.explanation', "To visualize your data, you'll need to connect it first.")}
@@ -100,8 +97,8 @@ export function DatasourceOnboarding({
             {t('datasource-onboarding.contact-admin', 'Please contact your administrator to configure data sources.')}
           </h4>
         )}
-        <button onClick={onNewDashboard} className={styles.createNew}>
-          <span>{t('datasource-onboarding.sampleData', 'Or set up a new dashboard with sample data')}</span>
+        <button onClick={onCTAClick} className={styles.ctaButton}>
+          <span>{CTAText}</span>
           <Icon name="arrow-right" size="lg" />
         </button>
       </div>
@@ -193,7 +190,7 @@ function getStyles(theme: GrafanaTheme2) {
       textDecoration: 'underline',
       textUnderlinePosition: 'under',
     }),
-    createNew: css({
+    ctaButton: css({
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
