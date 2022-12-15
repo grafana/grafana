@@ -20,10 +20,10 @@ describe('Cloud Monitoring Datasource', () => {
       templateSrv.replace = jest.fn().mockReturnValue('project-variable');
       const mockInstanceSettings = createMockInstanceSetttings();
       const ds = new Datasource(mockInstanceSettings, templateSrv);
-      const query = createMockQuery({ metricQuery: { projectName: '$testVar' } });
+      const query = createMockQuery({ timeSeriesList: { projectName: '$testVar', crossSeriesReducer: '' } });
       const templatedQuery = ds.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toHaveProperty('datasource');
-      expect(templatedQuery[0].metricQuery.projectName).toEqual('project-variable');
+      expect(templatedQuery[0].timeSeriesList?.projectName).toEqual('project-variable');
     });
 
     it('should correctly apply template variables for timeSeriesList', () => {
@@ -34,7 +34,7 @@ describe('Cloud Monitoring Datasource', () => {
       const query = createMockQuery({ timeSeriesList: { projectName: '$testVar', crossSeriesReducer: '' } });
       const templatedQuery = ds.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toHaveProperty('datasource');
-      expect(templatedQuery[0].metricQuery.projectName).toEqual('project-variable');
+      expect(templatedQuery[0].timeSeriesList?.projectName).toEqual('project-variable');
     });
 
     it('should correctly apply template variables for timeSeriesQuery', () => {
@@ -45,7 +45,7 @@ describe('Cloud Monitoring Datasource', () => {
       const query = createMockQuery({ timeSeriesQuery: { projectName: '$testVar', query: '' } });
       const templatedQuery = ds.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toHaveProperty('datasource');
-      expect(templatedQuery[0].metricQuery.projectName).toEqual('project-variable');
+      expect(templatedQuery[0].timeSeriesList?.projectName).toEqual('project-variable');
     });
   });
 
@@ -140,11 +140,8 @@ describe('Cloud Monitoring Datasource', () => {
             filters: ['foo', '=', 'bar', 'AND', 'metric.type', '=', 'cloudsql_database'],
             groupBys: [],
             projectName: 'project',
-            perSeriesAligner: 'ALIGN_DELTA',
-            secondaryAlignmentPeriod: 'cloud-monitoring-auto',
-            secondaryCrossSeriesReducer: 'REDUCE_NONE',
-            secondaryGroupBys: [],
-            secondaryPerSeriesAligner: 'ALIGN_MEAN',
+            perSeriesAligner: 'ALIGN_MEAN',
+            preprocessor: PreprocessorType.Delta,
           },
         },
         {
@@ -177,7 +174,7 @@ describe('Cloud Monitoring Datasource', () => {
         it(t.description, () => {
           const mockInstanceSettings = createMockInstanceSetttings();
           const ds = new Datasource(mockInstanceSettings);
-          const oldQuery: CloudMonitoringQuery = t.input;
+          const oldQuery: CloudMonitoringQuery = { ...t.input };
           const newQuery = ds.migrateQuery(oldQuery);
           if (t.input.metricQuery.editorMode === 'mql') {
             expect(newQuery.timeSeriesQuery).toEqual(t.expected);
