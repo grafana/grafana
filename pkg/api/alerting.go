@@ -202,7 +202,7 @@ func (hs *HTTPServer) GetAlertNotifiers(ngalertEnabled bool) func(*models.ReqCon
 			availableNotifier := notifier.GetAvailableNotifiers()
 			allowedNotifiers := []alerting.NotifierPlugin{}
 			isAllowedNotifier := func(t string) bool {
-				allowedTypes := []string{"slack", "email", "opsgenie", "victorops", "teams", "webhook", "pagerduty"}
+				allowedTypes := []string{"slack", "email", "opsgenie", "victorops", "teams", "webhook", "pagerduty", "logzio_opsgenie"} // LOGZ.IO GRAFANA CHANGE :: DEV-35483 - Allow type for Opsgenie Logzio intergration
 				isAllowedNotifier := false
 				for _, allowedType := range allowedTypes {
 					if allowedType == t {

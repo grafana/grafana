@@ -875,5 +875,24 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 			},
 		},
+		// LOGZ.IO GRAFANA CHANGE :: DEV-35483 - Add type for logzio Opsgenie integration
+		{
+			Type:        "logzio_opsgenie",
+			Name:        "OpsGenie (Logz.io Integration)",
+			Description: "Sends notifications to OpsGenie. Use this type in case you use Logz.io integration in Opsgenie",
+			Heading:     "OpsGenie settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "API Key",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "OpsGenie API Key",
+					PropertyName: "apiKey",
+					Required:     true,
+					Secure:       true,
+				},
+			},
+		},
+		// LOGZ.IO GRAFANA CHANGE :: end
 	}
 }

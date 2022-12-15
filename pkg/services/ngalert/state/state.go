@@ -165,6 +165,11 @@ func (a *State) NeedsSending(resendDelay time.Duration) bool {
 	if a.State == eval.Pending || a.State == eval.Normal && !a.Resolved {
 		return false
 	}
+	// LOGZ.IO GRAFANA CHANGE :: DEV-35481 - Do not send a notification on error or no data state
+	if a.State == eval.NoData || a.State == eval.Error {
+		return false
+	}
+	// LOGZ.IO GRAFANA CHANGE :: end
 	// if LastSentAt is before or equal to LastEvaluationTime + resendDelay, send again
 	nextSent := a.LastSentAt.Add(resendDelay)
 	return nextSent.Before(a.LastEvaluationTime) || nextSent.Equal(a.LastEvaluationTime)

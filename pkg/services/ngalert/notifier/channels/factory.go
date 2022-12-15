@@ -44,8 +44,9 @@ var receiverFactories = map[string]func(FactoryConfig) (NotificationChannel, err
 	//"googlechat": GoogleChatFactory,
 	//"kafka":      KafkaFactory,
 	//"line":       LineFactory,
-	"opsgenie":  OpsgenieFactory,
-	"pagerduty": PagerdutyFactory,
+	"opsgenie":        OpsgenieFactory,
+	"logzio_opsgenie": LogzioOpsgenieFactory, // LOGZ.IO GRAFANA CHANGE :: DEV-35483 - Add type for logzio Opsgenie integration
+	"pagerduty":       PagerdutyFactory,
 	//"pushover":   PushoverFactory,
 	//"sensugo":    SensuGoFactory,
 	"slack": SlackFactory,
