@@ -5,6 +5,7 @@ import "context"
 type Service interface {
 	RegisterHealthCheck(ctx context.Context, name string, checker HealthChecker) error
 	AreCoreChecksImplemented(ctx context.Context) bool
+	GetHealthCheck(ctx context.Context, name string) HealthCheckStatus
 
 	// CheckDatabaseHealth(ctx context.Context) error
 	// CheckDatabaseMigrations(ctx context.Context) error // TODO

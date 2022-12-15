@@ -54,6 +54,16 @@ func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, nam
 	return nil
 }
 
+func (hcs *HealthChecksServiceImpl) GetHealthCheck(ctx context.Context, name string) healthchecks.HealthCheckStatus {
+	//TODO
+	/*
+			- look up the result in the cache
+		    - if its there return it
+		    - if its not, run the health check and cache result and return result
+	*/
+	return 1
+}
+
 func (hcs *HealthChecksServiceImpl) CheckDatabaseHealth(ctx context.Context) error {
 	// const cacheKey = "db-healthy"
 
