@@ -90,6 +90,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			Type:        "alert",
 			Epoch:       10,
 			Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
+			Data:        simplejson.NewFromAny(map[string]interface{}{"data1": "I am a cool data", "data2": "I am another cool data"}),
 		}
 		err = repo.Add(context.Background(), annotation)
 		require.NoError(t, err)
@@ -321,6 +322,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.Equal(t, annotationId, items[0].Id)
 			assert.Empty(t, items[0].Tags)
 			assert.Equal(t, "something new", items[0].Text)
+			data, err := items[0].Data.Map()
+			assert.NoError(t, err)
+			assert.Equal(t, data, map[string]interface{}{"data1": "I am a cool data", "data2": "I am another cool data"})
 		})
 
 		t.Run("Can update annotation with new tags", func(t *testing.T) {
