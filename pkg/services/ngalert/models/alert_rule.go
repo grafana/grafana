@@ -116,8 +116,9 @@ const (
 	ValueStringAnnotation = "__value_string__"
 )
 
-var (
+const (
 	StateReasonMissingSeries = "MissingSeries"
+	StateReasonError         = "Error"
 )
 
 var (

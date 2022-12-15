@@ -8,6 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneComponentProps, SceneLayout, SceneObject, SceneObjectStatePlain } from '../core/types';
+import { UrlSyncManager } from '../services/UrlSyncManager';
 
 interface DashboardSceneState extends SceneObjectStatePlain {
   title: string;
@@ -18,6 +19,27 @@ interface DashboardSceneState extends SceneObjectStatePlain {
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public static Component = DashboardSceneRenderer;
+  private urlSyncManager?: UrlSyncManager;
+
+  public activate() {
+    super.activate();
+  }
+
+  /**
+   * It's better to do this before activate / mount to not trigger unnessary re-renders
+   */
+  public initUrlSync() {
+    this.urlSyncManager = new UrlSyncManager(this);
+    this.urlSyncManager.initSync();
+  }
+
+  public deactivate() {
+    super.deactivate();
+
+    if (this.urlSyncManager) {
+      this.urlSyncManager!.cleanUp();
+    }
+  }
 }
 
 function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {

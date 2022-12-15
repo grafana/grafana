@@ -192,6 +192,10 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
+	if frame == nil {
+		// empty response
+		return dataResponse
+	}
 
 	azurePortalUrl, err := GetAzurePortalUrl(dsInfo.Cloud)
 	if err != nil {

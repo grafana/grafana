@@ -33,7 +33,6 @@ const props = {
   datasource: ds.datasource,
   metricStat,
   onChange: jest.fn(),
-  onRunQuery: jest.fn(),
 };
 
 describe('MetricStatEditor', () => {
@@ -43,10 +42,9 @@ describe('MetricStatEditor', () => {
   describe('statistics field', () => {
     test.each([['Average', 'p23.23', 'p34', '$statistic']])('should accept valid values', async (statistic) => {
       const onChange = jest.fn();
-      const onRunQuery = jest.fn();
       props.datasource.getVariables = jest.fn().mockReturnValue(['$statistic']);
 
-      render(<MetricStatEditor {...props} onChange={onChange} onRunQuery={onRunQuery} />);
+      render(<MetricStatEditor {...props} onChange={onChange} />);
 
       const statisticElement = await screen.findByLabelText('Statistic');
       expect(statisticElement).toBeInTheDocument();
@@ -54,14 +52,12 @@ describe('MetricStatEditor', () => {
       await userEvent.type(statisticElement, statistic);
       fireEvent.keyDown(statisticElement, { keyCode: 13 });
       expect(onChange).toHaveBeenCalledWith({ ...props.metricStat, statistic });
-      expect(onRunQuery).toHaveBeenCalled();
     });
 
     test.each([['CustomStat', 'p23,23', '$statistic']])('should not accept invalid values', async (statistic) => {
       const onChange = jest.fn();
-      const onRunQuery = jest.fn();
 
-      render(<MetricStatEditor {...props} onChange={onChange} onRunQuery={onRunQuery} />);
+      render(<MetricStatEditor {...props} onChange={onChange} />);
 
       const statisticElement = await screen.findByLabelText('Statistic');
       expect(statisticElement).toBeInTheDocument();
@@ -69,7 +65,6 @@ describe('MetricStatEditor', () => {
       await userEvent.type(statisticElement, statistic);
       fireEvent.keyDown(statisticElement, { keyCode: 13 });
       expect(onChange).not.toHaveBeenCalled();
-      expect(onRunQuery).not.toHaveBeenCalled();
     });
   });
 
@@ -120,18 +115,15 @@ describe('MetricStatEditor', () => {
       { value: 'm2', label: 'm2', text: 'm2' },
     ];
     const onChange = jest.fn();
-    const onRunQuery = jest.fn();
     const propsNamespaceMetrics = {
       ...props,
       onChange,
-      onRunQuery,
     };
 
     beforeEach(() => {
       propsNamespaceMetrics.datasource.api.getNamespaces = jest.fn().mockResolvedValue(namespaces);
       propsNamespaceMetrics.datasource.api.getMetrics = jest.fn().mockResolvedValue(metrics);
       onChange.mockClear();
-      onRunQuery.mockClear();
     });
 
     it('should select namespace and metric name correctly', async () => {
@@ -151,7 +143,6 @@ describe('MetricStatEditor', () => {
         [{ ...propsNamespaceMetrics.metricStat, namespace: 'n1' }], // First call, namespace select
         [{ ...propsNamespaceMetrics.metricStat, metricName: 'm1' }], // Second call, metric select
       ]);
-      expect(onRunQuery).toHaveBeenCalledTimes(2);
     });
 
     it('should remove metricName from metricStat if it does not exist in new namespace', async () => {
