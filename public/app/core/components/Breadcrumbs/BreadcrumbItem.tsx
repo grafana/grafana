@@ -43,6 +43,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       padding: theme.spacing(0, 0.5),
+      fontWeight: theme.typography.fontWeightMedium,
       whiteSpace: 'nowrap',
       color: theme.colors.text.secondary,
     }),
