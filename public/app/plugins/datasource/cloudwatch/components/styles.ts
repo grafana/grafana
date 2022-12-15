@@ -8,6 +8,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     tableLayout: 'fixed',
   }),
 
+  selectedLogGroupsContainer: css({
+    marginLeft: theme.spacing(0.5),
+    display: 'flex',
+    flexFlow: 'wrap',
+  }),
+
   tableScroller: css({
     maxHeight: '50vh',
     overflow: 'auto',
@@ -63,8 +69,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   selectedLogGroup: css({
     background: theme.colors.background.secondary,
     borderRadius: theme.shape.borderRadius(),
-    margin: theme.spacing(0.25, 1, 0.25, 0),
-    padding: theme.spacing(0.25, 0, 0.25, 1),
+    margin: theme.spacing(0, 1, 1, 0),
+    padding: theme.spacing(0.5, 0, 0.5, 1),
     color: theme.colors.text.primary,
     fontSize: theme.typography.size.sm,
   }),
@@ -75,6 +81,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   removeButton: css({
     verticalAlign: 'middle',
+    marginLeft: theme.spacing(0.5),
   }),
 
   addBtn: css({

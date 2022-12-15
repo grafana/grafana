@@ -167,7 +167,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
         </Button>
       </div>
 
-      <div>
+      <div className={styles.selectedLogGroupsContainer}>
         {props.selectedLogGroups.map((lg) => (
           <div key={lg.value} className={styles.selectedLogGroup}>
             {lg.label}
