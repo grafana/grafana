@@ -612,13 +612,16 @@ func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 func CreateSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string) []string {
 	t.Helper()
 
-	ancestorUIDs := []string{parentUID}
+	ancestorUIDs := []string{}
+	if parentUID != "" {
+		ancestorUIDs = append(ancestorUIDs, parentUID)
+	}
 	for i := 0; i < depth; i++ {
 		title := fmt.Sprintf("%sfolder-%d", prefix, i)
 		cmd := folder.CreateFolderCommand{
 			Title:     title,
 			OrgID:     orgID,
-			ParentUID: ancestorUIDs[len(ancestorUIDs)-1],
+			ParentUID: parentUID,
 			UID:       util.GenerateShortUID(),
 		}
 		f, err := store.Create(context.Background(), cmd)
@@ -638,7 +641,8 @@ func CreateSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 		}
 		require.Equal(t, ancestorUIDs, parentUIDs)
 
-		ancestorUIDs = append(ancestorUIDs, f.UID)
+		parentUID = f.UID
+		ancestorUIDs = append(ancestorUIDs, parentUID)
 	}
 
 	return ancestorUIDs

@@ -44,24 +44,3 @@ func (s *FakeService) MakeUserAdmin(ctx context.Context, orgID int64, userID, fo
 func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
-
-// temporary helper until all Folder service methods are updated to use
-// folder.Folder instead of model.Folder
-func modelsToFolders(m []*models.Folder) []*folder.Folder {
-	if m == nil {
-		return nil
-	}
-	ret := make([]*folder.Folder, len(m))
-	for i, f := range m {
-		ret[i] = &folder.Folder{
-			ID:          f.Id,
-			UID:         f.Uid,
-			Title:       f.Title,
-			Description: "", // model.Folder does not have a description
-			Created:     f.Created,
-			Updated:     f.Updated,
-			//UpdatedBy:   f.UpdatedBy,
-		}
-	}
-	return ret
-}

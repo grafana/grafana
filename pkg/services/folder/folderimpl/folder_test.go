@@ -342,7 +342,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 
 	t.Run("get parents folder", func(t *testing.T) {
 		folderStore.ExpectedFolder = &folder.Folder{}
-		_, err := folderService.getParents(context.Background(), &folder.GetParentsQuery{})
+		_, err := folderService.store.GetParents(context.Background(), folder.GetParentsQuery{})
 		require.NoError(t, err)
 	})
 
@@ -361,8 +361,8 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 				UID: "test4",
 			},
 		}
-		res, err := folderService.getTree(context.Background(),
-			&folder.GetTreeQuery{
+		res, err := folderService.store.GetChildren(context.Background(),
+			folder.GetTreeQuery{
 				UID: "test",
 			})
 		require.NoError(t, err)
