@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -91,8 +90,9 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Given a correct request for updating a folder", func(t *testing.T) {
+		title := "Folder upd"
 		cmd := folder.UpdateFolderCommand{
-			NewTitle: pointer.String("Folder upd"),
+			NewTitle: &title,
 		}
 
 		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder upd"}
@@ -126,8 +126,9 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
+		title := "Folder upd"
 		cmd := folder.UpdateFolderCommand{
-			NewTitle: pointer.String("Folder upd"),
+			NewTitle: &title,
 		}
 
 		for _, tc := range testCases {
