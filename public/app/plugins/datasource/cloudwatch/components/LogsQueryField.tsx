@@ -45,7 +45,7 @@ const plugins: Array<Plugin<Editor>> = [
   ),
 ];
 export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) => {
-  const { query, datasource, onChange, onRunQuery, ExtraFieldElement, data } = props;
+  const { query, datasource, onChange, ExtraFieldElement, data } = props;
 
   const showError = data?.error?.refId === query.refId;
   const cleanText = datasource.languageProvider.cleanText;
