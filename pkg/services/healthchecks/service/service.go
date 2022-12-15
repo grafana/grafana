@@ -10,13 +10,13 @@ import (
 // These are required checks for the server to start up. If you add a core check, but fail to register it at startup, the server will not start.
 var coreChecks = []string{
 	"migrations",
-	//"database",
 }
 
 type HealthChecksServiceImpl struct {
 	// Store            healthchecks.Store
 	CacheService     *localcache.CacheService
 	registeredChecks map[string]healthchecks.HealthChecker
+	coreChecks       map[string]healthchecks.HealthChecker
 }
 
 // func ProvideService(store healthchecks.Store, cache *localcache.CacheService) *HealthChecksServiceImpl {
@@ -34,6 +34,7 @@ func ProvideService(cache *localcache.CacheService) *HealthChecksServiceImpl {
 
 		CacheService:     cache,
 		registeredChecks: map[string]healthchecks.HealthChecker{},
+		coreChecks:       map[string]healthchecks.HealthChecker{},
 	}
 
 	return service
@@ -42,7 +43,7 @@ func ProvideService(cache *localcache.CacheService) *HealthChecksServiceImpl {
 // Make sure there is a registered handler for all core checks
 func (hcs *HealthChecksServiceImpl) AreCoreChecksImplemented(ctx context.Context) bool {
 	for _, c := range coreChecks {
-		if _, ok := hcs.registeredChecks[c]; !ok {
+		if _, ok := hcs.coreChecks[c]; !ok {
 			return false
 		}
 	}
@@ -50,6 +51,12 @@ func (hcs *HealthChecksServiceImpl) AreCoreChecksImplemented(ctx context.Context
 }
 
 func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, name string, checker healthchecks.HealthChecker) error {
+	for _, c := range coreChecks {
+		if c == name {
+			hcs.coreChecks[name] = checker
+			return nil
+		}
+	}
 	hcs.registeredChecks[name] = checker
 	return nil
 }
