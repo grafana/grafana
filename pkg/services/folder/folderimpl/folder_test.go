@@ -146,7 +146,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
 				dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
 
-				err := service.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{
+				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
 					UID:              folderUID,
 					OrgID:            orgID,
 					ForceDeleteRules: false,
@@ -229,7 +229,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				}).Return(nil).Once()
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
-				err := service.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{
+				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
 					UID:              f.UID,
 					OrgID:            orgID,
 					ForceDeleteRules: expectedForceDeleteRules,
@@ -342,7 +342,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 
 	t.Run("get parents folder", func(t *testing.T) {
 		folderStore.ExpectedFolder = &folder.Folder{}
-		_, err := folderService.GetParents(context.Background(), &folder.GetParentsQuery{})
+		_, err := folderService.getParents(context.Background(), &folder.GetParentsQuery{})
 		require.NoError(t, err)
 	})
 
@@ -361,7 +361,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 				UID: "test4",
 			},
 		}
-		res, err := folderService.GetTree(context.Background(),
+		res, err := folderService.getTree(context.Background(),
 			&folder.GetTreeQuery{
 				UID: "test",
 			})
@@ -416,7 +416,7 @@ func TestNestedFolderService(t *testing.T) {
 			g := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
-			err := foldersvc.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
+			err := foldersvc.Delete(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
 			require.NotNil(t, actualCmd)
 
@@ -637,7 +637,7 @@ func TestNestedFolderService(t *testing.T) {
 			g := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
-			err := foldersvc.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
+			err := foldersvc.Delete(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
 			require.NotNil(t, actualCmd)
 
