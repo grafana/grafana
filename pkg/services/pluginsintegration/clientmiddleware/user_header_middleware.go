@@ -27,18 +27,16 @@ type UserHeaderMiddleware struct {
 	next plugins.Client
 }
 
-func (m *UserHeaderMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req interface{}) context.Context {
+func (m *UserHeaderMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, h backend.ForwardHTTPHeaders) context.Context {
 	reqCtx := contexthandler.FromContext(ctx)
 	// if no HTTP request context skip middleware
-	if req == nil || reqCtx == nil || reqCtx.Req == nil || reqCtx.SignedInUser == nil {
+	if h == nil || reqCtx == nil || reqCtx.Req == nil || reqCtx.SignedInUser == nil {
 		return ctx
 	}
 
-	if h, ok := req.(backend.ForwardHTTPHeaders); ok {
-		h.DeleteHTTPHeader(proxyutil.UserHeaderName)
-		if !reqCtx.IsAnonymous {
-			h.SetHTTPHeader(proxyutil.UserHeaderName, reqCtx.Login)
-		}
+	h.DeleteHTTPHeader(proxyutil.UserHeaderName)
+	if !reqCtx.IsAnonymous {
+		h.SetHTTPHeader(proxyutil.UserHeaderName, reqCtx.Login)
 	}
 
 	middlewares := []sdkhttpclient.Middleware{}
