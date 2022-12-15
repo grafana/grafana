@@ -23,8 +23,6 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	AddAlertRuleMigrations(mg, 60)
 	AddAlertRuleVersionMigrations(mg)
 
-	AddAlertmanagerConfigHistoryMigrations(mg)
-
 	// Create Alertmanager configurations
 	AddAlertmanagerConfigMigrations(mg)
 
@@ -35,6 +33,11 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	AddProvisioningMigrations(mg)
 
 	AddAlertImageMigrations(mg)
+
+	AddAlertmanagerConfigHistoryMigrations(mg)
+	ExtractAlertmanagerConfigurationHistoryMigration(mg)
+	mg.AddMigration("drop non-unique orgID index", migrator.NewDropIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Cols: []string{"org_id"}}))
+	mg.AddMigration("add unique index on orgID", migrator.NewAddIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Type: migrator.UniqueIndex, Cols: []string{"org_id"}}))
 }
 
 // AddAlertDefinitionMigrations should not be modified.
@@ -344,16 +347,6 @@ func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("add configuration_hash column to alert_configuration", migrator.NewAddColumnMigration(alertConfiguration, &migrator.Column{
 		Name: "configuration_hash", Type: migrator.DB_Varchar, Nullable: false, Default: "'not-yet-calculated'", Length: 32,
-	}))
-
-	ExtractAlertmanagerConfigurationHistoryMigration(mg)
-
-	mg.AddMigration("drop non-unique orgID index", migrator.NewDropIndexMigration(alertConfiguration, &migrator.Index{
-		Cols: []string{"org_id"},
-	}))
-	mg.AddMigration("add unique index on orgID", migrator.NewAddIndexMigration(alertConfiguration, &migrator.Index{
-		Type: migrator.UniqueIndex,
-		Cols: []string{"org_id"},
 	}))
 }
 
