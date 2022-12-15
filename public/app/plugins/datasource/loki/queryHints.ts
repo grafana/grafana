@@ -106,9 +106,9 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
   if (hasLogfmt && !hasLabelFilter) {
     hints.push({
       type: 'ADD_LABEL_FILTER',
-      label: '',
+      label: 'Consider filtering logs by their label and value.',
       fix: {
-        label: 'Consider filtering logs by their label and value.',
+        label: '',
         action: {
           type: 'ADD_LABEL_FILTER',
           query,
@@ -122,9 +122,9 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
   if (!hasLineFilter) {
     hints.push({
       type: 'ADD_LINE_FILTER',
-      label: '',
+      label: 'Consider filtering logs based on if they contain a specific string.',
       fix: {
-        label: 'Consider filtering logs by ...',
+        label: '',
         action: {
           type: 'ADD_LINE_FILTER',
           query,
