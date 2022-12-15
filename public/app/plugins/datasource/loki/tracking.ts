@@ -145,10 +145,11 @@ export function trackQuery(
   }
 
   let totalBytes = 0;
-  for (const frame of response.data as DataFrame[]) {
+  for (const frame of response.data) {
     const byteKey = frame.meta?.custom?.lokiQueryStatKey;
     if (byteKey) {
-      totalBytes += frame.meta?.stats?.find((stat) => stat.displayName === byteKey)?.value ?? 0;
+      totalBytes +=
+        frame.meta?.stats?.find((stat: { displayName: string }) => stat.displayName === byteKey)?.value ?? 0;
     }
   }
 
