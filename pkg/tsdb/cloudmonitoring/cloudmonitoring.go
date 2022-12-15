@@ -216,32 +216,6 @@ func migrateMetricTypeFilter(metricTypeFilter string, prevFilters interface{}) [
 	return metricTypeFilterArray
 }
 
-func migratePreprocessor(tsl *timeSeriesList, preprocessor string) {
-	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
-	// and the aggregation that is specified in the UI becomes the secondary aggregation
-	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
-	t := toPreprocessorType(preprocessor)
-	if t != PreprocessorTypeNone {
-		// Move aggregation to secondaryAggregation
-		tsl.SecondaryAlignmentPeriod = tsl.AlignmentPeriod
-		tsl.SecondaryCrossSeriesReducer = tsl.CrossSeriesReducer
-		tsl.SecondaryPerSeriesAligner = tsl.PerSeriesAligner
-		tsl.SecondaryGroupBys = tsl.GroupBys
-
-		// Set a default cross series reducer if grouped
-		if len(tsl.GroupBys) == 0 {
-			tsl.CrossSeriesReducer = crossSeriesReducerDefault
-		}
-
-		// Set aligner based on preprocessor type
-		aligner := "ALIGN_RATE"
-		if t == PreprocessorTypeDelta {
-			aligner = "ALIGN_DELTA"
-		}
-		tsl.PerSeriesAligner = aligner
-	}
-}
-
 func migrateRequest(req *backend.QueryDataRequest) error {
 	for i, q := range req.Queries {
 		var rawQuery map[string]interface{}
@@ -270,9 +244,6 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			if rawQuery["metricType"] != nil {
 				// metricType should be a filter
 				gq.TimeSeriesList.Filters = migrateMetricTypeFilter(rawQuery["metricType"].(string), rawQuery["filters"])
-			}
-			if rawQuery["preprocessor"] != nil {
-				migratePreprocessor(gq.TimeSeriesList, rawQuery["preprocessor"].(string))
 			}
 
 			b, err := json.Marshal(gq)
@@ -313,9 +284,6 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 				if metricQuery["metricType"] != nil {
 					// metricType should be a filter
 					tsl.Filters = migrateMetricTypeFilter(metricQuery["metricType"].(string), metricQuery["filters"])
-				}
-				if rawQuery["preprocessor"] != nil {
-					migratePreprocessor(tsl, rawQuery["preprocessor"].(string))
 				}
 				rawQuery["timeSeriesList"] = tsl
 			}
