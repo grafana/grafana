@@ -168,7 +168,11 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       text-overflow: ellipsis;
       user-select: text;
       white-space: nowrap;
-      text-decoration: underline;
+      font-weight: ${theme.typography.fontWeightMedium};
+      color: ${theme.colors.text.link};
+      &:hover {
+        text-decoration: underline;
+      }
     `,
     imageCellLink: css`
       cursor: pointer;
