@@ -9,11 +9,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/urfave/cli/v2"
-
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/gcloud"
 	"github.com/grafana/grafana/pkg/build/packaging"
+	"github.com/urfave/cli/v2"
 )
 
 const releaseFolder = "release"
@@ -53,7 +52,7 @@ func UploadPackages(c *cli.Context) error {
 		return cli.Exit(err.Error(), 1)
 	}
 
-	metadata, err := GenerateMetadata(c)
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}
