@@ -162,7 +162,7 @@
   ],
   "schemaVersion": 37,
   "style": "dark",
-  "tags": [],
+  "tags": ["gdev", "panel-tests", "geomap"],
   "templating": {
     "list": []
   },
