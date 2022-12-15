@@ -155,6 +155,12 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "k8s",
+			Description:     "Explore native k8s integrations",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:            "dashboardsFromStorage",
 			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,
@@ -381,6 +387,11 @@ var (
 		{
 			Name:        "sessionRemoteCache",
 			Description: "Enable using remote cache for user sessions",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "alertingBacktesting",
+			Description: "Rule backtesting API for alerting",
 			State:       FeatureStateAlpha,
 		},
 	}

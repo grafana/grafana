@@ -13,18 +13,15 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 // WebhookNotifier is responsible for sending
 // alert notifications as webhooks.
 type WebhookNotifier struct {
 	*Base
-	log      log.Logger
-	ns       notifications.WebhookSender
+	log      Logger
+	ns       WebhookSender
 	images   ImageStore
 	tmpl     *template.Template
 	orgID    int64
@@ -118,15 +115,9 @@ func buildWebhookNotifier(factoryConfig FactoryConfig) (*WebhookNotifier, error)
 		return nil, err
 	}
 	return &WebhookNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   factoryConfig.Config.UID,
-			Name:                  factoryConfig.Config.Name,
-			Type:                  factoryConfig.Config.Type,
-			DisableResolveMessage: factoryConfig.Config.DisableResolveMessage,
-			Settings:              factoryConfig.Config.Settings,
-		}),
+		Base:     NewBase(factoryConfig.Config),
 		orgID:    factoryConfig.Config.OrgID,
-		log:      log.New("alerting.notifier.webhook"),
+		log:      factoryConfig.Logger,
 		ns:       factoryConfig.NotificationService,
 		images:   factoryConfig.ImageStore,
 		tmpl:     factoryConfig.Template,
@@ -161,7 +152,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 
 	// Augment our Alert data with ImageURLs if available.
 	_ = withStoredImages(ctx, wn.log, wn.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			if len(image.URL) != 0 {
 				data.Alerts[index].ImageURL = image.URL
 			}
@@ -204,7 +195,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		return false, tmplErr
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        parsedURL,
 		User:       wn.settings.User,
 		Password:   wn.settings.Password,
@@ -213,7 +204,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		HttpHeader: headers,
 	}
 
-	if err := wn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := wn.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, err
 	}
 
