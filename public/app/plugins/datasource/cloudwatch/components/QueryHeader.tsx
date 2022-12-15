@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { LoadingState, QueryEditorProps, SelectableValue } from '@grafana/data';
+import { CoreApp, LoadingState, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorHeader, InlineSelect, FlexItem } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Badge, Button } from '@grafana/ui';
@@ -38,6 +38,7 @@ const QueryHeader: React.FC<Props> = ({
   const onQueryModeChange = ({ value }: SelectableValue<CloudWatchQueryMode>) => {
     if (value && value !== queryMode) {
       onChange({
+        ...datasource.getDefaultQuery(CoreApp.Unknown),
         ...query,
         queryMode: value,
       });
