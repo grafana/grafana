@@ -156,7 +156,7 @@ export const Table = memo((props: Props) => {
   const prevExpandedIndexes = usePrevious(expandedIndexes);
 
   const footerHeight = useMemo(() => {
-    const EXTENDED_ROW_HEIGHT = 33;
+    const EXTENDED_ROW_HEIGHT = headerHeight;
     let length = 0;
 
     if (!footerItems) {
@@ -174,7 +174,7 @@ export const Table = memo((props: Props) => {
     }
 
     return EXTENDED_ROW_HEIGHT;
-  }, [footerItems]);
+  }, [footerItems, headerHeight]);
 
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
   // The cells use the field to look up values
@@ -475,7 +475,6 @@ export const Table = memo((props: Props) => {
           )}
           {footerItems && (
             <FooterRow
-              height={footerHeight}
               isPaginationVisible={Boolean(enablePagination)}
               footerValues={footerItems}
               footerGroups={footerGroups}
