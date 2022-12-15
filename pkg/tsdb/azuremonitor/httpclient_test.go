@@ -28,7 +28,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			Scopes: []string{"https://management.azure.com/.default"},
 		}
 
-		_, err := newHTTPClient(route, model, cfg, provider, sdkhttpclient.Options{})
+		_, err := newHTTPClient(route, model, cfg, provider)
 		require.NoError(t, err)
 
 		require.NotNil(t, provider.opts)
@@ -41,40 +41,13 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 			Scopes: []string{},
 		}
 
-		_, err := newHTTPClient(route, model, cfg, provider, sdkhttpclient.Options{})
+		_, err := newHTTPClient(route, model, cfg, provider)
 		require.NoError(t, err)
 
 		assert.NotNil(t, provider.opts)
 
 		if provider.opts.Middlewares != nil {
 			assert.Len(t, provider.opts.Middlewares, 0)
-		}
-	})
-
-	t.Run("should combine custom azure and custom grafana headers", func(t *testing.T) {
-		route := types.AzRoute{
-			Headers: map[string]string{
-				"AzureHeader": "AzureValue",
-			},
-		}
-		opts := sdkhttpclient.Options{
-			Headers: map[string]string{
-				"GrafanaHeader": "GrafanaValue",
-			},
-		}
-
-		res := map[string]string{
-			"GrafanaHeader": "GrafanaValue",
-			"AzureHeader":   "AzureValue",
-		}
-		_, err := newHTTPClient(route, model, cfg, provider, opts)
-		require.NoError(t, err)
-
-		assert.NotNil(t, provider.opts)
-
-		if provider.opts.Headers != nil {
-			assert.Len(t, provider.opts.Headers, 2)
-			assert.Equal(t, res, provider.opts.Headers)
 		}
 	})
 }

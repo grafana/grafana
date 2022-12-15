@@ -71,7 +71,7 @@ func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (types.DatasourceI
 	pluginContext := httpadapter.PluginConfigFromContext(ctx)
 	i, err := s.im.Get(pluginContext)
 	if err != nil {
-		return types.DatasourceInfo{}, err
+		return types.DatasourceInfo{}, nil
 	}
 	ds, ok := i.(types.DatasourceInfo)
 	if !ok {

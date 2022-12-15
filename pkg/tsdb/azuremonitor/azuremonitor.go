@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -68,9 +67,9 @@ type Service struct {
 	tracer          tracing.Tracer
 }
 
-func getDatasourceService(cfg *setting.Cfg, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string, httpClientOptions httpclient.Options) (types.DatasourceService, error) {
+func getDatasourceService(cfg *setting.Cfg, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
 	route := dsInfo.Routes[routeName]
-	client, err := newHTTPClient(route, dsInfo, cfg, clientProvider, httpClientOptions)
+	client, err := newHTTPClient(route, dsInfo, cfg, clientProvider)
 	if err != nil {
 		return types.DatasourceService{}, err
 	}
@@ -86,15 +85,11 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+
 		jsonDataObj := map[string]interface{}{}
 		err = json.Unmarshal(settings.JSONData, &jsonDataObj)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
-
-		httpClientOpts, err := settings.HTTPClientOptions()
-		if err != nil {
-			return nil, fmt.Errorf("error getting http options: %w", err)
 		}
 
 		azMonitorSettings := types.AzureMonitorSettings{}
@@ -130,7 +125,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		}
 
 		for routeName := range executors {
-			service, err := getDatasourceService(cfg, clientProvider, model, routeName, httpClientOpts)
+			service, err := getDatasourceService(cfg, clientProvider, model, routeName)
 			if err != nil {
 				return nil, err
 			}
@@ -151,7 +146,7 @@ func getCustomizedCloudSettings(cloud string, jsonData json.RawMessage) (types.A
 }
 
 func getAzureRoutes(cloud string, jsonData json.RawMessage) (map[string]types.AzRoute, error) {
-	if cloud == azsettings.AzureCustomized {
+	if _, has := routes[cloud]; !has {
 		customizedCloudSettings, err := getCustomizedCloudSettings(cloud, jsonData)
 		if err != nil {
 			return nil, err
@@ -161,9 +156,9 @@ func getAzureRoutes(cloud string, jsonData json.RawMessage) (map[string]types.Az
 		}
 		azureRoutes := customizedCloudSettings.CustomizedRoutes
 		return azureRoutes, nil
-	} else {
-		return routes[cloud], nil
 	}
+
+	return routes[cloud], nil
 }
 
 type azDatasourceExecutor interface {
