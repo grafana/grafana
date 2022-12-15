@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/google/go-github/github"
+	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/oauth2"
 )
@@ -100,7 +101,7 @@ func githubRepositoryClient(ctx context.Context, token string) githubRepositoryS
 }
 
 func getPublishGithubFlags(ctx *cli.Context) (*publishGithubFlags, error) {
-	metadata, err := GenerateMetadata(ctx)
+	metadata, err := config.GenerateMetadata(ctx)
 	if err != nil {
 		return nil, err
 	}

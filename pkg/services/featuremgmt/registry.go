@@ -389,5 +389,10 @@ var (
 			Description: "Enable using remote cache for user sessions",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "alertingBacktesting",
+			Description: "Rule backtesting API for alerting",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

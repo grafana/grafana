@@ -85,4 +85,5 @@ export interface FeatureToggles {
   secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
   sessionRemoteCache?: boolean;
+  alertingBacktesting?: boolean;
 }

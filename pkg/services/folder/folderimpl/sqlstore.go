@@ -275,7 +275,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQu
 func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error) {
 	height := -1
 	queue := []string{foldrUID}
-	for len(queue) > 0 {
+	for len(queue) > 0 && height <= folder.MaxNestedFolderDepth {
 		length := len(queue)
 		height++
 		for i := 0; i < length; i++ {
@@ -292,6 +292,9 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 				queue = append(queue, f.UID)
 			}
 		}
+	}
+	if height > folder.MaxNestedFolderDepth {
+		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", folder.MaxNestedFolderDepth)
 	}
 	return height, nil
 }
