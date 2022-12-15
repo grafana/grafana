@@ -1,6 +1,6 @@
 import { Scene, SceneTimePicker, SceneFlexLayout, VizPanel } from '../components';
 import { EmbeddedScene } from '../components/Scene';
-import { SceneDataTransformer } from '../core/SceneDataNode';
+import { SceneDataTransformer } from '../core/SceneDataTransformer';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
