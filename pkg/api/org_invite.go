@@ -102,7 +102,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 		return response.Error(500, "Could not generate random string", err)
 	}
 	cmd.Role = inviteDto.Role
-	cmd.RemoteAddr = c.Req.RemoteAddr
+	cmd.RemoteAddr = c.RemoteAddr()
 
 	if err := hs.tempUserService.CreateTempUser(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to save invite to database", err)
@@ -259,7 +259,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 		SkipOrgSetup: true,
 	}
 
-	usr, err := hs.Login.CreateUser(cmd)
+	usr, err := hs.userService.Create(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, user.ErrUserAlreadyExists) {
 			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", completeInvite.Email, completeInvite.Username), err)

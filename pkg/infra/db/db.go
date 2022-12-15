@@ -19,6 +19,7 @@ type DB interface {
 	GetDBType() core.DbType
 	GetSqlxSession() *session.SessionDB
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
+	Quote(value string) string
 }
 
 type Session = sqlstore.DBSession
@@ -29,6 +30,14 @@ var InitTestDB = sqlstore.InitTestDB
 var InitTestDBwithCfg = sqlstore.InitTestDBWithCfg
 var ProvideService = sqlstore.ProvideService
 var NewSqlBuilder = sqlstore.NewSqlBuilder
+
+func IsTestDbSQLite() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); !present || db == "sqlite" {
+		return true
+	}
+
+	return !IsTestDbMySQL() && !IsTestDbPostgres()
+}
 
 func IsTestDbMySQL() bool {
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {

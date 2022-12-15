@@ -16,6 +16,7 @@
 export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
+  returnUnameHeader?: boolean;
   alertingBigTransactions?: boolean;
   promQueryBuilder?: boolean;
   trimDefaults?: boolean;
@@ -42,6 +43,7 @@ export interface FeatureToggles {
   annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
+  k8s?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
@@ -52,27 +54,24 @@ export interface FeatureToggles {
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
-  prometheusBufferedClient?: boolean;
   newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
   autoMigrateGraphPanels?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
   scenes?: boolean;
-  useLegacyHeatmapPanel?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   internationalization?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
-  objectStore?: boolean;
-  traceqlEditor?: boolean;
+  entityStore?: boolean;
   flameGraph?: boolean;
+  cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   increaseInMemDatabaseQueryCache?: boolean;
-  interFont?: boolean;
   newPanelChromeUI?: boolean;
   queryLibrary?: boolean;
   showDashboardValidationWarnings?: boolean;
@@ -82,4 +81,9 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
   elasticsearchBackendMigration?: boolean;
+  datasourceOnboarding?: boolean;
+  secureSocksDatasourceProxy?: boolean;
+  authnService?: boolean;
+  sessionRemoteCache?: boolean;
+  alertingBacktesting?: boolean;
 }

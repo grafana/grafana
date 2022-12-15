@@ -156,13 +156,13 @@ export function transformV2(
 
   // Everything else is processed as time_series result and graph preferredVisualisationType
   const otherFrames = framesWithoutTableHeatmapsAndExemplars.map((dataFrame) => {
-    const df = {
+    const df: DataFrame = {
       ...dataFrame,
       meta: {
         ...dataFrame.meta,
         preferredVisualisationType: 'graph',
       },
-    } as DataFrame;
+    };
     return df;
   });
 
@@ -354,7 +354,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
         title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
         url: '',
         internal: {
-          query: { query: '${__value.raw}', queryType: 'traceId' },
+          query: { query: '${__value.raw}', queryType: 'traceql' },
           datasourceUid: options.datasourceUid,
           datasourceName: dsSettings?.name ?? 'Data source not found',
         },

@@ -1,5 +1,7 @@
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 
+import { config } from '@grafana/runtime';
+
 // Dynamic labels: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html
 export const DYNAMIC_LABEL_PATTERNS = [
   '${DATAPOINT_COUNT}',
@@ -27,6 +29,7 @@ export const DYNAMIC_LABEL_PATTERNS = [
   "${PROP('Region')}",
   "${PROP('Stat')}",
   '${SUM}',
+  ...(config.featureToggles.cloudWatchCrossAccountQuerying ? ["${PROP('AccountLabel')}"] : []),
 ];
 
 export const language: monacoType.languages.IMonarchLanguage = {

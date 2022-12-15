@@ -13,18 +13,17 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+	ptr "github.com/xorcare/pointer"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
 	OpsgenieSendTags    = "tags"
 	OpsgenieSendDetails = "details"
 	OpsgenieSendBoth    = "both"
+	// https://docs.opsgenie.com/docs/alert-api - 130 characters meaning runes.
+	opsGenieMaxMessageLenRunes = 130
 )
 
 var (
@@ -35,21 +34,14 @@ var (
 // OpsgenieNotifier is responsible for sending alert notifications to Opsgenie.
 type OpsgenieNotifier struct {
 	*Base
-	APIKey           string
-	APIUrl           string
-	Message          string
-	Description      string
-	AutoClose        bool
-	OverridePriority bool
-	SendTagsAs       string
-	tmpl             *template.Template
-	log              log.Logger
-	ns               notifications.WebhookSender
-	images           ImageStore
+	tmpl     *template.Template
+	log      log.Logger
+	ns       WebhookSender
+	images   ImageStore
+	settings *opsgenieSettings
 }
 
-type OpsgenieConfig struct {
-	*NotificationChannelConfig
+type opsgenieSettings struct {
 	APIKey           string
 	APIUrl           string
 	Message          string
@@ -57,64 +49,88 @@ type OpsgenieConfig struct {
 	AutoClose        bool
 	OverridePriority bool
 	SendTagsAs       string
+}
+
+func buildOpsgenieSettings(fc FactoryConfig) (*opsgenieSettings, error) {
+	type rawSettings struct {
+		APIKey           string `json:"apiKey,omitempty" yaml:"apiKey,omitempty"`
+		APIUrl           string `json:"apiUrl,omitempty" yaml:"apiUrl,omitempty"`
+		Message          string `json:"message,omitempty" yaml:"message,omitempty"`
+		Description      string `json:"description,omitempty" yaml:"description,omitempty"`
+		AutoClose        *bool  `json:"autoClose,omitempty" yaml:"autoClose,omitempty"`
+		OverridePriority *bool  `json:"overridePriority,omitempty" yaml:"overridePriority,omitempty"`
+		SendTagsAs       string `json:"sendTagsAs,omitempty" yaml:"sendTagsAs,omitempty"`
+	}
+
+	raw := rawSettings{}
+	err := fc.Config.unmarshalSettings(&raw)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+
+	raw.APIKey = fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "apiKey", raw.APIKey)
+	if raw.APIKey == "" {
+		return nil, errors.New("could not find api key property in settings")
+	}
+	if raw.APIUrl == "" {
+		raw.APIUrl = OpsgenieAlertURL
+	}
+
+	if strings.TrimSpace(raw.Message) == "" {
+		raw.Message = DefaultMessageTitleEmbed
+	}
+
+	switch raw.SendTagsAs {
+	case OpsgenieSendTags, OpsgenieSendDetails, OpsgenieSendBoth:
+	case "":
+		raw.SendTagsAs = OpsgenieSendTags
+	default:
+		return nil, fmt.Errorf("invalid value for sendTagsAs: %q", raw.SendTagsAs)
+	}
+
+	if raw.AutoClose == nil {
+		raw.AutoClose = ptr.Bool(true)
+	}
+	if raw.OverridePriority == nil {
+		raw.OverridePriority = ptr.Bool(true)
+	}
+
+	return &opsgenieSettings{
+		APIKey:           raw.APIKey,
+		APIUrl:           raw.APIUrl,
+		Message:          raw.Message,
+		Description:      raw.Description,
+		AutoClose:        *raw.AutoClose,
+		OverridePriority: *raw.OverridePriority,
+		SendTagsAs:       raw.SendTagsAs,
+	}, nil
 }
 
 func OpsgenieFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewOpsgenieConfig(fc.Config, fc.DecryptFunc)
+	notifier, err := NewOpsgenieNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewOpsgenieNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template, fc.DecryptFunc), nil
-}
-
-func NewOpsgenieConfig(config *NotificationChannelConfig, decryptFunc GetDecryptedValueFn) (*OpsgenieConfig, error) {
-	apiKey := decryptFunc(context.Background(), config.SecureSettings, "apiKey", config.Settings.Get("apiKey").MustString())
-	if apiKey == "" {
-		return nil, errors.New("could not find api key property in settings")
-	}
-	sendTagsAs := config.Settings.Get("sendTagsAs").MustString(OpsgenieSendTags)
-	if sendTagsAs != OpsgenieSendTags &&
-		sendTagsAs != OpsgenieSendDetails &&
-		sendTagsAs != OpsgenieSendBoth {
-		return nil, fmt.Errorf("invalid value for sendTagsAs: %q", sendTagsAs)
-	}
-	return &OpsgenieConfig{
-		NotificationChannelConfig: config,
-		APIKey:                    apiKey,
-		APIUrl:                    config.Settings.Get("apiUrl").MustString(OpsgenieAlertURL),
-		AutoClose:                 config.Settings.Get("autoClose").MustBool(true),
-		OverridePriority:          config.Settings.Get("overridePriority").MustBool(true),
-		Message:                   config.Settings.Get("message").MustString(`{{ template "default.title" . }}`),
-		Description:               config.Settings.Get("description").MustString(""),
-		SendTagsAs:                sendTagsAs,
-	}, nil
+	return notifier, nil
 }
 
 // NewOpsgenieNotifier is the constructor for the Opsgenie notifier
-func NewOpsgenieNotifier(config *OpsgenieConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template, fn GetDecryptedValueFn) *OpsgenieNotifier {
-	return &OpsgenieNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
-		}),
-		APIKey:           config.APIKey,
-		APIUrl:           config.APIUrl,
-		Description:      config.Description,
-		Message:          config.Message,
-		AutoClose:        config.AutoClose,
-		OverridePriority: config.OverridePriority,
-		SendTagsAs:       config.SendTagsAs,
-		tmpl:             t,
-		log:              log.New("alerting.notifier." + config.Name),
-		ns:               ns,
-		images:           images,
+func NewOpsgenieNotifier(fc FactoryConfig) (*OpsgenieNotifier, error) {
+	settings, err := buildOpsgenieSettings(fc)
+	if err != nil {
+		return nil, err
 	}
+	return &OpsgenieNotifier{
+		Base:     NewBase(fc.Config),
+		tmpl:     fc.Template,
+		log:      log.New("alerting.notifier.opsgenie"),
+		ns:       fc.NotificationService,
+		images:   fc.ImageStore,
+		settings: settings,
+	}, nil
 }
 
 // Notify sends an alert notification to Opsgenie
@@ -127,7 +143,7 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		return true, nil
 	}
 
-	bodyJSON, url, err := on.buildOpsgenieMessage(ctx, alerts, as)
+	body, url, err := on.buildOpsgenieMessage(ctx, alerts, as)
 	if err != nil {
 		return false, fmt.Errorf("build Opsgenie message: %w", err)
 	}
@@ -138,50 +154,41 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		return true, nil
 	}
 
-	body, err := json.Marshal(bodyJSON)
-	if err != nil {
-		return false, fmt.Errorf("marshal json: %w", err)
-	}
-
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        url,
 		Body:       string(body),
 		HttpMethod: http.MethodPost,
 		HttpHeader: map[string]string{
 			"Content-Type":  "application/json",
-			"Authorization": fmt.Sprintf("GenieKey %s", on.APIKey),
+			"Authorization": fmt.Sprintf("GenieKey %s", on.settings.APIKey),
 		},
 	}
 
-	if err := on.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := on.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Opsgenie: %w", err)
 	}
 
 	return true, nil
 }
 
-func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts model.Alerts, as []*types.Alert) (payload *simplejson.Json, apiURL string, err error) {
+func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts model.Alerts, as []*types.Alert) (payload []byte, apiURL string, err error) {
 	key, err := notify.ExtractGroupKey(ctx)
 	if err != nil {
 		return nil, "", err
 	}
 
-	var (
-		alias    = key.Hash()
-		bodyJSON = simplejson.New()
-		details  = simplejson.New()
-	)
-
 	if alerts.Status() == model.AlertResolved {
 		// For resolved notification, we only need the source.
 		// Don't need to run other templates.
-		if on.AutoClose {
-			bodyJSON := simplejson.New()
-			bodyJSON.Set("source", "Grafana")
-			apiURL = fmt.Sprintf("%s/%s/close?identifierType=alias", on.APIUrl, alias)
-			return bodyJSON, apiURL, nil
+		if !on.settings.AutoClose { // TODO This should be handled by DisableResolveMessage?
+			return nil, "", nil
 		}
-		return nil, "", nil
+		msg := opsGenieCloseMessage{
+			Source: "Grafana",
+		}
+		data, err := json.Marshal(msg)
+		apiURL = fmt.Sprintf("%s/%s/close?identifierType=alias", on.settings.APIUrl, key.Hash())
+		return data, apiURL, err
 	}
 
 	ruleURL := joinUrlPath(on.tmpl.ExternalURL.String(), "/alerting/list", on.log)
@@ -189,17 +196,12 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	var tmplErr error
 	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
 
-	titleTmpl := on.Message
-	if strings.TrimSpace(titleTmpl) == "" {
-		titleTmpl = `{{ template "default.title" . }}`
+	message, truncated := TruncateInRunes(tmpl(on.settings.Message), opsGenieMaxMessageLenRunes)
+	if truncated {
+		on.log.Warn("Truncated message", "alert", key, "max_runes", opsGenieMaxMessageLenRunes)
 	}
 
-	title := tmpl(titleTmpl)
-	if len(title) > 130 {
-		title = title[:127] + "..."
-	}
-
-	description := tmpl(on.Description)
+	description := tmpl(on.settings.Description)
 	if strings.TrimSpace(description) == "" {
 		description = fmt.Sprintf(
 			"%s\n%s\n\n%s",
@@ -215,8 +217,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	lbls := make(map[string]string, len(data.CommonLabels))
 	for k, v := range data.CommonLabels {
 		lbls[k] = tmpl(v)
-
-		if k == "og_priority" {
+		if k == "og_priority" && on.settings.OverridePriority {
 			if ValidPriorities[v] {
 				priority = v
 			}
@@ -229,20 +230,15 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		tmplErr = nil
 	}
 
-	bodyJSON.Set("message", title)
-	bodyJSON.Set("source", "Grafana")
-	bodyJSON.Set("alias", alias)
-	bodyJSON.Set("description", description)
-	details.Set("url", ruleURL)
-
+	details := make(map[string]interface{})
+	details["url"] = ruleURL
 	if on.sendDetails() {
 		for k, v := range lbls {
-			details.Set(k, v)
+			details[k] = v
 		}
-
-		images := []string{}
+		var images []string
 		_ = withStoredImages(ctx, on.log, on.images,
-			func(_ int, image ngmodels.Image) error {
+			func(_ int, image Image) error {
 				if len(image.URL) == 0 {
 					return nil
 				}
@@ -252,7 +248,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 			as...)
 
 		if len(images) != 0 {
-			details.Set("image_urls", images)
+			details["image_urls"] = images
 		}
 	}
 
@@ -264,19 +260,24 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	}
 	sort.Strings(tags)
 
-	if priority != "" && on.OverridePriority {
-		bodyJSON.Set("priority", priority)
+	result := opsGenieCreateMessage{
+		Alias:       key.Hash(),
+		Description: description,
+		Tags:        tags,
+		Source:      "Grafana",
+		Message:     message,
+		Details:     details,
+		Priority:    priority,
 	}
 
-	bodyJSON.Set("tags", tags)
-	bodyJSON.Set("details", details)
-	apiURL = tmpl(on.APIUrl)
+	apiURL = tmpl(on.settings.APIUrl)
 	if tmplErr != nil {
-		on.log.Warn("failed to template Opsgenie URL", "error", tmplErr.Error(), "fallback", on.APIUrl)
-		apiURL = on.APIUrl
+		on.log.Warn("failed to template Opsgenie URL", "error", tmplErr.Error(), "fallback", on.settings.APIUrl)
+		apiURL = on.settings.APIUrl
 	}
 
-	return bodyJSON, apiURL, nil
+	b, err := json.Marshal(result)
+	return b, apiURL, err
 }
 
 func (on *OpsgenieNotifier) SendResolved() bool {
@@ -284,9 +285,34 @@ func (on *OpsgenieNotifier) SendResolved() bool {
 }
 
 func (on *OpsgenieNotifier) sendDetails() bool {
-	return on.SendTagsAs == OpsgenieSendDetails || on.SendTagsAs == OpsgenieSendBoth
+	return on.settings.SendTagsAs == OpsgenieSendDetails || on.settings.SendTagsAs == OpsgenieSendBoth
 }
 
 func (on *OpsgenieNotifier) sendTags() bool {
-	return on.SendTagsAs == OpsgenieSendTags || on.SendTagsAs == OpsgenieSendBoth
+	return on.settings.SendTagsAs == OpsgenieSendTags || on.settings.SendTagsAs == OpsgenieSendBoth
+}
+
+type opsGenieCreateMessage struct {
+	Alias       string                           `json:"alias"`
+	Message     string                           `json:"message"`
+	Description string                           `json:"description,omitempty"`
+	Details     map[string]interface{}           `json:"details"`
+	Source      string                           `json:"source"`
+	Responders  []opsGenieCreateMessageResponder `json:"responders,omitempty"`
+	Tags        []string                         `json:"tags"`
+	Note        string                           `json:"note,omitempty"`
+	Priority    string                           `json:"priority,omitempty"`
+	Entity      string                           `json:"entity,omitempty"`
+	Actions     []string                         `json:"actions,omitempty"`
+}
+
+type opsGenieCreateMessageResponder struct {
+	ID       string `json:"id,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Username string `json:"username,omitempty"`
+	Type     string `json:"type"` // team, user, escalation, schedule etc.
+}
+
+type opsGenieCloseMessage struct {
+	Source string `json:"source"`
 }

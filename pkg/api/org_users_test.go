@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
@@ -37,11 +38,17 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	sqlStore.Cfg.AutoAssignOrg = true
 	sqlStore.Cfg.AutoAssignOrgId = int(testOrgID)
 
-	_, err := sqlStore.CreateUser(context.Background(), user.CreateUserCommand{Email: "testUser@grafana.com", Login: testUserLogin})
+	quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 	require.NoError(t, err)
-	_, err = sqlStore.CreateUser(context.Background(), user.CreateUserCommand{Email: "user1@grafana.com", Login: "user1"})
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService)
 	require.NoError(t, err)
-	_, err = sqlStore.CreateUser(context.Background(), user.CreateUserCommand{Email: "user2@grafana.com", Login: "user2"})
+
+	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: "testUser@grafana.com", Login: testUserLogin})
+	require.NoError(t, err)
+	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: "user1@grafana.com", Login: "user1"})
+	require.NoError(t, err)
+	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: "user2@grafana.com", Login: "user2"})
 	require.NoError(t, err)
 }
 
@@ -331,19 +338,21 @@ var (
 func setupOrgUsersDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, orgService org.Service) {
 	t.Helper()
 
-	var err error
+	quotaService := quotaimpl.ProvideService(db, db.Cfg)
+	usrSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService)
+	require.NoError(t, err)
 
-	_, err = db.CreateUser(context.Background(), user.CreateUserCommand{Email: testServerAdminViewer.Email, SkipOrgSetup: true, Login: testServerAdminViewer.Login})
+	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: testServerAdminViewer.Email, SkipOrgSetup: true, Login: testServerAdminViewer.Login})
 	require.NoError(t, err)
-	_, err = db.CreateUser(context.Background(), user.CreateUserCommand{Email: testAdminOrg2.Email, SkipOrgSetup: true, Login: testAdminOrg2.Login})
+	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: testAdminOrg2.Email, SkipOrgSetup: true, Login: testAdminOrg2.Login})
 	require.NoError(t, err)
-	_, err = db.CreateUser(context.Background(), user.CreateUserCommand{Email: testEditorOrg1.Email, SkipOrgSetup: true, Login: testEditorOrg1.Login})
+	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: testEditorOrg1.Email, SkipOrgSetup: true, Login: testEditorOrg1.Login})
 	require.NoError(t, err)
 
 	// Create both orgs with server admin
-	err = db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: testServerAdminViewer.OrgName, UserId: testServerAdminViewer.UserID})
+	_, err = orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: testServerAdminViewer.OrgName, UserID: testServerAdminViewer.UserID})
 	require.NoError(t, err)
-	err = db.CreateOrg(context.Background(), &models.CreateOrgCommand{Name: testAdminOrg2.OrgName, UserId: testServerAdminViewer.UserID})
+	_, err = orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: testAdminOrg2.OrgName, UserID: testServerAdminViewer.UserID})
 	require.NoError(t, err)
 
 	err = orgService.AddOrgUser(context.Background(), &org.AddOrgUserCommand{LoginOrEmail: testAdminOrg2.Login, Role: testAdminOrg2.OrgRole, OrgID: testAdminOrg2.OrgID, UserID: testAdminOrg2.UserID})
@@ -377,10 +386,11 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 			enableAccessControl: true,
 			expectedCode:        http.StatusOK,
 			expectedMetadata: map[string]bool{
-				"org.users:write":  true,
-				"org.users:add":    true,
-				"org.users:read":   true,
-				"org.users:remove": true},
+				"org.users:write":        true,
+				"org.users:add":          true,
+				"org.users:read":         true,
+				"org.users:remove":       true,
+				"users.permissions:read": true},
 			user:      testServerAdminViewer,
 			targetOrg: testServerAdminViewer.OrgID,
 		},
@@ -728,6 +738,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			var err error
 			sc := setupHTTPServer(t, true, func(hs *HTTPServer) {
 				hs.tempUserService = tempuserimpl.ProvideService(hs.SQLStore)
+				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, setting.NewCfg(), quotatest.New(false, nil))
 				hs.userService, err = userimpl.ProvideService(
 					hs.SQLStore, nil, setting.NewCfg(), teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), setting.NewCfg()), localcache.ProvideService(), quotatest.New(false, nil))
 				require.NoError(t, err)

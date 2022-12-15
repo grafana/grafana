@@ -1,9 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/calculation-types/
-  - /docs/grafana/latest/panels/calculations-list/
-  - /docs/grafana/latest/panels/reference-calculation-types/
-  - /docs/grafana/latest/panels-visualizations/calculation-types/
+  - ../panels/calculation-types/
+  - ../panels/calculations-list/
+  - ../panels/reference-calculation-types/
 title: Calculation types
 weight: 1100
 ---

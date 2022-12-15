@@ -10,19 +10,24 @@ import (
 	"mime/multipart"
 	"os"
 	"strconv"
+	"strings"
 
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
 	pushoverMaxFileSize = 1 << 21 // 2MB
+	// https://pushover.net/api#limits - 250 characters or runes.
+	pushoverMaxTitleLenRunes = 250
+	// https://pushover.net/api#limits - 1024 characters or runes.
+	pushoverMaxMessageLenRunes = 1024
+	// https://pushover.net/api#limits - 512 characters or runes.
+	pushoverMaxURLLenRunes = 512
 )
 
 var (
@@ -36,7 +41,7 @@ type PushoverNotifier struct {
 	tmpl     *template.Template
 	log      log.Logger
 	images   ImageStore
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	settings pushoverSettings
 }
 
@@ -141,14 +146,7 @@ func NewPushoverNotifier(fc FactoryConfig) (*PushoverNotifier, error) {
 		return nil, err
 	}
 	return &PushoverNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-			SecureSettings:        fc.Config.SecureSettings,
-		}),
+		Base:     NewBase(fc.Config),
 		tmpl:     fc.Template,
 		log:      log.New("alerting.notifier.pushover"),
 		images:   fc.ImageStore,
@@ -165,14 +163,14 @@ func (pn *PushoverNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		return false, err
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        PushoverEndpoint,
 		HttpMethod: "POST",
 		HttpHeader: headers,
 		Body:       uploadBody.String(),
 	}
 
-	if err := pn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := pn.ns.SendWebhook(ctx, cmd); err != nil {
 		pn.log.Error("failed to send pushover notification", "error", err, "webhook", pn.Name)
 		return false, err
 	}
@@ -184,6 +182,11 @@ func (pn *PushoverNotifier) SendResolved() bool {
 }
 
 func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Alert) (map[string]string, bytes.Buffer, error) {
+	key, err := notify.ExtractGroupKey(ctx)
+	if err != nil {
+		return nil, bytes.Buffer{}, err
+	}
+
 	b := bytes.Buffer{}
 	w := multipart.NewWriter(&b)
 
@@ -204,6 +207,27 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 
 	if err := w.WriteField("token", pn.settings.apiToken); err != nil {
 		return nil, b, fmt.Errorf("failed to write the token: %w", err)
+	}
+
+	title, truncated := TruncateInRunes(tmpl(pn.settings.title), pushoverMaxTitleLenRunes)
+	if truncated {
+		pn.log.Warn("Truncated title", "incident", key, "max_runes", pushoverMaxTitleLenRunes)
+	}
+	message := tmpl(pn.settings.message)
+	message, truncated = TruncateInRunes(message, pushoverMaxMessageLenRunes)
+	if truncated {
+		pn.log.Warn("Truncated message", "incident", key, "max_runes", pushoverMaxMessageLenRunes)
+	}
+	message = strings.TrimSpace(message)
+	if message == "" {
+		// Pushover rejects empty messages.
+		message = "(no details)"
+	}
+
+	supplementaryURL := joinUrlPath(pn.tmpl.ExternalURL.String(), "/alerting/list", pn.log)
+	supplementaryURL, truncated = TruncateInRunes(supplementaryURL, pushoverMaxURLLenRunes)
+	if truncated {
+		pn.log.Warn("Truncated URL", "incident", key, "max_runes", pushoverMaxURLLenRunes)
 	}
 
 	status := types.Alerts(as...).Status()
@@ -231,12 +255,11 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 		}
 	}
 
-	if err := w.WriteField("title", tmpl(pn.settings.title)); err != nil {
+	if err := w.WriteField("title", title); err != nil {
 		return nil, b, fmt.Errorf("failed to write the title: %w", err)
 	}
 
-	ruleURL := joinUrlPath(pn.tmpl.ExternalURL.String(), "/alerting/list", pn.log)
-	if err := w.WriteField("url", ruleURL); err != nil {
+	if err := w.WriteField("url", supplementaryURL); err != nil {
 		return nil, b, fmt.Errorf("failed to write the URL: %w", err)
 	}
 
@@ -244,43 +267,11 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 		return nil, b, fmt.Errorf("failed to write the URL title: %w", err)
 	}
 
-	if err := w.WriteField("message", tmpl(pn.settings.message)); err != nil {
+	if err := w.WriteField("message", message); err != nil {
 		return nil, b, fmt.Errorf("failed write the message: %w", err)
 	}
 
-	// Pushover supports at most one image attachment with a maximum size of pushoverMaxFileSize.
-	// If the image is larger than pushoverMaxFileSize then return an error.
-	_ = withStoredImages(ctx, pn.log, pn.images, func(index int, image ngmodels.Image) error {
-		f, err := os.Open(image.Path)
-		if err != nil {
-			return fmt.Errorf("failed to open the image: %w", err)
-		}
-		defer func() {
-			if err := f.Close(); err != nil {
-				pn.log.Error("failed to close the image", "file", image.Path)
-			}
-		}()
-
-		fileInfo, err := f.Stat()
-		if err != nil {
-			return fmt.Errorf("failed to stat the image: %w", err)
-		}
-
-		if fileInfo.Size() > pushoverMaxFileSize {
-			return fmt.Errorf("image would exceeded maximum file size: %d", fileInfo.Size())
-		}
-
-		fw, err := w.CreateFormFile("attachment", image.Path)
-		if err != nil {
-			return fmt.Errorf("failed to create form file for the image: %w", err)
-		}
-
-		if _, err = io.Copy(fw, f); err != nil {
-			return fmt.Errorf("failed to copy the image to the form file: %w", err)
-		}
-
-		return ErrImagesDone
-	}, as...)
+	pn.writeImageParts(ctx, w, as...)
 
 	var sound string
 	if status == model.AlertResolved {
@@ -311,4 +302,40 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	return headers, b, nil
+}
+
+func (pn *PushoverNotifier) writeImageParts(ctx context.Context, w *multipart.Writer, as ...*types.Alert) {
+	// Pushover supports at most one image attachment with a maximum size of pushoverMaxFileSize.
+	// If the image is larger than pushoverMaxFileSize then return an error.
+	_ = withStoredImages(ctx, pn.log, pn.images, func(index int, image Image) error {
+		f, err := os.Open(image.Path)
+		if err != nil {
+			return fmt.Errorf("failed to open the image: %w", err)
+		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				pn.log.Error("failed to close the image", "file", image.Path)
+			}
+		}()
+
+		fileInfo, err := f.Stat()
+		if err != nil {
+			return fmt.Errorf("failed to stat the image: %w", err)
+		}
+
+		if fileInfo.Size() > pushoverMaxFileSize {
+			return fmt.Errorf("image would exceeded maximum file size: %d", fileInfo.Size())
+		}
+
+		fw, err := w.CreateFormFile("attachment", image.Path)
+		if err != nil {
+			return fmt.Errorf("failed to create form file for the image: %w", err)
+		}
+
+		if _, err = io.Copy(fw, f); err != nil {
+			return fmt.Errorf("failed to copy the image to the form file: %w", err)
+		}
+
+		return ErrImagesDone
+	}, as...)
 }

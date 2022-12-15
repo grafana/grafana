@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/configuration/
-  - /docs/grafana/latest/installation/configuration/
-  - /docs/grafana/latest/setup-grafana/configure-grafana/
+  - ../administration/configuration/
+  - ../installation/configuration/
 description: Configuration documentation
 title: Configure Grafana
 weight: 200
@@ -289,6 +288,17 @@ For example, given a cdn url like `https://cdn.myserver.com` grafana will try to
 
 Sets the maximum time using a duration format (5s/5m/5ms) before timing out read of an incoming request and closing idle connections.
 `0` means there is no timeout for reading the request.
+
+<hr />
+
+## [server.custom_response_headers]
+
+This setting enables you to specify additional headers that the server adds to HTTP(S) responses.
+
+```
+exampleHeader1 = exampleValue1
+exampleHeader2 = exampleValue2
+```
 
 <hr />
 
@@ -759,6 +769,10 @@ Text used as placeholder text on login page for password input.
 ### default_theme
 
 Set the default UI theme: `dark` or `light`. Default is `dark`.
+
+### default_language
+
+This setting configures the default UI language, which must be a supported IETF language tag, such as `en-US`.
 
 ### home_page
 

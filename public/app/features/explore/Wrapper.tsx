@@ -3,6 +3,7 @@ import { inRange } from 'lodash';
 import React, { useEffect, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
 
+import { isTruthy } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert, usePanelContext } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
@@ -10,7 +11,6 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { isTruthy } from 'app/core/utils/types';
 import { useDispatch, useSelector } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 
@@ -26,10 +26,8 @@ const styles = {
     width: 100%;
     flex-grow: 1;
     min-height: 0;
-  `,
-  exploreWrapper: css`
-    display: flex;
     height: 100%;
+    position: relative;
   `,
 };
 
@@ -135,35 +133,34 @@ function Wrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   return (
     <div className={styles.pageScrollbarWrapper}>
       <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
-      <div className={styles.exploreWrapper}>
-        <SplitPaneWrapper
-          splitOrientation="vertical"
-          paneSize={widthCalc}
-          minSize={minWidth}
-          maxSize={minWidth * -1}
-          primary="second"
-          splitVisible={hasSplit}
-          paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column', overflowY: 'scroll' }}
-          onDragFinished={(size) => {
-            if (size) {
-              updateSplitSize(size);
-            }
-          }}
-        >
+
+      <SplitPaneWrapper
+        splitOrientation="vertical"
+        paneSize={widthCalc}
+        minSize={minWidth}
+        maxSize={minWidth * -1}
+        primary="second"
+        splitVisible={hasSplit}
+        paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column', overflowY: 'scroll' }}
+        onDragFinished={(size) => {
+          if (size) {
+            updateSplitSize(size);
+          }
+        }}
+      >
+        <ErrorBoundaryAlert style="page">
+          <ExplorePaneContainer exploreId={ExploreId.left} urlQuery={queryParams.left} eventBus={eventBus.current} />
+        </ErrorBoundaryAlert>
+        {hasSplit && (
           <ErrorBoundaryAlert style="page">
-            <ExplorePaneContainer exploreId={ExploreId.left} urlQuery={queryParams.left} eventBus={eventBus.current} />
+            <ExplorePaneContainer
+              exploreId={ExploreId.right}
+              urlQuery={queryParams.right}
+              eventBus={eventBus.current}
+            />
           </ErrorBoundaryAlert>
-          {hasSplit && (
-            <ErrorBoundaryAlert style="page">
-              <ExplorePaneContainer
-                exploreId={ExploreId.right}
-                urlQuery={queryParams.right}
-                eventBus={eventBus.current}
-              />
-            </ErrorBoundaryAlert>
-          )}
-        </SplitPaneWrapper>
-      </div>
+        )}
+      </SplitPaneWrapper>
     </div>
   );
 }

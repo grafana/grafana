@@ -302,6 +302,18 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         <NodeGraphEditor onChange={(val: NodesQuery) => onChange({ ...query, nodes: val })} query={query} />
       )}
       {scenarioId === 'server_error_500' && <ErrorEditor onChange={onUpdate} query={query} ds={datasource} />}
+      {scenarioId === 'trace' && (
+        <InlineField labelWidth={14} label="Span count">
+          <Input
+            type="number"
+            name="spanCount"
+            value={query.spanCount}
+            width={32}
+            onChange={onInputChange}
+            placeholder="10"
+          />
+        </InlineField>
+      )}
 
       {description && <p>{description}</p>}
     </>
