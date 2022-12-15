@@ -239,7 +239,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   waitingForDatasourceToLoad = (): boolean => {
-    // if we not yet have lodade the datasource in state the
+    // if we not yet have loaded the datasource in state the
     // ds in props and the ds in state will have different values.
     return this.props.dataSource.uid !== this.state.datasource?.uid;
   };
