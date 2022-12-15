@@ -51,10 +51,9 @@ export function readCSV(csv: string, options?: CSVOptions): MutableDataFrame[] {
 
 export function readSpreadsheet(file: ArrayBuffer): DataFrame[] {
   const wb = read(file, { type: 'buffer' });
-  const sheetName = wb.SheetNames[0];
-  const sheetJson = utils.sheet_to_json(wb.Sheets[sheetName]);
-
-  return [toDataFrame(sheetJson)];
+  return wb.SheetNames.map((name) => {
+    return toDataFrame(utils.sheet_to_json(wb.Sheets[name]));
+  });
 }
 
 enum ParseState {

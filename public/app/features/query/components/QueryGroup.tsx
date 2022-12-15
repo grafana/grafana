@@ -10,7 +10,6 @@ import {
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
-  dateTimeParse,
   getDefaultTimeRange,
   GrafanaTheme2,
   LoadingState,
@@ -472,9 +471,11 @@ class UnThemedQueryGroup extends PureComponent<Props, State> {
           if (typeof result === 'string') {
             return;
           }
-          const dataFrame = readSpreadsheet(result)[0];
-          const dataframeJson = dataFrameToJSON(dataFrame);
-          snapshot.push(dataframeJson);
+          const dataFrames = readSpreadsheet(result);
+          dataFrames.forEach((df) => {
+            const dataframeJson = dataFrameToJSON(df);
+            snapshot.push(dataframeJson);
+          });
         }
         // TODO only update state when all the files are loaded
         this.props.onRunQueries();
