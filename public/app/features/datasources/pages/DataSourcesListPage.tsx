@@ -7,7 +7,7 @@ import { DataSourceAddButton } from '../components/DataSourceAddButton';
 import { DataSourcesList } from '../components/DataSourcesList';
 
 export function DataSourcesListPage() {
-  const actions = config.featureToggles.topnav ? DataSourceAddButton() : undefined;
+  const actions = config.featureToggles.topnav ? <DataSourceAddButton /> : undefined;
   return (
     <Page navId="datasources" actions={actions}>
       <Page.Contents>
