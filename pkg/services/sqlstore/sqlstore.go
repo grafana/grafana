@@ -188,6 +188,10 @@ func (ss *SQLStore) GetDBType() core.DbType {
 	return ss.engine.Dialect().DBType()
 }
 
+func (ss *SQLStore) GetEngine() *xorm.Engine {
+	return ss.engine
+}
+
 func (ss *SQLStore) Bus() bus.Bus {
 	return ss.bus
 }
