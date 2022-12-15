@@ -38,6 +38,10 @@ export const Configuration = ({
             <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
           </Layout>
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
+            <Label>Allow viewers to change time range</Label>
+            <Switch {...register('isTimeRangeEnabled')} data-testid={selectors.EnableTimeRangeSwitch} />
+          </Layout>
+          <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
             <Label description="Show annotations on public dashboard">Show annotations</Label>
             <Switch
               {...register('isAnnotationsEnabled')}
