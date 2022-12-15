@@ -322,7 +322,7 @@ export const DashNav = React.memo<Props>((props) => {
       return [renderPlaylistControls(), renderTimeControls()];
     }
 
-    if (props.isPublic) {
+    if (props.isPublic && props.dashboard.meta.publicDashboardTimeSelectionEnabled) {
       return [renderTimeControls()];
     }
 
