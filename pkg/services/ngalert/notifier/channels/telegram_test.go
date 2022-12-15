@@ -111,6 +111,25 @@ func TestTelegramNotifier(t *testing.T) {
 				"parse_mode": "test"
 			}`,
 			expInitError: "unknown parse_mode, must be Markdown, MarkdownV2, HTML or None",
+		}, {
+			name: "Fallback to default template if custom results in empty string",
+			settings: `{
+				"bottoken": "abcdefgh0123456789",
+				"chatid": "someid",
+				"message": "{{ .CommonLabels.myLabel }}"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels: model.LabelSet{"alertname": "test"},
+					},
+				},
+			},
+			expMsg: map[string]string{
+				"parse_mode": "HTML",
+				"text":       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = test\nAnnotations:\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dtest\n",
+			},
+			expMsgError: nil,
 		},
 	}
 
