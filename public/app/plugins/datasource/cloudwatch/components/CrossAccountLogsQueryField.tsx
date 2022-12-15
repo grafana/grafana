@@ -155,7 +155,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
           <Button onClick={handleApply} type="button" className={styles.addBtn}>
             Add log groups
           </Button>
-          <Button onClick={handleCancel} type="button">
+          <Button onClick={handleCancel} variant="secondary" type="button">
             Cancel
           </Button>
         </div>
