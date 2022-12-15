@@ -352,7 +352,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const inspectPanel = this.getInspectPanel();
     const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview;
 
-    const toolbar = kioskMode !== KioskMode.Full && !queryParams.editview && (
+    const toolbar = ((kioskMode !== KioskMode.Full && !queryParams.editview) || isPublic) && (
       <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
         <DashNav
           dashboard={dashboard}
@@ -363,6 +363,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           kioskMode={kioskMode}
           hideTimePicker={dashboard.timepicker.hidden}
           shareModalActiveTab={this.props.queryParams.shareView}
+          isPublic={!!isPublic}
         />
       </header>
     );
