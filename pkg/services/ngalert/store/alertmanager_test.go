@@ -114,6 +114,21 @@ func TestIntegrationAlertManagerStore(t *testing.T) {
 		require.Equal(t, get.Result.AlertmanagerConfiguration, "my-config")
 	})
 
+	t.Run("SaveAlertmanagerConfigurationWithCallback saves the ID of the created record in the cmd", func(t *testing.T) {
+		_, _ = setupConfigInOrg(t, "my-config", 1, store)
+		callback := func() error { return nil }
+		cmd := buildSaveConfigCmd(t, "my-config-changed", 1)
+
+		err := store.SaveAlertmanagerConfigurationWithCallback(context.Background(), &cmd, callback)
+
+		require.NoError(t, err)
+		require.NotEqual(t, cmd.ResultID, 0)
+		get := &models.GetLatestAlertmanagerConfigurationQuery{OrgID: 1}
+		err = store.GetLatestAlertmanagerConfiguration(context.Background(), get)
+		require.NoError(t, err)
+		require.Equal(t, cmd.ResultID, get.Result.ID)
+	})
+
 	t.Run("UpdateAlertmanagerConfiguration returns error if existing config does not exist", func(t *testing.T) {
 		cmd := buildSaveConfigCmd(t, "my-config", 1234)
 		cmd.FetchedConfigurationHash = fmt.Sprintf("%x", md5.Sum([]byte("my-config")))

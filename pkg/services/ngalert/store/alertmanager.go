@@ -79,12 +79,9 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			Default:                   cmd.Default,
 			OrgID:                     cmd.OrgID,
 		}
-		if _, err := sess.Insert(config); err != nil {
+		if _, err := sess.Insert(&config); err != nil {
 			return err
 		}
-
-		// Add the created ID to the command.
-		cmd.ResultID = config.ID
 
 		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
 			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
@@ -93,6 +90,8 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			return err
 		}
 
+		// After the callback succeeds, add the created ID to the command.
+		cmd.ResultID = config.ID
 		return nil
 	})
 }
