@@ -114,6 +114,7 @@ func TestLineNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				DecryptFunc:         decryptFn,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 			pn, err := newLineNotifier(fc)
 			if c.expInitError != "" {

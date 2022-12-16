@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -19,7 +18,7 @@ import (
 // alert notifications to Kafka.
 type KafkaNotifier struct {
 	*Base
-	log      log.Logger
+	log      Logger
 	images   ImageStore
 	ns       WebhookSender
 	tmpl     *template.Template
@@ -58,14 +57,8 @@ func newKafkaNotifier(fc FactoryConfig) (*KafkaNotifier, error) {
 	details := fc.Config.Settings.Get("details").MustString(DefaultMessageEmbed)
 
 	return &KafkaNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
-		log:      log.New("alerting.notifier.kafka"),
+		Base:     NewBase(fc.Config),
+		log:      fc.Logger,
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
@@ -157,7 +150,7 @@ func buildState(as ...*types.Alert) models.AlertStateType {
 	return models.AlertStateAlerting
 }
 
-func buildContextImages(ctx context.Context, l log.Logger, imageStore ImageStore, as ...*types.Alert) []interface{} {
+func buildContextImages(ctx context.Context, l Logger, imageStore ImageStore, as ...*types.Alert) []interface{} {
 	var contexts []interface{}
 	_ = withStoredImages(ctx, l, imageStore,
 		func(_ int, image Image) error {

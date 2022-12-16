@@ -14,10 +14,11 @@ type FactoryConfig struct {
 	ImageStore          ImageStore
 	// Used to retrieve image URLs for messages, or data for uploads.
 	Template *template.Template
+	Logger   Logger
 }
 
 func NewFactoryConfig(config *NotificationChannelConfig, notificationService NotificationSender,
-	decryptFunc GetDecryptedValueFn, template *template.Template, imageStore ImageStore) (FactoryConfig, error) {
+	decryptFunc GetDecryptedValueFn, template *template.Template, imageStore ImageStore, loggerFactory LoggerFactory) (FactoryConfig, error) {
 	if config.Settings == nil {
 		return FactoryConfig{}, errors.New("no settings supplied")
 	}
@@ -36,6 +37,7 @@ func NewFactoryConfig(config *NotificationChannelConfig, notificationService Not
 		DecryptFunc:         decryptFunc,
 		Template:            template,
 		ImageStore:          imageStore,
+		Logger:              loggerFactory("ngalert.notifier." + config.Type),
 	}, nil
 }
 

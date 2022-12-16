@@ -11,9 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 var (
@@ -24,7 +21,7 @@ var (
 // alert notifications to Threema.
 type ThreemaNotifier struct {
 	*Base
-	log      log.Logger
+	log      Logger
 	images   ImageStore
 	ns       WebhookSender
 	tmpl     *template.Template
@@ -95,14 +92,8 @@ func NewThreemaNotifier(fc FactoryConfig) (*ThreemaNotifier, error) {
 		return nil, err
 	}
 	return &ThreemaNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
-		log:      log.New("alerting.notifier.threema"),
+		Base:     NewBase(fc.Config),
+		log:      fc.Logger,
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,

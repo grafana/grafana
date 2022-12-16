@@ -10,9 +10,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 const (
@@ -250,7 +247,7 @@ func buildTeamsSettings(fc FactoryConfig) (teamsSettings, error) {
 type TeamsNotifier struct {
 	*Base
 	tmpl     *template.Template
-	log      log.Logger
+	log      Logger
 	ns       WebhookSender
 	images   ImageStore
 	settings teamsSettings
@@ -263,14 +260,8 @@ func NewTeamsNotifier(fc FactoryConfig) (*TeamsNotifier, error) {
 		return nil, err
 	}
 	return &TeamsNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
-		log:      log.New("alerting.notifier.teams"),
+		Base:     NewBase(fc.Config),
+		log:      fc.Logger,
 		ns:       fc.NotificationService,
 		images:   fc.ImageStore,
 		tmpl:     fc.Template,

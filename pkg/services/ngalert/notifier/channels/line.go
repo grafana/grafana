@@ -9,9 +9,6 @@ import (
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 var (
@@ -22,7 +19,7 @@ var (
 // alert notifications to LINE.
 type LineNotifier struct {
 	*Base
-	log      log.Logger
+	log      Logger
 	ns       WebhookSender
 	tmpl     *template.Template
 	settings lineSettings
@@ -55,14 +52,8 @@ func newLineNotifier(fc FactoryConfig) (*LineNotifier, error) {
 	description := fc.Config.Settings.Get("description").MustString(DefaultMessageEmbed)
 
 	return &LineNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
-		log:      log.New("alerting.notifier.line"),
+		Base:     NewBase(fc.Config),
+		log:      fc.Logger,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
 		settings: lineSettings{token: token, title: title, description: description},

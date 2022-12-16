@@ -11,9 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"golang.org/x/sync/singleflight"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 var weComEndpoint = "https://qyapi.weixin.qq.com"
@@ -110,15 +107,9 @@ func buildWecomNotifier(factoryConfig FactoryConfig) (*WeComNotifier, error) {
 		return nil, err
 	}
 	return &WeComNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   factoryConfig.Config.UID,
-			Name:                  factoryConfig.Config.Name,
-			Type:                  factoryConfig.Config.Type,
-			DisableResolveMessage: factoryConfig.Config.DisableResolveMessage,
-			Settings:              factoryConfig.Config.Settings,
-		}),
+		Base:     NewBase(factoryConfig.Config),
 		tmpl:     factoryConfig.Template,
-		log:      log.New("alerting.notifier.wecom"),
+		log:      factoryConfig.Logger,
 		ns:       factoryConfig.NotificationService,
 		settings: settings,
 	}, nil
@@ -128,7 +119,7 @@ func buildWecomNotifier(factoryConfig FactoryConfig) (*WeComNotifier, error) {
 type WeComNotifier struct {
 	*Base
 	tmpl        *template.Template
-	log         log.Logger
+	log         Logger
 	ns          WebhookSender
 	settings    wecomSettings
 	tok         *WeComAccessToken

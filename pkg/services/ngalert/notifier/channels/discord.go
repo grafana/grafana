@@ -17,14 +17,12 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DiscordNotifier struct {
 	*Base
-	log      log.Logger
+	log      Logger
 	ns       WebhookSender
 	images   ImageStore
 	tmpl     *template.Template
@@ -67,15 +65,8 @@ func newDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
 	}
 
 	return &DiscordNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-			SecureSettings:        fc.Config.SecureSettings,
-		}),
-		log:    log.New("alerting.notifier.discord"),
+		Base:   NewBase(fc.Config),
+		log:    fc.Logger,
 		ns:     fc.NotificationService,
 		images: fc.ImageStore,
 		tmpl:   fc.Template,

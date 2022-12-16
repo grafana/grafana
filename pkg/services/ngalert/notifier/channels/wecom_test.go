@@ -177,6 +177,7 @@ func TestWeComNotifier(t *testing.T) {
 				DecryptFunc:         secretsService.GetDecryptedValue,
 				ImageStore:          nil,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			pn, err := buildWecomNotifier(fc)
@@ -362,6 +363,7 @@ func TestWeComNotifierAPIAPP(t *testing.T) {
 				DecryptFunc:         secretsService.GetDecryptedValue,
 				ImageStore:          nil,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			pn, err := buildWecomNotifier(fc)
@@ -547,6 +549,7 @@ func TestWeComFactory(t *testing.T) {
 				NotificationService: webhookSender,
 				DecryptFunc:         secretsService.GetDecryptedValue,
 				ImageStore:          nil,
+				Logger:              &FakeLogger{},
 			}
 
 			_, err = WeComFactory(fc)

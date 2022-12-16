@@ -14,9 +14,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	ptr "github.com/xorcare/pointer"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 const (
@@ -36,7 +33,7 @@ var (
 type OpsgenieNotifier struct {
 	*Base
 	tmpl     *template.Template
-	log      log.Logger
+	log      Logger
 	ns       WebhookSender
 	images   ImageStore
 	settings *opsgenieSettings
@@ -125,15 +122,9 @@ func NewOpsgenieNotifier(fc FactoryConfig) (*OpsgenieNotifier, error) {
 		return nil, err
 	}
 	return &OpsgenieNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		tmpl:     fc.Template,
-		log:      log.New("alerting.notifier.opsgenie"),
+		log:      fc.Logger,
 		ns:       fc.NotificationService,
 		images:   fc.ImageStore,
 		settings: settings,

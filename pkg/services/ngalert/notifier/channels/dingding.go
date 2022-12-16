@@ -9,9 +9,6 @@ import (
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 const defaultDingdingMsgType = "link"
@@ -54,14 +51,8 @@ func newDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
 		return nil, err
 	}
 	return &DingDingNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
-		log:      log.New("alerting.notifier.dingding"),
+		Base:     NewBase(fc.Config),
+		log:      fc.Logger,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
 		settings: *settings,
@@ -71,7 +62,7 @@ func newDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
 // DingDingNotifier is responsible for sending alert notifications to ding ding.
 type DingDingNotifier struct {
 	*Base
-	log      log.Logger
+	log      Logger
 	ns       WebhookSender
 	tmpl     *template.Template
 	settings dingDingSettings
