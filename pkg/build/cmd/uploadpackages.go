@@ -152,7 +152,7 @@ func uploadPackages(cfg uploadConfig) error {
 		versionFolder = releaseFolder
 	case config.MainMode, config.DownstreamMode:
 		versionFolder = mainFolder
-	case config.ReleaseBranchMode:
+	case config.ReleaseBranchMode, config.Enterprise2Mode:
 		versionFolder = releaseBranchFolder
 	default:
 		panic(fmt.Sprintf("Unrecognized version mode: %s", cfg.versionMode))
