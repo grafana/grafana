@@ -5,8 +5,7 @@ import React from 'react';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
-import { createMockMetricQuery } from '../__mocks__/cloudMonitoringQuery';
-import { MetricKind, ValueTypes } from '../types';
+import { MetricKind, PreprocessorType, ValueTypes } from '../types';
 
 import { Preprocessor } from './Preprocessor';
 
@@ -17,10 +16,9 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('Preprocessor', () => {
   it('only provides "None" as an option if no metric descriptor is provided', () => {
-    const query = createMockMetricQuery();
-    const onChange = jest.fn();
+    const onChangePreprocessor = jest.fn();
 
-    render(<Preprocessor onChange={onChange} query={query} />);
+    render(<Preprocessor onChangePreprocessor={onChangePreprocessor} preprocessor={PreprocessorType.None} />);
     expect(screen.getByText('Pre-processing')).toBeInTheDocument();
     expect(screen.getByText('None')).toBeInTheDocument();
     expect(screen.queryByText('Rate')).not.toBeInTheDocument();
@@ -28,11 +26,16 @@ describe('Preprocessor', () => {
   });
 
   it('only provides "None" as an option if metric kind is "Gauge"', () => {
-    const query = createMockMetricQuery();
-    const onChange = jest.fn();
+    const onChangePreprocessor = jest.fn();
     const metricDescriptor = createMockMetricDescriptor({ metricKind: MetricKind.GAUGE });
 
-    render(<Preprocessor onChange={onChange} query={query} metricDescriptor={metricDescriptor} />);
+    render(
+      <Preprocessor
+        onChangePreprocessor={onChangePreprocessor}
+        preprocessor={PreprocessorType.None}
+        metricDescriptor={metricDescriptor}
+      />
+    );
     expect(screen.getByText('Pre-processing')).toBeInTheDocument();
     expect(screen.getByText('None')).toBeInTheDocument();
     expect(screen.queryByText('Rate')).not.toBeInTheDocument();
@@ -40,11 +43,16 @@ describe('Preprocessor', () => {
   });
 
   it('only provides "None" as an option if value type is "Distribution"', () => {
-    const query = createMockMetricQuery();
-    const onChange = jest.fn();
+    const onChangePreprocessor = jest.fn();
     const metricDescriptor = createMockMetricDescriptor({ valueType: ValueTypes.DISTRIBUTION });
 
-    render(<Preprocessor onChange={onChange} query={query} metricDescriptor={metricDescriptor} />);
+    render(
+      <Preprocessor
+        onChangePreprocessor={onChangePreprocessor}
+        preprocessor={PreprocessorType.None}
+        metricDescriptor={metricDescriptor}
+      />
+    );
     expect(screen.getByText('Pre-processing')).toBeInTheDocument();
     expect(screen.getByText('None')).toBeInTheDocument();
     expect(screen.queryByText('Rate')).not.toBeInTheDocument();
@@ -52,11 +60,16 @@ describe('Preprocessor', () => {
   });
 
   it('provides "None" and "Rate" as options if metric kind is not "Delta" or "Cumulative" and value type is not "Distribution"', () => {
-    const query = createMockMetricQuery();
-    const onChange = jest.fn();
+    const onChangePreprocessor = jest.fn();
     const metricDescriptor = createMockMetricDescriptor({ metricKind: MetricKind.DELTA });
 
-    render(<Preprocessor onChange={onChange} query={query} metricDescriptor={metricDescriptor} />);
+    render(
+      <Preprocessor
+        onChangePreprocessor={onChangePreprocessor}
+        preprocessor={PreprocessorType.None}
+        metricDescriptor={metricDescriptor}
+      />
+    );
     expect(screen.getByText('Pre-processing')).toBeInTheDocument();
     expect(screen.getByText('None')).toBeInTheDocument();
     expect(screen.queryByText('Rate')).toBeInTheDocument();
@@ -64,11 +77,16 @@ describe('Preprocessor', () => {
   });
 
   it('provides all options if metric kind is "Cumulative" and value type is not "Distribution"', () => {
-    const query = createMockMetricQuery();
-    const onChange = jest.fn();
+    const onChangePreprocessor = jest.fn();
     const metricDescriptor = createMockMetricDescriptor({ metricKind: MetricKind.CUMULATIVE });
 
-    render(<Preprocessor onChange={onChange} query={query} metricDescriptor={metricDescriptor} />);
+    render(
+      <Preprocessor
+        onChangePreprocessor={onChangePreprocessor}
+        preprocessor={PreprocessorType.None}
+        metricDescriptor={metricDescriptor}
+      />
+    );
     expect(screen.getByText('Pre-processing')).toBeInTheDocument();
     expect(screen.getByText('None')).toBeInTheDocument();
     expect(screen.queryByText('Rate')).toBeInTheDocument();
@@ -76,11 +94,16 @@ describe('Preprocessor', () => {
   });
 
   it('provides all options if metric kind is "Cumulative" and value type is not "Distribution"', async () => {
-    const query = createMockMetricQuery();
-    const onChange = jest.fn();
+    const onChangePreprocessor = jest.fn();
     const metricDescriptor = createMockMetricDescriptor({ metricKind: MetricKind.CUMULATIVE });
 
-    render(<Preprocessor onChange={onChange} query={query} metricDescriptor={metricDescriptor} />);
+    render(
+      <Preprocessor
+        onChangePreprocessor={onChangePreprocessor}
+        preprocessor={PreprocessorType.None}
+        metricDescriptor={metricDescriptor}
+      />
+    );
     const none = screen.getByLabelText('None');
     const rate = screen.getByLabelText('Rate');
     const delta = screen.getByLabelText('Delta');
@@ -90,6 +113,6 @@ describe('Preprocessor', () => {
 
     await userEvent.click(rate);
 
-    expect(onChange).toBeCalledWith(expect.objectContaining({ preprocessor: 'rate' }));
+    expect(onChangePreprocessor).toBeCalledWith('rate');
   });
 });
