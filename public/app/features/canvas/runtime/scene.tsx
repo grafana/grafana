@@ -508,8 +508,14 @@ export class Scene {
           const sourceX = (arrowLineX1 - sourceHorizontalCenter) / (sourceRect.width / 2);
           const sourceY = (sourceVerticalCenter - arrowLineY1) / (sourceRect.height / 2);
 
-          const targetX = (x - sourceHorizontalCenter) / (sourceRect.width / 2);
-          const targetY = (sourceVerticalCenter - y) / (sourceRect.height / 2);
+          // might need to apply offset from parent's parent to make this accurate
+          const parentVerticalCenter = parentRect.height / 2;
+          const parentHorizontalCenter = parentRect.width / 2;
+
+          // This should be relative to the target element (could be the parent)
+          // 0, 0 is center of element, 1,1 is top right corner etc.
+          const targetX = (x - parentHorizontalCenter) / (parentRect.width / 2);
+          const targetY = (parentVerticalCenter - y) / (parentRect.height / 2);
 
           const connection = {
             source: {
@@ -536,7 +542,7 @@ export class Scene {
         }
 
         if (this.arrowSVG) {
-          // this.arrowSVG.style.display = 'none';
+          this.arrowSVG.style.display = 'none';
         }
 
         if (this.selecto && this.selecto.rootContainer) {
