@@ -20,7 +20,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -151,7 +150,7 @@ var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logge
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 	if cfg.user != "" && cfg.password != "" {
-		request.Header.Set("Authorization", util.GetBasicAuthHeader(cfg.user, cfg.password))
+		request.SetBasicAuth(cfg.user, cfg.password)
 	}
 
 	request.Header.Set("Content-Type", "application/json")
