@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -50,7 +51,7 @@ type Alertmanager interface {
 	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 
 	// Receivers
-	GetReceivers(ctx context.Context) apimodels.Receivers
+	GetReceivers(ctx context.Context) []apimodels.Receiver
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
 }
 
@@ -64,7 +65,6 @@ type API struct {
 	DatasourceCache      datasources.CacheService
 	DatasourceService    datasources.DataSourceService
 	RouteRegister        routing.RouteRegister
-	ExpressionService    *expr.Service
 	QuotaService         quota.Service
 	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
@@ -82,6 +82,10 @@ type API struct {
 	MuteTimings          *provisioning.MuteTimingService
 	AlertRules           *provisioning.AlertRuleService
 	AlertsRouter         *sender.AlertsRouter
+	EvaluatorFactory     eval.EvaluatorFactory
+	FeatureManager       featuremgmt.FeatureToggles
+
+	AppUrl *url.URL
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -91,8 +95,6 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		DataProxy: api.DataProxy,
 		ac:        api.AccessControl,
 	}
-
-	evaluator := eval.NewEvaluator(api.Cfg, log.New("ngalert.eval"), api.DatasourceCache, api.ExpressionService)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
@@ -111,7 +113,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		&RulerSrv{
-			conditionValidator: evaluator,
+			conditionValidator: api.EvaluatorFactory,
 			QuotaService:       api.QuotaService,
 			scheduleService:    api.Schedule,
 			store:              api.RuleStore,
@@ -128,7 +130,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			DatasourceCache: api.DatasourceCache,
 			log:             logger,
 			accessControl:   api.AccessControl,
-			evaluator:       evaluator,
+			evaluator:       api.EvaluatorFactory,
+			cfg:             &api.Cfg.UnifiedAlerting,
+			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory),
+			featureManager:  api.FeatureManager,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{
@@ -147,4 +152,29 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		muteTimings:         api.MuteTimings,
 		alertRules:          api.AlertRules,
 	}), m)
+}
+
+func (api *API) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+	u := &quota.Map{}
+	if orgUsage, err := api.RuleStore.Count(ctx, scopeParams.OrgID); err != nil {
+		return u, err
+	} else {
+		tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
+		if err != nil {
+			return u, err
+		}
+		u.Set(tag, orgUsage)
+	}
+
+	if globalUsage, err := api.RuleStore.Count(ctx, 0); err != nil {
+		return u, err
+	} else {
+		tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
+		if err != nil {
+			return u, err
+		}
+		u.Set(tag, globalUsage)
+	}
+
+	return u, nil
 }

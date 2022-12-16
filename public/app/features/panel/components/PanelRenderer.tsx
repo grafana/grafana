@@ -9,8 +9,10 @@ import {
   PanelPlugin,
   compareArrayValues,
   compareDataFrameStructures,
+  PluginContextProvider,
+  ScopedVars,
 } from '@grafana/data';
-import { PanelRendererProps } from '@grafana/runtime';
+import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 
@@ -37,7 +39,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
   const [error, setError] = useState<string | undefined>();
   const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
-  const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults, data, timeZone);
+  const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults?.fieldConfig, data, timeZone);
 
   useEffect(() => {
     // If we already have a plugin and it's correct one do nothing
@@ -73,24 +75,26 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
 
   return (
     <ErrorBoundaryAlert dependencies={[plugin, data]}>
-      <PanelComponent
-        id={1}
-        data={dataWithOverrides}
-        title={title}
-        timeRange={dataWithOverrides.timeRange}
-        timeZone={timeZone}
-        options={optionsWithDefaults!.options}
-        fieldConfig={fieldConfig}
-        transparent={false}
-        width={width}
-        height={height}
-        renderCounter={0}
-        replaceVariables={(str: string) => str}
-        onOptionsChange={onOptionsChange}
-        onFieldConfigChange={onFieldConfigChange}
-        onChangeTimeRange={onChangeTimeRange}
-        eventBus={appEvents}
-      />
+      <PluginContextProvider meta={plugin.meta}>
+        <PanelComponent
+          id={1}
+          data={dataWithOverrides}
+          title={title}
+          timeRange={dataWithOverrides.timeRange}
+          timeZone={timeZone}
+          options={optionsWithDefaults!.options}
+          fieldConfig={fieldConfig}
+          transparent={false}
+          width={width}
+          height={height}
+          renderCounter={0}
+          replaceVariables={(str: string) => str}
+          onOptionsChange={onOptionsChange}
+          onFieldConfigChange={onFieldConfigChange}
+          onChangeTimeRange={onChangeTimeRange}
+          eventBus={appEvents}
+        />
+      </PluginContextProvider>
     </ErrorBoundaryAlert>
   );
 }
@@ -114,13 +118,12 @@ function useOptionDefaults<P extends object = any, F extends object = any>(
   }, [plugin, fieldConfig, options]);
 }
 
-function useFieldOverrides(
+export function useFieldOverrides(
   plugin: PanelPlugin | undefined,
-  defaultOptions: OptionDefaults | undefined,
+  fieldConfig: FieldConfigSource | undefined,
   data: PanelData | undefined,
   timeZone: string
 ): PanelData | undefined {
-  const fieldConfig = defaultOptions?.fieldConfig;
   const fieldConfigRegistry = plugin?.fieldConfigRegistry;
   const theme = useTheme2();
   const structureRev = useRef(0);
@@ -149,7 +152,9 @@ function useFieldOverrides(
         data: series,
         fieldConfig,
         fieldConfigRegistry,
-        replaceVariables: (str: string) => str,
+        replaceVariables: (str: string, scopedVars?: ScopedVars) => {
+          return getTemplateSrv().replace(str, scopedVars);
+        },
         theme,
         timeZone,
       }),

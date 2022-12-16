@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -67,7 +68,7 @@ func (cmd *ConditionsCmd) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (cmd *ConditionsCmd) Execute(_ context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (cmd *ConditionsCmd) Execute(_ context.Context, _ time.Time, vars mathexp.Vars) (mathexp.Results, error) {
 	firing := true
 	newRes := mathexp.Results{}
 	noDataFound := true
@@ -78,10 +79,21 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, vars mathexp.Vars) (mathexp
 		querySeriesSet := vars[c.InputRefID]
 		nilReducedCount := 0
 		firingCount := 0
+
+		if len(querySeriesSet.Values) == 0 {
+			// Append a NoData data frame so "has no value" still works
+			querySeriesSet.Values = append(querySeriesSet.Values, mathexp.NoData{}.New())
+		}
+
 		for _, val := range querySeriesSet.Values {
 			var reducedNum mathexp.Number
 			var name string
 			switch v := val.(type) {
+			case mathexp.NoData:
+				// To keep this code as simple as possible we translate mathexp.NoData into a
+				// mathexp.Number with a nil value so number.GetFloat64Value() returns nil
+				reducedNum = mathexp.NewNumber("no data", nil)
+				reducedNum.SetValue(nil)
 			case mathexp.Series:
 				reducedNum = c.Reducer.Reduce(v)
 				name = v.GetName()
@@ -97,10 +109,6 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, vars mathexp.Vars) (mathexp
 			// TODO handle error / no data signals
 			thisCondNoDataFound := reducedNum.GetFloat64Value() == nil
 
-			if thisCondNoDataFound {
-				nilReducedCount++
-			}
-
 			evalRes := c.Evaluator.Eval(reducedNum)
 
 			if evalRes {
@@ -113,6 +121,8 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, vars mathexp.Vars) (mathexp
 				}
 				matches = append(matches, match)
 				firingCount++
+			} else if thisCondNoDataFound {
+				nilReducedCount++
 			}
 		}
 
@@ -136,7 +146,6 @@ func (cmd *ConditionsCmd) Execute(_ context.Context, vars mathexp.Vars) (mathexp
 			matches = append(matches, EvalMatch{
 				Metric: "NoData",
 			})
-			noDataFound = true
 		}
 
 		firingCount = 0

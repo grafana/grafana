@@ -4,10 +4,12 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
-import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv, logInfo } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
+import * as actions from 'app/features/alerting/unified/state/actions';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
@@ -37,6 +39,8 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
+jest.mock('../../../core/hooks/useMediaQueryChange');
+jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.mock('app/core/core', () => ({
   appEvents: {
     subscribe: () => {
@@ -54,9 +58,11 @@ jest.mock('@grafana/runtime', () => {
 });
 
 jest.spyOn(config, 'getAllDataSources');
+jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
+  rulesInSameGroupHaveInvalidForMock: jest.mocked(actions.rulesInSameGroupHaveInvalidFor),
 
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
@@ -118,9 +124,11 @@ const ui = {
   newRuleButton: byRole('link', { name: 'New alert rule' }),
 
   editGroupModal: {
-    namespaceInput: byLabelText('Namespace'),
-    ruleGroupInput: byLabelText('Rule group'),
-    intervalInput: byLabelText('Rule group evaluation interval'),
+    namespaceInput: byRole('textbox', { hidden: true, name: /namespace/i }),
+    ruleGroupInput: byRole('textbox', { name: 'Evaluation group', exact: true }),
+    intervalInput: byRole('textbox', {
+      name: /Rule group evaluation interval Evaluation interval should be smaller or equal to 'For' values for existing rules in this group./i,
+    }),
     saveButton: byRole('button', { name: /Save changes/ }),
   },
 };
@@ -128,6 +136,7 @@ const ui = {
 describe('RuleList', () => {
   beforeEach(() => {
     contextSrv.isEditor = true;
+    mocks.rulesInSameGroupHaveInvalidForMock.mockReturnValue([]);
   });
 
   afterEach(() => {
@@ -208,6 +217,8 @@ describe('RuleList', () => {
       return Promise.reject(new Error(`unexpected datasourceName: ${dataSourceName}`));
     });
 
+    mocks.api.fetchRulerRules.mockRejectedValue({ status: 500, data: { message: 'Server error' } });
+
     await renderRuleList();
 
     await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(4));
@@ -234,7 +245,7 @@ describe('RuleList', () => {
 
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
     mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Lotex,
+      application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: true,
       },
@@ -311,8 +322,11 @@ describe('RuleList', () => {
 
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);
-    expect(groups[0]).toHaveTextContent('1 rule');
-    expect(groups[1]).toHaveTextContent('4 rules: 1 firing, 1 pending');
+    expect(groups[0]).toHaveTextContent('1 firing');
+    expect(groups[1]).toHaveTextContent('1 firing');
+    expect(groups[1]).toHaveTextContent('1 pending');
+    expect(groups[1]).toHaveTextContent('1 recording');
+    expect(groups[1]).toHaveTextContent('1 normal');
 
     // expand second group to see rules table
     expect(ui.rulesTable.query()).not.toBeInTheDocument();
@@ -376,7 +390,7 @@ describe('RuleList', () => {
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
 
     mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Lotex,
+      application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: true,
       },
@@ -524,7 +538,7 @@ describe('RuleList', () => {
         setDataSourceSrv(new MockDataSourceSrv(testDatasources));
 
         mocks.api.discoverFeatures.mockResolvedValue({
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,
           },
@@ -548,9 +562,12 @@ describe('RuleList', () => {
 
         // open edit dialog
         await userEvent.click(ui.editCloudGroupIcon.get(groups[0]));
-
-        expect(ui.editGroupModal.namespaceInput.get()).toHaveValue('namespace1');
-        expect(ui.editGroupModal.ruleGroupInput.get()).toHaveValue('group1');
+        await expect(screen.getByRole('textbox', { hidden: true, name: /namespace/i })).toHaveDisplayValue(
+          'namespace1'
+        );
+        await expect(screen.getByRole('textbox', { name: 'Evaluation group', exact: true })).toHaveDisplayValue(
+          'group1'
+        );
         await fn();
       });
     }
@@ -598,9 +615,14 @@ describe('RuleList', () => {
 
     testCase('rename just the lotex group', async () => {
       // make changes to form
-      await userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
-      await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
-      await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
+      await userEvent.clear(screen.getByRole('textbox', { name: 'Evaluation group', exact: true }));
+      await userEvent.type(screen.getByRole('textbox', { name: 'Evaluation group', exact: true }), 'super group');
+      await userEvent.type(
+        screen.getByRole('textbox', {
+          name: /rule group evaluation interval evaluation interval should be smaller or equal to 'for' values for existing rules in this group\./i,
+        }),
+        '5m'
+      );
 
       // submit, check that appropriate calls were made
       await userEvent.click(ui.editGroupModal.saveButton.get());
@@ -710,7 +732,7 @@ describe('RuleList', () => {
         mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
         setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
         mocks.api.discoverFeatures.mockResolvedValue({
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,
           },
@@ -737,7 +759,7 @@ describe('RuleList', () => {
         mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
         setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
         mocks.api.discoverFeatures.mockResolvedValue({
-          application: PromApplication.Lotex,
+          application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,
           },

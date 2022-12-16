@@ -55,12 +55,11 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respon
 		}
 
 		msg := "failed to fetch admin configuration from the database"
-		srv.log.Error(msg, "err", err)
+		srv.log.Error(msg, "error", err)
 		return ErrResp(http.StatusInternalServerError, err, msg)
 	}
 
 	resp := apimodels.GettableNGalertConfig{
-		Alertmanagers:       cfg.Alertmanagers,
 		AlertmanagersChoice: apimodels.AlertmanagersChoice(cfg.SendAlertsTo.String()),
 	}
 	return response.JSON(http.StatusOK, resp)
@@ -81,27 +80,19 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels
 		return response.Error(500, "Couldn't fetch the external Alertmanagers from datasources", err)
 	}
 
-	if sendAlertsTo == ngmodels.ExternalAlertmanagers &&
-		len(body.Alertmanagers)+len(externalAlertmanagers) < 1 {
+	if sendAlertsTo == ngmodels.ExternalAlertmanagers && len(externalAlertmanagers) < 1 {
 		return response.Error(400, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", nil)
 	}
 
 	cfg := &ngmodels.AdminConfiguration{
-		Alertmanagers: body.Alertmanagers,
-		SendAlertsTo:  sendAlertsTo,
-		OrgID:         c.OrgID,
-	}
-
-	if err := cfg.Validate(); err != nil {
-		msg := "failed to validate admin configuration"
-		srv.log.Error(msg, "err", err)
-		return ErrResp(http.StatusBadRequest, err, msg)
+		SendAlertsTo: sendAlertsTo,
+		OrgID:        c.OrgID,
 	}
 
 	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: cfg}
 	if err := srv.store.UpdateAdminConfiguration(cmd); err != nil {
 		msg := "failed to save the admin configuration to the database"
-		srv.log.Error(msg, "err", err)
+		srv.log.Error(msg, "error", err)
 		return ErrResp(http.StatusBadRequest, err, msg)
 	}
 
@@ -115,7 +106,7 @@ func (srv ConfigSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Res
 
 	err := srv.store.DeleteAdminConfiguration(c.OrgID)
 	if err != nil {
-		srv.log.Error("unable to delete configuration", "err", err)
+		srv.log.Error("unable to delete configuration", "error", err)
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
@@ -150,7 +141,7 @@ func (srv ConfigSrv) RouteGetAlertingStatus(c *models.ReqContext) response.Respo
 	cfg, err := srv.store.GetAdminConfiguration(c.OrgID)
 	if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
 		msg := "failed to fetch configuration from the database"
-		srv.log.Error(msg, "err", err)
+		srv.log.Error(msg, "error", err)
 		return ErrResp(http.StatusInternalServerError, err, msg)
 	}
 	if cfg != nil {

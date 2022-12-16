@@ -10,7 +10,7 @@ interface Props {
 }
 
 /** @internal */
-export const ModalTabContent: React.FC<Props> = ({ children }) => {
+export const ModalTabContent = ({ children }: React.PropsWithChildren<Props>) => {
   return (
     <div className="share-modal-body">
       <div className="share-modal-header">

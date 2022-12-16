@@ -3,8 +3,8 @@ package correlations
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -19,7 +19,7 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 		Config:      cmd.Config,
 	}
 
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		var err error
 
 		query := &datasources.GetDataSourceQuery{
@@ -59,7 +59,7 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 }
 
 func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
-	return s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+	return s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		query := &datasources.GetDataSourceQuery{
 			OrgId: cmd.OrgId,
 			Uid:   cmd.SourceUID,
@@ -86,7 +86,7 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 		SourceUID: cmd.SourceUID,
 	}
 
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		query := &datasources.GetDataSourceQuery{
 			OrgId: cmd.OrgId,
 			Uid:   cmd.SourceUID,
@@ -148,7 +148,7 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 		SourceUID: cmd.SourceUID,
 	}
 
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		query := &datasources.GetDataSourceQuery{
 			OrgId: cmd.OrgId,
 			Uid:   cmd.SourceUID,
@@ -174,7 +174,7 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {
 	correlations := make([]Correlation, 0)
 
-	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		query := &datasources.GetDataSourceQuery{
 			OrgId: cmd.OrgId,
 			Uid:   cmd.SourceUID,
@@ -196,7 +196,7 @@ func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd
 func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrelationsQuery) ([]Correlation, error) {
 	correlations := make([]Correlation, 0)
 
-	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		return session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Find(&correlations)
 	})
 	if err != nil {
@@ -207,14 +207,14 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 }
 
 func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
-	return s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+	return s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		_, err := session.Delete(&Correlation{SourceUID: cmd.SourceUID})
 		return err
 	})
 }
 
 func (s CorrelationsService) deleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
-	return s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+	return s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		_, err := session.Delete(&Correlation{TargetUID: &cmd.TargetUID})
 		return err
 	})

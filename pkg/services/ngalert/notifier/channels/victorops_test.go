@@ -105,6 +105,31 @@ func TestVictoropsNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		}, {
+			name:     "Custom title and description",
+			settings: `{"url": "http://localhost", "title": "Alerts firing: {{ len .Alerts.Firing }}", "description": "customDescription"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"alert_url":           "http://localhost/alerting/list",
+				"entity_display_name": "Alerts firing: 2",
+				"entity_id":           "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+				"message_type":        "CRITICAL",
+				"monitoring_tool":     "Grafana v" + setting.BuildVersion,
+				"state_message":       "customDescription",
+			},
+			expMsgError: nil,
+		}, {
 			name:     "Missing field in template",
 			settings: `{"url": "http://localhost", "messageType": "custom template {{ .NotAField }} bad template"}`,
 			alerts: []*types.Alert{
@@ -179,6 +204,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				ImageStore:          images,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			pn, err := NewVictoropsNotifier(fc)

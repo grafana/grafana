@@ -24,5 +24,5 @@ export const DataHoverRow = ({ feature }: Props) => {
     data = new ArrayDataFrame([properties]);
   }
 
-  return <DataHoverView data={data} rowIndex={rowIndex} />;
+  return <DataHoverView data={data} rowIndex={rowIndex} displayExemplarHeader={false} />;
 };

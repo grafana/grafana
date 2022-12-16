@@ -14,11 +14,10 @@ export interface FooterRowProps {
   footerGroups: HeaderGroup[];
   footerValues: FooterItem[];
   isPaginationVisible: boolean;
-  height: number;
 }
 
 export const FooterRow = (props: FooterRowProps) => {
-  const { totalColumnsWidth, footerGroups, height, isPaginationVisible } = props;
+  const { totalColumnsWidth, footerGroups, isPaginationVisible } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
   const tableStyles = useStyles2(getTableStyles);
 
@@ -33,16 +32,8 @@ export const FooterRow = (props: FooterRowProps) => {
       {footerGroups.map((footerGroup: HeaderGroup) => {
         const { key, ...footerGroupProps } = footerGroup.getFooterGroupProps();
         return (
-          <div
-            className={tableStyles.tfoot}
-            {...footerGroupProps}
-            key={key}
-            data-testid={e2eSelectorsTable.footer}
-            style={height ? { height: `${height}px` } : undefined}
-          >
-            {footerGroup.headers.map((column: ColumnInstance, index: number) =>
-              renderFooterCell(column, tableStyles, height)
-            )}
+          <div className={tableStyles.tfoot} {...footerGroupProps} key={key} data-testid={e2eSelectorsTable.footer}>
+            {footerGroup.headers.map((column: ColumnInstance) => renderFooterCell(column, tableStyles))}
           </div>
         );
       })}
@@ -50,7 +41,7 @@ export const FooterRow = (props: FooterRowProps) => {
   );
 };
 
-function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, height?: number) {
+function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
   const footerProps = column.getHeaderProps();
 
   if (!footerProps) {
@@ -60,9 +51,6 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, heig
   footerProps.style = footerProps.style ?? {};
   footerProps.style.position = 'absolute';
   footerProps.style.justifyContent = (column as any).justifyContent;
-  if (height) {
-    footerProps.style.height = height;
-  }
 
   return (
     <div className={tableStyles.headerCell} {...footerProps}>
@@ -71,9 +59,18 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, heig
   );
 }
 
-export function getFooterValue(index: number, footerValues?: FooterItem[]) {
+export function getFooterValue(index: number, footerValues?: FooterItem[], isCountRowsSet?: boolean) {
   if (footerValues === undefined) {
     return EmptyCell;
+  }
+
+  if (isCountRowsSet) {
+    const count = footerValues[index];
+    if (typeof count !== 'string') {
+      return EmptyCell;
+    }
+
+    return FooterCell({ value: [{ Count: count }] });
   }
 
   return FooterCell({ value: footerValues[index] });

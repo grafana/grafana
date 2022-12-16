@@ -11,6 +11,8 @@ export interface SearchQuery {
   location?: string;
   sort?: string;
   ds_uid?: string;
+  ds_type?: string;
+  saved_query_uid?: string; // TODO: not implemented yet
   tags?: string[];
   kind?: string[];
   panel_type?: string;
@@ -71,4 +73,8 @@ export interface GrafanaSearcher {
   starred: (query: SearchQuery) => Promise<QueryResponse>;
   tags: (query: SearchQuery) => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
+  sortPlaceholder?: string;
+
+  /** Gets the default sort used for the Folder view */
+  getFolderViewSort: () => string;
 }

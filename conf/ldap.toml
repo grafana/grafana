@@ -60,7 +60,7 @@ org_role = "Admin"
 # org_id = 1
 
 [[servers.group_mappings]]
-group_dn = "cn=users,ou=groups,dc=grafana,dc=org"
+group_dn = "cn=editors,ou=groups,dc=grafana,dc=org"
 org_role = "Editor"
 
 [[servers.group_mappings]]

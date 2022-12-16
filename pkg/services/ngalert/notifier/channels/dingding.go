@@ -9,141 +9,97 @@ import (
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const defaultDingdingMsgType = "link"
 
-type DingDingConfig struct {
-	*NotificationChannelConfig
-	MsgType string
-	Message string
-	URL     string
+type dingDingSettings struct {
+	URL         string
+	MessageType string
+	Title       string
+	Message     string
 }
 
-func NewDingDingConfig(config *NotificationChannelConfig) (*DingDingConfig, error) {
-	url := config.Settings.Get("url").MustString()
-	if url == "" {
+func buildDingDingSettings(fc FactoryConfig) (*dingDingSettings, error) {
+	URL := fc.Config.Settings.Get("url").MustString()
+	if URL == "" {
 		return nil, errors.New("could not find url property in settings")
 	}
-	return &DingDingConfig{
-		NotificationChannelConfig: config,
-		MsgType:                   config.Settings.Get("msgType").MustString(defaultDingdingMsgType),
-		Message:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
-		URL:                       config.Settings.Get("url").MustString(),
+	return &dingDingSettings{
+		URL:         URL,
+		MessageType: fc.Config.Settings.Get("msgType").MustString(defaultDingdingMsgType),
+		Title:       fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
+		Message:     fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
 	}, nil
 }
+
 func DingDingFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewDingDingConfig(fc.Config)
+	n, err := newDingDingNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewDingDingNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return n, nil
 }
 
-// NewDingDingNotifier is the constructor for the Dingding notifier
-func NewDingDingNotifier(config *DingDingConfig, ns notifications.WebhookSender, t *template.Template) *DingDingNotifier {
-	return &DingDingNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
-		}),
-		MsgType: config.MsgType,
-		Message: config.Message,
-		URL:     config.URL,
-		log:     log.New("alerting.notifier.dingding"),
-		tmpl:    t,
-		ns:      ns,
+// newDingDingNotifier is the constructor for the Dingding notifier
+func newDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
+	settings, err := buildDingDingSettings(fc)
+	if err != nil {
+		return nil, err
 	}
+	return &DingDingNotifier{
+		Base:     NewBase(fc.Config),
+		log:      fc.Logger,
+		ns:       fc.NotificationService,
+		tmpl:     fc.Template,
+		settings: *settings,
+	}, nil
 }
 
 // DingDingNotifier is responsible for sending alert notifications to ding ding.
 type DingDingNotifier struct {
 	*Base
-	MsgType string
-	URL     string
-	Message string
-	tmpl    *template.Template
-	ns      notifications.WebhookSender
-	log     log.Logger
+	log      Logger
+	ns       WebhookSender
+	tmpl     *template.Template
+	settings dingDingSettings
 }
 
 // Notify sends the alert notification to dingding.
 func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	dd.log.Info("sending dingding")
 
-	ruleURL := joinUrlPath(dd.tmpl.ExternalURL.String(), "/alerting/list", dd.log)
-
-	q := url.Values{
-		"pc_slide": {"false"},
-		"url":      {ruleURL},
-	}
-
-	// Use special link to auto open the message url outside of Dingding
-	// Refer: https://open-doc.dingtalk.com/docs/doc.htm?treeId=385&articleId=104972&docType=1#s9
-	messageURL := "dingtalk://dingtalkclient/page/link?" + q.Encode()
+	msgUrl := buildDingDingURL(dd)
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
 
-	message := tmpl(dd.Message)
-	title := tmpl(DefaultMessageTitleEmbed)
+	message := tmpl(dd.settings.Message)
+	title := tmpl(dd.settings.Title)
 
-	var bodyMsg map[string]interface{}
-	if tmpl(dd.MsgType) == "actionCard" {
-		bodyMsg = map[string]interface{}{
-			"msgtype": "actionCard",
-			"actionCard": map[string]string{
-				"text":        message,
-				"title":       title,
-				"singleTitle": "More",
-				"singleURL":   messageURL,
-			},
-		}
-	} else {
-		link := map[string]string{
-			"text":       message,
-			"title":      title,
-			"messageUrl": messageURL,
-		}
-
-		bodyMsg = map[string]interface{}{
-			"msgtype": "link",
-			"link":    link,
-		}
-	}
-
-	if tmplErr != nil {
-		dd.log.Warn("failed to template DingDing message", "err", tmplErr.Error())
-		tmplErr = nil
-	}
-
-	u := tmpl(dd.URL)
-	if tmplErr != nil {
-		dd.log.Warn("failed to template DingDing URL", "err", tmplErr.Error(), "fallback", dd.URL)
-		u = dd.URL
-	}
-
-	body, err := json.Marshal(bodyMsg)
+	msgType := tmpl(dd.settings.MessageType)
+	b, err := buildBody(msgUrl, msgType, title, message)
 	if err != nil {
 		return false, err
 	}
 
-	cmd := &models.SendWebhookSync{
-		Url:  u,
-		Body: string(body),
+	if tmplErr != nil {
+		dd.log.Warn("failed to template DingDing message", "error", tmplErr.Error())
+		tmplErr = nil
 	}
 
-	if err := dd.ns.SendWebhookSync(ctx, cmd); err != nil {
+	u := tmpl(dd.settings.URL)
+	if tmplErr != nil {
+		dd.log.Warn("failed to template DingDing URL", "error", tmplErr.Error(), "fallback", dd.settings.URL)
+		u = dd.settings.URL
+	}
+
+	cmd := &SendWebhookSettings{Url: u, Body: b}
+
+	if err := dd.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to dingding: %w", err)
 	}
 
@@ -152,4 +108,44 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 
 func (dd *DingDingNotifier) SendResolved() bool {
 	return !dd.GetDisableResolveMessage()
+}
+
+func buildDingDingURL(dd *DingDingNotifier) string {
+	q := url.Values{
+		"pc_slide": {"false"},
+		"url":      {joinUrlPath(dd.tmpl.ExternalURL.String(), "/alerting/list", dd.log)},
+	}
+
+	// Use special link to auto open the message url outside Dingding
+	// Refer: https://open-doc.dingtalk.com/docs/doc.htm?treeId=385&articleId=104972&docType=1#s9
+	return "dingtalk://dingtalkclient/page/link?" + q.Encode()
+}
+
+func buildBody(msgUrl string, msgType string, title string, msg string) (string, error) {
+	var bodyMsg map[string]interface{}
+	if msgType == "actionCard" {
+		bodyMsg = map[string]interface{}{
+			"msgtype": "actionCard",
+			"actionCard": map[string]string{
+				"text":        msg,
+				"title":       title,
+				"singleTitle": "More",
+				"singleURL":   msgUrl,
+			},
+		}
+	} else {
+		bodyMsg = map[string]interface{}{
+			"msgtype": "link",
+			"link": map[string]string{
+				"text":       msg,
+				"title":      title,
+				"messageUrl": msgUrl,
+			},
+		}
+	}
+	body, err := json.Marshal(bodyMsg)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
 }

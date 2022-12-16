@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,6 +23,7 @@ const (
 	orgID              = int64(1)
 	defaultDashboardID = int64(-1)
 	dashboardID        = int64(1)
+	dashboardUID       = "uid"
 	parentFolderID     = int64(2)
 	childDashboardID   = int64(3)
 	userID             = int64(1)
@@ -687,7 +688,7 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsWithOverrideShou
 
 func TestGuardianGetHiddenACL(t *testing.T) {
 	t.Run("Get hidden ACL tests", func(t *testing.T) {
-		store := mockstore.NewSQLStoreMock()
+		store := dbtest.NewFakeDB()
 		dashSvc := dashboards.NewFakeDashboardService(t)
 		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
@@ -695,6 +696,14 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				{Inherited: false, UserId: 1, UserLogin: "user1", Permission: models.PERMISSION_EDIT},
 				{Inherited: false, UserId: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
 				{Inherited: true, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
+			}
+		}).Return(nil)
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardQuery)
+			q.Result = &models.Dashboard{
+				Id:    q.Id,
+				Uid:   q.Uid,
+				OrgId: q.OrgId,
 			}
 		}).Return(nil)
 
@@ -707,7 +716,8 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				UserID: 1,
 				Login:  "user1",
 			}
-			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
+			g, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
+			require.NoError(t, err)
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
 			require.NoError(t, err)
@@ -723,7 +733,16 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				Login:          "user1",
 				IsGrafanaAdmin: true,
 			}
-			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
+			dashSvc := dashboards.NewFakeDashboardService(t)
+			dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+				q := args.Get(1).(*models.GetDashboardQuery)
+				q.Result = &models.Dashboard{
+					Id:  q.Id,
+					Uid: q.Uid,
+				}
+			}).Return(nil)
+			g, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
+			require.NoError(t, err)
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
 			require.NoError(t, err)
@@ -735,7 +754,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 
 func TestGuardianGetACLWithoutDuplicates(t *testing.T) {
 	t.Run("Get hidden ACL tests", func(t *testing.T) {
-		store := mockstore.NewSQLStoreMock()
+		store := dbtest.NewFakeDB()
 		dashSvc := dashboards.NewFakeDashboardService(t)
 		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
@@ -750,6 +769,14 @@ func TestGuardianGetACLWithoutDuplicates(t *testing.T) {
 				{Inherited: false, UserId: 6, UserLogin: "user6", Permission: models.PERMISSION_EDIT},
 			}
 		}).Return(nil)
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardQuery)
+			q.Result = &models.Dashboard{
+				Id:    q.Id,
+				Uid:   q.Uid,
+				OrgId: q.OrgId,
+			}
+		}).Return(nil)
 
 		t.Run("Should get acl without duplicates", func(t *testing.T) {
 			user := &user.SignedInUser{
@@ -757,7 +784,8 @@ func TestGuardianGetACLWithoutDuplicates(t *testing.T) {
 				UserID: 1,
 				Login:  "user1",
 			}
-			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
+			g, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
+			require.NoError(t, err)
 
 			acl, err := g.GetACLWithoutDuplicates()
 			require.NoError(t, err)

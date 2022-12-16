@@ -87,7 +87,7 @@ func (i *Initializer) awsEnvVars() []string {
 type pluginSettings map[string]string
 
 func (ps pluginSettings) asEnvVar(prefix string, hostEnv []string) []string {
-	var env []string
+	env := make([]string, 0, len(ps))
 	for k, v := range ps {
 		key := fmt.Sprintf("%s_%s", prefix, strings.ToUpper(k))
 		if value := os.Getenv(key); value != "" {

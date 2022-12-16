@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { Unsubscribable } from 'rxjs';
+import { mergeMap, MonoTypeOperatorFunction, Unsubscribable, map, of } from 'rxjs';
 
 import {
   CoreApp,
@@ -7,21 +7,31 @@ import {
   DataQueryRequest,
   DataSourceApi,
   DataSourceRef,
+  DataTransformerConfig,
   PanelData,
   rangeUtil,
   ScopedVars,
   TimeRange,
+  transformDataFrame,
 } from '@grafana/data';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 import { runRequest } from 'app/features/query/state/runRequest';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneObjectStatePlain } from '../core/types';
+import { sceneGraph } from '../core/sceneGraph';
+import { SceneObject, SceneObjectStatePlain } from '../core/types';
+import { VariableDependencyConfig } from '../variables/VariableDependencyConfig';
 
 export interface QueryRunnerState extends SceneObjectStatePlain {
   data?: PanelData;
   queries: DataQueryExtended[];
+  transformations?: DataTransformerConfig[];
+  datasource?: DataSourceRef;
+  minInterval?: string;
+  maxDataPoints?: number;
+  // Non persisted state
+  maxDataPointsFromWidth?: boolean;
 }
 
 export interface DataQueryExtended extends DataQuery {
@@ -29,42 +39,87 @@ export interface DataQueryExtended extends DataQuery {
 }
 
 export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
-  private querySub?: Unsubscribable;
+  private _querySub?: Unsubscribable;
+  private _containerWidth?: number;
 
-  activate() {
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    statePaths: ['queries'],
+    onReferencedVariableValueChanged: () => this.runQueries(),
+  });
+
+  public activate() {
     super.activate();
 
-    const timeRange = this.getTimeRange();
+    const timeRange = sceneGraph.getTimeRange(this);
 
-    this.subs.add(
-      timeRange.subscribe({
+    this._subs.add(
+      timeRange.subscribeToState({
         next: (timeRange) => {
-          this.runWithTimeRange(timeRange);
+          this.runWithTimeRange(timeRange.value);
         },
       })
     );
 
-    if (!this.state.data) {
+    if (this.shouldRunQueriesOnActivate()) {
       this.runQueries();
     }
   }
 
-  deactivate(): void {
+  private shouldRunQueriesOnActivate() {
+    // If we already have data, no need
+    // TODO validate that time range is similar and if not we should run queries again
+    if (this.state.data) {
+      return false;
+    }
+
+    // If no maxDataPoints specified we need might to wait for container width to be set from the outside
+    if (!this.state.maxDataPoints && this.state.maxDataPointsFromWidth && !this._containerWidth) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public deactivate(): void {
     super.deactivate();
 
-    if (this.querySub) {
-      this.querySub.unsubscribe();
-      this.querySub = undefined;
+    if (this._querySub) {
+      this._querySub.unsubscribe();
+      this._querySub = undefined;
     }
   }
 
-  runQueries() {
-    const timeRange = this.getTimeRange();
-    this.runWithTimeRange(timeRange.state);
+  public setContainerWidth(width: number) {
+    // If we don't have a width we should run queries
+    if (!this._containerWidth && width > 0) {
+      this._containerWidth = width;
+
+      // If we don't have maxDataPoints specifically set and maxDataPointsFromWidth is true
+      if (this.state.maxDataPointsFromWidth && !this.state.maxDataPoints) {
+        // As this is called from render path we need to wait for next tick before running queries
+        setTimeout(() => {
+          if (this.isActive && !this._querySub) {
+            this.runQueries();
+          }
+        }, 0);
+      }
+    } else {
+      // let's just remember the width until next query issue
+      this._containerWidth = width;
+    }
+  }
+
+  public runQueries() {
+    const timeRange = sceneGraph.getTimeRange(this);
+    this.runWithTimeRange(timeRange.state.value);
+  }
+
+  private getMaxDataPoints() {
+    return this.state.maxDataPoints ?? this._containerWidth ?? 500;
   }
 
   private async runWithTimeRange(timeRange: TimeRange) {
-    const queries = cloneDeep(this.state.queries);
+    const { datasource, minInterval, queries } = this.state;
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,
@@ -75,14 +130,14 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       range: timeRange,
       interval: '1s',
       intervalMs: 1000,
-      targets: cloneDeep(this.state.queries),
-      maxDataPoints: 500,
+      targets: cloneDeep(queries),
+      maxDataPoints: this.getMaxDataPoints(),
       scopedVars: {},
       startTime: Date.now(),
     };
 
     try {
-      const ds = await getDataSource(queries[0].datasource!, request.scopedVars);
+      const ds = await getDataSource(datasource, request.scopedVars);
 
       // Attach the data source name to each query
       request.targets = request.targets.map((query) => {
@@ -92,8 +147,9 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
         return query;
       });
 
-      const lowerIntervalLimit = ds.interval;
-      const norm = rangeUtil.calculateInterval(timeRange, request.maxDataPoints ?? 1000, lowerIntervalLimit);
+      // TODO interpolate minInterval
+      const lowerIntervalLimit = minInterval ? minInterval : ds.interval;
+      const norm = rangeUtil.calculateInterval(timeRange, request.maxDataPoints!, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
       // and add built in variables interval and interval_ms
@@ -105,24 +161,47 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      this.querySub = runRequest(ds, request).subscribe({
-        next: (data) => {
-          console.log('set data', data, data.state);
-          this.setState({ data });
-        },
-      });
+      this._querySub = runRequest(ds, request)
+        .pipe(getTransformationsStream(this, this.state.transformations))
+        .subscribe({
+          next: this.onDataReceived,
+        });
     } catch (err) {
       console.error('PanelQueryRunner Error', err);
     }
   }
+
+  private onDataReceived = (data: PanelData) => {
+    this.setState({ data });
+  };
 }
 
-async function getDataSource(
-  datasource: DataSourceRef | string | DataSourceApi | null,
-  scopedVars: ScopedVars
-): Promise<DataSourceApi> {
+async function getDataSource(datasource: DataSourceRef | undefined, scopedVars: ScopedVars): Promise<DataSourceApi> {
   if (datasource && (datasource as any).query) {
     return datasource as DataSourceApi;
   }
   return await getDatasourceSrv().get(datasource as string, scopedVars);
 }
+
+export const getTransformationsStream: (
+  sceneObject: SceneObject,
+  transformations?: DataTransformerConfig[]
+) => MonoTypeOperatorFunction<PanelData> = (sceneObject, transformations) => (inputStream) => {
+  return inputStream.pipe(
+    mergeMap((data) => {
+      if (!transformations || transformations.length === 0) {
+        return of(data);
+      }
+
+      const replace: (option?: string) => string = (option) => {
+        return sceneGraph.interpolate(sceneObject, option, data?.request?.scopedVars);
+      };
+
+      transformations.forEach((transform: DataTransformerConfig) => {
+        transform.replace = replace;
+      });
+
+      return transformDataFrame(transformations, data.series).pipe(map((series) => ({ ...data, series })));
+    })
+  );
+};

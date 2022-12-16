@@ -1,12 +1,13 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": "Copied"
+    }
+  },
   "common": {
     "locale": {
-      "default": "Default",
-      "en-US": "English",
-      "es-ES": "Spanish",
-      "fr-FR": "French",
-      "zh-Hans": "Chinese (Simplified)"
+      "default": "Default"
     },
     "save": "Save"
   },
@@ -63,12 +64,6 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
-    "refresh-picker": {
-      "off-arialabel": "Turn off auto refresh",
-      "off-description": "Auto refresh turned off. Choose refresh time interval",
-      "off-label": "Off",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Add panel",
       "comments-show": "Show dashboard comments",
@@ -108,6 +103,15 @@
     "admin": {
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
+    },
+    "admin-access": {
+      "title": "Users and access"
+    },
+    "admin-general": {
+      "title": "General"
+    },
+    "admin-plugins": {
+      "title": "Plugins and data"
     },
     "alerting": {
       "subtitle": "Learn about problems in your systems moments after they occur",
@@ -155,7 +159,8 @@
       "title": "Apps"
     },
     "config": {
-      "title": "Configuration"
+      "title": "Administration",
+      "titleBeforeTopnav": "Configuration"
     },
     "correlations": {
       "subtitle": "Add and configure correlations",
@@ -192,8 +197,9 @@
       "title": "Organizations"
     },
     "global-users": {
-      "subtitle": "Manage and create users across the whole Grafana server",
-      "title": "Users"
+      "subtitle": "Manage users in Grafana",
+      "title": "Users",
+      "titleBeforeTopnav": "Users"
     },
     "help": {
       "title": "Help"
@@ -236,7 +242,8 @@
     },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
-      "title": "Preferences"
+      "title": "Default preferences",
+      "titleBeforeTopnav": "Preferences"
     },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
@@ -261,6 +268,9 @@
     },
     "search": {
       "placeholder": "Search Grafana"
+    },
+    "search-dashboards": {
+      "title": "Search dashboards"
     },
     "server-settings": {
       "subtitle": "View the settings defined in your Grafana config",
@@ -308,14 +318,37 @@
   "news": {
     "title": "Latest from the blog"
   },
+  "notifications": {
+    "starred-dashboard": "Dashboard starred",
+    "unstarred-dashboard": "Dashboard unstarred"
+  },
   "panel": {
     "header-menu": {
+      "hide-legend": "Hide legend",
       "inspect": "Inspect",
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
       "share": "Share",
+      "show-legend": "Show legend",
       "view": "View"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Auto refresh turned off. Choose refresh time interval",
+      "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
+    },
+    "live-option": {
+      "aria-label": "Turn on live streaming",
+      "label": "Live"
+    },
+    "off-option": {
+      "aria-label": "Turn off auto refresh",
+      "label": "Off"
+    },
+    "select-button": {
+      "auto-refresh": "Set auto refresh interval"
     }
   },
   "share-modal": {
@@ -373,7 +406,8 @@
       "mistake-message": "Did you make a mistake? ",
       "name": "Snapshot name",
       "timeout": "Timeout (seconds)",
-      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics."
+      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics.",
+      "url-label": "Snapshot URL"
     },
     "tab-title": {
       "embed": "Embed",
@@ -387,6 +421,9 @@
       "dark": "Dark",
       "field-name": "Theme",
       "light": "Light"
+    },
+    "view-json": {
+      "copy-button": "Copy to Clipboard"
     }
   },
   "shared-dashboard": {
@@ -414,6 +451,48 @@
     "absolute": {
       "recent-title": "Recently used absolute ranges",
       "title": "Absolute time range"
+    },
+    "calendar": {
+      "apply-button": "Apply time range",
+      "cancel-button": "Cancel",
+      "select-time": "Select a time range"
+    },
+    "content": {
+      "empty-recent-list": "<0><0>It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.</0></0><1><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></1>",
+      "filter-placeholder": "Search quick ranges"
+    },
+    "footer": {
+      "change-settings-button": "Change time settings",
+      "fiscal-year-option": "Fiscal year",
+      "fiscal-year-start": "Fiscal year start month",
+      "time-zone-option": "Time zone",
+      "time-zone-selection": "Time zone selection"
+    },
+    "range-content": {
+      "apply-button": "Apply time range",
+      "default-error": "Please enter a past date or \"now\"",
+      "fiscal-year": "Fiscal year",
+      "from-input": "From",
+      "range-error": "\"From\" can't be after \"To\"",
+      "to-input": "To"
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "Move time range backwards",
+      "current-time-selected": "Time range selected: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Move time range forwards",
+      "to": "to",
+      "zoom-out-button": "Zoom out time range",
+      "zoom-out-tooltip": "Time range zoom out <1></1> CTRL+Z"
+    },
+    "time-range": {
+      "aria-role": "Time range selection",
+      "default-title": "Time ranges",
+      "example-title": "Example time ranges",
+      "specify": "Specify time range <1></1>"
+    },
+    "zone": {
+      "select-aria-label": "Time zone picker",
+      "select-search-input": "Type to search (country, city, abbreviation)"
     }
   },
   "user-orgs": {
@@ -442,5 +521,14 @@
   },
   "user-sessions": {
     "loading": "Loading sessions..."
+  },
+  "variable": {
+    "picker": {
+      "input": "Enter variable value",
+      "link-all": "All",
+      "option-all": "All",
+      "option-selected-values": "Selected",
+      "option-tooltip": "Clear selections"
+    }
   }
 }

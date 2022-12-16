@@ -197,7 +197,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		am.silences.Maintenance(silenceMaintenanceInterval, silencesFilePath, am.stopc, func() (int64, error) {
 			// Delete silences older than the retention period.
 			if _, err := am.silences.GC(); err != nil {
-				am.logger.Error("silence garbage collection", "err", err)
+				am.logger.Error("silence garbage collection", "error", err)
 				// Don't return here - we need to snapshot our state first.
 			}
 
@@ -428,14 +428,16 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.logger, am.dispatcherMetrics)
 
 	// Check which receivers are active and create the receiver stage.
+	var receivers []*notify.Receiver
 	activeReceivers := am.getActiveReceiversMap(am.route)
 	for name := range integrationsMap {
 		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
 		routingStage[name] = notify.MultiStage{meshStage, silencingStage, timeMuteStage, inhibitionStage, stage}
 		_, isActive := activeReceivers[name]
 
-		am.receivers = append(am.receivers, notify.NewReceiver(name, isActive, integrationsMap[name]))
+		receivers = append(receivers, notify.NewReceiver(name, isActive, integrationsMap[name]))
 	}
+	am.receivers = receivers
 
 	am.wg.Add(1)
 	go func() {
@@ -512,7 +514,7 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 			SecureSettings:        secureSettings,
 		}
 	)
-	factoryConfig, err := channels.NewFactoryConfig(cfg, am.NotificationService, am.decryptFn, tmpl, am.Store)
+	factoryConfig, err := channels.NewFactoryConfig(cfg, NewNotificationSender(am.NotificationService), am.decryptFn, tmpl, newImageStore(am.Store), LoggerFactory)
 	if err != nil {
 		return nil, InvalidReceiverError{
 			Receiver: r,

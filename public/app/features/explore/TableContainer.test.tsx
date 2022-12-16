@@ -56,8 +56,8 @@ const defaultProps = {
   loading: false,
   width: 800,
   onCellFilterAdded: jest.fn(),
-  tableResult: dataFrame,
-  splitOpen: (() => {}) as any,
+  tableResult: [dataFrame],
+  splitOpenFn: (() => {}) as any,
   range: {} as any,
   timeZone: InternalTimeZones.utc,
   resultsStyle: TABLE_RESULTS_STYLE.raw,
@@ -97,11 +97,13 @@ describe('TableContainer', () => {
   });
 
   it('should render 0 series returned on no items', () => {
-    const emptyFrames = {
-      name: 'TableResultName',
-      fields: [],
-      length: 0,
-    } as DataFrame;
+    const emptyFrames = [
+      {
+        name: 'TableResultName',
+        fields: [],
+        length: 0,
+      },
+    ] as DataFrame[];
     render(<TableContainer {...defaultProps} tableResult={emptyFrames} />);
     expect(screen.getByText('0 series returned')).toBeInTheDocument();
   });

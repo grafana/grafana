@@ -15,6 +15,7 @@ import { ProvisioningBadge } from '../Provisioning';
 import { RuleLocation } from '../RuleLocation';
 import { Tokenize } from '../Tokenize';
 
+import { RuleActionsButtons } from './RuleActionsButtons';
 import { RuleConfigStatus } from './RuleConfigStatus';
 import { RuleDetails } from './RuleDetails';
 import { RuleHealth } from './RuleHealth';
@@ -188,6 +189,16 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         size: 5,
       });
     }
+    columns.push({
+      id: 'actions',
+      label: 'Actions',
+      // eslint-disable-next-line react/display-name
+      renderCell: ({ data: rule }) => {
+        return <RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />;
+      },
+      size: '200px',
+    });
+
     return columns;
-  }, [hasRuler, rulerRulesLoaded, showSummaryColumn, showGroupColumn]);
+  }, [showSummaryColumn, showGroupColumn, hasRuler, rulerRulesLoaded]);
 }

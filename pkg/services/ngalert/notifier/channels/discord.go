@@ -17,27 +17,20 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DiscordNotifier struct {
 	*Base
-	log                log.Logger
-	ns                 notifications.WebhookSender
-	images             ImageStore
-	tmpl               *template.Template
-	Content            string
-	AvatarURL          string
-	WebhookURL         string
-	UseDiscordUsername bool
+	log      Logger
+	ns       WebhookSender
+	images   ImageStore
+	tmpl     *template.Template
+	settings discordSettings
 }
 
-type DiscordConfig struct {
-	*NotificationChannelConfig
+type discordSettings struct {
+	Title              string
 	Content            string
 	AvatarURL          string
 	WebhookURL         string
@@ -54,50 +47,37 @@ type discordAttachment struct {
 
 const DiscordMaxEmbeds = 10
 
-func NewDiscordConfig(config *NotificationChannelConfig) (*DiscordConfig, error) {
-	discordURL := config.Settings.Get("url").MustString()
-	if discordURL == "" {
-		return nil, errors.New("could not find webhook url property in settings")
-	}
-	return &DiscordConfig{
-		NotificationChannelConfig: config,
-		Content:                   config.Settings.Get("message").MustString(DefaultMessageEmbed),
-		AvatarURL:                 config.Settings.Get("avatar_url").MustString(),
-		WebhookURL:                discordURL,
-		UseDiscordUsername:        config.Settings.Get("use_discord_username").MustBool(false),
-	}, nil
-}
-
 func DiscordFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewDiscordConfig(fc.Config)
+	dn, err := newDiscordNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewDiscordNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
+	return dn, nil
 }
 
-func NewDiscordNotifier(config *DiscordConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *DiscordNotifier {
-	return &DiscordNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
-			SecureSettings:        config.SecureSettings,
-		}),
-		Content:            config.Content,
-		AvatarURL:          config.AvatarURL,
-		WebhookURL:         config.WebhookURL,
-		log:                log.New("alerting.notifier.discord"),
-		ns:                 ns,
-		images:             images,
-		tmpl:               t,
-		UseDiscordUsername: config.UseDiscordUsername,
+func newDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
+	dUrl := fc.Config.Settings.Get("url").MustString()
+	if dUrl == "" {
+		return nil, errors.New("could not find webhook url property in settings")
 	}
+
+	return &DiscordNotifier{
+		Base:   NewBase(fc.Config),
+		log:    fc.Logger,
+		ns:     fc.NotificationService,
+		images: fc.ImageStore,
+		tmpl:   fc.Template,
+		settings: discordSettings{
+			Title:              fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
+			Content:            fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
+			AvatarURL:          fc.Config.Settings.Get("avatar_url").MustString(),
+			WebhookURL:         dUrl,
+			UseDiscordUsername: fc.Config.Settings.Get("use_discord_username").MustBool(false),
+		},
+	}, nil
 }
 
 func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
@@ -105,38 +85,42 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	bodyJSON := simplejson.New()
 
-	if !d.UseDiscordUsername {
+	if !d.settings.UseDiscordUsername {
 		bodyJSON.Set("username", "Grafana")
 	}
 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, d.tmpl, as, d.log, &tmplErr)
 
-	if d.Content != "" {
-		bodyJSON.Set("content", tmpl(d.Content))
-		if tmplErr != nil {
-			d.log.Warn("failed to template Discord notification content", "err", tmplErr.Error())
-			// Reset tmplErr for templating other fields.
-			tmplErr = nil
-		}
+	bodyJSON.Set("content", tmpl(d.settings.Content))
+	if tmplErr != nil {
+		d.log.Warn("failed to template Discord notification content", "error", tmplErr.Error())
+		// Reset tmplErr for templating other fields.
+		tmplErr = nil
 	}
 
-	if d.AvatarURL != "" {
-		bodyJSON.Set("avatar_url", tmpl(d.AvatarURL))
+	if d.settings.AvatarURL != "" {
+		bodyJSON.Set("avatar_url", tmpl(d.settings.AvatarURL))
 		if tmplErr != nil {
-			d.log.Warn("failed to template Discord Avatar URL", "err", tmplErr.Error(), "fallback", d.AvatarURL)
-			bodyJSON.Set("avatar_url", d.AvatarURL)
+			d.log.Warn("failed to template Discord Avatar URL", "error", tmplErr.Error(), "fallback", d.settings.AvatarURL)
+			bodyJSON.Set("avatar_url", d.settings.AvatarURL)
 			tmplErr = nil
 		}
 	}
 
 	footer := map[string]interface{}{
 		"text":     "Grafana v" + setting.BuildVersion,
-		"icon_url": "https://grafana.com/assets/img/fav32.png",
+		"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 	}
 
 	linkEmbed := simplejson.New()
-	linkEmbed.Set("title", tmpl(DefaultMessageTitleEmbed))
+
+	linkEmbed.Set("title", tmpl(d.settings.Title))
+	if tmplErr != nil {
+		d.log.Warn("failed to template Discord notification title", "error", tmplErr.Error())
+		// Reset tmplErr for templating other fields.
+		tmplErr = nil
+	}
 	linkEmbed.Set("footer", footer)
 	linkEmbed.Set("type", "rich")
 
@@ -164,14 +148,14 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	bodyJSON.Set("embeds", embeds)
 
 	if tmplErr != nil {
-		d.log.Warn("failed to template Discord message", "err", tmplErr.Error())
+		d.log.Warn("failed to template Discord message", "error", tmplErr.Error())
 		tmplErr = nil
 	}
 
-	u := tmpl(d.WebhookURL)
+	u := tmpl(d.settings.WebhookURL)
 	if tmplErr != nil {
-		d.log.Warn("failed to template Discord URL", "err", tmplErr.Error(), "fallback", d.WebhookURL)
-		u = d.WebhookURL
+		d.log.Warn("failed to template Discord URL", "error", tmplErr.Error(), "fallback", d.settings.WebhookURL)
+		u = d.settings.WebhookURL
 	}
 
 	body, err := json.Marshal(bodyJSON)
@@ -179,13 +163,13 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, err
 	}
 
-	cmd, err := d.buildRequest(ctx, u, body, attachments)
+	cmd, err := d.buildRequest(u, body, attachments)
 	if err != nil {
 		return false, err
 	}
 
-	if err := d.ns.SendWebhookSync(ctx, cmd); err != nil {
-		d.log.Error("failed to send notification to Discord", "err", err)
+	if err := d.ns.SendWebhook(ctx, cmd); err != nil {
+		d.log.Error("failed to send notification to Discord", "error", err)
 		return false, err
 	}
 	return true, nil
@@ -199,7 +183,7 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 	attachments := make([]discordAttachment, 0)
 
 	_ = withStoredImages(ctx, d.log, d.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			if embedQuota < 1 {
 				return ErrImagesDone
 			}
@@ -219,8 +203,8 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 				base := filepath.Base(image.Path)
 				url := fmt.Sprintf("attachment://%s", base)
 				reader, err := openImage(image.Path)
-				if err != nil && !errors.Is(err, ngmodels.ErrImageNotFound) {
-					d.log.Warn("failed to retrieve image data from store", "err", err)
+				if err != nil && !errors.Is(err, ErrImageNotFound) {
+					d.log.Warn("failed to retrieve image data from store", "error", err)
 					return nil
 				}
 
@@ -241,8 +225,8 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 	return attachments
 }
 
-func (d DiscordNotifier) buildRequest(ctx context.Context, url string, body []byte, attachments []discordAttachment) (*models.SendWebhookSync, error) {
-	cmd := &models.SendWebhookSync{
+func (d DiscordNotifier) buildRequest(url string, body []byte, attachments []discordAttachment) (*SendWebhookSettings, error) {
+	cmd := &SendWebhookSettings{
 		Url:        url,
 		HttpMethod: "POST",
 	}
@@ -257,7 +241,7 @@ func (d DiscordNotifier) buildRequest(ctx context.Context, url string, body []by
 	defer func() {
 		if err := w.Close(); err != nil {
 			// Shouldn't matter since we already close w explicitly on the non-error path
-			d.log.Warn("failed to close multipart writer", "err", err)
+			d.log.Warn("failed to close multipart writer", "error", err)
 		}
 	}()
 

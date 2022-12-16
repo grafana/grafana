@@ -13,7 +13,7 @@ import (
 )
 
 func BuildBackend(ctx *cli.Context) error {
-	metadata, err := GenerateMetadata(ctx)
+	metadata, err := config.GenerateMetadata(ctx)
 	if err != nil {
 		return err
 	}

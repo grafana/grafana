@@ -10,6 +10,31 @@ export const CloudWatchDashboardLoadedEvent = new DashboardLoadedEvent({
   queries: {
     cloudwatch: [
       {
+        accountId: '123456789',
+        datasource: {
+          type: 'cloudwatch',
+          uid: '123',
+        },
+        dimensions: {
+          InstanceId: 'i-123',
+        },
+        expression: '',
+        hide: false,
+        id: '',
+        label: '',
+        matchExact: true,
+        metricEditorMode: 0,
+        metricName: 'CPUUtilization',
+        metricQueryType: 0,
+        namespace: 'AWS/EC2',
+        period: '',
+        queryMode: 'Metrics',
+        refId: 'A',
+        region: 'us-east-1',
+        sqlExpression: '',
+        statistic: 'Average',
+      },
+      {
         alias: '',
         datasource: {
           type: 'cloudwatch',
@@ -709,6 +734,30 @@ export const CloudWatchDashboardLoadedEvent = new DashboardLoadedEvent({
         region: 'default',
         sqlExpression: '',
         statistic: 'Average',
+      },
+      {
+        alias: '',
+        datasource: {
+          type: 'cloudwatch',
+          uid: 'abc',
+        },
+        dimensions: {
+          InstanceId: '*',
+        },
+        expression: 'a / ',
+        hide: false,
+        id: '',
+        matchExact: true,
+        metricEditorMode: 0,
+        metricName: 'CPUUtilization',
+        metricQueryType: 0,
+        namespace: 'AWS/EC2',
+        period: '',
+        queryMode: '',
+        refId: 'B',
+        region: 'default',
+        sqlExpression: '',
+        statistic: '',
       },
     ] as CloudWatchQuery[],
   },

@@ -11,12 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -65,7 +65,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When a server admin attempts to revoke an auth token for a non-existing user", func(t *testing.T) {
-		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
+		cmd := auth.RevokeAuthTokenCmd{AuthTokenId: 2}
 		mockUser := usertest.NewUserServiceFake()
 		mockUser.ExpectedError = user.ErrUserNotFound
 		adminRevokeUserAuthTokenScenario(t, "Should return not found when calling POST on",
@@ -167,8 +167,8 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				Login:    testLogin,
 				Password: testPassword,
 			}
-
-			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
+			usrSvc := &usertest.FakeUserService{ExpectedUser: &user.User{ID: testUserID}}
+			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, usrSvc, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 200, sc.resp.Code)
 
@@ -185,8 +185,8 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				Password: testPassword,
 				OrgId:    testOrgID,
 			}
-
-			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
+			usrSvc := &usertest.FakeUserService{ExpectedUser: &user.User{ID: testUserID}}
+			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, usrSvc, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 200, sc.resp.Code)
 
@@ -203,8 +203,8 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				Password: testPassword,
 				OrgId:    nonExistingOrgID,
 			}
-
-			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
+			usrSvc := &usertest.FakeUserService{ExpectedError: models.ErrOrgNotFound}
+			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, usrSvc, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 400, sc.resp.Code)
 
@@ -220,8 +220,8 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			Login:    existingTestLogin,
 			Password: testPassword,
 		}
-
-		adminCreateUserScenario(t, "Should return an error", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
+		usrSvc := &usertest.FakeUserService{ExpectedError: user.ErrUserAlreadyExists}
+		adminCreateUserScenario(t, "Should return an error", "/api/admin/users", "/api/admin/users", createCmd, usrSvc, func(sc *scenarioContext) {
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 412, sc.resp.Code)
 
@@ -233,7 +233,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 }
 
 func putAdminScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
-	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore sqlstore.Store, userSvc user.Service) {
+	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore db.DB, userSvc user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := &HTTPServer{
 			Cfg:             setting.NewCfg(),
@@ -263,7 +263,7 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, userService *usertest.FakeUserService) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
-			AuthTokenService: auth.NewFakeUserAuthTokenService(),
+			AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 			userService:      userService,
 		}
 
@@ -285,9 +285,9 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 	})
 }
 
-func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd, fn scenarioFunc, userService user.Service) {
+func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd auth.RevokeAuthTokenCmd, fn scenarioFunc, userService user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
+		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,
@@ -315,7 +315,7 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 
 func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, userService *usertest.FakeUserService) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
+		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
 		hs := HTTPServer{
 			AuthTokenService: fakeAuthTokenService,
@@ -341,7 +341,7 @@ func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, route
 
 func adminDisableUserScenario(t *testing.T, desc string, action string, url string, routePattern string, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
+		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
 		authInfoService := &logintest.AuthInfoServiceFake{}
 
@@ -396,15 +396,10 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 	})
 }
 
-func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.AdminCreateUserForm, fn scenarioFunc) {
+func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.AdminCreateUserForm, svc *usertest.FakeUserService, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
-			Login: loginservice.LoginServiceMock{
-				ExpectedUserForm:    cmd,
-				NoExistingOrgId:     nonExistingOrgID,
-				AlreadyExitingLogin: existingTestLogin,
-				GeneratedUserId:     testUserID,
-			},
+			userService: svc,
 		}
 
 		sc := setupScenarioContext(t, url)

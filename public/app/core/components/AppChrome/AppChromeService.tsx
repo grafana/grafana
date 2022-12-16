@@ -57,10 +57,10 @@ export class AppChromeService {
       this.routeChangeHandled = true;
     }
 
+    Object.assign(newState, update);
+
     // KioskMode overrides chromeless state
     newState.chromeless = newState.kioskMode === KioskMode.Full || this.currentRoute?.chromeless;
-
-    Object.assign(newState, update);
 
     if (!isShallowEqual(current, newState)) {
       this.state.next(newState);

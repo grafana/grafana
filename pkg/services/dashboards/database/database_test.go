@@ -12,15 +12,21 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	publicDashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
@@ -28,19 +34,26 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	var sqlStore *sqlstore.SQLStore
+	var cfg *setting.Cfg
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
 	var dashboardStore *DashboardStore
 	var starService star.Service
+	var publicDashboardStore *database.PublicDashboardStoreImpl
 
 	setup := func() {
-		sqlStore = sqlstore.InitTestDB(t)
-		starService = starimpl.ProvideService(sqlStore, sqlStore.Cfg)
-		dashboardStore = ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+		sqlStore, cfg = db.InitTestDBwithCfg(t)
+		starService = starimpl.ProvideService(sqlStore, cfg)
+		quotaService := quotatest.New(false, nil)
+		var err error
+		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+		require.NoError(t, err)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.Id, false, "prod")
 		savedDash2 = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod")
 		insertTestRule(t, sqlStore, savedFolder.OrgId, savedFolder.Uid)
+
+		publicDashboardStore = database.ProvideStore(sqlStore)
 	}
 
 	t.Run("Should return dashboard model", func(t *testing.T) {
@@ -232,6 +245,78 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.True(t, errors.Is(err, dashboards.ErrFolderContainsAlertRules))
 	})
 
+	t.Run("Should be able to delete dashboard and related public dashboard", func(t *testing.T) {
+		setup()
+
+		uid := util.GenerateShortUID()
+		cmd := publicDashboardModels.SavePublicDashboardCommand{
+			PublicDashboard: publicDashboardModels.PublicDashboard{
+				Uid:          uid,
+				DashboardUid: savedDash.Uid,
+				OrgId:        savedDash.OrgId,
+				IsEnabled:    true,
+				TimeSettings: &publicDashboardModels.TimeSettings{},
+				CreatedBy:    1,
+				CreatedAt:    time.Now(),
+				AccessToken:  "an-access-token",
+			},
+		}
+		_, err := publicDashboardStore.Create(context.Background(), cmd)
+		require.NoError(t, err)
+		pubdashConfig, _ := publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
+		require.NotNil(t, pubdashConfig)
+
+		deleteCmd := &models.DeleteDashboardCommand{Id: savedDash.Id, OrgId: savedDash.OrgId}
+		err = dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
+		require.NoError(t, err)
+
+		query := models.GetDashboardQuery{Uid: savedDash.Uid, OrgId: savedDash.OrgId}
+		dash, getErr := dashboardStore.GetDashboard(context.Background(), &query)
+		require.Equal(t, getErr, dashboards.ErrDashboardNotFound)
+		assert.Nil(t, dash)
+
+		pubdashConfig, err = publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
+		require.Nil(t, err)
+		require.Nil(t, pubdashConfig)
+	})
+
+	t.Run("Should be able to delete a dashboard folder, with its dashboard and related public dashboard", func(t *testing.T) {
+		setup()
+
+		uid := util.GenerateShortUID()
+		cmd := publicDashboardModels.SavePublicDashboardCommand{
+			PublicDashboard: publicDashboardModels.PublicDashboard{
+				Uid:          uid,
+				DashboardUid: savedDash.Uid,
+				OrgId:        savedDash.OrgId,
+				IsEnabled:    true,
+				TimeSettings: &publicDashboardModels.TimeSettings{},
+				CreatedBy:    1,
+				CreatedAt:    time.Now(),
+				AccessToken:  "an-access-token",
+			},
+		}
+		_, err := publicDashboardStore.Create(context.Background(), cmd)
+		require.NoError(t, err)
+		pubdashConfig, _ := publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
+		require.NotNil(t, pubdashConfig)
+
+		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: true}
+		err = dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
+		require.NoError(t, err)
+
+		query := models.GetDashboardsQuery{
+			DashboardIds: []int64{savedFolder.Id, savedDash.Id},
+		}
+		err = dashboardStore.GetDashboards(context.Background(), &query)
+		require.NoError(t, err)
+		require.Equal(t, len(query.Result), 0)
+
+		pubdashConfig, err = publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
+		require.Nil(t, err)
+		require.Nil(t, pubdashConfig)
+	})
+
 	t.Run("Should be able to delete a dashboard folder and its children if force delete rules is enabled", func(t *testing.T) {
 		setup()
 		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id, ForceDeleteFolderRules: true}
@@ -248,7 +333,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, len(res), 0)
 
-		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			var existingRuleID int64
 			exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", savedFolder.Id).Cols("id").Get(&existingRuleID)
 			require.NoError(t, err)
@@ -479,14 +564,34 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.Equal(t, len(res), 1)
 		require.Equal(t, res[0].Title, "starred dash")
 	})
+
+	t.Run("Can count dashboards by parent folder", func(t *testing.T) {
+		setup()
+		// setup() saves one dashboard in the general folder and two in the "savedFolder".
+		count, err := dashboardStore.CountDashboardsInFolder(
+			context.Background(),
+			&dashboards.CountDashboardsInFolderRequest{FolderID: 0, OrgID: 1})
+		require.NoError(t, err)
+		require.Equal(t, int64(1), count)
+
+		count, err = dashboardStore.CountDashboardsInFolder(
+			context.Background(),
+			&dashboards.CountDashboardsInFolderRequest{FolderID: savedFolder.Id, OrgID: 1})
+		require.NoError(t, err)
+		require.Equal(t, int64(2), count)
+	})
 }
 
 func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
 	pluginId := "test-app"
 
 	appFolder := insertTestDashboardForPlugin(t, dashboardStore, "app-test", 1, 0, true, pluginId)
@@ -498,7 +603,7 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 		OrgId:    1,
 	}
 
-	err := dashboardStore.GetDashboardsByPluginID(context.Background(), &query)
+	err = dashboardStore.GetDashboardsByPluginID(context.Background(), &query)
 	require.NoError(t, err)
 	require.Equal(t, len(query.Result), 2)
 }
@@ -507,8 +612,12 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
 
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
@@ -556,8 +665,12 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg))
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	qNoFilter := &models.FindPersistedDashboardsQuery{
@@ -596,8 +709,8 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	assert.Equal(t, dashB.Id, results[0].ID)
 }
 
-func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64, folderUID string) {
-	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID string) {
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		type alertQuery struct {
 			RefID         string
 			DatasourceUID string
@@ -667,21 +780,6 @@ func insertTestRule(t *testing.T, sqlStore *sqlstore.SQLStore, foderOrgID int64,
 		return err
 	})
 	require.NoError(t, err)
-}
-
-func CreateUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role string, isAdmin bool) user.User {
-	t.Helper()
-	sqlStore.Cfg.AutoAssignOrg = true
-	sqlStore.Cfg.AutoAssignOrgId = 1
-	sqlStore.Cfg.AutoAssignOrgRole = role
-	currentUserCmd := user.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
-	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
-	require.NoError(t, err)
-	q1 := models.GetUserOrgListQuery{UserId: currentUser.ID}
-	err = sqlStore.GetUserOrgList(context.Background(), &q1)
-	require.NoError(t, err)
-	require.Equal(t, org.RoleType(role), q1.Result[0].Role)
-	return *currentUser
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore *DashboardStore, title string, orgId int64,

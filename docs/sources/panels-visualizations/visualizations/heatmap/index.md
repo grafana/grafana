@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/heatmap/
-  - /docs/grafana/latest/visualizations/heatmap/
-  - /docs/grafana/latest/panels-visualizations/visualizations/heatmap/
+  - ../../features/panels/heatmap/
+  - ../../visualizations/heatmap/
 description: Heatmap visualization documentation
 keywords:
   - grafana
@@ -15,7 +14,7 @@ weight: 600
 
 # Heatmap
 
-The Heatmap panel visualization allows you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../../basics/intro-histograms/" >}}).
+The Heatmap panel visualization allows you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../../fundamentals/intro-histograms/" >}}).
 
 ![](/static/img/docs/v43/heatmap_panel_cover.jpg)
 

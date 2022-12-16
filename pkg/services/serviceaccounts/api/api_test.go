@@ -15,19 +15,24 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -42,13 +47,16 @@ var (
 	serviceAccountIDPath = serviceAccountPath + "%v"
 )
 
+// TODO:
+// refactor this set of tests to make use of fakes for the ServiceAccountService
+// all of the API tests are calling with all of the db store injections
+// which is not ideal
+// this is a bit of a hack to get the tests to pass until we refactor the tests
+// to use fakes as in the user service tests
+
 func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
-	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
-	kvStore := kvstore.ProvideService(store)
-	orgService := orgimpl.ProvideService(store, setting.NewCfg())
-	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, orgService)
-	svcmock := tests.ServiceAccountMock{}
+	store := db.InitTestDB(t)
+	services := setupTestServices(t, store)
 
 	autoAssignOrg := store.Cfg.AutoAssignOrg
 	store.Cfg.AutoAssignOrg = true
@@ -56,8 +64,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 		store.Cfg.AutoAssignOrg = autoAssignOrg
 	}()
 
-	orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
-	err := store.CreateOrg(context.Background(), orgCmd)
+	orgCmd := &org.CreateOrgCommand{Name: "Some Test Org"}
+	_, err := services.OrgService.CreateWithMember(context.Background(), orgCmd)
 	require.Nil(t, err)
 
 	type testCreateSATestCase struct {
@@ -162,7 +170,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			serviceAccountRequestScenario(t, http.MethodPost, serviceAccountPath, testUser, func(httpmethod string, endpoint string, usr *tests.TestUser) {
-				server, api := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
+				server, api := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), tc.acmock, store)
 				marshalled, err := json.Marshal(tc.body)
 				require.NoError(t, err)
 
@@ -210,11 +218,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 // test the accesscontrol endpoints
 // with permissions and without permissions
 func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
-	kvStore := kvstore.ProvideService(store)
-	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
-	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
-	svcmock := tests.ServiceAccountMock{}
+	store := db.InitTestDB(t)
+	services := setupTestServices(t, store)
 
 	var requestResponse = func(server *web.Mux, httpMethod, requestpath string) *httptest.ResponseRecorder {
 		req, err := http.NewRequest(httpMethod, requestpath, nil)
@@ -242,7 +247,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		}
 		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
-			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, saStore)
+			server, _ := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), testcase.acmock, store)
 			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, fmt.Sprint(createduser.ID))).Code
 			require.Equal(t, testcase.expectedCode, actual)
 		})
@@ -266,7 +271,7 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		}
 		serviceAccountRequestScenario(t, http.MethodDelete, serviceAccountIDPath, &testcase.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
 			createduser := tests.SetupUserServiceAccount(t, store, testcase.user)
-			server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), testcase.acmock, store, saStore)
+			server, _ := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), testcase.acmock, store)
 			actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, createduser.ID)).Code
 			require.Equal(t, testcase.expectedCode, actual)
 		})
@@ -278,18 +283,29 @@ func serviceAccountRequestScenario(t *testing.T, httpMethod string, endpoint str
 	fn(httpMethod, endpoint, user)
 }
 
-func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
+func setupTestServer(
+	t *testing.T,
+	svc *tests.ServiceAccountMock,
 	routerRegister routing.RouteRegister,
 	acmock *accesscontrolmock.Mock,
-	sqlStore *sqlstore.SQLStore, saStore serviceaccounts.Store) (*web.Mux, *ServiceAccountsAPI) {
+	sqlStore db.DB,
+) (*web.Mux, *ServiceAccountsAPI) {
 	cfg := setting.NewCfg()
 	teamSvc := teamimpl.ProvideService(sqlStore, cfg)
-	userSvc := userimpl.ProvideService(sqlStore, nil, cfg, teamimpl.ProvideService(sqlStore, cfg), nil)
-	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(
-		cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, saStore, acmock, teamSvc, userSvc)
+	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 
-	a := NewServiceAccountsAPI(cfg, svc, acmock, routerRegister, saStore, saPermissionService)
+	userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, cfg, teamimpl.ProvideService(sqlStore, cfg), nil, quotatest.New(false, nil))
+	require.NoError(t, err)
+
+	// TODO: create fake for retriever to pass into the permissionservice
+	retrieverSvc := retriever.ProvideService(sqlStore, nil, nil, nil, nil)
+	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(
+		cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, retrieverSvc, acmock, teamSvc, userSvc)
+	require.NoError(t, err)
+	acService := actest.FakeService{}
+
+	a := NewServiceAccountsAPI(cfg, svc, acmock, acService, routerRegister, saPermissionService)
 	a.RegisterAPIEndpoints()
 
 	a.cfg.ApiKeyMaxSecondsToLive = -1 // disable api key expiration
@@ -315,11 +331,9 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 }
 
 func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
-	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
-	kvStore := kvstore.ProvideService(store)
-	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
-	svcmock := tests.ServiceAccountMock{}
+	store := db.InitTestDB(t)
+	services := setupTestServices(t, store)
+
 	type testRetrieveSATestCase struct {
 		desc         string
 		user         *tests.TestUser
@@ -383,7 +397,7 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 					createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
 					scopeID = int(createdUser.ID)
 				}
-				server, _ := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
+				server, _ := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), tc.acmock, store)
 
 				actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, scopeID))
 
@@ -407,11 +421,9 @@ func newString(s string) *string {
 }
 
 func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
-	store := sqlstore.InitTestDB(t)
-	apiKeyService := apikeyimpl.ProvideService(store, store.Cfg)
-	kvStore := kvstore.ProvideService(store)
-	saStore := database.ProvideServiceAccountsStore(store, apiKeyService, kvStore, nil)
-	svcmock := tests.ServiceAccountMock{}
+	store := db.InitTestDB(t)
+	services := setupTestServices(t, store)
+
 	type testUpdateSATestCase struct {
 		desc         string
 		user         *tests.TestUser
@@ -504,7 +516,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server, saAPI := setupTestServer(t, &svcmock, routing.NewRouteRegister(), tc.acmock, store, saStore)
+			server, saAPI := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), tc.acmock, store)
 			scopeID := tc.Id
 			if tc.user != nil {
 				createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
@@ -534,11 +546,40 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 				assert.Equal(t, tc.user.Login, serviceAccountData["login"].(string))
 
 				// Ensure the user was updated in DB
-				sa, err := saAPI.store.RetrieveServiceAccount(context.Background(), 1, int64(scopeID))
+				sa, err := saAPI.service.RetrieveServiceAccount(context.Background(), 1, int64(scopeID))
 				require.NoError(t, err)
 				require.Equal(t, *tc.body.Name, sa.Name)
 				require.Equal(t, string(*tc.body.Role), sa.Role)
 			}
 		})
+	}
+}
+
+type services struct {
+	OrgService    org.Service
+	UserService   user.Service
+	SAService     tests.ServiceAccountMock
+	APIKeyService apikey.Service
+}
+
+func setupTestServices(t *testing.T, db *sqlstore.SQLStore) services {
+	kvStore := kvstore.ProvideService(db)
+	quotaService := quotatest.New(false, nil)
+	apiKeyService, err := apikeyimpl.ProvideService(db, db.Cfg, quotaService)
+	require.NoError(t, err)
+
+	orgService, err := orgimpl.ProvideService(db, setting.NewCfg(), quotaService)
+	require.NoError(t, err)
+	userSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService)
+	require.NoError(t, err)
+
+	saStore := database.ProvideServiceAccountsStore(nil, db, apiKeyService, kvStore, userSvc, orgService)
+	svcmock := tests.ServiceAccountMock{Store: saStore, Calls: tests.Calls{}, Stats: nil, SecretScanEnabled: false}
+
+	return services{
+		OrgService:    orgService,
+		UserService:   userSvc,
+		SAService:     svcmock,
+		APIKeyService: apiKeyService,
 	}
 }

@@ -1,30 +1,24 @@
 package channels
 
 import (
-	"context"
 	"errors"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 )
 
 type FactoryConfig struct {
 	Config              *NotificationChannelConfig
-	NotificationService notifications.Service
+	NotificationService NotificationSender
 	DecryptFunc         GetDecryptedValueFn
 	ImageStore          ImageStore
 	// Used to retrieve image URLs for messages, or data for uploads.
 	Template *template.Template
+	Logger   Logger
 }
 
-type ImageStore interface {
-	GetImage(ctx context.Context, token string) (*models.Image, error)
-}
-
-func NewFactoryConfig(config *NotificationChannelConfig, notificationService notifications.Service,
-	decryptFunc GetDecryptedValueFn, template *template.Template, imageStore ImageStore) (FactoryConfig, error) {
+func NewFactoryConfig(config *NotificationChannelConfig, notificationService NotificationSender,
+	decryptFunc GetDecryptedValueFn, template *template.Template, imageStore ImageStore, loggerFactory LoggerFactory) (FactoryConfig, error) {
 	if config.Settings == nil {
 		return FactoryConfig{}, errors.New("no settings supplied")
 	}
@@ -43,6 +37,7 @@ func NewFactoryConfig(config *NotificationChannelConfig, notificationService not
 		DecryptFunc:         decryptFunc,
 		Template:            template,
 		ImageStore:          imageStore,
+		Logger:              loggerFactory("ngalert.notifier." + config.Type),
 	}, nil
 }
 
@@ -65,6 +60,7 @@ var receiverFactories = map[string]func(FactoryConfig) (NotificationChannel, err
 	"victorops":               VictorOpsFactory,
 	"webhook":                 WebHookFactory,
 	"wecom":                   WeComFactory,
+	"webex":                   WebexFactory,
 }
 
 func Factory(receiverType string) (func(FactoryConfig) (NotificationChannel, error), bool) {

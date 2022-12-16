@@ -4,19 +4,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
-type getStore func(*sqlstore.SQLStore) store
+type getStore func(db.DB) store
 
 func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	t.Helper()
 
-	ss := sqlstore.InitTestDB(t)
+	ss := db.InitTestDB(t)
 	playlistStore := fn(ss)
 
 	t.Run("Can create playlist", func(t *testing.T) {

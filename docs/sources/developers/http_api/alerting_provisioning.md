@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/alerting_provisioning/
-  - /docs/grafana/latest/http_api/alerting_provisioning/
+  - ../../http_api/alerting_provisioning/
 description: Grafana Alerts HTTP API
 keywords:
   - grafana
@@ -878,7 +877,7 @@ Status: Bad Request
 
 ### <span id="embedded-contact-point"></span> EmbeddedContactPoint
 
-> EmbeddedContactPoint is the contact point type that is used
+> EmbeddedContactPoint is the contact point integration that is used
 > by grafanas embedded alertmanager implementation.
 
 **Properties**

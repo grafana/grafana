@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/auditing/
-  - /docs/grafana/latest/setup-grafana/configure-security/audit-grafana/
+  - ../../enterprise/auditing/
 description: Auditing
 keywords:
   - grafana
@@ -16,7 +15,9 @@ weight: 800
 
 Auditing allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) version 7.3 and later, and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+Only API requests or UI actions that trigger an API request generate an audit log.
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.3 and later, and [Grafana Cloud Advanced](/docs/grafana-cloud).
 
 ## Audit logs
 
@@ -66,6 +67,7 @@ The `additionalData` field can contain the following information:
 | `extUserInfo` | `login` | User information provided by the external system that was used to log in. |
 | `authTokenCount` | `login` | Number of active authentication tokens for the user that logged in. |
 | `terminationReason` | `logout` | The reason why the user logged out, such as a manual logout or a token expiring. |
+| `billing_role` | `billing-information` | The billing role associated with the billing information being sent. |
 
 ### Recorded actions
 
@@ -116,6 +118,10 @@ For example, creating an API key produces an audit log like this:
 Some actions can only be distinguished by their `requestUri` fields. For those actions, the relevant
 pattern of the `requestUri` field is given.
 
+Note that almost all these recorded actions are actions that correspond to API requests or UI actions that
+trigger an API request. Therefore, the action `{"action": "email", "resources": [{"type": "report"}]}` corresponds
+to the action when the user requests a report's preview to be sent through email, and not the scheduled ones.
+
 #### Sessions
 
 | Action                           | Distinguishing fields                                                                      |
@@ -130,6 +136,46 @@ pattern of the `requestUri` field is given.
 \* Where `AUTH-MODULE` is the name of the authentication module: `grafana`, `saml`,
 `ldap`, etc. \
 \*\* Includes manual log out, token expired/revoked, and [SAML Single Logout]({{< relref "configure-authentication/saml/#single-logout" >}}).
+
+#### Service accounts
+
+| Action                       | Distinguishing fields                                                                                 |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Create service account       | `{"action": "create", "resources": [{"type": "service-account"}]}`                                    |
+| Update service account       | `{"action": "update", "resources": [{"type": "service-account"}]}`                                    |
+| Delete service account       | `{"action": "delete", "resources": [{"type": "service-account"}]}`                                    |
+| Create service account token | `{"action": "create", "resources": [{"type": "service-account"}, {"type": "service-account-token"}]}` |
+| Delete service account token | `{"action": "delete", "resources": [{"type": "service-account"}, {"type": "service-account-token"}]}` |
+| Hide API keys                | `{"action": "hide-api-keys"}`                                                                         |
+| Migrate API keys             | `{"action": "migrate-api-keys"}`                                                                      |
+| Migrate API key              | `{"action": "migrate-api-keys"}, "resources": [{"type": "api-key"}]}`                                 |
+
+#### Access control
+
+| Action                                   | Distinguishing fields                                                                                                       |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Create role                              | `{"action": "create", "resources": [{"type": "role"}]}`                                                                     |
+| Update role                              | `{"action": "update", "resources": [{"type": "role"}]}`                                                                     |
+| Delete role                              | `{"action": "delete", "resources": [{"type": "role"}]}`                                                                     |
+| Assign built-in role                     | `{"action": "assign-builtin-role", "resources": [{"type": "role"}, {"type": "builtin-role"}]}`                              |
+| Remove built-in role                     | `{"action": "remove-builtin-role", "resources": [{"type": "role"}, {"type": "builtin-role"}]}`                              |
+| Grant team role                          | `{"action": "grant-team-role", "resources": [{"type": "team"}]}`                                                            |
+| Set team roles                           | `{"action": "set-team-roles", "resources": [{"type": "team"}]}`                                                             |
+| Revoke team role                         | `{"action": "revoke-team-role", "resources": [{"type": "role"}, {"type": "team"}]}`                                         |
+| Grant user role                          | `{"action": "grant-user-role", "resources": [{"type": "role"}, {"type": "user"}]}`                                          |
+| Set user roles                           | `{"action": "set-user-roles", "resources": [{"type": "user"}]}`                                                             |
+| Revoke user role                         | `{"action": "revoke-user-role", "resources": [{"type": "role"}, {"type": "user"}]}`                                         |
+| Set user permissions on folder           | `{"action": "set-user-permissions-on-folder", "resources": [{"type": "folder"}, {"type": "user"}]}`                         |
+| Set team permissions on folder           | `{"action": "set-team-permissions-on-folder", "resources": [{"type": "folder"}, {"type": "team"}]}`                         |
+| Set basic role permissions on folder     | `{"action": "set-basic-role-permissions-on-folder", "resources": [{"type": "folder"}, {"type": "builtin-role"}]}`           |
+| Set user permissions on dashboard        | `{"action": "set-user-permissions-on-dashboards", "resources": [{"type": "dashboard"}, {"type": "user"}]}`                  |
+| Set team permissions on dashboard        | `{"action": "set-team-permissions-on-dashboards", "resources": [{"type": "dashboard"}, {"type": "team"}]}`                  |
+| Set basic role permissions on dashboard  | `{"action": "set-basic-role-permissions-on-dashboards", "resources": [{"type": "dashboard"}, {"type": "builtin-role"}]}`    |
+| Set user permissions on team             | `{"action": "set-user-permissions-on-teams", "resources": [{"type": "teams"}, {"type": "user"}]}`                           |
+| Set user permissions on service account  | `{"action": "set-user-permissions-on-service-accounts", "resources": [{"type": "service-account"}, {"type": "user"}]}`      |
+| Set user permissions on datasource       | `{"action": "set-user-permissions-on-data-sources", "resources": [{"type": "datasource"}, {"type": "user"}]}`               |
+| Set team permissions on datasource       | `{"action": "set-team-permissions-on-data-sources", "resources": [{"type": "datasource"}, {"type": "team"}]}`               |
+| Set basic role permissions on datasource | `{"action": "set-basic-role-permissions-on-data-sources", "resources": [{"type": "datasource"}, {"type": "builtin-role"}]}` |
 
 #### User management
 
@@ -273,15 +319,18 @@ The following legacy alerting actions are still supported:
 | Delete playlist                   | `{"action": "delete", "resources": [{"type": "playlist"}]}`                          |
 | Create a snapshot                 | `{"action": "create", "resources": [{"type": "dashboard"}, {"type": "snapshot"}]}`   |
 | Delete a snapshot                 | `{"action": "delete", "resources": [{"type": "snapshot"}]}`                          |
+| Delete a snapshot by delete key   | `{"action": "delete", "resources": [{"type": "snapshot"}]}`                          |
 
 #### Provisioning
 
-| Action                           | Distinguishing fields                      |
-| -------------------------------- | ------------------------------------------ |
-| Reload provisioned dashboards    | `{"action": "provisioning-dashboards"}`    |
-| Reload provisioned datasources   | `{"action": "provisioning-datasources"}`   |
-| Reload provisioned plugins       | `{"action": "provisioning-plugins"}`       |
-| Reload provisioned notifications | `{"action": "provisioning-notifications"}` |
+| Action                            | Distinguishing fields                      |
+| --------------------------------- | ------------------------------------------ |
+| Reload provisioned dashboards     | `{"action": "provisioning-dashboards"}`    |
+| Reload provisioned datasources    | `{"action": "provisioning-datasources"}`   |
+| Reload provisioned plugins        | `{"action": "provisioning-plugins"}`       |
+| Reload provisioned notifications  | `{"action": "provisioning-notifications"}` |
+| Reload provisioned alerts         | `{"action": "provisioning-alerts"}`        |
+| Reload provisioned access control | `{"action": "provisioning-accesscontrol"}` |
 
 #### Plugins management
 
@@ -292,9 +341,25 @@ The following legacy alerting actions are still supported:
 
 #### Miscellaneous
 
-| Action              | Distinguishing fields                                        |
-| ------------------- | ------------------------------------------------------------ |
-| Set licensing token | `{"action": "create", "requestUri": "/api/licensing/token"}` |
+| Action                   | Distinguishing fields                                        |
+| ------------------------ | ------------------------------------------------------------ |
+| Set licensing token      | `{"action": "create", "requestUri": "/api/licensing/token"}` |
+| Save billing information | `{"action": "billing-information"}`                          |
+
+#### Generic actions
+
+In addition to the actions listed above, any HTTP request (`POST`, `PATCH`, `PUT`, and `DELETE`)
+against the API is recorded with one of the following generic actions.
+
+Furthermore, you can also record `GET` requests. See below how to configure it.
+
+| Action         | Distinguishing fields          |
+| -------------- | ------------------------------ |
+| POST request   | `{"action": "action"}`         |
+| PATCH request  | `{"action": "partial-update"}` |
+| PUT request    | `{"action": "update"}`         |
+| DELETE request | `{"action": "delete"}`         |
+| GET request    | `{"action": "retrieve"}`       |
 
 ## Configuration
 
@@ -315,11 +380,14 @@ enabled = false
 loggers = file
 # Keep dashboard content in the logs (request or response fields); this can significantly increase the size of your logs.
 log_dashboard_content = false
-# Log all GET requests and always include request body for generic POST/PUT/PATCH requests.
+# Keep requests and responses body; this can significantly increase the size of your logs.
 verbose = false
-# By default Grafana logs requests even if the status code indicates that no changes to the system were made.
-# Set to false to only log requests with 2xx, 3xx, 401, 403, 500 responses.
-log_all_status_codes = true
+# Write an audit log for every status code.
+# By default it only logs the following ones: 2XX, 3XX, 401, 403 and 500.
+log_all_status_codes = false
+# Maximum response body (in bytes) to be audited; 500KiB by default.
+# May help reducing the memory footprint caused by auditing.
+max_response_size_bytes = 512000
 ```
 
 Each exporter has its own configuration fields.

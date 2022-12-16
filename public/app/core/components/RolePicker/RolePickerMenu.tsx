@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
@@ -22,6 +23,7 @@ import { MENU_MAX_HEIGHT, ROLE_PICKER_SUBMENU_MIN_WIDTH } from './constants';
 enum GroupType {
   fixed = 'fixed',
   custom = 'custom',
+  plugin = 'plugin',
 }
 
 const BasicRoles = Object.values(OrgRole);
@@ -87,7 +89,33 @@ export const RolePickerMenu = ({
 
   const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
   const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
-  const optionGroups = getOptionGroups(options);
+  const pluginRoles = options.filter(filterPluginsRoles).sort(sortRolesByName);
+  const optionGroups = {
+    fixed: convertRolesToGroupOptions(fixedRoles).sort((a, b) => a.name.localeCompare(b.name)),
+    custom: convertRolesToGroupOptions(customRoles).sort((a, b) => a.name.localeCompare(b.name)),
+    plugin: convertRolesToGroupOptions(pluginRoles).sort((a, b) => a.name.localeCompare(b.name)),
+  };
+
+  const rolesCollection = {
+    fixed: {
+      groupType: GroupType.fixed,
+      optionGroup: optionGroups.fixed,
+      renderedName: `Fixed roles`,
+      roles: fixedRoles,
+    },
+    custom: {
+      groupType: GroupType.custom,
+      optionGroup: optionGroups.custom,
+      renderedName: `Custom roles`,
+      roles: customRoles,
+    },
+    pluginRoles: {
+      groupType: GroupType.plugin,
+      optionGroup: optionGroups.plugin,
+      renderedName: `Plugin roles`,
+      roles: pluginRoles,
+    },
+  };
 
   const getSelectedGroupOptions = (group: string) => {
     const selectedGroupOptions = [];
@@ -123,16 +151,17 @@ export const RolePickerMenu = ({
     const group = optionGroups[groupType].find((g) => {
       return g.value === value;
     });
+
+    if (!group) {
+      return;
+    }
+
     if (groupSelected(groupType, value) || groupPartiallySelected(groupType, value)) {
-      if (group) {
-        setSelectedOptions(selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid)));
-      }
+      setSelectedOptions(selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid)));
     } else {
-      if (group) {
-        const groupOptions = group.options.filter((role) => role.delegatable);
-        const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
-        setSelectedOptions([...restOptions, ...groupOptions]);
-      }
+      const groupOptions = group.options.filter((role) => role.delegatable);
+      const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
+      setSelectedOptions([...restOptions, ...groupOptions]);
     }
   };
 
@@ -200,96 +229,33 @@ export const RolePickerMenu = ({
               />
             </div>
           )}
-          {!!fixedRoles.length && (
-            <div className={customStyles.menuSection}>
-              <div className={customStyles.groupHeader}>Fixed roles</div>
-              <div className={styles.optionBody}>
-                {showGroups && !!optionGroups.fixed.length
-                  ? optionGroups.fixed.map((option, i) => (
-                      <RoleMenuGroupOption
-                        data={option}
-                        key={i}
-                        isSelected={
-                          groupSelected(GroupType.fixed, option.value) ||
-                          groupPartiallySelected(GroupType.fixed, option.value)
-                        }
-                        partiallySelected={groupPartiallySelected(GroupType.fixed, option.value)}
-                        disabled={option.options?.every(isNotDelegatable)}
-                        onChange={(group: string) => onGroupChange(GroupType.fixed, group)}
-                        onOpenSubMenu={(group: string) => onOpenSubMenu(GroupType.fixed, group)}
-                        onCloseSubMenu={onCloseSubMenu}
-                        root={subMenuNode?.current!}
-                        isFocused={showSubMenu && openedMenuGroup === option.value}
-                      >
-                        {showSubMenu && openedMenuGroup === option.value && (
-                          <RolePickerSubMenu
-                            options={subMenuOptions}
-                            selectedOptions={selectedOptions}
-                            onSelect={onChange}
-                            onClear={onClearSubMenu}
-                            showOnLeft={offset.horizontal > 0}
-                          />
-                        )}
-                      </RoleMenuGroupOption>
-                    ))
-                  : fixedRoles.map((option, i) => (
-                      <RoleMenuOption
-                        data={option}
-                        key={i}
-                        isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
-                        disabled={isNotDelegatable(option)}
-                        onChange={onChange}
-                        hideDescription
-                      />
-                    ))}
-              </div>
-            </div>
-          )}
-          {!!customRoles.length && (
-            <div className={customStyles.menuSection}>
-              <div className={customStyles.groupHeader}>Custom roles</div>
-              <div className={styles.optionBody}>
-                {showGroups && !!optionGroups.custom.length
-                  ? optionGroups.custom.map((option, i) => (
-                      <RoleMenuGroupOption
-                        data={option}
-                        key={i}
-                        isSelected={
-                          groupSelected(GroupType.custom, option.value) ||
-                          groupPartiallySelected(GroupType.custom, option.value)
-                        }
-                        partiallySelected={groupPartiallySelected(GroupType.custom, option.value)}
-                        disabled={option.options?.every(isNotDelegatable)}
-                        onChange={(group: string) => onGroupChange(GroupType.custom, group)}
-                        onOpenSubMenu={(group: string) => onOpenSubMenu(GroupType.custom, group)}
-                        onCloseSubMenu={onCloseSubMenu}
-                        root={subMenuNode?.current!}
-                        isFocused={showSubMenu && openedMenuGroup === option.value}
-                      >
-                        {showSubMenu && openedMenuGroup === option.value && (
-                          <RolePickerSubMenu
-                            options={subMenuOptions}
-                            selectedOptions={selectedOptions}
-                            onSelect={onChange}
-                            onClear={onClearSubMenu}
-                            showOnLeft={offset.horizontal > 0}
-                          />
-                        )}
-                      </RoleMenuGroupOption>
-                    ))
-                  : customRoles.map((option, i) => (
-                      <RoleMenuOption
-                        data={option}
-                        key={i}
-                        isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
-                        disabled={isNotDelegatable(option)}
-                        onChange={onChange}
-                        hideDescription
-                      />
-                    ))}
-              </div>
-            </div>
-          )}
+          {Object.entries(rolesCollection).map(([groupId, collection]) => {
+            return (
+              <RoleMenuGroupsSection
+                key={groupId}
+                roles={collection.roles}
+                renderedName={collection.renderedName}
+                menuSectionStyle={customStyles.menuSection}
+                groupHeaderStyle={customStyles.groupHeader}
+                optionBodyStyle={styles.optionBody}
+                showGroups={showGroups}
+                optionGroups={collection.optionGroup}
+                groupSelected={(group: string) => groupSelected(collection.groupType, group)}
+                groupPartiallySelected={(group: string) => groupPartiallySelected(collection.groupType, group)}
+                onChange={(group: string) => onGroupChange(collection.groupType, group)}
+                onOpenSubMenuRMGS={(group: string) => onOpenSubMenu(collection.groupType, group)}
+                onCloseSubMenu={onCloseSubMenu}
+                subMenuNode={subMenuNode?.current!}
+                showSubMenu={showSubMenu}
+                openedMenuGroup={openedMenuGroup}
+                subMenuOptions={subMenuOptions}
+                selectedOptions={selectedOptions}
+                onChangeSubMenu={onChange}
+                onClearSubMenu={onClearSubMenu}
+                showOnLeftSubMenu={offset.horizontal > 0}
+              ></RoleMenuGroupsSection>
+            );
+          })}
         </CustomScrollbar>
         <div className={customStyles.menuButtonRow}>
           <HorizontalGroup justify="flex-end">
@@ -307,45 +273,28 @@ export const RolePickerMenu = ({
   );
 };
 
-const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:');
+const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:') && !option.name.startsWith('plugins:');
 const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
+const filterPluginsRoles = (option: Role) => option.name?.startsWith('plugins:');
 
-const getOptionGroups = (options: Role[]) => {
+const convertRolesToGroupOptions = (roles: Role[]) => {
   const groupsMap: { [key: string]: Role[] } = {};
-  const customGroupsMap: { [key: string]: Role[] } = {};
-  options.forEach((role) => {
-    const m = role.name.startsWith('fixed:') ? groupsMap : customGroupsMap;
+  roles.forEach((role) => {
     const groupName = getRoleGroup(role);
-    if (!m[groupName]) {
-      m[groupName] = [];
+    if (!groupsMap[groupName]) {
+      groupsMap[groupName] = [];
     }
-    m[groupName].push(role);
+    groupsMap[groupName].push(role);
   });
-
-  const groups = [];
-  for (const groupName of Object.keys(groupsMap)) {
-    const groupOptions = groupsMap[groupName].sort(sortRolesByName);
-    groups.push({
+  const groups = Object.entries(groupsMap).map(([groupName, roles]) => {
+    return {
       name: fixedRoleGroupNames[groupName] || capitalize(groupName),
       value: groupName,
-      options: groupOptions,
-    });
-  }
-
-  const customGroups = [];
-  for (const groupName of Object.keys(customGroupsMap)) {
-    const groupOptions = customGroupsMap[groupName].sort(sortRolesByName);
-    customGroups.push({
-      name: capitalize(groupName),
-      value: groupName,
-      options: groupOptions,
-    });
-  }
-
-  return {
-    fixed: groups.sort((a, b) => a.name.localeCompare(b.name)),
-    custom: customGroups.sort((a, b) => a.name.localeCompare(b.name)),
-  };
+      options: roles.sort(sortRolesByName),
+      uid: uuidv4(),
+    };
+  });
+  return groups;
 };
 
 interface RolePickerSubMenuProps {
@@ -413,7 +362,7 @@ export const RolePickerSubMenu = ({
   );
 };
 
-interface RoleMenuOptionProps<T> {
+interface RoleMenuOptionProps {
   data: Role;
   onChange: (value: Role) => void;
   isSelected?: boolean;
@@ -422,7 +371,7 @@ interface RoleMenuOptionProps<T> {
   hideDescription?: boolean;
 }
 
-export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithChildren<RoleMenuOptionProps<any>>>(
+export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithChildren<RoleMenuOptionProps>>(
   ({ data, isFocused, isSelected, disabled, onChange, hideDescription }, ref) => {
     const theme = useTheme2();
     const styles = getSelectStyles(theme);
@@ -466,6 +415,111 @@ export const RoleMenuOption = React.forwardRef<HTMLDivElement, React.PropsWithCh
 );
 
 RoleMenuOption.displayName = 'RoleMenuOption';
+
+interface RoleMenuGroupsSectionProps {
+  roles: Role[];
+  renderedName: string;
+  menuSectionStyle: string;
+  groupHeaderStyle: string;
+  optionBodyStyle: string;
+  showGroups?: boolean;
+  optionGroups: Array<{
+    name: string;
+    options: Role[];
+    value: string;
+    uid: string;
+  }>;
+  onChange: (value: string) => void;
+  onOpenSubMenuRMGS: (value: string) => void;
+  onCloseSubMenu?: (value: string) => void;
+  groupSelected: (group: string) => boolean;
+  groupPartiallySelected: (group: string) => boolean;
+  disabled?: boolean;
+  subMenuNode?: HTMLDivElement;
+  showSubMenu: boolean;
+  openedMenuGroup: string;
+  subMenuOptions: Role[];
+  selectedOptions: Role[];
+  onChangeSubMenu: (option: Role) => void;
+  onClearSubMenu: () => void;
+  showOnLeftSubMenu: boolean;
+}
+
+export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGroupsSectionProps>(
+  (
+    {
+      roles,
+      renderedName,
+      menuSectionStyle,
+      groupHeaderStyle,
+      optionBodyStyle,
+      showGroups,
+      optionGroups,
+      onChange,
+      groupSelected,
+      groupPartiallySelected,
+      onOpenSubMenuRMGS,
+      onCloseSubMenu,
+      subMenuNode,
+      showSubMenu,
+      openedMenuGroup,
+      subMenuOptions,
+      selectedOptions,
+      onChangeSubMenu,
+      onClearSubMenu,
+      showOnLeftSubMenu,
+    },
+    _ref
+  ) => {
+    return (
+      <div>
+        {roles.length > 0 && (
+          <div className={menuSectionStyle}>
+            <div className={groupHeaderStyle}>{renderedName}</div>
+            <div className={optionBodyStyle}></div>
+            {showGroups && !!optionGroups?.length
+              ? optionGroups.map((option) => (
+                  <RoleMenuGroupOption
+                    data={option}
+                    key={option.value}
+                    isSelected={groupSelected(option.value) || groupPartiallySelected(option.value)}
+                    partiallySelected={groupPartiallySelected(option.value)}
+                    disabled={option.options?.every(isNotDelegatable)}
+                    onChange={onChange}
+                    onOpenSubMenu={onOpenSubMenuRMGS}
+                    onCloseSubMenu={onCloseSubMenu}
+                    root={subMenuNode}
+                    isFocused={showSubMenu && openedMenuGroup === option.value}
+                  >
+                    {showSubMenu && openedMenuGroup === option.value && (
+                      <RolePickerSubMenu
+                        options={subMenuOptions}
+                        selectedOptions={selectedOptions}
+                        onSelect={onChangeSubMenu}
+                        onClear={onClearSubMenu}
+                        showOnLeft={showOnLeftSubMenu}
+                      />
+                    )}
+                  </RoleMenuGroupOption>
+                ))
+              : roles.map((option) => (
+                  <RoleMenuOption
+                    data={option}
+                    key={option.uid}
+                    isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                    disabled={isNotDelegatable(option)}
+                    onChange={onChangeSubMenu}
+                    hideDescription
+                  />
+                ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+);
+
+RoleMenuGroupsSection.displayName = 'RoleMenuGroupsSection';
 
 interface RoleMenuGroupsOptionProps {
   data: SelectableValue<string>;

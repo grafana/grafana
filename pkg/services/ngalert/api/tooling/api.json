@@ -289,6 +289,60 @@
    "title": "Authorization contains HTTP authorization credentials.",
    "type": "object"
   },
+  "BacktestConfig": {
+   "properties": {
+    "annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "condition": {
+     "type": "string"
+    },
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQuery"
+     },
+     "type": "array"
+    },
+    "for": {
+     "$ref": "#/definitions/Duration"
+    },
+    "from": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "no_data_state": {
+     "enum": [
+      "Alerting",
+      "NoData",
+      "OK"
+     ],
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "to": {
+     "format": "date-time",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "BacktestResult": {
+   "$ref": "#/definitions/Frame"
+  },
   "BasicAuth": {
    "properties": {
     "password": {
@@ -364,11 +418,14 @@
    "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
    "properties": {
     "Error": {
-     "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+     "description": "Error is a property to be set if the corresponding DataQuery has an error.",
      "type": "string"
     },
     "Frames": {
      "$ref": "#/definitions/Frames"
+    },
+    "Status": {
+     "$ref": "#/definitions/Status"
     }
    },
    "title": "DataResponse contains the results from a DataQuery.",
@@ -395,11 +452,6 @@
    ],
    "type": "object"
   },
-  "DsPermissionType": {
-   "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
-   "format": "int64",
-   "type": "integer"
-  },
   "Duration": {
    "format": "int64",
    "title": "Duration is a type used for marshalling durations.",
@@ -412,6 +464,9 @@
     },
     "auth_password": {
      "$ref": "#/definitions/Secret"
+    },
+    "auth_password_file": {
+     "type": "string"
     },
     "auth_secret": {
      "$ref": "#/definitions/Secret"
@@ -1043,12 +1098,6 @@
   },
   "GettableNGalertConfig": {
    "properties": {
-    "alertmanagers": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
     "alertmanagersChoice": {
      "enum": [
       "all",
@@ -1160,6 +1209,9 @@
     },
     "smtp_auth_password": {
      "$ref": "#/definitions/Secret"
+    },
+    "smtp_auth_password_file": {
+     "type": "string"
     },
     "smtp_auth_secret": {
      "$ref": "#/definitions/Secret"
@@ -1978,12 +2030,6 @@
   },
   "PostableNGalertConfig": {
    "properties": {
-    "alertmanagers": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
     "alertmanagersChoice": {
      "enum": [
       "all",
@@ -2171,6 +2217,12 @@
     "for"
    ],
    "type": "object"
+  },
+  "ProvisionedAlertRules": {
+   "items": {
+    "$ref": "#/definitions/ProvisionedAlertRule"
+   },
+   "type": "array"
   },
   "PushoverConfig": {
    "properties": {
@@ -2827,6 +2879,10 @@
   "SmtpNotEnabled": {
    "$ref": "#/definitions/ResponseDetails"
   },
+  "Status": {
+   "format": "int64",
+   "type": "integer"
+  },
   "Success": {
    "$ref": "#/definitions/ResponseDetails"
   },
@@ -3034,6 +3090,9 @@
       "type": "string"
      },
      "type": "array"
+    },
+    "location": {
+     "type": "string"
     },
     "months": {
      "items": {
@@ -3613,6 +3672,15 @@
    ],
    "type": "object"
   },
+  "postSilencesOKBody": {
+   "properties": {
+    "silenceID": {
+     "description": "silence ID",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "postableAlert": {
    "description": "PostableAlert postable alert",
    "properties": {
@@ -3651,7 +3719,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3809,6 +3876,21 @@
  },
  "paths": {
   "/api/v1/provisioning/alert-rules": {
+   "get": {
+    "operationId": "RouteGetAlertRules",
+    "responses": {
+     "200": {
+      "description": "ProvisionedAlertRules",
+      "schema": {
+       "$ref": "#/definitions/ProvisionedAlertRules"
+      }
+     }
+    },
+    "summary": "Get all the alert rules.",
+    "tags": [
+     "provisioning"
+    ]
+   },
    "post": {
     "consumes": [
      "application/json"
@@ -3821,6 +3903,11 @@
       "schema": {
        "$ref": "#/definitions/ProvisionedAlertRule"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -3911,6 +3998,11 @@
       "schema": {
        "$ref": "#/definitions/ProvisionedAlertRule"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -4459,6 +4551,17 @@
  "produces": [
   "application/json"
  ],
+ "responses": {
+  "receiversResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/receiver"
+    },
+    "type": "array"
+   }
+  }
+ },
  "schemes": [
   "http",
   "https"

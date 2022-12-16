@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/expr"
 )
 
@@ -70,10 +69,10 @@ func (rtr *RelativeTimeRange) isValid() bool {
 	return rtr.From > rtr.To
 }
 
-func (rtr *RelativeTimeRange) ToTimeRange(now time.Time) backend.TimeRange {
-	return backend.TimeRange{
-		From: now.Add(-time.Duration(rtr.From)),
-		To:   now.Add(-time.Duration(rtr.To)),
+func (rtr *RelativeTimeRange) ToTimeRange() expr.TimeRange {
+	return expr.RelativeTimeRange{
+		From: -time.Duration(rtr.From),
+		To:   -time.Duration(rtr.To),
 	}
 }
 

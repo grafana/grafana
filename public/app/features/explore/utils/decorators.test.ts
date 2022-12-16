@@ -216,17 +216,18 @@ describe('decorateWithTableResult', () => {
     const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
 
     let theResult = panelResult.tableResult;
+    let theResultTable = theResult?.[0];
 
-    expect(theResult?.fields[0].name).toEqual('value');
-    expect(theResult?.fields[1].name).toEqual('time');
-    expect(theResult?.fields[2].name).toEqual('tsNs');
-    expect(theResult?.fields[3].name).toEqual('message');
-    expect(theResult?.fields[1].display).not.toBeNull();
-    expect(theResult?.length).toBe(3);
+    expect(theResultTable?.fields[0].name).toEqual('value');
+    expect(theResultTable?.fields[1].name).toEqual('time');
+    expect(theResultTable?.fields[2].name).toEqual('tsNs');
+    expect(theResultTable?.fields[3].name).toEqual('message');
+    expect(theResultTable?.fields[1].display).not.toBeNull();
+    expect(theResultTable?.length).toBe(3);
 
     // I don't understand the purpose of the code below, feels like this belongs in toDataFrame tests?
     // Same data though a DataFrame
-    theResult = toDataFrame(
+    theResultTable = toDataFrame(
       new TableModel({
         columns: [
           { text: 'value', type: 'number' },
@@ -242,12 +243,12 @@ describe('decorateWithTableResult', () => {
         type: 'table',
       })
     );
-    expect(theResult.fields[0].name).toEqual('value');
-    expect(theResult.fields[1].name).toEqual('time');
-    expect(theResult.fields[2].name).toEqual('tsNs');
-    expect(theResult.fields[3].name).toEqual('message');
-    expect(theResult.fields[1].display).not.toBeNull();
-    expect(theResult.length).toBe(3);
+    expect(theResultTable.fields[0].name).toEqual('value');
+    expect(theResultTable.fields[1].name).toEqual('time');
+    expect(theResultTable.fields[2].name).toEqual('tsNs');
+    expect(theResultTable.fields[3].name).toEqual('message');
+    expect(theResultTable.fields[1].display).not.toBeNull();
+    expect(theResultTable.length).toBe(3);
   });
 
   it('should do join transform if all series are timeseries', async () => {
@@ -272,13 +273,14 @@ describe('decorateWithTableResult', () => {
     const panelData = createExplorePanelData({ tableFrames });
     const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
     const result = panelResult.tableResult;
+    const tableResult = result?.[0];
 
-    expect(result?.fields[0].name).toBe('Time');
-    expect(result?.fields[1].name).toBe('A-series');
-    expect(result?.fields[2].name).toBe('B-series');
-    expect(result?.fields[0].values.toArray()).toEqual([100, 200, 300]);
-    expect(result?.fields[1].values.toArray()).toEqual([4, 5, 6]);
-    expect(result?.fields[2].values.toArray()).toEqual([4, 5, 6]);
+    expect(tableResult?.fields[0].name).toBe('Time');
+    expect(tableResult?.fields[1].name).toBe('A-series');
+    expect(tableResult?.fields[2].name).toBe('B-series');
+    expect(tableResult?.fields[0].values.toArray()).toEqual([100, 200, 300]);
+    expect(tableResult?.fields[1].values.toArray()).toEqual([4, 5, 6]);
+    expect(tableResult?.fields[2].values.toArray()).toEqual([4, 5, 6]);
   });
 
   it('should not override fields display property when filled', async () => {
@@ -294,7 +296,7 @@ describe('decorateWithTableResult', () => {
 
     const panelData = createExplorePanelData({ tableFrames });
     const panelResult = await lastValueFrom(decorateWithTableResult(panelData));
-    expect(panelResult.tableResult?.fields[0].display).toBe(displayFunctionMock);
+    expect(panelResult.tableResult?.[0]?.fields[0].display).toBe(displayFunctionMock);
   });
 
   it('should return null when passed empty array', async () => {

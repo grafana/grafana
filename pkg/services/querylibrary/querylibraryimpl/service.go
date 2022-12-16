@@ -262,8 +262,16 @@ func (s *service) GetBatch(ctx context.Context, user *user.SignedInUser, uids []
 
 func (s *service) Update(ctx context.Context, user *user.SignedInUser, query *querylibrary.Query) error {
 	if query.UID == "" {
-		query.UID = util.GenerateShortUID()
+		queriesWithTheSameTitle, err := s.Search(ctx, user, querylibrary.QuerySearchOptions{Query: query.Title})
+		if err != nil {
+			return err
+		}
 
+		if len(queriesWithTheSameTitle) != 0 {
+			return fmt.Errorf("can't create query with title '%s'. existing query with similar name: '%s'", query.Title, queriesWithTheSameTitle[0].Title)
+		}
+
+		query.UID = util.GenerateShortUID()
 		return s.collection.Insert(ctx, namespaceFromUser(user), query)
 	}
 

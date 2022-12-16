@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { UseFormRegister } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -10,16 +11,16 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { useIsDesktop } from 'app/features/dashboard/utils/screen';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
+import { SharePublicDashboardInputs } from './SharePublicDashboard';
+
 export const Configuration = ({
   disabled,
-  isPubDashEnabled,
-  onToggleEnabled,
   dashboard,
+  register,
 }: {
   disabled: boolean;
-  isPubDashEnabled?: boolean;
-  onToggleEnabled: () => void;
   dashboard: DashboardModel;
+  register: UseFormRegister<SharePublicDashboardInputs>;
 }) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
@@ -29,7 +30,7 @@ export const Configuration = ({
 
   return (
     <>
-      <h4 className="share-modal-info-text">Public dashboard configuration</h4>
+      <h4 className={styles.title}>Public dashboard configuration</h4>
       <FieldSet disabled={disabled} className={styles.dashboardConfig}>
         <VerticalGroup spacing="md">
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
@@ -37,17 +38,31 @@ export const Configuration = ({
             <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
           </Layout>
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
+            <Label description="Show annotations on public dashboard">Show annotations</Label>
+            <Switch
+              {...register('isAnnotationsEnabled')}
+              onChange={(e) => {
+                const { onChange } = register('isAnnotationsEnabled');
+                reportInteraction('grafana_dashboards_annotations_clicked', {
+                  action: e.currentTarget.checked ? 'enable' : 'disable',
+                });
+                onChange(e);
+              }}
+              data-testid={selectors.EnableAnnotationsSwitch}
+            />
+          </Layout>
+          <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
             <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>
             <Switch
-              data-testid={selectors.EnableSwitch}
-              value={isPubDashEnabled}
-              onChange={() => {
+              {...register('enabledSwitch')}
+              onChange={(e) => {
+                const { onChange } = register('enabledSwitch');
                 reportInteraction('grafana_dashboards_public_enable_clicked', {
-                  action: isPubDashEnabled ? 'disable' : 'enable',
+                  action: e.currentTarget.checked ? 'enable' : 'disable',
                 });
-
-                onToggleEnabled();
+                onChange(e);
               }}
+              data-testid={selectors.EnableSwitch}
             />
           </Layout>
         </VerticalGroup>
@@ -57,7 +72,16 @@ export const Configuration = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  title: css`
+    margin-bottom: ${theme.spacing(2)};
+  `,
   dashboardConfig: css`
     margin: ${theme.spacing(0, 0, 3, 0)};
+  `,
+  timeRange: css`
+    margin-bottom: ${theme.spacing(0)};
+  `,
+  timeRangeDisabledText: css`
+    font-size: ${theme.typography.bodySmall.fontSize};
   `,
 });

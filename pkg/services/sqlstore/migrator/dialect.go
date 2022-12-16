@@ -26,6 +26,7 @@ type Dialect interface {
 	Default(col *Column) string
 	BooleanStr(bool) string
 	DateTimeFunc(string) string
+	BatchSize() int
 
 	OrderBy(order string) string
 

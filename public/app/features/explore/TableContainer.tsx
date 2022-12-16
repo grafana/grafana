@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { applyFieldOverrides, SelectableValue, TimeZone, ValueLinkConfig } from '@grafana/data';
+import { applyFieldOverrides, SelectableValue, SplitOpen, TimeZone, ValueLinkConfig } from '@grafana/data';
 import { Collapse, RadioButtonGroup, Table } from '@grafana/ui';
 import { FilterItem } from '@grafana/ui/src/components/Table/types';
 import { config } from 'app/core/config';
@@ -12,7 +12,6 @@ import { ExploreId, ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } 
 
 import { MetaInfoText } from './MetaInfoText';
 import RawListContainer from './PrometheusListView/RawListContainer';
-import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
 
 interface TableContainerProps {
@@ -22,6 +21,7 @@ interface TableContainerProps {
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: FilterItem) => void;
   showRawPrometheus?: boolean;
+  splitOpenFn: SplitOpen;
 }
 
 interface TableContainerState {
@@ -38,11 +38,7 @@ function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) 
   return { loading, tableResult: result, range };
 }
 
-const mapDispatchToProps = {
-  splitOpen,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
+const connector = connect(mapStateToProps, {});
 
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
@@ -58,19 +54,24 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
     }
   }
 
+  getMainFrame(frames: DataFrame[] | null) {
+    return frames?.find((df) => df.meta?.custom?.parentRowIndex === undefined) || frames?.[0];
+  }
+
   onChangeResultsStyle = (resultsStyle: TableResultsStyle) => {
     this.setState({ resultsStyle });
   };
-
+  
   getTableHeight() {
     const { tableResult } = this.props;
+    const mainFrame = this.getMainFrame(tableResult);
 
-    if (!tableResult || tableResult.length === 0) {
+    if (!mainFrame || mainFrame.length === 0) {
       return 200;
     }
 
     // tries to estimate table height
-    return Math.max(Math.min(600, tableResult.length * 35) + 35);
+    return Math.max(Math.min(600, mainFrame.length * 35) + 35);
   }
 
   renderLabel = () => {
@@ -98,15 +99,15 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
   };
 
   render() {
-    const { loading, onCellFilterAdded, tableResult, width, splitOpen, range, ariaLabel, timeZone } = this.props;
+    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
     const height = this.getTableHeight();
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
 
-    let dataFrame = tableResult;
+    let dataFrames = tableResult;
 
-    if (dataFrame?.length) {
-      dataFrame = applyFieldOverrides({
-        data: [dataFrame],
+    if (dataFrames?.length) {
+      dataFrames = applyFieldOverrides({
+        data: dataFrames,
         timeZone,
         theme: config.theme2,
         replaceVariables: (v: string) => v,
@@ -114,35 +115,37 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
           defaults: {},
           overrides: [],
         },
-      })[0];
+      });
       // Bit of code smell here. We need to add links here to the frame modifying the frame on every render.
       // Should work fine in essence but still not the ideal way to pass props. In logs container we do this
       // differently and sidestep this getLinks API on a dataframe
-      for (const field of dataFrame.fields) {
-        field.getLinks = (config: ValueLinkConfig) => {
-          return getFieldLinksForExplore({
-            field,
-            rowIndex: config.valueRowIndex!,
-            splitOpenFn: splitOpen,
-            range,
-            dataFrame: dataFrame!,
-          });
-        };
+      for (const frame of dataFrames) {
+        for (const field of frame.fields) {
+          field.getLinks = (config: ValueLinkConfig) => {
+            return getFieldLinksForExplore({
+              field,
+              rowIndex: config.valueRowIndex!,
+              splitOpenFn,
+              range,
+              dataFrame: frame!,
+            });
+          };
+        }
       }
     }
-    const label = this.state?.resultsStyle !== undefined ? this.renderLabel() : 'Table';
 
-    // Render table as default if resultsStyle is not set.
-    const renderTable = !this.state?.resultsStyle || this.state?.resultsStyle === TABLE_RESULTS_STYLE.table;
+    const mainFrame = this.getMainFrame(dataFrames);
+    const subFrames = dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex !== undefined);
 
     return (
       <Collapse label={label} loading={loading} isOpen>
-        {dataFrame?.length && (
+        {mainFrame?.length && (
           <>
             {renderTable && (
               <Table
                 ariaLabel={ariaLabel}
-                data={dataFrame}
+                data={mainFrame}
+            subData={subFrames}
                 width={tableWidth}
                 height={height}
                 onCellFilterAdded={onCellFilterAdded}

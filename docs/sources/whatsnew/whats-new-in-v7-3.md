@@ -2,8 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v7-3/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-3/
+  - ../guides/whats-new-in-v7-3/
 description: Feature and improvement highlights for Grafana v7.3
 keywords:
   - grafana
@@ -41,7 +40,7 @@ Another new feature that can be seen in the image above is the new image cell di
 
 {{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="450px" caption="Color scheme" class="pull-right" >}}
 
-A new standard field color scheme option has been added. This new option will provide a unified way for all new panels to specify how colors should be assigned. For more information, refer to [Apply color to series and fields](../panels/working-with-panels/apply-color-to-series.md)
+A new standard field color scheme option has been added. This new option will provide a unified way for all new panels to specify how colors should be assigned. For more information, refer to [Apply color to series and fields]({{< relref "../panels-visualizations/configure-standard-options/#color-scheme" >}}).
 
 - **Single color**: Specifies a single color. Useful in an override rule.
 - **From thresholds**: Informs Grafana to take color from the matching threshold.

@@ -19,9 +19,9 @@ const OVERFLOW_BUTTON_ID = 'overflow-button';
 
 export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
   ({ alignment = 'left', className, children, ...rest }, ref) => {
-    const [childVisibility, setChildVisibility] = useState<boolean[]>(
-      Array(React.Children.toArray(children).length).fill(true)
-    );
+    // null is a valid react child so we need to filter it out to prevent unnecessary padding
+    const childrenWithoutNull = React.Children.toArray(children).filter((child) => child !== null);
+    const [childVisibility, setChildVisibility] = useState<boolean[]>(Array(childrenWithoutNull.length).fill(true));
     const containerRef = useRef<HTMLDivElement>(null);
     const [showOverflowItems, setShowOverflowItems] = useState(false);
     const overflowItemsRef = createRef<HTMLDivElement>();
@@ -66,8 +66,9 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
 
     return (
       <div ref={containerRef} className={cx(styles.container, className)} {...rest}>
-        {React.Children.map(children, (child, index) => (
+        {childrenWithoutNull.map((child, index) => (
           <div
+            key={index}
             style={{ order: index, visibility: childVisibility[index] ? 'visible' : 'hidden' }}
             className={styles.childWrapper}
           >
@@ -87,7 +88,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
             {showOverflowItems && (
               <FocusScope contain autoFocus>
                 <div className={styles.overflowItems} ref={overflowItemsRef} {...overlayProps} {...dialogProps}>
-                  {React.Children.toArray(children).map((child, index) => !childVisibility[index] && child)}
+                  {childrenWithoutNull.map((child, index) => !childVisibility[index] && child)}
                 </div>
               </FocusScope>
             )}

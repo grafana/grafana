@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { useCallback } from 'react';
 import { useAsync } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
@@ -7,10 +7,12 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 
 import { AlertWarning } from './AlertWarning';
+import { CloneRuleEditor } from './CloneRuleEditor';
 import { ExistingRuleEditor } from './ExistingRuleEditor';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
-import { fetchAllPromBuildInfoAction } from './state/actions';
+import { useURLSearchParams } from './hooks/useURLSearchParams';
+import { fetchRulesSourceBuildInfoAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import * as ruleId from './utils/rule-id';
 
@@ -31,18 +33,25 @@ const getPageNav = (state: 'edit' | 'add') => {
   return undefined;
 };
 
-const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
+const RuleEditor = ({ match }: RuleEditorProps) => {
   const dispatch = useDispatch();
+  const [searchParams] = useURLSearchParams();
+
   const { id } = match.params;
   const identifier = ruleId.tryParse(id, true);
 
+  const copyFromId = searchParams.get('copyFrom') ?? undefined;
+  const copyFromIdentifier = ruleId.tryParse(copyFromId);
+
   const { loading = true } = useAsync(async () => {
-    await dispatch(fetchAllPromBuildInfoAction());
+    if (identifier) {
+      await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: identifier.ruleSourceName }));
+    }
   }, [dispatch]);
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
-  const getContent = () => {
+  const getContent = useCallback(() => {
     if (loading) {
       return;
     }
@@ -59,8 +68,12 @@ const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
       return <ExistingRuleEditor key={id} identifier={identifier} />;
     }
 
+    if (copyFromIdentifier) {
+      return <CloneRuleEditor sourceRuleId={copyFromIdentifier} />;
+    }
+
     return <AlertRuleForm />;
-  };
+  }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, id, identifier, loading]);
 
   return (
     <AlertingPageWrapper isLoading={loading} pageId="alert-list" pageNav={getPageNav(identifier ? 'edit' : 'add')}>

@@ -1,8 +1,6 @@
 ---
-_build:
-  list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v9-2/
+  - ../guides/whats-new-in-v9-2/
 description: Feature and improvement highlights for Grafana v9.2
 keywords:
   - grafana
@@ -42,7 +40,7 @@ Canvas visualizations are extensible form-built panels that allow you to explici
 
 For example, you can place image layers and then overlay text that's updated by Grafana data sources, and display icons that can change color conditionally based on data.
 
-We've planned additional features and design elements for future releases to make Canvas panels even more powerful tools for creating custom, interactive, data-driven visualizations. To learn more about the Canvas panel, see the [documentation]({{< relref "../visualizations/canvas/" >}}).
+We've planned additional features and design elements for future releases to make Canvas panels even more powerful tools for creating custom, interactive, data-driven visualizations. To learn more about the Canvas panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-beta-overview-9-2-0.mp4" max-width="750px" caption="Canvas panel beta overview" >}}
 
@@ -219,3 +217,19 @@ For more information, see the [SAML configuration documentation](https://grafana
 You can now map OAuth groups and roles to Server Admin for the GitLab, GitHub, AzureAD, Okta, and Generic OAuth integrations.
 To enable this functionality, set the `allow_assign_grafana_admin` configuration option to `true` in the desired OAuth integration section.
 For more information, see the [authentication configuration documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/) for each OAuth client.
+
+## Match parameter support in prometheus labels API
+
+Prometheus users running Prometheus v2.24 and higher can use the [labels endpoint](https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values) instead of the [series endpoint](https://prometheus.io/docs/prometheus/latest/querying/api/#finding-series-by-label-matchers) for the [`label_values` function]({{< relref "../datasources/prometheus/#query-variable" >}}).
+This decreases load times for templated high-cardinality Prometheus instances.
+
+If you want to benefit from this endpoint you must first configure the Prometheus type and version in any Prometheus data sources' [configuration]({{< relref "../datasources/prometheus/" >}}).
+
+## New Prometheus streaming parser
+
+In Grafana v9.2, you can enable the `prometheusStreamingJSONParser` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) to use a better-performing, memory-efficient streaming JSON client for Prometheus.
+We'll make this client the default in Grafana v9.3.
+
+When Prometheus returns `NaN` values, this new client doesn't change them, neither to the value `null` nor to `0` as in recent Grafana versions.
+If you use this new Prometheus streaming parser with Grafana Managed Alerts, this change in behavior might trigger alerts.
+To avoid this, select the "Drop non-numeric values" option in the Reduce expression to drop `NaN` values.

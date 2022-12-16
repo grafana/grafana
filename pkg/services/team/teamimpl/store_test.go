@@ -7,21 +7,26 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Run("Testing Team commands & queries", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+	t.Run("Testing Team commands and queries", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
 		teamSvc := ProvideService(sqlStore, sqlStore.Cfg)
 		testUser := &user.SignedInUser{
 			OrgID: 1,
@@ -33,6 +38,11 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				},
 			},
 		}
+		quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+		require.NoError(t, err)
+		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, teamSvc, nil, quotaService)
+		require.NoError(t, err)
 
 		t.Run("Given saved users and two teams", func(t *testing.T) {
 			var userIds []int64
@@ -49,7 +59,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 						Name:  fmt.Sprint("user", i),
 						Login: fmt.Sprint("loginuser", i),
 					}
-					usr, err = sqlStore.CreateUser(context.Background(), userCmd)
+					usr, err = userSvc.Create(context.Background(), &userCmd)
 					require.NoError(t, err)
 					userIds = append(userIds, usr.ID)
 				}
@@ -80,7 +90,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, SignedInUser: testUser}
 				err = teamSvc.GetTeamMembers(context.Background(), q1)
 				require.NoError(t, err)
-				require.Equal(t, len(q1.Result), 2)
+				require.Equal(t, 2, len(q1.Result))
 				require.Equal(t, q1.Result[0].TeamId, team1.Id)
 				require.Equal(t, q1.Result[0].Login, "loginuser0")
 				require.Equal(t, q1.Result[0].OrgId, testOrgID)
@@ -114,7 +124,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should return latest auth module for users when getting team members", func(t *testing.T) {
-				sqlStore = sqlstore.InitTestDB(t)
+				sqlStore = db.InitTestDB(t)
 				setup()
 				userId := userIds[1]
 
@@ -165,7 +175,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should default to member permission level when updating a user with invalid permission level", func(t *testing.T) {
-				sqlStore = sqlstore.InitTestDB(t)
+				sqlStore = db.InitTestDB(t)
 				setup()
 				userID := userIds[0]
 				team := team1
@@ -194,7 +204,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Shouldn't be able to update a user not in the team.", func(t *testing.T) {
-				sqlStore = sqlstore.InitTestDB(t)
+				sqlStore = db.InitTestDB(t)
 				setup()
 				err = teamSvc.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
 					UserId:     1,
@@ -220,7 +230,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
-				sqlStore = sqlstore.InitTestDB(t)
+				sqlStore = db.InitTestDB(t)
 				setup()
 				groupId := team2.Id
 				err := teamSvc.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
@@ -234,7 +244,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 						Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}, ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
 					},
 				}
-				err = sqlStore.GetTeamsByUser(context.Background(), query)
+				err = teamSvc.GetTeamsByUser(context.Background(), query)
 				require.NoError(t, err)
 				require.Equal(t, len(query.Result), 1)
 				require.Equal(t, query.Result[0].Name, "group2 name")
@@ -269,7 +279,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				})
 
 				t.Run("A user should be able to remove the admin permission if there are other admins", func(t *testing.T) {
-					sqlStore = sqlstore.InitTestDB(t)
+					sqlStore = db.InitTestDB(t)
 					setup()
 
 					err = teamSvc.AddTeamMember(userIds[0], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
@@ -307,7 +317,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to return if user is admin of teams or not", func(t *testing.T) {
-				sqlStore = sqlstore.InitTestDB(t)
+				sqlStore = db.InitTestDB(t)
 				setup()
 				groupId := team2.Id
 				err := teamSvc.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
@@ -327,7 +337,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should not return hidden users in team member count", func(t *testing.T) {
-				sqlStore = sqlstore.InitTestDB(t)
+				sqlStore = db.InitTestDB(t)
 				setup()
 				signedInUser := &user.SignedInUser{
 					Login: "loginuser0",
@@ -370,7 +380,12 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
-				sqlStore = sqlstore.InitTestDB(t)
+				sqlStore = db.InitTestDB(t)
+				quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+				orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+				require.NoError(t, err)
+				userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, teamSvc, nil, quotaService)
+				require.NoError(t, err)
 				setup()
 				userCmd = user.CreateUserCommand{
 					Email:            fmt.Sprint("sa", 1, "@test.com"),
@@ -378,7 +393,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					Login:            fmt.Sprint("login-sa", 1),
 					IsServiceAccount: true,
 				}
-				serviceAccount, err := sqlStore.CreateUser(context.Background(), userCmd)
+				serviceAccount, err := userSvc.CreateUserForTests(context.Background(), &userCmd)
 				require.NoError(t, err)
 
 				groupId := team2.Id
@@ -454,7 +469,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 		},
 	}
 
-	store := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
+	store := db.InitTestDB(t, db.InitTestDBOpt{})
 	teamSvc := ProvideService(store, store.Cfg)
 
 	// Seed 10 teams
@@ -495,6 +510,11 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errCreateTeam)
 		team2, errCreateTeam := teamSvc.CreateTeam("group2 name", "test2@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
+		quotaService := quotaimpl.ProvideService(store, store.Cfg)
+		orgSvc, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+		require.NoError(t, err)
+		userSvc, err := userimpl.ProvideService(store, orgSvc, store.Cfg, teamSvc, nil, quotaService)
+		require.NoError(t, err)
 
 		for i := 0; i < 4; i++ {
 			userCmd := user.CreateUserCommand{
@@ -502,7 +522,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 				Name:  fmt.Sprint("user", i),
 				Login: fmt.Sprint("loginuser", i),
 			}
-			user, errCreateUser := store.CreateUser(context.Background(), userCmd)
+			user, errCreateUser := userSvc.Create(context.Background(), &userCmd)
 			require.NoError(t, errCreateUser)
 			userIds[i] = user.ID
 		}
@@ -517,7 +537,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errAddMember)
 	}
 
-	store := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
+	store := db.InitTestDB(t, db.InitTestDBOpt{})
 	setup(store)
 	teamSvc := ProvideService(store, store.Cfg)
 
@@ -598,7 +618,7 @@ func hasWildcardScope(user *user.SignedInUser, action string) bool {
 func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID int64, items ...*models.DashboardACL) error {
 	t.Helper()
 
-	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
 		if err != nil {
 			return fmt.Errorf("deleting from dashboard_acl failed: %w", err)
@@ -633,7 +653,7 @@ func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID i
 // import cycles. When this org-related code is refactored into a service the
 // tests can the real GetDashboardACLInfoList functions
 func getDashboardACLInfoList(s *sqlstore.SQLStore, query *models.GetDashboardACLInfoListQuery) error {
-	outerErr := s.WithDbSession(context.Background(), func(dbSession *sqlstore.DBSession) error {
+	outerErr := s.WithDbSession(context.Background(), func(dbSession *db.Session) error {
 		query.Result = make([]*models.DashboardACLInfoDTO, 0)
 		falseStr := s.GetDialect().BooleanStr(false)
 

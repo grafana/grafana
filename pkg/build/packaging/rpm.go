@@ -7,15 +7,18 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 
+	// Consider switching this over to a community fork unless there is
+	// an option to move us away from OpenPGP.
+	"golang.org/x/crypto/openpgp"        //nolint:staticcheck
+	"golang.org/x/crypto/openpgp/armor"  //nolint:staticcheck
+	"golang.org/x/crypto/openpgp/packet" //nolint:staticcheck
+
 	"github.com/grafana/grafana/pkg/build/config"
+	"github.com/grafana/grafana/pkg/build/fsutil"
 	"github.com/grafana/grafana/pkg/infra/fs"
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/armor"
-	"golang.org/x/crypto/openpgp/packet"
 )
 
 // UpdateRPMRepo updates the RPM repository with the new release.
@@ -32,7 +35,10 @@ func UpdateRPMRepo(cfg PublishConfig, workDir string) error {
 		return err
 	}
 
-	repoRoot := path.Join(os.TempDir(), "rpm-repo")
+	repoRoot, err := fsutil.CreateTempDir("rpm-repo")
+	if err != nil {
+		return err
+	}
 	defer func() {
 		if err := os.RemoveAll(repoRoot); err != nil {
 			log.Printf("Failed to remove %q: %s\n", repoRoot, err.Error())

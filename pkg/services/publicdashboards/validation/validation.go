@@ -1,15 +1,14 @@
 package validation
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/models"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
-func ValidateSavePublicDashboard(dto *SavePublicDashboardConfigDTO, dashboard *models.Dashboard) error {
+func ValidatePublicDashboard(dto *SavePublicDashboardDTO, dashboard *models.Dashboard) error {
 	if hasTemplateVariables(dashboard) {
-		return ErrPublicDashboardHasTemplateVariables
+		return ErrPublicDashboardHasTemplateVariables.Errorf("ValidateSavePublicDashboard: public dashboard has template variables")
 	}
 
 	return nil
@@ -21,13 +20,26 @@ func hasTemplateVariables(dashboard *models.Dashboard) bool {
 	return len(templateVariables) > 0
 }
 
-func ValidateQueryPublicDashboardRequest(req PublicDashboardQueryDTO) error {
+func ValidateQueryPublicDashboardRequest(req PublicDashboardQueryDTO, pd *PublicDashboard) error {
 	if req.IntervalMs < 0 {
-		return fmt.Errorf("intervalMS should be greater than 0")
+		return ErrInvalidInterval.Errorf("ValidateQueryPublicDashboardRequest: intervalMS should be greater than 0")
 	}
 
 	if req.MaxDataPoints < 0 {
-		return fmt.Errorf("maxDataPoints should be greater than 0")
+		return ErrInvalidMaxDataPoints.Errorf("ValidateQueryPublicDashboardRequest: maxDataPoints should be greater than 0")
+	}
+
+	if pd.TimeSelectionEnabled {
+		timeRange := legacydata.NewDataTimeRange(req.TimeRange.From, req.TimeRange.To)
+
+		_, err := timeRange.ParseFrom()
+		if err != nil {
+			return ErrInvalidTimeRange.Errorf("ValidateQueryPublicDashboardRequest: time range from is invalid")
+		}
+		_, err = timeRange.ParseTo()
+		if err != nil {
+			return ErrInvalidTimeRange.Errorf("ValidateQueryPublicDashboardRequest: time range to is invalid")
+		}
 	}
 
 	return nil

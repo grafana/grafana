@@ -9,11 +9,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -42,8 +43,18 @@ func orgRoleScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFu
 			OrgID:   orgID,
 			OrgRole: role,
 		}
-		store := mockstore.NewSQLStoreMock()
-		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
+		store := dbtest.NewFakeDB()
+
+		fakeDashboardService := dashboards.NewFakeDashboardService(t)
+		fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardQuery)
+			q.Result = &models.Dashboard{
+				Id:  q.Id,
+				Uid: q.Uid,
+			}
+		}).Return(nil)
+		guard, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, fakeDashboardService, &teamtest.FakeService{})
+		require.NoError(t, err)
 
 		sc := &scenarioContext{
 			t:                t,
@@ -64,8 +75,18 @@ func apiKeyScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFun
 			OrgRole:  role,
 			ApiKeyID: 10,
 		}
-		store := mockstore.NewSQLStoreMock()
-		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{}, &teamtest.FakeService{})
+		store := dbtest.NewFakeDB()
+		dashSvc := dashboards.NewFakeDashboardService(t)
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardQuery)
+			q.Result = &models.Dashboard{
+				Id:  q.Id,
+				Uid: q.Uid,
+			}
+		}).Return(nil)
+		guard, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
+		require.NoError(t, err)
+
 		sc := &scenarioContext{
 			t:                t,
 			orgRoleScenario:  desc,
@@ -81,7 +102,7 @@ func apiKeyScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFun
 func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 	permissions []*models.DashboardACLInfoDTO, fn scenarioFunc) {
 	sc.t.Run(desc, func(t *testing.T) {
-		store := mockstore.NewSQLStoreMock()
+		store := dbtest.NewFakeDB()
 		teams := []*models.TeamDTO{}
 
 		for _, p := range permissions {
@@ -96,9 +117,20 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
 			q.Result = permissions
 		}).Return(nil)
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardQuery)
+			q.Result = &models.Dashboard{
+				Id:    q.Id,
+				Uid:   q.Uid,
+				OrgId: q.OrgId,
+			}
+		}).Return(nil)
 
 		sc.permissionScenario = desc
-		sc.g = newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgID, sc.givenUser, store, dashSvc, teamSvc)
+		g, err := newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgID, sc.givenUser, store, dashSvc, teamSvc)
+		require.NoError(t, err)
+		sc.g = g
+
 		sc.givenDashboardID = dashboardID
 		sc.givenPermissions = permissions
 		sc.givenTeams = teams

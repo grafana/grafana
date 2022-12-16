@@ -54,6 +54,7 @@ export function PeriodSelect({
       inputId={inputId}
       disabled={disabled}
       allowCustomValue
+      menuPlacement="top"
     />
   );
 }

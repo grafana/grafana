@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -303,7 +302,7 @@ func (server *Server) Users(logins []string) (
 	}
 
 	server.log.Debug(
-		"LDAP users found", "users", spew.Sdump(serializedUsers),
+		"LDAP users found", "users", fmt.Sprintf("%v", serializedUsers),
 	)
 
 	return serializedUsers, nil

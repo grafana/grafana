@@ -47,7 +47,7 @@ func (hs *HTTPServer) AdminGetSettings(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) AdminGetStats(c *models.ReqContext) response.Response {
 	statsQuery := models.GetAdminStatsQuery{}
 
-	if err := hs.SQLStore.GetAdminStats(c.Req.Context(), &statsQuery); err != nil {
+	if err := hs.statsService.GetAdminStats(c.Req.Context(), &statsQuery); err != nil {
 		return response.Error(500, "Failed to get admin stats from database", err)
 	}
 

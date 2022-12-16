@@ -1,4 +1,4 @@
-import { debounce, intersection, unionBy } from 'lodash';
+import { debounce, unionBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
@@ -21,11 +21,10 @@ export interface LogGroupSelectorProps {
   onChange: (logGroups: string[]) => void;
 
   datasource?: CloudWatchDatasource;
-  onRunQuery?: () => void;
   onOpenMenu?: () => Promise<void>;
   refId?: string;
   width?: number | 'auto';
-  saved?: boolean;
+  saved?: boolean; // is only used in the config editor
 }
 
 export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
@@ -33,7 +32,6 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
   selectedLogGroups,
   onChange,
   datasource,
-  onRunQuery,
   onOpenMenu,
   refId,
   width,
@@ -90,7 +88,7 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
 
   // Reset the log group options if the datasource or region change and are saved
   useEffect(() => {
-    async function resetLogGroups() {
+    async function getAvailableLogGroupOptions() {
       // Don't call describeLogGroups if datasource or region is undefined
       if (!datasource || !datasource.getActualRegion(region)) {
         setAvailableLogGroups([]);
@@ -100,19 +98,21 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
       setLoadingLogGroups(true);
       return fetchLogGroupOptions(datasource.getActualRegion(region))
         .then((logGroups) => {
-          const newSelectedLogGroups = intersection(
-            selectedLogGroups,
-            logGroups.map((l) => l.value || '')
-          );
-          onChange(newSelectedLogGroups);
           setAvailableLogGroups(logGroups);
         })
         .finally(() => {
           setLoadingLogGroups(false);
         });
     }
-    // Only reset if the current datasource is saved
-    saved && resetLogGroups();
+
+    // Config editor does not fetch new log group options unless changes have been saved
+    saved && getAvailableLogGroupOptions();
+
+    // if component unmounts in the middle of setting state, we reset state and unsubscribe from fetchLogGroupOptions
+    return () => {
+      setAvailableLogGroups([]);
+      setLoadingLogGroups(false);
+    };
     // this hook shouldn't get called every time selectedLogGroups or onChange updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource, region, saved]);
@@ -133,7 +133,6 @@ export const LogGroupSelector: React.FC<LogGroupSelectorProps> = ({
       options={datasource ? appendTemplateVariables(datasource, logGroupOptions) : logGroupOptions}
       value={selectedLogGroups}
       onChange={(v) => onChange(v.filter(({ value }) => value).map(({ value }) => value))}
-      onBlur={onRunQuery}
       closeMenuOnSelect={false}
       isClearable
       isOptionDisabled={() => selectedLogGroups.length >= MAX_LOG_GROUPS}

@@ -61,30 +61,37 @@ export const CloudWatchSettings: DataSourceInstanceSettings<CloudWatchJsonData> 
 export function setupMockedDataSource({
   variables,
   mockGetVariableName = true,
+  getMock = jest.fn(),
+  customInstanceSettings = CloudWatchSettings,
 }: {
+  getMock?: jest.Func;
   variables?: CustomVariableModel[];
   mockGetVariableName?: boolean;
+  customInstanceSettings?: DataSourceInstanceSettings<CloudWatchJsonData>;
 } = {}) {
   let templateService = new TemplateSrv();
   if (variables) {
     templateService = setupMockedTemplateService(variables);
     if (mockGetVariableName) {
-      templateService.getVariableName = (name: string) => name;
+      templateService.getVariableName = (name: string) => name.replace('$', '');
     }
   }
 
   const timeSrv = getTimeSrv();
-  const datasource = new CloudWatchDatasource(CloudWatchSettings, templateService, timeSrv);
+  const datasource = new CloudWatchDatasource(customInstanceSettings, templateService, timeSrv);
   datasource.getVariables = () => ['test'];
   datasource.api.describeLogGroups = jest.fn().mockResolvedValue([]);
   datasource.api.getNamespaces = jest.fn().mockResolvedValue([]);
   datasource.api.getRegions = jest.fn().mockResolvedValue([]);
+  datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
+  datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
+  datasource.api.getAccounts = jest.fn().mockResolvedValue([]);
   datasource.logsQueryRunner.defaultLogGroups = [];
   const fetchMock = jest.fn().mockReturnValue(of({}));
   setBackendSrv({
     ...getBackendSrv(),
     fetch: fetchMock,
-    get: jest.fn(),
+    get: getMock,
   });
 
   return { datasource, fetchMock, templateService, timeSrv };
@@ -236,4 +243,17 @@ export const periodIntervalVariable: CustomVariableModel = {
   query: '',
   hide: VariableHide.dontHide,
   type: 'custom',
+};
+
+export const accountIdVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'accountId',
+  name: 'accountId',
+  current: {
+    value: 'templatedaccountId',
+    text: 'templatedaccountId',
+    selected: true,
+  },
+  options: [{ value: 'templatedRegion', text: 'templatedRegion', selected: true }],
+  multi: false,
 };

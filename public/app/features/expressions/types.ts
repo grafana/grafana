@@ -56,7 +56,7 @@ export enum ReducerMode {
   DropNonNumbers = 'dropNN',
 }
 
-export const reducerMode: Array<SelectableValue<ReducerMode>> = [
+export const reducerModes: Array<SelectableValue<ReducerMode>> = [
   {
     value: ReducerMode.Strict,
     label: 'Strict',
@@ -75,6 +75,7 @@ export const reducerMode: Array<SelectableValue<ReducerMode>> = [
 ];
 
 export const downsamplingTypes: Array<SelectableValue<string>> = [
+  { value: ReducerID.last, label: 'Last', description: 'Fill with the last value' },
   { value: ReducerID.min, label: 'Min', description: 'Fill with the minimum value' },
   { value: ReducerID.max, label: 'Max', description: 'Fill with the maximum value' },
   { value: ReducerID.mean, label: 'Mean', description: 'Fill with the average value' },

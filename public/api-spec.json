@@ -1400,7 +1400,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateUserQuotaCmd"
+              "$ref": "#/definitions/UpdateQuotaCmd"
             }
           },
           {
@@ -4608,6 +4608,7 @@
         }
       },
       "post": {
+        "description": "If nested folders are enabled then it additionally expects the parent folder UID.",
         "tags": [
           "folders"
         ],
@@ -4715,6 +4716,7 @@
         }
       },
       "put": {
+        "description": "If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and\nincludes it into the response.",
         "tags": [
           "folders"
         ],
@@ -4762,7 +4764,7 @@
         }
       },
       "delete": {
-        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.",
+        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.\nIf nested folders are enabled then it also deletes all the subfolders.",
         "tags": [
           "folders"
         ],
@@ -5668,6 +5670,33 @@
         }
       }
     },
+    "/org/quotas": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).",
+        "tags": [
+          "getCurrentOrg"
+        ],
+        "summary": "Fetch Organization quota.",
+        "operationId": "getCurrentOrgQuota",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getQuotaResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/org/users": {
       "get": {
         "description": "Returns all org users within the current organization. Accessible to users with org admin role.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
@@ -6191,7 +6220,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UpdateOrgQuotaCmd"
+              "$ref": "#/definitions/UpdateQuotaCmd"
             }
           },
           {
@@ -10425,6 +10454,10 @@
         "replyTo": {
           "type": "string"
         },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
+        },
         "schedule": {
           "$ref": "#/definitions/ScheduleDTO"
         },
@@ -10638,8 +10671,15 @@
       }
     },
     "CreateFolderCommand": {
+      "description": "CreateFolderCommand captures the information required by the folder service\nto create a folder.",
       "type": "object",
       "properties": {
+        "description": {
+          "type": "string"
+        },
+        "parentUid": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -10725,6 +10765,10 @@
         },
         "replyTo": {
           "type": "string"
+        },
+        "scaleFactor": {
+          "type": "integer",
+          "format": "int64"
         },
         "schedule": {
           "$ref": "#/definitions/ScheduleDTO"
@@ -11071,6 +11115,9 @@
         "hasAcl": {
           "type": "boolean"
         },
+        "hasPublicDashboard": {
+          "type": "boolean"
+        },
         "isFolder": {
           "type": "boolean"
         },
@@ -11354,11 +11401,14 @@
       "title": "DataResponse contains the results from a DataQuery.",
       "properties": {
         "Error": {
-          "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+          "description": "Error is a property to be set if the corresponding DataQuery has an error.",
           "type": "string"
         },
         "Frames": {
           "$ref": "#/definitions/Frames"
+        },
+        "Status": {
+          "$ref": "#/definitions/Status"
         }
       }
     },
@@ -11590,7 +11640,7 @@
       "type": "string"
     },
     "DsPermissionType": {
-      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
+      "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2",
       "type": "integer",
       "format": "int64"
     },
@@ -11784,6 +11834,10 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "parentUid": {
+          "description": "only used if nested folders are enabled",
+          "type": "string"
         },
         "title": {
           "type": "string"
@@ -12080,6 +12134,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "folderUid": {
+          "type": "string"
+        },
         "imported": {
           "type": "boolean"
         },
@@ -12354,6 +12411,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "schemaVersion": {
+          "type": "integer",
+          "format": "int64"
+        },
         "type": {
           "type": "string"
         },
@@ -12536,32 +12597,6 @@
           "items": {
             "$ref": "#/definitions/QueryToMigrate"
           }
-        }
-      }
-    },
-    "Model": {
-      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
-      "type": "object",
-      "title": "Model is the Go representation of a playlist.",
-      "properties": {
-        "interval": {
-          "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
-          "type": "string"
-        },
-        "items": {
-          "description": "The ordered list of items that the playlist will iterate over.\nFIXME! This should not be optional, but changing it makes the godegen awkward",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PlaylistItem"
-          }
-        },
-        "name": {
-          "description": "Name of the playlist.",
-          "type": "string"
-        },
-        "uid": {
-          "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
-          "type": "string"
         }
       }
     },
@@ -12818,7 +12853,7 @@
         "homeDashboardUID": {
           "type": "string"
         },
-        "locale": {
+        "language": {
           "type": "string"
         },
         "navbar": {
@@ -12909,12 +12944,15 @@
           "format": "int64"
         },
         "interval": {
+          "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
           "type": "string"
         },
         "name": {
+          "description": "Name of the playlist.",
           "type": "string"
         },
         "uid": {
+          "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
           "type": "string"
         }
       }
@@ -12951,9 +12989,8 @@
       }
     },
     "PlaylistItem": {
-      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
       "type": "object",
-      "title": "PlaylistItem is the Go representation of a playlist.Item.",
+      "title": "PlaylistItem defines model for playlist.Item.",
       "properties": {
         "title": {
           "description": "Title is an unused property -- it will be removed in the future",
@@ -12969,7 +13006,6 @@
       }
     },
     "PlaylistItemType": {
-      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
       "type": "string",
       "title": "Type of the item."
     },
@@ -13044,7 +13080,7 @@
         "homeDashboardUID": {
           "type": "string"
         },
-        "locale": {
+        "language": {
           "type": "string"
         },
         "navbar": {
@@ -13292,6 +13328,30 @@
         },
         "starred": {
           "type": "boolean"
+        }
+      }
+    },
+    "QuotaDTO": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "org_id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "target": {
+          "type": "string"
+        },
+        "used": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "user_id": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -13809,12 +13869,8 @@
       "type": "string"
     },
     "Status": {
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        }
-      }
+      "type": "integer",
+      "format": "int64"
     },
     "SuccessResponseBody": {
       "type": "object",
@@ -14430,6 +14486,9 @@
     "UpdateFolderCommand": {
       "type": "object",
       "properties": {
+        "description": {
+          "type": "string"
+        },
         "overwrite": {
           "type": "boolean"
         },
@@ -14472,18 +14531,6 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
-        }
-      }
-    },
-    "UpdateOrgQuotaCmd": {
-      "type": "object",
-      "properties": {
-        "limit": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "target": {
           "type": "string"
         }
       }
@@ -14533,7 +14580,7 @@
         "homeDashboardUID": {
           "type": "string"
         },
-        "locale": {
+        "language": {
           "type": "string"
         },
         "navbar": {
@@ -14557,6 +14604,18 @@
           ]
         },
         "weekStart": {
+          "type": "string"
+        }
+      }
+    },
+    "UpdateQuotaCmd": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "target": {
           "type": "string"
         }
       }
@@ -14649,18 +14708,6 @@
           "type": "string"
         },
         "theme": {
-          "type": "string"
-        }
-      }
-    },
-    "UpdateUserQuotaCmd": {
-      "type": "object",
-      "properties": {
-        "limit": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "target": {
           "type": "string"
         }
       }
@@ -14766,26 +14813,6 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
-        }
-      }
-    },
-    "UserQuotaDTO": {
-      "type": "object",
-      "properties": {
-        "limit": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "target": {
-          "type": "string"
-        },
-        "used": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "user_id": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -15573,7 +15600,7 @@
     "getPlaylistResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/Model"
+        "$ref": "#/definitions/Playlist"
       }
     },
     "getPreferencesResponse": {
@@ -15611,7 +15638,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/UserQuotaDTO"
+          "$ref": "#/definitions/QuotaDTO"
         }
       }
     },
@@ -16086,7 +16113,7 @@
     "updatePlaylistResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/Model"
+        "$ref": "#/definitions/Playlist"
       }
     },
     "updateServiceAccountResponse": {
@@ -16114,6 +16141,17 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/UserProfileDTO"
+      }
+    },
+    "validateDashboardResponse": {
+      "description": "",
+      "headers": {
+        "isValid": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
       }
     }
   },

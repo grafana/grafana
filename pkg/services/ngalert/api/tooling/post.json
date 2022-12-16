@@ -289,6 +289,60 @@
    "title": "Authorization contains HTTP authorization credentials.",
    "type": "object"
   },
+  "BacktestConfig": {
+   "properties": {
+    "annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "condition": {
+     "type": "string"
+    },
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQuery"
+     },
+     "type": "array"
+    },
+    "for": {
+     "$ref": "#/definitions/Duration"
+    },
+    "from": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "no_data_state": {
+     "enum": [
+      "Alerting",
+      "NoData",
+      "OK"
+     ],
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "to": {
+     "format": "date-time",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "BacktestResult": {
+   "$ref": "#/definitions/Frame"
+  },
   "BasicAuth": {
    "properties": {
     "password": {
@@ -364,11 +418,14 @@
    "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
    "properties": {
     "Error": {
-     "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+     "description": "Error is a property to be set if the corresponding DataQuery has an error.",
      "type": "string"
     },
     "Frames": {
      "$ref": "#/definitions/Frames"
+    },
+    "Status": {
+     "$ref": "#/definitions/Status"
     }
    },
    "title": "DataResponse contains the results from a DataQuery.",
@@ -395,11 +452,6 @@
    ],
    "type": "object"
   },
-  "DsPermissionType": {
-   "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
-   "format": "int64",
-   "type": "integer"
-  },
   "Duration": {
    "format": "int64",
    "title": "Duration is a type used for marshalling durations.",
@@ -412,6 +464,9 @@
     },
     "auth_password": {
      "$ref": "#/definitions/Secret"
+    },
+    "auth_password_file": {
+     "type": "string"
     },
     "auth_secret": {
      "$ref": "#/definitions/Secret"
@@ -1043,12 +1098,6 @@
   },
   "GettableNGalertConfig": {
    "properties": {
-    "alertmanagers": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
     "alertmanagersChoice": {
      "enum": [
       "all",
@@ -1160,6 +1209,9 @@
     },
     "smtp_auth_password": {
      "$ref": "#/definitions/Secret"
+    },
+    "smtp_auth_password_file": {
+     "type": "string"
     },
     "smtp_auth_secret": {
      "$ref": "#/definitions/Secret"
@@ -1978,12 +2030,6 @@
   },
   "PostableNGalertConfig": {
    "properties": {
-    "alertmanagers": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
     "alertmanagersChoice": {
      "enum": [
       "all",
@@ -2171,6 +2217,12 @@
     "for"
    ],
    "type": "object"
+  },
+  "ProvisionedAlertRules": {
+   "items": {
+    "$ref": "#/definitions/ProvisionedAlertRule"
+   },
+   "type": "array"
   },
   "PushoverConfig": {
    "properties": {
@@ -2827,6 +2879,10 @@
   "SmtpNotEnabled": {
    "$ref": "#/definitions/ResponseDetails"
   },
+  "Status": {
+   "format": "int64",
+   "type": "integer"
+  },
   "Success": {
    "$ref": "#/definitions/ResponseDetails"
   },
@@ -3035,6 +3091,9 @@
      },
      "type": "array"
     },
+    "location": {
+     "type": "string"
+    },
     "months": {
      "items": {
       "type": "string"
@@ -3078,7 +3137,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3114,7 +3172,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
   "Userinfo": {
@@ -3610,6 +3668,15 @@
    ],
    "type": "object"
   },
+  "postSilencesOKBody": {
+   "properties": {
+    "silenceID": {
+     "description": "silence ID",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "postableAlert": {
    "description": "PostableAlert postable alert",
    "properties": {
@@ -3864,39 +3931,6 @@
     "tags": [
      "alertmanager"
     ]
-   },
-   "post": {
-    "description": "create alertmanager alerts",
-    "operationId": "RoutePostGrafanaAMAlerts",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "PostableAlerts",
-      "schema": {
-       "items": {
-        "$ref": "#/definitions/postableAlert"
-       },
-       "type": "array"
-      }
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "tags": [
-     "alertmanager"
-    ]
    }
   },
   "/api/alertmanager/grafana/api/v2/alerts/groups": {
@@ -4066,9 +4100,9 @@
     ],
     "responses": {
      "201": {
-      "description": "gettableSilence",
+      "description": "postSilencesOKBody",
       "schema": {
-       "$ref": "#/definitions/gettableSilence"
+       "$ref": "#/definitions/postSilencesOKBody"
       }
      },
      "400": {
@@ -4182,13 +4216,13 @@
   },
   "/api/alertmanager/grafana/config/api/v1/receivers": {
    "get": {
+    "description": "Get a list of all receivers",
     "operationId": "RouteGetGrafanaReceivers",
     "responses": {
      "200": {
-      "$ref": "#/responses/receivers"
+      "$ref": "#/responses/receiversResponse"
      }
     },
-    "summary": "Get a list of all receivers.",
     "tags": [
      "alertmanager"
     ]
@@ -4602,9 +4636,9 @@
     ],
     "responses": {
      "201": {
-      "description": "gettableSilence",
+      "description": "postSilencesOKBody",
       "schema": {
-       "$ref": "#/definitions/gettableSilence"
+       "$ref": "#/definitions/postSilencesOKBody"
       }
      },
      "400": {
@@ -4775,75 +4809,6 @@
       }
      }
     },
-    "tags": [
-     "alertmanager"
-    ]
-   }
-  },
-  "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test": {
-   "post": {
-    "operationId": "RoutePostTestReceivers",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/TestReceiversConfigBodyParams"
-      }
-     },
-     {
-      "description": "DatasoureUID should be the datasource UID identifier",
-      "in": "path",
-      "name": "DatasourceUID",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "207": {
-      "description": "MultiStatus",
-      "schema": {
-       "$ref": "#/definitions/MultiStatus"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     },
-     "403": {
-      "description": "PermissionDenied",
-      "schema": {
-       "$ref": "#/definitions/PermissionDenied"
-      }
-     },
-     "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
-     },
-     "408": {
-      "description": "Failure",
-      "schema": {
-       "$ref": "#/definitions/Failure"
-      }
-     },
-     "409": {
-      "description": "AlertManagerNotReady",
-      "schema": {
-       "$ref": "#/definitions/AlertManagerNotReady"
-      }
-     }
-    },
-    "summary": "Test Grafana managed receivers without saving them.",
     "tags": [
      "alertmanager"
     ]
@@ -5580,6 +5545,21 @@
    }
   },
   "/api/v1/provisioning/alert-rules": {
+   "get": {
+    "operationId": "RouteGetAlertRules",
+    "responses": {
+     "200": {
+      "description": "ProvisionedAlertRules",
+      "schema": {
+       "$ref": "#/definitions/ProvisionedAlertRules"
+      }
+     }
+    },
+    "summary": "Get all the alert rules.",
+    "tags": [
+     "provisioning"
+    ]
+   },
    "post": {
     "consumes": [
      "application/json"
@@ -5592,6 +5572,11 @@
       "schema": {
        "$ref": "#/definitions/ProvisionedAlertRule"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5682,6 +5667,11 @@
       "schema": {
        "$ref": "#/definitions/ProvisionedAlertRule"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -6226,6 +6216,29 @@
     ]
    }
   },
+  "/api/v1/rule/backtest": {
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Test rule",
+    "operationId": "BacktestConfig",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "BacktestResult",
+      "schema": {
+       "$ref": "#/definitions/BacktestResult"
+      }
+     }
+    },
+    "tags": [
+     "testing"
+    ]
+   }
+  },
   "/api/v1/rule/test/grafana": {
    "post": {
     "consumes": [
@@ -6307,6 +6320,17 @@
  "produces": [
   "application/json"
  ],
+ "responses": {
+  "receiversResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/receiver"
+    },
+    "type": "array"
+   }
+  }
+ },
  "schemes": [
   "http",
   "https"

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )

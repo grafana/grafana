@@ -24,6 +24,17 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
         supportedTimeGrains: [],
         dimensions: [],
       }),
+      getProvider: jest.fn().mockResolvedValueOnce({
+        namespace: 'Microsoft.Insights',
+        resourceTypes: [
+          { resourceType: 'logs', locations: ['North Europe'], apiVersions: ['2022-11-11'], capabilities: '' },
+        ],
+      }),
+      getLocations: jest
+        .fn()
+        .mockResolvedValueOnce(
+          new Map([['northeurope', { displayName: 'North Europe', name: 'northeurope', supportsLogs: false }]])
+        ),
     },
 
     getAzureLogAnalyticsWorkspaces: jest.fn().mockResolvedValueOnce([]),
@@ -49,5 +60,5 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
 
   const mockDatasource = _mockDatasource as Datasource;
 
-  return jest.mocked(mockDatasource, true);
+  return jest.mocked(mockDatasource);
 }

@@ -80,6 +80,26 @@ func TestDingdingNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		}, {
+			name:     "Default config with one alert and custom title and description",
+			settings: `{"url": "http://localhost", "title": "Alerts firing: {{ len .Alerts.Firing }}", "message": "customMessage"}}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__values__": "{\"A\": 1234}", "__value_string__": "1234"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"msgtype": "link",
+				"link": map[string]interface{}{
+					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
+					"text":       "customMessage",
+					"title":      "Alerts firing: 1",
+				},
+			},
+			expMsgError: nil,
+		}, {
 			name: "Missing field in template",
 			settings: `{
 				"url": "http://localhost",
@@ -149,14 +169,19 @@ func TestDingdingNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &NotificationChannelConfig{
-				Name:     "dingding_testing",
-				Type:     "dingding",
-				Settings: settingsJSON,
-			}
-
 			webhookSender := mockNotificationService()
-			cfg, err := NewDingDingConfig(m)
+			fc := FactoryConfig{
+				Config: &NotificationChannelConfig{
+					Name:     "dingding_testing",
+					Type:     "dingding",
+					Settings: settingsJSON,
+				},
+				// TODO: allow changing the associated values for different tests.
+				NotificationService: webhookSender,
+				Template:            tmpl,
+				Logger:              &FakeLogger{},
+			}
+			pn, err := newDingDingNotifier(fc)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
@@ -165,7 +190,6 @@ func TestDingdingNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewDingDingNotifier(cfg, webhookSender, tmpl)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

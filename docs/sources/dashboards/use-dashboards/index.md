@@ -1,21 +1,19 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/dashboard-ui/
-  - /docs/grafana/latest/dashboards/dashboard-ui/dashboard-header/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/dashboard-ui/dashboard-row/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/shortcuts/
-  - /docs/grafana/latest/dashboards/search/
-  - /docs/grafana/latest/reference/search/
-  - /docs/grafana/latest/dashboards/use-dashboards/
-title: Use dashboards
-menuTitle: Use dashboards
-weight: 1
+  - ../features/dashboard/dashboards/
+  - ../reference/search/
+  - dashboard-ui/
+  - dashboard-ui/dashboard-header/
+  - dashboard-ui/dashboard-row/
+  - search/
+  - shortcuts/
 keywords:
   - dashboard
   - search
   - shortcuts
+menuTitle: Use dashboards
+title: Use dashboards
+weight: 1
 ---
 
 # Use dashboards
@@ -34,8 +32,10 @@ The following image and descriptions highlights all dashboards features.
 - **Dashboard title** (2): When you click the dashboard title you can search for dashboard contained in the current folder.
 - **Share dashboard** (3): Use this option to share the current dashboard by link or snapshot. You can also export the dashboard definition from the share modal.
 - **Add panel** (4): Use this option to add a panel, dashboard row, or library panel to the current dashboard.
-- **Dashboard settings** (5): Use this option to change dashboard name, folder, and tags and manage variables and annotation queries.
+- **Dashboard settings** (5): Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. For more information about dashboard settings, refer to [Modify dashboard settings]({{< relref "../build-dashboards/modify-dashboard-settings/" >}})
 - **Time picker dropdown** (6): Click to select relative time range options and set custom absolute time ranges.
+  - You can change the **Timezone** and **fiscal year** settings from the time range controls by clicking the **Change time settings** button.
+  - Time settings are saved on a per-dashboard basis.
 - **Zoom out time range** (7): Click to zoom out the time range. For more information about how to use time range controls, refer to [Common time range controls](../time-range-controls/#common-time-range-controls).
 - **Refresh dashboard** (8): Click to immediately trigger queries and refresh dashboard data.
 - **Refresh dashboard time interval** (9): Click to select a dashboard auto refresh time interval.

@@ -102,6 +102,24 @@ export function transformV2(
     (df) => isHeatmapResult(df, request)
   );
 
+  // this works around the fact that we only get back frame.name with le buckets when legendFormat == {{le}}...which is not the default
+  heatmapResults.forEach((df) => {
+    if (df.name == null) {
+      let f = df.fields.find((f) => f.name === 'Value');
+
+      if (f) {
+        let le = f.labels?.le;
+
+        if (le) {
+          // this is used for sorting the frames by numeric ascending le labels for de-accum
+          df.name = le;
+          // this is used for renaming the Value fields to le label
+          f.config.displayNameFromDS = le;
+        }
+      }
+    }
+  });
+
   // Group heatmaps by query
   const heatmapResultsGroupedByQuery = groupBy<DataFrame>(heatmapResults, (h) => h.refId);
 
@@ -138,13 +156,13 @@ export function transformV2(
 
   // Everything else is processed as time_series result and graph preferredVisualisationType
   const otherFrames = framesWithoutTableHeatmapsAndExemplars.map((dataFrame) => {
-    const df = {
+    const df: DataFrame = {
       ...dataFrame,
       meta: {
         ...dataFrame.meta,
         preferredVisualisationType: 'graph',
       },
-    } as DataFrame;
+    };
     return df;
   });
 
@@ -337,7 +355,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
         title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
         url: '',
         internal: {
-          query: { query: '${__value.raw}', queryType: 'traceId' },
+          query: { query: '${__value.raw}', queryType: 'traceql' },
           datasourceUid: options.datasourceUid,
           datasourceName: dsSettings?.name ?? 'Data source not found',
         },

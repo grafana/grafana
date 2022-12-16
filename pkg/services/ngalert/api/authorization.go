@@ -68,6 +68,11 @@ func (api *API) authorize(method, path string) web.Handler {
 		fallback = middleware.ReqSignedIn
 		// additional authorization is done in the request handler
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+	// Grafana Rules Testing Paths
+	case http.MethodPost + "/api/v1/rule/backtest":
+		fallback = middleware.ReqSignedIn
+		// additional authorization is done in the request handler
+		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 	case http.MethodPost + "/api/v1/eval":
 		fallback = middleware.ReqSignedIn
 		// additional authorization is done in the request handler
@@ -114,8 +119,6 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
-	case http.MethodPost + "/api/alertmanager/grafana/api/v2/alerts":
-		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceCreate), ac.EvalPermission(ac.ActionAlertingInstanceUpdate))
 
 	// Grafana Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/alerts":
@@ -171,8 +174,6 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/config/api/v1/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
-	case http.MethodPost + "/api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	case http.MethodGet + "/api/v1/ngalert":
 		// let user with any alerting permission access this API
@@ -198,6 +199,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/provisioning/templates/{name}",
 		http.MethodGet + "/api/v1/provisioning/mute-timings",
 		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}",
+		http.MethodGet + "/api/v1/provisioning/alert-rules",
 		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}",
 		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
 		fallback = middleware.ReqOrgAdmin

@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/reporting/
-  - /docs/grafana/latest/http_api/reporting/
+  - ../../http_api/reporting/
 description: Grafana Enterprise APIs
 keywords:
   - grafana
@@ -17,7 +16,7 @@ This API allows you to interact programmatically with the [Reporting]({{< relref
 
 > The Reporting API is not stabilized yet, it is still in active development and may change without prior notice.
 
-> Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+> Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
 

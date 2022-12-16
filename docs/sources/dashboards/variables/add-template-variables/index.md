@@ -1,34 +1,30 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/variable-types/
-  - /docs/grafana/latest/variables/add-query-variable/
-  - /docs/grafana/latest/variables/variable-types/add-query-variable/
-  - /docs/grafana/latest/variables/add-custom-variable/
-  - /docs/grafana/latest/variables/variable-types/add-custom-variable/
-  - /docs/grafana/latest/variables/add-text-box-variable/
-  - /docs/grafana/latest/variables/variable-types/add-text-box-variable/
-  - /docs/grafana/latest/variables/add-constant-variable/
-  - /docs/grafana/latest/variables/variable-types/add-constant-variable/
-  - /docs/grafana/latest/variables/add-data-source-variable/
-  - /docs/grafana/latest/variables/variable-types/add-data-source-variable/
-  - /docs/grafana/latest/variables/add-interval-variable/
-  - /docs/grafana/latest/variables/variable-types/add-interval-variable/
-  - /docs/grafana/latest/variables/add-ad-hoc-filters/
-  - /docs/grafana/latest/variables/variable-types/add-ad-hoc-filters/
-  - /docs/grafana/latest/variables/global-variables/
-  - /docs/grafana/latest/variables/variable-types/global-variables/
-  - /docs/grafana/latest/variables/chained-variables/
-  - /docs/grafana/latest/variables/variable-types/chained-variables/
-  - /docs/grafana/latest/variables/add-template-variables/
-  - /docs/grafana/latest/variables/variable-selection-options/
-  - /docs/grafana/latest/variables/filter-variables-with-regex/
-  - /docs/grafana/latest/variables/formatting-multi-value-variables/
-  - /docs/grafana/latest/reference/templating/
-  - /docs/grafana/latest/variables/manage-variable/
-  - /docs/grafana/latest/dashboards/variables/add-template-variables/
-title: Add and manage variables
-menuTitle: Manage variables
-weight: 100
+  - ../../reference/templating/
+  - ../../variables/add-ad-hoc-filters/
+  - ../../variables/add-constant-variable/
+  - ../../variables/add-custom-variable/
+  - ../../variables/add-data-source-variable/
+  - ../../variables/add-interval-variable/
+  - ../../variables/add-query-variable/
+  - ../../variables/add-template-variables/
+  - ../../variables/add-text-box-variable/
+  - ../../variables/chained-variables/
+  - ../../variables/filter-variables-with-regex/
+  - ../../variables/formatting-multi-value-variables/
+  - ../../variables/global-variables/
+  - ../../variables/manage-variable/
+  - ../../variables/variable-selection-options/
+  - ../../variables/variable-types/
+  - ../../variables/variable-types/add-ad-hoc-filters/
+  - ../../variables/variable-types/add-constant-variable/
+  - ../../variables/variable-types/add-custom-variable/
+  - ../../variables/variable-types/add-data-source-variable/
+  - ../../variables/variable-types/add-interval-variable/
+  - ../../variables/variable-types/add-query-variable/
+  - ../../variables/variable-types/add-text-box-variable/
+  - ../../variables/variable-types/chained-variables/
+  - ../../variables/variable-types/global-variables/
 keywords:
   - grafana
   - documentation
@@ -39,6 +35,9 @@ keywords:
   - nested
   - chained
   - linked
+menuTitle: Manage variables
+title: Add and manage variables
+weight: 100
 ---
 
 # Add and manage variables
@@ -85,7 +84,7 @@ Query expressions can contain references to other variables and in effect create
 > **Note:** Query expressions are different for each data source. For more information, refer to the documentation for your [data source]({{< relref "../../../datasources/" >}}).
 
 1. [Enter general options](#enter-general-options).
-1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source]({{< relref "../../../datasources/add-a-data-source/" >}}).
+1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}).
 1. In the **Refresh** list, select when the variable should update options.
    - **On Dashboard Load:** Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
    - **On Time Range Change:** Queries the data source when the dashboard time range changes. Only use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
@@ -139,7 +138,7 @@ Constant variables are useful when you have complex values that you need to incl
 _Data source_ variables enable you to quickly change the data source for an entire dashboard. They are useful if you have multiple instances of a data source, perhaps in different environments.
 
 1. [Enter general options](#enter-general-options).
-1. In the **Type** list, select the target data source for the variable. For more information about data sources, refer to [Add a data source]({{< relref "../../../datasources/add-a-data-source/" >}}).
+1. In the **Type** list, select the target data source for the variable. For more information about data sources, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}).
 1. (Optional) In **Instance name filter**, enter a regex filter for which data source instances to choose from in the variable value drop-down list. Leave this field empty to display all instances.
 1. (Optional) Enter [Selection Options]({{< relref "#configure-variable-selection-options" >}}).
 1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
@@ -180,7 +179,7 @@ _Ad hoc filters_ enable you to add key/value filters that are automatically adde
 > **Note:** Ad hoc filter variables only work with Prometheus, Loki, InfluxDB, and Elasticsearch data sources.
 
 1. [Enter general options](#enter-general-options).
-1. In the **Data source** list, select the target data source. For more information about data sources, refer to [Add a data source]({{< relref "../../../datasources/add-a-data-source/" >}}).
+1. In the **Data source** list, select the target data source. For more information about data sources, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}).
 1. Click **Add** to add the variable to the dashboard.
 
 ### Create ad hoc filters
@@ -301,7 +300,7 @@ Currently only supported for Prometheus and Loki data sources. This variable rep
 
 ### $\_\_rate_interval
 
-Currently only supported for Prometheus data sources. The `$__rate_interval` variable is meant to be used in the rate function. Refer to [Prometheus query variables]({{< relref "../../../datasources/prometheus.md#using-__rate_interval">}}) for details.
+Currently only supported for Prometheus data sources. The `$__rate_interval` variable is meant to be used in the rate function. Refer to [Prometheus query variables]({{< relref "../../../datasources/prometheus/template-variables#use-__rate_interval" >}}) for details.
 
 ### $timeFilter or $\_\_timeFilter
 

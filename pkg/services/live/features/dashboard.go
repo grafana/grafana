@@ -8,11 +8,11 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -42,7 +42,7 @@ type dashboardEvent struct {
 type DashboardHandler struct {
 	Publisher        models.ChannelPublisher
 	ClientCount      models.ChannelClientCount
-	Store            sqlstore.Store
+	Store            db.DB
 	DashboardService dashboards.DashboardService
 }
 
@@ -73,7 +73,10 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *user.SignedInU
 		}
 
 		dash := query.Result
-		guard := guardian.New(ctx, dash.Id, user.OrgID, user)
+		guard, err := guardian.NewByDashboard(ctx, dash, user.OrgID, user)
+		if err != nil {
+			return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, err
+		}
 		if canView, err := guard.CanView(); err != nil || !canView {
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 		}
@@ -119,7 +122,12 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *user.SignedInUse
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 		}
 
-		guard := guardian.New(ctx, query.Result.Id, user.OrgID, user)
+		guard, err := guardian.NewByDashboard(ctx, query.Result, user.OrgID, user)
+		if err != nil {
+			logger.Error("Failed to create guardian", "err", err)
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
+		}
+
 		canEdit, err := guard.CanEdit()
 		if err != nil {
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")

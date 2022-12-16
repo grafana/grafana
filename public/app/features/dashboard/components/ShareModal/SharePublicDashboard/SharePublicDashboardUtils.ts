@@ -2,8 +2,13 @@ import { getConfig } from 'app/core/config';
 import { VariableModel } from 'app/features/variables/types';
 import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
+import { PanelModel } from '../../../state';
+
+import { supportedDatasources } from './SupportedPubdashDatasources';
+
 export interface PublicDashboard {
   accessToken?: string;
+  annotationsEnabled: boolean;
   isEnabled: boolean;
   uid: string;
   dashboardUid: string;
@@ -15,12 +20,6 @@ export interface DashboardResponse {
   meta: DashboardMeta;
 }
 
-export interface Acknowledgements {
-  public: boolean;
-  datasources: boolean;
-  usage: boolean;
-}
-
 // Instance methods
 export const dashboardHasTemplateVariables = (variables: VariableModel[]): boolean => {
   return variables.length > 0;
@@ -28,6 +27,24 @@ export const dashboardHasTemplateVariables = (variables: VariableModel[]): boole
 
 export const publicDashboardPersisted = (publicDashboard?: PublicDashboard): boolean => {
   return publicDashboard?.uid !== '' && publicDashboard?.uid !== undefined;
+};
+
+/**
+ * Get unique datasource names from all panels that are not currently supported by public dashboards.
+ */
+export const getUnsupportedDashboardDatasources = (panels: PanelModel[]): string[] => {
+  let unsupportedDS = new Set<string>();
+
+  for (const panel of panels) {
+    for (const target of panel.targets) {
+      let ds = target?.datasource?.type;
+      if (ds && !supportedDatasources.has(ds)) {
+        unsupportedDS.add(ds);
+      }
+    }
+  }
+
+  return Array.from(unsupportedDS).sort();
 };
 
 /**

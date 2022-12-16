@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/developers/plugins/data-frames/
 title: Data frames
 ---
 
@@ -74,7 +72,7 @@ A data transformation is any function that accepts a data frame as input, and re
 
 A data frame with at least one time field is considered a _time series_.
 
-For more information on time series, refer to our [Introduction to time series]({{< relref "../../basics/timeseries/" >}}).
+For more information on time series, refer to our [Introduction to time series]({{< relref "../../fundamentals/timeseries/" >}}).
 
 ### Wide format
 

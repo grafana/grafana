@@ -4,7 +4,7 @@ import React from 'react';
 import { Dimensions, TimeZone } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
 
-import { useStyles } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { FlotPosition } from '../Graph/types';
 import { Portal } from '../Portal/Portal';
 
@@ -34,7 +34,7 @@ export interface VizTooltipProps {
   content?: React.ReactElement;
 
   /** Optional component to be used as a tooltip content */
-  tooltipComponent?: React.ComponentType<VizTooltipContentProps>;
+  tooltipComponent?: React.ComponentType<React.PropsWithChildren<VizTooltipContentProps>>;
 
   /** x/y position relative to the window */
   position?: { x: number; y: number };
@@ -51,8 +51,8 @@ export interface VizTooltipProps {
 /**
  * @public
  */
-export const VizTooltip: React.FC<VizTooltipProps> = ({ content, position, offset }) => {
-  const styles = useStyles(getStyles);
+export const VizTooltip = ({ content, position, offset }: VizTooltipProps) => {
+  const styles = useStyles2(getStyles);
   if (position) {
     return (
       <Portal className={styles.portal}>

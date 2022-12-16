@@ -8,9 +8,11 @@ import {
   DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
+  dateTime,
   FieldType,
   isValidGoDuration,
   LoadingState,
+  rangeUtil,
   ScopedVars,
 } from '@grafana/data';
 import {
@@ -51,7 +53,6 @@ import {
   createTableFrameFromSearch,
   createTableFrameFromTraceQlQuery,
 } from './resultTransformer';
-import { mockedSearchResponse } from './traceql/mockedSearchResponse';
 import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
 
 export const DEFAULT_LIMIT = 20;
@@ -68,6 +69,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   lokiSearch?: {
     datasourceUid?: string;
   };
+  traceQuery?: {
+    timeShiftEnabled?: boolean;
+    spanStartTimeShift?: string;
+    spanEndTimeShift?: string;
+  };
   uploadedJson?: string | ArrayBuffer | null = null;
   spanBar?: SpanBarOptions;
   languageProvider: TempoLanguageProvider;
@@ -82,13 +88,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.search = instanceSettings.jsonData.search;
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
     this.lokiSearch = instanceSettings.jsonData.lokiSearch;
+    this.traceQuery = instanceSettings.jsonData.traceQuery;
     this.languageProvider = new TempoLanguageProvider(this);
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
     const subQueries: Array<Observable<DataQueryResponse>> = [];
     const filteredTargets = options.targets.filter((target) => !target.hide);
-    const targets: { [type: string]: TempoQuery[] } = groupBy(filteredTargets, (t) => t.queryType || 'traceId');
+    const targets: { [type: string]: TempoQuery[] } = groupBy(filteredTargets, (t) => t.queryType || 'traceql');
 
     if (targets.clear) {
       return of({ data: [], state: LoadingState.Done });
@@ -168,16 +175,42 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
     if (targets.traceql?.length) {
       try {
-        reportInteraction('grafana_traces_traceql_queried', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-        });
+        const queryValue = targets.traceql[0].query;
+        const hexOnlyRegex = /^[0-9A-Fa-f]*$/;
+        // Check whether this is a trace ID or traceQL query by checking if it only contains hex characters
+        if (queryValue.trim().match(hexOnlyRegex)) {
+          // There's only hex characters so let's assume that this is a trace ID
+          reportInteraction('grafana_traces_traceql_traceID_queried', {
+            datasourceType: 'tempo',
+            app: options.app ?? '',
+            query: queryValue ?? '',
+          });
 
-        subQueries.push(
-          of({
-            data: [createTableFrameFromTraceQlQuery(mockedSearchResponse().traces, this.instanceSettings)],
-          })
-        );
+          subQueries.push(this.handleTraceIdQuery(options, targets.traceql));
+        } else {
+          reportInteraction('grafana_traces_traceql_queried', {
+            datasourceType: 'tempo',
+            app: options.app ?? '',
+            query: queryValue ?? '',
+          });
+          subQueries.push(
+            this._request('/api/search', {
+              q: queryValue,
+              limit: options.targets[0].limit,
+              start: options.range.from.unix(),
+              end: options.range.to.unix(),
+            }).pipe(
+              map((response) => {
+                return {
+                  data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+                };
+              }),
+              catchError((error) => {
+                return of({ error: { message: error.data.message }, data: [] });
+              })
+            )
+          );
+        }
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
@@ -231,16 +264,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
     }
 
-    if (targets.traceId?.length > 0) {
-      reportInteraction('grafana_traces_traceID_queried', {
-        datasourceType: 'tempo',
-        app: options.app ?? '',
-        query: targets.traceId[0].query ?? '',
-      });
-
-      subQueries.push(this.handleTraceIdQuery(options, targets.traceId));
-    }
-
     return merge(...subQueries);
   }
 
@@ -289,16 +312,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
    * @param targets
    * @private
    */
-  private handleTraceIdQuery(
-    options: DataQueryRequest<TempoQuery>,
-    targets: TempoQuery[]
-  ): Observable<DataQueryResponse> {
+  handleTraceIdQuery(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): Observable<DataQueryResponse> {
     const validTargets = targets.filter((t) => t.query).map((t) => ({ ...t, query: t.query.trim() }));
     if (!validTargets.length) {
       return EMPTY;
     }
 
-    const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: validTargets };
+    const traceRequest = this.traceIdQueryRequest(options, validTargets);
+
     return super.query(traceRequest).pipe(
       map((response) => {
         if (response.error) {
@@ -307,6 +328,28 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return transformTrace(response, this.nodeGraph?.enabled);
       })
     );
+  }
+
+  traceIdQueryRequest(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): DataQueryRequest<TempoQuery> {
+    const request = {
+      ...options,
+      targets,
+    };
+
+    if (this.traceQuery?.timeShiftEnabled) {
+      request.range = options.range && {
+        ...options.range,
+        from: options.range.from.subtract(
+          rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
+          'milliseconds'
+        ),
+        to: options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds'),
+      };
+    } else {
+      request.range = { from: dateTime(0), to: dateTime(0), raw: { from: dateTime(0), to: dateTime(0) } };
+    }
+
+    return request;
   }
 
   async metadataRequest(url: string, params = {}) {
@@ -327,7 +370,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       method: 'GET',
       url: `${this.instanceSettings.url}/api/echo`,
     };
-    const response = await lastValueFrom(getBackendSrv().fetch<any>(options));
+    const response = await lastValueFrom(getBackendSrv().fetch(options));
 
     if (response?.ok) {
       return { status: 'success', message: 'Data source is working' };
@@ -427,6 +470,12 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       }
 
       const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
+
+      // No handling of multiple targets assume just one. NodeGraph does not support it anyway, but still should be
+      // fixed at some point.
+      nodes.refId = request.targets[0].refId;
+      edges.refId = request.targets[0].refId;
+
       nodes.fields[0].config = getFieldConfig(
         datasourceUid,
         tempoDatasourceUid,
@@ -607,6 +656,7 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
     ...options,
     targets: serviceMapMetrics.map((metric) => {
       return {
+        format: 'table',
         refId: metric,
         // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
         // service map at the same time anyway

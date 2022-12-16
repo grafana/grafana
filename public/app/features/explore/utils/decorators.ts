@@ -143,20 +143,20 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
 
   return transformer.pipe(
     map((frames) => {
-      const frame = frames[0];
-
-      // set display processor
-      for (const field of frame.fields) {
-        field.display =
-          field.display ??
-          getDisplayProcessor({
-            field,
-            theme: config.theme2,
-            timeZone: data.request?.timezone ?? 'browser',
-          });
+      for (const frame of frames) {
+        // set display processor
+        for (const field of frame.fields) {
+          field.display =
+            field.display ??
+            getDisplayProcessor({
+              field,
+              theme: config.theme2,
+              timeZone: data.request?.timezone ?? 'browser',
+            });
+        }
       }
 
-      return { ...data, tableResult: frame };
+      return { ...data, tableResult: frames };
     })
   );
 };

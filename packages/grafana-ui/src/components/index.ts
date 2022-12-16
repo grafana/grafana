@@ -24,6 +24,7 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { InlineToast } from './InlineToast/InlineToast';
 
 export { LoadingPlaceholder, type LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
+export { LoadingBar, type LoadingBarProps } from './LoadingBar/LoadingBar';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { ColorPickerInput } from './ColorPicker/ColorPickerInput';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
@@ -42,6 +43,7 @@ export {
 } from './DateTimePickers/DatePickerWithInput/DatePickerWithInput';
 export { DateTimePicker } from './DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './List/List';
+export { InteractiveTable } from './InteractiveTable/InteractiveTable';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
 export { Tag, type OnTagClick } from './Tags/Tag';
@@ -49,7 +51,7 @@ export { TagList } from './Tags/TagList';
 export { FilterPill } from './FilterPill/FilterPill';
 
 export { ConfirmModal, type ConfirmModalProps } from './ConfirmModal/ConfirmModal';
-export { QueryField } from './QueryField/QueryField';
+export { QueryField, type QueryFieldProps } from './QueryField/QueryField';
 
 export { CodeEditor } from './Monaco/CodeEditor';
 
@@ -66,7 +68,7 @@ export {
 export { variableSuggestionToCodeEditorSuggestion } from './Monaco/utils';
 
 // TODO: namespace
-export { Modal } from './Modal/Modal';
+export { Modal, type Props as ModalProps } from './Modal/Modal';
 export { ModalHeader } from './Modal/ModalHeader';
 export { ModalTabsHeader } from './Modal/ModalTabsHeader';
 export { ModalTabContent } from './Modal/ModalTabContent';
@@ -191,14 +193,14 @@ export { RangeSlider } from './Slider/RangeSlider';
 export { Form } from './Forms/Form';
 export { sharedInputStyle } from './Forms/commonStyles';
 export { InputControl } from './InputControl';
-export { Button, LinkButton, type ButtonVariant, ButtonGroup, type ButtonProps } from './Button';
+export { Button, LinkButton, type ButtonVariant, ButtonGroup, type ButtonProps, clearButtonStyles } from './Button';
 export { ToolbarButton, ToolbarButtonRow } from './ToolbarButton';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { Link } from './Link/Link';
 
 export { Label } from './Forms/Label';
-export { Field } from './Forms/Field';
+export { Field, type FieldProps } from './Forms/Field';
 export { Legend } from './Forms/Legend';
 export { FieldSet } from './Forms/FieldSet';
 export { FieldValidationMessage } from './Forms/FieldValidationMessage';
@@ -276,4 +278,3 @@ export { type GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
-export * from './QueryEditor';

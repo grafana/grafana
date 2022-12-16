@@ -15,15 +15,17 @@
       "kind": "panel",
       "name": "two units",
       "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=4",
+      "fields": {
+        "type": "timeseries"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "timeseries"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "timeseries"
         }
       ]
     },
@@ -32,23 +34,27 @@
       "kind": "panel",
       "name": "Speed vs Temperature (XY)",
       "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=13",
+      "fields": {
+        "type": "xychart"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "xychart"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "xychart"
         },
         {
-          "kind": "transform",
-          "type": "organize"
+          "kind": "runtime",
+          "type": "transformer",
+          "UID": "organize"
         },
         {
-          "kind": "transform",
-          "type": "seriesToColumns"
+          "kind": "runtime",
+          "type": "transformer",
+          "UID": "seriesToColumns"
         }
       ]
     },
@@ -57,15 +63,17 @@
       "kind": "panel",
       "name": "Cursor info",
       "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=2",
+      "fields": {
+        "type": "debug"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "debug"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "debug"
         }
       ]
     },
@@ -74,15 +82,17 @@
       "kind": "panel",
       "name": "Only temperature",
       "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=5",
+      "fields": {
+        "type": "timeseries"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "timeseries"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "timeseries"
         }
       ]
     },
@@ -91,15 +101,17 @@
       "kind": "panel",
       "name": "Only Speed",
       "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=9",
+      "fields": {
+        "type": "timeseries"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "timeseries"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "timeseries"
         }
       ]
     },
@@ -108,15 +120,17 @@
       "kind": "panel",
       "name": "Panel Title",
       "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=11",
+      "fields": {
+        "type": "timeseries"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "timeseries"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "timeseries"
         }
       ]
     },
@@ -125,15 +139,17 @@
       "kind": "panel",
       "name": "flot panel (temperature)",
       "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=8",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     },
@@ -142,40 +158,54 @@
       "kind": "panel",
       "name": "flot panel (no units)",
       "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=10",
+      "fields": {
+        "type": "graph"
+      },
       "references": [
         {
-          "kind": "ds",
-          "type": "default.type",
-          "UID": "default.uid"
+          "kind": "ds"
         },
         {
-          "kind": "panel",
-          "type": "graph"
+          "kind": "plugin",
+          "type": "panel",
+          "UID": "graph"
         }
       ]
     }
   ],
   "references": [
     {
-      "kind": "ds",
-      "type": "default.type",
-      "UID": "default.uid"
+      "kind": "ds"
     },
     {
-      "kind": "panel",
-      "type": "debug"
+      "kind": "plugin",
+      "type": "panel",
+      "UID": "debug"
     },
     {
-      "kind": "panel",
-      "type": "graph"
+      "kind": "plugin",
+      "type": "panel",
+      "UID": "graph"
     },
     {
-      "kind": "panel",
-      "type": "timeseries"
+      "kind": "plugin",
+      "type": "panel",
+      "UID": "timeseries"
     },
     {
-      "kind": "panel",
-      "type": "xychart"
+      "kind": "plugin",
+      "type": "panel",
+      "UID": "xychart"
+    },
+    {
+      "kind": "runtime",
+      "type": "transformer",
+      "UID": "organize"
+    },
+    {
+      "kind": "runtime",
+      "type": "transformer",
+      "UID": "seriesToColumns"
     }
   ]
 }

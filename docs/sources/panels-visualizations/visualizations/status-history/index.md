@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/status-history/
-  - /docs/grafana/latest/visualizations/status-history/
-  - /docs/grafana/latest/panels-visualizations/visualizations/status-history/
+  - ../../panels/visualizations/status-history/
+  - ../../visualizations/status-history/
 description: Status history visualization
 keywords:
   - grafana
@@ -45,7 +44,7 @@ Controls the opacity of state regions.
 
 ## Value mappings
 
-To assign colors to boolean or string values, use the [Value mappings](< {{ refref "../value-mappings.md"}} >).
+To assign colors to boolean or string values, use the [Value mappings]({{< relref "../../configure-value-mappings/" >}}).
 
 {{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
 

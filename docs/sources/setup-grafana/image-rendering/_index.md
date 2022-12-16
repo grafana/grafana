@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/image_rendering/
-  - /docs/grafana/latest/image-rendering/
-  - /docs/grafana/latest/setup-grafana/image-rendering/
+  - ../administration/image_rendering/
+  - ../image-rendering/
 description: Image rendering
 keywords:
   - grafana
@@ -15,7 +14,7 @@ weight: 1000
 
 # Set up image rendering
 
-Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../../alerting/notifications/" >}}), [PDF export]({{< relref "../../dashboards/create-reports/#export-dashboard-as-pdf" >}}), and [Reporting]({{< relref "../../dashboards/create-reports/" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in alert notifications, [PDF export]({{< relref "../../dashboards/create-reports/#export-dashboard-as-pdf" >}}), and [Reporting]({{< relref "../../dashboards/create-reports/" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 
 > **Note:** Image rendering of dashboards is not supported at this time.
 

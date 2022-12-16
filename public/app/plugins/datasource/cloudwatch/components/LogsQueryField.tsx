@@ -1,95 +1,66 @@
-import { css } from '@emotion/css';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Node, Plugin } from 'slate';
 import { Editor } from 'slate-react';
 
 import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
-import { BracesPlugin, LegacyForms, QueryField, SlatePrism, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
+import {
+  BracesPlugin,
+  QueryField,
+  SlatePrism,
+  Themeable2,
+  TypeaheadInput,
+  TypeaheadOutput,
+  withTheme2,
+} from '@grafana/ui';
 import { ExploreId } from 'app/types';
+
 // Utils & Services
 // dom also includes Element polyfills
-
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchLanguageProvider } from '../language_provider';
 import syntax from '../syntax';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
-import { LogGroupSelector } from './LogGroupSelector';
-import QueryHeader from './QueryHeader';
+import { LogGroupSelection } from './LogGroupSelection';
 
 export interface CloudWatchLogsQueryFieldProps
-  extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
+  extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>,
+    Themeable2 {
   absoluteRange: AbsoluteTimeRange;
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
   exploreId: ExploreId;
   query: CloudWatchLogsQuery;
 }
+const plugins: Array<Plugin<Editor>> = [
+  BracesPlugin(),
+  SlatePrism(
+    {
+      onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
+      getSyntax: (node: Node) => 'cloudwatch',
+    },
+    { ...(prismLanguages as LanguageMap), cloudwatch: syntax }
+  ),
+];
+export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) => {
+  const { query, datasource, onChange, ExtraFieldElement, data } = props;
 
-const rowGap = css`
-  gap: 3px;
-`;
+  const showError = data?.error?.refId === query.refId;
+  const cleanText = datasource.languageProvider.cleanText;
 
-interface State {
-  hint:
-    | {
-        message: string;
-        fix: {
-          label: string;
-          action: () => void;
-        };
-      }
-    | undefined;
-}
-
-export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogsQueryFieldProps, State> {
-  state: State = {
-    hint: undefined,
-  };
-
-  plugins: Array<Plugin<Editor>>;
-
-  constructor(props: CloudWatchLogsQueryFieldProps, context: React.Context<any>) {
-    super(props, context);
-
-    this.plugins = [
-      BracesPlugin(),
-      SlatePrism(
-        {
-          onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
-          getSyntax: (node: Node) => 'cloudwatch',
-        },
-        { ...(prismLanguages as LanguageMap), cloudwatch: syntax }
-      ),
-    ];
-  }
-
-  componentDidMount = () => {
-    const { query, datasource, onChange } = this.props;
-
-    if (onChange) {
-      onChange({ ...query, logGroupNames: query.logGroupNames ?? datasource.logsQueryRunner.defaultLogGroups });
-    }
-  };
-
-  onChangeQuery = (value: string) => {
+  const onChangeQuery = (value: string) => {
     // Send text change to parent
-    const { query, onChange } = this.props;
-
-    if (onChange) {
-      const nextQuery = {
-        ...query,
-        expression: value,
-        statsGroups: getStatsGroups(value),
-      };
-      onChange(nextQuery);
-    }
+    const nextQuery = {
+      ...query,
+      expression: value,
+      statsGroups: getStatsGroups(value),
+    };
+    onChange(nextQuery);
   };
 
-  onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const { datasource, query } = this.props;
+  const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     const { logGroupNames } = query;
 
     if (!datasource.languageProvider) {
@@ -97,7 +68,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     }
 
     const cloudwatchLanguageProvider = datasource.languageProvider as CloudWatchLanguageProvider;
-    const { history, absoluteRange } = this.props;
+    const { history, absoluteRange } = props;
     const { prefix, text, value, wrapperClasses, labelKey, editor } = typeahead;
 
     return await cloudwatchLanguageProvider.provideCompletionItems(
@@ -111,74 +82,30 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     );
   };
 
-  render() {
-    const { onRunQuery, onChange, ExtraFieldElement, data, query, datasource } = this.props;
-    const { region, refId, expression, logGroupNames } = query;
-    const { hint } = this.state;
-
-    const showError = data && data.error && data.error.refId === query.refId;
-    const cleanText = datasource.languageProvider ? datasource.languageProvider.cleanText : undefined;
-
-    return (
-      <>
-        <QueryHeader
-          query={query}
-          onRunQuery={onRunQuery}
-          datasource={datasource}
-          onChange={onChange}
-          sqlCodeEditorIsDirty={false}
-        />
-        <div className={`gf-form gf-form--grow flex-grow-1 ${rowGap}`}>
-          <LegacyForms.FormField
-            label="Log Groups"
-            labelWidth={6}
-            className="flex-grow-1"
-            inputEl={
-              <LogGroupSelector
-                region={region}
-                selectedLogGroups={logGroupNames ?? datasource.logsQueryRunner.defaultLogGroups}
-                datasource={datasource}
-                onChange={function (logGroups: string[]): void {
-                  onChange({ ...query, logGroupNames: logGroups });
-                }}
-                onRunQuery={onRunQuery}
-                refId={refId}
-              />
-            }
+  return (
+    <>
+      <LogGroupSelection datasource={datasource} query={query} onChange={onChange} />
+      <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
+        <div className="gf-form gf-form--grow flex-shrink-1">
+          <QueryField
+            additionalPlugins={plugins}
+            query={query.expression ?? ''}
+            onChange={onChangeQuery}
+            onTypeahead={onTypeahead}
+            cleanText={cleanText}
+            placeholder="Enter a CloudWatch Logs Insights query (run with Shift+Enter)"
+            portalOrigin="cloudwatch"
           />
         </div>
-        <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
-          <div className="gf-form gf-form--grow flex-shrink-1">
-            <QueryField
-              additionalPlugins={this.plugins}
-              query={expression ?? ''}
-              onChange={this.onChangeQuery}
-              onRunQuery={this.props.onRunQuery}
-              onTypeahead={this.onTypeahead}
-              cleanText={cleanText}
-              placeholder="Enter a CloudWatch Logs Insights query (run with Shift+Enter)"
-              portalOrigin="cloudwatch"
-              disabled={!logGroupNames || logGroupNames.length === 0}
-            />
-          </div>
-          {ExtraFieldElement}
+        {ExtraFieldElement}
+      </div>
+      {showError ? (
+        <div className="query-row-break">
+          <div className="prom-query-field-info text-error">{data?.error?.message}</div>
         </div>
-        {hint && (
-          <div className="query-row-break">
-            <div className="text-warning">
-              {hint.message}
-              <a className="text-link muted" onClick={hint.fix.action}>
-                {hint.fix.label}
-              </a>
-            </div>
-          </div>
-        )}
-        {showError ? (
-          <div className="query-row-break">
-            <div className="prom-query-field-info text-error">{data?.error?.message}</div>
-          </div>
-        ) : null}
-      </>
-    );
-  }
-}
+      ) : null}
+    </>
+  );
+};
+
+export default withTheme2(CloudWatchLogsQueryField);

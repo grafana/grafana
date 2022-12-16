@@ -5,20 +5,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/stretchr/testify/require"
 )
 
 func mockTimeNow() {
@@ -47,7 +46,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 	var items []*models.Alert
 
 	setup := func(t *testing.T) {
-		ss := sqlstore.InitTestDB(t)
+		ss := db.InitTestDB(t)
 		tagService := tagimpl.ProvideService(ss, ss.Cfg)
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
@@ -264,7 +263,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		err := store.SaveAlerts(context.Background(), testDash.Id, items)
 		require.Nil(t, err)
 
-		err = store.db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = store.db.WithDbSession(context.Background(), func(sess *db.Session) error {
 			dash := models.Dashboard{Id: testDash.Id, OrgId: 1}
 			_, err := sess.Delete(dash)
 			return err
@@ -289,7 +288,7 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 	defer resetTimeNow()
 
 	t.Run("Given an alert", func(t *testing.T) {
-		ss := sqlstore.InitTestDB(t)
+		ss := db.InitTestDB(t)
 		sqlStore := sqlStore{db: ss, log: log.New(), tagService: tagimpl.ProvideService(ss, ss.Cfg)}
 
 		testDash := insertTestDashboard(t, sqlStore.db, "dashboard with alerts", 1, 0, false, "alert")
@@ -380,7 +379,7 @@ func (ss *sqlStore) pauseAllAlerts(t *testing.T, pauseState bool) error {
 	return err
 }
 
-func insertTestDashboard(t *testing.T, db db.DB, title string, orgId int64,
+func insertTestDashboard(t *testing.T, store db.DB, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	t.Helper()
 	cmd := models.SaveDashboardCommand{
@@ -395,7 +394,7 @@ func insertTestDashboard(t *testing.T, db db.DB, title string, orgId int64,
 	}
 
 	var dash *models.Dashboard
-	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 		dash = cmd.GetDashboardModel()
 		dash.SetVersion(1)
 		dash.Created = time.Now()
@@ -410,7 +409,7 @@ func insertTestDashboard(t *testing.T, db db.DB, title string, orgId int64,
 	dash.Data.Set("id", dash.Id)
 	dash.Data.Set("uid", dash.Uid)
 
-	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
 		dashVersion := &dashver.DashboardVersion{
 			DashboardID:   dash.Id,
 			ParentVersion: dash.Version,

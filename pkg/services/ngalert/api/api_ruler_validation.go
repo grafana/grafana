@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -18,19 +18,12 @@ func validateRuleNode(
 	groupName string,
 	interval time.Duration,
 	orgId int64,
-	namespace *models.Folder,
+	namespace *folder.Folder,
 	conditionValidator func(ngmodels.Condition) error,
 	cfg *setting.UnifiedAlertingSettings) (*ngmodels.AlertRule, error) {
-	intervalSeconds := int64(interval.Seconds())
-
-	baseIntervalSeconds := int64(cfg.BaseInterval.Seconds())
-
-	if interval <= 0 {
-		return nil, fmt.Errorf("rule evaluation interval must be positive duration that is multiple of the base interval %d seconds", baseIntervalSeconds)
-	}
-
-	if intervalSeconds%baseIntervalSeconds != 0 {
-		return nil, fmt.Errorf("rule evaluation interval %d should be multiple of the base interval of %d seconds", int64(interval.Seconds()), baseIntervalSeconds)
+	intervalSeconds, err := validateInterval(cfg, interval)
+	if err != nil {
+		return nil, err
 	}
 
 	if ruleNode.GrafanaManagedAlert == nil {
@@ -54,7 +47,6 @@ func validateRuleNode(
 	}
 
 	if ruleNode.GrafanaManagedAlert.NoDataState != "" {
-		var err error
 		noDataState, err = ngmodels.NoDataStateFromString(string(ruleNode.GrafanaManagedAlert.NoDataState))
 		if err != nil {
 			return nil, err
@@ -68,7 +60,6 @@ func validateRuleNode(
 	}
 
 	if ruleNode.GrafanaManagedAlert.ExecErrState != "" {
-		var err error
 		errorState, err = ngmodels.ErrStateFromString(string(ruleNode.GrafanaManagedAlert.ExecErrState))
 		if err != nil {
 			return nil, err
@@ -90,7 +81,7 @@ func validateRuleNode(
 			Condition: ruleNode.GrafanaManagedAlert.Condition,
 			Data:      ruleNode.GrafanaManagedAlert.Data,
 		}
-		if err := conditionValidator(cond); err != nil {
+		if err = conditionValidator(cond); err != nil {
 			return nil, fmt.Errorf("failed to validate condition of alert rule %s: %w", ruleNode.GrafanaManagedAlert.Title, err)
 		}
 	}
@@ -102,13 +93,12 @@ func validateRuleNode(
 		Data:            ruleNode.GrafanaManagedAlert.Data,
 		UID:             ruleNode.GrafanaManagedAlert.UID,
 		IntervalSeconds: intervalSeconds,
-		NamespaceUID:    namespace.Uid,
+		NamespaceUID:    namespace.UID,
 		RuleGroup:       groupName,
 		NoDataState:     noDataState,
 		ExecErrState:    errorState,
 	}
 
-	var err error
 	newAlertRule.For, err = validateForInterval(ruleNode)
 	if err != nil {
 		return nil, err
@@ -118,12 +108,28 @@ func validateRuleNode(
 		newAlertRule.Annotations = ruleNode.ApiRuleNode.Annotations
 		newAlertRule.Labels = ruleNode.ApiRuleNode.Labels
 
-		err = newAlertRule.SetDashboardAndPanel()
+		err = newAlertRule.SetDashboardAndPanelFromAnnotations()
 		if err != nil {
 			return nil, err
 		}
 	}
 	return &newAlertRule, nil
+}
+
+func validateInterval(cfg *setting.UnifiedAlertingSettings, interval time.Duration) (int64, error) {
+	intervalSeconds := int64(interval.Seconds())
+
+	baseIntervalSeconds := int64(cfg.BaseInterval.Seconds())
+
+	if interval <= 0 {
+		return 0, fmt.Errorf("rule evaluation interval must be positive duration that is multiple of the base interval %d seconds", baseIntervalSeconds)
+	}
+
+	if intervalSeconds%baseIntervalSeconds != 0 {
+		return 0, fmt.Errorf("rule evaluation interval %d should be multiple of the base interval of %d seconds", int64(interval.Seconds()), baseIntervalSeconds)
+	}
+
+	return intervalSeconds, nil
 }
 
 // validateForInterval validates ApiRuleNode.For and converts it to time.Duration. If the field is not specified returns 0 if GrafanaManagedAlert.UID is empty and -1 if it is not.
@@ -146,7 +152,7 @@ func validateForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Dur
 func validateRuleGroup(
 	ruleGroupConfig *apimodels.PostableRuleGroupConfig,
 	orgId int64,
-	namespace *models.Folder,
+	namespace *folder.Folder,
 	conditionValidator func(ngmodels.Condition) error,
 	cfg *setting.UnifiedAlertingSettings) ([]*ngmodels.AlertRule, error) {
 	if ruleGroupConfig.Name == "" {

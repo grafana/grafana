@@ -4,25 +4,25 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type PermissionChecker struct {
-	sqlStore         *sqlstore.SQLStore
+	sqlStore         db.DB
 	features         featuremgmt.FeatureToggles
 	accessControl    accesscontrol.AccessControl
 	dashboardService dashboards.DashboardService
 	annotationsRepo  annotations.Repository
 }
 
-func NewPermissionChecker(sqlStore *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
+func NewPermissionChecker(sqlStore db.DB, features featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
 	annotationsRepo annotations.Repository,
 ) *PermissionChecker {
@@ -57,7 +57,10 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if err != nil {
 			return false, err
 		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
+		if err != nil {
+			return false, err
+		}
 		if ok, err := guard.CanView(); err != nil || !ok {
 			return false, nil
 		}
@@ -81,7 +84,10 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if err != nil {
 			return false, err
 		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
+		if err != nil {
+			return false, err
+		}
 		if ok, err := guard.CanView(); err != nil || !ok {
 			return false, nil
 		}
@@ -103,7 +109,10 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if err != nil {
 			return false, err
 		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
+		if err != nil {
+			return false, err
+		}
 		if ok, err := guard.CanEdit(); err != nil || !ok {
 			return false, nil
 		}
@@ -133,7 +142,10 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if err != nil {
 			return false, nil
 		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
+		if err != nil {
+			return false, err
+		}
 		if ok, err := guard.CanEdit(); err != nil || !ok {
 			return false, nil
 		}

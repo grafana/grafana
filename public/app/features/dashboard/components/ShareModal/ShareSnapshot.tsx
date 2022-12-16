@@ -86,10 +86,6 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       timestamp: new Date(),
     };
 
-    if (!external) {
-      this.dashboard.snapshot.originalUrl = window.location.href;
-    }
-
     this.setState({ isLoading: true });
     this.dashboard.startRefresh();
 
@@ -278,7 +274,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
     return (
       <>
-        <Field label="Snapshot URL">
+        <Field label={t('share-modal.snapshot.url-label', 'Snapshot URL')}>
           <Input
             id="snapshot-url-input"
             value={snapshotUrl}

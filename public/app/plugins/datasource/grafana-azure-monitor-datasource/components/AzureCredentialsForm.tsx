@@ -1,10 +1,12 @@
 import React, { ChangeEvent, FunctionComponent, useEffect, useReducer, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { InlineFormLabel, LegacyForms, Button, Select } from '@grafana/ui';
+import { InlineFormLabel, LegacyForms, Button, Select, InlineField } from '@grafana/ui';
 
 import { isCredentialsComplete } from '../credentials';
+import { selectors } from '../e2e/selectors';
 import { AzureAuthType, AzureCredentials } from '../types';
+
 const { Input } = LegacyForms;
 
 export interface Props {
@@ -27,6 +29,8 @@ const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
     label: 'App Registration',
   },
 ];
+
+const LABEL_WIDTH = 18;
 
 export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => {
   const { credentials, azureCloudOptions, onCredentialsChange, getSubscriptions, disabled } = props;
@@ -153,68 +157,77 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
   return (
     <div className="gf-form-group">
       {props.managedIdentityEnabled && (
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineFormLabel className="width-12" tooltip="Choose the type of authentication to Azure services">
-              Authentication
-            </InlineFormLabel>
-            <Select
-              className="width-15"
-              value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
-              options={authTypeOptions}
-              onChange={onAuthTypeChange}
-              disabled={disabled}
-            />
-          </div>
-        </div>
+        <InlineField
+          label="Authentication"
+          labelWidth={LABEL_WIDTH}
+          tooltip="Choose the type of authentication to Azure services"
+          data-testid={selectors.components.configEditor.authType.select}
+          htmlFor="authentication-type"
+        >
+          <Select
+            className="width-15"
+            value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
+            options={authTypeOptions}
+            onChange={onAuthTypeChange}
+            disabled={disabled}
+          />
+        </InlineField>
       )}
       {credentials.authType === 'clientsecret' && (
         <>
           {azureCloudOptions && (
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <InlineFormLabel className="width-12" tooltip="Choose an Azure Cloud">
-                  Azure Cloud
-                </InlineFormLabel>
-                <Select
-                  aria-label="Azure Cloud"
-                  className="width-15"
-                  value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
-                  options={azureCloudOptions}
-                  onChange={onAzureCloudChange}
-                  disabled={disabled}
-                />
-              </div>
-            </div>
+            <InlineField
+              label="Azure Cloud"
+              labelWidth={LABEL_WIDTH}
+              tooltip="Choose an Azure Cloud"
+              data-testid={selectors.components.configEditor.azureCloud.input}
+              htmlFor="azure-cloud-type"
+              disabled={disabled}
+            >
+              <Select
+                inputId="azure-cloud-type"
+                aria-label="Azure Cloud"
+                className="width-15"
+                value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
+                options={azureCloudOptions}
+                onChange={onAzureCloudChange}
+              />
+            </InlineField>
           )}
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel className="width-12">Directory (tenant) ID</InlineFormLabel>
-              <div className="width-15">
-                <Input
-                  className="width-30"
-                  placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                  value={credentials.tenantId || ''}
-                  onChange={onTenantIdChange}
-                  disabled={disabled}
-                />
-              </div>
+          <InlineField
+            label="Directory (tenant) ID"
+            labelWidth={LABEL_WIDTH}
+            data-testid={selectors.components.configEditor.tenantID.input}
+            htmlFor="tenant-id"
+          >
+            <div className="width-15">
+              <Input
+                aria-label="Tenant ID"
+                className="width-30"
+                placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                value={credentials.tenantId || ''}
+                onChange={onTenantIdChange}
+                disabled={disabled}
+              />
             </div>
-          </div>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel className="width-12">Application (client) ID</InlineFormLabel>
-              <div className="width-15">
-                <Input
-                  className="width-30"
-                  placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                  value={credentials.clientId || ''}
-                  onChange={onClientIdChange}
-                  disabled={disabled}
-                />
-              </div>
+          </InlineField>
+          <InlineField
+            label="Application (client) ID"
+            labelWidth={LABEL_WIDTH}
+            data-testid={selectors.components.configEditor.clientID.input}
+            htmlFor="tenant-id"
+          >
+            <div className="width-15">
+              <Input
+                className="width-30"
+                aria-label="Client ID"
+                placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                value={credentials.clientId || ''}
+                onChange={onClientIdChange}
+                disabled={disabled}
+              />
             </div>
-          </div>
+          </InlineField>
           {!disabled &&
             (typeof credentials.clientSecret === 'symbol' ? (
               <div className="gf-form-inline">
@@ -231,27 +244,28 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                 </div>
               </div>
             ) : (
-              <div className="gf-form-inline">
-                <div className="gf-form">
-                  <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
-                  <div className="width-15">
-                    <Input
-                      className="width-30"
-                      placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                      value={credentials.clientSecret || ''}
-                      onChange={onClientSecretChange}
-                      disabled={disabled}
-                    />
-                  </div>
-                </div>
-              </div>
+              <InlineField
+                label="Client Secret"
+                labelWidth={LABEL_WIDTH}
+                data-testid={selectors.components.configEditor.clientSecret.input}
+                htmlFor="client-secret"
+              >
+                <Input
+                  className="width-30"
+                  aria-label="Client Secret"
+                  placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                  value={credentials.clientSecret || ''}
+                  onChange={onClientSecretChange}
+                  disabled={disabled}
+                />
+              </InlineField>
             ))}
         </>
       )}
       {getSubscriptions && (
         <>
           <div className="gf-form-inline">
-            <div className="gf-form">
+            <div className="gf-form" data-testid={selectors.components.configEditor.defaultSubscription.input}>
               <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
               <div className="width-30">
                 <Select
@@ -274,10 +288,12 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                 <div className="max-width-30 gf-form-inline">
                   <Button
                     variant="secondary"
+                    aria-label="Load Subscriptions"
                     size="sm"
                     type="button"
                     onClick={onLoadSubscriptions}
                     disabled={!hasRequiredFields}
+                    data-testid={selectors.components.configEditor.loadSubscriptions.button}
                   >
                     Load Subscriptions
                   </Button>

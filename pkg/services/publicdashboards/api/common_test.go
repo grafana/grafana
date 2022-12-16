@@ -7,11 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"golang.org/x/oauth2"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -21,17 +22,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/user"
-
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 func setupTestServer(
@@ -39,7 +37,7 @@ func setupTestServer(
 	cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	service publicdashboards.Service,
-	db *sqlstore.SQLStore,
+	db db.DB,
 	user *user.SignedInUser,
 ) *web.Mux {
 	// build router to register routes
@@ -106,10 +104,10 @@ func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T)
 
 // helper to query.Service
 // allows us to stub the cache and plugin clients
-func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakePluginClient, store *sqlstore.SQLStore) *query.Service {
+func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakePluginClient, store db.DB) *query.Service {
 	//	build database if we need one
 	if store == nil {
-		store = sqlstore.InitTestDB(t)
+		store = db.InitTestDB(t)
 	}
 
 	// default cache service
@@ -132,13 +130,12 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	}
 
 	return query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		cs,
 		nil,
 		&fakePluginRequestValidator{},
 		&fakeDatasources.FakeDataSourceService{},
 		fpc,
-		&fakeOAuthTokenService{},
 	)
 }
 
@@ -149,19 +146,6 @@ type fakePluginRequestValidator struct {
 
 func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) error {
 	return rv.err
-}
-
-type fakeOAuthTokenService struct {
-	passThruEnabled bool
-	token           *oauth2.Token
-}
-
-func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
-	return ts.token
-}
-
-func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
-	return ts.passThruEnabled
 }
 
 // copied from pkg/api/plugins_test.go

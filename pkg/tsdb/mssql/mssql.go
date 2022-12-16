@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
@@ -54,21 +55,28 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:    0,
-			MaxIdleConns:    2,
-			ConnMaxLifetime: 14400,
-			Encrypt:         "false",
+			MaxOpenConns:      0,
+			MaxIdleConns:      2,
+			ConnMaxLifetime:   14400,
+			Encrypt:           "false",
+			ConnectionTimeout: 0,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+
+		database := jsonData.Database
+		if database == "" {
+			database = settings.Database
+		}
+
 		dsInfo := sqleng.DataSourceInfo{
 			JsonData:                jsonData,
 			URL:                     settings.URL,
 			User:                    settings.User,
-			Database:                settings.Database,
+			Database:                database,
 			ID:                      settings.ID,
 			Updated:                 settings.Updated,
 			UID:                     settings.UID,
@@ -80,7 +88,7 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 		}
 
 		if cfg.Env == setting.Dev {
-			logger.Debug("getEngine", "connection", cnnstr)
+			logger.Debug("GetEngine", "connection", cnnstr)
 		}
 		config := sqleng.DataPluginConfiguration{
 			DriverName:        "mssql",
@@ -90,9 +98,7 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			RowLimit:          cfg.DataProxyRowLimit,
 		}
 
-		queryResultTransformer := mssqlQueryResultTransformer{
-			log: logger,
-		}
+		queryResultTransformer := mssqlQueryResultTransformer{}
 
 		return sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	}
@@ -172,18 +178,21 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	} else if encrypt == "disable" {
 		connStr += fmt.Sprintf("encrypt=%s;", dsInfo.JsonData.Encrypt)
 	}
+
+	if dsInfo.JsonData.ConnectionTimeout != 0 {
+		connStr += fmt.Sprintf("connection timeout=%d;", dsInfo.JsonData.ConnectionTimeout)
+	}
+
 	return connStr, nil
 }
 
-type mssqlQueryResultTransformer struct {
-	log log.Logger
-}
+type mssqlQueryResultTransformer struct{}
 
-func (t *mssqlQueryResultTransformer) TransformQueryError(err error) error {
+func (t *mssqlQueryResultTransformer) TransformQueryError(logger log.Logger, err error) error {
 	// go-mssql overrides source error, so we currently match on string
 	// ref https://github.com/denisenkom/go-mssqldb/blob/045585d74f9069afe2e115b6235eb043c8047043/tds.go#L904
 	if strings.HasPrefix(strings.ToLower(err.Error()), "unable to open tcp connection with host") {
-		t.log.Error("query error", "err", err)
+		logger.Error("Query error", "error", err)
 		return sqleng.ErrConnectionFailed
 	}
 

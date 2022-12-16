@@ -13,12 +13,11 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// https://help.victorops.com/knowledge-base/incident-fields-glossary/ - 20480 characters.
+const victorOpsMaxMessageLenRunes = 20480
 
 const (
 	// victoropsAlertStateCritical - Victorops uses "CRITICAL" string to indicate "Alerting" state
@@ -31,6 +30,8 @@ const (
 type victorOpsSettings struct {
 	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
 	MessageType string `json:"messageType,omitempty" yaml:"messageType,omitempty"`
+	Title       string `json:"title,omitempty" yaml:"title,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 func buildVictorOpsSettings(fc FactoryConfig) (victorOpsSettings, error) {
@@ -44,6 +45,12 @@ func buildVictorOpsSettings(fc FactoryConfig) (victorOpsSettings, error) {
 	}
 	if settings.MessageType == "" {
 		settings.MessageType = victoropsAlertStateCritical
+	}
+	if settings.Title == "" {
+		settings.Title = DefaultMessageTitleEmbed
+	}
+	if settings.Description == "" {
+		settings.Description = DefaultMessageEmbed
 	}
 	return settings, nil
 }
@@ -67,14 +74,8 @@ func NewVictoropsNotifier(fc FactoryConfig) (*VictoropsNotifier, error) {
 		return nil, err
 	}
 	return &VictoropsNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
-		log:      log.New("alerting.notifier.victorops"),
+		Base:     NewBase(fc.Config),
+		log:      fc.Logger,
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
@@ -87,9 +88,9 @@ func NewVictoropsNotifier(fc FactoryConfig) (*VictoropsNotifier, error) {
 // Victorops specifications (http://victorops.force.com/knowledgebase/articles/Integration/Alert-Ingestion-API-Documentation/)
 type VictoropsNotifier struct {
 	*Base
-	log      log.Logger
+	log      Logger
 	images   ImageStore
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	tmpl     *template.Template
 	settings victorOpsSettings
 }
@@ -101,38 +102,35 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
 
-	messageType := strings.ToUpper(tmpl(vn.settings.MessageType))
-	if messageType == "" {
-		vn.log.Warn("expansion of message type template resulted in an empty string. Using fallback", "fallback", victoropsAlertStateCritical, "template", vn.settings.MessageType)
-		messageType = victoropsAlertStateCritical
-	}
-	alerts := types.Alerts(as...)
-	if alerts.Status() == model.AlertResolved {
-		messageType = victoropsAlertStateRecovery
-	}
+	messageType := buildMessageType(vn.log, tmpl, vn.settings.MessageType, as...)
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
 	if err != nil {
 		return false, err
 	}
 
+	stateMessage, truncated := TruncateInRunes(tmpl(vn.settings.Description), victorOpsMaxMessageLenRunes)
+	if truncated {
+		vn.log.Warn("Truncated stateMessage", "incident", groupKey, "max_runes", victorOpsMaxMessageLenRunes)
+	}
+
 	bodyJSON := map[string]interface{}{
 		"message_type":        messageType,
 		"entity_id":           groupKey.Hash(),
-		"entity_display_name": tmpl(DefaultMessageTitleEmbed),
+		"entity_display_name": tmpl(vn.settings.Title),
 		"timestamp":           time.Now().Unix(),
-		"state_message":       tmpl(DefaultMessageEmbed),
+		"state_message":       stateMessage,
 		"monitoring_tool":     "Grafana v" + setting.BuildVersion,
 	}
 
 	if tmplErr != nil {
 		vn.log.Warn("failed to expand message template. "+
-			"", "err", tmplErr.Error())
+			"", "error", tmplErr.Error())
 		tmplErr = nil
 	}
 
 	_ = withStoredImages(ctx, vn.log, vn.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			if image.URL != "" {
 				bodyJSON["image_url"] = image.URL
 				return ErrImagesDone
@@ -145,7 +143,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 	u := tmpl(vn.settings.URL)
 	if tmplErr != nil {
-		vn.log.Info("failed to expand URL template", "err", tmplErr.Error(), "fallback", vn.settings.URL)
+		vn.log.Info("failed to expand URL template", "error", tmplErr.Error(), "fallback", vn.settings.URL)
 		u = vn.settings.URL
 	}
 
@@ -153,13 +151,13 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	if err != nil {
 		return false, err
 	}
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:  u,
 		Body: string(b),
 	}
 
-	if err := vn.ns.SendWebhookSync(ctx, cmd); err != nil {
-		vn.log.Error("failed to send notification", "err", err, "webhook", vn.Name)
+	if err := vn.ns.SendWebhook(ctx, cmd); err != nil {
+		vn.log.Error("failed to send notification", "error", err, "webhook", vn.Name)
 		return false, err
 	}
 
@@ -168,4 +166,15 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 
 func (vn *VictoropsNotifier) SendResolved() bool {
 	return !vn.GetDisableResolveMessage()
+}
+
+func buildMessageType(l Logger, tmpl func(string) string, msgType string, as ...*types.Alert) string {
+	if types.Alerts(as...).Status() == model.AlertResolved {
+		return victoropsAlertStateRecovery
+	}
+	if messageType := strings.ToUpper(tmpl(msgType)); messageType != "" {
+		return messageType
+	}
+	l.Warn("expansion of message type template resulted in an empty string. Using fallback", "fallback", victoropsAlertStateCritical, "template", msgType)
+	return victoropsAlertStateCritical
 }

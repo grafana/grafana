@@ -1,3 +1,6 @@
+import { escapeLabelValueInExactSelector } from '../../../languageUtils';
+import { explainOperator } from '../../../querybuilder/operations';
+import { LokiOperationId } from '../../../querybuilder/types';
 import { AGGREGATION_OPERATORS, RANGE_VEC_FUNCTIONS } from '../../../syntax';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
@@ -13,7 +16,7 @@ export type CompletionType =
   | 'PATTERN'
   | 'PARSER'
   | 'LINE_FILTER'
-  | 'LINE_FORMAT';
+  | 'PIPE_OPERATION';
 
 type Completion = {
   type: CompletionType;
@@ -63,12 +66,59 @@ const DURATION_COMPLETIONS: Completion[] = ['$__interval', '$__range', '1m', '5m
   })
 );
 
-const LINE_FILTER_COMPLETIONS: Completion[] = ['|=', '!=', '|~', '!~'].map((item) => ({
-  type: 'LINE_FILTER',
-  label: `${item} ""`,
-  insertText: `${item} "$0"`,
-  isSnippet: true,
-}));
+const UNWRAP_FUNCTION_COMPLETIONS: Completion[] = [
+  {
+    type: 'FUNCTION',
+    label: 'duration_seconds',
+    documentation: 'Will convert the label value in seconds from the go duration format (e.g 5m, 24s30ms).',
+    insertText: 'duration_seconds()',
+  },
+  {
+    type: 'FUNCTION',
+    label: 'duration',
+    documentation: 'Short version of duration_seconds().',
+    insertText: 'duration()',
+  },
+  {
+    type: 'FUNCTION',
+    label: 'bytes',
+    documentation: 'Will convert the label value to raw bytes applying the bytes unit (e.g. 5 MiB, 3k, 1G).',
+    insertText: 'bytes()',
+  },
+];
+
+const LINE_FILTER_COMPLETIONS = [
+  {
+    operator: '|=',
+    documentation: explainOperator(LokiOperationId.LineContains),
+    afterPipe: true,
+  },
+  {
+    operator: '!=',
+    documentation: explainOperator(LokiOperationId.LineContainsNot),
+  },
+  {
+    operator: '|~',
+    documentation: explainOperator(LokiOperationId.LineMatchesRegex),
+    afterPipe: true,
+  },
+  {
+    operator: '!~',
+    documentation: explainOperator(LokiOperationId.LineMatchesRegexNot),
+  },
+];
+
+function getLineFilterCompletions(afterPipe: boolean): Completion[] {
+  return LINE_FILTER_COMPLETIONS.filter((completion) => !afterPipe || completion.afterPipe).map(
+    ({ operator, documentation }) => ({
+      type: 'LINE_FILTER',
+      label: `${operator} ""`,
+      insertText: `${afterPipe ? operator.replace('|', '') : operator} "$0"`,
+      isSnippet: true,
+      documentation,
+    })
+  );
+}
 
 async function getAllHistoryCompletions(dataProvider: CompletionDataProvider): Promise<Completion[]> {
   const history = await dataProvider.getHistory();
@@ -80,77 +130,67 @@ async function getAllHistoryCompletions(dataProvider: CompletionDataProvider): P
   }));
 }
 
-async function getLabelNamesForCompletions(
-  suffix: string,
-  triggerOnInsert: boolean,
-  addExtractedLabels: boolean,
-  otherLabels: Label[],
-  dataProvider: CompletionDataProvider
-): Promise<Completion[]> {
-  const labelNames = await dataProvider.getLabelNames(otherLabels);
-  const result: Completion[] = labelNames.map((text) => ({
-    type: 'LABEL_NAME',
-    label: text,
-    insertText: `${text}${suffix}`,
-    triggerOnInsert,
-  }));
-
-  if (addExtractedLabels) {
-    const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(otherLabels);
-    extractedLabelKeys.forEach((key) => {
-      result.push({
-        type: 'LABEL_NAME',
-        label: `${key} (parsed)`,
-        insertText: `${key}${suffix}`,
-        triggerOnInsert,
-      });
-    });
-  }
-
-  return result;
-}
-
 async function getLabelNamesForSelectorCompletions(
   otherLabels: Label[],
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  return getLabelNamesForCompletions('=', true, false, otherLabels, dataProvider);
+  const labelNames = await dataProvider.getLabelNames(otherLabels);
+
+  return labelNames.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: `${label}=`,
+    triggerOnInsert: true,
+  }));
 }
 
-async function getInGroupingCompletions(
-  otherLabels: Label[],
-  dataProvider: CompletionDataProvider
-): Promise<Completion[]> {
-  return getLabelNamesForCompletions('', false, true, otherLabels, dataProvider);
+async function getInGroupingCompletions(logQuery: string, dataProvider: CompletionDataProvider): Promise<Completion[]> {
+  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
+
+  return extractedLabelKeys.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: label,
+    triggerOnInsert: false,
+  }));
 }
 
-async function getAfterSelectorCompletions(
-  labels: Label[],
+const PARSERS = ['json', 'logfmt', 'pattern', 'regexp', 'unpack'];
+
+async function getParserCompletions(
   afterPipe: boolean,
-  dataProvider: CompletionDataProvider
-): Promise<Completion[]> {
-  const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(labels);
-  const allParsers = new Set(['json', 'logfmt', 'pattern', 'regexp', 'unpack']);
+  hasJSON: boolean,
+  hasLogfmt: boolean,
+  extractedLabelKeys: string[]
+) {
+  const allParsers = new Set(PARSERS);
   const completions: Completion[] = [];
-  const prefix = afterPipe ? '' : '| ';
+  const prefix = afterPipe ? ' ' : '| ';
   const hasLevelInExtractedLabels = extractedLabelKeys.some((key) => key === 'level');
+
   if (hasJSON) {
     allParsers.delete('json');
-    const explanation = hasLevelInExtractedLabels ? 'use to get log-levels in the histogram' : 'detected';
+    const extra = hasLevelInExtractedLabels ? '' : ' (detected)';
     completions.push({
       type: 'PARSER',
-      label: `json (${explanation})`,
+      label: `json${extra}`,
       insertText: `${prefix}json`,
+      documentation: hasLevelInExtractedLabels
+        ? 'Use it to get log-levels in the histogram'
+        : explainOperator(LokiOperationId.Json),
     });
   }
 
   if (hasLogfmt) {
     allParsers.delete('logfmt');
-    const explanation = hasLevelInExtractedLabels ? 'get detected levels in the histogram' : 'detected';
+    const extra = hasLevelInExtractedLabels ? '' : ' (detected)';
     completions.push({
-      type: 'DURATION',
-      label: `logfmt (${explanation})`,
+      type: 'PARSER',
+      label: `logfmt${extra}`,
       insertText: `${prefix}logfmt`,
+      documentation: hasLevelInExtractedLabels
+        ? 'Get detected levels in the histogram'
+        : explainOperator(LokiOperationId.Logfmt),
     });
   }
 
@@ -160,31 +200,58 @@ async function getAfterSelectorCompletions(
       type: 'PARSER',
       label: parser,
       insertText: `${prefix}${parser}`,
+      documentation: explainOperator(parser),
     });
   });
 
+  return completions;
+}
+
+async function getAfterSelectorCompletions(
+  logQuery: string,
+  afterPipe: boolean,
+  dataProvider: CompletionDataProvider
+): Promise<Completion[]> {
+  const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(logQuery);
+
+  const completions: Completion[] = await getParserCompletions(afterPipe, hasJSON, hasLogfmt, extractedLabelKeys);
+
+  const prefix = afterPipe ? ' ' : '| ';
+
   extractedLabelKeys.forEach((key) => {
     completions.push({
-      type: 'LINE_FILTER',
-      label: `unwrap ${key} (detected)`,
+      type: 'PIPE_OPERATION',
+      label: `unwrap ${key}`,
       insertText: `${prefix}unwrap ${key}`,
     });
   });
 
   completions.push({
-    type: 'LINE_FILTER',
+    type: 'PIPE_OPERATION',
     label: 'unwrap',
     insertText: `${prefix}unwrap`,
+    documentation: explainOperator(LokiOperationId.Unwrap),
   });
 
   completions.push({
-    type: 'LINE_FORMAT',
+    type: 'PIPE_OPERATION',
     label: 'line_format',
     insertText: `${prefix}line_format "{{.$0}}"`,
     isSnippet: true,
+    documentation: explainOperator(LokiOperationId.LineFormat),
   });
 
-  return [...LINE_FILTER_COMPLETIONS, ...completions];
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'label_format',
+    insertText: `${prefix}label_format`,
+    isSnippet: true,
+    documentation: explainOperator(LokiOperationId.LabelFormat),
+  });
+
+  const lineFilters = getLineFilterCompletions(afterPipe);
+
+  return [...lineFilters, ...completions];
 }
 
 async function getLabelValuesForMetricCompletions(
@@ -197,8 +264,24 @@ async function getLabelValuesForMetricCompletions(
   return values.map((text) => ({
     type: 'LABEL_VALUE',
     label: text,
-    insertText: betweenQuotes ? text : `"${text}"`,
+    insertText: betweenQuotes ? escapeLabelValueInExactSelector(text) : `"${escapeLabelValueInExactSelector(text)}"`,
   }));
+}
+
+async function getAfterUnwrapCompletions(
+  logQuery: string,
+  dataProvider: CompletionDataProvider
+): Promise<Completion[]> {
+  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
+
+  const labelCompletions: Completion[] = extractedLabelKeys.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: label,
+    triggerOnInsert: false,
+  }));
+
+  return [...labelCompletions, ...UNWRAP_FUNCTION_COMPLETIONS];
 }
 
 export async function getCompletions(
@@ -210,10 +293,10 @@ export async function getCompletions(
     case 'AT_ROOT':
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
       return [...historyCompletions, ...LOG_COMPLETIONS, ...AGGREGATION_COMPLETIONS, ...FUNCTION_COMPLETIONS];
-    case 'IN_DURATION':
+    case 'IN_RANGE':
       return DURATION_COMPLETIONS;
     case 'IN_GROUPING':
-      return getInGroupingCompletions(situation.otherLabels, dataProvider);
+      return getInGroupingCompletions(situation.logQuery, dataProvider);
     case 'IN_LABEL_SELECTOR_NO_LABEL_NAME':
       return getLabelNamesForSelectorCompletions(situation.otherLabels, dataProvider);
     case 'IN_LABEL_SELECTOR_WITH_LABEL_NAME':
@@ -224,7 +307,9 @@ export async function getCompletions(
         dataProvider
       );
     case 'AFTER_SELECTOR':
-      return getAfterSelectorCompletions(situation.labels, situation.afterPipe, dataProvider);
+      return getAfterSelectorCompletions(situation.logQuery, situation.afterPipe, dataProvider);
+    case 'AFTER_UNWRAP':
+      return getAfterUnwrapCompletions(situation.logQuery, dataProvider);
     case 'IN_AGGREGATION':
       return [...FUNCTION_COMPLETIONS, ...AGGREGATION_COMPLETIONS];
     default:

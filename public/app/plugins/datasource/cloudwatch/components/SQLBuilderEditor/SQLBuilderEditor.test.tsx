@@ -8,7 +8,7 @@ import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpressio
 
 const { datasource } = setupMockedDataSource();
 
-const makeSQLQuery = (sql?: SQLExpression): CloudWatchMetricsQuery => ({
+export const makeSQLQuery = (sql?: SQLExpression): CloudWatchMetricsQuery => ({
   queryMode: 'Metrics',
   refId: '',
   id: '',
@@ -32,7 +32,6 @@ describe('Cloudwatch SQLBuilderEditor', () => {
     query: makeSQLQuery(),
     datasource,
     onChange: () => {},
-    onRunQuery: () => {},
   };
 
   it('Displays the namespace', async () => {
@@ -95,12 +94,12 @@ describe('Cloudwatch SQLBuilderEditor', () => {
 
     render(<SQLBuilderEditor {...baseProps} query={query} />);
     await waitFor(() =>
-      expect(datasource.api.getDimensionKeys).toHaveBeenCalledWith(
-        'AWS/EC2',
-        query.region,
-        { InstanceId: null },
-        undefined
-      )
+      expect(datasource.api.getDimensionKeys).toHaveBeenCalledWith({
+        namespace: 'AWS/EC2',
+        region: query.region,
+        dimensionFilters: { InstanceId: null },
+        metricName: undefined,
+      })
     );
     expect(screen.getByText('AWS/EC2')).toBeInTheDocument();
     expect(screen.getByLabelText('With schema')).toBeChecked();

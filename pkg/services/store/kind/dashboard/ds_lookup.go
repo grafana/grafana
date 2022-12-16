@@ -3,7 +3,7 @@ package dashboard
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 type DataSourceRef struct {
@@ -22,6 +22,21 @@ type DatasourceQueryResult struct {
 	Type      string `xorm:"type"`
 	Name      string `xorm:"name"`
 	IsDefault bool   `xorm:"is_default"`
+}
+
+type directLookup struct{}
+
+func (d *directLookup) ByRef(ref *DataSourceRef) *DataSourceRef {
+	if ref == nil {
+		return &DataSourceRef{} // indicates the default
+	}
+	return ref
+}
+
+func (d *directLookup) ByType(dsType string) []DataSourceRef {
+	return []DataSourceRef{
+		{Type: dsType, UID: "*"},
+	}
 }
 
 func CreateDatasourceLookup(rows []*DatasourceQueryResult) DatasourceLookup {
@@ -114,10 +129,10 @@ func (d *DsLookup) ByType(dsType string) []DataSourceRef {
 	return ds
 }
 
-func LoadDatasourceLookup(ctx context.Context, orgID int64, sql *sqlstore.SQLStore) (DatasourceLookup, error) {
+func LoadDatasourceLookup(ctx context.Context, orgID int64, sql db.DB) (DatasourceLookup, error) {
 	rows := make([]*DatasourceQueryResult, 0)
 
-	if err := sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	if err := sql.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Table("data_source").
 			Where("org_id = ?", orgID).
 			Cols("uid", "name", "type", "is_default")
