@@ -1,28 +1,17 @@
 package healthchecks
 
-import "context"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/services/healthchecks/models"
+)
 
 type Service interface {
 	RegisterHealthCheck(ctx context.Context, name string, checker HealthChecker) error
 	AreCoreChecksImplemented(ctx context.Context) bool
-	GetHealthCheck(ctx context.Context, name string) HealthCheckStatus
-
-	// CheckDatabaseHealth(ctx context.Context) error
-	// CheckDatabaseMigrations(ctx context.Context) error // TODO
+	GetHealthCheck(ctx context.Context, name string) models.HealthStatus
 }
-
-type HealthCheckStatus int
-
-const (
-	StatusOK  HealthCheckStatus = 0
-	StatusBad HealthCheckStatus = 1
-)
 
 type HealthChecker interface {
-	CheckHealth(name string) (int, error)
+	CheckHealth(name string) (models.HealthStatus, map[string]string, error)
 }
-
-// type Store interface {
-// 	CheckDatabaseHealth(ctx context.Context) error
-// 	CheckDatabaseMigrations(ctx context.Context) error // TODO
-// }

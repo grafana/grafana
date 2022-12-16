@@ -13,7 +13,6 @@ var coreChecks = []string{
 }
 
 type HealthChecksServiceImpl struct {
-	// Store            healthchecks.Store
 	CacheService     *localcache.CacheService
 	registeredChecks map[string]healthchecks.HealthChecker
 	coreChecks       map[string]healthchecks.HealthChecker
