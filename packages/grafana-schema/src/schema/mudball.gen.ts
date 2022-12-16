@@ -394,6 +394,7 @@ export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 export enum TableCellDisplayMode {
   Auto = 'auto',
   ColorBackground = 'color-background',
+  // Deprecated
   ColorBackgroundSolid = 'color-background-solid',
   ColorText = 'color-text',
   Gauge = 'gauge',
