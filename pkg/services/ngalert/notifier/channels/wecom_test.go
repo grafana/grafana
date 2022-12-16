@@ -11,9 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -166,15 +163,16 @@ func TestWeComNotifier(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 			fc := FactoryConfig{
 				Config:              m,
 				NotificationService: webhookSender,
-				DecryptFunc:         secretsService.GetDecryptedValue,
-				ImageStore:          nil,
-				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				ImageStore: nil,
+				Template:   tmpl,
+				Logger:     &FakeLogger{},
 			}
 
 			pn, err := buildWecomNotifier(fc)
@@ -349,15 +347,16 @@ func TestWeComNotifierAPIAPP(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 			fc := FactoryConfig{
 				Config:              m,
 				NotificationService: webhookSender,
-				DecryptFunc:         secretsService.GetDecryptedValue,
-				ImageStore:          nil,
-				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				ImageStore: nil,
+				Template:   tmpl,
+				Logger:     &FakeLogger{},
 			}
 
 			pn, err := buildWecomNotifier(fc)
@@ -533,14 +532,15 @@ func TestWeComFactory(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 			fc := FactoryConfig{
 				Config:              m,
 				NotificationService: webhookSender,
-				DecryptFunc:         secretsService.GetDecryptedValue,
-				ImageStore:          nil,
-				Logger:              &FakeLogger{},
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				ImageStore: nil,
+				Logger:     &FakeLogger{},
 			}
 
 			_, err := WeComFactory(fc)

@@ -7,9 +7,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -54,8 +51,9 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 				SecureSettings: secureSettings,
 			}
 
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
+			decryptFn := func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+				return fallback
+			}
 			cfg, err := NewAlertmanagerConfig(m, decryptFn)
 			if c.expectedInitError != "" {
 				require.Equal(t, c.expectedInitError, err.Error())
@@ -151,8 +149,9 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 				SecureSettings: secureSettings,
 			}
 
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
+			decryptFn := func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+				return fallback
+			}
 			cfg, err := NewAlertmanagerConfig(m, decryptFn)
 			require.NoError(t, err)
 			sn := NewAlertmanagerNotifier(cfg, &FakeLogger{}, images, tmpl, decryptFn)

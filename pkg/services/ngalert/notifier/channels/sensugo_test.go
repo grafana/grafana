@@ -7,9 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -147,16 +144,16 @@ func TestSensuGoNotifier(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
 
 			fc := FactoryConfig{
 				Config:              m,
 				ImageStore:          images,
 				NotificationService: webhookSender,
 				Template:            tmpl,
-				DecryptFunc:         decryptFn,
-				Logger:              &FakeLogger{},
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				Logger: &FakeLogger{},
 			}
 
 			sn, err := NewSensuGoNotifier(fc)

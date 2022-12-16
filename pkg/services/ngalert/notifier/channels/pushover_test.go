@@ -12,9 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -214,8 +211,6 @@ func TestPushoverNotifier(t *testing.T) {
 			secureSettings := make(map[string][]byte)
 
 			webhookSender := mockNotificationService()
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
 
 			fc := FactoryConfig{
 				Config: &NotificationChannelConfig{
@@ -226,9 +221,11 @@ func TestPushoverNotifier(t *testing.T) {
 				},
 				ImageStore:          images,
 				NotificationService: webhookSender,
-				DecryptFunc:         decryptFn,
-				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				Template: tmpl,
+				Logger:   &FakeLogger{},
 			}
 
 			pn, err := NewPushoverNotifier(fc)

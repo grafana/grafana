@@ -10,9 +10,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 )
 
 func TestLineNotifier(t *testing.T) {
@@ -99,8 +96,6 @@ func TestLineNotifier(t *testing.T) {
 			settingsJSON := json.RawMessage(c.settings)
 			secureSettings := make(map[string][]byte)
 			webhookSender := mockNotificationService()
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
 
 			fc := FactoryConfig{
 				Config: &NotificationChannelConfig{
@@ -111,9 +106,11 @@ func TestLineNotifier(t *testing.T) {
 				},
 				// TODO: allow changing the associated values for different tests.
 				NotificationService: webhookSender,
-				DecryptFunc:         decryptFn,
-				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				Template: tmpl,
+				Logger:   &FakeLogger{},
 			}
 			pn, err := newLineNotifier(fc)
 			if c.expInitError != "" {
