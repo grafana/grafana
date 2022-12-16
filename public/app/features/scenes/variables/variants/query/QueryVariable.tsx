@@ -40,7 +40,7 @@ export interface QueryVariableState extends MultiValueVariableState {
 export class QueryVariable extends MultiValueVariable<QueryVariableState> {
   private updateSubscription?: Unsubscribable;
   private dataSourceSubject?: Subject<DataSourceApi>;
-
+  private _optionsInitialized = false;
   protected _variableDependency = new VariableDependencyConfig(this, {
     statePaths: ['regex', 'query', 'datasource'],
   });
@@ -92,6 +92,14 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
       return of([]);
     }
 
+    // If called for the first time with options already set, return them
+    // TODO: Should we have a new variable refresh option to support skiping initial fetch if options are provided?
+    if (!this._optionsInitialized && this.state.options.length > 0 && this.state.cacheKey) {
+      this._optionsInitialized = true;
+      return of(this.state.options);
+    }
+
+    this._optionsInitialized = true;
     return from(this.getDataSource()).pipe(
       mergeMap((ds) => {
         const runner = createQueryVariableRunner(ds);
@@ -112,6 +120,7 @@ export class QueryVariable extends MultiValueVariable<QueryVariableState> {
             if (this.state.regex) {
               regex = sceneGraph.interpolate(this, this.state.regex, undefined, 'regex');
             }
+
             return of(metricNamesToVariableValues(regex, this.state.sort, values));
           }),
           catchError((error) => {

@@ -11,7 +11,7 @@ class SceneObjectsCache {
     this._cache.set(state.cacheKey, state);
   }
 
-  public get(key: string): SceneObjectState | undefined {
+  private get(key: string): SceneObjectState | undefined {
     return this._cache.get(key);
   }
 
