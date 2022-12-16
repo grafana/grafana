@@ -54,7 +54,6 @@ func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
 	if err != nil {
 		return nil, err
 	}
-	
 	URL := rawsettings.Get("url").MustString()
 	if URL == "" {
 		return nil, errors.New("could not find url property in settings")

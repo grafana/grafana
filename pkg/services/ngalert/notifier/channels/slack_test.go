@@ -421,7 +421,6 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 			URL:   "https://www.example.com/test.png",
 		}},
 	}
-	
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	notificationService := mockNotificationService()
 

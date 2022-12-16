@@ -474,7 +474,6 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 			if err != nil {
 				return err
 			}
-			
 			var (
 				cfg = &channels.NotificationChannelConfig{
 					UID:                   gr.UID,
