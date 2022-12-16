@@ -34,47 +34,48 @@ export const ConfigEditor = ({
       {({ register, errors }) => (
         <>
           {!readOnly && (
-            <Field
-              disabled={loading}
-              label="Configuration"
-              invalid={!!errors.configJSON}
-              error={errors.configJSON?.message}
-            >
-              <TextArea
-                {...register('configJSON', {
-                  required: { value: true, message: 'Required.' },
-                  validate: (v) => {
-                    try {
-                      JSON.parse(v);
-                      return true;
-                    } catch (e) {
-                      return e instanceof Error ? e.message : 'Invalid JSON.';
-                    }
-                  },
-                })}
-                id="configuration"
-                rows={25}
-              />
-            </Field>
+            <>
+              <Field
+                disabled={loading}
+                label="Configuration"
+                invalid={!!errors.configJSON}
+                error={errors.configJSON?.message}
+              >
+                <TextArea
+                  {...register('configJSON', {
+                    required: { value: true, message: 'Required.' },
+                    validate: (v) => {
+                      try {
+                        JSON.parse(v);
+                        return true;
+                      } catch (e) {
+                        return e instanceof Error ? e.message : 'Invalid JSON.';
+                      }
+                    },
+                  })}
+                  id="configuration"
+                  rows={25}
+                />
+              </Field>
+
+              <HorizontalGroup>
+                <Button type="submit" variant="primary" disabled={loading}>
+                  Save
+                </Button>
+                {onReset && (
+                  <Button type="button" disabled={loading} variant="destructive" onClick={onReset}>
+                    Reset configuration
+                  </Button>
+                )}
+              </HorizontalGroup>
+            </>
           )}
           {readOnly && (
             <Field label="Configuration">
               <pre data-testid="readonly-config">{defaultValues.configJSON}</pre>
             </Field>
           )}
-          {!readOnly && (
-            <HorizontalGroup>
-              <Button type="submit" variant="primary" disabled={loading}>
-                Save
-              </Button>
-              {onReset && (
-                <Button type="button" disabled={loading} variant="destructive" onClick={onReset}>
-                  Reset configuration
-                </Button>
-              )}
-            </HorizontalGroup>
-          )}
-          {!!showConfirmDeleteAMConfig && onConfirmReset && onDismiss && (
+          {Boolean(showConfirmDeleteAMConfig) && onConfirmReset && onDismiss && (
             <ConfirmModal
               isOpen={true}
               title="Reset Alertmanager configuration"
