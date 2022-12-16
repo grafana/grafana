@@ -8,7 +8,9 @@ type Props = {
   setRef: (anchorElement: HTMLDivElement) => void;
 };
 
-export const ArrowAnchors = ({ setRef }: Props) => {
+export const CONNECTION_ANCHOR_DIV_ID = 'connectionControl';
+
+export const ConnectionAnchors = ({ setRef }: Props) => {
   const highlightEllipseRef = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
   const halfSize = 2.5;
@@ -26,7 +28,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
   };
 
   const onMouseEnterHighlightElement = () => {
-    // TODO: Implement drawing an arrow here (or in scene selecto implementation)
+    // TODO: Implement drawing a connection here (or in scene selecto implementation)
   };
 
   const onMouseLeaveHighlightElement = () => {
@@ -34,6 +36,8 @@ export const ArrowAnchors = ({ setRef }: Props) => {
       highlightEllipseRef.current.style.display = 'none';
     }
   };
+
+  const connectionAnchorAlt = 'connection anchor';
 
   return (
     <div
@@ -44,14 +48,14 @@ export const ArrowAnchors = ({ setRef }: Props) => {
       ref={setRef}
     >
       <div
-        id="arrowControl"
+        id={CONNECTION_ANCHOR_DIV_ID}
         ref={highlightEllipseRef}
         className={styles.highlightElement}
         onMouseEnter={onMouseEnterHighlightElement}
         onMouseLeave={onMouseLeaveHighlightElement}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="tl"
         className={styles.anchor}
         style={{
@@ -62,7 +66,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="ttl"
         className={styles.anchor}
         style={{
@@ -73,7 +77,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="t"
         className={styles.anchor}
         style={{
@@ -84,7 +88,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="ttr"
         className={styles.anchor}
         style={{
@@ -95,7 +99,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="tr"
         className={styles.anchor}
         style={{
@@ -106,7 +110,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="rrt"
         className={styles.anchor}
         style={{
@@ -117,7 +121,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="r"
         className={styles.anchor}
         style={{
@@ -128,7 +132,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="rrb"
         className={styles.anchor}
         style={{
@@ -139,7 +143,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="br"
         className={styles.anchor}
         style={{
@@ -150,7 +154,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="bbr"
         className={styles.anchor}
         style={{
@@ -161,7 +165,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="b"
         className={styles.anchor}
         style={{
@@ -172,7 +176,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="bbl"
         className={styles.anchor}
         style={{
@@ -183,7 +187,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="bl"
         className={styles.anchor}
         style={{
@@ -194,7 +198,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="llb"
         className={styles.anchor}
         style={{
@@ -205,7 +209,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="l"
         className={styles.anchor}
         style={{
@@ -216,7 +220,7 @@ export const ArrowAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterAnchor}
       />
       <img
-        alt="arrow anchor"
+        alt={connectionAnchorAlt}
         id="llt"
         className={styles.anchor}
         style={{

@@ -19,7 +19,7 @@ interface ConnectionInfo {
   info: CanvasConnection;
 }
 
-export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
+export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   const styles = useStyles2(getStyles);
 
   // TODO: memos? in scene?  only update when things actually change?
@@ -75,7 +75,6 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
         x2 = targetHorizontalCenter + (info.target.x * targetRect!.width) / 2;
         y2 = targetVerticalCenter - (info.target.y * targetRect!.height) / 2;
       } else {
-        console.log('parent case');
         const parentHorizontalCenter = parentRect.width / 2;
         const parentVerticalCenter = parentRect.height / 2;
 
@@ -87,7 +86,7 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
         <svg className={styles.connection} key={idx}>
           <defs>
             <marker
-              id="arrowhead"
+              id="head"
               markerWidth="10"
               markerHeight="7"
               refX="10"
@@ -100,7 +99,7 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
           </defs>
           <line
             style={{ stroke: 'rgb(255,255,255)', strokeWidth: 2 }}
-            markerEnd="url(#arrowhead)"
+            markerEnd="url(#head)"
             x1={x1}
             y1={y1}
             x2={x2}
@@ -116,7 +115,7 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       <svg ref={setSVGRef} className={styles.editorSVG}>
         <defs>
           <marker
-            id="editorArrowhead"
+            id="editorHead"
             markerWidth="10"
             markerHeight="7"
             refX="10"
@@ -127,11 +126,7 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
             <polygon points="0 0, 10 3.5, 0 7" fill="rgb(255,255,255)" />
           </marker>
         </defs>
-        <line
-          ref={setLineRef}
-          style={{ stroke: 'rgb(255,255,255)', strokeWidth: 2 }}
-          markerEnd="url(#editorArrowhead)"
-        />
+        <line ref={setLineRef} style={{ stroke: 'rgb(255,255,255)', strokeWidth: 2 }} markerEnd="url(#editorHead)" />
       </svg>
       {renderConnections()}
     </>
@@ -139,7 +134,6 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // editor WIP
   editorSVG: css`
     position: absolute;
     pointer-events: none;

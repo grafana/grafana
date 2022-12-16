@@ -25,9 +25,9 @@ import {
   getScaleDimensionFromData,
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
-import { ArrowAnchors } from 'app/plugins/panel/canvas/ArrowAnchors';
-import { ArrowSVG } from 'app/plugins/panel/canvas/ArrowSVG';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
+import { ConnectionAnchors, CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/ConnectionAnchors';
+import { ConnectionSVG } from 'app/plugins/panel/canvas/ConnectionSVG';
 import { AnchorPoint, LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
@@ -60,12 +60,12 @@ export class Scene {
   selecto?: Selecto;
   moveable?: Moveable;
   div?: HTMLDivElement;
-  arrowAnchorDiv?: HTMLDivElement;
-  arrowSVG?: SVGElement;
-  arrowLine?: SVGLineElement;
+  connectionAnchorDiv?: HTMLDivElement;
+  connectionSVG?: SVGElement;
+  connectionLine?: SVGLineElement;
   connectionSource?: ElementState;
   connectionTarget?: ElementState;
-  isDrawingArrow?: boolean;
+  isDrawingConnection?: boolean;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
@@ -304,16 +304,16 @@ export class Scene {
     this.div = sceneContainer;
   };
 
-  setArrowAnchorRef = (anchorElement: HTMLDivElement) => {
-    this.arrowAnchorDiv = anchorElement;
+  setConnectionAnchorRef = (anchorElement: HTMLDivElement) => {
+    this.connectionAnchorDiv = anchorElement;
   };
 
-  setArrowSVGRef = (arrowSVG: SVGSVGElement) => {
-    this.arrowSVG = arrowSVG;
+  setConnectionSVGRef = (connectionSVG: SVGSVGElement) => {
+    this.connectionSVG = connectionSVG;
   };
 
-  setArrowLineRef = (arrowLine: SVGLineElement) => {
-    this.arrowLine = arrowLine;
+  setConnectionLineRef = (connectionLine: SVGLineElement) => {
+    this.connectionLine = connectionLine;
   };
 
   select = (selection: SelectionParams) => {
@@ -322,9 +322,9 @@ export class Scene {
       this.updateSelection(selection);
       this.editModeEnabled.next(false);
 
-      // Hide arrow anchors on programmatic select
-      if (this.arrowAnchorDiv) {
-        this.arrowAnchorDiv.style.display = 'none';
+      // Hide connection anchors on programmatic select
+      if (this.connectionAnchorDiv) {
+        this.connectionAnchorDiv.style.display = 'none';
       }
     }
   };
@@ -481,10 +481,10 @@ export class Scene {
         }
       });
 
-    const arrowListener = (event: MouseEvent) => {
+    const connectionListener = (event: MouseEvent) => {
       event.preventDefault();
 
-      if (!(this.arrowLine && this.div && this.div.parentElement)) {
+      if (!(this.connectionLine && this.div && this.div.parentElement)) {
         return;
       }
 
@@ -492,13 +492,13 @@ export class Scene {
       const x = event.pageX - parentBoundingRect.x;
       const y = event.pageY - parentBoundingRect.y;
 
-      this.arrowLine.setAttribute('x2', `${x}`);
-      this.arrowLine.setAttribute('y2', `${y}`);
+      this.connectionLine.setAttribute('x2', `${x}`);
+      this.connectionLine.setAttribute('y2', `${y}`);
 
       if (!event.buttons) {
         if (this.connectionSource && this.connectionSource.div && this.connectionSource.div.parentElement) {
-          const arrowLineX1 = this.arrowLine.x1.baseVal.value;
-          const arrowLineY1 = this.arrowLine.y1.baseVal.value;
+          const connectionLineX1 = this.connectionLine.x1.baseVal.value;
+          const connectionLineY1 = this.connectionLine.y1.baseVal.value;
 
           const sourceRect = this.connectionSource.div.getBoundingClientRect();
           const parentRect = this.connectionSource.div.parentElement.getBoundingClientRect();
@@ -507,8 +507,8 @@ export class Scene {
           const sourceVerticalCenter = sourceRect.top - parentRect.top - parentBorderWidth + sourceRect.height / 2;
           const sourceHorizontalCenter = sourceRect.left - parentRect.left - parentBorderWidth + sourceRect.width / 2;
 
-          const sourceX = (arrowLineX1 - sourceHorizontalCenter) / (sourceRect.width / 2);
-          const sourceY = (sourceVerticalCenter - arrowLineY1) / (sourceRect.height / 2);
+          const sourceX = (connectionLineX1 - sourceHorizontalCenter) / (sourceRect.width / 2);
+          const sourceY = (sourceVerticalCenter - connectionLineY1) / (sourceRect.height / 2);
 
           let targetX;
           let targetY;
@@ -555,16 +555,16 @@ export class Scene {
           this.connectionSource.onChange(this.connectionSource.options);
         }
 
-        if (this.arrowSVG) {
-          this.arrowSVG.style.display = 'none';
+        if (this.connectionSVG) {
+          this.connectionSVG.style.display = 'none';
         }
 
         if (this.selecto && this.selecto.rootContainer) {
           this.selecto.rootContainer.style.cursor = 'default';
-          this.selecto.rootContainer.removeEventListener('mousemove', arrowListener);
+          this.selecto.rootContainer.removeEventListener('mousemove', connectionListener);
         }
 
-        this.isDrawingArrow = false;
+        this.isDrawingConnection = false;
       }
     };
 
@@ -572,27 +572,27 @@ export class Scene {
     this.selecto!.on('dragStart', (event) => {
       const selectedTarget = event.inputEvent.target;
 
-      // If selected target is an arrow control, eject to handle arrow event
-      if (selectedTarget.id === 'arrowControl') {
+      // If selected target is a connection control, eject to handle connection event
+      if (selectedTarget.id === CONNECTION_ANCHOR_DIV_ID) {
         this.selecto!.rootContainer!.style.cursor = 'crosshair';
-        if (this.arrowSVG && this.arrowLine && this.div && this.div.parentElement) {
-          const arrowStartTargetBox = selectedTarget.getBoundingClientRect();
+        if (this.connectionSVG && this.connectionLine && this.div && this.div.parentElement) {
+          const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
           const parentBoundingRect = this.div.parentElement.getBoundingClientRect();
 
           // TODO: Make this not as magic numbery -> related to the height / width of highlight ellipse
-          const arrowAnchorHighlightOffset = 8;
+          const connectionAnchorHighlightOffset = 8;
 
-          const x = arrowStartTargetBox.x - parentBoundingRect!.x + arrowAnchorHighlightOffset;
-          const y = arrowStartTargetBox.y - parentBoundingRect!.y + arrowAnchorHighlightOffset;
+          const x = connectionStartTargetBox.x - parentBoundingRect!.x + connectionAnchorHighlightOffset;
+          const y = connectionStartTargetBox.y - parentBoundingRect!.y + connectionAnchorHighlightOffset;
 
-          this.arrowLine.setAttribute('x1', `${x}`);
-          this.arrowLine.setAttribute('y1', `${y}`);
-          this.arrowSVG.style.display = 'block';
+          this.connectionLine.setAttribute('x1', `${x}`);
+          this.connectionLine.setAttribute('y1', `${y}`);
+          this.connectionSVG.style.display = 'block';
 
-          this.isDrawingArrow = true;
+          this.isDrawingConnection = true;
         }
 
-        this.selecto?.rootContainer?.addEventListener('mousemove', arrowListener);
+        this.selecto?.rootContainer?.addEventListener('mousemove', connectionListener);
         event.stop();
         return;
       }
@@ -623,9 +623,9 @@ export class Scene {
       .on('select', () => {
         this.editModeEnabled.next(false);
 
-        // Hide arrow anchors on select
-        if (this.arrowAnchorDiv) {
-          this.arrowAnchorDiv.style.display = 'none';
+        // Hide connection anchors on select
+        if (this.connectionAnchorDiv) {
+          this.connectionAnchorDiv.style.display = 'none';
         }
       })
       .on('selectEnd', (event) => {
@@ -714,7 +714,7 @@ export class Scene {
       return;
     }
 
-    if (this.isDrawingArrow) {
+    if (this.isDrawingConnection) {
       this.connectionTarget = this.findElementByTarget(element);
     } else {
       this.connectionSource = this.findElementByTarget(element);
@@ -731,16 +731,16 @@ export class Scene {
     const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0) - parentBorderWidth;
     const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0) - parentBorderWidth;
 
-    this.arrowAnchorDiv!.style.display = 'block';
-    this.arrowAnchorDiv!.style.top = `${relativeTop}px`;
-    this.arrowAnchorDiv!.style.left = `${relativeLeft}px`;
-    this.arrowAnchorDiv!.style.height = `${elementBoundingRect.height}px`;
-    this.arrowAnchorDiv!.style.width = `${elementBoundingRect.width}px`;
+    this.connectionAnchorDiv!.style.display = 'block';
+    this.connectionAnchorDiv!.style.top = `${relativeTop}px`;
+    this.connectionAnchorDiv!.style.left = `${relativeLeft}px`;
+    this.connectionAnchorDiv!.style.height = `${elementBoundingRect.height}px`;
+    this.connectionAnchorDiv!.style.width = `${elementBoundingRect.width}px`;
   };
 
   handleMouseLeave = (event: React.MouseEvent) => {
-    // TODO: Figure out how to hide arrows when mouse leaves element but not when hovering on anchor
-    // this.arrowAnchorDiv!.style.display = 'none';
+    // TODO: Figure out how to hide connections when mouse leaves element but not when hovering on anchor
+    // this.connectionAnchorDiv!.style.display = 'none';
   };
 
   render() {
@@ -748,8 +748,8 @@ export class Scene {
 
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
-        <ArrowAnchors setRef={this.setArrowAnchorRef} />
-        <ArrowSVG setSVGRef={this.setArrowSVGRef} setLineRef={this.setArrowLineRef} scene={this} />
+        <ConnectionAnchors setRef={this.setConnectionAnchorRef} />
+        <ConnectionSVG setSVGRef={this.setConnectionSVGRef} setLineRef={this.setConnectionLineRef} scene={this} />
         {this.root.render()}
         {canShowContextMenu && (
           <Portal>
