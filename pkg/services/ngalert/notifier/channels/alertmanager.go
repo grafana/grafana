@@ -11,10 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // GetDecryptedValueFn is a function that returns the decrypted value of
@@ -65,23 +61,18 @@ func AlertmanagerFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewAlertmanagerNotifier(config, fc.ImageStore, nil, fc.DecryptFunc), nil
+	return NewAlertmanagerNotifier(config, fc.Logger, fc.ImageStore, nil, fc.DecryptFunc), nil
 }
 
 // NewAlertmanagerNotifier returns a new Alertmanager notifier.
-func NewAlertmanagerNotifier(config *AlertmanagerConfig, images ImageStore, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
+func NewAlertmanagerNotifier(config *AlertmanagerConfig, l Logger, images ImageStore, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
 	return &AlertmanagerNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
-		}),
+		Base:              NewBase(config.NotificationChannelConfig),
 		images:            images,
 		urls:              config.URLs,
 		basicAuthUser:     config.BasicAuthUser,
 		basicAuthPassword: config.BasicAuthPassword,
-		logger:            log.New("alerting.notifier.prometheus-alertmanager"),
+		logger:            l,
 	}
 }
 
@@ -93,7 +84,7 @@ type AlertmanagerNotifier struct {
 	urls              []*url.URL
 	basicAuthUser     string
 	basicAuthPassword string
-	logger            log.Logger
+	logger            Logger
 }
 
 // Notify sends alert notifications to Alertmanager.
@@ -104,7 +95,7 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	}
 
 	_ = withStoredImages(ctx, n.logger, n.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			// If there is an image for this alert and the image has been uploaded
 			// to a public URL then include it as an annotation
 			if image.URL != "" {

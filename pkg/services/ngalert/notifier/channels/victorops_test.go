@@ -204,6 +204,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				ImageStore:          images,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			pn, err := NewVictoropsNotifier(fc)

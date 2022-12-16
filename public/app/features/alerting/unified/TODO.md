@@ -16,6 +16,8 @@ If the item needs more rationale and you feel like a single sentence is inedequa
 
 ## Refactoring
 
+- Get rid of "+ Add new" in drop-downs : Let's see if is there a way we can make it work with `<Select allowCustomValue />`
+
 ## Bug fixes
 
 _Preferably these should go to GitHub for discoverability, but not all bugs are equal, use your best judgment._
