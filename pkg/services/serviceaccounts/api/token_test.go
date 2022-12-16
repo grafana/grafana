@@ -97,6 +97,58 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 
 }
 
+func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
+	type TestCase struct {
+		desc         string
+		saID         int64
+		apikeyID     int64
+		permissions  []accesscontrol.Permission
+		expectedErr  error
+		expectedCode int
+	}
+
+	tests := []TestCase{
+		{
+			desc:         "should be able to delete service account token with correct permission",
+			saID:         1,
+			apikeyID:     1,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:         "should not be able to delete service account token with wrong permission",
+			saID:         2,
+			apikeyID:     1,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:         "should not be able to delete service account token when service account don't exist",
+			saID:         1,
+			apikeyID:     1,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedErr:  serviceaccounts.ErrServiceAccountNotFound,
+			expectedCode: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := setupTests(t, func(a *ServiceAccountsAPI) {
+				a.service = &fakeService{ExpectedErr: tt.expectedErr}
+			})
+
+			req := server.NewRequest(http.MethodDelete, fmt.Sprintf("/api/serviceaccounts/%d/tokens/%d", tt.saID, tt.apikeyID), nil)
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			defer res.Body.Close()
+
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+		})
+	}
+}
+
 const (
 	serviceaccountIDTokensPath       = "/api/serviceaccounts/%v/tokens"    // #nosec G101
 	serviceaccountIDTokensDetailPath = "/api/serviceaccounts/%v/tokens/%v" // #nosec G101
@@ -117,93 +169,6 @@ func createTokenforSA(t *testing.T, service serviceaccounts.Service, keyName str
 	err = service.AddServiceAccountToken(context.Background(), saID, &cmd)
 	require.NoError(t, err)
 	return cmd.Result
-}
-
-func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
-	store := db.InitTestDB(t)
-	services := setupTestServices(t, store)
-
-	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
-
-	type testCreateSAToken struct {
-		desc         string
-		keyName      string
-		expectedCode int
-		acmock       *accesscontrolmock.Mock
-	}
-
-	testCases := []testCreateSAToken{
-		{
-			desc:    "should be ok to delete serviceaccount token with scope id permissions",
-			keyName: "Test1",
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusOK,
-		},
-		{
-			desc:    "should be ok to delete serviceaccount token with scope all permissions",
-			keyName: "Test2",
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusOK,
-		},
-		{
-			desc:    "should be forbidden to delete serviceaccount token if wrong scoped",
-			keyName: "Test3",
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:10"}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusForbidden,
-		},
-	}
-
-	var requestResponse = func(server *web.Mux, httpMethod, requestpath string, requestBody io.Reader) *httptest.ResponseRecorder {
-		req, err := http.NewRequest(httpMethod, requestpath, requestBody)
-		require.NoError(t, err)
-		req.Header.Add("Content-Type", "application/json")
-		recorder := httptest.NewRecorder()
-		server.ServeHTTP(recorder, req)
-		return recorder
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			token := createTokenforSA(t, &services.SAService, tc.keyName, sa.OrgID, sa.ID, 1)
-
-			endpoint := fmt.Sprintf(serviceaccountIDTokensDetailPath, sa.ID, token.Id)
-			bodyString := ""
-			server, _ := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), tc.acmock, store)
-			actual := requestResponse(server, http.MethodDelete, endpoint, strings.NewReader(bodyString))
-
-			actualCode := actual.Code
-			actualBody := map[string]interface{}{}
-
-			_ = json.Unmarshal(actual.Body.Bytes(), &actualBody)
-			require.Equal(t, tc.expectedCode, actualCode, endpoint, actualBody)
-
-			query := apikey.GetByNameQuery{KeyName: tc.keyName, OrgId: sa.OrgID}
-			err := services.APIKeyService.GetApiKeyByName(context.Background(), &query)
-			if actualCode == http.StatusOK {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
 }
 
 func TestServiceAccountsAPI_ListTokens(t *testing.T) {

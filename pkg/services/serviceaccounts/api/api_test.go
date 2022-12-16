@@ -406,3 +406,7 @@ func (f *fakeService) AddServiceAccountToken(ctx context.Context, id int64, cmd 
 	cmd.Result = f.ExpectedApiKey
 	return f.ExpectedErr
 }
+
+func (f *fakeService) DeleteServiceAccountToken(ctx context.Context, orgID, id, tokenID int64) error {
+	return f.ExpectedErr
+}
