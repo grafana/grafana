@@ -35,7 +35,7 @@ export interface PanelChromeProps {
   menu?: ReactElement;
   /** dragClass, hoverHeader not yet implemented */
   // dragClass?: string;
-  // hoverHeader?: boolean;
+  hoverHeader?: boolean;
   onStreamingStop?: () => void;
   loadingState?: LoadingState;
   dataStateNode?: ReactNode;
@@ -64,7 +64,7 @@ export function PanelChrome({
   titleItems = [],
   menu,
   // dragClass,
-  // hoverHeader = false,
+  hoverHeader = false,
   onStreamingStop,
   loadingState,
   dataStateNode = null,
