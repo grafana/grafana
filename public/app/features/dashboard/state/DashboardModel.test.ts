@@ -313,7 +313,6 @@ describe('DashboardModel', () => {
     });
 
     it('should show submmenu', () => {
-      console.log(model.annotations.list);
       expect(model.isSubMenuVisible()).toBe(true);
     });
   });
