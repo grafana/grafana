@@ -147,7 +147,11 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		}
 
 		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
-			listItem.DefaultNavUrl = hs.Cfg.AppSubURL + "/plugins/" + listItem.Id + "/"
+			if listItem.Type == "datasource" && hs.Features.IsEnabled(featuremgmt.FlagDataConnectionsConsole) {
+				listItem.DefaultNavUrl = hs.Cfg.AppSubURL + "/connections/connect-data/datasources/" + listItem.Id + "/"
+			} else {
+				listItem.DefaultNavUrl = hs.Cfg.AppSubURL + "/plugins/" + listItem.Id + "/"
+			}
 		}
 
 		result = append(result, listItem)
