@@ -3,7 +3,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { createMockInstanceSetttings } from './__mocks__/cloudMonitoringInstanceSettings';
 import { createMockQuery } from './__mocks__/cloudMonitoringQuery';
 import Datasource from './datasource';
-import { CloudMonitoringQuery, EditorMode, MetricKind, PreprocessorType, QueryType } from './types';
+import { CloudMonitoringQuery, MetricKind, PreprocessorType, QueryType } from './types';
 
 describe('Cloud Monitoring Datasource', () => {
   describe('interpolateVariablesInQueries', () => {
@@ -70,7 +70,7 @@ describe('Cloud Monitoring Datasource', () => {
               metricKind: MetricKind.DELTA,
               valueType: 'DOUBLE',
               query: '',
-              editorMode: EditorMode.Visual,
+              editorMode: 'visual',
             },
           },
           expected: {
@@ -100,7 +100,7 @@ describe('Cloud Monitoring Datasource', () => {
               metricKind: MetricKind.DELTA,
               valueType: 'DOUBLE',
               query: '',
-              editorMode: EditorMode.Visual,
+              editorMode: 'visual',
             },
           },
           expected: {
@@ -130,7 +130,7 @@ describe('Cloud Monitoring Datasource', () => {
               metricKind: MetricKind.DELTA,
               valueType: 'DOUBLE',
               query: '',
-              editorMode: EditorMode.Visual,
+              editorMode: 'visual',
               preprocessor: PreprocessorType.Delta,
             },
           },
@@ -162,7 +162,7 @@ describe('Cloud Monitoring Datasource', () => {
               metricKind: MetricKind.DELTA,
               valueType: 'DOUBLE',
               query: 'test query',
-              editorMode: EditorMode.MQL,
+              editorMode: 'mql',
             },
           },
           expected: {

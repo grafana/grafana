@@ -3,7 +3,7 @@ import React from 'react';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockQuery } from '../__mocks__/cloudMonitoringQuery';
-import { EditorMode, QueryType } from '../types';
+import { QueryType } from '../types';
 
 import { QueryEditor } from './QueryEditor';
 
@@ -22,7 +22,6 @@ const defaultProps = {
   onRunQuery: jest.fn(),
   query: createMockQuery(),
   datasource: createMockDatasource(),
-  editorMode: EditorMode.Visual,
 };
 
 describe('QueryEditor', () => {

@@ -1,4 +1,4 @@
-import { chunk, flatten, isString, isArray, isEmpty } from 'lodash';
+import { chunk, flatten, isString, isArray, has, get, omit } from 'lodash';
 import { from, lastValueFrom, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
@@ -24,6 +24,7 @@ import {
   QueryType,
   PostResponse,
   Aggregation,
+  MetricQuery,
 } from './types';
 import { CloudMonitoringVariableSupport } from './variables';
 
@@ -59,23 +60,12 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
-    const { metricQuery, timeSeriesList, timeSeriesQuery, sloQuery } = target;
+    const { timeSeriesList, timeSeriesQuery, sloQuery } = target;
 
     return {
       ...target,
       datasource: this.getRef(),
       intervalMs: this.intervalMs,
-      metricQuery: metricQuery && {
-        ...this.interpolateProps(metricQuery, scopedVars),
-        projectName: this.templateSrv.replace(
-          metricQuery.projectName ? metricQuery.projectName : this.getDefaultProject(),
-          scopedVars
-        ),
-        filters: this.interpolateFilters(metricQuery.filters || [], scopedVars),
-        groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),
-        view: metricQuery.view || 'FULL',
-        editorMode: metricQuery.editorMode,
-      },
       timeSeriesList: timeSeriesList && {
         ...this.interpolateProps(timeSeriesList, scopedVars),
         projectName: this.templateSrv.replace(
@@ -234,43 +224,44 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         intervalMs,
         hide,
         queryType: type === 'annotationQuery' ? QueryType.ANNOTATION : QueryType.TIME_SERIES_LIST,
-        metricQuery: {
+        timeSeriesList: {
           ...rest,
           view: rest.view || 'FULL',
         },
       };
     }
 
-    if (!isEmpty(query.metricQuery) && query.queryType !== QueryType.SLO) {
-      if (query.metricQuery.editorMode === 'mql') {
+    if (has(query, 'metricQuery') && query.queryType !== QueryType.SLO) {
+      const metricQuery: MetricQuery = get(query, 'metricQuery')!;
+      if (metricQuery.editorMode === 'mql') {
         query.timeSeriesQuery = {
-          projectName: query.metricQuery.projectName,
-          query: query.metricQuery.query,
-          graphPeriod: query.metricQuery.graphPeriod,
+          projectName: metricQuery.projectName,
+          query: metricQuery.query,
+          graphPeriod: metricQuery.graphPeriod,
         };
         query.queryType = QueryType.TIME_SERIES_QUERY;
       } else {
         query.timeSeriesList = {
-          projectName: query.metricQuery.projectName,
-          crossSeriesReducer: query.metricQuery.crossSeriesReducer,
-          alignmentPeriod: query.metricQuery.alignmentPeriod,
-          perSeriesAligner: query.metricQuery.perSeriesAligner,
-          groupBys: query.metricQuery.groupBys,
-          filters: query.metricQuery.filters,
-          view: query.metricQuery.view,
-          preprocessor: query.metricQuery.preprocessor,
+          projectName: metricQuery.projectName,
+          crossSeriesReducer: metricQuery.crossSeriesReducer,
+          alignmentPeriod: metricQuery.alignmentPeriod,
+          perSeriesAligner: metricQuery.perSeriesAligner,
+          groupBys: metricQuery.groupBys,
+          filters: metricQuery.filters,
+          view: metricQuery.view,
+          preprocessor: metricQuery.preprocessor,
         };
         query.queryType = QueryType.TIME_SERIES_LIST;
-        if (query.metricQuery.metricType) {
+        if (metricQuery.metricType) {
           query.timeSeriesList.filters = this.migrateMetricTypeFilter(
-            query.metricQuery.metricType,
+            metricQuery.metricType,
             query.timeSeriesList.filters
           );
         }
       }
-      query.aliasBy = query.metricQuery.aliasBy;
+      query.aliasBy = metricQuery.aliasBy;
     }
-    delete query.metricQuery;
+    omit(query, 'metricQuery');
 
     return query;
   }

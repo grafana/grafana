@@ -61,11 +61,6 @@ export enum QueryType {
   ANNOTATION = 'annotation',
 }
 
-export enum EditorMode {
-  Visual = 'visual',
-  MQL = 'mql',
-}
-
 export enum PreprocessorType {
   None = 'none',
   Rate = 'rate',
@@ -111,16 +106,14 @@ export enum AlignmentTypes {
   ALIGN_NONE = 'ALIGN_NONE',
 }
 
-export interface BaseQuery {
+// deprecated: use TimeSeriesList instead
+// left here for migration purposes
+export interface MetricQuery {
   projectName: string;
   perSeriesAligner?: string;
   alignmentPeriod?: string;
   aliasBy?: string;
-}
-
-// deprecated: use TimeSeriesList instead
-export interface MetricQuery extends BaseQuery {
-  editorMode: EditorMode;
+  editorMode: string;
   metricType: string;
   crossSeriesReducer: string;
   groupBys?: string[];
@@ -154,6 +147,7 @@ export interface TimeSeriesList {
 export interface TimeSeriesQuery {
   projectName: string;
   query: string;
+  // To disable the graphPeriod, it should explictly be set to 'disabled'
   graphPeriod?: 'disabled' | string;
 }
 
@@ -162,13 +156,11 @@ export interface AnnotationQuery extends TimeSeriesList {
   text?: string;
 }
 
-// deprecated: use AnnotationQuery instead
-export interface AnnotationMetricQuery extends MetricQuery {
-  title?: string;
-  text?: string;
-}
-
-export interface SLOQuery extends BaseQuery {
+export interface SLOQuery {
+  projectName: string;
+  perSeriesAligner?: string;
+  alignmentPeriod?: string;
+  aliasBy?: string;
   selectorName: string;
   serviceId: string;
   serviceName: string;
@@ -186,8 +178,6 @@ export interface CloudMonitoringQuery extends DataQuery {
   timeSeriesQuery?: TimeSeriesQuery;
   sloQuery?: SLOQuery;
   intervalMs: number;
-  // deprecated: use timeSeriesList instead
-  metricQuery?: MetricQuery | AnnotationMetricQuery;
 }
 
 export interface CloudMonitoringOptions extends DataSourceJsonData {

@@ -1,32 +1,7 @@
-import {
-  AlignmentTypes,
-  CloudMonitoringQuery,
-  EditorMode,
-  MetricQuery,
-  QueryType,
-  SLOQuery,
-  TimeSeriesList,
-  TimeSeriesQuery,
-} from '../types';
+import { AlignmentTypes, CloudMonitoringQuery, QueryType, SLOQuery, TimeSeriesList, TimeSeriesQuery } from '../types';
 
 type Subset<K> = {
   [attr in keyof K]?: K[attr] extends object ? Subset<K[attr]> : K[attr];
-};
-
-export const createMockMetricQuery: (overrides?: Partial<MetricQuery>) => MetricQuery = (
-  overrides?: Partial<MetricQuery>
-) => {
-  return {
-    editorMode: EditorMode.Visual,
-    metricType: '',
-    crossSeriesReducer: 'REDUCE_NONE',
-    query: '',
-    projectName: 'cloud-monitoring-default-project',
-    filters: [],
-    groupBys: [],
-    view: 'FULL',
-    ...overrides,
-  };
 };
 
 export const createMockSLOQuery: (overrides?: Partial<SLOQuery>) => SLOQuery = (overrides) => {
@@ -79,7 +54,6 @@ export const createMockQuery: (overrides?: Subset<CloudMonitoringQuery>) => Clou
     intervalMs: 0,
     hide: false,
     ...overrides,
-    metricQuery: createMockMetricQuery(overrides?.metricQuery),
     sloQuery: createMockSLOQuery(overrides?.sloQuery),
     timeSeriesList: createMockTimeSeriesList(overrides?.timeSeriesList),
     timeSeriesQuery: createMockTimeSeriesQuery(overrides?.timeSeriesQuery),
