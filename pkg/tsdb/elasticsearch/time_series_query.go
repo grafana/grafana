@@ -67,6 +67,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		return err
 	}
 	interval := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval, q.MaxDataPoints)
+	defaultTimeField := e.client.GetTimeField()
 
 	b := ms.Search(interval)
 	b.Size(0)
@@ -109,7 +110,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 			bucketAgg.Settings = simplejson.NewFromAny(
 				bucketAgg.generateSettingsForDSL(),
 			)
-			_ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
+			_ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
 		}
 		return nil
 	}
@@ -123,7 +124,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		)
 		switch bucketAgg.Type {
 		case dateHistType:
-			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
+			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
 		case histogramType:
 			aggBuilder = addHistogramAgg(aggBuilder, bucketAgg)
 		case filtersType:
@@ -255,8 +256,13 @@ func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
 	return bucketAgg.Settings.MustMap()
 }
 
-func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64) es.AggBuilder {
-	aggBuilder.DateHistogram(bucketAgg.ID, bucketAgg.Field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
+func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64, timeField string) es.AggBuilder {
+	// If no field is specified, use the time field
+	field := bucketAgg.Field
+	if field == "" {
+		field = timeField
+	}
+	aggBuilder.DateHistogram(bucketAgg.ID, field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
 		a.FixedInterval = bucketAgg.Settings.Get("interval").MustString("auto")
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
 		a.ExtendedBounds = &es.ExtendedBounds{Min: timeFrom, Max: timeTo}

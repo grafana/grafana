@@ -293,6 +293,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				DecryptFunc:         decryptFn,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 			pn, err := newPagerdutyNotifier(fc)
 			if c.expInitError != "" {

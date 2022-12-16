@@ -1714,10 +1714,9 @@ func TestSettingsCasting(t *testing.T) {
 			}`, from, to, 15*time.Second)
 
 			assert.Nil(t, err)
-			// FIXME: This should be @timestamp, but Field is empty
-			// sr := c.multisearchRequests[0].Requests[0]
-			// dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
-			// assert.Equal(t, dateHistogramAgg.Field, "@timestamp")
+			sr := c.multisearchRequests[0].Requests[0]
+			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+			assert.Equal(t, dateHistogramAgg.Field, "@timestamp")
 		})
 
 		t.Run("Should use field from bucket agg when specified", func(t *testing.T) {
