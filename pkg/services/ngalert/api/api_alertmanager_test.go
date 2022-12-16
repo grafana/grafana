@@ -345,7 +345,7 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 		require.Len(tt, configs, 1)
 	})
 
-	t.Run("assert 400 when no limit is provided", func(tt *testing.T) {
+	t.Run("assert 200 when no limit is provided", func(tt *testing.T) {
 		rc := models.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
@@ -356,10 +356,10 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 		}
 
 		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
-		require.Equal(tt, 400, response.Status())
+		require.Equal(tt, 200, response.Status())
 	})
 
-	t.Run("assert 400 when limit is < 1", func(tt *testing.T) {
+	t.Run("assert 200 when limit is < 1", func(tt *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
 		require.NoError(tt, err)
 		q := req.URL.Query()
@@ -376,7 +376,7 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 		}
 
 		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
-		require.Equal(tt, 400, response.Status())
+		require.Equal(tt, 200, response.Status())
 	})
 }
 

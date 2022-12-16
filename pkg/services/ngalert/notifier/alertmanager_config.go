@@ -10,10 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
-var (
-	ErrZeroLimit = errors.New("limit should be greater than 0")
-)
-
 type UnknownReceiverError struct {
 	UID string
 }
@@ -50,11 +46,7 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 }
 
 func (moa *MultiOrgAlertmanager) GetSuccessfullyAppliedAlertmanagerConfigurations(ctx context.Context, org int64, limit int) (definitions.GettableUserConfigs, error) {
-	if limit < 1 {
-		return definitions.GettableUserConfigs{}, ErrZeroLimit
-	}
-
-	if limit > store.ConfigRecordsLimit {
+	if limit < 1 || limit > store.ConfigRecordsLimit {
 		limit = store.ConfigRecordsLimit
 	}
 

@@ -432,6 +432,7 @@
    "type": "object"
   },
   "DataTopic": {
+   "description": "nolint:revive",
    "title": "DataTopic is used to identify which topic the frame should be assigned to.",
    "type": "string"
   },
@@ -1176,6 +1177,12 @@
     }
    },
    "type": "object"
+  },
+  "GettableUserConfigs": {
+   "items": {
+    "$ref": "#/definitions/GettableUserConfig"
+   },
+   "type": "array"
   },
   "GlobalConfig": {
    "description": "GlobalConfig defines configuration parameters that are valid globally\nunless overwritten.",
@@ -3137,6 +3144,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3172,117 +3180,288 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
-  "AlertDiscovery": {
-   "title": "AlertDiscovery has info for all active alerts."
+  "Userinfo": {
+   "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
+   "type": "object"
   },
-  "AlertInstancesResponse": {},
-  "AlertManagerNotReady": {},
-  "AlertResponse": {},
-  "AlertRuleGroup": {},
-  "AlertRuleGroupMetadata": {},
-  "AlertingRule": {
-   "description": "adapted from cortex"
+  "ValidationError": {
+   "properties": {
+    "msg": {
+     "example": "error message",
+     "type": "string"
+    }
+   },
+   "type": "object"
   },
-  "AlertingStatus": {},
-  "ContactPoints": {},
-  "DashboardACLUpdateItem": {},
-  "DataResponse": {
-   "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
-   "title": "DataResponse contains the results from a DataQuery."
+  "ValueMapping": {
+   "description": "ValueMapping allows mapping input values to text and color",
+   "type": "object"
   },
-  "DiscoveryBase": {},
-  "EmbeddedContactPoint": {
-   "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation."
+  "ValueMappings": {
+   "items": {
+    "$ref": "#/definitions/ValueMapping"
+   },
+   "type": "array"
   },
-  "EvalQueriesPayload": {},
-  "EvalQueriesResponse": {},
-  "ExtendedReceiver": {},
-  "Failure": {},
-  "Field": {
-   "description": "A Field is essentially a slice of various types with extra properties and methods.\nSee NewField() for supported types.\n\nThe slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.",
-   "title": "Field represents a typed column of data within a Frame."
+  "Vector": {
+   "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
+   "items": {
+    "$ref": "#/definitions/Sample"
+   },
+   "type": "array"
   },
-  "Frame": {
-   "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
-   "title": "Frame is a columnar data structure where each column is a Field."
+  "VictorOpsConfig": {
+   "properties": {
+    "api_key": {
+     "$ref": "#/definitions/Secret"
+    },
+    "api_key_file": {
+     "$ref": "#/definitions/Secret"
+    },
+    "api_url": {
+     "$ref": "#/definitions/URL"
+    },
+    "custom_fields": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "entity_display_name": {
+     "type": "string"
+    },
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "message_type": {
+     "type": "string"
+    },
+    "monitoring_tool": {
+     "type": "string"
+    },
+    "routing_key": {
+     "type": "string"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "state_message": {
+     "type": "string"
+    }
+   },
+   "title": "VictorOpsConfig configures notifications via VictorOps.",
+   "type": "object"
   },
-  "FrameLabels": {
-   "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys"
+  "VisType": {
+   "title": "VisType is used to indicate how the data should be visualized in explore.",
+   "type": "string"
   },
-  "FrameMeta": {
-   "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
-   "title": "FrameMeta matches:"
+  "WebhookConfig": {
+   "properties": {
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "max_alerts": {
+     "description": "MaxAlerts is the maximum number of alerts to be sent per webhook message.\nAlerts exceeding this threshold will be truncated. Setting this to 0\nallows an unlimited number of alerts.",
+     "format": "uint64",
+     "type": "integer"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "url": {
+     "$ref": "#/definitions/URL"
+    }
+   },
+   "title": "WebhookConfig configures notifications via a generic webhook.",
+   "type": "object"
   },
-  "Frames": {
-   "description": "It is the main data container within a backend.DataResponse.",
-   "title": "Frames is a slice of Frame pointers."
+  "WechatConfig": {
+   "properties": {
+    "agent_id": {
+     "type": "string"
+    },
+    "api_secret": {
+     "$ref": "#/definitions/Secret"
+    },
+    "api_url": {
+     "$ref": "#/definitions/URL"
+    },
+    "corp_id": {
+     "type": "string"
+    },
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "message": {
+     "type": "string"
+    },
+    "message_type": {
+     "type": "string"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "to_party": {
+     "type": "string"
+    },
+    "to_tag": {
+     "type": "string"
+    },
+    "to_user": {
+     "type": "string"
+    }
+   },
+   "title": "WechatConfig configures notifications via Wechat.",
+   "type": "object"
   },
-  "GettableAlertmanagers": {},
-  "GettableGrafanaRule": {},
-  "GettableNGalertConfig": {},
-  "GettableRuleGroupConfig": {},
-  "GettableStatus": {},
-  "GettableUserConfig": {},
-  "GettableUserConfigs": {},
-  "LegacyAlert": {},
-  "MessageTemplate": {},
-  "MessageTemplates": {},
-  "MetricRequest": {},
-  "MultiStatus": {},
-  "MuteTimeInterval": {},
-  "MuteTimings": {},
-  "NamespaceConfigResponse": {},
-  "NewApiKeyResult": {},
-  "NotFound": {},
-  "PatchPrefsCmd": {},
-  "PermissionDenied": {},
-  "PostableGrafanaRule": {},
-  "PostableNGalertConfig": {},
-  "PostableRuleGroupConfig": {},
-  "PostableUserConfig": {},
-  "ResponseDetails": {},
-  "Responses": {
-   "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataResponses' frames based on these RefIDs.",
-   "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses."
-  },
-  "Rule": {
-   "description": "adapted from cortex"
-  },
-  "RuleDiscovery": {},
-  "RuleGroup": {},
-  "RuleGroupConfigResponse": {},
-  "RuleResponse": {},
-  "SmtpNotEnabled": {},
-  "Success": {},
-  "TestReceiverConfigResult": {},
-  "TestReceiverResult": {},
-  "TestReceiversResult": {},
-  "TestRulePayload": {},
-  "TestRuleResponse": {},
-  "UpdateDashboardACLCommand": {},
-  "UpdatePrefsCmd": {},
-  "ValidationError": {},
   "alert": {
-   "description": "Alert alert"
+   "description": "Alert alert",
+   "properties": {
+    "generatorURL": {
+     "description": "generator URL\nFormat: uri",
+     "format": "uri",
+     "type": "string"
+    },
+    "labels": {
+     "$ref": "#/definitions/labelSet"
+    }
+   },
+   "required": [
+    "labels"
+   ],
+   "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group"
+   "description": "AlertGroup alert group",
+   "properties": {
+    "alerts": {
+     "description": "alerts",
+     "items": {
+      "$ref": "#/definitions/gettableAlert"
+     },
+     "type": "array"
+    },
+    "labels": {
+     "$ref": "#/definitions/labelSet"
+    },
+    "receiver": {
+     "$ref": "#/definitions/receiver"
+    }
+   },
+   "required": [
+    "alerts",
+    "labels",
+    "receiver"
+   ],
+   "type": "object"
   },
-  "alertGroups": {},
+  "alertGroups": {
+   "items": {
+    "$ref": "#/definitions/alertGroup"
+   },
+   "type": "array"
+  },
   "alertStatus": {
-   "description": "AlertStatus alert status"
+   "description": "AlertStatus alert status",
+   "properties": {
+    "inhibitedBy": {
+     "description": "inhibited by",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "silencedBy": {
+     "description": "silenced by",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "state": {
+     "description": "state",
+     "enum": [
+      "[unprocessed active suppressed]"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "inhibitedBy",
+    "silencedBy",
+    "state"
+   ],
+   "type": "object"
   },
   "alertmanagerConfig": {
-   "description": "AlertmanagerConfig alertmanager config"
+   "description": "AlertmanagerConfig alertmanager config",
+   "properties": {
+    "original": {
+     "description": "original",
+     "type": "string"
+    }
+   },
+   "required": [
+    "original"
+   ],
+   "type": "object"
   },
   "alertmanagerStatus": {
-   "description": "AlertmanagerStatus alertmanager status"
+   "description": "AlertmanagerStatus alertmanager status",
+   "properties": {
+    "cluster": {
+     "$ref": "#/definitions/clusterStatus"
+    },
+    "config": {
+     "$ref": "#/definitions/alertmanagerConfig"
+    },
+    "uptime": {
+     "description": "uptime",
+     "format": "date-time",
+     "type": "string"
+    },
+    "versionInfo": {
+     "$ref": "#/definitions/versionInfo"
+    }
+   },
+   "required": [
+    "cluster",
+    "config",
+    "uptime",
+    "versionInfo"
+   ],
+   "type": "object"
   },
   "clusterStatus": {
-   "description": "ClusterStatus cluster status"
+   "description": "ClusterStatus cluster status",
+   "properties": {
+    "name": {
+     "description": "name",
+     "type": "string"
+    },
+    "peers": {
+     "description": "peers",
+     "items": {
+      "$ref": "#/definitions/peerStatus"
+     },
+     "type": "array"
+    },
+    "status": {
+     "description": "status",
+     "enum": [
+      "[ready settling disabled]"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "status"
+   ],
+   "type": "object"
   },
   "gettableAlert": {
    "description": "GettableAlert gettable alert",
@@ -3347,7 +3526,6 @@
    },
    "type": "array"
   },
-  "gettableAlerts": {},
   "gettableSilence": {
    "description": "GettableSilence gettable silence",
    "properties": {
@@ -3405,6 +3583,7 @@
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -3434,23 +3613,111 @@
    ],
    "type": "object"
   },
-  "gettableSilences": {},
-  "integration": {},
   "labelSet": {
-   "description": "LabelSet label set"
+   "additionalProperties": {
+    "type": "string"
+   },
+   "description": "LabelSet label set",
+   "type": "object"
   },
   "matcher": {
-   "description": "Matcher matcher"
+   "description": "Matcher matcher",
+   "properties": {
+    "isEqual": {
+     "description": "is equal",
+     "type": "boolean"
+    },
+    "isRegex": {
+     "description": "is regex",
+     "type": "boolean"
+    },
+    "name": {
+     "description": "name",
+     "type": "string"
+    },
+    "value": {
+     "description": "value",
+     "type": "string"
+    }
+   },
+   "required": [
+    "isRegex",
+    "name",
+    "value"
+   ],
+   "type": "object"
   },
   "matchers": {
-   "description": "Matchers matchers"
+   "description": "Matchers matchers",
+   "items": {
+    "$ref": "#/definitions/matcher"
+   },
+   "type": "array"
+  },
+  "overrideLabels": {
+   "additionalProperties": {
+    "type": "string"
+   },
+   "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
+   "title": "override the labels type with a map for generation.",
+   "type": "object"
   },
   "peerStatus": {
-   "description": "PeerStatus peer status"
+   "description": "PeerStatus peer status",
+   "properties": {
+    "address": {
+     "description": "address",
+     "type": "string"
+    },
+    "name": {
+     "description": "name",
+     "type": "string"
+    }
+   },
+   "required": [
+    "address",
+    "name"
+   ],
+   "type": "object"
   },
-  "postSilencesOKBody": {},
+  "postSilencesOKBody": {
+   "properties": {
+    "silenceID": {
+     "description": "silence ID",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "postableAlert": {
-   "description": "PostableAlert postable alert"
+   "description": "PostableAlert postable alert",
+   "properties": {
+    "annotations": {
+     "$ref": "#/definitions/labelSet"
+    },
+    "endsAt": {
+     "description": "ends at\nFormat: date-time",
+     "format": "date-time",
+     "type": "string"
+    },
+    "generatorURL": {
+     "description": "generator URL\nFormat: uri",
+     "format": "uri",
+     "type": "string"
+    },
+    "labels": {
+     "$ref": "#/definitions/labelSet"
+    },
+    "startsAt": {
+     "description": "starts at\nFormat: date-time",
+     "format": "date-time",
+     "type": "string"
+    }
+   },
+   "required": [
+    "labels"
+   ],
+   "type": "object"
   },
   "postableAlerts": {
    "description": "PostableAlerts postable alerts",
@@ -3460,6 +3727,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3521,16 +3789,93 @@
    ],
    "type": "object"
   },
-  "postableSilence": {},
-  "receiver": {},
   "silence": {
-   "description": "Silence silence"
+   "description": "Silence silence",
+   "properties": {
+    "comment": {
+     "description": "comment",
+     "type": "string"
+    },
+    "createdBy": {
+     "description": "created by",
+     "type": "string"
+    },
+    "endsAt": {
+     "description": "ends at",
+     "format": "date-time",
+     "type": "string"
+    },
+    "matchers": {
+     "$ref": "#/definitions/matchers"
+    },
+    "startsAt": {
+     "description": "starts at",
+     "format": "date-time",
+     "type": "string"
+    }
+   },
+   "required": [
+    "comment",
+    "createdBy",
+    "endsAt",
+    "matchers",
+    "startsAt"
+   ],
+   "type": "object"
   },
   "silenceStatus": {
-   "description": "SilenceStatus silence status"
+   "description": "SilenceStatus silence status",
+   "properties": {
+    "state": {
+     "description": "state",
+     "enum": [
+      "[expired active pending]"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "state"
+   ],
+   "type": "object"
   },
   "versionInfo": {
-   "description": "VersionInfo version info"
+   "description": "VersionInfo version info",
+   "properties": {
+    "branch": {
+     "description": "branch",
+     "type": "string"
+    },
+    "buildDate": {
+     "description": "build date",
+     "type": "string"
+    },
+    "buildUser": {
+     "description": "build user",
+     "type": "string"
+    },
+    "goVersion": {
+     "description": "go version",
+     "type": "string"
+    },
+    "revision": {
+     "description": "revision",
+     "type": "string"
+    },
+    "version": {
+     "description": "version",
+     "type": "string"
+    }
+   },
+   "required": [
+    "branch",
+    "buildDate",
+    "buildUser",
+    "goVersion",
+    "revision",
+    "version"
+   ],
+   "type": "object"
   }
  },
  "info": {
@@ -3564,7 +3909,9 @@
      {
       "in": "body",
       "name": "Body",
-      "schema": {}
+      "schema": {
+       "$ref": "#/definitions/ProvisionedAlertRule"
+      }
      },
      {
       "in": "header",
@@ -3574,7 +3921,10 @@
     ],
     "responses": {
      "201": {
-      "$ref": "#/responses/ProvisionedAlertRule"
+      "description": "ProvisionedAlertRule",
+      "schema": {
+       "$ref": "#/definitions/ProvisionedAlertRule"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -3624,7 +3974,10 @@
     ],
     "responses": {
      "200": {
-      "$ref": "#/responses/ProvisionedAlertRule"
+      "description": "ProvisionedAlertRule",
+      "schema": {
+       "$ref": "#/definitions/ProvisionedAlertRule"
+      }
      },
      "404": {
       "description": " Not found."
@@ -3651,7 +4004,9 @@
      {
       "in": "body",
       "name": "Body",
-      "schema": {}
+      "schema": {
+       "$ref": "#/definitions/ProvisionedAlertRule"
+      }
      },
      {
       "in": "header",
@@ -3661,7 +4016,10 @@
     ],
     "responses": {
      "200": {
-      "$ref": "#/responses/ProvisionedAlertRule"
+      "description": "ProvisionedAlertRule",
+      "schema": {
+       "$ref": "#/definitions/ProvisionedAlertRule"
+      }
      },
      "400": {
       "description": "ValidationError",
@@ -3709,7 +4067,9 @@
      {
       "in": "body",
       "name": "Body",
-      "schema": {}
+      "schema": {
+       "$ref": "#/definitions/EmbeddedContactPoint"
+      }
      }
     ],
     "responses": {
@@ -3773,7 +4133,9 @@
      {
       "in": "body",
       "name": "Body",
-      "schema": {}
+      "schema": {
+       "$ref": "#/definitions/EmbeddedContactPoint"
+      }
      }
     ],
     "responses": {
@@ -3850,7 +4212,9 @@
      {
       "in": "body",
       "name": "Body",
-      "schema": {}
+      "schema": {
+       "$ref": "#/definitions/AlertRuleGroup"
+      }
      }
     ],
     "responses": {
@@ -3898,7 +4262,9 @@
      {
       "in": "body",
       "name": "Body",
-      "schema": {}
+      "schema": {
+       "$ref": "#/definitions/MuteTimeInterval"
+      }
      }
     ],
     "responses": {
@@ -3986,7 +4352,9 @@
      {
       "in": "body",
       "name": "Body",
-      "schema": {}
+      "schema": {
+       "$ref": "#/definitions/MuteTimeInterval"
+      }
      }
     ],
     "responses": {
@@ -4032,7 +4400,10 @@
     "operationId": "RouteGetPolicyTree",
     "responses": {
      "200": {
-      "$ref": "#/responses/Route"
+      "description": "Route",
+      "schema": {
+       "$ref": "#/definitions/Route"
+      }
      }
     },
     "summary": "Get the notification policy tree.",
@@ -4050,7 +4421,9 @@
       "description": "The new notification routing tree to use",
       "in": "body",
       "name": "Body",
-      "schema": {}
+      "schema": {
+       "$ref": "#/definitions/Route"
+      }
      }
     ],
     "responses": {
@@ -4158,7 +4531,9 @@
      {
       "in": "body",
       "name": "Body",
-      "schema": {}
+      "schema": {
+       "$ref": "#/definitions/MessageTemplateContent"
+      }
      }
     ],
     "responses": {
@@ -4189,7 +4564,9 @@
   "receiversResponse": {
    "description": "",
    "schema": {
-    "items": {},
+    "items": {
+     "$ref": "#/definitions/receiver"
+    },
     "type": "array"
    }
   }

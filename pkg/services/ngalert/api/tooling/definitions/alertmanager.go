@@ -54,7 +54,6 @@ import (
 //
 //     Responses:
 //       200: GettableUserConfigs
-//       400: ValidationError
 
 // swagger:route GET /api/alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RouteGetAlertingConfig
 //
@@ -459,7 +458,6 @@ type BodyAlertingConfig struct {
 type RouteGetGrafanaSuccessfullyAppliedAlertingConfigsParams struct {
 	// Limit response to X number of alerting configurations.
 	// in:query
-	// required: true
 	Limit int `json:"limit"`
 }
 

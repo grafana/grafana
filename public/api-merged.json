@@ -2482,7 +2482,10 @@
         ],
         "responses": {
           "201": {
-            "$ref": "#/responses/ProvisionedAlertRule"
+            "description": "ProvisionedAlertRule",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
           },
           "400": {
             "description": "ValidationError",
@@ -2511,7 +2514,10 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/ProvisionedAlertRule"
+            "description": "ProvisionedAlertRule",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
           },
           "404": {
             "description": " Not found."
@@ -2541,11 +2547,19 @@
             "schema": {
               "$ref": "#/definitions/ProvisionedAlertRule"
             }
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/ProvisionedAlertRule"
+            "description": "ProvisionedAlertRule",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
           },
           "400": {
             "description": "ValidationError",
@@ -2614,7 +2628,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
           }
         ],
         "responses": {
@@ -2654,7 +2670,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
           }
         ],
         "responses": {
@@ -2755,7 +2773,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroup"
+            }
           }
         ],
         "responses": {
@@ -2803,7 +2823,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
           }
         ],
         "responses": {
@@ -2870,7 +2892,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
           }
         ],
         "responses": {
@@ -2919,7 +2943,10 @@
         "operationId": "RouteGetPolicyTree",
         "responses": {
           "200": {
-            "$ref": "#/responses/Route"
+            "description": "Route",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
           }
         }
       },
@@ -2937,7 +2964,9 @@
             "description": "The new notification routing tree to use",
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
           }
         ],
         "responses": {
@@ -3042,7 +3071,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/MessageTemplateContent"
+            }
           }
         ],
         "responses": {
@@ -10380,7 +10411,9 @@
     }
   },
   "definitions": {
-    "Ack": {},
+    "Ack": {
+      "type": "object"
+    },
     "ActiveSyncStatusDTO": {
       "description": "ActiveSyncStatusDTO holds the information for LDAP background Sync",
       "type": "object",
@@ -10740,12 +10773,64 @@
       }
     },
     "Alert": {
-      "title": "Alert has info for an alert."
+      "type": "object",
+      "title": "Alert has info for an alert.",
+      "required": [
+        "labels",
+        "annotations",
+        "state",
+        "value"
+      ],
+      "properties": {
+        "activeAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "annotations": {
+          "$ref": "#/definitions/overrideLabels"
+        },
+        "labels": {
+          "$ref": "#/definitions/overrideLabels"
+        },
+        "state": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
     },
     "AlertDiscovery": {
-      "title": "AlertDiscovery has info for all active alerts."
+      "type": "object",
+      "title": "AlertDiscovery has info for all active alerts.",
+      "required": [
+        "alerts"
+      ],
+      "properties": {
+        "alerts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Alert"
+          }
+        }
+      }
     },
-    "AlertInstancesResponse": {},
+    "AlertInstancesResponse": {
+      "type": "object",
+      "properties": {
+        "instances": {
+          "description": "Instances is an array of arrow encoded dataframes\neach frame has a single row, and a column for each instance (alert identified by unique labels) with a boolean value (firing/not firing)",
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8"
+            }
+          }
+        }
+      }
+    },
     "AlertListItemDTO": {
       "type": "object",
       "properties": {
@@ -10792,7 +10877,36 @@
         }
       }
     },
-    "AlertManagerNotReady": {},
+    "AlertManager": {
+      "type": "object",
+      "title": "AlertManager models a configured Alert Manager.",
+      "properties": {
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "AlertManagerNotReady": {
+      "type": "object"
+    },
+    "AlertManagersResult": {
+      "type": "object",
+      "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
+      "properties": {
+        "activeAlertManagers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertManager"
+          }
+        },
+        "droppedAlertManagers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertManager"
+          }
+        }
+      }
+    },
     "AlertNotification": {
       "type": "object",
       "properties": {
@@ -10861,9 +10975,81 @@
         }
       }
     },
-    "AlertResponse": {},
-    "AlertRuleGroup": {},
-    "AlertRuleGroupMetadata": {},
+    "AlertQuery": {
+      "type": "object",
+      "title": "AlertQuery represents a single query associated with an alert definition.",
+      "properties": {
+        "datasourceUid": {
+          "description": "Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.",
+          "type": "string"
+        },
+        "model": {
+          "description": "JSON is the raw JSON query and includes the above properties as well as custom properties.",
+          "type": "object"
+        },
+        "queryType": {
+          "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+          "type": "string"
+        },
+        "refId": {
+          "description": "RefID is the unique identifier of the query, set by the frontend call.",
+          "type": "string"
+        },
+        "relativeTimeRange": {
+          "$ref": "#/definitions/RelativeTimeRange"
+        }
+      }
+    },
+    "AlertResponse": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/AlertDiscovery"
+        },
+        "error": {
+          "type": "string"
+        },
+        "errorType": {
+          "$ref": "#/definitions/ErrorType"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "AlertRuleGroup": {
+      "type": "object",
+      "properties": {
+        "folderUid": {
+          "type": "string"
+        },
+        "interval": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProvisionedAlertRule"
+          }
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    },
+    "AlertRuleGroupMetadata": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "AlertStateInfoDTO": {
       "type": "object",
       "properties": {
@@ -10945,9 +11131,76 @@
       }
     },
     "AlertingRule": {
-      "description": "adapted from cortex"
+      "description": "adapted from cortex",
+      "type": "object",
+      "required": [
+        "name",
+        "query",
+        "health",
+        "type",
+        "state",
+        "annotations",
+        "alerts"
+      ],
+      "properties": {
+        "alerts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Alert"
+          }
+        },
+        "annotations": {
+          "$ref": "#/definitions/overrideLabels"
+        },
+        "duration": {
+          "type": "number",
+          "format": "double"
+        },
+        "evaluationTime": {
+          "type": "number",
+          "format": "double"
+        },
+        "health": {
+          "type": "string"
+        },
+        "labels": {
+          "$ref": "#/definitions/overrideLabels"
+        },
+        "lastError": {
+          "type": "string"
+        },
+        "lastEvaluation": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "name": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "state": {
+          "description": "State can be \"pending\", \"firing\", \"inactive\".",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/RuleType"
+        }
+      }
     },
-    "AlertingStatus": {},
+    "AlertingStatus": {
+      "type": "object",
+      "properties": {
+        "alertmanagersChoice": {
+          "type": "string",
+          "enum": [
+            "all",
+            "internal",
+            "external"
+          ]
+        }
+      }
+    },
     "AnnotationActions": {
       "type": "object",
       "properties": {
@@ -11044,6 +11297,60 @@
         }
       }
     },
+    "BacktestConfig": {
+      "type": "object",
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "condition": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          }
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
+        },
+        "from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "no_data_state": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "BacktestResult": {
+      "$ref": "#/definitions/Frame"
+    },
     "BasicAuth": {
       "type": "object",
       "title": "BasicAuth contains basic HTTP authentication credentials.",
@@ -11110,6 +11417,36 @@
       "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
       "type": "number",
       "format": "double"
+    },
+    "Config": {
+      "type": "object",
+      "title": "Config is the top-level configuration for Alertmanager's config files.",
+      "properties": {
+        "global": {
+          "$ref": "#/definitions/GlobalConfig"
+        },
+        "inhibit_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InhibitRule"
+          }
+        },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimeInterval"
+          }
+        },
+        "route": {
+          "$ref": "#/definitions/Route"
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
     "ConfigDTO": {
       "description": "ConfigDTO is model representation in transfer",
@@ -11193,7 +11530,12 @@
         }
       }
     },
-    "ContactPoints": {},
+    "ContactPoints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/EmbeddedContactPoint"
+      }
+    },
     "Correlation": {
       "description": "Correlation is the model for correlations definitions",
       "type": "object",
@@ -12353,7 +12695,23 @@
         }
       }
     },
-    "DiscoveryBase": {},
+    "DiscoveryBase": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "errorType": {
+          "$ref": "#/definitions/ErrorType"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
     "DsAccess": {
       "type": "string"
     },
@@ -12367,8 +12725,115 @@
       "type": "integer",
       "format": "int64"
     },
+    "EmailConfig": {
+      "type": "object",
+      "title": "EmailConfig configures notifications via mail.",
+      "properties": {
+        "auth_identity": {
+          "type": "string"
+        },
+        "auth_password": {
+          "$ref": "#/definitions/Secret"
+        },
+        "auth_password_file": {
+          "type": "string"
+        },
+        "auth_secret": {
+          "$ref": "#/definitions/Secret"
+        },
+        "auth_username": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "hello": {
+          "type": "string"
+        },
+        "html": {
+          "type": "string"
+        },
+        "require_tls": {
+          "type": "boolean"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "smarthost": {
+          "$ref": "#/definitions/HostPort"
+        },
+        "text": {
+          "type": "string"
+        },
+        "tls_config": {
+          "$ref": "#/definitions/TLSConfig"
+        },
+        "to": {
+          "description": "Email address to notify.",
+          "type": "string"
+        }
+      }
+    },
     "EmbeddedContactPoint": {
-      "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation."
+      "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
+      "type": "object",
+      "required": [
+        "type",
+        "settings"
+      ],
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean",
+          "example": false
+        },
+        "name": {
+          "description": "Name is used as grouping key in the UI. Contact points with the\nsame name will be grouped in the UI.",
+          "type": "string",
+          "example": "webhook_1"
+        },
+        "provenance": {
+          "type": "string",
+          "readOnly": true
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "alertmanager",
+            " dingding",
+            " discord",
+            " email",
+            " googlechat",
+            " kafka",
+            " line",
+            " opsgenie",
+            " pagerduty",
+            " pushover",
+            " sensugo",
+            " slack",
+            " teams",
+            " telegram",
+            " threema",
+            " victorops",
+            " webhook",
+            " wecom"
+          ],
+          "example": "webhook"
+        },
+        "uid": {
+          "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
+          "type": "string",
+          "example": "my_external_reference"
+        }
+      }
     },
     "ErrorResponseBody": {
       "type": "object",
@@ -12390,6 +12855,29 @@
         }
       }
     },
+    "ErrorType": {
+      "type": "string",
+      "title": "ErrorType models the different API error types."
+    },
+    "EvalAlertConditionCommand": {
+      "description": "EvalAlertConditionCommand is the command for evaluating a condition",
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          }
+        },
+        "now": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "EvalMatch": {
       "type": "object",
       "properties": {
@@ -12407,9 +12895,54 @@
         }
       }
     },
-    "EvalQueriesPayload": {},
+    "EvalQueriesPayload": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          }
+        },
+        "now": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "EvalQueriesResponse": {},
-    "ExtendedReceiver": {},
+    "ExtendedReceiver": {
+      "type": "object",
+      "properties": {
+        "email_configs": {
+          "$ref": "#/definitions/EmailConfig"
+        },
+        "grafana_managed_receiver": {
+          "$ref": "#/definitions/PostableGrafanaReceiver"
+        },
+        "opsgenie_configs": {
+          "$ref": "#/definitions/OpsGenieConfig"
+        },
+        "pagerduty_configs": {
+          "$ref": "#/definitions/PagerdutyConfig"
+        },
+        "pushover_configs": {
+          "$ref": "#/definitions/PushoverConfig"
+        },
+        "slack_configs": {
+          "$ref": "#/definitions/SlackConfig"
+        },
+        "victorops_configs": {
+          "$ref": "#/definitions/VictorOpsConfig"
+        },
+        "webhook_configs": {
+          "$ref": "#/definitions/WebhookConfig"
+        },
+        "wechat_configs": {
+          "$ref": "#/definitions/WechatConfig"
+        }
+      }
+    },
     "FailedUser": {
       "description": "FailedUser holds the information of an user that failed",
       "type": "object",
@@ -12422,7 +12955,9 @@
         }
       }
     },
-    "Failure": {},
+    "Failure": {
+      "$ref": "#/definitions/ResponseDetails"
+    },
     "Field": {
       "description": "A Field is essentially a slice of various types with extra properties and methods.\nSee NewField() for supported types.\n\nThe slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.",
       "type": "object",
@@ -13002,12 +13537,6 @@
     "GettableNGalertConfig": {
       "type": "object",
       "properties": {
-        "alertmanagers": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
         "alertmanagersChoice": {
           "type": "string",
           "enum": [
@@ -13084,6 +13613,12 @@
             "type": "string"
           }
         }
+      }
+    },
+    "GettableUserConfigs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/GettableUserConfig"
       }
     },
     "GlobalConfig": {
@@ -13262,6 +13797,18 @@
     "HitType": {
       "type": "string"
     },
+    "HostPort": {
+      "type": "object",
+      "title": "HostPort represents a \"host:port\" network address.",
+      "properties": {
+        "Host": {
+          "type": "string"
+        },
+        "Port": {
+          "type": "string"
+        }
+      }
+    },
     "ImportDashboardInput": {
       "type": "object",
       "title": "ImportDashboardInput definition of input parameters when importing a dashboard.",
@@ -13366,6 +13913,41 @@
         }
       }
     },
+    "InhibitRule": {
+      "description": "InhibitRule defines an inhibition rule that mutes alerts that match the\ntarget labels if an alert matching the source labels exists.\nBoth alerts have to have a set of labels being equal.",
+      "type": "object",
+      "properties": {
+        "equal": {
+          "$ref": "#/definitions/LabelNames"
+        },
+        "source_match": {
+          "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "source_match_re": {
+          "$ref": "#/definitions/MatchRegexps"
+        },
+        "source_matchers": {
+          "$ref": "#/definitions/Matchers"
+        },
+        "target_match": {
+          "description": "TargetMatch defines a set of labels that have to equal the given\nvalue for target alerts. Deprecated. Remove before v1.0 release.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "target_match_re": {
+          "$ref": "#/definitions/MatchRegexps"
+        },
+        "target_matchers": {
+          "$ref": "#/definitions/Matchers"
+        }
+      }
+    },
     "InspectType": {
       "type": "integer",
       "format": "int64",
@@ -13447,6 +14029,44 @@
     },
     "Json": {
       "type": "object"
+    },
+    "Label": {
+      "type": "object",
+      "title": "Label is a key/value pair of strings.",
+      "properties": {
+        "Name": {
+          "type": "string"
+        }
+      }
+    },
+    "LabelName": {
+      "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
+      "type": "string"
+    },
+    "LabelNames": {
+      "type": "array",
+      "title": "LabelNames is a sortable LabelName slice. In implements sort.Interface.",
+      "items": {
+        "$ref": "#/definitions/LabelName"
+      }
+    },
+    "LabelSet": {
+      "description": "A LabelSet is a collection of LabelName and LabelValue pairs.  The LabelSet\nmay be fully-qualified down to the point where it may resolve to a single\nMetric in the data store or not.  All operations that occur within the realm\nof a LabelSet can emit a vector of Metric entities to which the LabelSet may\nmatch.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/LabelValue"
+      }
+    },
+    "LabelValue": {
+      "type": "string",
+      "title": "A LabelValue is an associated value for a LabelName."
+    },
+    "Labels": {
+      "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Label"
+      }
     },
     "LegacyAlert": {
       "type": "object",
@@ -13727,8 +14347,68 @@
         }
       }
     },
-    "MessageTemplate": {},
-    "MessageTemplates": {},
+    "MatchRegexps": {
+      "type": "object",
+      "title": "MatchRegexps represents a map of Regexp.",
+      "additionalProperties": {
+        "$ref": "#/definitions/Regexp"
+      }
+    },
+    "MatchType": {
+      "type": "integer",
+      "format": "int64",
+      "title": "MatchType is an enum for label matching types."
+    },
+    "Matcher": {
+      "type": "object",
+      "title": "Matcher models the matching of a label.",
+      "properties": {
+        "Name": {
+          "type": "string"
+        },
+        "Type": {
+          "$ref": "#/definitions/MatchType"
+        },
+        "Value": {
+          "type": "string"
+        }
+      }
+    },
+    "Matchers": {
+      "description": "Matchers is a slice of Matchers that is sortable, implements Stringer, and\nprovides a Matches method to match a LabelSet against all Matchers in the\nslice. Note that some users of Matchers might require it to be sorted.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Matcher"
+      }
+    },
+    "MessageTemplate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "template": {
+          "type": "string"
+        }
+      }
+    },
+    "MessageTemplateContent": {
+      "type": "object",
+      "properties": {
+        "template": {
+          "type": "string"
+        }
+      }
+    },
+    "MessageTemplates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/MessageTemplate"
+      }
+    },
     "Metadata": {
       "description": "Metadata contains user accesses for a given resource\nEx: map[string]bool{\"create\":true, \"delete\": true}",
       "type": "object",
@@ -13791,32 +14471,6 @@
           "items": {
             "$ref": "#/definitions/QueryToMigrate"
           }
-        }
-      }
-    },
-    "Model": {
-      "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
-      "type": "object",
-      "title": "Model is the Go representation of a playlist.",
-      "properties": {
-        "interval": {
-          "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
-          "type": "string"
-        },
-        "items": {
-          "description": "The ordered list of items that the playlist will iterate over.\nFIXME! This should not be optional, but changing it makes the godegen awkward",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PlaylistItem"
-          }
-        },
-        "name": {
-          "description": "Name of the playlist.",
-          "type": "string"
-        },
-        "uid": {
-          "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
-          "type": "string"
         }
       }
     },
@@ -13899,7 +14553,9 @@
         }
       }
     },
-    "NotFound": {},
+    "NotFound": {
+      "type": "object"
+    },
     "Notice": {
       "type": "object",
       "title": "Notice provides a structure for presenting notifications in Grafana's user interface.",
@@ -13954,6 +14610,134 @@
           "$ref": "#/definitions/Json"
         },
         "type": {
+          "type": "string"
+        }
+      }
+    },
+    "NotifierConfig": {
+      "type": "object",
+      "title": "NotifierConfig contains base options common across all notifier configurations.",
+      "properties": {
+        "send_resolved": {
+          "type": "boolean"
+        }
+      }
+    },
+    "OAuth2": {
+      "type": "object",
+      "title": "OAuth2 is the oauth2 client configuration.",
+      "properties": {
+        "TLSConfig": {
+          "$ref": "#/definitions/TLSConfig"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "client_secret": {
+          "$ref": "#/definitions/Secret"
+        },
+        "client_secret_file": {
+          "type": "string"
+        },
+        "endpoint_params": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "proxy_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "token_url": {
+          "type": "string"
+        }
+      }
+    },
+    "ObjectMatchers": {
+      "description": "ObjectMatchers is Matchers with a different Unmarshal and Marshal methods that accept matchers as objects\nthat have already been parsed.",
+      "$ref": "#/definitions/Matchers"
+    },
+    "OpsGenieConfig": {
+      "type": "object",
+      "title": "OpsGenieConfig configures notifications via OpsGenie.",
+      "properties": {
+        "actions": {
+          "type": "string"
+        },
+        "api_key": {
+          "$ref": "#/definitions/Secret"
+        },
+        "api_key_file": {
+          "type": "string"
+        },
+        "api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "description": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "entity": {
+          "type": "string"
+        },
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "message": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "string"
+        },
+        "responders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpsGenieConfigResponder"
+          }
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "source": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "string"
+        },
+        "update_alerts": {
+          "type": "boolean"
+        }
+      }
+    },
+    "OpsGenieConfigResponder": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "One of those 3 should be filled.",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "description": "team, user, escalation, schedule etc.",
+          "type": "string"
+        },
+        "username": {
           "type": "string"
         }
       }
@@ -14026,6 +14810,93 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "PagerdutyConfig": {
+      "type": "object",
+      "title": "PagerdutyConfig configures notifications via PagerDuty.",
+      "properties": {
+        "class": {
+          "type": "string"
+        },
+        "client": {
+          "type": "string"
+        },
+        "client_url": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "group": {
+          "type": "string"
+        },
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PagerdutyImage"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PagerdutyLink"
+          }
+        },
+        "routing_key": {
+          "$ref": "#/definitions/Secret"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "service_key": {
+          "$ref": "#/definitions/Secret"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "url": {
+          "$ref": "#/definitions/URL"
+        }
+      }
+    },
+    "PagerdutyImage": {
+      "description": "PagerdutyImage is an image",
+      "type": "object",
+      "properties": {
+        "alt": {
+          "type": "string"
+        },
+        "href": {
+          "type": "string"
+        },
+        "src": {
+          "type": "string"
+        }
+      }
+    },
+    "PagerdutyLink": {
+      "description": "PagerdutyLink is a link",
+      "type": "object",
+      "properties": {
+        "href": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
         }
       }
     },
@@ -14185,7 +15056,9 @@
         }
       }
     },
-    "PermissionDenied": {},
+    "PermissionDenied": {
+      "type": "object"
+    },
     "PermissionType": {
       "type": "integer",
       "format": "int64"
@@ -14268,6 +15141,20 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/Playlist"
+      }
+    },
+    "Point": {
+      "type": "object",
+      "title": "Point represents a single data point for a given timestamp.",
+      "properties": {
+        "T": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "V": {
+          "type": "number",
+          "format": "double"
+        }
       }
     },
     "PostAnnotationsCmd": {
@@ -14544,12 +15431,6 @@
     "PostableNGalertConfig": {
       "type": "object",
       "properties": {
-        "alertmanagers": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
         "alertmanagersChoice": {
           "type": "string",
           "enum": [
@@ -14779,6 +15660,12 @@
           "format": "date-time",
           "readOnly": true
         }
+      }
+    },
+    "ProvisionedAlertRules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ProvisionedAlertRule"
       }
     },
     "PushoverConfig": {
@@ -15042,6 +15929,30 @@
         }
       }
     },
+    "QuotaDTO": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "org_id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "target": {
+          "type": "string"
+        },
+        "used": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "user_id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "Receiver": {
       "type": "object",
       "title": "Receiver configuration provides configuration on how to contact a receiver.",
@@ -15157,6 +16068,23 @@
         }
       }
     },
+    "Regexp": {
+      "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
+      "type": "object",
+      "title": "Regexp is the representation of a compiled regular expression."
+    },
+    "RelativeTimeRange": {
+      "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
+      "type": "object",
+      "properties": {
+        "from": {
+          "$ref": "#/definitions/Duration"
+        },
+        "to": {
+          "$ref": "#/definitions/Duration"
+        }
+      }
+    },
     "ReportEmailDTO": {
       "type": "object",
       "properties": {
@@ -15192,7 +16120,14 @@
         }
       }
     },
-    "ResponseDetails": {},
+    "ResponseDetails": {
+      "type": "object",
+      "properties": {
+        "msg": {
+          "type": "string"
+        }
+      }
+    },
     "Responses": {
       "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataResponses' frames based on these RefIDs.",
       "type": "object",
@@ -15292,13 +16227,254 @@
         }
       }
     },
-    "Rule": {
-      "description": "adapted from cortex"
+    "Route": {
+      "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
+      "type": "object",
+      "properties": {
+        "continue": {
+          "type": "boolean"
+        },
+        "group_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "group_interval": {
+          "type": "string"
+        },
+        "group_wait": {
+          "type": "string"
+        },
+        "match": {
+          "description": "Deprecated. Remove before v1.0 release.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "match_re": {
+          "$ref": "#/definitions/MatchRegexps"
+        },
+        "matchers": {
+          "$ref": "#/definitions/Matchers"
+        },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "object_matchers": {
+          "$ref": "#/definitions/ObjectMatchers"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "receiver": {
+          "type": "string"
+        },
+        "repeat_interval": {
+          "type": "string"
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Route"
+          }
+        }
+      }
     },
-    "RuleDiscovery": {},
-    "RuleGroup": {},
-    "RuleGroupConfigResponse": {},
-    "RuleResponse": {},
+    "Rule": {
+      "description": "adapted from cortex",
+      "type": "object",
+      "required": [
+        "name",
+        "query",
+        "health",
+        "type"
+      ],
+      "properties": {
+        "evaluationTime": {
+          "type": "number",
+          "format": "double"
+        },
+        "health": {
+          "type": "string"
+        },
+        "labels": {
+          "$ref": "#/definitions/overrideLabels"
+        },
+        "lastError": {
+          "type": "string"
+        },
+        "lastEvaluation": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "name": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/RuleType"
+        }
+      }
+    },
+    "RuleDiscovery": {
+      "type": "object",
+      "required": [
+        "groups"
+      ],
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RuleGroup"
+          }
+        }
+      }
+    },
+    "RuleGroup": {
+      "type": "object",
+      "required": [
+        "name",
+        "file",
+        "rules",
+        "interval"
+      ],
+      "properties": {
+        "evaluationTime": {
+          "type": "number",
+          "format": "double"
+        },
+        "file": {
+          "type": "string"
+        },
+        "interval": {
+          "type": "number",
+          "format": "double"
+        },
+        "lastEvaluation": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "name": {
+          "type": "string"
+        },
+        "rules": {
+          "description": "In order to preserve rule ordering, while exposing type (alerting or recording)\nspecific properties, both alerting and recording rules are exposed in the\nsame array.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertingRule"
+          }
+        }
+      }
+    },
+    "RuleGroupConfigResponse": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "name": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GettableExtendedRuleNode"
+          }
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "RuleResponse": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/RuleDiscovery"
+        },
+        "error": {
+          "type": "string"
+        },
+        "errorType": {
+          "$ref": "#/definitions/ErrorType"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "RuleType": {
+      "type": "string",
+      "title": "RuleType models the type of a rule."
+    },
+    "SNSConfig": {
+      "type": "object",
+      "properties": {
+        "api_url": {
+          "type": "string"
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "message": {
+          "type": "string"
+        },
+        "phone_number": {
+          "type": "string"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "sigv4": {
+          "$ref": "#/definitions/SigV4Config"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "target_arn": {
+          "type": "string"
+        },
+        "topic_arn": {
+          "type": "string"
+        }
+      }
+    },
+    "Sample": {
+      "type": "object",
+      "title": "Sample is a single sample belonging to a metric.",
+      "properties": {
+        "Metric": {
+          "$ref": "#/definitions/Labels"
+        },
+        "T": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "V": {
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
     "SaveDashboardCommand": {
       "type": "object",
       "properties": {
@@ -15444,6 +16620,14 @@
           }
         }
       }
+    },
+    "Secret": {
+      "type": "string",
+      "title": "Secret special type for storing secrets."
+    },
+    "SecretURL": {
+      "title": "SecretURL is a URL that must not be revealed on marshaling.",
+      "$ref": "#/definitions/URL"
     },
     "ServiceAccountDTO": {
       "description": "swagger: model",
@@ -15630,7 +16814,177 @@
         }
       }
     },
-    "SmtpNotEnabled": {},
+    "SigV4Config": {
+      "description": "SigV4Config is the configuration for signing remote write requests with\nAWS's SigV4 verification process. Empty values will be retrieved using the\nAWS default credentials chain.",
+      "type": "object",
+      "properties": {
+        "AccessKey": {
+          "type": "string"
+        },
+        "Profile": {
+          "type": "string"
+        },
+        "Region": {
+          "type": "string"
+        },
+        "RoleARN": {
+          "type": "string"
+        },
+        "SecretKey": {
+          "$ref": "#/definitions/Secret"
+        }
+      }
+    },
+    "SlackAction": {
+      "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
+      "type": "object",
+      "title": "SlackAction configures a single Slack action that is sent with each notification.",
+      "properties": {
+        "confirm": {
+          "$ref": "#/definitions/SlackConfirmationField"
+        },
+        "name": {
+          "type": "string"
+        },
+        "style": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "SlackConfig": {
+      "type": "object",
+      "title": "SlackConfig configures notifications via Slack.",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SlackAction"
+          }
+        },
+        "api_url": {
+          "$ref": "#/definitions/SecretURL"
+        },
+        "api_url_file": {
+          "type": "string"
+        },
+        "callback_id": {
+          "type": "string"
+        },
+        "channel": {
+          "description": "Slack channel override, (like #other-channel or @username).",
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "fallback": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SlackField"
+          }
+        },
+        "footer": {
+          "type": "string"
+        },
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "icon_emoji": {
+          "type": "string"
+        },
+        "icon_url": {
+          "type": "string"
+        },
+        "image_url": {
+          "type": "string"
+        },
+        "link_names": {
+          "type": "boolean"
+        },
+        "mrkdwn_in": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pretext": {
+          "type": "string"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "short_fields": {
+          "type": "boolean"
+        },
+        "text": {
+          "type": "string"
+        },
+        "thumb_url": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "title_link": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "SlackConfirmationField": {
+      "description": "SlackConfirmationField protect users from destructive actions or particularly distinguished decisions\nby asking them to confirm their button click one more time.\nSee https://api.slack.com/docs/interactive-message-field-guide#confirmation_fields for more information.",
+      "type": "object",
+      "properties": {
+        "dismiss_text": {
+          "type": "string"
+        },
+        "ok_text": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    },
+    "SlackField": {
+      "description": "Each field must contain a title, value, and optionally, a boolean value to indicate if the field\nis short enough to be displayed next to other fields designated as short.\nSee https://api.slack.com/docs/message-attachments#fields for more information.",
+      "type": "object",
+      "title": "SlackField configures a single Slack field that is sent with each notification.",
+      "properties": {
+        "short": {
+          "type": "boolean"
+        },
+        "title": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "SmtpNotEnabled": {
+      "$ref": "#/definitions/ResponseDetails"
+    },
     "State": {
       "type": "string"
     },
@@ -15638,7 +16992,9 @@
       "type": "integer",
       "format": "int64"
     },
-    "Success": {},
+    "Success": {
+      "$ref": "#/definitions/ResponseDetails"
+    },
     "SuccessResponseBody": {
       "type": "object",
       "properties": {
@@ -15679,6 +17035,39 @@
           }
         }
       }
+    },
+    "TLSConfig": {
+      "type": "object",
+      "title": "TLSConfig configures the options for TLS connections.",
+      "properties": {
+        "ca_file": {
+          "description": "The CA cert to use for the targets.",
+          "type": "string"
+        },
+        "cert_file": {
+          "description": "The client cert file for the targets.",
+          "type": "string"
+        },
+        "insecure_skip_verify": {
+          "description": "Disable target certificate validation.",
+          "type": "boolean"
+        },
+        "key_file": {
+          "description": "The client key file for the targets.",
+          "type": "string"
+        },
+        "min_version": {
+          "$ref": "#/definitions/TLSVersion"
+        },
+        "server_name": {
+          "description": "Used to verify the hostname for the targets.",
+          "type": "string"
+        }
+      }
+    },
+    "TLSVersion": {
+      "type": "integer",
+      "format": "uint16"
     },
     "TagsDTO": {
       "type": "object",
@@ -15793,6 +17182,37 @@
         }
       }
     },
+    "TelegramConfig": {
+      "type": "object",
+      "title": "TelegramConfig configures notifications via Telegram.",
+      "properties": {
+        "api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "chat": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "disable_notifications": {
+          "type": "boolean"
+        },
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "message": {
+          "type": "string"
+        },
+        "parse_mode": {
+          "type": "string"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "token": {
+          "$ref": "#/definitions/Secret"
+        }
+      }
+    },
     "TempUserDTO": {
       "type": "object",
       "properties": {
@@ -15852,11 +17272,103 @@
     "TempUserStatus": {
       "type": "string"
     },
-    "TestReceiverConfigResult": {},
-    "TestReceiverResult": {},
-    "TestReceiversResult": {},
-    "TestRulePayload": {},
-    "TestRuleResponse": {},
+    "TestReceiverConfigResult": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "TestReceiverResult": {
+      "type": "object",
+      "properties": {
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestReceiverConfigResult"
+          }
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "TestReceiversConfigAlertParams": {
+      "type": "object",
+      "properties": {
+        "annotations": {
+          "$ref": "#/definitions/LabelSet"
+        },
+        "labels": {
+          "$ref": "#/definitions/LabelSet"
+        }
+      }
+    },
+    "TestReceiversConfigBodyParams": {
+      "type": "object",
+      "properties": {
+        "alert": {
+          "$ref": "#/definitions/TestReceiversConfigAlertParams"
+        },
+        "receivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostableApiReceiver"
+          }
+        }
+      }
+    },
+    "TestReceiversResult": {
+      "type": "object",
+      "properties": {
+        "alert": {
+          "$ref": "#/definitions/TestReceiversConfigAlertParams"
+        },
+        "notified_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "receivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TestReceiverResult"
+          }
+        }
+      }
+    },
+    "TestRulePayload": {
+      "type": "object",
+      "properties": {
+        "expr": {
+          "type": "string",
+          "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)"
+        },
+        "grafana_condition": {
+          "$ref": "#/definitions/EvalAlertConditionCommand"
+        }
+      }
+    },
+    "TestRuleResponse": {
+      "type": "object",
+      "properties": {
+        "alerts": {
+          "$ref": "#/definitions/Vector"
+        },
+        "grafana_alert_instances": {
+          "$ref": "#/definitions/AlertInstancesResponse"
+        }
+      }
+    },
     "Threshold": {
       "description": "Threshold a single step on the threshold list",
       "type": "object",
@@ -15891,6 +17403,60 @@
     "ThresholdsMode": {
       "description": "ThresholdsMode absolute or percentage",
       "type": "string"
+    },
+    "TimeInterval": {
+      "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
+      "type": "object",
+      "properties": {
+        "days_of_month": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "location": {
+          "type": "string"
+        },
+        "months": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "times": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeRange"
+          }
+        },
+        "weekdays": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "years": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "TimeRange": {
+      "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
+      "type": "object",
+      "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
+      "properties": {
+        "EndMinute": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "StartMinute": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
     },
     "TimeRangeDTO": {
       "type": "object",
@@ -16060,6 +17626,46 @@
     },
     "Type": {
       "type": "string"
+    },
+    "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
+      "type": "object",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "properties": {
+        "ForceQuery": {
+          "type": "boolean"
+        },
+        "Fragment": {
+          "type": "string"
+        },
+        "Host": {
+          "type": "string"
+        },
+        "OmitHost": {
+          "type": "boolean"
+        },
+        "Opaque": {
+          "type": "string"
+        },
+        "Path": {
+          "type": "string"
+        },
+        "RawFragment": {
+          "type": "string"
+        },
+        "RawPath": {
+          "type": "string"
+        },
+        "RawQuery": {
+          "type": "string"
+        },
+        "Scheme": {
+          "type": "string"
+        },
+        "User": {
+          "$ref": "#/definitions/Userinfo"
+        }
+      }
     },
     "UpdateAlertNotificationCommand": {
       "type": "object",
@@ -16680,7 +18286,19 @@
         }
       }
     },
-    "ValidationError": {},
+    "Userinfo": {
+      "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
+      "type": "object"
+    },
+    "ValidationError": {
+      "type": "object",
+      "properties": {
+        "msg": {
+          "type": "string",
+          "example": "error message"
+        }
+      }
+    },
     "ValueMapping": {
       "description": "ValueMapping allows mapping input values to text and color",
       "type": "object"
@@ -16691,14 +18309,137 @@
         "$ref": "#/definitions/ValueMapping"
       }
     },
+    "Vector": {
+      "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Sample"
+      }
+    },
+    "VictorOpsConfig": {
+      "type": "object",
+      "title": "VictorOpsConfig configures notifications via VictorOps.",
+      "properties": {
+        "api_key": {
+          "$ref": "#/definitions/Secret"
+        },
+        "api_key_file": {
+          "$ref": "#/definitions/Secret"
+        },
+        "api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "custom_fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "entity_display_name": {
+          "type": "string"
+        },
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "message_type": {
+          "type": "string"
+        },
+        "monitoring_tool": {
+          "type": "string"
+        },
+        "routing_key": {
+          "type": "string"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "state_message": {
+          "type": "string"
+        }
+      }
+    },
     "VisType": {
       "type": "string",
       "title": "VisType is used to indicate how the data should be visualized in explore."
     },
+    "WebhookConfig": {
+      "type": "object",
+      "title": "WebhookConfig configures notifications via a generic webhook.",
+      "properties": {
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "max_alerts": {
+          "description": "MaxAlerts is the maximum number of alerts to be sent per webhook message.\nAlerts exceeding this threshold will be truncated. Setting this to 0\nallows an unlimited number of alerts.",
+          "type": "integer",
+          "format": "uint64"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "url": {
+          "$ref": "#/definitions/URL"
+        }
+      }
+    },
+    "WechatConfig": {
+      "type": "object",
+      "title": "WechatConfig configures notifications via Wechat.",
+      "properties": {
+        "agent_id": {
+          "type": "string"
+        },
+        "api_secret": {
+          "$ref": "#/definitions/Secret"
+        },
+        "api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "corp_id": {
+          "type": "string"
+        },
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "message": {
+          "type": "string"
+        },
+        "message_type": {
+          "type": "string"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "to_party": {
+          "type": "string"
+        },
+        "to_tag": {
+          "type": "string"
+        },
+        "to_user": {
+          "type": "string"
+        }
+      }
+    },
     "alert": {
-      "description": "Alert alert"
+      "description": "Alert alert",
+      "type": "object",
+      "required": [
+        "labels"
+      ],
+      "properties": {
+        "generatorURL": {
+          "description": "generator URL\nFormat: uri",
+          "type": "string",
+          "format": "uri"
+        },
+        "labels": {
+          "$ref": "#/definitions/labelSet"
+        }
+      }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -16722,29 +18463,174 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
       }
     },
     "alertStatus": {
-      "description": "AlertStatus alert status"
+      "description": "AlertStatus alert status",
+      "type": "object",
+      "required": [
+        "inhibitedBy",
+        "silencedBy",
+        "state"
+      ],
+      "properties": {
+        "inhibitedBy": {
+          "description": "inhibited by",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "silencedBy": {
+          "description": "silenced by",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "state": {
+          "description": "state",
+          "type": "string",
+          "enum": [
+            "[unprocessed active suppressed]"
+          ]
+        }
+      }
     },
     "alertmanagerConfig": {
-      "description": "AlertmanagerConfig alertmanager config"
+      "description": "AlertmanagerConfig alertmanager config",
+      "type": "object",
+      "required": [
+        "original"
+      ],
+      "properties": {
+        "original": {
+          "description": "original",
+          "type": "string"
+        }
+      }
     },
     "alertmanagerStatus": {
-      "description": "AlertmanagerStatus alertmanager status"
+      "description": "AlertmanagerStatus alertmanager status",
+      "type": "object",
+      "required": [
+        "cluster",
+        "config",
+        "uptime",
+        "versionInfo"
+      ],
+      "properties": {
+        "cluster": {
+          "$ref": "#/definitions/clusterStatus"
+        },
+        "config": {
+          "$ref": "#/definitions/alertmanagerConfig"
+        },
+        "uptime": {
+          "description": "uptime",
+          "type": "string",
+          "format": "date-time"
+        },
+        "versionInfo": {
+          "$ref": "#/definitions/versionInfo"
+        }
+      }
     },
     "clusterStatus": {
-      "description": "ClusterStatus cluster status"
+      "description": "ClusterStatus cluster status",
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "name": {
+          "description": "name",
+          "type": "string"
+        },
+        "peers": {
+          "description": "peers",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/peerStatus"
+          }
+        },
+        "status": {
+          "description": "status",
+          "type": "string",
+          "enum": [
+            "[ready settling disabled]"
+          ]
+        }
+      }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert"
+      "description": "GettableAlert gettable alert",
+      "type": "object",
+      "required": [
+        "labels",
+        "annotations",
+        "endsAt",
+        "fingerprint",
+        "receivers",
+        "startsAt",
+        "status",
+        "updatedAt"
+      ],
+      "properties": {
+        "annotations": {
+          "$ref": "#/definitions/labelSet"
+        },
+        "endsAt": {
+          "description": "ends at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "fingerprint": {
+          "description": "fingerprint",
+          "type": "string"
+        },
+        "generatorURL": {
+          "description": "generator URL\nFormat: uri",
+          "type": "string",
+          "format": "uri"
+        },
+        "labels": {
+          "$ref": "#/definitions/labelSet"
+        },
+        "receivers": {
+          "description": "receivers",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/receiver"
+          }
+        },
+        "startsAt": {
+          "description": "starts at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "$ref": "#/definitions/alertStatus"
+        },
+        "updatedAt": {
+          "description": "updated at",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     },
-    "gettableAlerts": {},
+    "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/gettableAlert"
+      }
+    },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -16793,6 +18679,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -16830,25 +18717,120 @@
       }
     },
     "labelSet": {
-      "description": "LabelSet label set"
+      "description": "LabelSet label set",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     },
     "matcher": {
-      "description": "Matcher matcher"
+      "description": "Matcher matcher",
+      "type": "object",
+      "required": [
+        "isRegex",
+        "name",
+        "value"
+      ],
+      "properties": {
+        "isEqual": {
+          "description": "is equal",
+          "type": "boolean"
+        },
+        "isRegex": {
+          "description": "is regex",
+          "type": "boolean"
+        },
+        "name": {
+          "description": "name",
+          "type": "string"
+        },
+        "value": {
+          "description": "value",
+          "type": "string"
+        }
+      }
     },
     "matchers": {
-      "description": "Matchers matchers"
+      "description": "Matchers matchers",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/matcher"
+      }
+    },
+    "overrideLabels": {
+      "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
+      "type": "object",
+      "title": "override the labels type with a map for generation.",
+      "additionalProperties": {
+        "type": "string"
+      }
     },
     "peerStatus": {
-      "description": "PeerStatus peer status"
+      "description": "PeerStatus peer status",
+      "type": "object",
+      "required": [
+        "address",
+        "name"
+      ],
+      "properties": {
+        "address": {
+          "description": "address",
+          "type": "string"
+        },
+        "name": {
+          "description": "name",
+          "type": "string"
+        }
+      }
     },
-    "postSilencesOKBody": {},
+    "postSilencesOKBody": {
+      "type": "object",
+      "properties": {
+        "silenceID": {
+          "description": "silence ID",
+          "type": "string"
+        }
+      }
+    },
     "postableAlert": {
-      "description": "PostableAlert postable alert"
+      "description": "PostableAlert postable alert",
+      "type": "object",
+      "required": [
+        "labels"
+      ],
+      "properties": {
+        "annotations": {
+          "$ref": "#/definitions/labelSet"
+        },
+        "endsAt": {
+          "description": "ends at\nFormat: date-time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "generatorURL": {
+          "description": "generator URL\nFormat: uri",
+          "type": "string",
+          "format": "uri"
+        },
+        "labels": {
+          "$ref": "#/definitions/labelSet"
+        },
+        "startsAt": {
+          "description": "starts at\nFormat: date-time",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     },
     "postableAlerts": {
-      "description": "PostableAlerts postable alerts"
+      "description": "PostableAlerts postable alerts",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/postableAlert"
+      }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -16886,7 +18868,6 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
@@ -16912,13 +18893,92 @@
       }
     },
     "silence": {
-      "description": "Silence silence"
+      "description": "Silence silence",
+      "type": "object",
+      "required": [
+        "comment",
+        "createdBy",
+        "endsAt",
+        "matchers",
+        "startsAt"
+      ],
+      "properties": {
+        "comment": {
+          "description": "comment",
+          "type": "string"
+        },
+        "createdBy": {
+          "description": "created by",
+          "type": "string"
+        },
+        "endsAt": {
+          "description": "ends at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "matchers": {
+          "$ref": "#/definitions/matchers"
+        },
+        "startsAt": {
+          "description": "starts at",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     },
     "silenceStatus": {
-      "description": "SilenceStatus silence status"
+      "description": "SilenceStatus silence status",
+      "type": "object",
+      "required": [
+        "state"
+      ],
+      "properties": {
+        "state": {
+          "description": "state",
+          "type": "string",
+          "enum": [
+            "[expired active pending]"
+          ]
+        }
+      }
     },
     "versionInfo": {
-      "description": "VersionInfo version info"
+      "description": "VersionInfo version info",
+      "type": "object",
+      "required": [
+        "branch",
+        "buildDate",
+        "buildUser",
+        "goVersion",
+        "revision",
+        "version"
+      ],
+      "properties": {
+        "branch": {
+          "description": "branch",
+          "type": "string"
+        },
+        "buildDate": {
+          "description": "build date",
+          "type": "string"
+        },
+        "buildUser": {
+          "description": "build user",
+          "type": "string"
+        },
+        "goVersion": {
+          "description": "go version",
+          "type": "string"
+        },
+        "revision": {
+          "description": "revision",
+          "type": "string"
+        },
+        "version": {
+          "description": "version",
+          "type": "string"
+        }
+      }
     }
   },
   "responses": {
@@ -18004,7 +20064,9 @@
       "description": "(empty)",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/receiver"
+        }
       }
     },
     "recordingRuleResponse": {

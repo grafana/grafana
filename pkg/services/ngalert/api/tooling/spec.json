@@ -241,7 +241,9 @@
           {
             "name": "Silence",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/postableSilence"
+            }
           }
         ],
         "responses": {
@@ -315,7 +317,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PostableUserConfig"
+            }
           }
         ],
         "responses": {
@@ -355,39 +359,6 @@
         }
       }
     },
-    "/api/alertmanager/grafana/config/api/v1/alerts/successfully-applied": {
-      "get": {
-        "description": "gets Alerting configurations that were successfully applied in the past",
-        "tags": [
-          "alertmanager"
-        ],
-        "operationId": "RouteGetGrafanaSuccessfullyAppliedAlertingConfigs",
-        "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "description": "Limit response to X number of alerting configurations.",
-            "name": "limit",
-            "in": "query",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "GettableUserConfigs",
-            "schema": {
-              "$ref": "#/definitions/GettableUserConfigs"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
     "/api/alertmanager/grafana/config/api/v1/receivers": {
       "get": {
         "description": "Get a list of all receivers",
@@ -413,7 +384,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/TestReceiversConfigBodyParams"
+            }
           }
         ],
         "responses": {
@@ -457,6 +430,32 @@
             "description": "AlertManagerNotReady",
             "schema": {
               "$ref": "#/definitions/AlertManagerNotReady"
+            }
+          }
+        }
+      }
+    },
+    "/api/alertmanager/grafana/config/history": {
+      "get": {
+        "description": "gets Alerting configurations that were successfully applied in the past",
+        "tags": [
+          "alertmanager"
+        ],
+        "operationId": "RouteGetGrafanaSuccessfullyAppliedAlertingConfigs",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "Limit response to X number of alerting configurations.",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GettableUserConfigs",
+            "schema": {
+              "$ref": "#/definitions/GettableUserConfigs"
             }
           }
         }
@@ -547,7 +546,9 @@
             "in": "body",
             "schema": {
               "type": "array",
-              "items": {}
+              "items": {
+                "$ref": "#/definitions/postableAlert"
+              }
             }
           },
           {
@@ -795,7 +796,9 @@
           {
             "name": "Silence",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/postableSilence"
+            }
           },
           {
             "type": "string",
@@ -912,7 +915,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PostableUserConfig"
+            }
           },
           {
             "type": "string",
@@ -1189,7 +1194,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PostableRuleGroupConfig"
+            }
           }
         ],
         "responses": {
@@ -1401,7 +1408,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PostableRuleGroupConfig"
+            }
           }
         ],
         "responses": {
@@ -1562,7 +1571,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/EvalQueriesPayload"
+            }
           }
         ],
         "responses": {
@@ -1639,7 +1650,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/PostableNGalertConfig"
+            }
           }
         ],
         "responses": {
@@ -1733,7 +1746,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
           },
           {
             "type": "string",
@@ -1743,7 +1758,10 @@
         ],
         "responses": {
           "201": {
-            "$ref": "#/responses/ProvisionedAlertRule"
+            "description": "ProvisionedAlertRule",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
           },
           "400": {
             "description": "ValidationError",
@@ -1773,7 +1791,10 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/ProvisionedAlertRule"
+            "description": "ProvisionedAlertRule",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
           },
           "404": {
             "description": " Not found."
@@ -1801,7 +1822,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
           },
           {
             "type": "string",
@@ -1811,7 +1834,10 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/ProvisionedAlertRule"
+            "description": "ProvisionedAlertRule",
+            "schema": {
+              "$ref": "#/definitions/ProvisionedAlertRule"
+            }
           },
           "400": {
             "description": "ValidationError",
@@ -1883,7 +1909,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
           }
         ],
         "responses": {
@@ -1924,7 +1952,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/EmbeddedContactPoint"
+            }
           }
         ],
         "responses": {
@@ -2028,7 +2058,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/AlertRuleGroup"
+            }
           }
         ],
         "responses": {
@@ -2078,7 +2110,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
           }
         ],
         "responses": {
@@ -2147,7 +2181,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/MuteTimeInterval"
+            }
           }
         ],
         "responses": {
@@ -2198,7 +2234,10 @@
         "operationId": "RouteGetPolicyTree",
         "responses": {
           "200": {
-            "$ref": "#/responses/Route"
+            "description": "Route",
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
           }
         }
       },
@@ -2217,7 +2256,9 @@
             "description": "The new notification routing tree to use",
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/Route"
+            }
           }
         ],
         "responses": {
@@ -2326,7 +2367,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/MessageTemplateContent"
+            }
           }
         ],
         "responses": {
@@ -2407,7 +2450,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/TestRulePayload"
+            }
           }
         ],
         "responses": {
@@ -2444,7 +2489,9 @@
           {
             "name": "Body",
             "in": "body",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/TestRulePayload"
+            }
           }
         ],
         "responses": {
@@ -2465,18 +2512,176 @@
     }
   },
   "definitions": {
-    "Ack": {},
+    "Ack": {
+      "type": "object"
+    },
     "Alert": {
-      "title": "Alert has info for an alert."
+      "type": "object",
+      "title": "Alert has info for an alert.",
+      "required": [
+        "labels",
+        "annotations",
+        "state",
+        "value"
+      ],
+      "properties": {
+        "activeAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "annotations": {
+          "$ref": "#/definitions/overrideLabels"
+        },
+        "labels": {
+          "$ref": "#/definitions/overrideLabels"
+        },
+        "state": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
     },
     "AlertDiscovery": {
-      "title": "AlertDiscovery has info for all active alerts."
+      "type": "object",
+      "title": "AlertDiscovery has info for all active alerts.",
+      "required": [
+        "alerts"
+      ],
+      "properties": {
+        "alerts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Alert"
+          }
+        }
+      }
     },
-    "AlertInstancesResponse": {},
-    "AlertManagerNotReady": {},
-    "AlertResponse": {},
-    "AlertRuleGroup": {},
-    "AlertRuleGroupMetadata": {},
+    "AlertInstancesResponse": {
+      "type": "object",
+      "properties": {
+        "instances": {
+          "description": "Instances is an array of arrow encoded dataframes\neach frame has a single row, and a column for each instance (alert identified by unique labels) with a boolean value (firing/not firing)",
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8"
+            }
+          }
+        }
+      }
+    },
+    "AlertManager": {
+      "type": "object",
+      "title": "AlertManager models a configured Alert Manager.",
+      "properties": {
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "AlertManagerNotReady": {
+      "type": "object"
+    },
+    "AlertManagersResult": {
+      "type": "object",
+      "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
+      "properties": {
+        "activeAlertManagers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertManager"
+          }
+        },
+        "droppedAlertManagers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertManager"
+          }
+        }
+      }
+    },
+    "AlertQuery": {
+      "type": "object",
+      "title": "AlertQuery represents a single query associated with an alert definition.",
+      "properties": {
+        "datasourceUid": {
+          "description": "Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.",
+          "type": "string"
+        },
+        "model": {
+          "description": "JSON is the raw JSON query and includes the above properties as well as custom properties.",
+          "type": "object"
+        },
+        "queryType": {
+          "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+          "type": "string"
+        },
+        "refId": {
+          "description": "RefID is the unique identifier of the query, set by the frontend call.",
+          "type": "string"
+        },
+        "relativeTimeRange": {
+          "$ref": "#/definitions/RelativeTimeRange"
+        }
+      }
+    },
+    "AlertResponse": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/AlertDiscovery"
+        },
+        "error": {
+          "type": "string"
+        },
+        "errorType": {
+          "$ref": "#/definitions/ErrorType"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "AlertRuleGroup": {
+      "type": "object",
+      "properties": {
+        "folderUid": {
+          "type": "string"
+        },
+        "interval": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProvisionedAlertRule"
+          }
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    },
+    "AlertRuleGroupMetadata": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "AlertStateType": {
+      "type": "string"
+    },
     "AlertingRule": {
       "description": "adapted from cortex",
       "type": "object",
@@ -2717,132 +2922,1107 @@
         }
       }
     },
-    "AlertingStatus": {},
-    "ContactPoints": {},
     "DataResponse": {
       "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
-      "title": "DataResponse contains the results from a DataQuery."
+      "type": "object",
+      "title": "DataResponse contains the results from a DataQuery.",
+      "properties": {
+        "Error": {
+          "description": "Error is a property to be set if the corresponding DataQuery has an error.",
+          "type": "string"
+        },
+        "Frames": {
+          "$ref": "#/definitions/Frames"
+        },
+        "Status": {
+          "$ref": "#/definitions/Status"
+        }
+      }
     },
-    "DiscoveryBase": {},
+    "DataTopic": {
+      "description": "nolint:revive",
+      "type": "string",
+      "title": "DataTopic is used to identify which topic the frame should be assigned to."
+    },
+    "DiscoveryBase": {
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "errorType": {
+          "$ref": "#/definitions/ErrorType"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "Duration": {
+      "type": "integer",
+      "format": "int64",
+      "title": "Duration is a type used for marshalling durations.",
+      "$ref": "#/definitions/Duration"
+    },
+    "EmailConfig": {
+      "type": "object",
+      "title": "EmailConfig configures notifications via mail.",
+      "properties": {
+        "auth_identity": {
+          "type": "string"
+        },
+        "auth_password": {
+          "$ref": "#/definitions/Secret"
+        },
+        "auth_password_file": {
+          "type": "string"
+        },
+        "auth_secret": {
+          "$ref": "#/definitions/Secret"
+        },
+        "auth_username": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "hello": {
+          "type": "string"
+        },
+        "html": {
+          "type": "string"
+        },
+        "require_tls": {
+          "type": "boolean"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "smarthost": {
+          "$ref": "#/definitions/HostPort"
+        },
+        "text": {
+          "type": "string"
+        },
+        "tls_config": {
+          "$ref": "#/definitions/TLSConfig"
+        },
+        "to": {
+          "description": "Email address to notify.",
+          "type": "string"
+        }
+      }
+    },
     "EmbeddedContactPoint": {
-      "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation."
+      "description": "EmbeddedContactPoint is the contact point type that is used\nby grafanas embedded alertmanager implementation.",
+      "type": "object",
+      "required": [
+        "type",
+        "settings"
+      ],
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean",
+          "example": false
+        },
+        "name": {
+          "description": "Name is used as grouping key in the UI. Contact points with the\nsame name will be grouped in the UI.",
+          "type": "string",
+          "example": "webhook_1"
+        },
+        "provenance": {
+          "type": "string",
+          "readOnly": true
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "alertmanager",
+            " dingding",
+            " discord",
+            " email",
+            " googlechat",
+            " kafka",
+            " line",
+            " opsgenie",
+            " pagerduty",
+            " pushover",
+            " sensugo",
+            " slack",
+            " teams",
+            " telegram",
+            " threema",
+            " victorops",
+            " webhook",
+            " wecom"
+          ],
+          "example": "webhook"
+        },
+        "uid": {
+          "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
+          "type": "string",
+          "example": "my_external_reference"
+        }
+      }
     },
-    "EvalQueriesPayload": {},
-    "EvalQueriesResponse": {},
-    "ExtendedReceiver": {},
-    "Failure": {},
+    "ErrorType": {
+      "type": "string",
+      "title": "ErrorType models the different API error types."
+    },
+    "EvalAlertConditionCommand": {
+      "description": "EvalAlertConditionCommand is the command for evaluating a condition",
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          }
+        },
+        "now": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "EvalQueriesPayload": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          }
+        },
+        "now": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "EvalQueriesResponse": {
+      "$ref": "#/definitions/EvalQueriesResponse"
+    },
+    "ExtendedReceiver": {
+      "type": "object",
+      "properties": {
+        "email_configs": {
+          "$ref": "#/definitions/EmailConfig"
+        },
+        "grafana_managed_receiver": {
+          "$ref": "#/definitions/PostableGrafanaReceiver"
+        },
+        "opsgenie_configs": {
+          "$ref": "#/definitions/OpsGenieConfig"
+        },
+        "pagerduty_configs": {
+          "$ref": "#/definitions/PagerdutyConfig"
+        },
+        "pushover_configs": {
+          "$ref": "#/definitions/PushoverConfig"
+        },
+        "slack_configs": {
+          "$ref": "#/definitions/SlackConfig"
+        },
+        "victorops_configs": {
+          "$ref": "#/definitions/VictorOpsConfig"
+        },
+        "webhook_configs": {
+          "$ref": "#/definitions/WebhookConfig"
+        },
+        "wechat_configs": {
+          "$ref": "#/definitions/WechatConfig"
+        }
+      }
+    },
+    "Failure": {
+      "$ref": "#/definitions/ResponseDetails"
+    },
     "Field": {
       "description": "A Field is essentially a slice of various types with extra properties and methods.\nSee NewField() for supported types.\n\nThe slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.",
-      "title": "Field represents a typed column of data within a Frame."
+      "type": "object",
+      "title": "Field represents a typed column of data within a Frame.",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/FieldConfig"
+        },
+        "labels": {
+          "$ref": "#/definitions/FrameLabels"
+        },
+        "name": {
+          "description": "Name is default identifier of the field. The name does not have to be unique, but the combination\nof name and Labels should be unique for proper behavior in all situations.",
+          "type": "string"
+        }
+      }
+    },
+    "FieldConfig": {
+      "type": "object",
+      "title": "FieldConfig represents the display properties for a Field.",
+      "properties": {
+        "color": {
+          "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "custom": {
+          "description": "Panel Specific Values",
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "decimals": {
+          "type": "integer",
+          "format": "uint16"
+        },
+        "description": {
+          "description": "Description is human readable field metadata",
+          "type": "string"
+        },
+        "displayName": {
+          "description": "DisplayName overrides Grafana default naming, should not be used from a data source",
+          "type": "string"
+        },
+        "displayNameFromDS": {
+          "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+          "type": "string"
+        },
+        "filterable": {
+          "description": "Filterable indicates if the Field's data can be filtered by additional calls.",
+          "type": "boolean"
+        },
+        "interval": {
+          "description": "Interval indicates the expected regular step between values in the series.\nWhen an interval exists, consumers can identify \"missing\" values when the expected value is not present.\nThe grafana timeseries visualization will render disconnected values when missing values are found it the time field.\nThe interval uses the same units as the values.  For time.Time, this is defined in milliseconds.",
+          "type": "number",
+          "format": "double"
+        },
+        "links": {
+          "description": "The behavior when clicking on a result",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataLink"
+          }
+        },
+        "mappings": {
+          "$ref": "#/definitions/ValueMappings"
+        },
+        "max": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "min": {
+          "$ref": "#/definitions/ConfFloat64"
+        },
+        "noValue": {
+          "description": "Alternative to empty string",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path is an explicit path to the field in the datasource. When the frame meta includes a path,\nthis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used as an identifier to update values in a subsequent request",
+          "type": "string"
+        },
+        "thresholds": {
+          "$ref": "#/definitions/ThresholdsConfig"
+        },
+        "unit": {
+          "description": "Numeric Options",
+          "type": "string"
+        },
+        "writeable": {
+          "description": "Writeable indicates that the datasource knows how to update this value",
+          "type": "boolean"
+        }
+      }
     },
     "Frame": {
       "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
-      "title": "Frame is a columnar data structure where each column is a Field."
+      "type": "object",
+      "title": "Frame is a columnar data structure where each column is a Field.",
+      "properties": {
+        "Fields": {
+          "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Field"
+          }
+        },
+        "Meta": {
+          "$ref": "#/definitions/FrameMeta"
+        },
+        "Name": {
+          "description": "Name is used in some Grafana visualizations.",
+          "type": "string"
+        },
+        "RefID": {
+          "description": "RefID is a property that can be set to match a Frame to its originating query.",
+          "type": "string"
+        }
+      }
     },
     "FrameLabels": {
-      "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys"
+      "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     },
     "FrameMeta": {
       "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
-      "title": "FrameMeta matches:"
+      "type": "object",
+      "title": "FrameMeta matches:",
+      "properties": {
+        "channel": {
+          "description": "Channel is the path to a stream in grafana live that has real-time updates for this data.",
+          "type": "string"
+        },
+        "custom": {
+          "description": "Custom datasource specific values."
+        },
+        "dataTopic": {
+          "$ref": "#/definitions/DataTopic"
+        },
+        "executedQueryString": {
+          "description": "ExecutedQueryString is the raw query sent to the underlying system. All macros and templating\nhave been applied.  When metadata contains this value, it will be shown in the query inspector.",
+          "type": "string"
+        },
+        "notices": {
+          "description": "Notices provide additional information about the data in the Frame that\nGrafana can display to the user in the user interface.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Notice"
+          }
+        },
+        "path": {
+          "description": "Path is a browsable path on the datasource.",
+          "type": "string"
+        },
+        "pathSeparator": {
+          "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
+          "type": "string"
+        },
+        "preferredVisualisationType": {
+          "$ref": "#/definitions/VisType"
+        },
+        "stats": {
+          "description": "Stats is an array of query result statistics.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/QueryStat"
+          }
+        },
+        "type": {
+          "$ref": "#/definitions/FrameType"
+        }
+      }
+    },
+    "FrameType": {
+      "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+      "type": "string"
     },
     "Frames": {
       "description": "It is the main data container within a backend.DataResponse.",
-      "title": "Frames is a slice of Frame pointers."
+      "type": "array",
+      "title": "Frames is a slice of Frame pointers.",
+      "items": {
+        "$ref": "#/definitions/Frame"
+      }
     },
-    "GettableAlertmanagers": {},
-    "GettableGrafanaRule": {},
-    "GettableNGalertConfig": {},
-    "GettableRuleGroupConfig": {},
-    "GettableStatus": {},
-    "GettableUserConfig": {},
-    "GettableUserConfigs": {},
-    "LegacyAlert": {},
-    "MessageTemplate": {},
-    "MessageTemplates": {},
-    "MultiStatus": {},
-    "MuteTimeInterval": {},
-    "MuteTimings": {},
-    "NamespaceConfigResponse": {},
-    "NotFound": {},
-    "PermissionDenied": {},
-    "PostableGrafanaRule": {},
-    "PostableNGalertConfig": {},
-    "PostableRuleGroupConfig": {},
-    "PostableUserConfig": {},
-    "ResponseDetails": {},
-    "Responses": {
-      "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataResponses' frames based on these RefIDs.",
-      "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses."
+    "GettableAlertmanagers": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/AlertManagersResult"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
     },
-    "Rule": {
-      "description": "adapted from cortex"
+    "GettableApiAlertingConfig": {
+      "type": "object",
+      "properties": {
+        "global": {
+          "$ref": "#/definitions/GlobalConfig"
+        },
+        "inhibit_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InhibitRule"
+          }
+        },
+        "muteTimeProvenances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Provenance"
+          }
+        },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MuteTimeInterval"
+          }
+        },
+        "receivers": {
+          "description": "Override with our superset receiver type",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GettableApiReceiver"
+          }
+        },
+        "route": {
+          "$ref": "#/definitions/Route"
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
-    "RuleDiscovery": {},
-    "RuleGroup": {},
-    "RuleGroupConfigResponse": {},
-    "RuleResponse": {},
-    "SmtpNotEnabled": {},
-    "Success": {},
-    "TestReceiverConfigResult": {},
-    "TestReceiverResult": {},
-    "TestReceiversResult": {},
-    "TestRulePayload": {},
-    "TestRuleResponse": {},
-    "ValidationError": {},
-    "alert": {
-      "description": "Alert alert"
+    "GettableApiReceiver": {
+      "type": "object",
+      "properties": {
+        "email_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailConfig"
+          }
+        },
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GettableGrafanaReceiver"
+          }
+        },
+        "name": {
+          "description": "A unique identifier for this receiver.",
+          "type": "string"
+        },
+        "opsgenie_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpsGenieConfig"
+          }
+        },
+        "pagerduty_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PagerdutyConfig"
+          }
+        },
+        "pushover_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PushoverConfig"
+          }
+        },
+        "slack_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SlackConfig"
+          }
+        },
+        "sns_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SNSConfig"
+          }
+        },
+        "telegram_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TelegramConfig"
+          }
+        },
+        "victorops_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VictorOpsConfig"
+          }
+        },
+        "webhook_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WebhookConfig"
+          }
+        },
+        "wechat_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WechatConfig"
+          }
+        }
+      }
     },
-    "alertGroup": {},
-    "alertGroups": {},
-    "alertStatus": {
-      "description": "AlertStatus alert status"
+    "GettableExtendedRuleNode": {
+      "type": "object",
+      "properties": {
+        "alert": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "expr": {
+          "type": "string"
+        },
+        "for": {
+          "type": "string"
+        },
+        "grafana_alert": {
+          "$ref": "#/definitions/GettableGrafanaRule"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "record": {
+          "type": "string"
+        }
+      }
     },
-    "alertmanagerConfig": {
-      "description": "AlertmanagerConfig alertmanager config"
+    "GettableGrafanaReceiver": {
+      "type": "object",
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "secureFields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "type": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
     },
-    "alertmanagerStatus": {
-      "description": "AlertmanagerStatus alertmanager status"
+    "GettableGrafanaReceivers": {
+      "type": "object",
+      "properties": {
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GettableGrafanaReceiver"
+          }
+        }
+      }
     },
-    "clusterStatus": {
-      "description": "ClusterStatus cluster status"
+    "GettableGrafanaRule": {
+      "type": "object",
+      "properties": {
+        "condition": {
+          "type": "string"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          }
+        },
+        "exec_err_state": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "Alerting",
+            "Error"
+          ]
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "intervalSeconds": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "namespace_id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "namespace_uid": {
+          "type": "string"
+        },
+        "no_data_state": {
+          "type": "string",
+          "enum": [
+            "Alerting",
+            "NoData",
+            "OK"
+          ]
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "rule_group": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
     },
-    "gettableAlert": {
-      "description": "GettableAlert gettable alert"
+    "GettableNGalertConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanagersChoice": {
+          "type": "string",
+          "enum": [
+            "all",
+            "internal",
+            "external"
+          ]
+        }
+      }
     },
-    "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts"
+    "GettableRuleGroupConfig": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "$ref": "#/definitions/Duration"
+        },
+        "name": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GettableExtendedRuleNode"
+          }
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
-    "gettableSilence": {
-      "description": "GettableSilence gettable silence"
+    "GettableStatus": {
+      "type": "object",
+      "required": [
+        "cluster",
+        "config",
+        "uptime",
+        "versionInfo"
+      ],
+      "properties": {
+        "cluster": {
+          "$ref": "#/definitions/clusterStatus"
+        },
+        "config": {
+          "$ref": "#/definitions/PostableApiAlertingConfig"
+        },
+        "uptime": {
+          "description": "uptime",
+          "type": "string",
+          "format": "date-time"
+        },
+        "versionInfo": {
+          "$ref": "#/definitions/versionInfo"
+        }
+      }
     },
-    "gettableSilences": {},
-    "integration": {
-      "description": "Integration integration"
+    "GettableUserConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "$ref": "#/definitions/GettableApiAlertingConfig"
+        },
+        "template_file_provenances": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Provenance"
+          }
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
     },
-    "labelSet": {
-      "description": "LabelSet label set"
+    "GettableUserConfigs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/GettableUserConfig"
+      }
     },
-    "matcher": {
-      "description": "Matcher matcher"
+    "GlobalConfig": {
+      "description": "GlobalConfig defines configuration parameters that are valid globally\nunless overwritten.",
+      "type": "object",
+      "properties": {
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "opsgenie_api_key": {
+          "$ref": "#/definitions/Secret"
+        },
+        "opsgenie_api_key_file": {
+          "type": "string"
+        },
+        "opsgenie_api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "pagerduty_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "resolve_timeout": {
+          "$ref": "#/definitions/Duration"
+        },
+        "slack_api_url": {
+          "$ref": "#/definitions/SecretURL"
+        },
+        "slack_api_url_file": {
+          "type": "string"
+        },
+        "smtp_auth_identity": {
+          "type": "string"
+        },
+        "smtp_auth_password": {
+          "$ref": "#/definitions/Secret"
+        },
+        "smtp_auth_password_file": {
+          "type": "string"
+        },
+        "smtp_auth_secret": {
+          "$ref": "#/definitions/Secret"
+        },
+        "smtp_auth_username": {
+          "type": "string"
+        },
+        "smtp_from": {
+          "type": "string"
+        },
+        "smtp_hello": {
+          "type": "string"
+        },
+        "smtp_require_tls": {
+          "type": "boolean"
+        },
+        "smtp_smarthost": {
+          "$ref": "#/definitions/HostPort"
+        },
+        "telegram_api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "victorops_api_key": {
+          "$ref": "#/definitions/Secret"
+        },
+        "victorops_api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "wechat_api_corp_id": {
+          "type": "string"
+        },
+        "wechat_api_secret": {
+          "$ref": "#/definitions/Secret"
+        },
+        "wechat_api_url": {
+          "$ref": "#/definitions/URL"
+        }
+      }
     },
-    "matchers": {
-      "description": "Matchers matchers"
+    "HTTPClientConfig": {
+      "type": "object",
+      "title": "HTTPClientConfig configures an HTTP client.",
+      "properties": {
+        "authorization": {
+          "$ref": "#/definitions/Authorization"
+        },
+        "basic_auth": {
+          "$ref": "#/definitions/BasicAuth"
+        },
+        "bearer_token": {
+          "$ref": "#/definitions/Secret"
+        },
+        "bearer_token_file": {
+          "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
+          "type": "string"
+        },
+        "enable_http2": {
+          "description": "EnableHTTP2 specifies whether the client should configure HTTP2.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
+          "type": "boolean"
+        },
+        "follow_redirects": {
+          "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
+          "type": "boolean"
+        },
+        "oauth2": {
+          "$ref": "#/definitions/OAuth2"
+        },
+        "proxy_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "tls_config": {
+          "$ref": "#/definitions/TLSConfig"
+        }
+      }
     },
-    "peerStatus": {
-      "description": "PeerStatus peer status"
+    "HostPort": {
+      "type": "object",
+      "title": "HostPort represents a \"host:port\" network address.",
+      "properties": {
+        "Host": {
+          "type": "string"
+        },
+        "Port": {
+          "type": "string"
+        }
+      }
     },
-    "postSilencesOKBody": {},
-    "postableAlert": {
-      "description": "PostableAlert postable alert"
+    "InhibitRule": {
+      "description": "InhibitRule defines an inhibition rule that mutes alerts that match the\ntarget labels if an alert matching the source labels exists.\nBoth alerts have to have a set of labels being equal.",
+      "type": "object",
+      "properties": {
+        "equal": {
+          "$ref": "#/definitions/LabelNames"
+        },
+        "source_match": {
+          "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "source_match_re": {
+          "$ref": "#/definitions/MatchRegexps"
+        },
+        "source_matchers": {
+          "$ref": "#/definitions/Matchers"
+        },
+        "target_match": {
+          "description": "TargetMatch defines a set of labels that have to equal the given\nvalue for target alerts. Deprecated. Remove before v1.0 release.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "target_match_re": {
+          "$ref": "#/definitions/MatchRegexps"
+        },
+        "target_matchers": {
+          "$ref": "#/definitions/Matchers"
+        }
+      }
     },
-    "postableAlerts": {
-      "description": "PostableAlerts postable alerts"
+    "InspectType": {
+      "type": "integer",
+      "format": "int64",
+      "title": "InspectType is a type for the Inspect property of a Notice."
     },
-    "postableSilence": {},
-    "receiver": {},
-    "silence": {
-      "description": "Silence silence"
+    "Json": {
+      "type": "object"
+    },
+    "Label": {
+      "type": "object",
+      "title": "Label is a key/value pair of strings.",
+      "properties": {
+        "Name": {
+          "type": "string"
+        }
+      }
+    },
+    "LabelName": {
+      "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
+      "type": "string"
+    },
+    "LabelNames": {
+      "type": "array",
+      "title": "LabelNames is a sortable LabelName slice. In implements sort.Interface.",
+      "items": {
+        "$ref": "#/definitions/LabelName"
+      }
+    },
+    "LabelSet": {
+      "description": "A LabelSet is a collection of LabelName and LabelValue pairs.  The LabelSet\nmay be fully-qualified down to the point where it may resolve to a single\nMetric in the data store or not.  All operations that occur within the realm\nof a LabelSet can emit a vector of Metric entities to which the LabelSet may\nmatch.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/LabelValue"
+      }
+    },
+    "LabelValue": {
+      "type": "string",
+      "title": "A LabelValue is an associated value for a LabelName."
+    },
+    "Labels": {
+      "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Label"
+      }
+    },
+    "LegacyAlert": {
+      "type": "object",
+      "properties": {
+        "Created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "DashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "EvalData": {
+          "$ref": "#/definitions/Json"
+        },
+        "ExecutionError": {
+          "type": "string"
+        },
+        "For": {
+          "$ref": "#/definitions/Duration"
+        },
+        "Frequency": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Handler": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Message": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        },
+        "NewStateDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "OrgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "PanelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Settings": {
+          "$ref": "#/definitions/Json"
+        },
+        "Severity": {
+          "type": "string"
+        },
+        "Silenced": {
+          "type": "boolean"
+        },
+        "State": {
+          "$ref": "#/definitions/AlertStateType"
+        },
+        "StateChanges": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "Updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Version": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "MatchRegexps": {
+      "type": "object",
+      "title": "MatchRegexps represents a map of Regexp.",
+      "additionalProperties": {
+        "$ref": "#/definitions/Regexp"
+      }
+    },
+    "MatchType": {
+      "type": "integer",
+      "format": "int64",
+      "title": "MatchType is an enum for label matching types."
+    },
+    "Matcher": {
+      "type": "object",
+      "title": "Matcher models the matching of a label.",
+      "properties": {
+        "Name": {
+          "type": "string"
+        },
+        "Type": {
+          "$ref": "#/definitions/MatchType"
+        },
+        "Value": {
+          "type": "string"
+        }
+      }
+    },
+    "Matchers": {
+      "description": "Matchers is a slice of Matchers that is sortable, implements Stringer, and\nprovides a Matches method to match a LabelSet against all Matchers in the\nslice. Note that some users of Matchers might require it to be sorted.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Matcher"
+      },
+      "$ref": "#/definitions/Matchers"
+    },
+    "MessageTemplate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "template": {
+          "type": "string"
+        }
+      }
     },
     "MessageTemplateContent": {
       "type": "object",
@@ -4667,6 +5847,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -4691,6 +5872,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -4860,6 +6042,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -4909,6 +6092,7 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -5176,7 +6360,42 @@
       }
     },
     "versionInfo": {
-      "description": "VersionInfo version info"
+      "description": "VersionInfo version info",
+      "type": "object",
+      "required": [
+        "branch",
+        "buildDate",
+        "buildUser",
+        "goVersion",
+        "revision",
+        "version"
+      ],
+      "properties": {
+        "branch": {
+          "description": "branch",
+          "type": "string"
+        },
+        "buildDate": {
+          "description": "build date",
+          "type": "string"
+        },
+        "buildUser": {
+          "description": "build user",
+          "type": "string"
+        },
+        "goVersion": {
+          "description": "go version",
+          "type": "string"
+        },
+        "revision": {
+          "description": "revision",
+          "type": "string"
+        },
+        "version": {
+          "description": "version",
+          "type": "string"
+        }
+      }
     }
   },
   "responses": {
@@ -5184,7 +6403,9 @@
       "description": "",
       "schema": {
         "type": "array",
-        "items": {}
+        "items": {
+          "$ref": "#/definitions/receiver"
+        }
       }
     }
   },
