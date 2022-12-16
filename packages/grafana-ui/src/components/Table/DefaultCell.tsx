@@ -58,36 +58,57 @@ function getCellStyle(
   displayValue: DisplayValue,
   disableOverflowOnHover = false
 ) {
-  if (field.config.custom?.displayMode === TableCellDisplayMode.ColorText) {
-    return tableStyles.buildCellContainerStyle(displayValue.color, undefined, !disableOverflowOnHover);
+  // How much to darken elements depends upon if we're in dark mode
+  const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
+
+  // See if we're using deprecated settings
+  const usingDeprecatedSettings = field.config.custom.cellOptions.subOptions['color-background'] === undefined;
+
+  // Setup color variables
+  let textColor: string | undefined = undefined;
+  let bgColor: string | undefined = undefined;
+
+  // Set colors using deprecated settings format
+  if (usingDeprecatedSettings) {
+    if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
+      textColor = displayValue.color;
+    } else if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = tinycolor(displayValue.color).toRgbString();
+    } else if (
+      field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground &&
+      field.config.custom?.backgroundDisplayMode === BackgroundDisplayMode.Gradient
+    ) {
+      const bgColor2 = tinycolor(displayValue.color)
+        .darken(10 * darkeningFactor)
+        .spin(5);
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
+    }
+  }
+  // Set colors using updated sub-options format
+  else {
+    const displayMode = field.config.custom.cellOptions.subOptions['color-background'].displayMode;
+    console.log(`Display Mode: ${displayMode}`);
+
+    if (displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
+      textColor = displayValue.color;
+    } else if (displayMode === BackgroundDisplayMode.Basic) {
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = tinycolor(displayValue.color).toRgbString();
+    } else if (displayMode === BackgroundDisplayMode.Gradient) {
+      const bgColor2 = tinycolor(displayValue.color)
+        .darken(10 * darkeningFactor)
+        .spin(5);
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
+    }
   }
 
-  if (
-    field.config.custom?.cellOptions.displayMode === TableCellDisplayMode.ColorBackground &&
-    field.config.custom?.cellOptions.backgroundDisplayMode === BackgroundDisplayMode.Basic
-  ) {
-    const bgColor = tinycolor(displayValue.color);
-    const textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
-    return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString(), !disableOverflowOnHover);
-  }
-
-  if (
-    field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground &&
-    field.config.custom?.backgroundDisplayMode === BackgroundDisplayMode.Gradient
-  ) {
-    const themeFactor = tableStyles.theme.isDark ? 1 : -0.7;
-    const bgColor2 = tinycolor(displayValue.color)
-      .darken(10 * themeFactor)
-      .spin(5)
-      .toRgbString();
-
-    const textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
-
-    return tableStyles.buildCellContainerStyle(
-      textColor,
-      `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`,
-      !disableOverflowOnHover
-    );
+  // If we have definied colors return those styles
+  // Otherwise we return default styles
+  if (textColor !== undefined && bgColor !== undefined) {
+    return tableStyles.buildCellContainerStyle(textColor, bgColor, !disableOverflowOnHover);
   }
 
   return disableOverflowOnHover ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer;
