@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/explore/query-management/
 keywords:
   - explore
   - loki

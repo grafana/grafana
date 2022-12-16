@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/change-user-org-permissions/
+  - ../../manage-users-and-permissions/manage-server-users/change-user-org-permissions/
 title: Change a user's organization permissions
 weight: 50
 ---

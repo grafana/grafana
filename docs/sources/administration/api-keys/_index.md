@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/api-keys/about-api-keys/
-  - /docs/grafana/latest/administration/api-keys/
-  - /docs/grafana/latest/administration/api-keys/create-api-key/
+  - about-api-keys/
+  - create-api-key/
 description: This section contains information about API keys in Grafana
 keywords:
   - API keys

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/troubleshooting/troubleshoot-queries/
 description: Guide to troubleshooting Grafana queries
 keywords:
   - grafana

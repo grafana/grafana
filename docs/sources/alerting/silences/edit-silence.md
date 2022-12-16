@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/silences/edit-silence/
-  - /docs/grafana/latest/alerting/unified-alerting/silences/
+  - ../unified-alerting/silences/
 description: Edit alerting silences
 keywords:
   - grafana

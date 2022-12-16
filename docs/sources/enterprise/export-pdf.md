@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/enterprise/export-pdf/
 description: ''
 keywords:
   - grafana

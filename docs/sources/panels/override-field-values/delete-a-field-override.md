@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/override-field-values/delete-a-field-override/
   - /docs/sources/panels/override-field-values/delete-a-field-override/
 title: Delete a field override
 weight: 50

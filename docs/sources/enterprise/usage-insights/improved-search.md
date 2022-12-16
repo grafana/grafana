@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/enterprise/usage-insights/improved-search/
 description: Sort dashboards by using insights data
 keywords:
   - grafana

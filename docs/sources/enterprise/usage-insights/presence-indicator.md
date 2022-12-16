@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/enterprise/usage-insights/presence-indicator/
 description: Know who is looking at the same dashboard as you are
 keywords:
   - grafana
