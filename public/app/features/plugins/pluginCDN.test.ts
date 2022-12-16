@@ -5,7 +5,7 @@ describe('Plugin CDN', () => {
     const load = {
       name: 'http://localhost:3000/public/plugin-cdn/grafana-worldmap-panel/0.3.3/grafana-worldmap-panel/module.js',
       address:
-        'https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/grafana-worldmap-panel/module.js',
+        'https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/grafana-worldmap-panel/0.3.3/grafana-worldmap-panel/module.js',
       source: 'public/plugins/grafana-worldmap-panel/template.html',
       metadata: {
         extension: '',
@@ -26,7 +26,7 @@ describe('Plugin CDN', () => {
         source: 'public/plugins/grafana-worldmap-panel/template.html',
       });
       expect(translatedLoad).toBe(
-        'https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/template.html'
+        'https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/template.html'
       );
     });
 
@@ -36,8 +36,8 @@ describe('Plugin CDN', () => {
         const img = "<img src='public/plugins/grafana-worldmap-panel/data/myimage.jpg'>";
       `;
       const expectedSource = `
-        const a = "https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/template.html";
-        const img = "<img src='https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/data/myimage.jpg'>";
+        const a = "https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/template.html";
+        const img = "<img src='https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/data/myimage.jpg'>";
       `;
       const translatedLoad = translateForCDN({ ...load, source });
       expect(translatedLoad).toBe(expectedSource);
@@ -49,8 +49,8 @@ describe('Plugin CDN', () => {
         const img = "<img src='public/plugins/grafana-worldmap-panel/data/myimage.jpg'>";
       `;
       const expectedSource = `
-        const a = "https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/template.html";
-        const img = "<img src='https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/data/myimage.jpg'>";
+        const a = "https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/template.html";
+        const img = "<img src='https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/data/myimage.jpg'>";
       `;
       const translatedLoad = translateForCDN({ ...load, source });
       expect(translatedLoad).toBe(expectedSource);
@@ -66,7 +66,7 @@ describe('Plugin CDN', () => {
       `;
       const expectedSource = `
         .getJSON(
-          "https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/data/" +
+          "https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/data/" +
             this.panel.locationData +
             ".json"
         )
@@ -82,7 +82,7 @@ describe('Plugin CDN', () => {
       `;
       const expectedSource = `
         Zn(t,e)},t.Rectangle=ui,t.rectangle=function(t,e){return new ui(t,e)},t.Map=He,t.map=function(t,e){return new He(t,e)}}(e)}])});
-        //# sourceMappingURL=https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js.map
+        //# sourceMappingURL=https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js.map
       `;
       const translatedLoad = translateForCDN({ ...load, source });
       expect(translatedLoad).toBe(expectedSource);

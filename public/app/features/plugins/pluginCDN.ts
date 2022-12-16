@@ -1,5 +1,5 @@
 // ⚠️ POC plugin CDN stuffs! ⚠️
-export const cdnHost = 'https://plugin-cdn.storage.googleapis.com';
+export const cdnHost = 'https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn';
 
 export function extractPluginDeets(address: string) {
   const path = new URL(address).pathname;
@@ -11,7 +11,7 @@ export function locateFromCDN(load: { address: string }): string {
   const { address } = load;
   // http://localhost:3000/public/plugin-cdn/pluginID/version/module
   const pluginPath = address.split('/public/plugin-cdn/');
-  // https://plugin-cdn.storage.googleapis.com/pluginID/version/module
+  // https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/pluginID/version/module
   return `${cdnHost}/${pluginPath[1]}`;
 }
 
@@ -30,4 +30,4 @@ export function translateForCDN(load: any): any {
   return load.source;
 }
 
-// http://localhost:3000/%22https://plugin-cdn.storage.googleapis.com/grafana-worldmap-panel/0.3.3/plugins/grafana-worldmap-panel/css/worldmap.dark.css%22?_cache=1670855773342
+// http://localhost:3000/%22https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/grafana-worldmap-panel/0.3.3/plugins/grafana-worldmap-panel/css/worldmap.dark.css%22?_cache=1670855773342

@@ -52,7 +52,10 @@ export class AngularApp {
 
         $httpProvider.useApplyAsync(true);
         // ⚠️ Plugin cdn poc! ⚠️
-        $sceDelegateProvider.trustedResourceUrlList(['self', 'https://plugin-cdn.storage.googleapis.com/**']);
+        $sceDelegateProvider.trustedResourceUrlList([
+          'self',
+          'https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/**',
+        ]);
 
         this.registerFunctions.controller = $controllerProvider.register;
         this.registerFunctions.directive = $compileProvider.directive;
