@@ -15,7 +15,7 @@ import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { LogMessages } from './Analytics';
-import RuleList from './Home';
+import RuleList from './RuleList';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
 import { deleteNamespace, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from './api/ruler';
