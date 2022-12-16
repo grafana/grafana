@@ -34,5 +34,5 @@ def publish_aws_marketplace_pipeline(mode):
         'target': [mode],
     }
     return [pipeline(
-        name='publish-aws-marketplace-{}'.format(mode), trigger=trigger, steps=[compile_build_cmd(), fetch_images_step('enterprise2'), publish_aws_marketplace_step()], edition="", environment = {'EDITION': 'enterprise2'}
+        name='publish-aws-marketplace-{}'.format(mode), trigger=trigger, steps=[compile_build_cmd(), fetch_images_step('enterprise'), publish_aws_marketplace_step()], edition="", environment = {'EDITION': 'enterprise2'}
     ),]
