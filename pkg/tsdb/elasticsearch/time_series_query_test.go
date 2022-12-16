@@ -1817,8 +1817,6 @@ func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval 
 
 func TestTimeSeriesQueryParser(t *testing.T) {
 	t.Run("Test time series query parser", func(t *testing.T) {
-		p := newTimeSeriesQueryParser()
-
 		t.Run("Should be able to parse query", func(t *testing.T) {
 			body := `{
 				"timeField": "@timestamp",
@@ -1872,7 +1870,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 			}`
 			dataQuery, err := newDataQuery(body)
 			require.NoError(t, err)
-			queries, err := p.parse(dataQuery.Queries)
+			queries, err := parseQuery(dataQuery.Queries)
 			require.NoError(t, err)
 			require.Len(t, queries, 1)
 
