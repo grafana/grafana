@@ -77,52 +77,38 @@ function Editor({
       onProjectChange={onChange}
       query={query}
     >
-      {(metric) => {
-        const onChangePreprocessor = (preprocessor: PreprocessorType) => {
-          const { perSeriesAligner: psa } = query;
-          let valueType = metric?.valueType;
-          let metricKind = metric?.metricKind;
-          const { perSeriesAligner } = getAlignmentPickerData(valueType, metricKind, psa, preprocessor);
-          onChange({ ...query, perSeriesAligner, preprocessor });
-        };
-
-        return (
-          <>
-            <LabelFilter
-              labels={labels}
-              filters={query.filters!}
-              onChange={(filters: string[]) => onChange({ ...query, filters })}
+      {(metric) => (
+        <>
+          <LabelFilter
+            labels={labels}
+            filters={query.filters!}
+            onChange={(filters: string[]) => onChange({ ...query, filters })}
+            variableOptionGroup={variableOptionGroup}
+          />
+          <EditorRow>
+            <Preprocessor metricDescriptor={metric} query={query} onChange={onChange} />
+            <GroupBy
+              refId={refId}
+              labels={Object.keys(labels)}
+              query={query}
+              onChange={onChange}
               variableOptionGroup={variableOptionGroup}
+              metricDescriptor={metric}
             />
-            <EditorRow>
-              <Preprocessor
-                metricDescriptor={metric}
-                preprocessor={query.preprocessor}
-                onChangePreprocessor={onChangePreprocessor}
-              />
-              <GroupBy
-                refId={refId}
-                labels={Object.keys(labels)}
-                query={query}
-                onChange={onChange}
-                variableOptionGroup={variableOptionGroup}
-                metricDescriptor={metric}
-              />
-              <Alignment
-                refId={refId}
-                datasource={datasource}
-                templateVariableOptions={variableOptionGroup.options}
-                query={query}
-                customMetaData={customMetaData}
-                onChange={onChange}
-                metricDescriptor={metric}
-                preprocessor={query.preprocessor}
-              />
-              <AliasBy refId={refId} value={aliasBy} onChange={onChangeAliasBy} />
-            </EditorRow>
-          </>
-        );
-      }}
+            <Alignment
+              refId={refId}
+              datasource={datasource}
+              templateVariableOptions={variableOptionGroup.options}
+              query={query}
+              customMetaData={customMetaData}
+              onChange={onChange}
+              metricDescriptor={metric}
+              preprocessor={query.preprocessor}
+            />
+            <AliasBy refId={refId} value={aliasBy} onChange={onChangeAliasBy} />
+          </EditorRow>
+        </>
+      )}
     </Metrics>
   );
 }
