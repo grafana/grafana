@@ -172,18 +172,6 @@
       ]
     },
     {
-      "name": "Stackdriver-DSOptions",
-      "pluralName": "Stackdriver-DSOptionss",
-      "machineName": "stackdriver_dsoptions",
-      "pluralMachineName": "stackdriver_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
       "name": "Stackdriver-Query",
       "pluralName": "Stackdriver-Querys",
       "machineName": "stackdriver_query",
@@ -196,10 +184,10 @@
       ]
     },
     {
-      "name": "Cloudwatch-DSOptions",
-      "pluralName": "Cloudwatch-DSOptionss",
-      "machineName": "cloudwatch_dsoptions",
-      "pluralMachineName": "cloudwatch_dsoptionss",
+      "name": "Stackdriver-DSOptions",
+      "pluralName": "Stackdriver-DSOptionss",
+      "machineName": "stackdriver_dsoptions",
+      "pluralMachineName": "stackdriver_dsoptionss",
       "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
@@ -220,10 +208,10 @@
       ]
     },
     {
-      "name": "Dashboard-DSOptions",
-      "pluralName": "Dashboard-DSOptionss",
-      "machineName": "dashboard_dsoptions",
-      "pluralMachineName": "dashboard_dsoptionss",
+      "name": "Cloudwatch-DSOptions",
+      "pluralName": "Cloudwatch-DSOptionss",
+      "machineName": "cloudwatch_dsoptions",
+      "pluralMachineName": "cloudwatch_dsoptionss",
       "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
@@ -237,6 +225,18 @@
       "machineName": "dashboard_query",
       "pluralMachineName": "dashboard_querys",
       "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Dashboard-DSOptions",
+      "pluralName": "Dashboard-DSOptionss",
+      "machineName": "dashboard_dsoptions",
+      "pluralMachineName": "dashboard_dsoptionss",
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -364,18 +364,6 @@
       ]
     },
     {
-      "name": "Loki-DSOptions",
-      "pluralName": "Loki-DSOptionss",
-      "machineName": "loki_dsoptions",
-      "pluralMachineName": "loki_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
       "name": "Loki-Query",
       "pluralName": "Loki-Querys",
       "machineName": "loki_query",
@@ -388,10 +376,10 @@
       ]
     },
     {
-      "name": "Mssql-DSOptions",
-      "pluralName": "Mssql-DSOptionss",
-      "machineName": "mssql_dsoptions",
-      "pluralMachineName": "mssql_dsoptionss",
+      "name": "Loki-DSOptions",
+      "pluralName": "Loki-DSOptionss",
+      "machineName": "loki_dsoptions",
+      "pluralMachineName": "loki_dsoptionss",
       "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
@@ -405,6 +393,18 @@
       "machineName": "mssql_query",
       "pluralMachineName": "mssql_querys",
       "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Mssql-DSOptions",
+      "pluralName": "Mssql-DSOptionss",
+      "machineName": "mssql_dsoptions",
+      "pluralMachineName": "mssql_dsoptionss",
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -436,11 +436,11 @@
       ]
     },
     {
-      "name": "Parca-DSOptions",
-      "pluralName": "Parca-DSOptionss",
-      "machineName": "parca_dsoptions",
-      "pluralMachineName": "parca_dsoptionss",
-      "lineageIsGroup": true,
+      "name": "Parca-Query",
+      "pluralName": "Parca-Querys",
+      "machineName": "parca_query",
+      "pluralMachineName": "parca_querys",
+      "lineageIsGroup": false,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -448,11 +448,11 @@
       ]
     },
     {
-      "name": "Parca-Query",
-      "pluralName": "Parca-Querys",
-      "machineName": "parca_query",
-      "pluralMachineName": "parca_querys",
-      "lineageIsGroup": false,
+      "name": "Parca-DSOptions",
+      "pluralName": "Parca-DSOptionss",
+      "machineName": "parca_dsoptions",
+      "pluralMachineName": "parca_dsoptionss",
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -532,18 +532,6 @@
       ]
     },
     {
-      "name": "Tempo-DSOptions",
-      "pluralName": "Tempo-DSOptionss",
-      "machineName": "tempo_dsoptions",
-      "pluralMachineName": "tempo_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
       "name": "Tempo-Query",
       "pluralName": "Tempo-Querys",
       "machineName": "tempo_query",
@@ -556,11 +544,11 @@
       ]
     },
     {
-      "name": "Testdata-Query",
-      "pluralName": "Testdata-Querys",
-      "machineName": "testdata_query",
-      "pluralMachineName": "testdata_querys",
-      "lineageIsGroup": false,
+      "name": "Tempo-DSOptions",
+      "pluralName": "Tempo-DSOptionss",
+      "machineName": "tempo_dsoptions",
+      "pluralMachineName": "tempo_dsoptionss",
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -580,11 +568,11 @@
       ]
     },
     {
-      "name": "Zipkin-DSOptions",
-      "pluralName": "Zipkin-DSOptionss",
-      "machineName": "zipkin_dsoptions",
-      "pluralMachineName": "zipkin_dsoptionss",
-      "lineageIsGroup": true,
+      "name": "Testdata-Query",
+      "pluralName": "Testdata-Querys",
+      "machineName": "testdata_query",
+      "pluralMachineName": "testdata_querys",
+      "lineageIsGroup": false,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -597,6 +585,18 @@
       "machineName": "zipkin_query",
       "pluralMachineName": "zipkin_querys",
       "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Zipkin-DSOptions",
+      "pluralName": "Zipkin-DSOptionss",
+      "machineName": "zipkin_dsoptions",
+      "pluralMachineName": "zipkin_dsoptionss",
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
