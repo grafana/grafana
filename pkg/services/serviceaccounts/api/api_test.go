@@ -115,13 +115,12 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	}
 }
 
-func TestServiceAccountsAPI_DeleteServiceAccount2(t *testing.T) {
+func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 	type TestCase struct {
 		desc         string
 		id           int64
 		permissions  []accesscontrol.Permission
 		expectedCode int
-		expectedErr  error
 	}
 
 	tests := []TestCase{
@@ -143,6 +142,48 @@ func TestServiceAccountsAPI_DeleteServiceAccount2(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t)
 			req := server.NewRequest(http.MethodDelete, fmt.Sprintf("/api/serviceaccounts/%d", tt.id), nil)
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			res, err := server.Send(req)
+			require.NoError(t, err)
+			defer res.Body.Close()
+
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+		})
+	}
+}
+
+func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
+	type TestCase struct {
+		desc         string
+		id           int64
+		permissions  []accesscontrol.Permission
+		expectedCode int
+		expectedErr  error
+		expectedSA   *serviceaccounts.ServiceAccountProfileDTO
+	}
+
+	tests := []TestCase{
+		{
+			desc:         "should be able to get service account with correct permission",
+			id:           1,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: "serviceaccounts:id:1"}},
+			expectedSA:   &serviceaccounts.ServiceAccountProfileDTO{},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:         "should not ba able to get service account with wrong permission",
+			id:           2,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: "serviceaccounts:id:1"}},
+			expectedCode: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := setupTests(t, func(a *ServiceAccountsAPI) {
+				a.service = &fakeService{ExpectedServiceAccountProfile: tt.expectedSA}
+			})
+			req := server.NewGetRequest(fmt.Sprintf("/api/serviceaccounts/%d", tt.id))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
 			res, err := server.Send(req)
 			require.NoError(t, err)
@@ -235,92 +276,6 @@ func setupTestServer(
 	})
 	a.RouterRegister.Register(m.Router)
 	return m, a
-}
-
-func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
-	store := db.InitTestDB(t)
-	services := setupTestServices(t, store)
-
-	type testRetrieveSATestCase struct {
-		desc         string
-		user         *tests.TestUser
-		expectedCode int
-		acmock       *accesscontrolmock.Mock
-		Id           int
-	}
-	testCases := []testRetrieveSATestCase{
-		{
-			desc: "should be ok to retrieve serviceaccount with permissions",
-			user: &tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true},
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusOK,
-		},
-		{
-			desc: "should be forbidden to retrieve serviceaccount if no permissions",
-			user: &tests.TestUser{Login: "servicetest2@admin", IsServiceAccount: true},
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusForbidden,
-		},
-		{
-			desc: "should be not found when the user doesnt exist",
-			user: nil,
-			Id:   12,
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusNotFound,
-		},
-	}
-
-	var requestResponse = func(server *web.Mux, httpMethod, requestpath string) *httptest.ResponseRecorder {
-		req, err := http.NewRequest(httpMethod, requestpath, nil)
-		require.NoError(t, err)
-		recorder := httptest.NewRecorder()
-		server.ServeHTTP(recorder, req)
-		return recorder
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			serviceAccountRequestScenario(t, http.MethodGet, serviceAccountIDPath, tc.user, func(httpmethod string, endpoint string, user *tests.TestUser) {
-				scopeID := tc.Id
-				if tc.user != nil {
-					createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
-					scopeID = int(createdUser.ID)
-				}
-				server, _ := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), tc.acmock, store)
-
-				actual := requestResponse(server, httpmethod, fmt.Sprintf(endpoint, scopeID))
-
-				actualCode := actual.Code
-				require.Equal(t, tc.expectedCode, actualCode)
-
-				if actualCode == http.StatusOK {
-					actualBody := map[string]interface{}{}
-					err := json.Unmarshal(actual.Body.Bytes(), &actualBody)
-					require.NoError(t, err)
-					require.Equal(t, scopeID, int(actualBody["id"].(float64)))
-					require.Equal(t, tc.user.Login, actualBody["login"].(string))
-				}
-			})
-		})
-	}
 }
 
 func newString(s string) *string {
@@ -495,8 +450,10 @@ var _ service = new(fakeService)
 
 type fakeService struct {
 	service
-	ExpectedErr            error
-	ExpectedServiceAccount *serviceaccounts.ServiceAccountDTO
+	ExpectedErr                   error
+	ExpectedServiceAccountTokens  []apikey.APIKey
+	ExpectedServiceAccount        *serviceaccounts.ServiceAccountDTO
+	ExpectedServiceAccountProfile *serviceaccounts.ServiceAccountProfileDTO
 }
 
 func (f *fakeService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
@@ -505,4 +462,12 @@ func (f *fakeService) CreateServiceAccount(ctx context.Context, orgID int64, saF
 
 func (f *fakeService) DeleteServiceAccount(ctx context.Context, orgID, id int64) error {
 	return f.ExpectedErr
+}
+
+func (f *fakeService) RetrieveServiceAccount(ctx context.Context, orgID, id int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	return f.ExpectedServiceAccountProfile, f.ExpectedErr
+}
+
+func (f *fakeService) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
+	return f.ExpectedServiceAccountTokens, f.ExpectedErr
 }
