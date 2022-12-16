@@ -511,7 +511,7 @@ func (p *timeSeriesQueryParser) parseMetrics(model *simplejson.Json) ([]*MetricA
 }
 
 func getPipelineAggField(m *MetricAgg) string {
-	// In frontend we are using Field as pipelineAggField 
+	// In frontend we are using Field as pipelineAggField
 	// There might be historical reason why in backend we were using PipelineAggregate as pipelineAggField
 	// So for now let's check Field first and then PipelineAggregate to ensure that we are not breaking anything
 	// TODO: Investigate, if we can remove check for PipelineAggregate
