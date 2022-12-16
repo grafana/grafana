@@ -19,6 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -375,7 +377,7 @@ type slackRequestRecorder struct {
 	requests []*http.Request
 }
 
-func (s *slackRequestRecorder) fn(_ context.Context, r *http.Request, _ Logger) (string, error) {
+func (s *slackRequestRecorder) fn(_ context.Context, r *http.Request, _ channels.Logger) (string, error) {
 	s.requests = append(s.requests, r)
 	return "", nil
 }
@@ -411,7 +413,7 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 	})
 
 	images := &fakeImageStore{
-		Images: []*Image{{
+		Images: []*channels.Image{{
 			Token: "image-on-disk",
 			Path:  f.Name(),
 		}, {
@@ -421,8 +423,8 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 	}
 	notificationService := mockNotificationService()
 
-	c := FactoryConfig{
-		Config: &NotificationChannelConfig{
+	c := channels.FactoryConfig{
+		Config: &channels.NotificationChannelConfig{
 			Name:           "slack_testing",
 			Type:           "slack",
 			Settings:       json.RawMessage(settings),
@@ -434,7 +436,7 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 			return fallback
 		},
 		Template: tmpl,
-		Logger:   &FakeLogger{},
+		Logger:   &channels.FakeLogger{},
 	}
 
 	sn, err := buildSlackNotifier(c)
@@ -562,7 +564,7 @@ func TestSendSlackRequest(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, server.URL, nil)
 			require.NoError(tt, err)
 
-			_, err = sendSlackRequest(context.Background(), req, &FakeLogger{})
+			_, err = sendSlackRequest(context.Background(), req, &channels.FakeLogger{})
 			if !test.expectError {
 				require.NoError(tt, err)
 			} else {

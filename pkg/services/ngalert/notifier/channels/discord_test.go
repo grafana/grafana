@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -287,10 +288,10 @@ func TestDiscordNotifier(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			webhookSender := mockNotificationService()
-			imageStore := &UnavailableImageStore{}
+			imageStore := &channels.UnavailableImageStore{}
 
-			fc := FactoryConfig{
-				Config: &NotificationChannelConfig{
+			fc := channels.FactoryConfig{
+				Config: &channels.NotificationChannelConfig{
 					Name:     "discord_testing",
 					Type:     "discord",
 					Settings: json.RawMessage(c.settings),
@@ -299,7 +300,7 @@ func TestDiscordNotifier(t *testing.T) {
 				// TODO: allow changing the associated values for different tests.
 				NotificationService: webhookSender,
 				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				Logger:              &channels.FakeLogger{},
 			}
 
 			dn, err := newDiscordNotifier(fc)
