@@ -3,7 +3,7 @@ import React from 'react';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockQuery } from '../__mocks__/cloudMonitoringQuery';
-import { EditorMode } from '../types';
+import { EditorMode, QueryType } from '../types';
 
 import { MetricQueryEditor } from './MetricQueryEditor';
 
@@ -41,8 +41,9 @@ describe('MetricQueryEditor', () => {
     const query = createMockQuery();
     // Force to populate with default values
     delete query.timeSeriesQuery;
+    query.queryType = QueryType.TIME_SERIES_QUERY;
 
-    render(<MetricQueryEditor {...defaultProps} onChange={onChange} query={query} editorMode={EditorMode.MQL} />);
+    render(<MetricQueryEditor {...defaultProps} onChange={onChange} query={query} />);
     expect(onChange).toHaveBeenCalled();
   });
 });

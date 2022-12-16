@@ -4,7 +4,7 @@ import { QueryEditorProps, toOption } from '@grafana/data';
 import { EditorRows } from '@grafana/experimental';
 
 import CloudMonitoringDatasource from '../datasource';
-import { CloudMonitoringQuery, QueryType, SLOQuery, CloudMonitoringOptions, EditorMode } from '../types';
+import { CloudMonitoringQuery, QueryType, SLOQuery, CloudMonitoringOptions } from '../types';
 
 import { QueryHeader } from './QueryHeader';
 import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
@@ -38,28 +38,19 @@ export const QueryEditor = (props: Props) => {
     expanded: false,
     options: datasource.getVariables().map(toOption),
   };
-  const [editorMode, setEditorMode] = useState<EditorMode>(
-    query.timeSeriesQuery?.query ? EditorMode.MQL : EditorMode.Visual
-  );
 
   // Use a known query type
   useEffect(() => {
     if (!Object.values(QueryType).includes(query.queryType)) {
-      onChange({ ...query, queryType: QueryType.METRICS });
+      onChange({ ...query, queryType: QueryType.TIME_SERIES_LIST });
     }
   });
   const queryType = query.queryType;
 
   return (
     <EditorRows>
-      <QueryHeader
-        query={query}
-        onChange={onChange}
-        onRunQuery={onRunQuery}
-        editorMode={editorMode}
-        setEditorMode={setEditorMode}
-      />
-      {queryType === QueryType.METRICS && (
+      <QueryHeader query={query} onChange={onChange} onRunQuery={onRunQuery} />
+      {queryType !== QueryType.SLO && (
         <MetricQueryEditor
           refId={query.refId}
           variableOptionGroup={variableOptionGroup}
@@ -68,7 +59,6 @@ export const QueryEditor = (props: Props) => {
           onRunQuery={onRunQuery}
           datasource={datasource}
           query={query}
-          editorMode={editorMode}
         />
       )}
 

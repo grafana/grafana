@@ -56,7 +56,8 @@ const (
 	gceAuthentication         = "gce"
 	jwtAuthentication         = "jwt"
 	annotationQueryType       = "annotation"
-	metricQueryType           = "metrics"
+	timeSeriesListQueryType   = "timeSeriesList"
+	timeSeriesQueryQueryType  = "timeSeriesQuery"
 	sloQueryType              = "slo"
 	crossSeriesReducerDefault = "REDUCE_NONE"
 	perSeriesAlignerDefault   = "ALIGN_MEAN"
@@ -234,7 +235,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			if err != nil {
 				return err
 			}
-			q.QueryType = metricQueryType
+			q.QueryType = timeSeriesListQueryType
 			gq := grafanaQuery{
 				TimeSeriesList: &mq,
 			}
@@ -262,7 +263,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 		}
 
 		// Metric query was divided between timeSeriesList and timeSeriesQuery API calls
-		if rawQuery["metricQuery"] != nil {
+		if rawQuery["metricQuery"] != nil && q.QueryType != sloQueryType {
 			metricQuery := rawQuery["metricQuery"].(map[string]interface{})
 
 			if metricQuery["editorMode"] != nil && toString(metricQuery["editorMode"]) == "mql" {
@@ -271,6 +272,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 					Query:       toString(metricQuery["query"]),
 					GraphPeriod: toString(metricQuery["graphPeriod"]),
 				}
+				q.QueryType = timeSeriesQueryQueryType
 			} else {
 				tslb, err := json.Marshal(metricQuery)
 				if err != nil {
@@ -286,6 +288,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 					tsl.Filters = migrateMetricTypeFilter(metricQuery["metricType"].(string), metricQuery["filters"])
 				}
 				rawQuery["timeSeriesList"] = tsl
+				q.QueryType = timeSeriesListQueryType
 			}
 			if metricQuery["aliasBy"] != nil {
 				rawQuery["aliasBy"] = metricQuery["aliasBy"]
@@ -293,9 +296,6 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			b, err := json.Marshal(rawQuery)
 			if err != nil {
 				return err
-			}
-			if q.QueryType == "" {
-				q.QueryType = metricQueryType
 			}
 			q.JSON = b
 		}
@@ -379,29 +379,25 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 
 		var queryInterface cloudMonitoringQueryExecutor
 		switch query.QueryType {
-		case metricQueryType, annotationQueryType:
-			if q.TimeSeriesQuery != nil {
-				queryInterface = &cloudMonitoringTimeSeriesQuery{
-					refID:      query.RefID,
-					aliasBy:    q.AliasBy,
-					parameters: q.TimeSeriesQuery,
-					IntervalMS: query.Interval.Milliseconds(),
-					timeRange:  req.Queries[0].TimeRange,
-				}
-			} else if q.TimeSeriesList != nil {
-				cmtsf := &cloudMonitoringTimeSeriesList{
-					refID:   query.RefID,
-					logger:  logger,
-					aliasBy: q.AliasBy,
-				}
-				if q.TimeSeriesList.View == "" {
-					q.TimeSeriesList.View = "FULL"
-				}
-				cmtsf.parameters = q.TimeSeriesList
-				cmtsf.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
-				queryInterface = cmtsf
-			} else {
-				return nil, fmt.Errorf("missing query info")
+		case timeSeriesListQueryType, annotationQueryType:
+			cmtsf := &cloudMonitoringTimeSeriesList{
+				refID:   query.RefID,
+				logger:  logger,
+				aliasBy: q.AliasBy,
+			}
+			if q.TimeSeriesList.View == "" {
+				q.TimeSeriesList.View = "FULL"
+			}
+			cmtsf.parameters = q.TimeSeriesList
+			cmtsf.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
+			queryInterface = cmtsf
+		case timeSeriesQueryQueryType:
+			queryInterface = &cloudMonitoringTimeSeriesQuery{
+				refID:      query.RefID,
+				aliasBy:    q.AliasBy,
+				parameters: q.TimeSeriesQuery,
+				IntervalMS: query.Interval.Milliseconds(),
+				timeRange:  req.Queries[0].TimeRange,
 			}
 		case sloQueryType:
 			cmslo := &cloudMonitoringSLO{

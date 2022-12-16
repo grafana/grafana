@@ -56,7 +56,7 @@ describe('Cloud Monitoring Datasource', () => {
           description: 'a list query with a metric type and no filters',
           input: {
             refId: 'A',
-            queryType: QueryType.METRICS,
+            queryType: QueryType.TIME_SERIES_LIST,
             intervalMs: 1000,
             metricQuery: {
               metricType: 'cloudsql_database',
@@ -86,7 +86,7 @@ describe('Cloud Monitoring Datasource', () => {
           description: 'a list query with filters',
           input: {
             refId: 'A',
-            queryType: QueryType.METRICS,
+            queryType: QueryType.TIME_SERIES_LIST,
             intervalMs: 1000,
             metricQuery: {
               metricType: 'cloudsql_database',
@@ -116,7 +116,7 @@ describe('Cloud Monitoring Datasource', () => {
           description: 'a list query with preprocessor',
           input: {
             refId: 'A',
-            queryType: QueryType.METRICS,
+            queryType: QueryType.TIME_SERIES_LIST,
             intervalMs: 1000,
             metricQuery: {
               metricType: 'cloudsql_database',
@@ -148,7 +148,7 @@ describe('Cloud Monitoring Datasource', () => {
           description: 'a mql query',
           input: {
             refId: 'A',
-            queryType: QueryType.METRICS,
+            queryType: QueryType.TIME_SERIES_QUERY,
             intervalMs: 1000,
             metricQuery: {
               metricType: 'cloudsql_database',

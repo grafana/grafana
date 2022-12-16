@@ -5,7 +5,6 @@ import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import {
   AlignmentTypes,
   CloudMonitoringQuery,
-  EditorMode,
   LegacyCloudMonitoringAnnotationQuery,
   MetricKind,
   QueryType,
@@ -15,16 +14,11 @@ const query: CloudMonitoringQuery = {
   refId: 'query',
   queryType: QueryType.ANNOTATION,
   intervalMs: 0,
-  metricQuery: {
-    editorMode: EditorMode.Visual,
+  timeSeriesList: {
     projectName: 'project-name',
-    metricType: '',
     filters: [],
-    metricKind: MetricKind.GAUGE,
-    valueType: '',
     title: '',
     text: '',
-    query: '',
     crossSeriesReducer: 'REDUCE_NONE',
     perSeriesAligner: AlignmentTypes.ALIGN_NONE,
   },
@@ -100,10 +94,10 @@ describe('CloudMonitoringAnnotationSupport', () => {
   });
 
   describe('prepareQuery', () => {
-    it('should ensure queryType is set to "metrics"', () => {
+    it('should ensure queryType is set to "timeSeriesList"', () => {
       const queryWithoutMetricsQueryType = { ...annotationQuery, queryType: 'blah' };
       expect(annotationSupport.prepareQuery?.(queryWithoutMetricsQueryType)).toEqual(
-        expect.objectContaining({ queryType: 'metrics' })
+        expect.objectContaining({ queryType: 'timeSeriesList' })
       );
     });
     it('should ensure type is set "annotationQuery"', () => {
