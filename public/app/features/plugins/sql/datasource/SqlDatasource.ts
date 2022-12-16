@@ -18,6 +18,7 @@ import {
   getBackendSrv,
   getTemplateSrv,
   TemplateSrv,
+  TestingStatus,
 } from '@grafana/runtime';
 import { toDataQueryResponse, toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -170,7 +171,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     );
   }
 
-  testDatasource(): Promise<{ status: string; message: string }> {
+  testDatasource(): Promise<TestingStatus> {
     const refId = 'A';
     return lastValueFrom(
       getBackendSrv()
