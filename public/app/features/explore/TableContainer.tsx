@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { applyFieldOverrides, SelectableValue, SplitOpen, TimeZone, ValueLinkConfig } from '@grafana/data';
+import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen, TimeZone, ValueLinkConfig } from '@grafana/data';
 import { Collapse, RadioButtonGroup, Table } from '@grafana/ui';
 import { FilterItem } from '@grafana/ui/src/components/Table/types';
 import { config } from 'app/core/config';
@@ -32,7 +32,8 @@ function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) 
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId] as ExploreItemState;
   const { loading: loadingInState, tableResult, rawPrometheusResult, range } = item;
-  const result = (tableResult?.length ?? false) > 0 ? tableResult : rawPrometheusResult;
+  const rawPrometheusFrame: DataFrame[] = rawPrometheusResult ? [rawPrometheusResult] : [];
+  const result = (tableResult?.length ?? false) > 0 && rawPrometheusResult ? tableResult : rawPrometheusFrame;
   const loading = result && result.length > 0 ? false : loadingInState;
 
   return { loading, tableResult: result, range };
@@ -61,7 +62,7 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
   onChangeResultsStyle = (resultsStyle: TableResultsStyle) => {
     this.setState({ resultsStyle });
   };
-  
+
   getTableHeight() {
     const { tableResult } = this.props;
     const mainFrame = this.getMainFrame(tableResult);
@@ -136,6 +137,10 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
 
     const mainFrame = this.getMainFrame(dataFrames);
     const subFrames = dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex !== undefined);
+    const label = this.state?.resultsStyle !== undefined ? this.renderLabel() : 'Table';
+
+    // Render table as default if resultsStyle is not set.
+    const renderTable = !this.state?.resultsStyle || this.state?.resultsStyle === TABLE_RESULTS_STYLE.table;
 
     return (
       <Collapse label={label} loading={loading} isOpen>
@@ -145,17 +150,17 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
               <Table
                 ariaLabel={ariaLabel}
                 data={mainFrame}
-            subData={subFrames}
+                subData={subFrames}
                 width={tableWidth}
                 height={height}
                 onCellFilterAdded={onCellFilterAdded}
               />
             )}
 
-            {this.state?.resultsStyle === TABLE_RESULTS_STYLE.raw && <RawListContainer tableResult={dataFrame} />}
+            {this.state?.resultsStyle === TABLE_RESULTS_STYLE.raw && <RawListContainer tableResult={mainFrame} />}
           </>
         )}
-        {!dataFrame?.length && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+        {!mainFrame?.length && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
       </Collapse>
     );
   }
