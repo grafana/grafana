@@ -302,6 +302,7 @@ func TestDiscordNotifier(t *testing.T) {
 				// TODO: allow changing the associated values for different tests.
 				NotificationService: webhookSender,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			dn, err := newDiscordNotifier(fc)

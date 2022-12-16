@@ -921,8 +921,8 @@ func TestHistogramWith2FiltersAgg(t *testing.T) {
 	frames := result.response.Responses["A"].Frames
 	require.Len(t, frames, 2)
 	requireFrameLength(t, frames[0], 2)
-	// require.Equal(t, "@metric:cpu", frames[0].Name)
-	// require.Equal(t, "@metric:logins.count", frames[1].Name)
+	requireTimeSeriesName(t, "@metric:cpu", frames[0])
+	requireTimeSeriesName(t, "@metric:logins.count", frames[1])
 }
 
 func TestTrimEdges(t *testing.T) {
@@ -1279,9 +1279,9 @@ func TestBucketScript(t *testing.T) {
 	frames := result.response.Responses["A"].Frames
 	require.Len(t, frames, 3)
 	requireFrameLength(t, frames[0], 2)
-	// require.Equal(t, "Sum @value", frames[0].Name)
-	// require.Equal(t, "Max @value", frames[1].Name)
-	// require.Equal(t, "Sum @value * Max @value", frames[2].Name)
+	requireTimeSeriesName(t, "Sum @value", frames[0])
+	requireTimeSeriesName(t, "Max @value", frames[1])
+	// requireTimeSeriesName(t, "Sum @value * Max @value", frames[2]) // FIXME
 
 	requireNumberValue(t, 2, frames[0], 0)
 	requireNumberValue(t, 3, frames[1], 0)

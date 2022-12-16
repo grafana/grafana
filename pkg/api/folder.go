@@ -81,7 +81,11 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
+
 	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
@@ -107,7 +111,10 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
 	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
@@ -143,7 +150,11 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
+
 	// TODO set ParentUID if nested folders are enabled
 	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
@@ -198,7 +209,11 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g := guardian.New(c.Req.Context(), result.ID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByUID(c.Req.Context(), result.UID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
+
 	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, result))
 }
 
