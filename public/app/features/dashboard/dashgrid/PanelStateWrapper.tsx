@@ -46,6 +46,7 @@ import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { PanelHeaderLoadingIndicator } from './PanelHeader/PanelHeaderLoadingIndicator';
+import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 
@@ -589,9 +590,18 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
     ];
 
+    let menu;
+    if (!dashboard.meta.publicDashboardAccessToken) {
+      menu = (closeMenu: () => void): React.ReactElement => (
+        <div data-testid="panel-dropdown">
+          <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} onClose={closeMenu} />
+        </div>
+      );
+    }
+
     if (config.featureToggles.newPanelChromeUI) {
       return (
-        <PanelChrome width={width} height={height} title={title} leftItems={leftItems} padding={noPadding}>
+        <PanelChrome width={width} height={height} title={title} leftItems={leftItems} padding={noPadding} menu={menu}>
           {(innerWidth, innerHeight) => (
             <>
               <ErrorBoundary

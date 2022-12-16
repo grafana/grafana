@@ -5,6 +5,7 @@ import { GrafanaTheme2, isIconName } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
+import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
 import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
@@ -31,7 +32,7 @@ export interface PanelChromeProps {
   padding?: PanelPadding;
   title?: string;
   titleItems?: PanelChromeInfoState[];
-  menu?: React.ReactElement;
+  menu?: (closeMenu: () => void) => React.ReactElement;
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
   // dragClass?: string;
   hoverHeader?: boolean;
@@ -70,6 +71,8 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
+  const [panelMenuOpen, setPanelMenuOpen] = React.useState(false);
+
   const headerHeight = !hoverHeader ? getHeaderHeight(theme, title, leftItems) : 0;
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
 
@@ -82,7 +85,13 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   };
   const containerStyles: CSSProperties = { width, height };
 
-  const handleMenuOpen = () => {};
+  const handleMenuOpen = () => {
+    setPanelMenuOpen(true);
+  };
+
+  const handleMenuClose = () => {
+    setPanelMenuOpen(false);
+  };
 
   const hasHeader = title || titleItems.length > 0 || menu;
 
@@ -115,14 +124,24 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
           )}
 
           {menu && (
-            <Dropdown overlay={menu} placement="bottom">
-              <div className={cx(styles.item, styles.menuItem, 'menu-icon')} data-testid="menu-icon" style={itemStyles}>
+            <Dropdown
+              overlay={() => (
+                <ClickOutsideWrapper onClick={handleMenuClose} parent={document}>
+                  {menu(handleMenuClose)}
+                </ClickOutsideWrapper>
+              )}
+              placement="bottom"
+            >
+              <div
+                className={cx(styles.rightAligned, styles.item, styles.menuItem, 'menu-icon')}
+                data-testid="menu-icon"
+                style={itemStyles}
+              >
                 <IconButton
                   ariaLabel={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
                   tooltip="Menu"
                   name="ellipsis-v"
                   size="sm"
-                  onClick={handleMenuOpen}
                 />
               </div>
             </Dropdown>

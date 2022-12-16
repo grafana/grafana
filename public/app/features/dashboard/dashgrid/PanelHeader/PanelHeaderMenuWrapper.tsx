@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { DashboardModel, PanelModel } from '../../state';
 
@@ -11,7 +11,7 @@ interface Props {
   onClose: () => void;
 }
 
-export const PanelHeaderMenuWrapper: FC<Props> = ({ panel, dashboard }) => {
+export function PanelHeaderMenuWrapper({ panel, dashboard }: Props) {
   return (
     <PanelHeaderMenuProvider panel={panel} dashboard={dashboard}>
       {({ items }) => {
@@ -19,4 +19,4 @@ export const PanelHeaderMenuWrapper: FC<Props> = ({ panel, dashboard }) => {
       }}
     </PanelHeaderMenuProvider>
   );
-};
+}
