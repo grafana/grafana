@@ -9,21 +9,17 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 type timeSeriesQuery struct {
-	client             es.Client
-	dataQueries        []backend.DataQuery
-	intervalCalculator intervalv2.Calculator
+	client      es.Client
+	dataQueries []backend.DataQuery
 }
 
-var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery,
-	intervalCalculator intervalv2.Calculator) *timeSeriesQuery {
+var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery) *timeSeriesQuery {
 	return &timeSeriesQuery{
-		client:             client,
-		dataQueries:        dataQuery,
-		intervalCalculator: intervalCalculator,
+		client:      client,
+		dataQueries: dataQuery,
 	}
 }
 
@@ -61,14 +57,9 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64,
 	result backend.QueryDataResponse) error {
-	minInterval, err := e.client.GetMinInterval(q.Interval)
-	if err != nil {
-		return err
-	}
-	interval := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval, q.MaxDataPoints)
 	defaultTimeField := e.client.GetTimeField()
 
-	b := ms.Search(interval)
+	b := ms.Search(q.Interval)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)

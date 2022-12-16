@@ -89,7 +89,7 @@ func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, er
 type multiRequest struct {
 	header   map[string]interface{}
 	body     interface{}
-	interval intervalv2.Interval
+	interval time.Duration
 }
 
 func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests []*multiRequest) (*http.Response, error) {
@@ -118,8 +118,11 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 		}
 
 		body := string(reqBody)
+		if err != nil {
+			return nil, err
+		}
 		body = strings.ReplaceAll(body, "$__interval_ms", strconv.FormatInt(r.interval.Milliseconds(), 10))
-		body = strings.ReplaceAll(body, "$__interval", r.interval.Text)
+		body = strings.ReplaceAll(body, "$__interval", r.interval.String())
 
 		payload.WriteString(body + "\n")
 	}

@@ -12,7 +12,6 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 type queryDataTestRoundTripper struct {
@@ -56,6 +55,7 @@ func newFlowTestDsInfo(body []byte, reuestCallback func(req *http.Request) error
 
 type queryDataTestQueryJSON struct {
 	IntervalMs    int64
+	Interval      time.Duration
 	MaxDataPoints int64
 	RefID         string
 }
@@ -90,7 +90,7 @@ func newFlowTestQueries(allJsonBytes []byte) ([]backend.DataQuery, error) {
 		query := backend.DataQuery{
 			RefID:         jsonInfo.RefID,
 			MaxDataPoints: jsonInfo.MaxDataPoints,
-			Interval:      time.Duration(jsonInfo.IntervalMs) * time.Millisecond,
+			Interval:      jsonInfo.Interval,
 			TimeRange:     timeRange,
 			JSON:          jsonBytes,
 		}
@@ -130,7 +130,7 @@ func queryDataTest(queriesBytes []byte, responseBytes []byte) (queryDataTestResu
 		return nil
 	})
 
-	result, err := queryData(context.Background(), queries, dsInfo, intervalv2.NewCalculator())
+	result, err := queryData(context.Background(), queries, dsInfo)
 	if err != nil {
 		return queryDataTestResult{}, err
 	}

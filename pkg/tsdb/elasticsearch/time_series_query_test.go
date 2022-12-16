@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +24,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"timeField": "@timestamp",
 				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }],
 				"metrics": [{"type": "count", "id": "0" }]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
@@ -45,7 +44,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"timeField": "@timestamp",
 				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "1" }],
 				"metrics": [{"type": "avg", "id": "0", "settings": {"missing": "null", "script": "1" } }]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			firstLevel := sr.Aggs[0]
@@ -63,7 +62,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 				],
 				"metrics": [{"type": "count", "id": "1" }]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			firstLevel := sr.Aggs[0]
@@ -84,7 +83,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
 				],
 				"metrics": [{"type": "avg", "field": "@value", "id": "1" }]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			firstLevel := sr.Aggs[0]
@@ -113,7 +112,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					{"type": "count", "id": "1" },
 					{"type": "avg", "field": "@value", "id": "5" }
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			firstLevel := sr.Aggs[0]
@@ -137,7 +136,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					{"type": "count", "id": "1" },
 					{"type": "avg", "field": "@value", "id": "5" }
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -168,7 +167,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"metrics": [
 					{"type": "count", "id": "1" }
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -193,7 +192,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					},
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			firstLevel := sr.Aggs[0]
@@ -219,7 +218,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"metrics": [
         {"type": "percentiles", "field": "@value", "id": "1", "settings": { "percents": ["95","99"] } }
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -248,7 +247,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"metrics": [
         {"type": "extended_stats", "field": "@value", "id": "1", "meta": { "std_deviation": true } }
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -279,7 +278,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					{"type": "count", "id": "1" },
 					{"type": "avg", "field": "@value", "id": "5" }
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -305,7 +304,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"metrics": [
 					{"type": "count", "id": "1" }
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			firstLevel := sr.Aggs[0]
@@ -332,7 +331,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						}
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -364,7 +363,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
 				"metrics": [{"type": "count", "id": "1" }]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -395,7 +394,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
 				"metrics": [{"type": "count", "id": "1" }]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -417,7 +416,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"timeField": "@timestamp",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -430,7 +429,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"timeField": "@timestamp",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 
 			sr := c.multisearchRequests[0].Requests[0]
@@ -452,7 +451,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"timeField": "@timestamp",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_data", "settings": {}	}]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 
 			sr := c.multisearchRequests[0].Requests[0]
@@ -474,7 +473,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"timeField": "@timestamp",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_document", "settings": { "size": 1337 }	}]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -494,7 +493,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					}
 				],
 				"metrics": [{"type": "count", "id": "1" }]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -521,7 +520,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						}
 					],
 					"metrics": [{"type": "count", "id": "1" }]
-				}`, from, to, 15*time.Second)
+				}`, from, to)
 				require.NoError(t, err)
 				sr := c.multisearchRequests[0].Requests[0]
 
@@ -544,7 +543,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						}
 					],
 					"metrics": [{"type": "count", "id": "1" }]
-				}`, from, to, 15*time.Second)
+				}`, from, to)
 				require.NoError(t, err)
 				sr := c.multisearchRequests[0].Requests[0]
 
@@ -567,7 +566,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						}
 					],
 					"metrics": [{"type": "count", "id": "1" }]
-				}`, from, to, 15*time.Second)
+				}`, from, to)
 				require.NoError(t, err)
 				sr := c.multisearchRequests[0].Requests[0]
 
@@ -589,7 +588,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					}
 				],
 				"metrics": [{"type": "count", "id": "1" }]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -616,7 +615,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					}
 				],
 				"metrics": [{"type": "count", "id": "1" }]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -642,7 +641,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					}
 				],
 				"metrics": [{"type": "count", "id": "1" }]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -669,7 +668,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"field": "3"
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			firstLevel := sr.Aggs[0]
@@ -709,7 +708,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"pipelineAgg": "3"
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -746,7 +745,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"field": "3"
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -781,7 +780,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"pipelineAgg": "3"
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -816,7 +815,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"type": "moving_avg"
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -856,7 +855,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"pipelineAgg": "Metric to apply moving average"
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -882,7 +881,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"metrics": [
 					{ "id": "2", "type": "top_metrics", "settings": { "order": "desc", "orderBy": "@timestamp", "metrics": ["@value"]} }
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			firstLevel := sr.Aggs[0]
@@ -912,7 +911,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"pipelineAgg": "3"
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -950,7 +949,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"pipelineAgg": "3"
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -986,7 +985,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"pipelineAgg": "Metric to apply cumulative sum"
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -1017,7 +1016,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"pipelineAgg": "3"
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -1047,7 +1046,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"pipelineAgg": "3"
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -1076,7 +1075,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"field": "3"
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -1109,7 +1108,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"settings": { "lag": "5" }
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -1140,7 +1139,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"settings": { "lag": "5" }
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -1171,7 +1170,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"pipelineAgg": "3"
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -1205,7 +1204,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"settings": { "script": "params.var1 * params.var2" }
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -1242,7 +1241,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"settings": { "script": "params.var1 * params.var2" }
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -1277,7 +1276,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"settings": { "script": "params.var1 * 1000" }
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -1311,7 +1310,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 						"settings": { "script": "params.var1 * 1000" }
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -1332,7 +1331,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"query": "foo"
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			filter := sr.Query.Bool.Filters[1].(*es.QueryStringFilter)
@@ -1345,7 +1344,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"query": "foo"
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			filter := sr.Query.Bool.Filters[1].(*es.QueryStringFilter)
@@ -1358,7 +1357,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"metrics": [{ "type": "logs", "id": "1"}]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			require.Equal(t, sr.Size, 500)
@@ -1391,7 +1390,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"metrics": [{ "type": "logs", "id": "1", "settings": { "limit": 1000 }}]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			require.Equal(t, sr.Size, 1000)
@@ -1402,7 +1401,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"metrics": [{ "type": "logs", "id": "1" }]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			require.Equal(t, sr.CustomProps["highlight"], map[string]interface{}{
@@ -1445,7 +1444,7 @@ func TestSettingsCasting(t *testing.T) {
 					}
 				],
 				"bucketAggs": [{"type": "date_histogram", "field": "@timestamp", "id": "1"}]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 		require.NoError(t, err)
 		// FIXME
 		// This is working correctly if instead of field we use pipelineAgg
@@ -1491,7 +1490,7 @@ func TestSettingsCasting(t *testing.T) {
 					}
 				}
 			]
-		}`, from, to, 15*time.Second)
+		}`, from, to)
 		assert.Nil(t, err)
 		sr := c.multisearchRequests[0].Requests[0]
 
@@ -1526,7 +1525,7 @@ func TestSettingsCasting(t *testing.T) {
 					}
 				}
 			]
-		}`, from, to, 15*time.Second)
+		}`, from, to)
 		assert.Nil(t, err)
 		// FIXME This fails, but if we add pipelineAgg it works
 		// sr := c.multisearchRequests[0].Requests[0]
@@ -1554,7 +1553,7 @@ func TestSettingsCasting(t *testing.T) {
 					}
 				}
 			]
-		}`, from, to, 15*time.Second)
+		}`, from, to)
 		assert.Nil(t, err)
 		sr := c.multisearchRequests[0].Requests[0]
 
@@ -1590,7 +1589,7 @@ func TestSettingsCasting(t *testing.T) {
 						}
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			assert.Nil(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -1625,7 +1624,7 @@ func TestSettingsCasting(t *testing.T) {
 						}
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 			assert.Nil(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
@@ -1652,7 +1651,7 @@ func TestSettingsCasting(t *testing.T) {
 					"metrics": [
 						{ "id": "1", "type": "average", "field": "@value" }
 					]
-				}`, from, to, 15*time.Second)
+				}`, from, to)
 				assert.Nil(t, err)
 				sr := c.multisearchRequests[0].Requests[0]
 
@@ -1689,7 +1688,7 @@ func TestSettingsCasting(t *testing.T) {
 						}
 					}
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 
 			assert.Nil(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
@@ -1711,7 +1710,7 @@ func TestSettingsCasting(t *testing.T) {
 				"bucketAggs": [
 					{ "type": "date_histogram", "id": "2", "settings": { "min_doc_count": "1" } }
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 
 			assert.Nil(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
@@ -1727,7 +1726,7 @@ func TestSettingsCasting(t *testing.T) {
 				"bucketAggs": [
 					{ "type": "date_histogram", "id": "2", "field": "@time", "settings": { "min_doc_count": "1" } }
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 
 			assert.Nil(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
@@ -1743,7 +1742,7 @@ func TestSettingsCasting(t *testing.T) {
 				"bucketAggs": [
 					{ "type": "date_histogram", "id": "2", "field": "@time", "settings": { "min_doc_count": "1", "interval": "1d" } }
 				]
-			}`, from, to, 15*time.Second)
+			}`, from, to)
 
 			assert.Nil(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
@@ -1797,7 +1796,7 @@ func newDataQuery(body string) (backend.QueryDataRequest, error) {
 	}, nil
 }
 
-func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval time.Duration) (
+func executeTsdbQuery(c es.Client, body string, from, to time.Time) (
 	*backend.QueryDataResponse, error) {
 	timeRange := backend.TimeRange{
 		From: from,
@@ -1811,6 +1810,6 @@ func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval 
 			},
 		},
 	}
-	query := newTimeSeriesQuery(c, dataRequest.Queries, intervalv2.NewCalculator(intervalv2.CalculatorOptions{MinInterval: minInterval}))
+	query := newTimeSeriesQuery(c, dataRequest.Queries)
 	return query.execute()
 }
