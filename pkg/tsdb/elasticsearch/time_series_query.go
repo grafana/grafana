@@ -28,32 +28,30 @@ var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery,
 }
 
 func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
 	queries, err := parseQuery(e.dataQueries)
 	if err != nil {
-		return &backend.QueryDataResponse{}, err
+		return result, err
 	}
 
 	ms := e.client.MultiSearch()
 
 	from := e.dataQueries[0].TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := e.dataQueries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
-	result := backend.QueryDataResponse{
-		Responses: backend.Responses{},
-	}
 	for _, q := range queries {
-		if err := e.processQuery(q, ms, from, to, result); err != nil {
+		if err := e.processQuery(q, ms, from, to, *result); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
 	}
 
 	req, err := ms.Build()
 	if err != nil {
-		return &backend.QueryDataResponse{}, err
+		return result, err
 	}
 
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
-		return &backend.QueryDataResponse{}, err
+		return result, err
 	}
 
 	return parseResponse(res.Responses, queries)
