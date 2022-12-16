@@ -96,14 +96,16 @@ Should explain what happened, what was expected and how to reproduce it together
 
 #### Enhancement requests
 
-Enhancement requests (aka. feature requests) should first be discussed in [Github discussions](https://github.com/grafana/grafana/discussions). When submitting an idea for discussion we welcome users to create a new discussion and use these prompts:
+Enhancement requests (aka. feature requests) should be created as a [Github discussion](https://github.com/grafana/grafana/discussions). When submitting an enhancement request we ask that users focus on the problem they'd like to solve and why it’s a problem rather than focusing on the solution itself. To facilitate this we recommend using the following template:
  
-- What would you like to be added
-- Why is this needed (describe your use case and goals)**:
+- What would you like to be added?:
+- Why is this needed (describe your use case and goals)**?:
 
 #### Accessibility issues
 
 This is a mix between a bug report and enhancement request but focused on accessibility issues to help make Grafana improve keyboard navigation, screen-reader support and being accessible to everyone. The report should include relevant [WCAG criteria](https://www.w3.org/WAI/WCAG21/quickref/?versions=2.0), if applicable.
+
+Grafana Labs is dedicated to improving our graphical user interfaces and overall experience so that our product becomes usable and accessible for people with disabilities as well as anyone else. Learn more about Grafana's commitment to [A11y](https://grafana.com/accessibility/) (accessibility).
 
 #### Support requests
 
