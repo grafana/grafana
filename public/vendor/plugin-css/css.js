@@ -81,7 +81,7 @@ if (typeof window !== 'undefined') {
   exports.locate = function (load) {
     if (load.metadata.loader === 'cdn-loader') {
       if (load.address.startsWith('http://localhost:3000/public/plugin-cdn')) {
-        load.address = load.address.replace('http://localhost:3000/public/plugin-cdn', 'https://plugin-cdn.storage.googleapis.com');
+        load.address = load.address.replace('http://localhost:3000/public/plugin-cdn', 'https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn');
       }
     }
     return load.address;
