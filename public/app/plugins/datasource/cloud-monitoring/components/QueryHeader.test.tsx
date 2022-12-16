@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu, select } from 'react-select-event';
 
-import { createMockQuery, createMockSLOQuery } from '../__mocks__/cloudMonitoringQuery';
+import { createMockQuery } from '../__mocks__/cloudMonitoringQuery';
 import { EditorMode, QueryType } from '../types';
 
 import { QueryHeader } from './QueryHeader';
@@ -11,18 +11,18 @@ import { QueryHeader } from './QueryHeader';
 describe('QueryHeader', () => {
   it('renders an editor mode radio group if query type is a metric query', () => {
     const query = createMockQuery();
-    const { metricQuery } = query;
-    const sloQuery = createMockSLOQuery();
+    const editorMode = EditorMode.Visual;
     const onChange = jest.fn();
     const onRunQuery = jest.fn();
+    const setEditorMode = jest.fn();
 
     render(
       <QueryHeader
         query={query}
-        metricQuery={metricQuery}
-        sloQuery={sloQuery}
         onChange={onChange}
         onRunQuery={onRunQuery}
+        editorMode={editorMode}
+        setEditorMode={setEditorMode}
       />
     );
 
@@ -33,16 +33,16 @@ describe('QueryHeader', () => {
 
   it('does not render an editor mode radio group if query type is a SLO query', () => {
     const query = createMockQuery({ queryType: QueryType.SLO });
-    const { metricQuery } = query;
-    const sloQuery = createMockSLOQuery();
+    const editorMode = EditorMode.Visual;
+    const setEditorMode = jest.fn();
     const onChange = jest.fn();
     const onRunQuery = jest.fn();
 
     render(
       <QueryHeader
         query={query}
-        metricQuery={metricQuery}
-        sloQuery={sloQuery}
+        editorMode={editorMode}
+        setEditorMode={setEditorMode}
         onChange={onChange}
         onRunQuery={onRunQuery}
       />
@@ -55,16 +55,16 @@ describe('QueryHeader', () => {
 
   it('can change query types', async () => {
     const query = createMockQuery();
-    const { metricQuery } = query;
-    const sloQuery = createMockSLOQuery();
+    const editorMode = EditorMode.Visual;
+    const setEditorMode = jest.fn();
     const onChange = jest.fn();
     const onRunQuery = jest.fn();
 
     render(
       <QueryHeader
         query={query}
-        metricQuery={metricQuery}
-        sloQuery={sloQuery}
+        editorMode={editorMode}
+        setEditorMode={setEditorMode}
         onChange={onChange}
         onRunQuery={onRunQuery}
       />
@@ -78,16 +78,16 @@ describe('QueryHeader', () => {
 
   it('can change editor modes when query is a metric query type', async () => {
     const query = createMockQuery();
-    const { metricQuery } = query;
-    const sloQuery = createMockSLOQuery();
+    const editorMode = EditorMode.Visual;
+    const setEditorMode = jest.fn();
     const onChange = jest.fn();
     const onRunQuery = jest.fn();
 
     render(
       <QueryHeader
         query={query}
-        metricQuery={metricQuery}
-        sloQuery={sloQuery}
+        editorMode={editorMode}
+        setEditorMode={setEditorMode}
         onChange={onChange}
         onRunQuery={onRunQuery}
       />
@@ -100,8 +100,6 @@ describe('QueryHeader', () => {
 
     await userEvent.click(MQL);
 
-    expect(onChange).toBeCalledWith(
-      expect.objectContaining({ metricQuery: expect.objectContaining({ editorMode: EditorMode.MQL }) })
-    );
+    expect(setEditorMode).toBeCalledWith(EditorMode.MQL);
   });
 });

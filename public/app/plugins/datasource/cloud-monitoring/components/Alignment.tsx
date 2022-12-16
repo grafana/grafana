@@ -6,15 +6,15 @@ import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { ALIGNMENT_PERIODS } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
 import { alignmentPeriodLabel } from '../functions';
-import { CustomMetaData, MetricDescriptor, PreprocessorType, SLOQuery, TimeSeriesList } from '../types';
+import { CustomMetaData, MetricDescriptor, PreprocessorType, TimeSeriesList } from '../types';
 
 import { AlignmentFunction } from './AlignmentFunction';
 import { PeriodSelect } from './PeriodSelect';
 
 export interface Props {
   refId: string;
-  onChange: (query: TimeSeriesList | SLOQuery) => void;
-  query: TimeSeriesList | SLOQuery;
+  onChange: (query: TimeSeriesList) => void;
+  query: TimeSeriesList;
   templateVariableOptions: Array<SelectableValue<string>>;
   customMetaData: CustomMetaData;
   datasource: CloudMonitoringDatasource;
@@ -43,7 +43,7 @@ export const Alignment: FC<Props> = ({
           inputId={`${refId}-alignment-function`}
           templateVariableOptions={templateVariableOptions}
           query={query}
-          onChange={onChange}
+          onChange={(q) => onChange({ ...query, ...q })}
           metricDescriptor={metricDescriptor}
           preprocessor={preprocessor}
         />
