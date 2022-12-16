@@ -36,12 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var (
-	dialect migrator.Dialect
-
-	sqlog log.Logger = log.New("sqlstore")
-)
-
 // ContextSessionKey is used as key to save values in `context.Context`
 type ContextSessionKey struct{}
 
@@ -117,8 +111,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 
 	ss.Dialect = migrator.NewDialect(ss.engine)
 
-	dialect = ss.Dialect
-
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
 	// }
@@ -188,6 +180,10 @@ func (ss *SQLStore) GetDBType() core.DbType {
 	return ss.engine.Dialect().DBType()
 }
 
+func (ss *SQLStore) GetEngine() *xorm.Engine {
+	return ss.engine
+}
+
 func (ss *SQLStore) Bus() bus.Bus {
 	return ss.bus
 }
@@ -209,7 +205,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 			var stats models.SystemUserCountStats
 			// TODO: Should be able to rename "Count" to "count", for more standard SQL style
 			// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
-			rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+			rawSQL := `SELECT COUNT(id) AS Count FROM ` + ss.Dialect.Quote("user")
 			if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
 				return fmt.Errorf("could not determine if admin user exists: %w", err)
 			}
@@ -354,7 +350,7 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 // initEngine initializes ss.engine.
 func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	if ss.engine != nil {
-		sqlog.Debug("Already connected to database")
+		ss.log.Debug("Already connected to database")
 		return nil
 	}
 
@@ -367,7 +363,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
-	sqlog.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
+	ss.log.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
 	if ss.dbCfg.Type == migrator.SQLite && strings.HasPrefix(connectionString, "file:") &&
 		!strings.HasPrefix(connectionString, "file::memory:") {
 		exists, err := fs.Exists(ss.dbCfg.Path)
@@ -614,7 +610,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 			return nil, err
 		}
 
-		if err := dialect.TruncateDBTables(); err != nil {
+		if err := testSQLStore.Dialect.TruncateDBTables(); err != nil {
 			return nil, err
 		}
 
@@ -630,8 +626,6 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 			}
 		}
 
-		// temp global var until we get rid of global vars
-		dialect = testSQLStore.Dialect
 		return testSQLStore, nil
 	}
 
@@ -644,7 +638,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		return false
 	}
 
-	if err := dialect.TruncateDBTables(); err != nil {
+	if err := testSQLStore.Dialect.TruncateDBTables(); err != nil {
 		return nil, err
 	}
 	if err := testSQLStore.Reset(); err != nil {
