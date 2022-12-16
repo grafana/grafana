@@ -80,8 +80,8 @@ if (typeof window !== 'undefined') {
   // systemjs plugin. Prefer to let systemjs resolve to localhost then replace in locate hook.
   exports.locate = function (load) {
     if (load.metadata.loader === 'cdn-loader') {
-      if (load.address.startsWith('http://localhost:3000/public/plugin-cdn')) {
-        load.address = load.address.replace('http://localhost:3000/public/plugin-cdn', 'https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn');
+      if (load.address.startsWith(`${location.origin}/public/plugin-cdn`)) {
+        load.address = load.address.replace(`${location.origin}/public/plugin-cdn`, 'https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn');
       }
     }
     return load.address;
