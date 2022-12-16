@@ -69,7 +69,8 @@ export interface DashboardLink {
 
 export class DashboardModel implements TimeModel {
   id: any;
-  uid: string;
+  // TODO: use propert type and fix all the places where uid is set to null
+  uid: any;
   title: string;
   description: any;
   tags: any;
@@ -129,7 +130,7 @@ export class DashboardModel implements TimeModel {
     this.events = new EventBusSrv();
     this.id = data.id || null;
     // UID is not there for newly created dashboards
-    this.uid = data.uid || '';
+    this.uid = data.uid || null;
     this.revision = data.revision || 1;
     this.title = data.title ?? 'No Title';
     this.description = data.description;

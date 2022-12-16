@@ -3564,14 +3564,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "25"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "26"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "27"],
-      [0, 0, 0, "Do not use any type assertions.", "28"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "29"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "28"],
+      [0, 0, 0, "Do not use any type assertions.", "29"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "30"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "31"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "32"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "33"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "34"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "35"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "35"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "36"]
     ],
     "public/app/features/dashboard/state/PanelModel.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
