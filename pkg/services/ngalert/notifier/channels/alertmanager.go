@@ -48,9 +48,6 @@ func buildAlertmanagerNotifier(fc channels.FactoryConfig) (*AlertmanagerNotifier
 		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
 
-	if len(settings.URL) == 0 {
-		return nil, errors.New("could not find url property in settings")
-	}
 	urls := make([]*url.URL, 0, len(settings.URL))
 	for _, uS := range settings.URL {
 		uS = strings.TrimSpace(uS)
@@ -63,6 +60,9 @@ func buildAlertmanagerNotifier(fc channels.FactoryConfig) (*AlertmanagerNotifier
 			return nil, fmt.Errorf("invalid url property in settings: %w", err)
 		}
 		urls = append(urls, u)
+	}
+	if len(settings.URL) == 0 || len(urls) == 0 {
+		return nil, errors.New("could not find url property in settings")
 	}
 	settings.Password = fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "basicAuthPassword", settings.Password)
 
