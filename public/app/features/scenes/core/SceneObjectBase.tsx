@@ -11,6 +11,7 @@ import { SceneComponentWrapper } from './SceneComponentWrapper';
 import { SceneObjectStateChangedEvent } from './events';
 import { SceneObject, SceneComponent, SceneObjectState, SceneObjectUrlSyncHandler } from './types';
 import { cloneSceneObject, forEachSceneObjectInState } from './utils';
+import { getSceneObjectsCache } from './SceneObjectsCache';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObjectState>
   implements SceneObject<TState>
@@ -33,7 +34,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
       state.key = uuidv4();
     }
 
-    this._state = Object.freeze(state);
+    this._state = getSceneObjectsCache().getInitialState(state);
     this._subject.next(state);
     this.setParent();
   }
@@ -104,6 +105,8 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
     };
 
     this._state = Object.freeze(newState);
+
+    getSceneObjectsCache().set(newState);
 
     this.setParent();
     this._subject.next(newState);

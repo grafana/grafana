@@ -7,6 +7,8 @@ import { SceneVariableDependencyConfigLike, SceneVariables } from '../variables/
 
 export interface SceneObjectStatePlain {
   key?: string;
+  // Used to identify the object in Scene object state cache.
+  cacheKey?: string;
   $timeRange?: SceneTimeRangeLike;
   $data?: SceneObject<SceneDataState>;
   $editor?: SceneEditor;
