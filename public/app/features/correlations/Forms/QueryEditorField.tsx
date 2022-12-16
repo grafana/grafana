@@ -54,7 +54,14 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
   const QueryEditor = datasource?.components?.QueryEditor;
 
   const handleValidation = (value: DataQuery) => {
-    const transaction = buildQueryTransaction(ExploreId.left, [value], {}, getDefaultTimeRange(), false, 'utc');
+    const transaction = buildQueryTransaction(
+      ExploreId.left,
+      [{ ...value, refId: 'something' }],
+      {},
+      getDefaultTimeRange(),
+      false,
+      'utc'
+    );
 
     if (datasource) {
       runRequest(datasource, transaction.request).subscribe((panelData) => {
