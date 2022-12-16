@@ -9,7 +9,7 @@ import (
 type Service interface {
 	RegisterHealthCheck(ctx context.Context, name string, checker HealthChecker) error
 	AreCoreChecksImplemented(ctx context.Context) bool
-	GetHealthCheck(ctx context.Context, name string) models.HealthStatus
+	GetHealthCheck(ctx context.Context, name string) models.HealthCheck
 }
 
 type HealthChecker interface {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/healthchecks"
+	"github.com/grafana/grafana/pkg/services/healthchecks/models"
 )
 
 // These are required checks for the server to start up. If you add a core check, but fail to register it at startup, the server will not start.
@@ -50,12 +51,14 @@ func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, nam
 	return nil
 }
 
-func (hcs *HealthChecksServiceImpl) GetHealthCheck(ctx context.Context, name string) healthchecks.HealthCheckStatus {
+func (hcs *HealthChecksServiceImpl) GetHealthCheck(ctx context.Context, name string) models.HealthCheck {
 	//TODO
 	/*
 			- look up the result in the cache
 		    - if its there return it
 		    - if its not, run the health check and cache result and return result
+
+			- return the external representation of a health check result
 	*/
-	return 1
+	return models.HealthCheck{}
 }

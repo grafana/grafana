@@ -2,14 +2,12 @@ package models
 
 import (
 	"time"
-
-	"github.com/grafana/grafana/pkg/services/healthchecks"
 )
 
 type HealthStatus int
 
 const (
-	StatusGreen int = iota
+	StatusGreen HealthStatus = iota
 	StatusYellow
 	StatusRed
 )
@@ -48,11 +46,10 @@ const (
 	StrategyOnDemand HealthCheckStrategy = "on-demand"
 )
 
-//Internal representation of a health check
-type healthCheck struct {
+// Our representation of a health check
+type HealthCheck struct {
 	// original config
 	healthCheckConfig HealthCheckConfig
-	healthChecker     healthchecks.HealthChecker
 
 	// cached results
 	latestMetrics    map[string]string

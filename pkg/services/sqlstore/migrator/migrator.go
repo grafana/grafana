@@ -7,6 +7,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/grafana/grafana/pkg/services/healthchecks/models"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/atomic"
@@ -106,17 +107,17 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 }
 
 // CheckHealth makes sure all migrations ran successfully
-func (mg *Migrator) CheckHealth(name string) (int, error) {
+func (mg *Migrator) CheckHealth(name string) (models.HealthStatus, map[string]string, error) {
 	has, err := mg.DBEngine.Exist(&MigrationLog{Success: false})
 	if err != nil {
-		return 1, err
+		return models.StatusRed, nil, err
 	}
 
 	if has {
-		return 1, errors.New("one or more migrations failed")
+		return models.StatusRed, nil, errors.New("one or more migrations failed")
 	}
 
-	return 0, nil
+	return models.StatusGreen, nil, nil
 }
 
 func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int) (err error) {
