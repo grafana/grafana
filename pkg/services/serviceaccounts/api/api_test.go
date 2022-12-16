@@ -1,13 +1,9 @@
 package api
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -194,6 +190,70 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 	}
 }
 
+func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
+	type TestCase struct {
+		desc         string
+		id           int64
+		body         string
+		basicRole    org.RoleType
+		permissions  []accesscontrol.Permission
+		expectedSA   *serviceaccounts.ServiceAccountProfileDTO
+		expectedCode int
+	}
+
+	tests := []TestCase{
+		{
+			desc:         "should be able to update service account with correct permission",
+			id:           1,
+			body:         `{"role": "Editor"}`,
+			basicRole:    org.RoleAdmin,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedSA:   &serviceaccounts.ServiceAccountProfileDTO{},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:         "should not be able to update service account with wrong permission",
+			id:           2,
+			body:         `{}`,
+			basicRole:    org.RoleAdmin,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:         "should not be able to update service account with a role that has higher privilege then caller",
+			id:           1,
+			body:         `{"role": "Admin"}`,
+			basicRole:    org.RoleEditor,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:         "should not be able to update service account with invalid role",
+			id:           1,
+			body:         `{"role": "fake"}`,
+			basicRole:    org.RoleEditor,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := setupTests(t, func(a *ServiceAccountsAPI) {
+				a.service = &fakeService{ExpectedServiceAccountProfile: tt.expectedSA}
+			})
+
+			req := server.NewRequest(http.MethodPatch, fmt.Sprintf("/api/serviceaccounts/%d", tt.id), strings.NewReader(tt.body))
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			defer res.Body.Close()
+
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+		})
+	}
+}
+
 func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Server {
 	t.Helper()
 	cfg := setting.NewCfg()
@@ -282,141 +342,6 @@ func newString(s string) *string {
 	return &s
 }
 
-func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
-	store := db.InitTestDB(t)
-	services := setupTestServices(t, store)
-
-	type testUpdateSATestCase struct {
-		desc         string
-		user         *tests.TestUser
-		expectedCode int
-		acmock       *accesscontrolmock.Mock
-		body         *serviceaccounts.UpdateServiceAccountForm
-		Id           int
-	}
-
-	viewerRole := org.RoleViewer
-	editorRole := org.RoleEditor
-	var invalidRole org.RoleType = "InvalidRole"
-	testCases := []testUpdateSATestCase{
-		{
-			desc: "should be ok to update serviceaccount with permissions",
-			user: &tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true, Role: "Viewer", Name: "Unaltered"},
-			body: &serviceaccounts.UpdateServiceAccountForm{Name: newString("New Name"), Role: &viewerRole},
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusOK,
-		},
-		{
-			desc: "should be forbidden to set role higher than user's role",
-			user: &tests.TestUser{Login: "servicetest2@admin", IsServiceAccount: true, Role: "Viewer", Name: "Unaltered 2"},
-			body: &serviceaccounts.UpdateServiceAccountForm{Name: newString("New Name 2"), Role: &editorRole},
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusForbidden,
-		},
-		{
-			desc: "bad request when invalid role",
-			user: &tests.TestUser{Login: "servicetest3@admin", IsServiceAccount: true, Role: "Invalid", Name: "Unaltered"},
-			body: &serviceaccounts.UpdateServiceAccountForm{Name: newString("NameB"), Role: &invalidRole},
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusBadRequest,
-		},
-		{
-			desc: "should be forbidden to update serviceaccount if no permissions",
-			user: &tests.TestUser{Login: "servicetest4@admin", IsServiceAccount: true},
-			body: nil,
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusForbidden,
-		},
-		{
-			desc: "should be not found when the user doesnt exist",
-			user: nil,
-			body: nil,
-			Id:   12,
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
-				},
-				false,
-			),
-			expectedCode: http.StatusNotFound,
-		},
-	}
-
-	var requestResponse = func(server *web.Mux, httpMethod, requestpath string, body io.Reader) *httptest.ResponseRecorder {
-		req, err := http.NewRequest(httpMethod, requestpath, body)
-		req.Header.Add("Content-Type", "application/json")
-		require.NoError(t, err)
-		recorder := httptest.NewRecorder()
-		server.ServeHTTP(recorder, req)
-		return recorder
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			server, saAPI := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), tc.acmock, store)
-			scopeID := tc.Id
-			if tc.user != nil {
-				createdUser := tests.SetupUserServiceAccount(t, store, *tc.user)
-				scopeID = int(createdUser.ID)
-			}
-
-			var rawBody io.Reader = http.NoBody
-			if tc.body != nil {
-				body, err := json.Marshal(tc.body)
-				require.NoError(t, err)
-				rawBody = bytes.NewReader(body)
-			}
-
-			actual := requestResponse(server, http.MethodPatch, fmt.Sprintf(serviceAccountIDPath, scopeID), rawBody)
-
-			actualCode := actual.Code
-			require.Equal(t, tc.expectedCode, actualCode)
-
-			if actualCode == http.StatusOK {
-				actualBody := map[string]interface{}{}
-				err := json.Unmarshal(actual.Body.Bytes(), &actualBody)
-				require.NoError(t, err)
-				assert.Equal(t, scopeID, int(actualBody["id"].(float64)))
-				assert.Equal(t, *tc.body.Name, actualBody["name"].(string))
-				serviceAccountData := actualBody["serviceaccount"].(map[string]interface{})
-				assert.Equal(t, string(*tc.body.Role), serviceAccountData["role"].(string))
-				assert.Equal(t, tc.user.Login, serviceAccountData["login"].(string))
-
-				// Ensure the user was updated in DB
-				sa, err := saAPI.service.RetrieveServiceAccount(context.Background(), 1, int64(scopeID))
-				require.NoError(t, err)
-				require.Equal(t, *tc.body.Name, sa.Name)
-				require.Equal(t, string(*tc.body.Role), sa.Role)
-			}
-		})
-	}
-}
-
 type services struct {
 	OrgService    org.Service
 	UserService   user.Service
@@ -470,4 +395,8 @@ func (f *fakeService) RetrieveServiceAccount(ctx context.Context, orgID, id int6
 
 func (f *fakeService) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
 	return f.ExpectedServiceAccountTokens, f.ExpectedErr
+}
+
+func (f *fakeService) UpdateServiceAccount(ctx context.Context, orgID, id int64, cmd *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+	return f.ExpectedServiceAccountProfile, f.ExpectedErr
 }
