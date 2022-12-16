@@ -43,57 +43,56 @@ env:
       fieldPath: status.podIP
 ```
 
-
 1. Add the port 9094 to the Grafana deployment:
 
-  ```yaml
-  ports:
+```yaml
+ports:
   - containerPort: 3000
     name: http-grafana
     protocol: TCP
   - containerPort: 9094
     name: grafana-alert
     protocol: TCP
-  ```
+```
 
 2. Add the environment variables to the Grafana deployment:
 
-  ```yaml
-  env:
-    - name: POD_IP
-      valueFrom:
-        fieldRef:
-          fieldPath: status.podIP
-  ```
+```yaml
+env:
+  - name: POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+```
 
 3. Create a headless service that returns the pod IP instead of the service IP, which is what the `ha_peers` need:
 
-  ```yaml
-  apiVersion: v1
-  kind: Service
-  metadata:
-    name: grafana-alerting
-    namespace: grafana
-    labels:
-      app.kubernetes.io/name: grafana-alerting
-      app.kubernetes.io/part-of: grafana
-  spec:
-    type: ClusterIP
-    clusterIP: "None"
-    ports:
-      - port: 9094
-    selector:
-      app: grafana
-  ```
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-alerting
+  namespace: grafana
+  labels:
+    app.kubernetes.io/name: grafana-alerting
+    app.kubernetes.io/part-of: grafana
+spec:
+  type: ClusterIP
+  clusterIP: 'None'
+  ports:
+    - port: 9094
+  selector:
+    app: grafana
+```
 
 4. Make sure your grafana deployment has the label matching the selector, e.g. `app:grafana`.
 
 5. Add in the grafana.ini:
 
-  ```bash
-  [unified_alerting]
-  enabled = true
-  ha_listen_address = "${POD_IP}:9094"
-  ha_peers = "grafana-alerting.grafana:9094"
-  ha_advertise_address = "${POD_IP}:9094"
-  ```
+```bash
+[unified_alerting]
+enabled = true
+ha_listen_address = "${POD_IP}:9094"
+ha_peers = "grafana-alerting.grafana:9094"
+ha_advertise_address = "${POD_IP}:9094"
+```
