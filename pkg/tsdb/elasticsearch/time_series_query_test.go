@@ -432,9 +432,40 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}]
 			}`, from, to, 15*time.Second)
 			require.NoError(t, err)
-			// FIXME: { _doc: { order: 'desc' } } is missing
-			// sr := c.multisearchRequests[0].Requests[0]
-			// require.Equal(t, sr, `{"docvalue_fields":["@timestamp"],"query":{"bool":{"filter":{"range":{"@timestamp":{"format":"epoch_millis","gte":1526406600000,"lte":1526406900000}}}}},"script_fields":{},"size":500,"sort":[{"@timestamp":{"order":"desc","unmapped_type":"boolean"}}, {"_doc": {"order": "desc"}}]}`)
+
+			sr := c.multisearchRequests[0].Requests[0]
+			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
+			require.Equal(t, rangeFilter.Key, c.timeField)
+			require.Equal(t, rangeFilter.Lte, toMs)
+			require.Equal(t, rangeFilter.Gte, fromMs)
+			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
+
+			require.Equal(t, sr.Size, 500)
+			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "desc", "unmapped_type": "boolean"})
+			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "desc"})
+			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}{})
+		})
+
+		t.Run("With raw data metric query (from frontend tests)", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [],
+				"metrics": [{ "id": "1", "type": "raw_data", "settings": {}	}]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+
+			sr := c.multisearchRequests[0].Requests[0]
+			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
+			require.Equal(t, rangeFilter.Key, c.timeField)
+			require.Equal(t, rangeFilter.Lte, toMs)
+			require.Equal(t, rangeFilter.Gte, fromMs)
+			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
+
+			require.Equal(t, sr.Size, 500)
+			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "desc", "unmapped_type": "boolean"})
+			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "desc"})
+			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}{})
 		})
 
 		t.Run("With raw document metric size set", func(t *testing.T) {
@@ -1322,39 +1353,67 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, filter.AnalyzeWildcard, true)
 		})
 
-		// FIXME
-		// Log query is not implemented with defaults
-		// t.Run("With log query should return query with defaults  (from frontend tests)", func(t *testing.T) {
-		// 	c := newFakeClient()
-		// 	_, err := executeTsdbQuery(c, `{
-		// 		"timeField": "@timestamp",
-		// 		"metrics": { "type": "logs", "id": "1"}
-		// 	}`, from, to, 15*time.Second)
-		// 	require.NoError(t, err)
-		// 	sr := c.multisearchRequests[0].Requests[0]
-		// 	require.Equal(t, sr.Size, 500)
+		t.Run("With log query should return query with defaults (from frontend tests)", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"metrics": [{ "type": "logs", "id": "1"}]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			require.Equal(t, sr.Size, 500)
 
-		// 	rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
-		// 	require.Equal(t, rangeFilter.Key, c.timeField)
-		// 	require.Equal(t, rangeFilter.Lte, toMs)
-		// 	require.Equal(t, rangeFilter.Gte, fromMs)
-		// 	require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
+			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
+			require.Equal(t, rangeFilter.Key, c.timeField)
+			require.Equal(t, rangeFilter.Lte, toMs)
+			require.Equal(t, rangeFilter.Gte, fromMs)
+			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
 
-		// 	sort, _ := json.Marshal(sr.Sort)
-		// 	require.Equal(t, string(sort), `"sort":[{"@timestamp":{"order":"desc","unmapped_type":"boolean"}},{"_doc":{"order":"desc"}}]`)
+			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "desc", "unmapped_type": "boolean"})
+			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "desc"})
+			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}{})
 
-		// 	firstLevel := sr.Aggs[0]
-		// 	require.Equal(t, firstLevel.Key, "1")
-		// 	require.Equal(t, firstLevel.Aggregation.Type, "date_histogram")
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "1")
+			require.Equal(t, firstLevel.Aggregation.Type, "date_histogram")
 
-		// 	hAgg := firstLevel.Aggregation.Aggregation.(*es.DateHistogramAgg)
-		// 	require.Equal(t, hAgg.ExtendedBounds.Max, toMs)
-		// 	require.Equal(t, hAgg.ExtendedBounds.Min, fromMs)
-		// 	require.Equal(t, hAgg.Field, "@timestamp")
-		// 	require.Equal(t, hAgg.Format, es.DateFormatEpochMS)
-		// 	require.Equal(t, hAgg.FixedInterval, "$__interval_msms")
-		// 	require.Equal(t, hAgg.MinDocCount, 0)
-		// })
+			hAgg := firstLevel.Aggregation.Aggregation.(*es.DateHistogramAgg)
+			require.Equal(t, hAgg.ExtendedBounds.Max, toMs)
+			require.Equal(t, hAgg.ExtendedBounds.Min, fromMs)
+			require.Equal(t, hAgg.Field, "@timestamp")
+			require.Equal(t, hAgg.Format, es.DateFormatEpochMS)
+			require.Equal(t, hAgg.FixedInterval, "$__interval_msms")
+			require.Equal(t, hAgg.MinDocCount, 0)
+		})
+
+		t.Run("With log query with limit should return query with correct size", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"metrics": [{ "type": "logs", "id": "1", "settings": { "limit": 1000 }}]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			require.Equal(t, sr.Size, 1000)
+		})
+
+		t.Run("With log query should return highlight properties", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"metrics": [{ "type": "logs", "id": "1" }]
+			}`, from, to, 15*time.Second)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			require.Equal(t, sr.CustomProps["highlight"], map[string]interface{}{
+				"fields": map[string]interface{}{
+					"*": map[string]interface{}{},
+				},
+				"fragment_size": 2147483647,
+				"post_tags":     []string{"@/HIGHLIGHT@"},
+				"pre_tags":      []string{"@HIGHLIGHT@"},
+			})
+		})
 	})
 }
 
@@ -1655,10 +1714,9 @@ func TestSettingsCasting(t *testing.T) {
 			}`, from, to, 15*time.Second)
 
 			assert.Nil(t, err)
-			// FIXME: This should be @timestamp, but Field is empty
-			// sr := c.multisearchRequests[0].Requests[0]
-			// dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
-			// assert.Equal(t, dateHistogramAgg.Field, "@timestamp")
+			sr := c.multisearchRequests[0].Requests[0]
+			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+			assert.Equal(t, dateHistogramAgg.Field, "@timestamp")
 		})
 
 		t.Run("Should use field from bucket agg when specified", func(t *testing.T) {
@@ -1755,106 +1813,4 @@ func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval 
 	}
 	query := newTimeSeriesQuery(c, dataRequest.Queries, intervalv2.NewCalculator(intervalv2.CalculatorOptions{MinInterval: minInterval}))
 	return query.execute()
-}
-
-func TestTimeSeriesQueryParser(t *testing.T) {
-	t.Run("Test time series query parser", func(t *testing.T) {
-		p := newTimeSeriesQueryParser()
-
-		t.Run("Should be able to parse query", func(t *testing.T) {
-			body := `{
-				"timeField": "@timestamp",
-				"query": "@metric:cpu",
-				"alias": "{{@hostname}} {{metric}}",
-        		"interval": "10m",
-				"metrics": [
-					{
-						"field": "@value",
-						"id": "1",
-						"meta": {},
-						"settings": {
-							"percents": [
-								"90"
-							]
-						},
-						"type": "percentiles"
-					},
-					{
-						"type": "count",
-						"field": "select field",
-						"id": "4",
-						"settings": {},
-						"meta": {}
-					}
-				],
-				"bucketAggs": [
-					{
-						"fake": true,
-						"field": "@hostname",
-						"id": "3",
-						"settings": {
-							"min_doc_count": 1,
-							"order": "desc",
-							"orderBy": "_term",
-							"size": "10"
-						},
-						"type": "terms"
-					},
-					{
-						"field": "@timestamp",
-						"id": "2",
-						"settings": {
-							"interval": "5m",
-							"min_doc_count": 0,
-							"trimEdges": 0
-						},
-						"type": "date_histogram"
-					}
-				]
-			}`
-			dataQuery, err := newDataQuery(body)
-			require.NoError(t, err)
-			queries, err := p.parse(dataQuery.Queries)
-			require.NoError(t, err)
-			require.Len(t, queries, 1)
-
-			q := queries[0]
-
-			require.Equal(t, q.TimeField, "@timestamp")
-			require.Equal(t, q.RawQuery, "@metric:cpu")
-			require.Equal(t, q.Alias, "{{@hostname}} {{metric}}")
-			require.Equal(t, q.Interval, "10m")
-
-			require.Len(t, q.Metrics, 2)
-			require.Equal(t, q.Metrics[0].Field, "@value")
-			require.Equal(t, q.Metrics[0].ID, "1")
-			require.Equal(t, q.Metrics[0].Type, "percentiles")
-			require.False(t, q.Metrics[0].Hide)
-			require.Equal(t, q.Metrics[0].PipelineAggregate, "")
-			require.Equal(t, q.Metrics[0].Settings.Get("percents").MustStringArray()[0], "90")
-
-			require.Equal(t, q.Metrics[1].Field, "select field")
-			require.Equal(t, q.Metrics[1].ID, "4")
-			require.Equal(t, q.Metrics[1].Type, "count")
-			require.False(t, q.Metrics[1].Hide)
-			require.Equal(t, q.Metrics[1].PipelineAggregate, "")
-			require.Empty(t, q.Metrics[1].Settings.MustMap())
-
-			require.Len(t, q.BucketAggs, 2)
-			require.Equal(t, q.BucketAggs[0].Field, "@hostname")
-			require.Equal(t, q.BucketAggs[0].ID, "3")
-			require.Equal(t, q.BucketAggs[0].Type, "terms")
-			require.Equal(t, q.BucketAggs[0].Settings.Get("min_doc_count").MustInt(), 1)
-			require.Equal(t, q.BucketAggs[0].Settings.Get("order").MustString(), "desc")
-			require.Equal(t, q.BucketAggs[0].Settings.Get("orderBy").MustString(), "_term")
-			require.Equal(t, q.BucketAggs[0].Settings.Get("size").MustString(), "10")
-
-			require.Equal(t, q.BucketAggs[1].Field, "@timestamp")
-			require.Equal(t, q.BucketAggs[1].ID, "2")
-			require.Equal(t, q.BucketAggs[1].Type, "date_histogram")
-			require.Equal(t, q.BucketAggs[1].Settings.Get("interval").MustString(), "5m")
-			require.Equal(t, q.BucketAggs[1].Settings.Get("min_doc_count").MustInt(), 0)
-			require.Equal(t, q.BucketAggs[1].Settings.Get("trimEdges").MustInt(), 0)
-		})
-	})
 }

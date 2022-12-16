@@ -56,10 +56,6 @@ export const Expression: FC<ExpressionProps> = ({
   const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
 
-  // sometime we receive results where every value is just "null" when noData occurs
-  const emptyResults = hasResults && isEmptySeries(series);
-  const isTimeSeriesResults = !emptyResults && isTimeSeries(series);
-
   const alertCondition = isAlertCondition ?? false;
   const showSummary = isAlertCondition && hasResults;
 
@@ -109,24 +105,7 @@ export const Expression: FC<ExpressionProps> = ({
           onUpdateExpressionType={(type) => onUpdateExpressionType(query.refId, type)}
         />
         <div className={styles.expression.body}>{renderExpressionType(query)}</div>
-        {hasResults && (
-          <div className={styles.expression.results}>
-            {!emptyResults && isTimeSeriesResults && (
-              <div>
-                {series.map((frame, index) => (
-                  <TimeseriesRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
-                ))}
-              </div>
-            )}
-            {!emptyResults &&
-              !isTimeSeriesResults &&
-              series.map((frame, index) => (
-                // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
-                <FrameRow key={uniqueId()} frame={frame} index={index} isAlertCondition={alertCondition} />
-              ))}
-            {emptyResults && <div className={cx(styles.expression.noData, styles.mutedText)}>No data</div>}
-          </div>
-        )}
+        {hasResults && <ExpressionResult series={series} isAlertCondition={isAlertCondition} />}
         <div className={styles.footer}>
           <Stack direction="row" alignItems="center">
             <AlertConditionIndicator
@@ -149,7 +128,39 @@ export const Expression: FC<ExpressionProps> = ({
   );
 };
 
-const PreviewSummary: FC<{ firing: number; normal: number }> = ({ firing, normal }) => {
+interface ExpressionResultProps {
+  series: DataFrame[];
+  isAlertCondition?: boolean;
+}
+
+export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition }) => {
+  const styles = useStyles2(getStyles);
+
+  // sometimes we receive results where every value is just "null" when noData occurs
+  const emptyResults = isEmptySeries(series);
+  const isTimeSeriesResults = !emptyResults && isTimeSeries(series);
+
+  return (
+    <div className={styles.expression.results}>
+      {!emptyResults && isTimeSeriesResults && (
+        <div>
+          {series.map((frame, index) => (
+            <TimeseriesRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
+          ))}
+        </div>
+      )}
+      {!emptyResults &&
+        !isTimeSeriesResults &&
+        series.map((frame, index) => (
+          // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
+          <FrameRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
+        ))}
+      {emptyResults && <div className={cx(styles.expression.noData, styles.mutedText)}>No data</div>}
+    </div>
+  );
+};
+
+export const PreviewSummary: FC<{ firing: number; normal: number }> = ({ firing, normal }) => {
   const { mutedText } = useStyles2(getStyles);
   return <span className={mutedText}>{`${firing} firing, ${normal} normal`}</span>;
 };

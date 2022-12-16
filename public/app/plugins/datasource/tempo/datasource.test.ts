@@ -51,7 +51,7 @@ describe('Tempo data source', () => {
   it('returns empty response when traceId is empty', async () => {
     const ds = new TempoDatasource(defaultSettings);
     const response = await lastValueFrom(
-      ds.query({ targets: [{ refId: 'refid1', queryType: 'traceId', query: '' } as Partial<TempoQuery>] } as any),
+      ds.query({ targets: [{ refId: 'refid1', queryType: 'traceql', query: '' } as Partial<TempoQuery>] } as any),
       { defaultValue: 'empty' }
     );
     expect(response).toBe('empty');
@@ -61,7 +61,7 @@ describe('Tempo data source', () => {
     function getQuery(): TempoQuery {
       return {
         refId: 'x',
-        queryType: 'traceId',
+        queryType: 'traceql',
         linkedQuery: {
           refId: 'linked',
           expr: '{instance="$interpolationVar"}',
@@ -388,7 +388,7 @@ describe('Tempo data source', () => {
           raw: { from: '15m', to: 'now' },
         },
       },
-      [{ refId: 'refid1', queryType: 'traceId', query: '' } as TempoQuery]
+      [{ refId: 'refid1', queryType: 'traceql', query: '' } as TempoQuery]
     );
 
     expect(request.range.from.unix()).toBe(dateTime(new Date(2022, 8, 13, 15, 58, 0, 0)).unix());
@@ -417,7 +417,7 @@ describe('Tempo data source', () => {
           raw: { from: '15m', to: 'now' },
         },
       },
-      [{ refId: 'refid1', queryType: 'traceId', query: '' } as TempoQuery]
+      [{ refId: 'refid1', queryType: 'traceql', query: '' } as TempoQuery]
     );
 
     expect(request.range.from.unix()).toBe(dateTime(0).unix());
