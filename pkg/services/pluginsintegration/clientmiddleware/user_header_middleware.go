@@ -10,8 +10,7 @@ import (
 )
 
 // NewUserHeaderMiddleware creates a new plugins.ClientMiddleware that will
-// populate the X-Grafana-User header on outgoing plugins.Client and HTTP
-// requests.
+// populate the X-Grafana-User header on outgoing plugins.Client requests.
 func NewUserHeaderMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &UserHeaderMiddleware{
