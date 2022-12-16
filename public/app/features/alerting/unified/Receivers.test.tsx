@@ -96,7 +96,7 @@ const dataSources = {
 const ui = {
   newContactPointButton: byRole('link', { name: /new contact point/i }),
   saveContactButton: byRole('button', { name: /save contact point/i }),
-  newContactPointTypeButton: byRole('button', { name: /new contact point type/i }),
+  newContactPointIntegrationButton: byRole('button', { name: /new contact point integration/i }),
   testContactPointButton: byRole('button', { name: /Test/ }),
   testContactPointModal: byRole('heading', { name: /test contact point/i }),
   customContactPointOption: byRole('radio', { name: /custom/i }),
@@ -403,7 +403,7 @@ describe('Receivers', () => {
     await byText(/Fields \(1\)/i).get(slackContainer);
 
     // add another channel
-    await userEvent.click(ui.newContactPointTypeButton.get());
+    await userEvent.click(ui.newContactPointIntegrationButton.get());
     await clickSelectOption(await byTestId('items.2.type').find(), 'Webhook');
     await userEvent.type(await ui.inputs.webhook.URL.find(), 'http://webhookurl');
 

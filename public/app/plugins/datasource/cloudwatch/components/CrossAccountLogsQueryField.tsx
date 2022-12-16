@@ -16,7 +16,6 @@ type CrossAccountLogsQueryProps = {
   accountOptions: Array<SelectableValue<string>>;
   fetchLogGroups: (params: Partial<DescribeLogGroupsRequest>) => Promise<SelectableResourceValue[]>;
   onChange: (selectedLogGroups: SelectableResourceValue[]) => void;
-  onRunQuery: () => void;
 };
 
 export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) => {
@@ -30,7 +29,6 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
     if (isModalOpen) {
-      props.onRunQuery();
     } else {
       setSelectedLogGroups(props.selectedLogGroups);
       searchFn(searchPhrase, searchAccountId);
