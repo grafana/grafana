@@ -44,6 +44,7 @@ const (
 const defaultRegion = "default"
 
 type CloudWatchQuery struct {
+	logger            log.Logger
 	RefId             string
 	Region            string
 	Id                string
@@ -65,7 +66,7 @@ type CloudWatchQuery struct {
 	AccountId         *string
 }
 
-func (q *CloudWatchQuery) GetGMDAPIMode(logger log.Logger) GMDApiMode {
+func (q *CloudWatchQuery) GetGMDAPIMode() GMDApiMode {
 	if q.MetricQueryType == MetricQueryTypeSearch && q.MetricEditorMode == MetricEditorModeBuilder {
 		if q.IsInferredSearchExpression() {
 			return GMDApiModeInferredSearchExpression
@@ -77,7 +78,7 @@ func (q *CloudWatchQuery) GetGMDAPIMode(logger log.Logger) GMDApiMode {
 		return GMDApiModeSQLExpression
 	}
 
-	logger.Warn("could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
+	q.logger.Warn("could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
 	return GMDApiModeMetricStat
 }
 
@@ -229,7 +230,7 @@ type metricsDataQuery struct {
 
 // ParseMetricDataQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
 // The CloudWatchQuery has a 1 to 1 mapping to a query editor row
-func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, defaultRegion string, dynamicLabelsEnabled,
+func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, defaultRegion string, logger log.Logger, dynamicLabelsEnabled,
 	crossAccountQueryingEnabled bool) ([]*CloudWatchQuery, error) {
 	var metricDataQueries = make(map[string]metricsDataQuery)
 	for _, query := range dataQueries {
@@ -250,6 +251,7 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 	var result []*CloudWatchQuery
 	for refId, mdq := range metricDataQueries {
 		cwQuery := &CloudWatchQuery{
+			logger:            logger,
 			Alias:             mdq.Alias,
 			RefId:             refId,
 			Id:                mdq.Id,
@@ -277,7 +279,7 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 }
 
 func (q *CloudWatchQuery) applyMacros(startTime, endTime time.Time) {
-	if q.GetGMDAPIMode(nil) == GMDApiModeMathExpression {
+	if q.GetGMDAPIMode() == GMDApiModeMathExpression {
 		q.Expression = strings.ReplaceAll(q.Expression, "$__period_auto", strconv.Itoa(calculatePeriodBasedOnTimeRange(startTime, endTime)))
 	}
 }
