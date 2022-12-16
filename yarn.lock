@@ -4852,7 +4852,7 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
-    rollup-plugin-esbuild: 4.10.1
+    rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
     rxjs: 7.5.7
     sinon: 14.0.1
@@ -4879,7 +4879,7 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
-    rollup-plugin-esbuild: 4.10.1
+    rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
     tslib: 2.4.1
     typescript: 4.8.4
@@ -4916,7 +4916,7 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
-    rollup-plugin-esbuild: 4.10.1
+    rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
     tracelib: 1.0.1
     ts-loader: 8.4.0
@@ -5059,7 +5059,7 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
-    rollup-plugin-esbuild: 4.10.1
+    rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
@@ -5086,7 +5086,7 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
-    rollup-plugin-esbuild: 4.10.1
+    rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
     tslib: 2.4.1
     typescript: 4.8.4
@@ -5324,7 +5324,7 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
-    rollup-plugin-esbuild: 4.10.1
+    rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
     rollup-plugin-svg-import: ^1.6.0
     rxjs: 7.5.7
@@ -19282,10 +19282,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"es-module-lexer@npm:^0.9.0, es-module-lexer@npm:^0.9.3":
+"es-module-lexer@npm:^0.9.0":
   version: 0.9.3
   resolution: "es-module-lexer@npm:0.9.3"
   checksum: 84bbab23c396281db2c906c766af58b1ae2a1a2599844a504df10b9e8dc77ec800b3211fdaa133ff700f5703d791198807bba25d9667392d27a5e9feda344da8
+  languageName: node
+  linkType: hard
+
+"es-module-lexer@npm:^1.0.5":
+  version: 1.1.0
+  resolution: "es-module-lexer@npm:1.1.0"
+  checksum: 3e9f5019b69c6b2f04eb8478c4fdb4ed72cb8b4c97511b5dd39c1f498386ed8f5083c32067c15efcfabc7e8460cb65ed4627dd32405475715a898009922f41fa
   languageName: node
   linkType: hard
 
@@ -25880,7 +25887,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"joycon@npm:^3.0.1":
+"joycon@npm:^3.0.1, joycon@npm:^3.1.1":
   version: 3.1.1
   resolution: "joycon@npm:3.1.1"
   checksum: 8003c9c3fc79c5c7602b1c7e9f7a2df2e9916f046b0dbad862aa589be78c15734d11beb9fe846f5e06138df22cb2ad29961b6a986ba81c4920ce2b15a7f11067
@@ -26185,17 +26192,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsonc-parser@npm:3.2.0":
+"jsonc-parser@npm:3.2.0, jsonc-parser@npm:^3.2.0":
   version: 3.2.0
   resolution: "jsonc-parser@npm:3.2.0"
   checksum: 946dd9a5f326b745aa326d48a7257e3f4a4b62c5e98ec8e49fa2bdd8d96cef7e6febf1399f5c7016114fd1f68a1c62c6138826d5d90bc650448e3cf0951c53c7
-  languageName: node
-  linkType: hard
-
-"jsonc-parser@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "jsonc-parser@npm:3.0.0"
-  checksum: 1df2326f1f9688de30c70ff19c5b2a83ba3b89a1036160da79821d1361090775e9db502dc57a67c11b56e1186fc1ed70b887f25c5febf9a3ec4f91435836c99d
   languageName: node
   linkType: hard
 
@@ -34489,19 +34489,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-esbuild@npm:4.10.1":
-  version: 4.10.1
-  resolution: "rollup-plugin-esbuild@npm:4.10.1"
+"rollup-plugin-esbuild@npm:5.0.0":
+  version: 5.0.0
+  resolution: "rollup-plugin-esbuild@npm:5.0.0"
   dependencies:
-    "@rollup/pluginutils": ^4.1.1
-    debug: ^4.3.3
-    es-module-lexer: ^0.9.3
-    joycon: ^3.0.1
-    jsonc-parser: ^3.0.0
+    "@rollup/pluginutils": ^5.0.1
+    debug: ^4.3.4
+    es-module-lexer: ^1.0.5
+    joycon: ^3.1.1
+    jsonc-parser: ^3.2.0
   peerDependencies:
     esbuild: ">=0.10.1"
-    rollup: ^1.20.0 || ^2.0.0
-  checksum: 8bc7c90c972e00d6757b92d6ee4c04d9b0f34b61659f4c544b3994091bc5fdfe4ffdcbf56999111da39e39e650eb93001d587843e87bc306322d9869afe4d60b
+    rollup: ^1.20.0 || ^2.0.0 || ^3.0.0
+  checksum: 59b2922db370918ca97ac3862bce9a37e530a8e6332c670803b211e827de6b0efb8e06d1b4eba60af7dab42a1fd38c6aaa039c6cea321f61fb363a3abdedc28a
   languageName: node
   linkType: hard
 
