@@ -13,8 +13,6 @@ import (
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 var (
@@ -33,7 +31,7 @@ const telegramMaxMessageLenRunes = 4096
 // alert notifications to Telegram.
 type TelegramNotifier struct {
 	*Base
-	log      log.Logger
+	log      Logger
 	images   ImageStore
 	ns       WebhookSender
 	tmpl     *template.Template
@@ -102,7 +100,7 @@ func NewTelegramNotifier(fc FactoryConfig) (*TelegramNotifier, error) {
 	return &TelegramNotifier{
 		Base:     NewBase(fc.Config),
 		tmpl:     fc.Template,
-		log:      log.New("alerting.notifier.telegram"),
+		log:      fc.Logger,
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		settings: settings,

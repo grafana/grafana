@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { debounce } from 'lodash';
 import { promLanguageDefinition } from 'monaco-promql';
 import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
@@ -215,8 +216,16 @@ const MonacoQueryField = (props: Props) => {
           // If you clicked into another field and haven't un-blurred the active field,
           // then the query that is run will be stale, as the reference is only updated
           // with the value of the last blurred input.
+          // This can run quite slowly, so we're debouncing this which should accomplish two things
+          // 1. Should prevent this function from blocking the current call stack by pushing into the web API callback queue
+          // 2. Should prevent a bunch of duplicates of this function being called as the user is typing
+          const updateCurrentEditorValue = debounce(() => {
+            const editorValue = editor.getValue();
+            onChangeRef.current(editorValue);
+          }, 300);
+
           editor.getModel()?.onDidChangeContent(() => {
-            onChangeRef.current(editor.getValue());
+            updateCurrentEditorValue();
           });
 
           // handle: shift + enter

@@ -13,7 +13,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -76,7 +75,7 @@ func NewVictoropsNotifier(fc FactoryConfig) (*VictoropsNotifier, error) {
 	}
 	return &VictoropsNotifier{
 		Base:     NewBase(fc.Config),
-		log:      log.New("alerting.notifier.victorops"),
+		log:      fc.Logger,
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
@@ -89,7 +88,7 @@ func NewVictoropsNotifier(fc FactoryConfig) (*VictoropsNotifier, error) {
 // Victorops specifications (http://victorops.force.com/knowledgebase/articles/Integration/Alert-Ingestion-API-Documentation/)
 type VictoropsNotifier struct {
 	*Base
-	log      log.Logger
+	log      Logger
 	images   ImageStore
 	ns       WebhookSender
 	tmpl     *template.Template
@@ -169,7 +168,7 @@ func (vn *VictoropsNotifier) SendResolved() bool {
 	return !vn.GetDisableResolveMessage()
 }
 
-func buildMessageType(l log.Logger, tmpl func(string) string, msgType string, as ...*types.Alert) string {
+func buildMessageType(l Logger, tmpl func(string) string, msgType string, as ...*types.Alert) string {
 	if types.Alerts(as...).Status() == model.AlertResolved {
 		return victoropsAlertStateRecovery
 	}

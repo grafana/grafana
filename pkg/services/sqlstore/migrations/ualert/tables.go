@@ -35,6 +35,9 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	AddAlertImageMigrations(mg)
 
 	AddAlertmanagerConfigHistoryMigrations(mg)
+	ExtractAlertmanagerConfigurationHistoryMigration(mg)
+	mg.AddMigration("drop non-unique orgID index", migrator.NewDropIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Cols: []string{"org_id"}}))
+	mg.AddMigration("add unique index on orgID", migrator.NewAddIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Type: migrator.UniqueIndex, Cols: []string{"org_id"}}))
 }
 
 // AddAlertDefinitionMigrations should not be modified.
