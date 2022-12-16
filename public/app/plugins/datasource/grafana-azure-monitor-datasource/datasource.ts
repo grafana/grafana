@@ -59,7 +59,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
   filterQuery(item: AzureMonitorQuery): boolean {
     if (!item.queryType) {
-      return true;
+      return false;
     }
     const ds = this.pseudoDatasource[item.queryType];
     return ds?.filterQuery?.(item) ?? true;

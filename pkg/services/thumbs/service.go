@@ -182,7 +182,12 @@ func (hs *thumbService) parseImageReq(c *models.ReqContext, checkSave bool) *pre
 	}
 
 	// Check permissions and status
-	status := hs.getStatus(c, req.UID, checkSave)
+	status, err := hs.getStatus(c, req.UID, checkSave)
+	if err != nil {
+		c.JSON(status, map[string]string{"error": err.Error()})
+		return nil
+	}
+
 	if status != 200 {
 		c.JSON(status, map[string]string{"error": fmt.Sprintf("code: %d", status)})
 		return nil
@@ -463,35 +468,24 @@ func (hs *thumbService) CrawlerStatus(c *models.ReqContext) response.Response {
 }
 
 // Ideally this service would not require first looking up the full dashboard just to bet the id!
-func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bool) int {
-	dashboardID, err := hs.getDashboardId(c, uid)
+func (hs *thumbService) getStatus(c *models.ReqContext, uid string, checkSave bool) (int, error) {
+	guardian, err := guardian.NewByUID(c.Req.Context(), uid, c.OrgID, c.SignedInUser)
 	if err != nil {
-		return 404
-	}
-
-	guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
-	if checkSave {
-		if canSave, err := guardian.CanSave(); err != nil || !canSave {
-			return 403 // forbidden
-		}
-		return 200
-	}
-
-	if canView, err := guardian.CanView(); err != nil || !canView {
-		return 403 // forbidden
-	}
-
-	return 200 // found and OK
-}
-
-func (hs *thumbService) getDashboardId(c *models.ReqContext, uid string) (int64, error) {
-	query := models.GetDashboardQuery{Uid: uid, OrgId: c.OrgID}
-
-	if err := hs.dashboardService.GetDashboard(c.Req.Context(), &query); err != nil {
 		return 0, err
 	}
 
-	return query.Result.Id, nil
+	if checkSave {
+		if canSave, err := guardian.CanSave(); err != nil || !canSave {
+			return 403, nil // forbidden
+		}
+		return 200, nil
+	}
+
+	if canView, err := guardian.CanView(); err != nil || !canView {
+		return 403, nil // forbidden
+	}
+
+	return 200, nil // found and OK
 }
 
 func (hs *thumbService) runOnDemandCrawl(parentCtx context.Context, theme models.Theme, mode CrawlerMode, kind ThumbnailKind, authOpts rendering.AuthOpts) {

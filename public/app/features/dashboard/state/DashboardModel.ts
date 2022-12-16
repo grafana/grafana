@@ -495,6 +495,15 @@ export class DashboardModel implements TimeModel {
     this.events.publish(new DashboardMetaChangedEvent());
   }
 
+  makeEditable() {
+    this.editable = true;
+    this.updateMeta({
+      canMakeEditable: false,
+      canEdit: true,
+      canSave: true,
+    });
+  }
+
   sortPanelsByGridPos() {
     this.panels.sort((panelA, panelB) => {
       if (panelA.gridPos.y === panelB.gridPos.y) {

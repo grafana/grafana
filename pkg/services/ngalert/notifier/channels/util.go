@@ -22,7 +22,6 @@ import (
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -49,11 +48,11 @@ var (
 	ErrImagesUnavailable = errors.New("alert screenshots are unavailable")
 )
 
-type forEachImageFunc func(index int, image models.Image) error
+type forEachImageFunc func(index int, image Image) error
 
 // getImage returns the image for the alert or an error. It returns a nil
 // image if the alert does not have an image token or the image does not exist.
-func getImage(ctx context.Context, l log.Logger, imageStore ImageStore, alert types.Alert) (*models.Image, error) {
+func getImage(ctx context.Context, l Logger, imageStore ImageStore, alert types.Alert) (*Image, error) {
 	token := getTokenFromAnnotations(alert.Annotations)
 	if token == "" {
 		return nil, nil
@@ -63,7 +62,7 @@ func getImage(ctx context.Context, l log.Logger, imageStore ImageStore, alert ty
 	defer cancelFunc()
 
 	img, err := imageStore.GetImage(ctx, token)
-	if errors.Is(err, models.ErrImageNotFound) || errors.Is(err, ErrImagesUnavailable) {
+	if errors.Is(err, ErrImageNotFound) || errors.Is(err, ErrImagesUnavailable) {
 		return nil, nil
 	} else if err != nil {
 		l.Warn("failed to get image with token", "token", token, "error", err)
@@ -80,7 +79,7 @@ func getImage(ctx context.Context, l log.Logger, imageStore ImageStore, alert ty
 // the error and not iterate the remaining alerts. A forEachFunc can return ErrImagesDone
 // to stop the iteration of remaining alerts if the intended image or maximum number of
 // images have been found.
-func withStoredImages(ctx context.Context, l log.Logger, imageStore ImageStore, forEachFunc forEachImageFunc, alerts ...*types.Alert) error {
+func withStoredImages(ctx context.Context, l Logger, imageStore ImageStore, forEachFunc forEachImageFunc, alerts ...*types.Alert) error {
 	for index, alert := range alerts {
 		logger := l.New("alert", alert.String())
 		img, err := getImage(ctx, logger, imageStore, *alert)
@@ -107,7 +106,7 @@ func openImage(path string) (io.ReadCloser, error) {
 	fp := filepath.Clean(path)
 	_, err := os.Stat(fp)
 	if os.IsNotExist(err) || os.IsPermission(err) {
-		return nil, models.ErrImageNotFound
+		return nil, ErrImageNotFound
 	}
 
 	f, err := os.Open(fp)
@@ -128,7 +127,7 @@ func getTokenFromAnnotations(annotations model.LabelSet) string {
 type UnavailableImageStore struct{}
 
 // Get returns the image with the corresponding token, or ErrImageNotFound.
-func (u *UnavailableImageStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
+func (u *UnavailableImageStore) GetImage(ctx context.Context, token string) (*Image, error) {
 	return nil, ErrImagesUnavailable
 }
 
@@ -195,7 +194,7 @@ type httpCfg struct {
 
 // sendHTTPRequest sends an HTTP request.
 // Stubbable by tests.
-var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logger log.Logger) ([]byte, error) {
+var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logger Logger) ([]byte, error) {
 	var reader io.Reader
 	if len(cfg.body) > 0 {
 		reader = bytes.NewReader(cfg.body)
@@ -249,7 +248,7 @@ var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logge
 	return respBody, nil
 }
 
-func joinUrlPath(base, additionalPath string, logger log.Logger) string {
+func joinUrlPath(base, additionalPath string, logger Logger) string {
 	u, err := url.Parse(base)
 	if err != nil {
 		logger.Debug("failed to parse URL while joining URL", "url", base, "error", err.Error())
@@ -318,4 +317,54 @@ func splitCommaDelimitedString(str string) []string {
 		}
 	}
 	return res
+}
+
+// Copied from https://github.com/prometheus/alertmanager/blob/main/notify/util.go, please remove once we're on-par with upstream.
+// truncationMarker is the character used to represent a truncation.
+const truncationMarker = "…"
+
+// Copied from https://github.com/prometheus/alertmanager/blob/main/notify/util.go, please remove once we're on-par with upstream.
+// TruncateInrunes truncates a string to fit the given size in Runes.
+func TruncateInRunes(s string, n int) (string, bool) {
+	r := []rune(s)
+	if len(r) <= n {
+		return s, false
+	}
+
+	if n <= 3 {
+		return string(r[:n]), true
+	}
+
+	return string(r[:n-1]) + truncationMarker, true
+}
+
+// TruncateInBytes truncates a string to fit the given size in Bytes.
+// TODO: This is more advanced than the upstream's TruncateInBytes. We should consider upstreaming this, and removing it from here.
+func TruncateInBytes(s string, n int) (string, bool) {
+	// First, measure the string the w/o a to-rune conversion.
+	if len(s) <= n {
+		return s, false
+	}
+
+	// The truncationMarker itself is 3 bytes, we can't return any part of the string when it's less than 3.
+	if n <= 3 {
+		switch n {
+		case 3:
+			return truncationMarker, true
+		default:
+			return strings.Repeat(".", n), true
+		}
+	}
+
+	// Now, to ensure we don't butcher the string we need to remove using runes.
+	r := []rune(s)
+	truncationTarget := n - 3
+
+	// Next, let's truncate the runes to the lower possible number.
+	truncatedRunes := r[:truncationTarget]
+	for len(string(truncatedRunes)) > truncationTarget {
+		truncatedRunes = r[:len(truncatedRunes)-1]
+	}
+
+	return string(truncatedRunes) + truncationMarker, true
 }

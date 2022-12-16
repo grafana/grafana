@@ -11,12 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -233,7 +233,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 }
 
 func putAdminScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
-	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore sqlstore.Store, userSvc user.Service) {
+	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore db.DB, userSvc user.Service) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := &HTTPServer{
 			Cfg:             setting.NewCfg(),

@@ -504,7 +504,11 @@ func (hs *HTTPServer) canSaveAnnotation(c *models.ReqContext, annotation *annota
 }
 
 func canEditDashboard(c *models.ReqContext, dashboardID int64) (bool, error) {
-	guard := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+	guard, err := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return false, err
+	}
+
 	if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
 		return false, err
 	}
@@ -606,6 +610,7 @@ func (hs *HTTPServer) canCreateAnnotation(c *models.ReqContext, dashboardId int6
 				return canSave, err
 			}
 		}
+
 		return canEditDashboard(c, dashboardId)
 	} else { // organization annotations
 		if !hs.AccessControl.IsDisabled() {
