@@ -118,9 +118,6 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 		}
 
 		body := string(reqBody)
-		if err != nil {
-			return nil, err
-		}
 		body = strings.ReplaceAll(body, "$__interval_ms", strconv.FormatInt(r.interval.Milliseconds(), 10))
 		body = strings.ReplaceAll(body, "$__interval", r.interval.String())
 
