@@ -105,6 +105,11 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 }
 
 func (mg *Migrator) CheckHealth(name string) (int, error) {
+	has, err := mg.DBEngine.Exist(&MigrationLog{Success: false})
+	fmt.Println("it has", has)
+	if err != nil {
+		return 1, err
+	}
 	return 0, nil
 }
 
