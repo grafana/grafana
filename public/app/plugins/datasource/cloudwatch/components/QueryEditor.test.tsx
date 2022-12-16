@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
@@ -15,7 +15,7 @@ import {
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchQuery, CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../types';
 
-import { PanelQueryEditor } from './PanelQueryEditor';
+import { QueryEditor } from './QueryEditor';
 
 // the following three fields are added to legacy queries in the dashboard migrator
 const migratedFields = {
@@ -31,7 +31,22 @@ const props: QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJ
   query: {} as CloudWatchQuery,
 };
 
-describe('PanelQueryEditor should render right editor', () => {
+const FAKE_EDITOR_LABEL = 'FakeEditor';
+
+jest.mock('./SQLCodeEditor', () => ({
+  SQLCodeEditor: ({ sql, onChange }: { sql: string; onChange: (val: string) => void }) => {
+    return (
+      <>
+        <label htmlFor="cloudwatch-fake-editor">{FAKE_EDITOR_LABEL}</label>
+        <input id="cloudwatch-fake-editor" value={sql} onChange={(e) => onChange(e.currentTarget.value)}></input>
+      </>
+    );
+  },
+}));
+
+export { SQLCodeEditor } from './SQLCodeEditor';
+
+describe('QueryEditor should render right editor', () => {
   describe('when using grafana 6.3.0 metric query', () => {
     it('should render the metrics query editor', async () => {
       const query = {
@@ -50,7 +65,7 @@ describe('PanelQueryEditor should render right editor', () => {
         returnData: false,
       };
       await act(async () => {
-        render(<PanelQueryEditor {...props} query={query} />);
+        render(<QueryEditor {...props} query={query} />);
       });
       expect(screen.getByText('Metric name')).toBeInTheDocument();
     });
@@ -78,7 +93,7 @@ describe('PanelQueryEditor should render right editor', () => {
         statistics: 'Average',
       } as any;
       await act(async () => {
-        render(<PanelQueryEditor {...props} query={query} />);
+        render(<QueryEditor {...props} query={query} />);
       });
       expect(screen.getByText('Choose Log Groups')).toBeInTheDocument();
     });
@@ -106,7 +121,7 @@ describe('PanelQueryEditor should render right editor', () => {
         statistic: 'Average',
       } as any;
       await act(async () => {
-        render(<PanelQueryEditor {...props} query={query} />);
+        render(<QueryEditor {...props} query={query} />);
       });
       expect(screen.getByText('Log Groups')).toBeInTheDocument();
     });
@@ -133,7 +148,7 @@ describe('PanelQueryEditor should render right editor', () => {
         statistic: 'Average',
       } as any;
       await act(async () => {
-        render(<PanelQueryEditor {...props} query={query} />);
+        render(<QueryEditor {...props} query={query} />);
       });
       expect(screen.getByText('Metric name')).toBeInTheDocument();
     });
@@ -177,7 +192,7 @@ describe('PanelQueryEditor should render right editor', () => {
       test.each(cases)('$name', async ({ query, toggle }) => {
         config.featureToggles.cloudWatchCrossAccountQuerying = toggle;
         await act(async () => {
-          render(<PanelQueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
+          render(<QueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
         });
         expect(await screen.getByText('Monitoring account')).toBeInTheDocument();
       });
@@ -193,7 +208,7 @@ describe('PanelQueryEditor should render right editor', () => {
         {
           name: 'it is metric query code query and toggle is not enabled',
           query: validMetricQueryCodeQuery,
-          toggle: true,
+          toggle: false,
         },
         { name: 'it is logs query and feature is not enabled', query: validLogsQuery, toggle: false },
         {
@@ -210,10 +225,128 @@ describe('PanelQueryEditor should render right editor', () => {
       test.each(cases)('$name', async ({ query, toggle }) => {
         config.featureToggles.cloudWatchCrossAccountQuerying = toggle;
         await act(async () => {
-          render(<PanelQueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
+          render(<QueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
         });
         expect(await screen.queryByText('Monitoring account')).toBeNull();
       });
+    });
+  });
+
+  describe('QueryHeader', () => {
+    it('should display metric actions in header when metric query is used', async () => {
+      await act(async () => {
+        render(<QueryEditor {...props} query={validMetricQueryCodeQuery} />);
+      });
+
+      expect(screen.getByLabelText(/Region.*/)).toBeInTheDocument();
+      expect(screen.getByText('CloudWatch Metrics')).toBeInTheDocument();
+      expect(screen.getByLabelText('Builder')).toBeInTheDocument();
+      expect(screen.getByLabelText('Code')).toBeInTheDocument();
+      expect(screen.getByText('Metric Query')).toBeInTheDocument();
+    });
+
+    it('should display metric actions in header when metric query is used', async () => {
+      await act(async () => {
+        render(<QueryEditor {...props} query={validLogsQuery} />);
+      });
+
+      expect(screen.getByLabelText(/Region.*/)).toBeInTheDocument();
+      expect(screen.getByText('CloudWatch Logs')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Builder')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Code')).not.toBeInTheDocument();
+      expect(screen.queryByText('Metric Query')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('metrics editor should handle editor modes correctly', () => {
+    it('when metric query type is metric search and editor mode is builder', async () => {
+      await act(async () => {
+        render(<QueryEditor {...props} query={validMetricSearchBuilderQuery} />);
+      });
+
+      expect(screen.getByText('Metric Search')).toBeInTheDocument();
+      const radio = screen.getByLabelText('Builder');
+      expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
+    });
+
+    it('when metric query type is metric search and editor mode is raw', async () => {
+      await act(async () => {
+        render(<QueryEditor {...props} query={validMetricSearchCodeQuery} />);
+      });
+      expect(screen.getByText('Metric Search')).toBeInTheDocument();
+      const radio = screen.getByLabelText('Code');
+      expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
+    });
+
+    it('when metric query type is metric query and editor mode is builder', async () => {
+      await act(async () => {
+        await act(async () => {
+          render(<QueryEditor {...props} query={validMetricQueryBuilderQuery} />);
+        });
+
+        expect(screen.getByText('Metric Query')).toBeInTheDocument();
+        const radio = screen.getByLabelText('Builder');
+        expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
+      });
+    });
+
+    it('when metric query type is metric query and editor mode is raw', async () => {
+      await act(async () => {
+        render(<QueryEditor {...props} query={validMetricQueryCodeQuery} />);
+      });
+
+      expect(screen.getByText('Metric Query')).toBeInTheDocument();
+      const radio = screen.getByLabelText('Code');
+      expect(radio instanceof HTMLInputElement && radio.checked).toBeTruthy();
+    });
+  });
+
+  describe('confirm modal', () => {
+    it('should be shown when moving from code editor to builder when in sql mode', async () => {
+      const sqlQuery = 'SELECT * FROM test';
+      render(
+        <QueryEditor
+          {...props}
+          query={{ ...validMetricQueryCodeQuery, sqlExpression: sqlQuery }}
+          onChange={jest.fn()}
+          onRunQuery={jest.fn()}
+        />
+      );
+
+      // the modal should not be shown unless the code editor is "dirty", so need to trigger a change
+      const codeEditorElement = screen.getByLabelText(FAKE_EDITOR_LABEL);
+      fireEvent.change(codeEditorElement, { target: { value: 'select * from ' } });
+      const builderElement = screen.getByLabelText('Builder');
+      expect(builderElement).toBeInTheDocument();
+      await act(async () => {
+        await builderElement.click();
+      });
+
+      const modalTitleElem = screen.getByText('Are you sure?');
+      expect(modalTitleElem).toBeInTheDocument();
+    });
+
+    it('should not be shown when moving from builder to code when in sql mode', async () => {
+      render(
+        <QueryEditor {...props} query={validMetricQueryBuilderQuery} onChange={jest.fn()} onRunQuery={jest.fn()} />
+      );
+      const builderElement = screen.getByLabelText('Builder');
+      expect(builderElement).toBeInTheDocument();
+      await act(async () => {
+        await builderElement.click();
+      });
+      expect(screen.queryByText('Are you sure?')).toBeNull();
+    });
+
+    it('should not be shown when moving from code to builder when in search mode', async () => {
+      render(<QueryEditor {...props} query={validMetricSearchCodeQuery} onChange={jest.fn()} onRunQuery={jest.fn()} />);
+
+      const builderElement = screen.getByLabelText('Builder');
+      expect(builderElement).toBeInTheDocument();
+      await act(async () => {
+        await builderElement.click();
+      });
+      expect(screen.queryByText('Are you sure?')).toBeNull();
     });
   });
 });

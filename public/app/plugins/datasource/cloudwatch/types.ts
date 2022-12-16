@@ -41,7 +41,7 @@ export interface SQLExpression {
 }
 
 export interface CloudWatchMetricsQuery extends MetricStat, DataQuery {
-  queryMode?: 'Metrics';
+  queryMode?: CloudWatchQueryMode;
   metricQueryType?: MetricQueryType;
   metricEditorMode?: MetricEditorMode;
 
@@ -96,7 +96,7 @@ export enum CloudWatchLogsQueryStatus {
 }
 
 export interface CloudWatchLogsQuery extends DataQuery {
-  queryMode: 'Logs';
+  queryMode: CloudWatchQueryMode;
   id: string;
   region: string;
   expression?: string;
@@ -115,7 +115,7 @@ export type CloudWatchQuery =
   | CloudWatchDefaultQuery;
 
 export interface CloudWatchAnnotationQuery extends MetricStat, DataQuery {
-  queryMode: 'Annotations';
+  queryMode: CloudWatchQueryMode;
   prefixMatching?: boolean;
   actionPrefix?: string;
   alarmNamePrefix?: string;

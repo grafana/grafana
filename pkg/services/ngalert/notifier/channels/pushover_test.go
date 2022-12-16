@@ -229,6 +229,7 @@ func TestPushoverNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				DecryptFunc:         decryptFn,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			pn, err := NewPushoverNotifier(fc)

@@ -265,6 +265,7 @@ func TestTeamsNotifier(t *testing.T) {
 				ImageStore:          &UnavailableImageStore{},
 				NotificationService: webhookSender,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			pn, err := NewTeamsNotifier(fc)

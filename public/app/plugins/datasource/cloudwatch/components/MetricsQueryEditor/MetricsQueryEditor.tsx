@@ -1,13 +1,12 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
-import { QueryEditorProps } from '@grafana/data';
-import { EditorField, EditorRow, Space } from '@grafana/experimental';
+import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { EditorField, EditorRow, InlineSelect, Space } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Input } from '@grafana/ui';
+import { ConfirmModal, Input, RadioButtonGroup } from '@grafana/ui';
 
-import { MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor, SQLCodeEditor } from '../';
+import { MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor } from '../';
 import { CloudWatchDatasource } from '../../datasource';
-import { isCloudWatchMetricsQuery } from '../../guards';
 import useMigratedMetricsQuery from '../../migrations/useMigratedMetricsQuery';
 import {
   CloudWatchJsonData,
@@ -18,39 +17,99 @@ import {
   MetricStat,
 } from '../../types';
 import { DynamicLabelsField } from '../DynamicLabelsField';
-import QueryHeader from '../QueryHeader';
+import { SQLCodeEditor } from '../SQLCodeEditor';
 
 import { Alias } from './Alias';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   query: CloudWatchMetricsQuery;
+  extraHeaderElementLeft?: React.Dispatch<JSX.Element | undefined>;
+  extraHeaderElementRight?: React.Dispatch<JSX.Element | undefined>;
 }
 
+const metricEditorModes: Array<SelectableValue<MetricQueryType>> = [
+  { label: 'Metric Search', value: MetricQueryType.Search },
+  { label: 'Metric Query', value: MetricQueryType.Query },
+];
+const editorModes = [
+  { label: 'Builder', value: MetricEditorMode.Builder },
+  { label: 'Code', value: MetricEditorMode.Code },
+];
+
 export const MetricsQueryEditor = (props: Props) => {
-  const { query, onRunQuery, datasource } = props;
+  const { query, datasource, extraHeaderElementLeft, extraHeaderElementRight, onChange } = props;
+  const [showConfirm, setShowConfirm] = useState(false);
   const [sqlCodeEditorIsDirty, setSQLCodeEditorIsDirty] = useState(false);
   const migratedQuery = useMigratedMetricsQuery(query, props.onChange);
 
-  const onChange = (query: CloudWatchQuery) => {
-    const { onChange, onRunQuery } = props;
-    onChange(query);
-    onRunQuery();
-  };
+  const onEditorModeChange = useCallback(
+    (newMetricEditorMode: MetricEditorMode) => {
+      if (
+        sqlCodeEditorIsDirty &&
+        query.metricQueryType === MetricQueryType.Query &&
+        query.metricEditorMode === MetricEditorMode.Code
+      ) {
+        setShowConfirm(true);
+        return;
+      }
+      onChange({ ...query, metricEditorMode: newMetricEditorMode });
+    },
+    [setShowConfirm, onChange, sqlCodeEditorIsDirty, query]
+  );
+
+  useEffect(() => {
+    extraHeaderElementLeft?.(
+      <InlineSelect
+        aria-label="Metric editor mode"
+        value={metricEditorModes.find((m) => m.value === query.metricQueryType)}
+        options={metricEditorModes}
+        onChange={({ value }) => {
+          onChange({ ...query, metricQueryType: value });
+        }}
+      />
+    );
+
+    extraHeaderElementRight?.(
+      <>
+        <RadioButtonGroup
+          options={editorModes}
+          size="sm"
+          value={query.metricEditorMode}
+          onChange={onEditorModeChange}
+        />
+        <ConfirmModal
+          isOpen={showConfirm}
+          title="Are you sure?"
+          body="You will lose manual changes done to the query if you go back to the visual builder."
+          confirmText="Yes, I am sure."
+          dismissText="No, continue editing the query manually."
+          icon="exclamation-triangle"
+          onConfirm={() => {
+            setShowConfirm(false);
+            onChange({ ...query, metricEditorMode: MetricEditorMode.Builder });
+          }}
+          onDismiss={() => setShowConfirm(false)}
+        />
+      </>
+    );
+
+    return () => {
+      extraHeaderElementLeft?.(undefined);
+      extraHeaderElementRight?.(undefined);
+    };
+  }, [
+    query,
+    sqlCodeEditorIsDirty,
+    datasource,
+    onChange,
+    extraHeaderElementLeft,
+    extraHeaderElementRight,
+    showConfirm,
+    onEditorModeChange,
+  ]);
 
   return (
     <>
-      <QueryHeader
-        query={query}
-        onRunQuery={onRunQuery}
-        datasource={datasource}
-        onChange={(newQuery) => {
-          if (isCloudWatchMetricsQuery(newQuery) && newQuery.metricEditorMode !== query.metricEditorMode) {
-            setSQLCodeEditorIsDirty(false);
-          }
-          onChange(newQuery);
-        }}
-        sqlCodeEditorIsDirty={sqlCodeEditorIsDirty}
-      />
       <Space v={0.5} />
 
       {query.metricQueryType === MetricQueryType.Search && (
@@ -65,7 +124,6 @@ export const MetricsQueryEditor = (props: Props) => {
           )}
           {query.metricEditorMode === MetricEditorMode.Code && (
             <MathExpressionQueryField
-              onRunQuery={onRunQuery}
               expression={query.expression ?? ''}
               onChange={(expression) => props.onChange({ ...query, expression })}
               datasource={datasource}
@@ -85,19 +143,13 @@ export const MetricsQueryEditor = (props: Props) => {
                 }
                 props.onChange({ ...migratedQuery, sqlExpression });
               }}
-              onRunQuery={onRunQuery}
               datasource={datasource}
             />
           )}
 
           {query.metricEditorMode === MetricEditorMode.Builder && (
             <>
-              <SQLBuilderEditor
-                query={query}
-                onChange={props.onChange}
-                onRunQuery={onRunQuery}
-                datasource={datasource}
-              ></SQLBuilderEditor>
+              <SQLBuilderEditor query={query} onChange={props.onChange} datasource={datasource}></SQLBuilderEditor>
             </>
           )}
         </>
@@ -113,7 +165,6 @@ export const MetricsQueryEditor = (props: Props) => {
         >
           <Input
             id={`${query.refId}-cloudwatch-metric-query-editor-id`}
-            onBlur={onRunQuery}
             onChange={(event: ChangeEvent<HTMLInputElement>) => onChange({ ...migratedQuery, id: event.target.value })}
             type="text"
             value={query.id}
@@ -125,7 +176,6 @@ export const MetricsQueryEditor = (props: Props) => {
             id={`${query.refId}-cloudwatch-metric-query-editor-period`}
             value={query.period || ''}
             placeholder="auto"
-            onBlur={onRunQuery}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               onChange({ ...migratedQuery, period: event.target.value })
             }
@@ -141,7 +191,6 @@ export const MetricsQueryEditor = (props: Props) => {
           >
             <DynamicLabelsField
               width={52}
-              onRunQuery={onRunQuery}
               label={migratedQuery.label ?? ''}
               onChange={(label) => props.onChange({ ...query, label })}
             ></DynamicLabelsField>
