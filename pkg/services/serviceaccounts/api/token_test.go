@@ -1,22 +1,20 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/web/webtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 func TestServiceAccountsAPI_ListTokens(t *testing.T) {
@@ -178,26 +176,4 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
 		})
 	}
-}
-
-const (
-	serviceaccountIDTokensPath       = "/api/serviceaccounts/%v/tokens"    // #nosec G101
-	serviceaccountIDTokensDetailPath = "/api/serviceaccounts/%v/tokens/%v" // #nosec G101
-)
-
-func createTokenforSA(t *testing.T, service serviceaccounts.Service, keyName string, orgID int64, saID int64, secondsToLive int64) *apikey.APIKey {
-	key, err := apikeygen.New(orgID, keyName)
-	require.NoError(t, err)
-
-	cmd := serviceaccounts.AddServiceAccountTokenCommand{
-		Name:          keyName,
-		OrgId:         orgID,
-		Key:           key.HashedKey,
-		SecondsToLive: secondsToLive,
-		Result:        &apikey.APIKey{},
-	}
-
-	err = service.AddServiceAccountToken(context.Background(), saID, &cmd)
-	require.NoError(t, err)
-	return cmd.Result
 }
