@@ -939,6 +939,18 @@ type extractAlertmanagerConfigurationHistory struct {
 	migrator.MigrationBase
 }
 
+// extractAMConfigHistoryConfigModel is the model of an alertmanager configuration row, at the time that the extractAlertmanagerConfigurationHistory migration was run.
+// This is not to be used outside of the extractAlertmanagerConfigurationHistory migration.
+type extractAMConfigHistoryConfigModel struct {
+	ID                        int64 `xorm:"pk autoincr 'id'"`
+	AlertmanagerConfiguration string
+	ConfigurationHash         string
+	ConfigurationVersion      string
+	CreatedAt                 int64 `xorm:"created"`
+	Default                   bool
+	OrgID                     int64 `xorm:"org_id"`
+}
+
 func (c extractAlertmanagerConfigurationHistory) SQL(migrator.Dialect) string {
 	return codeMigration
 }
@@ -949,21 +961,35 @@ func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrat
 		return fmt.Errorf("failed to retrieve the organizations with alerting configurations: %w", err)
 	}
 
-	// Quote the column called "default" because it's a reserved keyword in SQL.
-	fields := fmt.Sprintf("org_id, alertmanager_configuration, configuration_hash, configuration_version, created_at, %s", migrator.Dialect.Quote("default"))
+	// Clear out the history table, just in case. It should already be empty.
+	if _, err := sess.Exec("DELETE FROM alert_configuration_history"); err != nil {
+		return fmt.Errorf("failed to clear the config history table: %w", err)
+	}
+
 	for _, orgID := range orgs {
-		_, err := sess.Exec(`
-			INSERT INTO alert_configuration_history (`+fields+`)
-			SELECT `+fields+`
-			FROM alert_configuration
-			WHERE org_id = ? AND id != (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?)`,
-			orgID, orgID)
+		var activeConfigID int64
+		has, err := sess.SQL(`SELECT MAX(id) FROM alert_configuration WHERE org_id = ?`, orgID).Get(&activeConfigID)
 		if err != nil {
-			return fmt.Errorf("failed to move old configurations to history table: %w", err)
+			return fmt.Errorf("failed to query active config ID for org %d: %w", orgID, err)
 		}
-		_, err = sess.Exec("DELETE FROM alert_configuration WHERE org_id = ? AND id != (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?)", orgID, orgID)
+		if !has {
+			return fmt.Errorf("we previously found a config for org, but later it was unexpectedly missing: %d", orgID)
+		}
+
+		history := make([]extractAMConfigHistoryConfigModel, 0)
+		_, err = sess.Table("alert_configuration").Where("org_id = ? AND id < ?", orgID, activeConfigID).Get(&history)
 		if err != nil {
-			return fmt.Errorf("failed to evict old configurations after moving to history table: %w", err)
+			return fmt.Errorf("failed to query for non-active configs for org %d: %w", orgID, err)
+		}
+
+		_, err = sess.Table("alert_configuration_history").InsertMulti(history)
+		if err != nil {
+			return fmt.Errorf("failed to insert historical configs for org: %d: %w", orgID, err)
+		}
+
+		_, err = sess.Exec("DELETE FROM alert_configuration WHERE org_id = ? AND id < ?", orgID, activeConfigID)
+		if err != nil {
+			return fmt.Errorf("failed to evict old configurations for org after moving to history table: %d: %w", orgID, err)
 		}
 	}
 	return nil
