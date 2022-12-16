@@ -265,6 +265,8 @@ TableFieldOptions: {
 	width?:      number
 	minWidth?:   number
 	align: FieldTextAlignment | *"auto"
+	// This field is deprecated in favor of using cellOptions
+	displayMode: TableCellDisplayMode | *"auto"
 	cellOptions: TableCellOptions
 	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false
