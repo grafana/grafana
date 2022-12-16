@@ -22,7 +22,6 @@ const defaultProps = {
     refId: '',
   } as CloudWatchLogsQuery,
   onChange: jest.fn(),
-  onRunQuery: jest.fn(),
 };
 describe('LogGroupSelection', () => {
   beforeEach(() => {

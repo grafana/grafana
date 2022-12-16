@@ -470,6 +470,10 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				secureSettings[k] = d
 			}
 
+			data, err := gr.Settings.MarshalJSON()
+			if err != nil {
+				return err
+			}
 			var (
 				cfg = &channels.NotificationChannelConfig{
 					UID:                   gr.UID,
@@ -477,10 +481,9 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 					Name:                  gr.Name,
 					Type:                  gr.Type,
 					DisableResolveMessage: gr.DisableResolveMessage,
-					Settings:              gr.Settings,
+					Settings:              data,
 					SecureSettings:        secureSettings,
 				}
-				err error
 			)
 
 			// decryptFunc represents the legacy way of decrypting data. Before the migration, we don't need any new way,
@@ -500,7 +503,9 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 			if !exists {
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}
-			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil)
+			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) channels.Logger {
+				return &channels.FakeLogger{}
+			})
 			if err != nil {
 				return err
 			}

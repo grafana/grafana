@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/datasources/alertmanager/
-  - /docs/grafana/latest/datasources/alertmanager/
-  - /docs/grafana/latest/data-sources/alertmanager/
+  - ../data-sources/alertmanager/
+  - ../features/datasources/alertmanager/
 description: Guide for using Alertmanager as a data source in Grafana
 keywords:
   - grafana
@@ -17,17 +16,22 @@ weight: 150
 
 # Alertmanager data source
 
-Grafana includes built-in support for Prometheus Alertmanager. Once you add it as a data source, you can use the [Grafana Alerting UI](/docs/grafana/latest/alerting/) to manage silences, contact points as well as notification policies. A drop-down option in these pages allows you to switch between Grafana and any configured Alertmanager data sources.
+Grafana includes built-in support for Alertmanager implementations in Prometheus and Mimir.
+Once you add it as a data source, you can use the [Grafana Alerting UI](/docs/grafana/latest/alerting/) to manage silences, contact points, and notification policies.
+To switch between Grafana and any configured Alertmanager data sources, you can select your preference from a drop-down option in those databases' data source settings pages.
 
 ## Alertmanager implementations
 
-[Prometheus](https://prometheus.io/) and [Grafana Mimir](/docs/mimir/latest/) (default) implementations of Alertmanager are supported. You can specify implementation in the data source settings page. In case of Prometheus contact points and notification policies are read-only in the Grafana Alerting UI, as it does not support updating configuration via HTTP API.
+The data source supports [Prometheus](https://prometheus.io/) and [Grafana Mimir](https://grafana.com/docs/mimir/latest/) (default) implementations of Alertmanager.
+You can specify the implementation in the data source's Settings page.
+When using Prometheus, contact points and notification policies are read-only in the Grafana Alerting UI, because it doesn't support updates to the configuration using HTTP API.
 
-## Provision the data source
+## Provision the Alertmanager data source
 
-Configure the Alertmanager data sources by updating Grafana's configuration files. For more information on how it works and the settings available, refer to the [provisioning docs page]({{< relref "../../administration/provisioning#data-sources" >}}).
+You can provision Alertmanager data sources by updating Grafana's configuration files.
+For more information on provisioning, and common settings available, refer to the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}).
 
-For example, this YAML provisions an Alertmanager data source running on port 9093, with proxy access and basic authentication:
+Here is an example for provisioning the Alertmanager data source:
 
 ```yaml
 apiVersion: 1
@@ -38,6 +42,8 @@ datasources:
     url: http://localhost:9093
     access: proxy
     jsonData:
+      # Options for implementation include prometheus and mimir
+      implementation: prometheus
     # optionally
     basicAuth: true
     basicAuthUser: my_user

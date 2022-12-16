@@ -67,7 +67,7 @@ func (decl *DeclForGen) Lineage() thema.Lineage {
 // ForLatestSchema returns a [SchemaForGen] for the latest schema in this
 // DeclForGen's lineage.
 func (decl *DeclForGen) ForLatestSchema() SchemaForGen {
-	comm := decl.Meta.Common()
+	comm := decl.Properties.Common()
 	return SchemaForGen{
 		Name:    comm.Name,
 		Schema:  decl.Lineage().Latest(),

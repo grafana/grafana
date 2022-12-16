@@ -185,6 +185,7 @@ func ApplyAdminIA(root *NavTreeRoot) {
 		accessNodeLinks := []*NavLink{}
 
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("upgrading"))
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("licensing"))
 		if orgSettings := root.FindById("org-settings"); orgSettings != nil {
 			orgSettings.Text = "Default preferences"
 			generalNodeLinks = append(generalNodeLinks, orgSettings)
@@ -205,6 +206,7 @@ func ApplyAdminIA(root *NavTreeRoot) {
 		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("teams"))
 		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("serviceaccounts"))
 		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("apikeys"))
+		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("ldap"))
 		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("standalone-plugin-page-/a/grafana-auth-app")) // Cloud Access Policies
 
 		generalNode := &NavLink{
@@ -244,6 +246,8 @@ func ApplyAdminIA(root *NavTreeRoot) {
 		if len(accessNode.Children) > 0 {
 			adminNodeLinks = append(adminNodeLinks, accessNode)
 		}
+
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("storage"))
 
 		if len(adminNodeLinks) > 0 {
 			orgAdminNode.Children = adminNodeLinks
