@@ -227,6 +227,7 @@ func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricR
 
 		req, err := http.NewRequest(http.MethodPost, u, buf1)
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36")
 		req.AddCookie(&http.Cookie{
 			Name: "cookie1",
 		})
@@ -274,6 +275,7 @@ func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricR
 		require.NotNil(t, tsCtx.outgoingRequest)
 		require.Equal(t, "cookie1=; cookie3=", tsCtx.outgoingRequest.Header.Get("Cookie"))
 		require.Equal(t, "custom-header-value", tsCtx.outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
+		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.SQLStore.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
 
 		if token == nil {
 			username, pwd, ok := tsCtx.outgoingRequest.BasicAuth()
@@ -328,6 +330,7 @@ func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T) {
 
 		req, err := http.NewRequest(http.MethodGet, u, nil)
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36")
 		req.AddCookie(&http.Cookie{
 			Name: "cookie1",
 		})
@@ -375,6 +378,7 @@ func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T) {
 		require.NotNil(t, tsCtx.outgoingRequest)
 		require.Equal(t, "cookie1=; cookie3=", tsCtx.outgoingRequest.Header.Get("Cookie"))
 		require.Equal(t, "custom-header-value", tsCtx.outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
+		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.SQLStore.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
 
 		if token == nil {
 			username, pwd, ok := tsCtx.outgoingRequest.BasicAuth()
@@ -451,6 +455,7 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T) {
 		req.Header.Set("X-Some-Conn-Header", "should be deleted")
 		req.Header.Set("Proxy-Connection", "should be deleted")
 		req.Header.Set("X-Custom", "custom")
+		req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36")
 		req.AddCookie(&http.Cookie{
 			Name: "cookie1",
 		})
@@ -513,6 +518,7 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T) {
 		require.Empty(t, tsCtx.outgoingRequest.Header.Get("Proxy-Connection"))
 		require.Equal(t, "custom", tsCtx.outgoingRequest.Header.Get("X-Custom"))
 		require.Equal(t, "custom-header-value", tsCtx.outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
+		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.SQLStore.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
 
 		if token == nil {
 			username, pwd, ok := tsCtx.outgoingRequest.BasicAuth()
