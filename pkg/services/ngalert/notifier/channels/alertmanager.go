@@ -21,9 +21,9 @@ type AlertmanagerConfig struct {
 }
 
 type alertmanagerSettings struct {
-	Url      string `json:"url,omitempty" yaml:"url,omitempty"`
-	User     string `json:"basicAuthUser,omitempty" yaml:"basicAuthUser,omitempty"`
-	Password string `json:"basicAuthPassword,omitempty" yaml:"basicAuthPassword,omitempty"`
+	URLs     []*url.URL
+	User     string
+	Password string
 }
 
 func AlertmanagerFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
@@ -38,18 +38,21 @@ func AlertmanagerFactory(fc channels.FactoryConfig) (channels.NotificationChanne
 }
 
 func buildAlertmanagerNotifier(fc channels.FactoryConfig) (*AlertmanagerNotifier, error) {
-	var settings alertmanagerSettings
+	var settings struct {
+		URL      channels.CommaSeparatedStrings `json:"url,omitempty" yaml:"url,omitempty"`
+		User     string                         `json:"basicAuthUser,omitempty" yaml:"basicAuthUser,omitempty"`
+		Password string                         `json:"basicAuthPassword,omitempty" yaml:"basicAuthPassword,omitempty"`
+	}
 	err := json.Unmarshal(fc.Config.Settings, &settings)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
 
-	if settings.Url == "" {
+	if len(settings.URL) == 0 {
 		return nil, errors.New("could not find url property in settings")
 	}
-	urlParts := strings.Split(settings.Url, ",")
-	urls := make([]*url.URL, 0, len(urlParts))
-	for _, uS := range urlParts {
+	urls := make([]*url.URL, 0, len(settings.URL))
+	for _, uS := range settings.URL {
 		uS = strings.TrimSpace(uS)
 		if uS == "" {
 			continue
@@ -64,20 +67,21 @@ func buildAlertmanagerNotifier(fc channels.FactoryConfig) (*AlertmanagerNotifier
 	settings.Password = fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "basicAuthPassword", settings.Password)
 
 	return &AlertmanagerNotifier{
-		Base:     channels.NewBase(fc.Config),
-		images:   fc.ImageStore,
-		urls:     urls,
-		settings: settings,
-		logger:   fc.Logger,
+		Base:   channels.NewBase(fc.Config),
+		images: fc.ImageStore,
+		settings: alertmanagerSettings{
+			URLs:     urls,
+			User:     settings.User,
+			Password: settings.Password,
+		},
+		logger: fc.Logger,
 	}, nil
 }
 
 // AlertmanagerNotifier sends alert notifications to the alert manager
 type AlertmanagerNotifier struct {
 	*channels.Base
-	images channels.ImageStore
-
-	urls     []*url.URL
+	images   channels.ImageStore
 	settings alertmanagerSettings
 	logger   channels.Logger
 }
@@ -108,7 +112,7 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		lastErr error
 		numErrs int
 	)
-	for _, u := range n.urls {
+	for _, u := range n.settings.URLs {
 		if _, err := sendHTTPRequest(ctx, u, httpCfg{
 			user:     n.settings.User,
 			password: n.settings.Password,
@@ -120,7 +124,7 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		}
 	}
 
-	if numErrs == len(n.urls) {
+	if numErrs == len(n.settings.URLs) {
 		// All attempts to send alerts have failed
 		n.logger.Warn("all attempts to send to Alertmanager failed", "alertmanager", n.Name)
 		return false, fmt.Errorf("failed to send alert to Alertmanager: %w", lastErr)
