@@ -3,9 +3,7 @@ import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
-  CoreApp,
   DataQuery,
-  DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
   PanelData,
@@ -98,9 +96,8 @@ export class QueryRows extends PureComponent<Props> {
     );
   };
 
-  onChangeDataSource = async (settings: DataSourceInstanceSettings, index: number) => {
+  onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
     const { queries, onQueriesChange } = this.props;
-    const dataSource = await getDataSourceSrv().get(settings.uid);
 
     const updatedQueries = queries.map((item, itemIndex) => {
       if (itemIndex !== index) {
@@ -111,9 +108,9 @@ export class QueryRows extends PureComponent<Props> {
 
       // Copy model if changing to a datasource of same type.
       if (settings.type === previousSettings?.type) {
-        return copyModel(item, settings.uid);
+        return copyModel(item, settings);
       }
-      return newModel(item, dataSource);
+      return newModel(item, settings);
     });
 
     onQueriesChange(updatedQueries);
@@ -280,24 +277,33 @@ export class QueryRows extends PureComponent<Props> {
   }
 }
 
-function copyModel(item: AlertQuery, uid: string): Omit<AlertQuery, 'datasource'> {
+function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
   return {
     ...item,
-    model: omit(item.model, 'datasource'),
-    datasourceUid: uid,
+    model: {
+      ...omit(item.model, 'datasource'),
+      datasource: {
+        type: settings.type,
+        uid: settings.uid,
+      },
+    },
+    datasourceUid: settings.uid,
   };
 }
 
-function newModel(item: AlertQuery, ds: DataSourceApi): Omit<AlertQuery, 'datasource'> {
+function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
   return {
     refId: item.refId,
     relativeTimeRange: item.relativeTimeRange,
     queryType: '',
-    datasourceUid: ds.uid,
+    datasourceUid: settings.uid,
     model: {
-      ...ds.getDefaultQuery?.(CoreApp.UnifiedAlerting),
       refId: item.refId,
       hide: false,
+      datasource: {
+        type: settings.type,
+        uid: settings.uid,
+      },
     },
   };
 }
