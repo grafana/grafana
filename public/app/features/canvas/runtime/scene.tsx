@@ -64,6 +64,8 @@ export class Scene {
   arrowSVG?: SVGElement;
   arrowLine?: SVGLineElement;
   connectionSource?: ElementState;
+  connectionTarget?: ElementState;
+  isDrawingArrow?: boolean;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
@@ -508,14 +510,26 @@ export class Scene {
           const sourceX = (arrowLineX1 - sourceHorizontalCenter) / (sourceRect.width / 2);
           const sourceY = (sourceVerticalCenter - arrowLineY1) / (sourceRect.height / 2);
 
-          // might need to apply offset from parent's parent to make this accurate
-          const parentVerticalCenter = parentRect.height / 2;
-          const parentHorizontalCenter = parentRect.width / 2;
+          let targetX;
+          let targetY;
+          let targetName;
 
-          // This should be relative to the target element (could be the parent)
-          // 0, 0 is center of element, 1,1 is top right corner etc.
-          const targetX = (x - parentHorizontalCenter) / (parentRect.width / 2);
-          const targetY = (parentVerticalCenter - y) / (parentRect.height / 2);
+          if (this.connectionTarget && this.connectionTarget.div) {
+            const targetRect = this.connectionTarget.div.getBoundingClientRect();
+
+            const targetVerticalCenter = targetRect.top - parentRect.top - parentBorderWidth + targetRect.height / 2;
+            const targetHorizontalCenter = targetRect.left - parentRect.left - parentBorderWidth + targetRect.width / 2;
+
+            targetX = (x - targetHorizontalCenter) / (targetRect.width / 2);
+            targetY = (targetVerticalCenter - y) / (targetRect.height / 2);
+            targetName = this.connectionTarget.options.name;
+          } else {
+            const parentVerticalCenter = parentRect.height / 2;
+            const parentHorizontalCenter = parentRect.width / 2;
+
+            targetX = (x - parentHorizontalCenter) / (parentRect.width / 2);
+            targetY = (parentVerticalCenter - y) / (parentRect.height / 2);
+          }
 
           const connection = {
             source: {
@@ -526,7 +540,7 @@ export class Scene {
               x: targetX,
               y: targetY,
             },
-            // targetName: string,
+            targetName: targetName,
             color: 'white',
             size: 10,
             path: ConnectionPath.Straight,
@@ -549,6 +563,8 @@ export class Scene {
           this.selecto.rootContainer.style.cursor = 'default';
           this.selecto.rootContainer.removeEventListener('mousemove', arrowListener);
         }
+
+        this.isDrawingArrow = false;
       }
     };
 
@@ -572,6 +588,8 @@ export class Scene {
           this.arrowLine.setAttribute('x1', `${x}`);
           this.arrowLine.setAttribute('y1', `${y}`);
           this.arrowSVG.style.display = 'block';
+
+          this.isDrawingArrow = true;
         }
 
         this.selecto?.rootContainer?.addEventListener('mousemove', arrowListener);
@@ -696,10 +714,14 @@ export class Scene {
       return;
     }
 
-    this.connectionSource = this.findElementByTarget(element);
-    if (!this.connectionSource) {
-      console.log('no connection source');
-      return;
+    if (this.isDrawingArrow) {
+      this.connectionTarget = this.findElementByTarget(element);
+    } else {
+      this.connectionSource = this.findElementByTarget(element);
+      if (!this.connectionSource) {
+        console.log('no connection source');
+        return;
+      }
     }
 
     const elementBoundingRect = element!.getBoundingClientRect();

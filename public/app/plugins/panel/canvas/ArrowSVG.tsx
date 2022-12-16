@@ -63,24 +63,25 @@ export const ArrowSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const x1 = sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2;
       const y1 = sourceVerticalCenter - (info.source.y * sourceRect.height) / 2;
 
-      // Change target to to be parent if no target instead of relative to source
       let x2;
       let y2;
-      console.log('target', target);
+
       if (info.targetName) {
-        // target stuff
+        const targetRect = target.div?.getBoundingClientRect();
+
+        const targetHorizontalCenter = targetRect!.left - parentRect.left - parentBorderWidth + targetRect!.width / 2;
+        const targetVerticalCenter = targetRect!.top - parentRect.top - parentBorderWidth + targetRect!.height / 2;
+
+        x2 = targetHorizontalCenter + (info.target.x * targetRect!.width) / 2;
+        y2 = targetVerticalCenter - (info.target.y * targetRect!.height) / 2;
       } else {
-        // parent stuff
+        console.log('parent case');
         const parentHorizontalCenter = parentRect.width / 2;
         const parentVerticalCenter = parentRect.height / 2;
-
-        console.log(parentHorizontalCenter, parentVerticalCenter);
 
         x2 = parentHorizontalCenter + (info.target.x * parentRect.width) / 2;
         y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
       }
-
-      console.log('x1', x1, 'y1', y1, 'x2', x2, 'y2', y2);
 
       return (
         <svg className={styles.connection} key={idx}>
