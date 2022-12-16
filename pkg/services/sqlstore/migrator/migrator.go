@@ -108,12 +108,7 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 
 // CheckHealth makes sure all migrations ran successfully
 func (mg *Migrator) CheckHealth(name string) (models.HealthStatus, map[string]string, error) {
-	has, err := mg.DBEngine.Exist(&MigrationLog{Success: false})
-	res := &MigrationLog{}
-	_ = mg.DBEngine.Find(res, &MigrationLog{Success: false})
-	count, err := mg.DBEngine.Count(&MigrationLog{})
-	//fmt.Printf("%+v\n", res)
-	fmt.Println("there are", count, " rows")
+	has, err := mg.DBEngine.UseBool("success").Exist(&MigrationLog{Success: false})
 
 	if err != nil {
 		return models.StatusRed, nil, err
