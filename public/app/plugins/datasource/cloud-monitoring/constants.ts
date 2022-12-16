@@ -316,7 +316,7 @@ export const SELECTORS = [
 ];
 
 export const QUERY_TYPES = [
-  { label: 'Basic', value: QueryType.TIME_SERIES_LIST },
+  { label: 'Builder', value: QueryType.TIME_SERIES_LIST },
   { label: 'MQL', value: QueryType.TIME_SERIES_QUERY },
   { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
 ];
