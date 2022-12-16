@@ -353,7 +353,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview;
 
     const toolbar = ((kioskMode !== KioskMode.Full && !queryParams.editview) ||
-      (isPublic && this.props.dashboard?.meta.publicDashboardTimeSelectionEnabled)) && (
+      (isPublic && !!this.props.dashboard?.meta.publicDashboardTimeSelectionEnabled)) && (
       <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
         <DashNav
           dashboard={dashboard}
