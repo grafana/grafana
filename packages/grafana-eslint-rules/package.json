@@ -10,5 +10,9 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-eslint-rules"
   },
+  "devDependencies": {
+    "@typescript-eslint/types": "^5.46.1",
+    "@typescript-eslint/utils": "^5.46.1"
+  },
   "private": true
 }
