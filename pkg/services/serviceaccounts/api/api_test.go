@@ -376,6 +376,7 @@ var _ service = new(fakeService)
 type fakeService struct {
 	service
 	ExpectedErr                   error
+	ExpectedApiKey                *apikey.APIKey
 	ExpectedServiceAccountTokens  []apikey.APIKey
 	ExpectedServiceAccount        *serviceaccounts.ServiceAccountDTO
 	ExpectedServiceAccountProfile *serviceaccounts.ServiceAccountProfileDTO
@@ -399,4 +400,9 @@ func (f *fakeService) ListTokens(ctx context.Context, query *serviceaccounts.Get
 
 func (f *fakeService) UpdateServiceAccount(ctx context.Context, orgID, id int64, cmd *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	return f.ExpectedServiceAccountProfile, f.ExpectedErr
+}
+
+func (f *fakeService) AddServiceAccountToken(ctx context.Context, id int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
+	cmd.Result = f.ExpectedApiKey
+	return f.ExpectedErr
 }

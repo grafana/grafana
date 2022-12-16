@@ -11,12 +11,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/web/webtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -26,6 +26,76 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestServiceAccountsAPI_CreateToken(t *testing.T) {
+	type TestCase struct {
+		desc           string
+		id             int64
+		body           string
+		permissions    []accesscontrol.Permission
+		tokenTTL       int64
+		expectedErr    error
+		expectedApiKey *apikey.APIKey
+		expectedCode   int
+	}
+
+	tests := []TestCase{
+		{
+			desc:           "should be able to create token for service account with correct permission",
+			id:             1,
+			body:           `{"name": "test"}`,
+			tokenTTL:       -1,
+			permissions:    []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedApiKey: &apikey.APIKey{},
+			expectedCode:   http.StatusOK,
+		},
+		{
+			desc:         "should not be able to create token for service account with wrong permission",
+			id:           2,
+			body:         `{"name": "test"}`,
+			tokenTTL:     -1,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:         "should not be able to create token for service account that dont exists",
+			id:           1,
+			body:         `{"name": "test"}`,
+			tokenTTL:     -1,
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedErr:  serviceaccounts.ErrServiceAccountNotFound,
+			expectedCode: http.StatusNotFound,
+		},
+		{
+			desc:         "should not be able to create token for service account if max ttl is configured but not set in body",
+			id:           1,
+			body:         `{"name": "test"}`,
+			tokenTTL:     10 * int64(time.Hour),
+			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
+			expectedCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := setupTests(t, func(a *ServiceAccountsAPI) {
+				a.cfg.ApiKeyMaxSecondsToLive = tt.tokenTTL
+				a.service = &fakeService{
+					ExpectedErr:    tt.expectedErr,
+					ExpectedApiKey: tt.expectedApiKey,
+				}
+			})
+			req := server.NewRequest(http.MethodPost, fmt.Sprintf("/api/serviceaccounts/%d/tokens", tt.id), strings.NewReader(tt.body))
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			defer res.Body.Close()
+
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+		})
+	}
+
+}
 
 const (
 	serviceaccountIDTokensPath       = "/api/serviceaccounts/%v/tokens"    // #nosec G101
@@ -47,120 +117,6 @@ func createTokenforSA(t *testing.T, service serviceaccounts.Service, keyName str
 	err = service.AddServiceAccountToken(context.Background(), saID, &cmd)
 	require.NoError(t, err)
 	return cmd.Result
-}
-
-func TestServiceAccountsAPI_CreateToken(t *testing.T) {
-	store := db.InitTestDB(t)
-	services := setupTestServices(t, store)
-	sa := tests.SetupUserServiceAccount(t, store, tests.TestUser{Login: "sa", IsServiceAccount: true})
-
-	type testCreateSAToken struct {
-		desc         string
-		expectedCode int
-		body         map[string]interface{}
-		acmock       *accesscontrolmock.Mock
-	}
-
-	testCases := []testCreateSAToken{
-		{
-			desc: "should be ok to create serviceaccount token with scope all permissions",
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
-				},
-				false,
-			),
-			body:         map[string]interface{}{"name": "Test1", "role": "Viewer", "secondsToLive": 1},
-			expectedCode: http.StatusOK,
-		},
-		{
-			desc: "serviceaccount token should match SA orgID and SA provided in parameters even if specified in body",
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
-				},
-				false,
-			),
-			body:         map[string]interface{}{"name": "Test2", "role": "Viewer", "secondsToLive": 1, "orgId": 4, "serviceAccountId": 4},
-			expectedCode: http.StatusOK,
-		},
-		{
-			desc: "should be ok to create serviceaccount token with scope id permissions",
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}}, nil
-				},
-				false,
-			),
-			body:         map[string]interface{}{"name": "Test3", "role": "Viewer", "secondsToLive": 1},
-			expectedCode: http.StatusOK,
-		},
-		{
-			desc: "should be forbidden to create serviceaccount token if wrong scoped",
-			acmock: tests.SetupMockAccesscontrol(
-				t,
-				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:2"}}, nil
-				},
-				false,
-			),
-			body:         map[string]interface{}{"name": "Test4", "role": "Viewer"},
-			expectedCode: http.StatusForbidden,
-		},
-	}
-
-	var requestResponse = func(server *web.Mux, httpMethod, requestpath string, requestBody io.Reader) *httptest.ResponseRecorder {
-		req, err := http.NewRequest(httpMethod, requestpath, requestBody)
-		require.NoError(t, err)
-		req.Header.Add("Content-Type", "application/json")
-		recorder := httptest.NewRecorder()
-		server.ServeHTTP(recorder, req)
-		return recorder
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			endpoint := fmt.Sprintf(serviceaccountIDTokensPath, sa.ID)
-			bodyString := ""
-			if tc.body != nil {
-				b, err := json.Marshal(tc.body)
-				require.NoError(t, err)
-				bodyString = string(b)
-			}
-
-			server, _ := setupTestServer(t, &services.SAService, routing.NewRouteRegister(), tc.acmock, store)
-			actual := requestResponse(server, http.MethodPost, endpoint, strings.NewReader(bodyString))
-
-			actualCode := actual.Code
-			actualBody := map[string]interface{}{}
-
-			err := json.Unmarshal(actual.Body.Bytes(), &actualBody)
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedCode, actualCode, endpoint, actualBody)
-
-			if actualCode == http.StatusOK {
-				assert.Equal(t, tc.body["name"], actualBody["name"])
-
-				query := apikey.GetByNameQuery{KeyName: tc.body["name"].(string), OrgId: sa.OrgID}
-				err = services.APIKeyService.GetApiKeyByName(context.Background(), &query)
-				require.NoError(t, err)
-
-				assert.Equal(t, sa.ID, *query.Result.ServiceAccountId)
-				assert.Equal(t, sa.OrgID, query.Result.OrgId)
-				assert.True(t, strings.HasPrefix(actualBody["key"].(string), "glsa"))
-
-				keyInfo, err := apikeygenprefix.Decode(actualBody["key"].(string))
-				assert.NoError(t, err)
-
-				hash, err := keyInfo.Hash()
-				require.NoError(t, err)
-				require.Equal(t, query.Result.Key, hash)
-			}
-		})
-	}
 }
 
 func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
