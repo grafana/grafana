@@ -35,18 +35,33 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   }
 
   const displayValue = field.display!(cell.value);
+
+  // Set default display mode
   let barGaugeMode = BarGaugeDisplayMode.Gradient;
 
-  if (
-    (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
-    (field.config.custom && field.config.custom.cellOptions.subDisplayMode === BarGaugeDisplayMode.Lcd)
-  ) {
-    barGaugeMode = BarGaugeDisplayMode.Lcd;
-  } else if (
-    (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
-    (field.config.custom && field.config.custom.cellOptions.subDisplayMode === BarGaugeDisplayMode.Basic)
-  ) {
-    barGaugeMode = BarGaugeDisplayMode.Basic;
+  // Support deprecated settings
+  const usingDeprecatedSettings = field.config.custom.cellOptions.subOptions.gauge === undefined;
+
+  // If we're using the old settings format we read the displayMode directly from
+  // the cell options
+  if (usingDeprecatedSettings) {
+    if (
+      (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
+      (field.config.custom && field.config.custom.cellOptions.displayMode === BarGaugeDisplayMode.Lcd)
+    ) {
+      barGaugeMode = BarGaugeDisplayMode.Lcd;
+    } else if (
+      (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
+      (field.config.custom && field.config.custom.cellOptions.displayMode === BarGaugeDisplayMode.Basic)
+    ) {
+      barGaugeMode = BarGaugeDisplayMode.Basic;
+    }
+  }
+  // Otherwise in the case of sub-options we read specifically from the sub-options
+  // object in order to get the display mode
+  else {
+    const gaugeOptions = field.config.custom.cellOptions.subOptions.gauge;
+    barGaugeMode = gaugeOptions.displayMode;
   }
 
   const getLinks = () => {
