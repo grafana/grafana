@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -49,7 +50,11 @@ func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
 		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
 
-	URL := fc.Config.Settings.Get("url").MustString()
+	rawsettings, err := simplejson.NewJson(fc.Config.Settings)
+	if err != nil {
+		return nil, err
+	}
+	URL := rawsettings.Get("url").MustString()
 	if URL == "" {
 		return nil, errors.New("could not find url property in settings")
 	}
@@ -62,8 +67,8 @@ func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
 		tmpl:   fc.Template,
 		settings: googleChatSettings{
 			URL:     URL,
-			Title:   fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
-			Content: fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
+			Title:   rawsettings.Get("title").MustString(DefaultMessageTitleEmbed),
+			Content: rawsettings.Get("message").MustString(DefaultMessageEmbed),
 		},
 	}, nil
 }

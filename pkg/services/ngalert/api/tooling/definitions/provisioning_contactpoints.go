@@ -108,8 +108,12 @@ func (e *EmbeddedContactPoint) Valid(decryptFunc channels.GetDecryptedValueFn) e
 	if !exists {
 		return fmt.Errorf("unknown type '%s'", e.Type)
 	}
+	jsonBytes, err := e.Settings.MarshalJSON()
+	if err != nil {
+		return err
+	}
 	cfg, _ := channels.NewFactoryConfig(&channels.NotificationChannelConfig{
-		Settings: e.Settings,
+		Settings: jsonBytes,
 		Type:     e.Type,
 	}, nil, decryptFunc, nil, nil, func(ctx ...interface{}) channels.Logger {
 		return &channels.FakeLogger{}

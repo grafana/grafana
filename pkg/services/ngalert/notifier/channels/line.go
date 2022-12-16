@@ -9,6 +9,8 @@ import (
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 var (
@@ -44,12 +46,16 @@ func LineFactory(fc FactoryConfig) (NotificationChannel, error) {
 
 // newLineNotifier is the constructor for the LINE notifier
 func newLineNotifier(fc FactoryConfig) (*LineNotifier, error) {
-	token := fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "token", fc.Config.Settings.Get("token").MustString())
+	settings, err := simplejson.NewJson(fc.Config.Settings)
+	if err != nil {
+		return nil, err
+	}
+	token := fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "token", settings.Get("token").MustString())
 	if token == "" {
 		return nil, errors.New("could not find token in settings")
 	}
-	title := fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed)
-	description := fc.Config.Settings.Get("description").MustString(DefaultMessageEmbed)
+	title := settings.Get("title").MustString(DefaultMessageTitleEmbed)
+	description := settings.Get("description").MustString(DefaultMessageEmbed)
 
 	return &LineNotifier{
 		Base:     NewBase(fc.Config),
