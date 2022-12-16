@@ -148,6 +148,12 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "k8s",
+			Description:     "Explore native k8s integrations",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:            "dashboardsFromStorage",
 			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,
@@ -206,11 +212,6 @@ var (
 			Description:  "Enable trace to metrics links",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-		},
-		{
-			Name:        "prometheusBufferedClient",
-			Description: "Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)",
-			State:       FeatureStateStable,
 		},
 		{
 			Name:        "newDBLibrary",
@@ -284,11 +285,6 @@ var (
 			Description:     "SQL-based entity store (requires storage flag also)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		},
-		{
-			Name:        "traceqlEditor",
-			Description: "Show the TraceQL editor in the explore page",
-			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "flameGraph",
@@ -384,6 +380,11 @@ var (
 		{
 			Name:        "sessionRemoteCache",
 			Description: "Enable using remote cache for user sessions",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "alertingBacktesting",
+			Description: "Rule backtesting API for alerting",
 			State:       FeatureStateAlpha,
 		},
 	}

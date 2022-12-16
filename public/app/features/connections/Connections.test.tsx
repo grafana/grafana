@@ -41,14 +41,21 @@ describe('Connections', () => {
     (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
   });
 
-  test('shows the "Data sources" page by default', async () => {
+  test('shows a landing page by default', async () => {
     renderPage();
 
-    expect(await screen.findByText('Datasources')).toBeVisible();
+    expect(await screen.findByRole('link', { name: 'Your connections' })).toBeVisible();
+    expect(await screen.findByText('Manage your existing connections')).toBeVisible();
+
+    expect(await screen.findByRole('link', { name: 'Connect data' })).toBeVisible();
+    expect(await screen.findByText('Browse and create new connections')).toBeVisible();
+  });
+
+  test('shows a landing page for Your connections', async () => {
+    renderPage(ROUTES.YourConnections);
+
+    expect(await screen.findByRole('link', { name: 'Datasources' })).toBeVisible();
     expect(await screen.findByText('Manage your existing datasource connections')).toBeVisible();
-    expect(await screen.findByText('Sort by A–Z')).toBeVisible();
-    expect(await screen.findByRole('link', { name: /add new data source/i })).toBeVisible();
-    expect(await screen.findByText(mockDatasources[0].name)).toBeVisible();
   });
 
   test('renders the correct tab even if accessing it with a "sub-url"', async () => {

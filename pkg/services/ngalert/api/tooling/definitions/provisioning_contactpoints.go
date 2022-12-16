@@ -111,7 +111,9 @@ func (e *EmbeddedContactPoint) Valid(decryptFunc channels.GetDecryptedValueFn) e
 	cfg, _ := channels.NewFactoryConfig(&channels.NotificationChannelConfig{
 		Settings: e.Settings,
 		Type:     e.Type,
-	}, nil, decryptFunc, nil, nil)
+	}, nil, decryptFunc, nil, nil, func(ctx ...interface{}) channels.Logger {
+		return &channels.FakeLogger{}
+	})
 	if _, err := factory(cfg); err != nil {
 		return err
 	}
