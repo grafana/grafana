@@ -166,7 +166,7 @@ func ServiceAccountDeletions(dialect migrator.Dialect) []string {
 	deletes := []string{
 		"DELETE FROM api_key WHERE service_account_id = ?",
 	}
-	deletes = append(deletes, userDeletions(dialect)...)
+	deletes = append(deletes, serviceAccountDeletions(dialect)...)
 	return deletes
 }
 
@@ -531,7 +531,7 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64,
 	return nil
 }
 
-func userDeletions(dialect migrator.Dialect) []string {
+func serviceAccountDeletions(dialect migrator.Dialect) []string {
 	deletes := []string{
 		"DELETE FROM star WHERE user_id = ?",
 		"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
