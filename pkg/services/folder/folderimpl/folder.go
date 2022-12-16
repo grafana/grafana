@@ -147,7 +147,10 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 
 		filtered := make([]*folder.Folder, 0, len(children))
 		for _, f := range children {
-			g := guardian.New(ctx, f.ID, f.OrgID, cmd.SignedInUser)
+			g, err := guardian.New(ctx, f.ID, f.OrgID, cmd.SignedInUser)
+			if err != nil {
+				return nil, err
+			}
 			canView, err := g.CanView()
 			if err != nil || canView {
 				filtered = append(filtered, f)
