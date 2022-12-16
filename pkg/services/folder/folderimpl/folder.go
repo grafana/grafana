@@ -507,16 +507,10 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	foldr, err := s.Get(ctx, &folder.GetFolderQuery{
-		UID:          &cmd.UID,
-		OrgID:        cmd.OrgID,
-		SignedInUser: cmd.SignedInUser,
-	})
+	g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
 	if err != nil {
 		return nil, err
 	}
-
-	g := guardian.New(ctx, foldr.ID, foldr.OrgID, cmd.SignedInUser)
 	if canSave, err := g.CanSave(); err != nil || !canSave {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -524,14 +518,9 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, dashboards.ErrFolderAccessDenied
 	}
 
-	// if the new parent is the same as the current parent, we don't need to do anything
-	if foldr.ParentUID == cmd.NewParentUID {
-		return foldr, nil
-	}
-
 	// here we get the folder, we need to get the height of current folder
 	// and the depth of the new parent folder, the sum can't bypass 8
-	folderHeight, err := s.store.GetHeight(ctx, foldr.UID, cmd.OrgID, &cmd.NewParentUID)
+	folderHeight, err := s.store.GetHeight(ctx, cmd.UID, cmd.OrgID, &cmd.NewParentUID)
 	if err != nil {
 		return nil, err
 	}
@@ -547,14 +536,14 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 
 	// if the current folder is already a parent of newparent, we should return error
 	for _, parent := range parents {
-		if parent.UID == foldr.UID {
+		if parent.UID == cmd.UID {
 			return nil, folder.ErrCircularReference
 		}
 	}
 
 	return s.store.Update(ctx, folder.UpdateFolderCommand{
-		UID:          foldr.UID,
-		OrgID:        foldr.OrgID,
+		UID:          cmd.UID,
+		OrgID:        cmd.OrgID,
 		NewParentUID: &cmd.NewParentUID,
 		SignedInUser: cmd.SignedInUser,
 	})

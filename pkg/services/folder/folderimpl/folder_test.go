@@ -378,7 +378,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 
 func TestNestedFolderService(t *testing.T) {
 	t.Run("with feature flag unset", func(t *testing.T) {
-		store := &FakeStore{}
+		store := NewFakeStore()
 		dashStore := dashboards.FakeDashboardStore{}
 		dashboardsvc := dashboards.FakeDashboardService{}
 		// nothing enabled yet
@@ -434,7 +434,7 @@ func TestNestedFolderService(t *testing.T) {
 	})
 
 	t.Run("with nested folder feature flag on", func(t *testing.T) {
-		store := &FakeStore{}
+		store := NewFakeStore()
 		dashStore := &dashboards.FakeDashboardStore{}
 		dashboardsvc := &dashboards.FakeDashboardService{}
 		// nothing enabled yet
@@ -606,6 +606,11 @@ func TestNestedFolderService(t *testing.T) {
 
 			store.ExpectedError = nil
 			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			store.ExpectedParentFolders = []*folder.Folder{
+				{UID: "newFolder", ParentUID: "newFolder"},
+				{UID: "newFolder2", ParentUID: "newFolder2"},
+				{UID: "newFolder3", ParentUID: "newFolder3"},
+			}
 			f, err := foldersvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
 			require.NotNil(t, f)
