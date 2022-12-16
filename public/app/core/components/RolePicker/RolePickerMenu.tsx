@@ -478,10 +478,10 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
             <div className={groupHeaderStyle}>{renderedName}</div>
             <div className={optionBodyStyle}></div>
             {showGroups && !!optionGroups?.length
-              ? optionGroups.map((option, i) => (
+              ? optionGroups.map((option) => (
                   <RoleMenuGroupOption
                     data={option}
-                    key={option.uid}
+                    key={option.value}
                     isSelected={groupSelected(option.value) || groupPartiallySelected(option.value)}
                     partiallySelected={groupPartiallySelected(option.value)}
                     disabled={option.options?.every(isNotDelegatable)}
@@ -489,7 +489,7 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
                     onOpenSubMenu={onOpenSubMenuRMGS}
                     onCloseSubMenu={onCloseSubMenu}
                     root={subMenuNode}
-                    isFocused={showSubMenu && openedMenuGroup === option.uid}
+                    isFocused={showSubMenu && openedMenuGroup === option.value}
                   >
                     {showSubMenu && openedMenuGroup === option.value && (
                       <RolePickerSubMenu
@@ -502,7 +502,7 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
                     )}
                   </RoleMenuGroupOption>
                 ))
-              : roles.map((option, i) => (
+              : roles.map((option) => (
                   <RoleMenuOption
                     data={option}
                     key={option.uid}
