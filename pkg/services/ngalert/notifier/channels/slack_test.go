@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
@@ -422,10 +421,6 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 			URL:   "https://www.example.com/test.png",
 		}},
 	}
-
-	settingsJSON, err := simplejson.NewJson([]byte(settings))
-	require.NoError(t, err)
-
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	notificationService := mockNotificationService()
 
@@ -433,7 +428,7 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 		Config: &NotificationChannelConfig{
 			Name:           "slack_testing",
 			Type:           "slack",
-			Settings:       settingsJSON,
+			Settings:       json.RawMessage(settings),
 			SecureSettings: make(map[string][]byte),
 		},
 		ImageStore:          images,

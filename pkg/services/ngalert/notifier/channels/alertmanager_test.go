@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
@@ -46,14 +45,12 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
 			secureSettings := make(map[string][]byte)
 
 			m := &NotificationChannelConfig{
 				Name:           c.receiverName,
 				Type:           "prometheus-alertmanager",
-				Settings:       settingsJSON,
+				Settings:       json.RawMessage(c.settings),
 				SecureSettings: secureSettings,
 			}
 
@@ -143,7 +140,7 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
+			settingsJSON := json.RawMessage(c.settings)
 			require.NoError(t, err)
 			secureSettings := make(map[string][]byte)
 

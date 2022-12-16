@@ -45,16 +45,20 @@ func KafkaFactory(fc FactoryConfig) (NotificationChannel, error) {
 
 // newKafkaNotifier is the constructor function for the Kafka notifier.
 func newKafkaNotifier(fc FactoryConfig) (*KafkaNotifier, error) {
-	endpoint := fc.Config.Settings.Get("kafkaRestProxy").MustString()
+	settings, err := simplejson.NewJson(fc.Config.Settings)
+	if err != nil {
+		return nil, err
+	}
+	endpoint := settings.Get("kafkaRestProxy").MustString()
 	if endpoint == "" {
 		return nil, errors.New("could not find kafka rest proxy endpoint property in settings")
 	}
-	topic := fc.Config.Settings.Get("kafkaTopic").MustString()
+	topic := settings.Get("kafkaTopic").MustString()
 	if topic == "" {
 		return nil, errors.New("could not find kafka topic property in settings")
 	}
-	description := fc.Config.Settings.Get("description").MustString(DefaultMessageTitleEmbed)
-	details := fc.Config.Settings.Get("details").MustString(DefaultMessageEmbed)
+	description := settings.Get("description").MustString(DefaultMessageTitleEmbed)
+	details := settings.Get("details").MustString(DefaultMessageEmbed)
 
 	return &KafkaNotifier{
 		Base:     NewBase(fc.Config),
