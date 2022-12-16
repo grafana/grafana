@@ -73,7 +73,7 @@ export function stringToMs(str: string): number {
 }
 
 export function toNumberString(value: number | undefined | null): string {
-  if (value !== null && value !== undefined && Number.isFinite(value as number)) {
+  if (value !== null && value !== undefined && Number.isFinite(value)) {
     return value.toString();
   }
   return '';

@@ -616,9 +616,21 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, ac, teamSvc, userSvc)
 	require.NoError(t, err)
 	if dashboardSvc == nil {
-		dashboardSvc = &dashboards.FakeDashboardService{}
+		fakeDashboardService := dashboards.NewFakeDashboardService(t)
+		fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardQuery)
+			q.Result = &models.Dashboard{
+				Id:    q.Id,
+				Uid:   q.Uid,
+				OrgId: q.OrgId,
+			}
+		}).Return(nil)
+		dashboardSvc = fakeDashboardService
 	}
-	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc), dash
+
+	g, err := NewAccessControlDashboardGuardian(context.Background(), dash.Id, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc)
+	require.NoError(t, err)
+	return g, dash
 }
 
 func testDashSvc(t *testing.T) dashboards.DashboardService {

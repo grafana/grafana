@@ -6,7 +6,6 @@ import { CoreApp } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
 
-import { testIds as regularTestIds } from './PromQueryEditor';
 import { PromQueryEditorByApp } from './PromQueryEditorByApp';
 import { testIds as alertingTestIds } from './PromQueryEditorForAlerting';
 
@@ -70,10 +69,9 @@ function setup(app: CoreApp): RenderResult & { onRunQuery: jest.Mock } {
 
 describe('PromQueryEditorByApp', () => {
   it('should render simplified query editor for cloud alerting', () => {
-    const { getByTestId, queryByTestId } = setup(CoreApp.CloudAlerting);
+    const { getByTestId } = setup(CoreApp.CloudAlerting);
 
     expect(getByTestId(alertingTestIds.editor)).toBeInTheDocument();
-    expect(queryByTestId(regularTestIds.editor)).toBeNull();
   });
 
   it('should render editor selector for unkown apps', () => {

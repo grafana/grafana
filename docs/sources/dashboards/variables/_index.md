@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/
-  - /docs/grafana/latest/variables/variable-examples/
-  - docs/grafana/latest/dashboards/variables/
+  - ../variables/
+  - ../variables/variable-examples/
+  - ./
 title: Variables
 weight: 130
 ---

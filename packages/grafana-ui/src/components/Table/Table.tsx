@@ -150,13 +150,13 @@ export const Table = memo((props: Props) => {
   const variableSizeListScrollbarRef = useRef<HTMLDivElement>(null);
   const tableStyles = useStyles2(getTableStyles);
   const theme = useTheme2();
-  const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
+  const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
   const [expandedIndexes, setExpandedIndexes] = useState<Set<number>>(new Set());
   const prevExpandedIndexes = usePrevious(expandedIndexes);
 
   const footerHeight = useMemo(() => {
-    const EXTENDED_ROW_HEIGHT = 33;
+    const EXTENDED_ROW_HEIGHT = headerHeight;
     let length = 0;
 
     if (!footerItems) {
@@ -174,7 +174,7 @@ export const Table = memo((props: Props) => {
     }
 
     return EXTENDED_ROW_HEIGHT;
-  }, [footerItems]);
+  }, [footerItems, headerHeight]);
 
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
   // The cells use the field to look up values
@@ -288,7 +288,9 @@ export const Table = memo((props: Props) => {
   if (enablePagination) {
     listHeight -= tableStyles.cellHeight;
   }
-  const pageSize = Math.round(listHeight / tableStyles.cellHeight) - 1;
+
+  const pageSize = Math.round(listHeight / tableStyles.rowHeight) - 1;
+
   useEffect(() => {
     // Don't update the page size if it is less than 1
     if (pageSize <= 0) {
@@ -473,7 +475,6 @@ export const Table = memo((props: Props) => {
           )}
           {footerItems && (
             <FooterRow
-              height={footerHeight}
               isPaginationVisible={Boolean(enablePagination)}
               footerValues={footerItems}
               footerGroups={footerGroups}

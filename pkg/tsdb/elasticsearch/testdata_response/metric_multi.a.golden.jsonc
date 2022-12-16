@@ -1,6 +1,8 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] 
+//  Frame[0] {
+//      "type": "timeseries-multi"
+//  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+-------------------+
@@ -20,15 +22,15 @@
   "frames": [
     {
       "schema": {
+        "meta": {
+          "type": "timeseries-multi"
+        },
         "fields": [
           {
             "name": "time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
-            },
-            "config": {
-              "displayNameFromDS": "Max float"
             }
           },
           {

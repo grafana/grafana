@@ -148,3 +148,8 @@ func (l *logWrapper) Error(msg string, args ...interface{}) {
 func (l *logWrapper) Level() sdklog.Level {
 	return sdklog.NoLevel
 }
+
+func (l *logWrapper) With(args ...interface{}) sdklog.Logger {
+	l.logger = l.logger.New(args...)
+	return l
+}

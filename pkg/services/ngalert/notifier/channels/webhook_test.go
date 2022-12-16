@@ -358,6 +358,7 @@ func TestWebhookNotifier(t *testing.T) {
 				DecryptFunc:         secretsService.GetDecryptedValue,
 				ImageStore:          &UnavailableImageStore{},
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			pn, err := buildWebhookNotifier(fc)
