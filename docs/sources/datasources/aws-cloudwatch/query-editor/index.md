@@ -92,6 +92,10 @@ For example, to apply arithmetic operations to a metric, apply a unique string i
 
 > **Note:** If you use the expression field to reference another query, like `queryA * 2`, you can't create an alert rule based on that query.
 
+##### Period macro
+
+If you're using a CloudWatch [`SEARCH`](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) expression, you may want to use the `$__period_auto` macro rather than specifying a period explicitly. The `$__period_auto` macro will resolve to a [CloudWatch period](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html) that is suitable for the choosen time range. It will use the same algorithm for calculating period as is used when the **Period** field is set to `auto`. Read more about that [here](#period).
+
 #### Deep-link Grafana panels to the CloudWatch console
 
 {{< figure src="/static/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
