@@ -11,6 +11,7 @@ import {
   stringArrayToFilters,
   alignmentPeriodLabel,
   getMetricType,
+  setMetricType,
 } from './functions';
 import { newMockDatasource } from './specs/testData';
 import { AlignmentTypes, MetricDescriptor, MetricKind, TimeSeriesList, ValueTypes } from './types';
@@ -242,6 +243,18 @@ describe('functions', () => {
     it('returns metric type', () => {
       const metricType = getMetricType({ filters: ['metric.type', '=', 'test'] } as TimeSeriesList);
       expect(metricType).toBe('test');
+    });
+  });
+
+  describe('setMetricType', () => {
+    it('sets a metric type if the filter did not exist', () => {
+      const metricType = setMetricType({} as TimeSeriesList, 'test');
+      expect(metricType.filters).toEqual(['metric.type', '=', 'test']);
+    });
+
+    it('sets a metric type if the filter exists', () => {
+      const metricType = setMetricType({ filters: ['metric.type', '=', 'test'] } as TimeSeriesList, 'other');
+      expect(metricType.filters).toEqual(['metric.type', '=', 'other']);
     });
   });
 });

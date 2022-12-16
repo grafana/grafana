@@ -25,8 +25,6 @@ import {
   QueryType,
   PostResponse,
   Aggregation,
-  TimeSeriesList,
-  PreprocessorType,
 } from './types';
 import { CloudMonitoringVariableSupport } from './variables';
 
@@ -68,7 +66,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       ...target,
       datasource: this.getRef(),
       intervalMs: this.intervalMs,
-      metricQuery: {
+      metricQuery: metricQuery && {
         ...this.interpolateProps(metricQuery, scopedVars),
         projectName: this.templateSrv.replace(
           metricQuery.projectName ? metricQuery.projectName : this.getDefaultProject(),
@@ -85,9 +83,9 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           timeSeriesList.projectName ? timeSeriesList.projectName : this.getDefaultProject(),
           scopedVars
         ),
-        filters: this.interpolateFilters(metricQuery.filters || [], scopedVars),
-        groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),
-        view: metricQuery.view || 'FULL',
+        filters: this.interpolateFilters(timeSeriesList.filters || [], scopedVars),
+        groupBys: this.interpolateGroupBys(timeSeriesList.groupBys || [], scopedVars),
+        view: timeSeriesList.view || 'FULL',
       },
       timeSeriesQuery: timeSeriesQuery && {
         ...this.interpolateProps(timeSeriesQuery, scopedVars),
@@ -222,34 +220,15 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return metricTypeFilterArray;
   }
 
-  migratePreprocessor(q: TimeSeriesList, preprocessor: PreprocessorType) {
-    if (preprocessor !== PreprocessorType.None) {
-      // Move aggregation to secondaryAggregation
-      q.secondaryAlignmentPeriod = q.alignmentPeriod;
-      q.secondaryCrossSeriesReducer = q.crossSeriesReducer;
-      q.secondaryPerSeriesAligner = q.perSeriesAligner;
-      q.secondaryGroupBys = q.groupBys;
-
-      // Set a default cross series reducer if grouped
-      if (!q.groupBys || q.groupBys.length === 0) {
-        q.crossSeriesReducer = 'REDUCE_NONE';
-      }
-
-      // Set aligner based on preprocessor type
-      let aligner = 'ALIGN_RATE';
-      if (preprocessor === PreprocessorType.Delta) {
-        aligner = 'ALIGN_DELTA';
-      }
-      q.perSeriesAligner = aligner;
-    }
-
-    return q;
-  }
-
   // This is a manual port of the migration code in cloudmonitoring.go
   // DO NOT UPDATE THIS CODE WITHOUT UPDATING THE BACKEND CODE
   migrateQuery(query: CloudMonitoringQuery): CloudMonitoringQuery {
-    if (!query.hasOwnProperty('metricQuery')) {
+    if (
+      !query.hasOwnProperty('metricQuery') &&
+      !query.hasOwnProperty('sloQuery') &&
+      !query.hasOwnProperty('timeSeriesQuery') &&
+      !query.hasOwnProperty('timeSeriesList')
+    ) {
       const { hide, refId, datasource, key, queryType, maxLines, metric, intervalMs, type, ...rest } = query as any;
       return {
         refId,
@@ -279,6 +258,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           groupBys: query.metricQuery.groupBys,
           filters: query.metricQuery.filters,
           view: query.metricQuery.view,
+          preprocessor: query.metricQuery.preprocessor,
         };
         if (query.metricQuery.metricType) {
           query.timeSeriesList.filters = this.migrateMetricTypeFilter(
@@ -286,14 +266,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
             query.timeSeriesList.filters
           );
         }
-        if (query.metricQuery.preprocessor) {
-          query.timeSeriesList = this.migratePreprocessor(query.timeSeriesList, query.metricQuery.preprocessor);
-        }
       }
       query.aliasBy = query.metricQuery.aliasBy;
 
-      // TODO: Remove metricQuery once all the code has been migrated
-      // query.metricQuery = {};
+      delete query.metricQuery;
     }
 
     return query;
@@ -324,13 +300,11 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       );
     }
 
-    if (query.queryType && query.queryType === QueryType.METRICS) {
-      if (query.timeSeriesQuery) {
-        return !!query.timeSeriesQuery.projectName && !!query.timeSeriesQuery.query;
-      }
-      if (query.timeSeriesList) {
-        return !!query.timeSeriesList.projectName && !!getMetricType(query.timeSeriesList);
-      }
+    if (query.timeSeriesQuery) {
+      return !!query.timeSeriesQuery.projectName && !!query.timeSeriesQuery.query;
+    }
+    if (query.timeSeriesList) {
+      return !!query.timeSeriesList.projectName && !!getMetricType(query.timeSeriesList);
     }
 
     // Deprecated

@@ -145,6 +145,9 @@ export interface TimeSeriesList {
   secondaryAlignmentPeriod?: string;
   secondaryPerSeriesAligner?: string;
   secondaryGroupBys?: string[];
+  // preprocessor is not part of the API, but is used to store the preprocessor
+  // and not affect the UI for the rest of parameters
+  preprocessor?: PreprocessorType;
 }
 
 export interface TimeSeriesQuery {
@@ -183,7 +186,7 @@ export interface CloudMonitoringQuery extends DataQuery {
   sloQuery?: SLOQuery;
   intervalMs: number;
   // deprecated: use timeSeriesList instead
-  metricQuery: MetricQuery | AnnotationMetricQuery;
+  metricQuery?: MetricQuery | AnnotationMetricQuery;
 }
 
 export interface CloudMonitoringOptions extends DataSourceJsonData {

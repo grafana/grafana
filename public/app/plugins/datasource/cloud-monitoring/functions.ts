@@ -140,3 +140,18 @@ export const getMetricType = (query?: TimeSeriesList) => {
   const metricType = query?.filters?.[metricTypeKey + 2];
   return metricType || '';
 };
+
+export const setMetricType = (query: TimeSeriesList, metricType: string) => {
+  if (!query.filters) {
+    query.filters = ['metric.type', '=', metricType];
+    return query;
+  }
+  const metricTypeKey = query?.filters?.findIndex((f) => f === 'metric.type')!;
+  if (metricTypeKey === -1) {
+    query.filters.push('metric.type', '=', metricType);
+  } else {
+    // filters are in the format [key, operator, value] so we need to add 2 to get the value
+    query.filters![metricTypeKey + 2] = metricType;
+  }
+  return query;
+};
