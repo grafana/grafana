@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -104,12 +105,17 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	return logMap, nil
 }
 
+// CheckHealth makes sure all migrations ran successfully
 func (mg *Migrator) CheckHealth(name string) (int, error) {
 	has, err := mg.DBEngine.Exist(&MigrationLog{Success: false})
-	fmt.Println("it has", has)
 	if err != nil {
 		return 1, err
 	}
+
+	if has {
+		return 1, errors.New("one or more migrations failed")
+	}
+
 	return 0, nil
 }
 
