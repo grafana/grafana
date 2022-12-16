@@ -149,12 +149,14 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	err = dsHandler.Ping()
 
-	var driverErr *mysql.MySQLError
-	if errors.As(err, &driverErr) {
-		logger.Error("Check health failed", "error", err)
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: driverErr.Message}, nil
+	if err != nil {
+		var driverErr *mysql.MySQLError
+		transformer := mysqlQueryResultTransformer{}
+		if errors.As(err, &driverErr) {
+			return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: transformer.TransformQueryError(logger, driverErr).Error()}, nil
+		}
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: transformer.TransformQueryError(logger, err).Error()}, nil
 	}
-
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
 }
 

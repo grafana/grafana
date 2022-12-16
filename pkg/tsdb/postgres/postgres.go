@@ -207,7 +207,8 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	if err != nil {
 		logger.Error("Check health failed", "error", err)
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}, nil
+		transformer := postgresQueryResultTransformer{}
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: transformer.TransformQueryError(logger,err).Error()}, nil
 	}
 
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
