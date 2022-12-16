@@ -1,19 +1,15 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/dashboard-manage/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/dashboard-folders/
-  - /docs/grafana/latest/reference/dashboard_folders/
-  - /docs/grafana/latest/dashboards/export-import/
-  - /docs/grafana/latest/reference/export_import/
-  - /docs/grafana/latest/troubleshooting/troubleshoot-dashboards/
-  - /docs/grafana/latest/dashboards/time-range-controls/
-  - /docs/grafana/latest/reference/timerange/
-  - /docs/grafana/latest/panels/working-with-panels/organize-dashboard/
-  - /docs/grafana/latest/dashboards/manage-dashboards/
-title: Manage dashboards
-menuTitle: Manage dashboards
-weight: 8
+  - ../features/dashboard/dashboards/
+  - ../panels/working-with-panels/organize-dashboard/
+  - ../reference/dashboard_folders/
+  - ../reference/export_import/
+  - ../reference/timerange/
+  - ../troubleshooting/troubleshoot-dashboards/
+  - dashboard-folders/
+  - dashboard-manage/
+  - export-import/
+  - time-range-controls/
 keywords:
   - grafana
   - dashboard
@@ -25,6 +21,9 @@ keywords:
   - troubleshoot
   - time range
   - scripting
+menuTitle: Manage dashboards
+title: Manage dashboards
+weight: 8
 ---
 
 # Manage dashboards
@@ -57,8 +56,6 @@ Folders help you organize and group dashboards, which is useful when you have ma
 When you save a dashboard, you can either select a folder for the dashboard to be saved in or create a new folder.
 
 ## Manage dashboards
-
-{{< figure src="/static/img/docs/v50/manage_dashboard_menu.png" max-width="300px" class="docs-image--right" >}}
 
 On the **Manage dashboards and folders** page, you can:
 
@@ -99,8 +96,6 @@ The dashboard export action creates a Grafana JSON file that contains everything
 
 Grafana downloads a JSON file to your local machine.
 
-{{< figure src="/static/img/docs/export/export-modal.png" max-width="800px" >}}
-
 #### Make a dashboard portable
 
 If you want to export a dashboard for others to use, you can add template variables for things like a metric prefix (use a constant variable) and server name.
@@ -110,16 +105,14 @@ A template variable of the type `Constant` will automatically be hidden in the d
 ### Import a dashboard
 
 1. Click **Dashboards > Import** in the side menu.
-
-   {{< figure src="/static/img/docs/v70/import_step1.png" max-width="700px" >}}
-
 1. Perform one of the following steps:
 
    - Upload a dashboard JSON file
    - Paste a [Grafana.com](https://grafana.com) dashboard URL
    - Paste dashboard JSON text directly into the text area
 
-{{< figure src="/static/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
+<!--{{< figure src="/static/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
+-->
 
 The import process enables you to change the name of the dashboard, pick the data source you want the dashboard to use, and specify any metric prefixes (if the dashboard uses any).
 

@@ -11,9 +11,15 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -100,7 +106,7 @@ func TestBuildConflictBlock(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
-
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -109,7 +115,7 @@ func TestBuildConflictBlock(t *testing.T) {
 						Login: u.Login,
 						OrgID: int64(testOrgID),
 					}
-					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
@@ -205,7 +211,7 @@ conflict: test2
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
-
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -214,7 +220,7 @@ conflict: test2
 						Login: u.Login,
 						OrgID: int64(testOrgID),
 					}
-					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 
@@ -383,6 +389,7 @@ func TestGetConflictingUsers(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -392,7 +399,7 @@ func TestGetConflictingUsers(t *testing.T) {
 						OrgID:            int64(testOrgID),
 						IsServiceAccount: u.IsServiceAccount,
 					}
-					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
@@ -491,6 +498,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -499,7 +507,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 						Login: u.Login,
 						OrgID: int64(testOrgID),
 					}
-					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
@@ -541,6 +549,8 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 	t.Run("should validate file thats gets created", func(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := db.InitTestDB(t)
+		usrSvc := setupTestUserService(t, sqlStore)
+
 		const testOrgID int64 = 1
 		if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 			// add additional user with conflicting login where DOMAIN is upper case
@@ -549,14 +559,14 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 				Login: "user_duplicate_test_1_login",
 				OrgID: testOrgID,
 			}
-			_, err := sqlStore.CreateUser(context.Background(), dupUserLogincmd)
+			_, err := usrSvc.Create(context.Background(), &dupUserLogincmd)
 			require.NoError(t, err)
 			dupUserEmailcmd := user.CreateUserCommand{
 				Email: "USERDUPLICATETEST1@TEST.COM",
 				Login: "USER_DUPLICATE_TEST_1_LOGIN",
 				OrgID: testOrgID,
 			}
-			_, err = sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
+			_, err = usrSvc.Create(context.Background(), &dupUserEmailcmd)
 			require.NoError(t, err)
 
 			// get users
@@ -577,13 +587,17 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 	})
 }
 
-func TestMergeUser(t *testing.T) {
+func TestIntegrationMergeUser(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("should be able to merge user", func(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := db.InitTestDB(t)
 		teamSvc := teamimpl.ProvideService(sqlStore, setting.NewCfg())
 		team1, err := teamSvc.CreateTeam("team1 name", "", 1)
 		require.Nil(t, err)
+		usrSvc := setupTestUserService(t, sqlStore)
 		const testOrgID int64 = 1
 
 		if sqlStore.GetDialect().DriverName() != ignoredDatabase {
@@ -596,7 +610,7 @@ func TestMergeUser(t *testing.T) {
 				Login: "user_duplicate_test_1_login",
 				OrgID: testOrgID,
 			}
-			_, err := sqlStore.CreateUser(context.Background(), dupUserLogincmd)
+			_, err := usrSvc.Create(context.Background(), &dupUserLogincmd)
 			require.NoError(t, err)
 			dupUserEmailcmd := user.CreateUserCommand{
 				Email: "USERDUPLICATETEST1@TEST.COM",
@@ -604,7 +618,7 @@ func TestMergeUser(t *testing.T) {
 				Login: "USER_DUPLICATE_TEST_1_LOGIN",
 				OrgID: testOrgID,
 			}
-			userWithUpperCase, err := sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
+			userWithUpperCase, err := usrSvc.Create(context.Background(), &dupUserEmailcmd)
 			require.NoError(t, err)
 			// this is the user we want to update to another team
 			err = teamSvc.AddTeamMember(userWithUpperCase.ID, testOrgID, team1.Id, false, 0)
@@ -613,7 +627,11 @@ func TestMergeUser(t *testing.T) {
 			// get users
 			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 			require.NoError(t, err)
-			r := ConflictResolver{Store: sqlStore}
+			r := ConflictResolver{
+				Store:       sqlStore,
+				userService: usertest.NewUserServiceFake(),
+				ac:          actest.FakeService{},
+			}
 			r.BuildConflictBlocks(conflictUsers, fmt.Sprintf)
 			tmpFile, err := generateConflictUsersFile(&r)
 			require.NoError(t, err)
@@ -632,17 +650,18 @@ func TestMergeUser(t *testing.T) {
 	})
 }
 
-func TestMergeUserFromNewFileInput(t *testing.T) {
+func TestIntegrationMergeUserFromNewFileInput(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	t.Run("should be able to merge users after choosing a different user to keep", func(t *testing.T) {
-		// Restore after destructive operation
-		sqlStore := db.InitTestDB(t)
-
 		type testBuildConflictBlock struct {
-			desc                string
-			users               []user.User
-			fileString          string
-			expectedBlocks      []string
-			expectedIdsInBlocks map[string][]string
+			desc                  string
+			users                 []user.User
+			fileString            string
+			expectedValidationErr error
+			expectedBlocks        []string
+			expectedIdsInBlocks   map[string][]string
 		}
 		testOrgID := 1
 		m := make(map[string][]string)
@@ -690,8 +709,53 @@ conflict: test2
 				expectedBlocks:      []string{"conflict: test", "conflict: test2"},
 				expectedIdsInBlocks: m,
 			},
+			{
+				desc: "should give error for having wrong number of users to keep",
+				users: []user.User{
+					{
+						Email: "TEST",
+						Login: "TEST",
+						OrgID: int64(testOrgID),
+					},
+					{
+						Email: "test",
+						Login: "test",
+						OrgID: int64(testOrgID),
+					},
+				},
+				fileString: `conflict: test
++ id: 1, email: test, login: test, last_seen_at: 2012-09-19T08:31:20Z, auth_module:, conflict_email: true, conflict_login: true
++ id: 2, email: TEST, login: TEST, last_seen_at: 2012-09-19T08:31:29Z, auth_module:, conflict_email: true, conflict_login: true
+`,
+				expectedValidationErr: fmt.Errorf("invalid number of users to keep, expected 1, got 2 for block: conflict: test"),
+				expectedBlocks:        []string{"conflict: test"},
+			},
+			{
+				desc: "should give error for having wrong character for user",
+				users: []user.User{
+					{
+						Email: "TEST",
+						Login: "TEST",
+						OrgID: int64(testOrgID),
+					},
+					{
+						Email: "test",
+						Login: "test",
+						OrgID: int64(testOrgID),
+					},
+				},
+				fileString: `conflict: test
++ id: 1, email: test, login: test, last_seen_at: 2012-09-19T08:31:20Z, auth_module:, conflict_email: true, conflict_login: true
+% id: 2, email: TEST, login: TEST, last_seen_at: 2012-09-19T08:31:29Z, auth_module:, conflict_email: true, conflict_login: true
+`,
+				expectedValidationErr: fmt.Errorf("invalid start character (expected '+,-') found %% for row number 3"),
+				expectedBlocks:        []string{"conflict: test"},
+			},
 		}
 		for _, tc := range testCases {
+			// Restore after destructive operation
+			sqlStore := db.InitTestDB(t)
+			usrSvc := setupTestUserService(t, sqlStore)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
 				for _, u := range tc.users {
 					cmd := user.CreateUserCommand{
@@ -700,13 +764,19 @@ conflict: test2
 						Login: u.Login,
 						OrgID: int64(testOrgID),
 					}
-					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					_, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
 					require.NoError(t, err)
 				}
 				// add additional user with conflicting login where DOMAIN is upper case
 				conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 				require.NoError(t, err)
-				r := ConflictResolver{Store: sqlStore}
+				userFake := usertest.NewUserServiceFake()
+				userFake.ExpectedUser = &user.User{Email: "test", Login: "test", OrgID: int64(testOrgID)}
+				r := ConflictResolver{
+					Store:       sqlStore,
+					userService: userFake,
+					ac:          actest.FakeService{},
+				}
 				r.BuildConflictBlocks(conflictUsers, fmt.Sprintf)
 				require.NoError(t, err)
 				// validation to get newConflicts
@@ -716,7 +786,11 @@ conflict: test2
 				b := tc.fileString
 				require.NoError(t, err)
 				validErr := getValidConflictUsers(&r, []byte(b))
-				require.NoError(t, validErr)
+				if tc.expectedValidationErr != nil {
+					require.Equal(t, tc.expectedValidationErr, validErr)
+				} else {
+					require.NoError(t, validErr)
+				}
 
 				// test starts here
 				err = r.MergeConflictingUsers(context.Background())
@@ -775,4 +849,14 @@ func TestMarshalConflictUser(t *testing.T) {
 			require.Equal(t, tc.expectedUser.ConflictLogin, user.ConflictLogin)
 		})
 	}
+}
+
+func setupTestUserService(t *testing.T, sqlStore *sqlstore.SQLStore) user.Service {
+	t.Helper()
+	orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, &quotatest.FakeQuotaService{})
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+	require.NoError(t, err)
+
+	return usrSvc
 }

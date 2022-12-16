@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,15 +33,44 @@ func ProvideService(
 	cfg *setting.Cfg,
 	teamService team.Service,
 	cacheService *localcache.CacheService,
-) user.Service {
+	quotaService quota.Service,
+) (user.Service, error) {
 	store := ProvideStore(db, cfg)
-	return &Service{
+	s := &Service{
 		store:        &store,
 		orgService:   orgService,
 		cfg:          cfg,
 		teamService:  teamService,
 		cacheService: cacheService,
 	}
+
+	defaultLimits, err := readQuotaConfig(cfg)
+	if err != nil {
+		return s, err
+	}
+
+	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
+		TargetSrv:     quota.TargetSrv(user.QuotaTargetSrv),
+		DefaultLimits: defaultLimits,
+		Reporter:      s.Usage,
+	}); err != nil {
+		return s, err
+	}
+	return s, nil
+}
+
+func (s *Service) Usage(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
+	u := &quota.Map{}
+	if used, err := s.store.Count(ctx); err != nil {
+		return u, err
+	} else {
+		tag, err := quota.NewTag(quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), quota.GlobalScope)
+		if err != nil {
+			return u, err
+		}
+		u.Set(tag, used)
+	}
+	return u, nil
 }
 
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
@@ -52,32 +82,27 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		SkipOrgSetup: cmd.SkipOrgSetup,
 	}
 	orgID, err := s.orgService.GetIDForNewUser(ctx, cmdOrg)
-	cmd.OrgID = orgID
 	if err != nil {
 		return nil, err
 	}
-
 	if cmd.Email == "" {
 		cmd.Email = cmd.Login
 	}
-	usr := &user.User{
-		Login: cmd.Login,
-		Email: cmd.Email,
-	}
-	usr, err = s.store.Get(ctx, usr)
-	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		return usr, err
+
+	err = s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
+	if err != nil {
+		return nil, user.ErrUserAlreadyExists
 	}
 
 	// create user
-	usr = &user.User{
+	usr := &user.User{
 		Email:            cmd.Email,
 		Name:             cmd.Name,
 		Login:            cmd.Login,
 		Company:          cmd.Company,
 		IsAdmin:          cmd.IsAdmin,
 		IsDisabled:       cmd.IsDisabled,
-		OrgID:            cmd.OrgID,
+		OrgID:            orgID,
 		EmailVerified:    cmd.EmailVerified,
 		Created:          time.Now(),
 		Updated:          time.Now(),
@@ -104,7 +129,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		usr.Password = encodedPassword
 	}
 
-	userID, err := s.store.Insert(ctx, usr)
+	_, err = s.store.Insert(ctx, usr)
 	if err != nil {
 		return nil, err
 	}
@@ -128,11 +153,10 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		}
 		_, err = s.orgService.InsertOrgUser(ctx, &orgUser)
 		if err != nil {
-			err := s.store.Delete(ctx, userID)
+			err := s.store.Delete(ctx, usr.ID)
 			return usr, err
 		}
 	}
-
 	return usr, nil
 }
 
@@ -202,11 +226,15 @@ func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand)
 
 func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	var signedInUser *user.SignedInUser
-	cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
-	if cached, found := s.cacheService.Get(cacheKey); found {
-		cachedUser := cached.(user.SignedInUser)
-		signedInUser = &cachedUser
-		return signedInUser, nil
+
+	// only check cache if we have a user ID and an org ID in query
+	if query.OrgID > 0 && query.UserID > 0 {
+		cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
+		if cached, found := s.cacheService.Get(cacheKey); found {
+			cachedUser := cached.(user.SignedInUser)
+			signedInUser = &cachedUser
+			return signedInUser, nil
+		}
 	}
 
 	result, err := s.GetSignedInUser(ctx, query)
@@ -214,7 +242,7 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 		return nil, err
 	}
 
-	cacheKey = newSignedInUserCacheKey(result.OrgID, query.UserID)
+	cacheKey := newSignedInUserCacheKey(result.OrgID, result.UserID)
 	s.cacheService.Set(cacheKey, *result, time.Second*5)
 	return result, nil
 }
@@ -303,4 +331,215 @@ func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlag
 func (s *Service) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
 	result, err := s.store.GetProfile(ctx, query)
 	return result, err
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
+	}
+
+	globalQuotaTag, err := quota.NewTag(quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), quota.GlobalScope)
+	if err != nil {
+		return limits, err
+	}
+
+	limits.Set(globalQuotaTag, cfg.Quota.Global.User)
+	return limits, nil
+}
+
+// CreateUserForTests creates a test user and optionally an organization. Unlike
+// Create, `cmd.SkipOrgSetup` toggles whether or not to create an org for the
+// test user if there isn't already an existing org. This must only be used in tests.
+func (s *Service) CreateUserForTests(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	var orgID int64 = -1
+	var err error
+	if !cmd.SkipOrgSetup {
+		orgID, err = s.getOrgIDForNewUser(ctx, cmd)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if cmd.Email == "" {
+		cmd.Email = cmd.Login
+	}
+
+	usr, err := s.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: cmd.Login})
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
+		return usr, err
+	} else if err == nil { // user exists
+		return usr, err
+	}
+
+	// create user
+	usr = &user.User{
+		Email:            cmd.Email,
+		Name:             cmd.Name,
+		Login:            cmd.Login,
+		Company:          cmd.Company,
+		IsAdmin:          cmd.IsAdmin,
+		IsDisabled:       cmd.IsDisabled,
+		OrgID:            orgID,
+		EmailVerified:    cmd.EmailVerified,
+		Created:          timeNow(),
+		Updated:          timeNow(),
+		LastSeenAt:       timeNow().AddDate(-10, 0, 0),
+		IsServiceAccount: cmd.IsServiceAccount,
+	}
+
+	salt, err := util.GetRandomString(10)
+	if err != nil {
+		return usr, err
+	}
+	usr.Salt = salt
+	rands, err := util.GetRandomString(10)
+	if err != nil {
+		return usr, err
+	}
+	usr.Rands = rands
+
+	if len(cmd.Password) > 0 {
+		encodedPassword, err := util.EncodePassword(cmd.Password, usr.Salt)
+		if err != nil {
+			return usr, err
+		}
+		usr.Password = encodedPassword
+	}
+
+	_, err = s.store.Insert(ctx, usr)
+	if err != nil {
+		return usr, err
+	}
+
+	// create org user link
+	if !cmd.SkipOrgSetup {
+		orgCmd := &org.AddOrgUserCommand{
+			OrgID:                     orgID,
+			UserID:                    usr.ID,
+			Role:                      org.RoleAdmin,
+			AllowAddingServiceAccount: true,
+		}
+
+		if s.cfg.AutoAssignOrg && !usr.IsAdmin {
+			if len(cmd.DefaultOrgRole) > 0 {
+				orgCmd.Role = org.RoleType(cmd.DefaultOrgRole)
+			} else {
+				orgCmd.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
+			}
+		}
+
+		if err = s.orgService.AddOrgUser(ctx, orgCmd); err != nil {
+			return nil, err
+		}
+	}
+
+	return usr, nil
+}
+
+func (s *Service) getOrgIDForNewUser(ctx context.Context, cmd *user.CreateUserCommand) (int64, error) {
+	if s.cfg.AutoAssignOrg && cmd.OrgID != 0 {
+		if _, err := s.orgService.GetByID(ctx, &org.GetOrgByIdQuery{ID: cmd.OrgID}); err != nil {
+			return -1, err
+		}
+		return cmd.OrgID, nil
+	}
+
+	orgName := cmd.OrgName
+	if orgName == "" {
+		orgName = util.StringsFallback2(cmd.Email, cmd.Login)
+	}
+
+	orgID, err := s.orgService.GetOrCreate(ctx, orgName)
+	if err != nil {
+		return 0, err
+	}
+	return orgID, err
+}
+
+// CreateServiceAccount is a copy of Create with a single difference; it will create the OrgUser service account.
+func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	cmdOrg := org.GetOrgIDForNewUserCommand{
+		Email:        cmd.Email,
+		Login:        cmd.Login,
+		OrgID:        cmd.OrgID,
+		OrgName:      cmd.OrgName,
+		SkipOrgSetup: cmd.SkipOrgSetup,
+	}
+	orgID, err := s.orgService.GetIDForNewUser(ctx, cmdOrg)
+	if err != nil {
+		return nil, err
+	}
+	if cmd.Email == "" {
+		cmd.Email = cmd.Login
+	}
+
+	err = s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
+	if err != nil {
+		return nil, user.ErrUserAlreadyExists
+	}
+
+	// create user
+	usr := &user.User{
+		Email:            cmd.Email,
+		Name:             cmd.Name,
+		Login:            cmd.Login,
+		Company:          cmd.Company,
+		IsAdmin:          cmd.IsAdmin,
+		IsDisabled:       cmd.IsDisabled,
+		OrgID:            cmd.OrgID,
+		EmailVerified:    cmd.EmailVerified,
+		Created:          time.Now(),
+		Updated:          time.Now(),
+		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
+		IsServiceAccount: cmd.IsServiceAccount,
+	}
+
+	salt, err := util.GetRandomString(10)
+	if err != nil {
+		return nil, err
+	}
+	usr.Salt = salt
+	rands, err := util.GetRandomString(10)
+	if err != nil {
+		return nil, err
+	}
+	usr.Rands = rands
+
+	if len(cmd.Password) > 0 {
+		encodedPassword, err := util.EncodePassword(cmd.Password, usr.Salt)
+		if err != nil {
+			return nil, err
+		}
+		usr.Password = encodedPassword
+	}
+
+	_, err = s.store.Insert(ctx, usr)
+	if err != nil {
+		return nil, err
+	}
+
+	// create org user link
+	if !cmd.SkipOrgSetup {
+		orgCmd := &org.AddOrgUserCommand{
+			OrgID:                     orgID,
+			UserID:                    usr.ID,
+			Role:                      org.RoleAdmin,
+			AllowAddingServiceAccount: true,
+		}
+
+		if s.cfg.AutoAssignOrg && !usr.IsAdmin {
+			if len(cmd.DefaultOrgRole) > 0 {
+				orgCmd.Role = org.RoleType(cmd.DefaultOrgRole)
+			} else {
+				orgCmd.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
+			}
+		}
+
+		if err = s.orgService.AddOrgUser(ctx, orgCmd); err != nil {
+			return nil, err
+		}
+	}
+	return usr, nil
 }

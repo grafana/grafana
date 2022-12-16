@@ -141,8 +141,19 @@ export function fieldToTimeField(field: Field, dateFormat?: string): Field {
 function fieldToNumberField(field: Field): Field {
   const numValues = field.values.toArray().slice();
 
+  const valuesAsStrings = numValues.some((v) => typeof v === 'string');
+
   for (let n = 0; n < numValues.length; n++) {
-    const number = +numValues[n];
+    let toBeConverted = numValues[n];
+
+    if (valuesAsStrings) {
+      // some numbers returned from datasources have commas
+      // strip the commas, coerce the string to a number
+      toBeConverted = toBeConverted.replace(/,/g, '');
+    }
+
+    const number = +toBeConverted;
+
     numValues[n] = Number.isFinite(number) ? number : null;
   }
 

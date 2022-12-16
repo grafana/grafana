@@ -107,7 +107,7 @@ export const Components = {
       expand: 'Drawer expand',
       contract: 'Drawer contract',
       close: 'Drawer close',
-      rcContentWrapper: () => '.drawer-content-wrapper',
+      rcContentWrapper: () => '.rc-drawer-content-wrapper',
     },
   },
   PanelEditor: {

@@ -1,10 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/contact-points/message-templating/
-  - /docs/grafana/latest/alerting/contact-points/notifiers/webhook-notifier/
-  - /docs/grafana/latest/alerting/message-templating/
-  - /docs/grafana/latest/alerting/unified-alerting/message-templating/
-  - /docs/grafana/latest/alerting/fundamentals/contact-points/webhook-notifier/
+  - ../contact-points/message-templating/
+  - ../contact-points/notifiers/webhook-notifier/
+  - ../fundamentals/contact-points/webhook-notifier/
+  - ../message-templating/
+  - ../unified-alerting/message-templating/
 keywords:
   - grafana
   - alerting

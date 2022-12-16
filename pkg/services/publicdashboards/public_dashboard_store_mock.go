@@ -18,6 +18,27 @@ type FakePublicDashboardStore struct {
 	mock.Mock
 }
 
+// Create provides a mock function with given fields: ctx, cmd
+func (_m *FakePublicDashboardStore) Create(ctx context.Context, cmd models.SavePublicDashboardCommand) (int64, error) {
+	ret := _m.Called(ctx, cmd)
+
+	var r0 int64
+	if rf, ok := ret.Get(0).(func(context.Context, models.SavePublicDashboardCommand) int64); ok {
+		r0 = rf(ctx, cmd)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, models.SavePublicDashboardCommand) error); ok {
+		r1 = rf(ctx, cmd)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Delete provides a mock function with given fields: ctx, orgId, uid
 func (_m *FakePublicDashboardStore) Delete(ctx context.Context, orgId int64, uid string) (int64, error) {
 	ret := _m.Called(ctx, orgId, uid)
@@ -217,32 +238,25 @@ func (_m *FakePublicDashboardStore) GetOrgIdByAccessToken(ctx context.Context, a
 	return r0, r1
 }
 
-// Save provides a mock function with given fields: ctx, cmd
-func (_m *FakePublicDashboardStore) Save(ctx context.Context, cmd models.SavePublicDashboardCommand) error {
-	ret := _m.Called(ctx, cmd)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, models.SavePublicDashboardCommand) error); ok {
-		r0 = rf(ctx, cmd)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // Update provides a mock function with given fields: ctx, cmd
-func (_m *FakePublicDashboardStore) Update(ctx context.Context, cmd models.SavePublicDashboardCommand) error {
+func (_m *FakePublicDashboardStore) Update(ctx context.Context, cmd models.SavePublicDashboardCommand) (int64, error) {
 	ret := _m.Called(ctx, cmd)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, models.SavePublicDashboardCommand) error); ok {
+	var r0 int64
+	if rf, ok := ret.Get(0).(func(context.Context, models.SavePublicDashboardCommand) int64); ok {
 		r0 = rf(ctx, cmd)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(int64)
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, models.SavePublicDashboardCommand) error); ok {
+		r1 = rf(ctx, cmd)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // NewFakePublicDashboardStore creates a new instance of FakePublicDashboardStore. It also registers the testing.TB interface on the mock and a cleanup function to assert the mocks expectations.

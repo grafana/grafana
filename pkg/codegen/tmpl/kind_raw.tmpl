@@ -1,0 +1,57 @@
+package {{ .Properties.MachineName }}
+
+import (
+	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/thema"
+	"github.com/grafana/thema/vmux"
+)
+
+// TODO standard generated docs
+type Kind struct {
+	decl kindsys.Decl[kindsys.RawProperties]
+}
+
+// type guard
+var _ kindsys.Raw = &Kind{}
+
+// TODO standard generated docs
+func NewKind() (*Kind, error) {
+	decl, err := kindsys.LoadCoreKind[kindsys.RawProperties]("kinds/raw/{{ .Properties.MachineName }}", nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Kind{
+		decl: *decl,
+	}, nil
+}
+
+// TODO standard generated docs
+func (k *Kind) Name() string {
+	return "{{ .Properties.Name }}"
+}
+
+// TODO standard generated docs
+func (k *Kind) MachineName() string {
+	return "{{ .Properties.MachineName }}"
+}
+
+// TODO standard generated docs
+func (k *Kind) Maturity() kindsys.Maturity {
+	return k.decl.Properties.Maturity
+}
+
+// Decl returns the [kindsys.Decl] containing both CUE and Go representations of the
+// {{ .Properties.MachineName }} declaration in .cue files.
+func (k *Kind) Decl() *kindsys.Decl[kindsys.RawProperties] {
+	d := k.decl
+	return &d
+}
+
+// Props returns a [kindsys.SomeKindProps], with underlying type [kindsys.RawProperties],
+// representing the static properties declared in the {{ .Properties.MachineName }} kind.
+//
+// This method is identical to calling Decl().Props. It is provided to satisfy [kindsys.Interface].
+func (k *Kind) Props() kindsys.SomeKindProperties {
+  return k.decl.Properties
+}

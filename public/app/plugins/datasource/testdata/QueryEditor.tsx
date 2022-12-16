@@ -124,22 +124,22 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   };
 
   const onInputChange = (e: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement | HTMLTextAreaElement;
+    const { name, value, type } = e.currentTarget;
     let newValue: any = value;
 
     if (type === 'number') {
       newValue = Number(value);
     }
 
-    if (name === 'levelColumn') {
-      newValue = (e.target as HTMLInputElement).checked;
+    if (name === 'levelColumn' && e.currentTarget instanceof HTMLInputElement) {
+      newValue = e.currentTarget.checked;
     }
 
     onUpdate({ ...query, [name]: newValue });
   };
 
   const onFieldChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement;
+    const { name, value, type } = e.currentTarget;
     let newValue: any = value;
 
     if (type === 'number') {
@@ -302,6 +302,18 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         <NodeGraphEditor onChange={(val: NodesQuery) => onChange({ ...query, nodes: val })} query={query} />
       )}
       {scenarioId === 'server_error_500' && <ErrorEditor onChange={onUpdate} query={query} ds={datasource} />}
+      {scenarioId === 'trace' && (
+        <InlineField labelWidth={14} label="Span count">
+          <Input
+            type="number"
+            name="spanCount"
+            value={query.spanCount}
+            width={32}
+            onChange={onInputChange}
+            placeholder="10"
+          />
+        </InlineField>
+      )}
 
       {description && <p>{description}</p>}
     </>

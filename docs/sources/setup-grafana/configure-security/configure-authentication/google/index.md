@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/google/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/google/
+  - ../../../auth/google/
 description: Grafana OAuthentication Guide
 title: Configure Google OAuth2 Authentication
 weight: 300
@@ -53,3 +52,15 @@ You may allow users to sign-up via Google authentication by setting the
 `allow_sign_up` option to `true`. When this option is set to `true`, any
 user successfully authenticating via Google authentication will be
 automatically signed up.
+
+### Configure refresh token
+
+> Available in Grafana v9.3 and later versions.
+
+> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
+
+When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
+
+Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
+
+By default, Grafana includes the `access_type=offline` parameter in the authorization request to request a refresh token.

@@ -91,7 +91,11 @@ func (db *MySQLDialect) SQLType(c *Column) string {
 
 	switch c.Type {
 	case DB_Char, DB_Varchar, DB_NVarchar, DB_TinyText, DB_Text, DB_MediumText, DB_LongText:
-		res += " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+		if c.IsLatin {
+			res += " CHARACTER SET latin1 COLLATE latin1_bin"
+		} else {
+			res += " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+		}
 	}
 
 	return res

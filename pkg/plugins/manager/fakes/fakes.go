@@ -355,3 +355,15 @@ func (*FakeLicensingService) EnabledFeatures() map[string]bool {
 func (*FakeLicensingService) FeatureEnabled(_ string) bool {
 	return false
 }
+
+type FakeRoleRegistry struct {
+	ExpectedErr error
+}
+
+func NewFakeRoleRegistry() *FakeRoleRegistry {
+	return &FakeRoleRegistry{}
+}
+
+func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ string, _ []plugins.RoleRegistration) error {
+	return f.ExpectedErr
+}

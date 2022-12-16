@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/provisioning/
-  - /docs/grafana/latest/installation/provisioning/
+  - ../installation/provisioning/
 description: Describes provisioning settings for Grafana using configuration files.
 keywords:
   - grafana
@@ -631,6 +630,15 @@ The following sections detail the supported settings and secure settings for eac
 | Name |
 | ---- |
 | url  |
+
+#### Alert notification `Cisco Webex Teams`
+
+| Name      | Secure setting |
+| --------- | -------------- |
+| message   |                |
+| room_id   |                |
+| api_url   |                |
+| bot_token | yes            |
 
 ## Grafana Enterprise
 

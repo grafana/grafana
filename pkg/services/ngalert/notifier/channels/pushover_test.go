@@ -61,7 +61,7 @@ func TestPushoverNotifier(t *testing.T) {
 				"title":      "[FIRING:1]  (val1)",
 				"url":        "http://localhost/alerting/list",
 				"url_title":  "Show alert rule",
-				"message":    "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				"message":    "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh",
 				"attachment": "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\b\x04\x00\x00\x00\xb5\x1c\f\x02\x00\x00\x00\vIDATx\xdacd`\x00\x00\x00\x06\x00\x020\x81\xd0/\x00\x00\x00\x00IEND\xaeB`\x82",
 				"html":       "1",
 			},
@@ -90,7 +90,7 @@ func TestPushoverNotifier(t *testing.T) {
 				"title":      "Alerts firing: 1",
 				"url":        "http://localhost/alerting/list",
 				"url_title":  "Show alert rule",
-				"message":    "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				"message":    "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh",
 				"attachment": "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\b\x04\x00\x00\x00\xb5\x1c\f\x02\x00\x00\x00\vIDATx\xdacd`\x00\x00\x00\x06\x00\x020\x81\xd0/\x00\x00\x00\x00IEND\xaeB`\x82",
 				"html":       "1",
 			},
@@ -106,6 +106,50 @@ func TestPushoverNotifier(t *testing.T) {
 					"okpriority": "0",
 					"retry": "30",
 					"expire": "86400",
+					"sound": "echo",
+					"oksound": "magic",
+					"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved"
+				}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"__alert_rule_uid__": "rule uid", "alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__alertImageToken__": "test-image-1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2", "__alertImageToken__": "test-image-2"},
+					},
+				},
+			},
+			expMsg: map[string]string{
+				"user":       "<userKey>",
+				"token":      "<apiToken>",
+				"priority":   "2",
+				"sound":      "echo",
+				"title":      "[FIRING:2]  ",
+				"url":        "http://localhost/alerting/list",
+				"url_title":  "Show alert rule",
+				"message":    "2 alerts are firing, 0 are resolved",
+				"attachment": "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\b\x04\x00\x00\x00\xb5\x1c\f\x02\x00\x00\x00\vIDATx\xdacd`\x00\x00\x00\x06\x00\x020\x81\xd0/\x00\x00\x00\x00IEND\xaeB`\x82",
+				"html":       "1",
+				"retry":      "30",
+				"expire":     "86400",
+				"device":     "device",
+			},
+			expMsgError: nil,
+		},
+		{
+			name: "Integer fields as integers",
+			settings: `{
+					"userKey": "<userKey>",
+					"apiToken": "<apiToken>",
+					"device": "device",
+					"priority": 2,
+					"okpriority": 0,
+					"retry": 30,
+					"expire": 86400,
 					"sound": "echo",
 					"oksound": "magic",
 					"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved"
@@ -185,8 +229,10 @@ func TestPushoverNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				DecryptFunc:         decryptFn,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
-			pn, err := newPushoverNotifier(fc)
+
+			pn, err := NewPushoverNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())

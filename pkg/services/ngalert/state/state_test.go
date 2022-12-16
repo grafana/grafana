@@ -8,15 +8,340 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/golang/mock/gomock"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/image"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/screenshot"
 )
+
+func TestSetAlerting(t *testing.T) {
+	mock := clock.NewMock()
+	tests := []struct {
+		name     string
+		state    State
+		reason   string
+		startsAt time.Time
+		endsAt   time.Time
+		expected State
+	}{{
+		name:     "state is set to Alerting",
+		reason:   "this is a reason",
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		expected: State{
+			State:       eval.Alerting,
+			StateReason: "this is a reason",
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
+		},
+	}, {
+		name: "previous state is removed",
+		state: State{
+			State:       eval.Normal,
+			StateReason: "this is a reason",
+			Error:       errors.New("this is an error"),
+		},
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		expected: State{
+			State:    eval.Alerting,
+			StartsAt: mock.Now(),
+			EndsAt:   mock.Now().Add(time.Minute),
+		},
+	}}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := test.state
+			actual.SetAlerting(test.reason, test.startsAt, test.endsAt)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestSetPending(t *testing.T) {
+	mock := clock.NewMock()
+	tests := []struct {
+		name     string
+		state    State
+		reason   string
+		startsAt time.Time
+		endsAt   time.Time
+		expected State
+	}{{
+		name:     "state is set to Pending",
+		reason:   "this is a reason",
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		expected: State{
+			State:       eval.Pending,
+			StateReason: "this is a reason",
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
+		},
+	}, {
+		name: "previous state is removed",
+		state: State{
+			State:       eval.Pending,
+			StateReason: "this is a reason",
+			Error:       errors.New("this is an error"),
+		},
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		expected: State{
+			State:    eval.Pending,
+			StartsAt: mock.Now(),
+			EndsAt:   mock.Now().Add(time.Minute),
+		},
+	}}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := test.state
+			actual.SetPending(test.reason, test.startsAt, test.endsAt)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestNormal(t *testing.T) {
+	mock := clock.NewMock()
+	tests := []struct {
+		name     string
+		state    State
+		reason   string
+		startsAt time.Time
+		endsAt   time.Time
+		expected State
+	}{{
+		name:     "state is set to Normal",
+		reason:   "this is a reason",
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		expected: State{
+			State:       eval.Normal,
+			StateReason: "this is a reason",
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
+		},
+	}, {
+		name: "previous state is removed",
+		state: State{
+			State:       eval.Normal,
+			StateReason: "this is a reason",
+			Error:       errors.New("this is an error"),
+		},
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		expected: State{
+			State:    eval.Normal,
+			StartsAt: mock.Now(),
+			EndsAt:   mock.Now().Add(time.Minute),
+		},
+	}}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := test.state
+			actual.SetNormal(test.reason, test.startsAt, test.endsAt)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestNoData(t *testing.T) {
+	mock := clock.NewMock()
+	tests := []struct {
+		name     string
+		state    State
+		reason   string
+		startsAt time.Time
+		endsAt   time.Time
+		expected State
+	}{{
+		name:     "state is set to No Data",
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		expected: State{
+			State:    eval.NoData,
+			StartsAt: mock.Now(),
+			EndsAt:   mock.Now().Add(time.Minute),
+		},
+	}, {
+		name: "previous state is removed",
+		state: State{
+			State:       eval.NoData,
+			StateReason: "this is a reason",
+			Error:       errors.New("this is an error"),
+		},
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		expected: State{
+			State:    eval.NoData,
+			StartsAt: mock.Now(),
+			EndsAt:   mock.Now().Add(time.Minute),
+		},
+	}}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := test.state
+			actual.SetNoData(test.reason, test.startsAt, test.endsAt)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestSetError(t *testing.T) {
+	mock := clock.NewMock()
+	tests := []struct {
+		name     string
+		state    State
+		startsAt time.Time
+		endsAt   time.Time
+		error    error
+		expected State
+	}{{
+		name:     "state is set to Error",
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		error:    errors.New("this is an error"),
+		expected: State{
+			State:       eval.Error,
+			StateReason: ngmodels.StateReasonError,
+			Error:       errors.New("this is an error"),
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
+		},
+	}, {
+		name: "previous state is removed",
+		state: State{
+			State:       eval.Error,
+			StateReason: "this is a reason",
+			Error:       errors.New("this is an error"),
+		},
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		error:    errors.New("this is another error"),
+		expected: State{
+			State:       eval.Error,
+			StateReason: ngmodels.StateReasonError,
+			Error:       errors.New("this is another error"),
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
+		},
+	}}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := test.state
+			actual.SetError(test.error, test.startsAt, test.endsAt)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestMaintain(t *testing.T) {
+	mock := clock.NewMock()
+	now := mock.Now()
+
+	// the interval is less than the resend interval of 30 seconds
+	s := State{State: eval.Alerting, StartsAt: now, EndsAt: now.Add(time.Second)}
+	s.Maintain(10, now.Add(10*time.Second))
+	// 10 seconds + 3 x 30 seconds is 100 seconds
+	assert.Equal(t, now.Add(100*time.Second), s.EndsAt)
+
+	// the interval is above the resend interval of 30 seconds
+	s = State{State: eval.Alerting, StartsAt: now, EndsAt: now.Add(time.Second)}
+	s.Maintain(60, now.Add(10*time.Second))
+	// 10 seconds + 3 x 60 seconds is 190 seconds
+	assert.Equal(t, now.Add(190*time.Second), s.EndsAt)
+}
+
+func TestEnd(t *testing.T) {
+	evaluationTime, _ := time.Parse("2006-01-02", "2021-03-25")
+	testCases := []struct {
+		name       string
+		expected   time.Time
+		testRule   *ngmodels.AlertRule
+		testResult eval.Result
+	}{
+		{
+			name:     "less than resend delay: for=unset,interval=10s - endsAt = resendDelay * 3",
+			expected: evaluationTime.Add(ResendDelay * 3),
+			testRule: &ngmodels.AlertRule{
+				IntervalSeconds: 10,
+			},
+		},
+		{
+			name:     "less than resend delay: for=0s,interval=10s - endsAt = resendDelay * 3",
+			expected: evaluationTime.Add(ResendDelay * 3),
+			testRule: &ngmodels.AlertRule{
+				For:             0 * time.Second,
+				IntervalSeconds: 10,
+			},
+		},
+		{
+			name:     "less than resend delay: for=10s,interval=10s - endsAt = resendDelay * 3",
+			expected: evaluationTime.Add(ResendDelay * 3),
+			testRule: &ngmodels.AlertRule{
+				For:             10 * time.Second,
+				IntervalSeconds: 10,
+			},
+		},
+		{
+			name:     "less than resend delay: for=10s,interval=20s - endsAt = resendDelay * 3",
+			expected: evaluationTime.Add(ResendDelay * 3),
+			testRule: &ngmodels.AlertRule{
+				For:             10 * time.Second,
+				IntervalSeconds: 20,
+			},
+		},
+		{
+			name:     "more than resend delay: for=unset,interval=1m - endsAt = interval * 3",
+			expected: evaluationTime.Add(time.Second * 60 * 3),
+			testRule: &ngmodels.AlertRule{
+				IntervalSeconds: 60,
+			},
+		},
+		{
+			name:     "more than resend delay: for=0s,interval=1m - endsAt = resendDelay * 3",
+			expected: evaluationTime.Add(time.Second * 60 * 3),
+			testRule: &ngmodels.AlertRule{
+				For:             0 * time.Second,
+				IntervalSeconds: 60,
+			},
+		},
+		{
+			name:     "more than resend delay: for=1m,interval=5m - endsAt = interval * 3",
+			expected: evaluationTime.Add(time.Second * 300 * 3),
+			testRule: &ngmodels.AlertRule{
+				For:             time.Minute,
+				IntervalSeconds: 300,
+			},
+		},
+		{
+			name:     "more than resend delay: for=5m,interval=1m - endsAt = interval * 3",
+			expected: evaluationTime.Add(time.Second * 60 * 3),
+			testRule: &ngmodels.AlertRule{
+				For:             300 * time.Second,
+				IntervalSeconds: 60,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := eval.Result{EvaluatedAt: evaluationTime}
+			assert.Equal(t, tc.expected, nextEndsTime(tc.testRule.IntervalSeconds, r.EvaluatedAt))
+		})
+	}
+}
 
 func TestNeedsSending(t *testing.T) {
 	evaluationTime, _ := time.Parse("2006-01-02", "2021-03-25")
@@ -145,88 +470,6 @@ func TestNeedsSending(t *testing.T) {
 	}
 }
 
-func TestSetEndsAt(t *testing.T) {
-	evaluationTime, _ := time.Parse("2006-01-02", "2021-03-25")
-	testCases := []struct {
-		name       string
-		expected   time.Time
-		testRule   *ngmodels.AlertRule
-		testResult eval.Result
-	}{
-		{
-			name:     "less than resend delay: for=unset,interval=10s - endsAt = resendDelay * 3",
-			expected: evaluationTime.Add(ResendDelay * 3),
-			testRule: &ngmodels.AlertRule{
-				IntervalSeconds: 10,
-			},
-		},
-		{
-			name:     "less than resend delay: for=0s,interval=10s - endsAt = resendDelay * 3",
-			expected: evaluationTime.Add(ResendDelay * 3),
-			testRule: &ngmodels.AlertRule{
-				For:             0 * time.Second,
-				IntervalSeconds: 10,
-			},
-		},
-		{
-			name:     "less than resend delay: for=10s,interval=10s - endsAt = resendDelay * 3",
-			expected: evaluationTime.Add(ResendDelay * 3),
-			testRule: &ngmodels.AlertRule{
-				For:             10 * time.Second,
-				IntervalSeconds: 10,
-			},
-		},
-		{
-			name:     "less than resend delay: for=10s,interval=20s - endsAt = resendDelay * 3",
-			expected: evaluationTime.Add(ResendDelay * 3),
-			testRule: &ngmodels.AlertRule{
-				For:             10 * time.Second,
-				IntervalSeconds: 20,
-			},
-		},
-		{
-			name:     "more than resend delay: for=unset,interval=1m - endsAt = interval * 3",
-			expected: evaluationTime.Add(time.Second * 60 * 3),
-			testRule: &ngmodels.AlertRule{
-				IntervalSeconds: 60,
-			},
-		},
-		{
-			name:     "more than resend delay: for=0s,interval=1m - endsAt = resendDelay * 3",
-			expected: evaluationTime.Add(time.Second * 60 * 3),
-			testRule: &ngmodels.AlertRule{
-				For:             0 * time.Second,
-				IntervalSeconds: 60,
-			},
-		},
-		{
-			name:     "more than resend delay: for=1m,interval=5m - endsAt = interval * 3",
-			expected: evaluationTime.Add(time.Second * 300 * 3),
-			testRule: &ngmodels.AlertRule{
-				For:             60 * time.Second,
-				IntervalSeconds: 300,
-			},
-		},
-		{
-			name:     "more than resend delay: for=5m,interval=1m - endsAt = interval * 3",
-			expected: evaluationTime.Add(time.Second * 60 * 3),
-			testRule: &ngmodels.AlertRule{
-				For:             300 * time.Second,
-				IntervalSeconds: 60,
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			s := &State{}
-			r := eval.Result{EvaluatedAt: evaluationTime}
-			s.setEndsAt(tc.testRule, r)
-			assert.Equal(t, tc.expected, s.EndsAt)
-		})
-	}
-}
-
 func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 	genState := func(results []Evaluation) *State {
 		return &State{
@@ -298,6 +541,13 @@ func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 	})
 }
 
+func TestResolve(t *testing.T) {
+	s := State{State: eval.Alerting, EndsAt: time.Now().Add(time.Minute)}
+	expected := State{State: eval.Normal, StateReason: "This is a reason", EndsAt: time.Now(), Resolved: true}
+	s.Resolve("This is a reason", expected.EndsAt)
+	assert.Equal(t, expected, s)
+}
+
 func TestShouldTakeImage(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -351,9 +601,9 @@ func TestTakeImage(t *testing.T) {
 
 		ctx := context.Background()
 		r := ngmodels.AlertRule{}
-		s := image.NewMockImageService(ctrl)
+		s := NewMockImageCapturer(ctrl)
 
-		s.EXPECT().NewImage(ctx, &r).Return(nil, image.ErrNoDashboard)
+		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoDashboard)
 		image, err := takeImage(ctx, s, &r)
 		assert.NoError(t, err)
 		assert.Nil(t, image)
@@ -365,9 +615,9 @@ func TestTakeImage(t *testing.T) {
 
 		ctx := context.Background()
 		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo")}
-		s := image.NewMockImageService(ctrl)
+		s := NewMockImageCapturer(ctrl)
 
-		s.EXPECT().NewImage(ctx, &r).Return(nil, image.ErrNoPanel)
+		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoPanel)
 		image, err := takeImage(ctx, s, &r)
 		assert.NoError(t, err)
 		assert.Nil(t, image)
@@ -379,7 +629,7 @@ func TestTakeImage(t *testing.T) {
 
 		ctx := context.Background()
 		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo"), PanelID: ptr.Int64(1)}
-		s := image.NewMockImageService(ctrl)
+		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, screenshot.ErrScreenshotsUnavailable)
 		image, err := takeImage(ctx, s, &r)
@@ -393,7 +643,7 @@ func TestTakeImage(t *testing.T) {
 
 		ctx := context.Background()
 		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo"), PanelID: ptr.Int64(1)}
-		s := image.NewMockImageService(ctrl)
+		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, errors.New("unknown error"))
 		image, err := takeImage(ctx, s, &r)
@@ -407,7 +657,7 @@ func TestTakeImage(t *testing.T) {
 
 		ctx := context.Background()
 		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo"), PanelID: ptr.Int64(1)}
-		s := image.NewMockImageService(ctrl)
+		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(&ngmodels.Image{Path: "foo.png"}, nil)
 		image, err := takeImage(ctx, s, &r)

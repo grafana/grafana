@@ -55,21 +55,28 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:    0,
-			MaxIdleConns:    2,
-			ConnMaxLifetime: 14400,
-			Encrypt:         "false",
+			MaxOpenConns:      0,
+			MaxIdleConns:      2,
+			ConnMaxLifetime:   14400,
+			Encrypt:           "false",
+			ConnectionTimeout: 0,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+
+		database := jsonData.Database
+		if database == "" {
+			database = settings.Database
+		}
+
 		dsInfo := sqleng.DataSourceInfo{
 			JsonData:                jsonData,
 			URL:                     settings.URL,
 			User:                    settings.User,
-			Database:                settings.Database,
+			Database:                database,
 			ID:                      settings.ID,
 			Updated:                 settings.Updated,
 			UID:                     settings.UID,
@@ -171,6 +178,11 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	} else if encrypt == "disable" {
 		connStr += fmt.Sprintf("encrypt=%s;", dsInfo.JsonData.Encrypt)
 	}
+
+	if dsInfo.JsonData.ConnectionTimeout != 0 {
+		connStr += fmt.Sprintf("connection timeout=%d;", dsInfo.JsonData.ConnectionTimeout)
+	}
+
 	return connStr, nil
 }
 

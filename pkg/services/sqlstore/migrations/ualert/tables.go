@@ -33,6 +33,11 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	AddProvisioningMigrations(mg)
 
 	AddAlertImageMigrations(mg)
+
+	AddAlertmanagerConfigHistoryMigrations(mg)
+	ExtractAlertmanagerConfigurationHistoryMigration(mg)
+	mg.AddMigration("drop non-unique orgID index", migrator.NewDropIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Cols: []string{"org_id"}}))
+	mg.AddMigration("add unique index on orgID", migrator.NewAddIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Type: migrator.UniqueIndex, Cols: []string{"org_id"}}))
 }
 
 // AddAlertDefinitionMigrations should not be modified.
@@ -343,6 +348,26 @@ func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add configuration_hash column to alert_configuration", migrator.NewAddColumnMigration(alertConfiguration, &migrator.Column{
 		Name: "configuration_hash", Type: migrator.DB_Varchar, Nullable: false, Default: "'not-yet-calculated'", Length: 32,
 	}))
+}
+
+func AddAlertmanagerConfigHistoryMigrations(mg *migrator.Migrator) {
+	alertConfigHistory := migrator.Table{
+		Name: "alert_configuration_history",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false, Default: "0"},
+			{Name: "alertmanager_configuration", Type: migrator.DB_MediumText, Nullable: false},
+			{Name: "configuration_hash", Type: migrator.DB_Varchar, Nullable: false, Default: "'not-yet-calculated'", Length: 32},
+			{Name: "configuration_version", Type: migrator.DB_NVarchar, Length: 3}, // In a format of vXX e.g. v1, v2, v10, etc
+			{Name: "created_at", Type: migrator.DB_Int, Nullable: false},
+			{Name: "default", Type: migrator.DB_Bool, Nullable: false, Default: "0"},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"org_id"}},
+		},
+	}
+
+	mg.AddMigration("create_alert_configuration_history_table", migrator.NewAddTableMigration(alertConfigHistory))
 }
 
 func AddAlertAdminConfigMigrations(mg *migrator.Migrator) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -27,15 +28,21 @@ func GetSignUpOptions(c *models.ReqContext) response.Response {
 // POST /api/user/signup
 func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 	form := dtos.SignUpForm{}
-	if err := web.Bind(c.Req, &form); err != nil {
+	var err error
+	if err = web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	if !setting.AllowUserSignUp {
 		return response.Error(401, "User signup is disabled", nil)
 	}
 
+	form.Email, err = ValidateAndNormalizeEmail(form.Email)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid email address", nil)
+	}
+
 	existing := user.GetUserByLoginQuery{LoginOrEmail: form.Email}
-	_, err := hs.userService.GetByLogin(c.Req.Context(), &existing)
+	_, err = hs.userService.GetByLogin(c.Req.Context(), &existing)
 	if err == nil {
 		return response.Error(422, "User with same email address already exists", nil)
 	}
@@ -49,7 +56,7 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(500, "Failed to generate random string", err)
 	}
-	cmd.RemoteAddr = c.Req.RemoteAddr
+	cmd.RemoteAddr = c.RemoteAddr()
 
 	if err := hs.tempUserService.CreateTempUser(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to create signup", err)
@@ -76,6 +83,9 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 		return response.Error(401, "User signup is disabled", nil)
 	}
 
+	form.Email = strings.TrimSpace(form.Email)
+	form.Username = strings.TrimSpace(form.Username)
+
 	createUserCmd := user.CreateUserCommand{
 		Email:    form.Email,
 		Login:    form.Username,
@@ -92,7 +102,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 		createUserCmd.EmailVerified = true
 	}
 
-	usr, err := hs.Login.CreateUser(createUserCmd)
+	usr, err := hs.userService.Create(c.Req.Context(), &createUserCmd)
 	if err != nil {
 		if errors.Is(err, user.ErrUserAlreadyExists) {
 			return response.Error(401, "User with same email address already exists", nil)
