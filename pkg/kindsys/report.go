@@ -37,9 +37,12 @@ func main() {
 	}
 }
 
-// static list of other core kinds that haven't been started on yet,
-// so that we can inject them as "planned"
-var otherCoreKinds = []string {
+// static list of planned core kinds so that we can inject ones that
+// haven't been started on yet as "planned"
+var plannedCoreKinds = []string {
+	"Dashboard",
+	"Playlist",
+	"Team",
 	"User",
 	"Folder",
 	"DataSource",
@@ -79,7 +82,7 @@ func buildKindStateReport() KindStateReport {
 		}
 	}
 
-	for _, kn := range otherCoreKinds {
+	for _, kn := range plannedCoreKinds {
 		if seen[kn] {
 			continue
 		}
