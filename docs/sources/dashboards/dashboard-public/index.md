@@ -32,7 +32,7 @@ Add the `publicDashboards` feature toggle to your `custom.ini` file.
 publicDashboards = true
 ```
 
-Or if configuring using (Docker) enviroment variable:
+If you are using Docker, use an environment variable to enable public dashboards:
 
 ```
 --env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
