@@ -9,11 +9,6 @@ import (
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const webexAPIURL = "https://webexapis.com/v1/messages"
@@ -21,8 +16,8 @@ const webexAPIURL = "https://webexapis.com/v1/messages"
 // WebexNotifier is responsible for sending alert notifications as webex messages.
 type WebexNotifier struct {
 	*Base
-	ns       notifications.WebhookSender
-	log      log.Logger
+	ns       WebhookSender
+	log      Logger
 	images   ImageStore
 	tmpl     *template.Template
 	orgID    int64
@@ -83,18 +78,10 @@ func buildWebexNotifier(factoryConfig FactoryConfig) (*WebexNotifier, error) {
 		return nil, err
 	}
 
-	logger := log.New("alerting.notifier.webex")
-
 	return &WebexNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   factoryConfig.Config.UID,
-			Name:                  factoryConfig.Config.Name,
-			Type:                  factoryConfig.Config.Type,
-			DisableResolveMessage: factoryConfig.Config.DisableResolveMessage,
-			Settings:              factoryConfig.Config.Settings,
-		}),
+		Base:     NewBase(factoryConfig.Config),
 		orgID:    factoryConfig.Config.OrgID,
-		log:      logger,
+		log:      factoryConfig.Logger,
 		ns:       factoryConfig.NotificationService,
 		images:   factoryConfig.ImageStore,
 		tmpl:     factoryConfig.Template,
@@ -131,7 +118,7 @@ func (wn *WebexNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	// Augment our Alert data with ImageURLs if available.
-	_ = withStoredImages(ctx, wn.log, wn.images, func(index int, image ngmodels.Image) error {
+	_ = withStoredImages(ctx, wn.log, wn.images, func(index int, image Image) error {
 		// Cisco Webex only supports a single image per request: https://developer.webex.com/docs/basics#message-attachments
 		if image.HasURL() {
 			data.Alerts[index].ImageURL = image.URL
@@ -152,7 +139,7 @@ func (wn *WebexNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, tmplErr
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        parsedURL,
 		Body:       string(body),
 		HttpMethod: http.MethodPost,
@@ -164,7 +151,7 @@ func (wn *WebexNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		cmd.HttpHeader = headers
 	}
 
-	if err := wn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := wn.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, err
 	}
 

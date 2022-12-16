@@ -9,10 +9,6 @@ import (
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 var (
@@ -23,8 +19,8 @@ var (
 // alert notifications to LINE.
 type LineNotifier struct {
 	*Base
-	log      log.Logger
-	ns       notifications.WebhookSender
+	log      Logger
+	ns       WebhookSender
 	tmpl     *template.Template
 	settings lineSettings
 }
@@ -56,14 +52,8 @@ func newLineNotifier(fc FactoryConfig) (*LineNotifier, error) {
 	description := fc.Config.Settings.Get("description").MustString(DefaultMessageEmbed)
 
 	return &LineNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
-		log:      log.New("alerting.notifier.line"),
+		Base:     NewBase(fc.Config),
+		log:      fc.Logger,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
 		settings: lineSettings{token: token, title: title, description: description},
@@ -79,7 +69,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	form := url.Values{}
 	form.Add("message", body)
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        LineNotifyURL,
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
@@ -89,7 +79,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		Body: form.Encode(),
 	}
 
-	if err := ln.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := ln.ns.SendWebhook(ctx, cmd); err != nil {
 		ln.log.Error("failed to send notification to LINE", "error", err, "body", body)
 		return false, err
 	}

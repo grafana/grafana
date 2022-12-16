@@ -147,7 +147,7 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
             }));
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });
-          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef.current);
+          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef);
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,

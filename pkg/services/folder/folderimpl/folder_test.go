@@ -470,11 +470,71 @@ func TestNestedFolderService(t *testing.T) {
 			require.True(t, store.CreateCalled)
 		})
 
+		t.Run("create without UID, no error", func(t *testing.T) {
+			// dashboard store & service commands that should be called.
+			dashStore = &dashboards.FakeDashboardStore{}
+			foldersvc.dashboardStore = dashStore
+			dashboardsvc.On("BuildSaveDashboardCommand",
+				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
+				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&models.SaveDashboardCommand{}, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{Uid: "newUID"}, nil)
+			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
+			f, err := foldersvc.Create(context.Background(), &folder.CreateFolderCommand{
+				OrgID:        orgID,
+				Title:        "myFolder",
+				SignedInUser: usr,
+			})
+			require.NoError(t, err)
+			// CreateFolder should also call the folder store's create method.
+			require.True(t, store.CreateCalled)
+			require.Equal(t, "newUID", f.UID)
+		})
+
+		t.Run("create failed because of circular reference", func(t *testing.T) {
+			// dashboard store & service commands that should be called.
+			dashboardFolder := models.NewDashboardFolder("myFolder")
+			dashboardFolder.Id = rand.Int63()
+			dashboardFolder.Uid = "myFolder"
+			f := folder.FromDashboard(dashboardFolder)
+
+			dashStore = &dashboards.FakeDashboardStore{}
+			foldersvc.dashboardStore = dashStore
+			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dashboardFolder, nil)
+			dashStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.Id).Return(f, nil)
+			var actualCmd *models.DeleteDashboardCommand
+			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+			}).Return(nil).Once()
+
+			store.ExpectedParentFolders = []*folder.Folder{
+				{UID: "newFolder", ParentUID: "newFolder"},
+				{UID: "newFolder2", ParentUID: "newFolder2"},
+				{UID: "newFolder3", ParentUID: "newFolder3"},
+				{UID: "myFolder", ParentUID: "newFolder"},
+			}
+
+			cmd := folder.CreateFolderCommand{
+				ParentUID:    "myFolder1",
+				OrgID:        orgID,
+				Title:        "myFolder",
+				UID:          "myFolder",
+				SignedInUser: usr,
+			}
+			_, err := foldersvc.Create(context.Background(), &cmd)
+			require.Error(t, err, folder.ErrCircularReference)
+			// CreateFolder should also call the folder store's create method.
+			require.True(t, store.CreateCalled)
+			require.NotNil(t, actualCmd)
+		})
+
 		t.Run("create returns error from nested folder service", func(t *testing.T) {
 			// This test creates and deletes the dashboard, so needs some extra setup.
 			g := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
 
+			dashStore = &dashboards.FakeDashboardStore{}
+			foldersvc.dashboardStore = dashStore
 			// dashboard store & service commands that should be called.
 			dashboardsvc.On("BuildSaveDashboardCommand",
 				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
@@ -629,6 +689,8 @@ func TestNestedFolderService(t *testing.T) {
 				guardian.New = g
 			})
 
+			dashStore = &dashboards.FakeDashboardStore{}
+			foldersvc.dashboardStore = dashStore
 			// dashboard store & service commands that should be called.
 			dashboardsvc.On("BuildSaveDashboardCommand",
 				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),

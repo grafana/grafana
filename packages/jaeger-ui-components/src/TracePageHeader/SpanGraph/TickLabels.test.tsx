@@ -22,7 +22,7 @@ describe('<TickLabels>', () => {
     duration: 5000,
   };
 
-  let ticks;
+  let ticks: HTMLElement[];
 
   beforeEach(() => {
     render(<TickLabels {...defaultProps} />);
@@ -49,9 +49,5 @@ describe('<TickLabels>', () => {
       const tick = ticks.at(i + 1);
       expect(tick).toHaveStyle(`left: ${pos};`);
     });
-  });
-
-  it("doesn't explode if no trace is present", () => {
-    expect(() => render(<TickLabels {...defaultProps} trace={null} />)).not.toThrow();
   });
 });

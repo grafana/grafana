@@ -128,6 +128,7 @@ func TestKafkaNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				DecryptFunc:         nil,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			pn, err := newKafkaNotifier(fc)
