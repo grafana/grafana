@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"testing"
 
 	amConfig "github.com/prometheus/alertmanager/config"
@@ -320,7 +319,7 @@ func defaultGettableReceiver(t *testing.T, uid string, provenance models.Provena
 					SecureFields: map[string]bool{
 						"url": true,
 					},
-					Settings: json.RawMessage(`{
+					Settings: definitions.RawMessage(`{
 						"hello": "world"
 					}`),
 				},
@@ -339,7 +338,7 @@ func defaultPostableReceiver(t *testing.T, uid string) *definitions.PostableApiR
 					Name:                  "yeah",
 					Type:                  "slack",
 					DisableResolveMessage: true,
-					Settings: json.RawMessage(`{
+					Settings: definitions.RawMessage(`{
 						"hello": "world"
 					}`),
 				},
