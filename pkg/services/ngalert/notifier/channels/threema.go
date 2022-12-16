@@ -11,11 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 var (
@@ -26,9 +21,9 @@ var (
 // alert notifications to Threema.
 type ThreemaNotifier struct {
 	*Base
-	log      log.Logger
+	log      Logger
 	images   ImageStore
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	tmpl     *template.Template
 	settings threemaSettings
 }
@@ -97,14 +92,8 @@ func NewThreemaNotifier(fc FactoryConfig) (*ThreemaNotifier, error) {
 		return nil, err
 	}
 	return &ThreemaNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
-		log:      log.New("alerting.notifier.threema"),
+		Base:     NewBase(fc.Config),
+		log:      fc.Logger,
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
@@ -123,7 +112,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	data.Set("secret", tn.settings.APISecret)
 	data.Set("text", tn.buildMessage(ctx, as...))
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        ThreemaGwBaseURL,
 		Body:       data.Encode(),
 		HttpMethod: "POST",
@@ -131,7 +120,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 			"Content-Type": "application/x-www-form-urlencoded",
 		},
 	}
-	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := tn.ns.SendWebhook(ctx, cmd); err != nil {
 		tn.log.Error("Failed to send threema notification", "error", err, "webhook", tn.Name)
 		return false, err
 	}
@@ -159,7 +148,7 @@ func (tn *ThreemaNotifier) buildMessage(ctx context.Context, as ...*types.Alert)
 	}
 
 	_ = withStoredImages(ctx, tn.log, tn.images,
-		func(_ int, image ngmodels.Image) error {
+		func(_ int, image Image) error {
 			if image.URL != "" {
 				message += fmt.Sprintf("*Image:* %s\n", image.URL)
 			}

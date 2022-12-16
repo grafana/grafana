@@ -289,6 +289,60 @@
    "title": "Authorization contains HTTP authorization credentials.",
    "type": "object"
   },
+  "BacktestConfig": {
+   "properties": {
+    "annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "condition": {
+     "type": "string"
+    },
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQuery"
+     },
+     "type": "array"
+    },
+    "for": {
+     "$ref": "#/definitions/Duration"
+    },
+    "from": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "no_data_state": {
+     "enum": [
+      "Alerting",
+      "NoData",
+      "OK"
+     ],
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "to": {
+     "format": "date-time",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "BacktestResult": {
+   "$ref": "#/definitions/Frame"
+  },
   "BasicAuth": {
    "properties": {
     "password": {

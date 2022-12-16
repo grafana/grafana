@@ -52,7 +52,7 @@
     "@grafana/data": "9.4.0-pre",
     "@grafana/e2e-selectors": "9.4.0-pre",
     "@grafana/schema": "9.4.0-pre",
-    "@leeoniya/ufuzzy": "0.8.0",
+    "@leeoniya/ufuzzy": "0.9.0",
     "@monaco-editor/react": "4.4.6",
     "@popperjs/core": "2.11.6",
     "@react-aria/button": "3.6.1",
