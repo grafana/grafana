@@ -299,8 +299,8 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   return (
     <ReceiversSection
       className={styles.section}
-      title={'Contact points'}
-      description={'Define where the notifications will be sent to, for example email or Slack.'}
+      title="Contact points"
+      description="Define where the notifications will be sent to, for example email or Slack."
       showButton={!isVanillaAM && contextSrv.hasPermission(permissions.create)}
       addButtonLabel={'New contact point'}
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
@@ -378,7 +378,6 @@ function useGetColumns(
       renderCell: ({ data: { name, provisioned, grafanaAppReceiverType } }) => (
         <Stack alignItems="center">
           <div>{name}</div>
-          {grafanaAppReceiverType && <GrafanaAppBadge grafanaAppType={grafanaAppReceiverType} />}{' '}
           {provisioned && <ProvisioningBadge />}
         </Stack>
       ),
@@ -387,7 +386,9 @@ function useGetColumns(
     {
       id: 'type',
       label: 'Type',
-      renderCell: ({ data: { types } }) => <>{types.join(', ')}</>,
+      renderCell: ({ data: { types, grafanaAppReceiverType } }) => (
+        <>{grafanaAppReceiverType ? <GrafanaAppBadge grafanaAppType={grafanaAppReceiverType} /> : types.join(', ')}</>
+      ),
       size: 1,
     },
   ];

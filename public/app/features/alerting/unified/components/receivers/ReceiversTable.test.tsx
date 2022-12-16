@@ -56,18 +56,15 @@ const mockNotifier = (type: NotifierType, name: string): NotifierDTO => ({
 });
 
 jest.spyOn(onCallApi, 'useGetOnCallIntegrations');
-
+const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
 const useGetContactPointsStateMock = jest.spyOn(receiversApi, 'useGetContactPointsState');
-const useGetReceiversWithGrafanaAppTypesMock = jest.spyOn(grafanaApp, 'useGetReceiversWithGrafanaAppTypes');
-const useGetOnCallIntegrationsMock = jest.mocked(onCallApi.useGetOnCallIntegrations);
 
 describe('ReceiversTable', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
     useGetContactPointsStateMock.mockReturnValue(emptyContactPointsState);
-    useGetReceiversWithGrafanaAppTypesMock.mockReturnValue([]);
-    useGetOnCallIntegrationsMock.mockReturnValue([]);
+    useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
   });
 
   it('render receivers with grafana notifiers', async () => {

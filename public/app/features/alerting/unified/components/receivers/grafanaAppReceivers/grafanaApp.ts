@@ -29,7 +29,6 @@ export const useGetGrafanaReceiverTypeChecker = () => {
 };
 
 export const useGetAmRouteReceiverWithGrafanaAppTypes = (receivers: Receiver[]) => {
-  // FOR GRAFANA ONCALL
   const getGrafanaReceiverType = useGetGrafanaReceiverTypeChecker();
   const receiverToSelectableContactPointValue = (receiver: Receiver): AmRouteReceiver => {
     const amRouteReceiverValue: AmRouteReceiver = {
@@ -44,7 +43,6 @@ export const useGetAmRouteReceiverWithGrafanaAppTypes = (receivers: Receiver[]) 
 };
 
 export const useGetReceiversWithGrafanaAppTypes = (receivers: Receiver[]): ReceiverWithTypes[] => {
-  // FOR GRAFANA ONCALL
   const getGrafanaReceiverType = useGetGrafanaReceiverTypeChecker();
   return receivers.map((receiver: Receiver) => {
     return {
