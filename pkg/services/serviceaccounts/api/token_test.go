@@ -123,7 +123,6 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
 		})
 	}
-
 }
 
 func TestServiceAccountsAPI_DeleteToken(t *testing.T) {

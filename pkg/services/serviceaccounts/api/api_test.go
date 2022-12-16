@@ -87,9 +87,9 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
-			defer res.Body.Close()
 
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
@@ -124,9 +124,9 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
 			res, err := server.Send(req)
 			require.NoError(t, err)
-			defer res.Body.Close()
 
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
@@ -137,7 +137,6 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 		id           int64
 		permissions  []accesscontrol.Permission
 		expectedCode int
-		expectedErr  error
 		expectedSA   *serviceaccounts.ServiceAccountProfileDTO
 	}
 
@@ -166,9 +165,8 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
 			res, err := server.Send(req)
 			require.NoError(t, err)
-			defer res.Body.Close()
-
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
@@ -230,9 +228,9 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
-			defer res.Body.Close()
 
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
