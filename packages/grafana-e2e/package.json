@@ -52,10 +52,10 @@
     "@types/lodash": "4.14.187",
     "@types/node": "18.11.9",
     "@types/uuid": "8.3.4",
-    "esbuild": "0.15.12",
+    "esbuild": "0.16.7",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",
-    "rollup-plugin-esbuild": "4.10.1",
+    "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
     "webpack": "5.74.0"
   },
