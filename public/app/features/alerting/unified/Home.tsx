@@ -31,7 +31,7 @@ export default function Home() {
             </li>
             <li>
               Firing instances are sent to <strong>the Alertmanager</strong>{' '}
-              <Tooltip content="Alertmanager receives alert instances, deduplicates and groups them and then send notification to the matching notification policy">
+              <Tooltip content="Alertmanager receives alert instances, deduplicates and groups them and then sends a notification to a contact point according to the matching notification policy">
                 <Icon name="info-circle" />
               </Tooltip>
             </li>
@@ -148,10 +148,6 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
     > li {
       flex: 1;
       min-width: 150px;
-
-      //::marker {
-      //  content: '\A';
-      //}
     }
   `,
 });
@@ -165,8 +161,6 @@ function WelcomeHeader({ className }: { className?: string }) {
         <h2>Welcome to Grafana Alerting</h2>
         <div>Grafana Alerting helps you manage your alert rules.</div>
       </header>
-      {/*<ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Alerting Docs" />*/}
-
       <div className={styles.ctaContainer}>
         <WelcomeCTABox
           title="Alert rules"
@@ -300,7 +294,7 @@ function ArrowLink({ href, title }: { href: string; title: string }) {
 
   return (
     <a href={href} className={styles.link} rel="noreferrer">
-      {title} <Icon name="angle-right" size="xl" className={styles.arrow} />
+      {title} <Icon name="angle-right" size="xl" />
     </a>
   );
 }
@@ -309,8 +303,5 @@ const getArrowLinkStyles = (theme: GrafanaTheme2) => ({
   link: css`
     display: block;
     color: ${theme.colors.text.link};
-  `,
-  arrow: css`
-    //vertical-align: top;
   `,
 });
