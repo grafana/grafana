@@ -574,6 +574,12 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/scenes/panels', // ?? move next to dashboards?
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "PanelSearchPage"*/ 'app/features/search/page/PanelSearchPage')
+      ),
+    },
+    {
       path: '/scenes/:name',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/ScenePage')),
     },

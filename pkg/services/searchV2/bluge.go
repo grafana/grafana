@@ -190,10 +190,9 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 	var docs []*bluge.Document
 	for _, panel := range dash.summary.Nested {
-		if panel.Kind == "panel-row" {
-			continue // for now, we are excluding rows from the search index
+		if panel.Fields["type"] == "row" {
+			continue // skip rows
 		}
-
 		doc := newSearchDocument(panel.UID, panel.Name, panel.Description, panel.URL).
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
@@ -223,7 +222,6 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 				}
 			}
 		}
-
 		docs = append(docs, doc)
 	}
 	return docs
