@@ -97,10 +97,6 @@ func buildKindStateReport() KindStateReport {
 		})
 	}
 
-	sort.Slice(r.Core, func(i, j int) bool {
-		return r.Core[i].Common().Name < r.Core[j].Common().Name
-	})
-
 	all := kindsys.AllSlots(nil)
 	// TODO this is all hacks until #59001, which will unite plugins with kindsys
 	for _, tree := range corelist.New(nil) {
@@ -126,6 +122,13 @@ func buildKindStateReport() KindStateReport {
 			}
 		}
 	}
+
+	sort.Slice(r.Core, func(i, j int) bool {
+		return r.Core[i].Common().Name < r.Core[j].Common().Name
+	})
+	sort.Slice(r.Composable, func(i, j int) bool {
+		return r.Composable[i].Common().Name < r.Composable[j].Common().Name
+	})
 
 	return r
 }

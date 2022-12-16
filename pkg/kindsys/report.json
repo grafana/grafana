@@ -148,11 +148,23 @@
   ],
   "composable": [
     {
-      "name": "Alertmanager-Query",
-      "pluralName": "Alertmanager-Querys",
-      "machineName": "alertmanager_query",
-      "pluralMachineName": "alertmanager_querys",
-      "lineageIsGroup": false,
+      "name": "AlertGroups-Panel",
+      "pluralName": "AlertGroups-Panels",
+      "machineName": "alertgroups_panel",
+      "pluralMachineName": "alertgroups_panels",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Alertlist-Panel",
+      "pluralName": "Alertlist-Panels",
+      "machineName": "alertlist_panel",
+      "pluralMachineName": "alertlist_panels",
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -172,455 +184,11 @@
       ]
     },
     {
-      "name": "Stackdriver-Query",
-      "pluralName": "Stackdriver-Querys",
-      "machineName": "stackdriver_query",
-      "pluralMachineName": "stackdriver_querys",
+      "name": "Alertmanager-Query",
+      "pluralName": "Alertmanager-Querys",
+      "machineName": "alertmanager_query",
+      "pluralMachineName": "alertmanager_querys",
       "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Stackdriver-DSOptions",
-      "pluralName": "Stackdriver-DSOptionss",
-      "machineName": "stackdriver_dsoptions",
-      "pluralMachineName": "stackdriver_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Cloudwatch-Query",
-      "pluralName": "Cloudwatch-Querys",
-      "machineName": "cloudwatch_query",
-      "pluralMachineName": "cloudwatch_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Cloudwatch-DSOptions",
-      "pluralName": "Cloudwatch-DSOptionss",
-      "machineName": "cloudwatch_dsoptions",
-      "pluralMachineName": "cloudwatch_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Dashboard-Query",
-      "pluralName": "Dashboard-Querys",
-      "machineName": "dashboard_query",
-      "pluralMachineName": "dashboard_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Dashboard-DSOptions",
-      "pluralName": "Dashboard-DSOptionss",
-      "machineName": "dashboard_dsoptions",
-      "pluralMachineName": "dashboard_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Elasticsearch-Query",
-      "pluralName": "Elasticsearch-Querys",
-      "machineName": "elasticsearch_query",
-      "pluralMachineName": "elasticsearch_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Elasticsearch-DSOptions",
-      "pluralName": "Elasticsearch-DSOptionss",
-      "machineName": "elasticsearch_dsoptions",
-      "pluralMachineName": "elasticsearch_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Grafana-Query",
-      "pluralName": "Grafana-Querys",
-      "machineName": "grafana_query",
-      "pluralMachineName": "grafana_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Grafana-DSOptions",
-      "pluralName": "Grafana-DSOptionss",
-      "machineName": "grafana_dsoptions",
-      "pluralMachineName": "grafana_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Grafana-Azure-Monitor-Datasource-Query",
-      "pluralName": "Grafana-Azure-Monitor-Datasource-Querys",
-      "machineName": "grafana_azure_monitor_datasource_query",
-      "pluralMachineName": "grafana_azure_monitor_datasource_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Grafana-Azure-Monitor-Datasource-DSOptions",
-      "pluralName": "Grafana-Azure-Monitor-Datasource-DSOptionss",
-      "machineName": "grafana_azure_monitor_datasource_dsoptions",
-      "pluralMachineName": "grafana_azure_monitor_datasource_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Graphite-Query",
-      "pluralName": "Graphite-Querys",
-      "machineName": "graphite_query",
-      "pluralMachineName": "graphite_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Graphite-DSOptions",
-      "pluralName": "Graphite-DSOptionss",
-      "machineName": "graphite_dsoptions",
-      "pluralMachineName": "graphite_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Jaeger-Query",
-      "pluralName": "Jaeger-Querys",
-      "machineName": "jaeger_query",
-      "pluralMachineName": "jaeger_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Jaeger-DSOptions",
-      "pluralName": "Jaeger-DSOptionss",
-      "machineName": "jaeger_dsoptions",
-      "pluralMachineName": "jaeger_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Loki-Query",
-      "pluralName": "Loki-Querys",
-      "machineName": "loki_query",
-      "pluralMachineName": "loki_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Loki-DSOptions",
-      "pluralName": "Loki-DSOptionss",
-      "machineName": "loki_dsoptions",
-      "pluralMachineName": "loki_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Mssql-Query",
-      "pluralName": "Mssql-Querys",
-      "machineName": "mssql_query",
-      "pluralMachineName": "mssql_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Mssql-DSOptions",
-      "pluralName": "Mssql-DSOptionss",
-      "machineName": "mssql_dsoptions",
-      "pluralMachineName": "mssql_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Mysql-Query",
-      "pluralName": "Mysql-Querys",
-      "machineName": "mysql_query",
-      "pluralMachineName": "mysql_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Mysql-DSOptions",
-      "pluralName": "Mysql-DSOptionss",
-      "machineName": "mysql_dsoptions",
-      "pluralMachineName": "mysql_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Parca-Query",
-      "pluralName": "Parca-Querys",
-      "machineName": "parca_query",
-      "pluralMachineName": "parca_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Parca-DSOptions",
-      "pluralName": "Parca-DSOptionss",
-      "machineName": "parca_dsoptions",
-      "pluralMachineName": "parca_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Phlare-Query",
-      "pluralName": "Phlare-Querys",
-      "machineName": "phlare_query",
-      "pluralMachineName": "phlare_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Phlare-DSOptions",
-      "pluralName": "Phlare-DSOptionss",
-      "machineName": "phlare_dsoptions",
-      "pluralMachineName": "phlare_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Postgres-Query",
-      "pluralName": "Postgres-Querys",
-      "machineName": "postgres_query",
-      "pluralMachineName": "postgres_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Postgres-DSOptions",
-      "pluralName": "Postgres-DSOptionss",
-      "machineName": "postgres_dsoptions",
-      "pluralMachineName": "postgres_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Prometheus-Query",
-      "pluralName": "Prometheus-Querys",
-      "machineName": "prometheus_query",
-      "pluralMachineName": "prometheus_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Prometheus-DSOptions",
-      "pluralName": "Prometheus-DSOptionss",
-      "machineName": "prometheus_dsoptions",
-      "pluralMachineName": "prometheus_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Tempo-Query",
-      "pluralName": "Tempo-Querys",
-      "machineName": "tempo_query",
-      "pluralMachineName": "tempo_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Tempo-DSOptions",
-      "pluralName": "Tempo-DSOptionss",
-      "machineName": "tempo_dsoptions",
-      "pluralMachineName": "tempo_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Testdata-DSOptions",
-      "pluralName": "Testdata-DSOptionss",
-      "machineName": "testdata_dsoptions",
-      "pluralMachineName": "testdata_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Testdata-Query",
-      "pluralName": "Testdata-Querys",
-      "machineName": "testdata_query",
-      "pluralMachineName": "testdata_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Zipkin-Query",
-      "pluralName": "Zipkin-Querys",
-      "machineName": "zipkin_query",
-      "pluralMachineName": "zipkin_querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Zipkin-DSOptions",
-      "pluralName": "Zipkin-DSOptionss",
-      "machineName": "zipkin_dsoptions",
-      "pluralMachineName": "zipkin_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "AlertGroups-Panel",
-      "pluralName": "AlertGroups-Panels",
-      "machineName": "alertgroups_panel",
-      "pluralMachineName": "alertgroups_panels",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    {
-      "name": "Alertlist-Panel",
-      "pluralName": "Alertlist-Panels",
-      "machineName": "alertlist_panel",
-      "pluralMachineName": "alertlist_panels",
-      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -664,6 +232,54 @@
       ]
     },
     {
+      "name": "Cloudwatch-DSOptions",
+      "pluralName": "Cloudwatch-DSOptionss",
+      "machineName": "cloudwatch_dsoptions",
+      "pluralMachineName": "cloudwatch_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Cloudwatch-Query",
+      "pluralName": "Cloudwatch-Querys",
+      "machineName": "cloudwatch_query",
+      "pluralMachineName": "cloudwatch_querys",
+      "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Dashboard-DSOptions",
+      "pluralName": "Dashboard-DSOptionss",
+      "machineName": "dashboard_dsoptions",
+      "pluralMachineName": "dashboard_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Dashboard-Query",
+      "pluralName": "Dashboard-Querys",
+      "machineName": "dashboard_query",
+      "pluralMachineName": "dashboard_querys",
+      "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
       "name": "Dashlist-Panel",
       "pluralName": "Dashlist-Panels",
       "machineName": "dashlist_panel",
@@ -681,6 +297,30 @@
       "machineName": "debug_panel",
       "pluralMachineName": "debug_panels",
       "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Elasticsearch-DSOptions",
+      "pluralName": "Elasticsearch-DSOptionss",
+      "machineName": "elasticsearch_dsoptions",
+      "pluralMachineName": "elasticsearch_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Elasticsearch-Query",
+      "pluralName": "Elasticsearch-Querys",
+      "machineName": "elasticsearch_query",
+      "pluralMachineName": "elasticsearch_querys",
+      "lineageIsGroup": false,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -736,11 +376,83 @@
       ]
     },
     {
+      "name": "Grafana-Azure-Monitor-Datasource-DSOptions",
+      "pluralName": "Grafana-Azure-Monitor-Datasource-DSOptionss",
+      "machineName": "grafana_azure_monitor_datasource_dsoptions",
+      "pluralMachineName": "grafana_azure_monitor_datasource_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Grafana-Azure-Monitor-Datasource-Query",
+      "pluralName": "Grafana-Azure-Monitor-Datasource-Querys",
+      "machineName": "grafana_azure_monitor_datasource_query",
+      "pluralMachineName": "grafana_azure_monitor_datasource_querys",
+      "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Grafana-DSOptions",
+      "pluralName": "Grafana-DSOptionss",
+      "machineName": "grafana_dsoptions",
+      "pluralMachineName": "grafana_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Grafana-Query",
+      "pluralName": "Grafana-Querys",
+      "machineName": "grafana_query",
+      "pluralMachineName": "grafana_querys",
+      "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
       "name": "Graph-Panel",
       "pluralName": "Graph-Panels",
       "machineName": "graph_panel",
       "pluralMachineName": "graph_panels",
       "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Graphite-DSOptions",
+      "pluralName": "Graphite-DSOptionss",
+      "machineName": "graphite_dsoptions",
+      "pluralMachineName": "graphite_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Graphite-Query",
+      "pluralName": "Graphite-Querys",
+      "machineName": "graphite_query",
+      "pluralMachineName": "graphite_querys",
+      "lineageIsGroup": false,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -772,6 +484,30 @@
       ]
     },
     {
+      "name": "Jaeger-DSOptions",
+      "pluralName": "Jaeger-DSOptionss",
+      "machineName": "jaeger_dsoptions",
+      "pluralMachineName": "jaeger_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Jaeger-Query",
+      "pluralName": "Jaeger-Querys",
+      "machineName": "jaeger_query",
+      "pluralMachineName": "jaeger_querys",
+      "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
       "name": "Live-Panel",
       "pluralName": "Live-Panels",
       "machineName": "live_panel",
@@ -789,6 +525,78 @@
       "machineName": "logs_panel",
       "pluralMachineName": "logs_panels",
       "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Loki-DSOptions",
+      "pluralName": "Loki-DSOptionss",
+      "machineName": "loki_dsoptions",
+      "pluralMachineName": "loki_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Loki-Query",
+      "pluralName": "Loki-Querys",
+      "machineName": "loki_query",
+      "pluralMachineName": "loki_querys",
+      "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Mssql-DSOptions",
+      "pluralName": "Mssql-DSOptionss",
+      "machineName": "mssql_dsoptions",
+      "pluralMachineName": "mssql_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Mssql-Query",
+      "pluralName": "Mssql-Querys",
+      "machineName": "mssql_query",
+      "pluralMachineName": "mssql_querys",
+      "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Mysql-DSOptions",
+      "pluralName": "Mysql-DSOptionss",
+      "machineName": "mysql_dsoptions",
+      "pluralMachineName": "mysql_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Mysql-Query",
+      "pluralName": "Mysql-Querys",
+      "machineName": "mysql_query",
+      "pluralMachineName": "mysql_querys",
+      "lineageIsGroup": false,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -820,12 +628,132 @@
       ]
     },
     {
+      "name": "Parca-DSOptions",
+      "pluralName": "Parca-DSOptionss",
+      "machineName": "parca_dsoptions",
+      "pluralMachineName": "parca_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Parca-Query",
+      "pluralName": "Parca-Querys",
+      "machineName": "parca_query",
+      "pluralMachineName": "parca_querys",
+      "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Phlare-DSOptions",
+      "pluralName": "Phlare-DSOptionss",
+      "machineName": "phlare_dsoptions",
+      "pluralMachineName": "phlare_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Phlare-Query",
+      "pluralName": "Phlare-Querys",
+      "machineName": "phlare_query",
+      "pluralMachineName": "phlare_querys",
+      "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
       "name": "Piechart-Panel",
       "pluralName": "Piechart-Panels",
       "machineName": "piechart_panel",
       "pluralMachineName": "piechart_panels",
       "lineageIsGroup": true,
       "maturity": "merged",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Postgres-DSOptions",
+      "pluralName": "Postgres-DSOptionss",
+      "machineName": "postgres_dsoptions",
+      "pluralMachineName": "postgres_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Postgres-Query",
+      "pluralName": "Postgres-Querys",
+      "machineName": "postgres_query",
+      "pluralMachineName": "postgres_querys",
+      "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Prometheus-DSOptions",
+      "pluralName": "Prometheus-DSOptionss",
+      "machineName": "prometheus_dsoptions",
+      "pluralMachineName": "prometheus_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Prometheus-Query",
+      "pluralName": "Prometheus-Querys",
+      "machineName": "prometheus_query",
+      "pluralMachineName": "prometheus_querys",
+      "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Stackdriver-DSOptions",
+      "pluralName": "Stackdriver-DSOptionss",
+      "machineName": "stackdriver_dsoptions",
+      "pluralMachineName": "stackdriver_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Stackdriver-Query",
+      "pluralName": "Stackdriver-Querys",
+      "machineName": "stackdriver_query",
+      "pluralMachineName": "stackdriver_querys",
+      "lineageIsGroup": false,
+      "maturity": "planned",
       "currentVersion": [
         0,
         0
@@ -849,6 +777,54 @@
       "machineName": "table_old_panel",
       "pluralMachineName": "table_old_panels",
       "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Tempo-DSOptions",
+      "pluralName": "Tempo-DSOptionss",
+      "machineName": "tempo_dsoptions",
+      "pluralMachineName": "tempo_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Tempo-Query",
+      "pluralName": "Tempo-Querys",
+      "machineName": "tempo_query",
+      "pluralMachineName": "tempo_querys",
+      "lineageIsGroup": false,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Testdata-DSOptions",
+      "pluralName": "Testdata-DSOptionss",
+      "machineName": "testdata_dsoptions",
+      "pluralMachineName": "testdata_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Testdata-Query",
+      "pluralName": "Testdata-Querys",
+      "machineName": "testdata_query",
+      "pluralMachineName": "testdata_querys",
+      "lineageIsGroup": false,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -897,6 +873,30 @@
       "machineName": "xychart_panel",
       "pluralMachineName": "xychart_panels",
       "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Zipkin-DSOptions",
+      "pluralName": "Zipkin-DSOptionss",
+      "machineName": "zipkin_dsoptions",
+      "pluralMachineName": "zipkin_dsoptionss",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Zipkin-Query",
+      "pluralName": "Zipkin-Querys",
+      "machineName": "zipkin_query",
+      "pluralMachineName": "zipkin_querys",
+      "lineageIsGroup": false,
       "maturity": "planned",
       "currentVersion": [
         0,
