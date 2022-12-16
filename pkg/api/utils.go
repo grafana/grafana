@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"net/mail"
+
+	"github.com/grafana/grafana/pkg/api/dtos"
 )
 
 func jsonMap(data []byte) (map[string]string, error) {
@@ -22,4 +24,12 @@ func ValidateAndNormalizeEmail(email string) (string, error) {
 	}
 
 	return e.Address, nil
+}
+
+func GetDefaultNavUrl(listItem dtos.PluginListItem, isDataConnectionsConsoleEnabled bool, appSubURL string) string {
+	if listItem.Type == "datasource" && isDataConnectionsConsoleEnabled {
+		return appSubURL + "/connections/connect-data/datasources/" + listItem.Id + "/"
+	} else {
+		return appSubURL + "/plugins/" + listItem.Id + "/"
+	}
 }
