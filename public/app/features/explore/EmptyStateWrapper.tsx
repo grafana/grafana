@@ -3,9 +3,9 @@ import { useEffectOnce } from 'react-use';
 
 import { config } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { EmptyStateNoDatasource } from 'app/features/datasources/components/EmptyStateNoDatasource';
 import { ExploreQueryParams, useDispatch, useSelector } from 'app/types';
 
-import { DatasourceOnboarding } from '../dashboard/containers/DatasourceOnboarding';
 import { loadDataSources } from '../datasources/state';
 
 import { ExplorePage } from './ExplorePage';
@@ -28,7 +28,7 @@ export default function NewDashboardPage(props: GrafanaRouteComponentProps<{}, E
   return showExplorePage ? (
     <ExplorePage {...props} />
   ) : (
-    <DatasourceOnboarding
+    <EmptyStateNoDatasource
       onCTAClick={() => setShowOnboarding(false)}
       loading={loading}
       title="Welcome to Grafana Explore!"

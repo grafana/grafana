@@ -28,7 +28,7 @@ interface Props extends Pick<ComponentProps<typeof Page>, 'navId' | 'pageNav'> {
   loading?: boolean;
 }
 
-export function DatasourceOnboarding({ onCTAClick, loading = false, title, CTAText, navId, pageNav }: Props) {
+export function EmptyStateNoDatasource({ onCTAClick, loading = false, title, CTAText, navId, pageNav }: Props) {
   const styles = useStyles2(getStyles);
   const { value: datasources, loading: loadingDatasources } = useAsync(async () => {
     const datasourceMeta: DataSourcePluginMeta[] = await getBackendSrv().get('/api/plugins', {

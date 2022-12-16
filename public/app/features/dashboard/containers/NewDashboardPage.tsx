@@ -4,11 +4,11 @@ import { useEffectOnce } from 'react-use';
 import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { EmptyStateNoDatasource } from 'app/features/datasources/components/EmptyStateNoDatasource';
 import { loadDataSources } from 'app/features/datasources/state';
 import { useDispatch, useSelector } from 'app/types';
 
 import DashboardPage from './DashboardPage';
-import { DatasourceOnboarding } from './DatasourceOnboarding';
 
 export default function NewDashboardPage(props: GrafanaRouteComponentProps) {
   const dispatch = useDispatch();
@@ -26,7 +26,7 @@ export default function NewDashboardPage(props: GrafanaRouteComponentProps) {
   return showDashboardPage ? (
     <DashboardPage {...props} />
   ) : (
-    <DatasourceOnboarding
+    <EmptyStateNoDatasource
       onCTAClick={() => setCreateDashboard(true)}
       loading={loading}
       title={t('datasource-onboarding.welcome', 'Welcome to Grafana dashboards!')}
