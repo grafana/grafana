@@ -55,10 +55,12 @@ func TestCookiesMiddleware(t *testing.T) {
 		})
 
 		t.Run("Should not forward cookies when calling CallResource", func(t *testing.T) {
-			err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+			pReq := &backend.CallResourceRequest{
 				PluginContext: pluginCtx,
 				Headers:       map[string][]string{otherHeader: {"test"}},
-			}, nopCallResourceSender)
+			}
+			pReq.Headers[backend.CookiesHeaderName] = []string{req.Header.Get(backend.CookiesHeaderName)}
+			err = cdt.Decorator.CallResource(req.Context(), pReq, nopCallResourceSender)
 			require.NoError(t, err)
 			require.NotNil(t, cdt.CallResourceReq)
 			require.Len(t, cdt.CallResourceReq.Headers, 1)

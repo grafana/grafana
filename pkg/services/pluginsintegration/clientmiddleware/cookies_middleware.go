@@ -52,13 +52,24 @@ func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.Plugi
 
 	proxyutil.ClearCookieHeader(reqCtx.Req, ds.AllowedCookies(), m.skipCookiesNames)
 
-	if cookieStr := reqCtx.Req.Header.Get(cookieHeaderName); cookieStr != "" {
-		switch t := req.(type) {
-		case *backend.QueryDataRequest:
+	cookieStr := reqCtx.Req.Header.Get(cookieHeaderName)
+	switch t := req.(type) {
+	case *backend.QueryDataRequest:
+		if cookieStr == "" {
+			delete(t.Headers, cookieHeaderName)
+		} else {
 			t.Headers[cookieHeaderName] = cookieStr
-		case *backend.CheckHealthRequest:
+		}
+	case *backend.CheckHealthRequest:
+		if cookieStr == "" {
+			delete(t.Headers, cookieHeaderName)
+		} else {
 			t.Headers[cookieHeaderName] = cookieStr
-		case *backend.CallResourceRequest:
+		}
+	case *backend.CallResourceRequest:
+		if cookieStr == "" {
+			delete(t.Headers, cookieHeaderName)
+		} else {
 			t.Headers[cookieHeaderName] = []string{cookieStr}
 		}
 	}
