@@ -109,6 +109,12 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 // CheckHealth makes sure all migrations ran successfully
 func (mg *Migrator) CheckHealth(name string) (models.HealthStatus, map[string]string, error) {
 	has, err := mg.DBEngine.Exist(&MigrationLog{Success: false})
+	res := &MigrationLog{}
+	_ = mg.DBEngine.Find(res, &MigrationLog{Success: false})
+	count, err := mg.DBEngine.Count(&MigrationLog{})
+	//fmt.Printf("%+v\n", res)
+	fmt.Println("there are", count, " rows")
+
 	if err != nil {
 		return models.StatusRed, nil, err
 	}
@@ -121,7 +127,15 @@ func (mg *Migrator) CheckHealth(name string) (models.HealthStatus, map[string]st
 }
 
 func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int) (err error) {
-	_ = mg.healthchecks.RegisterHealthCheck(context.Background(), "migrations", mg)
+	config := models.HealthCheckConfig{
+		Name:         "migrations",
+		Type:         models.ReadinessCheck,
+		Severity:     models.SeverityFatal,
+		Strategy:     models.StrategyOnce,
+		Interval:     0,
+		RequiresAuth: false,
+	}
+	_ = mg.healthchecks.RegisterHealthCheck(context.Background(), config, mg)
 
 	if !isDatabaseLockingEnabled {
 		return mg.run()

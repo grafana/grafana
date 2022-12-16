@@ -22,6 +22,8 @@ type HealthCheckConfig struct {
 	RequiresAuth bool
 }
 
+type HealthFunc func(name string) (HealthStatus, map[string]string, error)
+
 type HealthCheckType string
 
 const (
@@ -49,10 +51,13 @@ const (
 // Our representation of a health check
 type HealthCheck struct {
 	// original config
-	healthCheckConfig HealthCheckConfig
+	HealthCheckConfig HealthCheckConfig
+
+	// health check function to generate result
+	HealthCheckFunc HealthFunc
 
 	// cached results
-	latestMetrics    map[string]string
-	latestStatus     HealthStatus
-	latestUpdateTime time.Time
+	LatestMetrics    map[string]string
+	LatestStatus     HealthStatus
+	LatestUpdateTime time.Time
 }

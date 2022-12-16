@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/healthchecks"
@@ -15,39 +17,54 @@ var coreChecks = []string{
 
 type HealthChecksServiceImpl struct {
 	CacheService     *localcache.CacheService
-	registeredChecks map[string]healthchecks.HealthChecker
-	coreChecks       map[string]healthchecks.HealthChecker
+	registeredChecks map[string]models.HealthCheck
 }
 
 func ProvideService(cache *localcache.CacheService) *HealthChecksServiceImpl {
 	service := &HealthChecksServiceImpl{
 
 		CacheService:     cache,
-		registeredChecks: map[string]healthchecks.HealthChecker{},
-		coreChecks:       map[string]healthchecks.HealthChecker{},
+		registeredChecks: map[string]models.HealthCheck{},
 	}
 
 	return service
 }
 
 // Make sure there is a registered handler for all core checks
-func (hcs *HealthChecksServiceImpl) AreCoreChecksImplemented(ctx context.Context) bool {
+func (hcs *HealthChecksServiceImpl) areCoreChecksImplemented(ctx context.Context) bool {
 	for _, c := range coreChecks {
-		if _, ok := hcs.coreChecks[c]; !ok {
+		if _, ok := hcs.registeredChecks[c]; !ok {
 			return false
 		}
 	}
 	return true
 }
 
-func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, name string, checker healthchecks.HealthChecker) error {
-	for _, c := range coreChecks {
-		if c == name {
-			hcs.coreChecks[name] = checker
-			return nil
+func (hcs *HealthChecksServiceImpl) RunCoreHealthChecks(ctx context.Context) error {
+	if !hcs.areCoreChecksImplemented(ctx) {
+		return errors.New("core health checks not registered yet")
+	}
+
+	// Run all the core health checks. Return error if any fail.
+	for _, coreCheck := range coreChecks {
+		status, _, err := hcs.registeredChecks[coreCheck].HealthCheckFunc(coreCheck)
+		if err != nil || status != models.StatusGreen {
+			return fmt.Errorf("core check %s failed", coreCheck)
 		}
 	}
-	hcs.registeredChecks[name] = checker
+
+	return nil
+}
+
+func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, config models.HealthCheckConfig, checker healthchecks.HealthChecker) error {
+	healthCheck := models.HealthCheck{
+		HealthCheckConfig: config,
+		HealthCheckFunc:   checker.CheckHealth,
+	}
+	if _, has := hcs.registeredChecks[config.Name]; has {
+		return errors.New(fmt.Sprintf("health check %s already exists", config.Name))
+	}
+	hcs.registeredChecks[config.Name] = healthCheck
 	return nil
 }
 

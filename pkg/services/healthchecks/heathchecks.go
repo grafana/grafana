@@ -7,8 +7,8 @@ import (
 )
 
 type Service interface {
-	RegisterHealthCheck(ctx context.Context, name string, checker HealthChecker) error
-	AreCoreChecksImplemented(ctx context.Context) bool
+	RegisterHealthCheck(ctx context.Context, config models.HealthCheckConfig, checker HealthChecker) error
+	RunCoreHealthChecks(ctx context.Context) error
 	GetHealthCheck(ctx context.Context, name string) models.HealthCheck
 }
 
