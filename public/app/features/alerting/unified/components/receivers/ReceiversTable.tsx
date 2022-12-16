@@ -251,10 +251,6 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const [receiverToDelete, setReceiverToDelete] = useState<string>();
   const [showCannotDeleteReceiverModal, setShowCannotDeleteReceiverModal] = useState(false);
 
-  // const isOnCallEnabled = useGetAppIsInstalledAndEnabled();
-
-  // const data = useGetOnCallIntegrations(!isOnCallEnabled);
-
   const onClickDeleteReceiver = (receiverName: string): void => {
     if (isReceiverUsed(receiverName, config)) {
       setShowCannotDeleteReceiverModal(true);
@@ -270,7 +266,6 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     setReceiverToDelete(undefined);
   };
   const receivers = useGetReceiversWithGrafanaAppTypes(config.alertmanager_config.receivers ?? []);
-  // fer un hook que retorni aixo
   const rows: RowItemTableProps[] = useMemo(() => {
     return (
       receivers?.map((receiver: ReceiverWithTypes) => ({

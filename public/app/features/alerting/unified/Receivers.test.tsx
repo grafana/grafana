@@ -26,7 +26,6 @@ import Receivers from './Receivers';
 import { fetchAlertManagerConfig, fetchStatus, testReceivers, updateAlertManagerConfig } from './api/alertmanager';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
 import { fetchNotifiers } from './api/grafana';
-import * as onCallApi from './api/onCallApi';
 import * as receiversApi from './api/receiversApi';
 import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
 import {
@@ -46,7 +45,6 @@ jest.mock('./api/grafana');
 jest.mock('./utils/config');
 jest.mock('app/core/services/context_srv');
 jest.mock('./api/buildInfo');
-jest.spyOn(onCallApi, 'useGetOnCallIntegrations');
 
 const mocks = {
   getAllDataSources: jest.mocked(getAllDataSources),
@@ -146,8 +144,7 @@ const clickSelectOption = async (selectElement: HTMLElement, optionText: string)
 document.addEventListener('click', interceptLinkClicks);
 const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
 
-const useGetReceiversWithGrafanaAppTypesMock = jest.spyOn(grafanaApp, 'useGetReceiversWithGrafanaAppTypes');
-const useGetOnCallIntegrationsMock = jest.mocked(onCallApi.useGetOnCallIntegrations);
+const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
 
 describe('Receivers', () => {
   const server = setupServer();
@@ -155,8 +152,6 @@ describe('Receivers', () => {
   beforeAll(() => {
     setBackendSrv(backendSrv);
     server.listen({ onUnhandledRequest: 'error' });
-    useGetReceiversWithGrafanaAppTypesMock.mockReturnValue([]);
-    useGetOnCallIntegrationsMock.mockReturnValue([]);
   });
 
   afterAll(() => {
@@ -166,6 +161,7 @@ describe('Receivers', () => {
   beforeEach(() => {
     server.resetHandlers();
     jest.resetAllMocks();
+    useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
