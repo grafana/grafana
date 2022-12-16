@@ -10,6 +10,7 @@ import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
 import { prepareItems } from '../../utils/dynamicTable';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EmptyArea } from '../EmptyArea';
+import { GrafanaAppBadge } from '../receivers/grafanaAppReceivers/GrafanaAppBadge';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 import { Matchers } from '../silences/Matchers';
 
@@ -68,6 +69,10 @@ export const deleteRoute = (routes: FormAmRoute[], routeId: string): FormAmRoute
   return routes.filter((route) => route.id !== routeId);
 };
 
+export const getGrafanaAppReceiverType = (receivers: AmRouteReceiver[], receiverName: string) => {
+  return receivers.find((receiver) => receiver.label === receiverName)?.grafanaAppReceiverType;
+};
+
 export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   isAddMode,
   onCancelAdd,
@@ -113,7 +118,16 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
     {
       id: 'receiverChannel',
       label: 'Contact point',
-      renderCell: (item) => item.data.receiver || '-',
+      renderCell: (item) => {
+        const type = getGrafanaAppReceiverType(receivers, item.data.receiver);
+        return item.data.receiver ? (
+          <>
+            {item.data.receiver} {type && <GrafanaAppBadge grafanaAppType={type} />}
+          </>
+        ) : (
+          '-'
+        );
+      },
       size: 5,
     },
     {
