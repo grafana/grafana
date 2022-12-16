@@ -86,10 +86,6 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 		// Add the created ID to the command.
 		cmd.ResultID = config.ID
 
-		if _, err := sess.Table("alert_configuration").Insert(config); err != nil {
-			return err
-		}
-
 		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
 			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}

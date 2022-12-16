@@ -185,7 +185,7 @@ func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
 		SQLStore: sqlStore,
 		Logger:   log.NewNopLogger(),
 	}
-	t.Run("when calling the cleanup with less records than the limit all recrods should stay", func(t *testing.T) {
+	t.Run("when calling the cleanup with fewer records than the limit all records should stay", func(t *testing.T) {
 		var orgID int64 = 3
 		oldestConfig, _ := setupConfig(t, "oldest-record", store)
 		err := store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
@@ -254,8 +254,8 @@ func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		rowsAffacted, err := store.deleteOldConfigurations(context.Background(), orgID, 1)
-		require.Equal(t, int64(2), rowsAffacted)
+		rowsAffected, err := store.deleteOldConfigurations(context.Background(), orgID, 1)
+		require.Equal(t, int64(2), rowsAffected)
 		require.NoError(t, err)
 
 		req := &models.GetLatestAlertmanagerConfigurationQuery{
