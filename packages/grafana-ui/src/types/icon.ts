@@ -26,6 +26,8 @@ export function getFieldTypeIcon(field?: Field): IconName {
         return 'toggle-on';
       case FieldType.trace:
         return 'info-circle';
+      case FieldType.enum:
+        return 'list-ul';
       case FieldType.geo:
         return 'map-marker';
       case FieldType.other:
