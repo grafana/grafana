@@ -49,9 +49,9 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
 			res, err := server.Send(req)
 			require.NoError(t, err)
-			defer res.Body.Close()
 
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
@@ -118,9 +118,9 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
-			defer res.Body.Close()
 
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
@@ -170,9 +170,9 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
-			defer res.Body.Close()
 
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
