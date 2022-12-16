@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -45,7 +44,7 @@ func TestWithStoredImages(t *testing.T) {
 	)
 
 	// should iterate all images
-	err = withStoredImages(ctx, log.New(ctx), imageStore, func(index int, image Image) error {
+	err = withStoredImages(ctx, &FakeLogger{}, imageStore, func(index int, image Image) error {
 		i += 1
 		return nil
 	}, alerts...)
@@ -54,7 +53,7 @@ func TestWithStoredImages(t *testing.T) {
 
 	// should iterate just the first image
 	i = 0
-	err = withStoredImages(ctx, log.New(ctx), imageStore, func(index int, image Image) error {
+	err = withStoredImages(ctx, &FakeLogger{}, imageStore, func(index int, image Image) error {
 		i += 1
 		return ErrImagesDone
 	}, alerts...)

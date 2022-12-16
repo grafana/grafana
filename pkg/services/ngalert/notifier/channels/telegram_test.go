@@ -135,6 +135,7 @@ func TestTelegramNotifier(t *testing.T) {
 				NotificationService: notificationService,
 				DecryptFunc:         decryptFn,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			n, err := NewTelegramNotifier(fc)
