@@ -24,9 +24,9 @@ export const getAllFields = memoizeOne(
     row: LogRowModel,
     getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>
   ) => {
-    const logMessageFields = parseMessage(row.entry);
+    // const logMessageFields = parseMessage(row.entry);
     const dataframeFields = getDataframeFields(row, getFieldLinks);
-    const fieldsMap = [...dataframeFields, ...logMessageFields].reduce((acc, field) => {
+    const fieldsMap = [...dataframeFields].reduce((acc, field) => {
       // Strip enclosing quotes for hashing. When values are parsed from log line the quotes are kept, but if same
       // value is in the dataFrame it will be without the quotes. We treat them here as the same value.
       // We need to handle this scenario:
@@ -111,11 +111,19 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
     return true;
   }
   // "id" field which we use for react key
-  if (field.name === 'id') {
+  if (field.name === 'id' || field.name === 'tsNs') {
     return true;
   }
   // entry field which we are showing as the log message
   if (row.entryFieldIndex === index) {
+    return true;
+  }
+  const firstTimeField = row.dataFrame.fields.find((f) => f.type === FieldType.time);
+  if (
+    field.name === firstTimeField?.name &&
+    field.type === FieldType.time &&
+    field.values.get(0) === firstTimeField.values.get(0)
+  ) {
     return true;
   }
   // hidden field

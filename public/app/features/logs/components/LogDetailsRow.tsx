@@ -182,7 +182,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
 
     const toggleFieldButton =
-      !isLabel && showDetectedFields && showDetectedFields.includes(parsedKey) ? (
+      showDetectedFields && showDetectedFields.includes(parsedKey) ? (
         <IconButton name="eye" className={styles.showingField} title="Hide this field" onClick={this.hideField} />
       ) : (
         <IconButton name="eye" title="Show this field instead of the message" onClick={this.showField} />
@@ -195,7 +195,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           <IconButton name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} />
         </td>
 
-        {hasFilteringFunctionality && isLabel && (
+        {hasFilteringFunctionality && (
           <>
             <td className={style.logsDetailsIcon}>
               <IconButton name="search-plus" title="Filter for value" onClick={this.filterLabel} />
@@ -206,12 +206,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           </>
         )}
 
-        {hasDetectedFieldsFunctionality && !isLabel && (
-          <td className={style.logsDetailsIcon} colSpan={2}>
-            {toggleFieldButton}
-          </td>
-        )}
-
+        {hasDetectedFieldsFunctionality && <td className={style.logsDetailsIcon}>{toggleFieldButton}</td>}
+        {links?.length && <td colSpan={2}>&nbsp; </td>}
         {/* Key - value columns */}
         <td className={style.logDetailsLabel}>{parsedKey}</td>
         <td
@@ -231,6 +227,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               className={styles.hoverValueCopy}
             />
           )}
+
           {links?.map((link) => (
             <span key={link.title}>
               &nbsp;

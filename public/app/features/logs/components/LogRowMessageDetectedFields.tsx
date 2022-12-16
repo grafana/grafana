@@ -34,6 +34,10 @@ class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
           return `${parsedKey}=${field.value}`;
         }
 
+        if (row.labels[parsedKey]) {
+          return `${parsedKey}=${row.labels[parsedKey]}`;
+        }
+
         return null;
       })
       .filter((s) => s !== null)
