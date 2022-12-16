@@ -256,8 +256,6 @@ BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")
 // TODO docs
 TableCellOptions: {
 	displayMode: TableCellDisplayMode | *"auto"
-	gaugeDisplayMode?: BarGaugeDisplayMode
-	backgroundDisplayMode?: BackgroundDisplayMode
 } @cuetsy(kind="interface")
 
 // TODO docs
