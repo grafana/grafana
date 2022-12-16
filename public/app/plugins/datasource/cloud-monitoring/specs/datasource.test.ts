@@ -94,7 +94,7 @@ describe('CloudMonitoringDataSource', () => {
         const { ds } = getTestcontext();
         await ds.getLabels('cpu', 'a', 'default-proj');
 
-        await expect(fetchMock.mock.calls[0][0].data.queries[0].metricQuery).toMatchObject({
+        await expect(fetchMock.mock.calls[0][0].data.queries[0].timeSeriesList).toMatchObject({
           crossSeriesReducer: 'REDUCE_NONE',
           groupBys: [],
           metricType: 'cpu',
@@ -112,7 +112,7 @@ describe('CloudMonitoringDataSource', () => {
           groupBys: ['metadata.system_label.name'],
         });
 
-        await expect(fetchMock.mock.calls[0][0].data.queries[0].metricQuery).toMatchObject({
+        await expect(fetchMock.mock.calls[0][0].data.queries[0].timeSeriesList).toMatchObject({
           crossSeriesReducer: 'REDUCE_MEAN',
           groupBys: ['metadata.system_label.name'],
           metricType: 'sql',

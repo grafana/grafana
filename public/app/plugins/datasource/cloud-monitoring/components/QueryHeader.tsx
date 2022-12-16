@@ -1,26 +1,18 @@
 import React from 'react';
 
 import { EditorHeader, FlexItem, InlineSelect } from '@grafana/experimental';
-import { RadioButtonGroup } from '@grafana/ui';
 
 import { QUERY_TYPES } from '../constants';
-import { EditorMode, CloudMonitoringQuery, QueryType } from '../types';
+import { CloudMonitoringQuery } from '../types';
 
 export interface QueryEditorHeaderProps {
-  editorMode: EditorMode;
   query: CloudMonitoringQuery;
   onChange: (value: CloudMonitoringQuery) => void;
   onRunQuery: () => void;
-  setEditorMode: (value: EditorMode) => void;
 }
 
-const EDITOR_MODES = [
-  { label: 'Builder', value: EditorMode.Visual },
-  { label: 'MQL', value: EditorMode.MQL },
-];
-
 export const QueryHeader = (props: QueryEditorHeaderProps) => {
-  const { query, onChange, onRunQuery, editorMode, setEditorMode } = props;
+  const { query, onChange, onRunQuery } = props;
   const { queryType } = query;
 
   return (
@@ -35,9 +27,6 @@ export const QueryHeader = (props: QueryEditorHeaderProps) => {
         }}
       />
       <FlexItem grow={1} />
-      {queryType !== QueryType.SLO && (
-        <RadioButtonGroup size="sm" options={EDITOR_MODES} value={editorMode} onChange={setEditorMode} />
-      )}
     </EditorHeader>
   );
 };

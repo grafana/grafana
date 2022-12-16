@@ -8,7 +8,7 @@ import {
   AlignmentTypes,
   CloudMonitoringQuery,
   CustomMetaData,
-  EditorMode,
+  QueryType,
   TimeSeriesList,
   TimeSeriesQuery,
 } from '../types';
@@ -25,7 +25,6 @@ export interface Props {
   onRunQuery: () => void;
   query: CloudMonitoringQuery;
   datasource: CloudMonitoringDatasource;
-  editorMode: EditorMode;
 }
 
 export const defaultTimeSeriesList: (dataSource: CloudMonitoringDatasource) => TimeSeriesList = (dataSource) => ({
@@ -50,7 +49,6 @@ function Editor({
   onRunQuery,
   customMetaData,
   variableOptionGroup,
-  editorMode,
 }: React.PropsWithChildren<Props>) {
   const onChangeTimeSeriesList = useCallback(
     (timeSeriesList: TimeSeriesList) => {
@@ -69,16 +67,16 @@ function Editor({
   );
 
   useEffect(() => {
-    if (editorMode === EditorMode.Visual && !query.timeSeriesList) {
+    if (query.queryType === QueryType.TIME_SERIES_LIST && !query.timeSeriesList) {
       onChangeTimeSeriesList(defaultTimeSeriesList(datasource));
     }
-    if (editorMode === EditorMode.MQL && !query.timeSeriesQuery) {
+    if (query.queryType === QueryType.TIME_SERIES_QUERY && !query.timeSeriesQuery) {
       onChangeTimeSeriesQuery(defaultTimeSeriesQuery(datasource));
     }
   }, [
-    editorMode,
     onChangeTimeSeriesList,
     onChangeTimeSeriesQuery,
+    query.queryType,
     query.timeSeriesList,
     query.timeSeriesQuery,
     datasource,
@@ -86,7 +84,7 @@ function Editor({
 
   return (
     <EditorRows>
-      {editorMode === EditorMode.Visual && query.timeSeriesList && (
+      {query.queryType === QueryType.TIME_SERIES_LIST && query.timeSeriesList && (
         <VisualMetricQueryEditor
           refId={refId}
           variableOptionGroup={variableOptionGroup}
@@ -99,7 +97,7 @@ function Editor({
         />
       )}
 
-      {editorMode === EditorMode.MQL && query.timeSeriesQuery && (
+      {query.queryType === QueryType.TIME_SERIES_QUERY && query.timeSeriesQuery && (
         <>
           <MQLQueryEditor
             onChange={(q: string) => onChangeTimeSeriesQuery({ ...query.timeSeriesQuery!, query: q })}

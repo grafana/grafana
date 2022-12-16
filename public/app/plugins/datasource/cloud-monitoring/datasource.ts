@@ -19,7 +19,6 @@ import { getMetricType } from './functions';
 import {
   CloudMonitoringOptions,
   CloudMonitoringQuery,
-  EditorMode,
   Filter,
   MetricDescriptor,
   QueryType,
@@ -104,8 +103,8 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         {
           refId,
           datasource: this.getRef(),
-          queryType: QueryType.METRICS,
-          metricQuery: {
+          queryType: QueryType.TIME_SERIES_LIST,
+          timeSeriesList: {
             projectName: this.templateSrv.replace(projectName),
             metricType: this.templateSrv.replace(metricType),
             groupBys: this.interpolateGroupBys(aggregation?.groupBys || [], {}),
@@ -115,7 +114,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         },
       ],
       range: this.timeSrv.timeRange(),
-    } as DataQueryRequest<CloudMonitoringQuery>;
+    };
 
     const queries = options.targets;
 
@@ -234,7 +233,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         refId,
         intervalMs,
         hide,
-        queryType: type === 'annotationQuery' ? QueryType.ANNOTATION : QueryType.METRICS,
+        queryType: type === 'annotationQuery' ? QueryType.ANNOTATION : QueryType.TIME_SERIES_LIST,
         metricQuery: {
           ...rest,
           view: rest.view || 'FULL',
@@ -242,13 +241,14 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       };
     }
 
-    if (!isEmpty(query.metricQuery)) {
+    if (!isEmpty(query.metricQuery) && query.queryType !== QueryType.SLO) {
       if (query.metricQuery.editorMode === 'mql') {
         query.timeSeriesQuery = {
           projectName: query.metricQuery.projectName,
           query: query.metricQuery.query,
           graphPeriod: query.metricQuery.graphPeriod,
         };
+        query.queryType = QueryType.TIME_SERIES_QUERY;
       } else {
         query.timeSeriesList = {
           projectName: query.metricQuery.projectName,
@@ -260,6 +260,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           view: query.metricQuery.view,
           preprocessor: query.metricQuery.preprocessor,
         };
+        query.queryType = QueryType.TIME_SERIES_LIST;
         if (query.metricQuery.metricType) {
           query.timeSeriesList.filters = this.migrateMetricTypeFilter(
             query.metricQuery.metricType,
@@ -268,9 +269,8 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         }
       }
       query.aliasBy = query.metricQuery.aliasBy;
-
-      delete query.metricQuery;
     }
+    delete query.metricQuery;
 
     return query;
   }
@@ -289,7 +289,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return false;
     }
 
-    if (query.queryType && query.queryType === QueryType.SLO && query.sloQuery) {
+    if (query.queryType === QueryType.SLO) {
+      if (!query.sloQuery) {
+        return false;
+      }
       const { selectorName, serviceId, sloId, projectName, lookbackPeriod } = query.sloQuery;
       return (
         !!selectorName &&
@@ -300,20 +303,12 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       );
     }
 
-    if (query.timeSeriesQuery) {
-      return !!query.timeSeriesQuery.projectName && !!query.timeSeriesQuery.query;
-    }
-    if (query.timeSeriesList) {
-      return !!query.timeSeriesList.projectName && !!getMetricType(query.timeSeriesList);
+    if (query.queryType === QueryType.TIME_SERIES_QUERY) {
+      return !!query.timeSeriesQuery && !!query.timeSeriesQuery.projectName && !!query.timeSeriesQuery.query;
     }
 
-    // Deprecated
-    if (query.metricQuery) {
-      if (query.queryType && query.queryType === QueryType.METRICS && query.metricQuery.editorMode === EditorMode.MQL) {
-        return !!query.metricQuery.projectName && !!query.metricQuery.query;
-      }
-      const { metricType } = query.metricQuery;
-      return !!metricType;
+    if (query.queryType === QueryType.TIME_SERIES_LIST) {
+      return !!query.timeSeriesList && !!query.timeSeriesList.projectName && !!getMetricType(query.timeSeriesList);
     }
 
     return false;

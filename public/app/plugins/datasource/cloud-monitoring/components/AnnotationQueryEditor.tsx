@@ -6,7 +6,7 @@ import { EditorField, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';
-import { AnnotationQuery, CloudMonitoringOptions, CloudMonitoringQuery, EditorMode } from '../types';
+import { AnnotationQuery, CloudMonitoringOptions, CloudMonitoringQuery } from '../types';
 
 import { MetricQueryEditor, defaultTimeSeriesList } from './MetricQueryEditor';
 
@@ -65,7 +65,6 @@ export const AnnotationQueryEditor = (props: Props) => {
           onRunQuery={onRunQuery}
           datasource={datasource}
           query={query}
-          editorMode={EditorMode.Visual}
         />
         <EditorField label="Title" htmlFor="annotation-query-title">
           <Input id="annotation-query-title" value={title} onChange={handleTitleChange} />

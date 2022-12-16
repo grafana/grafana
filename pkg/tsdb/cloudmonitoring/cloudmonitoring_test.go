@@ -1103,7 +1103,7 @@ func baseTimeSeriesList() *backend.QueryDataRequest {
 					From: fromStart,
 					To:   fromStart.Add(34 * time.Minute),
 				},
-				QueryType: "metrics",
+				QueryType: timeSeriesListQueryType,
 				JSON: json.RawMessage(`{
 					"timeSeriesList": {
 						"filters": ["metric.type=\"a/metric/type\""],
@@ -1127,7 +1127,7 @@ func baseTimeSeriesQuery() *backend.QueryDataRequest {
 					From: fromStart,
 					To:   fromStart.Add(34 * time.Minute),
 				},
-				QueryType: "metrics",
+				QueryType: timeSeriesQueryQueryType,
 				JSON: json.RawMessage(`{
 					"queryType": "metrics",
 					"timeSeriesQuery": {

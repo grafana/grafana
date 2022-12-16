@@ -55,7 +55,8 @@ export interface Aggregation {
 }
 
 export enum QueryType {
-  METRICS = 'metrics',
+  TIME_SERIES_LIST = 'timeSeriesList',
+  TIME_SERIES_QUERY = 'timeSeriesQuery',
   SLO = 'slo',
   ANNOTATION = 'annotation',
 }

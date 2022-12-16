@@ -41,7 +41,7 @@ describe('QueryEditor', () => {
 
     render(<QueryEditor {...defaultProps} query={query} onChange={onChange} />);
     await waitFor(() =>
-      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ queryType: QueryType.METRICS }))
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ queryType: QueryType.TIME_SERIES_LIST }))
     );
   });
 });

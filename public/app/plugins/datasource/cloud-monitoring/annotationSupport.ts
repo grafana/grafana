@@ -74,7 +74,7 @@ export const CloudMonitoringAnnotationSupport: (
 
       return {
         ...anno.target,
-        queryType: QueryType.METRICS,
+        queryType: QueryType.TIME_SERIES_LIST,
         type: 'annotationQuery',
       };
     },
