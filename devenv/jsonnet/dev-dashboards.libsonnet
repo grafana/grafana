@@ -205,6 +205,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('geomap-route-layer', import '../dev-dashboards/panel-geomap/geomap-route-layer.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('geomap-spatial-operations-transformer', import '../dev-dashboards/panel-geomap/geomap-spatial-operations-transformer.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {

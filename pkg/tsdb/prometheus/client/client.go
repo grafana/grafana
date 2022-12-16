@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -33,16 +34,14 @@ func NewClient(d doer, method, baseUrl string) *Client {
 
 func (c *Client) QueryRange(ctx context.Context, q *models.Query) (*http.Response, error) {
 	tr := q.TimeRange()
-	u, err := c.createUrl("api/v1/query_range", map[string]string{
+	qv := map[string]string{
 		"query": q.Expr,
 		"start": formatTime(tr.Start),
 		"end":   formatTime(tr.End),
 		"step":  strconv.FormatFloat(tr.Step.Seconds(), 'f', -1, 64),
-	})
-	if err != nil {
-		return nil, err
 	}
-	req, err := createRequest(ctx, c.method, u, nil)
+
+	req, err := c.createQueryRequest(ctx, "api/v1/query_range", qv)
 	if err != nil {
 		return nil, err
 	}
@@ -51,17 +50,13 @@ func (c *Client) QueryRange(ctx context.Context, q *models.Query) (*http.Respons
 }
 
 func (c *Client) QueryInstant(ctx context.Context, q *models.Query) (*http.Response, error) {
-	qs := map[string]string{"query": q.Expr}
+	qv := map[string]string{"query": q.Expr}
 	tr := q.TimeRange()
 	if !tr.End.IsZero() {
-		qs["time"] = formatTime(tr.End)
+		qv["time"] = formatTime(tr.End)
 	}
 
-	u, err := c.createUrl("api/v1/query", qs)
-	if err != nil {
-		return nil, err
-	}
-	req, err := createRequest(ctx, c.method, u, nil)
+	req, err := c.createQueryRequest(ctx, "api/v1/query", qv)
 	if err != nil {
 		return nil, err
 	}
@@ -71,16 +66,13 @@ func (c *Client) QueryInstant(ctx context.Context, q *models.Query) (*http.Respo
 
 func (c *Client) QueryExemplars(ctx context.Context, q *models.Query) (*http.Response, error) {
 	tr := q.TimeRange()
-	u, err := c.createUrl("api/v1/query_exemplars", map[string]string{
+	qv := map[string]string{
 		"query": q.Expr,
 		"start": formatTime(tr.Start),
 		"end":   formatTime(tr.End),
-	})
-	if err != nil {
-		return nil, err
 	}
 
-	req, err := createRequest(ctx, c.method, u, nil)
+	req, err := c.createQueryRequest(ctx, "api/v1/query_exemplars", qv)
 	if err != nil {
 		return nil, err
 	}
@@ -103,12 +95,35 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 
 	// We use method from the request, as for resources front end may do a fallback to GET if POST does not work
 	// nad we want to respect that.
-	httpRequest, err := createRequest(ctx, req.Method, u, req.Body)
+	httpRequest, err := createRequest(ctx, req.Method, u, bytes.NewReader(req.Body))
 	if err != nil {
 		return nil, err
 	}
 
 	return c.doer.Do(httpRequest)
+}
+
+func (c *Client) createQueryRequest(ctx context.Context, endpoint string, qv map[string]string) (*http.Request, error) {
+	if strings.ToUpper(c.method) == http.MethodPost {
+		u, err := c.createUrl(endpoint, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		v := make(url.Values)
+		for key, val := range qv {
+			v.Set(key, val)
+		}
+
+		return createRequest(ctx, c.method, u, strings.NewReader(v.Encode()))
+	}
+
+	u, err := c.createUrl(endpoint, qv)
+	if err != nil {
+		return nil, err
+	}
+
+	return createRequest(ctx, c.method, u, http.NoBody)
 }
 
 func (c *Client) createUrl(endpoint string, qs map[string]string) (*url.URL, error) {
@@ -118,18 +133,22 @@ func (c *Client) createUrl(endpoint string, qs map[string]string) (*url.URL, err
 	}
 
 	finalUrl.Path = path.Join(finalUrl.Path, endpoint)
-	urlQuery := finalUrl.Query()
 
-	for key, val := range qs {
-		urlQuery.Set(key, val)
+	// don't re-encode the Query if not needed
+	if len(qs) != 0 {
+		urlQuery := finalUrl.Query()
+
+		for key, val := range qs {
+			urlQuery.Set(key, val)
+		}
+
+		finalUrl.RawQuery = urlQuery.Encode()
 	}
 
-	finalUrl.RawQuery = urlQuery.Encode()
 	return finalUrl, nil
 }
 
-func createRequest(ctx context.Context, method string, u *url.URL, body []byte) (*http.Request, error) {
-	bodyReader := bytes.NewReader(body)
+func createRequest(ctx context.Context, method string, u *url.URL, bodyReader io.Reader) (*http.Request, error) {
 	request, err := http.NewRequestWithContext(ctx, method, u.String(), bodyReader)
 	if err != nil {
 		return nil, err
