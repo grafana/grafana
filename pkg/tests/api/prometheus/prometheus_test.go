@@ -97,8 +97,7 @@ func TestIntegrationPrometheusBuffered(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NotNil(t, outgoingRequest)
-		require.Equal(t, "/api/v1/query_range?end=1668081660&q1=1&q2=2&query=up&start=1668078060&step=30",
-			outgoingRequest.URL.String())
+		require.Equal(t, "/api/v1/query_range?q1=1&q2=2", outgoingRequest.URL.String())
 		require.Equal(t, "custom-header-value", outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
 		username, pwd, ok := outgoingRequest.BasicAuth()
 		require.True(t, ok)
@@ -183,7 +182,7 @@ func TestIntegrationPrometheusClient(t *testing.T) {
 
 		require.NotNil(t, outgoingRequest)
 		require.Equal(t, "/api/v1/query_range", outgoingRequest.URL.Path)
-		require.Contains(t, outgoingRequest.URL.String(), "&q1=1&q2=2")
+		require.Contains(t, outgoingRequest.URL.String(), "?q1=1&q2=2")
 		require.Equal(t, "custom-header-value", outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
 		username, pwd, ok := outgoingRequest.BasicAuth()
 		require.True(t, ok)
