@@ -18,7 +18,6 @@ import {
   deleteAlertManagerConfig,
   updateAlertManagerConfig,
   fetchStatus,
-  fetchValidAlertManagerConfig,
 } from '../../api/alertmanager';
 import {
   disableRBAC,
@@ -45,7 +44,6 @@ const mocks = {
     deleteAlertManagerConfig: jest.mocked(deleteAlertManagerConfig),
     updateAlertManagerConfig: jest.mocked(updateAlertManagerConfig),
     fetchStatus: jest.mocked(fetchStatus),
-    fetchValidConfig: jest.mocked(fetchValidAlertManagerConfig),
   },
 };
 
