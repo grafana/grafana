@@ -3,7 +3,7 @@ import React, { useRef, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { config } from '@grafana/runtime';
-import { Input } from '@grafana/ui';
+import { Input, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -31,6 +31,16 @@ export default function PanelSearchPage(props: Props) {
     return searcher.current.search(state.query ?? '*');
   }, [state.query]);
 
+  if (!config.featureToggles.panelTitleSearch) {
+    return (
+      <div>
+        <Alert title="Missing feature toggle">
+          <code>panelTitleSearch</code>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <Page navId="scenes" subTitle="Search for panels">
       <Page.Contents>
@@ -52,6 +62,15 @@ export default function PanelSearchPage(props: Props) {
             <results.value.scene.Component model={results.value.scene} />
           </div>
         )}
+
+        <div>
+          <h3>TODO</h3>
+          <ul>
+            <li>Links in panel header?</li>
+            <li>Error boundary around PanelVis?</li>
+            <li>Time picker?</li>
+          </ul>
+        </div>
       </Page.Contents>
     </Page>
   );
