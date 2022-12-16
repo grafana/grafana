@@ -1,4 +1,4 @@
-package sqlstore
+package db
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -197,7 +198,7 @@ func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *Dash
 	})
 }
 
-func createDummyUser(t *testing.T, sqlStore *SQLStore) *user.User {
+func createDummyUser(t *testing.T, sqlStore DB) *user.User {
 	t.Helper()
 
 	uid := strconv.Itoa(rand.Intn(9999999))
@@ -214,7 +215,7 @@ func createDummyUser(t *testing.T, sqlStore *SQLStore) *user.User {
 	}
 
 	var id int64
-	err := sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+	err := sqlStore.WithDbSession(context.Background(), func(sess *Session) error {
 		sess.UseBool("is_admin")
 		var err error
 		id, err = sess.Insert(usr)
@@ -225,7 +226,7 @@ func createDummyUser(t *testing.T, sqlStore *SQLStore) *user.User {
 	return usr
 }
 
-func createDummyDashboard(t *testing.T, sqlStore *SQLStore, dashboardProps DashboardProps) *models.Dashboard {
+func createDummyDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardProps DashboardProps) *models.Dashboard {
 	t.Helper()
 
 	json, err := simplejson.NewJson([]byte(`{"schemaVersion":17,"title":"gdev dashboards","uid":"","version":1}`))
@@ -255,7 +256,7 @@ func createDummyDashboard(t *testing.T, sqlStore *SQLStore, dashboardProps Dashb
 	return dash
 }
 
-func createDummyACL(t *testing.T, sqlStore *SQLStore, dashboardPermission *DashboardPermission, search Search, dashboardID int64) int64 {
+func createDummyACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardPermission *DashboardPermission, search Search, dashboardID int64) int64 {
 	t.Helper()
 
 	acl := &models.DashboardACL{
@@ -291,7 +292,7 @@ func createDummyACL(t *testing.T, sqlStore *SQLStore, dashboardPermission *Dashb
 	return 0
 }
 
-func getDashboards(t *testing.T, sqlStore *SQLStore, search Search, aclUserID int64) []*dashboardResponse {
+func getDashboards(t *testing.T, sqlStore *sqlstore.SQLStore, search Search, aclUserID int64) []*dashboardResponse {
 	t.Helper()
 
 	old := sqlStore.Cfg.RBACEnabled
@@ -300,7 +301,7 @@ func getDashboards(t *testing.T, sqlStore *SQLStore, search Search, aclUserID in
 		sqlStore.Cfg.RBACEnabled = old
 	}()
 
-	builder := NewSqlBuilder(sqlStore.Cfg)
+	builder := NewSqlBuilder(sqlStore.Cfg, sqlStore.GetDialect())
 	signedInUser := &user.SignedInUser{
 		UserID: 9999999999,
 	}
@@ -324,13 +325,13 @@ func getDashboards(t *testing.T, sqlStore *SQLStore, search Search, aclUserID in
 	builder.Write("SELECT * FROM dashboard WHERE true")
 	builder.WriteDashboardPermissionFilter(signedInUser, search.RequiredPermission)
 	t.Logf("Searching for dashboards, SQL: %q\n", builder.GetSQLString())
-	err := sqlStore.engine.SQL(builder.GetSQLString(), builder.params...).Find(&res)
+	err := sqlStore.GetEngine().SQL(builder.GetSQLString(), builder.params...).Find(&res)
 	require.NoError(t, err)
 	return res
 }
 
 // TODO: Use FakeDashboardStore when org has its own service
-func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId int64,
+func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	t.Helper()
 	cmd := models.SaveDashboardCommand{
@@ -345,7 +346,7 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 	}
 
 	var dash *models.Dashboard
-	err := sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+	err := sqlStore.WithDbSession(context.Background(), func(sess *Session) error {
 		dash = cmd.GetDashboardModel()
 		dash.SetVersion(1)
 		dash.Created = time.Now()
@@ -360,7 +361,7 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 	dash.Data.Set("id", dash.Id)
 	dash.Data.Set("uid", dash.Uid)
 
-	err = sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+	err = sqlStore.WithDbSession(context.Background(), func(sess *Session) error {
 		dashVersion := &dashver.DashboardVersion{
 			DashboardID:   dash.Id,
 			ParentVersion: dash.Version,
@@ -387,10 +388,10 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 }
 
 // TODO: Use FakeDashboardStore when org has its own service
-func updateDashboardACL(t *testing.T, sqlStore *SQLStore, dashboardID int64, items ...*models.DashboardACL) error {
+func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID int64, items ...*models.DashboardACL) error {
 	t.Helper()
 
-	err := sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
+	err := sqlStore.WithDbSession(context.Background(), func(sess *Session) error {
 		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
 		if err != nil {
 			return fmt.Errorf("deleting from dashboard_acl failed: %w", err)

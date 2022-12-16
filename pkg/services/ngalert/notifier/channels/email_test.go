@@ -50,7 +50,7 @@ func TestEmailNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		})
 		require.NoError(t, err)
-		emailNotifier := NewEmailNotifier(cfg, emailSender, &UnavailableImageStore{}, tmpl)
+		emailNotifier := NewEmailNotifier(cfg, &FakeLogger{}, emailSender, &UnavailableImageStore{}, tmpl)
 
 		alerts := []*types.Alert{
 			{
@@ -104,7 +104,7 @@ func TestEmailNotifier(t *testing.T) {
 }
 
 func TestEmailNotifierIntegration(t *testing.T) {
-	ns := CreateNotificationService(t)
+	ns := createEmailSender(t)
 
 	emailTmpl := templateForTests(t)
 	externalURL, err := url.Parse("http://localhost/base")
@@ -267,7 +267,7 @@ func TestEmailNotifierIntegration(t *testing.T) {
 	}
 }
 
-func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns notifications.EmailSender) *EmailNotifier {
+func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns *emailSender) *EmailNotifier {
 	t.Helper()
 
 	json := `{
@@ -290,15 +290,15 @@ func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *
 		Settings: settingsJSON,
 	})
 	require.NoError(t, err)
-	emailNotifier := NewEmailNotifier(cfg, ns, &UnavailableImageStore{}, emailTmpl)
+	emailNotifier := NewEmailNotifier(cfg, &FakeLogger{}, ns, &UnavailableImageStore{}, emailTmpl)
 
 	return emailNotifier
 }
 
-func getSingleSentMessage(t *testing.T, ns *notifications.NotificationService) *notifications.Message {
+func getSingleSentMessage(t *testing.T, ns *emailSender) *notifications.Message {
 	t.Helper()
 
-	mailer := ns.GetMailer().(*notifications.FakeMailer)
+	mailer := ns.ns.GetMailer().(*notifications.FakeMailer)
 	require.Len(t, mailer.Sent, 1)
 	sent := mailer.Sent[0]
 	mailer.Sent = []*notifications.Message{}

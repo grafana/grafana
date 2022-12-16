@@ -41,7 +41,7 @@ require (
 	github.com/gchaincl/sqlhooks v1.3.0
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-git/go-git/v5 v5.4.2
-	github.com/go-kit/kit v0.12.0
+	github.com/go-kit/kit v0.12.0 // indirect
 	github.com/go-openapi/strfmt v0.21.3
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible
@@ -59,7 +59,7 @@ require (
 	github.com/grafana/cuetsy v0.1.1
 	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.3.1
-	github.com/grafana/grafana-plugin-sdk-go v0.145.0
+	github.com/grafana/grafana-plugin-sdk-go v0.147.0
 	github.com/grafana/thema v0.0.0-20221113112305-b441ed85a1fd
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.0.0
@@ -73,7 +73,7 @@ require (
 	github.com/lib/pq v1.10.7
 	github.com/linkedin/goavro/v2 v2.10.0
 	github.com/m3db/prometheus_remote_client_golang v0.4.4
-	github.com/magefile/mage v1.13.0
+	github.com/magefile/mage v1.14.0
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/matttproud/golang_protobuf_extensions v1.0.2
@@ -268,6 +268,8 @@ require (
 	k8s.io/client-go v12.0.0+incompatible // gets replaced with v0.25.0
 )
 
+require k8s.io/apimachinery v0.25.0
+
 require (
 	cloud.google.com/go v0.102.0 // indirect
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
@@ -318,7 +320,6 @@ require (
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/api v0.25.0 // indirect
-	k8s.io/apimachinery v0.25.0 // indirect
 	k8s.io/klog/v2 v2.70.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed // indirect

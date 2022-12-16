@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -9,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service,
@@ -35,8 +37,11 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 		rr.Get("/user/actions", middleware.ReqSignedIn, routing.Wrap(api.getUserActions))
 		rr.Get("/user/permissions", middleware.ReqSignedIn, routing.Wrap(api.getUserPermissions))
 		if api.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
+			userIDScope := ac.Scope("users", "id", ac.Parameter(":userID"))
 			rr.Get("/users/permissions/search", authorize(middleware.ReqSignedIn,
-				ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.SearchUsersPermissions))
+				ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.searchUsersPermissions))
+			rr.Get("/user/:userID/permissions/search", authorize(middleware.ReqSignedIn,
+				ac.EvalPermission(ac.ActionUsersPermissionsRead, userIDScope)), routing.Wrap(api.searchUserPermissions))
 		}
 	})
 }
@@ -66,7 +71,7 @@ func (api *AccessControlAPI) getUserPermissions(c *models.ReqContext) response.R
 }
 
 // GET /api/access-control/users/permissions
-func (api *AccessControlAPI) SearchUsersPermissions(c *models.ReqContext) response.Response {
+func (api *AccessControlAPI) searchUsersPermissions(c *models.ReqContext) response.Response {
 	searchOptions := ac.SearchOptions{
 		ActionPrefix: c.Query("actionPrefix"),
 		Action:       c.Query("action"),
@@ -90,4 +95,31 @@ func (api *AccessControlAPI) SearchUsersPermissions(c *models.ReqContext) respon
 	}
 
 	return response.JSON(http.StatusOK, permsByAction)
+}
+
+// GET /api/access-control/user/:userID/permissions/search
+func (api *AccessControlAPI) searchUserPermissions(c *models.ReqContext) response.Response {
+	userIDString := web.Params(c.Req)[":userID"]
+	userID, err := strconv.ParseInt(userIDString, 10, 64)
+	if err != nil {
+		response.Error(http.StatusBadRequest, "user ID is invalid", err)
+	}
+
+	searchOptions := ac.SearchOptions{
+		ActionPrefix: c.Query("actionPrefix"),
+		Action:       c.Query("action"),
+		Scope:        c.Query("scope"),
+		UserID:       userID,
+	}
+	// Validate inputs
+	if (searchOptions.ActionPrefix != "") == (searchOptions.Action != "") {
+		return response.JSON(http.StatusBadRequest, "provide one of 'action' or 'actionPrefix'")
+	}
+
+	permissions, err := api.Service.SearchUserPermissions(c.Req.Context(), c.OrgID, searchOptions)
+	if err != nil {
+		response.Error(http.StatusInternalServerError, "could not search user permissions", err)
+	}
+
+	return response.JSON(http.StatusOK, ac.GroupScopesByAction(permissions))
 }

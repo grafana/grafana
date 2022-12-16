@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -104,7 +105,17 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	return logMap, nil
 }
 
+// CheckHealth makes sure all migrations ran successfully
 func (mg *Migrator) CheckHealth(name string) (int, error) {
+	has, err := mg.DBEngine.Exist(&MigrationLog{Success: false})
+	if err != nil {
+		return 1, err
+	}
+
+	if has {
+		return 1, errors.New("one or more migrations failed")
+	}
+
 	return 0, nil
 }
 
@@ -261,7 +272,7 @@ func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
 }
 
 func casRestoreOnErr(lock *atomic.Bool, o, n bool, casErr error, f func(LockCfg) error, lockCfg LockCfg) error {
-	if !lock.CAS(o, n) {
+	if !lock.CompareAndSwap(o, n) {
 		return casErr
 	}
 	if err := f(lockCfg); err != nil {
