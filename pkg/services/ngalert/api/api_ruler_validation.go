@@ -119,7 +119,7 @@ func validateRuleNode(
 		newAlertRule.Annotations = ruleNode.ApiRuleNode.Annotations
 		newAlertRule.Labels = ruleNode.ApiRuleNode.Labels
 
-		err = newAlertRule.SetDashboardAndPanel()
+		err = newAlertRule.SetDashboardAndPanelFromAnnotations()
 		if err != nil {
 			return nil, err
 		}

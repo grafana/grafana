@@ -147,6 +147,22 @@ type AlertRule struct {
 	Labels      map[string]string
 }
 
+// GetDashboardUID returns the DashboardUID or "".
+func (alertRule *AlertRule) GetDashboardUID() string {
+	if alertRule.DashboardUID != nil {
+		return *alertRule.DashboardUID
+	}
+	return ""
+}
+
+// GetPanelID returns the Panel ID or -1.
+func (alertRule *AlertRule) GetPanelID() int64 {
+	if alertRule.PanelID != nil {
+		return *alertRule.PanelID
+	}
+	return -1
+}
+
 type LabelOption func(map[string]string)
 
 func WithoutInternalLabels() LabelOption {
@@ -196,10 +212,9 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 	return reporter.Diffs
 }
 
-// SetDashboardAndPanel will set the DashboardUID and PanlID
-// field be doing a lookup in the annotations. Errors when
-// the found annotations are not valid.
-func (alertRule *AlertRule) SetDashboardAndPanel() error {
+// SetDashboardAndPanelFromAnnotations will set the DashboardUID and PanelID field by doing a lookup in the annotations.
+// Errors when the found annotations are not valid.
+func (alertRule *AlertRule) SetDashboardAndPanelFromAnnotations() error {
 	if alertRule.Annotations == nil {
 		return nil
 	}
