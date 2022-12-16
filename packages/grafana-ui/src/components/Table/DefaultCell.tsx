@@ -70,7 +70,7 @@ function getCellStyle(
 
   // Set colors using deprecated settings format
   if (usingDeprecatedSettings) {
-    if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
+    if (field.config.custom?.displayMode === TableCellDisplayMode.ColorText) {
       textColor = displayValue.color;
     } else if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
@@ -89,9 +89,8 @@ function getCellStyle(
   // Set colors using updated sub-options format
   else {
     const displayMode = field.config.custom.cellOptions.subOptions['color-background'].displayMode;
-    console.log(`Display Mode: ${displayMode}`);
 
-    if (displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
+    if (field.config.custom.cellOptions.displayMode === TableCellDisplayMode.ColorText) {
       textColor = displayValue.color;
     } else if (displayMode === BackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
