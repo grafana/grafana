@@ -282,4 +282,8 @@ const (
 	// FlagSessionRemoteCache
 	// Enable using remote cache for user sessions
 	FlagSessionRemoteCache = "sessionRemoteCache"
+
+	// FlagAlertingBacktesting
+	// Rule backtesting API for alerting
+	FlagAlertingBacktesting = "alertingBacktesting"
 )

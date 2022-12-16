@@ -50,6 +50,7 @@ func TestReverseProxy(t *testing.T) {
 		require.Equal(t, "10.0.0.1", actualReq.Header.Get("X-Forwarded-For"))
 		require.Empty(t, actualReq.Header.Get("Origin"))
 		require.Empty(t, actualReq.Header.Get("Referer"))
+		require.Equal(t, "https://test.com/api", actualReq.Header.Get("X-Grafana-Referer"))
 		require.Equal(t, "value", actualReq.Header.Get("X-KEY"))
 		resp := rec.Result()
 		require.Empty(t, resp.Cookies())
