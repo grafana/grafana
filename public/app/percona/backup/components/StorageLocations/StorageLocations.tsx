@@ -167,6 +167,7 @@ export const StorageLocations: FC = () => {
             emptyMessage={Messages.storageLocations.table.noData}
             pendingRequest={pending}
             renderExpandedRow={renderSelectedSubRow}
+            getRowId={useCallback((row: StorageLocation) => row.locationID, [])}
           ></Table>
           <AddStorageLocationModal
             location={selectedLocation}

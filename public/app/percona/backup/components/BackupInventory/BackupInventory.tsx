@@ -256,6 +256,7 @@ export const BackupInventory: FC = () => {
             pendingRequest={pending}
             autoResetExpanded={false}
             renderExpandedRow={renderSelectedSubRow}
+            getRowId={useCallback((row: Backup) => row.id, [])}
           ></Table>
           {restoreModalVisible && (
             <RestoreBackupModal

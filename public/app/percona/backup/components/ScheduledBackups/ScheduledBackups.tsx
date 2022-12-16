@@ -260,6 +260,7 @@ export const ScheduledBackups: FC = () => {
             pendingRequest={pending}
             renderExpandedRow={renderSelectedSubRow}
             getCellProps={getCellProps}
+            getRowId={useCallback((row: ScheduledBackup) => row.id, [])}
           />
           <DeleteModal
             title={Messages.scheduledBackups.deleteModalTitle}

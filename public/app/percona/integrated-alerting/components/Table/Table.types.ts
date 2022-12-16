@@ -60,6 +60,7 @@ export interface TableProps {
   getRowProps?: (row: Row<any>) => ExtendedTableRowProps;
   getColumnProps?: (column: ColumnInstance) => ExtendedTableCellProps;
   getCellProps?: (cell: Cell<any, any>) => ExtendedTableCellProps;
+  getRowId?: (originalRow: any, relativeIndex: number, parent?: Row<any>) => string;
   showFilter?: boolean;
   hasBackendFiltering?: boolean;
 }

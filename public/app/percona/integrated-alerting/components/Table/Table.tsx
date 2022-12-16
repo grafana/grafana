@@ -36,6 +36,7 @@ export const Table: FC<TableProps> = ({
   getCellProps = defaultPropGetter,
   showFilter = false,
   hasBackendFiltering = false,
+  getRowId,
 }) => {
   const [filterData, setFilteredData] = useState<Object[]>([]);
   const data = useMemo(() => (showFilter ? filterData : rawData), [showFilter, filterData, rawData]);
@@ -51,6 +52,7 @@ export const Table: FC<TableProps> = ({
     manualPagination,
     autoResetExpanded,
     autoResetPage,
+    getRowId,
   };
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const plugins: any[] = [useExpanded];
