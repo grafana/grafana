@@ -35,12 +35,12 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
-		codegen.CoreStructuredKindJenny(kindsys.GoCoreKindParentPath, nil),
-		codegen.RawKindJenny(kindsys.GoCoreKindParentPath, nil),
-		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
-		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
-		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
+		//codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
+		//codegen.CoreStructuredKindJenny(kindsys.GoCoreKindParentPath, nil),
+		//codegen.RawKindJenny(kindsys.GoCoreKindParentPath, nil),
+		//codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
+		//codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
+		//codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
 
