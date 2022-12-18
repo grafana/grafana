@@ -21,9 +21,12 @@ replace github.com/gomodule/redigo => github.com/gomodule/redigo v1.8.9
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
 replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309
 
+// contains openapi encoder fixes. remove ASAP
+replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20221218111347-341999f48bdb
+
 require (
 	cloud.google.com/go/storage v1.22.1
-	cuelang.org/go v0.4.3
+	cuelang.org/go v0.5.0-beta.2
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.27
 	github.com/BurntSushi/toml v1.1.0
@@ -60,7 +63,7 @@ require (
 	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.3.1
 	github.com/grafana/grafana-plugin-sdk-go v0.147.0
-	github.com/grafana/thema v0.0.0-20221113112305-b441ed85a1fd
+	github.com/grafana/thema v0.0.0-20221218114504-71b453193538
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.0.0
 	github.com/hashicorp/go-plugin v1.4.3
