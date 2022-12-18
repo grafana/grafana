@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
@@ -66,7 +65,7 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, &UnavailableImageStore{}, tmpl, decryptFn)
+			sn := NewAlertmanagerNotifier(cfg, &FakeLogger{}, &UnavailableImageStore{}, tmpl, decryptFn)
 			require.NotNil(t, sn)
 		})
 	}
@@ -159,13 +158,13 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 			decryptFn := secretsService.GetDecryptedValue
 			cfg, err := NewAlertmanagerConfig(m, decryptFn)
 			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, images, tmpl, decryptFn)
+			sn := NewAlertmanagerNotifier(cfg, &FakeLogger{}, images, tmpl, decryptFn)
 			var body []byte
 			origSendHTTPRequest := sendHTTPRequest
 			t.Cleanup(func() {
 				sendHTTPRequest = origSendHTTPRequest
 			})
-			sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logger log.Logger) ([]byte, error) {
+			sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logger Logger) ([]byte, error) {
 				body = cfg.body
 				return nil, c.sendHTTPRequestError
 			}

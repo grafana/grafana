@@ -43,6 +43,7 @@ export interface FeatureToggles {
   annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
+  k8s?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
@@ -66,7 +67,6 @@ export interface FeatureToggles {
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
-  traceqlEditor?: boolean;
   flameGraph?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
@@ -85,4 +85,5 @@ export interface FeatureToggles {
   secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
   sessionRemoteCache?: boolean;
+  alertingBacktesting?: boolean;
 }

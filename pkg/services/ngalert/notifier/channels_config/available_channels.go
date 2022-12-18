@@ -682,6 +682,36 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
+				{
+					Label:   "Parse Mode",
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
+						{
+							Value: "None",
+							Label: "None",
+						},
+						{
+							Value: "HTML",
+							Label: "HTML",
+						},
+						{
+							Value: "Markdown",
+							Label: "Markdown",
+						},
+						{
+							Value: "MarkdownV2",
+							Label: "Markdown V2",
+						},
+					},
+					Description:  `Mode for parsing entities in the message text. Default is 'HTML'`,
+					PropertyName: "parse_mode",
+				},
+				{
+					Label:        "Disable Notification",
+					Description:  "Sends the message silently. Users will receive a notification with no sound.",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "disable_notification",
+				},
 			},
 		},
 		{

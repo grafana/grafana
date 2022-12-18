@@ -151,7 +151,7 @@ export const RulesForGroupTable = ({
         renderCell: ({ data: { alertName } }) => {
           return <>{alertName}</>;
         },
-        size: 0.6,
+        size: '330px',
       },
       {
         id: 'for',
@@ -174,7 +174,7 @@ export const RulesForGroupTable = ({
             return <>{numberEvaluations}</>;
           }
         },
-        size: 0.2,
+        size: 0.6,
       },
     ];
   }, [currentInterval]);
@@ -207,6 +207,37 @@ interface FormValues {
   groupName: string;
   groupInterval: string;
 }
+
+export const evaluateEveryValidationOptions = (
+  rules: RulerRulesConfigDTO | null | undefined,
+  groupName: string,
+  nameSpaceName: string
+): RegisterOptions => ({
+  required: {
+    value: true,
+    message: 'Required.',
+  },
+  validate: (value: string) => {
+    try {
+      const duration = parsePrometheusDuration(value);
+
+      if (duration < MIN_TIME_RANGE_STEP_S * 1000) {
+        return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+
+      if (duration % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
+        return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+      if (rulesInSameGroupHaveInvalidFor(rules, groupName, nameSpaceName, value).length === 0) {
+        return true;
+      } else {
+        return `Invalid evaluation interval. Evaluation interval should be smaller or equal to 'For' values for existing rules in this group.`;
+      }
+    } catch (error) {
+      return error instanceof Error ? error.message : 'Failed to parse duration';
+    }
+  },
+});
 
 export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const {
@@ -285,35 +316,6 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const groupfoldersForSource = rulerRuleRequests[sourceName];
 
-  const evaluateEveryValidationOptions: RegisterOptions = {
-    required: {
-      value: true,
-      message: 'Required.',
-    },
-    validate: (value: string) => {
-      try {
-        const duration = parsePrometheusDuration(value);
-
-        if (duration < MIN_TIME_RANGE_STEP_S * 1000) {
-          return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
-        }
-
-        if (duration % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
-          return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
-        }
-        if (
-          rulesInSameGroupHaveInvalidFor(groupfoldersForSource.result, groupName, nameSpaceName, value).length === 0
-        ) {
-          return true;
-        } else {
-          return `Invalid evaluation interval. Evaluation interval should be smaller or equal to 'For' values for existing rules in this group.`;
-        }
-      } catch (error) {
-        return error instanceof Error ? error.message : 'Failed to parse duration';
-      }
-    },
-  };
-
   return (
     <Modal
       className={styles.modal}
@@ -387,7 +389,10 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               <Input
                 id="groupInterval"
                 placeholder="1m"
-                {...register('groupInterval', evaluateEveryValidationOptions)}
+                {...register(
+                  'groupInterval',
+                  evaluateEveryValidationOptions(groupfoldersForSource?.result, groupName, nameSpaceName)
+                )}
               />
             </Field>
 

@@ -45,7 +45,6 @@ export const AnnotationQueryEditor = (props: Props) => {
         metricStat={query}
         disableExpressions={true}
         onChange={(metricStat: MetricStat) => onChange({ ...query, ...metricStat })}
-        onRunQuery={() => {}}
       ></MetricStatEditor>
       <Space v={0.5} />
       <EditorRow>

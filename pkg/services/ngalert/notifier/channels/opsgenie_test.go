@@ -250,6 +250,7 @@ func TestOpsgenieNotifier(t *testing.T) {
 				DecryptFunc:         decryptFn,
 				ImageStore:          &UnavailableImageStore{},
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")

@@ -6,16 +6,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/thema/encoding/jsonschema"
-	"github.com/olekukonko/tablewriter"
-	"github.com/xeipuuv/gojsonpointer"
 	"io"
 	"path/filepath"
 	"sort"
 	"strings"
 	"text/template"
+
+	"github.com/grafana/codejen"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/thema/encoding/jsonschema"
+	"github.com/olekukonko/tablewriter"
+	"github.com/xeipuuv/gojsonpointer"
 )
 
 func DocsJenny(docsPath string) OneToOne {
@@ -41,7 +42,7 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 	}
 	b, _ := cuecontext.New().BuildFile(f).MarshalJSON()
 
-	// We don't need the entire json obj, only the value for components.schemas path
+	// We don't need entire json obj, only the value of components.schemas path
 	var obj struct {
 		Components struct {
 			Schemas json.RawMessage
@@ -50,6 +51,12 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 	err = json.Unmarshal(b, &obj)
 	if err != nil {
 		return nil, err
+	}
+
+	// fixes the references between the types within a json after making components.schema.<types> the root of the json
+	kindJsonStr := string(obj.Components.Schemas)
+	if strings.Contains(kindJsonStr, "#/components/schemas/") {
+		kindJsonStr = strings.Replace(kindJsonStr, "#/components/schemas/", "#/", -1)
 	}
 
 	kindProps := decl.Properties.Common()
@@ -66,14 +73,14 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 		return nil, err
 	}
 
-	doc, err := jsonToMarkdown(obj.Components.Schemas, string(tmpl), kindName)
+	doc, err := jsonToMarkdown([]byte(kindJsonStr), string(tmpl), kindName)
 	if err != nil {
 		return nil, err
 	}
 	return codejen.NewFile(filepath.Join(j.docsPath, kindName)+".md", doc, j), nil
 }
 
-// makeTemplate pre-populates the template
+// makeTemplate pre-populates the template with the kind metadata
 func makeTemplate(data templateData, tmpl string) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup(tmpl).Execute(buf, data); err != nil {
@@ -141,21 +148,11 @@ func newSchema(b []byte, kindName string) (*schema, error) {
 	return resolveSchema(data[kindName], root)
 }
 
-// TODO: these are used to fix the references between the types within a json after making components.schema.<types> the root of the json
-const (
-	refPrefix   = "#/components/schemas/"
-	replaceWith = "#/"
-)
-
 // resolveSchema recursively resolves schemas.
 func resolveSchema(schem *schema, root *simplejson.Json) (*schema, error) {
 	for _, prop := range schem.Properties {
 		if prop.Ref != "" {
-			ref := prop.Ref
-			if strings.HasPrefix(ref, refPrefix) {
-				ref = strings.Replace(ref, refPrefix, replaceWith, 1)
-			}
-			tmp, err := resolveReference(ref, root)
+			tmp, err := resolveReference(prop.Ref, root)
 			if err != nil {
 				return nil, err
 			}
@@ -170,11 +167,7 @@ func resolveSchema(schem *schema, root *simplejson.Json) (*schema, error) {
 
 	if schem.Items != nil {
 		if schem.Items.Ref != "" {
-			ref := schem.Items.Ref
-			if strings.HasPrefix(ref, refPrefix) {
-				ref = strings.Replace(ref, refPrefix, replaceWith, 1)
-			}
-			tmp, err := resolveReference(ref, root)
+			tmp, err := resolveReference(schem.Items.Ref, root)
 			if err != nil {
 				return nil, err
 			}

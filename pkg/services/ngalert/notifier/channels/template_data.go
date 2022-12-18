@@ -14,7 +14,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -58,7 +57,7 @@ func removePrivateItems(kv template.KV) template.KV {
 	return kv
 }
 
-func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *ExtendedAlert {
+func extendAlert(alert template.Alert, externalURL string, logger Logger) *ExtendedAlert {
 	// remove "private" annotations & labels so they don't show up in the template
 	extended := &ExtendedAlert{
 		Status:       alert.Status,
@@ -150,7 +149,7 @@ func setOrgIdQueryParam(url *url.URL, orgId string) string {
 	return url.String()
 }
 
-func ExtendData(data *template.Data, logger log.Logger) *ExtendedData {
+func ExtendData(data *template.Data, logger Logger) *ExtendedData {
 	alerts := []ExtendedAlert{}
 
 	for _, alert := range data.Alerts {
@@ -171,7 +170,7 @@ func ExtendData(data *template.Data, logger log.Logger) *ExtendedData {
 	return extended
 }
 
-func TmplText(ctx context.Context, tmpl *template.Template, alerts []*types.Alert, l log.Logger, tmplErr *error) (func(string) string, *ExtendedData) {
+func TmplText(ctx context.Context, tmpl *template.Template, alerts []*types.Alert, l Logger, tmplErr *error) (func(string) string, *ExtendedData) {
 	promTmplData := notify.GetTemplateData(ctx, tmpl, alerts, l)
 	data := ExtendData(promTmplData, l)
 
