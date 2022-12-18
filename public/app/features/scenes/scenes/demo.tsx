@@ -1,4 +1,3 @@
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import {
   Scene,
   SceneCanvasText,
@@ -9,7 +8,7 @@ import {
   VizPanel,
 } from '../components';
 import { EmbeddedScene } from '../components/Scene';
-import { newGraphPanel } from '../components/TypedVizPanels';
+import { typedPanels } from '../components/VizPanel/TypedVizPanels';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
@@ -21,29 +20,17 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
     layout: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new VizPanel({
+        typedPanels.newGraph({
           size: { minWidth: '70%' },
-          pluginId: 'timeseries',
           title: 'Dynamic height and width',
           $data: getQueryRunnerWithRandomWalkQuery({}, { maxDataPointsFromWidth: true }),
         }),
         new SceneFlexLayout({
           direction: 'column',
           children: [
-            newGraphPanel({
+            typedPanels.newGraph({
               title: 'Fill height',
-              options: {
-                legend: {
-                  calcs: [],
-                  displayMode: LegendDisplayMode.List,
-                  placement: 'bottom',
-                  showLegend: true,
-                },
-                tooltip: {
-                  mode: TooltipDisplayMode.Single,
-                  sort: SortOrder.None,
-                },
-              },
+              options: {},
               fieldConfig: {
                 defaults: {
                   custom: {
@@ -53,8 +40,7 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
                 overrides: [],
               },
             }),
-            new VizPanel({
-              pluginId: 'timeseries',
+            typedPanels.newGraph({
               title: 'Fill height',
             }),
             new SceneCanvasText({
@@ -63,10 +49,9 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
               fontSize: 20,
               align: 'center',
             }),
-            new VizPanel({
-              size: { height: 300 },
-              pluginId: 'timeseries',
+            typedPanels.newGraph({
               title: 'Fixed height',
+              size: { height: 300 },
             }),
           ],
         }),
