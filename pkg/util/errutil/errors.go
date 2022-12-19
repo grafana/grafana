@@ -15,6 +15,7 @@ type Base struct {
 	messageID     string
 	publicMessage string
 	logLevel      LogLevel
+	guide         string
 }
 
 // NewBase initializes a [Base] that is used to construct [Error].
@@ -50,6 +51,17 @@ type BaseOpt func(Base) Base
 func WithLogLevel(lvl LogLevel) BaseOpt {
 	return func(b Base) Base {
 		b.logLevel = lvl
+		return b
+	}
+}
+
+// WithGuide adds a longer text intended to support a user to resolve
+// the error.
+//
+// Used as a functional option to [NewBase].
+func WithGuide(guide string) BaseOpt {
+	return func(b Base) Base {
+		b.guide = guide
 		return b
 	}
 }
@@ -171,6 +183,9 @@ type Error struct {
 	PublicPayload map[string]interface{}
 	// LogLevel provides a suggested level of logging for the error.
 	LogLevel LogLevel
+	// Guide is a longer text intended to support a user to resolve
+	// the error.
+	Guide string
 }
 
 // MarshalJSON returns an error, we do not want raw [Error]s being
@@ -229,6 +244,7 @@ type PublicError struct {
 	MessageID  string                 `json:"messageId"`
 	Message    string                 `json:"message,omitempty"`
 	Extra      map[string]interface{} `json:"extra,omitempty"`
+	Guide      string                 `json:"guide,omitempty"`
 }
 
 // Public returns a subset of the error with non-sensitive information
@@ -249,5 +265,6 @@ func (e Error) Public() PublicError {
 		MessageID:  e.MessageID,
 		Message:    message,
 		Extra:      e.PublicPayload,
+		Guide:      e.Guide,
 	}
 }
