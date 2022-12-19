@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	ngchannels "github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // swagger:route GET /api/v1/provisioning/contact-points provisioning stable RouteGetContactpoints
@@ -119,7 +120,7 @@ func (e *EmbeddedContactPoint) Valid(decryptFunc channels.GetDecryptedValueFn) e
 		Type:     e.Type,
 	}, nil, decryptFunc, nil, nil, func(ctx ...interface{}) channels.Logger {
 		return &channels.FakeLogger{}
-	})
+	}, setting.BuildVersion)
 	if _, err := factory(cfg); err != nil {
 		return err
 	}
