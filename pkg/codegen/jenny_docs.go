@@ -19,12 +19,17 @@ import (
 	"github.com/xeipuuv/gojsonpointer"
 )
 
-func DocsJenny(docsPath string) OneToOne {
-	return docsJenny{docsPath: docsPath}
+func DocsJenny(docsPath string, draft bool) OneToOne {
+	return docsJenny{
+		docsPath: docsPath,
+		draft:    draft,
+	}
 }
 
 type docsJenny struct {
 	docsPath string
+	// draft is an attribute of the generated markdown file indicating if the document is a draft and should not be published to the site.
+	draft bool
 }
 
 func (j docsJenny) JennyName() string {
@@ -62,6 +67,7 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 	kindProps := decl.Properties.Common()
 	kindName := strings.ToLower(kindProps.Name)
 	data := templateData{
+		Draft:        j.draft,
 		KindName:     kindProps.Name,
 		KindVersion:  decl.Lineage().Latest().Version().String(),
 		KindMaturity: string(kindProps.Maturity),
@@ -91,6 +97,7 @@ func makeTemplate(data templateData, tmpl string) ([]byte, error) {
 }
 
 type templateData struct {
+	Draft        bool
 	KindName     string
 	KindVersion  string
 	KindMaturity string

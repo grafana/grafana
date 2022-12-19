@@ -182,6 +182,3 @@ public/locales/*/grafana_old.json
 deployment_tools_config.json
 
 .betterer.cache
-
-# generated core schema kinds docs
-/docs/sources/developers/kinds
