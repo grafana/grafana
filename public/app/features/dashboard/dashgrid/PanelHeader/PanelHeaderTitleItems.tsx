@@ -2,9 +2,11 @@ import React from 'react';
 
 import { PanelModel, renderMarkdown, ScopedVars, LinkModelSupplier } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Icon, Tooltip } from '@grafana/ui';
+import { Button, Dropdown, IconButton, Menu } from '@grafana/ui';
 
 export interface Props {
+  innerHeight: number;
+  innerWidth: number;
   panelDescription?: string;
   alertState?: string;
   scopedVars?: ScopedVars;
@@ -32,47 +34,37 @@ export function PanelHeaderTitleItems(props: Props) {
 
   const getLinksContent = (): JSX.Element => {
     return (
-      <ul className="panel-info-corner-links">
-        {panelLinks?.map((link, idx: number) => {
-          return (
-            <li key={idx}>
-              <a className="panel-info-corner-links__item" href={link.href} target={link.target}>
-                {link.title}
-              </a>
-            </li>
-          );
+      <Menu>
+        {panelLinks?.map((link, idx) => {
+          return <Menu.Item key={idx} label={link.title} url={link.href} target={link.target} />;
         })}
-      </ul>
+      </Menu>
     );
   };
 
-  const descriptionItem = description ? (
-    <Tooltip content={getDescriptionContent} placement="top-start">
-      <Icon name="info-circle" />
-    </Tooltip>
-  ) : null;
+  const descriptionItem = <IconButton name="info-circle" tooltip={getDescriptionContent} />;
 
-  const alertStateItem = alertState ? (
-    <Icon
+  const alertStateItem = (
+    <IconButton
       name={alertState === 'alerting' ? 'heart-break' : 'heart'}
+      tooltip={`alerting is ${alertState}`}
       className="icon-gf panel-alert-icon"
       style={{ marginRight: '4px' }}
       size="sm"
     />
-  ) : null;
+  );
 
-  const linksItem =
-    panelLinks && panelLinks.length > 0 ? (
-      <Tooltip content={getLinksContent} placement="top-start">
-        <Icon name="external-link-alt" />
-      </Tooltip>
-    ) : null;
+  const linksItem = (
+    <Dropdown overlay={getLinksContent}>
+      <Button icon="external-link-alt" aria-label="panel links" variant="secondary" />
+    </Dropdown>
+  );
 
   return (
     <>
-      {descriptionItem}
-      {alertStateItem}
-      {linksItem}
+      {description && descriptionItem}
+      {alertState && alertStateItem}
+      {panelLinks && panelLinks.length > 0 && linksItem}
     </>
   );
 }

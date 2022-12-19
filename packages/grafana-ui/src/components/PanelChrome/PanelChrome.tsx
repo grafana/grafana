@@ -16,7 +16,7 @@ export interface PanelChromeProps {
   children: (innerWidth: number, innerHeight: number) => ReactNode;
   padding?: PanelPadding;
   title?: string;
-  titleItems?: ReactNode[];
+  titleItems?: (innerWidth: number, innerHeight: number) => ReactNode;
   menu?: React.ReactElement;
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
   // dragClass?: string;
@@ -45,7 +45,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   children,
   padding = 'md',
   title = '',
-  titleItems = [],
+  titleItems = () => null,
   menu,
   // dragClass,
   hoverHeader = false,
@@ -82,13 +82,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
             </div>
           )}
 
-          {titleItems.length > 0 && (
-            <div className={styles.items} data-testid="title-items-container">
-              {itemsRenderer(titleItems, (item) => {
-                return <div data-testid="title-item">{item}</div>;
-              })}
-            </div>
-          )}
+          <div data-testid="title-items">{titleItems(innerWidth, innerHeight)}</div>
 
           {menu && (
             <Dropdown overlay={menu} placement="bottom">
