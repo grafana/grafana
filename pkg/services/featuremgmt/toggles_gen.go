@@ -15,10 +15,6 @@ const (
 	// Use big transactions for alerting database writes
 	FlagAlertingBigTransactions = "alertingBigTransactions"
 
-	// FlagPromQueryBuilder
-	// Show Prometheus query builder
-	FlagPromQueryBuilder = "promQueryBuilder"
-
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"

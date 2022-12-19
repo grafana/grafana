@@ -20,13 +20,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "promQueryBuilder",
-			Description:  "Show Prometheus query builder",
-			State:        FeatureStateStable,
-			Expression:   "true", // on by default
-			FrontendOnly: true,
-		},
-		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
