@@ -32,7 +32,7 @@ type DiscordNotifier struct {
 
 type discordSettings struct {
 	Title              string `json:"title,omitempty" yaml:"title,omitempty"`
-	Content            string `json:"message,omitempty" yaml:"message,omitempty"`
+	Message            string `json:"message,omitempty" yaml:"message,omitempty"`
 	AvatarURL          string `json:"avatar_url,omitempty" yaml:"avatar_url,omitempty"`
 	WebhookURL         string `json:"url,omitempty" yaml:"url,omitempty"`
 	UseDiscordUsername bool   `json:"use_discord_username,omitempty" yaml:"use_discord_username,omitempty"`
@@ -50,8 +50,8 @@ func buildDiscordSettings(fc channels.FactoryConfig) (*discordSettings, error) {
 	if settings.Title == "" {
 		settings.Title = channels.DefaultMessageTitleEmbed
 	}
-	if settings.Content == "" {
-		settings.Content = channels.DefaultMessageEmbed
+	if settings.Message == "" {
+		settings.Message = channels.DefaultMessageEmbed
 	}
 	return &settings, nil
 }
@@ -104,7 +104,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	var tmplErr error
 	tmpl, _ := channels.TmplText(ctx, d.tmpl, as, d.log, &tmplErr)
 
-	bodyJSON.Set("content", tmpl(d.settings.Content))
+	bodyJSON.Set("content", tmpl(d.settings.Message))
 	if tmplErr != nil {
 		d.log.Warn("failed to template Discord notification content", "error", tmplErr.Error())
 		// Reset tmplErr for templating other fields.
