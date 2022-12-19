@@ -1,5 +1,7 @@
 # Configuring plugin spellcheck
 
+> ℹ️ This process is applicable only for grafana maintained plugins and only if the plugins are activated in drone.grafana.net for CI process.
+
 ## What it is and why it is required
 
 The spellcheck CI step performs basic spellcheck against the plugin code and documentation.\
