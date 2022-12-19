@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryRequest, DataQueryResponse, DataSourceApi } from './datasource';
+import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
 
