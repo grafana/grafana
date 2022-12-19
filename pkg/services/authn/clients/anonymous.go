@@ -39,3 +39,7 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 		IsAnonymous: true,
 	}, nil
 }
+
+func (a *Anonymous) ClientParams() *authn.ClientParams {
+	return &authn.ClientParams{}
+}

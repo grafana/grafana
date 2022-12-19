@@ -74,8 +74,10 @@ func (s *Service) Authenticate(ctx context.Context, clientName string, r *authn.
 	// login handler, but if we want to perform basic auth during a request (called from contexthandler) we don't
 	// want a session to be created.
 
+	params := client.ClientParams()
+
 	for _, hook := range s.postAuthHooks {
-		if err := hook(ctx, &authn.ClientParams{}, identity); err != nil {
+		if err := hook(ctx, params, identity); err != nil {
 			return nil, err
 		}
 	}

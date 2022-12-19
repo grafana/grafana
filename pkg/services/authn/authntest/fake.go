@@ -20,3 +20,7 @@ type FakeClient struct {
 func (f *FakeClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	return f.ExpectedIdentity, f.ExpectedErr
 }
+
+func (f *FakeClient) ClientParams() *authn.ClientParams {
+	return &authn.ClientParams{}
+}

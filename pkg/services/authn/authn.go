@@ -32,6 +32,7 @@ type Service interface {
 
 type Client interface {
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
+	ClientParams() *ClientParams
 }
 
 type Request struct {

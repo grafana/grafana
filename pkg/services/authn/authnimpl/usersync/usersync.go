@@ -52,7 +52,7 @@ func (s *UserSync) SyncUser(ctx context.Context, clientParams *authn.ClientParam
 	}
 
 	// update user
-	if errUpdate := s.updateUserAttributes(ctx, usr, id); errUpdate != nil {
+	if errUpdate := s.updateUserAttributes(ctx, clientParams, usr, id); errUpdate != nil {
 		return errUpdate
 	}
 
@@ -148,11 +148,18 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, clientParams *authn
 }
 
 func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
+	isAdmin := false
+	if id.IsGrafanaAdmin != nil {
+		isAdmin = *id.IsGrafanaAdmin
+
+	}
+
 	// TODO: add quota check
 	usr, errCreateUser := s.userService.Create(ctx, &user.CreateUserCommand{
 		Login:        id.Login,
 		Email:        id.Email,
 		Name:         id.Name,
+		IsAdmin:      isAdmin,
 		SkipOrgSetup: len(id.OrgRoles) > 0,
 	})
 	if errCreateUser != nil {
