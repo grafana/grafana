@@ -3,6 +3,7 @@ package channels
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -10,10 +11,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
@@ -210,13 +207,10 @@ func TestPushoverNotifier(t *testing.T) {
 		})
 
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
+			settingsJSON := json.RawMessage(c.settings)
 			secureSettings := make(map[string][]byte)
 
 			webhookSender := mockNotificationService()
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
 
 			fc := FactoryConfig{
 				Config: &NotificationChannelConfig{
@@ -227,9 +221,11 @@ func TestPushoverNotifier(t *testing.T) {
 				},
 				ImageStore:          images,
 				NotificationService: webhookSender,
-				DecryptFunc:         decryptFn,
-				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				Template: tmpl,
+				Logger:   &FakeLogger{},
 			}
 
 			pn, err := NewPushoverNotifier(fc)

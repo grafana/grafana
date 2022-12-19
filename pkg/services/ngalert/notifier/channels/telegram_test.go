@@ -2,13 +2,10 @@ package channels
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"strings"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
@@ -116,12 +113,10 @@ func TestTelegramNotifier(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
+			settingsJSON := json.RawMessage(c.settings)
 			require.NoError(t, err)
 			secureSettings := make(map[string][]byte)
 
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
 			notificationService := mockNotificationService()
 
 			fc := FactoryConfig{
@@ -133,9 +128,11 @@ func TestTelegramNotifier(t *testing.T) {
 				},
 				ImageStore:          images,
 				NotificationService: notificationService,
-				DecryptFunc:         decryptFn,
-				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				Template: tmpl,
+				Logger:   &FakeLogger{},
 			}
 
 			n, err := NewTelegramNotifier(fc)

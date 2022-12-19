@@ -5240,7 +5240,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID.",
         "tags": [
           "folders"
         ],
@@ -5261,6 +5261,12 @@
             "default": 1,
             "description": "Page index for starting fetching folders",
             "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The parent folder UID",
+            "name": "parent_uid",
             "in": "query"
           }
         ],
@@ -13130,6 +13136,9 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "parent_uid": {
+          "type": "string"
         },
         "title": {
           "type": "string"

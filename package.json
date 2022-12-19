@@ -201,8 +201,8 @@
     "jest-matcher-utils": "29.3.1",
     "lerna": "5.5.4",
     "lint-staged": "13.1.0",
-    "mini-css-extract-plugin": "2.6.1",
-    "msw": "0.48.1",
+    "mini-css-extract-plugin": "2.7.2",
+    "msw": "0.49.2",
     "mutationobserver-shim": "0.3.7",
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",
@@ -210,7 +210,7 @@
     "postcss-loader": "7.0.1",
     "postcss-reporter": "7.0.5",
     "postcss-scss": "4.0.5",
-    "prettier": "2.7.1",
+    "prettier": "2.8.1",
     "react-refresh": "0.14.0",
     "react-select-event": "5.5.1",
     "react-simple-compat": "1.2.3",
@@ -343,7 +343,7 @@
     "prismjs": "1.29.0",
     "prop-types": "15.8.1",
     "pseudoizer": "^0.1.0",
-    "rc-cascader": "3.7.0",
+    "rc-cascader": "3.8.0",
     "rc-drawer": "6.0.1",
     "rc-slider": "10.0.1",
     "rc-time-picker": "3.7.3",
@@ -417,8 +417,7 @@
     "@storybook/manager-webpack5/webpack": "5.74.0",
     "ngtemplate-loader/loader-utils": "^2.0.0",
     "node-fetch": "2.6.7",
-    "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch",
-    "storybook-dark-mode@1.1.2": "patch:storybook-dark-mode@npm%3A1.1.2#./.yarn/patches/storybook-dark-mode-npm-1.1.2-ecc4605688.patch"
+    "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch"
   },
   "workspaces": {
     "packages": [

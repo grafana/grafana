@@ -59,7 +59,11 @@ func DiscordFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 func newDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
-	dUrl := fc.Config.Settings.Get("url").MustString()
+	settings, err := simplejson.NewJson(fc.Config.Settings)
+	if err != nil {
+		return nil, err
+	}
+	dUrl := settings.Get("url").MustString()
 	if dUrl == "" {
 		return nil, errors.New("could not find webhook url property in settings")
 	}
@@ -71,11 +75,11 @@ func newDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
 		images: fc.ImageStore,
 		tmpl:   fc.Template,
 		settings: discordSettings{
-			Title:              fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
-			Content:            fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
-			AvatarURL:          fc.Config.Settings.Get("avatar_url").MustString(),
+			Title:              settings.Get("title").MustString(DefaultMessageTitleEmbed),
+			Content:            settings.Get("message").MustString(DefaultMessageEmbed),
+			AvatarURL:          settings.Get("avatar_url").MustString(),
 			WebhookURL:         dUrl,
-			UseDiscordUsername: fc.Config.Settings.Get("use_discord_username").MustBool(false),
+			UseDiscordUsername: settings.Get("use_discord_username").MustBool(false),
 		},
 	}, nil
 }
