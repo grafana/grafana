@@ -163,16 +163,17 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 					continue
 				}
 			} else {
-				if _, err := strconv.Atoi(m.PipelineAggregate); err == nil {
+				pipelineAggField := getPipelineAggField(m)
+				if _, err := strconv.Atoi(pipelineAggField); err == nil {
 					var appliedAgg *MetricAgg
 					for _, pipelineMetric := range q.Metrics {
-						if pipelineMetric.ID == m.PipelineAggregate {
+						if pipelineMetric.ID == pipelineAggField {
 							appliedAgg = pipelineMetric
 							break
 						}
 					}
 					if appliedAgg != nil {
-						bucketPath := m.PipelineAggregate
+						bucketPath := pipelineAggField
 						if appliedAgg.Type == countType {
 							bucketPath = "_count"
 						}
@@ -387,4 +388,17 @@ func addGeoHashGridAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBui
 	})
 
 	return aggBuilder
+}
+
+func getPipelineAggField(m *MetricAgg) string {
+	// In frontend we are using Field as pipelineAggField
+	// There might be historical reason why in backend we were using PipelineAggregate as pipelineAggField
+	// So for now let's check Field first and then PipelineAggregate to ensure that we are not breaking anything
+	// TODO: Investigate, if we can remove check for PipelineAggregate
+	pipelineAggField := m.Field
+
+	if pipelineAggField == "" {
+		pipelineAggField = m.PipelineAggregate
+	}
+	return pipelineAggField
 }

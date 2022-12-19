@@ -134,28 +134,53 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 	}
 }
 
-func (s *Service) GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
+func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		children, err := s.store.GetChildren(ctx, *cmd)
+		if err != nil {
+			return nil, err
+		}
+
+		filtered := make([]*folder.Folder, 0, len(children))
+		for _, f := range children {
+			g, err := guardian.New(ctx, f.ID, f.OrgID, cmd.SignedInUser)
+			if err != nil {
+				return nil, err
+			}
+			canView, err := g.CanView()
+			if err != nil || canView {
+				filtered = append(filtered, f)
+			}
+		}
+
+		return filtered, nil
+	}
+
 	searchQuery := search.Query{
-		SignedInUser: user,
+		SignedInUser: cmd.SignedInUser,
 		DashboardIds: make([]int64, 0),
 		FolderIds:    make([]int64, 0),
-		Limit:        limit,
-		OrgId:        orgID,
+		Limit:        cmd.Limit,
+		OrgId:        cmd.OrgID,
 		Type:         "dash-folder",
 		Permission:   models.PERMISSION_VIEW,
-		Page:         page,
+		Page:         cmd.Page,
 	}
 
 	if err := s.searchService.SearchHandler(ctx, &searchQuery); err != nil {
 		return nil, err
 	}
 
-	folders := make([]*models.Folder, 0)
+	folders := make([]*folder.Folder, 0)
 
 	for _, hit := range searchQuery.Result {
-		folders = append(folders, &models.Folder{
-			Id:    hit.ID,
-			Uid:   hit.UID,
+		folders = append(folders, &folder.Folder{
+			ID:    hit.ID,
+			UID:   hit.UID,
 			Title: hit.Title,
 		})
 	}
@@ -533,7 +558,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		return err
 	}
 
-	folders, err := s.store.GetChildren(ctx, folder.GetTreeQuery{UID: cmd.UID, OrgID: cmd.OrgID})
+	folders, err := s.store.GetChildren(ctx, folder.GetChildrenQuery{UID: cmd.UID, OrgID: cmd.OrgID})
 	if err != nil {
 		return err
 	}
@@ -558,12 +583,6 @@ func (s *Service) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) (
 	// check the flag, if old - do whatever did before
 	//  for new only the store
 	return s.store.GetParents(ctx, *cmd)
-}
-
-func (s *Service) GetTree(ctx context.Context, cmd *folder.GetTreeQuery) ([]*folder.Folder, error) {
-	// check the flag, if old - do whatever did before
-	//  for new only the store
-	return s.store.GetChildren(ctx, *cmd)
 }
 
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
