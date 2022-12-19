@@ -64,9 +64,9 @@ describe('DashboardModel', () => {
           { type: 'annotations', enable: true, annotations: [{ name: 'old' }] },
         ],
         panels: [
+          // @ts-expect-error
           {
             type: 'graph',
-            // @ts-expect-error
             legend: true,
             aliasYAxis: { test: 2 },
             y_formats: ['kbyte', 'ms'],
