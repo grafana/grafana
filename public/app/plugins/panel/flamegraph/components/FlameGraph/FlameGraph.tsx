@@ -23,11 +23,11 @@ import { useMeasure } from 'react-use';
 import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { TooltipData, SelectedView } from '../types';
+import { TooltipData, SelectedView, Selection } from '../types';
 
 import FlameGraphTooltip, { getTooltipData } from './FlameGraphTooltip';
 import { ItemWithStart } from './dataTransform';
-import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
+import { getBarX, getRectDimensionsForLevel, renderRect, renderSelection } from './rendering';
 
 type Props = {
   data: DataFrame;
@@ -72,6 +72,13 @@ const FlameGraph = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData>();
   const [showTooltip, setShowTooltip] = useState(false);
+  const [selection, _setSelection] = useState<Selection>();
+
+  const selectionRef = useRef(selection);
+  const setSelection = (data?: Selection) => {
+    selectionRef.current = data;
+    _setSelection(data);
+  };
 
   // Convert pixel coordinates to bar coordinates in the levels array so that we can add mouse events like clicks to
   // the canvas.
@@ -117,8 +124,12 @@ const FlameGraph = ({
           renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex);
         }
       }
+
+      if (selectionRef.current) {
+        renderSelection(ctx, selectionRef.current);
+      }
     },
-    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
+    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex, selectionRef]
   );
 
   useEffect(() => {
@@ -126,23 +137,73 @@ const FlameGraph = ({
       const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
       render(pixelsPerTick);
 
-      // Clicking allows user to "zoom" into the flamegraph. Zooming means the x axis gets smaller so that the clicked
-      // bar takes 100% of the x axis.
-      graphRef.current.onclick = (e) => {
-        const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
+      // Track the users starting position to detect if they're doing a mouse drag, or a mouse click
+      graphRef.current!.onmousedown = (e) => {
         const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(e.offsetX, e.offsetY, pixelsPerTick);
-
-        if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-          setTopLevelIndex(levelIndex);
-          setRangeMin(levels[levelIndex][barIndex].start / totalTicks);
-          setRangeMax((levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks);
+        if (barIndex === -1 || isNaN(levelIndex) || isNaN(barIndex)) {
+          return;
         }
+        setSelection({
+          startX: e.offsetX,
+          startY: e.offsetY,
+          endX: e.offsetX,
+        });
+      };
+
+      // Check the mouse's new position and figure out if it was a short drag or a real drag.
+      // Short drags are considered a click, which allows the user to zoom into the flamegraph on the node they clicked on.
+      // Long drags are considered a selection zoom, which allows the user to zoom into an area on the graph.
+      graphRef.current!.onmouseup = (e) => {
+        if (!selectionRef.current) {
+          return;
+        }
+
+        // Using the Y position from the mouse down event so that it's based on where the click started
+        let { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
+          e.offsetX,
+          selectionRef.current.startY,
+          pixelsPerTick
+        );
+        if (barIndex === -1 || isNaN(levelIndex) || isNaN(barIndex)) {
+          return;
+        }
+
+        // 1% of the current width is the number of pixels the mouse can move before it's considered a non-click.
+        const delta = 0.01 * graphRef.current!.clientWidth;
+        const diff = Math.abs(e.offsetX - selectionRef.current.startX);
+        let newMin;
+        let newMax;
+        if (diff < delta) {
+          // Click
+          // Clicks will align to the ends of the bar being clicked, so grab the start and end bar that was clicked on.
+          newMin = levels[levelIndex][barIndex].start / totalTicks;
+          newMax = (levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks;
+        } else {
+          // Drag
+          // We're not clicking on a specific node, so make sure that the levelIndex is the top level
+          levelIndex = 0;
+          // A non-click selection highlights an area from where the mouse was clicked down, to where it was released.
+          newMin = Math.min(selectionRef.current.startX, e.offsetX) / graphRef.current!.clientWidth;
+          newMax = Math.max(selectionRef.current.startX, e.offsetX) / graphRef.current!.clientWidth;
+          // Scale the new min and max based on the previous values to account for the current zoom.
+          newMin = (rangeMax - rangeMin) * newMin + rangeMin;
+          newMax = (rangeMax - rangeMin) * newMax + rangeMin;
+        }
+        setTopLevelIndex(levelIndex);
+        setRangeMin(newMin);
+        setRangeMax(newMax);
+        setSelection(undefined);
       };
 
       graphRef.current!.onmousemove = (e) => {
+        if (selectionRef.current) {
+          setSelection({
+            ...selectionRef.current,
+            endX: e.offsetX,
+          });
+        }
         if (tooltipRef.current) {
           setShowTooltip(false);
-          const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
           const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(e.offsetX, e.offsetY, pixelsPerTick);
 
           if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
@@ -167,6 +228,7 @@ const FlameGraph = ({
     levels,
     rangeMin,
     rangeMax,
+    selection,
     topLevelIndex,
     totalTicks,
     wrapperWidth,

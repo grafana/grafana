@@ -42,3 +42,9 @@ export type TopTableValue = {
   value: number;
   unitValue: string;
 };
+
+export type Selection = {
+  startX: number;
+  startY: number;
+  endX?: number;
+};

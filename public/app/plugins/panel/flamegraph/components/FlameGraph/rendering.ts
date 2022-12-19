@@ -9,6 +9,7 @@ import {
   LABEL_THRESHOLD,
   PIXELS_PER_LEVEL,
 } from '../../constants';
+import { Selection } from '../types';
 
 import { ItemWithStart } from './dataTransform';
 
@@ -124,6 +125,22 @@ export function renderRect(
       Math.max(rect.x, 0) + BAR_TEXT_PADDING_LEFT,
       rect.y + PIXELS_PER_LEVEL / 2
     );
+    ctx.restore();
+  }
+}
+
+export function renderSelection(ctx: CanvasRenderingContext2D, selection: Selection) {
+  if (selection.startX && selection.endX) {
+    const height = ctx.canvas.height;
+    const x = selection.startX;
+    const y = 0;
+    const width = selection.endX - x;
+
+    ctx.beginPath();
+    ctx.save();
+    ctx.globalAlpha = 0.2;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x, y, width, height);
     ctx.restore();
   }
 }
