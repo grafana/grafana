@@ -1,18 +1,19 @@
 import { css } from '@emotion/css';
-import React, { FC, useMemo, useState } from 'react';
-import { FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
+import React, { FC, useEffect, useMemo, useState } from 'react';
+import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { logInfo } from '@grafana/runtime';
+import { logInfo, config } from '@grafana/runtime';
 import { Button, ConfirmModal, CustomScrollbar, Spinner, useStyles2, HorizontalGroup, Field, Input } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
-import { LogMessages } from '../../Analytics';
+import { LogMessages, trackNewAlerRuleFormCancelled, trackNewAlerRuleFormError } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -65,16 +66,20 @@ const AlertRuleNameInput = () => {
   );
 };
 
+export const MINUTE = '1m';
+
 type Props = {
   existing?: RuleWithLocation;
+  prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
 };
 
-export const AlertRuleForm: FC<Props> = ({ existing }) => {
+export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
   const [queryParams] = useQueryParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
+  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -83,14 +88,23 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     if (existing) {
       return rulerRuleToFormValues(existing);
     }
+
+    if (prefill) {
+      return {
+        ...getDefaultFormValues(),
+        ...prefill,
+      };
+    }
+
     return {
       ...getDefaultFormValues(),
       queries: getDefaultQueries(),
       condition: 'C',
       ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
       type: RuleFormType.grafana,
+      evaluateEvery: evaluateEvery,
     };
-  }, [existing, queryParams]);
+  }, [existing, prefill, queryParams, evaluateEvery]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -125,6 +139,8 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         },
         existing,
         redirectOnSave: exitOnSave ? returnTo : undefined,
+        initialAlertRuleName: defaultValues.name,
+        evaluateEvery: evaluateEvery,
       })
     );
   };
@@ -142,9 +158,30 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     }
   };
 
-  const onInvalid = () => {
+  const onInvalid = (errors: DeepMap<RuleFormValues, FieldError>): void => {
+    if (!existing) {
+      trackNewAlerRuleFormError({
+        grafana_version: config.buildInfo.version,
+        org_id: contextSrv.user.orgId,
+        user_id: contextSrv.user.id,
+        error: Object.keys(errors).toString(),
+      });
+    }
     notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
+
+  const cancelRuleCreation = () => {
+    logInfo(LogMessages.cancelSavingAlertRule);
+    if (!existing) {
+      trackNewAlerRuleFormCancelled({
+        grafana_version: config.buildInfo.version,
+        org_id: contextSrv.user.orgId,
+        user_id: contextSrv.user.id,
+      });
+    }
+  };
+  const evaluateEveryInForm = watch('evaluateEvery');
+  useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
 
   return (
     <FormProvider {...formAPI}>
@@ -156,7 +193,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               disabled={submitState.loading}
               type="button"
               fill="outline"
-              onClick={() => logInfo(LogMessages.cancelSavingAlertRule)}
+              onClick={cancelRuleCreation}
             >
               Cancel
             </Button>
@@ -202,8 +239,16 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               <QueryAndExpressionsStep editingExistingRule={!!existing} />
               {showStep2 && (
                 <>
-                  {type === RuleFormType.grafana ? <GrafanaEvaluationBehavior /> : <CloudEvaluationBehavior />}
-                  <DetailsStep initialFolder={defaultValues.folder} />
+                  {type === RuleFormType.grafana ? (
+                    <GrafanaEvaluationBehavior
+                      initialFolder={defaultValues.folder}
+                      evaluateEvery={evaluateEvery}
+                      setEvaluateEvery={setEvaluateEvery}
+                    />
+                  ) : (
+                    <CloudEvaluationBehavior />
+                  )}
+                  <DetailsStep />
                   <NotificationsStep />
                 </>
               )}

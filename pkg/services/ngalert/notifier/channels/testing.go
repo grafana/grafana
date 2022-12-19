@@ -13,23 +13,22 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type fakeImageStore struct {
-	Images []*ngmodels.Image
+	Images []*Image
 }
 
 // getImage returns an image with the same token.
-func (f *fakeImageStore) GetImage(_ context.Context, token string) (*ngmodels.Image, error) {
+func (f *fakeImageStore) GetImage(_ context.Context, token string) (*Image, error) {
 	for _, img := range f.Images {
 		if img.Token == token {
 			return img, nil
 		}
 	}
-	return nil, ngmodels.ErrImageNotFound
+	return nil, ErrImageNotFound
 }
 
 // newFakeImageStore returns an image store with N test images.
@@ -37,7 +36,7 @@ func (f *fakeImageStore) GetImage(_ context.Context, token string) (*ngmodels.Im
 func newFakeImageStore(n int) ImageStore {
 	s := fakeImageStore{}
 	for i := 1; i <= n; i++ {
-		s.Images = append(s.Images, &ngmodels.Image{
+		s.Images = append(s.Images, &Image{
 			Token:     fmt.Sprintf("test-image-%d", i),
 			URL:       fmt.Sprintf("https://www.example.com/test-image-%d.jpg", i),
 			CreatedAt: time.Now().UTC(),
@@ -72,7 +71,7 @@ func newFakeImageStoreWithFile(t *testing.T, n int) ImageStore {
 			t.Fatalf("failed to create test image: %s", err)
 		}
 		files = append(files, file)
-		s.Images = append(s.Images, &ngmodels.Image{
+		s.Images = append(s.Images, &Image{
 			Token:     fmt.Sprintf("test-image-%d", i),
 			Path:      file,
 			URL:       fmt.Sprintf("https://www.example.com/test-image-%d", i),
@@ -129,28 +128,50 @@ func resetTimeNow() {
 }
 
 type notificationServiceMock struct {
-	Webhook     models.SendWebhookSync
-	EmailSync   models.SendEmailCommandSync
-	Emailx      models.SendEmailCommand
+	Webhook     SendWebhookSettings
+	EmailSync   SendEmailSettings
 	ShouldError error
 }
 
-func (ns *notificationServiceMock) SendWebhookSync(ctx context.Context, cmd *models.SendWebhookSync) error {
+func (ns *notificationServiceMock) SendWebhook(ctx context.Context, cmd *SendWebhookSettings) error {
 	ns.Webhook = *cmd
 	return ns.ShouldError
 }
-func (ns *notificationServiceMock) SendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
+func (ns *notificationServiceMock) SendEmail(ctx context.Context, cmd *SendEmailSettings) error {
 	ns.EmailSync = *cmd
-	return ns.ShouldError
-}
-func (ns *notificationServiceMock) SendEmailCommandHandler(ctx context.Context, cmd *models.SendEmailCommand) error {
-	ns.Emailx = *cmd
 	return ns.ShouldError
 }
 
 func mockNotificationService() *notificationServiceMock { return &notificationServiceMock{} }
 
-func CreateNotificationService(t *testing.T) *notifications.NotificationService {
+type emailSender struct {
+	ns *notifications.NotificationService
+}
+
+func (e emailSender) SendEmail(ctx context.Context, cmd *SendEmailSettings) error {
+	attached := make([]*models.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
+	for _, file := range cmd.AttachedFiles {
+		attached = append(attached, &models.SendEmailAttachFile{
+			Name:    file.Name,
+			Content: file.Content,
+		})
+	}
+	return e.ns.SendEmailCommandHandlerSync(ctx, &models.SendEmailCommandSync{
+		SendEmailCommand: models.SendEmailCommand{
+			To:            cmd.To,
+			SingleEmail:   cmd.SingleEmail,
+			Template:      cmd.Template,
+			Subject:       cmd.Subject,
+			Data:          cmd.Data,
+			Info:          cmd.Info,
+			ReplyTo:       cmd.ReplyTo,
+			EmbeddedFiles: cmd.EmbeddedFiles,
+			AttachedFiles: attached,
+		},
+	})
+}
+
+func createEmailSender(t *testing.T) *emailSender {
 	t.Helper()
 
 	tracer := tracing.InitializeTracerForTest()
@@ -170,5 +191,5 @@ func CreateNotificationService(t *testing.T) *notifications.NotificationService 
 	ns, err := notifications.ProvideService(bus, cfg, mailer, nil)
 	require.NoError(t, err)
 
-	return ns
+	return &emailSender{ns: ns}
 }

@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/elasticsearch/
-  - /docs/grafana/latest/features/datasources/elasticsearch/
-  - /docs/grafana/latest/data-sources/elasticsearch/
+  - ../data-sources/elasticsearch/
+  - ../features/datasources/elasticsearch/
 description: Guide for using Elasticsearch in Grafana
 keywords:
   - grafana

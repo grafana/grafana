@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/
+  - ../unified-alerting/alerting-rules/create-grafana-managed-rule/
 description: Create Grafana managed alert rule
 keywords:
   - grafana
@@ -43,7 +42,8 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
    - For **Group**, specify a pre-defined group. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
    - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label/" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.
-   - Add custom labels.
+1. In Step 5, add custom labels.
+   - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
 1. Next, create a for the rule.
 

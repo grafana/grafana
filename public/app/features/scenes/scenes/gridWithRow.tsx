@@ -1,14 +1,13 @@
-import { VizPanel } from '../components';
-import { Scene } from '../components/Scene';
+import { VizPanel, SceneGridLayout, SceneGridRow } from '../components';
+import { EmbeddedScene, Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneGridLayout, SceneGridRow } from '../components/layout/SceneGridLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getGridWithRowLayoutTest(): Scene {
-  const scene = new Scene({
+export function getGridWithRowLayoutTest(standalone: boolean): Scene {
+  const state = {
     title: 'Grid with row layout test',
     body: new SceneGridLayout({
       children: [
@@ -71,7 +70,7 @@ export function getGridWithRowLayoutTest(): Scene {
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  });
+  };
 
-  return scene;
+  return standalone ? new Scene(state) : new EmbeddedScene(state);
 }

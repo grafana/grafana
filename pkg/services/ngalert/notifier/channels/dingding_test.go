@@ -10,8 +10,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestDingdingNotifier(t *testing.T) {
@@ -166,19 +164,17 @@ func TestDingdingNotifier(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
-
 			webhookSender := mockNotificationService()
 			fc := FactoryConfig{
 				Config: &NotificationChannelConfig{
 					Name:     "dingding_testing",
 					Type:     "dingding",
-					Settings: settingsJSON,
+					Settings: json.RawMessage(c.settings),
 				},
 				// TODO: allow changing the associated values for different tests.
 				NotificationService: webhookSender,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 			pn, err := newDingDingNotifier(fc)
 			if c.expInitError != "" {

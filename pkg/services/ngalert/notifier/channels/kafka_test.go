@@ -2,6 +2,7 @@ package channels
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"testing"
 
@@ -9,8 +10,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestKafkaNotifier(t *testing.T) {
@@ -112,22 +111,20 @@ func TestKafkaNotifier(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
-
 			webhookSender := mockNotificationService()
 
 			fc := FactoryConfig{
 				Config: &NotificationChannelConfig{
 					Name:     "kafka_testing",
 					Type:     "kafka",
-					Settings: settingsJSON,
+					Settings: json.RawMessage(c.settings),
 				},
 				ImageStore: images,
 				// TODO: allow changing the associated values for different tests.
 				NotificationService: webhookSender,
 				DecryptFunc:         nil,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			pn, err := newKafkaNotifier(fc)

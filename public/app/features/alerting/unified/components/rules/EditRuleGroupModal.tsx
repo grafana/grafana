@@ -14,7 +14,7 @@ import { RulerRulesConfigDTO, RulerRuleGroupDTO, RulerRuleDTO } from 'app/types/
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { rulesInSameGroupHaveInvalidFor, updateLotexNamespaceAndGroupAction } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
-import { getRulesSourceName } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { isAlertingRulerRule, isGrafanaRulerRule } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
@@ -151,7 +151,7 @@ export const RulesForGroupTable = ({
         renderCell: ({ data: { alertName } }) => {
           return <>{alertName}</>;
         },
-        size: 0.6,
+        size: '330px',
       },
       {
         id: 'for',
@@ -174,7 +174,7 @@ export const RulesForGroupTable = ({
             return <>{numberEvaluations}</>;
           }
         },
-        size: 0.2,
+        size: 0.6,
       },
     ];
   }, [currentInterval]);
@@ -186,10 +186,20 @@ export const RulesForGroupTable = ({
   );
 };
 
-interface ModalProps {
+interface CombinedGroupAndNameSpace {
   namespace: CombinedRuleNamespace;
   group: CombinedRuleGroup;
+}
+interface GroupAndNameSpaceNames {
+  namespace: string;
+  group: string;
+}
+interface ModalProps {
+  nameSpaceAndGroup: CombinedGroupAndNameSpace | GroupAndNameSpaceNames;
+  sourceName: string;
+  groupInterval: string;
   onClose: (saved?: boolean) => void;
+  folderAndGroupReadOnly?: boolean;
 }
 
 interface FormValues {
@@ -198,23 +208,74 @@ interface FormValues {
   groupInterval: string;
 }
 
+export const evaluateEveryValidationOptions = (
+  rules: RulerRulesConfigDTO | null | undefined,
+  groupName: string,
+  nameSpaceName: string
+): RegisterOptions => ({
+  required: {
+    value: true,
+    message: 'Required.',
+  },
+  validate: (value: string) => {
+    try {
+      const duration = parsePrometheusDuration(value);
+
+      if (duration < MIN_TIME_RANGE_STEP_S * 1000) {
+        return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+
+      if (duration % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
+        return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+      if (rulesInSameGroupHaveInvalidFor(rules, groupName, nameSpaceName, value).length === 0) {
+        return true;
+      } else {
+        return `Invalid evaluation interval. Evaluation interval should be smaller or equal to 'For' values for existing rules in this group.`;
+      }
+    } catch (error) {
+      return error instanceof Error ? error.message : 'Failed to parse duration';
+    }
+  },
+});
+
 export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
-  const { namespace, group, onClose } = props;
+  const {
+    nameSpaceAndGroup: { namespace, group },
+    onClose,
+    groupInterval,
+    sourceName,
+    folderAndGroupReadOnly,
+  } = props;
+
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const { loading, error, dispatched } =
     useUnifiedAlertingSelector((state) => state.updateLotexNamespaceAndGroup) ?? initialAsyncRequestState;
   const notifyApp = useAppNotification();
-
+  const nameSpaceName = typeof namespace === 'string' ? namespace : namespace.name;
+  const groupName = typeof group === 'string' ? group : group.name;
   const defaultValues = useMemo(
     (): FormValues => ({
-      namespaceName: namespace.name,
-      groupName: group.name,
-      groupInterval: group.interval ?? '',
+      namespaceName: nameSpaceName,
+      groupName: groupName,
+      groupInterval: groupInterval ?? '',
     }),
-    [namespace, group]
+    [nameSpaceName, groupName, groupInterval]
   );
 
+  const isGrafanaManagedGroup = sourceName === GRAFANA_RULES_SOURCE_NAME;
+  const nameSpaceLabel = isGrafanaManagedGroup ? 'Folder' : 'Namespace';
+  const nameSpaceInfoIconLabelEditable = isGrafanaManagedGroup
+    ? 'Folder name can be updated to a non-existing folder name'
+    : 'Name space can be updated to a non-existing name space';
+  const nameSpaceInfoIconLabelNonEditable = isGrafanaManagedGroup
+    ? 'Folder name can be updated in folder view'
+    : 'Name space can be updated folder view';
+
+  const spaceNameInfoIconLabel = folderAndGroupReadOnly
+    ? nameSpaceInfoIconLabelNonEditable
+    : nameSpaceInfoIconLabelEditable;
   // close modal if successfully saved
   useEffect(() => {
     if (dispatched && !loading && !error) {
@@ -223,14 +284,13 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   }, [dispatched, loading, onClose, error]);
 
   useCleanup((state) => (state.unifiedAlerting.updateLotexNamespaceAndGroup = initialAsyncRequestState));
-
   const onSubmit = (values: FormValues) => {
     dispatch(
       updateLotexNamespaceAndGroupAction({
-        rulesSourceName: getRulesSourceName(namespace.rulesSource),
-        groupName: group.name,
+        rulesSourceName: sourceName,
+        groupName: groupName,
         newGroupName: values.groupName,
-        namespaceName: namespace.name,
+        namespaceName: nameSpaceName,
         newNamespaceName: values.namespaceName,
         groupInterval: values.groupInterval || undefined,
       })
@@ -254,42 +314,13 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   };
 
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-  const groupfoldersForSource = rulerRuleRequests[getRulesSourceName(namespace.rulesSource)];
-
-  const evaluateEveryValidationOptions: RegisterOptions = {
-    required: {
-      value: true,
-      message: 'Required.',
-    },
-    validate: (value: string) => {
-      try {
-        const duration = parsePrometheusDuration(value);
-
-        if (duration < MIN_TIME_RANGE_STEP_S * 1000) {
-          return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
-        }
-
-        if (duration % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
-          return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
-        }
-        if (
-          rulesInSameGroupHaveInvalidFor(groupfoldersForSource.result, group.name, namespace.name, value).length === 0
-        ) {
-          return true;
-        } else {
-          return `Invalid evaluation interval. Evaluation interval should be smaller or equal to 'For' values for existing rules in this group.`;
-        }
-      } catch (error) {
-        return error instanceof Error ? error.message : 'Failed to parse duration';
-      }
-    },
-  };
+  const groupfoldersForSource = rulerRuleRequests[sourceName];
 
   return (
     <Modal
       className={styles.modal}
       isOpen={true}
-      title="Edit namespace or evaluation group"
+      title={folderAndGroupReadOnly ? 'Edit evaluation group' : `Edit ${nameSpaceLabel} or evaluation group`}
       onDismiss={onClose}
       onClickBackdrop={onClose}
     >
@@ -300,8 +331,8 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               label={
                 <Label htmlFor="namespaceName">
                   <Stack gap={0.5}>
-                    NameSpace
-                    <InfoIcon text={'Name space can be updated'} />
+                    {nameSpaceLabel}
+                    <InfoIcon text={spaceNameInfoIconLabel} />
                   </Stack>
                 </Label>
               }
@@ -310,6 +341,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
             >
               <Input
                 id="namespaceName"
+                readOnly={folderAndGroupReadOnly}
                 {...register('namespaceName', {
                   required: 'Namespace name is required.',
                 })}
@@ -320,7 +352,11 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 <Label htmlFor="groupName">
                   <Stack gap={0.5}>
                     Evaluation group
-                    <InfoIcon text={'Group name can be updated'} />
+                    {isGrafanaManagedGroup ? (
+                      <InfoIcon text={'Group name can be updated on Group view.'} />
+                    ) : (
+                      <InfoIcon text={'Group name can be updated to a non existing group name.'} />
+                    )}
                   </Stack>
                 </Label>
               }
@@ -329,6 +365,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
             >
               <Input
                 id="groupName"
+                readOnly={folderAndGroupReadOnly}
                 {...register('groupName', {
                   required: 'Evaluation group name is required.',
                 })}
@@ -352,13 +389,36 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               <Input
                 id="groupInterval"
                 placeholder="1m"
-                {...register('groupInterval', evaluateEveryValidationOptions)}
+                {...register(
+                  'groupInterval',
+                  evaluateEveryValidationOptions(groupfoldersForSource?.result, groupName, nameSpaceName)
+                )}
               />
             </Field>
 
             {checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
               <EvaluationIntervalLimitExceeded />
             )}
+            <div className={styles.modalButtons}>
+              <Modal.ButtonRow>
+                <Button
+                  variant="secondary"
+                  type="button"
+                  disabled={loading}
+                  onClick={() => onClose(false)}
+                  fill="outline"
+                >
+                  Close
+                </Button>
+                <Button
+                  type="button"
+                  disabled={!isDirty || loading}
+                  onClick={handleSubmit((values) => onSubmit(values), onInvalid)}
+                >
+                  {loading ? 'Saving...' : 'Save changes'}
+                </Button>
+              </Modal.ButtonRow>
+            </div>
             {rulerRuleRequests && (
               <>
                 <div>List of rules that belong to this group</div>
@@ -367,30 +427,11 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 </div>
                 <RulesForGroupTable
                   rulerRules={groupfoldersForSource?.result}
-                  groupName={group.name}
-                  folderName={namespace.name}
+                  groupName={groupName}
+                  folderName={nameSpaceName}
                 />
               </>
             )}
-
-            <Modal.ButtonRow>
-              <Button
-                variant="secondary"
-                type="button"
-                disabled={loading}
-                onClick={() => onClose(false)}
-                fill="outline"
-              >
-                Close
-              </Button>
-              <Button
-                type="button"
-                disabled={!isDirty || loading}
-                onClick={handleSubmit((values) => onSubmit(values), onInvalid)}
-              >
-                {loading ? 'Saving...' : 'Save changes'}
-              </Button>
-            </Modal.ButtonRow>
           </>
         </form>
       </FormProvider>
@@ -402,6 +443,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   modal: css`
     max-width: 560px;
   `,
+  modalButtons: css`
+    top: -24px;
+    position: relative;
+  `,
   formInput: css`
     width: 275px;
     & + & {
@@ -411,8 +456,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tableWrapper: css`
     margin-top: ${theme.spacing(2)};
     margin-bottom: ${theme.spacing(2)};
-    height: 225px;
-    overflow: auto;
+    height: 100%;
   `,
   evalRequiredLabel: css`
     font-size: ${theme.typography.bodySmall.fontSize};

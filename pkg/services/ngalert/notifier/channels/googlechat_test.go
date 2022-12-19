@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -462,9 +461,6 @@ func TestGoogleChatNotifier(t *testing.T) {
 			require.NoError(t, err)
 			tmpl.ExternalURL = externalURL
 
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
-
 			webhookSender := mockNotificationService()
 			imageStore := &UnavailableImageStore{}
 
@@ -472,11 +468,12 @@ func TestGoogleChatNotifier(t *testing.T) {
 				Config: &NotificationChannelConfig{
 					Name:     "googlechat_testing",
 					Type:     "googlechat",
-					Settings: settingsJSON,
+					Settings: json.RawMessage(c.settings),
 				},
 				ImageStore:          imageStore,
 				NotificationService: webhookSender,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			pn, err := newGoogleChatNotifier(fc)

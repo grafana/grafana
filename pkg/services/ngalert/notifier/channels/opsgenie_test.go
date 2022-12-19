@@ -2,13 +2,10 @@ package channels
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"testing"
 	"time"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
@@ -95,7 +92,7 @@ func TestOpsgenieNotifier(t *testing.T) {
 				"details": {
 					"url": "http://localhost/alerting/list"
 				},
-				"message": "IyJnsW78xQoiBJ7L7NqASv31JCFf0At3r9KUykqBVxSiC6qkDhvDLDW9VImiFcq0Iw2XwFy5fX4FcbTmlkaZzUzjVwx9VUuokhzqQlJVhWDYFqhj3a5wX0LjyvNQjsq...",
+				"message": "IyJnsW78xQoiBJ7L7NqASv31JCFf0At3r9KUykqBVxSiC6qkDhvDLDW9VImiFcq0Iw2XwFy5fX4FcbTmlkaZzUzjVwx9VUuokhzqQlJVhWDYFqhj3a5wX0LjyvNQjsqT9…",
 				"source": "Grafana",
 				"tags": ["alertname:alert1", "lbl1:val1"]
 			}`,
@@ -230,32 +227,37 @@ func TestOpsgenieNotifier(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
+			settingsJSON := json.RawMessage(c.settings)
 			secureSettings := make(map[string][]byte)
-
-			m := &NotificationChannelConfig{
-				Name:           "opsgenie_testing",
-				Type:           "opsgenie",
-				Settings:       settingsJSON,
-				SecureSettings: secureSettings,
-			}
 
 			webhookSender := mockNotificationService()
 			webhookSender.Webhook.Body = "<not-sent>"
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
-			cfg, err := NewOpsgenieConfig(m, decryptFn)
+
+			fc := FactoryConfig{
+				Config: &NotificationChannelConfig{
+					Name:           "opsgenie_testing",
+					Type:           "opsgenie",
+					Settings:       settingsJSON,
+					SecureSettings: secureSettings,
+				},
+				NotificationService: webhookSender,
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				ImageStore: &UnavailableImageStore{},
+				Template:   tmpl,
+				Logger:     &FakeLogger{},
+			}
+
+			ctx := notify.WithGroupKey(context.Background(), "alertname")
+			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
+			pn, err := NewOpsgenieNotifier(fc)
 			if c.expInitError != "" {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
-
-			ctx := notify.WithGroupKey(context.Background(), "alertname")
-			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewOpsgenieNotifier(cfg, webhookSender, &UnavailableImageStore{}, tmpl, decryptFn)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

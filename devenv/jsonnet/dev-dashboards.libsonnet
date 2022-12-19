@@ -107,6 +107,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('barchart-label-rotation-skipping', import '../dev-dashboards/panel-barchart/barchart-label-rotation-skipping.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('barchart-thresholds-mappings', import '../dev-dashboards/panel-barchart/barchart-thresholds-mappings.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -192,6 +199,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('geomap-photo-layer', import '../dev-dashboards/panel-geomap/geomap-photo-layer.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('geomap-route-layer', import '../dev-dashboards/panel-geomap/geomap-route-layer.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

@@ -1,25 +1,20 @@
-import { dateTime } from '@grafana/data';
-
-import { VizPanel } from '../components';
-import { Scene } from '../components/Scene';
+import { VizPanel, SceneGridRow } from '../components';
+import { EmbeddedScene, Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneGridLayout, SceneGridRow } from '../components/layout/SceneGridLayout';
+import { SceneGridLayout } from '../components/layout/SceneGridLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getGridWithMultipleTimeRanges(): Scene {
+export function getGridWithMultipleTimeRanges(standalone: boolean): Scene {
   const globalTimeRange = new SceneTimeRange();
-
-  const now = dateTime();
   const row1TimeRange = new SceneTimeRange({
-    from: dateTime(now).subtract(1, 'year'),
-    to: now,
-    raw: { from: 'now-1y', to: 'now' },
+    from: 'now-1y',
+    to: 'now',
   });
 
-  const scene = new Scene({
+  const state = {
     title: 'Grid with rows and different queries and time ranges',
     body: new SceneGridLayout({
       children: [
@@ -66,7 +61,7 @@ export function getGridWithMultipleTimeRanges(): Scene {
     $timeRange: globalTimeRange,
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  });
+  };
 
-  return scene;
+  return standalone ? new Scene(state) : new EmbeddedScene(state);
 }

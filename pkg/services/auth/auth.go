@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 
 	"github.com/grafana/grafana/pkg/models/usertoken"
@@ -16,16 +17,16 @@ const (
 	QuotaTarget    quota.Target    = "session"
 )
 
-type ActiveTokenService interface {
-	ActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error)
-}
-
 // Typed errors
 var (
-	ErrUserTokenNotFound = errors.New("user token not found")
+	ErrUserTokenNotFound   = errors.New("user token not found")
+	ErrInvalidSessionToken = usertoken.ErrInvalidSessionToken
 )
 
-type TokenRevokedError = usertoken.TokenRevokedError
+type (
+	TokenRevokedError = usertoken.TokenRevokedError
+	UserToken         = usertoken.UserToken
+)
 
 // CreateTokenErr represents a token creation error; used in Enterprise
 type CreateTokenErr struct {
@@ -46,9 +47,11 @@ type TokenExpiredError struct {
 	TokenID int64
 }
 
-func (e *TokenExpiredError) Error() string { return "user token expired" }
+func (e *TokenExpiredError) Unwrap() error { return ErrInvalidSessionToken }
 
-type UserToken = usertoken.UserToken
+func (e *TokenExpiredError) Error() string {
+	return fmt.Sprintf("%s: user token expired", ErrInvalidSessionToken)
+}
 
 type RevokeAuthTokenCmd struct {
 	AuthTokenId int64 `json:"authTokenId"`

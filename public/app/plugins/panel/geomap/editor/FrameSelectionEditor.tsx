@@ -40,9 +40,12 @@ export const FrameSelectionEditor: FC<StandardEditorProps<MatcherConfig>> = ({ v
     }));
   }, [context.data]);
 
-  const [priorSelectionState, updatePriorSelectionState] = useState({
-    refIds: [] as SelectableValue[],
-    value: undefined as string | undefined,
+  const [priorSelectionState, updatePriorSelectionState] = useState<{
+    refIds: SelectableValue[];
+    value: string | undefined;
+  }>({
+    refIds: [],
+    value: undefined,
   });
 
   const currentValue = useMemo(() => {

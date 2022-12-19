@@ -7,10 +7,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -337,8 +333,7 @@ func TestWebhookNotifier(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
+			settingsJSON := json.RawMessage(c.settings)
 			secureSettings := make(map[string][]byte)
 
 			m := &NotificationChannelConfig{
@@ -350,14 +345,16 @@ func TestWebhookNotifier(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 			fc := FactoryConfig{
 				Config:              m,
 				NotificationService: webhookSender,
-				DecryptFunc:         secretsService.GetDecryptedValue,
-				ImageStore:          &UnavailableImageStore{},
-				Template:            tmpl,
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				ImageStore: &UnavailableImageStore{},
+				Template:   tmpl,
+				Logger:     &FakeLogger{},
 			}
 
 			pn, err := buildWebhookNotifier(fc)

@@ -1,6 +1,6 @@
 import { VizPanel } from '../components';
 import { NestedScene } from '../components/NestedScene';
-import { Scene } from '../components/Scene';
+import { EmbeddedScene, Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
@@ -8,8 +8,8 @@ import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getSceneWithRows(): Scene {
-  const scene = new Scene({
+export function getSceneWithRows(standalone: boolean): Scene {
+  const state = {
     title: 'Scene with rows',
     body: new SceneFlexLayout({
       direction: 'column',
@@ -56,7 +56,7 @@ export function getSceneWithRows(): Scene {
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  });
+  };
 
-  return scene;
+  return standalone ? new Scene(state) : new EmbeddedScene(state);
 }

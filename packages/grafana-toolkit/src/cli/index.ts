@@ -39,8 +39,10 @@ export const run = (includeInternalScripts = false) => {
       .command('node-version-check')
       .description('[deprecated] Verify node version')
       .action(async () => {
-        chalk.yellow.bold(
-          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        console.log(
+          chalk.yellow.bold(
+            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+          )
         );
         console.log(
           'if you were reliant on this command we recommend https://www.npmjs.com/package/check-node-version'
@@ -60,8 +62,10 @@ export const run = (includeInternalScripts = false) => {
       .command('toolkit:build')
       .description('[Deprecated] Prepares grafana/toolkit dist package')
       .action(async (cmd) => {
-        chalk.yellow.bold(
-          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        console.log(
+          chalk.yellow.bold(
+            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+          )
         );
         await execTask(toolkitBuildTask)({});
       });
@@ -71,8 +75,10 @@ export const run = (includeInternalScripts = false) => {
       .option('-c, --count <number_of_dashboards>', 'Specify number of dashboards')
       .description('[deprecated] Setup test data for search')
       .action(async (cmd) => {
-        chalk.yellow.bold(
-          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        console.log(
+          chalk.yellow.bold(
+            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+          )
         );
         await execTask(searchTestDataSetupTask)({ count: cmd.count });
       });
@@ -84,8 +90,10 @@ export const run = (includeInternalScripts = false) => {
         '[deprecated] Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
       )
       .action(async () => {
-        chalk.yellow.bold(
-          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        console.log(
+          chalk.yellow.bold(
+            `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+          )
         );
         console.log(
           'if you were reliant on this command we recommend https://www.npmjs.com/package/react-gen-component'
@@ -101,8 +109,12 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:create [name]')
-    .description('Creates plugin from template')
+    .description('[Deprecated] Creates plugin from template')
     .action(async (cmd) => {
+      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
+      console.log(
+        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
+      );
       await execTask(pluginCreateTask)({ name: cmd, silent: true });
     });
 
@@ -113,8 +125,13 @@ export const run = (includeInternalScripts = false) => {
     .option('--skipTest', 'Skip running tests (for pipelines that run it separate)', false)
     .option('--skipLint', 'Skip running lint (for pipelines that run it separate)', false)
     .option('--preserveConsole', 'Preserves console calls', false)
-    .description('Prepares plugin dist package')
+    .description('[Deprecated] Prepares plugin dist package')
     .action(async (cmd) => {
+      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
+      console.log(
+        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
+      );
+
       await execTask(pluginBuildTask)({
         coverage: cmd.coverage,
         silent: true,
@@ -128,8 +145,13 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:dev')
     .option('-w, --watch', 'Run plugin development mode with watch enabled')
-    .description('Starts plugin dev mode')
+    .description('[Deprecated] Starts plugin dev mode')
     .action(async (cmd) => {
+      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
+      console.log(
+        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
+      );
+
       await execTask(pluginDevTask)({
         watch: !!cmd.watch,
         silent: true,
@@ -144,8 +166,13 @@ export const run = (includeInternalScripts = false) => {
     .option('--testPathPattern <regex>', 'Run only tests with a path that matches the regex')
     .option('--testNamePattern <regex>', 'Run only tests with a name that matches the regex')
     .option('--maxWorkers <num>|<string>', 'Limit number of workers spawned')
-    .description('Executes plugin tests')
+    .description('[Deprecated] Executes plugin tests')
     .action(async (cmd) => {
+      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
+      console.log(
+        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
+      );
+
       await execTask(pluginTestTask)({
         updateSnapshot: !!cmd.updateSnapshot,
         coverage: !!cmd.coverage,
@@ -175,8 +202,12 @@ export const run = (includeInternalScripts = false) => {
       },
       []
     )
-    .description('Create a plugin signature')
+    .description('[Deprecated] Create a plugin signature')
     .action(async (cmd) => {
+      console.log(
+        chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️') +
+          '\nPlease migrate to grafana sign-plugin https://github.com/grafana/plugin-tools/tree/main/packages/sign-plugin'
+      );
       await execTask(pluginSignTask)({
         signatureType: cmd.signatureType,
         rootUrls: cmd.rootUrls,
@@ -221,10 +252,12 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:bundle-managed')
-    .description('Builds managed plugins')
+    .description('[Deprecated] Builds managed plugins')
     .action(async (cmd) => {
-      chalk.yellow.bold(
-        `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+      console.log(
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        )
       );
       await execTask(bundleManagedTask)({});
     });
@@ -234,9 +267,11 @@ export const run = (includeInternalScripts = false) => {
     .option('--dryrun', 'Do a dry run only', false)
     .option('--verbose', 'Print verbose', false)
     .option('--commitHash <hashKey>', 'Specify the commit hash')
-    .description('Publish to github')
+    .description('[Deprecated] Publish to github')
     .action(async (cmd) => {
-      chalk.yellow.bold(`⚠️ This command is deprecated and will be removed . No further support will be provided. ⚠️`);
+      console.log(
+        chalk.yellow.bold(`⚠️ This command is deprecated and will be removed . No further support will be provided. ⚠️`)
+      );
       console.log(
         'We recommend using github actions directly for plugin releasing. You can find an example here:  https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin/templates/github/ci/.github/workflows'
       );
@@ -249,10 +284,12 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:update-circleci')
-    .description('Update plugin')
+    .description('[Deprecated] Update plugin')
     .action(async (cmd) => {
-      chalk.yellow.bold(
-        `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+      console.log(
+        chalk.yellow.bold(
+          `⚠️ This command is deprecated and will be removed in v10. No further support will be provided. ⚠️`
+        )
       );
       await execTask(pluginUpdateTask)({});
     });

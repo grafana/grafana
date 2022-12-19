@@ -1,10 +1,7 @@
-import { css, cx } from '@emotion/css';
 import React from 'react';
 import ReactGridLayout from 'react-grid-layout';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PANEL_SPAN, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
@@ -371,101 +368,6 @@ function SceneGridLayoutRenderer({ model }: SceneComponentProps<SceneGridLayout>
     </AutoSizer>
   );
 }
-
-interface SceneGridRowState extends SceneLayoutChildState {
-  title: string;
-  isCollapsible?: boolean;
-  isCollapsed?: boolean;
-  children: Array<SceneObject<SceneLayoutChildState>>;
-}
-
-export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
-  public static Component = SceneGridRowRenderer;
-
-  public constructor(state: SceneGridRowState) {
-    super({
-      isCollapsible: true,
-      ...state,
-      layout: {
-        isDraggable: true,
-        ...state.layout,
-        x: 0,
-        height: 1,
-        width: GRID_COLUMN_COUNT,
-        isResizable: false,
-      },
-    });
-  }
-
-  public onCollapseToggle = () => {
-    if (!this.state.isCollapsible) {
-      return;
-    }
-
-    const layout = this.parent;
-
-    if (!layout || !(layout instanceof SceneGridLayout)) {
-      throw new Error('SceneGridRow must be a child of SceneGridLayout');
-    }
-
-    layout.toggleRow(this);
-  };
-}
-
-function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
-  const styles = useStyles2(getSceneGridRowStyles);
-  const { isCollapsible, isCollapsed, title, layout } = model.useState();
-  const parentLayout = sceneGraph.getLayout(model);
-  const dragHandle = <SceneDragHandle layoutKey={parentLayout.state.key!} />;
-
-  return (
-    <div className={styles.row}>
-      <div className={cx(styles.rowHeader, isCollapsed && styles.rowHeaderCollapsed)}>
-        <div onClick={model.onCollapseToggle} className={styles.rowTitleWrapper}>
-          {isCollapsible && <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />}
-          <span className={styles.rowTitle}>{title}</span>
-        </div>
-        {layout?.isDraggable && isCollapsed && <div>{dragHandle}</div>}
-      </div>
-    </div>
-  );
-}
-
-const getSceneGridRowStyles = (theme: GrafanaTheme2) => {
-  return {
-    row: css({
-      width: '100%',
-      height: '100%',
-      position: 'relative',
-      zIndex: 0,
-      display: 'flex',
-      flexDirection: 'column',
-    }),
-    rowHeader: css({
-      width: '100%',
-      height: '30px',
-      display: 'flex',
-      justifyContent: 'space-between',
-      marginBottom: '8px',
-      border: `1px solid transparent`,
-    }),
-    rowTitleWrapper: css({
-      display: 'flex',
-      alignItems: 'center',
-      cursor: 'pointer',
-    }),
-    rowHeaderCollapsed: css({
-      marginBottom: '0px',
-      background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.borderRadius(1),
-    }),
-    rowTitle: css({
-      fontSize: theme.typography.h6.fontSize,
-      fontWeight: theme.typography.h6.fontWeight,
-    }),
-  };
-};
 
 function validateChildrenSize(children: SceneLayoutChild[]) {
   if (

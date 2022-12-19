@@ -11,16 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestWeComNotifier(t *testing.T) {
@@ -159,8 +154,7 @@ func TestWeComNotifier(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
+			settingsJSON := json.RawMessage(c.settings)
 
 			m := &NotificationChannelConfig{
 				Name:     "wecom_testing",
@@ -169,14 +163,16 @@ func TestWeComNotifier(t *testing.T) {
 			}
 
 			webhookSender := mockNotificationService()
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 			fc := FactoryConfig{
 				Config:              m,
 				NotificationService: webhookSender,
-				DecryptFunc:         secretsService.GetDecryptedValue,
-				ImageStore:          nil,
-				Template:            tmpl,
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				ImageStore: nil,
+				Template:   tmpl,
+				Logger:     &FakeLogger{},
 			}
 
 			pn, err := buildWecomNotifier(fc)
@@ -344,24 +340,23 @@ func TestWeComNotifierAPIAPP(t *testing.T) {
 			}))
 			defer server.Close()
 
-			settingsJSON, err := simplejson.NewJson([]byte(tt.settings))
-			require.NoError(t, err)
-
 			m := &NotificationChannelConfig{
 				Name:     "wecom_testing",
 				Type:     "wecom",
-				Settings: settingsJSON,
+				Settings: json.RawMessage(tt.settings),
 			}
 
 			webhookSender := mockNotificationService()
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 			fc := FactoryConfig{
 				Config:              m,
 				NotificationService: webhookSender,
-				DecryptFunc:         secretsService.GetDecryptedValue,
-				ImageStore:          nil,
-				Template:            tmpl,
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				ImageStore: nil,
+				Template:   tmpl,
+				Logger:     &FakeLogger{},
 			}
 
 			pn, err := buildWecomNotifier(fc)
@@ -530,26 +525,25 @@ func TestWeComFactory(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(tt.settings))
-			require.NoError(t, err)
-
 			m := &NotificationChannelConfig{
 				Name:     "wecom_testing",
 				Type:     "wecom",
-				Settings: settingsJSON,
+				Settings: json.RawMessage(tt.settings),
 			}
 
 			webhookSender := mockNotificationService()
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 			fc := FactoryConfig{
 				Config:              m,
 				NotificationService: webhookSender,
-				DecryptFunc:         secretsService.GetDecryptedValue,
-				ImageStore:          nil,
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				ImageStore: nil,
+				Logger:     &FakeLogger{},
 			}
 
-			_, err = WeComFactory(fc)
+			_, err := WeComFactory(fc)
 			if !tt.wantErr(t, err, fmt.Sprintf("WeComFactory(%v)", fc)) {
 				return
 			}

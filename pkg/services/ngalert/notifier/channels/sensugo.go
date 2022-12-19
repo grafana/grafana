@@ -10,18 +10,13 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 type SensuGoNotifier struct {
 	*Base
-	log      log.Logger
+	log      Logger
 	images   ImageStore
-	ns       notifications.WebhookSender
+	ns       WebhookSender
 	tmpl     *template.Template
 	settings sensuGoSettings
 }
@@ -73,15 +68,8 @@ func NewSensuGoNotifier(fc FactoryConfig) (*SensuGoNotifier, error) {
 		return nil, err
 	}
 	return &SensuGoNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-			SecureSettings:        fc.Config.SecureSettings,
-		}),
-		log:      log.New("alerting.notifier.sensugo"),
+		Base:     NewBase(fc.Config),
+		log:      fc.Logger,
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
@@ -128,7 +116,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	labels := make(map[string]string)
 
 	_ = withStoredImages(ctx, sn.log, sn.images,
-		func(_ int, image ngmodels.Image) error {
+		func(_ int, image Image) error {
 			// If there is an image for this alert and the image has been uploaded
 			// to a public URL then add it to the request. We cannot add more than
 			// one image per request.
@@ -172,7 +160,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		return false, err
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        fmt.Sprintf("%s/api/core/v2/namespaces/%s/events", strings.TrimSuffix(sn.settings.URL, "/"), namespace),
 		Body:       string(body),
 		HttpMethod: "POST",
@@ -181,7 +169,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 			"Authorization": fmt.Sprintf("Key %s", sn.settings.APIKey),
 		},
 	}
-	if err := sn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := sn.ns.SendWebhook(ctx, cmd); err != nil {
 		sn.log.Error("failed to send Sensu Go event", "error", err, "sensugo", sn.Name)
 		return false, err
 	}
