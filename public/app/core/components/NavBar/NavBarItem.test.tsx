@@ -196,9 +196,9 @@ describe('NavBarItem', () => {
         expect(screen.getAllByRole('menuitem')[2]).toHaveAttribute('tabIndex', '-1');
 
         await userEvent.keyboard('{ArrowLeft}');
-        expect((await screen.findAllByRole('link'))[0]).toHaveFocus();
+        expect(screen.getAllByRole('link')[0]).toHaveFocus();
         expect(screen.getAllByRole('menuitem')).toHaveLength(3);
-        expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
+        expect(screen.getAllByRole('menuitem')[0]).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[1]).toHaveAttribute('tabIndex', '-1');
         expect(screen.getAllByRole('menuitem')[2]).toHaveAttribute('tabIndex', '-1');
       });
