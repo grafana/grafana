@@ -75,20 +75,27 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/dashboard/:type/:slug',
-      pageClass: 'page-dashboard',
-      routeName: DashboardRoutes.Normal,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
-      ),
-    },
-    {
       path: '/dashboard/new',
       roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.New,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardPage')
+      ),
+    },
+    {
+      path: '/dashboard/new-with-ds/:datasourceUid',
+      roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.DashboardsCreate]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardWithDS')
+      ),
+    },
+    {
+      path: '/dashboard/:type/:slug',
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Normal,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
       ),
     },
     {
