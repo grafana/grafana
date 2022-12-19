@@ -11,6 +11,8 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -189,7 +191,7 @@ func TestVictoropsNotifier(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			settingsJSON := json.RawMessage(c.settings)
 
-			m := &NotificationChannelConfig{
+			m := &channels.NotificationChannelConfig{
 				Name:     "victorops_testing",
 				Type:     "victorops",
 				Settings: settingsJSON,
@@ -197,12 +199,12 @@ func TestVictoropsNotifier(t *testing.T) {
 
 			webhookSender := mockNotificationService()
 
-			fc := FactoryConfig{
+			fc := channels.FactoryConfig{
 				Config:              m,
 				NotificationService: webhookSender,
 				ImageStore:          images,
 				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				Logger:              &channels.FakeLogger{},
 			}
 
 			pn, err := NewVictoropsNotifier(fc)
@@ -225,7 +227,7 @@ func TestVictoropsNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			require.NotEmpty(t, webhookSender.Webhook.Url)
+			require.NotEmpty(t, webhookSender.Webhook.URL)
 
 			// Remove the non-constant timestamp
 			data := make(map[string]interface{})

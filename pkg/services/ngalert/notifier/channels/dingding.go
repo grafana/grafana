@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -22,7 +23,7 @@ type dingDingSettings struct {
 	Message     string
 }
 
-func buildDingDingSettings(fc FactoryConfig) (*dingDingSettings, error) {
+func buildDingDingSettings(fc channels.FactoryConfig) (*dingDingSettings, error) {
 	settings, err := simplejson.NewJson(fc.Config.Settings)
 	if err != nil {
 		return nil, err
@@ -34,12 +35,12 @@ func buildDingDingSettings(fc FactoryConfig) (*dingDingSettings, error) {
 	return &dingDingSettings{
 		URL:         URL,
 		MessageType: settings.Get("msgType").MustString(defaultDingdingMsgType),
-		Title:       settings.Get("title").MustString(DefaultMessageTitleEmbed),
-		Message:     settings.Get("message").MustString(DefaultMessageEmbed),
+		Title:       settings.Get("title").MustString(channels.DefaultMessageTitleEmbed),
+		Message:     settings.Get("message").MustString(channels.DefaultMessageEmbed),
 	}, nil
 }
 
-func DingDingFactory(fc FactoryConfig) (NotificationChannel, error) {
+func DingDingFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
 	n, err := newDingDingNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
@@ -51,13 +52,13 @@ func DingDingFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 // newDingDingNotifier is the constructor for the Dingding notifier
-func newDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
+func newDingDingNotifier(fc channels.FactoryConfig) (*DingDingNotifier, error) {
 	settings, err := buildDingDingSettings(fc)
 	if err != nil {
 		return nil, err
 	}
 	return &DingDingNotifier{
-		Base:     NewBase(fc.Config),
+		Base:     channels.NewBase(fc.Config),
 		log:      fc.Logger,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
@@ -67,9 +68,9 @@ func newDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
 
 // DingDingNotifier is responsible for sending alert notifications to ding ding.
 type DingDingNotifier struct {
-	*Base
-	log      Logger
-	ns       WebhookSender
+	*channels.Base
+	log      channels.Logger
+	ns       channels.WebhookSender
 	tmpl     *template.Template
 	settings dingDingSettings
 }
@@ -81,7 +82,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	msgUrl := buildDingDingURL(dd)
 
 	var tmplErr error
-	tmpl, _ := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
+	tmpl, _ := channels.TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
 
 	message := tmpl(dd.settings.Message)
 	title := tmpl(dd.settings.Title)
@@ -103,7 +104,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		u = dd.settings.URL
 	}
 
-	cmd := &SendWebhookSettings{Url: u, Body: b}
+	cmd := &channels.SendWebhookSettings{URL: u, Body: b}
 
 	if err := dd.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to dingding: %w", err)

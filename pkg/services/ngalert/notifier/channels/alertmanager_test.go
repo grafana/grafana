@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -44,7 +45,7 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			secureSettings := make(map[string][]byte)
 
-			m := &NotificationChannelConfig{
+			m := &channels.NotificationChannelConfig{
 				Name:           c.receiverName,
 				Type:           "prometheus-alertmanager",
 				Settings:       json.RawMessage(c.settings),
@@ -60,7 +61,7 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, &FakeLogger{}, &UnavailableImageStore{}, tmpl, decryptFn)
+			sn := NewAlertmanagerNotifier(cfg, &channels.FakeLogger{}, &channels.UnavailableImageStore{}, tmpl, decryptFn)
 			require.NotNil(t, sn)
 		})
 	}
@@ -142,7 +143,7 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 			require.NoError(t, err)
 			secureSettings := make(map[string][]byte)
 
-			m := &NotificationChannelConfig{
+			m := &channels.NotificationChannelConfig{
 				Name:           c.receiverName,
 				Type:           "prometheus-alertmanager",
 				Settings:       settingsJSON,
@@ -154,13 +155,13 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 			}
 			cfg, err := NewAlertmanagerConfig(m, decryptFn)
 			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, &FakeLogger{}, images, tmpl, decryptFn)
+			sn := NewAlertmanagerNotifier(cfg, &channels.FakeLogger{}, images, tmpl, decryptFn)
 			var body []byte
 			origSendHTTPRequest := sendHTTPRequest
 			t.Cleanup(func() {
 				sendHTTPRequest = origSendHTTPRequest
 			})
-			sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logger Logger) ([]byte, error) {
+			sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logger channels.Logger) ([]byte, error) {
 				body = cfg.body
 				return nil, c.sendHTTPRequestError
 			}

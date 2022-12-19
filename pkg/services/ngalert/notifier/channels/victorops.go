@@ -13,6 +13,8 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -34,9 +36,9 @@ type victorOpsSettings struct {
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
-func buildVictorOpsSettings(fc FactoryConfig) (victorOpsSettings, error) {
+func buildVictorOpsSettings(fc channels.FactoryConfig) (victorOpsSettings, error) {
 	settings := victorOpsSettings{}
-	err := fc.Config.unmarshalSettings(&settings)
+	err := json.Unmarshal(fc.Config.Settings, &settings)
 	if err != nil {
 		return settings, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
@@ -47,15 +49,15 @@ func buildVictorOpsSettings(fc FactoryConfig) (victorOpsSettings, error) {
 		settings.MessageType = victoropsAlertStateCritical
 	}
 	if settings.Title == "" {
-		settings.Title = DefaultMessageTitleEmbed
+		settings.Title = channels.DefaultMessageTitleEmbed
 	}
 	if settings.Description == "" {
-		settings.Description = DefaultMessageEmbed
+		settings.Description = channels.DefaultMessageEmbed
 	}
 	return settings, nil
 }
 
-func VictorOpsFactory(fc FactoryConfig) (NotificationChannel, error) {
+func VictorOpsFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
 	notifier, err := NewVictoropsNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
@@ -68,13 +70,13 @@ func VictorOpsFactory(fc FactoryConfig) (NotificationChannel, error) {
 
 // NewVictoropsNotifier creates an instance of VictoropsNotifier that
 // handles posting notifications to Victorops REST API
-func NewVictoropsNotifier(fc FactoryConfig) (*VictoropsNotifier, error) {
+func NewVictoropsNotifier(fc channels.FactoryConfig) (*VictoropsNotifier, error) {
 	settings, err := buildVictorOpsSettings(fc)
 	if err != nil {
 		return nil, err
 	}
 	return &VictoropsNotifier{
-		Base:     NewBase(fc.Config),
+		Base:     channels.NewBase(fc.Config),
 		log:      fc.Logger,
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
@@ -87,10 +89,10 @@ func NewVictoropsNotifier(fc FactoryConfig) (*VictoropsNotifier, error) {
 // and handles notification process by formatting POST body according to
 // Victorops specifications (http://victorops.force.com/knowledgebase/articles/Integration/Alert-Ingestion-API-Documentation/)
 type VictoropsNotifier struct {
-	*Base
-	log      Logger
-	images   ImageStore
-	ns       WebhookSender
+	*channels.Base
+	log      channels.Logger
+	images   channels.ImageStore
+	ns       channels.WebhookSender
 	tmpl     *template.Template
 	settings victorOpsSettings
 }
@@ -100,7 +102,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	vn.log.Debug("sending notification", "notification", vn.Name)
 
 	var tmplErr error
-	tmpl, _ := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
+	tmpl, _ := channels.TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
 
 	messageType := buildMessageType(vn.log, tmpl, vn.settings.MessageType, as...)
 
@@ -109,7 +111,7 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		return false, err
 	}
 
-	stateMessage, truncated := TruncateInRunes(tmpl(vn.settings.Description), victorOpsMaxMessageLenRunes)
+	stateMessage, truncated := channels.TruncateInRunes(tmpl(vn.settings.Description), victorOpsMaxMessageLenRunes)
 	if truncated {
 		vn.log.Warn("Truncated stateMessage", "incident", groupKey, "max_runes", victorOpsMaxMessageLenRunes)
 	}
@@ -130,10 +132,10 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	}
 
 	_ = withStoredImages(ctx, vn.log, vn.images,
-		func(index int, image Image) error {
+		func(index int, image channels.Image) error {
 			if image.URL != "" {
 				bodyJSON["image_url"] = image.URL
-				return ErrImagesDone
+				return channels.ErrImagesDone
 			}
 			return nil
 		}, as...)
@@ -151,8 +153,8 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	if err != nil {
 		return false, err
 	}
-	cmd := &SendWebhookSettings{
-		Url:  u,
+	cmd := &channels.SendWebhookSettings{
+		URL:  u,
 		Body: string(b),
 	}
 
@@ -168,7 +170,7 @@ func (vn *VictoropsNotifier) SendResolved() bool {
 	return !vn.GetDisableResolveMessage()
 }
 
-func buildMessageType(l Logger, tmpl func(string) string, msgType string, as ...*types.Alert) string {
+func buildMessageType(l channels.Logger, tmpl func(string) string, msgType string, as ...*types.Alert) string {
 	if types.Alerts(as...).Status() == model.AlertResolved {
 		return victoropsAlertStateRecovery
 	}
