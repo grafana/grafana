@@ -209,8 +209,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	err = dsHandler.Ping()
 
 	if err != nil {
-		transformer := mssqlQueryResultTransformer{}
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: transformer.TransformQueryError(logger, err).Error()}, nil
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(logger, err).Error()}, nil
 	}
 
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil

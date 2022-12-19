@@ -107,7 +107,7 @@ type QueryJson struct {
 	Format       string  `json:"format"`
 }
 
-func (e *DataSourceHandler) transformQueryError(logger log.Logger, err error) error {
+func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) error {
 	// OpError is the error type usually returned by functions in the net
 	// package. It describes the operation, network type, and address of
 	// an error. We log this error rather than return it to the client
@@ -254,14 +254,14 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	// global substitutions
 	interpolatedQuery, err := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
 	if err != nil {
-		errAppendDebug("interpolation failed", e.transformQueryError(logger, err), interpolatedQuery)
+		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 
 	// data source specific substitutions
 	interpolatedQuery, err = e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("interpolation failed", e.transformQueryError(logger, err), interpolatedQuery)
+		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 
@@ -271,7 +271,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	rows, err := db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("db query error", e.transformQueryError(logger, err), interpolatedQuery)
+		errAppendDebug("db query error", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 	defer func() {
