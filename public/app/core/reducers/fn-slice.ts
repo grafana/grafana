@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { WritableDraft } from 'immer/dist/internal';
 
 import { GrafanaThemeType } from '@grafana/data';
+import { dispatch } from 'app/store/store';
 
 import { AnyObject } from '../../fn-app/types';
 
@@ -15,6 +16,11 @@ export interface FnGlobalState {
   queryParams: AnyObject;
   hiddenVariables: string[];
 }
+
+export type UpdateFNGlobalStateAction = PayloadAction<{
+  type: keyof FnGlobalState;
+  payload: FnGlobalState[keyof FnGlobalState];
+}>;
 
 const INITIAL_MODE = GrafanaThemeType.Light;
 
@@ -33,14 +39,11 @@ const fnSlice = createSlice({
   name: 'fnGlobalState',
   initialState,
   reducers: {
-    setInitialMountState: (state, action: PayloadAction<FnGlobalState>) => {
+    setInitialMountState: (state, action: PayloadAction<Omit<FnGlobalState, 'hiddenVariables'>>) => {
       return { ...state, ...action.payload };
     },
-    updateFnState: (
-      state: WritableDraft<FnGlobalState>,
-      action: PayloadAction<{ type: keyof FnGlobalState; payload: FnGlobalState[keyof FnGlobalState] }>
-    ) => {
-      const { type, payload } = action;
+    updateFnState: (state: WritableDraft<FnGlobalState>, action: UpdateFNGlobalStateAction) => {
+      const { type, payload } = action.payload;
 
       return {
         ...state,
@@ -52,3 +55,15 @@ const fnSlice = createSlice({
 
 export const { updateFnState, setInitialMountState } = fnSlice.actions;
 export const fnSliceReducer = fnSlice.reducer;
+
+export const updateFNGlobalState = (
+  type: keyof FnGlobalState,
+  payload: UpdateFNGlobalStateAction['payload']['payload']
+): void => {
+  dispatch(
+    updateFnState({
+      type,
+      payload,
+    })
+  );
+};
