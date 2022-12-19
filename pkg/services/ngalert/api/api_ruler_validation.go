@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -18,7 +18,7 @@ func validateRuleNode(
 	groupName string,
 	interval time.Duration,
 	orgId int64,
-	namespace *models.Folder,
+	namespace *folder.Folder,
 	conditionValidator func(ngmodels.Condition) error,
 	cfg *setting.UnifiedAlertingSettings) (*ngmodels.AlertRule, error) {
 	intervalSeconds, err := validateInterval(cfg, interval)
@@ -93,7 +93,7 @@ func validateRuleNode(
 		Data:            ruleNode.GrafanaManagedAlert.Data,
 		UID:             ruleNode.GrafanaManagedAlert.UID,
 		IntervalSeconds: intervalSeconds,
-		NamespaceUID:    namespace.Uid,
+		NamespaceUID:    namespace.UID,
 		RuleGroup:       groupName,
 		NoDataState:     noDataState,
 		ExecErrState:    errorState,
@@ -108,7 +108,7 @@ func validateRuleNode(
 		newAlertRule.Annotations = ruleNode.ApiRuleNode.Annotations
 		newAlertRule.Labels = ruleNode.ApiRuleNode.Labels
 
-		err = newAlertRule.SetDashboardAndPanel()
+		err = newAlertRule.SetDashboardAndPanelFromAnnotations()
 		if err != nil {
 			return nil, err
 		}
@@ -152,7 +152,7 @@ func validateForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Dur
 func validateRuleGroup(
 	ruleGroupConfig *apimodels.PostableRuleGroupConfig,
 	orgId int64,
-	namespace *models.Folder,
+	namespace *folder.Folder,
 	conditionValidator func(ngmodels.Condition) error,
 	cfg *setting.UnifiedAlertingSettings) ([]*ngmodels.AlertRule, error) {
 	if ruleGroupConfig.Name == "" {

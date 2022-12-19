@@ -83,7 +83,7 @@ func TestQuery_GetLogEvents(t *testing.T) {
 			cli = fakeCWLogsClient{}
 
 			im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-				return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+				return DataSource{Settings: models.CloudWatchSettings{}}, nil
 			})
 
 			executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -141,7 +141,7 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 	const refID = "A"
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -222,7 +222,7 @@ func TestQuery_StartQuery(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -275,7 +275,7 @@ func TestQuery_StartQuery(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -333,7 +333,7 @@ func Test_executeStartQuery(t *testing.T) {
 	t.Run("successfully parses information from JSON to StartQueryWithContext", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
@@ -369,7 +369,7 @@ func Test_executeStartQuery(t *testing.T) {
 	t.Run("does not populate StartQueryInput.limit when no limit provided", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
@@ -390,6 +390,78 @@ func Test_executeStartQuery(t *testing.T) {
 		assert.NoError(t, err)
 		require.Len(t, cli.calls.startQueryWithContext, 1)
 		assert.Nil(t, cli.calls.startQueryWithContext[0].Limit)
+	})
+
+	t.Run("attaches logGroupIdentifiers if the crossAccount feature is enabled", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchCrossAccountQuerying))
+
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"limit":   12,
+						"queryString":"fields @message",
+						"logGroups":[{"value": "fakeARN"}]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, []*cloudwatchlogs.StartQueryInput{
+			{
+				StartTime:           aws.Int64(0),
+				EndTime:             aws.Int64(1),
+				Limit:               aws.Int64(12),
+				QueryString:         aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
+				LogGroupIdentifiers: []*string{aws.String("fakeARN")},
+			},
+		}, cli.calls.startQueryWithContext)
+	})
+
+	t.Run("attaches logGroupIdentifiers if the crossAccount feature is enabled and strips out trailing *", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchCrossAccountQuerying))
+
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"limit":   12,
+						"queryString":"fields @message",
+						"logGroups":[{"value": "*fake**ARN*"}]
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, []*cloudwatchlogs.StartQueryInput{
+			{
+				StartTime:           aws.Int64(0),
+				EndTime:             aws.Int64(1),
+				Limit:               aws.Int64(12),
+				QueryString:         aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
+				LogGroupIdentifiers: []*string{aws.String("*fake**ARN")},
+			},
+		}, cli.calls.startQueryWithContext)
 	})
 }
 
@@ -425,7 +497,7 @@ func TestQuery_StopQuery(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
 	timeRange := backend.TimeRange{
@@ -520,7 +592,7 @@ func TestQuery_GetQueryResults(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -581,4 +653,27 @@ func TestQuery_GetQueryResults(t *testing.T) {
 		},
 	},
 	}, resp)
+}
+
+func TestGroupResponseFrame(t *testing.T) {
+	t.Run("Doesn't group results without time field", func(t *testing.T) {
+		frame := data.NewFrameOfFieldTypes("test", 0, data.FieldTypeString, data.FieldTypeInt32)
+		frame.AppendRow("val1", int32(10))
+		frame.AppendRow("val2", int32(20))
+		frame.AppendRow("val3", int32(30))
+
+		groupedFrame, err := groupResponseFrame(frame, []string{"something"})
+		require.NoError(t, err)
+		require.Equal(t, 3, groupedFrame[0].Rows())
+		require.Equal(t, []interface{}{"val1", "val2", "val3"}, asArray(groupedFrame[0].Fields[0]))
+		require.Equal(t, []interface{}{int32(10), int32(20), int32(30)}, asArray(groupedFrame[0].Fields[1]))
+	})
+}
+
+func asArray(field *data.Field) []interface{} {
+	var vals []interface{}
+	for i := 0; i < field.Len(); i++ {
+		vals = append(vals, field.At(i))
+	}
+	return vals
 }

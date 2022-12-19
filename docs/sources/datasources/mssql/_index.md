@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/datasources/mssql/
-  - /docs/grafana/latest/datasources/mssql/
-  - /docs/grafana/latest/data-sources/mssql/
+  - ../data-sources/mssql/
+  - ../features/datasources/mssql/
 description: Guide for using Microsoft SQL Server in Grafana
 keywords:
   - grafana
@@ -77,6 +76,10 @@ For example, use `1m` if Microsoft SQL Server writes data every minute.
 
 You can also override this setting in a dashboard panel under its data source options.
 
+### Connection timeout
+
+The **Connection timeout** setting defines the maximum number of seconds to wait for a connection to the database before timing out. Default is 0 for no timeout.
+
 ### Database user permissions
 
 Grafana doesn't validate that a query is safe, and could include any SQL statement.
@@ -113,12 +116,13 @@ datasources:
   - name: MSSQL
     type: mssql
     url: localhost:1433
-    database: grafana
     user: grafana
     jsonData:
+      database: grafana
       maxOpenConns: 0 # Grafana v5.4+
       maxIdleConns: 2 # Grafana v5.4+
       connMaxLifetime: 14400 # Grafana v5.4+
+      connectionTimeout: 0 # Grafana v9.3+
     secureJsonData:
       password: 'Password!'
 ```

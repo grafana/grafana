@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/provision-alerting-resources/file-provisioning
-  - /docs/grafana/latest/alerting/provision-alerting-resources/file-provisioning
+  - ../../provision-alerting-resources/file-provisioning/
 description: Create and manage resources using file provisioning
 keywords:
   - grafana
@@ -177,7 +176,7 @@ deleteContactPoints:
 #### Settings
 
 Here are some examples of settings you can use for the different
-contact point types.
+contact point integrations.
 
 ##### Alertmanager
 
@@ -536,7 +535,7 @@ policies:
     # <duration> How long to wait before sending a notification about new alerts that
     #            are added to a group of alerts for which an initial notification has
     #            already been sent. (Usually ~5m or more), default = 5m
-    group_internval: 5m
+    group_interval: 5m
     # <duration>  How long to wait before sending a notification again if it has already
     #             been sent successfully for an alert. (Usually ~3h or more), default = 4h
     repeat_interval: 4h

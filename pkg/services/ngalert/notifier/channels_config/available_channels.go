@@ -1,11 +1,15 @@
 package channels_config
 
 import (
+	"os"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
 func GetAvailableNotifiers() []*NotifierPlugin {
+	hostname, _ := os.Hostname()
+
 	pushoverSoundOptions := []SelectOption{
 		{
 			Value: "default",
@@ -239,26 +243,11 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Secure:       true,
 				},
 				{
-					Label:   "Severity",
-					Element: ElementTypeSelect,
-					SelectOptions: []SelectOption{
-						{
-							Value: "critical",
-							Label: "Critical",
-						},
-						{
-							Value: "error",
-							Label: "Error",
-						},
-						{
-							Value: "warning",
-							Label: "Warning",
-						},
-						{
-							Value: "info",
-							Label: "Info",
-						},
-					},
+					Label:        "Severity",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "error",
+					Description:  "Severity of the event. It must be critical, error, warning, info - otherwise, the default is set which is error. You can use templates",
 					PropertyName: "severity",
 				},
 				{ // New in 8.0.
@@ -290,6 +279,30 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Placeholder:  channels.DefaultMessageTitleEmbed,
 					PropertyName: "summary",
+				},
+				{ // New in 9.4.
+					Label:        "Source",
+					Description:  "The unique location of the affected system, preferably a hostname or FQDN. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  hostname,
+					PropertyName: "source",
+				},
+				{ // New in 9.4.
+					Label:        "Client",
+					Description:  "The name of the monitoring client that is triggering this event. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "Grafana",
+					PropertyName: "client",
+				},
+				{ // New in 9.4.
+					Label:        "Client URL",
+					Description:  "The URL of the monitoring client that is triggering this event. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "{{ .ExternalURL }}",
+					PropertyName: "client_url",
 				},
 			},
 		},
@@ -668,6 +681,36 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeTextArea,
 					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
+				},
+				{
+					Label:   "Parse Mode",
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
+						{
+							Value: "None",
+							Label: "None",
+						},
+						{
+							Value: "HTML",
+							Label: "HTML",
+						},
+						{
+							Value: "Markdown",
+							Label: "Markdown",
+						},
+						{
+							Value: "MarkdownV2",
+							Label: "Markdown V2",
+						},
+					},
+					Description:  `Mode for parsing entities in the message text. Default is 'HTML'`,
+					PropertyName: "parse_mode",
+				},
+				{
+					Label:        "Disable Notification",
+					Description:  "Sends the message silently. Users will receive a notification with no sound.",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "disable_notification",
 				},
 			},
 		},
@@ -1098,6 +1141,50 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					},
 					Description:  "Send the common annotations to Opsgenie as either Extra Properties, Tags or both",
 					PropertyName: "sendTagsAs",
+				},
+			},
+		},
+		{
+			Type:        "webex",
+			Name:        "Cisco Webex Teams",
+			Description: "Sends notifications to Cisco Webex Teams",
+			Heading:     "Webex settings",
+			Info:        "Notifications can be configured for any Cisco Webex Teams",
+			Options: []NotifierOption{
+				{
+					Label:        "Cisco Webex API URL",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "https://api.ciscospark.com/v1/messages",
+					Description:  "API endpoint at which we'll send webhooks to.",
+					PropertyName: "api_url",
+				},
+				{
+					Label:        "Room ID",
+					Description:  "The room ID to send messages to.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "GMtOWY0ZGJkNzMyMGFl",
+					PropertyName: "room_id",
+					Required:     true,
+				},
+				{
+					Label:        "Bot Token",
+					Description:  "Non-expiring access token of the bot that will post messages on our behalf.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  `GMtOWY0ZGJkNzMyMGFl-12535454-123213`,
+					PropertyName: "bot_token",
+					Secure:       true,
+					Required:     true,
+				},
+				{
+					Label:        "Message Template",
+					Description:  "Message template to use. Markdown is supported.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  `{{ template "default.message" . }}`,
+					PropertyName: "message",
 				},
 			},
 		},

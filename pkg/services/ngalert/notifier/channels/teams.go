@@ -10,11 +10,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
@@ -224,70 +219,65 @@ func (i AdaptiveCardOpenURLActionItem) MarshalJSON() ([]byte, error) {
 	})
 }
 
-type TeamsConfig struct {
-	*NotificationChannelConfig
-	URL          string
-	Message      string
-	Title        string
-	SectionTitle string
+type teamsSettings struct {
+	URL          string `json:"url,omitempty" yaml:"url,omitempty"`
+	Message      string `json:"message,omitempty" yaml:"message,omitempty"`
+	Title        string `json:"title,omitempty" yaml:"title,omitempty"`
+	SectionTitle string `json:"sectiontitle,omitempty" yaml:"sectiontitle,omitempty"`
 }
 
-func NewTeamsConfig(config *NotificationChannelConfig) (*TeamsConfig, error) {
-	URL := config.Settings.Get("url").MustString()
-	if URL == "" {
-		return nil, errors.New("could not find url property in settings")
+func buildTeamsSettings(fc FactoryConfig) (teamsSettings, error) {
+	settings := teamsSettings{}
+	err := fc.Config.unmarshalSettings(&settings)
+	if err != nil {
+		return settings, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
-	return &TeamsConfig{
-		NotificationChannelConfig: config,
-		URL:                       URL,
-		Message:                   config.Settings.Get("message").MustString(`{{ template "teams.default.message" .}}`),
-		Title:                     config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
-		SectionTitle:              config.Settings.Get("sectiontitle").MustString(""),
-	}, nil
+	if settings.URL == "" {
+		return settings, errors.New("could not find url property in settings")
+	}
+	if settings.Message == "" {
+		settings.Message = `{{ template "teams.default.message" .}}`
+	}
+	if settings.Title == "" {
+		settings.Title = DefaultMessageTitleEmbed
+	}
+	return settings, nil
 }
 
 type TeamsNotifier struct {
 	*Base
-	URL          string
-	Message      string
-	Title        string
-	SectionTitle string
-	tmpl         *template.Template
-	log          log.Logger
-	ns           notifications.WebhookSender
-	images       ImageStore
+	tmpl     *template.Template
+	log      Logger
+	ns       WebhookSender
+	images   ImageStore
+	settings teamsSettings
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(config *TeamsConfig, ns notifications.WebhookSender, images ImageStore, t *template.Template) *TeamsNotifier {
-	return &TeamsNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			Type:                  config.Type,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
-		}),
-		URL:          config.URL,
-		Message:      config.Message,
-		Title:        config.Title,
-		SectionTitle: config.SectionTitle,
-		log:          log.New("alerting.notifier.teams"),
-		ns:           ns,
-		images:       images,
-		tmpl:         t,
+func NewTeamsNotifier(fc FactoryConfig) (*TeamsNotifier, error) {
+	settings, err := buildTeamsSettings(fc)
+	if err != nil {
+		return nil, err
 	}
+	return &TeamsNotifier{
+		Base:     NewBase(fc.Config),
+		log:      fc.Logger,
+		ns:       fc.NotificationService,
+		images:   fc.ImageStore,
+		tmpl:     fc.Template,
+		settings: settings,
+	}, nil
 }
 
 func TeamsFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewTeamsConfig(fc.Config)
+	notifier, err := NewTeamsNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewTeamsNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
+	return notifier, nil
 }
 
 func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
@@ -297,19 +287,19 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	card := NewAdaptiveCard()
 	card.AppendItem(AdaptiveCardTextBlockItem{
 		Color:  getTeamsTextColor(types.Alerts(as...)),
-		Text:   tmpl(tn.Title),
+		Text:   tmpl(tn.settings.Title),
 		Size:   TextSizeLarge,
 		Weight: TextWeightBolder,
 		Wrap:   true,
 	})
 	card.AppendItem(AdaptiveCardTextBlockItem{
-		Text: tmpl(tn.Message),
+		Text: tmpl(tn.settings.Message),
 		Wrap: true,
 	})
 
 	var s AdaptiveCardImageSetItem
 	_ = withStoredImages(ctx, tn.log, tn.images,
-		func(_ int, image ngmodels.Image) error {
+		func(_ int, image Image) error {
 			if image.URL != "" {
 				s.AppendImage(AdaptiveCardImageItem{URL: image.URL})
 			}
@@ -335,7 +325,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	})
 
 	msg := NewAdaptiveCardsMessage(card)
-	msg.Summary = tmpl(tn.Title)
+	msg.Summary = tmpl(tn.settings.Title)
 
 	// This check for tmplErr must happen before templating the URL
 	if tmplErr != nil {
@@ -343,10 +333,10 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		tmplErr = nil
 	}
 
-	u := tmpl(tn.URL)
+	u := tmpl(tn.settings.URL)
 	if tmplErr != nil {
-		tn.log.Warn("failed to template Teams URL", "error", tmplErr.Error(), "fallback", tn.URL)
-		u = tn.URL
+		tn.log.Warn("failed to template Teams URL", "error", tmplErr.Error(), "fallback", tn.settings.URL)
+		u = tn.settings.URL
 	}
 
 	b, err := json.Marshal(msg)
@@ -354,23 +344,25 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, fmt.Errorf("failed to marshal JSON: %w", err)
 	}
 
-	cmd := &models.SendWebhookSync{Url: u, Body: string(b)}
+	cmd := &SendWebhookSettings{Url: u, Body: string(b)}
 	// Teams sometimes does not use status codes to show when a request has failed. Instead, the
 	// response can contain an error message, irrespective of status code (i.e. https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#rate-limiting-for-connectors)
-	cmd.Validation = func(b []byte, statusCode int) error {
-		// The request succeeded if the response is "1"
-		// https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#send-messages-using-curl-and-powershell
-		if !bytes.Equal(b, []byte("1")) {
-			return errors.New(string(b))
-		}
-		return nil
-	}
+	cmd.Validation = validateResponse
 
-	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := tn.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, errors.Wrap(err, "send notification to Teams")
 	}
 
 	return true, nil
+}
+
+func validateResponse(b []byte, statusCode int) error {
+	// The request succeeded if the response is "1"
+	// https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#send-messages-using-curl-and-powershell
+	if !bytes.Equal(b, []byte("1")) {
+		return errors.New(string(b))
+	}
+	return nil
 }
 
 func (tn *TeamsNotifier) SendResolved() bool {

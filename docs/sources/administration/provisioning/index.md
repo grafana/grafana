@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/provisioning/
-  - /docs/grafana/latest/installation/provisioning/
+  - ../installation/provisioning/
 description: Describes provisioning settings for Grafana using configuration files.
 keywords:
   - grafana
@@ -392,11 +391,11 @@ providers:
 
 ## Alerting
 
-For information on provisioning Grafana Alerting, refer to [Provision Grafana Alerting resources](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/).
+For information on provisioning Grafana Alerting, refer to [Provision Grafana Alerting resources]({{< relref "../../alerting/set-up/provision-alerting-resources/"  >}}).
 
 ## Alert Notification Channels
 
-> **Note:** Alert Notification Channels are part of legacy alerting, which is deprecated and will be removed in Grafana 10. Use the Provision contact points section in [Create and manage alerting resources using file provisioning](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/).
+> **Note:** Alert Notification Channels are part of legacy alerting, which is deprecated and will be removed in Grafana 10. Use the Provision contact points section in [Create and manage alerting resources using file provisioning]({{< relref "../../alerting/set-up/provision-alerting-resources/file-provisioning" >}}).
 
 Alert Notification Channels can be provisioned by adding one or more YAML config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
 
@@ -631,6 +630,15 @@ The following sections detail the supported settings and secure settings for eac
 | Name |
 | ---- |
 | url  |
+
+#### Alert notification `Cisco Webex Teams`
+
+| Name      | Secure setting |
+| --------- | -------------- |
+| message   |                |
+| room_id   |                |
+| api_url   |                |
+| bot_token | yes            |
 
 ## Grafana Enterprise
 

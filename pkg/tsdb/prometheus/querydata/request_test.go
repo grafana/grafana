@@ -13,15 +13,16 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	p "github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 )
@@ -342,15 +343,36 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	})
 }
 
+func TestPrometheusCanonicalHeaders(t *testing.T) {
+	// Ensure headers are always canonicalized for all outgoing requests
+	b, err := json.Marshal(models.QueryModel{})
+	require.NoError(t, err)
+	query := backend.DataQuery{JSON: b}
+	tctx, err := setup(true)
+	require.NoError(t, err)
+	const idToken = "abc"
+	_, err = executeWithHeaders(tctx, query, queryResult{}, map[string]string{
+		"X-Id-Token": idToken,
+		"X-ID-Token": idToken,
+		"X-Other":    "thing",
+	})
+	require.NoError(t, err)
+	assert.NotEmpty(t, tctx.httpProvider.req.Header)
+	// Check the request that hit the fake prometheus server to ensure headers are valid
+	assert.Equal(t, []string{idToken}, tctx.httpProvider.req.Header["X-Id-Token"])
+	assert.Empty(t, tctx.httpProvider.req.Header["X-ID-Token"]) //nolint:staticcheck
+	assert.Equal(t, []string{"thing"}, tctx.httpProvider.req.Header["X-Other"])
+}
+
 type queryResult struct {
 	Type   p.ValueType `json:"resultType"`
 	Result interface{} `json:"result"`
 }
 
-func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.Frames, error) {
+func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr interface{}, headers map[string]string) (data.Frames, error) {
 	req := backend.QueryDataRequest{
 		Queries: []backend.DataQuery{query},
-		Headers: map[string]string{},
+		Headers: headers,
 	}
 
 	promRes, err := toAPIResponse(qr)
@@ -365,6 +387,10 @@ func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.F
 	}
 
 	return res.Responses[req.Queries[0].RefID].Frames, nil
+}
+
+func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.Frames, error) {
+	return executeWithHeaders(tctx, query, qr, map[string]string{})
 }
 
 type apiResponse struct {
@@ -415,9 +441,10 @@ func setup(wideFrames bool) (*testContext, error) {
 		JSONData: json.RawMessage(`{"timeInterval": "15s"}`),
 	}
 
-	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusStreamingJSONParser": true, "prometheusWideSeries": wideFrames}}
+	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusBufferedClient": false,
+		"prometheusWideSeries": wideFrames}}
 
-	opts, err := buffered.CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
+	opts, err := client.CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
 	if err != nil {
 		return nil, err
 	}
@@ -446,6 +473,7 @@ func (f *fakeFeatureToggles) IsEnabled(feature string) bool {
 type fakeHttpClientProvider struct {
 	httpclient.Provider
 	opts sdkhttpclient.Options
+	req  *http.Request
 	res  *http.Response
 }
 
@@ -469,5 +497,6 @@ func (p *fakeHttpClientProvider) setResponse(res *http.Response) {
 }
 
 func (p *fakeHttpClientProvider) RoundTrip(req *http.Request) (*http.Response, error) {
+	p.req = req
 	return p.res, nil
 }

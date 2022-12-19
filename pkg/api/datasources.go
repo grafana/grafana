@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -394,6 +393,12 @@ func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 		}
 
 		return response.Error(500, "Failed to add datasource", err)
+	}
+
+	// Clear permission cache for the user who's created the data source, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
+	if !hs.AccessControl.IsDisabled() {
+		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
 	ds := hs.convertModelToDtos(c.Req.Context(), cmd.Result)
@@ -815,21 +820,6 @@ func (hs *HTTPServer) checkDatasourceHealth(c *models.ReqContext, ds *datasource
 	err = hs.PluginRequestValidator.Validate(dsURL, c.Req)
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Access denied", err)
-	}
-
-	if hs.DataProxy.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
-		if token := hs.DataProxy.OAuthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser); token != nil {
-			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
-			idToken, ok := token.Extra("id_token").(string)
-			if ok && idToken != "" {
-				req.Headers["X-ID-Token"] = idToken
-			}
-		}
-	}
-
-	proxyutil.ClearCookieHeader(c.Req, ds.AllowedCookies(), []string{hs.Cfg.LoginCookieName})
-	if cookieStr := c.Req.Header.Get("Cookie"); cookieStr != "" {
-		req.Headers["Cookie"] = cookieStr
 	}
 
 	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), req)

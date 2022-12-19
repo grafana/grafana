@@ -4,12 +4,12 @@ import { setDataSourceSrv } from '@grafana/runtime';
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
 import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
+import { FormatRegistryID } from '../scenes/variables/interpolation/formatRegistry';
+import { TestVariable } from '../scenes/variables/variants/TestVariable';
 import { VariableAdapter, variableAdapters } from '../variables/adapters';
 import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../variables/query/adapter';
 import { VariableModel } from '../variables/types';
-
-import { FormatRegistryID } from './formatRegistry';
 
 const key = 'key';
 
@@ -17,6 +17,14 @@ variableAdapters.setInit(() => [
   createQueryVariableAdapter() as unknown as VariableAdapter<VariableModel>,
   createAdHocVariableAdapter() as unknown as VariableAdapter<VariableModel>,
 ]);
+
+const interpolateMock = jest.fn();
+
+jest.mock('../scenes/core/sceneGraph', () => ({
+  sceneGraph: {
+    interpolate: (...args: any[]) => interpolateMock(...args),
+  },
+}));
 
 describe('templateSrv', () => {
   silenceConsoleOutput();
@@ -809,6 +817,21 @@ describe('templateSrv', () => {
     it('query variable with adhoc value and queryparam format should return correct queryparam', () => {
       const target = _templateSrv.replace('${adhoc}', { adhoc: { value: 'value2', text: 'value2' } }, 'queryparam');
       expect(target).toBe('var-adhoc=value2');
+    });
+  });
+
+  describe('scenes compatibility', () => {
+    beforeEach(() => {
+      _templateSrv = initTemplateSrv(key, []);
+    });
+    it('should use scene interpolator when scoped var provided', () => {
+      const variable = new TestVariable({});
+
+      _templateSrv.replace('test ${test}', { __sceneObject: { value: variable } });
+
+      expect(interpolateMock).toHaveBeenCalledTimes(1);
+      expect(interpolateMock.mock.calls[0][0]).toEqual(variable);
+      expect(interpolateMock.mock.calls[0][1]).toEqual('test ${test}');
     });
   });
 });

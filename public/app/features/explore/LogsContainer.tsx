@@ -10,6 +10,7 @@ import {
   RawTimeRange,
   EventBus,
   SplitOpen,
+  DataFrame,
 } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
@@ -71,9 +72,9 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     return false;
   };
 
-  getFieldLinks = (field: Field, rowIndex: number) => {
+  getFieldLinks = (field: Field, rowIndex: number, dataFrame: DataFrame) => {
     const { splitOpenFn, range } = this.props;
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range });
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame });
   };
 
   render() {

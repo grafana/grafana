@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -33,45 +34,85 @@ func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashb
 	}
 }
 
-func (h *AnnotationStateHistorian) RecordState(ctx context.Context, rule *ngmodels.AlertRule, currentState *state.State, evaluatedAt time.Time, currentData, previousData state.InstanceStateAndReason) {
-	logger := h.log.New(rule.GetKey().LogContext()...)
-	logger.Debug("Alert state changed creating annotation", "newState", currentData.String(), "oldState", previousData.String())
+// RecordStates writes a number of state transitions for a given rule to state history.
+func (h *AnnotationStateHistorian) RecordStatesAsync(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) {
+	logger := h.log.FromContext(ctx)
+	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
+	annotations := h.buildAnnotations(rule, states, logger)
+	panel := parsePanelKey(rule, logger)
+	go h.recordAnnotationsSync(ctx, panel, annotations, logger)
+}
 
-	annotationText, annotationData := buildAnnotationTextAndData(rule, currentState)
-	item := &annotations.Item{
-		AlertId:   rule.ID,
-		OrgId:     rule.OrgID,
-		PrevState: previousData.String(),
-		NewState:  currentData.String(),
-		Text:      annotationText,
-		Data:      annotationData,
-		Epoch:     evaluatedAt.UnixNano() / int64(time.Millisecond),
+func (h *AnnotationStateHistorian) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
+	items := make([]annotations.Item, 0, len(states))
+	for _, state := range states {
+		if !shouldAnnotate(state) {
+			continue
+		}
+		logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())
+
+		annotationText, annotationData := buildAnnotationTextAndData(rule, state.State)
+
+		item := annotations.Item{
+			AlertId:   rule.ID,
+			OrgId:     state.OrgID,
+			PrevState: state.PreviousFormatted(),
+			NewState:  state.Formatted(),
+			Text:      annotationText,
+			Data:      annotationData,
+			Epoch:     state.LastEvaluationTime.UnixNano() / int64(time.Millisecond),
+		}
+
+		items = append(items, item)
 	}
+	return items
+}
 
-	dashUid, ok := rule.Annotations[ngmodels.DashboardUIDAnnotation]
+// panelKey uniquely identifies a panel.
+type panelKey struct {
+	orgID   int64
+	dashUID string
+	panelID int64
+}
+
+// panelKey attempts to get the key of the panel attached to the given rule. Returns nil if the rule is not attached to a panel.
+func parsePanelKey(rule *ngmodels.AlertRule, logger log.Logger) *panelKey {
+	dashUID, ok := rule.Annotations[ngmodels.DashboardUIDAnnotation]
 	if ok {
-		panelUid := rule.Annotations[ngmodels.PanelIDAnnotation]
-
-		panelId, err := strconv.ParseInt(panelUid, 10, 64)
+		panelAnno := rule.Annotations[ngmodels.PanelIDAnnotation]
+		panelID, err := strconv.ParseInt(panelAnno, 10, 64)
 		if err != nil {
-			logger.Error("Error parsing panelUID for alert annotation", "panelUID", panelUid, "error", err)
+			logger.Error("Error parsing panelUID for alert annotation", "actual", panelAnno, "error", err)
+			return nil
+		}
+		return &panelKey{
+			orgID:   rule.OrgID,
+			dashUID: dashUID,
+			panelID: panelID,
+		}
+	}
+	return nil
+}
+
+func (h *AnnotationStateHistorian) recordAnnotationsSync(ctx context.Context, panel *panelKey, annotations []annotations.Item, logger log.Logger) {
+	if panel != nil {
+		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
+		if err != nil {
+			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", panel.dashUID, "error", err)
 			return
 		}
 
-		dashID, err := h.dashboards.getID(ctx, rule.OrgID, dashUid)
-		if err != nil {
-			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", dashUid, "error", err)
-			return
+		for _, i := range annotations {
+			i.DashboardId = dashID
+			i.PanelId = panel.panelID
 		}
-
-		item.PanelId = panelId
-		item.DashboardId = dashID
 	}
 
-	if err := h.annotations.Save(ctx, item); err != nil {
-		logger.Error("Error saving alert annotation", "error", err)
-		return
+	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
+		logger.Error("Error saving alert annotation batch", "error", err)
 	}
+
+	logger.Debug("Done saving alert annotation batch")
 }
 
 func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.State) (string, *simplejson.Json) {
@@ -116,4 +157,12 @@ func removePrivateLabels(labels data.Labels) data.Labels {
 		}
 	}
 	return result
+}
+
+func shouldAnnotate(transition state.StateTransition) bool {
+	// Do not log not transitioned states normal states if it was marked as stale
+	if !transition.Changed() || transition.StateReason == ngmodels.StateReasonMissingSeries && transition.PreviousState == eval.Normal && transition.State.State == eval.Normal {
+		return false
+	}
+	return true
 }

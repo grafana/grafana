@@ -1,5 +1,5 @@
-import { agent, LogLevel as GrafanaLogLevel } from '@grafana/agent-web';
-import { config } from '@grafana/runtime/src';
+import { faro, LogLevel as GrafanaLogLevel } from '@grafana/faro-web-sdk';
+import { config, reportInteraction } from '@grafana/runtime/src';
 
 export const LogMessages = {
   filterByLabel: 'filtering alert instances by label',
@@ -15,7 +15,7 @@ export const LogMessages = {
 // logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent and Sentry correctly
 export function logInfo(message: string, context: Record<string, string | number> = {}) {
   if (config.grafanaJavascriptAgent.enabled) {
-    agent.api.pushLog([message], {
+    faro.api.pushLog([message], {
       level: GrafanaLogLevel.INFO,
       context: { ...context, module: 'Alerting' },
     });
@@ -39,3 +39,21 @@ export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise
     return response;
   };
 }
+
+export const trackNewAlerRuleFormSaved = (props: AlertRuleTrackingProps) => {
+  reportInteraction('grafana_alerting_rule_creation', props);
+};
+
+export const trackNewAlerRuleFormCancelled = (props: AlertRuleTrackingProps) => {
+  reportInteraction('grafana_alerting_rule_aborted', props);
+};
+
+export const trackNewAlerRuleFormError = (props: AlertRuleTrackingProps & { error: string }) => {
+  reportInteraction('grafana_alerting_rule_form_error', props);
+};
+
+export type AlertRuleTrackingProps = {
+  grafana_version?: string;
+  org_id?: number;
+  user_id?: number;
+};

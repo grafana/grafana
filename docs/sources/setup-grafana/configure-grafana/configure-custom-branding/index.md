@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/white-labeling/
-  - /docs/grafana/latest/setup-grafana/enable-custom-branding/
-  - /docs/grafana/latest/setup-grafana/configure-grafana/configure-custom-branding/
+  - ../../enterprise/white-labeling/
+  - ../enable-custom-branding/
 description: Change the look of Grafana to match your corporate brand.
 title: Configure custom branding
 weight: 300
@@ -101,3 +100,27 @@ GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_URL=http://your.custom.site
 - Grafana version with build number
 
 If you specify `footer_links` or `GF_WHITE_LABELING_FOOTER_LINKS`, then all other default links are removed from the footer and only what is specified is included.
+
+## Custom branding for Public Dashboards
+
+In addition to the customizations described below, you can customize the footer of your public dashboards.
+To customize the footer of a public dashboard, add the following section to the `grafana.ini` file.
+
+```ini
+[white_labeling.public_dashboards]
+
+# Hides the footer for the public dashboards if set to "true". If
+# example: footer_hide = "true"
+;footer_hide =
+
+# Set to text shown in the footer
+;footer_text =
+
+# Set to complete url to override public dashboard footer logo
+;footer_logo =
+
+# Set to link for the footer
+;footer_link =
+```
+
+If you specify `footer_hide` to `true`, all the other values are ignored because the footer will not be shown.

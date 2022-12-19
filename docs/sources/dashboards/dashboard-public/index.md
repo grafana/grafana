@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/dashboard-manage/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/dashboard-public/
+  - ../features/dashboard/dashboards/
+  - dashboard-manage/
 title: Public dashboards
 weight: 8
 ---
@@ -163,3 +162,7 @@ guaranteed because plugin developers can override this functionality. The follow
 - Datasources using Reverse Proxy functionality are not supported.
 
 We are excited to share this enhancement with you and we’d love your feedback! Please check out the [Github](https://github.com/grafana/grafana/discussions/49253) discussion and join the conversation.
+
+#### Custom branding
+
+If you are a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Custom branding](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/configure-custom-branding/).

@@ -13,65 +13,83 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 // WebhookNotifier is responsible for sending
 // alert notifications as webhooks.
 type WebhookNotifier struct {
 	*Base
-	log       log.Logger
-	ns        notifications.WebhookSender
-	images    ImageStore
-	tmpl      *template.Template
-	orgID     int64
-	maxAlerts int
-	settings  webhookSettings
+	log      Logger
+	ns       WebhookSender
+	images   ImageStore
+	tmpl     *template.Template
+	orgID    int64
+	settings webhookSettings
 }
 
 type webhookSettings struct {
-	URL        string      `json:"url,omitempty" yaml:"url,omitempty"`
-	HTTPMethod string      `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty"`
-	MaxAlerts  interface{} `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty"`
-
+	URL        string
+	HTTPMethod string
+	MaxAlerts  int
 	// Authorization Header.
-	AuthorizationScheme      string `json:"authorization_scheme,omitempty" yaml:"authorization_scheme,omitempty"`
-	AuthorizationCredentials string `json:"authorization_credentials,omitempty" yaml:"authorization_credentials,omitempty"`
+	AuthorizationScheme      string
+	AuthorizationCredentials string
 	// HTTP Basic Authentication.
-	User     string `json:"username,omitempty" yaml:"username,omitempty"`
-	Password string `json:"password,omitempty" yaml:"password,omitempty"`
+	User     string
+	Password string
 
-	Title   string `json:"title,omitempty" yaml:"title,omitempty"`
-	Message string `json:"message,omitempty" yaml:"message,omitempty"`
+	Title   string
+	Message string
 }
 
 func buildWebhookSettings(factoryConfig FactoryConfig) (webhookSettings, error) {
 	settings := webhookSettings{}
-	err := factoryConfig.Config.unmarshalSettings(&settings)
+	rawSettings := struct {
+		URL                      string      `json:"url,omitempty" yaml:"url,omitempty"`
+		HTTPMethod               string      `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty"`
+		MaxAlerts                json.Number `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty"`
+		AuthorizationScheme      string      `json:"authorization_scheme,omitempty" yaml:"authorization_scheme,omitempty"`
+		AuthorizationCredentials string      `json:"authorization_credentials,omitempty" yaml:"authorization_credentials,omitempty"`
+		User                     string      `json:"username,omitempty" yaml:"username,omitempty"`
+		Password                 string      `json:"password,omitempty" yaml:"password,omitempty"`
+		Title                    string      `json:"title,omitempty" yaml:"title,omitempty"`
+		Message                  string      `json:"message,omitempty" yaml:"message,omitempty"`
+	}{}
+
+	err := factoryConfig.Config.unmarshalSettings(&rawSettings)
 	if err != nil {
 		return settings, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
-	if settings.URL == "" {
+	if rawSettings.URL == "" {
 		return settings, errors.New("required field 'url' is not specified")
 	}
-	if settings.HTTPMethod == "" {
-		settings.HTTPMethod = http.MethodPost
+	settings.URL = rawSettings.URL
+
+	if rawSettings.HTTPMethod == "" {
+		rawSettings.HTTPMethod = http.MethodPost
 	}
-	settings.User = factoryConfig.DecryptFunc(context.Background(), factoryConfig.Config.SecureSettings, "username", settings.User)
-	settings.Password = factoryConfig.DecryptFunc(context.Background(), factoryConfig.Config.SecureSettings, "password", settings.Password)
-	settings.AuthorizationCredentials = factoryConfig.DecryptFunc(context.Background(), factoryConfig.Config.SecureSettings, "authorization_scheme", settings.AuthorizationCredentials)
+	settings.HTTPMethod = rawSettings.HTTPMethod
+
+	if rawSettings.MaxAlerts != "" {
+		settings.MaxAlerts, _ = strconv.Atoi(rawSettings.MaxAlerts.String())
+	}
+
+	settings.User = factoryConfig.DecryptFunc(context.Background(), factoryConfig.Config.SecureSettings, "username", rawSettings.User)
+	settings.Password = factoryConfig.DecryptFunc(context.Background(), factoryConfig.Config.SecureSettings, "password", rawSettings.Password)
+	settings.AuthorizationCredentials = factoryConfig.DecryptFunc(context.Background(), factoryConfig.Config.SecureSettings, "authorization_scheme", rawSettings.AuthorizationCredentials)
+
 	if settings.AuthorizationCredentials != "" && settings.AuthorizationScheme == "" {
 		settings.AuthorizationScheme = "Bearer"
 	}
 	if settings.User != "" && settings.Password != "" && settings.AuthorizationScheme != "" && settings.AuthorizationCredentials != "" {
 		return settings, errors.New("both HTTP Basic Authentication and Authorization Header are set, only 1 is permitted")
 	}
+	settings.Title = rawSettings.Title
 	if settings.Title == "" {
 		settings.Title = DefaultMessageTitleEmbed
 	}
+	settings.Message = rawSettings.Message
 	if settings.Message == "" {
 		settings.Message = DefaultMessageEmbed
 	}
@@ -96,39 +114,14 @@ func buildWebhookNotifier(factoryConfig FactoryConfig) (*WebhookNotifier, error)
 	if err != nil {
 		return nil, err
 	}
-
-	logger := log.New("alerting.notifier.webhook")
-	maxAlerts := 0
-	if settings.MaxAlerts != nil {
-		switch value := settings.MaxAlerts.(type) {
-		case int:
-			maxAlerts = value
-		case string:
-			maxAlerts, err = strconv.Atoi(value)
-			if err != nil {
-				logger.Warn("failed to convert setting maxAlerts to integer. Using default", "error", err, "original", value)
-				maxAlerts = 0
-			}
-		default:
-			logger.Warn("unexpected type of setting maxAlerts. Expected integer. Using default", "type", fmt.Sprintf("%T", settings.MaxAlerts))
-		}
-	}
-
 	return &WebhookNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   factoryConfig.Config.UID,
-			Name:                  factoryConfig.Config.Name,
-			Type:                  factoryConfig.Config.Type,
-			DisableResolveMessage: factoryConfig.Config.DisableResolveMessage,
-			Settings:              factoryConfig.Config.Settings,
-		}),
-		orgID:     factoryConfig.Config.OrgID,
-		log:       logger,
-		ns:        factoryConfig.NotificationService,
-		images:    factoryConfig.ImageStore,
-		tmpl:      factoryConfig.Template,
-		maxAlerts: maxAlerts,
-		settings:  settings,
+		Base:     NewBase(factoryConfig.Config),
+		orgID:    factoryConfig.Config.OrgID,
+		log:      factoryConfig.Logger,
+		ns:       factoryConfig.NotificationService,
+		images:   factoryConfig.ImageStore,
+		tmpl:     factoryConfig.Template,
+		settings: settings,
 	}, nil
 }
 
@@ -153,13 +146,13 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		return false, err
 	}
 
-	as, numTruncated := truncateAlerts(wn.maxAlerts, as)
+	as, numTruncated := truncateAlerts(wn.settings.MaxAlerts, as)
 	var tmplErr error
 	tmpl, data := TmplText(ctx, wn.tmpl, as, wn.log, &tmplErr)
 
 	// Augment our Alert data with ImageURLs if available.
 	_ = withStoredImages(ctx, wn.log, wn.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			if len(image.URL) != 0 {
 				data.Alerts[index].ImageURL = image.URL
 			}
@@ -202,7 +195,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		return false, tmplErr
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        parsedURL,
 		User:       wn.settings.User,
 		Password:   wn.settings.Password,
@@ -211,7 +204,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		HttpHeader: headers,
 	}
 
-	if err := wn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := wn.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, err
 	}
 

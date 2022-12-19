@@ -22,7 +22,6 @@ import { SpanLinkFunc, TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
@@ -116,7 +115,11 @@ function legacyCreateSpanLinkFactory(
           dataLink = getLinkForSplunk(span, traceToLogsOptions, logsDataSourceSettings);
           break;
         case 'elasticsearch':
-          dataLink = getLinkForElasticsearch(span, traceToLogsOptions, logsDataSourceSettings);
+          dataLink = getLinkForElasticsearchOrOpensearch(span, traceToLogsOptions, logsDataSourceSettings);
+          break;
+        case 'grafana-opensearch-datasource':
+          dataLink = getLinkForElasticsearchOrOpensearch(span, traceToLogsOptions, logsDataSourceSettings);
+          break;
       }
 
       if (dataLink) {
@@ -283,7 +286,17 @@ function getLinkForLoki(span: TraceSpan, options: TraceToLogsOptions, dataSource
   return dataLink;
 }
 
-function getLinkForElasticsearch(
+// we do not have access to the dataquery type for opensearch,
+// so here is a minimal interface that handles both elasticsearch and opensearch.
+interface ElasticsearchOrOpensearchQuery extends DataQuery {
+  query: string;
+  metrics: Array<{
+    id: string;
+    type: 'logs';
+  }>;
+}
+
+function getLinkForElasticsearchOrOpensearch(
   span: TraceSpan,
   options: TraceToLogsOptions,
   dataSourceSettings: DataSourceInstanceSettings
@@ -316,7 +329,7 @@ function getLinkForElasticsearch(
     query = `"${span.spanID}" AND ` + query;
   }
 
-  const dataLink: DataLink<ElasticsearchQuery> = {
+  const dataLink: DataLink<ElasticsearchOrOpensearchQuery> = {
     title: dataSourceSettings.name,
     url: '',
     internal: {
@@ -442,7 +455,7 @@ function buildMetricsQuery(query: TraceToMetricQuery, tags: Array<KeyValue<strin
     }, [] as string[]);
 
     const labelsQuery = labels?.join(', ');
-    expr = expr.replace('$__tags', labelsQuery);
+    expr = expr.replace(/\$__tags/g, labelsQuery);
   }
 
   return expr;

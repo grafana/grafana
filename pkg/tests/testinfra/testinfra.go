@@ -22,7 +22,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -307,19 +311,28 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 			_, err = logSection.NewKey("enabled", "false")
 			require.NoError(t, err)
+		} else {
+			serverSection, err := getOrCreateSection("server")
+			require.NoError(t, err)
+			_, err = serverSection.NewKey("router_logging", "true")
+			require.NoError(t, err)
 		}
+
 		if o.GRPCServerAddress != "" {
 			logSection, err := getOrCreateSection("grpc_server")
 			require.NoError(t, err)
 			_, err = logSection.NewKey("address", o.GRPCServerAddress)
 			require.NoError(t, err)
 		}
+		// retry queries 3 times by default
+		queryRetries := 3
 		if o.QueryRetries != 0 {
-			logSection, err := getOrCreateSection("database")
-			require.NoError(t, err)
-			_, err = logSection.NewKey("query_retries", fmt.Sprintf("%d", o.QueryRetries))
-			require.NoError(t, err)
+			queryRetries = int(o.QueryRetries)
 		}
+		logSection, err := getOrCreateSection("database")
+		require.NoError(t, err)
+		_, err = logSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
+		require.NoError(t, err)
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -330,6 +343,14 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 
 	return tmpDir, cfgPath
+}
+
+func SQLiteIntegrationTest(t *testing.T) {
+	t.Helper()
+
+	if testing.Short() || !db.IsTestDbSQLite() {
+		t.Skip("skipping integration test")
+	}
 }
 
 type GrafanaOpts struct {
@@ -352,4 +373,21 @@ type GrafanaOpts struct {
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int64
+}
+
+func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) int64 {
+	t.Helper()
+
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = 1
+
+	quotaService := quotaimpl.ProvideService(store, store.Cfg)
+	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService)
+	require.NoError(t, err)
+
+	u, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
+	require.NoError(t, err)
+	return u.ID
 }

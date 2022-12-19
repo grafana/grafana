@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
 	"net/url"
 	"strings"
 
@@ -13,9 +12,7 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 // GetDecryptedValueFn is a function that returns the decrypted value of
@@ -30,28 +27,35 @@ type AlertmanagerConfig struct {
 }
 
 func NewAlertmanagerConfig(config *NotificationChannelConfig, fn GetDecryptedValueFn) (*AlertmanagerConfig, error) {
-	urlStr := config.Settings.Get("url").MustString()
+	simpleConfig, err := simplejson.NewJson(config.Settings)
+	if err != nil {
+		return nil, err
+	}
+	urlStr := simpleConfig.Get("url").MustString()
 	if urlStr == "" {
 		return nil, errors.New("could not find url property in settings")
 	}
-	var urls []*url.URL
-	for _, uS := range strings.Split(urlStr, ",") {
+
+	urlParts := strings.Split(urlStr, ",")
+	urls := make([]*url.URL, 0, len(urlParts))
+
+	for _, uS := range urlParts {
 		uS = strings.TrimSpace(uS)
 		if uS == "" {
 			continue
 		}
 		uS = strings.TrimSuffix(uS, "/") + "/api/v1/alerts"
-		url, err := url.Parse(uS)
+		u, err := url.Parse(uS)
 		if err != nil {
 			return nil, fmt.Errorf("invalid url property in settings: %w", err)
 		}
-		urls = append(urls, url)
+		urls = append(urls, u)
 	}
 	return &AlertmanagerConfig{
 		NotificationChannelConfig: config,
 		URLs:                      urls,
-		BasicAuthUser:             config.Settings.Get("basicAuthUser").MustString(),
-		BasicAuthPassword:         fn(context.Background(), config.SecureSettings, "basicAuthPassword", config.Settings.Get("basicAuthPassword").MustString()),
+		BasicAuthUser:             simpleConfig.Get("basicAuthUser").MustString(),
+		BasicAuthPassword:         fn(context.Background(), config.SecureSettings, "basicAuthPassword", simpleConfig.Get("basicAuthPassword").MustString()),
 	}, nil
 }
 
@@ -63,23 +67,18 @@ func AlertmanagerFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewAlertmanagerNotifier(config, fc.ImageStore, nil, fc.DecryptFunc), nil
+	return NewAlertmanagerNotifier(config, fc.Logger, fc.ImageStore, nil, fc.DecryptFunc), nil
 }
 
 // NewAlertmanagerNotifier returns a new Alertmanager notifier.
-func NewAlertmanagerNotifier(config *AlertmanagerConfig, images ImageStore, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
+func NewAlertmanagerNotifier(config *AlertmanagerConfig, l Logger, images ImageStore, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
 	return &AlertmanagerNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   config.UID,
-			Name:                  config.Name,
-			DisableResolveMessage: config.DisableResolveMessage,
-			Settings:              config.Settings,
-		}),
+		Base:              NewBase(config.NotificationChannelConfig),
 		images:            images,
 		urls:              config.URLs,
 		basicAuthUser:     config.BasicAuthUser,
 		basicAuthPassword: config.BasicAuthPassword,
-		logger:            log.New("alerting.notifier.prometheus-alertmanager"),
+		logger:            l,
 	}
 }
 
@@ -91,7 +90,7 @@ type AlertmanagerNotifier struct {
 	urls              []*url.URL
 	basicAuthUser     string
 	basicAuthPassword string
-	logger            log.Logger
+	logger            Logger
 }
 
 // Notify sends alert notifications to Alertmanager.
@@ -102,7 +101,7 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	}
 
 	_ = withStoredImages(ctx, n.logger, n.images,
-		func(index int, image ngmodels.Image) error {
+		func(index int, image Image) error {
 			// If there is an image for this alert and the image has been uploaded
 			// to a public URL then include it as an annotation
 			if image.URL != "" {

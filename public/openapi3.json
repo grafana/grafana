@@ -954,7 +954,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Model"
+              "$ref": "#/components/schemas/Playlist"
             }
           }
         },
@@ -1015,7 +1015,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/UserQuotaDTO"
+                "$ref": "#/components/schemas/QuotaDTO"
               },
               "type": "array"
             }
@@ -1511,6 +1511,19 @@
         },
         "description": "(empty)"
       },
+      "receiversResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/receiver"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "recordingRuleResponse": {
         "content": {
           "application/json": {
@@ -1691,7 +1704,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Model"
+              "$ref": "#/components/schemas/Playlist"
             }
           }
         },
@@ -2790,6 +2803,10 @@
           "replyTo": {
             "type": "string"
           },
+          "scaleFactor": {
+            "format": "int64",
+            "type": "integer"
+          },
           "schedule": {
             "$ref": "#/components/schemas/ScheduleDTO"
           },
@@ -3010,7 +3027,14 @@
         "type": "object"
       },
       "CreateFolderCommand": {
+        "description": "CreateFolderCommand captures the information required by the folder service\nto create a folder.",
         "properties": {
+          "description": {
+            "type": "string"
+          },
+          "parentUid": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -3096,6 +3120,10 @@
           },
           "replyTo": {
             "type": "string"
+          },
+          "scaleFactor": {
+            "format": "int64",
+            "type": "integer"
           },
           "schedule": {
             "$ref": "#/components/schemas/ScheduleDTO"
@@ -3442,6 +3470,9 @@
           "hasAcl": {
             "type": "boolean"
           },
+          "hasPublicDashboard": {
+            "type": "boolean"
+          },
           "isFolder": {
             "type": "boolean"
           },
@@ -3724,11 +3755,14 @@
         "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
         "properties": {
           "Error": {
-            "description": "Error is a property to be set if the the corresponding DataQuery has an error.",
+            "description": "Error is a property to be set if the corresponding DataQuery has an error.",
             "type": "string"
           },
           "Frames": {
             "$ref": "#/components/schemas/Frames"
+          },
+          "Status": {
+            "$ref": "#/components/schemas/Status"
           }
         },
         "title": "DataResponse contains the results from a DataQuery.",
@@ -3979,7 +4013,7 @@
         "type": "string"
       },
       "DsPermissionType": {
-        "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\nEnum: 0,1",
+        "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2",
         "format": "int64",
         "type": "integer"
       },
@@ -3995,6 +4029,9 @@
           },
           "auth_password": {
             "$ref": "#/components/schemas/Secret"
+          },
+          "auth_password_file": {
+            "type": "string"
           },
           "auth_secret": {
             "$ref": "#/components/schemas/Secret"
@@ -4354,6 +4391,10 @@
             "format": "int64",
             "type": "integer"
           },
+          "parentUid": {
+            "description": "only used if nested folders are enabled",
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -4385,6 +4426,9 @@
           "id": {
             "format": "int64",
             "type": "integer"
+          },
+          "parent_uid": {
+            "type": "string"
           },
           "title": {
             "type": "string"
@@ -4792,12 +4836,6 @@
       },
       "GettableNGalertConfig": {
         "properties": {
-          "alertmanagers": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
           "alertmanagersChoice": {
             "enum": [
               "all",
@@ -4909,6 +4947,9 @@
           },
           "smtp_auth_password": {
             "$ref": "#/components/schemas/Secret"
+          },
+          "smtp_auth_password_file": {
+            "type": "string"
           },
           "smtp_auth_secret": {
             "$ref": "#/components/schemas/Secret"
@@ -5123,6 +5164,9 @@
           "folderId": {
             "format": "int64",
             "type": "integer"
+          },
+          "folderUid": {
+            "type": "string"
           },
           "imported": {
             "type": "boolean"
@@ -5471,6 +5515,10 @@
             "format": "int64",
             "type": "integer"
           },
+          "schemaVersion": {
+            "format": "int64",
+            "type": "integer"
+          },
           "type": {
             "type": "string"
           },
@@ -5718,32 +5766,6 @@
             "type": "array"
           }
         },
-        "type": "object"
-      },
-      "Model": {
-        "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
-        "properties": {
-          "interval": {
-            "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
-            "type": "string"
-          },
-          "items": {
-            "description": "The ordered list of items that the playlist will iterate over.\nFIXME! This should not be optional, but changing it makes the godegen awkward",
-            "items": {
-              "$ref": "#/components/schemas/PlaylistItem"
-            },
-            "type": "array"
-          },
-          "name": {
-            "description": "Name of the playlist.",
-            "type": "string"
-          },
-          "uid": {
-            "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
-            "type": "string"
-          }
-        },
-        "title": "Model is the Go representation of a playlist.",
         "type": "object"
       },
       "MultiStatus": {
@@ -6248,7 +6270,7 @@
           "homeDashboardUID": {
             "type": "string"
           },
-          "locale": {
+          "language": {
             "type": "string"
           },
           "navbar": {
@@ -6342,12 +6364,15 @@
             "type": "integer"
           },
           "interval": {
+            "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
             "type": "string"
           },
           "name": {
+            "description": "Name of the playlist.",
             "type": "string"
           },
           "uid": {
+            "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
             "type": "string"
           }
         },
@@ -6385,7 +6410,6 @@
         "type": "array"
       },
       "PlaylistItem": {
-        "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
         "properties": {
           "title": {
             "description": "Title is an unused property -- it will be removed in the future",
@@ -6399,11 +6423,10 @@
             "type": "string"
           }
         },
-        "title": "PlaylistItem is the Go representation of a playlist.Item.",
+        "title": "PlaylistItem defines model for playlist.Item.",
         "type": "object"
       },
       "PlaylistItemType": {
-        "description": "THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.\nEquivalent Go types at stable import paths are provided in https://github.com/grafana/grok.",
         "title": "Type of the item.",
         "type": "string"
       },
@@ -6700,12 +6723,6 @@
       },
       "PostableNGalertConfig": {
         "properties": {
-          "alertmanagers": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
           "alertmanagersChoice": {
             "enum": [
               "all",
@@ -6757,7 +6774,7 @@
           "homeDashboardUID": {
             "type": "string"
           },
-          "locale": {
+          "language": {
             "type": "string"
           },
           "navbar": {
@@ -7195,6 +7212,30 @@
           },
           "starred": {
             "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "QuotaDTO": {
+        "properties": {
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "org_id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "target": {
+            "type": "string"
+          },
+          "used": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "user_id": {
+            "format": "int64",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -8234,12 +8275,8 @@
         "type": "string"
       },
       "Status": {
-        "properties": {
-          "enabled": {
-            "type": "boolean"
-          }
-        },
-        "type": "object"
+        "format": "int64",
+        "type": "integer"
       },
       "Success": {
         "$ref": "#/components/schemas/ResponseDetails"
@@ -8662,6 +8699,9 @@
             },
             "type": "array"
           },
+          "location": {
+            "type": "string"
+          },
           "months": {
             "items": {
               "type": "string"
@@ -8874,6 +8914,7 @@
         "type": "string"
       },
       "URL": {
+        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -8883,9 +8924,6 @@
           },
           "Host": {
             "type": "string"
-          },
-          "OmitHost": {
-            "type": "boolean"
           },
           "Opaque": {
             "type": "string"
@@ -8909,7 +8947,7 @@
             "$ref": "#/components/schemas/Userinfo"
           }
         },
-        "title": "URL is a custom URL type that allows validation at configuration load time.",
+        "title": "A URL represents a parsed URL (technically, a URI reference).",
         "type": "object"
       },
       "UpdateAlertNotificationCommand": {
@@ -9108,6 +9146,9 @@
       },
       "UpdateFolderCommand": {
         "properties": {
+          "description": {
+            "type": "string"
+          },
           "overwrite": {
             "type": "boolean"
           },
@@ -9150,18 +9191,6 @@
       "UpdateOrgForm": {
         "properties": {
           "name": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "UpdateOrgQuotaCmd": {
-        "properties": {
-          "limit": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "target": {
             "type": "string"
           }
         },
@@ -9211,7 +9240,7 @@
           "homeDashboardUID": {
             "type": "string"
           },
-          "locale": {
+          "language": {
             "type": "string"
           },
           "navbar": {
@@ -9235,6 +9264,18 @@
             "type": "string"
           },
           "weekStart": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateQuotaCmd": {
+        "properties": {
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "target": {
             "type": "string"
           }
         },
@@ -9327,18 +9368,6 @@
             "type": "string"
           },
           "theme": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "UpdateUserQuotaCmd": {
-        "properties": {
-          "limit": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "target": {
             "type": "string"
           }
         },
@@ -9444,26 +9473,6 @@
           "updatedAt": {
             "format": "date-time",
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "UserQuotaDTO": {
-        "properties": {
-          "limit": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "target": {
-            "type": "string"
-          },
-          "used": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "user_id": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -9842,7 +9851,6 @@
         "type": "object"
       },
       "gettableAlert": {
-        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -9961,6 +9969,7 @@
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -10055,6 +10064,15 @@
           "address",
           "name"
         ],
+        "type": "object"
+      },
+      "postSilencesOKBody": {
+        "properties": {
+          "silenceID": {
+            "description": "silence ID",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "postableAlert": {
@@ -11738,7 +11756,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateUserQuotaCmd"
+                "$ref": "#/components/schemas/UpdateQuotaCmd"
               }
             }
           },
@@ -12872,6 +12890,15 @@
     "/api/v1/provisioning/alert-rules": {
       "post": {
         "operationId": "RoutePostAlertRule",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -12975,6 +13002,13 @@
             "in": "path",
             "name": "UID",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Disable-Provenance",
             "schema": {
               "type": "string"
             }
@@ -13912,6 +13946,7 @@
     },
     "/dashboards/id/{DashboardID}/permissions": {
       "get": {
+        "deprecated": true,
         "description": "Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsListByUID) instead",
         "operationId": "getDashboardPermissionsListByID",
         "parameters": [
@@ -13948,6 +13983,7 @@
         ]
       },
       "post": {
+        "deprecated": true,
         "description": "Please refer to [updated API](#/dashboard_permissions/updateDashboardPermissionsByUID) instead\n\nThis operation will remove existing permissions if they’re not included in the request.",
         "operationId": "updateDashboardPermissionsByID",
         "parameters": [
@@ -14000,6 +14036,7 @@
     },
     "/dashboards/id/{DashboardID}/restore": {
       "post": {
+        "deprecated": true,
         "description": "Please refer to [updated API](#/dashboard_versions/restoreDashboardVersionByUID) instead",
         "operationId": "restoreDashboardVersionByID",
         "parameters": [
@@ -14049,6 +14086,7 @@
     },
     "/dashboards/id/{DashboardID}/versions": {
       "get": {
+        "deprecated": true,
         "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionsByUID) instead",
         "operationId": "getDashboardVersionsByID",
         "parameters": [
@@ -14087,6 +14125,7 @@
     },
     "/dashboards/id/{DashboardID}/versions/{DashboardVersionID}": {
       "get": {
+        "deprecated": true,
         "description": "Please refer to [updated API](#/dashboard_versions/getDashboardVersionByUID) instead",
         "operationId": "getDashboardVersionByID",
         "parameters": [
@@ -14871,6 +14910,7 @@
     },
     "/datasources/proxy/{id}/{datasource_proxy_route}": {
       "delete": {
+        "deprecated": true,
         "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyDELETEByUIDcalls) instead",
         "operationId": "datasourceProxyDELETEcalls",
         "parameters": [
@@ -14917,6 +14957,7 @@
         ]
       },
       "get": {
+        "deprecated": true,
         "description": "Proxies all calls to the actual data source.\n\nPlease refer to [updated API](#/datasources/datasourceProxyGETByUIDcalls) instead",
         "operationId": "datasourceProxyGETcalls",
         "parameters": [
@@ -14963,6 +15004,7 @@
         ]
       },
       "post": {
+        "deprecated": true,
         "description": "Proxies all calls to the actual data source. The data source should support POST methods for the specific path and role as defined\n\nPlease refer to [updated API](#/datasources/datasourceProxyPOSTByUIDcalls) instead",
         "operationId": "datasourceProxyPOSTcalls",
         "parameters": [
@@ -15675,6 +15717,7 @@
     },
     "/datasources/{id}": {
       "delete": {
+        "deprecated": true,
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/deleteDataSourceByUID) instead",
         "operationId": "deleteDataSourceByID",
         "parameters": [
@@ -15710,6 +15753,7 @@
         ]
       },
       "get": {
+        "deprecated": true,
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/getDataSourceByUID) instead",
         "operationId": "getDataSourceByID",
         "parameters": [
@@ -15748,6 +15792,7 @@
         ]
       },
       "put": {
+        "deprecated": true,
         "description": "Similar to creating a data source, `password` and `basicAuthPassword` should be defined under\nsecureJsonData in order to be stored securely as an encrypted blob in the database. Then, the\nencrypted fields are listed under secureJsonFields section in the response.\n\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/updateDataSourceByUID) instead",
         "operationId": "updateDataSourceByID",
         "parameters": [
@@ -15793,6 +15838,7 @@
     },
     "/datasources/{id}/health": {
       "get": {
+        "deprecated": true,
         "description": "Please refer to [updated API](#/datasources/checkDatasourceHealthWithUID) instead",
         "operationId": "checkDatasourceHealthByID",
         "parameters": [
@@ -15830,6 +15876,7 @@
     },
     "/datasources/{id}/resources/{datasource_proxy_route}": {
       "get": {
+        "deprecated": true,
         "description": "Please refer to [updated API](#/datasources/callDatasourceResourceWithUID) instead",
         "operationId": "callDatasourceResourceByID",
         "parameters": [
@@ -15919,7 +15966,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID.",
         "operationId": "getFolders",
         "parameters": [
           {
@@ -15940,6 +15987,14 @@
               "default": 1,
               "format": "int64",
               "type": "integer"
+            }
+          },
+          {
+            "description": "The parent folder UID",
+            "in": "query",
+            "name": "parent_uid",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -15963,6 +16018,7 @@
         ]
       },
       "post": {
+        "description": "If nested folders are enabled then it additionally expects the parent folder UID.",
         "operationId": "createFolder",
         "requestBody": {
           "content": {
@@ -16041,7 +16097,7 @@
     },
     "/folders/{folder_uid}": {
       "delete": {
-        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.",
+        "description": "Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.\nIf nested folders are enabled then it also deletes all the subfolders.",
         "operationId": "deleteFolder",
         "parameters": [
           {
@@ -16122,6 +16178,7 @@
         ]
       },
       "put": {
+        "description": "If nested folders are enabled then it optionally expects a new parent folder UID that moves the folder and\nincludes it into the response.",
         "operationId": "updateFolder",
         "parameters": [
           {
@@ -17081,6 +17138,33 @@
         ]
       }
     },
+    "/org/quotas": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).",
+        "operationId": "getCurrentOrgQuota",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getQuotaResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Fetch Organization quota.",
+        "tags": [
+          "getCurrentOrg"
+        ]
+      }
+    },
     "/org/users": {
       "get": {
         "description": "Returns all org users within the current organization. Accessible to users with org admin role.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
@@ -17651,7 +17735,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateOrgQuotaCmd"
+                "$ref": "#/components/schemas/UpdateQuotaCmd"
               }
             }
           },
@@ -18810,6 +18894,7 @@
     },
     "/reports/render/pdf/{dashboardID}": {
       "get": {
+        "deprecated": true,
         "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
         "operationId": "renderReportPDF",
         "parameters": [
@@ -21011,6 +21096,7 @@
     },
     "/user/stars/dashboard/{dashboard_id}": {
       "delete": {
+        "deprecated": true,
         "description": "Deletes the starring of the given Dashboard for the actual user.",
         "operationId": "unstarDashboard",
         "parameters": [
@@ -21046,6 +21132,7 @@
         ]
       },
       "post": {
+        "deprecated": true,
         "description": "Stars the given Dashboard for the actual user.",
         "operationId": "starDashboard",
         "parameters": [

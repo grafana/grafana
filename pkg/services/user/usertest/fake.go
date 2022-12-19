@@ -28,6 +28,14 @@ func (f *FakeUserService) Create(ctx context.Context, cmd *user.CreateUserComman
 	return f.ExpectedUser, f.ExpectedError
 }
 
+func (f *FakeUserService) CreateUserForTests(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeUserService) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
 func (f *FakeUserService) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
 	return f.ExpectedError
 }
@@ -71,6 +79,10 @@ func (f *FakeUserService) GetSignedInUser(ctx context.Context, query *user.GetSi
 	if f.ExpectedSignedInUser == nil {
 		return &user.SignedInUser{}, f.ExpectedError
 	}
+	return f.ExpectedSignedInUser, f.ExpectedError
+}
+
+func (f *FakeUserService) NewAnonymousSignedInUser(ctx context.Context) (*user.SignedInUser, error) {
 	return f.ExpectedSignedInUser, f.ExpectedError
 }
 

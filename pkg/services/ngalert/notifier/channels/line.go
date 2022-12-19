@@ -10,9 +10,7 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 var (
@@ -23,8 +21,8 @@ var (
 // alert notifications to LINE.
 type LineNotifier struct {
 	*Base
-	log      log.Logger
-	ns       notifications.WebhookSender
+	log      Logger
+	ns       WebhookSender
 	tmpl     *template.Template
 	settings lineSettings
 }
@@ -48,22 +46,20 @@ func LineFactory(fc FactoryConfig) (NotificationChannel, error) {
 
 // newLineNotifier is the constructor for the LINE notifier
 func newLineNotifier(fc FactoryConfig) (*LineNotifier, error) {
-	token := fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "token", fc.Config.Settings.Get("token").MustString())
+	settings, err := simplejson.NewJson(fc.Config.Settings)
+	if err != nil {
+		return nil, err
+	}
+	token := fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "token", settings.Get("token").MustString())
 	if token == "" {
 		return nil, errors.New("could not find token in settings")
 	}
-	title := fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed)
-	description := fc.Config.Settings.Get("description").MustString(DefaultMessageEmbed)
+	title := settings.Get("title").MustString(DefaultMessageTitleEmbed)
+	description := settings.Get("description").MustString(DefaultMessageEmbed)
 
 	return &LineNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
-		log:      log.New("alerting.notifier.line"),
+		Base:     NewBase(fc.Config),
+		log:      fc.Logger,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
 		settings: lineSettings{token: token, title: title, description: description},
@@ -79,7 +75,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	form := url.Values{}
 	form.Add("message", body)
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        LineNotifyURL,
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
@@ -89,7 +85,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		Body: form.Encode(),
 	}
 
-	if err := ln.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := ln.ns.SendWebhook(ctx, cmd); err != nil {
 		ln.log.Error("failed to send notification to LINE", "error", err, "body", body)
 		return false, err
 	}

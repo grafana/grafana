@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/ticker"
 
 	"github.com/benbjohnson/clock"
@@ -37,9 +36,6 @@ type ScheduleService interface {
 	UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64)
 	// DeleteAlertRule notifies scheduler that rules have been deleted
 	DeleteAlertRule(keys ...ngmodels.AlertRuleKey)
-	// the following are used by tests only used for tests
-	evalApplied(ngmodels.AlertRuleKey, time.Time)
-	stopApplied(ngmodels.AlertRuleKey)
 }
 
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
@@ -101,33 +97,33 @@ type schedule struct {
 
 // SchedulerCfg is the scheduler configuration.
 type SchedulerCfg struct {
-	Cfg              setting.UnifiedAlertingSettings
-	C                clock.Clock
-	EvalAppliedFunc  func(ngmodels.AlertRuleKey, time.Time)
-	StopAppliedFunc  func(ngmodels.AlertRuleKey)
-	EvaluatorFactory eval.EvaluatorFactory
-	RuleStore        RulesStore
-	Metrics          *metrics.Scheduler
-	AlertSender      AlertsSender
+	MaxAttempts          int64
+	BaseInterval         time.Duration
+	C                    clock.Clock
+	MinRuleInterval      time.Duration
+	DisableGrafanaFolder bool
+	AppURL               *url.URL
+	EvaluatorFactory     eval.EvaluatorFactory
+	RuleStore            RulesStore
+	Metrics              *metrics.Scheduler
+	AlertSender          AlertsSender
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager) *schedule {
+func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	sch := schedule{
 		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
-		maxAttempts:           cfg.Cfg.MaxAttempts,
+		maxAttempts:           cfg.MaxAttempts,
 		clock:                 cfg.C,
-		baseInterval:          cfg.Cfg.BaseInterval,
+		baseInterval:          cfg.BaseInterval,
 		log:                   log.New("ngalert.scheduler"),
-		evalAppliedFunc:       cfg.EvalAppliedFunc,
-		stopAppliedFunc:       cfg.StopAppliedFunc,
 		evaluatorFactory:      cfg.EvaluatorFactory,
 		ruleStore:             cfg.RuleStore,
 		metrics:               cfg.Metrics,
-		appURL:                appURL,
-		disableGrafanaFolder:  cfg.Cfg.ReservedLabels.IsReservedLabelDisabled(ngmodels.FolderTitleLabel),
+		appURL:                cfg.AppURL,
+		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
 		stateManager:          stateManager,
-		minRuleInterval:       cfg.Cfg.MinInterval,
+		minRuleInterval:       cfg.MinRuleInterval,
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
 		alertsSender:          cfg.AlertSender,
 	}
@@ -190,119 +186,123 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 			start := time.Now().Round(0)
 			sch.metrics.BehindSeconds.Set(start.Sub(tick).Seconds())
 
-			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
-
-			if err := sch.updateSchedulableAlertRules(ctx); err != nil {
-				sch.log.Error("Failed to update alert rules", "error", err)
-			}
-			alertRules, folderTitles := sch.schedulableAlertRules.all()
-
-			// registeredDefinitions is a map used for finding deleted alert rules
-			// initially it is assigned to all known alert rules from the previous cycle
-			// each alert rule found also in this cycle is removed
-			// so, at the end, the remaining registered alert rules are the deleted ones
-			registeredDefinitions := sch.registry.keyMap()
-
-			// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
-			// scheduled as rules could be removed before we get a chance to evaluate them.
-			sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
-			sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
-
-			type readyToRunItem struct {
-				ruleInfo *alertRuleInfo
-				evaluation
-			}
-
-			readyToRun := make([]readyToRunItem, 0)
-			missingFolder := make(map[string][]string)
-			for _, item := range alertRules {
-				key := item.GetKey()
-				ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key)
-
-				// enforce minimum evaluation interval
-				if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
-					sch.log.Debug("Interval adjusted", append(key.LogContext(), "originalInterval", item.IntervalSeconds, "adjustedInterval", sch.minRuleInterval.Seconds())...)
-					item.IntervalSeconds = int64(sch.minRuleInterval.Seconds())
-				}
-
-				invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
-
-				if newRoutine && !invalidInterval {
-					dispatcherGroup.Go(func() error {
-						return sch.ruleRoutine(ruleInfo.ctx, key, ruleInfo.evalCh, ruleInfo.updateCh)
-					})
-				}
-
-				if invalidInterval {
-					// this is expected to be always false
-					// given that we validate interval during alert rule updates
-					sch.log.Warn("Rule has an invalid interval and will be ignored. Interval should be divided exactly by scheduler interval", append(key.LogContext(), "ruleInterval", time.Duration(item.IntervalSeconds)*time.Second, "schedulerInterval", sch.baseInterval)...)
-					continue
-				}
-
-				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
-				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					var folderTitle string
-					if !sch.disableGrafanaFolder {
-						title, ok := folderTitles[item.NamespaceUID]
-						if ok {
-							folderTitle = title
-						} else {
-							missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
-						}
-					}
-					readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
-						scheduledAt: tick,
-						rule:        item,
-						folderTitle: folderTitle,
-					}})
-				}
-
-				// remove the alert rule from the registered alert rules
-				delete(registeredDefinitions, key)
-			}
-
-			if len(missingFolder) > 0 { // if this happens then there can be problems with fetching folders from the database.
-				sch.log.Warn("Unable to obtain folder titles for some rules", "missingFolderUIDToRuleUID", missingFolder)
-			}
-
-			var step int64 = 0
-			if len(readyToRun) > 0 {
-				step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
-			}
-
-			for i := range readyToRun {
-				item := readyToRun[i]
-
-				time.AfterFunc(time.Duration(int64(i)*step), func() {
-					key := item.rule.GetKey()
-					success, dropped := item.ruleInfo.eval(&item.evaluation)
-					if !success {
-						sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", append(key.LogContext(), "time", tick)...)
-						return
-					}
-					if dropped != nil {
-						sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", tick)...)
-						orgID := fmt.Sprint(key.OrgID)
-						sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.rule.Title).Inc()
-					}
-				})
-			}
-
-			// unregister and stop routines of the deleted alert rules
-			for key := range registeredDefinitions {
-				sch.DeleteAlertRule(key)
-			}
+			sch.processTick(ctx, dispatcherGroup, tick)
 
 			sch.metrics.SchedulePeriodicDuration.Observe(time.Since(start).Seconds())
 		case <-ctx.Done():
 			// waiting for all rule evaluation routines to stop
 			waitErr := dispatcherGroup.Wait()
-			// close the state manager and flush the state
-			sch.stateManager.Close()
 			return waitErr
 		}
 	}
+}
+
+type readyToRunItem struct {
+	ruleInfo *alertRuleInfo
+	evaluation
+}
+
+func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}) {
+	tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
+
+	if err := sch.updateSchedulableAlertRules(ctx); err != nil {
+		sch.log.Error("Failed to update alert rules", "error", err)
+	}
+	alertRules, folderTitles := sch.schedulableAlertRules.all()
+
+	// registeredDefinitions is a map used for finding deleted alert rules
+	// initially it is assigned to all known alert rules from the previous cycle
+	// each alert rule found also in this cycle is removed
+	// so, at the end, the remaining registered alert rules are the deleted ones
+	registeredDefinitions := sch.registry.keyMap()
+
+	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
+	// scheduled as rules could be removed before we get a chance to evaluate them.
+	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
+	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
+
+	readyToRun := make([]readyToRunItem, 0)
+	missingFolder := make(map[string][]string)
+	for _, item := range alertRules {
+		key := item.GetKey()
+		ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key)
+
+		// enforce minimum evaluation interval
+		if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
+			sch.log.Debug("Interval adjusted", append(key.LogContext(), "originalInterval", item.IntervalSeconds, "adjustedInterval", sch.minRuleInterval.Seconds())...)
+			item.IntervalSeconds = int64(sch.minRuleInterval.Seconds())
+		}
+
+		invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
+
+		if newRoutine && !invalidInterval {
+			dispatcherGroup.Go(func() error {
+				return sch.ruleRoutine(ruleInfo.ctx, key, ruleInfo.evalCh, ruleInfo.updateCh)
+			})
+		}
+
+		if invalidInterval {
+			// this is expected to be always false
+			// given that we validate interval during alert rule updates
+			sch.log.Warn("Rule has an invalid interval and will be ignored. Interval should be divided exactly by scheduler interval", append(key.LogContext(), "ruleInterval", time.Duration(item.IntervalSeconds)*time.Second, "schedulerInterval", sch.baseInterval)...)
+			continue
+		}
+
+		itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
+		if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
+			var folderTitle string
+			if !sch.disableGrafanaFolder {
+				title, ok := folderTitles[item.NamespaceUID]
+				if ok {
+					folderTitle = title
+				} else {
+					missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
+				}
+			}
+			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
+				scheduledAt: tick,
+				rule:        item,
+				folderTitle: folderTitle,
+			}})
+		}
+
+		// remove the alert rule from the registered alert rules
+		delete(registeredDefinitions, key)
+	}
+
+	if len(missingFolder) > 0 { // if this happens then there can be problems with fetching folders from the database.
+		sch.log.Warn("Unable to obtain folder titles for some rules", "missingFolderUIDToRuleUID", missingFolder)
+	}
+
+	var step int64 = 0
+	if len(readyToRun) > 0 {
+		step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
+	}
+
+	for i := range readyToRun {
+		item := readyToRun[i]
+
+		time.AfterFunc(time.Duration(int64(i)*step), func() {
+			key := item.rule.GetKey()
+			success, dropped := item.ruleInfo.eval(&item.evaluation)
+			if !success {
+				sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", append(key.LogContext(), "time", tick)...)
+				return
+			}
+			if dropped != nil {
+				sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", tick)...)
+				orgID := fmt.Sprint(key.OrgID)
+				sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.rule.Title).Inc()
+			}
+		})
+	}
+
+	// unregister and stop routines of the deleted alert rules
+	for key := range registeredDefinitions {
+		sch.DeleteAlertRule(key)
+	}
+
+	return readyToRun, registeredDefinitions
 }
 
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersion) error {
@@ -328,10 +328,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		start := sch.clock.Now()
 
 		schedulerUser := &user.SignedInUser{
-			UserID:  -1,
-			Login:   "grafana_scheduler",
-			OrgID:   e.rule.OrgID,
-			OrgRole: org.RoleAdmin,
+			UserID:           -1,
+			IsServiceAccount: true,
+			Login:            "grafana_scheduler",
+			OrgID:            e.rule.OrgID,
+			OrgRole:          org.RoleAdmin,
 			Permissions: map[int64]map[string][]string{
 				e.rule.OrgID: {
 					datasources.ActionQuery: []string{
@@ -370,7 +371,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			return
 		}
 		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, sch.getRuleExtraLabels(e))
-		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
+		alerts := FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		if len(alerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, alerts)
 		}

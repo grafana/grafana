@@ -45,6 +45,12 @@
   },
   "overrides": [
     {
+      "files": ["public/app/features/scenes/**/*.{ts,tsx}"],
+      "rules": {
+        "@typescript-eslint/explicit-member-accessibility": ["error", { "accessibility": "explicit" }]
+      }
+    },
+    {
       "files": ["packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}"],
       "rules": {
         "react-hooks/rules-of-hooks": "off",
@@ -81,7 +87,11 @@
             "ignoreNonDOM": true
           }
         ],
-        "jsx-a11y/no-static-element-interactions": "off"
+        "jsx-a11y/no-static-element-interactions": "off",
+        "jsx-a11y/label-has-associated-control": [ "error", {
+          "controlComponents": ["NumberInput"],
+          "depth": 2
+        }]
       }
     }
   ]

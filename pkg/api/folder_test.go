@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -39,7 +39,7 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			Title: "Folder",
 		}
 
-		folderService.ExpectedFolder = &models.Folder{Id: 1, Uid: "uid", Title: "Folder"}
+		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder"}
 
 		createFolderScenario(t, "When calling POST on", "/api/folders", "/api/folders", folderService, cmd,
 			func(sc *scenarioContext) {
@@ -94,7 +94,7 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			Title: "Folder upd",
 		}
 
-		folderService.ExpectedFolder = &models.Folder{Id: 1, Uid: "uid", Title: "Folder upd"}
+		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder upd"}
 
 		updateFolderScenario(t, "When calling PUT on", "/api/folders/uid", "/api/folders/:uid", folderService, cmd,
 			func(sc *scenarioContext) {
@@ -146,11 +146,11 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.folderService = folderService
 		hs.AccessControl = acmock.New()
-		hs.QuotaService = quotatest.NewQuotaServiceFake()
+		hs.QuotaService = quotatest.New(false, nil)
 	})
 
 	t.Run("Should attach access control metadata to multiple folders", func(t *testing.T) {
-		folderService.ExpectedFolders = []*models.Folder{{Uid: "1"}, {Uid: "2"}, {Uid: "3"}}
+		folderService.ExpectedFolders = []*folder.Folder{{UID: "1"}, {UID: "2"}, {UID: "3"}}
 
 		req := server.NewGetRequest("/api/folders?accesscontrol=true")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -179,7 +179,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 	})
 
 	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
-		folderService.ExpectedFolder = &models.Folder{Uid: "folderUid"}
+		folderService.ExpectedFolder = &folder.Folder{UID: "folderUid"}
 
 		req := server.NewGetRequest("/api/folders/folderUid?accesscontrol=true")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -202,7 +202,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 	})
 
 	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
-		folderService.ExpectedFolder = &models.Folder{Uid: "folderUid"}
+		folderService.ExpectedFolder = &folder.Folder{UID: "folderUid"}
 
 		req := server.NewGetRequest("/api/folders/folderUid")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -240,13 +240,21 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
 			q.Result = aclMockResp
 		}).Return(nil)
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardQuery)
+			q.Result = &models.Dashboard{
+				Id:  q.Id,
+				Uid: q.Uid,
+			}
+		}).Return(nil)
 		store := mockstore.NewSQLStoreMock()
 		guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 		hs := HTTPServer{
-			AccessControl: acmock.New(),
-			folderService: folderService,
-			Cfg:           setting.NewCfg(),
-			Features:      featuremgmt.WithFeatures(),
+			AccessControl:        acmock.New(),
+			folderService:        folderService,
+			Cfg:                  setting.NewCfg(),
+			Features:             featuremgmt.WithFeatures(),
+			accesscontrolService: actest.FakeService{},
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -293,48 +301,4 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 
 		fn(sc)
 	})
-}
-
-type fakeFolderService struct {
-	folder.Service
-
-	GetFoldersResult     []*models.Folder
-	GetFoldersError      error
-	GetFolderByUIDResult *models.Folder
-	GetFolderByUIDError  error
-	GetFolderByIDResult  *models.Folder
-	GetFolderByIDError   error
-	CreateFolderResult   *models.Folder
-	CreateFolderError    error
-	UpdateFolderResult   *models.Folder
-	UpdateFolderError    error
-	DeleteFolderResult   *models.Folder
-	DeleteFolderError    error
-	DeletedFolderUids    []string
-}
-
-func (s *fakeFolderService) GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
-	return s.GetFoldersResult, s.GetFoldersError
-}
-
-func (s *fakeFolderService) GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
-	return s.GetFolderByIDResult, s.GetFolderByIDError
-}
-
-func (s *fakeFolderService) GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
-	return s.GetFolderByUIDResult, s.GetFolderByUIDError
-}
-
-func (s *fakeFolderService) CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title, uid string) (*models.Folder, error) {
-	return s.CreateFolderResult, s.CreateFolderError
-}
-
-func (s *fakeFolderService) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
-	cmd.Result = s.UpdateFolderResult
-	return s.UpdateFolderError
-}
-
-func (s *fakeFolderService) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
-	s.DeletedFolderUids = append(s.DeletedFolderUids, uid)
-	return s.DeleteFolderResult, s.DeleteFolderError
 }

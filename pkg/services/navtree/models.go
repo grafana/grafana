@@ -36,10 +36,14 @@ const (
 )
 
 const (
+	NavIDRoot               = "root"
 	NavIDDashboards         = "dashboards"
 	NavIDDashboardsBrowse   = "dashboards/browse"
 	NavIDCfg                = "cfg" // NavIDCfg is the id for org configuration navigation node
 	NavIDAdmin              = "admin"
+	NavIDAdminGeneral       = "admin/general"
+	NavIDAdminPlugins       = "admin/plugins"
+	NavIDAdminAccess        = "admin/access"
 	NavIDAlertsAndIncidents = "alerts-and-incidents"
 	NavIDAlerting           = "alerting"
 	NavIDMonitoring         = "monitoring"
@@ -67,6 +71,8 @@ type NavLink struct {
 	HighlightText    string     `json:"highlightText,omitempty"`
 	HighlightID      string     `json:"highlightId,omitempty"`
 	EmptyMessageId   string     `json:"emptyMessageId,omitempty"`
+	PluginID         string     `json:"pluginId,omitempty"` // (Optional) The ID of the plugin that registered nav link (e.g. as a standalone plugin page)
+	IsCreateAction   bool       `json:"isCreateAction,omitempty"`
 }
 
 func (node *NavLink) Sort() {
@@ -108,22 +114,7 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 	}
 
 	if topNavEnabled {
-		orgAdminNode := root.FindById(NavIDCfg)
-
-		if orgAdminNode != nil {
-			orgAdminNode.Url = "/admin"
-			orgAdminNode.Text = "Administration"
-		}
-
-		if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
-			serverAdminNode.Url = "/admin/server"
-			serverAdminNode.SortWeight = 0
-
-			if orgAdminNode != nil {
-				orgAdminNode.Children = append(orgAdminNode.Children, serverAdminNode)
-				root.RemoveSection(serverAdminNode)
-			}
-		}
+		ApplyAdminIA(root)
 
 		// Move reports into dashboards
 		if reports := root.FindById(NavIDReporting); reports != nil {
@@ -148,6 +139,10 @@ func (root *NavTreeRoot) RemoveEmptySectionsAndApplyNewInformationArchitecture(t
 		} else if !topNavEnabled {
 			node.Url = node.Children[0].Url
 		}
+	}
+
+	if len(root.Children) < 1 {
+		root.Children = make([]*NavLink, 0)
 	}
 }
 
@@ -176,6 +171,102 @@ func Sort(nodes []*NavLink) {
 	for _, child := range nodes {
 		child.Sort()
 	}
+}
+
+func ApplyAdminIA(root *NavTreeRoot) {
+	orgAdminNode := root.FindById(NavIDCfg)
+
+	if orgAdminNode != nil {
+		orgAdminNode.Url = "/admin"
+		orgAdminNode.Text = "Administration"
+
+		generalNodeLinks := []*NavLink{}
+		pluginsNodeLinks := []*NavLink{}
+		accessNodeLinks := []*NavLink{}
+
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("upgrading"))
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("licensing"))
+		if orgSettings := root.FindById("org-settings"); orgSettings != nil {
+			orgSettings.Text = "Default preferences"
+			generalNodeLinks = append(generalNodeLinks, orgSettings)
+		}
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("global-orgs"))
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("server-settings"))
+
+		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("plugins"))
+		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("datasources"))
+		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("correlations"))
+		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("plugin-page-grafana-cloud-link-app"))
+		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("recordedQueries")) // enterprise only
+
+		if globalUsers := root.FindById("global-users"); globalUsers != nil {
+			globalUsers.Text = "Users"
+			accessNodeLinks = append(accessNodeLinks, globalUsers)
+		}
+		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("teams"))
+		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("serviceaccounts"))
+		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("apikeys"))
+		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("ldap"))
+		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("standalone-plugin-page-/a/grafana-auth-app")) // Cloud Access Policies
+
+		generalNode := &NavLink{
+			Text:     "General",
+			Id:       NavIDAdminGeneral,
+			Url:      "/admin/general",
+			Icon:     "shield",
+			Children: generalNodeLinks,
+		}
+
+		pluginsNode := &NavLink{
+			Text:     "Plugins and data",
+			Id:       NavIDAdminPlugins,
+			Url:      "/admin/plugins",
+			Icon:     "shield",
+			Children: pluginsNodeLinks,
+		}
+
+		accessNode := &NavLink{
+			Text:     "Users and access",
+			Id:       NavIDAdminAccess,
+			Url:      "/admin/access",
+			Icon:     "shield",
+			Children: accessNodeLinks,
+		}
+
+		adminNodeLinks := []*NavLink{}
+
+		if len(generalNode.Children) > 0 {
+			adminNodeLinks = append(adminNodeLinks, generalNode)
+		}
+
+		if len(pluginsNode.Children) > 0 {
+			adminNodeLinks = append(adminNodeLinks, pluginsNode)
+		}
+
+		if len(accessNode.Children) > 0 {
+			adminNodeLinks = append(adminNodeLinks, accessNode)
+		}
+
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("storage"))
+
+		if len(adminNodeLinks) > 0 {
+			orgAdminNode.Children = adminNodeLinks
+		} else {
+			root.RemoveSection(orgAdminNode)
+		}
+	}
+
+	if serverAdminNode := root.FindById(NavIDAdmin); serverAdminNode != nil {
+		root.RemoveSection(serverAdminNode)
+	}
+}
+
+func AppendIfNotNil(children []*NavLink, newChild *NavLink) []*NavLink {
+	if newChild != nil {
+		return append(children, newChild)
+	}
+
+	return children
 }
 
 func FindById(nodes []*NavLink, id string) *NavLink {

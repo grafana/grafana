@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
+import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Button, Icon, useStyles2 } from '@grafana/ui';
@@ -28,7 +29,8 @@ export function NavBarMenuSection({
   const FeatureHighlightWrapper = link.highlightText ? NavFeatureHighlight : React.Fragment;
   const isActive = link === activeItem;
   const hasActiveChild = hasChildMatch(link, activeItem);
-  const [sectionExpanded, setSectionExpanded] = useState(Boolean(hasActiveChild));
+  const [sectionExpanded, setSectionExpanded] =
+    useLocalStorage(`grafana.navigation.expanded[${link.text}]`, false) ?? Boolean(hasActiveChild);
 
   return (
     <>
@@ -54,7 +56,7 @@ export function NavBarMenuSection({
             {getNavTitle(link.id) ?? link.text}
           </div>
         </NavBarMenuItem>
-        {Boolean(link.children?.length) && (
+        {children && (
           <Button
             aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section`}
             variant="secondary"

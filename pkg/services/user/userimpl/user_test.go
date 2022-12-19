@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
@@ -23,7 +24,9 @@ func TestUserService(t *testing.T) {
 		store:        userStore,
 		orgService:   orgService,
 		cacheService: localcache.ProvideService(),
+		teamService:  &teamtest.FakeService{},
 	}
+	userService.cfg = setting.NewCfg()
 
 	t.Run("create user", func(t *testing.T) {
 		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
@@ -42,7 +45,6 @@ func TestUserService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "login", u.Login)
 		require.Equal(t, "name", u.Name)
-
 		require.Equal(t, "email", u.Email)
 	})
 
@@ -126,6 +128,68 @@ func TestUserService(t *testing.T) {
 		require.NotNil(t, result2)
 		assert.Equal(t, query2.OrgID, result2.OrgID)
 	})
+
+	t.Run("NewAnonymousSignedInUser", func(t *testing.T) {
+		t.Run("should error when anonymous access is disabled", func(t *testing.T) {
+			userService.cfg = setting.NewCfg()
+			userService.cfg.AnonymousEnabled = false
+			_, err := userService.NewAnonymousSignedInUser(context.Background())
+			require.Error(t, err)
+		})
+
+		t.Run("should return user when anonymous access is enabled and org is not set", func(t *testing.T) {
+			userService.cfg = setting.NewCfg()
+			userService.cfg.AnonymousEnabled = true
+			u, err := userService.NewAnonymousSignedInUser(context.Background())
+			require.NoError(t, err)
+			require.Equal(t, true, u.IsAnonymous)
+			require.Equal(t, int64(0), u.UserID)
+			require.Equal(t, "", u.OrgName)
+			require.Equal(t, roletype.RoleType(""), u.OrgRole)
+		})
+
+		t.Run("should return user with org info when anonymous access is enabled and org is set", func(t *testing.T) {
+			userService.cfg = setting.NewCfg()
+			userService.cfg.AnonymousEnabled = true
+			userService.cfg.AnonymousOrgName = "anonymous"
+			userService.cfg.AnonymousOrgRole = "anonymous"
+			orgService.ExpectedOrg = &org.Org{Name: "anonymous", ID: 123}
+			u, err := userService.NewAnonymousSignedInUser(context.Background())
+			require.NoError(t, err)
+			require.Equal(t, true, u.IsAnonymous)
+			require.Equal(t, int64(0), u.UserID)
+			require.Equal(t, orgService.ExpectedOrg.ID, u.OrgID)
+			require.Equal(t, orgService.ExpectedOrg.Name, u.OrgName)
+			require.Equal(t, roletype.RoleType(userService.cfg.AnonymousOrgRole), u.OrgRole)
+		})
+	})
+
+	t.Run("Can set using org", func(t *testing.T) {
+		cmd := user.SetUsingOrgCommand{UserID: 2, OrgID: 1}
+		orgService.ExpectedUserOrgDTO = []*org.UserOrgDTO{{OrgID: 1}}
+		userStore.ExpectedError = nil
+		err := userService.SetUsingOrg(context.Background(), &cmd)
+		require.NoError(t, err)
+
+		t.Run("SignedInUserQuery with a different org", func(t *testing.T) {
+			query := user.GetSignedInUserQuery{UserID: 2}
+			userStore.ExpectedSignedInUser = &user.SignedInUser{
+				OrgID:   1,
+				Email:   "ac2@test.com",
+				Name:    "ac2 name",
+				Login:   "ac2",
+				OrgName: "ac1@test.com",
+			}
+			queryResult, err := userService.GetSignedInUser(context.Background(), &query)
+
+			require.NoError(t, err)
+			require.EqualValues(t, queryResult.OrgID, 1)
+			require.Equal(t, queryResult.Email, "ac2@test.com")
+			require.Equal(t, queryResult.Name, "ac2 name")
+			require.Equal(t, queryResult.Login, "ac2")
+			require.Equal(t, queryResult.OrgName, "ac1@test.com")
+		})
+	})
 }
 
 type FakeUserStore struct {
@@ -162,6 +226,10 @@ func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
 }
 
 func (f *FakeUserStore) CaseInsensitiveLoginConflict(context.Context, string, string) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) LoginConflict(context.Context, string, string, bool) error {
 	return f.ExpectedError
 }
 
@@ -215,4 +283,8 @@ func (f *FakeUserStore) Disable(ctx context.Context, cmd *user.DisableUserComman
 
 func (f *FakeUserStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
 	return f.ExpectedSearchUserQueryResult, f.ExpectedError
+}
+
+func (f *FakeUserStore) Count(ctx context.Context) (int64, error) {
+	return 0, nil
 }

@@ -10,12 +10,15 @@ import {
 import { Alert, FieldSet, InlineField, InlineFieldRow, InlineSwitch, Input, Link, SecretInput } from '@grafana/ui';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
+import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseField';
 
 import { MySQLOptions } from '../types';
 
 export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<MySQLOptions>) => {
   const { options, onOptionsChange } = props;
   const jsonData = options.jsonData;
+
+  useMigrateDatabaseField(props);
 
   const onResetPassword = () => {
     updateDatasourcePluginResetOption(props, 'password');
@@ -54,9 +57,9 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
           <Input
             width={longWidth}
             name="database"
-            value={options.database || ''}
+            value={jsonData.database || ''}
             placeholder="database name"
-            onChange={onDSOptionChanged('database')}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'database')}
           ></Input>
         </InlineField>
         <InlineFieldRow>
@@ -128,10 +131,11 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         </InlineField>
       </FieldSet>
 
-      {options.jsonData.tlsAuth ? (
+      {jsonData.tlsAuth || jsonData.tlsAuthWithCACert ? (
         <FieldSet label="TLS/SSL Auth Details">
           <TLSSecretsConfig
             showCACert={jsonData.tlsAuthWithCACert}
+            showKeyPair={jsonData.tlsAuth}
             editorProps={props}
             labelWidth={25}
           ></TLSSecretsConfig>
@@ -170,10 +174,10 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
         statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect
         against this we <strong>Highly</strong> recommend you create a specific MySQL user with restricted permissions.
-        Checkout the{' '}
+        Check out the{' '}
         <Link rel="noreferrer" target="_blank" href="http://docs.grafana.org/features/datasources/mysql/">
           MySQL Data Source Docs
-        </Link>
+        </Link>{' '}
         for more information.
       </Alert>
     </>

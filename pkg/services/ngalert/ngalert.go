@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -62,6 +63,7 @@ func ProvideService(
 	bus bus.Bus,
 	accesscontrolService accesscontrol.Service,
 	annotationsRepo annotations.Repository,
+	pluginsStore plugins.Store,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -85,6 +87,7 @@ func ProvideService(
 		bus:                  bus,
 		accesscontrolService: accesscontrolService,
 		annotationsRepo:      annotationsRepo,
+		pluginsStore:         pluginsStore,
 	}
 
 	if ng.IsDisabled() {
@@ -127,8 +130,10 @@ type AlertNG struct {
 	accesscontrol        accesscontrol.AccessControl
 	accesscontrolService accesscontrol.Service
 	annotationsRepo      annotations.Repository
+	store                *store.DBstore
 
-	bus bus.Bus
+	bus          bus.Bus
+	pluginsStore plugins.Store
 }
 
 func (ng *AlertNG) init() error {
@@ -143,6 +148,7 @@ func (ng *AlertNG) init() error {
 		AccessControl:    ng.accesscontrol,
 		DashboardService: ng.dashboardService,
 	}
+	ng.store = store
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
@@ -180,19 +186,23 @@ func (ng *AlertNG) init() error {
 
 	ng.AlertsRouter = alertsRouter
 
-	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
+	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 	schedCfg := schedule.SchedulerCfg{
-		Cfg:              ng.Cfg.UnifiedAlerting,
-		C:                clk,
-		EvaluatorFactory: evalFactory,
-		RuleStore:        store,
-		Metrics:          ng.Metrics.GetSchedulerMetrics(),
-		AlertSender:      alertsRouter,
+		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
+		C:                    clk,
+		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
+		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
+		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
+		AppURL:               appUrl,
+		EvaluatorFactory:     evalFactory,
+		RuleStore:            store,
+		Metrics:              ng.Metrics.GetSchedulerMetrics(),
+		AlertSender:          alertsRouter,
 	}
 
 	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)
-	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.imageService, clk, historian)
-	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
+	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, ng.imageService, clk, historian)
+	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
 	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
@@ -234,8 +244,23 @@ func (ng *AlertNG) init() error {
 		AlertRules:           alertRuleService,
 		AlertsRouter:         alertsRouter,
 		EvaluatorFactory:     evalFactory,
+		FeatureManager:       ng.FeatureToggles,
+		AppUrl:               appUrl,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
+
+	defaultLimits, err := readQuotaConfig(ng.Cfg)
+	if err != nil {
+		return err
+	}
+
+	if err := ng.QuotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
+		TargetSrv:     models.QuotaTargetSrv,
+		DefaultLimits: defaultLimits,
+		Reporter:      api.Usage,
+	}); err != nil {
+		return err
+	}
 
 	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
 		key, ok := models.RuleKeyFromContext(ctx)
@@ -276,9 +301,13 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 // Run starts the scheduler and Alertmanager.
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("Starting")
-	ng.stateManager.Warm(ctx)
+	ng.stateManager.Warm(ctx, ng.store)
 
 	children, subCtx := errgroup.WithContext(ctx)
+
+	children.Go(func() error {
+		return ng.stateManager.Run(subCtx)
+	})
 
 	children.Go(func() error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)
@@ -301,4 +330,33 @@ func (ng *AlertNG) IsDisabled() bool {
 		return true
 	}
 	return !ng.Cfg.UnifiedAlerting.IsEnabled()
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
+	}
+
+	var alertOrgQuota int64
+	var alertGlobalQuota int64
+
+	if cfg.UnifiedAlerting.IsEnabled() {
+		alertOrgQuota = cfg.Quota.Org.AlertRule
+		alertGlobalQuota = cfg.Quota.Global.AlertRule
+	}
+
+	globalQuotaTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return limits, err
+	}
+	orgQuotaTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
+	if err != nil {
+		return limits, err
+	}
+
+	limits.Set(globalQuotaTag, alertGlobalQuota)
+	limits.Set(orgQuotaTag, alertOrgQuota)
+	return limits, nil
 }
