@@ -102,7 +102,7 @@ export class MetricMathCompletionItemProvider extends CompletionItemProvider {
           addSuggestion('$__period_auto', {
             kind: monaco.languages.CompletionItemKind.Variable,
             sortText: 'a',
-            detail: 'Will be expanded to period in seconds matching the time range.',
+            detail: 'Sets period dynamically to adjust to selected time range.',
           });
           METRIC_MATH_PERIODS.map((s, idx) =>
             addSuggestion(s.toString(), {

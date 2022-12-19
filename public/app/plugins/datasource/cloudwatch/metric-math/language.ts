@@ -93,7 +93,7 @@ export const language: monacoType.languages.IMonarchLanguage = {
     variables: [
       [/\$[a-zA-Z0-9-_]+/, 'variable'], // $ followed by any letter/number we assume could be grafana template variable
     ],
-    macros: [[/\$__[a-zA-Z0-9-_]+/, 'type']],
+    macros: [[/\$__[a-zA-Z0-9-_]+/, 'type']], // example: $__period_auto
     whitespace: [[/\s+/, 'white']],
     assignment: [[/=/, 'tag']],
     numbers: [

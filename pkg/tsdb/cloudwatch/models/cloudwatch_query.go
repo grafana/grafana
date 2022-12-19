@@ -66,7 +66,7 @@ type CloudWatchQuery struct {
 	AccountId         *string
 }
 
-func (q *CloudWatchQuery) GetGMDAPIMode() GMDApiMode {
+func (q *CloudWatchQuery) GetGetMetricDataAPIMode() GMDApiMode {
 	if q.MetricQueryType == MetricQueryTypeSearch && q.MetricEditorMode == MetricEditorModeBuilder {
 		if q.IsInferredSearchExpression() {
 			return GMDApiModeInferredSearchExpression
@@ -279,7 +279,7 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 }
 
 func (q *CloudWatchQuery) applyMacros(startTime, endTime time.Time) {
-	if q.GetGMDAPIMode() == GMDApiModeMathExpression {
+	if q.GetGetMetricDataAPIMode() == GMDApiModeMathExpression {
 		q.Expression = strings.ReplaceAll(q.Expression, "$__period_auto", strconv.Itoa(calculatePeriodBasedOnTimeRange(startTime, endTime)))
 	}
 }

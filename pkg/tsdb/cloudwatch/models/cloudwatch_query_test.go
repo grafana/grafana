@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	log "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
-var logger = log.New("testCloudWatchLogger")
+var logger = &logtest.Fake{}
 
 func TestCloudWatchQuery(t *testing.T) {
 	t.Run("Deeplink", func(t *testing.T) {
@@ -706,7 +706,7 @@ func Test_ParseMetricDataQueries_query_type_and_metric_editor_mode_and_GMD_query
 			require.NotNil(t, res[0])
 			assert.Equal(t, tc.expectedMetricQueryType, res[0].MetricQueryType)
 			assert.Equal(t, tc.expectedMetricEditorMode, res[0].MetricEditorMode)
-			assert.Equal(t, tc.expectedGMDApiMode, res[0].GetGMDAPIMode())
+			assert.Equal(t, tc.expectedGMDApiMode, res[0].GetGetMetricDataAPIMode())
 		})
 	}
 }
@@ -1231,20 +1231,21 @@ func Test_ParseMetricDataQueries_default_region(t *testing.T) {
 
 func Test_ParseMetricDataQueries_ApplyMacros(t *testing.T) {
 	t.Run("should expand $__period_auto macro when a metric search code query is used", func(t *testing.T) {
+		timeNow := time.Now()
 		testCases := []struct {
 			startTime      time.Time
 			expectedPeriod string
 		}{
 			{
-				startTime:      time.Now().Add(-2 * time.Hour),
+				startTime:      timeNow.Add(-2 * time.Hour),
 				expectedPeriod: "60",
 			},
 			{
-				startTime:      time.Now().Add(-100 * time.Hour),
+				startTime:      timeNow.Add(-100 * time.Hour),
 				expectedPeriod: "300",
 			},
 			{
-				startTime:      time.Now().Add(-1000 * time.Hour),
+				startTime:      timeNow.Add(-1000 * time.Hour),
 				expectedPeriod: "3600",
 			},
 		}
