@@ -14,10 +14,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 )
 
 func TestPagerdutyNotifier(t *testing.T) {
@@ -276,13 +272,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
+			settingsJSON := json.RawMessage(c.settings)
 			secureSettings := make(map[string][]byte)
 			webhookSender := mockNotificationService()
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
-
 			fc := FactoryConfig{
 				Config: &NotificationChannelConfig{
 					Name:           "pageduty_testing",
@@ -291,9 +283,11 @@ func TestPagerdutyNotifier(t *testing.T) {
 					SecureSettings: secureSettings,
 				},
 				NotificationService: webhookSender,
-				DecryptFunc:         decryptFn,
-				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				Template: tmpl,
+				Logger:   &FakeLogger{},
 			}
 			pn, err := newPagerdutyNotifier(fc)
 			if c.expInitError != "" {

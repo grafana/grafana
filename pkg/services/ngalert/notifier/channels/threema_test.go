@@ -2,12 +2,9 @@ package channels
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
@@ -118,11 +115,9 @@ func TestThreemaNotifier(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
+			settingsJSON := json.RawMessage(c.settings)
 			secureSettings := make(map[string][]byte)
 			webhookSender := mockNotificationService()
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 
 			fc := FactoryConfig{
 				Config: &NotificationChannelConfig{
@@ -134,8 +129,10 @@ func TestThreemaNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				ImageStore:          images,
 				Template:            tmpl,
-				DecryptFunc:         secretsService.GetDecryptedValue,
-				Logger:              &FakeLogger{},
+				DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+					return fallback
+				},
+				Logger: &FakeLogger{},
 			}
 
 			pn, err := NewThreemaNotifier(fc)

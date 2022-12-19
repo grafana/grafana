@@ -33,9 +33,13 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 	}
 
 	return &authn.Identity{
-		OrgID:       o.ID,
-		OrgName:     o.Name,
-		OrgRoles:    map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
-		IsAnonymous: true,
+		OrgID:    o.ID,
+		OrgName:  o.Name,
+		OrgRoles: map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
 	}, nil
+}
+
+func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {
+	// If anonymous client is register it can always be used for authentication
+	return true
 }

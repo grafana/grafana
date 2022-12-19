@@ -510,7 +510,7 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 			Name:                  r.Name,
 			Type:                  r.Type,
 			DisableResolveMessage: r.DisableResolveMessage,
-			Settings:              r.Settings,
+			Settings:              json.RawMessage(r.Settings),
 			SecureSettings:        secureSettings,
 		}
 	)

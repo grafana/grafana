@@ -11,6 +11,8 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 // GetDecryptedValueFn is a function that returns the decrypted value of
@@ -25,7 +27,11 @@ type AlertmanagerConfig struct {
 }
 
 func NewAlertmanagerConfig(config *NotificationChannelConfig, fn GetDecryptedValueFn) (*AlertmanagerConfig, error) {
-	urlStr := config.Settings.Get("url").MustString()
+	simpleConfig, err := simplejson.NewJson(config.Settings)
+	if err != nil {
+		return nil, err
+	}
+	urlStr := simpleConfig.Get("url").MustString()
 	if urlStr == "" {
 		return nil, errors.New("could not find url property in settings")
 	}
@@ -48,8 +54,8 @@ func NewAlertmanagerConfig(config *NotificationChannelConfig, fn GetDecryptedVal
 	return &AlertmanagerConfig{
 		NotificationChannelConfig: config,
 		URLs:                      urls,
-		BasicAuthUser:             config.Settings.Get("basicAuthUser").MustString(),
-		BasicAuthPassword:         fn(context.Background(), config.SecureSettings, "basicAuthPassword", config.Settings.Get("basicAuthPassword").MustString()),
+		BasicAuthUser:             simpleConfig.Get("basicAuthUser").MustString(),
+		BasicAuthPassword:         fn(context.Background(), config.SecureSettings, "basicAuthPassword", simpleConfig.Get("basicAuthPassword").MustString()),
 	}, nil
 }
 

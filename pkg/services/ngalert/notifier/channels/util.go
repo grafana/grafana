@@ -24,8 +24,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 const (
@@ -170,20 +168,12 @@ type NotificationChannelConfig struct {
 	Name                  string            `json:"name"`
 	Type                  string            `json:"type"`
 	DisableResolveMessage bool              `json:"disableResolveMessage"`
-	Settings              *simplejson.Json  `json:"settings"`
+	Settings              json.RawMessage   `json:"settings"`
 	SecureSettings        map[string][]byte `json:"secureSettings"`
 }
 
 func (c NotificationChannelConfig) unmarshalSettings(v interface{}) error {
-	ser, err := c.Settings.Encode()
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(ser, v)
-	if err != nil {
-		return err
-	}
-	return nil
+	return json.Unmarshal(c.Settings, v)
 }
 
 type httpCfg struct {
