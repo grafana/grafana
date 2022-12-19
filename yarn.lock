@@ -4840,7 +4840,7 @@ __metadata:
     sinon: 14.0.1
     tinycolor2: 1.4.2
     tslib: 2.4.1
-    typescript: 4.8.4
+    typescript: 4.9.3
     uplot: 1.6.23
     xss: 1.0.14
   peerDependencies:
@@ -4864,7 +4864,7 @@ __metadata:
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
     tslib: 2.4.1
-    typescript: 4.8.4
+    typescript: 4.9.3
   languageName: unknown
   linkType: soft
 
@@ -4903,7 +4903,7 @@ __metadata:
     tracelib: 1.0.1
     ts-loader: 8.4.0
     tslib: 2.4.1
-    typescript: 4.8.4
+    typescript: 4.9.3
     uuid: 9.0.0
     webpack: 5.74.0
     yaml: ^2.0.0
@@ -5048,7 +5048,7 @@ __metadata:
     rxjs: 7.5.7
     systemjs: 0.20.19
     tslib: 2.4.1
-    typescript: 4.8.4
+    typescript: 4.9.3
   peerDependencies:
     react: 17.0.2
     react-dom: 17.0.2
@@ -5071,7 +5071,7 @@ __metadata:
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
     tslib: 2.4.1
-    typescript: 4.8.4
+    typescript: 4.9.3
   languageName: unknown
   linkType: soft
 
@@ -5161,7 +5161,7 @@ __metadata:
     ts-loader: ^9.3.1
     ts-node: ^9.1.0
     tslib: 2.4.0
-    typescript: 4.8.2
+    typescript: 4.9.3
     webpack: ^5.72.0
   bin:
     grafana-toolkit: ./bin/grafana-toolkit.js
@@ -5318,7 +5318,7 @@ __metadata:
     style-loader: 3.3.1
     tinycolor2: 1.4.2
     tslib: 2.4.1
-    typescript: 4.8.4
+    typescript: 4.9.3
     uplot: 1.6.23
     uuid: 9.0.0
     webpack: 5.74.0
@@ -5499,7 +5499,7 @@ __metadata:
     tinycolor2: 1.4.2
     tslib: 2.4.1
     tween-functions: ^1.2.0
-    typescript: 4.8.4
+    typescript: 4.9.3
   languageName: unknown
   linkType: soft
 
@@ -22204,7 +22204,7 @@ __metadata:
     ts-loader: 9.3.1
     ts-node: 10.9.1
     tslib: 2.4.1
-    typescript: 4.8.4
+    typescript: 4.9.3
     uplot: 1.6.23
     uuid: 9.0.0
     vendor: "link:./public/vendor"
@@ -37691,16 +37691,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.8.2":
-  version: 4.8.2
-  resolution: "typescript@npm:4.8.2"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 7f5b81d0d558c9067f952c7af52ab7f19c2e70a916817929e4a5b256c93990bf3178eccb1ac8a850bc75df35f6781b6f4cb3370ce20d8b1ded92ed462348f628
-  languageName: node
-  linkType: hard
-
 "typescript@npm:4.8.4, typescript@npm:^3 || ^4":
   version: 4.8.4
   resolution: "typescript@npm:4.8.4"
@@ -37708,6 +37698,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 3e4f061658e0c8f36c820802fa809e0fd812b85687a9a2f5430bc3d0368e37d1c9605c3ce9b39df9a05af2ece67b1d844f9f6ea8ff42819f13bcb80f85629af0
+  languageName: node
+  linkType: hard
+
+"typescript@npm:4.9.3":
+  version: 4.9.3
+  resolution: "typescript@npm:4.9.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 17b8f816050b412403e38d48eef0e893deb6be522d6dc7caf105e54a72e34daf6835c447735fd2b28b66784e72bfbf87f627abb4818a8e43d1fa8106396128dc
   languageName: node
   linkType: hard
 
@@ -37741,16 +37741,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@4.8.2#~builtin<compat/typescript>":
-  version: 4.8.2
-  resolution: "typescript@patch:typescript@npm%3A4.8.2#~builtin<compat/typescript>::version=4.8.2&hash=aae4e6"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 5cb0f02f414f5405f4b0e7ee1fd7fa9177b6a8783c9017b6cad85f56ce4c4f93e0e6f2ce37e863cb597d44227cd009474c9fbd85bf7a50004e5557426cb58079
-  languageName: node
-  linkType: hard
-
 "typescript@patch:typescript@4.8.4#~builtin<compat/typescript>, typescript@patch:typescript@^3 || ^4#~builtin<compat/typescript>":
   version: 4.8.4
   resolution: "typescript@patch:typescript@npm%3A4.8.4#~builtin<compat/typescript>::version=4.8.4&hash=0102e9"
@@ -37758,6 +37748,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 301459fc3eb3b1a38fe91bf96d98eb55da88a9cb17b4ef80b4d105d620f4d547ba776cc27b44cc2ef58b66eda23fe0a74142feb5e79a6fb99f54fc018a696afa
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@4.9.3#~builtin<compat/typescript>":
+  version: 4.9.3
+  resolution: "typescript@patch:typescript@npm%3A4.9.3#~builtin<compat/typescript>::version=4.9.3&hash=d73830"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 67ca21a387c0572f1c04936e638dde7782c5aa520c3754aadc7cc9b7c915da9ebc3e27c601bfff4ccb7d7264e82dce6d277ada82ec09dc75024349e0ef64926d
   languageName: node
   linkType: hard
 
