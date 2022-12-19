@@ -99,5 +99,10 @@ export function fingerprintGraph(graph: Graph) {
 
 // create a unique fingerprint of the array of queries
 export function fingerPrintQueries(queries: AlertQuery[]) {
-  return queries.map((query) => query.refId + query.model.expression).join();
+  return queries
+    .map((query) => {
+      const type = isExpressionQuery(query.model) ? query.model.type : query.queryType;
+      return query.refId + query.model.expression + type;
+    })
+    .join();
 }
