@@ -81,11 +81,6 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 		return nil, true, err
 	}
 
-	identity, err := client.Authenticate(ctx, r)
-	if err != nil {
-		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client failed"}})
-		return nil, err
-	}
 	// FIXME: We want to perform common authentication operations here.
 	// We will add them as we start to implement clients that requires them.
 	// Those operations can be Syncing user, syncing teams, create a session etc.
@@ -94,7 +89,7 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 	// login handler, but if we want to perform basic auth during a request (called from contexthandler) we don't
 	// want a session to be created.
 
-	params := client.ClientParams()
+	params := c.ClientParams()
 
 	for _, hook := range s.postAuthHooks {
 		if err := hook(ctx, params, identity); err != nil {

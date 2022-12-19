@@ -52,7 +52,6 @@ const (
 )
 
 type Identity struct {
-	ID       string
 	OrgID    int64
 	OrgCount int
 	OrgName  string
@@ -67,12 +66,6 @@ type Identity struct {
 	AuthID         string // AuthId is the unique identifier for the user in the external system
 	OAuthToken     *oauth2.Token
 	LookUpParams   models.UserLookupParams
-	Login          string
-	Name           string
-	Email          string
-	AuthID         string
-	AuthModule     string
-	IsGrafanaAdmin bool
 	IsDisabled     bool
 	HelpFlags1     user.HelpFlags1
 	LastSeenAt     time.Time
@@ -81,6 +74,11 @@ type Identity struct {
 
 func (i *Identity) Role() org.RoleType {
 	return i.OrgRoles[i.OrgID]
+}
+
+// IsAnonymous will return true if no ID is set on the identity
+func (i *Identity) IsAnonymous() bool {
+	return i.ID == ""
 }
 
 func (i *Identity) NamespacedID() (string, int64) {
@@ -106,7 +104,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Name:               i.Name,
 		Email:              i.Email,
 		OrgCount:           i.OrgCount,
-		IsGrafanaAdmin:     i.IsGrafanaAdmin,
+		IsGrafanaAdmin:     *i.IsGrafanaAdmin,
 		IsAnonymous:        i.IsAnonymous(),
 		IsDisabled:         i.IsDisabled,
 		HelpFlags1:         i.HelpFlags1,
@@ -137,7 +135,7 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser) *Identity {
 		Name:           usr.Name,
 		Email:          usr.Email,
 		OrgCount:       usr.OrgCount,
-		IsGrafanaAdmin: usr.IsGrafanaAdmin,
+		IsGrafanaAdmin: &usr.IsGrafanaAdmin,
 		IsDisabled:     usr.IsDisabled,
 		HelpFlags1:     usr.HelpFlags1,
 		LastSeenAt:     usr.LastSeenAt,
