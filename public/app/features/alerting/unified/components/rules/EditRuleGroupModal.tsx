@@ -136,7 +136,7 @@ export const RulesForGroupTable = ({
 
   const { watch } = useFormContext<FormValues>();
   const currentInterval = watch('groupInterval');
-  const unknownCurrentInteval = !Boolean(currentInterval);
+  const unknownCurrentInterval = !Boolean(currentInterval);
 
   const rows: AlertsWithForTableProps[] = rules
     .slice()
@@ -170,7 +170,7 @@ export const RulesForGroupTable = ({
         id: 'numberEvaluations',
         label: '#Evaluations',
         renderCell: ({ data: { evaluationsToFire: numberEvaluations } }) => {
-          if (unknownCurrentInteval) {
+          if (unknownCurrentInterval) {
             return <ForBadge message="#Evaluations not available." />;
           } else {
             if (!isValidEvaluation(currentInterval)) {
@@ -188,7 +188,7 @@ export const RulesForGroupTable = ({
         size: 0.6,
       },
     ];
-  }, [currentInterval, unknownCurrentInteval]);
+  }, [currentInterval, unknownCurrentInterval]);
 
   return (
     <div className={styles.tableWrapper}>
