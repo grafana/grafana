@@ -29,7 +29,7 @@ type GoogleChatNotifier struct {
 type googleChatSettings struct {
 	URL     string `json:"url,omitempty" yaml:"url,omitempty"`
 	Title   string `json:"title,omitempty" yaml:"title,omitempty"`
-	Content string `json:"message,omitempty" yaml:"message,omitempty"`
+	Message string `json:"message,omitempty" yaml:"message,omitempty"`
 }
 
 func buildGoogleChatSettings(fc channels.FactoryConfig) (*googleChatSettings, error) {
@@ -45,8 +45,8 @@ func buildGoogleChatSettings(fc channels.FactoryConfig) (*googleChatSettings, er
 	if settings.Title == "" {
 		settings.Title = channels.DefaultMessageTitleEmbed
 	}
-	if settings.Content == "" {
-		settings.Content = channels.DefaultMessageEmbed
+	if settings.Message == "" {
+		settings.Message = channels.DefaultMessageEmbed
 	}
 	return &settings, nil
 }
@@ -86,7 +86,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 
 	var widgets []widget
 
-	if msg := tmpl(gcn.settings.Content); msg != "" {
+	if msg := tmpl(gcn.settings.Message); msg != "" {
 		// Add a text paragraph widget for the message if there is a message.
 		// Google Chat API doesn't accept an empty text property.
 		widgets = append(widgets, textParagraphWidget{Text: text{Text: msg}})
