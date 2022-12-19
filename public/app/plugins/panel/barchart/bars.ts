@@ -60,6 +60,7 @@ export interface BarsOptions {
   xSpacing?: number;
   xTimeAuto?: boolean;
   negY?: boolean[];
+  barHighlight?: boolean;
 }
 
 /**
@@ -448,7 +449,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         let cy = u.cursor.top! * uPlot.pxRatio;
 
         qt.get(cx, cy, 1, 1, (o) => {
-          if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+          if (opts.barHighlight && pointWithin(cx, cy, o.x, 0, o.x + o.w, o.y)) {
+            o.h = u.bbox.height;
+            hRect = o;
+          } else if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
             if (isStacked) {
               // choose the smallest hovered rect (when stacked bigger ones overlap smaller ones)
               if (hRect == null || o.h * o.w < hRect.h * hRect.w) {
@@ -465,28 +469,30 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     },
     points: {
       fill: 'rgba(255,255,255,0.4)',
-      bbox: (u, seriesIdx) => {
-        let isHovered = hRect && seriesIdx === hRect.sidx;
+      bbox: !opts.barHighlight
+        ? (u, seriesIdx) => {
+            let isHovered = hRect && seriesIdx === hRect.sidx;
 
-        let heightReduce = 0;
-        let widthReduce = 0;
+            let heightReduce = 0;
+            let widthReduce = 0;
 
-        // get height of bar rect at same index of the series below the hovered one
-        if (isStacked && isHovered && hRect!.sidx > 1) {
-          if (isXHorizontal) {
-            heightReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.h;
-          } else {
-            widthReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.w;
+            // get height of bar rect at same index of the series below the hovered one
+            if (isStacked && isHovered && hRect!.sidx > 1) {
+              if (isXHorizontal) {
+                heightReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.h;
+              } else {
+                widthReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.w;
+              }
+            }
+
+            return {
+              left: isHovered ? (hRect!.x + widthReduce) / uPlot.pxRatio : -10,
+              top: isHovered ? hRect!.y / uPlot.pxRatio : -10,
+              width: isHovered ? (hRect!.w - widthReduce) / uPlot.pxRatio : 0,
+              height: isHovered ? (hRect!.h - heightReduce) / uPlot.pxRatio : 0,
+            };
           }
-        }
-
-        return {
-          left: isHovered ? (hRect!.x + widthReduce) / uPlot.pxRatio : -10,
-          top: isHovered ? hRect!.y / uPlot.pxRatio : -10,
-          width: isHovered ? (hRect!.w - widthReduce) / uPlot.pxRatio : 0,
-          height: isHovered ? (hRect!.h - heightReduce) / uPlot.pxRatio : 0,
-        };
-      },
+        : undefined,
     },
   };
 

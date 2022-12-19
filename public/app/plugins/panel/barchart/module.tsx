@@ -220,6 +220,11 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
           max: 0.5,
           step: 0.05,
         },
+      })
+      .addBooleanSwitch({
+        path: 'barHighlight',
+        name: 'Highlight bar on hover',
+        defaultValue: defaultPanelOptions.barHighlight,
       });
 
     builder.addFieldNamePicker({

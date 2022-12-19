@@ -53,6 +53,8 @@ Panel: thema.#Lineage & {
 						barWidth:   float64 & >= 0 & <= 1 | *0.97
 						// Controls the width of groups. 1 = max with, 0 = min width.
 						groupWidth: float64 & >= 0 & <= 1 | *0.7
+						// Enables bar highlight mode which highlights the entire bar area and shows tooltip (even if bar value is 0)
+						barHighlight: bool | *false
 					} @cuetsy(kind="interface")
 					PanelFieldConfig: {
 						ui.AxisConfig

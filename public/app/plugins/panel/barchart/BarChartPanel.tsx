@@ -14,12 +14,14 @@ import {
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
+  BarHighlightPlugin,
   GraphGradientMode,
   GraphNG,
   GraphNGProps,
   measureText,
   PlotLegend,
   Portal,
+  StackingMode,
   TooltipDisplayMode,
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
@@ -195,7 +197,11 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
           rowIndex={datapointIdx}
           columnIndex={seriesIdx}
           sortOrder={options.tooltip.sort}
-          mode={options.tooltip.mode}
+          mode={
+            options.barHighlight && options.stacking !== StackingMode.None
+              ? TooltipDisplayMode.Multi
+              : options.tooltip.mode
+          }
         />
       </>
     );
@@ -280,6 +286,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       text,
       xTickLabelRotation,
       xTickLabelSpacing,
+      barHighlight,
     } = options;
 
     return preparePlotConfigBuilder({
@@ -305,6 +312,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       getColor,
       fillOpacity,
       allFrames: info.viz,
+      barHighlight,
     });
   };
 
@@ -343,17 +351,20 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
         }
 
         return (
-          <Portal>
-            {hover && coords && focusedSeriesIdx && (
-              <VizTooltipContainer
-                position={{ x: coords.viewport.x, y: coords.viewport.y }}
-                offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
-                allowPointerEvents={isToolTipOpen.current}
-              >
-                {renderTooltip(info.aligned, focusedSeriesIdx, focusedPointIdx)}
-              </VizTooltipContainer>
-            )}
-          </Portal>
+          <>
+            {options.barHighlight && <BarHighlightPlugin config={config} />}
+            <Portal>
+              {hover && coords && focusedSeriesIdx && (
+                <VizTooltipContainer
+                  position={{ x: coords.viewport.x, y: coords.viewport.y }}
+                  offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+                  allowPointerEvents={isToolTipOpen.current}
+                >
+                  {renderTooltip(info.aligned, focusedSeriesIdx, focusedPointIdx)}
+                </VizTooltipContainer>
+              )}
+            </Portal>
+          </>
         );
       }}
     </GraphNG>

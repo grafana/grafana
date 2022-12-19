@@ -14,6 +14,10 @@ export const PanelModelVersion = Object.freeze([0, 0]);
 
 export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTextFormatting {
   /**
+   * Enables bar highlight mode which highlights the entire bar area and shows tooltip (even if bar value is 0)
+   */
+  barHighlight: boolean;
+  /**
    * TODO docs
    */
   barRadius?: number;
@@ -61,6 +65,7 @@ export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithToolti
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
+  barHighlight: false,
   barRadius: 0,
   barWidth: 0.97,
   groupWidth: 0.7,
