@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// TODO: move to org package
 type OrgSync struct {
 	userService   user.Service
 	orgService    org.Service

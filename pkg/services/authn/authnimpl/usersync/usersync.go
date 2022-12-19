@@ -15,7 +15,6 @@ import (
 
 type postSyncHookFn func(ctx context.Context, identity *authn.Identity) error
 
-// TODO: move to user package
 type UserSync struct {
 	userService     user.Service
 	authInfoService login.AuthInfoService
@@ -66,6 +65,8 @@ func (s *UserSync) SyncUser(ctx context.Context, clientParams *authn.ClientParam
 	return nil
 }
 
+// syncUserToIdentity syncs a user to an identity.
+// This is used to update the identity with the latest user information.
 func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 	id.ID = fmt.Sprintf("user:%d", usr.ID)
 	id.Login = usr.Login
