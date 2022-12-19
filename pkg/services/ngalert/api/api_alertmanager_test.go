@@ -357,6 +357,11 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 
 		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
 		require.Equal(tt, 200, response.Status())
+
+		configs := asGettableUserConfigs(tt, response)
+		for _, config := range configs {
+			require.NotZero(tt, config.SuccessfullyAppliedAt)
+		}
 	})
 
 	t.Run("assert 200 when limit is < 1", func(tt *testing.T) {
@@ -377,6 +382,11 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 
 		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
 		require.Equal(tt, 200, response.Status())
+
+		configs := asGettableUserConfigs(tt, response)
+		for _, config := range configs {
+			require.NotZero(tt, config.SuccessfullyAppliedAt)
+		}
 	})
 }
 
@@ -747,6 +757,14 @@ func asGettableUserConfig(t *testing.T, r response.Response) *apimodels.Gettable
 	t.Helper()
 	body := &apimodels.GettableUserConfig{}
 	err := json.Unmarshal(r.Body(), body)
+	require.NoError(t, err)
+	return body
+}
+
+func asGettableUserConfigs(t *testing.T, r response.Response) []apimodels.GettableUserConfig {
+	t.Helper()
+	body := []apimodels.GettableUserConfig{}
+	err := json.Unmarshal(r.Body(), &body)
 	require.NoError(t, err)
 	return body
 }

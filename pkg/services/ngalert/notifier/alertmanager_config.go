@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -63,6 +65,8 @@ func (moa *MultiOrgAlertmanager) GetSuccessfullyAppliedAlertmanagerConfiguration
 			return definitions.GettableUserConfigs{}, err
 		}
 
+		appliedAt := strfmt.DateTime(time.Unix(config.SuccessfullyAppliedAt, 0).UTC())
+		gettableUserConfig.SuccessfullyAppliedAt = &appliedAt
 		configs = append(configs, gettableUserConfig)
 	}
 

@@ -587,6 +587,7 @@ type GettableUserConfig struct {
 	TemplateFiles           map[string]string            `yaml:"template_files" json:"template_files"`
 	TemplateFileProvenances map[string]models.Provenance `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
 	AlertmanagerConfig      GettableApiAlertingConfig    `yaml:"alertmanager_config" json:"alertmanager_config"`
+	SuccessfullyAppliedAt   *strfmt.DateTime             `yaml:"successfully_applied_at,omitempty" json:"successfully_applied_at,omitempty"`
 
 	// amSimple stores a map[string]interface of the decoded alertmanager config.
 	// This enables circumventing the underlying alertmanager secret type
@@ -624,13 +625,15 @@ func (c *GettableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 
 func (c *GettableUserConfig) MarshalJSON() ([]byte, error) {
 	type plain struct {
-		TemplateFiles      map[string]string      `yaml:"template_files" json:"template_files"`
-		AlertmanagerConfig map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
+		TemplateFiles         map[string]string      `yaml:"template_files" json:"template_files"`
+		AlertmanagerConfig    map[string]interface{} `yaml:"alertmanager_config" json:"alertmanager_config"`
+		SuccessfullyAppliedAt *strfmt.DateTime       `yaml:"successfully_applied_at,omitempty" json:"successfully_applied_at,omitempty"`
 	}
 
 	tmp := plain{
-		TemplateFiles:      c.TemplateFiles,
-		AlertmanagerConfig: c.amSimple,
+		TemplateFiles:         c.TemplateFiles,
+		AlertmanagerConfig:    c.amSimple,
+		SuccessfullyAppliedAt: c.SuccessfullyAppliedAt,
 	}
 
 	return json.Marshal(tmp)
@@ -643,6 +646,7 @@ func (c GettableUserConfigs) MarshalJSON() ([]byte, error) {
 		TemplateFiles           map[string]string            `yaml:"template_files" json:"template_files"`
 		TemplateFilesProvenance map[string]models.Provenance `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
 		AlertmanagerConfig      GettableApiAlertingConfig    `yaml:"alertmanager_config" json:"alertmanager_config"`
+		SuccessfullyAppliedAt   *strfmt.DateTime             `yaml:"successfully_applied_at,omitempty" json:"successfully_applied_at,omitempty"`
 	}
 
 	tmp := []plainConfig{}
@@ -651,6 +655,7 @@ func (c GettableUserConfigs) MarshalJSON() ([]byte, error) {
 			TemplateFiles:           config.TemplateFiles,
 			TemplateFilesProvenance: config.TemplateFileProvenances,
 			AlertmanagerConfig:      config.AlertmanagerConfig,
+			SuccessfullyAppliedAt:   config.SuccessfullyAppliedAt,
 		})
 	}
 

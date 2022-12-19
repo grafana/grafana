@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -150,7 +151,7 @@ func (f *fakeConfigStore) MarkAlertmanagerConfigurationAsSuccessfullyApplied(_ c
 	defer f.mtx.Unlock()
 
 	if config, ok := f.configByID[configID]; ok {
-		config.SuccessfullyApplied = true
+		config.SuccessfullyAppliedAt = time.Now().UTC().Unix()
 		return nil
 	}
 
@@ -176,7 +177,7 @@ func (f *fakeConfigStore) GetSuccessfullyAppliedAlertmanagerConfigurations(_ con
 	}
 
 	for i := start; i >= end; i-- {
-		if configsByOrg[i].SuccessfullyApplied {
+		if configsByOrg[i].SuccessfullyAppliedAt > 0 {
 			successfullyAppliedConfigs = append(successfullyAppliedConfigs, configsByOrg[i])
 		}
 	}

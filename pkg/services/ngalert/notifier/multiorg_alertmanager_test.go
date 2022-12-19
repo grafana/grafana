@@ -67,7 +67,7 @@ grafana_alerting_discovered_configurations 3
 			configs, ok := configStore.configsByOrg[org]
 			for _, config := range configs {
 				require.True(t, ok)
-				require.True(t, config.SuccessfullyApplied)
+				require.NotZero(t, config.SuccessfullyAppliedAt)
 			}
 		}
 	}
@@ -260,7 +260,7 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		for _, org := range orgs {
 			query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
 			require.NoError(t, configStore.GetLatestAlertmanagerConfiguration(ctx, &query))
-			require.True(t, query.Result.SuccessfullyApplied, fmt.Sprintf("orgID: %d", org))
+			require.NotZero(t, query.Result.SuccessfullyAppliedAt, fmt.Sprintf("orgID: %d", org))
 		}
 	}
 }

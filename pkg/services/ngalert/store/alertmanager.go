@@ -136,7 +136,7 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 
 func (st *DBstore) MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx context.Context, configurationID int64) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		res, err := sess.Exec("UPDATE alert_configuration SET successfully_applied = true WHERE id = ?", configurationID)
+		res, err := sess.Exec("UPDATE alert_configuration SET successfully_applied_at = ? WHERE id = ?", time.Now().UTC().Unix(), configurationID)
 		if err != nil {
 			return err
 		}
@@ -158,7 +158,7 @@ func (st *DBstore) MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx contex
 func (st *DBstore) GetSuccessfullyAppliedAlertmanagerConfigurations(ctx context.Context, query *models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery) error {
 	var result []*models.AlertConfiguration
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		err := sess.Table("alert_configuration").Where("org_id = ? AND successfully_applied = true", query.OrgID).Desc("id").Limit(query.Limit).Find(&result)
+		err := sess.Table("alert_configuration").Where("org_id = ? AND successfully_applied_at != 0", query.OrgID).Desc("id").Limit(query.Limit).Find(&result)
 		if err != nil {
 			return err
 		}

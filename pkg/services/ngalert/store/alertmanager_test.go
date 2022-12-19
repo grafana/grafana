@@ -325,7 +325,7 @@ func TestMarkAlertmanagerConfigurationAsSuccessfullyApplied(t *testing.T) {
 		require.NoError(tt, err)
 
 		// Config should not be marked as valid yet.
-		require.False(tt, query.Result.SuccessfullyApplied)
+		require.Zero(tt, query.Result.SuccessfullyAppliedAt)
 
 		err = store.MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx, query.Result.ID)
 		require.NoError(tt, err)
@@ -337,7 +337,7 @@ func TestMarkAlertmanagerConfigurationAsSuccessfullyApplied(t *testing.T) {
 		err = store.GetLatestAlertmanagerConfiguration(ctx, &query)
 		require.NoError(tt, err)
 
-		require.True(tt, query.Result.SuccessfullyApplied)
+		require.NotZero(tt, query.Result.SuccessfullyAppliedAt)
 	})
 }
 

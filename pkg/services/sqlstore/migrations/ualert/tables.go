@@ -35,6 +35,10 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	AddAlertImageMigrations(mg)
 
 	AddAlertmanagerConfigHistoryMigrations(mg)
+
+	mg.AddMigration("add successfully_applied_at column to alert_configuration", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Column{
+		Name: "successfully_applied_at", Type: migrator.DB_Int, Nullable: true,
+	}))
 }
 
 // AddAlertDefinitionMigrations should not be modified.
@@ -344,10 +348,6 @@ func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("add configuration_hash column to alert_configuration", migrator.NewAddColumnMigration(alertConfiguration, &migrator.Column{
 		Name: "configuration_hash", Type: migrator.DB_Varchar, Nullable: false, Default: "'not-yet-calculated'", Length: 32,
-	}))
-
-	mg.AddMigration("add successfully_applied column to alert_configuration", migrator.NewAddColumnMigration(alertConfiguration, &migrator.Column{
-		Name: "successfully_applied", Type: migrator.DB_Bool, Nullable: false, Default: "0",
 	}))
 }
 

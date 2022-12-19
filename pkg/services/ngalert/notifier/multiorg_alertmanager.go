@@ -215,7 +215,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		}
 
 		// Mark config as successfully applied if needed.
-		if !dbConfig.SuccessfullyApplied {
+		if dbConfig.SuccessfullyAppliedAt == 0 {
 			moa.logger.Debug("Marking Alertmanger configuration as successfully applied", "org", orgID, "id", dbConfig.ID)
 			if err := moa.configStore.MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx, dbConfig.ID); err != nil {
 				moa.logger.Error("Failed to mark Alertmanager config as successfully applied", "org", orgID, "id", dbConfig.ID, "error", err)

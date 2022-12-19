@@ -12,7 +12,7 @@ type AlertConfiguration struct {
 	CreatedAt                 int64 `xorm:"created"`
 	Default                   bool
 	OrgID                     int64 `xorm:"org_id"`
-	SuccessfullyApplied       bool  `xorm:"successfully_applied"`
+	SuccessfullyAppliedAt     int64 `xorm:"successfully_applied_at"`
 }
 
 // GetLatestAlertmanagerConfigurationQuery is the query to get the latest alertmanager configuration.
