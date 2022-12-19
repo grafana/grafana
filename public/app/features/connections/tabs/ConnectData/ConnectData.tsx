@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
+import { PluginType } from '@grafana/data';
 import { useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { useGetAllWithFilters } from 'app/features/plugins/admin/state/hooks';
 
@@ -25,7 +26,11 @@ export function ConnectData() {
     setSearchTerm(e.currentTarget.value.toLowerCase());
   };
 
-  const { isLoading, error, plugins } = useGetAllWithFilters({ query: searchTerm, filterBy: '' });
+  const { isLoading, error, plugins } = useGetAllWithFilters({
+    query: searchTerm,
+    filterBy: '',
+    filterByType: PluginType.datasource,
+  });
 
   const cardGridItems = useMemo(
     () =>
