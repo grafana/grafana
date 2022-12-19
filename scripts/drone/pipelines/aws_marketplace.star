@@ -18,7 +18,7 @@ def publish_aws_marketplace_step():
     return {
         'name': 'publish-aws-marketplace',
         'image': publish_image,
-        'commands': ['./bin/build publish aws --image grafana/grafana-enterprise-dev --repo grafana-labs/grafana-enterprise --product 1b97f7d0-f274-4cce-b5f4-910dbfa45535'],
+        'commands': ['./bin/build publish aws --image grafana/grafana-enterprise --repo grafana-labs/grafana-enterprise --product 422b46fb-bea6-4f27-8bcc-832117bd627e'],
         'depends_on': ['fetch-images-enterprise'],
         'environment': {
             'AWS_REGION': from_secret('aws_region'),
