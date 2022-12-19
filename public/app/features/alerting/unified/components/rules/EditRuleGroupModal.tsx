@@ -31,7 +31,7 @@ interface AlertInfo {
 }
 function ForBadge({ message, error }: { message: string; error?: boolean }) {
   if (error) {
-    return <Badge color="orange" icon="exclamation-triangle" text={'Error'} tooltip={message} />;
+    return <Badge color="red" icon="exclamation-circle" text={'Error'} tooltip={message} />;
   } else {
     return <Badge color="orange" icon="exclamation-triangle" text={'Unknown'} tooltip={message} />;
   }
