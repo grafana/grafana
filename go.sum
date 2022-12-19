@@ -1373,6 +1373,8 @@ github.com/grafana/alerting v0.0.0-20221215195045-4dd9b084e84d h1:2uPWbeBhkBfS5w
 github.com/grafana/alerting v0.0.0-20221215195045-4dd9b084e84d/go.mod h1:BO51roH8bMRpAqeWxvnGePyCQoqgk1TiNISYKfoyHzQ=
 github.com/grafana/alerting v0.0.0-20221216210437-c818b1197cdd h1:EiSgiWT16KVktYkZxblUqXPfueLcyLQf1oF5mTDh4NY=
 github.com/grafana/alerting v0.0.0-20221216210437-c818b1197cdd/go.mod h1:A+ko8Ui4Ojw9oTi1WMCPH937mFUozN8Y41cqrOfNuy8=
+github.com/grafana/alerting v0.0.0-20221219210434-60ecaff51745 h1:6HIwDYa01WcVBdz7WXnidVXfGLRAzYFNKPPFFwg9OXE=
+github.com/grafana/alerting v0.0.0-20221219210434-60ecaff51745/go.mod h1:A+ko8Ui4Ojw9oTi1WMCPH937mFUozN8Y41cqrOfNuy8=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cuetsy v0.1.1 h1:+1jaDDYCpvKlcOWJgBRbkc5+VZIClCEn5mbI+4PLZqM=
