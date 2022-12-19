@@ -5,13 +5,15 @@ keywords:
   - alerting
   - notifications
   - templates
-title: Template notifications
+title: Customize notifications
 weight: 100
 ---
 
-# Template notifications
+# Customize notifications
 
-You customize your notifications with message templates. Message templates can be used to change the title, message, and format of the message in notifications. Message templates are not tied to specific contact point integrations, such as email and Slack. However, you can choose to create separate message templates for different integrations if you prefer. Your message templates should be general rather than written for a specific alert as contact points can receive all different kinds of alerts. You can find examples of this in [Create message templates]({{< relref "./create-message-templates" >}}).
+Customize your notifications using message templates, so you don't have to create notifications from scratch each time. You can use message templates to change the title, message, and format of the message in your notifications.
+
+Message templates are not tied to specific contact point integrations, such as email or Slack. However, you can choose to create separate message templates for different contact point integrations.
 
 You can use message templates to:
 
@@ -27,16 +29,16 @@ You cannot use message templates to:
 
 [Using Go's templating language]({{< relref "./using-go-templating-language" >}})
 
-Write the content of your templates in Go’s templating language
+Learn how to write the content of your message templates in Go’s templating language.
 
 [Create message templates]({{< relref "./create-message-templates" >}})
 
-Create reusable templates for your contact points
+Create reusable message templates for your contact points.
 
 [Use message templates]({{< relref "./use-message-templates" >}})
 
-Use the templates in contact points to customize your notifications
+Use message templates to send notifications to your contact points.
 
 [Reference]({{< relref "./reference" >}})
 
-The data available when writing templates
+Data that is available when writing templates.

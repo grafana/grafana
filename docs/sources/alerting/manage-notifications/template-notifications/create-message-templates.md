@@ -14,49 +14,51 @@ weight: 300
 
 # Create message templates
 
-Create reusable templates for your contact points.
+Create reusable message templates to send to your contact points.
 
-A message template can contain more than one template. The name of the template must be unique. You should not have two templates with the same name in the same message template or in different message templates. You should also avoid defining templates with the same name as default templates such as `__subject`, `__text_values_list`, `__text_alert_list`, `default.title` and `default.message`.
+You can add one or more templates to your message template.
 
-1. In the Contact points tab you can see a list of your message templates
+Your message template name must be unique. You cannot have two templates with the same name in the same message template or in different message templates. Avoid defining templates with the same name as default templates, such as: `__subject`, `__text_values_list`, `__text_alert_list`, `default.title` and `default.message`.
 
-2. Click New template
+In the Contact points tab, you can see a list of your message templates.
 
-3. Choose a name for the message template
+To create a template, complete the following steps.
 
-4. Write the content of the template in the content field
+1. Click New template.
+
+2. Choose a name for the message template.
+
+3. Write the content of the template in the content field.
 
 {{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-message-template-email-subject-9-3.png" caption="New message template email.subject" >}}
 
-5. Click Save
+5. Click Save.
 
-You will see that Grafana has added `{{ define "email.subject" }}` and `{{ end }}` to the start and end of the content:
+`{{ define "email.subject" }}` and `{{ end }}` is automatically added to the start and end of the content:
 
 {{< figure max-width="940px" src="/static/img/docs/alerting/unified/edit-message-template-email-subject-9-3.png" caption="Edit message template email.subject" >}}
 
-You can also create a message template that contains related templates.
+To create a message template that contains more than one template:
 
-1. In the Contact points tab you can see a list of your message templates
+1. Click New Template.
 
-2. Click New Template
+2. Enter a name for the message template.
 
-3. Choose a name for the message template
-
-4. Write each template in the content field, including `{{ define "name-of-template" }}` and `{{ end }}` at the start and end of each template
+3. Write each template in the Content field, including `{{ define "name-of-template" }}` and `{{ end }}` at the start and end of each template.
 
 {{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-message-template-email-9-3.png" caption="New message template" >}}
 
-5. Click Save
+5. Click Save.
 
 ## Template the subject of an email
 
-To send emails where the subject contains the number of firing and resolved alerts:
+Template the subject of an email to contain the number of firing and resolved alerts:
 
 ```
 1 firing alert(s), 0 resolved alerts(s)
 ```
 
-create a template called `email.subject` with the following content:
+1. Create a template called `email.subject` with the following content:
 
 ```
 {{ define "email.subject" }}
@@ -64,7 +66,7 @@ create a template called `email.subject` with the following content:
 {{ end }}
 ```
 
-You can then execute the template from the subject field in your contact point integration:
+2. Execute the template from the subject field in your contact point integration:
 
 ```
 {{ template "email.subject" . }}
@@ -72,7 +74,7 @@ You can then execute the template from the subject field in your contact point i
 
 ## Template the message of an email
 
-To send emails where the message contains a summary of all firing and resolved alerts:
+Template the message of an email to contain a summary of all firing and resolved alerts:
 
 ```
 There are 2 firing alert(s), and 1 resolved alert(s)
@@ -87,7 +89,9 @@ Resolved alerts:
 - alertname=Test 3 grafana_folder=GrafanaCloud has value(s) B=0
 ```
 
-create a message template called `email` with two templates in the content: `email.message_alert` and `email.message`. The `email.message_alert` template is used to print the labels and values for each firing and resolved alert while the `email.message` template contains the structure of the email.
+1. Ceate a message template called `email` with two templates in the content: `email.message_alert` and `email.message`.
+
+   The `email.message_alert` template is used to print the labels and values for each firing and resolved alert while the `email.message` template contains the structure of the email.
 
 ```
 {{- define "email.message_alert" -}}
@@ -115,7 +119,7 @@ Resolved alerts:
 {{ end }}
 ```
 
-You can then execute the template from the message field in your contact point integration:
+2. Execute the template from the message field in your contact point integration:
 
 ```
 {{ template "email.message" . }}
@@ -123,13 +127,13 @@ You can then execute the template from the message field in your contact point i
 
 ## Template the title of a Slack message
 
-You can template the subject of a Slack message just like you would template the subject of an email. To send Slack messages where the title contains the number of firing and resolved alerts:
+Template the title of a Slack message to contain the number of firing and resolved alerts:
 
 ```
 1 firing alert(s), 0 resolved alerts(s)
 ```
 
-create a template called `slack.title` with the following content:
+1. Create a template called `slack.title` with the following content:
 
 ```
 {{ define "slack.title" }}
@@ -137,7 +141,7 @@ create a template called `slack.title` with the following content:
 {{ end }}
 ```
 
-You can then execute the template from the title field in your contact point integration:
+2. Execute the template from the title field in your contact point integration:
 
 ```
 {{ template "slack.title" . }}
@@ -145,7 +149,7 @@ You can then execute the template from the title field in your contact point int
 
 ## Template the content of a Slack message
 
-To send Slack messages where the content contains a description of all firing and resolved alerts, including their labels, annotations, Silence URL and Dashboard URL:
+Template the content of a Slack message to contain a description of all firing and resolved alerts, including their labels, annotations, Silence URL and Dashboard URL:
 
 ```
 1 firing alert(s):
@@ -171,7 +175,9 @@ Silence: https://example.com/alerting/silence/new?alertmanager=grafana&matcher=a
 Go to dashboard: https://example.com/d/dlhdLqF4z?orgId=1
 ```
 
-create a template called `slack` with two templates in the content: `slack.print_alert` and `slack.message`. The `slack.print_alert` template is used to print the labels, annotations, SilenceURL and DashboardURL while the `slack.message` template contains the structure of the notification.
+1. Create a template called `slack` with two templates in the content: `slack.print_alert` and `slack.message`.
+
+   The `slack.print_alert` template is used to print the labels, annotations, SilenceURL and DashboardURL while the `slack.message` template contains the structure of the notification.
 
 ```
 {{ define "slack.print_alert" -}}
@@ -210,7 +216,7 @@ Annotations:
 {{- end }}
 ```
 
-You can then execute the template from the text body field in your contact point integration:
+2. Execute the template from the text body field in your contact point integration:
 
 ```
 {{ template "slack.message" . }}
@@ -218,13 +224,15 @@ You can then execute the template from the text body field in your contact point
 
 ## Template both email and Slack with shared templates
 
-Instead of creating separate message templates for email and Slack, you can instead share the same template. For example, to send an email and Slack message with the same subject and title:
+Instead of creating separate message templates for email and Slack, you can share the same template.
+
+For example, if you want to send an email with this subject and Slack message with this title:
 
 ```
 1 firing alert(s), 0 resolved alerts(s)
 ```
 
-create a template called `common.subject_title` with the following content:
+1. Create a template called `common.subject_title` with the following content:
 
 ```
 {{ define "common.subject_title" }}
@@ -232,13 +240,13 @@ create a template called `common.subject_title` with the following content:
 {{ end }}
 ```
 
-You can then execute the template from the subject field in your email contact point integration:
+2. For email, execute the template from the subject field in your email contact point integration:
 
 ```
 {{ template "common.subject_title" . }}
 ```
 
-and from the title field in your Slack contact point integration:
+3. For Slack, execute the template from the title field in your Slack contact point integration:
 
 ```
 {{ template "common.subject_title" . }}

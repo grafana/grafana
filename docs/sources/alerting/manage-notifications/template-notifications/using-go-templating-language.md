@@ -12,7 +12,9 @@ weight: 200
 
 # Using Go's templating language
 
-You write message templates in Go's templating language, [text/template](https://pkg.go.dev/text/template). In the following topics we will look at how to write templates in text/template. You can then refer to [Template examples]({{< relref "./template-examples" >}}) which has a number of more complex examples that you might want to use as a reference for customizing your notifications.
+You write message templates in Go's templating language, [text/template](https://pkg.go.dev/text/template).
+
+Before you start creating your own message templates, we recommend that you read through this topic, which provides you with an overview of Go's templating language and writing templates in text/template.
 
 ## Dot
 
