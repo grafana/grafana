@@ -40,6 +40,30 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 			expectedInitError: `invalid url property in settings: parse "://alertmanager.com/api/v1/alerts": missing protocol scheme`,
 			receiverName:      "Alertmanager",
 		},
+		{
+			name: "Error in initing: empty URL",
+			settings: `{
+				"url": ""
+			}`,
+			expectedInitError: `could not find url property in settings`,
+			receiverName:      "Alertmanager",
+		},
+		{
+			name: "Error in initing: null URL",
+			settings: `{
+				"url": null
+			}`,
+			expectedInitError: `could not find url property in settings`,
+			receiverName:      "Alertmanager",
+		},
+		{
+			name: "Error in initing: one of multiple URLs is invalid",
+			settings: `{
+				"url": "https://alertmanager-01.com,://url"
+			}`,
+			expectedInitError: "invalid url property in settings: parse \"://url/api/v1/alerts\": missing protocol scheme",
+			receiverName:      "Alertmanager",
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -55,14 +79,20 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 			decryptFn := func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
 				return fallback
 			}
-			cfg, err := NewAlertmanagerConfig(m, decryptFn)
-			if c.expectedInitError != "" {
-				require.Equal(t, c.expectedInitError, err.Error())
-				return
+
+			fc := channels.FactoryConfig{
+				Config:      m,
+				DecryptFunc: decryptFn,
+				ImageStore:  &channels.UnavailableImageStore{},
+				Template:    tmpl,
+				Logger:      &channels.FakeLogger{},
 			}
-			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, &channels.FakeLogger{}, &channels.UnavailableImageStore{}, tmpl, decryptFn)
-			require.NotNil(t, sn)
+			sn, err := buildAlertmanagerNotifier(fc)
+			if c.expectedInitError != "" {
+				require.ErrorContains(t, err, c.expectedInitError)
+			} else {
+				require.NotNil(t, sn)
+			}
 		})
 	}
 }
@@ -153,9 +183,16 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 			decryptFn := func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
 				return fallback
 			}
-			cfg, err := NewAlertmanagerConfig(m, decryptFn)
+			fc := channels.FactoryConfig{
+				Config:      m,
+				DecryptFunc: decryptFn,
+				ImageStore:  images,
+				Template:    tmpl,
+				Logger:      &channels.FakeLogger{},
+			}
+			sn, err := buildAlertmanagerNotifier(fc)
 			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, &channels.FakeLogger{}, images, tmpl, decryptFn)
+
 			var body []byte
 			origSendHTTPRequest := sendHTTPRequest
 			t.Cleanup(func() {
