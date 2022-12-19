@@ -89,10 +89,12 @@ func (s *OrgSync) SyncOrgUser(ctx context.Context, clientParams *authn.ClientPar
 				logger.Error(err.Error(), "userId", cmd.UserID, "orgId", cmd.OrgID)
 				continue
 			}
-			if err := s.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserID); err != nil {
-				logger.Warn("failed to delete permissions for user", "userID", cmd.UserID, "orgID", orgId)
-			}
 
+			return err
+		}
+
+		if err := s.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserID); err != nil {
+			logger.Error("failed to delete permissions for user", "error", err, "userID", cmd.UserID, "orgID", orgId)
 			return err
 		}
 	}
