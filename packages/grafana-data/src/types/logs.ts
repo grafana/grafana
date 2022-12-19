@@ -1,6 +1,8 @@
+import { Observable } from 'rxjs';
+
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryResponse } from './datasource';
+import { DataQueryRequest, DataQueryResponse, DataSourceApi } from './datasource';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
 
@@ -171,8 +173,25 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
   if (!datasource) {
     return false;
   }
-
+  // Typescript documentation recommends to use this approach to check if a property exists on an object
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
 
   return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
+};
+
+/**
+ * Data sources that support log volume.
+ * This will enable full-range log volume histogram in Explore.
+ */
+export interface DataSourceWithLogsVolumeSupport<TQuery extends DataQuery> {
+  getLogsVolumeDataProvider(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> | undefined;
+}
+
+export const hasLogsVolumeSupport = <TQuery extends DataQuery>(
+  datasource: unknown
+): datasource is DataSourceWithLogsVolumeSupport<TQuery> => {
+  // Typescript documentation recommends to use this approach to check if a property exists on an object
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return (datasource as DataSourceWithLogsVolumeSupport<TQuery>).getLogsVolumeDataProvider !== undefined;
 };
