@@ -19,7 +19,7 @@ def publish_aws_marketplace_step():
         'name': 'publish-aws-marketplace',
         'image': publish_image,
         'commands': ['./bin/build publish aws --image grafana/grafana-enterprise-dev --repo grafana-labs/grafana-enterprise --product 1b97f7d0-f274-4cce-b5f4-910dbfa45535'],
-        'depends_on': ['fetch-images-enterprise2'],
+        'depends_on': ['fetch-images-enterprise'],
         'environment': {
             'AWS_REGION': from_secret('aws_region'),
             'AWS_ACCESS_KEY_ID': from_secret('aws_access_key_id'),
@@ -34,5 +34,5 @@ def publish_aws_marketplace_pipeline(mode):
         'target': [mode],
     }
     return [pipeline(
-        name='publish-aws-marketplace-{}'.format(mode), trigger=trigger, steps=[compile_build_cmd(), fetch_images_step('enterprise'), publish_aws_marketplace_step()], edition="", environment = {'EDITION': 'enterprise2'}
+        name='publish-aws-marketplace-{}'.format(mode), trigger=trigger, steps=[compile_build_cmd(), fetch_images_step('enterprise'), publish_aws_marketplace_step()], edition="", depends_on = ['publish-docker-enterprise-public'], environment = {'EDITION': 'enterprise2'}
     ),]
