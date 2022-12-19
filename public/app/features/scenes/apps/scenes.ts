@@ -38,7 +38,6 @@ export function getHttpHandlerListScene(): EmbeddedScene {
     $data: httpHandlerQueriesFiltered,
     pluginId: 'table',
     title: '',
-    //displayMode: 'transparent',
     options: {
       footer: {
         enablePagination: true,
@@ -422,6 +421,59 @@ export function getHandlerLogsScene(handler: string): EmbeddedScene {
 
   const scene = new EmbeddedScene({
     title: `Http handler: ${handler}`,
+    $variables: getVariablesDefinitions(),
+    $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
+    subMenu: new SceneSubMenu({
+      children: [new VariableValueSelectors({}), new SceneSubMenuSpacer(), new SceneTimePicker({ isOnCanvas: true })],
+    }),
+    layout: new SceneFlexLayout({
+      direction: 'column',
+      children: [
+        new VizPanel({
+          $data: logsQuery,
+          pluginId: 'logs',
+          title: '',
+          size: {},
+          options: {
+            showTime: true,
+            showLabels: false,
+            showCommonLabels: false,
+            wrapLogMessage: true,
+            prettifyLogMessage: false,
+            enableLogDetails: true,
+            dedupStrategy: 'none',
+            sortOrder: 'Descending',
+          },
+        }),
+      ],
+    }),
+  });
+
+  sceneCache.set(sceneKey, scene);
+  return scene;
+}
+
+export function getOverviewLogsScene(): EmbeddedScene {
+  const sceneKey = 'logs';
+
+  if (sceneCache.has(sceneKey)) {
+    return sceneCache.get(sceneKey)!;
+  }
+
+  const logsQuery = new SceneQueryRunner({
+    datasource: { uid: 'gdev-loki' },
+    queries: [
+      {
+        refId: 'A',
+        expr: `{job="grafana"} | logfmt | __error__=\`\``,
+        queryType: 'range',
+        maxDataPoints: 5000,
+      },
+    ],
+  });
+
+  const scene = new EmbeddedScene({
+    title: `Http handler`,
     $variables: getVariablesDefinitions(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
     subMenu: new SceneSubMenu({

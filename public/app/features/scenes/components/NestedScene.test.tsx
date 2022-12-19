@@ -1,37 +1,21 @@
 import { screen, render } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-
-import { configureStore } from '../../../store/configureStore';
 
 import { NestedScene } from './NestedScene';
-import { Scene } from './Scene';
 import { SceneCanvasText } from './SceneCanvasText';
 import { SceneFlexLayout } from './layout/SceneFlexLayout';
 
 function setup() {
-  const store = configureStore();
-  const scene = new Scene({
-    title: 'Hello',
+  const scene = new NestedScene({
+    title: 'Nested title',
+    canRemove: true,
+    canCollapse: true,
     layout: new SceneFlexLayout({
-      children: [
-        new NestedScene({
-          title: 'Nested title',
-          canRemove: true,
-          canCollapse: true,
-          layout: new SceneFlexLayout({
-            children: [new SceneCanvasText({ text: 'SceneCanvasText' })],
-          }),
-        }),
-      ],
+      children: [new SceneCanvasText({ text: 'SceneCanvasText' })],
     }),
   });
 
-  render(
-    <Provider store={store}>
-      <scene.Component model={scene} />
-    </Provider>
-  );
+  render(<scene.Component model={scene} />);
 }
 
 describe('NestedScene', () => {

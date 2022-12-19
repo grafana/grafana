@@ -8,7 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { EmbeddedScene } from '../components/Scene';
 
 import { HttpHandlerDetailsPage } from './HttpHandlerDetailsPage';
-import { getOverviewScene, getHttpHandlerListScene } from './scenes';
+import { getOverviewScene, getHttpHandlerListScene, getOverviewLogsScene } from './scenes';
 import { getLinkUrlWithAppUrlState, useAppQueryParams } from './utils';
 
 export function GrafanaMonitoringApp() {
@@ -66,7 +66,7 @@ export function getTabs(): AppTab[] {
   return [
     { text: 'Overview', url: '/scenes/grafana-monitoring', getScene: getOverviewScene },
     { text: 'HTTP handlers', url: '/scenes/grafana-monitoring/handlers', getScene: getHttpHandlerListScene },
-    { text: 'Alerts', url: '/scenes/grafana-monitoring/alerts', getScene: getHttpHandlerListScene },
+    { text: 'Logs', url: '/scenes/grafana-monitoring/logs', getScene: getOverviewLogsScene },
   ];
 }
 

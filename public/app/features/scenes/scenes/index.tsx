@@ -10,6 +10,7 @@ import { getNestedScene } from './nested';
 import { getQueryVariableDemo } from './queryVariableDemo';
 import { getSceneWithRows } from './sceneWithRows';
 import { getTransformationsDemo } from './transformations';
+import { getTuesdayDemo } from './tuesdayDemo';
 import { getVariablesDemo, getVariablesDemoWithAll } from './variablesDemo';
 
 interface SceneDef {
@@ -18,6 +19,7 @@ interface SceneDef {
 }
 export function getScenes(): SceneDef[] {
   return [
+    { title: 'Tuesday demo', getScene: getTuesdayDemo },
     { title: 'Flex layout test', getScene: getFlexLayoutTest },
     { title: 'Panel repeater test', getScene: getScenePanelRepeaterTest },
     { title: 'Nested Scene demo', getScene: getNestedScene },
