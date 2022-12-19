@@ -383,6 +383,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "disablePrometheusExemplarSampling",
+			Description: "Disable Prometheus examplar sampling",
+			State:       FeatureStateStable,
+		},
+		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			State:       FeatureStateAlpha,
