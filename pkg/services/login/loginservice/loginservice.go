@@ -315,8 +315,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 		}
 
 		if err := ls.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserID); err != nil {
-			logger.Error("failed to delete permissions for user", "error", err, "userID", cmd.UserID, "orgID", orgId)
-			return err
+			logger.Warn("failed to delete permissions for user", "error", err, "userID", cmd.UserID, "orgID", orgId)
 		}
 	}
 
