@@ -1,8 +1,10 @@
 import React from 'react';
 
-import { PanelModel, renderMarkdown, ScopedVars, LinkModelSupplier } from '@grafana/data';
+import { PanelModel, renderMarkdown, ScopedVars, LinkModelSupplier, PanelData } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Button, Dropdown, IconButton, Menu } from '@grafana/ui';
+
+import { PanelHeaderNotices } from './PanelHeaderNotices';
 
 export interface Props {
   innerHeight: number;
@@ -12,11 +14,13 @@ export interface Props {
   scopedVars?: ScopedVars;
   replaceVariables: (value: string, extraVars: ScopedVars | undefined, format?: string | Function) => string;
   links?: LinkModelSupplier<PanelModel>;
+  data: PanelData;
+  panelId: number;
 }
 
 export function PanelHeaderTitleItems(props: Props) {
   // description
-  const { panelDescription, alertState, scopedVars, links, replaceVariables } = props;
+  const { panelDescription, alertState, scopedVars, links, replaceVariables, data, panelId } = props;
   const rawDescription = panelDescription || '';
   const descriptionMarkdown = getTemplateSrv().replace(rawDescription, scopedVars);
   const description = renderMarkdown(descriptionMarkdown);
@@ -60,11 +64,20 @@ export function PanelHeaderTitleItems(props: Props) {
     </Dropdown>
   );
 
+  const timeshift = (
+    <>
+      <IconButton name="clock-nine" size="sm" />
+      {data.request && data.request.timeInfo}
+    </>
+  );
+
   return (
     <>
+      {data.series && <PanelHeaderNotices frames={data.series} panelId={panelId} />}
       {description && descriptionItem}
-      {alertState && alertStateItem}
       {panelLinks && panelLinks.length > 0 && linksItem}
+      {data.request && timeshift}
+      {alertState && alertStateItem}
     </>
   );
 }

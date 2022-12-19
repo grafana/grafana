@@ -602,6 +602,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           scopedVars={panel.scopedVars}
           replaceVariables={panel.replaceVariables}
           alertState={alertState}
+          data={data}
+          panelId={panel.id}
         />
       );
     };
