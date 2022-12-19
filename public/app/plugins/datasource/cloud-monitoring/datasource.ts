@@ -9,13 +9,13 @@ import {
   ScopedVars,
   SelectableValue,
 } from '@grafana/data';
-import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse, BackendSrv } from '@grafana/runtime';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import { SLO_BURN_RATE_SELECTOR_NAME } from './constants';
-import { getMetricType } from './functions';
+import { getMetricType, setMetricType } from './functions';
 import {
   CloudMonitoringOptions,
   CloudMonitoringQuery,
@@ -34,6 +34,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
 > {
   authenticationType: string;
   intervalMs: number;
+  backendSrv: BackendSrv;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudMonitoringOptions>,
@@ -45,6 +46,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     this.variables = new CloudMonitoringVariableSupport(this);
     this.intervalMs = 0;
     this.annotations = CloudMonitoringAnnotationSupport(this);
+    this.backendSrv = getBackendSrv();
   }
 
   getVariables() {
@@ -94,13 +96,15 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           refId,
           datasource: this.getRef(),
           queryType: QueryType.TIME_SERIES_LIST,
-          timeSeriesList: {
-            projectName: this.templateSrv.replace(projectName),
-            metricType: this.templateSrv.replace(metricType),
-            groupBys: this.interpolateGroupBys(aggregation?.groupBys || [], {}),
-            crossSeriesReducer: aggregation?.crossSeriesReducer ?? 'REDUCE_NONE',
-            view: 'HEADERS',
-          },
+          timeSeriesList: setMetricType(
+            {
+              projectName: this.templateSrv.replace(projectName),
+              groupBys: this.interpolateGroupBys(aggregation?.groupBys || [], {}),
+              crossSeriesReducer: aggregation?.crossSeriesReducer ?? 'REDUCE_NONE',
+              view: 'HEADERS',
+            },
+            metricType
+          ),
         },
       ],
       range: this.timeSrv.timeRange(),
@@ -115,7 +119,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return lastValueFrom(
       from(this.ensureGCEDefaultProject()).pipe(
         mergeMap(() => {
-          return getBackendSrv().fetch<PostResponse>({
+          return this.backendSrv.fetch<PostResponse>({
             url: '/api/ds/query',
             method: 'POST',
             headers: this.getRequestHeaders(),
@@ -231,7 +235,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       };
     }
 
-    if (has(query, 'metricQuery') && query.queryType !== QueryType.SLO) {
+    if (has(query, 'metricQuery') && query.queryType.toString() === 'metrics') {
       const metricQuery: MetricQuery = get(query, 'metricQuery')!;
       if (metricQuery.editorMode === 'mql') {
         query.timeSeriesQuery = {
@@ -260,8 +264,13 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         }
       }
       query.aliasBy = metricQuery.aliasBy;
+      query = omit(query, 'metricQuery');
     }
-    omit(query, 'metricQuery');
+
+    if (query.queryType === QueryType.SLO && has(query, 'sloQuery.aliasBy')) {
+      query.aliasBy = get(query, 'sloQuery.aliasBy');
+      query = omit(query, 'sloQuery.aliasBy');
+    }
 
     return query;
   }

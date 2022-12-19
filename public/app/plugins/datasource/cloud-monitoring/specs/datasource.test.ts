@@ -97,7 +97,7 @@ describe('CloudMonitoringDataSource', () => {
         await expect(fetchMock.mock.calls[0][0].data.queries[0].timeSeriesList).toMatchObject({
           crossSeriesReducer: 'REDUCE_NONE',
           groupBys: [],
-          metricType: 'cpu',
+          filters: ['metric.type', '=', 'cpu'],
           projectName: 'default-proj',
           view: 'HEADERS',
         });
@@ -115,7 +115,7 @@ describe('CloudMonitoringDataSource', () => {
         await expect(fetchMock.mock.calls[0][0].data.queries[0].timeSeriesList).toMatchObject({
           crossSeriesReducer: 'REDUCE_MEAN',
           groupBys: ['metadata.system_label.name'],
-          metricType: 'sql',
+          filters: ['metric.type', '=', 'sql'],
           projectName: 'default-proj',
           view: 'HEADERS',
         });

@@ -664,7 +664,7 @@ func TestCloudMonitoring(t *testing.T) {
 					"projectName":      "test-proj",
 					"alignmentPeriod":  "stackdriver-auto",
 					"perSeriesAligner": "ALIGN_NEXT_OLDER",
-					"aliasBy":          "",
+					"aliasBy":          "test-alias",
 					"selectorName":     "select_slo_health",
 					"serviceId":        "test-service",
 					"sloId":            "test-slo"
@@ -683,7 +683,7 @@ func TestCloudMonitoring(t *testing.T) {
 			assert.Equal(t, "2018-03-15T13:00:00Z", queries[0].params["interval.startTime"][0])
 			assert.Equal(t, "2018-03-15T13:34:00Z", queries[0].params["interval.endTime"][0])
 			assert.Equal(t, `+60s`, queries[0].params["aggregation.alignmentPeriod"][0])
-			assert.Equal(t, "", queries[0].aliasBy)
+			assert.Equal(t, "test-alias", queries[0].aliasBy)
 			assert.Equal(t, "ALIGN_MEAN", queries[0].params["aggregation.perSeriesAligner"][0])
 			assert.Equal(t, `aggregation.alignmentPeriod=%2B60s&aggregation.perSeriesAligner=ALIGN_MEAN&filter=select_slo_health%28%22projects%2Ftest-proj%2Fservices%2Ftest-service%2FserviceLevelObjectives%2Ftest-slo%22%29&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z`, queries[0].params.Encode())
 			assert.Equal(t, 5, len(queries[0].params))
