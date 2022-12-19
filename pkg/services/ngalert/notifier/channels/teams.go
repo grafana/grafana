@@ -10,11 +10,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
@@ -252,8 +247,8 @@ func buildTeamsSettings(fc FactoryConfig) (teamsSettings, error) {
 type TeamsNotifier struct {
 	*Base
 	tmpl     *template.Template
-	log      log.Logger
-	ns       notifications.WebhookSender
+	log      Logger
+	ns       WebhookSender
 	images   ImageStore
 	settings teamsSettings
 }
@@ -265,14 +260,8 @@ func NewTeamsNotifier(fc FactoryConfig) (*TeamsNotifier, error) {
 		return nil, err
 	}
 	return &TeamsNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
-		log:      log.New("alerting.notifier.teams"),
+		Base:     NewBase(fc.Config),
+		log:      fc.Logger,
 		ns:       fc.NotificationService,
 		images:   fc.ImageStore,
 		tmpl:     fc.Template,
@@ -310,7 +299,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	var s AdaptiveCardImageSetItem
 	_ = withStoredImages(ctx, tn.log, tn.images,
-		func(_ int, image ngmodels.Image) error {
+		func(_ int, image Image) error {
 			if image.URL != "" {
 				s.AppendImage(AdaptiveCardImageItem{URL: image.URL})
 			}
@@ -355,23 +344,25 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, fmt.Errorf("failed to marshal JSON: %w", err)
 	}
 
-	cmd := &models.SendWebhookSync{Url: u, Body: string(b)}
+	cmd := &SendWebhookSettings{Url: u, Body: string(b)}
 	// Teams sometimes does not use status codes to show when a request has failed. Instead, the
 	// response can contain an error message, irrespective of status code (i.e. https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#rate-limiting-for-connectors)
-	cmd.Validation = func(b []byte, statusCode int) error {
-		// The request succeeded if the response is "1"
-		// https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#send-messages-using-curl-and-powershell
-		if !bytes.Equal(b, []byte("1")) {
-			return errors.New(string(b))
-		}
-		return nil
-	}
+	cmd.Validation = validateResponse
 
-	if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := tn.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, errors.Wrap(err, "send notification to Teams")
 	}
 
 	return true, nil
+}
+
+func validateResponse(b []byte, statusCode int) error {
+	// The request succeeded if the response is "1"
+	// https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#send-messages-using-curl-and-powershell
+	if !bytes.Equal(b, []byte("1")) {
+		return errors.New(string(b))
+	}
+	return nil
 }
 
 func (tn *TeamsNotifier) SendResolved() bool {

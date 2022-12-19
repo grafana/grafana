@@ -14,6 +14,7 @@ var _ authn.Client = new(FakeClient)
 
 type FakeClient struct {
 	ExpectedErr      error
+	ExpectedTest     bool
 	ExpectedIdentity *authn.Identity
 }
 
@@ -23,4 +24,8 @@ func (f *FakeClient) Authenticate(ctx context.Context, r *authn.Request) (*authn
 
 func (f *FakeClient) ClientParams() *authn.ClientParams {
 	return &authn.ClientParams{}
+}
+
+func (f *FakeClient) Test(ctx context.Context, r *authn.Request) bool {
+	return f.ExpectedTest
 }

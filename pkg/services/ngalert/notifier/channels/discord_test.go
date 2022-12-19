@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -287,8 +286,6 @@ func TestDiscordNotifier(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJson, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
 			webhookSender := mockNotificationService()
 			imageStore := &UnavailableImageStore{}
 
@@ -296,12 +293,13 @@ func TestDiscordNotifier(t *testing.T) {
 				Config: &NotificationChannelConfig{
 					Name:     "discord_testing",
 					Type:     "discord",
-					Settings: settingsJson,
+					Settings: json.RawMessage(c.settings),
 				},
 				ImageStore: imageStore,
 				// TODO: allow changing the associated values for different tests.
 				NotificationService: webhookSender,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			dn, err := newDiscordNotifier(fc)

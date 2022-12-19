@@ -92,6 +92,7 @@ Alpha features might be changed or removed without prior notice.
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
+| `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
 
 ## Development feature toggles
 
@@ -101,6 +102,7 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | -------------------------------------- | --------------------------------------------------------- |
 | `dashboardPreviewsAdmin`               | Manage the dashboard previews crawler process from the UI |
 | `showFeatureFlagsInUI`                 | Show feature flags in the settings UI                     |
+| `k8s`                                  | Explore native k8s integrations                           |
 | `dashboardsFromStorage`                | Load dashboards from the generic storage interface        |
 | `export`                               | Export grafana instance (to git, etc)                     |
 | `azureMonitorResourcePickerForMetrics` | New UI for Azure Monitor Metrics Query                    |

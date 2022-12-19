@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -188,8 +187,7 @@ func TestVictoropsNotifier(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
+			settingsJSON := json.RawMessage(c.settings)
 
 			m := &NotificationChannelConfig{
 				Name:     "victorops_testing",
@@ -204,6 +202,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				ImageStore:          images,
 				Template:            tmpl,
+				Logger:              &FakeLogger{},
 			}
 
 			pn, err := NewVictoropsNotifier(fc)
@@ -229,10 +228,11 @@ func TestVictoropsNotifier(t *testing.T) {
 			require.NotEmpty(t, webhookSender.Webhook.Url)
 
 			// Remove the non-constant timestamp
-			j, err := simplejson.NewJson([]byte(webhookSender.Webhook.Body))
+			data := make(map[string]interface{})
+			err = json.Unmarshal([]byte(webhookSender.Webhook.Body), &data)
 			require.NoError(t, err)
-			j.Del("timestamp")
-			b, err := j.MarshalJSON()
+			delete(data, "timestamp")
+			b, err := json.Marshal(data)
 			require.NoError(t, err)
 			body := string(b)
 

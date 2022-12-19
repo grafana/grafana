@@ -17,7 +17,7 @@ func BuildInternalPlugins(c *cli.Context) error {
 	}
 
 	const grafanaDir = "."
-	metadata, err := GenerateMetadata(c)
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}

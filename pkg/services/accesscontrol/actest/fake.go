@@ -11,10 +11,12 @@ var _ accesscontrol.Service = new(FakeService)
 var _ accesscontrol.RoleRegistry = new(FakeService)
 
 type FakeService struct {
-	ExpectedErr              error
-	ExpectedDisabled         bool
-	ExpectedPermissions      []accesscontrol.Permission
-	ExpectedUsersPermissions map[int64][]accesscontrol.Permission
+	ExpectedErr                     error
+	ExpectedDisabled                bool
+	ExpectedCachedPermissions       bool
+	ExpectedPermissions             []accesscontrol.Permission
+	ExpectedFilteredUserPermissions []accesscontrol.Permission
+	ExpectedUsersPermissions        map[int64][]accesscontrol.Permission
 }
 
 func (f FakeService) GetUsageStats(ctx context.Context) map[string]interface{} {
@@ -27,6 +29,10 @@ func (f FakeService) GetUserPermissions(ctx context.Context, user *user.SignedIn
 
 func (f FakeService) SearchUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	return f.ExpectedUsersPermissions, f.ExpectedErr
+}
+
+func (f FakeService) SearchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+	return f.ExpectedFilteredUserPermissions, f.ExpectedErr
 }
 
 func (f FakeService) ClearUserPermissionCache(user *user.SignedInUser) {}
@@ -81,7 +87,7 @@ func (f FakeStore) SearchUsersPermissions(ctx context.Context, orgID int64, opti
 	return f.ExpectedUsersPermissions, f.ExpectedErr
 }
 
-func (f FakeStore) GetUsersBasicRoles(ctx context.Context, orgID int64) (map[int64][]string, error) {
+func (f FakeStore) GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error) {
 	return f.ExpectedUsersRoles, f.ExpectedErr
 }
 
