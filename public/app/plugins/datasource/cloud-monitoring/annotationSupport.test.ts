@@ -82,10 +82,10 @@ describe('CloudMonitoringAnnotationSupport', () => {
   });
 
   describe('prepareQuery', () => {
-    it('should ensure queryType is set to "timeSeriesList"', () => {
+    it('should ensure queryType is set to "annotation"', () => {
       const queryWithoutMetricsQueryType = { ...annotationQuery, queryType: 'blah' };
       expect(annotationSupport.prepareQuery?.(queryWithoutMetricsQueryType)).toEqual(
-        expect.objectContaining({ queryType: 'timeSeriesList' })
+        expect.objectContaining({ queryType: QueryType.ANNOTATION })
       );
     });
     it('should ensure type is set "annotationQuery"', () => {

@@ -235,7 +235,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       };
     }
 
-    if (has(query, 'metricQuery') && query.queryType.toString() === 'metrics') {
+    if (has(query, 'metricQuery') && ['metrics', QueryType.ANNOTATION].includes(query.queryType)) {
       const metricQuery: MetricQuery = get(query, 'metricQuery')!;
       if (metricQuery.editorMode === 'mql') {
         query.timeSeriesQuery = {
