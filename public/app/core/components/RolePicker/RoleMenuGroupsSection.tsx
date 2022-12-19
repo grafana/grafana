@@ -18,7 +18,6 @@ interface RoleMenuGroupsSectionProps {
     name: string;
     options: Role[];
     value: string;
-    uid: string;
   }>;
   onChange: (value: string) => void;
   onOpenSubMenuRMGS: (value: string) => void;
@@ -69,20 +68,20 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
             <div className={groupHeaderStyle}>{renderedName}</div>
             <div className={optionBodyStyle}></div>
             {showGroups && !!optionGroups?.length
-              ? optionGroups.map((option) => (
+              ? optionGroups.map((groupOption) => (
                   <RoleMenuGroupOption
-                    data={option}
-                    key={option.value}
-                    isSelected={groupSelected(option.value) || groupPartiallySelected(option.value)}
-                    partiallySelected={groupPartiallySelected(option.value)}
-                    disabled={option.options?.every(isNotDelegatable)}
+                    data={groupOption}
+                    key={groupOption.value}
+                    isSelected={groupSelected(groupOption.value) || groupPartiallySelected(groupOption.value)}
+                    partiallySelected={groupPartiallySelected(groupOption.value)}
+                    disabled={groupOption.options?.every(isNotDelegatable)}
                     onChange={onChange}
                     onOpenSubMenu={onOpenSubMenuRMGS}
                     onCloseSubMenu={onCloseSubMenu}
                     root={subMenuNode}
-                    isFocused={showSubMenu && openedMenuGroup === option.value}
+                    isFocused={showSubMenu && openedMenuGroup === groupOption.value}
                   >
-                    {showSubMenu && openedMenuGroup === option.value && (
+                    {showSubMenu && openedMenuGroup === groupOption.value && (
                       <RolePickerSubMenu
                         options={subMenuOptions}
                         selectedOptions={selectedOptions}

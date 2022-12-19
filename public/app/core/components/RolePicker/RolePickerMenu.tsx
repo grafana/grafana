@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
 import { Button, CustomScrollbar, HorizontalGroup, RadioButtonGroup, useStyles2, useTheme2 } from '@grafana/ui';
@@ -15,6 +14,19 @@ enum GroupType {
   fixed = 'fixed',
   custom = 'custom',
   plugin = 'plugin',
+}
+
+interface RoleGroupOption {
+  name: string;
+  value: string;
+  options: Role[];
+}
+
+interface RolesCollectionEntry {
+  groupType: GroupType;
+  optionGroup: RoleGroupOption[];
+  renderedName: string;
+  roles: Role[];
 }
 
 const BasicRoles = Object.values(OrgRole);
@@ -62,6 +74,8 @@ export const RolePickerMenu = ({
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [openedMenuGroup, setOpenedMenuGroup] = useState('');
   const [subMenuOptions, setSubMenuOptions] = useState<Role[]>([]);
+  const [optionGroups, setOptionGroups] = useState<{ [key: string]: RoleGroupOption[] }>({});
+  const [rolesCollection, setRolesCollection] = useState<{ [key: string]: RolesCollectionEntry }>({});
   const subMenuNode = useRef<HTMLDivElement | null>(null);
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -78,35 +92,40 @@ export const RolePickerMenu = ({
     }
   }, [selectedBuiltInRole, onBasicRoleSelect]);
 
-  const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
-  const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
-  const pluginRoles = options.filter(filterPluginsRoles).sort(sortRolesByName);
-  const optionGroups = {
-    fixed: convertRolesToGroupOptions(fixedRoles).sort((a, b) => a.name.localeCompare(b.name)),
-    custom: convertRolesToGroupOptions(customRoles).sort((a, b) => a.name.localeCompare(b.name)),
-    plugin: convertRolesToGroupOptions(pluginRoles).sort((a, b) => a.name.localeCompare(b.name)),
-  };
+  // Evaluate optionGroups and rolesCollection only if options changed, otherwise
+  // it triggers unnecessary re-rendering of <RoleMenuGroupsSection /> component
+  useEffect(() => {
+    const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
+    const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
+    const pluginRoles = options.filter(filterPluginsRoles).sort(sortRolesByName);
+    const optionGroups = {
+      fixed: convertRolesToGroupOptions(fixedRoles).sort((a, b) => a.name.localeCompare(b.name)),
+      custom: convertRolesToGroupOptions(customRoles).sort((a, b) => a.name.localeCompare(b.name)),
+      plugin: convertRolesToGroupOptions(pluginRoles).sort((a, b) => a.name.localeCompare(b.name)),
+    };
+    setOptionGroups(optionGroups);
 
-  const rolesCollection = {
-    fixed: {
-      groupType: GroupType.fixed,
-      optionGroup: optionGroups.fixed,
-      renderedName: `Fixed roles`,
-      roles: fixedRoles,
-    },
-    custom: {
-      groupType: GroupType.custom,
-      optionGroup: optionGroups.custom,
-      renderedName: `Custom roles`,
-      roles: customRoles,
-    },
-    pluginRoles: {
-      groupType: GroupType.plugin,
-      optionGroup: optionGroups.plugin,
-      renderedName: `Plugin roles`,
-      roles: pluginRoles,
-    },
-  };
+    setRolesCollection({
+      fixed: {
+        groupType: GroupType.fixed,
+        optionGroup: optionGroups.fixed,
+        renderedName: `Fixed roles`,
+        roles: fixedRoles,
+      },
+      custom: {
+        groupType: GroupType.custom,
+        optionGroup: optionGroups.custom,
+        renderedName: `Custom roles`,
+        roles: customRoles,
+      },
+      pluginRoles: {
+        groupType: GroupType.plugin,
+        optionGroup: optionGroups.plugin,
+        renderedName: `Plugin roles`,
+        roles: pluginRoles,
+      },
+    });
+  }, [options]);
 
   const getSelectedGroupOptions = (group: string) => {
     const selectedGroupOptions = [];
@@ -268,28 +287,46 @@ const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:') &
 const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
 const filterPluginsRoles = (option: Role) => option.name?.startsWith('plugins:');
 
+interface GroupsMap {
+  [key: string]: { roles: Role[]; name: string };
+}
+
 const convertRolesToGroupOptions = (roles: Role[]) => {
-  const groupsMap: { [key: string]: Role[] } = {};
+  const groupsMap: GroupsMap = {};
   roles.forEach((role) => {
-    const groupName = getRoleGroup(role);
-    if (!groupsMap[groupName]) {
-      groupsMap[groupName] = [];
+    const groupId = getRoleGroup(role);
+    const groupName = getRoleGroupName(role);
+    if (!groupsMap[groupId]) {
+      groupsMap[groupId] = { name: groupName, roles: [] };
     }
-    groupsMap[groupName].push(role);
+    groupsMap[groupId].roles.push(role);
   });
-  const groups = Object.entries(groupsMap).map(([groupName, roles]) => {
+  const groups = Object.entries(groupsMap).map(([groupId, groupEntry]) => {
     return {
-      name: fixedRoleGroupNames[groupName] || capitalize(groupName),
-      value: groupName,
-      options: roles.sort(sortRolesByName),
-      uid: uuidv4(),
+      name: fixedRoleGroupNames[groupId] || capitalize(groupEntry.name),
+      value: groupId,
+      options: groupEntry.roles.sort(sortRolesByName),
     };
   });
   return groups;
 };
 
 const getRoleGroup = (role: Role) => {
+  const prefix = getRolePrefix(role);
+  const name = getRoleGroupName(role);
+  return `${prefix}:${name}`;
+};
+
+const getRoleGroupName = (role: Role) => {
   return role.group || 'Other';
+};
+
+const getRolePrefix = (role: Role) => {
+  const prefixEnd = role.name.indexOf(':');
+  if (prefixEnd < 0) {
+    return 'unknown';
+  }
+  return role.name.substring(0, prefixEnd);
 };
 
 const sortRolesByName = (a: Role, b: Role) => a.name.localeCompare(b.name);
