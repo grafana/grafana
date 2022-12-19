@@ -2,7 +2,6 @@ package codegen
 
 import (
 	"bytes"
-	"cuelang.org/go/cue/cuecontext"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +11,7 @@ import (
 	"strings"
 	"text/template"
 
+	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/thema/encoding/jsonschema"
@@ -57,10 +57,7 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 	}
 
 	// fixes the references between the types within a json after making components.schema.<types> the root of the json
-	kindJsonStr := string(obj.Components.Schemas)
-	if strings.Contains(kindJsonStr, "#/components/schemas/") {
-		kindJsonStr = strings.Replace(kindJsonStr, "#/components/schemas/", "#/", -1)
-	}
+	kindJsonStr := strings.Replace(string(obj.Components.Schemas), "#/components/schemas/", "#/", -1)
 
 	kindProps := decl.Properties.Common()
 	kindName := strings.ToLower(kindProps.Name)
@@ -407,7 +404,7 @@ func (pts *PropertyTypes) HasType(pt PropertyType) bool {
 	return false
 }
 
-func (pt *PropertyTypes) UnmarshalJSON(data []byte) error {
+func (pts *PropertyTypes) UnmarshalJSON(data []byte) error {
 	var value interface{}
 	if err := json.Unmarshal(data, &value); err != nil {
 		return err
@@ -415,18 +412,18 @@ func (pt *PropertyTypes) UnmarshalJSON(data []byte) error {
 
 	switch val := value.(type) {
 	case string:
-		*pt = []PropertyType{PropertyType(val)}
+		*pts = []PropertyType{PropertyType(val)}
 		return nil
 	case []interface{}:
-		var pts []PropertyType
+		var pt []PropertyType
 		for _, t := range val {
 			s, ok := t.(string)
 			if !ok {
 				return errors.New("unsupported property type")
 			}
-			pts = append(pts, PropertyType(s))
+			pt = append(pt, PropertyType(s))
 		}
-		*pt = pts
+		*pts = pt
 	default:
 		return errors.New("unsupported property type")
 	}
