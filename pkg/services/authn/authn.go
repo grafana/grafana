@@ -89,13 +89,12 @@ func (i *Identity) NamespacedID() (string, int64) {
 
 	split := strings.Split(i.ID, ":")
 	if len(split) != 2 {
-		namespace = ""
-		id = -1
+		return "", -1
 	}
 
 	id, errI := strconv.ParseInt(split[1], 10, 64)
 	if errI != nil {
-		id = -1
+		return "", -1
 	}
 
 	namespace = split[0]

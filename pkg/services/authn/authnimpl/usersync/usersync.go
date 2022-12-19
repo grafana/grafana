@@ -13,8 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-type postSyncHookFn func(ctx context.Context, identity *authn.Identity) error
-
 type UserSync struct {
 	userService     user.Service
 	authInfoService login.AuthInfoService
@@ -152,7 +150,6 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 	isAdmin := false
 	if id.IsGrafanaAdmin != nil {
 		isAdmin = *id.IsGrafanaAdmin
-
 	}
 
 	// TODO: add quota check
@@ -211,7 +208,7 @@ func (s *UserSync) UserInDB(ctx context.Context,
 		}
 	}
 
-	// Check user table to grab exising user
+	// Check user table to grab existing user
 	return s.LookupByOneOf(ctx, &params)
 }
 
