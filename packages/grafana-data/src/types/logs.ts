@@ -169,15 +169,13 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
   showContextToggle(row?: LogRowModel): boolean;
 }
 
-export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
+// TODO: When we upgrade to Typescript 9.4, we can type this as unknown and use improved in narrowing
+// https://devblogs.microsoft.com/typescript/announcing-typescript-4-9/#in-narrowing
+export const hasLogsContextSupport = (datasource: any): datasource is DataSourceWithLogsContextSupport => {
   if (!datasource) {
     return false;
   }
-  // Typescript documentation recommends to use this approach to check if a property exists on an object
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
-
-  return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
+  return datasource.getLogRowContext !== undefined && datasource.showContextToggle !== undefined;
 };
 
 /**
@@ -188,13 +186,13 @@ export interface DataSourceWithLogsVolumeSupport<TQuery extends DataQuery> {
   getLogsVolumeDataProvider(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> | undefined;
 }
 
+// TODO: When we upgrade to Typescript 9.4, we can type this as unknown and use improved in narrowing
+// https://devblogs.microsoft.com/typescript/announcing-typescript-4-9/#in-narrowing
 export const hasLogsVolumeSupport = <TQuery extends DataQuery>(
-  datasource: unknown
+  datasource: any
 ): datasource is DataSourceWithLogsVolumeSupport<TQuery> => {
   if (!datasource) {
     return false;
   }
-  // Typescript documentation recommends to use this approach to check if a property exists on an object
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return (datasource as DataSourceWithLogsVolumeSupport<TQuery>).getLogsVolumeDataProvider !== undefined;
+  return datasource.getLogsVolumeDataProvider !== undefined;
 };
