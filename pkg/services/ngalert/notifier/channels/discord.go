@@ -27,15 +27,33 @@ type DiscordNotifier struct {
 	ns       channels.WebhookSender
 	images   channels.ImageStore
 	tmpl     *template.Template
-	settings discordSettings
+	settings *discordSettings
 }
 
 type discordSettings struct {
-	Title              string
-	Content            string
-	AvatarURL          string
-	WebhookURL         string
-	UseDiscordUsername bool
+	Title              string `json:"title,omitempty" yaml:"title,omitempty"`
+	Content            string `json:"message,omitempty" yaml:"message,omitempty"`
+	AvatarURL          string `json:"avatar_url,omitempty" yaml:"avatar_url,omitempty"`
+	WebhookURL         string `json:"url,omitempty" yaml:"url,omitempty"`
+	UseDiscordUsername bool   `json:"use_discord_username,omitempty" yaml:"use_discord_username,omitempty"`
+}
+
+func buildDiscordSettings(fc channels.FactoryConfig) (*discordSettings, error) {
+	var settings discordSettings
+	err := json.Unmarshal(fc.Config.Settings, &settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+	if settings.WebhookURL == "" {
+		return nil, errors.New("could not find webhook url property in settings")
+	}
+	if settings.Title == "" {
+		settings.Title = channels.DefaultMessageTitleEmbed
+	}
+	if settings.Content == "" {
+		settings.Content = channels.DefaultMessageEmbed
+	}
+	return &settings, nil
 }
 
 type discordAttachment struct {
@@ -60,28 +78,17 @@ func DiscordFactory(fc channels.FactoryConfig) (channels.NotificationChannel, er
 }
 
 func newDiscordNotifier(fc channels.FactoryConfig) (*DiscordNotifier, error) {
-	settings, err := simplejson.NewJson(fc.Config.Settings)
+	settings, err := buildDiscordSettings(fc)
 	if err != nil {
 		return nil, err
 	}
-	dUrl := settings.Get("url").MustString()
-	if dUrl == "" {
-		return nil, errors.New("could not find webhook url property in settings")
-	}
-
 	return &DiscordNotifier{
-		Base:   channels.NewBase(fc.Config),
-		log:    fc.Logger,
-		ns:     fc.NotificationService,
-		images: fc.ImageStore,
-		tmpl:   fc.Template,
-		settings: discordSettings{
-			Title:              settings.Get("title").MustString(channels.DefaultMessageTitleEmbed),
-			Content:            settings.Get("message").MustString(channels.DefaultMessageEmbed),
-			AvatarURL:          settings.Get("avatar_url").MustString(),
-			WebhookURL:         dUrl,
-			UseDiscordUsername: settings.Get("use_discord_username").MustBool(false),
-		},
+		Base:     channels.NewBase(fc.Config),
+		log:      fc.Logger,
+		ns:       fc.NotificationService,
+		images:   fc.ImageStore,
+		tmpl:     fc.Template,
+		settings: settings,
 	}, nil
 }
 
