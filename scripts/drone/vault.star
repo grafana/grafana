@@ -81,17 +81,17 @@ def secrets():
         ),
         vault_secret(
             'aws_region',
-            'secret/aws-marketplace',
+            'secret/data/common/aws-marketplace',
             'aws_region',
         ),
         vault_secret(
             'aws_access_key_id',
-            'secret/aws-marketplace',
+            'secret/data/common/aws-marketplace',
             'aws_access_key_id',
         ),
         vault_secret(
             'aws_secret_access_key',
-            'secret/aws-marketplace',
+            'secret/data/common/aws-marketplace',
             'aws_secret_access_key',
         ),
     ]

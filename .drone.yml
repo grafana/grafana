@@ -6416,23 +6416,23 @@ name: packages_secret_access_key
 ---
 get:
   name: aws_region
-  path: secret/aws-marketplace
+  path: secret/data/common/aws-marketplace
 kind: secret
 name: aws_region
 ---
 get:
   name: aws_access_key_id
-  path: secret/aws-marketplace
+  path: secret/data/common/aws-marketplace
 kind: secret
 name: aws_access_key_id
 ---
 get:
   name: aws_secret_access_key
-  path: secret/aws-marketplace
+  path: secret/data/common/aws-marketplace
 kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 820cb5f74979902c1674132a46cbc90a98efb23b771faa74cbfda133bfc21df6
+hmac: 1469aed3e12075feb3f8719ca24ccbb462f9e94dec5360af009d5ba6030597d7
 
 ...
