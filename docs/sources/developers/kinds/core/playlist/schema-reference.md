@@ -1,9 +1,12 @@
-+++
+---
 draft: true
-keywords = ["grafana", "schema", "documentation"]
-+++
+keywords:
+  - grafana
+  - schema
+title: Playlist kind
+---
 
-# Kind: Playlist
+# Playlist kind
 
 ### Maturity: merged
 

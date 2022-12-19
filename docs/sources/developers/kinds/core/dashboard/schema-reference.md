@@ -1,9 +1,12 @@
-+++
+---
 draft: true
-keywords = ["grafana", "schema", "documentation"]
-+++
+keywords:
+  - grafana
+  - schema
+title: Dashboard kind
+---
 
-# Kind: Dashboard
+# Dashboard kind
 
 ### Maturity: merged
 
