@@ -4218,7 +4218,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/build publish aws --image grafana/grafana-enterprise --repo grafana-labs/grafana-enterprise
+  - ./bin/build publish aws --image grafana/grafana-enterprise --repo grafana-labs/grafanaenterprise
     --product 422b46fb-bea6-4f27-8bcc-832117bd627e
   depends_on:
   - fetch-images-enterprise
@@ -6437,6 +6437,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: c8f9d3463b57b855994905b4ee9645c3562fefb13b150284bc39d70ede21cc33
+hmac: e3d58aacde14e03c46303c4d707f9b4e7d6e33b92b696b19befd06d6a28cf88a
 
 ...
