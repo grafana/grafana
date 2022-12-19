@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { lazy, PureComponent, RefObject, Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -36,6 +36,16 @@ import { LiveTailControls } from './useLiveTailControls';
 const AddToDashboard = lazy(() =>
   import('./AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
 );
+
+const getStyles = (exploreId: ExploreId) => {
+  return {
+    rotateIcon: css({
+      '> div > svg': {
+        transform: exploreId === 'left' ? 'rotate(180deg)' : 'none',
+      },
+    }),
+  };
+};
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -172,7 +182,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
             onClick={onClickResize}
             icon={isLargerExploreId ? 'gf-movepane-right' : 'gf-movepane-left'}
             iconOnly={true}
-            className={cx(styles.iconButton, styles.rotateIcon)}
+            className={styles.rotateIcon}
           />
           <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
             Close
@@ -351,18 +361,3 @@ const mapDispatchToProps = {
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export const ExploreToolbar = connector(UnConnectedExploreToolbar);
-
-const getStyles = (exploreId: ExploreId) => {
-  return {
-    iconButton: css({
-      '> div': {
-        scale: '1.5',
-      },
-    }),
-    rotateIcon: css({
-      '> div > svg': {
-        transform: exploreId === 'left' ? 'rotate(180deg)' : 'none',
-      },
-    }),
-  };
-};
