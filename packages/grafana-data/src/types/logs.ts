@@ -191,6 +191,9 @@ export interface DataSourceWithLogsVolumeSupport<TQuery extends DataQuery> {
 export const hasLogsVolumeSupport = <TQuery extends DataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithLogsVolumeSupport<TQuery> => {
+  if (!datasource) {
+    return false;
+  }
   // Typescript documentation recommends to use this approach to check if a property exists on an object
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return (datasource as DataSourceWithLogsVolumeSupport<TQuery>).getLogsVolumeDataProvider !== undefined;
