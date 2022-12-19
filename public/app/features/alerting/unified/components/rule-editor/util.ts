@@ -242,11 +242,6 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
             value: -Infinity,
             color: config.theme2.colors.error.main,
           },
-          // we have to duplicate this value, or the graph will not display the handle in the right color
-          {
-            value: values[0],
-            color: config.theme2.colors.error.main,
-          },
           {
             value: values[0],
             color: 'transparent',
