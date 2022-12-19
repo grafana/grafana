@@ -40,6 +40,30 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 			expectedInitError: `invalid url property in settings: parse "://alertmanager.com/api/v1/alerts": missing protocol scheme`,
 			receiverName:      "Alertmanager",
 		},
+		{
+			name: "Error in initing: empty URL",
+			settings: `{
+				"url": ""
+			}`,
+			expectedInitError: `could not find url property in settings`,
+			receiverName:      "Alertmanager",
+		},
+		{
+			name: "Error in initing: null URL",
+			settings: `{
+				"url": null
+			}`,
+			expectedInitError: `could not find url property in settings`,
+			receiverName:      "Alertmanager",
+		},
+		{
+			name: "Error in initing: one of multiple URLs is invalid",
+			settings: `{
+				"url": "https://alertmanager-01.com,://url"
+			}`,
+			expectedInitError: "invalid url property in settings: parse \"://url/api/v1/alerts\": missing protocol scheme",
+			receiverName:      "Alertmanager",
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
