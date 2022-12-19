@@ -1,0 +1,14 @@
+@top AlertRuleSearch { expression+ }
+
+expression { FilterExpression expression }
+
+FilterExpression { FilterType ":" FilterValue }
+
+FilterType { "ns" | "group" | "rule" | "ds" | "state" | "type" }
+
+@skip { space }
+
+@tokens {
+  space { @whitespace+ }
+  FilterValue { @asciiLetter+ }
+}

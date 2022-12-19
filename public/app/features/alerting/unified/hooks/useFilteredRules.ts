@@ -5,14 +5,57 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRuleGroup, CombinedRuleNamespace, FilterState } from 'app/types/unified-alerting';
 import { PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { parser } from '../search/search';
+import * as terms from '../search/search.terms';
 import { labelsMatchMatchers, parseMatchers } from '../utils/alertmanager';
 import { isCloudRulesSource } from '../utils/datasource';
 import { getFiltersFromUrlParams } from '../utils/misc';
 import { isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
 
+enum FilterType {
+  ns = 'ns',
+  group = 'group',
+  rule = 'rule',
+  state = 'state', // Firing | Normal | Pending
+  type = 'type', // Alerting | Recording
+  ds = 'ds',
+}
+
+function isFilterType(filterType: string): filterType is FilterType {
+  return Object.values<string>(FilterType).includes(filterType);
+}
+
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
   const [queryParams] = useQueryParams();
   const filters = getFiltersFromUrlParams(queryParams);
+
+  const freeFormQuery = filters.queryString ?? '';
+  const parsed = parser.parse(freeFormQuery);
+
+  const parsedFilters: Array<{ type: FilterType; value: string }> = [];
+  let cursor = parsed.cursor();
+  do {
+    // console.log(`Node ${cursor.name} from ${cursor.from} to ${cursor.to}`);
+    if (cursor.node.type.id === terms.FilterExpression) {
+      const typeNode = cursor.node.getChild(terms.FilterType);
+      const valueNode = cursor.node.getChild(terms.FilterValue);
+
+      if (typeNode && valueNode) {
+        const filterType = freeFormQuery.substring(typeNode.from, typeNode.to);
+        const filterValue = freeFormQuery.substring(valueNode.from, valueNode.to);
+
+        if (isFilterType(filterType)) {
+          parsedFilters.push({
+            type: filterType,
+            value: filterValue,
+          });
+        }
+      }
+      // console.log('Type & Value: ', typeNode, valueNode);
+    }
+  } while (cursor.next());
+
+  console.log(parsedFilters);
 
   return useMemo(() => filterRules(namespaces, filters), [namespaces, filters]);
 };

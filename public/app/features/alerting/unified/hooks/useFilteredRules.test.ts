@@ -37,6 +37,21 @@ describe('filterRules', function () {
     expect(filtered[0].groups[0].rules[0].name).toBe('High CPU usage');
   });
 
+  // it('should filter out rules by evaluation group name', function () {
+  //   const ns = mockCombinedRuleNamespace({
+  //     groups: [
+  //       mockCombinedRuleGroup('Performance group', [mockCombinedRule({ name: 'High CPU usage' })]),
+  //       mockCombinedRuleGroup('Availability group', [mockCombinedRule({ name: 'Memory too low' })]),
+  //     ],
+  //   });
+  //
+  //   const filtered = filterRules([ns], { queryString: 'memory' });
+  //
+  //   expect(filtered[0].groups[0].rules).toHaveLength(1);
+  //   expect(filtered[])
+  //   expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
+  // });
+
   it('should filter out rules by label filter', function () {
     const rules = [
       mockCombinedRule({ name: 'High CPU usage', labels: { severity: 'warning' } }),
