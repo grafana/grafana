@@ -56,12 +56,12 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 				return fallback
 			}
 
-			fc := FactoryConfig{
+			fc := channels.FactoryConfig{
 				Config:      m,
 				DecryptFunc: decryptFn,
-				ImageStore:  &UnavailableImageStore{},
+				ImageStore:  &channels.UnavailableImageStore{},
 				Template:    tmpl,
-				Logger:      &FakeLogger{},
+				Logger:      &channels.FakeLogger{},
 			}
 			sn, err := buildAlertmanagerNotifier(fc)
 			if c.expectedInitError != "" {
@@ -159,12 +159,12 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 			decryptFn := func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
 				return fallback
 			}
-			fc := FactoryConfig{
+			fc := channels.FactoryConfig{
 				Config:      m,
 				DecryptFunc: decryptFn,
 				ImageStore:  images,
 				Template:    tmpl,
-				Logger:      &FakeLogger{},
+				Logger:      &channels.FakeLogger{},
 			}
 			sn, err := buildAlertmanagerNotifier(fc)
 			require.NoError(t, err)
