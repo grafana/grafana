@@ -31,7 +31,11 @@ func (s *UserSync) SyncUser(ctx context.Context, clientParams *authn.ClientParam
 
 	// Does user exist in the database?
 	usr, errUserInDB := s.UserInDB(ctx, &id.AuthModule, &id.AuthID, id.LookUpParams)
-	if errUserInDB != nil && errors.Is(errUserInDB, user.ErrUserNotFound) {
+	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
+		return errUserInDB
+	}
+
+	if errors.Is(errUserInDB, user.ErrUserNotFound) {
 		if !clientParams.AllowSignUp {
 			s.log.Warn("Not allowing login, user not found in internal user database and allow signup = false",
 				"auth_module", id.AuthModule)
@@ -44,10 +48,6 @@ func (s *UserSync) SyncUser(ctx context.Context, clientParams *authn.ClientParam
 		if errCreate != nil {
 			return errCreate
 		}
-	}
-
-	if errUserInDB != nil {
-		return errUserInDB
 	}
 
 	// update user

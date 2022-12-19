@@ -2,7 +2,6 @@ package authn
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -81,13 +80,25 @@ func (i *Identity) IsAnonymous() bool {
 	return i.ID == ""
 }
 
+// TODO: improve error handling
 func (i *Identity) NamespacedID() (string, int64) {
 	var (
 		id        int64
 		namespace string
 	)
 
-	fmt.Sscanf(i.ID, "%s:%d", &namespace, &id)
+	split := strings.Split(i.ID, ":")
+	if len(split) != 2 {
+		namespace = ""
+		id = -1
+	}
+
+	id, errI := strconv.ParseInt(split[1], 10, 64)
+	if errI != nil {
+		id = -1
+	}
+
+	namespace = split[0]
 
 	return namespace, id
 }

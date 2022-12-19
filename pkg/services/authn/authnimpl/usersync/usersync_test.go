@@ -24,8 +24,21 @@ func ptrBool(b bool) *bool {
 	return &b
 }
 
+func ptrInt64(i int64) *int64 {
+	return &i
+}
+
 func TestUserSync_SyncUser(t *testing.T) {
-	authFakeNil := &logintest.AuthInfoServiceFake{ExpectedUser: nil, ExpectedError: user.ErrUserNotFound}
+	authFakeNil := &logintest.AuthInfoServiceFake{
+		ExpectedUser:  nil,
+		ExpectedError: user.ErrUserNotFound,
+		SetAuthInfoFn: func(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
+			return nil
+		},
+		UpdateAuthInfoFn: func(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
+			return nil
+		},
+	}
 	authFakeUserID := &logintest.AuthInfoServiceFake{
 		ExpectedUser:  nil,
 		ExpectedError: nil,
@@ -41,6 +54,29 @@ func TestUserSync_SyncUser(t *testing.T) {
 		Name:  "test",
 		Email: "test",
 	}}
+
+	userServiceMod := &usertest.FakeUserService{ExpectedUser: &user.User{
+		ID:         3,
+		Login:      "test",
+		Name:       "test",
+		Email:      "test",
+		IsDisabled: true,
+		IsAdmin:    false,
+	}}
+
+	userServiceNil := &usertest.FakeUserService{
+		ExpectedUser:  nil,
+		ExpectedError: user.ErrUserNotFound,
+		CreateFn: func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+			return &user.User{
+				ID:      2,
+				Login:   cmd.Login,
+				Name:    cmd.Name,
+				Email:   cmd.Email,
+				IsAdmin: cmd.IsAdmin,
+			}, nil
+		},
+	}
 
 	type fields struct {
 		userService     user.Service
@@ -101,7 +137,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 		},
 		{
-			name: "sync - user found in DB",
+			name: "sync - user found in DB - by email",
 			fields: fields{
 				userService:     userService,
 				authInfoService: authFakeNil,
@@ -142,6 +178,88 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 		},
 		{
+			name: "sync - user found in DB - by login",
+			fields: fields{
+				userService:     userService,
+				authInfoService: authFakeNil,
+				quotaService:    &quotatest.FakeQuotaService{},
+				log:             log.NewNopLogger(),
+			},
+			args: args{
+				ctx: context.Background(),
+				clientParams: &authn.ClientParams{
+					SyncUser:            true,
+					AllowSignUp:         false,
+					EnableDisabledUsers: false,
+				},
+				id: &authn.Identity{
+					ID:    "",
+					Login: "test",
+					Name:  "test",
+					Email: "test",
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  nil,
+						Login:  ptrString("test"),
+					},
+				},
+			},
+			wantErr: false,
+			wantID: &authn.Identity{
+				ID:             "user:1",
+				Login:          "test",
+				Name:           "test",
+				Email:          "test",
+				IsGrafanaAdmin: ptrBool(false),
+				LookUpParams: models.UserLookupParams{
+					UserID: nil,
+					Email:  nil,
+					Login:  ptrString("test"),
+				},
+			},
+		},
+		{
+			name: "sync - user found in DB - by ID",
+			fields: fields{
+				userService:     userService,
+				authInfoService: authFakeNil,
+				quotaService:    &quotatest.FakeQuotaService{},
+				log:             log.NewNopLogger(),
+			},
+			args: args{
+				ctx: context.Background(),
+				clientParams: &authn.ClientParams{
+					SyncUser:            true,
+					AllowSignUp:         false,
+					EnableDisabledUsers: false,
+				},
+				id: &authn.Identity{
+					ID:    "",
+					Login: "test",
+					Name:  "test",
+					Email: "test",
+					LookUpParams: models.UserLookupParams{
+						UserID: ptrInt64(1),
+						Email:  nil,
+						Login:  nil,
+					},
+				},
+			},
+			wantErr: false,
+			wantID: &authn.Identity{
+				ID:             "user:1",
+				Login:          "test",
+				Name:           "test",
+				Email:          "test",
+				IsGrafanaAdmin: ptrBool(false),
+				LookUpParams: models.UserLookupParams{
+					UserID: ptrInt64(1),
+					Email:  nil,
+					Login:  nil,
+				},
+			},
+		},
+		{
 			name: "sync - user found in authInfo",
 			fields: fields{
 				userService:     userService,
@@ -177,6 +295,127 @@ func TestUserSync_SyncUser(t *testing.T) {
 				IsGrafanaAdmin: ptrBool(false),
 				LookUpParams: models.UserLookupParams{
 					UserID: nil,
+					Email:  nil,
+					Login:  nil,
+				},
+			},
+		},
+		{
+			name: "sync - user needs to be created - disabled signup",
+			fields: fields{
+				userService:     userService,
+				authInfoService: authFakeNil,
+				quotaService:    &quotatest.FakeQuotaService{},
+				log:             log.NewNopLogger(),
+			},
+			args: args{
+				ctx: context.Background(),
+				clientParams: &authn.ClientParams{
+					SyncUser:            true,
+					AllowSignUp:         false,
+					EnableDisabledUsers: false,
+				},
+				id: &authn.Identity{
+					ID:         "",
+					Login:      "test",
+					Name:       "test",
+					Email:      "test",
+					AuthModule: "oauth",
+					AuthID:     "2032",
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  nil,
+						Login:  nil,
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "sync - user needs to be created - enabled signup",
+			fields: fields{
+				userService:     userServiceNil,
+				authInfoService: authFakeNil,
+				quotaService:    &quotatest.FakeQuotaService{},
+				log:             log.NewNopLogger(),
+			},
+			args: args{
+				ctx: context.Background(),
+				clientParams: &authn.ClientParams{
+					SyncUser:            true,
+					AllowSignUp:         true,
+					EnableDisabledUsers: true,
+				},
+				id: &authn.Identity{
+					ID:             "",
+					Login:          "test_create",
+					Name:           "test_create",
+					IsGrafanaAdmin: ptrBool(true),
+					Email:          "test_create",
+					AuthModule:     "oauth",
+					AuthID:         "2032",
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test_create"),
+						Login:  nil,
+					},
+				},
+			},
+			wantErr: false,
+			wantID: &authn.Identity{
+				ID:             "user:2",
+				Login:          "test_create",
+				Name:           "test_create",
+				Email:          "test_create",
+				AuthModule:     "oauth",
+				AuthID:         "2032",
+				IsGrafanaAdmin: ptrBool(true),
+				LookUpParams: models.UserLookupParams{
+					UserID: nil,
+					Email:  ptrString("test_create"),
+					Login:  nil,
+				},
+			},
+		},
+		{
+			name: "sync - needs full update",
+			fields: fields{
+				userService:     userServiceMod,
+				authInfoService: authFakeNil,
+				quotaService:    &quotatest.FakeQuotaService{},
+				log:             log.NewNopLogger(),
+			},
+			args: args{
+				ctx: context.Background(),
+				clientParams: &authn.ClientParams{
+					SyncUser:            true,
+					AllowSignUp:         false,
+					EnableDisabledUsers: true,
+				},
+				id: &authn.Identity{
+					ID:             "",
+					Login:          "test_mod",
+					Name:           "test_mod",
+					Email:          "test_mod",
+					IsDisabled:     false,
+					IsGrafanaAdmin: ptrBool(true),
+					LookUpParams: models.UserLookupParams{
+						UserID: ptrInt64(3),
+						Email:  nil,
+						Login:  nil,
+					},
+				},
+			},
+			wantErr: false,
+			wantID: &authn.Identity{
+				ID:             "user:3",
+				Login:          "test_mod",
+				Name:           "test_mod",
+				Email:          "test_mod",
+				IsDisabled:     false,
+				IsGrafanaAdmin: ptrBool(true),
+				LookUpParams: models.UserLookupParams{
+					UserID: ptrInt64(3),
 					Email:  nil,
 					Login:  nil,
 				},
