@@ -11,7 +11,9 @@ weight: 100
 
 # Customize notifications
 
-Customize your notifications using message templates, so you don't have to create notifications from scratch each time. You can use message templates to change the title, message, and format of the message in your notifications.
+Customize your notifications by creating message templates to use in the notifications sent to contact points.
+
+You can use message templates to change the title, message, and format of the message in your notifications.
 
 Message templates are not tied to specific contact point integrations, such as email or Slack. However, you can choose to create separate message templates for different contact point integrations.
 
