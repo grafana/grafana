@@ -326,6 +326,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         exploreId={exploreId}
         onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
         timeZone={timeZone}
+        splitOpenFn={this.onSplitOpen('table')}
       />
     );
   }

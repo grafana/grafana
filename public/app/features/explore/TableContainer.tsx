@@ -156,7 +156,6 @@ export class TableContainer extends PureComponent<Props, TableContainerState> {
                 onCellFilterAdded={onCellFilterAdded}
               />
             )}
-
             {this.state?.resultsStyle === TABLE_RESULTS_STYLE.raw && <RawListContainer tableResult={mainFrame} />}
           </>
         )}

@@ -1,14 +1,16 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, {useEffect, useState} from 'react';
+import React, { useState } from 'react';
+import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
-import { DataFrame, Field } from '@grafana/data/src';
-import { stylesFactory } from '@grafana/ui/src';
+import { DataFrame } from '@grafana/data/src';
+import { Button, stylesFactory } from '@grafana/ui/src';
 
 import { getRawPrometheusListItemsFromDataFrame } from '../utils/getRawPrometheusListItemsFromDataFrame';
 
-import RawList from './RawList';
+import { ItemLabels } from './ItemLabels';
+import RawListItem from './RawListItem';
 
 export type instantQueryRawVirtualizedListData = { Value: string; __name__: string; [index: string]: string };
 
@@ -16,18 +18,23 @@ export interface RawListContainerProps {
   tableResult: DataFrame;
 }
 
-const getRawListContainerStyles = stylesFactory(() => {
+export const getRawListContainerStyles = stylesFactory(() => {
   return {
     wrapper: css`
       height: 100%;
       overflow: scroll;
     `,
-    valueNavigation: css`
-      padding-right: 20px;
+    mobileWrapper: css`
+      height: 100%;
+      overflow: scroll;
 
-      &:last-child {
-        padding-right: 0;
+      .list-item-attribute {
+        display: block;
+        text-indent: 1em;
       }
+    `,
+    valueNavigation: css`
+      width: 80px;
     `,
     valueNavigationActive: css`
       padding-right: 15px;
@@ -36,6 +43,12 @@ const getRawListContainerStyles = stylesFactory(() => {
     valueNavigationWrapper: css`
       display: flex;
       justify-content: flex-end;
+    `,
+    header: css`
+      display: flex;
+      justify-content: space-between;
+      padding-top: 10px;
+      padding-bottom: 10px;
     `,
   };
 });
@@ -50,60 +63,94 @@ const RawListContainer = (props: RawListContainerProps) => {
   let dataFrame = cloneDeep(tableResult);
   const styles = getRawListContainerStyles();
 
-  const valueLabels = dataFrame.fields.filter((field) => field.name.includes('Value #'));
-  const initialValueName = valueLabels.length > 0 ? valueLabels[0].name : 'Value';
-  const [selectedValue, setSelectedValue] = useState<string>(initialValueName);
+  const valueLabels = dataFrame.fields.filter((field) => field.name.includes('Value'));
+  const items = getRawPrometheusListItemsFromDataFrame(dataFrame);
+  const { width } = useWindowSize();
+  const [isExpandedView, setIsExpandedView] = useState(width <= 480 || valueLabels.length > 2);
 
-  const items = getRawPrometheusListItemsFromDataFrame(dataFrame, selectedValue);
+  const onContentClick = () => {
+    setIsExpandedView(!isExpandedView);
+  };
 
-  useEffect(() => {
-    // If the current value is for a single query, but we are passing in multiple, select the first value
-    if(selectedValue === 'Value' && valueLabels.length > 0){
-      setSelectedValue(valueLabels[0].name);
-      return;
+  const getListItemHeight = (itemIndex: number) => {
+    const singleLineHeight = 42;
+    const additionalLineHeight = 22;
+    if (!isExpandedView) {
+      return singleLineHeight;
     }
-    // If the current value is for multiple queries, but we are only passing in one, set the value for a single query
-    if(selectedValue !== 'Value' && valueLabels.length === 0){
-      setSelectedValue('Value');
-      return;
-    }
-    // If they removed the selected set of values, select the first value
-    if(valueLabels.length > 0 && !valueLabels.find(label => label.name === selectedValue)){
-      setSelectedValue(valueLabels[0].name);
-    }
+    const item = items[itemIndex];
 
-  }, [valueLabels.length])
-
-  const OnValueClick = (field: Field) => {
-    setSelectedValue(field.name);
+    // Height of a single line, plus the number of non value attributes times the height of additional lines plus padding
+    return singleLineHeight + (Object.keys(item).length - valueLabels.length) * additionalLineHeight + 5;
   };
 
   return (
-    // We don't use testids around here, how should we target this element in tests?
     <section data-testid={'raw-list-container'}>
-      <div>Result series: {items.length}</div>
-      {valueLabels.length > 1 && (
-        <div className={styles.valueNavigationWrapper}>
-          {valueLabels.map((value, index) => (
-            <a
-              style={value.name === selectedValue ? { textDecoration: 'underline' } : {}}
-              className={styles.valueNavigation}
-              key={index}
-              onClick={() => OnValueClick(value)}
-            >
-              {value.name}
-            </a>
-          ))}
-        </div>
-      )}
+      <header className={styles.header}>
+        <Button
+          variant="secondary"
+          title="Add query"
+          icon={isExpandedView ? 'minus' : 'plus'}
+          type="button"
+          onClick={onContentClick}
+        >
+          {isExpandedView ? 'Contract' : 'Expand'}
+        </Button>
+        <div>Result series: {items.length}</div>
+      </header>
 
-      <List itemCount={items.length} className={styles.wrapper} itemSize={() => 42} height={600} width="100%">
-        {({ index, style }) => (
-          <div role="row" style={{ ...style, overflow: 'hidden' }}>
-            <RawList selectedValueName={selectedValue} listKey={index} listItemData={items[index]} />
-          </div>
+      <div role={'table'}>
+        {/* Using one component and changing properties wasn't working well with the virtualized list */}
+        {/* MOBILE VIEW OR COMPARING MANY VALUES */}
+        {isExpandedView && (
+          <List
+            itemCount={items.length}
+            className={styles.mobileWrapper}
+            itemSize={getListItemHeight}
+            height={600}
+            width="100%"
+          >
+            {({ index, style }) => {
+              const filteredValueLabels = valueLabels.filter((valueLabel) => {
+                const itemWithValue = items[index][valueLabel.name];
+                return itemWithValue && itemWithValue !== ' ';
+              });
+              return (
+                <div role="row" style={{ ...style, overflow: 'hidden' }}>
+                  <RawListItem
+                    valueLabels={filteredValueLabels}
+                    totalNumberOfValues={filteredValueLabels.length}
+                    listKey={index}
+                    listItemData={items[index]}
+                  />
+                </div>
+              );
+            }}
+          </List>
         )}
-      </List>
+
+        {/* DESKTOP VIEW AND COMPARING FEW VALUES */}
+        {!isExpandedView && (
+          <>
+            {valueLabels.length > 1 && <ItemLabels valueLabels={valueLabels} />}
+            <List
+              itemCount={items.length}
+              className={styles.wrapper}
+              itemSize={getListItemHeight}
+              height={600}
+              width="100%"
+            >
+              {({ index, style }) => {
+                return (
+                  <div role="row" style={{ ...style, overflow: 'hidden' }}>
+                    <RawListItem totalNumberOfValues={valueLabels.length} listKey={index} listItemData={items[index]} />
+                  </div>
+                );
+              }}
+            </List>
+          </>
+        )}
+      </div>
     </section>
   );
 };

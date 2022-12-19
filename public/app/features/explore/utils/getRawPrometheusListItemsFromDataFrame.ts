@@ -8,12 +8,9 @@ type instantQueryMetricList = { [index: string]: { [index: string]: instantQuery
  * transform dataFrame to instantQueryRawVirtualizedListData
  * @param dataFrame
  */
-export const getRawPrometheusListItemsFromDataFrame = (dataFrame: DataFrame, selectedValue: string): instantQueryRawVirtualizedListData[] => {
+export const getRawPrometheusListItemsFromDataFrame = (dataFrame: DataFrame): instantQueryRawVirtualizedListData[] => {
   const metricList: instantQueryMetricList = {};
   const outputList: instantQueryRawVirtualizedListData[] = [];
-
-  console.log('dataFrame', dataFrame);
-  console.log('selectedValue', selectedValue);
 
   // Filter out time
   const newFields = dataFrame.fields.filter((field) => !['Time'].includes(field.name));
@@ -42,6 +39,8 @@ export const getRawPrometheusListItemsFromDataFrame = (dataFrame: DataFrame, sel
           const stringValue = formattedValueToString(field?.display(field.values.get(i)));
           if (stringValue) {
             formattedMetric[label] = stringValue;
+          } else if (label.includes('Value #')) {
+            formattedMetric[label] = ' ';
           }
         } else {
           console.warn('Field display method is missing!');
