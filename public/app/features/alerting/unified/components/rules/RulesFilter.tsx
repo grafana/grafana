@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import React, { FormEvent, useState } from 'react';
 
@@ -104,26 +104,40 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
 
   const searchIcon = <Icon name={'search'} />;
   return (
-    <div className={styles.container}>
-      <Field className={styles.inputWidth} label="Search by data source">
-        <DataSourcePicker
-          key={dataSourceKey}
-          alerting
-          noDefault
-          placeholder="All data sources"
-          current={dataSource}
-          onChange={handleDataSourceChange}
-          onClear={clearDataSource}
-        />
-      </Field>
-      <div className={cx(styles.flexRow, styles.spaceBetween)}>
-        <div className={styles.flexRow}>
+    <Stack direction="column" gap={1}>
+      <Stack direction="row" gap={1}>
+        <Field className={styles.dsPickerContainer} label="Search by data source">
+          <DataSourcePicker
+            key={dataSourceKey}
+            alerting
+            noDefault
+            placeholder="All data sources"
+            current={dataSource}
+            onChange={handleDataSourceChange}
+            onClear={clearDataSource}
+          />
+        </Field>
+        <div>
+          <Label>State</Label>
+          <RadioButtonGroup options={stateOptions} value={alertState} onChange={handleAlertStateChange} />
+        </div>
+        <div>
+          <Label>Rule type</Label>
+          <RadioButtonGroup
+            options={RuleTypeOptions}
+            value={ruleType as PromRuleType}
+            onChange={handleRuleTypeChange}
+          />
+        </div>
+      </Stack>
+      <Stack direction="column" gap={1}>
+        <Stack direction="row" gap={1}>
           <Field
-            className={styles.rowChild}
+            className={styles.searchInput}
             label={
               <Label>
                 <Stack gap={0.5}>
-                  <span>Search by label</span>
+                  <span>Search</span>
                   <Tooltip
                     content={
                       <div>
@@ -140,7 +154,6 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
           >
             <Input
               key={queryStringKey}
-              className={styles.inputWidth}
               prefix={searchIcon}
               onChange={handleQueryStringChange}
               defaultValue={queryString}
@@ -148,19 +161,7 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
               data-testid="search-query-input"
             />
           </Field>
-          <div className={styles.rowChild}>
-            <Label>State</Label>
-            <RadioButtonGroup options={stateOptions} value={alertState} onChange={handleAlertStateChange} />
-          </div>
-          <div className={styles.rowChild}>
-            <Label>Rule type</Label>
-            <RadioButtonGroup
-              options={RuleTypeOptions}
-              value={ruleType as PromRuleType}
-              onChange={handleRuleTypeChange}
-            />
-          </div>
-          <div className={styles.rowChild}>
+          <div>
             <Label>View as</Label>
             <RadioButtonGroup
               options={ViewOptions}
@@ -168,7 +169,7 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
               onChange={handleViewChange}
             />
           </div>
-        </div>
+        </Stack>
         {(dataSource || alertState || queryString || ruleType) && (
           <div className={styles.flexRow}>
             <Button
@@ -182,8 +183,8 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
             </Button>
           </div>
         )}
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   );
 };
 
@@ -192,12 +193,15 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: css`
       display: flex;
       flex-direction: column;
-      padding-bottom: ${theme.spacing(1)};
-      margin-bottom: ${theme.spacing(1)};
     `,
-    inputWidth: css`
-      width: 340px;
+    dsPickerContainer: css`
+      width: 250px;
       flex-grow: 0;
+      margin: 0;
+    `,
+    searchInput: css`
+      flex: 1;
+      margin: 0;
     `,
     flexRow: css`
       display: flex;
@@ -209,11 +213,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     spaceBetween: css`
       justify-content: space-between;
     `,
-    rowChild: css`
-      margin: ${theme.spacing(0, 1, 0, 0)};
-    `,
     clearButton: css`
-      margin-top: ${theme.spacing(1)};
+      margin-bottom: ${theme.spacing(1)};
     `,
   };
 };
