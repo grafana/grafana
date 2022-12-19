@@ -209,6 +209,71 @@ describe('Cloud Monitoring Datasource', () => {
     });
   });
 
+  describe('filterQuery', () => {
+    [
+      {
+        description: 'should filter out queries with no metric type',
+        input: {},
+        expected: false,
+      },
+      {
+        description: 'should include an SLO query',
+        input: {
+          queryType: QueryType.SLO,
+          sloQuery: {
+            selectorName: 'selector',
+            serviceId: 'service',
+            sloId: 'slo',
+            projectName: 'project',
+            lookbackPeriod: '30d',
+          },
+        },
+        expected: true,
+      },
+      {
+        description: 'should include a time series query',
+        input: {
+          queryType: QueryType.TIME_SERIES_QUERY,
+          timeSeriesQuery: {
+            projectName: 'project',
+            query: 'test query',
+          },
+        },
+        expected: true,
+      },
+      {
+        description: 'should include a time series list query',
+        input: {
+          queryType: QueryType.TIME_SERIES_LIST,
+          timeSeriesList: {
+            projectName: 'project',
+            filters: ['metric.type', '=', 'cloudsql_database'],
+          },
+        },
+        expected: true,
+      },
+      {
+        description: 'should include an annotation query',
+        input: {
+          queryType: QueryType.ANNOTATION,
+          timeSeriesList: {
+            projectName: 'project',
+            filters: ['metric.type', '=', 'cloudsql_database'],
+          },
+        },
+        expected: true,
+      },
+    ].forEach((t) =>
+      it(t.description, () => {
+        const mockInstanceSettings = createMockInstanceSetttings();
+        const ds = new Datasource(mockInstanceSettings);
+        const query = { ...t.input } as CloudMonitoringQuery;
+        const result = ds.filterQuery(query);
+        expect(result).toBe(t.expected);
+      })
+    );
+  });
+
   describe('getLabels', () => {
     it('should get labels', async () => {
       const mockInstanceSettings = createMockInstanceSetttings();

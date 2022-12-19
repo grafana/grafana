@@ -307,7 +307,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return !!query.timeSeriesQuery && !!query.timeSeriesQuery.projectName && !!query.timeSeriesQuery.query;
     }
 
-    if (query.queryType === QueryType.TIME_SERIES_LIST) {
+    if ([QueryType.TIME_SERIES_LIST, QueryType.ANNOTATION].includes(query.queryType)) {
       return !!query.timeSeriesList && !!query.timeSeriesList.projectName && !!getMetricType(query.timeSeriesList);
     }
 

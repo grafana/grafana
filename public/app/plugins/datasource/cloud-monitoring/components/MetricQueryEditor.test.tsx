@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
@@ -44,5 +44,15 @@ describe('MetricQueryEditor', () => {
 
     render(<MetricQueryEditor {...defaultProps} onChange={onChange} query={query} />);
     expect(onChange).toHaveBeenCalled();
+  });
+
+  it('renders an annotation query', async () => {
+    const onChange = jest.fn();
+    const query = createMockQuery();
+    query.queryType = QueryType.ANNOTATION;
+
+    render(<MetricQueryEditor {...defaultProps} onChange={onChange} query={query} />);
+    const l = await screen.findByLabelText('Project');
+    expect(l).toBeInTheDocument();
   });
 });

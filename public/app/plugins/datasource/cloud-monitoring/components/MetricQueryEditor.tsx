@@ -84,7 +84,7 @@ function Editor({
 
   return (
     <EditorRows>
-      {query.queryType === QueryType.TIME_SERIES_LIST && query.timeSeriesList && (
+      {[QueryType.TIME_SERIES_LIST, QueryType.ANNOTATION].includes(query.queryType) && query.timeSeriesList && (
         <VisualMetricQueryEditor
           refId={refId}
           variableOptionGroup={variableOptionGroup}
