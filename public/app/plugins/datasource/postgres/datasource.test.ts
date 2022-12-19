@@ -1,4 +1,4 @@
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
 import {
@@ -77,44 +77,6 @@ describe('PostgreSQLDatasource', () => {
       expectObservable(result).toBe(expectedMarble, expectedValues);
     });
   };
-
-  describe('when performing testDatasource call', () => {
-    it('should return the error from the server', async () => {
-      setupTestContext(
-        undefined,
-        throwError(() => ({
-          status: 400,
-          statusText: 'Bad Request',
-          data: {
-            results: {
-              meta: {
-                error: 'db query error: pq: password authentication failed for user "postgres"',
-                frames: [
-                  {
-                    schema: {
-                      refId: 'meta',
-                      meta: {
-                        executedQueryString: 'SELECT 1',
-                      },
-                      fields: [],
-                    },
-                    data: {
-                      values: [],
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        }))
-      );
-
-      const ds = new PostgresDatasource({ name: '', id: 0 } as DataSourceInstanceSettings<PostgresOptions>);
-      const result = await ds.testDatasource();
-      expect(result.status).toEqual('error');
-      expect(result.message).toEqual('db query error: pq: password authentication failed for user "postgres"');
-    });
-  });
 
   describe('When performing a time series query', () => {
     it('should transform response correctly', () => {
