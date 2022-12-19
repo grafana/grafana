@@ -15,5 +15,5 @@ export const ROUTES = {
 
   // Connect Data
   ConnectData: `/${ROUTE_BASE_ID}/connect-data`,
-  DataSourcesDetails: `/${ROUTE_BASE_ID}/connect-data/datasources/:id`,
+  DataSourcesDetails: `/${ROUTE_BASE_ID}/datasources/:id`,
 } as const;
