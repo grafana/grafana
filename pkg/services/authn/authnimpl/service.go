@@ -73,8 +73,7 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 		return nil, false, nil
 	}
 
-	orgID := orgIDFromRequest(r)
-
+	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
 		logger.Warn("auth client could not authenticate request", "client", client, "error", err)
