@@ -88,27 +88,53 @@ func TestIntegrationPublishAfterCommitWithNestedTransactions(t *testing.T) {
 	var yHasSucceeded bool
 	ss.Bus().AddEventListener(func(ctx context.Context, e *Y) error {
 		yHasSucceeded = true
-		t.Log("Succeeded and committed: %T\n", e)
+		t.Logf("Succeeded and committed: %T\n", e)
 		return nil
 	})
 
-	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		t.Logf("Outer transaction: doing X... success!")
-		sess.PublishAfterCommit(&X{})
+	t.Run("When no session is stored into the context, each transaction should be independent", func(t *testing.T) {
+		t.Cleanup(func() { xHasSucceeded = false; yHasSucceeded = false })
 
-		ss.InTransaction(ctx, func(ctx context.Context) error {
-			t.Log("Inner transaction: doing Y... success!")
-			sess.PublishAfterCommit(&Y{})
-			return nil
+		err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+			t.Logf("Outer transaction: doing X... success!")
+			sess.PublishAfterCommit(&X{})
+
+			require.NoError(t, ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+				t.Log("Inner transaction: doing Y... success!")
+				sess.PublishAfterCommit(&Y{})
+				return nil
+			}))
+
+			t.Log("Outer transaction: doing Z... failure, rolling back...")
+			return errors.New("z failed")
 		})
 
-		t.Log("Outer transaction: doing Z... failure, rolling back...")
-		return errors.New("z failed")
+		assert.NotNil(t, err)
+		assert.False(t, xHasSucceeded)
+		assert.True(t, yHasSucceeded)
 	})
 
-	assert.NotNil(t, err)
-	assert.False(t, xHasSucceeded)
-	assert.False(t, yHasSucceeded)
+	t.Run("When the session is stored into the context, the inner transaction should depend on the outer one", func(t *testing.T) {
+		t.Cleanup(func() { xHasSucceeded = false; yHasSucceeded = false })
+
+		err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+			t.Logf("Outer transaction: doing X... success!")
+			sess.PublishAfterCommit(&X{})
+
+			require.NoError(t, ss.InTransaction(ctx, func(ctx context.Context) error {
+				t.Log("Inner transaction: doing Y... success!")
+				sess.PublishAfterCommit(&Y{})
+				return nil
+			}))
+
+			t.Log("Outer transaction: doing Z... failure, rolling back...")
+			return errors.New("z failed")
+		})
+
+		assert.NotNil(t, err)
+		assert.False(t, xHasSucceeded)
+		assert.False(t, yHasSucceeded)
+	})
 }
 
 type X struct{}
