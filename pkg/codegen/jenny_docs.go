@@ -77,7 +77,8 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	return codejen.NewFile(filepath.Join(j.docsPath, kindName)+".md", doc, j), nil
+
+	return codejen.NewFile(filepath.Join(j.docsPath, kindName, "schema-reference.md"), doc, j), nil
 }
 
 // makeTemplate pre-populates the template with the kind metadata
