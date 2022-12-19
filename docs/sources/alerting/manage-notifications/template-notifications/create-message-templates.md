@@ -89,7 +89,7 @@ Resolved alerts:
 - alertname=Test 3 grafana_folder=GrafanaCloud has value(s) B=0
 ```
 
-1. Ceate a message template called `email` with two templates in the content: `email.message_alert` and `email.message`.
+1. Create a message template called `email` with two templates in the content: `email.message_alert` and `email.message`.
 
    The `email.message_alert` template is used to print the labels and values for each firing and resolved alert while the `email.message` template contains the structure of the email.
 
