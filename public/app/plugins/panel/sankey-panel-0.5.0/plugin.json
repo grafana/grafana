@@ -1,0 +1,34 @@
+{
+  "type": "panel",
+  "name": "sankey-panel",
+  "id": "ismael-sankey-panel",
+  "info": {
+    "description": "Sankey chart panel for grafana using d3",
+    "author": {
+      "name": "Ismael",
+      "url": ""
+    },
+    "keywords": ["sankey", "d3", "grafana", "panel"],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      {
+        "name": "Website",
+        "url": "https://github.com/grafana/simple-react-panel"
+      },
+      {
+        "name": "License",
+        "url": "https://github.com/grafana/simple-react-panel/blob/master/LICENSE"
+      }
+    ],
+    "screenshots": [],
+    "version": "1.0.0",
+    "updated": "2022-12-16"
+  },
+  "dependencies": {
+    "grafanaVersion": "7.0.x",
+    "plugins": []
+  }
+}
