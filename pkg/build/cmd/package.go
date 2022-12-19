@@ -5,16 +5,15 @@ import (
 	"log"
 	"strings"
 
-	"github.com/urfave/cli/v2"
-
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/gpg"
 	"github.com/grafana/grafana/pkg/build/packaging"
 	"github.com/grafana/grafana/pkg/build/syncutil"
+	"github.com/urfave/cli/v2"
 )
 
 func Package(c *cli.Context) error {
-	metadata, err := GenerateMetadata(c)
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}

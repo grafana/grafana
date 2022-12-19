@@ -107,7 +107,7 @@ func graphLink(rawQuery string) string {
 	escapedDatasource := url.QueryEscape(q.Datasource)
 
 	return fmt.Sprintf(
-		`/explore?left=["now-1h","now",%[1]q,{"datasource":%[1]q,"expr":%q,"instant":false,"range":true}]`, escapedDatasource, escapedExpression)
+		`/explore?left={"datasource":%[1]q,"queries":[{"datasource":%[1]q,"expr":%q,"instant":false,"range":true,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`, escapedDatasource, escapedExpression)
 }
 
 func tableLink(rawQuery string) string {
@@ -120,5 +120,5 @@ func tableLink(rawQuery string) string {
 	escapedDatasource := url.QueryEscape(q.Datasource)
 
 	return fmt.Sprintf(
-		`/explore?left=["now-1h","now",%[1]q,{"datasource":%[1]q,"expr":%q,"instant":true,"range":false}]`, escapedDatasource, escapedExpression)
+		`/explore?left={"datasource":%[1]q,"queries":[{"datasource":%[1]q,"expr":%q,"instant":true,"range":false,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`, escapedDatasource, escapedExpression)
 }

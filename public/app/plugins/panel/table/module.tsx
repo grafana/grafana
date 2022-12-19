@@ -20,7 +20,6 @@ const footerCategory = 'Table footer';
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
-  .setNoPadding()
   .useFieldConfig({
     useCustomConfig: (builder) => {
       builder

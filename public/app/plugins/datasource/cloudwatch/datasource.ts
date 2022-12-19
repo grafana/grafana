@@ -159,7 +159,7 @@ export class CloudWatchDatasource
   }
 
   getQueryDisplayText(query: CloudWatchQuery) {
-    if (query.queryMode === 'Logs') {
+    if (isCloudWatchLogsQuery(query)) {
       return query.expression ?? '';
     } else {
       return JSON.stringify(query);
