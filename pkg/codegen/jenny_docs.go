@@ -38,9 +38,12 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 
 	f, err := jsonschema.GenerateSchema(decl.Lineage().Latest())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate json representation for the schema: %v", err)
 	}
-	b, _ := cuecontext.New().BuildFile(f).MarshalJSON()
+	b, err := cuecontext.New().BuildFile(f).MarshalJSON()
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal schema value to json: %v", err)
+	}
 
 	// We don't need entire json obj, only the value of components.schemas path
 	var obj struct {
@@ -50,7 +53,7 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 	}
 	err = json.Unmarshal(b, &obj)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal schema json: %v", err)
 	}
 
 	// fixes the references between the types within a json after making components.schema.<types> the root of the json
@@ -75,7 +78,7 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 
 	doc, err := jsonToMarkdown([]byte(kindJsonStr), string(tmpl), kindName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to build markdown for kind %s: %v", kindName, err)
 	}
 
 	return codejen.NewFile(filepath.Join(j.docsPath, kindName, "schema-reference.md"), doc, j), nil
@@ -85,7 +88,7 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 func makeTemplate(data templateData, tmpl string) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup(tmpl).Execute(buf, data); err != nil {
-		return []byte{}, err
+		return []byte{}, fmt.Errorf("failed to populate docs template with the kind metadata")
 	}
 	return buf.Bytes(), nil
 }
