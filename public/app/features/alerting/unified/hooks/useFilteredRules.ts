@@ -1,9 +1,15 @@
+import { capitalize } from 'lodash';
 import { useMemo } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRuleGroup, CombinedRuleNamespace, FilterState } from 'app/types/unified-alerting';
-import { PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import {
+  GrafanaAlertState,
+  isGrafanaAlertState,
+  PromRuleType,
+  RulerGrafanaRuleDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { parser } from '../search/search';
 import * as terms from '../search/search.terms';
@@ -19,10 +25,77 @@ enum FilterType {
   state = 'state', // Firing | Normal | Pending
   type = 'type', // Alerting | Recording
   ds = 'ds',
+  label = 'label',
+}
+
+interface SearchFilterState {
+  namespace?: string;
+  groupName?: string;
+  ruleName?: string;
+  ruleState?: GrafanaAlertState; // Unify somehow with Prometheus rules
+  type?: PromRuleType;
+  dataSourceName?: string;
+  labels: string[];
 }
 
 function isFilterType(filterType: string): filterType is FilterType {
   return Object.values<string>(FilterType).includes(filterType);
+}
+
+function isPromRuleType(ruleType: string): ruleType is PromRuleType {
+  return Object.values<string>(PromRuleType).includes(ruleType);
+}
+
+function getSearchFilterFromQuery(query: string): SearchFilterState {
+  const parsed = parser.parse(query);
+
+  const filterState: SearchFilterState = { labels: [] };
+
+  let cursor = parsed.cursor();
+  do {
+    if (cursor.node.type.id === terms.FilterExpression) {
+      const typeNode = cursor.node.getChild(terms.FilterType);
+      const valueNode = cursor.node.getChild(terms.FilterValue);
+
+      if (typeNode && valueNode) {
+        const filterType = query.substring(typeNode.from, typeNode.to);
+        const filterValue = query.substring(valueNode.from, valueNode.to);
+
+        if (isFilterType(filterType)) {
+          switch (filterType) {
+            case FilterType.ds:
+              filterState.dataSourceName = filterValue;
+              break;
+            case FilterType.ns:
+              filterState.namespace = filterValue;
+              break;
+            case FilterType.group:
+              filterState.groupName = filterValue;
+              break;
+            case FilterType.rule:
+              filterState.ruleName = filterValue;
+              break;
+            case FilterType.label:
+              filterState.labels.push(filterValue);
+              break;
+            case FilterType.state:
+              const capitalized = capitalize(filterValue);
+              if (isGrafanaAlertState(capitalized)) {
+                filterState.ruleState = capitalized;
+              }
+              break;
+            case FilterType.type:
+              if (isPromRuleType(filterValue)) {
+                filterState.type = filterValue;
+              }
+              break;
+          }
+        }
+      }
+    }
+  } while (cursor.next());
+
+  return filterState;
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
@@ -30,32 +103,9 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
   const filters = getFiltersFromUrlParams(queryParams);
 
   const freeFormQuery = filters.queryString ?? '';
-  const parsed = parser.parse(freeFormQuery);
+  const searchFilters = getSearchFilterFromQuery(freeFormQuery);
 
-  const parsedFilters: Array<{ type: FilterType; value: string }> = [];
-  let cursor = parsed.cursor();
-  do {
-    // console.log(`Node ${cursor.name} from ${cursor.from} to ${cursor.to}`);
-    if (cursor.node.type.id === terms.FilterExpression) {
-      const typeNode = cursor.node.getChild(terms.FilterType);
-      const valueNode = cursor.node.getChild(terms.FilterValue);
-
-      if (typeNode && valueNode) {
-        const filterType = freeFormQuery.substring(typeNode.from, typeNode.to);
-        const filterValue = freeFormQuery.substring(valueNode.from, valueNode.to);
-
-        if (isFilterType(filterType)) {
-          parsedFilters.push({
-            type: filterType,
-            value: filterValue,
-          });
-        }
-      }
-      // console.log('Type & Value: ', typeNode, valueNode);
-    }
-  } while (cursor.next());
-
-  console.log(parsedFilters);
+  console.log(searchFilters);
 
   return useMemo(() => filterRules(namespaces, filters), [namespaces, filters]);
 };

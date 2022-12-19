@@ -4,11 +4,11 @@ expression { FilterExpression expression }
 
 FilterExpression { FilterType ":" FilterValue }
 
-FilterType { "ns" | "group" | "rule" | "ds" | "state" | "type" }
+FilterType { "ns" | "group" | "rule" | "ds" | "state" | "type" | "label" }
 
 @skip { space }
 
 @tokens {
   space { @whitespace+ }
-  FilterValue { @asciiLetter+ }
+  FilterValue { $[a-zA-Z0-9,./?=!@#$%^&*()+-]+ }
 }
