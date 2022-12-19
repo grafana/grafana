@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -81,7 +80,7 @@ func TestIntegrationPublishAfterCommitWithNestedTransactions(t *testing.T) {
 	var xHasSucceeded bool
 	ss.Bus().AddEventListener(func(ctx context.Context, e *X) error {
 		xHasSucceeded = true
-		fmt.Printf("Succeeded and committed: %T\n", e)
+		t.Logf("Succeeded and committed: %T\n", e)
 		return nil
 	})
 
@@ -89,21 +88,21 @@ func TestIntegrationPublishAfterCommitWithNestedTransactions(t *testing.T) {
 	var yHasSucceeded bool
 	ss.Bus().AddEventListener(func(ctx context.Context, e *Y) error {
 		yHasSucceeded = true
-		fmt.Printf("Succeeded and committed: %T\n", e)
+		t.Log("Succeeded and committed: %T\n", e)
 		return nil
 	})
 
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		fmt.Println("Outer transaction: doing X... success!")
+		t.Logf("Outer transaction: doing X... success!")
 		sess.PublishAfterCommit(&X{})
 
 		ss.InTransaction(ctx, func(ctx context.Context) error {
-			fmt.Println("Inner transaction: doing Y... success!")
+			t.Log("Inner transaction: doing Y... success!")
 			sess.PublishAfterCommit(&Y{})
 			return nil
 		})
 
-		fmt.Println("Outer transaction: doing Z... failure, rolling back...")
+		t.Log("Outer transaction: doing Z... failure, rolling back...")
 		return errors.New("z failed")
 	})
 
