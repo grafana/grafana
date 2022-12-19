@@ -4179,6 +4179,72 @@ clone:
   retries: 3
 depends_on: []
 environment:
+  EDITION: enterprise2
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: publish-aws-marketplace-public
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.3
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts docker fetch --edition enterprise2
+  depends_on:
+  - compile-build-cmd
+  environment:
+    DOCKER_ENTERPRISE2_REPO:
+      from_secret: docker_enterprise2_repo
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: fetch-images-enterprise2
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - ./bin/build publish aws --image grafana/grafana-enterprise-dev --repo grafana-labs/grafana-enterprise
+    --product 1b97f7d0-f274-4cce-b5f4-910dbfa45535
+  depends_on:
+  - fetch-images-enterprise2
+  environment:
+    AWS_ACCESS_KEY_ID:
+      from_secret: aws_access_key_id
+    AWS_REGION:
+      from_secret: aws_region
+    AWS_SECRET_ACCESS_KEY:
+      from_secret: aws_secret_access_key
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: publish-aws-marketplace
+trigger:
+  event:
+  - promote
+  target:
+  - public
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
   EDITION: all
 image_pull_secrets:
 - dockerconfigjson
@@ -6348,7 +6414,25 @@ get:
 kind: secret
 name: packages_secret_access_key
 ---
+get:
+  name: aws_region
+  path: secret/aws-marketplace
+kind: secret
+name: aws_region
+---
+get:
+  name: aws_access_key_id
+  path: secret/aws-marketplace
+kind: secret
+name: aws_access_key_id
+---
+get:
+  name: aws_secret_access_key
+  path: secret/aws-marketplace
+kind: secret
+name: aws_secret_access_key
+---
 kind: signature
-hmac: b4096b73caa8b48e68c564820954e1fb5632a49a91021c30fab1880d8afb96ba
+hmac: 820cb5f74979902c1674132a46cbc90a98efb23b771faa74cbfda133bfc21df6
 
 ...
