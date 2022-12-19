@@ -131,7 +131,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels }
   };
 
   const stringRep = `${__name__}{${attributeValues.map((value) => {
-    return `${value.key}="${transformCopyValue(value.value)}"`;
+    return value.key !== 'le' ? `${value.key}="${transformCopyValue(value.value)}"` : '';
   })}}`;
 
   const hideFieldsWithoutValues = Boolean(valueLabels && valueLabels?.length);
