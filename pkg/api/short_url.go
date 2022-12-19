@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models/errs"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -17,7 +18,7 @@ import (
 func (hs *HTTPServer) createShortURL(c *models.ReqContext) response.Response {
 	cmd := dtos.CreateShortURLCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Err(models.ErrShortURLBadRequest.Errorf("bad request data: %w", err))
+		return response.Err(errs.ErrShorturlBadRequest.Errorf("bad request data: %w", err))
 	}
 	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
 	shortURL, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd.Path)
@@ -45,7 +46,7 @@ func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
 
 	shortURL, err := hs.ShortURLService.GetShortURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
 	if err != nil {
-		if models.ErrShortURLNotFound.Is(err) {
+		if errs.ErrShorturlNotFound.Is(err) {
 			hs.log.Debug("Not redirecting short URL since not found")
 			return
 		}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models/errs"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,7 +40,7 @@ func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *user.Signed
 			return err
 		}
 		if !exists {
-			return models.ErrShortURLNotFound.Errorf("short URL not found")
+			return errs.ErrShorturlNotFound.Errorf("short URL not found")
 		}
 
 		return nil
@@ -67,10 +68,10 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *user.SignedIn
 	relPath = strings.TrimSpace(relPath)
 
 	if path.IsAbs(relPath) {
-		return nil, models.ErrShortURLAbsolutePath.Errorf("expected relative path: %s", relPath)
+		return nil, errs.ErrShorturlAbsolutePath.Errorf("expected relative path: %s", relPath)
 	}
 	if strings.Contains(relPath, "../") {
-		return nil, models.ErrShortURLInvalidPath.Errorf("path cannot contain '../': %s", relPath)
+		return nil, errs.ErrShorturlInvalidPath.Errorf("path cannot contain '../': %s", relPath)
 	}
 
 	now := time.Now().Unix()
@@ -87,7 +88,7 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *user.SignedIn
 		return err
 	})
 	if err != nil {
-		return nil, models.ErrShortURLInternal.Errorf("failed to insert shorturl: %w", err)
+		return nil, errs.ErrShorturlInternal.Errorf("failed to insert shorturl: %w", err)
 	}
 
 	return &shortURL, nil
