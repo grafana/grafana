@@ -196,7 +196,7 @@ func (s *UserSync) UserInDB(ctx context.Context,
 		}
 		errGetAuthInfo := s.authInfoService.GetAuthInfo(ctx, query)
 		if errGetAuthInfo == nil {
-			usr, errGetByID := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: *params.UserID})
+			usr, errGetByID := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: query.Result.UserId})
 			if errGetByID == nil {
 				return usr, nil
 			}

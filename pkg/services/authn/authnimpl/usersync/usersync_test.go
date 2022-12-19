@@ -26,6 +26,15 @@ func ptrBool(b bool) *bool {
 
 func TestUserSync_SyncUser(t *testing.T) {
 	authFakeNil := &logintest.AuthInfoServiceFake{ExpectedUser: nil, ExpectedError: user.ErrUserNotFound}
+	authFakeUserID := &logintest.AuthInfoServiceFake{
+		ExpectedUser:  nil,
+		ExpectedError: nil,
+		ExpectedUserAuth: &models.UserAuth{
+			AuthModule: "oauth",
+			AuthId:     "2032",
+			UserId:     1,
+			Id:         1}}
+
 	userService := &usertest.FakeUserService{ExpectedUser: &user.User{
 		ID:    1,
 		Login: "test",
@@ -128,6 +137,47 @@ func TestUserSync_SyncUser(t *testing.T) {
 				LookUpParams: models.UserLookupParams{
 					UserID: nil,
 					Email:  ptrString("test"),
+					Login:  nil,
+				},
+			},
+		},
+		{
+			name: "sync - user found in authInfo",
+			fields: fields{
+				userService:     userService,
+				authInfoService: authFakeUserID,
+				quotaService:    &quotatest.FakeQuotaService{},
+				log:             log.NewNopLogger(),
+			},
+			args: args{
+				ctx: context.Background(),
+				clientParams: &authn.ClientParams{
+					SyncUser:            true,
+					AllowSignUp:         false,
+					EnableDisabledUsers: false,
+				},
+				id: &authn.Identity{
+					ID:    "",
+					Login: "test",
+					Name:  "test",
+					Email: "test",
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  nil,
+						Login:  nil,
+					},
+				},
+			},
+			wantErr: false,
+			wantID: &authn.Identity{
+				ID:             "user:1",
+				Login:          "test",
+				Name:           "test",
+				Email:          "test",
+				IsGrafanaAdmin: ptrBool(false),
+				LookUpParams: models.UserLookupParams{
+					UserID: nil,
+					Email:  nil,
 					Login:  nil,
 				},
 			},
