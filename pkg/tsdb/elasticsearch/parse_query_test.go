@@ -70,7 +70,7 @@ func TestParseQuery(t *testing.T) {
 			require.Equal(t, q.TimeField, "@timestamp")
 			require.Equal(t, q.RawQuery, "@metric:cpu")
 			require.Equal(t, q.Alias, "{{@hostname}} {{metric}}")
-			require.Equal(t, q.Interval, "10m")
+			require.Equal(t, q.Interval.String(), "10s")
 
 			require.Len(t, q.Metrics, 2)
 			require.Equal(t, q.Metrics[0].Field, "@value")

@@ -1774,6 +1774,7 @@ func newDataQuery(body string) (backend.QueryDataRequest, error) {
 		Queries: []backend.DataQuery{
 			{
 				JSON: json.RawMessage(body),
+				Interval: 10 * time.Second,
 			},
 		},
 	}, nil
