@@ -7,11 +7,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -47,26 +42,25 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
 			secureSettings := make(map[string][]byte)
 
 			m := &NotificationChannelConfig{
 				Name:           c.receiverName,
 				Type:           "prometheus-alertmanager",
-				Settings:       settingsJSON,
+				Settings:       json.RawMessage(c.settings),
 				SecureSettings: secureSettings,
 			}
 
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
+			decryptFn := func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+				return fallback
+			}
 			cfg, err := NewAlertmanagerConfig(m, decryptFn)
 			if c.expectedInitError != "" {
 				require.Equal(t, c.expectedInitError, err.Error())
 				return
 			}
 			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, &UnavailableImageStore{}, tmpl, decryptFn)
+			sn := NewAlertmanagerNotifier(cfg, &FakeLogger{}, &UnavailableImageStore{}, tmpl, decryptFn)
 			require.NotNil(t, sn)
 		})
 	}
@@ -144,7 +138,7 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
+			settingsJSON := json.RawMessage(c.settings)
 			require.NoError(t, err)
 			secureSettings := make(map[string][]byte)
 
@@ -155,17 +149,18 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 				SecureSettings: secureSettings,
 			}
 
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-			decryptFn := secretsService.GetDecryptedValue
+			decryptFn := func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+				return fallback
+			}
 			cfg, err := NewAlertmanagerConfig(m, decryptFn)
 			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, images, tmpl, decryptFn)
+			sn := NewAlertmanagerNotifier(cfg, &FakeLogger{}, images, tmpl, decryptFn)
 			var body []byte
 			origSendHTTPRequest := sendHTTPRequest
 			t.Cleanup(func() {
 				sendHTTPRequest = origSendHTTPRequest
 			})
-			sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logger log.Logger) ([]byte, error) {
+			sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logger Logger) ([]byte, error) {
 				body = cfg.body
 				return nil, c.sendHTTPRequestError
 			}

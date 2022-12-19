@@ -14,17 +14,14 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	ptr "github.com/xorcare/pointer"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const (
 	OpsgenieSendTags    = "tags"
 	OpsgenieSendDetails = "details"
 	OpsgenieSendBoth    = "both"
+	// https://docs.opsgenie.com/docs/alert-api - 130 characters meaning runes.
+	opsGenieMaxMessageLenRunes = 130
 )
 
 var (
@@ -36,8 +33,8 @@ var (
 type OpsgenieNotifier struct {
 	*Base
 	tmpl     *template.Template
-	log      log.Logger
-	ns       notifications.WebhookSender
+	log      Logger
+	ns       WebhookSender
 	images   ImageStore
 	settings *opsgenieSettings
 }
@@ -125,15 +122,9 @@ func NewOpsgenieNotifier(fc FactoryConfig) (*OpsgenieNotifier, error) {
 		return nil, err
 	}
 	return &OpsgenieNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
+		Base:     NewBase(fc.Config),
 		tmpl:     fc.Template,
-		log:      log.New("alerting.notifier.opsgenie"),
+		log:      fc.Logger,
 		ns:       fc.NotificationService,
 		images:   fc.ImageStore,
 		settings: settings,
@@ -161,7 +152,7 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		return true, nil
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &SendWebhookSettings{
 		Url:        url,
 		Body:       string(body),
 		HttpMethod: http.MethodPost,
@@ -171,7 +162,7 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		},
 	}
 
-	if err := on.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := on.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to Opsgenie: %w", err)
 	}
 
@@ -203,9 +194,9 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	var tmplErr error
 	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
 
-	message, truncated := notify.Truncate(tmpl(on.settings.Message), 130)
+	message, truncated := TruncateInRunes(tmpl(on.settings.Message), opsGenieMaxMessageLenRunes)
 	if truncated {
-		on.log.Debug("Truncated message", "originalMessage", message)
+		on.log.Warn("Truncated message", "alert", key, "max_runes", opsGenieMaxMessageLenRunes)
 	}
 
 	description := tmpl(on.settings.Description)
@@ -245,7 +236,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		}
 		var images []string
 		_ = withStoredImages(ctx, on.log, on.images,
-			func(_ int, image ngmodels.Image) error {
+			func(_ int, image Image) error {
 				if len(image.URL) == 0 {
 					return nil
 				}

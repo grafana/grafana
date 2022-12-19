@@ -30,6 +30,8 @@ type awsPublishTestCase struct {
 
 func TestPublishAwsMarketplace(t *testing.T) {
 	t.Setenv("DRONE_BUILD_EVENT", "promote")
+	t.Setenv("DRONE_TAG", "v1.0.0")
+	t.Setenv("DRONE_COMMIT", "abcdefgh")
 	testApp := setupPublishAwsMarketplaceTests(t)
 	errShouldNotCallMock := errors.New("shouldn't call")
 

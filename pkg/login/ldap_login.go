@@ -47,6 +47,7 @@ var loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery, log
 				ldapLogger.Debug("Failed to disable external user", "err", err)
 			}
 
+			// Return invalid credentials if we couldn't find the user anywhere
 			return true, ldap.ErrInvalidCredentials
 		}
 
