@@ -9,13 +9,12 @@ title: Dashboard kind
 # Dashboard kind
 
 ### Maturity: merged
-
 ### Version: 0.0
 
 ## Properties
 
 | Property               | Type                   | Required | Description                                                                                                              |
-| ---------------------- | ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
+|------------------------|------------------------|----------|--------------------------------------------------------------------------------------------------------------------------|
 | `editable`             | boolean                | **Yes**  | Whether a dashboard is editable or not.                                                                                  |
 | `graphTooltip`         | integer                | **Yes**  | Possible values are: `0`, `1`, `2`.                                                                                      |
 | `schemaVersion`        | integer                | **Yes**  | Version of the JSON schema, incremented each time a Grafana update brings                                                |
@@ -48,7 +47,7 @@ title: Dashboard kind
 ### Properties
 
 | Property | Type              | Required | Description |
-| -------- | ----------------- | -------- | ----------- |
+|----------|-------------------|----------|-------------|
 | `list`   | [object](#list)[] | **Yes**  | TODO docs   |
 
 ### list
@@ -59,7 +58,7 @@ FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 #### Properties
 
 | Property     | Type                  | Required | Description                       |
-| ------------ | --------------------- | -------- | --------------------------------- |
+|--------------|-----------------------|----------|-----------------------------------|
 | `builtIn`    | integer               | **Yes**  |                                   |
 | `datasource` | [object](#datasource) | **Yes**  | Datasource to use for annotation. |
 | `enable`     | boolean               | **Yes**  | Whether annotation is enabled.    |
@@ -78,7 +77,7 @@ Datasource to use for annotation.
 ##### Properties
 
 | Property | Type   | Required | Description |
-| -------- | ------ | -------- | ----------- |
+|----------|--------|----------|-------------|
 | `type`   | string | No       |             |
 | `uid`    | string | No       |             |
 
@@ -89,7 +88,7 @@ TODO docs
 ##### Properties
 
 | Property   | Type     | Required | Description |
-| ---------- | -------- | -------- | ----------- |
+|------------|----------|----------|-------------|
 | `limit`    | integer  | **Yes**  |             |
 | `matchAny` | boolean  | **Yes**  |             |
 | `tags`     | string[] | **Yes**  |             |
@@ -103,7 +102,7 @@ TODO docs
 ### Properties
 
 | Property      | Type     | Required | Description                                |
-| ------------- | -------- | -------- | ------------------------------------------ |
+|---------------|----------|----------|--------------------------------------------|
 | `asDropdown`  | boolean  | **Yes**  |                                            |
 | `includeVars` | boolean  | **Yes**  |                                            |
 | `keepTime`    | boolean  | **Yes**  |                                            |
@@ -118,14 +117,14 @@ TODO docs
 ## panels
 
 | Property | Type | Required | Description |
-| -------- | ---- | -------- | ----------- |
+|----------|------|----------|-------------|
 
 ## templating
 
 ### Properties
 
 | Property | Type              | Required | Description |
-| -------- | ----------------- | -------- | ----------- |
+|----------|-------------------|----------|-------------|
 | `list`   | [object](#list)[] | **Yes**  | TODO docs   |
 
 ### list
@@ -138,7 +137,7 @@ TODO there appear to be a lot of different kinds of [template] vars here? if so 
 #### Properties
 
 | Property | Type   | Required | Description                                                                                                 |
-| -------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------- |
+|----------|--------|----------|-------------------------------------------------------------------------------------------------------------|
 | `name`   | string | **Yes**  |                                                                                                             |
 | `type`   | string | **Yes**  | Possible values are: `query`, `adhoc`, `constant`, `datasource`, `interval`, `textbox`, `custom`, `system`. |
 | `label`  | string | No       |                                                                                                             |
@@ -150,7 +149,7 @@ Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 ### Properties
 
 | Property | Type   | Required | Description |
-| -------- | ------ | -------- | ----------- |
+|----------|--------|----------|-------------|
 | `from`   | string | **Yes**  |             |
 | `to`     | string | **Yes**  |             |
 
@@ -162,9 +161,11 @@ TODO this appears to be spread all over in the frontend. Concepts will likely ne
 ### Properties
 
 | Property            | Type     | Required | Description                             |
-| ------------------- | -------- | -------- | --------------------------------------- |
+|---------------------|----------|----------|-----------------------------------------|
 | `collapse`          | boolean  | **Yes**  | Whether timepicker is collapsed or not. |
 | `enable`            | boolean  | **Yes**  | Whether timepicker is enabled or not.   |
 | `hidden`            | boolean  | **Yes**  | Whether timepicker is visible or not.   |
 | `refresh_intervals` | string[] | **Yes**  | Selectable intervals for auto-refresh.  |
 | `time_options`      | string[] | **Yes**  | TODO docs                               |
+
+
