@@ -25,6 +25,7 @@ def publish_aws_marketplace_step():
             'AWS_ACCESS_KEY_ID': from_secret('aws_access_key_id'),
             'AWS_SECRET_ACCESS_KEY': from_secret('aws_secret_access_key'),
         },
+        'volumes': [{'name': 'docker', 'path': '/var/run/docker.sock'}],
     }
 
 def publish_aws_marketplace_pipeline(mode):
