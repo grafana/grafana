@@ -83,7 +83,7 @@ func SlashHeaderMapper(maingen string) codejen.FileMapper {
 	return func(f codejen.File) (codejen.File, error) {
 		// Never inject on certain filetypes, it's never valid
 		switch filepath.Ext(f.RelativePath) {
-		case ".json", ".yml", ".yaml":
+		case ".json", ".yml", ".yaml", ".md":
 			return f, nil
 		default:
 			buf := new(bytes.Buffer)
