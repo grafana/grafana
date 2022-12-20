@@ -67,7 +67,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
   if (meta.yOrdinalDisplay) {
     const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
     const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
-    yBucketMin = `${meta.yOrdinalDisplay[yMinIdx]}`;
+    yBucketMin = yMinIdx < 0 ? meta.yMinDisplay! : `${meta.yOrdinalDisplay[yMinIdx]}`;
     yBucketMax = `${meta.yOrdinalDisplay[yMaxIdx]}`;
   } else {
     const value = yVals?.[yValueIdx];
