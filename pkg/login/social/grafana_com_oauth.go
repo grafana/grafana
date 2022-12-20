@@ -14,6 +14,7 @@ type SocialGrafanaCom struct {
 	*SocialBase
 	url                  string
 	allowedOrganizations []string
+	skipOrgRoleSync      bool
 }
 
 type OrgRecord struct {
@@ -40,7 +41,9 @@ func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool 
 	return false
 }
 
+// UserInfo is used for login credentials for the user
 func (s *SocialGrafanaCom) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
+	fmt.Printf("inside userinfo grafanacom")
 	var data struct {
 		Id    int         `json:"id"`
 		Name  string      `json:"name"`

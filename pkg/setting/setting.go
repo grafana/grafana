@@ -456,12 +456,14 @@ type Cfg struct {
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
 
+	// Grafana.com
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
 	// Grafana.com API URL. Can be set separately to GrafanaComURL
 	// in case API is not publicly accessible.
 	// Defaults to GrafanaComURL setting + "/api" if unset.
-	GrafanaComAPIURL string
+	GrafanaComAPIURL          string
+	GrafanaComSkipOrgRoleSync bool
 
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]interface{}
@@ -1102,6 +1104,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	// check old key  name
+	// TODO: move these into the read grafanacom section
 	GrafanaComUrl = valueAsString(iniFile.Section("grafana_net"), "url", "")
 	if GrafanaComUrl == "" {
 		GrafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
@@ -1351,6 +1354,12 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
+func readAuthGrafanaComSettings(iniFile *ini.File, cfg *Cfg) (err error) {
+	sec := iniFile.Section("auth.grafana_com")
+	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+	return nil
+}
+
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
 
@@ -1452,6 +1461,11 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
+
+	err = readAuthGrafanaComSettings(iniFile, cfg)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

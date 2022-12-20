@@ -223,5 +223,6 @@ export interface AuthSettings {
   OAuthSkipOrgRoleUpdateSync?: boolean;
   SAMLSkipOrgRoleSync?: boolean;
   LDAPSkipOrgRoleSync?: boolean;
+  GrafanaComSkipOrgRoleSync?: boolean;
   DisableSyncLock?: boolean;
 }

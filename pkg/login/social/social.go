@@ -260,7 +260,7 @@ type SocialBase struct {
 	roleAttributePath   string
 	roleAttributeStrict bool
 	autoAssignOrgRole   string
-	skipOrgRoleSync     bool
+	skipOrgRoleSyncBase bool
 	features            featuremgmt.FeatureManager
 }
 
@@ -309,7 +309,7 @@ func newSocialBase(name string,
 		autoAssignOrgRole:       autoAssignOrgRole,
 		roleAttributePath:       info.RoleAttributePath,
 		roleAttributeStrict:     info.RoleAttributeStrict,
-		skipOrgRoleSync:         skipOrgRoleSync,
+		skipOrgRoleSyncBase:     skipOrgRoleSync,
 		features:                features,
 	}
 }
@@ -319,6 +319,8 @@ type groupStruct struct {
 }
 
 func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy bool) (org.RoleType, bool) {
+	fmt.Println("inside the extract role and admin")
+
 	if s.roleAttributePath == "" {
 		return s.defaultRole(legacy), false
 	}
@@ -341,6 +343,7 @@ func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy
 // defaultRole returns the default role for the user based on the autoAssignOrgRole setting
 // if legacy is enabled "" is returned indicating the previous role assignment is used.
 func (s *SocialBase) defaultRole(legacy bool) org.RoleType {
+	fmt.Printf("inside defaaultRole")
 	if s.roleAttributeStrict {
 		s.log.Debug("RoleAttributeStrict is set, returning no role.")
 		return ""
@@ -351,7 +354,7 @@ func (s *SocialBase) defaultRole(legacy bool) org.RoleType {
 		return org.RoleType(s.autoAssignOrgRole)
 	}
 
-	if legacy && !s.skipOrgRoleSync {
+	if legacy && !s.skipOrgRoleSyncBase {
 		s.log.Warn("No valid role found. Skipping role sync. " +
 			"In Grafana 10, this will result in the user being assigned the default role and overriding manual assignment. " +
 			"If role sync is not desired, set oauth_skip_org_role_update_sync to true")

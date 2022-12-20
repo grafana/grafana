@@ -113,12 +113,21 @@ export class UserAdminPage extends PureComponent<Props> {
     const isSAMLUser = user?.isExternal && user?.authLabels?.includes('SAML');
     const isGoogleUser = user?.isExternal && user?.authLabels?.includes('Google');
     const isAuthProxyUser = user?.isExternal && user?.authLabels?.includes('Auth Proxy');
+    const isGrafanaComUser = user?.isExternal && user?.authLabels?.includes('grafana.com');
     const isUserSynced =
       !config.auth.DisableSyncLock &&
       ((user?.isExternal &&
-        !(isAuthProxyUser || isGoogleUser || isOAuthUserWithSkippableSync || isSAMLUser || isLDAPUser)) ||
+        !(
+          isAuthProxyUser ||
+          isGoogleUser ||
+          isOAuthUserWithSkippableSync ||
+          isSAMLUser ||
+          isLDAPUser ||
+          isGrafanaComUser
+        )) ||
         (!config.auth.OAuthSkipOrgRoleUpdateSync && isOAuthUserWithSkippableSync) ||
         (!config.auth.SAMLSkipOrgRoleSync && isSAMLUser) ||
+        (!config.auth.GrafanaComSkipOrgRoleSync && isGrafanaComUser) ||
         (!config.auth.LDAPSkipOrgRoleSync && isLDAPUser));
 
     const pageNav: NavModelItem = {
