@@ -54,7 +54,7 @@ export class AngularApp {
         // ⚠️ Plugin cdn poc! ⚠️
         $sceDelegateProvider.trustedResourceUrlList([
           'self',
-          'https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/**',
+          'http://grafana-assets-staging.grafana.net.global.prod.fastly.net/**',
         ]);
 
         this.registerFunctions.controller = $controllerProvider.register;
