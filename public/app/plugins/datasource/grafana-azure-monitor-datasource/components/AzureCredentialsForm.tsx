@@ -230,14 +230,14 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
           </InlineField>
           {!disabled &&
             (typeof credentials.clientSecret === 'symbol' ? (
-              <InlineField
-                label="Client Secret"
-                labelWidth={LABEL_WIDTH}
-                data-testid={'client-secret'}
-                htmlFor="client-secret"
-              >
+              <InlineField label="Client Secret" labelWidth={LABEL_WIDTH} htmlFor="client-secret">
                 <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
-                  <Input aria-label="Client Secret" placeholder="configured" disabled={true} />
+                  <Input
+                    aria-label="Client Secret"
+                    placeholder="configured"
+                    disabled={true}
+                    data-testid={'client-secret'}
+                  />
                   <Button variant="secondary" type="button" onClick={onClientSecretReset} disabled={disabled}>
                     Reset
                   </Button>
