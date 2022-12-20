@@ -346,8 +346,6 @@ func (ds *dataSource) CallResource(ctx context.Context, req *backend.CallResourc
 }
 ```
 
-> **Note:** Due to a bug in Grafana, using this feature with PostgreSQL can cause a deadlock. For more information, refer to [Grafana causes deadlocks in PostgreSQL, while trying to refresh users token](https://github.com/grafana/grafana/issues/20515).
-
 ## Forward cookies for the logged-in user
 
 Your data source plugin can forward certain cookies for the logged-in Grafana user to the data source. Use the [DataSourceHttpSettings](https://developers.grafana.com/ui/latest/index.html?path=/story/data-source-datasourcehttpsettings--basic) component on the data source's configuration page. It provides the **Allowed cookies** option, where the names of cookies to pass to the plugin can be specified.
