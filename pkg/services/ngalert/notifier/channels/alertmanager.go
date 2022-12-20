@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -15,18 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-// GetDecryptedValueFn is a function that returns the decrypted value of
-// the given key. If the key is not present, then it returns the fallback value.
-type GetDecryptedValueFn func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string
-
 type AlertmanagerConfig struct {
-	*NotificationChannelConfig
+	*channels.NotificationChannelConfig
 	URLs              []*url.URL
 	BasicAuthUser     string
 	BasicAuthPassword string
 }
 
-func NewAlertmanagerConfig(config *NotificationChannelConfig, fn GetDecryptedValueFn) (*AlertmanagerConfig, error) {
+func NewAlertmanagerConfig(config *channels.NotificationChannelConfig, fn channels.GetDecryptedValueFn) (*AlertmanagerConfig, error) {
 	simpleConfig, err := simplejson.NewJson(config.Settings)
 	if err != nil {
 		return nil, err
@@ -59,7 +56,7 @@ func NewAlertmanagerConfig(config *NotificationChannelConfig, fn GetDecryptedVal
 	}, nil
 }
 
-func AlertmanagerFactory(fc FactoryConfig) (NotificationChannel, error) {
+func AlertmanagerFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
 	config, err := NewAlertmanagerConfig(fc.Config, fc.DecryptFunc)
 	if err != nil {
 		return nil, receiverInitError{
@@ -71,9 +68,9 @@ func AlertmanagerFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 // NewAlertmanagerNotifier returns a new Alertmanager notifier.
-func NewAlertmanagerNotifier(config *AlertmanagerConfig, l Logger, images ImageStore, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
+func NewAlertmanagerNotifier(config *AlertmanagerConfig, l channels.Logger, images channels.ImageStore, _ *template.Template, fn channels.GetDecryptedValueFn) *AlertmanagerNotifier {
 	return &AlertmanagerNotifier{
-		Base:              NewBase(config.NotificationChannelConfig),
+		Base:              channels.NewBase(config.NotificationChannelConfig),
 		images:            images,
 		urls:              config.URLs,
 		basicAuthUser:     config.BasicAuthUser,
@@ -84,13 +81,13 @@ func NewAlertmanagerNotifier(config *AlertmanagerConfig, l Logger, images ImageS
 
 // AlertmanagerNotifier sends alert notifications to the alert manager
 type AlertmanagerNotifier struct {
-	*Base
-	images ImageStore
+	*channels.Base
+	images channels.ImageStore
 
 	urls              []*url.URL
 	basicAuthUser     string
 	basicAuthPassword string
-	logger            Logger
+	logger            channels.Logger
 }
 
 // Notify sends alert notifications to Alertmanager.
@@ -101,7 +98,7 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	}
 
 	_ = withStoredImages(ctx, n.logger, n.images,
-		func(index int, image Image) error {
+		func(index int, image channels.Image) error {
 			// If there is an image for this alert and the image has been uploaded
 			// to a public URL then include it as an annotation
 			if image.URL != "" {

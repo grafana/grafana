@@ -3,8 +3,10 @@ package definitions
 import (
 	"fmt"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	ngchannels "github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 )
 
@@ -104,7 +106,7 @@ func (e *EmbeddedContactPoint) Valid(decryptFunc channels.GetDecryptedValueFn) e
 	if e.Settings == nil {
 		return fmt.Errorf("settings should not be empty")
 	}
-	factory, exists := channels.Factory(e.Type)
+	factory, exists := ngchannels.Factory(e.Type)
 	if !exists {
 		return fmt.Errorf("unknown type '%s'", e.Type)
 	}
