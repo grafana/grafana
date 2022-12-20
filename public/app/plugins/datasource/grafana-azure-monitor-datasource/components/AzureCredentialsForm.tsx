@@ -287,7 +287,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
               variant="secondary"
               type="button"
               onClick={onLoadSubscriptions}
-              disabled={!hasRequiredFields}
+              disabled={!hasRequiredFields || disabled}
               data-testid={selectors.components.configEditor.loadSubscriptions.button}
             >
               Load Subscriptions
