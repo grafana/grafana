@@ -71,7 +71,6 @@ export const RolePickerMenu = ({
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(basicRole);
-  const [optionGroups, setOptionGroups] = useState<{ [key: string]: RoleGroupOption[] }>({});
   const [rolesCollection, setRolesCollection] = useState<{ [key: string]: RolesCollectionEntry }>({});
   const subMenuNode = useRef<HTMLDivElement | null>(null);
   const theme = useTheme2();
@@ -89,7 +88,7 @@ export const RolePickerMenu = ({
     }
   }, [selectedBuiltInRole, onBasicRoleSelect]);
 
-  // Evaluate optionGroups and rolesCollection only if options changed, otherwise
+  // Evaluate rolesCollection only if options changed, otherwise
   // it triggers unnecessary re-rendering of <RoleMenuGroupsSection /> component
   useEffect(() => {
     const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
@@ -100,7 +99,6 @@ export const RolePickerMenu = ({
       custom: convertRolesToGroupOptions(customRoles).sort((a, b) => a.name.localeCompare(b.name)),
       plugin: convertRolesToGroupOptions(pluginRoles).sort((a, b) => a.name.localeCompare(b.name)),
     };
-    setOptionGroups(optionGroups);
 
     setRolesCollection({
       fixed: {
@@ -115,7 +113,7 @@ export const RolePickerMenu = ({
         renderedName: `Custom roles`,
         roles: customRoles,
       },
-      pluginRoles: {
+      plugin: {
         groupType: GroupType.plugin,
         optionGroup: optionGroups.plugin,
         renderedName: `Plugin roles`,
@@ -136,13 +134,13 @@ export const RolePickerMenu = ({
 
   const groupSelected = (groupType: GroupType, group: string) => {
     const selectedGroupOptions = getSelectedGroupOptions(group);
-    const groupOptions = optionGroups[groupType].find((g) => g.value === group);
+    const groupOptions = rolesCollection[groupType]?.optionGroup.find((g) => g.value === group);
     return selectedGroupOptions.length > 0 && selectedGroupOptions.length >= groupOptions!.options.length;
   };
 
   const groupPartiallySelected = (groupType: GroupType, group: string) => {
     const selectedGroupOptions = getSelectedGroupOptions(group);
-    const groupOptions = optionGroups[groupType].find((g) => g.value === group);
+    const groupOptions = rolesCollection[groupType]?.optionGroup.find((g) => g.value === group);
     return selectedGroupOptions.length > 0 && selectedGroupOptions.length < groupOptions!.options.length;
   };
 
@@ -155,7 +153,7 @@ export const RolePickerMenu = ({
   };
 
   const onGroupChange = (groupType: GroupType, value: string) => {
-    const group = optionGroups[groupType].find((g) => {
+    const group = rolesCollection[groupType]?.optionGroup.find((g) => {
       return g.value === value;
     });
 
