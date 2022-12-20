@@ -122,6 +122,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
 	r.Get("/admin/support-bundles", reqGrafanaAdmin, hs.Index)
+	r.Get("/admin/support-bundles/create", reqGrafanaAdmin, hs.Index)
 
 	r.Get("/live", reqGrafanaAdmin, hs.Index)
 	r.Get("/live/pipeline", reqGrafanaAdmin, hs.Index)

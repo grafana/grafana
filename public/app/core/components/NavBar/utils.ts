@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { ShowModalReactEvent } from '../../../types/events';
 import appEvents from '../../app_events';
-import { getFooterLinks } from '../Footer/Footer';
+import { FooterLink, getFooterLinks } from '../Footer/Footer';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { HelpModal } from '../help/HelpModal';
 
@@ -53,12 +53,7 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
     if (link.id === 'help') {
       link.children = [
         ...getFooterLinks(),
-        {
-          id: 'support-bundle',
-          text: t('nav.help/support-bundle', 'Support Bundles'),
-          icon: 'question-circle',
-          url: '/admin/support-bundles',
-        },
+        ...getSupportBundleFooterLinks(),
         {
           id: 'keyboard-shortcuts',
           text: t('nav.help/keyboard-shortcuts', 'Keyboard shortcuts'),
@@ -81,6 +76,22 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
     }
   });
   return items;
+};
+
+export let getSupportBundleFooterLinks = (cfg = config): FooterLink[] => {
+  if (!cfg.featureToggles.supportBundles) {
+    return [];
+  }
+
+  return [
+    {
+      target: '_self',
+      id: 'support-bundle',
+      text: t('nav.help/support-bundle', 'Support Bundles'),
+      icon: 'question-circle',
+      url: '/admin/support-bundles',
+    },
+  ];
 };
 
 export const enrichWithInteractionTracking = (item: NavModelItem, expandedState: boolean) => {

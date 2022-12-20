@@ -125,6 +125,7 @@ func (s *Service) Remove(ctx context.Context, uid string) error {
 }
 
 func (s *Service) RegisterSupportItemCollector(collector supportbundles.Collector) {
+	// FIXME: add check for duplicate UIDs
 	s.collectors = append(s.collectors, collector)
 }
 

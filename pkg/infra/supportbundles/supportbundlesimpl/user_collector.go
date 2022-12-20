@@ -37,7 +37,7 @@ func userCollector(users user.Service) supportbundles.Collector {
 	}
 
 	return supportbundles.Collector{
-		UID:               "db",
+		UID:               "users",
 		Description:       "User information",
 		DisplayName:       "A list of users of the Grafana instance",
 		IncludedByDefault: false,
