@@ -2,7 +2,9 @@ package channels
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/prometheus/alertmanager/notify"
@@ -24,14 +26,36 @@ type KafkaNotifier struct {
 	images   channels.ImageStore
 	ns       channels.WebhookSender
 	tmpl     *template.Template
-	settings kafkaSettings
+	settings *kafkaSettings
 }
 
 type kafkaSettings struct {
-	Endpoint    string
-	Topic       string
-	Description string
-	Details     string
+	Endpoint    string `json:"kafkaRestProxy,omitempty" yaml:"kafkaRestProxy,omitempty"`
+	Topic       string `json:"kafkaTopic,omitempty" yaml:"kafkaTopic,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Details     string `json:"details,omitempty" yaml:"details,omitempty"`
+}
+
+func buildKafkaSettings(fc channels.FactoryConfig) (*kafkaSettings, error) {
+	var settings kafkaSettings
+	err := json.Unmarshal(fc.Config.Settings, &settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+
+	if settings.Endpoint == "" {
+		return nil, errors.New("could not find kafka rest proxy endpoint property in settings")
+	}
+	if settings.Topic == "" {
+		return nil, errors.New("could not find kafka topic property in settings")
+	}
+	if settings.Description == "" {
+		settings.Description = channels.DefaultMessageTitleEmbed
+	}
+	if settings.Details == "" {
+		settings.Details = channels.DefaultMessageEmbed
+	}
+	return &settings, nil
 }
 
 func KafkaFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
@@ -47,20 +71,10 @@ func KafkaFactory(fc channels.FactoryConfig) (channels.NotificationChannel, erro
 
 // newKafkaNotifier is the constructor function for the Kafka notifier.
 func newKafkaNotifier(fc channels.FactoryConfig) (*KafkaNotifier, error) {
-	settings, err := simplejson.NewJson(fc.Config.Settings)
+	settings, err := buildKafkaSettings(fc)
 	if err != nil {
 		return nil, err
 	}
-	endpoint := settings.Get("kafkaRestProxy").MustString()
-	if endpoint == "" {
-		return nil, errors.New("could not find kafka rest proxy endpoint property in settings")
-	}
-	topic := settings.Get("kafkaTopic").MustString()
-	if topic == "" {
-		return nil, errors.New("could not find kafka topic property in settings")
-	}
-	description := settings.Get("description").MustString(channels.DefaultMessageTitleEmbed)
-	details := settings.Get("details").MustString(channels.DefaultMessageEmbed)
 
 	return &KafkaNotifier{
 		Base:     channels.NewBase(fc.Config),
@@ -68,7 +82,7 @@ func newKafkaNotifier(fc channels.FactoryConfig) (*KafkaNotifier, error) {
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
-		settings: kafkaSettings{Endpoint: endpoint, Topic: topic, Description: description, Details: details},
+		settings: settings,
 	}, nil
 }
 

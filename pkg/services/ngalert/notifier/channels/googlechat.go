@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -24,13 +23,32 @@ type GoogleChatNotifier struct {
 	ns       channels.WebhookSender
 	images   channels.ImageStore
 	tmpl     *template.Template
-	settings googleChatSettings
+	settings *googleChatSettings
 }
 
 type googleChatSettings struct {
-	URL     string
-	Title   string
-	Content string
+	URL     string `json:"url,omitempty" yaml:"url,omitempty"`
+	Title   string `json:"title,omitempty" yaml:"title,omitempty"`
+	Message string `json:"message,omitempty" yaml:"message,omitempty"`
+}
+
+func buildGoogleChatSettings(fc channels.FactoryConfig) (*googleChatSettings, error) {
+	var settings googleChatSettings
+	err := json.Unmarshal(fc.Config.Settings, &settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+
+	if settings.URL == "" {
+		return nil, errors.New("could not find url property in settings")
+	}
+	if settings.Title == "" {
+		settings.Title = channels.DefaultMessageTitleEmbed
+	}
+	if settings.Message == "" {
+		settings.Message = channels.DefaultMessageEmbed
+	}
+	return &settings, nil
 }
 
 func GoogleChatFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
@@ -45,32 +63,17 @@ func GoogleChatFactory(fc channels.FactoryConfig) (channels.NotificationChannel,
 }
 
 func newGoogleChatNotifier(fc channels.FactoryConfig) (*GoogleChatNotifier, error) {
-	var settings googleChatSettings
-	err := json.Unmarshal(fc.Config.Settings, &settings)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
-	}
-
-	rawsettings, err := simplejson.NewJson(fc.Config.Settings)
+	settings, err := buildGoogleChatSettings(fc)
 	if err != nil {
 		return nil, err
 	}
-	URL := rawsettings.Get("url").MustString()
-	if URL == "" {
-		return nil, errors.New("could not find url property in settings")
-	}
-
 	return &GoogleChatNotifier{
-		Base:   channels.NewBase(fc.Config),
-		log:    fc.Logger,
-		ns:     fc.NotificationService,
-		images: fc.ImageStore,
-		tmpl:   fc.Template,
-		settings: googleChatSettings{
-			URL:     URL,
-			Title:   rawsettings.Get("title").MustString(channels.DefaultMessageTitleEmbed),
-			Content: rawsettings.Get("message").MustString(channels.DefaultMessageEmbed),
-		},
+		Base:     channels.NewBase(fc.Config),
+		log:      fc.Logger,
+		ns:       fc.NotificationService,
+		images:   fc.ImageStore,
+		tmpl:     fc.Template,
+		settings: settings,
 	}, nil
 }
 
@@ -83,7 +86,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 
 	var widgets []widget
 
-	if msg := tmpl(gcn.settings.Content); msg != "" {
+	if msg := tmpl(gcn.settings.Message); msg != "" {
 		// Add a text paragraph widget for the message if there is a message.
 		// Google Chat API doesn't accept an empty text property.
 		widgets = append(widgets, textParagraphWidget{Text: text{Text: msg}})

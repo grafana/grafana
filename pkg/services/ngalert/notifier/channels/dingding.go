@@ -10,34 +10,36 @@ import (
 	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 const defaultDingdingMsgType = "link"
 
 type dingDingSettings struct {
-	URL         string
-	MessageType string
-	Title       string
-	Message     string
+	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
+	MessageType string `json:"msgType,omitempty" yaml:"msgType,omitempty"`
+	Title       string `json:"title,omitempty" yaml:"title,omitempty"`
+	Message     string `json:"message,omitempty" yaml:"message,omitempty"`
 }
 
 func buildDingDingSettings(fc channels.FactoryConfig) (*dingDingSettings, error) {
-	settings, err := simplejson.NewJson(fc.Config.Settings)
+	var settings dingDingSettings
+	err := json.Unmarshal(fc.Config.Settings, &settings)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
-	URL := settings.Get("url").MustString()
-	if URL == "" {
+	if settings.URL == "" {
 		return nil, errors.New("could not find url property in settings")
 	}
-	return &dingDingSettings{
-		URL:         URL,
-		MessageType: settings.Get("msgType").MustString(defaultDingdingMsgType),
-		Title:       settings.Get("title").MustString(channels.DefaultMessageTitleEmbed),
-		Message:     settings.Get("message").MustString(channels.DefaultMessageEmbed),
-	}, nil
+	if settings.MessageType == "" {
+		settings.MessageType = defaultDingdingMsgType
+	}
+	if settings.Title == "" {
+		settings.Title = channels.DefaultMessageTitleEmbed
+	}
+	if settings.Message == "" {
+		settings.Message = channels.DefaultMessageEmbed
+	}
+	return &settings, nil
 }
 
 func DingDingFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {

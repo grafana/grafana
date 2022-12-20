@@ -2,6 +2,7 @@ package channels
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -10,8 +11,6 @@ import (
 	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 var (
@@ -25,13 +24,32 @@ type LineNotifier struct {
 	log      channels.Logger
 	ns       channels.WebhookSender
 	tmpl     *template.Template
-	settings lineSettings
+	settings *lineSettings
 }
 
 type lineSettings struct {
-	token       string
-	title       string
-	description string
+	Token       string `json:"token,omitempty" yaml:"token,omitempty"`
+	Title       string `json:"title,omitempty" yaml:"title,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+}
+
+func buildLineSettings(fc channels.FactoryConfig) (*lineSettings, error) {
+	var settings lineSettings
+	err := json.Unmarshal(fc.Config.Settings, &settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+	settings.Token = fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "token", settings.Token)
+	if settings.Token == "" {
+		return nil, errors.New("could not find token in settings")
+	}
+	if settings.Title == "" {
+		settings.Title = channels.DefaultMessageTitleEmbed
+	}
+	if settings.Description == "" {
+		settings.Description = channels.DefaultMessageEmbed
+	}
+	return &settings, nil
 }
 
 func LineFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
@@ -47,23 +65,17 @@ func LineFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error
 
 // newLineNotifier is the constructor for the LINE notifier
 func newLineNotifier(fc channels.FactoryConfig) (*LineNotifier, error) {
-	settings, err := simplejson.NewJson(fc.Config.Settings)
+	settings, err := buildLineSettings(fc)
 	if err != nil {
 		return nil, err
 	}
-	token := fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "token", settings.Get("token").MustString())
-	if token == "" {
-		return nil, errors.New("could not find token in settings")
-	}
-	title := settings.Get("title").MustString(channels.DefaultMessageTitleEmbed)
-	description := settings.Get("description").MustString(channels.DefaultMessageEmbed)
 
 	return &LineNotifier{
 		Base:     channels.NewBase(fc.Config),
 		log:      fc.Logger,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
-		settings: lineSettings{token: token, title: title, description: description},
+		settings: settings,
 	}, nil
 }
 
@@ -80,7 +92,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		URL:        LineNotifyURL,
 		HTTPMethod: "POST",
 		HTTPHeader: map[string]string{
-			"Authorization": fmt.Sprintf("Bearer %s", ln.settings.token),
+			"Authorization": fmt.Sprintf("Bearer %s", ln.settings.Token),
 			"Content-Type":  "application/x-www-form-urlencoded;charset=UTF-8",
 		},
 		Body: form.Encode(),
@@ -106,9 +118,9 @@ func (ln *LineNotifier) buildMessage(ctx context.Context, as ...*types.Alert) st
 
 	body := fmt.Sprintf(
 		"%s\n%s\n\n%s",
-		tmpl(ln.settings.title),
+		tmpl(ln.settings.Title),
 		ruleURL,
-		tmpl(ln.settings.description),
+		tmpl(ln.settings.Description),
 	)
 	if tmplErr != nil {
 		ln.log.Warn("failed to template Line message", "error", tmplErr.Error())
