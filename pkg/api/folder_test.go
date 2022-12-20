@@ -90,8 +90,9 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Given a correct request for updating a folder", func(t *testing.T) {
-		cmd := models.UpdateFolderCommand{
-			Title: "Folder upd",
+		title := "Folder upd"
+		cmd := folder.UpdateFolderCommand{
+			NewTitle: &title,
 		}
 
 		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder upd"}
@@ -125,8 +126,9 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
-		cmd := models.UpdateFolderCommand{
-			Title: "Folder upd",
+		title := "Folder upd"
+		cmd := folder.UpdateFolderCommand{
+			NewTitle: &title,
 		}
 
 		for _, tc := range testCases {
@@ -278,7 +280,7 @@ func callUpdateFolder(sc *scenarioContext) {
 }
 
 func updateFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService folder.Service,
-	cmd models.UpdateFolderCommand, fn scenarioFunc) {
+	cmd folder.UpdateFolderCommand, fn scenarioFunc) {
 	setUpRBACGuardian(t)
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
