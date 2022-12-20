@@ -86,6 +86,10 @@ type emailSender struct {
 	ns *notifications.NotificationService
 }
 
+func (e emailSender) SendWebhook(ctx context.Context, cmd *channels.SendWebhookSettings) error {
+	panic("not implemented")
+}
+
 func (e emailSender) SendEmail(ctx context.Context, cmd *channels.SendEmailSettings) error {
 	attached := make([]*models.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
 	for _, file := range cmd.AttachedFiles {

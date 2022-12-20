@@ -23,15 +23,12 @@ func TestEmailNotifier(t *testing.T) {
 	tmpl.ExternalURL = externalURL
 
 	t.Run("empty settings should return error", func(t *testing.T) {
-		jsonData := `{ }`
-		settingsJSON := json.RawMessage(jsonData)
-		model := &channels.NotificationChannelConfig{
+		cfg := &channels.NotificationChannelConfig{
 			Name:     "ops",
 			Type:     "email",
-			Settings: settingsJSON,
+			Settings: json.RawMessage(`{ }`),
 		}
-
-		_, err := NewEmailConfig(model)
+		_, err := buildEmailNotifier(channels.FactoryConfig{Config: cfg})
 		require.Error(t, err)
 	})
 
@@ -42,13 +39,24 @@ func TestEmailNotifier(t *testing.T) {
 		}`
 
 		emailSender := mockNotificationService()
-		cfg, err := NewEmailConfig(&channels.NotificationChannelConfig{
-			Name:     "ops",
-			Type:     "email",
-			Settings: json.RawMessage(jsonData),
-		})
+
+		fc := channels.FactoryConfig{
+			Config: &channels.NotificationChannelConfig{
+				Name:     "ops",
+				Type:     "email",
+				Settings: json.RawMessage(jsonData),
+			},
+			NotificationService: emailSender,
+			DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+				return fallback
+			},
+			ImageStore: &channels.UnavailableImageStore{},
+			Template:   tmpl,
+			Logger:     &channels.FakeLogger{},
+		}
+
+		emailNotifier, err := EmailFactory(fc)
 		require.NoError(t, err)
-		emailNotifier := NewEmailNotifier(cfg, &channels.FakeLogger{}, emailSender, &channels.UnavailableImageStore{}, tmpl)
 
 		alerts := []*types.Alert{
 			{
@@ -265,7 +273,7 @@ func TestEmailNotifierIntegration(t *testing.T) {
 	}
 }
 
-func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns *emailSender) *EmailNotifier {
+func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns channels.NotificationSender) *EmailNotifier {
 	t.Helper()
 
 	jsonData := map[string]interface{}{
@@ -281,14 +289,23 @@ func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *
 	}
 	bytes, err := json.Marshal(jsonData)
 	require.NoError(t, err)
-	cfg, err := NewEmailConfig(&channels.NotificationChannelConfig{
-		Name:     "ops",
-		Type:     "email",
-		Settings: bytes,
-	})
-	require.NoError(t, err)
-	emailNotifier := NewEmailNotifier(cfg, &channels.FakeLogger{}, ns, &channels.UnavailableImageStore{}, emailTmpl)
 
+	fc := channels.FactoryConfig{
+		Config: &channels.NotificationChannelConfig{
+			Name:     "ops",
+			Type:     "email",
+			Settings: json.RawMessage(bytes),
+		},
+		NotificationService: ns,
+		DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+			return fallback
+		},
+		ImageStore: &channels.UnavailableImageStore{},
+		Template:   emailTmpl,
+		Logger:     &channels.FakeLogger{},
+	}
+	emailNotifier, err := buildEmailNotifier(fc)
+	require.NoError(t, err)
 	return emailNotifier
 }
 

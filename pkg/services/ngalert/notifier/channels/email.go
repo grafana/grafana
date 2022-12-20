@@ -46,7 +46,7 @@ func EmailFactory(fc channels.FactoryConfig) (channels.NotificationChannel, erro
 	return notifier, nil
 }
 
-func buildWebexSettings(fc channels.FactoryConfig) (*emailSettings, error) {
+func buildEmailSettings(fc channels.FactoryConfig) (*emailSettings, error) {
 	type emailSettingsRaw struct {
 		SingleEmail bool   `json:"singleEmail,omitempty"`
 		Addresses   string `json:"addresses,omitempty"`
@@ -80,7 +80,7 @@ func buildWebexSettings(fc channels.FactoryConfig) (*emailSettings, error) {
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
 func buildEmailNotifier(fc channels.FactoryConfig) (*EmailNotifier, error) {
-	settings, err := buildWebexSettings(fc)
+	settings, err := buildEmailSettings(fc)
 	if err != nil {
 		return nil, err
 	}
