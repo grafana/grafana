@@ -112,6 +112,7 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
       type: 'ADD_LABEL_FILTER',
       label: 'Consider filtering logs by their label and value.',
       fix: {
+        title: 'add label filter',
         label: '',
         action: {
           type: 'ADD_LABEL_FILTER',
@@ -128,6 +129,7 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
       type: 'ADD_LINE_FILTER',
       label: 'Consider filtering logs based on if they contain a specific string.',
       fix: {
+        title: 'add line filter',
         label: '',
         action: {
           type: 'ADD_LINE_FILTER',
