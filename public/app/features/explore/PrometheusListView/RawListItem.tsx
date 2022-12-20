@@ -48,6 +48,7 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
       display: none; /* Chrome, Safari and Opera */
     }
     &:after {
+      pointer-events: none;
       content: '';
       width: 100%;
       height: 100%;
