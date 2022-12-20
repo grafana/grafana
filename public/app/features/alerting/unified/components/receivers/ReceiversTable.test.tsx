@@ -55,7 +55,7 @@ const mockNotifier = (type: NotifierType, name: string): NotifierDTO => ({
   options: [],
 });
 
-jest.spyOn(onCallApi, 'useGetOnCallIntegrations');
+jest.spyOn(onCallApi, 'useGetOnCallIntegrationsQuery');
 const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
 const useGetContactPointsStateMock = jest.spyOn(receiversApi, 'useGetContactPointsState');
 

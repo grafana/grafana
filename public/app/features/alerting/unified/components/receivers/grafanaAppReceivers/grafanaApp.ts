@@ -2,7 +2,7 @@ import { useGetSingleLocalWithoutDetails } from 'app/features/plugins/admin/stat
 import { CatalogPlugin } from 'app/features/plugins/admin/types';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
-import { useGetOnCallIntegrations } from '../../../api/onCallApi';
+import { useGetOnCallIntegrationsQuery } from '../../../api/onCallApi';
 
 import { isOnCallReceiver } from './onCall/onCall';
 import { AmRouteReceiver, GrafanaAppReceiverEnum, GRAFANA_APP_PLUGIN_IDS, ReceiverWithTypes } from './types';
@@ -15,7 +15,9 @@ export const useGetAppIsInstalledAndEnabled = (grafanaAppType: GrafanaAppReceive
 
 export const useGetGrafanaReceiverTypeChecker = () => {
   const isOnCallEnabled = useGetAppIsInstalledAndEnabled(GrafanaAppReceiverEnum.GRAFANA_ONCALL);
-  const data = useGetOnCallIntegrations(!isOnCallEnabled);
+  const { data } = useGetOnCallIntegrationsQuery(undefined, {
+    skip: !isOnCallEnabled,
+  });
 
   const getGrafanaReceiverType = (receiver: Receiver): GrafanaAppReceiverEnum | undefined => {
     //CHECK FOR ONCALL PLUGIN
@@ -40,7 +42,7 @@ export const useGetAmRouteReceiverWithGrafanaAppTypes = (receivers: Receiver[]) 
     return amRouteReceiverValue;
   };
 
-  return receivers.map((receiver: Receiver) => receiverToSelectableContactPointValue(receiver));
+  return receivers.map(receiverToSelectableContactPointValue);
 };
 
 export const useGetReceiversWithGrafanaAppTypes = (receivers: Receiver[]): ReceiverWithTypes[] => {

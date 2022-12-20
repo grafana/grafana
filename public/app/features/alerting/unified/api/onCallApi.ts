@@ -1,6 +1,5 @@
 import { alertingApi } from './alertingApi';
 export interface OnCallIntegration {
-  [key: string]: string;
   integration_url: string;
 }
 export type OnCallIntegrationsResponse = OnCallIntegration[];
@@ -18,10 +17,4 @@ export const onCallApi = alertingApi.injectEndpoints({
     }),
   }),
 });
-
-export const useGetOnCallIntegrations = (skip: boolean) => {
-  const { data } = onCallApi.useGetOnCallIntegrationsQuery(undefined, {
-    skip,
-  });
-  return data;
-};
+export const { useGetOnCallIntegrationsQuery } = onCallApi;
