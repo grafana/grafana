@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
+	sync "github.com/grafana/grafana/pkg/services/authn/authnimpl/usersync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -18,11 +19,12 @@ var _ authn.Service = new(Service)
 
 func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service, apikeyService apikey.Service, userService user.Service) *Service {
 	s := &Service{
-		log:         log.New("authn.service"),
-		cfg:         cfg,
-		clients:     make(map[string]authn.Client),
-		tracer:      tracer,
-		userService: userService,
+		log:           log.New("authn.service"),
+		cfg:           cfg,
+		clients:       make(map[string]authn.Client),
+		tracer:        tracer,
+		postAuthHooks: []authn.PostAuthHookFn{},
+		userService:   userService,
 	}
 
 	s.clients[authn.ClientAPIKey] = clients.ProvideAPIKey(apikeyService, userService)
@@ -31,6 +33,12 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Serv
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
 	}
 
+	// FIXME (jguer): move to User package
+	userSyncService := &sync.UserSync{}
+	orgUserSyncService := &sync.OrgSync{}
+	s.RegisterPostAuthHook(userSyncService.SyncUser)
+	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgUser)
+
 	return s
 }
 
@@ -38,6 +46,9 @@ type Service struct {
 	log     log.Logger
 	cfg     *setting.Cfg
 	clients map[string]authn.Client
+
+	// postAuthHooks are called after a successful authentication. They can modify the identity.
+	postAuthHooks []authn.PostAuthHookFn
 
 	tracer      tracing.Tracer
 	userService user.Service
@@ -78,6 +89,17 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 	// login handler, but if we want to perform basic auth during a request (called from contexthandler) we don't
 	// want a session to be created.
 
-	logger.Debug("auth client successfully authenticated request", "client", client, "identity", identity)
+	params := c.ClientParams()
+
+	for _, hook := range s.postAuthHooks {
+		if err := hook(ctx, params, identity); err != nil {
+			return nil, false, err
+		}
+	}
+
 	return identity, true, nil
+}
+
+func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn) {
+	s.postAuthHooks = append(s.postAuthHooks, hook)
 }
