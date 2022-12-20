@@ -37,11 +37,14 @@ const AddToDashboard = lazy(() =>
   import('./AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
 );
 
-const getStyles = (exploreId: ExploreId) => {
+const getStyles = (exploreId: ExploreId, isLargerExploreId: boolean) => {
   return {
     rotateIcon: css({
       '> div > svg': {
-        transform: exploreId === 'left' ? 'rotate(180deg)' : 'none',
+        transform:
+          (exploreId === 'left' && isLargerExploreId) || (exploreId === 'right' && !isLargerExploreId)
+            ? 'rotate(180deg)'
+            : 'none',
       },
     }),
   };
@@ -147,9 +150,8 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       largerExploreId,
     } = this.props;
     const showSmallTimePicker = splitted || containerWidth < 1210;
-    const styles = getStyles(exploreId);
-
     const isLargerExploreId = largerExploreId === exploreId;
+    const styles = getStyles(exploreId, isLargerExploreId);
 
     const showExploreToDashboard =
       contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
@@ -180,7 +182,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
             tooltip={`${isLargerExploreId ? 'Narrow' : 'Widen'} pane`}
             disabled={isLive}
             onClick={onClickResize}
-            icon={isLargerExploreId ? 'gf-movepane-right' : 'gf-movepane-left'}
+            icon={isLargerExploreId ? 'gf-movepane-left' : 'gf-movepane-right'}
             iconOnly={true}
             className={styles.rotateIcon}
           />
