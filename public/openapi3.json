@@ -4427,6 +4427,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "parent_uid": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -15963,7 +15966,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID.",
         "operationId": "getFolders",
         "parameters": [
           {
@@ -15984,6 +15987,14 @@
               "default": 1,
               "format": "int64",
               "type": "integer"
+            }
+          },
+          {
+            "description": "The parent folder UID",
+            "in": "query",
+            "name": "parent_uid",
+            "schema": {
+              "type": "string"
             }
           }
         ],

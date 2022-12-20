@@ -212,21 +212,28 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 	return util.Reverse(folders[1:]), nil
 }
 
-func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetTreeQuery) ([]*folder.Folder, error) {
+func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error) {
 	var folders []*folder.Folder
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
-		sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=? ORDER BY id"))
+		args := make([]interface{}, 0, 2)
+		if q.UID == "" {
+			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=?"))
+			args = append(args, q.OrgID)
+		} else {
+			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=?"))
+			args = append(args, q.UID, q.OrgID)
+		}
 
 		if q.Limit != 0 {
-			var offset int64 = 1
-			if q.Page != 0 {
-				offset = q.Page
+			var offset int64 = 0
+			if q.Page > 0 {
+				offset = q.Limit * (q.Page - 1)
 			}
 			sql.Write([]byte(ss.db.GetDialect().LimitOffset(q.Limit, offset)))
 		}
-		err := sess.SQL(sql.String(), q.UID, q.OrgID).Find(&folders)
+		err := sess.SQL(sql.String(), args...).Find(&folders)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
 		}
@@ -277,7 +284,7 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 			if parentUID != nil && *parentUID == ele {
 				return 0, folder.ErrCircularReference
 			}
-			folders, err := ss.GetChildren(ctx, folder.GetTreeQuery{UID: ele, OrgID: orgID})
+			folders, err := ss.GetChildren(ctx, folder.GetChildrenQuery{UID: ele, OrgID: orgID})
 			if err != nil {
 				return 0, err
 			}

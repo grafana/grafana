@@ -638,7 +638,8 @@ export class ElasticDatasource
     const shouldRunTroughBackend =
       request.app === CoreApp.Explore && config.featureToggles.elasticsearchBackendMigration;
     if (shouldRunTroughBackend) {
-      return super.query(request).pipe(tap((response) => trackQuery(response, request.targets, request.app)));
+      const start = new Date();
+      return super.query(request).pipe(tap((response) => trackQuery(response, request, start)));
     }
     let payload = '';
     const targets = this.interpolateVariablesInQueries(cloneDeep(request.targets), request.scopedVars);
@@ -705,6 +706,7 @@ export class ElasticDatasource
 
     const url = this.getMultiSearchUrl();
 
+    const start = new Date();
     return this.post(url, payload).pipe(
       map((res) => {
         const er = new ElasticResponse(sentTargets, res);
@@ -721,7 +723,7 @@ export class ElasticDatasource
 
         return er.getTimeSeries();
       }),
-      tap((response) => trackQuery(response, request.targets, request.app))
+      tap((response) => trackQuery(response, request, start))
     );
   }
 

@@ -19,17 +19,17 @@ This page contains a list of available feature toggles. To learn how to turn on 
 
 Some stable features are enabled by default. You can disable a stable feature by setting the feature flag to "false" in the configuration.
 
-| Feature toggle name          | Description                                                                          | Enabled by default |
-| ---------------------------- | ------------------------------------------------------------------------------------ | ------------------ |
-| `promQueryBuilder`           | Show Prometheus query builder                                                        | Yes                |
-| `disableEnvelopeEncryption`  | Disable envelope encryption (emergency only)                                         |                    |
-| `database_metrics`           | Add Prometheus metrics for database tables                                           |                    |
-| `lokiMonacoEditor`           | Access to Monaco query editor for Loki                                               | Yes                |
-| `featureHighlights`          | Highlight Grafana Enterprise features                                                |                    |
-| `commandPalette`             | Enable command palette                                                               | Yes                |
-| `cloudWatchDynamicLabels`    | Use dynamic labels instead of alias patterns in CloudWatch datasource                | Yes                |
-| `internationalization`       | Enables internationalization                                                         | Yes                |
-| `accessTokenExpirationCheck` | Enable OAuth access_token expiration check and token refresh using the refresh_token |                    |
+| Feature toggle name                 | Description                                                                          | Enabled by default |
+| ----------------------------------- | ------------------------------------------------------------------------------------ | ------------------ |
+| `disableEnvelopeEncryption`         | Disable envelope encryption (emergency only)                                         |                    |
+| `database_metrics`                  | Add Prometheus metrics for database tables                                           |                    |
+| `lokiMonacoEditor`                  | Access to Monaco query editor for Loki                                               | Yes                |
+| `featureHighlights`                 | Highlight Grafana Enterprise features                                                |                    |
+| `commandPalette`                    | Enable command palette                                                               | Yes                |
+| `cloudWatchDynamicLabels`           | Use dynamic labels instead of alias patterns in CloudWatch datasource                | Yes                |
+| `internationalization`              | Enables internationalization                                                         | Yes                |
+| `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token |                    |
+| `disablePrometheusExemplarSampling` | Disable Prometheus examplar sampling                                                 |                    |
 
 ## Beta feature toggles
 
