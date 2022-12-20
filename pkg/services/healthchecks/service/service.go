@@ -158,6 +158,14 @@ func (hcs *HealthChecksServiceImpl) GetHealthCheck(ctx context.Context, name str
 	return found, check
 }
 
+func (hcs *HealthChecksServiceImpl) ListHealthChecks(ctx context.Context) []models.HealthCheckConfig {
+	configs := make([]models.HealthCheckConfig, 0)
+	for _, c := range hcs.registeredChecks {
+		configs = append(configs, c.HealthCheckConfig)
+	}
+	return configs
+}
+
 func (hcs *HealthChecksServiceImpl) runIndividualHealthCheck(hc models.HealthCheck) {
 	hcs.mu.Lock()
 	defer hcs.mu.Unlock()

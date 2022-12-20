@@ -50,6 +50,7 @@ func (api *Api) getReadiness(ctx *models.ReqContext) response.Response {
 
 func (api *Api) getLiveness(ctx *models.ReqContext) response.Response {
 	s, m := api.HealthCheckService.GetLatestHealth(ctx.Req.Context())
+	// TODO need to do filtering based on whether auth is required
 	resp := make(map[string]interface{})
 	resp["status"] = s
 	resp["metrics"] = m
@@ -57,9 +58,7 @@ func (api *Api) getLiveness(ctx *models.ReqContext) response.Response {
 }
 
 func (api *Api) listHealthChecks(ctx *models.ReqContext) response.Response {
-	configs := make([]hcm.HealthCheckConfig, 0)
-	// TODO populate
-	return response.JSON(http.StatusOK, configs)
+	return response.JSON(http.StatusOK, api.HealthCheckService.ListHealthChecks(ctx.Req.Context()))
 }
 
 func (api *Api) getHealthCheck(ctx *models.ReqContext) response.Response {

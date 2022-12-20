@@ -11,6 +11,7 @@ type Service interface {
 	RunCoreHealthChecks(ctx context.Context) error
 	GetLatestHealth(ctx context.Context) (models.HealthStatus, map[string]map[string]string)
 	GetHealthCheck(ctx context.Context, name string) (bool, models.HealthCheck)
+	ListHealthChecks(ctx context.Context) []models.HealthCheckConfig
 }
 
 type HealthChecker interface {
