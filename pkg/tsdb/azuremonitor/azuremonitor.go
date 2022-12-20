@@ -235,8 +235,8 @@ func checkAzureMonitorMetricsHealth(dsInfo types.DatasourceInfo) (*http.Response
 	return res, nil
 }
 
-func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo) (*http.Response, error) {
-	workspacesUrl := fmt.Sprintf("%v/subscriptions/%v/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview", dsInfo.Routes["Azure Monitor"].URL, dsInfo.Settings.SubscriptionId)
+func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo, subscription string) (*http.Response, error) {
+	workspacesUrl := fmt.Sprintf("%v/subscriptions/%v/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview", dsInfo.Routes["Azure Monitor"].URL, subscription)
 	workspacesReq, err := http.NewRequest(http.MethodGet, workspacesUrl, nil)
 	if err != nil {
 		return nil, err
@@ -280,10 +280,10 @@ func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo) (*http.Response, 
 	return res, nil
 }
 
-func checkAzureMonitorResourceGraphHealth(dsInfo types.DatasourceInfo) (*http.Response, error) {
+func checkAzureMonitorResourceGraphHealth(dsInfo types.DatasourceInfo, subscription string) (*http.Response, error) {
 	body, err := json.Marshal(map[string]interface{}{
 		"query":         "Resources | project id | limit 1",
-		"subscriptions": []string{dsInfo.Settings.SubscriptionId},
+		"subscriptions": []string{subscription},
 	})
 	if err != nil {
 		return nil, err
@@ -303,6 +303,26 @@ func checkAzureMonitorResourceGraphHealth(dsInfo types.DatasourceInfo) (*http.Re
 	return res, nil
 }
 
+func parseSubscriptions(res *http.Response) ([]string, error) {
+	var target struct {
+		Value []struct {
+			SubscriptionId string `json:"subscriptionId"`
+		}
+	}
+	err := json.NewDecoder(res.Body).Decode(&target)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	result := make([]string, len(target.Value))
+	for i, v := range target.Value {
+		result[i] = v.SubscriptionId
+	}
+
+	return result, nil
+}
+
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
@@ -316,6 +336,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	metricsLog := "Successfully connected to Azure Monitor endpoint."
 	logAnalyticsLog := "Successfully connected to Azure Log Analytics endpoint."
 	graphLog := "Successfully connected to Azure Resource Graph endpoint."
+	defaultSubscription := dsInfo.Settings.SubscriptionId
 
 	metricsRes, err := checkAzureMonitorMetricsHealth(dsInfo)
 	if err != nil || metricsRes.StatusCode != 200 {
@@ -333,9 +354,17 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			}
 			metricsLog = fmt.Sprintf("Error connecting to Azure Monitor endpoint: %s", string(body))
 		}
+	} else {
+		subscriptions, err := parseSubscriptions(metricsRes)
+		if err != nil {
+			return nil, err
+		}
+		if defaultSubscription == "" && len(subscriptions) > 0 {
+			defaultSubscription = subscriptions[0]
+		}
 	}
 
-	logsRes, err := checkAzureLogAnalyticsHealth(dsInfo)
+	logsRes, err := checkAzureLogAnalyticsHealth(dsInfo, defaultSubscription)
 	if err != nil || logsRes.StatusCode != 200 {
 		status = backend.HealthStatusError
 		if err != nil {
@@ -356,7 +385,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}
 	}
 
-	resourceGraphRes, err := checkAzureMonitorResourceGraphHealth(dsInfo)
+	resourceGraphRes, err := checkAzureMonitorResourceGraphHealth(dsInfo, defaultSubscription)
 	if err != nil || resourceGraphRes.StatusCode != 200 {
 		status = backend.HealthStatusError
 		if err != nil {
