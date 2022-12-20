@@ -10,10 +10,8 @@ var _ authn.Client = new(MockClient)
 
 type MockClient struct {
 	AuthenticateFunc func(ctx context.Context, r *authn.Request) (*authn.Identity, error)
+	ClientParamsFunc func() *authn.ClientParams
 	TestFunc         func(ctx context.Context, r *authn.Request) bool
-}
-
-type ClientFunctions struct {
 }
 
 func (m MockClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -21,6 +19,13 @@ func (m MockClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 		return m.AuthenticateFunc(ctx, r)
 	}
 	return nil, nil
+}
+
+func (m MockClient) ClientParams() *authn.ClientParams {
+	if m.ClientParamsFunc != nil {
+		return m.ClientParamsFunc()
+	}
+	return nil
 }
 
 func (m MockClient) Test(ctx context.Context, r *authn.Request) bool {
