@@ -2,9 +2,6 @@ package folder
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Service interface {
