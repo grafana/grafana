@@ -38,6 +38,12 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 
 jest.spyOn(config, 'getAllDataSources');
 
+// these tests are rather slow because we have to wait for various API calls and mocks to be called
+// and wait for the UI to be in particular states, drone seems to time out quite often so
+// we're increasing the timeout here to remove the flakey-ness of this test
+// ideally we'd move this to an e2e test but it's quite involved to set up the test environment
+jest.setTimeout(60 * 1000);
+
 const mocks = {
   getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),

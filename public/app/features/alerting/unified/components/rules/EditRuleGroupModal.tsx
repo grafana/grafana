@@ -29,8 +29,12 @@ interface AlertInfo {
   forDuration: string;
   evaluationsToFire: number;
 }
-function ForError({ message }: { message: string }) {
-  return <Badge color="orange" icon="exclamation-triangle" text={'Error'} tooltip={message} />;
+function ForBadge({ message, error }: { message: string; error?: boolean }) {
+  if (error) {
+    return <Badge color="red" icon="exclamation-circle" text={'Error'} tooltip={message} />;
+  } else {
+    return <Badge color="orange" icon="exclamation-triangle" text={'Unknown'} tooltip={message} />;
+  }
 }
 
 export const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
@@ -132,6 +136,7 @@ export const RulesForGroupTable = ({
 
   const { watch } = useFormContext<FormValues>();
   const currentInterval = watch('groupInterval');
+  const unknownCurrentInterval = !Boolean(currentInterval);
 
   const rows: AlertsWithForTableProps[] = rules
     .slice()
@@ -151,7 +156,7 @@ export const RulesForGroupTable = ({
         renderCell: ({ data: { alertName } }) => {
           return <>{alertName}</>;
         },
-        size: 0.6,
+        size: '330px',
       },
       {
         id: 'for',
@@ -165,19 +170,25 @@ export const RulesForGroupTable = ({
         id: 'numberEvaluations',
         label: '#Evaluations',
         renderCell: ({ data: { evaluationsToFire: numberEvaluations } }) => {
-          if (!isValidEvaluation(currentInterval)) {
-            return <ForError message={'Invalid evaluation interval format'} />;
-          }
-          if (numberEvaluations === 0) {
-            return <ForError message="Invalid 'For' value: it should be greater or equal to evaluation interval." />;
+          if (unknownCurrentInterval) {
+            return <ForBadge message="#Evaluations not available." />;
           } else {
-            return <>{numberEvaluations}</>;
+            if (!isValidEvaluation(currentInterval)) {
+              return <ForBadge message={'Invalid evaluation interval format'} error />;
+            }
+            if (numberEvaluations === 0) {
+              return (
+                <ForBadge message="Invalid 'For' value: it should be greater or equal to evaluation interval." error />
+              );
+            } else {
+              return <>{numberEvaluations}</>;
+            }
           }
         },
-        size: 0.2,
+        size: 0.6,
       },
     ];
-  }, [currentInterval]);
+  }, [currentInterval, unknownCurrentInterval]);
 
   return (
     <div className={styles.tableWrapper}>
@@ -207,6 +218,37 @@ interface FormValues {
   groupName: string;
   groupInterval: string;
 }
+
+export const evaluateEveryValidationOptions = (
+  rules: RulerRulesConfigDTO | null | undefined,
+  groupName: string,
+  nameSpaceName: string
+): RegisterOptions => ({
+  required: {
+    value: true,
+    message: 'Required.',
+  },
+  validate: (value: string) => {
+    try {
+      const duration = parsePrometheusDuration(value);
+
+      if (duration < MIN_TIME_RANGE_STEP_S * 1000) {
+        return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+
+      if (duration % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
+        return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+      if (rulesInSameGroupHaveInvalidFor(rules, groupName, nameSpaceName, value).length === 0) {
+        return true;
+      } else {
+        return `Invalid evaluation interval. Evaluation interval should be smaller or equal to 'For' values for existing rules in this group.`;
+      }
+    } catch (error) {
+      return error instanceof Error ? error.message : 'Failed to parse duration';
+    }
+  },
+});
 
 export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const {
@@ -285,35 +327,6 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const groupfoldersForSource = rulerRuleRequests[sourceName];
 
-  const evaluateEveryValidationOptions: RegisterOptions = {
-    required: {
-      value: true,
-      message: 'Required.',
-    },
-    validate: (value: string) => {
-      try {
-        const duration = parsePrometheusDuration(value);
-
-        if (duration < MIN_TIME_RANGE_STEP_S * 1000) {
-          return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
-        }
-
-        if (duration % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
-          return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
-        }
-        if (
-          rulesInSameGroupHaveInvalidFor(groupfoldersForSource.result, groupName, nameSpaceName, value).length === 0
-        ) {
-          return true;
-        } else {
-          return `Invalid evaluation interval. Evaluation interval should be smaller or equal to 'For' values for existing rules in this group.`;
-        }
-      } catch (error) {
-        return error instanceof Error ? error.message : 'Failed to parse duration';
-      }
-    },
-  };
-
   return (
     <Modal
       className={styles.modal}
@@ -387,7 +400,10 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               <Input
                 id="groupInterval"
                 placeholder="1m"
-                {...register('groupInterval', evaluateEveryValidationOptions)}
+                {...register(
+                  'groupInterval',
+                  evaluateEveryValidationOptions(groupfoldersForSource?.result, groupName, nameSpaceName)
+                )}
               />
             </Field>
 
@@ -451,8 +467,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tableWrapper: css`
     margin-top: ${theme.spacing(2)};
     margin-bottom: ${theme.spacing(2)};
-    height: 225px;
-    overflow: auto;
+    height: 100%;
   `,
   evalRequiredLabel: css`
     font-size: ${theme.typography.bodySmall.fontSize};

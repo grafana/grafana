@@ -102,7 +102,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 		return response.Error(500, "Could not generate random string", err)
 	}
 	cmd.Role = inviteDto.Role
-	cmd.RemoteAddr = c.Req.RemoteAddr
+	cmd.RemoteAddr = c.RemoteAddr()
 
 	if err := hs.tempUserService.CreateTempUser(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to save invite to database", err)

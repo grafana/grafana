@@ -177,7 +177,7 @@ export function decomposeColor(color: string | DecomposeColor): DecomposeColor {
  */
 export function recomposeColor(color: DecomposeColor) {
   const { type, colorSpace } = color;
-  let values: any = color.values;
+  let values = color.values;
 
   if (type.indexOf('rgb') !== -1) {
     // Only convert the first 3 values to int (i.e. not alpha)

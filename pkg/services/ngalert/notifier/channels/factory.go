@@ -1,53 +1,12 @@
 package channels
 
 import (
-	"context"
-	"errors"
 	"strings"
 
-	"github.com/prometheus/alertmanager/template"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/alerting/alerting/notifier/channels"
 )
 
-type FactoryConfig struct {
-	Config              *NotificationChannelConfig
-	NotificationService notifications.Service
-	DecryptFunc         GetDecryptedValueFn
-	ImageStore          ImageStore
-	// Used to retrieve image URLs for messages, or data for uploads.
-	Template *template.Template
-}
-
-type ImageStore interface {
-	GetImage(ctx context.Context, token string) (*models.Image, error)
-}
-
-func NewFactoryConfig(config *NotificationChannelConfig, notificationService notifications.Service,
-	decryptFunc GetDecryptedValueFn, template *template.Template, imageStore ImageStore) (FactoryConfig, error) {
-	if config.Settings == nil {
-		return FactoryConfig{}, errors.New("no settings supplied")
-	}
-	// not all receivers do need secure settings, we still might interact with
-	// them, so we make sure they are never nil
-	if config.SecureSettings == nil {
-		config.SecureSettings = map[string][]byte{}
-	}
-
-	if imageStore == nil {
-		imageStore = &UnavailableImageStore{}
-	}
-	return FactoryConfig{
-		Config:              config,
-		NotificationService: notificationService,
-		DecryptFunc:         decryptFunc,
-		Template:            template,
-		ImageStore:          imageStore,
-	}, nil
-}
-
-var receiverFactories = map[string]func(FactoryConfig) (NotificationChannel, error){
+var receiverFactories = map[string]func(channels.FactoryConfig) (channels.NotificationChannel, error){
 	"prometheus-alertmanager": AlertmanagerFactory,
 	"dingding":                DingDingFactory,
 	"discord":                 DiscordFactory,
@@ -55,21 +14,21 @@ var receiverFactories = map[string]func(FactoryConfig) (NotificationChannel, err
 	"googlechat":              GoogleChatFactory,
 	"kafka":                   KafkaFactory,
 	"line":                    LineFactory,
-	"opsgenie":                OpsgenieFactory,
-	"pagerduty":               PagerdutyFactory,
-	"pushover":                PushoverFactory,
-	"sensugo":                 SensuGoFactory,
+	"opsgenie":                channels.OpsgenieFactory,
+	"pagerduty":               channels.PagerdutyFactory,
+	"pushover":                channels.PushoverFactory,
+	"sensugo":                 channels.SensuGoFactory,
 	"slack":                   SlackFactory,
-	"teams":                   TeamsFactory,
-	"telegram":                TelegramFactory,
-	"threema":                 ThreemaFactory,
+	"teams":                   channels.TeamsFactory,
+	"telegram":                channels.TelegramFactory,
+	"threema":                 channels.ThreemaFactory,
 	"victorops":               VictorOpsFactory,
-	"webhook":                 WebHookFactory,
-	"wecom":                   WeComFactory,
-	"webex":                   WebexFactory,
+	"webhook":                 channels.WebHookFactory,
+	"wecom":                   channels.WeComFactory,
+	"webex":                   channels.WebexFactory,
 }
 
-func Factory(receiverType string) (func(FactoryConfig) (NotificationChannel, error), bool) {
+func Factory(receiverType string) (func(channels.FactoryConfig) (channels.NotificationChannel, error), bool) {
 	receiverType = strings.ToLower(receiverType)
 	factory, exists := receiverFactories[receiverType]
 	return factory, exists

@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceInstanceSettings, DataSourceRef, TimeRange } from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings, DataSourceRef, dateTime, TimeRange } from '@grafana/data';
 import { BackendSrvRequest, BackendSrv, DataSourceWithBackend } from '@grafana/runtime';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -45,6 +45,34 @@ describe('PublicDashboardDatasource', () => {
     expect(annotation?.queryType).toEqual(GrafanaQueryType.Annotations);
   });
 
+  test('will not fetch annotations when access token is falsey', async () => {
+    mockDatasourceRequest.mockReset();
+    mockDatasourceRequest.mockReturnValue(Promise.resolve([]));
+
+    const ds = new PublicDashboardDataSource('public');
+    const panelId = 1;
+    const publicDashboardAccessToken = undefined;
+
+    await ds.query({
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      targets: [
+        {
+          refId: 'A',
+          datasource: { uid: GRAFANA_DATASOURCE_NAME, type: 'sample' },
+          queryType: GrafanaQueryType.Annotations,
+        },
+      ],
+      panelId,
+      publicDashboardAccessToken,
+      range: { from: new Date().toLocaleString(), to: new Date().toLocaleString() } as unknown as TimeRange,
+    } as DataQueryRequest);
+
+    const mock = mockDatasourceRequest.mock;
+
+    expect(mock.calls.length).toBe(0);
+  });
+
   test('fetches results from the pubdash annotations endpoint when it is an annotation query', async () => {
     mockDatasourceRequest.mockReset();
     mockDatasourceRequest.mockReturnValue(Promise.resolve([]));
@@ -87,6 +115,14 @@ describe('PublicDashboardDatasource', () => {
       intervalMs: 5000,
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
       panelId,
+      range: {
+        from: dateTime('2022-01-01T15:55:00Z'),
+        to: dateTime('2022-07-12T15:55:00Z'),
+        raw: {
+          from: 'now-15m',
+          to: 'now',
+        },
+      },
       publicDashboardAccessToken,
     } as DataQueryRequest);
 

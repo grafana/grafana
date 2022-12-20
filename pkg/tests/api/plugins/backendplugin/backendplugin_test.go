@@ -405,6 +405,12 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T) {
 			}
 			outReq, err := http.NewRequestWithContext(ctx, http.MethodGet, tsCtx.outgoingServer.URL, nil)
 			require.NoError(t, err)
+			for k, vals := range req.Headers {
+				for _, v := range vals {
+					outReq.Header.Add(k, v)
+				}
+			}
+
 			resp, err := c.Do(outReq)
 			if err != nil {
 				return err
@@ -420,8 +426,18 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T) {
 				tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to discard body", "error", err)
 			}
 
+			responseHeaders := map[string][]string{
+				"Connection":       {"close, TE"},
+				"Te":               {"foo", "bar, trailers"},
+				"Proxy-Connection": {"should be deleted"},
+				"Upgrade":          {"foo"},
+				"Set-Cookie":       {"should be deleted"},
+				"X-Custom":         {"should not be deleted"},
+			}
+
 			err = sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusOK,
+				Status:  http.StatusOK,
+				Headers: responseHeaders,
 			})
 
 			return err
@@ -431,6 +447,10 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T) {
 
 		req, err := http.NewRequest(http.MethodGet, u, nil)
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Connection", "X-Some-Conn-Header")
+		req.Header.Set("X-Some-Conn-Header", "should be deleted")
+		req.Header.Set("Proxy-Connection", "should be deleted")
+		req.Header.Set("X-Custom", "custom")
 		req.AddCookie(&http.Cookie{
 			Name: "cookie1",
 		})
@@ -457,9 +477,20 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T) {
 		_, err = io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
+		require.Empty(t, resp.Header.Get("Connection"))
+		require.Empty(t, resp.Header.Get("Te"))
+		require.Empty(t, resp.Header.Get("Proxy-Connection"))
+		require.Empty(t, resp.Header.Get("Upgrade"))
+		require.Empty(t, resp.Header.Get("Set-Cookie"))
+		require.Equal(t, "should not be deleted", resp.Header.Get("X-Custom"))
+
 		// backend query data request
 		require.NotNil(t, received)
 		require.Equal(t, "cookie1=; cookie3=", received.req.Headers["Cookie"][0])
+		require.Empty(t, received.req.Headers["Connection"])
+		require.Empty(t, received.req.Headers["X-Some-Conn-Header"])
+		require.Empty(t, received.req.Headers["Proxy-Connection"])
+		require.Equal(t, "custom", received.req.Headers["X-Custom"][0])
 
 		token := tsCtx.testEnv.OAuthTokenService.Token
 
@@ -477,6 +508,10 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T) {
 		// outgoing HTTP request
 		require.NotNil(t, tsCtx.outgoingRequest)
 		require.Equal(t, "cookie1=; cookie3=", tsCtx.outgoingRequest.Header.Get("Cookie"))
+		require.Empty(t, tsCtx.outgoingRequest.Header.Get("Connection"))
+		require.Empty(t, tsCtx.outgoingRequest.Header.Get("X-Some-Conn-Header"))
+		require.Empty(t, tsCtx.outgoingRequest.Header.Get("Proxy-Connection"))
+		require.Equal(t, "custom", tsCtx.outgoingRequest.Header.Get("X-Custom"))
 		require.Equal(t, "custom-header-value", tsCtx.outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
 
 		if token == nil {

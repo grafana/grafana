@@ -16,8 +16,8 @@ interface Props {
   data: PanelData;
   currentPanel: SupportedPanelPlugins;
   changePanel: (panel: SupportedPanelPlugins) => void;
-  thresholds: ThresholdsConfig;
-  onThresholdsChange: (thresholds: ThresholdsConfig) => void;
+  thresholds?: ThresholdsConfig;
+  onThresholdsChange?: (thresholds: ThresholdsConfig) => void;
 }
 
 type PanelFieldConfig = FieldConfigSource<GraphFieldConfig>;
@@ -30,7 +30,7 @@ export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel, onThres
   const vizHeight = useVizHeight(data, currentPanel, options.frameIndex);
   const styles = useStyles2(getStyles(vizHeight));
 
-  const [fieldConfig, setFieldConfig] = useState<PanelFieldConfig>(defaultFieldConfig(thresholds, data));
+  const [fieldConfig, setFieldConfig] = useState<PanelFieldConfig>(defaultFieldConfig(data, thresholds));
 
   useEffect(() => {
     setFieldConfig((fieldConfig) => ({
@@ -109,7 +109,7 @@ function defaultUnit(data: PanelData): string | undefined {
   return data.series[0]?.fields.find((field) => field.type === 'number')?.config.unit;
 }
 
-function defaultFieldConfig(thresholds: ThresholdsConfig, data: PanelData): PanelFieldConfig {
+function defaultFieldConfig(data: PanelData, thresholds?: ThresholdsConfig): PanelFieldConfig {
   if (!thresholds) {
     return { defaults: {}, overrides: [] };
   }

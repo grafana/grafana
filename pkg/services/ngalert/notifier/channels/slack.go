@@ -18,13 +18,12 @@ import (
 	"time"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -54,33 +53,36 @@ var (
 
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
-type sendFunc func(ctx context.Context, req *http.Request, logger log.Logger) (string, error)
+type sendFunc func(ctx context.Context, req *http.Request, logger channels.Logger) (string, error)
+
+// https://api.slack.com/reference/messaging/attachments#legacy_fields - 1024, no units given, assuming runes or characters.
+const slackMaxTitleLenRunes = 1024
 
 // SlackNotifier is responsible for sending
 // alert notification to Slack.
 type SlackNotifier struct {
-	*Base
-	log           log.Logger
+	*channels.Base
+	log           channels.Logger
 	tmpl          *template.Template
-	images        ImageStore
-	webhookSender notifications.WebhookSender
+	images        channels.ImageStore
+	webhookSender channels.WebhookSender
 	sendFn        sendFunc
 	settings      slackSettings
 }
 
 type slackSettings struct {
-	EndpointURL    string                `json:"endpointUrl,omitempty" yaml:"endpointUrl,omitempty"`
-	URL            string                `json:"url,omitempty" yaml:"url,omitempty"`
-	Token          string                `json:"token,omitempty" yaml:"token,omitempty"`
-	Recipient      string                `json:"recipient,omitempty" yaml:"recipient,omitempty"`
-	Text           string                `json:"text,omitempty" yaml:"text,omitempty"`
-	Title          string                `json:"title,omitempty" yaml:"title,omitempty"`
-	Username       string                `json:"username,omitempty" yaml:"username,omitempty"`
-	IconEmoji      string                `json:"icon_emoji,omitempty" yaml:"icon_emoji,omitempty"`
-	IconURL        string                `json:"icon_url,omitempty" yaml:"icon_url,omitempty"`
-	MentionChannel string                `json:"mentionChannel,omitempty" yaml:"mentionChannel,omitempty"`
-	MentionUsers   CommaSeparatedStrings `json:"mentionUsers,omitempty" yaml:"mentionUsers,omitempty"`
-	MentionGroups  CommaSeparatedStrings `json:"mentionGroups,omitempty" yaml:"mentionGroups,omitempty"`
+	EndpointURL    string                         `json:"endpointUrl,omitempty" yaml:"endpointUrl,omitempty"`
+	URL            string                         `json:"url,omitempty" yaml:"url,omitempty"`
+	Token          string                         `json:"token,omitempty" yaml:"token,omitempty"`
+	Recipient      string                         `json:"recipient,omitempty" yaml:"recipient,omitempty"`
+	Text           string                         `json:"text,omitempty" yaml:"text,omitempty"`
+	Title          string                         `json:"title,omitempty" yaml:"title,omitempty"`
+	Username       string                         `json:"username,omitempty" yaml:"username,omitempty"`
+	IconEmoji      string                         `json:"icon_emoji,omitempty" yaml:"icon_emoji,omitempty"`
+	IconURL        string                         `json:"icon_url,omitempty" yaml:"icon_url,omitempty"`
+	MentionChannel string                         `json:"mentionChannel,omitempty" yaml:"mentionChannel,omitempty"`
+	MentionUsers   channels.CommaSeparatedStrings `json:"mentionUsers,omitempty" yaml:"mentionUsers,omitempty"`
+	MentionGroups  channels.CommaSeparatedStrings `json:"mentionGroups,omitempty" yaml:"mentionGroups,omitempty"`
 }
 
 // isIncomingWebhook returns true if the settings are for an incoming webhook.
@@ -100,7 +102,7 @@ func uploadURL(s slackSettings) (string, error) {
 }
 
 // SlackFactory creates a new NotificationChannel that sends notifications to Slack.
-func SlackFactory(fc FactoryConfig) (NotificationChannel, error) {
+func SlackFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
 	ch, err := buildSlackNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
@@ -111,10 +113,10 @@ func SlackFactory(fc FactoryConfig) (NotificationChannel, error) {
 	return ch, nil
 }
 
-func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
+func buildSlackNotifier(factoryConfig channels.FactoryConfig) (*SlackNotifier, error) {
 	decryptFunc := factoryConfig.DecryptFunc
 	var settings slackSettings
-	err := factoryConfig.Config.unmarshalSettings(&settings)
+	err := json.Unmarshal(factoryConfig.Config.Settings, &settings)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
@@ -148,25 +150,19 @@ func buildSlackNotifier(factoryConfig FactoryConfig) (*SlackNotifier, error) {
 		settings.Username = "Grafana"
 	}
 	if settings.Text == "" {
-		settings.Text = DefaultMessageEmbed
+		settings.Text = channels.DefaultMessageEmbed
 	}
 	if settings.Title == "" {
-		settings.Title = DefaultMessageTitleEmbed
+		settings.Title = channels.DefaultMessageTitleEmbed
 	}
 	return &SlackNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   factoryConfig.Config.UID,
-			Name:                  factoryConfig.Config.Name,
-			Type:                  factoryConfig.Config.Type,
-			DisableResolveMessage: factoryConfig.Config.DisableResolveMessage,
-			Settings:              factoryConfig.Config.Settings,
-		}),
+		Base:     channels.NewBase(factoryConfig.Config),
 		settings: settings,
 
 		images:        factoryConfig.ImageStore,
 		webhookSender: factoryConfig.NotificationService,
 		sendFn:        sendSlackRequest,
-		log:           log.New("alerting.notifier.slack"),
+		log:           factoryConfig.Logger,
 		tmpl:          factoryConfig.Template,
 	}, nil
 }
@@ -217,7 +213,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 
 	// Do not upload images if using an incoming webhook as incoming webhooks cannot upload files
 	if !isIncomingWebhook(sn.settings) {
-		if err := withStoredImages(ctx, sn.log, sn.images, func(index int, image ngmodels.Image) error {
+		if err := withStoredImages(ctx, sn.log, sn.images, func(index int, image channels.Image) error {
 			// If we have exceeded the maximum number of images for this thread_ts
 			// then tell the recipient and stop iterating subsequent images
 			if index >= maxImagesPerThreadTs {
@@ -228,7 +224,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 				}); err != nil {
 					sn.log.Error("Failed to send Slack message", "err", err)
 				}
-				return ErrImagesDone
+				return channels.ErrImagesDone
 			}
 			comment := initialCommentForImage(alerts[index])
 			return sn.uploadImage(ctx, image, sn.settings.Recipient, comment, thread_ts)
@@ -243,7 +239,7 @@ func (sn *SlackNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 
 // sendSlackRequest sends a request to the Slack API.
 // Stubbable by tests.
-var sendSlackRequest = func(ctx context.Context, req *http.Request, logger log.Logger) (string, error) {
+var sendSlackRequest = func(ctx context.Context, req *http.Request, logger channels.Logger) (string, error) {
 	resp, err := slackClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to send request: %w", err)
@@ -275,7 +271,7 @@ var sendSlackRequest = func(ctx context.Context, req *http.Request, logger log.L
 	}
 }
 
-func handleSlackIncomingWebhookResponse(resp *http.Response, logger log.Logger) (string, error) {
+func handleSlackIncomingWebhookResponse(resp *http.Response, logger channels.Logger) (string, error) {
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("failed to read response: %w", err)
@@ -319,7 +315,7 @@ func handleSlackIncomingWebhookResponse(resp *http.Response, logger log.Logger) 
 	return "", fmt.Errorf("failed incoming webhook: %s", string(b))
 }
 
-func handleSlackJSONResponse(resp *http.Response, logger log.Logger) (string, error) {
+func handleSlackJSONResponse(resp *http.Response, logger channels.Logger) (string, error) {
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("failed to read response: %w", err)
@@ -353,9 +349,18 @@ func handleSlackJSONResponse(resp *http.Response, logger log.Logger) (string, er
 
 func (sn *SlackNotifier) createSlackMessage(ctx context.Context, alerts []*types.Alert) (*slackMessage, error) {
 	var tmplErr error
-	tmpl, _ := TmplText(ctx, sn.tmpl, alerts, sn.log, &tmplErr)
+	tmpl, _ := channels.TmplText(ctx, sn.tmpl, alerts, sn.log, &tmplErr)
 
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
+
+	title, truncated := channels.TruncateInRunes(tmpl(sn.settings.Title), slackMaxTitleLenRunes)
+	if truncated {
+		key, err := notify.ExtractGroupKey(ctx)
+		if err != nil {
+			return nil, err
+		}
+		sn.log.Warn("Truncated title", "key", key, "max_runes", slackMaxTitleLenRunes)
+	}
 
 	req := &slackMessage{
 		Channel:   tmpl(sn.settings.Recipient),
@@ -367,10 +372,10 @@ func (sn *SlackNotifier) createSlackMessage(ctx context.Context, alerts []*types
 		Attachments: []attachment{
 			{
 				Color:      getAlertStatusColor(types.Alerts(alerts...).Status()),
-				Title:      tmpl(sn.settings.Title),
-				Fallback:   tmpl(sn.settings.Title),
+				Title:      title,
+				Fallback:   title,
 				Footer:     "Grafana v" + setting.BuildVersion,
-				FooterIcon: FooterIconURL,
+				FooterIcon: channels.FooterIconURL,
 				Ts:         time.Now().Unix(),
 				TitleLink:  ruleURL,
 				Text:       tmpl(sn.settings.Text),
@@ -381,10 +386,10 @@ func (sn *SlackNotifier) createSlackMessage(ctx context.Context, alerts []*types
 
 	if isIncomingWebhook(sn.settings) {
 		// Incoming webhooks cannot upload files, instead share images via their URL
-		_ = withStoredImages(ctx, sn.log, sn.images, func(index int, image ngmodels.Image) error {
+		_ = withStoredImages(ctx, sn.log, sn.images, func(index int, image channels.Image) error {
 			if image.URL != "" {
 				req.Attachments[0].ImageURL = image.URL
-				return ErrImagesDone
+				return channels.ErrImagesDone
 			}
 			return nil
 		}, alerts...)
@@ -464,7 +469,7 @@ func (sn *SlackNotifier) sendSlackMessage(ctx context.Context, m *slackMessage) 
 // createImageMultipart returns the mutlipart/form-data request and headers for files.upload.
 // It returns an error if the image does not exist or there was an error preparing the
 // multipart form.
-func (sn *SlackNotifier) createImageMultipart(image ngmodels.Image, channel, comment, thread_ts string) (http.Header, []byte, error) {
+func (sn *SlackNotifier) createImageMultipart(image channels.Image, channel, comment, thread_ts string) (http.Header, []byte, error) {
 	buf := bytes.Buffer{}
 	w := multipart.NewWriter(&buf)
 	defer func() {
@@ -477,6 +482,11 @@ func (sn *SlackNotifier) createImageMultipart(image ngmodels.Image, channel, com
 	if err != nil {
 		return nil, nil, err
 	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			sn.log.Error("Failed to close image file reader", "error", err)
+		}
+	}()
 
 	fw, err := w.CreateFormFile("file", image.Path)
 	if err != nil {
@@ -536,7 +546,7 @@ func (sn *SlackNotifier) sendMultipart(ctx context.Context, headers http.Header,
 // uploadImage shares the image to the channel names or IDs. It returns an error if the file
 // does not exist, or if there was an error either preparing or sending the multipart/form-data
 // request.
-func (sn *SlackNotifier) uploadImage(ctx context.Context, image ngmodels.Image, channel, comment, thread_ts string) error {
+func (sn *SlackNotifier) uploadImage(ctx context.Context, image channels.Image, channel, comment, thread_ts string) error {
 	sn.log.Debug("Uploadimg image", "image", image.Token)
 	headers, data, err := sn.createImageMultipart(image, channel, comment, thread_ts)
 	if err != nil {
