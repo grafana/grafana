@@ -37,18 +37,27 @@ func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 		newPassword = c.Args().First()
 	}
 
+	err := resetPassword(adminId, newPassword, runner.UserService)
+	if err == nil {
+		logger.Infof("\n")
+		logger.Infof("Admin password changed successfully %s", color.GreenString("✔"))
+	}
+	return err
+}
+
+func resetPassword(adminId int64, newPassword string, userSvc user.Service) error {
 	password := models.Password(newPassword)
 	if password.IsWeak() {
 		return fmt.Errorf("new password is too short")
 	}
 
 	userQuery := user.GetUserByIDQuery{ID: adminId}
-	usr, err := runner.UserService.GetByID(context.Background(), &userQuery)
+	usr, err := userSvc.GetByID(context.Background(), &userQuery)
 	if err != nil {
 		return fmt.Errorf("could not read user from database. Error: %v", err)
 	}
 	if !usr.IsAdmin {
-		return fmt.Errorf("reset-admin-password can only be used to reset an admin user account")
+		return ErrMustBeAdmin
 	}
 
 	passwordHashed, err := util.EncodePassword(newPassword, usr.Salt)
@@ -61,12 +70,11 @@ func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 		NewPassword: passwordHashed,
 	}
 
-	if err := runner.UserService.ChangePassword(context.Background(), &cmd); err != nil {
+	if err := userSvc.ChangePassword(context.Background(), &cmd); err != nil {
 		return fmt.Errorf("failed to update user password: %w", err)
 	}
 
-	logger.Infof("\n")
-	logger.Infof("Admin password changed successfully %s", color.GreenString("✔"))
-
 	return nil
 }
+
+var ErrMustBeAdmin = fmt.Errorf("reset-admin-password can only be used to reset an admin user account")
