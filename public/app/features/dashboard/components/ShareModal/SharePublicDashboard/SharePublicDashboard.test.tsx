@@ -8,11 +8,13 @@ import 'whatwg-fetch';
 import { BootData, DataQuery } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { setEchoSrv } from '@grafana/runtime/src';
+import { Panel } from '@grafana/schema';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { configureStore } from 'app/store/configureStore';
 
 import { ShareModal } from '../ShareModal';
@@ -71,7 +73,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
-  mockDashboard = new DashboardModel({
+  mockDashboard = createDashboardModelFixture({
     uid: 'mockDashboardUid',
   });
 
@@ -203,8 +205,8 @@ describe('SharePublic - New config setup', () => {
           datasource: { type: 'notSupportedDatasource', uid: 'abc123' },
         } as DataQuery,
       ] as DataQuery[],
-    } as PanelModel;
-    const dashboard = new DashboardModel({
+    } as unknown as Panel;
+    const dashboard = createDashboardModelFixture({
       id: 1,
       panels: [panelModel],
     });
