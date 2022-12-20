@@ -93,6 +93,7 @@ Alpha features might be changed or removed without prior notice.
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
+| `editPanelCSVDragAndDrop`          | Enable drag and drop csv, excel files for edit panel                                                                                                                         |
 
 ## Development feature toggles
 

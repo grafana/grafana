@@ -286,4 +286,8 @@ const (
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
+
+	// FlagEditPanelCSVDragAndDrop
+	// Enable drag and drop csv, excel files for edit panel
+	FlagEditPanelCSVDragAndDrop = "editPanelCSVDragAndDrop"
 )

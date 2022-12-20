@@ -392,5 +392,11 @@ var (
 			Description: "Rule backtesting API for alerting",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:         "editPanelCSVDragAndDrop",
+			Description:  "Enable drag and drop csv, excel files for edit panel",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+		},
 	}
 )
