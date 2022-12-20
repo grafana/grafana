@@ -37,11 +37,16 @@ export const QueryBuilderHints = <T extends PromLokiVisualQuery>({
     setHints(hints);
   }, [datasource, visualQuery, data, queryModeller]);
 
+  const hasLabelFilter = visualQuery.operations.find((x) => x.id === '__label_filter');
+
   return (
     <>
       {hints.length > 0 && (
         <div className={styles.container}>
           {hints.map((hint) => {
+            if (hint.type === 'ADD_LABEL_FILTER' && hasLabelFilter) {
+              return null;
+            }
             return (
               <Tooltip content={`${hint.label} ${hint.fix?.label}`} key={hint.type}>
                 <Button
