@@ -7,6 +7,7 @@ import { useStyles } from '@grafana/ui/src';
 import { RawListValue } from './RawListItem';
 
 const getStyles = (theme: GrafanaTheme) => {
+  // Borrowed from the monaco styles
   const reddish = theme.isDark ? '#ce9178' : '#a31515';
   const greenish = theme.isDark ? '#73bf69' : '#56a64b';
 

@@ -20,6 +20,7 @@ export type RawListValue = { key: string; value: string };
 
 export const rawListItemColumnWidth = '80px';
 const extraSpaceAtEndOfLine = '20px';
+const paddingToHoldSpaceForCopyIcon = '25px';
 const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
   rowWrapper: css`
     border-bottom: 1px solid ${theme.colors.border3};
@@ -35,7 +36,7 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
   `,
   rowLabelWrapWrap: css`
     position: relative;
-    width: calc(100% - (${totalNumberOfValues} * ${rawListItemColumnWidth}) - 25px);
+    width: calc(100% - (${totalNumberOfValues} * ${rawListItemColumnWidth}) - ${paddingToHoldSpaceForCopyIcon});
   `,
   rowLabelWrap: css`
     white-space: nowrap;
@@ -63,7 +64,7 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
     font-weight: bold;
   `,
   rowValuesWrap: css`
-    padding-left: 25px;
+    padding-left: ${paddingToHoldSpaceForCopyIcon};
     font-weight: bold;
     width: calc(${totalNumberOfValues} * ${rawListItemColumnWidth});
     display: flex;

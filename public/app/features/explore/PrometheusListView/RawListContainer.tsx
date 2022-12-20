@@ -61,7 +61,7 @@ const RawListContainer = (props: RawListContainerProps) => {
   };
 
   const getListItemHeight = (itemIndex: number) => {
-    const singleLineHeight = 42;
+    const singleLineHeight = 32;
     const additionalLineHeight = 22;
     if (!isExpandedView) {
       return singleLineHeight;
@@ -69,7 +69,7 @@ const RawListContainer = (props: RawListContainerProps) => {
     const item = items[itemIndex];
 
     // Height of a single line, plus the number of non value attributes times the height of additional lines plus padding
-    return singleLineHeight + (Object.keys(item).length - valueLabels.length) * additionalLineHeight + 5;
+    return singleLineHeight + (Object.keys(item).length - valueLabels.length) * additionalLineHeight + 15;
   };
 
   return (
