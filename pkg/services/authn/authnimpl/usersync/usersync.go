@@ -79,8 +79,8 @@ func (s *UserSync) updateAuthInfo(ctx context.Context, id *authn.Identity) error
 	}
 
 	namespace, userID := id.NamespacedID()
-	if namespace != "user" { // FIXME: constant namespace
-		return nil // FIXME: we should return an error here
+	if namespace != "user" && userID <= 0 { // FIXME: constant namespace
+		return fmt.Errorf("invalid namespace %q for user ID %q", namespace, userID)
 	}
 
 	updateCmd := &models.UpdateAuthInfoCommand{

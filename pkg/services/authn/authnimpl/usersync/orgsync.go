@@ -29,7 +29,7 @@ func (s *OrgSync) SyncOrgUser(ctx context.Context, clientParams *authn.ClientPar
 	}
 
 	namespace, userID := id.NamespacedID()
-	if namespace != "user" {
+	if namespace != "user" && userID <= 0 {
 		return fmt.Errorf("invalid namespace %q for user ID %q", namespace, userID)
 	}
 
