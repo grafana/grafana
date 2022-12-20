@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 
+import { useStyles2, getSelectStyles, useTheme2 } from '@grafana/ui';
 import { Role } from 'app/types';
 
 import { RoleMenuGroupOption } from './RoleMenuGroupOption';
 import { RoleMenuOption } from './RoleMenuOption';
 import { RolePickerSubMenu } from './RolePickerSubMenu';
+import { getStyles } from './styles';
 import { isNotDelegatable } from './utils';
 
 interface RoleMenuGroupsSectionProps {
   roles: Role[];
   renderedName: string;
-  menuSectionStyle: string;
-  groupHeaderStyle: string;
-  optionBodyStyle: string;
   showGroups?: boolean;
   optionGroups: Array<{
     name: string;
@@ -35,9 +34,6 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
     {
       roles,
       renderedName,
-      menuSectionStyle,
-      groupHeaderStyle,
-      optionBodyStyle,
       showGroups,
       optionGroups,
       onGroupChange,
@@ -54,6 +50,10 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
     const [showSubMenu, setShowSubMenu] = useState(false);
     const [openedMenuGroup, setOpenedMenuGroup] = useState('');
 
+    const theme = useTheme2();
+    const selectStyles = getSelectStyles(theme);
+    const styles = useStyles2(getStyles);
+
     const onOpenSubMenu = (value: string) => {
       setOpenedMenuGroup(value);
       setShowSubMenu(true);
@@ -67,9 +67,9 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
     return (
       <div>
         {roles.length > 0 && (
-          <div className={menuSectionStyle}>
-            <div className={groupHeaderStyle}>{renderedName}</div>
-            <div className={optionBodyStyle}></div>
+          <div className={styles.menuSection}>
+            <div className={styles.groupHeader}>{renderedName}</div>
+            <div className={selectStyles.optionBody}></div>
             {showGroups && !!optionGroups?.length
               ? optionGroups.map((groupOption) => (
                   <RoleMenuGroupOption

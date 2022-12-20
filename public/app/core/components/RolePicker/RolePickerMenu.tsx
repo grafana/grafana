@@ -224,9 +224,6 @@ export const RolePickerMenu = ({
               key={groupId}
               roles={collection.roles}
               renderedName={collection.renderedName}
-              menuSectionStyle={customStyles.menuSection}
-              groupHeaderStyle={customStyles.groupHeader}
-              optionBodyStyle={styles.optionBody}
               showGroups={showGroups}
               optionGroups={collection.optionGroup}
               groupSelected={(group: string) => groupSelected(collection.groupType, group)}
