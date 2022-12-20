@@ -149,7 +149,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
 				dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
 
-				err := service.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{
+				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
 					UID:              folderUID,
 					OrgID:            orgID,
 					ForceDeleteRules: false,
@@ -235,7 +235,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				}).Return(nil).Once()
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
-				err := service.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{
+				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
 					UID:              f.UID,
 					OrgID:            orgID,
 					ForceDeleteRules: expectedForceDeleteRules,
@@ -345,56 +345,6 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		require.NotNil(t, res.UID)
 		require.NotEmpty(t, res.ParentUID)
 	})
-
-	t.Run("get parents folder", func(t *testing.T) {
-		folderStore.ExpectedFolder = &folder.Folder{}
-		_, err := folderService.GetParents(context.Background(), &folder.GetParentsQuery{})
-		require.NoError(t, err)
-	})
-
-	t.Run("get children folder", func(t *testing.T) {
-		folderStore.ExpectedChildFolders = []*folder.Folder{
-			{
-				UID: "test",
-			},
-			{
-				UID: "test2",
-			},
-			{
-				UID: "test3",
-			},
-			{
-				UID: "test4",
-			},
-		}
-
-		g := guardian.New
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
-		t.Cleanup(func() {
-			guardian.New = g
-		})
-
-		res, err := folderService.GetChildren(context.Background(),
-			&folder.GetChildrenQuery{
-				UID:          "test",
-				SignedInUser: usr,
-			})
-		require.NoError(t, err)
-		require.Equal(t, 0, len(res))
-
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
-		t.Cleanup(func() {
-			guardian.New = g
-		})
-
-		res, err = folderService.GetChildren(context.Background(),
-			&folder.GetChildrenQuery{
-				UID:          "test",
-				SignedInUser: usr,
-			})
-		require.NoError(t, err)
-		require.Equal(t, 4, len(res))
-	})
 }
 
 func TestNestedFolderService(t *testing.T) {
@@ -443,7 +393,7 @@ func TestNestedFolderService(t *testing.T) {
 			g := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
-			err := foldersvc.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
+			err := foldersvc.Delete(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
 			require.NotNil(t, actualCmd)
 
@@ -697,7 +647,7 @@ func TestNestedFolderService(t *testing.T) {
 			g := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
-			err := foldersvc.DeleteFolder(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
+			err := foldersvc.Delete(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
 			require.NotNil(t, actualCmd)
 

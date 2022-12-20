@@ -488,14 +488,14 @@ func prepareForUpdate(dashFolder *models.Dashboard, orgId int64, userId int64, c
 	dashFolder.UpdateSlug()
 }
 
-func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	logger := s.log.FromContext(ctx)
 	if cmd.SignedInUser == nil {
 		return folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		err := s.Delete(ctx, cmd)
+		err := s.nestedFolderDelete(ctx, cmd)
 		if err != nil {
 			logger.Error("the delete folder on folder table failed with err: ", "error", err)
 			return err
@@ -519,6 +519,10 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		return dashboards.ErrFolderAccessDenied
 	}
 
+	return s.legacyDelete(ctx, cmd, dashFolder)
+}
+
+func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
 	deleteCmd := models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
@@ -549,7 +553,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	if err != nil {
 		return nil, err
 	}
-	parents, err := s.GetParents(ctx, &folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
+	parents, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
 	if err != nil {
 		return nil, err
 	}
@@ -574,7 +578,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	})
 }
 
-func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	logger := s.log.FromContext(ctx)
 	if cmd.SignedInUser == nil {
 		return folder.ErrBadRequest.Errorf("missing signed in user")
@@ -595,7 +599,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	}
 	for _, f := range folders {
 		logger.Info("deleting subfolder", "org_id", f.OrgID, "uid", f.UID)
-		err := s.Delete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules, SignedInUser: cmd.SignedInUser})
+		err := s.nestedFolderDelete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules, SignedInUser: cmd.SignedInUser})
 		if err != nil {
 			logger.Error("failed deleting subfolder", "org_id", f.OrgID, "uid", f.UID, "error", err)
 			return err
@@ -608,12 +612,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		return err
 	}
 	return nil
-}
-
-func (s *Service) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) ([]*folder.Folder, error) {
-	// check the flag, if old - do whatever did before
-	//  for new only the store
-	return s.store.GetParents(ctx, *cmd)
 }
 
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {

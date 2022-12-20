@@ -30,7 +30,7 @@ func (s *FakeService) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*fol
 func (s *FakeService) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
-func (s *FakeService) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+func (s *FakeService) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	return s.ExpectedError
 }
 func (s *FakeService) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
@@ -39,14 +39,4 @@ func (s *FakeService) MakeUserAdmin(ctx context.Context, orgID int64, userID, fo
 
 func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
-}
-
-func (s *FakeService) GetParents(ctx context.Context, orgID int64, folderUID string) ([]*folder.Folder, error) {
-	return s.ExpectedFolders, s.ExpectedError
-}
-
-func (s *FakeService) GetTree(ctx context.Context, orgID int64, folderUID string, depth int64) (map[string][]*folder.Folder, error) {
-	ret := make(map[string][]*folder.Folder)
-	ret[folderUID] = s.ExpectedFolders
-	return ret, s.ExpectedError
 }
