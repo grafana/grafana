@@ -111,5 +111,11 @@ func (s *Service) handleRemove(ctx *models.ReqContext) response.Response {
 }
 
 func (s *Service) handleGetCollectors(ctx *models.ReqContext) response.Response {
-	return response.JSON(http.StatusOK, s.collectors)
+	collectors := make([]supportbundles.Collector, 0, len(s.collectors))
+
+	for _, c := range s.collectors {
+		collectors = append(collectors, c)
+	}
+
+	return response.JSON(http.StatusOK, collectors)
 }
