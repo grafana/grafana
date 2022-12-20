@@ -7,6 +7,7 @@ export type AlertManagerCortexConfig = {
   alertmanager_config: AlertmanagerConfig;
   /** { [name]: provenance } */
   template_file_provenances?: Record<string, string>;
+  successfully_applied_at?: string;
 };
 
 export type TLSConfig = {

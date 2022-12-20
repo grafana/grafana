@@ -44,8 +44,10 @@ export default function AlertmanagerConfigSelector({
       return [];
     }
 
-    const configs: ValidAmConfigOption[] = validAmConfigs.map((config, index) => ({
-      label: `Config ${index + 1}`,
+    const configs: ValidAmConfigOption[] = validAmConfigs.map((config) => ({
+      label: config.successfully_applied_at
+        ? `Config from ${new Date(config.successfully_applied_at).toLocaleString()}`
+        : 'Previous config',
       value: config,
     }));
     onChange(configs[0]);
