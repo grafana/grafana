@@ -77,7 +77,7 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
 export interface VariableModel {
   datasource?: DataSourceRef;
   description?: string;
-  error?: Record<string, unknown>;
+  error?: Record<string, any>;
   global: boolean;
   hide: VariableHide;
   id: string;
@@ -87,7 +87,7 @@ export interface VariableModel {
   /**
    * TODO: Move this into a separated QueryVariableModel type
    */
-  query?: (string | Record<string, unknown>);
+  query?: (string | Record<string, any>);
   rootStateKey?: string;
   skipUrlSync: boolean;
   state: LoadingState;
@@ -105,9 +105,9 @@ export const defaultVariableModel: Partial<VariableModel> = {
  * TODO: There is a bug generating the names, they are always title case
  */
 export enum VariableHide {
-  DontHide = 0,
-  HideLabel = 1,
-  HideVariable = 2,
+  dontHide = 0,
+  hideLabel = 1,
+  hideVariable = 2,
 }
 
 export enum LoadingState {
@@ -289,10 +289,7 @@ export enum MappingType {
 /**
  * TODO docs
  */
-export interface ValueMap {
-  options: Record<string, unknown>;
-  type: MappingType.ValueToText;
-}
+export interface ValueMap %!s(PANIC=String method: runtime error: invalid memory address or nil pointer dereference)
 
 /**
  * TODO docs
@@ -360,7 +357,7 @@ export interface ValueMappingResult {
  */
 export interface Transformation {
   id: string;
-  options: Record<string, unknown>;
+  options: Record<string, any>;
 }
 
 /**
@@ -420,7 +417,7 @@ export interface Panel {
    * options is specified by the PanelOptions field in panel
    * plugin schemas.
    */
-  options: Record<string, unknown>;
+  options: Record<string, any>;
   /**
    * FIXME this almost certainly has to be changed in favor of scuemata versions
    */
@@ -446,7 +443,7 @@ export interface Panel {
   /**
    * TODO docs
    */
-  targets?: Array<Record<string, unknown>>;
+  targets?: Array<Record<string, any>>;
   /**
    * TODO docs - seems to be an old field from old dashboard alerts?
    */
@@ -524,7 +521,7 @@ export interface FieldConfig {
    * custom is specified by the PanelFieldConfig field
    * in panel plugin schemas.
    */
-  custom?: Record<string, unknown>;
+  custom?: Record<string, any>;
   /**
    * Significant digits (for display)
    */

@@ -61,7 +61,6 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/grafana/alerting v0.0.0-20221219210434-60ecaff51745
 	github.com/grafana/cuetsy v0.1.2
-	github.com/grafana/cuetsy v0.1.1
 	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.5.1
 	github.com/grafana/grafana-plugin-sdk-go v0.147.0
@@ -273,7 +272,10 @@ require (
 	k8s.io/client-go v12.0.0+incompatible // gets replaced with v0.25.0
 )
 
-require k8s.io/apimachinery v0.25.0
+require (
+	github.com/dave/dst v0.27.2
+	k8s.io/apimachinery v0.25.0
+)
 
 require (
 	cloud.google.com/go v0.102.0 // indirect
@@ -285,7 +287,6 @@ require (
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
 	github.com/containerd/containerd v1.6.8 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
-	github.com/dave/dst v0.27.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -365,7 +366,6 @@ require (
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.3 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
