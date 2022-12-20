@@ -36,6 +36,7 @@ describe('Public dashboard title tag', () => {
               isFullscreen={false}
               onAddPanel={() => {}}
               title="test"
+              isPublic={false}
             />
           </Router>
         </GrafanaContext.Provider>

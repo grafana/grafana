@@ -361,9 +361,30 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 				UID: "test4",
 			},
 		}
-		res, err := folderService.GetTree(context.Background(),
-			&folder.GetTreeQuery{
-				UID: "test",
+
+		g := guardian.New
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
+		t.Cleanup(func() {
+			guardian.New = g
+		})
+
+		res, err := folderService.GetChildren(context.Background(),
+			&folder.GetChildrenQuery{
+				UID:          "test",
+				SignedInUser: usr,
+			})
+		require.NoError(t, err)
+		require.Equal(t, 0, len(res))
+
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
+		t.Cleanup(func() {
+			guardian.New = g
+		})
+
+		res, err = folderService.GetChildren(context.Background(),
+			&folder.GetChildrenQuery{
+				UID:          "test",
+				SignedInUser: usr,
 			})
 		require.NoError(t, err)
 		require.Equal(t, 4, len(res))

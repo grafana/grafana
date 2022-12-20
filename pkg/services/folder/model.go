@@ -124,10 +124,10 @@ type GetParentsQuery struct {
 	OrgID int64  `xorm:"org_id"`
 }
 
-// GetTreeCommand captures the information required by the folder service to
+// GetChildrenQuery captures the information required by the folder service to
 // return a list of child folders of the given folder.
 
-type GetTreeQuery struct {
+type GetChildrenQuery struct {
 	UID   string `xorm:"uid"`
 	OrgID int64  `xorm:"org_id"`
 	Depth int64
@@ -135,6 +135,8 @@ type GetTreeQuery struct {
 	// Pagination options
 	Limit int64
 	Page  int64
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // ToLegacyModel is temporary until the two folder services are merged
