@@ -113,6 +113,7 @@ describe('fingerprints', () => {
     const queries = [
       {
         refId: 'A',
+        queryType: 'query',
         model: {
           refId: 'A',
           expression: '',
@@ -120,6 +121,7 @@ describe('fingerprints', () => {
       },
       {
         refId: 'B',
+        queryType: 'query',
         model: {
           refId: 'B',
           expression: 'A',
@@ -127,6 +129,7 @@ describe('fingerprints', () => {
       },
       {
         refId: 'C',
+        queryType: 'query',
         model: {
           refId: 'C',
           expression: '$B > 0',
@@ -135,6 +138,6 @@ describe('fingerprints', () => {
       },
     ] as AlertQuery[];
 
-    expect(fingerPrintQueries(queries)).toMatchInlineSnapshot(`"A,BA,C$B > 0"`);
+    expect(fingerPrintQueries(queries)).toMatchInlineSnapshot(`"Aquery,BAquery,C$B > 0math"`);
   });
 });

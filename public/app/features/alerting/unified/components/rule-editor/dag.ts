@@ -102,7 +102,7 @@ export function fingerPrintQueries(queries: AlertQuery[]) {
   return queries
     .map((query) => {
       const type = isExpressionQuery(query.model) ? query.model.type : query.queryType;
-      return query.refId + query.model.expression + type;
+      return query.refId + (query.model.expression ?? '') + type;
     })
     .join();
 }
