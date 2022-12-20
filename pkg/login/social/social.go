@@ -319,7 +319,6 @@ type groupStruct struct {
 }
 
 func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy bool) (org.RoleType, bool) {
-	fmt.Println("inside the extract role and admin")
 
 	if s.roleAttributePath == "" {
 		return s.defaultRole(legacy), false
@@ -343,7 +342,6 @@ func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy
 // defaultRole returns the default role for the user based on the autoAssignOrgRole setting
 // if legacy is enabled "" is returned indicating the previous role assignment is used.
 func (s *SocialBase) defaultRole(legacy bool) org.RoleType {
-	fmt.Printf("inside defaaultRole")
 	if s.roleAttributeStrict {
 		s.log.Debug("RoleAttributeStrict is set, returning no role.")
 		return ""
