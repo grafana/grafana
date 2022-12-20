@@ -211,10 +211,10 @@ func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 }
 
 // CheckHealth makes Grafana can connect to the sqlstore
-func (ss *SQLStore) CheckHealth(name string) (hcm.HealthStatus, map[string]string, error) {
+func (ss *SQLStore) CheckHealth(ctx context.Context, name string) (hcm.HealthStatus, map[string]string, error) {
 	metrics := make(map[string]string)
 	start := time.Now()
-	err := ss.withDbSession(context.Background(), ss.engine, func(sess *DBSession) error {
+	err := ss.withDbSession(ctx, ss.engine, func(sess *DBSession) error {
 		_, err := sess.Exec("SELECT 1")
 		return err
 	})

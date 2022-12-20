@@ -107,7 +107,7 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 }
 
 // CheckHealth makes sure all migrations ran successfully
-func (mg *Migrator) CheckHealth(name string) (models.HealthStatus, map[string]string, error) {
+func (mg *Migrator) CheckHealth(ctx context.Context, name string) (models.HealthStatus, map[string]string, error) {
 	metrics := make(map[string]string)
 	has, err := mg.DBEngine.UseBool("success").Exist(&MigrationLog{Success: false})
 

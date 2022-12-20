@@ -15,5 +15,5 @@ type Service interface {
 }
 
 type HealthChecker interface {
-	CheckHealth(name string) (models.HealthStatus, map[string]string, error)
+	CheckHealth(ctx context.Context, name string) (models.HealthStatus, map[string]string, error)
 }

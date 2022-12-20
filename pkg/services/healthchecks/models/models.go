@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"time"
 )
 
@@ -22,7 +23,7 @@ type HealthCheckConfig struct {
 	RequiresAuth bool
 }
 
-type HealthFunc func(name string) (HealthStatus, map[string]string, error)
+type HealthFunc func(ctx context.Context, name string) (HealthStatus, map[string]string, error)
 
 type HealthCheckType string
 

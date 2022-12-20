@@ -55,7 +55,7 @@ func (hcs *HealthChecksServiceImpl) RunCoreHealthChecks(ctx context.Context) err
 	// Run all the core health checks. Return error if any fail.
 	for coreCheck := range coreChecks {
 		c := hcs.registeredChecks[coreCheck]
-		status, metrics, err := c.HealthCheckFunc(coreCheck)
+		status, metrics, err := c.HealthCheckFunc(ctx, coreCheck)
 		if err != nil || status == models.StatusRed {
 			return fmt.Errorf("core check %s failed", coreCheck)
 		}
@@ -115,10 +115,10 @@ func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, con
 		hcs.cron.Schedule(cron.ConstantDelaySchedule{
 			Delay: config.Interval,
 		}, cron.FuncJob(func() {
-			hcs.runIndividualHealthCheck(healthCheck)
+			hcs.runIndividualHealthCheck(ctx, healthCheck)
 		}))
 	} else if config.Strategy == models.StrategyOnce {
-		hcs.runIndividualHealthCheck(healthCheck)
+		hcs.runIndividualHealthCheck(ctx, healthCheck)
 	}
 
 	return nil
@@ -167,12 +167,12 @@ func (hcs *HealthChecksServiceImpl) ListHealthChecks(ctx context.Context) []mode
 	return configs
 }
 
-func (hcs *HealthChecksServiceImpl) runIndividualHealthCheck(hc models.HealthCheck) {
+func (hcs *HealthChecksServiceImpl) runIndividualHealthCheck(ctx context.Context, hc models.HealthCheck) {
 	hcs.mu.Lock()
 	defer hcs.mu.Unlock()
-	hcs.log.Info("Running health check", "name", hc.HealthCheckConfig.Name)
+	hcs.log.Debug("Running health check", "name", hc.HealthCheckConfig.Name)
 
-	status, metrics, err := hc.HealthCheckFunc(hc.HealthCheckConfig.Name)
+	status, metrics, err := hc.HealthCheckFunc(ctx, hc.HealthCheckConfig.Name)
 	if err != nil {
 		hcs.log.Error("Error running health check", "name", hc.HealthCheckConfig.Name, "error", err.Error())
 	}
