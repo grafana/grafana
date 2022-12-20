@@ -20,7 +20,7 @@ interface RoleMenuGroupsSectionProps {
     value: string;
   }>;
   onChange: (value: string) => void;
-  onOpenSubMenuRMGS: (value: string) => void;
+  onOpenSubMenu: (value: string) => void;
   onCloseSubMenu?: (value: string) => void;
   groupSelected: (group: string) => boolean;
   groupPartiallySelected: (group: string) => boolean;
@@ -28,7 +28,6 @@ interface RoleMenuGroupsSectionProps {
   subMenuNode?: HTMLDivElement;
   showSubMenu: boolean;
   openedMenuGroup: string;
-  subMenuOptions: Role[];
   selectedOptions: Role[];
   onChangeSubMenu: (option: Role) => void;
   onClearSubMenu: () => void;
@@ -48,12 +47,11 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
       onChange,
       groupSelected,
       groupPartiallySelected,
-      onOpenSubMenuRMGS,
+      onOpenSubMenu,
       onCloseSubMenu,
       subMenuNode,
       showSubMenu,
       openedMenuGroup,
-      subMenuOptions,
       selectedOptions,
       onChangeSubMenu,
       onClearSubMenu,
@@ -70,20 +68,21 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
             {showGroups && !!optionGroups?.length
               ? optionGroups.map((groupOption) => (
                   <RoleMenuGroupOption
-                    data={groupOption}
                     key={groupOption.value}
+                    name={groupOption.name}
+                    value={groupOption.value}
                     isSelected={groupSelected(groupOption.value) || groupPartiallySelected(groupOption.value)}
                     partiallySelected={groupPartiallySelected(groupOption.value)}
                     disabled={groupOption.options?.every(isNotDelegatable)}
                     onChange={onChange}
-                    onOpenSubMenu={onOpenSubMenuRMGS}
+                    onOpenSubMenu={onOpenSubMenu}
                     onCloseSubMenu={onCloseSubMenu}
                     root={subMenuNode}
                     isFocused={showSubMenu && openedMenuGroup === groupOption.value}
                   >
                     {showSubMenu && openedMenuGroup === groupOption.value && (
                       <RolePickerSubMenu
-                        options={subMenuOptions}
+                        options={groupOption.options}
                         selectedOptions={selectedOptions}
                         onSelect={onChangeSubMenu}
                         onClear={onClearSubMenu}

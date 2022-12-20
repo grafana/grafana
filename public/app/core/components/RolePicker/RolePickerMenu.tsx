@@ -73,7 +73,6 @@ export const RolePickerMenu = ({
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(basicRole);
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [openedMenuGroup, setOpenedMenuGroup] = useState('');
-  const [subMenuOptions, setSubMenuOptions] = useState<Role[]>([]);
   const [optionGroups, setOptionGroups] = useState<{ [key: string]: RoleGroupOption[] }>({});
   const [rolesCollection, setRolesCollection] = useState<{ [key: string]: RolesCollectionEntry }>({});
   const subMenuNode = useRef<HTMLDivElement | null>(null);
@@ -175,21 +174,14 @@ export const RolePickerMenu = ({
     }
   };
 
-  const onOpenSubMenu = (groupType: GroupType, value: string) => {
+  const onOpenSubMenu = (value: string) => {
     setOpenedMenuGroup(value);
     setShowSubMenu(true);
-    const group = optionGroups[groupType].find((g) => {
-      return g.value === value;
-    });
-    if (group) {
-      setSubMenuOptions(group.options);
-    }
   };
 
   const onCloseSubMenu = (value: string) => {
     setShowSubMenu(false);
     setOpenedMenuGroup('');
-    setSubMenuOptions([]);
   };
 
   const onSelectedBuiltinRoleChange = (newRole: OrgRole) => {
@@ -253,12 +245,11 @@ export const RolePickerMenu = ({
                 groupSelected={(group: string) => groupSelected(collection.groupType, group)}
                 groupPartiallySelected={(group: string) => groupPartiallySelected(collection.groupType, group)}
                 onChange={(group: string) => onGroupChange(collection.groupType, group)}
-                onOpenSubMenuRMGS={(group: string) => onOpenSubMenu(collection.groupType, group)}
+                onOpenSubMenu={onOpenSubMenu}
                 onCloseSubMenu={onCloseSubMenu}
                 subMenuNode={subMenuNode?.current!}
                 showSubMenu={showSubMenu}
                 openedMenuGroup={openedMenuGroup}
-                subMenuOptions={subMenuOptions}
                 selectedOptions={selectedOptions}
                 onChangeSubMenu={onChange}
                 onClearSubMenu={onClearSubMenu}

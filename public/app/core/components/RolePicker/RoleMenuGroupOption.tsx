@@ -1,14 +1,16 @@
 import { cx } from '@emotion/css';
 import React, { FormEvent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { Checkbox, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 
 import { getStyles } from './styles';
 
 interface RoleMenuGroupsOptionProps {
-  data: SelectableValue<string>;
+  // display name
+  name: string;
+  // group id
+  value: string;
   onChange: (value: string) => void;
   onClick?: (value: string) => void;
   onOpenSubMenu?: (value: string) => void;
@@ -24,7 +26,8 @@ interface RoleMenuGroupsOptionProps {
 export const RoleMenuGroupOption = React.forwardRef<HTMLDivElement, RoleMenuGroupsOptionProps>(
   (
     {
-      data,
+      name,
+      value,
       isFocused,
       isSelected,
       partiallySelected,
@@ -52,26 +55,26 @@ export const RoleMenuGroupOption = React.forwardRef<HTMLDivElement, RoleMenuGrou
       if (disabled) {
         return;
       }
-      if (data.value) {
-        onChange(data.value);
+      if (value) {
+        onChange(value);
       }
     };
 
     const onClickInternal = (event: FormEvent<HTMLElement>) => {
       if (onClick) {
-        onClick(data.value!);
+        onClick(value!);
       }
     };
 
     const onMouseEnter = () => {
       if (onOpenSubMenu) {
-        onOpenSubMenu(data.value!);
+        onOpenSubMenu(value!);
       }
     };
 
     const onMouseLeave = () => {
       if (onCloseSubMenu) {
-        onCloseSubMenu(data.value!);
+        onCloseSubMenu(value!);
       }
     };
 
@@ -87,7 +90,7 @@ export const RoleMenuGroupOption = React.forwardRef<HTMLDivElement, RoleMenuGrou
             disabled={disabled}
           />
           <div className={cx(styles.optionBody, customStyles.menuOptionBody)}>
-            <span>{data.displayName || data.name}</span>
+            <span>{name}</span>
             <span className={customStyles.menuOptionExpand} />
           </div>
           {root && children && (
