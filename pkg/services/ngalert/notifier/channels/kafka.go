@@ -147,7 +147,7 @@ func (kn *KafkaNotifier) SendResolved() bool {
 }
 
 func (kn *KafkaNotifier) buildBody(ctx context.Context, tmpl func(string) string, as ...*types.Alert) (string, error) {
-	record := kafkaRecord{}
+	var record kafkaRecord
 	record.Client = "Grafana"
 	record.Description = tmpl(kn.settings.Description)
 	record.Details = tmpl(kn.settings.Details)
