@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
@@ -15,10 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const AdminUserId = 1
+const DefaultAdminUserId = 1
 
 func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 	newPassword := ""
+	adminId := int64(c.Int("user-id"))
 
 	if c.Bool("password-from-stdin") {
 		logger.Infof("New Password: ")
@@ -40,11 +42,13 @@ func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 		return fmt.Errorf("new password is too short")
 	}
 
-	userQuery := user.GetUserByIDQuery{ID: AdminUserId}
-
+	userQuery := user.GetUserByIDQuery{ID: adminId}
 	usr, err := runner.UserService.GetByID(context.Background(), &userQuery)
 	if err != nil {
 		return fmt.Errorf("could not read user from database. Error: %v", err)
+	}
+	if !usr.IsAdmin {
+		return fmt.Errorf("reset-admin-password can only be used to reset an admin user account")
 	}
 
 	passwordHashed, err := util.EncodePassword(newPassword, usr.Salt)
@@ -53,7 +57,7 @@ func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 	}
 
 	cmd := user.ChangeUserPasswordCommand{
-		UserID:      AdminUserId,
+		UserID:      adminId,
 		NewPassword: passwordHashed,
 	}
 
