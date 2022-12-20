@@ -36,7 +36,7 @@ type Service struct {
 
 	log log.Logger
 
-	collectors []supportbundles.Collector
+	collectors map[string]supportbundles.Collector
 }
 
 func ProvideService(cfg *setting.Cfg,
@@ -59,6 +59,7 @@ func ProvideService(cfg *setting.Cfg,
 		accessControl:  accessControl,
 		features:       features,
 		log:            log.New("supportbundle.service"),
+		collectors:     make(map[string]supportbundles.Collector),
 	}
 
 	if !features.IsEnabled(featuremgmt.FlagSupportBundles) {
@@ -85,8 +86,11 @@ func ProvideService(cfg *setting.Cfg,
 }
 
 func (s *Service) RegisterSupportItemCollector(collector supportbundles.Collector) {
-	// FIXME: add check for duplicate UIDs
-	s.collectors = append(s.collectors, collector)
+	if _, ok := s.collectors[collector.UID]; ok {
+		s.log.Warn("Support bundle collector with the same UID already registered", "uid", collector.UID)
+	}
+
+	s.collectors[collector.UID] = collector
 }
 
 func (s *Service) Run(ctx context.Context) error {

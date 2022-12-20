@@ -14,6 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+const (
+	defaultBundleExpiration = 72 * time.Hour // 72h
+)
+
 func newStore(kv kvstore.KVStore) *store {
 	return &store{kv: kvstore.WithNamespace(kv, 0, "supportbundle")}
 }
@@ -41,7 +45,7 @@ func (s *store) Create(ctx context.Context, usr *user.SignedInUser) (*supportbun
 		State:     supportbundles.StatePending,
 		Creator:   usr.Login,
 		CreatedAt: time.Now().Unix(),
-		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+		ExpiresAt: time.Now().Add(defaultBundleExpiration).Unix(),
 	}
 
 	if err := s.set(ctx, &bundle); err != nil {
