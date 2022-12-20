@@ -339,35 +339,6 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		require.NotNil(t, res.UID)
 		require.NotEmpty(t, res.ParentUID)
 	})
-
-	t.Run("get parents folder", func(t *testing.T) {
-		folderStore.ExpectedFolder = &folder.Folder{}
-		_, err := folderService.store.GetParents(context.Background(), folder.GetParentsQuery{})
-		require.NoError(t, err)
-	})
-
-	t.Run("get children folder", func(t *testing.T) {
-		folderStore.ExpectedChildFolders = []*folder.Folder{
-			{
-				UID: "test",
-			},
-			{
-				UID: "test2",
-			},
-			{
-				UID: "test3",
-			},
-			{
-				UID: "test4",
-			},
-		}
-		res, err := folderService.store.GetChildren(context.Background(),
-			folder.GetTreeQuery{
-				UID: "test",
-			})
-		require.NoError(t, err)
-		require.Equal(t, 4, len(res))
-	})
 }
 
 func TestNestedFolderService(t *testing.T) {

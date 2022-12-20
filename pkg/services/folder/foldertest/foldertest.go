@@ -9,7 +9,7 @@ import (
 )
 
 type FakeService struct {
-	ExpectedFolders []*models.Folder
+	ExpectedFolders []*folder.Folder
 	ExpectedFolder  *folder.Folder
 	ExpectedError   error
 }
@@ -20,10 +20,9 @@ func NewFakeService() *FakeService {
 
 var _ folder.Service = (*FakeService)(nil)
 
-func (s *FakeService) GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
+func (s *FakeService) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
 	return s.ExpectedFolders, s.ExpectedError
 }
-
 func (s *FakeService) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }

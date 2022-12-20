@@ -8,8 +8,8 @@ import (
 )
 
 type Service interface {
-	GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error)
-
+	// GetChildren returns an array containing all child folders.
+	GetChildren(ctx context.Context, cmd *GetChildrenQuery) ([]*Folder, error)
 	Create(ctx context.Context, cmd *CreateFolderCommand) (*Folder, error)
 
 	// GetFolder takes a GetFolderCommand and returns a folder matching the

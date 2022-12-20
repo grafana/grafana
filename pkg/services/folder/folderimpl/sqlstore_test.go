@@ -177,7 +177,7 @@ func TestIntegrationDelete(t *testing.T) {
 		err := folderStore.Delete(context.Background(), ancestorUIDs[len(ancestorUIDs)-1], orgID)
 		require.NoError(t, err)
 
-		children, err := folderStore.GetChildren(context.Background(), folder.GetTreeQuery{
+		children, err := folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
 			UID:   ancestorUIDs[len(ancestorUIDs)-2],
 			OrgID: orgID,
 		})
@@ -456,7 +456,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	treeLeaves := CreateLeaves(t, folderStore, parent, 4)
+	treeLeaves := CreateLeaves(t, folderStore, parent, 8)
 
 	t.Cleanup(func() {
 		for _, uid := range treeLeaves {
@@ -473,7 +473,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	*/
 
 	t.Run("should successfully get all children", func(t *testing.T) {
-		children, err := folderStore.GetChildren(context.Background(), folder.GetTreeQuery{
+		children, err := folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
 			UID:   parent.UID,
 			OrgID: orgID,
 		})
@@ -489,12 +489,24 @@ func TestIntegrationGetChildren(t *testing.T) {
 		}
 	})
 
+	t.Run("should default to general folder if UID is missing", func(t *testing.T) {
+		children, err := folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
+			OrgID: orgID,
+		})
+		require.NoError(t, err)
+
+		childrenUIDs := make([]string, 0, len(children))
+		for _, c := range children {
+			childrenUIDs = append(childrenUIDs, c.UID)
+		}
+		assert.Equal(t, []string{parent.UID}, childrenUIDs)
+	})
+
 	t.Run("query with pagination should work as expected", func(t *testing.T) {
-		children, err := folderStore.GetChildren(context.Background(), folder.GetTreeQuery{
+		children, err := folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
 			UID:   parent.UID,
 			OrgID: orgID,
-			Limit: 1,
-			Page:  1,
+			Limit: 2,
 		})
 		require.NoError(t, err)
 
@@ -503,14 +515,31 @@ func TestIntegrationGetChildren(t *testing.T) {
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
-		if diff := cmp.Diff(treeLeaves[1:2], childrenUIDs); diff != "" {
+		if diff := cmp.Diff(treeLeaves[:2], childrenUIDs); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 
-		children, err = folderStore.GetChildren(context.Background(), folder.GetTreeQuery{
+		children, err = folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
 			UID:   parent.UID,
 			OrgID: orgID,
-			Limit: 1,
+			Limit: 2,
+			Page:  1,
+		})
+		require.NoError(t, err)
+
+		childrenUIDs = make([]string, 0, len(children))
+		for _, c := range children {
+			childrenUIDs = append(childrenUIDs, c.UID)
+		}
+
+		if diff := cmp.Diff(treeLeaves[:2], childrenUIDs); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+
+		children, err = folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
+			UID:   parent.UID,
+			OrgID: orgID,
+			Limit: 2,
 			Page:  2,
 		})
 		require.NoError(t, err)
@@ -520,12 +549,12 @@ func TestIntegrationGetChildren(t *testing.T) {
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
-		if diff := cmp.Diff(treeLeaves[2:3], childrenUIDs); diff != "" {
+		if diff := cmp.Diff(treeLeaves[2:4], childrenUIDs); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 
 		// no page is set
-		children, err = folderStore.GetChildren(context.Background(), folder.GetTreeQuery{
+		children, err = folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
 			UID:   parent.UID,
 			OrgID: orgID,
 			Limit: 1,
@@ -537,12 +566,12 @@ func TestIntegrationGetChildren(t *testing.T) {
 			childrenUIDs = append(childrenUIDs, c.UID)
 		}
 
-		if diff := cmp.Diff(treeLeaves[1:2], childrenUIDs); diff != "" {
+		if diff := cmp.Diff(treeLeaves[:1], childrenUIDs); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 
 		// page is set but limit is not set, it should return them all
-		children, err = folderStore.GetChildren(context.Background(), folder.GetTreeQuery{
+		children, err = folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
 			UID:   parent.UID,
 			OrgID: orgID,
 			Page:  1,
@@ -683,7 +712,7 @@ func assertAncestorUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expecte
 func assertChildrenUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expected []string) {
 	t.Helper()
 
-	ancestors, err := store.GetChildren(context.Background(), folder.GetTreeQuery{
+	ancestors, err := store.GetChildren(context.Background(), folder.GetChildrenQuery{
 		UID:   f.UID,
 		OrgID: f.OrgID,
 	})
