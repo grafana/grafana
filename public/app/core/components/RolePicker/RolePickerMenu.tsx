@@ -71,8 +71,6 @@ export const RolePickerMenu = ({
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(basicRole);
-  const [showSubMenu, setShowSubMenu] = useState(false);
-  const [openedMenuGroup, setOpenedMenuGroup] = useState('');
   const [optionGroups, setOptionGroups] = useState<{ [key: string]: RoleGroupOption[] }>({});
   const [rolesCollection, setRolesCollection] = useState<{ [key: string]: RolesCollectionEntry }>({});
   const subMenuNode = useRef<HTMLDivElement | null>(null);
@@ -174,16 +172,6 @@ export const RolePickerMenu = ({
     }
   };
 
-  const onOpenSubMenu = (value: string) => {
-    setOpenedMenuGroup(value);
-    setShowSubMenu(true);
-  };
-
-  const onCloseSubMenu = (value: string) => {
-    setShowSubMenu(false);
-    setOpenedMenuGroup('');
-  };
-
   const onSelectedBuiltinRoleChange = (newRole: OrgRole) => {
     setSelectedBuiltInRole(newRole);
   };
@@ -192,10 +180,10 @@ export const RolePickerMenu = ({
     setSelectedOptions([]);
   };
 
-  const onClearSubMenu = () => {
+  const onClearSubMenu = (group: string) => {
     const options = selectedOptions.filter((role) => {
-      const groupName = getRoleGroup(role);
-      return groupName !== openedMenuGroup;
+      const roleGroup = getRoleGroup(role);
+      return roleGroup !== group;
     });
     setSelectedOptions(options);
   };
@@ -231,32 +219,26 @@ export const RolePickerMenu = ({
               />
             </div>
           )}
-          {Object.entries(rolesCollection).map(([groupId, collection]) => {
-            return (
-              <RoleMenuGroupsSection
-                key={groupId}
-                roles={collection.roles}
-                renderedName={collection.renderedName}
-                menuSectionStyle={customStyles.menuSection}
-                groupHeaderStyle={customStyles.groupHeader}
-                optionBodyStyle={styles.optionBody}
-                showGroups={showGroups}
-                optionGroups={collection.optionGroup}
-                groupSelected={(group: string) => groupSelected(collection.groupType, group)}
-                groupPartiallySelected={(group: string) => groupPartiallySelected(collection.groupType, group)}
-                onChange={(group: string) => onGroupChange(collection.groupType, group)}
-                onOpenSubMenu={onOpenSubMenu}
-                onCloseSubMenu={onCloseSubMenu}
-                subMenuNode={subMenuNode?.current!}
-                showSubMenu={showSubMenu}
-                openedMenuGroup={openedMenuGroup}
-                selectedOptions={selectedOptions}
-                onChangeSubMenu={onChange}
-                onClearSubMenu={onClearSubMenu}
-                showOnLeftSubMenu={offset.horizontal > 0}
-              ></RoleMenuGroupsSection>
-            );
-          })}
+          {Object.entries(rolesCollection).map(([groupId, collection]) => (
+            <RoleMenuGroupsSection
+              key={groupId}
+              roles={collection.roles}
+              renderedName={collection.renderedName}
+              menuSectionStyle={customStyles.menuSection}
+              groupHeaderStyle={customStyles.groupHeader}
+              optionBodyStyle={styles.optionBody}
+              showGroups={showGroups}
+              optionGroups={collection.optionGroup}
+              groupSelected={(group: string) => groupSelected(collection.groupType, group)}
+              groupPartiallySelected={(group: string) => groupPartiallySelected(collection.groupType, group)}
+              onGroupChange={(group: string) => onGroupChange(collection.groupType, group)}
+              subMenuNode={subMenuNode?.current!}
+              selectedOptions={selectedOptions}
+              onRoleChange={onChange}
+              onClearSubMenu={onClearSubMenu}
+              showOnLeftSubMenu={offset.horizontal > 0}
+            />
+          ))}
         </CustomScrollbar>
         <div className={customStyles.menuButtonRow}>
           <HorizontalGroup justify="flex-end">
