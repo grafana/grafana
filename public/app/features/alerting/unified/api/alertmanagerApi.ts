@@ -43,7 +43,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       query: () => ({
         url: `/api/alertmanager/${getDatasourceAPIUid(
           GRAFANA_RULES_SOURCE_NAME
-        )}/config/api/v1/alerts/successfully-applied?limit=${LIMIT_TO_SUCCESSFULLY_APPLIED_AMS}`,
+        )}/config/history?limit=${LIMIT_TO_SUCCESSFULLY_APPLIED_AMS}`,
       }),
     }),
   }),
