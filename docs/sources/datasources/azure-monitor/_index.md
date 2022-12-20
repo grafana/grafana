@@ -63,7 +63,6 @@ For details, refer to [Configuring using Managed Identity]({{< relref "#configur
 | **Application (client) ID** | Sets the application/client ID for the Azure AD app registration to use for authentication.                                                                                                                                                                                                           |
 | **Client secret**           | Sets the application client secret for the Azure AD app registration to use for authentication. For details, see the [Azure application secret docs](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#option-2-create-a-new-application-secret). |
 | **Default subscription**    | _(Optional)_ Sets a default subscription for template variables to use.                                                                                                                                                                                                                               |
-| **Default workspace**       | _(Optional)_ Sets a default workspace for Log Analytics-based template variable queries to use.                                                                                                                                                                                                       |
 
 ### Provision the data source
 
