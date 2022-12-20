@@ -46,16 +46,24 @@ func (hcs *HealthChecksServiceImpl) areCoreChecksImplemented(ctx context.Context
 }
 
 func (hcs *HealthChecksServiceImpl) RunCoreHealthChecks(ctx context.Context) error {
+	hcs.mu.Lock()
+	defer hcs.mu.Unlock()
 	if !hcs.areCoreChecksImplemented(ctx) {
 		return models.ErrCoreChecksNotRegistered
 	}
 
 	// Run all the core health checks. Return error if any fail.
 	for coreCheck := range coreChecks {
-		status, _, err := hcs.registeredChecks[coreCheck].HealthCheckFunc(coreCheck)
+		c := hcs.registeredChecks[coreCheck]
+		status, metrics, err := c.HealthCheckFunc(coreCheck)
 		if err != nil || status == models.StatusRed {
 			return fmt.Errorf("core check %s failed", coreCheck)
 		}
+
+		c.LatestMetrics = metrics
+		c.LatestStatus = status
+		c.LatestUpdateTime = time.Now()
+		hcs.registeredChecks[coreCheck] = c
 	}
 
 	return nil
@@ -128,6 +136,9 @@ func (hcs *HealthChecksServiceImpl) GetLatestHealth(ctx context.Context) (models
 			hasYellow = true
 		}
 		metrics := c.LatestMetrics
+		if metrics == nil {
+			metrics = make(map[string]string)
+		}
 		metrics["latest_update_time"] = c.LatestUpdateTime.UTC().String()
 		allMetrics[c.HealthCheckConfig.Name] = metrics
 	}
@@ -137,7 +148,7 @@ func (hcs *HealthChecksServiceImpl) GetLatestHealth(ctx context.Context) (models
 	} else if hasYellow {
 		status = models.StatusYellow
 	}
-	return status, map[string]map[string]string{}
+	return status, allMetrics
 }
 
 func (hcs *HealthChecksServiceImpl) GetHealthCheck(ctx context.Context, name string) (bool, models.HealthCheck) {

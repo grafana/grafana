@@ -108,17 +108,19 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 
 // CheckHealth makes sure all migrations ran successfully
 func (mg *Migrator) CheckHealth(name string) (models.HealthStatus, map[string]string, error) {
+	metrics := make(map[string]string)
 	has, err := mg.DBEngine.UseBool("success").Exist(&MigrationLog{Success: false})
 
 	if err != nil {
-		return models.StatusRed, nil, err
+		return models.StatusRed, metrics, err
 	}
 
 	if has {
-		return models.StatusRed, nil, errors.New("one or more migrations failed")
+		return models.StatusRed, metrics, errors.New("one or more migrations failed")
 	}
-
-	return models.StatusGreen, nil, nil
+	l, _ := mg.GetMigrationLog()
+	metrics["num_migrations"] = fmt.Sprintf("%d", len(l))
+	return models.StatusGreen, metrics, nil
 }
 
 func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int) (err error) {

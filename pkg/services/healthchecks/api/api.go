@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -8,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/healthchecks"
+	hcm "github.com/grafana/grafana/pkg/services/healthchecks/models"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -23,26 +25,48 @@ func ProvideApi(hcs healthchecks.Service, rr routing.RouteRegister) *Api {
 		RouteRegister:      rr,
 		Log:                log.New("healthchecks.api"),
 	}
-
+	api.RegisterApiEndpoints()
 	return api
 }
 
 func (api *Api) RegisterApiEndpoints() {
 	// TODO figure out how to move the old health checks over here. They're awkward.
-	//api.RouteRegister.Get("/healthz/v2", routing.Wrap(api.Healthz))
-	//api.RouteRegister.Get("/api/health/v2", routing.Wrap(api.HealthHandler))
-	api.RouteRegister.Get("api/health/v2/:healthCheckName", routing.Wrap(api.GetHealthCheck))
+	api.RouteRegister.Get("/api/healthv2/list", routing.Wrap(api.listHealthChecks))
+	api.RouteRegister.Get("/api/healthv2/readiness", routing.Wrap(api.getReadiness))
+	api.RouteRegister.Get("/api/healthv2/liveness", routing.Wrap(api.getLiveness))
+	api.RouteRegister.Get("/api/healthv2/get/:healthCheckName", routing.Wrap(api.getHealthCheck))
 }
 
-func (api *Api) ListHealthChecks(ctx *models.ReqContext) response.Response {
-	return response.Success("THERE ARE NONE. SORRY!")
+func (api *Api) getReadiness(ctx *models.ReqContext) response.Response {
+	err := api.HealthCheckService.RunCoreHealthChecks(ctx.Req.Context())
+	if errors.Is(err, hcm.ErrCoreChecksNotRegistered) {
+		return response.Empty(http.StatusServiceUnavailable)
+	} else if err == nil {
+		return response.Success("ready")
+	} else {
+		return response.Error(http.StatusInternalServerError, "error running readiness checks", err)
+	}
 }
 
-func (api *Api) GetHealthCheck(ctx *models.ReqContext) response.Response {
+func (api *Api) getLiveness(ctx *models.ReqContext) response.Response {
+	s, m := api.HealthCheckService.GetLatestHealth(ctx.Req.Context())
+	resp := make(map[string]interface{})
+	resp["status"] = s
+	resp["metrics"] = m
+	return response.JSON(http.StatusOK, resp)
+}
+
+func (api *Api) listHealthChecks(ctx *models.ReqContext) response.Response {
+	configs := make([]hcm.HealthCheckConfig, 0)
+	// TODO populate
+	return response.JSON(http.StatusOK, configs)
+}
+
+func (api *Api) getHealthCheck(ctx *models.ReqContext) response.Response {
 	name := web.Params(ctx.Req)[":healthCheckName"]
 	found, res := api.HealthCheckService.GetHealthCheck(ctx.Req.Context(), name)
 	if found {
-		return response.JSON(http.StatusOK, res)
+		return response.JSON(http.StatusOK, res.HealthCheckConfig)
 	} else {
 		return response.Empty(http.StatusNotFound)
 	}
