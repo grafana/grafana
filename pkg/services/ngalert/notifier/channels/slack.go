@@ -23,8 +23,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/alerting/alerting/notifier/channels"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -68,6 +66,7 @@ type SlackNotifier struct {
 	webhookSender channels.WebhookSender
 	sendFn        sendFunc
 	settings      slackSettings
+	appVersion    string
 }
 
 type slackSettings struct {
@@ -164,6 +163,7 @@ func buildSlackNotifier(factoryConfig channels.FactoryConfig) (*SlackNotifier, e
 		sendFn:        sendSlackRequest,
 		log:           factoryConfig.Logger,
 		tmpl:          factoryConfig.Template,
+		appVersion:    factoryConfig.GrafanaBuildVersion,
 	}, nil
 }
 
@@ -374,7 +374,7 @@ func (sn *SlackNotifier) createSlackMessage(ctx context.Context, alerts []*types
 				Color:      getAlertStatusColor(types.Alerts(alerts...).Status()),
 				Title:      title,
 				Fallback:   title,
-				Footer:     "Grafana v" + setting.BuildVersion,
+				Footer:     "Grafana v" + sn.appVersion,
 				FooterIcon: channels.FooterIconURL,
 				Ts:         time.Now().Unix(),
 				TitleLink:  ruleURL,

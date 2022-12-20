@@ -3,6 +3,8 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"math/rand"
 	"net/url"
 	"testing"
 
@@ -11,8 +13,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestDiscordNotifier(t *testing.T) {
@@ -21,7 +21,7 @@ func TestDiscordNotifier(t *testing.T) {
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
-
+	appVersion := fmt.Sprintf("%d.0.0", rand.Uint32())
 	cases := []struct {
 		name         string
 		settings     string
@@ -47,7 +47,7 @@ func TestDiscordNotifier(t *testing.T) {
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
-						"text":     "Grafana v" + setting.BuildVersion,
+						"text":     "Grafana v" + appVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
 					"url":   "http://localhost/alerting/list",
@@ -74,7 +74,7 @@ func TestDiscordNotifier(t *testing.T) {
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
-						"text":     "Grafana v" + setting.BuildVersion,
+						"text":     "Grafana v" + appVersion,
 					},
 					"title": "Alerts firing: 1",
 					"url":   "http://localhost/alerting/list",
@@ -106,7 +106,7 @@ func TestDiscordNotifier(t *testing.T) {
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
-						"text":     "Grafana v" + setting.BuildVersion,
+						"text":     "Grafana v" + appVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
 					"url":   "http://localhost/alerting/list",
@@ -138,7 +138,7 @@ func TestDiscordNotifier(t *testing.T) {
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
-						"text":     "Grafana v" + setting.BuildVersion,
+						"text":     "Grafana v" + appVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
 					"url":   "http://localhost/alerting/list",
@@ -170,7 +170,7 @@ func TestDiscordNotifier(t *testing.T) {
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
-						"text":     "Grafana v" + setting.BuildVersion,
+						"text":     "Grafana v" + appVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
 					"url":   "http://localhost/alerting/list",
@@ -202,7 +202,7 @@ func TestDiscordNotifier(t *testing.T) {
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
-						"text":     "Grafana v" + setting.BuildVersion,
+						"text":     "Grafana v" + appVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
 					"url":   "http://localhost/alerting/list",
@@ -239,7 +239,7 @@ func TestDiscordNotifier(t *testing.T) {
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
-						"text":     "Grafana v" + setting.BuildVersion,
+						"text":     "Grafana v" + appVersion,
 					},
 					"title": "[FIRING:2]  ",
 					"url":   "http://localhost/alerting/list",
@@ -274,7 +274,7 @@ func TestDiscordNotifier(t *testing.T) {
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
 						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
-						"text":     "Grafana v" + setting.BuildVersion,
+						"text":     "Grafana v" + appVersion,
 					},
 					"title": "[FIRING:1]  (val1)",
 					"url":   "http://localhost/alerting/list",
@@ -301,6 +301,7 @@ func TestDiscordNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				Template:            tmpl,
 				Logger:              &channels.FakeLogger{},
+				GrafanaBuildVersion: appVersion,
 			}
 
 			dn, err := newDiscordNotifier(fc)

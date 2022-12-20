@@ -11,19 +11,18 @@ import (
 	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // GoogleChatNotifier is responsible for sending
 // alert notifications to Google chat.
 type GoogleChatNotifier struct {
 	*channels.Base
-	log      channels.Logger
-	ns       channels.WebhookSender
-	images   channels.ImageStore
-	tmpl     *template.Template
-	settings *googleChatSettings
+	log        channels.Logger
+	ns         channels.WebhookSender
+	images     channels.ImageStore
+	tmpl       *template.Template
+	settings   *googleChatSettings
+	appVersion string
 }
 
 type googleChatSettings struct {
@@ -68,12 +67,13 @@ func newGoogleChatNotifier(fc channels.FactoryConfig) (*GoogleChatNotifier, erro
 		return nil, err
 	}
 	return &GoogleChatNotifier{
-		Base:     channels.NewBase(fc.Config),
-		log:      fc.Logger,
-		ns:       fc.NotificationService,
-		images:   fc.ImageStore,
-		tmpl:     fc.Template,
-		settings: settings,
+		Base:       channels.NewBase(fc.Config),
+		log:        fc.Logger,
+		ns:         fc.NotificationService,
+		images:     fc.ImageStore,
+		tmpl:       fc.Template,
+		settings:   settings,
+		appVersion: fc.GrafanaBuildVersion,
 	}, nil
 }
 
@@ -121,7 +121,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	// Add text paragraph widget for the build version and timestamp.
 	widgets = append(widgets, textParagraphWidget{
 		Text: text{
-			Text: "Grafana v" + setting.BuildVersion + " | " + (timeNow()).Format(time.RFC822),
+			Text: "Grafana v" + gcn.appVersion + " | " + (timeNow()).Format(time.RFC822),
 		},
 	})
 
