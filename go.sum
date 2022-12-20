@@ -1377,6 +1377,8 @@ github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cuetsy v0.1.1 h1:+1jaDDYCpvKlcOWJgBRbkc5+VZIClCEn5mbI+4PLZqM=
 github.com/grafana/cuetsy v0.1.1/go.mod h1:4KWkUOslwvRTpEv7wdQG0jDFTuJmU+0L9x0h4kWxa2A=
+github.com/grafana/cuetsy v0.1.2 h1:v4re6ZMrQMsfS9iyJhdkgRxSLmqgtmGUZ2OY0VuKN7c=
+github.com/grafana/cuetsy v0.1.2/go.mod h1:4KWkUOslwvRTpEv7wdQG0jDFTuJmU+0L9x0h4kWxa2A=
 github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f h1:FvvSVEbnGeM2bUivGmsiXTi8URJyBU7TcFEEoRe5wWI=
 github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f/go.mod h1:uPG2nyK4CtgNDmWv7qyzYcdI+S90kHHRWvHnBtEMBXM=
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5JIhUUrggPcPBhOn+eT8+WsHiebvq7GgA=
@@ -1400,6 +1402,10 @@ github.com/grafana/thema v0.0.0-20221218103249-392072f53f26 h1:qgkbcXsyhiDGBcobg
 github.com/grafana/thema v0.0.0-20221218103249-392072f53f26/go.mod h1:NcBP8PTT06wct2HgZ1z4Cn16lAieM0eY1aB1rpqBZUM=
 github.com/grafana/thema v0.0.0-20221218114504-71b453193538 h1:pM3sHWmvQAXj/kuw36zqbZheaN1eJsrxKFpT4eZngbM=
 github.com/grafana/thema v0.0.0-20221218114504-71b453193538/go.mod h1:8wmENx19kzNI+5De7889AVRJ3T4OnOb5I1bSJLcj1t4=
+github.com/grafana/thema v0.0.0-20221219163827-8dee2bc442ba h1:kD9ID99cllsWPkAW4q94/rQ78QvhqjuiZG/udneSVic=
+github.com/grafana/thema v0.0.0-20221219163827-8dee2bc442ba/go.mod h1:8wmENx19kzNI+5De7889AVRJ3T4OnOb5I1bSJLcj1t4=
+github.com/grafana/thema v0.0.0-20221220200752-767cf6d27469 h1:q1mE1qXA4zpuMNTYItiaAZleWsjzRLnGs0aMo8OTZcw=
+github.com/grafana/thema v0.0.0-20221220200752-767cf6d27469/go.mod h1:3qbK8CKe2NZwt4I4gQ3GlyBUF/I3fgCSqPgaPwu01wk=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6 h1:I9dh1MXGX0wGyxdV/Sl7+ugnki4Dfsy8lv2s5Yf887o=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6/go.mod h1:ZkJLEYLoVyg7amJK/5r779bHyzs2AU8f8VMiP6BM7uY=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=

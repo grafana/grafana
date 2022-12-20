@@ -59,11 +59,11 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/grafana/cuetsy v0.1.1
+	github.com/grafana/cuetsy v0.1.2
 	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.3.1
 	github.com/grafana/grafana-plugin-sdk-go v0.147.0
-	github.com/grafana/thema v0.0.0-20221218114504-71b453193538
+	github.com/grafana/thema v0.0.0-20221220200752-767cf6d27469
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.0.0
 	github.com/hashicorp/go-plugin v1.4.3
