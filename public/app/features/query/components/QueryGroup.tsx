@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
-import DropZone from 'react-dropzone';
+import DropZone, { FileRejection } from 'react-dropzone';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -458,7 +458,7 @@ class UnThemedQueryGroup extends PureComponent<Props, State> {
     this.setState({ scrollElement });
   };
 
-  onFileDrop = (files: File[]) => {
+  onFileDrop = (files: File[], rejectedFiles: FileRejection[]) => {
     const snapshot: DataFrameJSON[] = [];
 
     files.forEach((file) => {
@@ -481,6 +481,21 @@ class UnThemedQueryGroup extends PureComponent<Props, State> {
         this.props.onRunQueries();
       };
     });
+
+    // RejectedFiles only going to be files that are exceeds the maxSize
+    if (rejectedFiles.length) {
+      this.onPanelDataUpdate({
+        ...this.state.data,
+        state: LoadingState.Error,
+        error: {
+          message: `File size exceeded for ${rejectedFiles
+            .map((rf) => {
+              return rf.file.name;
+            })
+            .join(',')}.`,
+        },
+      });
+    }
 
     const grafanaDS = {
       type: 'grafana',
@@ -506,7 +521,7 @@ class UnThemedQueryGroup extends PureComponent<Props, State> {
 
     return (
       <CustomScrollbar autoHeightMin="100%" scrollRefCallback={this.setScrollRef}>
-        <DropZone onDrop={this.onFileDrop} noClick>
+        <DropZone onDrop={this.onFileDrop} noClick maxSize={200000}>
           {({ getRootProps, isDragActive }) => {
             const styles = getStyles(this.props.theme, isDragActive);
             return (
