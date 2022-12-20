@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, Space } from '@grafana/experimental';
-import { Button, Checkbox, IconButton, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Icon, IconButton, Label, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
 
 import Search from '../Search';
 import { SelectableResourceValue } from '../api';
@@ -102,6 +102,16 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
         </div>
         <Space layout="block" v={2} />
         <div>
+          {!isLoading && selectableLogGroups.length >= 25 && (
+            <>
+              <Label className={styles.limitLabel}>
+                <Icon name="info-circle"></Icon>
+                Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your
+                search.
+              </Label>
+              <Space layout="block" v={1} />
+            </>
+          )}
           <div className={styles.tableScroller}>
             <table className={styles.table}>
               <thead>

@@ -14,6 +14,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexFlow: 'wrap',
   }),
 
+  limitLabel: css({
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    maxWidth: 'none',
+    svg: {
+      marginRight: theme.spacing(0.5),
+    },
+  }),
+
   tableScroller: css({
     maxHeight: '50vh',
     overflow: 'auto',
