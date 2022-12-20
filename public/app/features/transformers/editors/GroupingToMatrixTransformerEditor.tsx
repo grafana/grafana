@@ -79,7 +79,7 @@ export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<Grou
         <InlineField label="Cell Value" labelWidth={10}>
           <Select options={fieldNames} value={options.valueField} onChange={onSelectValue} isClearable />
         </InlineField>
-        <InlineField label="Empty Value" labelWidth={10}>
+        <InlineField label="Empty Value">
           <Select options={specialValueOptions} value={options.emptyValue} onChange={onSelectEmptyValue} isClearable />
         </InlineField>
       </InlineFieldRow>
