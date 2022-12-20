@@ -10,7 +10,7 @@ import { loadDataSources } from '../datasources/state';
 
 import { ExplorePage } from './ExplorePage';
 
-export default function NewDashboardPage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
+export default function EmptyStateWrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   const dispatch = useDispatch();
   useEffectOnce(() => {
     if (config.featureToggles.datasourceOnboarding) {
