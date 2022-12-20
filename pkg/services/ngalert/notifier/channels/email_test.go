@@ -11,26 +11,141 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
-func TestEmailNotifier(t *testing.T) {
+func TestEmailNotifier_Init(t *testing.T) {
+	testCase := []struct {
+		Name          string
+		Config        json.RawMessage
+		Expected      *emailSettings
+		ExpectedError string
+	}{
+		{
+			Name:          "error if JSON is empty",
+			Config:        json.RawMessage(`{}`),
+			ExpectedError: "could not find addresses in settings",
+		},
+		{
+			Name: "should split addresses separated by semicolon",
+			Config: json.RawMessage(`{
+				"addresses": "someops@example.com;somedev@example.com"
+			}`),
+			Expected: &emailSettings{
+				SingleEmail: false,
+				Addresses: []string{
+					"someops@example.com",
+					"somedev@example.com",
+				},
+				Message: "",
+				Subject: channels.DefaultMessageTitleEmbed,
+			},
+		},
+		{
+			Name: "should split addresses separated by comma",
+			Config: json.RawMessage(`{
+				"addresses": "someops@example.com,somedev@example.com"
+			}`),
+			Expected: &emailSettings{
+				SingleEmail: false,
+				Addresses: []string{
+					"someops@example.com",
+					"somedev@example.com",
+				},
+				Message: "",
+				Subject: channels.DefaultMessageTitleEmbed,
+			},
+		},
+		{
+			Name: "should split addresses separated by new-line",
+			Config: json.RawMessage(`{
+				"addresses": "someops@example.com\nsomedev@example.com"
+			}`),
+			Expected: &emailSettings{
+				SingleEmail: false,
+				Addresses: []string{
+					"someops@example.com",
+					"somedev@example.com",
+				},
+				Message: "",
+				Subject: channels.DefaultMessageTitleEmbed,
+			},
+		},
+		{
+			Name: "should split addresses separated by mixed separators",
+			Config: json.RawMessage(`{
+				"addresses": "someops@example.com\nsomedev@example.com;somedev2@example.com,somedev3@example.com"
+			}`),
+			Expected: &emailSettings{
+				SingleEmail: false,
+				Addresses: []string{
+					"someops@example.com",
+					"somedev@example.com",
+					"somedev2@example.com",
+					"somedev3@example.com",
+				},
+				Message: "",
+				Subject: channels.DefaultMessageTitleEmbed,
+			},
+		},
+		{
+			Name: "should split addresses separated by mixed separators",
+			Config: json.RawMessage(`{
+				"addresses": "someops@example.com\nsomedev@example.com;somedev2@example.com,somedev3@example.com"
+			}`),
+			Expected: &emailSettings{
+				SingleEmail: false,
+				Addresses: []string{
+					"someops@example.com",
+					"somedev@example.com",
+					"somedev2@example.com",
+					"somedev3@example.com",
+				},
+				Message: "",
+				Subject: channels.DefaultMessageTitleEmbed,
+			},
+		},
+		{
+			Name: "should parse all settings",
+			Config: json.RawMessage(`{
+			    "singleEmail": true,
+				"addresses": "someops@example.com",
+				"message": "test-message",
+				"subject": "test-subject"
+			}`),
+			Expected: &emailSettings{
+				SingleEmail: true,
+				Addresses: []string{
+					"someops@example.com",
+				},
+				Message: "test-message",
+				Subject: "test-subject",
+			},
+		},
+	}
+
+	for _, test := range testCase {
+		t.Run(test.Name, func(t *testing.T) {
+			cfg := &channels.NotificationChannelConfig{
+				Name:     "ops",
+				Type:     "email",
+				Settings: test.Config,
+			}
+			settings, err := buildEmailSettings(channels.FactoryConfig{Config: cfg})
+			if test.ExpectedError != "" {
+				require.ErrorContains(t, err, test.ExpectedError)
+			} else {
+				require.Equal(t, *test.Expected, *settings)
+			}
+		})
+	}
+}
+
+func TestEmailNotifier_Notify(t *testing.T) {
 	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost/base")
 	require.NoError(t, err)
 	tmpl.ExternalURL = externalURL
-
-	t.Run("empty settings should return error", func(t *testing.T) {
-		cfg := &channels.NotificationChannelConfig{
-			Name:     "ops",
-			Type:     "email",
-			Settings: json.RawMessage(`{ }`),
-		}
-		_, err := buildEmailNotifier(channels.FactoryConfig{Config: cfg})
-		require.Error(t, err)
-	})
 
 	t.Run("with the correct settings it should not fail and produce the expected command", func(t *testing.T) {
 		jsonData := `{
@@ -107,214 +222,4 @@ func TestEmailNotifier(t *testing.T) {
 			},
 		}, expected)
 	})
-}
-
-func TestEmailNotifierIntegration(t *testing.T) {
-	ns := createEmailSender(t)
-
-	emailTmpl := templateForTests(t)
-	externalURL, err := url.Parse("http://localhost/base")
-	require.NoError(t, err)
-	emailTmpl.ExternalURL = externalURL
-
-	cases := []struct {
-		name        string
-		alerts      []*types.Alert
-		messageTmpl string
-		subjectTmpl string
-		expSubject  string
-		expSnippets []string
-	}{
-		{
-			name: "single alert with templated message",
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
-				},
-			},
-			messageTmpl: `Hi, this is a custom template.
-				{{ if gt (len .Alerts.Firing) 0 }}
-					You have {{ len .Alerts.Firing }} alerts firing.
-					{{ range .Alerts.Firing }} Firing: {{ .Labels.alertname }} at {{ .Labels.severity }} {{ end }}
-				{{ end }}`,
-			expSubject: "[FIRING:1]  (AlwaysFiring warning)",
-			expSnippets: []string{
-				"Hi, this is a custom template.",
-				"You have 1 alerts firing.",
-				"Firing: AlwaysFiring at warning",
-			},
-		},
-		{
-			name: "multiple alerts with templated message",
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "FiringOne", "severity": "warning"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
-				},
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "FiringTwo", "severity": "critical"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
-				},
-			},
-			messageTmpl: `Hi, this is a custom template.
-				{{ if gt (len .Alerts.Firing) 0 }}
-					You have {{ len .Alerts.Firing }} alerts firing.
-					{{ range .Alerts.Firing }} Firing: {{ .Labels.alertname }} at {{ .Labels.severity }} {{ end }}
-				{{ end }}`,
-			expSubject: "[FIRING:2]  ",
-			expSnippets: []string{
-				"Hi, this is a custom template.",
-				"You have 2 alerts firing.",
-				"Firing: FiringOne at warning",
-				"Firing: FiringTwo at critical",
-			},
-		},
-		{
-			name: "empty message with alerts uses default template content",
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "FiringOne", "severity": "warning"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
-				},
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "FiringTwo", "severity": "critical"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
-				},
-			},
-			messageTmpl: "",
-			expSubject:  "[FIRING:2]  ",
-			expSnippets: []string{
-				"2 firing instances",
-				"<strong>severity</strong>",
-				"warning\n",
-				"critical\n",
-				"<strong>alertname</strong>",
-				"FiringTwo\n",
-				"FiringOne\n",
-				"<a href=\"http://fix.me\"",
-				"<a href=\"http://localhost/base/d/abc",
-				"<a href=\"http://localhost/base/d/abc?viewPanel=5",
-			},
-		},
-		{
-			name: "message containing HTML gets HTMLencoded",
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
-				},
-			},
-			messageTmpl: `<marquee>Hi, this is a custom template.</marquee>
-				{{ if gt (len .Alerts.Firing) 0 }}
-					<ol>
-					{{range .Alerts.Firing }}<li>Firing: {{ .Labels.alertname }} at {{ .Labels.severity }} </li> {{ end }}
-					</ol>
-				{{ end }}`,
-			expSubject: "[FIRING:1]  (AlwaysFiring warning)",
-			expSnippets: []string{
-				"&lt;marquee&gt;Hi, this is a custom template.&lt;/marquee&gt;",
-				"&lt;li&gt;Firing: AlwaysFiring at warning &lt;/li&gt;",
-			},
-		},
-		{
-			name: "single alert with templated subject",
-			alerts: []*types.Alert{
-				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
-				},
-			},
-			subjectTmpl: `This notification is {{ .Status }}!`,
-			expSubject:  "This notification is firing!",
-			expSnippets: []string{},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			emailNotifier := createSut(t, c.messageTmpl, c.subjectTmpl, emailTmpl, ns)
-
-			ok, err := emailNotifier.Notify(context.Background(), c.alerts...)
-			require.NoError(t, err)
-			require.True(t, ok)
-
-			sentMsg := getSingleSentMessage(t, ns)
-
-			require.NotNil(t, sentMsg)
-
-			require.Equal(t, "\"Grafana Admin\" <from@address.com>", sentMsg.From)
-			require.Equal(t, sentMsg.To[0], "someops@example.com")
-
-			require.Equal(t, c.expSubject, sentMsg.Subject)
-
-			require.Contains(t, sentMsg.Body, "text/html")
-			html := sentMsg.Body["text/html"]
-			require.NotNil(t, html)
-
-			for _, s := range c.expSnippets {
-				require.Contains(t, html, s)
-			}
-		})
-	}
-}
-
-func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns channels.NotificationSender) *EmailNotifier {
-	t.Helper()
-
-	jsonData := map[string]interface{}{
-		"addresses":   "someops@example.com;somedev@example.com",
-		"singleEmail": true,
-	}
-	if messageTmpl != "" {
-		jsonData["message"] = messageTmpl
-	}
-
-	if subjectTmpl != "" {
-		jsonData["subject"] = subjectTmpl
-	}
-	bytes, err := json.Marshal(jsonData)
-	require.NoError(t, err)
-
-	fc := channels.FactoryConfig{
-		Config: &channels.NotificationChannelConfig{
-			Name:     "ops",
-			Type:     "email",
-			Settings: json.RawMessage(bytes),
-		},
-		NotificationService: ns,
-		DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
-			return fallback
-		},
-		ImageStore: &channels.UnavailableImageStore{},
-		Template:   emailTmpl,
-		Logger:     &channels.FakeLogger{},
-	}
-	emailNotifier, err := buildEmailNotifier(fc)
-	require.NoError(t, err)
-	return emailNotifier
-}
-
-func getSingleSentMessage(t *testing.T, ns *emailSender) *notifications.Message {
-	t.Helper()
-
-	mailer := ns.ns.GetMailer().(*notifications.FakeMailer)
-	require.Len(t, mailer.Sent, 1)
-	sent := mailer.Sent[0]
-	mailer.Sent = []*notifications.Message{}
-	return sent
 }
