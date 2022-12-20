@@ -168,23 +168,18 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &result, err
 	}
 
-	framesPerQuery := make(map[string][]*data.Frame)
-
-	for _, f := range frames {
-		if frames, ok := framesPerQuery[f.Name]; ok {
-			framesPerQuery[f.Name] = append(frames, f)
-		} else {
-			framesPerQuery[f.Name] = []*data.Frame{f}
-		}
-	}
-
 	result = backend.QueryDataResponse{
 		Responses: make(backend.Responses),
 	}
 
-	for k, v := range framesPerQuery {
-		result.Responses[k] = backend.DataResponse{
-			Frames: v,
+	for _, f := range frames {
+		if resp, ok := result.Responses[f.Name]; ok {
+			resp.Frames = append(resp.Frames, f)
+			result.Responses[f.Name] = resp
+		} else {
+			result.Responses[f.Name] = backend.DataResponse{
+				Frames: data.Frames{f},
+			}
 		}
 	}
 
