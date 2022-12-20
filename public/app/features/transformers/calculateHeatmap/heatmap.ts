@@ -199,7 +199,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
         name: opts.value?.length ? opts.value : 'Value',
         type: FieldType.number,
         values: new ArrayVector(counts2),
-        config: yFields[0].config,
+        config: {}, // displayNameFromDS: undefined
         display: yFields[0].display,
       },
     ],
