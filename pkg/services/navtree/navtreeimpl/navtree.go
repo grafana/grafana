@@ -243,6 +243,15 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqC
 			helpVersion = setting.ApplicationName
 		}
 
+		supportBundleNode := &navtree.NavLink{
+			Text:       "Support bundles",
+			Id:         "support-bundles",
+			Url:        "/admin/support-bundles",
+			Icon:       "wrench",
+			Section:    navtree.NavSectionConfig,
+			SortWeight: navtree.WeightHelp,
+		}
+
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Help",
 			SubTitle:   helpVersion,
@@ -251,7 +260,7 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqC
 			Icon:       "question-circle",
 			SortWeight: navtree.WeightHelp,
 			Section:    navtree.NavSectionConfig,
-			Children:   []*navtree.NavLink{},
+			Children:   []*navtree.NavLink{supportBundleNode},
 		})
 	}
 }

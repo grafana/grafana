@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -97,8 +98,8 @@ func TestLineNotifier(t *testing.T) {
 			secureSettings := make(map[string][]byte)
 			webhookSender := mockNotificationService()
 
-			fc := FactoryConfig{
-				Config: &NotificationChannelConfig{
+			fc := channels.FactoryConfig{
+				Config: &channels.NotificationChannelConfig{
 					Name:           "line_testing",
 					Type:           "line",
 					Settings:       settingsJSON,
@@ -110,7 +111,7 @@ func TestLineNotifier(t *testing.T) {
 					return fallback
 				},
 				Template: tmpl,
-				Logger:   &FakeLogger{},
+				Logger:   &channels.FakeLogger{},
 			}
 			pn, err := newLineNotifier(fc)
 			if c.expInitError != "" {
@@ -132,7 +133,7 @@ func TestLineNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			require.Equal(t, c.expHeaders, webhookSender.Webhook.HttpHeader)
+			require.Equal(t, c.expHeaders, webhookSender.Webhook.HTTPHeader)
 			require.Equal(t, c.expMsg, webhookSender.Webhook.Body)
 		})
 	}
