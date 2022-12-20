@@ -8,38 +8,48 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/prometheus/alertmanager/template"
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-// GetDecryptedValueFn is a function that returns the decrypted value of
-// the given key. If the key is not present, then it returns the fallback value.
-type GetDecryptedValueFn func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string
-
 type AlertmanagerConfig struct {
-	*NotificationChannelConfig
+	*channels.NotificationChannelConfig
 	URLs              []*url.URL
 	BasicAuthUser     string
 	BasicAuthPassword string
 }
 
-func NewAlertmanagerConfig(config *NotificationChannelConfig, fn GetDecryptedValueFn) (*AlertmanagerConfig, error) {
-	simpleConfig, err := simplejson.NewJson(config.Settings)
+type alertmanagerSettings struct {
+	URLs     []*url.URL
+	User     string
+	Password string
+}
+
+func AlertmanagerFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
+	ch, err := buildAlertmanagerNotifier(fc)
 	if err != nil {
-		return nil, err
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
-	urlStr := simpleConfig.Get("url").MustString()
-	if urlStr == "" {
-		return nil, errors.New("could not find url property in settings")
+	return ch, nil
+}
+
+func buildAlertmanagerNotifier(fc channels.FactoryConfig) (*AlertmanagerNotifier, error) {
+	var settings struct {
+		URL      channels.CommaSeparatedStrings `json:"url,omitempty" yaml:"url,omitempty"`
+		User     string                         `json:"basicAuthUser,omitempty" yaml:"basicAuthUser,omitempty"`
+		Password string                         `json:"basicAuthPassword,omitempty" yaml:"basicAuthPassword,omitempty"`
+	}
+	err := json.Unmarshal(fc.Config.Settings, &settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
 
-	urlParts := strings.Split(urlStr, ",")
-	urls := make([]*url.URL, 0, len(urlParts))
-
-	for _, uS := range urlParts {
+	urls := make([]*url.URL, 0, len(settings.URL))
+	for _, uS := range settings.URL {
 		uS = strings.TrimSpace(uS)
 		if uS == "" {
 			continue
@@ -51,46 +61,29 @@ func NewAlertmanagerConfig(config *NotificationChannelConfig, fn GetDecryptedVal
 		}
 		urls = append(urls, u)
 	}
-	return &AlertmanagerConfig{
-		NotificationChannelConfig: config,
-		URLs:                      urls,
-		BasicAuthUser:             simpleConfig.Get("basicAuthUser").MustString(),
-		BasicAuthPassword:         fn(context.Background(), config.SecureSettings, "basicAuthPassword", simpleConfig.Get("basicAuthPassword").MustString()),
-	}, nil
-}
-
-func AlertmanagerFactory(fc FactoryConfig) (NotificationChannel, error) {
-	config, err := NewAlertmanagerConfig(fc.Config, fc.DecryptFunc)
-	if err != nil {
-		return nil, receiverInitError{
-			Reason: err.Error(),
-			Cfg:    *fc.Config,
-		}
+	if len(settings.URL) == 0 || len(urls) == 0 {
+		return nil, errors.New("could not find url property in settings")
 	}
-	return NewAlertmanagerNotifier(config, fc.Logger, fc.ImageStore, nil, fc.DecryptFunc), nil
-}
+	settings.Password = fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "basicAuthPassword", settings.Password)
 
-// NewAlertmanagerNotifier returns a new Alertmanager notifier.
-func NewAlertmanagerNotifier(config *AlertmanagerConfig, l Logger, images ImageStore, _ *template.Template, fn GetDecryptedValueFn) *AlertmanagerNotifier {
 	return &AlertmanagerNotifier{
-		Base:              NewBase(config.NotificationChannelConfig),
-		images:            images,
-		urls:              config.URLs,
-		basicAuthUser:     config.BasicAuthUser,
-		basicAuthPassword: config.BasicAuthPassword,
-		logger:            l,
-	}
+		Base:   channels.NewBase(fc.Config),
+		images: fc.ImageStore,
+		settings: alertmanagerSettings{
+			URLs:     urls,
+			User:     settings.User,
+			Password: settings.Password,
+		},
+		logger: fc.Logger,
+	}, nil
 }
 
 // AlertmanagerNotifier sends alert notifications to the alert manager
 type AlertmanagerNotifier struct {
-	*Base
-	images ImageStore
-
-	urls              []*url.URL
-	basicAuthUser     string
-	basicAuthPassword string
-	logger            Logger
+	*channels.Base
+	images   channels.ImageStore
+	settings alertmanagerSettings
+	logger   channels.Logger
 }
 
 // Notify sends alert notifications to Alertmanager.
@@ -101,7 +94,7 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	}
 
 	_ = withStoredImages(ctx, n.logger, n.images,
-		func(index int, image Image) error {
+		func(index int, image channels.Image) error {
 			// If there is an image for this alert and the image has been uploaded
 			// to a public URL then include it as an annotation
 			if image.URL != "" {
@@ -119,10 +112,10 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		lastErr error
 		numErrs int
 	)
-	for _, u := range n.urls {
+	for _, u := range n.settings.URLs {
 		if _, err := sendHTTPRequest(ctx, u, httpCfg{
-			user:     n.basicAuthUser,
-			password: n.basicAuthPassword,
+			user:     n.settings.User,
+			password: n.settings.Password,
 			body:     body,
 		}, n.logger); err != nil {
 			n.logger.Warn("failed to send to Alertmanager", "error", err, "alertmanager", n.Name, "url", u.String())
@@ -131,7 +124,7 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		}
 	}
 
-	if numErrs == len(n.urls) {
+	if numErrs == len(n.settings.URLs) {
 		// All attempts to send alerts have failed
 		n.logger.Warn("all attempts to send to Alertmanager failed", "alertmanager", n.Name)
 		return false, fmt.Errorf("failed to send alert to Alertmanager: %w", lastErr)
