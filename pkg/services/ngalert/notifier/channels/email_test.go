@@ -2,15 +2,16 @@ package channels
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"testing"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -22,10 +23,9 @@ func TestEmailNotifier(t *testing.T) {
 	tmpl.ExternalURL = externalURL
 
 	t.Run("empty settings should return error", func(t *testing.T) {
-		json := `{ }`
-
-		settingsJSON, _ := simplejson.NewJson([]byte(json))
-		model := &NotificationChannelConfig{
+		jsonData := `{ }`
+		settingsJSON := json.RawMessage(jsonData)
+		model := &channels.NotificationChannelConfig{
 			Name:     "ops",
 			Type:     "email",
 			Settings: settingsJSON,
@@ -36,21 +36,19 @@ func TestEmailNotifier(t *testing.T) {
 	})
 
 	t.Run("with the correct settings it should not fail and produce the expected command", func(t *testing.T) {
-		json := `{
+		jsonData := `{
 			"addresses": "someops@example.com;somedev@example.com",
 			"message": "{{ template \"default.title\" . }}"
 		}`
-		settingsJSON, err := simplejson.NewJson([]byte(json))
-		require.NoError(t, err)
 
 		emailSender := mockNotificationService()
-		cfg, err := NewEmailConfig(&NotificationChannelConfig{
+		cfg, err := NewEmailConfig(&channels.NotificationChannelConfig{
 			Name:     "ops",
 			Type:     "email",
-			Settings: settingsJSON,
+			Settings: json.RawMessage(jsonData),
 		})
 		require.NoError(t, err)
-		emailNotifier := NewEmailNotifier(cfg, &FakeLogger{}, emailSender, &UnavailableImageStore{}, tmpl)
+		emailNotifier := NewEmailNotifier(cfg, &channels.FakeLogger{}, emailSender, &channels.UnavailableImageStore{}, tmpl)
 
 		alerts := []*types.Alert{
 			{
@@ -81,8 +79,8 @@ func TestEmailNotifier(t *testing.T) {
 				"Title":   "[FIRING:1]  (AlwaysFiring warning)",
 				"Message": "[FIRING:1]  (AlwaysFiring warning)",
 				"Status":  "firing",
-				"Alerts": ExtendedAlerts{
-					ExtendedAlert{
+				"Alerts": channels.ExtendedAlerts{
+					channels.ExtendedAlert{
 						Status:       "firing",
 						Labels:       template.KV{"alertname": "AlwaysFiring", "severity": "warning"},
 						Annotations:  template.KV{"runbook_url": "http://fix.me"},
@@ -270,27 +268,26 @@ func TestEmailNotifierIntegration(t *testing.T) {
 func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns *emailSender) *EmailNotifier {
 	t.Helper()
 
-	json := `{
-		"addresses": "someops@example.com;somedev@example.com",
-		"singleEmail": true
-	}`
-	settingsJSON, err := simplejson.NewJson([]byte(json))
+	jsonData := map[string]interface{}{
+		"addresses":   "someops@example.com;somedev@example.com",
+		"singleEmail": true,
+	}
 	if messageTmpl != "" {
-		settingsJSON.Set("message", messageTmpl)
+		jsonData["message"] = messageTmpl
 	}
 
 	if subjectTmpl != "" {
-		settingsJSON.Set("subject", subjectTmpl)
+		jsonData["subject"] = subjectTmpl
 	}
-
+	bytes, err := json.Marshal(jsonData)
 	require.NoError(t, err)
-	cfg, err := NewEmailConfig(&NotificationChannelConfig{
+	cfg, err := NewEmailConfig(&channels.NotificationChannelConfig{
 		Name:     "ops",
 		Type:     "email",
-		Settings: settingsJSON,
+		Settings: bytes,
 	})
 	require.NoError(t, err)
-	emailNotifier := NewEmailNotifier(cfg, &FakeLogger{}, ns, &UnavailableImageStore{}, emailTmpl)
+	emailNotifier := NewEmailNotifier(cfg, &channels.FakeLogger{}, ns, &channels.UnavailableImageStore{}, emailTmpl)
 
 	return emailNotifier
 }
