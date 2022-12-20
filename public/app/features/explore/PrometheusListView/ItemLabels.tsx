@@ -4,10 +4,12 @@ import React from 'react';
 import { Field } from '@grafana/data/src';
 import { stylesFactory } from '@grafana/ui/src';
 
+import { rawListItemColumnWidth } from './RawListItem';
+
 const getItemLabelsStyles = stylesFactory(() => {
   return {
     valueNavigation: css`
-      width: 80px;
+      width: ${rawListItemColumnWidth};
     `,
     valueNavigationWrapper: css`
       display: flex;

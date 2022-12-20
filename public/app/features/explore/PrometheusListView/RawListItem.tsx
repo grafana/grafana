@@ -18,7 +18,7 @@ interface RawListProps {
 
 export type RawListValue = { key: string; value: string };
 
-const columnWidth = '80px';
+export const rawListItemColumnWidth = '80px';
 const extraSpaceAtEndOfLine = '20px';
 const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
   rowWrapper: css`
@@ -35,7 +35,7 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
   `,
   rowLabelWrapWrap: css`
     position: relative;
-    width: calc(100% - (${totalNumberOfValues} * ${columnWidth}) - 25px);
+    width: calc(100% - (${totalNumberOfValues} * ${rawListItemColumnWidth}) - 25px);
   `,
   rowLabelWrap: css`
     white-space: nowrap;
@@ -59,13 +59,13 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
     }
   `,
   rowValue: css`
-    min-width: ${columnWidth};
+    min-width: ${rawListItemColumnWidth};
     font-weight: bold;
   `,
   rowValuesWrap: css`
     padding-left: 25px;
     font-weight: bold;
-    width: calc(${totalNumberOfValues} * ${columnWidth});
+    width: calc(${totalNumberOfValues} * ${rawListItemColumnWidth});
     display: flex;
   `,
 });
