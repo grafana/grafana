@@ -22,6 +22,14 @@ type store struct {
 	kv *kvstore.NamespacedKVStore
 }
 
+type bundleStore interface {
+	Create(ctx context.Context, usr *user.SignedInUser) (*supportbundles.Bundle, error)
+	Get(ctx context.Context, uid string) (*supportbundles.Bundle, error)
+	List() ([]supportbundles.Bundle, error)
+	Remove(ctx context.Context, uid string) error
+	Update(ctx context.Context, uid string, state supportbundles.State, filePath string) error
+}
+
 func (s *store) Create(ctx context.Context, usr *user.SignedInUser) (*supportbundles.Bundle, error) {
 	uid, err := uuid.NewRandom()
 	if err != nil {

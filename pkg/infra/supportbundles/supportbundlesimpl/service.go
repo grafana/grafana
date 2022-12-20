@@ -23,7 +23,7 @@ import (
 
 type Service struct {
 	cfg            *setting.Cfg
-	store          *store
+	store          bundleStore
 	pluginStore    plugins.Store
 	pluginSettings pluginsettings.Service
 	accessControl  ac.AccessControl
@@ -61,7 +61,7 @@ func ProvideService(cfg *setting.Cfg,
 	}
 
 	if !accessControl.IsDisabled() {
-		if err := DeclareFixedRoles(accesscontrolService); err != nil {
+		if err := declareFixedRoles(accesscontrolService); err != nil {
 			return nil, err
 		}
 	}
@@ -77,51 +77,6 @@ func ProvideService(cfg *setting.Cfg,
 	s.RegisterSupportItemCollector(pluginInfoCollector(pluginStore, pluginSettings))
 
 	return s, nil
-}
-
-func (s *Service) Create(ctx context.Context, collectors []string, usr *user.SignedInUser) (*supportbundles.Bundle, error) {
-	bundle, err := s.store.Create(ctx, usr)
-	if err != nil {
-		return nil, err
-	}
-
-	go func(uid string, collectors []string) {
-		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
-		defer cancel()
-		s.startBundleWork(ctx, collectors, uid)
-	}(bundle.UID, collectors)
-
-	return bundle, nil
-}
-
-func (s *Service) Get(ctx context.Context, uid string) (*supportbundles.Bundle, error) {
-	return s.store.Get(ctx, uid)
-}
-
-func (s *Service) List(ctx context.Context) ([]supportbundles.Bundle, error) {
-	return s.store.List()
-}
-
-func (s *Service) Remove(ctx context.Context, uid string) error {
-	// Remove the data
-	bundle, err := s.store.Get(ctx, uid)
-	if err != nil {
-		return fmt.Errorf("could not retrieve support bundle with uid %s: %w", uid, err)
-	}
-
-	// TODO handle cases when bundles aren't complete yet
-	if bundle.State == supportbundles.StatePending {
-		return fmt.Errorf("could not remove a support bundle with uid %s as it is still beign cteated", uid)
-	}
-
-	if bundle.FilePath != "" {
-		if err := os.RemoveAll(filepath.Dir(bundle.FilePath)); err != nil {
-			return fmt.Errorf("could not remove directory for support bundle %s: %w", uid, err)
-		}
-	}
-
-	// Remove the KV store entry
-	return s.store.Remove(ctx, uid)
 }
 
 func (s *Service) RegisterSupportItemCollector(collector supportbundles.Collector) {
@@ -146,8 +101,53 @@ func (s *Service) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
+func (s *Service) create(ctx context.Context, collectors []string, usr *user.SignedInUser) (*supportbundles.Bundle, error) {
+	bundle, err := s.store.Create(ctx, usr)
+	if err != nil {
+		return nil, err
+	}
+
+	go func(uid string, collectors []string) {
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
+		defer cancel()
+		s.startBundleWork(ctx, collectors, uid)
+	}(bundle.UID, collectors)
+
+	return bundle, nil
+}
+
+func (s *Service) get(ctx context.Context, uid string) (*supportbundles.Bundle, error) {
+	return s.store.Get(ctx, uid)
+}
+
+func (s *Service) list(ctx context.Context) ([]supportbundles.Bundle, error) {
+	return s.store.List()
+}
+
+func (s *Service) remove(ctx context.Context, uid string) error {
+	// Remove the data
+	bundle, err := s.store.Get(ctx, uid)
+	if err != nil {
+		return fmt.Errorf("could not retrieve support bundle with uid %s: %w", uid, err)
+	}
+
+	// TODO handle cases when bundles aren't complete yet
+	if bundle.State == supportbundles.StatePending {
+		return fmt.Errorf("could not remove a support bundle with uid %s as it is still beign cteated", uid)
+	}
+
+	if bundle.FilePath != "" {
+		if err := os.RemoveAll(filepath.Dir(bundle.FilePath)); err != nil {
+			return fmt.Errorf("could not remove directory for support bundle %s: %w", uid, err)
+		}
+	}
+
+	// Remove the KV store entry
+	return s.store.Remove(ctx, uid)
+}
+
 func (s *Service) cleanup(ctx context.Context) {
-	bundles, err := s.List(ctx)
+	bundles, err := s.list(ctx)
 	if err != nil {
 		s.log.Error("failed to list bundles to clean up", "error", err)
 	}
@@ -155,7 +155,7 @@ func (s *Service) cleanup(ctx context.Context) {
 	if err == nil {
 		for _, b := range bundles {
 			if time.Now().Unix() >= b.ExpiresAt {
-				if err := s.Remove(ctx, b.UID); err != nil {
+				if err := s.remove(ctx, b.UID); err != nil {
 					s.log.Error("failed to cleanup bundle", "error", err)
 				}
 			}
