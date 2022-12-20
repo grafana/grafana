@@ -33,9 +33,6 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
     top: 0;
     z-index: 1;
   `,
-  attributeWrapper: css`
-    //display:inline-block
-  `,
   rowLabelWrapWrap: css`
     position: relative;
     width: calc(100% - (${totalNumberOfValues} * ${columnWidth}) - 25px);
@@ -47,6 +44,9 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
     scrollbar-width: none; /* Firefox */
     padding-right: ${extraSpaceAtEndOfLine};
 
+    &::-webkit-scrollbar {
+      display: none; /* Chrome, Safari and Opera */
+    }
     &:after {
       content: '';
       width: 100%;
@@ -55,10 +55,6 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
       left: 0;
       top: 0;
       background: linear-gradient(to right, transparent calc(100% - ${extraSpaceAtEndOfLine}), ${theme.colors.bg1});
-    }
-
-    &::-webkit-scrollbar {
-      display: none; /* Chrome, Safari and Opera */
     }
   `,
   rowValue: css`
@@ -164,7 +160,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels }
           <div className={styles.rowLabelWrap}>
             <span>{__name__}</span>
             <span>{`{`}</span>
-            <span className={styles.attributeWrapper}>
+            <span>
               {attributeValues.map((value, index) => (
                 <RawListItemAttributes value={value} key={index} index={index} length={attributeValues.length} />
               ))}

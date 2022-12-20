@@ -1,11 +1,23 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { Field } from '@grafana/data/src';
+import { stylesFactory } from '@grafana/ui/src';
 
-import { getRawListContainerStyles } from './RawListContainer';
+const getItemLabelsStyles = stylesFactory(() => {
+  return {
+    valueNavigation: css`
+      width: 80px;
+    `,
+    valueNavigationWrapper: css`
+      display: flex;
+      justify-content: flex-end;
+    `,
+  };
+});
 
 export const ItemLabels = ({ valueLabels }: { valueLabels: Field[] }) => {
-  const styles = getRawListContainerStyles();
+  const styles = getItemLabelsStyles();
   return (
     <div>
       <div className={styles.valueNavigationWrapper}>

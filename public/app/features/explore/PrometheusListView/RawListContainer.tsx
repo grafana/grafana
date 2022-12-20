@@ -18,7 +18,7 @@ export interface RawListContainerProps {
   tableResult: DataFrame;
 }
 
-export const getRawListContainerStyles = stylesFactory(() => {
+const getRawListContainerStyles = stylesFactory(() => {
   return {
     wrapper: css`
       height: 100%;
@@ -27,22 +27,10 @@ export const getRawListContainerStyles = stylesFactory(() => {
     mobileWrapper: css`
       height: 100%;
       overflow: scroll;
-
       .list-item-attribute {
         display: block;
         text-indent: 1em;
       }
-    `,
-    valueNavigation: css`
-      width: 80px;
-    `,
-    valueNavigationActive: css`
-      padding-right: 15px;
-      text-decoration: underline;
-    `,
-    valueNavigationWrapper: css`
-      display: flex;
-      justify-content: flex-end;
     `,
     header: css`
       display: flex;
