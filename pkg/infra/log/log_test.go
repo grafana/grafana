@@ -327,8 +327,13 @@ func newLoggerScenario(t *testing.T, desc string, fn func(t *testing.T, ctx *sce
 		now = origNow
 	})
 
-	root = newManager(l)
+	origContextHandlers := ctxLogProviders
+	ctxLogProviders = []ContextualLogProviderFunc{}
+	t.Cleanup(func() {
+		ctxLogProviders = origContextHandlers
+	})
 
+	root = newManager(l)
 	t.Run(desc, func(t *testing.T) {
 		fn(t, ctx)
 	})
