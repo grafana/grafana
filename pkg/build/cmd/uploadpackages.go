@@ -32,27 +32,27 @@ type uploadConfig struct {
 func UploadPackages(c *cli.Context) error {
 	if c.NArg() > 0 {
 		if err := cli.ShowSubcommandHelp(c); err != nil {
-			return cli.NewExitError(err.Error(), 1)
+			return cli.Exit(err.Error(), 1)
 		}
-		return cli.NewExitError("", 1)
+		return cli.Exit("", 1)
 	}
 
 	gcpKeyB64 := strings.TrimSpace(os.Getenv("GCP_KEY"))
 	if gcpKeyB64 == "" {
-		return cli.NewExitError("the environment variable GCP_KEY must be set", 1)
+		return cli.Exit("the environment variable GCP_KEY must be set", 1)
 	}
 	gcpKeyB, err := base64.StdEncoding.DecodeString(gcpKeyB64)
 	if err != nil {
-		return cli.NewExitError("failed to base64 decode $GCP_KEY", 1)
+		return cli.Exit("failed to base64 decode $GCP_KEY", 1)
 	}
 	gcpKey := string(gcpKeyB)
 
 	distDir, err := filepath.Abs("dist")
 	if err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
-	metadata, err := GenerateMetadata(c)
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}
@@ -61,12 +61,12 @@ func UploadPackages(c *cli.Context) error {
 
 	releaseMode, err := metadata.GetReleaseMode()
 	if err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
 	releaseModeConfig, err := config.GetBuildConfig(releaseMode.Mode)
 	if err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
 	var edition config.Edition
@@ -103,7 +103,7 @@ func UploadPackages(c *cli.Context) error {
 	}
 
 	if err := uploadPackages(cfg); err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
 	log.Println("Successfully uploaded packages!")

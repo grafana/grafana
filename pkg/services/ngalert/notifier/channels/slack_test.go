@@ -19,11 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -380,7 +377,7 @@ type slackRequestRecorder struct {
 	requests []*http.Request
 }
 
-func (s *slackRequestRecorder) fn(_ context.Context, r *http.Request, _ log.Logger) (string, error) {
+func (s *slackRequestRecorder) fn(_ context.Context, r *http.Request, _ channels.Logger) (string, error) {
 	s.requests = append(s.requests, r)
 	return "", nil
 }
@@ -416,7 +413,7 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 	})
 
 	images := &fakeImageStore{
-		Images: []*models.Image{{
+		Images: []*channels.Image{{
 			Token: "image-on-disk",
 			Path:  f.Name(),
 		}, {
@@ -424,24 +421,22 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 			URL:   "https://www.example.com/test.png",
 		}},
 	}
-
-	settingsJSON, err := simplejson.NewJson([]byte(settings))
-	require.NoError(t, err)
-
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	notificationService := mockNotificationService()
 
-	c := FactoryConfig{
-		Config: &NotificationChannelConfig{
+	c := channels.FactoryConfig{
+		Config: &channels.NotificationChannelConfig{
 			Name:           "slack_testing",
 			Type:           "slack",
-			Settings:       settingsJSON,
+			Settings:       json.RawMessage(settings),
 			SecureSettings: make(map[string][]byte),
 		},
 		ImageStore:          images,
 		NotificationService: notificationService,
-		DecryptFunc:         secretsService.GetDecryptedValue,
-		Template:            tmpl,
+		DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+			return fallback
+		},
+		Template: tmpl,
+		Logger:   &channels.FakeLogger{},
 	}
 
 	sn, err := buildSlackNotifier(c)
@@ -569,7 +564,7 @@ func TestSendSlackRequest(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, server.URL, nil)
 			require.NoError(tt, err)
 
-			_, err = sendSlackRequest(context.Background(), req, log.New("test"))
+			_, err = sendSlackRequest(context.Background(), req, &channels.FakeLogger{})
 			if !test.expectError {
 				require.NoError(tt, err)
 			} else {

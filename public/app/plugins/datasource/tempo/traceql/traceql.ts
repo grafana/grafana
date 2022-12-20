@@ -53,6 +53,9 @@ export const language = {
       // labels
       [/[a-z_.][\w./_-]*(?=\s*(=|!=|>|<|>=|<=|=~|!~))/, 'tag'],
 
+      //trace ID
+      [/^\s*[0-9A-Fa-f]+\s*$/, 'tag'],
+
       // all keywords have the same color
       [
         /[a-zA-Z_.]\w*/,

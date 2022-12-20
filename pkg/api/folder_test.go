@@ -150,7 +150,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 	})
 
 	t.Run("Should attach access control metadata to multiple folders", func(t *testing.T) {
-		folderService.ExpectedFolders = []*models.Folder{{Uid: "1"}, {Uid: "2"}, {Uid: "3"}}
+		folderService.ExpectedFolders = []*folder.Folder{{UID: "1"}, {UID: "2"}, {UID: "3"}}
 
 		req := server.NewGetRequest("/api/folders?accesscontrol=true")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -239,6 +239,13 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
 			q.Result = aclMockResp
+		}).Return(nil)
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardQuery)
+			q.Result = &models.Dashboard{
+				Id:  q.Id,
+				Uid: q.Uid,
+			}
 		}).Return(nil)
 		store := mockstore.NewSQLStoreMock()
 		guardian.InitLegacyGuardian(store, dashSvc, teamSvc)

@@ -77,5 +77,9 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 	}
 
+	if cfg.SendUserHeader {
+		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())
+	}
+
 	return middlewares
 }

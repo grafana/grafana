@@ -9,6 +9,7 @@ import { getGridWithRowLayoutTest } from './gridWithRow';
 import { getNestedScene } from './nested';
 import { getQueryVariableDemo } from './queryVariableDemo';
 import { getSceneWithRows } from './sceneWithRows';
+import { getTransformationsDemo } from './transformations';
 import { getVariablesDemo, getVariablesDemoWithAll } from './variablesDemo';
 
 interface SceneDef {
@@ -29,6 +30,7 @@ export function getScenes(): SceneDef[] {
     { title: 'Variables', getScene: getVariablesDemo },
     { title: 'Variables with All values', getScene: getVariablesDemoWithAll },
     { title: 'Query variable', getScene: getQueryVariableDemo },
+    { title: 'Transformations demo', getScene: getTransformationsDemo },
   ];
 }
 

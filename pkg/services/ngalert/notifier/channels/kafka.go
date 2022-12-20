@@ -10,20 +10,19 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 // KafkaNotifier is responsible for sending
 // alert notifications to Kafka.
 type KafkaNotifier struct {
-	*Base
-	log      log.Logger
-	images   ImageStore
-	ns       notifications.WebhookSender
+	*channels.Base
+	log      channels.Logger
+	images   channels.ImageStore
+	ns       channels.WebhookSender
 	tmpl     *template.Template
 	settings kafkaSettings
 }
@@ -35,7 +34,7 @@ type kafkaSettings struct {
 	Details     string
 }
 
-func KafkaFactory(fc FactoryConfig) (NotificationChannel, error) {
+func KafkaFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
 	ch, err := newKafkaNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
@@ -47,27 +46,25 @@ func KafkaFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 // newKafkaNotifier is the constructor function for the Kafka notifier.
-func newKafkaNotifier(fc FactoryConfig) (*KafkaNotifier, error) {
-	endpoint := fc.Config.Settings.Get("kafkaRestProxy").MustString()
+func newKafkaNotifier(fc channels.FactoryConfig) (*KafkaNotifier, error) {
+	settings, err := simplejson.NewJson(fc.Config.Settings)
+	if err != nil {
+		return nil, err
+	}
+	endpoint := settings.Get("kafkaRestProxy").MustString()
 	if endpoint == "" {
 		return nil, errors.New("could not find kafka rest proxy endpoint property in settings")
 	}
-	topic := fc.Config.Settings.Get("kafkaTopic").MustString()
+	topic := settings.Get("kafkaTopic").MustString()
 	if topic == "" {
 		return nil, errors.New("could not find kafka topic property in settings")
 	}
-	description := fc.Config.Settings.Get("description").MustString(DefaultMessageTitleEmbed)
-	details := fc.Config.Settings.Get("details").MustString(DefaultMessageEmbed)
+	description := settings.Get("description").MustString(channels.DefaultMessageTitleEmbed)
+	details := settings.Get("details").MustString(channels.DefaultMessageEmbed)
 
 	return &KafkaNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
-		log:      log.New("alerting.notifier.kafka"),
+		Base:     channels.NewBase(fc.Config),
+		log:      fc.Logger,
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
@@ -78,7 +75,7 @@ func newKafkaNotifier(fc FactoryConfig) (*KafkaNotifier, error) {
 // Notify sends the alert notification.
 func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	var tmplErr error
-	tmpl, _ := TmplText(ctx, kn.tmpl, as, kn.log, &tmplErr)
+	tmpl, _ := channels.TmplText(ctx, kn.tmpl, as, kn.log, &tmplErr)
 
 	topicURL := strings.TrimRight(kn.settings.Endpoint, "/") + "/topics/" + tmpl(kn.settings.Topic)
 
@@ -91,17 +88,17 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		kn.log.Warn("failed to template Kafka message", "error", tmplErr.Error())
 	}
 
-	cmd := &models.SendWebhookSync{
-		Url:        topicURL,
+	cmd := &channels.SendWebhookSettings{
+		URL:        topicURL,
 		Body:       body,
-		HttpMethod: "POST",
-		HttpHeader: map[string]string{
+		HTTPMethod: "POST",
+		HTTPHeader: map[string]string{
 			"Content-Type": "application/vnd.kafka.json.v2+json",
 			"Accept":       "application/vnd.kafka.v2+json",
 		},
 	}
 
-	if err = kn.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err = kn.ns.SendWebhook(ctx, cmd); err != nil {
 		kn.log.Error("Failed to send notification to Kafka", "error", err, "body", body)
 		return false, err
 	}
@@ -159,10 +156,10 @@ func buildState(as ...*types.Alert) models.AlertStateType {
 	return models.AlertStateAlerting
 }
 
-func buildContextImages(ctx context.Context, l log.Logger, imageStore ImageStore, as ...*types.Alert) []interface{} {
+func buildContextImages(ctx context.Context, l channels.Logger, imageStore channels.ImageStore, as ...*types.Alert) []interface{} {
 	var contexts []interface{}
 	_ = withStoredImages(ctx, l, imageStore,
-		func(_ int, image ngmodels.Image) error {
+		func(_ int, image channels.Image) error {
 			if image.URL != "" {
 				imageJSON := simplejson.New()
 				imageJSON.Set("type", "image")
