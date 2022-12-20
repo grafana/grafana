@@ -21,6 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	cleanUpInterval       = 24 * time.Hour
+	bundleCreationTimeout = 20 * time.Minute
+)
+
 type Service struct {
 	cfg            *setting.Cfg
 	store          bundleStore
@@ -89,7 +94,7 @@ func (s *Service) Run(ctx context.Context) error {
 		return nil
 	}
 
-	ticker := time.NewTicker(24 * time.Hour)
+	ticker := time.NewTicker(cleanUpInterval)
 	defer ticker.Stop()
 	s.cleanup(ctx)
 	select {
@@ -108,7 +113,7 @@ func (s *Service) create(ctx context.Context, collectors []string, usr *user.Sig
 	}
 
 	go func(uid string, collectors []string) {
-		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), bundleCreationTimeout)
 		defer cancel()
 		s.startBundleWork(ctx, collectors, uid)
 	}(bundle.UID, collectors)
