@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -11,7 +10,6 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/common/model"
 )
 
 // validateRuleNode validates API model (definitions.PostableExtendedRuleNode) and converts it to models.AlertRule
@@ -101,12 +99,12 @@ func validateRuleNode(
 		ExecErrState:    errorState,
 	}
 
-	newAlertRule.For, err = validateDurationPointerField(ruleNode, "For")
+	newAlertRule.For, err = validateForInterval(ruleNode)
 	if err != nil {
 		return nil, err
 	}
 
-	newAlertRule.ForError, err = validateDurationPointerField(ruleNode, "ForError")
+	newAlertRule.ForError, err = validateForErrorInterval(ruleNode)
 	if err != nil {
 		return nil, err
 	}
@@ -140,18 +138,32 @@ func validateInterval(cfg *setting.UnifiedAlertingSettings, interval time.Durati
 }
 
 // validateForInterval validates ApiRuleNode.For and converts it to time.Duration. If the field is not specified returns 0 if GrafanaManagedAlert.UID is empty and -1 if it is not.
-func validateDurationPointerField(ruleNode *apimodels.PostableExtendedRuleNode, fieldName string) (time.Duration, error) {
-	refApiRuleNode := reflect.ValueOf(ruleNode.ApiRuleNode)
-	if refApiRuleNode.IsNil() || refApiRuleNode.Elem().FieldByName(fieldName).IsNil() {
+func validateForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Duration, error) {
+	if ruleNode.ApiRuleNode == nil || ruleNode.ApiRuleNode.For == nil {
 		if ruleNode.GrafanaManagedAlert.UID != "" {
 			return -1, nil // will be patched later with the real value of the current version of the rule
 		}
 		return 0, nil // if it's a new rule, use the 0 as the default
 	}
-	elemField := refApiRuleNode.Elem().FieldByName(fieldName).Elem()
-	duration := time.Duration(elemField.Interface().(model.Duration))
+	duration := time.Duration(*ruleNode.ApiRuleNode.For)
 	if duration < 0 {
-		return 0, fmt.Errorf("field `%s` cannot be negative [%v]. 0 or any positive duration are allowed", fieldName, elemField.Interface())
+		return 0, fmt.Errorf("field `for` cannot be negative [%v]. 0 or any positive duration are allowed", *ruleNode.ApiRuleNode.For)
+	}
+	return duration, nil
+}
+
+// validateForErrorInterval validates GrafanaManagedAlert.ForError and converts it to time.Duration.
+// If the field is not specified returns 0 if GrafanaManagedAlert.UID is empty and -1 if it is not.
+func validateForErrorInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Duration, error) {
+	if ruleNode.GrafanaManagedAlert == nil || ruleNode.GrafanaManagedAlert.ForError == nil {
+		if ruleNode.GrafanaManagedAlert.UID != "" {
+			return -1, nil // will be patched later with the real value of the current version of the rule
+		}
+		return 0, nil // if it's a new rule, use the 0 as the default
+	}
+	duration := time.Duration(*ruleNode.GrafanaManagedAlert.ForError)
+	if duration < 0 {
+		return 0, fmt.Errorf("field `forError` cannot be negative [%v]. 0 or any positive duration are allowed", *ruleNode.GrafanaManagedAlert.ForError)
 	}
 	return duration, nil
 }

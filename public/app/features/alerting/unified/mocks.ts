@@ -95,7 +95,6 @@ export const mockRulerGrafanaRule = (
 ): RulerGrafanaRuleDTO => {
   return {
     for: '1m',
-    for_error: '3m',
     grafana_alert: {
       uid: '123',
       title: 'myalert',
@@ -104,6 +103,7 @@ export const mockRulerGrafanaRule = (
       condition: 'A',
       no_data_state: GrafanaAlertStateDecision.Alerting,
       exec_err_state: GrafanaAlertStateDecision.Alerting,
+      for_error: '3m',
       data: [
         {
           datasourceUid: '123',

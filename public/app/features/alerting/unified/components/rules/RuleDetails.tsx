@@ -67,7 +67,9 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
   // recording rules don't have a for duration
   if (!isRecordingRulerRule(rule.rulerRule)) {
     forDuration = rule.rulerRule?.for;
-    forErrorDuration = rule.rulerRule?.for_error;
+    if (rule.rulerRule && 'grafana_alert' in rule.rulerRule) {
+      forErrorDuration = rule.rulerRule.grafana_alert.for_error;
+    }
   }
 
   return (

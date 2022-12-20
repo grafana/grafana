@@ -264,7 +264,6 @@ type ApiRuleNode struct {
 	Alert       string            `yaml:"alert,omitempty" json:"alert,omitempty"`
 	Expr        string            `yaml:"expr" json:"expr"`
 	For         *model.Duration   `yaml:"for,omitempty" json:"for,omitempty"`
-	ForError    *model.Duration   `yaml:"for_error,omitempty" json:"for_error,omitempty"`
 	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 	Annotations map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 }
@@ -375,6 +374,7 @@ type PostableGrafanaRule struct {
 	UID          string              `json:"uid" yaml:"uid"`
 	NoDataState  NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
+	ForError     *model.Duration     `json:"for_error" yaml:"for_error"`
 	IsPaused     *bool               `json:"is_paused" yaml:"is_paused"`
 }
 
@@ -393,6 +393,7 @@ type GettableGrafanaRule struct {
 	NamespaceID     int64               `json:"namespace_id" yaml:"namespace_id"`
 	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
+	ForError        *model.Duration     `json:"for_error" yaml:"for_error"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
 	Provenance      models.Provenance   `json:"provenance,omitempty" yaml:"provenance,omitempty"`
 	IsPaused        bool                `json:"is_paused" yaml:"is_paused"`

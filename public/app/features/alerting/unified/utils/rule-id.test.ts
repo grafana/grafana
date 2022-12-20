@@ -49,11 +49,11 @@ describe('hashRulerRule', () => {
       data: [],
       no_data_state: GrafanaAlertStateDecision.NoData,
       exec_err_state: GrafanaAlertStateDecision.Alerting,
+      for_error: '3m',
     };
     const grafanaRule: RulerGrafanaRuleDTO = {
       grafana_alert: grafanaAlertDefinition,
       for: '30s',
-      for_error: '3m',
       labels: { type: 'cpu' },
       annotations: { description: 'CPU usage too high' },
     };

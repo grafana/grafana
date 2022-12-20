@@ -235,21 +235,17 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		state.Error = result.Error
 		state.StateReason = "error"
 	case models.ErrorErrState:
-		switch {
-		case state.State == eval.Error:
+		if state.State == eval.Error {
 			logger.Debug("Keeping state", "state", state.State)
 			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
-		case state.State == eval.Pending && state.Error != nil:
+		} else if state.State == eval.Pending && state.Error != nil {
 			// If the previous state is Pending then check if the ForError duration has been observed
 			if result.EvaluatedAt.Sub(state.StartsAt) >= rule.ForError {
 				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error)
 				state.SetError(result.Error, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
 			}
-		default:
+		} else {
 			// This is the first occurrence of an error
-			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error)
-			state.SetError(result.Error, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
-
 			if result.Error != nil {
 				state.Annotations["Error"] = result.Error.Error()
 				// If the evaluation failed because a query returned an error then add the Ref ID and

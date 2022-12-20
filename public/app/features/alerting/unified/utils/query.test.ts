@@ -24,7 +24,6 @@ describe('alertRuleToQueries', () => {
       },
       rulerRule: {
         for: '',
-        for_error: '',
         annotations: {},
         labels: {},
         grafana_alert: grafanaAlert,
@@ -86,6 +85,7 @@ const grafanaAlert = {
   namespace_id: 11,
   namespace_uid: 'namespaceuid123',
   no_data_state: GrafanaAlertStateDecision.NoData,
+  for_error: '',
   title: 'Test alert',
   uid: 'asdf23',
   data: [
