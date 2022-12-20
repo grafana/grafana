@@ -210,16 +210,14 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
     );
   }
 
-  const renderYBuckets = () => {
+  const renderYBuckets = (includeLabel?: false) => {
     switch (data.yLayout) {
       case HeatmapCellLayout.unknown:
         return <div>{yDisp(yBucketMin)}</div>;
     }
-    return (
-      <div>
-        Bucket: {yDisp(yBucketMin)} - {yDisp(yBucketMax)}
-      </div>
-    );
+    return includeLabel
+      ? `<div>Bucket: ${yDisp(yBucketMin)} - ${yDisp(yBucketMax)}</div>`
+      : `${yDisp(yBucketMin)} - ${yDisp(yBucketMax)}`;
   };
 
   return (
@@ -239,7 +237,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
       <div>
         {renderYBuckets()}
         <div>
-          {getFieldDisplayName(countField!, data.heatmap)}: {data.display!(count)}
+          {renderYBuckets(false)}: {data.display!(count)}
         </div>
       </div>
       {links.length > 0 && (
