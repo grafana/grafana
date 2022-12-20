@@ -89,7 +89,8 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 
 	finalFilePath := filepath.Join(sbDir, fmt.Sprintf("%s.tar.gz", uid))
 
-	// write the .tar.gzip
+	// Ignore gosec G304 as this function is only used internally.
+	//nolint:gosec
 	fileToWrite, err := os.OpenFile(finalFilePath, os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		return "", err
@@ -107,7 +108,7 @@ func compress(src string, buf io.Writer) error {
 	tw := tar.NewWriter(zr)
 
 	// walk through every file in the folder
-	filepath.Walk(src, func(file string, fi os.FileInfo, err error) error {
+	err := filepath.Walk(src, func(file string, fi os.FileInfo, err error) error {
 		// if not a dir, write file content
 		if !fi.IsDir() {
 			// generate tar header
@@ -122,6 +123,9 @@ func compress(src string, buf io.Writer) error {
 			if err := tw.WriteHeader(header); err != nil {
 				return err
 			}
+
+			// Ignore gosec G304 as this function is only used internally.
+			//nolint:gosec
 			data, err := os.Open(file)
 			if err != nil {
 				return err
@@ -132,6 +136,9 @@ func compress(src string, buf io.Writer) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	// produce tar
 	if err := tw.Close(); err != nil {

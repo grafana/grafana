@@ -22,7 +22,7 @@ func dbCollector(sql db.DB) supportbundles.Collector {
 
 		logItems := make([]migrator.MigrationLog, 0)
 		version := []string{}
-		sql.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sql.WithDbSession(ctx, func(sess *db.Session) error {
 			rawSQL := ""
 			if dbType == migrator.MySQL {
 				rawSQL = "SELECT @@VERSION"
@@ -36,14 +36,20 @@ func dbCollector(sql db.DB) supportbundles.Collector {
 
 			return sess.Table("migration_log").SQL(rawSQL).Find(&version)
 		})
+		if err != nil {
+			return nil, err
+		}
 
 		for _, v := range version {
 			bWriter.WriteString("version: " + v + "  \n")
 		}
 
-		sql.WithDbSession(ctx, func(sess *db.Session) error {
+		errD := sql.WithDbSession(ctx, func(sess *db.Session) error {
 			return sess.Table("migration_log").Find(&logItems)
 		})
+		if errD != nil {
+			return nil, err
+		}
 
 		bWriter.WriteString("\n## Migration Log\n\n")
 

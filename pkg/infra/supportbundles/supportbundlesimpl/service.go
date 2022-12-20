@@ -21,12 +21,11 @@ import (
 )
 
 type Service struct {
-	cfg                  *setting.Cfg
-	store                *store
-	pluginStore          plugins.Store
-	pluginSettings       pluginsettings.Service
-	accessControl        ac.AccessControl
-	accesscontrolService ac.Service
+	cfg            *setting.Cfg
+	store          *store
+	pluginStore    plugins.Store
+	pluginSettings pluginsettings.Service
+	accessControl  ac.AccessControl
 
 	log log.Logger
 

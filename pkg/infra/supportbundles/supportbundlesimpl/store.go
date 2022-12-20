@@ -16,7 +16,6 @@ import (
 
 func newStore(kv kvstore.KVStore) *store {
 	return &store{kv: kvstore.WithNamespace(kv, 0, "supportbundle")}
-
 }
 
 type store struct {
