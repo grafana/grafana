@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/healthchecks"
+	hcm "github.com/grafana/grafana/pkg/services/healthchecks/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -82,6 +83,17 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	prometheus.MustRegister(sqlstats.NewStatsCollector("grafana", db))
 	// TODO: deprecate/remove these metrics
 	prometheus.MustRegister(newSQLStoreMetrics(db))
+
+	// register health checks
+	if err := healthchecks.RegisterHealthCheck(context.Background(), hcm.HealthCheckConfig{
+		Name:     "sqlstore",
+		Type:     hcm.LivenessCheck,
+		Severity: hcm.SeverityFatal,
+		Strategy: hcm.StrategyChron,
+		Interval: 5 * time.Second,
+	}, s); err != nil {
+		return nil, err
+	}
 
 	return s, nil
 }
@@ -196,6 +208,22 @@ func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 		ss.sqlxsession = session.GetSession(sqlx.NewDb(ss.engine.DB().DB, ss.GetDialect().DriverName()))
 	}
 	return ss.sqlxsession
+}
+
+// CheckHealth makes Grafana can connect to the sqlstore
+func (ss *SQLStore) CheckHealth(name string) (hcm.HealthStatus, map[string]string, error) {
+	metrics := make(map[string]string)
+	start := time.Now()
+	err := ss.withDbSession(context.Background(), ss.engine, func(sess *DBSession) error {
+		_, err := sess.Exec("SELECT 1")
+		return err
+	})
+	status := hcm.StatusGreen
+	if err != nil {
+		status = hcm.StatusRed
+	}
+	metrics["query_time"] = fmt.Sprintf("%d ms", time.Since(start).Milliseconds())
+	return status, metrics, nil
 }
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
