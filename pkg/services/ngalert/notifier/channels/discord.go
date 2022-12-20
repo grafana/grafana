@@ -134,7 +134,7 @@ func newDiscordNotifier(fc channels.FactoryConfig) (*DiscordNotifier, error) {
 func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	alerts := types.Alerts(as...)
 
-	msg := discordMessage{}
+	var msg discordMessage
 
 	if !d.settings.UseDiscordUsername {
 		msg.Username = "Grafana"
@@ -173,7 +173,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		IconURL: "https://grafana.com/static/assets/img/fav32.png",
 	}
 
-	linkEmbed := discordLinkEmbed{}
+	var linkEmbed discordLinkEmbed
 
 	linkEmbed.Title = tmpl(d.settings.Title)
 	if tmplErr != nil {
