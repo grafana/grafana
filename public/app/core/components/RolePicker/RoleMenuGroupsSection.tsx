@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { useStyles2, getSelectStyles, useTheme2 } from '@grafana/ui';
 import { Role } from 'app/types';
@@ -54,15 +54,15 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
     const selectStyles = getSelectStyles(theme);
     const styles = useStyles2(getStyles);
 
-    const onOpenSubMenu = (value: string) => {
+    const onOpenSubMenu = useCallback((value: string) => {
       setOpenedMenuGroup(value);
       setShowSubMenu(true);
-    };
+    }, []);
 
-    const onCloseSubMenu = (value: string) => {
+    const onCloseSubMenu = useCallback(() => {
       setShowSubMenu(false);
       setOpenedMenuGroup('');
-    };
+    }, []);
 
     return (
       <div>

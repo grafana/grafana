@@ -14,7 +14,7 @@ interface RoleMenuGroupsOptionProps {
   onChange: (value: string) => void;
   onClick?: (value: string) => void;
   onOpenSubMenu?: (value: string) => void;
-  onCloseSubMenu?: (value: string) => void;
+  onCloseSubMenu?: () => void;
   isSelected?: boolean;
   partiallySelected?: boolean;
   isFocused?: boolean;
@@ -75,7 +75,7 @@ export const RoleMenuGroupOption = memo(
 
       const onMouseLeave = () => {
         if (onCloseSubMenu) {
-          onCloseSubMenu(value!);
+          onCloseSubMenu();
         }
       };
 
