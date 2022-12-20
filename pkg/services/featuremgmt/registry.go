@@ -154,6 +154,11 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:        "supportBundles",
+			Description: "Support bundles for troubleshooting",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:            "dashboardsFromStorage",
 			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,

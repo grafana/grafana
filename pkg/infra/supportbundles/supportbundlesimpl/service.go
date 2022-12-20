@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,6 +27,7 @@ type Service struct {
 	pluginStore    plugins.Store
 	pluginSettings pluginsettings.Service
 	accessControl  ac.AccessControl
+	features       *featuremgmt.FeatureManager
 
 	log log.Logger
 
@@ -42,6 +44,7 @@ func ProvideService(cfg *setting.Cfg,
 	settings setting.Provider,
 	pluginStore plugins.Store,
 	pluginSettings pluginsettings.Service,
+	features *featuremgmt.FeatureManager,
 	usageStats usagestats.Service) (*Service, error) {
 	s := &Service{
 		cfg:            cfg,
@@ -49,7 +52,12 @@ func ProvideService(cfg *setting.Cfg,
 		pluginStore:    pluginStore,
 		pluginSettings: pluginSettings,
 		accessControl:  accessControl,
+		features:       features,
 		log:            log.New("supportbundle.service"),
+	}
+
+	if !features.IsEnabled(featuremgmt.FlagSupportBundles) {
+		return s, nil
 	}
 
 	if !accessControl.IsDisabled() {
@@ -121,6 +129,10 @@ func (s *Service) RegisterSupportItemCollector(collector supportbundles.Collecto
 }
 
 func (s *Service) Run(ctx context.Context) error {
+	if !s.features.IsEnabled(featuremgmt.FlagSupportBundles) {
+		return nil
+	}
+
 	ticker := time.NewTicker(24 * time.Hour)
 	defer ticker.Stop()
 	s.cleanup(ctx)
