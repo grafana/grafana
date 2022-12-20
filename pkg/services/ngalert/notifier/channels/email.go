@@ -2,37 +2,33 @@ package channels
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
 	"github.com/grafana/alerting/alerting/notifier/channels"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // EmailNotifier is responsible for sending
 // alert notifications over email.
 type EmailNotifier struct {
 	*channels.Base
-	Addresses   []string
-	SingleEmail bool
-	Message     string
-	Subject     string
-	log         channels.Logger
-	ns          channels.EmailSender
-	images      channels.ImageStore
-	tmpl        *template.Template
+	log      channels.Logger
+	ns       channels.EmailSender
+	images   channels.ImageStore
+	tmpl     *template.Template
+	settings *emailSettings
 }
 
-type EmailConfig struct {
-	*channels.NotificationChannelConfig
+type emailSettings struct {
 	SingleEmail bool
 	Addresses   []string
 	Message     string
@@ -40,50 +36,62 @@ type EmailConfig struct {
 }
 
 func EmailFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
-	cfg, err := NewEmailConfig(fc.Config)
+	notifier, err := buildEmailNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewEmailNotifier(cfg, fc.Logger, fc.NotificationService, fc.ImageStore, fc.Template), nil
+	return notifier, nil
 }
 
-func NewEmailConfig(config *channels.NotificationChannelConfig) (*EmailConfig, error) {
-	settings, err := simplejson.NewJson(config.Settings)
-	if err != nil {
-		return nil, err
+func buildWebexSettings(fc channels.FactoryConfig) (*emailSettings, error) {
+	type emailSettingsRaw struct {
+		SingleEmail bool   `json:"singleEmail,omitempty"`
+		Addresses   string `json:"addresses,omitempty"`
+		Message     string `json:"message,omitempty"`
+		Subject     string `json:"subject,omitempty"`
 	}
-	addressesString := settings.Get("addresses").MustString()
-	if addressesString == "" {
+
+	var settings emailSettingsRaw
+	err := json.Unmarshal(fc.Config.Settings, &settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+	if settings.Addresses == "" {
 		return nil, errors.New("could not find addresses in settings")
 	}
 	// split addresses with a few different ways
-	addresses := util.SplitEmails(addressesString)
-	return &EmailConfig{
-		NotificationChannelConfig: config,
-		SingleEmail:               settings.Get("singleEmail").MustBool(false),
-		Message:                   settings.Get("message").MustString(),
-		Subject:                   settings.Get("subject").MustString(channels.DefaultMessageTitleEmbed),
-		Addresses:                 addresses,
+	addresses := splitEmails(settings.Addresses)
+
+	if settings.Subject == "" {
+		settings.Subject = channels.DefaultMessageTitleEmbed
+	}
+
+	return &emailSettings{
+		SingleEmail: settings.SingleEmail,
+		Message:     settings.Message,
+		Subject:     settings.Subject,
+		Addresses:   addresses,
 	}, nil
 }
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(config *EmailConfig, l channels.Logger, ns channels.EmailSender, images channels.ImageStore, t *template.Template) *EmailNotifier {
-	return &EmailNotifier{
-		Base:        channels.NewBase(config.NotificationChannelConfig),
-		Addresses:   config.Addresses,
-		SingleEmail: config.SingleEmail,
-		Message:     config.Message,
-		Subject:     config.Subject,
-		log:         l,
-		ns:          ns,
-		images:      images,
-		tmpl:        t,
+func buildEmailNotifier(fc channels.FactoryConfig) (*EmailNotifier, error) {
+	settings, err := buildWebexSettings(fc)
+	if err != nil {
+		return nil, err
 	}
+	return &EmailNotifier{
+		Base:     channels.NewBase(fc.Config),
+		log:      fc.Logger,
+		ns:       fc.NotificationService,
+		images:   fc.ImageStore,
+		tmpl:     fc.Template,
+		settings: settings,
+	}, nil
 }
 
 // Notify sends the alert notification.
@@ -91,7 +99,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 	var tmplErr error
 	tmpl, data := channels.TmplText(ctx, en.tmpl, alerts, en.log, &tmplErr)
 
-	subject := tmpl(en.Subject)
+	subject := tmpl(en.settings.Subject)
 	alertPageURL := en.tmpl.ExternalURL.String()
 	ruleURL := en.tmpl.ExternalURL.String()
 	u, err := url.Parse(en.tmpl.ExternalURL.String())
@@ -127,7 +135,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 		Subject: subject,
 		Data: map[string]interface{}{
 			"Title":             subject,
-			"Message":           tmpl(en.Message),
+			"Message":           tmpl(en.settings.Message),
 			"Status":            data.Status,
 			"Alerts":            data.Alerts,
 			"GroupLabels":       data.GroupLabels,
@@ -138,8 +146,8 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 			"AlertPageUrl":      alertPageURL,
 		},
 		EmbeddedFiles: embeddedFiles,
-		To:            en.Addresses,
-		SingleEmail:   en.SingleEmail,
+		To:            en.settings.Addresses,
+		SingleEmail:   en.settings.SingleEmail,
 		Template:      "ng_alert_notification",
 	}
 
@@ -156,4 +164,14 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 
 func (en *EmailNotifier) SendResolved() bool {
 	return !en.GetDisableResolveMessage()
+}
+
+func splitEmails(emails string) []string {
+	return strings.FieldsFunc(emails, func(r rune) bool {
+		switch r {
+		case ',', ';', '\n':
+			return true
+		}
+		return false
+	})
 }
