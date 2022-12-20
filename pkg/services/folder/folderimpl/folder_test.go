@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -96,9 +95,10 @@ func TestIntegrationFolderService(t *testing.T) {
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
+			var zeroInt int64 = 0
 			t.Run("When get folder by id, with id = 0 should return default folder", func(t *testing.T) {
 				foldr, err := service.Get(context.Background(), &folder.GetFolderQuery{
-					ID:           pointer.Int64(0),
+					ID:           &zeroInt,
 					OrgID:        orgID,
 					SignedInUser: usr,
 				})
@@ -126,15 +126,18 @@ func TestIntegrationFolderService(t *testing.T) {
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
 
+			title := "Folder-TEST"
 			t.Run("When updating folder should return access denied error", func(t *testing.T) {
 				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
 					folder := args.Get(1).(*models.GetDashboardQuery)
 					folder.Result = models.NewDashboard("dashboard-test")
 					folder.Result.IsFolder = true
 				}).Return(&models.Dashboard{}, nil)
-				_, err := service.Update(context.Background(), usr, orgID, folderUID, &models.UpdateFolderCommand{
-					Uid:   folderUID,
-					Title: "Folder-TEST",
+				_, err := service.Update(context.Background(), &folder.UpdateFolderCommand{
+					UID:          folderUID,
+					OrgID:        orgID,
+					NewTitle:     &title,
+					SignedInUser: usr,
 				})
 				require.Equal(t, err, dashboards.ErrFolderAccessDenied)
 			})
@@ -207,12 +210,15 @@ func TestIntegrationFolderService(t *testing.T) {
 				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dashboardFolder, nil)
 				dashStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.Id).Return(f, nil)
 
-				req := &models.UpdateFolderCommand{
-					Uid:   dashboardFolder.Uid,
-					Title: "TEST-Folder",
+				title := "TEST-Folder"
+				req := &folder.UpdateFolderCommand{
+					UID:          dashboardFolder.Uid,
+					OrgID:        orgID,
+					NewTitle:     &title,
+					SignedInUser: usr,
 				}
 
-				reqResult, err := service.Update(context.Background(), usr, orgID, dashboardFolder.Uid, req)
+				reqResult, err := service.Update(context.Background(), req)
 				require.NoError(t, err)
 				require.Equal(t, f, reqResult)
 			})
@@ -343,7 +349,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 
 func TestNestedFolderService(t *testing.T) {
 	t.Run("with feature flag unset", func(t *testing.T) {
-		store := &FakeStore{}
+		store := NewFakeStore()
 		dashStore := dashboards.FakeDashboardStore{}
 		dashboardsvc := dashboards.FakeDashboardService{}
 		// nothing enabled yet
@@ -399,7 +405,7 @@ func TestNestedFolderService(t *testing.T) {
 	})
 
 	t.Run("with nested folder feature flag on", func(t *testing.T) {
-		store := &FakeStore{}
+		store := NewFakeStore()
 		dashStore := &dashboards.FakeDashboardStore{}
 		dashboardsvc := &dashboards.FakeDashboardService{}
 		// nothing enabled yet
@@ -533,6 +539,34 @@ func TestNestedFolderService(t *testing.T) {
 			})
 		})
 
+		t.Run("move, no view permission should fail", func(t *testing.T) {
+			// This test creates and deletes the dashboard, so needs some extra setup.
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: false})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			store.ExpectedError = nil
+			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			_, err := foldersvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
+			require.Error(t, err, dashboards.ErrFolderAccessDenied)
+		})
+
+		t.Run("move, no save permission should fail", func(t *testing.T) {
+			// This test creates and deletes the dashboard, so needs some extra setup.
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: false, CanViewValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			store.ExpectedError = nil
+			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			_, err := foldersvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
+			require.Error(t, err, dashboards.ErrFolderAccessDenied)
+		})
+
 		t.Run("move, no error", func(t *testing.T) {
 			// This test creates and deletes the dashboard, so needs some extra setup.
 			g := guardian.New
@@ -543,6 +577,11 @@ func TestNestedFolderService(t *testing.T) {
 
 			store.ExpectedError = nil
 			store.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			store.ExpectedParentFolders = []*folder.Folder{
+				{UID: "newFolder", ParentUID: "newFolder"},
+				{UID: "newFolder2", ParentUID: "newFolder2"},
+				{UID: "newFolder3", ParentUID: "newFolder3"},
+			}
 			f, err := foldersvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
 			require.NotNil(t, f)

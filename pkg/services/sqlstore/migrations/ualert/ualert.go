@@ -507,7 +507,7 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 			}
 			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) channels.Logger {
 				return &channels.FakeLogger{}
-			})
+			}, setting.BuildVersion)
 			if err != nil {
 				return err
 			}

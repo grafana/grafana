@@ -22,7 +22,7 @@ var receiverFactories = map[string]func(channels.FactoryConfig) (channels.Notifi
 	"teams":                   channels.TeamsFactory,
 	"telegram":                channels.TelegramFactory,
 	"threema":                 channels.ThreemaFactory,
-	"victorops":               VictorOpsFactory,
+	"victorops":               channels.VictorOpsFactory,
 	"webhook":                 channels.WebHookFactory,
 	"wecom":                   channels.WeComFactory,
 	"webex":                   channels.WebexFactory,

@@ -76,10 +76,20 @@ type CreateFolderCommand struct {
 // UpdateFolderCommand captures the information required by the folder service
 // to update a folder. Use Move to update a folder's parent folder.
 type UpdateFolderCommand struct {
-	Folder         *Folder `json:"folder"` // The extant folder
-	NewUID         *string `json:"uid" xorm:"uid"`
-	NewTitle       *string `json:"title"`
-	NewDescription *string `json:"description"`
+	UID   string `json:"-"`
+	OrgID int64  `json:"-"`
+	// NewUID it's an optional parameter used for overriding the existing folder UID
+	NewUID *string `json:"uid"` // keep same json tag with the legacy command for not breaking the existing APIs
+	// NewTitle it's an optional parameter used for overriding the existing folder title
+	NewTitle *string `json:"title"` // keep same json tag with the legacy command for not breaking the existing APIs
+	// NewDescription it's an optional parameter used for overriding the existing folder description
+	NewDescription *string `json:"description"` // keep same json tag with the legacy command for not breaking the existing APIs
+	NewParentUID   *string `json:"-"`
+
+	// Version only used by the legacy folder implementation
+	Version int `json:"version"`
+	// Overwrite only used by the legacy folder implementation
+	Overwrite bool `json:"overwrite"`
 
 	SignedInUser *user.SignedInUser `json:"-"`
 }
