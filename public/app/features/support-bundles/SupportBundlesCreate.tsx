@@ -53,8 +53,7 @@ export const SupportBundlesCreate = ({}: Props): JSX.Element => {
 
   // turn components into a uuid -> enabled map
   const values: Record<string, boolean> = components.reduce((acc, curr) => {
-    acc[curr.uid] = curr.default;
-    return acc;
+    return { ...acc, [curr.uid]: curr.default };
   }, {});
 
   return (
