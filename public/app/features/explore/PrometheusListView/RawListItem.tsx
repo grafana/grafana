@@ -18,6 +18,8 @@ interface RawListProps {
 
 export type RawListValue = { key: string; value: string };
 
+const columnWidth = '80px';
+const extraSpaceAtEndOfLine = '20px';
 const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
   rowWrapper: css`
     border-bottom: 1px solid ${theme.colors.border3};
@@ -29,29 +31,44 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
     position: absolute;
     left: 0;
     top: 0;
+    z-index: 1;
   `,
   attributeWrapper: css`
     //display:inline-block
   `,
+  rowLabelWrapWrap: css`
+    position: relative;
+    width: calc(100% - (${totalNumberOfValues} * ${columnWidth}) - 25px);
+  `,
   rowLabelWrap: css`
     white-space: nowrap;
-    overflow-x: scroll;
+    overflow-x: auto;
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
-    width: calc(100% - (${totalNumberOfValues} * 80px) - 25px);
+    padding-right: ${extraSpaceAtEndOfLine};
+
+    &:after {
+      content: '';
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+      background: linear-gradient(to right, transparent calc(100% - ${extraSpaceAtEndOfLine}), ${theme.colors.bg1});
+    }
 
     &::-webkit-scrollbar {
       display: none; /* Chrome, Safari and Opera */
     }
   `,
   rowValue: css`
-    min-width: 80px;
+    min-width: ${columnWidth};
     font-weight: bold;
   `,
   rowValuesWrap: css`
     padding-left: 25px;
     font-weight: bold;
-    width: calc(${totalNumberOfValues} * 80px);
+    width: calc(${totalNumberOfValues} * ${columnWidth});
     display: flex;
   `,
 });
@@ -140,20 +157,21 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels }
     <>
       {valueLabels && valueLabels?.length && <ItemLabels valueLabels={valueLabels} />}
       <div key={listKey} className={styles.rowWrapper}>
-        <div className={styles.rowLabelWrap}>
-          <span className={styles.copyToClipboardWrapper}>
-            <IconButton tooltip="Copy to clipboard" onClick={() => copyToClipboard(stringRep)} name="copy" />
-          </span>
-
-          <span>{__name__}</span>
-          <span>{`{`}</span>
-          <span className={styles.attributeWrapper}>
-            {attributeValues.map((value, index) => (
-              <RawListItemAttributes value={value} key={index} index={index} length={attributeValues.length} />
-            ))}
-          </span>
-          <span>{`}`}</span>
-        </div>
+        <span className={styles.copyToClipboardWrapper}>
+          <IconButton tooltip="Copy to clipboard" onClick={() => copyToClipboard(stringRep)} name="copy" />
+        </span>
+        <span className={styles.rowLabelWrapWrap}>
+          <div className={styles.rowLabelWrap}>
+            <span>{__name__}</span>
+            <span>{`{`}</span>
+            <span className={styles.attributeWrapper}>
+              {attributeValues.map((value, index) => (
+                <RawListItemAttributes value={value} key={index} index={index} length={attributeValues.length} />
+              ))}
+            </span>
+            <span>{`}`}</span>
+          </div>
+        </span>
 
         {/* Output the values */}
         <ItemValues

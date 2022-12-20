@@ -47,8 +47,8 @@ export const getRawListContainerStyles = stylesFactory(() => {
     header: css`
       display: flex;
       justify-content: space-between;
-      padding-top: 10px;
-      padding-bottom: 10px;
+      align-items: center;
+      padding: 10px 0;
     `,
   };
 });
