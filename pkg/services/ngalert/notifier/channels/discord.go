@@ -26,7 +26,8 @@ type discordEmbedType string
 const (
 	discordRichEmbed discordEmbedType = "rich"
 
-	discordMaxEmbeds = 10
+	discordMaxEmbeds     = 10
+	discordMaxMessageLen = 2000
 )
 
 type discordMessage struct {
@@ -147,6 +148,15 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		d.log.Warn("failed to template Discord notification content", "error", tmplErr.Error())
 		// Reset tmplErr for templating other fields.
 		tmplErr = nil
+	}
+	truncatedMsg, truncated := channels.TruncateInRunes(msg.Content, discordMaxMessageLen)
+	if truncated {
+		key, err := notify.ExtractGroupKey(ctx)
+		if err != nil {
+			return false, err
+		}
+		d.log.Warn("Truncated content", "key", key, "max_runes", discordMaxMessageLen)
+		msg.Content = truncatedMsg
 	}
 
 	if d.settings.AvatarURL != "" {
