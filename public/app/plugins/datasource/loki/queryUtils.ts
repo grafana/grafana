@@ -237,23 +237,20 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   return selector + pipelineExpr;
 }
 
-export function isQueryWithLabelFilter(query: string): string {
+export function isQueryWithLabelFilter(query: string): boolean {
   const tree = parser.parse(query);
-  let labelName = '';
+  let hasLabelFilter = false;
 
   tree.iterate({
     enter: ({ type, node }): false | void => {
       if (type.id === LabelFilter) {
-        const label = node.getChild(Matcher)?.getChild(Identifier);
-        if (label) {
-          labelName = query.substring(label.from, label.to);
-        }
-        return false;
+        hasLabelFilter = true;
+        return;
       }
     },
   });
 
-  return labelName;
+  return hasLabelFilter;
 }
 
 export function isQueryWithLineFilter(query: string): boolean {
