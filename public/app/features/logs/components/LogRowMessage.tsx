@@ -77,6 +77,15 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
       right: ${isInDashboard ? '40px' : `calc(75px + ${theme.spacing()} + ${showContextButton ? '80px' : '40px'})`};
       margin-top: -${theme.spacing(0.125)};
     `,
+    logLine: css`
+      background-color: transparent;
+      border: none;
+      diplay: inline;
+      font-family: ${theme.typography.fontFamilyMonospace};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      letter-spacing: ${theme.typography.bodySmall.letterSpacing};
+      padding: 0;
+    `,
   };
 };
 
@@ -193,9 +202,9 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
                 }}
               />
             )}
-            <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
+            <button className={cx(styles.logLine, styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
               {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, style.logsRowMatchHighLight)}
-            </span>
+            </button>
           </div>
         </td>
         {showRowMenu && (
