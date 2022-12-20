@@ -5212,16 +5212,8 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloud-monitoring/components/MQLQueryEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/datasource/cloud-monitoring/components/MetricQueryEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/plugins/datasource/cloud-monitoring/components/Metrics.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/cloud-monitoring/components/QueryEditor.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/cloud-monitoring/components/VariableQueryEditor.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5241,14 +5233,13 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/cloud-monitoring/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"]
+      [0, 0, 0, "Do not use any type assertions.", "6"],
+      [0, 0, 0, "Do not use any type assertions.", "7"]
     ],
     "public/app/plugins/datasource/cloud-monitoring/functions.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
