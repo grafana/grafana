@@ -128,12 +128,12 @@ func (s *Service) remove(ctx context.Context, uid string) error {
 	// Remove the data
 	bundle, err := s.store.Get(ctx, uid)
 	if err != nil {
-		return fmt.Errorf("could not retrieve support bundle with uid %s: %w", uid, err)
+		return fmt.Errorf("could not retrieve support bundle with UID %s: %w", uid, err)
 	}
 
 	// TODO handle cases when bundles aren't complete yet
 	if bundle.State == supportbundles.StatePending {
-		return fmt.Errorf("could not remove a support bundle with uid %s as it is still beign cteated", uid)
+		return fmt.Errorf("could not remove a support bundle with uid %s as it is still being created", uid)
 	}
 
 	if bundle.FilePath != "" {
