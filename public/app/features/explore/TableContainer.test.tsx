@@ -82,7 +82,7 @@ describe('TableContainer', () => {
   it('should render component for prometheus', () => {
     render(<TableContainer {...defaultProps} showRawPrometheus={true} />);
 
-    expect(screen.queryAllByRole('table').length).toBe(0);
+    expect(screen.queryAllByRole('table').length).toBe(1);
     fireEvent.click(getTableToggle());
 
     expect(getTable()).toBeInTheDocument();
