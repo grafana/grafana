@@ -147,7 +147,11 @@ func (e *EmbeddedContactPoint) SecretKeys() ([]string, error) {
 		return []string{}, nil
 	case "wecom":
 		return []string{"url"}, nil
+	// LOGZ.IO GRAFANA CHANGE :: DEV-35483 - Add type to support logzio opsgenie integration
+	case "logzio_opsgenie":
+		return []string{"apiKey"}, nil
 	}
+	// LOGZ.IO GRAFANA CHANGE :: end
 	return nil, fmt.Errorf("no secrets configured for type '%s'", e.Type)
 }
 
