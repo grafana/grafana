@@ -1,4 +1,4 @@
-class CustomReporter {
+class LogReporter {
   constructor(globalConfig, reporterOptions, reporterContext) {
     this._globalConfig = globalConfig;
     this._options = reporterOptions;
