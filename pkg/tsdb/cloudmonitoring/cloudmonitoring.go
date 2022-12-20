@@ -263,7 +263,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 		}
 
 		// Metric query was divided between timeSeriesList and timeSeriesQuery API calls
-		if rawQuery["metricQuery"] != nil && q.QueryType != sloQueryType {
+		if rawQuery["metricQuery"] != nil && q.QueryType == "metrics" {
 			metricQuery := rawQuery["metricQuery"].(map[string]interface{})
 
 			if metricQuery["editorMode"] != nil && toString(metricQuery["editorMode"]) == "mql" {
@@ -290,6 +290,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 				rawQuery["timeSeriesList"] = tsl
 				q.QueryType = timeSeriesListQueryType
 			}
+			// AliasBy is now a top level property
 			if metricQuery["aliasBy"] != nil {
 				rawQuery["aliasBy"] = metricQuery["aliasBy"]
 			}
@@ -298,6 +299,19 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 				return err
 			}
 			q.JSON = b
+		}
+
+		if rawQuery["sloQuery"] != nil && q.QueryType == sloQueryType {
+			sloQuery := rawQuery["sloQuery"].(map[string]interface{})
+			// AliasBy is now a top level property
+			if sloQuery["aliasBy"] != nil {
+				rawQuery["aliasBy"] = sloQuery["aliasBy"]
+				b, err := json.Marshal(rawQuery)
+				if err != nil {
+					return err
+				}
+				q.JSON = b
+			}
 		}
 
 		req.Queries[i] = q

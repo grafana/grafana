@@ -160,7 +160,6 @@ export interface SLOQuery {
   projectName: string;
   perSeriesAligner?: string;
   alignmentPeriod?: string;
-  aliasBy?: string;
   selectorName: string;
   serviceId: string;
   serviceName: string;

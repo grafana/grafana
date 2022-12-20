@@ -71,6 +71,8 @@ export const QueryEditor = (props: Props) => {
           onRunQuery={onRunQuery}
           datasource={datasource}
           query={sloQuery}
+          aliasBy={query.aliasBy}
+          onChangeAliasBy={(aliasBy: string) => onChange({ ...query, aliasBy })}
         />
       )}
     </EditorRows>
