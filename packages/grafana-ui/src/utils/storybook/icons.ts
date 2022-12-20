@@ -1,8 +1,4 @@
-import { select } from '@storybook/addon-knobs';
-
 import { getAvailableIcons } from '../../types';
-
-const VISUAL_GROUP = 'Visual options';
 
 export const iconOptions = {
   None: undefined,
@@ -13,5 +9,3 @@ export const iconOptions = {
     };
   }, {}),
 };
-
-export const getIconKnob = () => select('Icon', iconOptions, undefined, VISUAL_GROUP);

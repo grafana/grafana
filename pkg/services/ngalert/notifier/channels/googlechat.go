@@ -8,19 +8,21 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // GoogleChatNotifier is responsible for sending
 // alert notifications to Google chat.
 type GoogleChatNotifier struct {
-	*Base
-	log      Logger
-	ns       WebhookSender
-	images   ImageStore
+	*channels.Base
+	log      channels.Logger
+	ns       channels.WebhookSender
+	images   channels.ImageStore
 	tmpl     *template.Template
 	settings googleChatSettings
 }
@@ -31,7 +33,7 @@ type googleChatSettings struct {
 	Content string
 }
 
-func GoogleChatFactory(fc FactoryConfig) (NotificationChannel, error) {
+func GoogleChatFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
 	gcn, err := newGoogleChatNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
@@ -42,28 +44,32 @@ func GoogleChatFactory(fc FactoryConfig) (NotificationChannel, error) {
 	return gcn, nil
 }
 
-func newGoogleChatNotifier(fc FactoryConfig) (*GoogleChatNotifier, error) {
+func newGoogleChatNotifier(fc channels.FactoryConfig) (*GoogleChatNotifier, error) {
 	var settings googleChatSettings
-	err := fc.Config.unmarshalSettings(&settings)
+	err := json.Unmarshal(fc.Config.Settings, &settings)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
 
-	URL := fc.Config.Settings.Get("url").MustString()
+	rawsettings, err := simplejson.NewJson(fc.Config.Settings)
+	if err != nil {
+		return nil, err
+	}
+	URL := rawsettings.Get("url").MustString()
 	if URL == "" {
 		return nil, errors.New("could not find url property in settings")
 	}
 
 	return &GoogleChatNotifier{
-		Base:   NewBase(fc.Config),
+		Base:   channels.NewBase(fc.Config),
 		log:    fc.Logger,
 		ns:     fc.NotificationService,
 		images: fc.ImageStore,
 		tmpl:   fc.Template,
 		settings: googleChatSettings{
 			URL:     URL,
-			Title:   fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
-			Content: fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
+			Title:   rawsettings.Get("title").MustString(channels.DefaultMessageTitleEmbed),
+			Content: rawsettings.Get("message").MustString(channels.DefaultMessageEmbed),
 		},
 	}, nil
 }
@@ -73,7 +79,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	gcn.log.Debug("executing Google Chat notification")
 
 	var tmplErr error
-	tmpl, _ := TmplText(ctx, gcn.tmpl, as, gcn.log, &tmplErr)
+	tmpl, _ := channels.TmplText(ctx, gcn.tmpl, as, gcn.log, &tmplErr)
 
 	var widgets []widget
 
@@ -150,10 +156,10 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	cmd := &SendWebhookSettings{
-		Url:        u,
-		HttpMethod: "POST",
-		HttpHeader: map[string]string{
+	cmd := &channels.SendWebhookSettings{
+		URL:        u,
+		HTTPMethod: "POST",
+		HTTPHeader: map[string]string{
 			"Content-Type": "application/json; charset=UTF-8",
 		},
 		Body: string(body),
@@ -188,7 +194,7 @@ func (gcn *GoogleChatNotifier) buildScreenshotCard(ctx context.Context, alerts [
 	}
 
 	_ = withStoredImages(ctx, gcn.log, gcn.images,
-		func(index int, image Image) error {
+		func(index int, image channels.Image) error {
 			if len(image.URL) == 0 {
 				return nil
 			}
