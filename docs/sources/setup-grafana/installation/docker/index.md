@@ -20,7 +20,6 @@ For documentation regarding the configuration of a docker image, refer to [confi
 
 This topic also contains important information about [migrating from earlier Docker image versions](#migrate-from-previous-docker-containers-versions).
 
-
 ## Alpine image (recommended)
 
 **Grafana Enterprise edition**: `grafana/grafana-enterprise:<version>`
