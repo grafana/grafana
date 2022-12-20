@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/grafana/alerting/alerting/notifier/channels"
@@ -270,6 +271,36 @@ func TestDiscordNotifier(t *testing.T) {
 			},
 			expMsg: map[string]interface{}{
 				"content": "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				"embeds": []interface{}{map[string]interface{}{
+					"color": 1.4037554e+07,
+					"footer": map[string]interface{}{
+						"icon_url": "https://grafana.com/static/assets/img/fav32.png",
+						"text":     "Grafana v" + appVersion,
+					},
+					"title": "[FIRING:1]  (val1)",
+					"url":   "http://localhost/alerting/list",
+					"type":  "rich",
+				}},
+			},
+			expMsgError: nil,
+		},
+		{
+			name: "Should truncate too long messages",
+			settings: fmt.Sprintf(`{
+				"url": "http://localhost",
+				"use_discord_username": true,
+				"message": "%s"
+			}`, strings.Repeat("Y", discordMaxMessageLen+rand.Intn(100)+1)),
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"content": strings.Repeat("Y", discordMaxMessageLen-1) + "…",
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
