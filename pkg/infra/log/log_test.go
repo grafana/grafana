@@ -283,7 +283,6 @@ func (s *scenarioContext) ValidateLineEquality(t testing.TB, n int, expected []a
 			assert.Equal(t, ex.Format(time.RFC3339Nano), actual[i].(fmt.Stringer).String())
 		default:
 			assert.Equalf(t, ex, actual[i], "line %d argument %d does not match expected value.", n, i)
-
 		}
 	}
 }
