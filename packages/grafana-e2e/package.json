@@ -81,7 +81,7 @@
     "tracelib": "1.0.1",
     "ts-loader": "8.4.0",
     "tslib": "2.4.1",
-    "typescript": "4.8.4",
+    "typescript": "4.9.4",
     "uuid": "9.0.0",
     "yaml": "^2.0.0"
   }
