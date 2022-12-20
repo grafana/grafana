@@ -14,7 +14,6 @@ import {
   LabelParser,
   JsonExpressionParser,
   LabelFilter,
-  Logfmt,
   MetricExpr,
   Matcher,
   Identifier,
@@ -255,21 +254,6 @@ export function isQueryWithLabelFilter(query: string): string {
   });
 
   return labelName;
-}
-
-export function isQueryWithLogFmt(query: string): boolean {
-  const tree = parser.parse(query);
-  let queryWithLogFmt = false;
-
-  tree.iterate({
-    enter: ({ type }): false | void => {
-      if (type.id === Logfmt) {
-        queryWithLogFmt = true;
-      }
-    },
-  });
-
-  return queryWithLogFmt;
 }
 
 export function isQueryWithLineFilter(query: string): boolean {

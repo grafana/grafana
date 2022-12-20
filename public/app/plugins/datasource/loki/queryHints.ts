@@ -5,7 +5,6 @@ import {
   isQueryPipelineErrorFiltering,
   isQueryWithLabelFormat,
   isQueryWithParser,
-  isQueryWithLogFmt,
   isQueryWithLineFilter,
 } from './queryUtils';
 import {
@@ -76,6 +75,23 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
         });
       }
     }
+
+    const hasLabelFilter = isQueryWithLabelFilter(query);
+
+    if (!hasLabelFilter) {
+      hints.push({
+        type: 'ADD_LABEL_FILTER',
+        label: 'Consider filtering logs by their label and value.',
+        fix: {
+          title: 'add label filter',
+          label: '',
+          action: {
+            type: 'ADD_LABEL_FILTER',
+            query,
+          },
+        },
+      });
+    }
   }
 
   const queryWithLabelFormat = isQueryWithLabelFormat(query);
@@ -102,24 +118,6 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
         },
       });
     }
-  }
-
-  const hasLabelFilter = isQueryWithLabelFilter(query);
-  const hasLogfmt = isQueryWithLogFmt(query);
-
-  if (hasLogfmt && !hasLabelFilter) {
-    hints.push({
-      type: 'ADD_LABEL_FILTER',
-      label: 'Consider filtering logs by their label and value.',
-      fix: {
-        title: 'add label filter',
-        label: '',
-        action: {
-          type: 'ADD_LABEL_FILTER',
-          query,
-        },
-      },
-    });
   }
 
   const hasLineFilter = isQueryWithLineFilter(query);
