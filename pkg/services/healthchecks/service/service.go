@@ -4,35 +4,40 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
+	"time"
 
-	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/healthchecks"
 	"github.com/grafana/grafana/pkg/services/healthchecks/models"
+	"github.com/robfig/cron/v3"
 )
 
 // These are required checks for the server to start up. If you add a core check, but fail to register it at startup, the server will not start.
-var coreChecks = []string{
-	"migrations",
+var coreChecks = map[string]bool{
+	"migrations": true,
 }
 
 type HealthChecksServiceImpl struct {
-	CacheService     *localcache.CacheService
+	mu               sync.Mutex
+	cron             *cron.Cron
 	registeredChecks map[string]models.HealthCheck
+	log              *log.ConcreteLogger
 }
 
-func ProvideService(cache *localcache.CacheService) *HealthChecksServiceImpl {
+func ProvideService() *HealthChecksServiceImpl {
 	service := &HealthChecksServiceImpl{
-
-		CacheService:     cache,
 		registeredChecks: map[string]models.HealthCheck{},
+		cron:             cron.New(),
+		log:              log.New("health-service"),
 	}
-
+	service.cron.Start()
 	return service
 }
 
 // Make sure there is a registered handler for all core checks
 func (hcs *HealthChecksServiceImpl) areCoreChecksImplemented(ctx context.Context) bool {
-	for _, c := range coreChecks {
+	for c := range coreChecks {
 		if _, ok := hcs.registeredChecks[c]; !ok {
 			return false
 		}
@@ -42,13 +47,13 @@ func (hcs *HealthChecksServiceImpl) areCoreChecksImplemented(ctx context.Context
 
 func (hcs *HealthChecksServiceImpl) RunCoreHealthChecks(ctx context.Context) error {
 	if !hcs.areCoreChecksImplemented(ctx) {
-		return errors.New("core health checks not registered yet")
+		return models.ErrCoreChecksNotRegistered
 	}
 
 	// Run all the core health checks. Return error if any fail.
-	for _, coreCheck := range coreChecks {
+	for coreCheck := range coreChecks {
 		status, _, err := hcs.registeredChecks[coreCheck].HealthCheckFunc(coreCheck)
-		if err != nil || status != models.StatusGreen {
+		if err != nil || status == models.StatusRed {
 			return fmt.Errorf("core check %s failed", coreCheck)
 		}
 	}
@@ -57,25 +62,101 @@ func (hcs *HealthChecksServiceImpl) RunCoreHealthChecks(ctx context.Context) err
 }
 
 func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, config models.HealthCheckConfig, checker healthchecks.HealthChecker) error {
+	hcs.mu.Lock()
+	defer hcs.mu.Unlock()
+
+	// valid name
+	if config.Name == "" {
+		return errors.New("received health check with empty name")
+	}
+
+	// unique names only
+	if _, has := hcs.registeredChecks[config.Name]; has {
+		return fmt.Errorf("health check %s already exists", config.Name)
+	}
+
+	// no readiness checks not listed as core
+	if config.Type == models.ReadinessCheck && !coreChecks[config.Name] {
+		return fmt.Errorf("health check '%s' has type 'readiness' but it is not listed as a core check", config.Name)
+	}
+
+	// no check names reserved by core checks
+	if config.Type != models.ReadinessCheck && coreChecks[config.Name] {
+		return fmt.Errorf("health check name '%s' is reserved for a readiness check", config.Name)
+	}
+
+	// valid intervals only
+	if config.Strategy == models.StrategyChron && config.Interval <= 0 {
+		return fmt.Errorf("health check '%s' has invalid interval of '%d'", config.Name, config.Interval)
+	}
+
 	healthCheck := models.HealthCheck{
 		HealthCheckConfig: config,
 		HealthCheckFunc:   checker.CheckHealth,
 	}
-	if _, has := hcs.registeredChecks[config.Name]; has {
-		return errors.New(fmt.Sprintf("health check %s already exists", config.Name))
-	}
+
 	hcs.registeredChecks[config.Name] = healthCheck
+
+	// if it's a readiness check, it will be run whenever the readiness endpoint is pinged
+	if config.Type == models.ReadinessCheck {
+		return nil
+	}
+
+	if config.Strategy == models.StrategyChron {
+		hcs.cron.Schedule(cron.ConstantDelaySchedule{
+			Delay: config.Interval,
+		}, cron.FuncJob(func() {
+			hcs.runIndividualHealthCheck(healthCheck)
+		}))
+	} else if config.Strategy == models.StrategyOnce {
+		hcs.runIndividualHealthCheck(healthCheck)
+	}
+
 	return nil
 }
 
-func (hcs *HealthChecksServiceImpl) GetHealthCheck(ctx context.Context, name string) models.HealthCheck {
-	//TODO
-	/*
-			- look up the result in the cache
-		    - if its there return it
-		    - if its not, run the health check and cache result and return result
+func (hcs *HealthChecksServiceImpl) GetLatestHealth(ctx context.Context) (models.HealthStatus, map[string]map[string]string) {
+	allMetrics := make(map[string]map[string]string)
+	hasYellow := false
+	hasRed := false
 
-			- return the external representation of a health check result
-	*/
-	return models.HealthCheck{}
+	// do not wait for lock, just read current state of health check map
+	for _, c := range hcs.registeredChecks {
+		if c.LatestStatus == models.StatusRed {
+			hasRed = true
+		} else if c.LatestStatus == models.StatusYellow {
+			hasYellow = true
+		}
+		metrics := c.LatestMetrics
+		metrics["latest_update_time"] = c.LatestUpdateTime.UTC().String()
+		allMetrics[c.HealthCheckConfig.Name] = metrics
+	}
+	status := models.StatusGreen
+	if hasRed {
+		status = models.StatusRed
+	} else if hasYellow {
+		status = models.StatusYellow
+	}
+	return status, map[string]map[string]string{}
+}
+
+func (hcs *HealthChecksServiceImpl) GetHealthCheck(ctx context.Context, name string) (bool, models.HealthCheck) {
+	hcs.mu.Lock()
+	defer hcs.mu.Unlock()
+	check, found := hcs.registeredChecks[name]
+	return found, check
+}
+
+func (hcs *HealthChecksServiceImpl) runIndividualHealthCheck(hc models.HealthCheck) {
+	hcs.mu.Lock()
+	defer hcs.mu.Unlock()
+
+	status, metrics, err := hc.HealthCheckFunc(hc.HealthCheckConfig.Name)
+	if err != nil {
+		hcs.log.Error("Error running health check", "name", hc.HealthCheckConfig.Name, "error", err.Error())
+	}
+	check := hcs.registeredChecks[hc.HealthCheckConfig.Name]
+	check.LatestMetrics = metrics
+	check.LatestStatus = status
+	check.LatestUpdateTime = time.Now()
 }

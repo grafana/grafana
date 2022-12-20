@@ -1,14 +1,15 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/healthchecks"
 	"github.com/grafana/grafana/pkg/web"
-	"net/http"
 )
-import "github.com/grafana/grafana/pkg/infra/log"
 
 type Api struct {
 	HealthCheckService healthchecks.Service
@@ -39,7 +40,10 @@ func (api *Api) ListHealthChecks(ctx *models.ReqContext) response.Response {
 
 func (api *Api) GetHealthCheck(ctx *models.ReqContext) response.Response {
 	name := web.Params(ctx.Req)[":healthCheckName"]
-	res := api.HealthCheckService.GetHealthCheck(ctx.Req.Context(), name)
-
-	return response.JSON(http.StatusOK, res)
+	found, res := api.HealthCheckService.GetHealthCheck(ctx.Req.Context(), name)
+	if found {
+		return response.JSON(http.StatusOK, res)
+	} else {
+		return response.Empty(http.StatusNotFound)
+	}
 }

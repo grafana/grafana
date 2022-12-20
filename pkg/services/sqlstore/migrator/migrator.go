@@ -130,7 +130,10 @@ func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int)
 		Interval:     0,
 		RequiresAuth: false,
 	}
-	_ = mg.healthchecks.RegisterHealthCheck(context.Background(), config, mg)
+	err = mg.healthchecks.RegisterHealthCheck(context.Background(), config, mg)
+	if err != nil {
+		return err
+	}
 
 	if !isDatabaseLockingEnabled {
 		return mg.run()
