@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -156,7 +155,7 @@ func TestIntegrationDelete(t *testing.T) {
 		})
 	*/
 
-	ancestorUIDs := CreateSubTree(t, folderStore, orgID, accesscontrol.GeneralFolderUID, folder.MaxNestedFolderDepth, "")
+	ancestorUIDs := CreateSubTree(t, folderStore, orgID, "", folder.MaxNestedFolderDepth, "")
 	require.Len(t, ancestorUIDs, folder.MaxNestedFolderDepth)
 
 	t.Cleanup(func() {
@@ -235,9 +234,7 @@ func TestIntegrationUpdate(t *testing.T) {
 		_, err = folderStore.Update(context.Background(), folder.UpdateFolderCommand{})
 		require.Error(t, err)
 
-		_, err = folderStore.Update(context.Background(), folder.UpdateFolderCommand{
-			Folder: &folder.Folder{},
-		})
+		_, err = folderStore.Update(context.Background(), folder.UpdateFolderCommand{})
 		require.Error(t, err)
 	})
 
@@ -246,7 +243,8 @@ func TestIntegrationUpdate(t *testing.T) {
 		newDesc := "new desc"
 		// existingUpdated := f.Updated
 		updated, err := folderStore.Update(context.Background(), folder.UpdateFolderCommand{
-			Folder:         f,
+			UID:            f.UID,
+			OrgID:          f.OrgID,
 			NewTitle:       &newTitle,
 			NewDescription: &newDesc,
 		})
@@ -264,6 +262,8 @@ func TestIntegrationUpdate(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, newTitle, updated.Title)
 		assert.Equal(t, newDesc, updated.Description)
+
+		f = updated
 	})
 
 	t.Run("updating folder UID should succeed", func(t *testing.T) {
@@ -271,7 +271,8 @@ func TestIntegrationUpdate(t *testing.T) {
 		existingTitle := f.Title
 		existingDesc := f.Description
 		updated, err := folderStore.Update(context.Background(), folder.UpdateFolderCommand{
-			Folder: f,
+			UID:    f.UID,
+			OrgID:  f.OrgID,
 			NewUID: &newUID,
 		})
 		require.NoError(t, err)
@@ -641,13 +642,16 @@ func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 func CreateSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string) []string {
 	t.Helper()
 
-	ancestorUIDs := []string{parentUID}
+	ancestorUIDs := []string{}
+	if parentUID != "" {
+		ancestorUIDs = append(ancestorUIDs, parentUID)
+	}
 	for i := 0; i < depth; i++ {
 		title := fmt.Sprintf("%sfolder-%d", prefix, i)
 		cmd := folder.CreateFolderCommand{
 			Title:     title,
 			OrgID:     orgID,
-			ParentUID: ancestorUIDs[len(ancestorUIDs)-1],
+			ParentUID: parentUID,
 			UID:       util.GenerateShortUID(),
 		}
 		f, err := store.Create(context.Background(), cmd)
@@ -668,6 +672,8 @@ func CreateSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 		require.Equal(t, ancestorUIDs, parentUIDs)
 
 		ancestorUIDs = append(ancestorUIDs, f.UID)
+
+		parentUID = f.UID
 	}
 
 	return ancestorUIDs
