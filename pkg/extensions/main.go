@@ -25,6 +25,7 @@ import (
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/stretchr/testify/require"
 	_ "github.com/vectordotdev/go-datemath"
+	_ "github.com/weaveworks/common/user"
 	_ "golang.org/x/time/rate"
 	_ "google.golang.org/genproto/googleapis/cloud/kms/v1"
 	_ "gopkg.in/square/go-jose.v2"
