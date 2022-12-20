@@ -18,7 +18,6 @@ import {
   getBackendSrv,
   getTemplateSrv,
   TemplateSrv,
-  TestingStatus,
 } from '@grafana/runtime';
 import { toDataQueryResponse } from '@grafana/runtime/src/utils/queryResponse';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';

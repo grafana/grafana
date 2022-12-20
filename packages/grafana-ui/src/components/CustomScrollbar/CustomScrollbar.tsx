@@ -24,6 +24,7 @@ interface Props {
   setScrollTop?: (position: ScrollbarPosition) => void;
   showScrollIndicators?: boolean;
   autoHeightMin?: number | string;
+  updateAfterMountMs?: number;
   onScroll?: React.UIEventHandler;
 }
 
@@ -43,11 +44,12 @@ export const CustomScrollbar = ({
   hideVerticalTrack,
   scrollRefCallback,
   showScrollIndicators = false,
+  updateAfterMountMs,
   scrollTop,
   onScroll,
   children,
 }: React.PropsWithChildren<Props>) => {
-  const ref = useRef<Scrollbars & { view: HTMLDivElement }>(null);
+  const ref = useRef<Scrollbars & { view: HTMLDivElement; update: () => void }>(null);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -61,6 +63,22 @@ export const CustomScrollbar = ({
       ref.current.scrollTop(scrollTop);
     }
   }, [scrollTop]);
+
+  /**
+   * Special logic for doing a update a few milliseconds after mount to check for
+   * updated height due to dynamic content
+   */
+  useEffect(() => {
+    if (!updateAfterMountMs) {
+      return;
+    }
+    setTimeout(() => {
+      const scrollbar = ref.current;
+      if (scrollbar?.update) {
+        scrollbar.update();
+      }
+    }, updateAfterMountMs);
+  }, [updateAfterMountMs]);
 
   function renderTrack(className: string, hideTrack: boolean | undefined, passedProps: JSX.IntrinsicElements['div']) {
     if (passedProps.style && hideTrack) {
