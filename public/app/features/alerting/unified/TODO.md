@@ -13,6 +13,7 @@ If the item needs more rationale and you feel like a single sentence is inedequa
 ## Improvements
 
 - Add a `edit` button to the alert detail page
+- Make the time series panel work with the threshold indicator but with drag disabled
 
 ## Refactoring
 
