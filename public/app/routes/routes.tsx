@@ -389,13 +389,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/support-bundles',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "SupportBundles" */ 'app/features/admin/SupportBundles')
+        () => import(/* webpackChunkName: "SupportBundles" */ 'app/features/support-bundles/SupportBundles')
       ),
     },
     {
       path: '/admin/support-bundles/create',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "ServiceAccountCreatePage" */ 'app/features/admin/SupportBundlesCreate')
+        () =>
+          import(/* webpackChunkName: "ServiceAccountCreatePage" */ 'app/features/support-bundles/SupportBundlesCreate')
       ),
     },
     {

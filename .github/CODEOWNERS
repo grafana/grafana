@@ -230,8 +230,7 @@ lerna.json @grafana/frontend-ops
 /pkg/services/authn @grafana/grafana-authnz-team
 
 # Support bundles
-/public/app/features/admin/SupportBundles.tsx @grafana/grafana-authnz-team
-/public/app/features/admin/SupportBundlesCreate.tsx @grafana/grafana-authnz-team
+/public/app/features/support-bundles @grafana/grafana-authnz-team
 /pkg/infra/supportbundles @grafana/grafana-authnz-team
 
 # Grafana Partnerships Team
