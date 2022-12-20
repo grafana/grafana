@@ -152,7 +152,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 	})
 
 	t.Run("Should attach access control metadata to multiple folders", func(t *testing.T) {
-		folderService.ExpectedFolders = []*models.Folder{{Uid: "1"}, {Uid: "2"}, {Uid: "3"}}
+		folderService.ExpectedFolders = []*folder.Folder{{UID: "1"}, {UID: "2"}, {UID: "3"}}
 
 		req := server.NewGetRequest("/api/folders?accesscontrol=true")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{

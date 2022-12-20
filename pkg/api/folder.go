@@ -22,6 +22,7 @@ import (
 // Get all folders.
 //
 // Returns all folders that the authenticated user has permission to view.
+// If nested folders are enabled, it expects an additional query parameter with the parent folder UID.
 //
 // Responses:
 // 200: getFoldersResponse
@@ -29,7 +30,13 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
-	folders, err := hs.folderService.GetFolders(c.Req.Context(), c.SignedInUser, c.OrgID, c.QueryInt64("limit"), c.QueryInt64("page"))
+	folders, err := hs.folderService.GetChildren(c.Req.Context(), &folder.GetChildrenQuery{
+		OrgID:        c.OrgID,
+		Limit:        c.QueryInt64("limit"),
+		Page:         c.QueryInt64("page"),
+		UID:          c.Query("parent_uid"),
+		SignedInUser: c.SignedInUser,
+	})
 
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -38,11 +45,12 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 	uids := make(map[string]bool, len(folders))
 	result := make([]dtos.FolderSearchHit, 0)
 	for _, f := range folders {
-		uids[f.Uid] = true
+		uids[f.UID] = true
 		result = append(result, dtos.FolderSearchHit{
-			Id:    f.Id,
-			Uid:   f.Uid,
-			Title: f.Title,
+			Id:        f.ID,
+			Uid:       f.UID,
+			Title:     f.Title,
+			ParentUID: f.ParentUID,
 		})
 	}
 
@@ -292,6 +300,10 @@ type GetFoldersParams struct {
 	// required:false
 	// default:1
 	Page int64 `json:"page"`
+	// The parent folder UID
+	// in:query
+	// required:false
+	ParentUID string `json:"parent_uid"`
 }
 
 // swagger:parameters getFolderByUID

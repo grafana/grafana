@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -21,10 +22,10 @@ import (
 )
 
 type DiscordNotifier struct {
-	*Base
-	log      Logger
-	ns       WebhookSender
-	images   ImageStore
+	*channels.Base
+	log      channels.Logger
+	ns       channels.WebhookSender
+	images   channels.ImageStore
 	tmpl     *template.Template
 	settings discordSettings
 }
@@ -47,7 +48,7 @@ type discordAttachment struct {
 
 const DiscordMaxEmbeds = 10
 
-func DiscordFactory(fc FactoryConfig) (NotificationChannel, error) {
+func DiscordFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
 	dn, err := newDiscordNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
@@ -58,24 +59,28 @@ func DiscordFactory(fc FactoryConfig) (NotificationChannel, error) {
 	return dn, nil
 }
 
-func newDiscordNotifier(fc FactoryConfig) (*DiscordNotifier, error) {
-	dUrl := fc.Config.Settings.Get("url").MustString()
+func newDiscordNotifier(fc channels.FactoryConfig) (*DiscordNotifier, error) {
+	settings, err := simplejson.NewJson(fc.Config.Settings)
+	if err != nil {
+		return nil, err
+	}
+	dUrl := settings.Get("url").MustString()
 	if dUrl == "" {
 		return nil, errors.New("could not find webhook url property in settings")
 	}
 
 	return &DiscordNotifier{
-		Base:   NewBase(fc.Config),
+		Base:   channels.NewBase(fc.Config),
 		log:    fc.Logger,
 		ns:     fc.NotificationService,
 		images: fc.ImageStore,
 		tmpl:   fc.Template,
 		settings: discordSettings{
-			Title:              fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
-			Content:            fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
-			AvatarURL:          fc.Config.Settings.Get("avatar_url").MustString(),
+			Title:              settings.Get("title").MustString(channels.DefaultMessageTitleEmbed),
+			Content:            settings.Get("message").MustString(channels.DefaultMessageEmbed),
+			AvatarURL:          settings.Get("avatar_url").MustString(),
 			WebhookURL:         dUrl,
-			UseDiscordUsername: fc.Config.Settings.Get("use_discord_username").MustBool(false),
+			UseDiscordUsername: settings.Get("use_discord_username").MustBool(false),
 		},
 	}, nil
 }
@@ -90,7 +95,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	var tmplErr error
-	tmpl, _ := TmplText(ctx, d.tmpl, as, d.log, &tmplErr)
+	tmpl, _ := channels.TmplText(ctx, d.tmpl, as, d.log, &tmplErr)
 
 	bodyJSON.Set("content", tmpl(d.settings.Content))
 	if tmplErr != nil {
@@ -183,9 +188,9 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 	attachments := make([]discordAttachment, 0)
 
 	_ = withStoredImages(ctx, d.log, d.images,
-		func(index int, image Image) error {
+		func(index int, image channels.Image) error {
 			if embedQuota < 1 {
-				return ErrImagesDone
+				return channels.ErrImagesDone
 			}
 
 			if len(image.URL) > 0 {
@@ -203,7 +208,7 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 				base := filepath.Base(image.Path)
 				url := fmt.Sprintf("attachment://%s", base)
 				reader, err := openImage(image.Path)
-				if err != nil && !errors.Is(err, ErrImageNotFound) {
+				if err != nil && !errors.Is(err, channels.ErrImageNotFound) {
 					d.log.Warn("failed to retrieve image data from store", "error", err)
 					return nil
 				}
@@ -225,10 +230,10 @@ func (d DiscordNotifier) constructAttachments(ctx context.Context, as []*types.A
 	return attachments
 }
 
-func (d DiscordNotifier) buildRequest(url string, body []byte, attachments []discordAttachment) (*SendWebhookSettings, error) {
-	cmd := &SendWebhookSettings{
-		Url:        url,
-		HttpMethod: "POST",
+func (d DiscordNotifier) buildRequest(url string, body []byte, attachments []discordAttachment) (*channels.SendWebhookSettings, error) {
+	cmd := &channels.SendWebhookSettings{
+		URL:        url,
+		HTTPMethod: "POST",
 	}
 	if len(attachments) == 0 {
 		cmd.ContentType = "application/json"

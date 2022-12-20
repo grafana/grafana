@@ -23,6 +23,7 @@ load(
     'publish_image_pipelines_security',
 )
 load('scripts/drone/pipelines/github.star', 'publish_github_pipeline')
+load('scripts/drone/pipelines/aws_marketplace.star', 'publish_aws_marketplace_pipeline')
 load('scripts/drone/version.star', 'version_branch_pipelines')
 load('scripts/drone/events/cron.star', 'cronjobs')
 load('scripts/drone/vault.star', 'secrets')
@@ -43,6 +44,7 @@ def main(ctx):
         + publish_image_pipelines_security()
         + publish_github_pipeline('public')
         + publish_github_pipeline('security')
+        + publish_aws_marketplace_pipeline('public')
         + publish_artifacts_pipelines('security')
         + publish_artifacts_pipelines('public')
         + publish_npm_pipelines()

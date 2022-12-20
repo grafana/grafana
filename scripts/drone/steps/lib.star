@@ -628,7 +628,7 @@ def codespell_step():
     }
 
 
-def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
+def package_step(edition, ver_mode, variants=None):
     deps = [
         'build-plugins',
         'build-backend' + enterprise2_suffix(edition),

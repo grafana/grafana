@@ -1,23 +1,25 @@
-package sqlstore
+package db
 
 import (
 	"bytes"
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewSqlBuilder(cfg *setting.Cfg) SQLBuilder {
-	return SQLBuilder{cfg: cfg}
+func NewSqlBuilder(cfg *setting.Cfg, dialect migrator.Dialect) SQLBuilder {
+	return SQLBuilder{cfg: cfg, dialect: dialect}
 }
 
 type SQLBuilder struct {
-	cfg    *setting.Cfg
-	sql    bytes.Buffer
-	params []interface{}
+	cfg     *setting.Cfg
+	sql     bytes.Buffer
+	params  []interface{}
+	dialect migrator.Dialect
 }
 
 func (sb *SQLBuilder) Write(sql string, params ...interface{}) {
@@ -50,7 +52,7 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 	} else {
 		sql, params = permissions.DashboardPermissionFilter{
 			OrgRole:         user.OrgRole,
-			Dialect:         dialect,
+			Dialect:         sb.dialect,
 			UserId:          user.UserID,
 			OrgId:           user.OrgID,
 			PermissionLevel: permission,
