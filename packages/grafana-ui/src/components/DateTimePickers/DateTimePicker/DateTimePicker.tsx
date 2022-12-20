@@ -1,12 +1,15 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, FormEvent, ReactNode, useCallback, useEffect, useState } from 'react';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
+import React, { FC, FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import Calendar from 'react-calendar';
 import { usePopper } from 'react-popper';
 import { useMedia } from 'react-use';
 
 import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
 
-import { Button, ClickOutsideWrapper, HorizontalGroup, Icon, InlineField, Input, Portal } from '../..';
+import { Button, HorizontalGroup, Icon, InlineField, Input, Portal } from '../..';
 import { useStyles2, useTheme2 } from '../../../themes';
 import { getModalStyles } from '../../Modal/getModalStyles';
 import { TimeOfDayPicker } from '../TimeOfDayPicker';
@@ -26,6 +29,13 @@ export interface Props {
 
 export const DateTimePicker: FC<Props> = ({ date, maxDate, label, onChange }) => {
   const [isOpen, setOpen] = useState(false);
+
+  const ref = useRef<HTMLDivElement>(null);
+  const { overlayProps, underlayProps } = useOverlay(
+    { onClose: () => setOpen(false), isDismissable: true, isOpen },
+    ref
+  );
+  const { dialogProps } = useDialog({}, ref);
 
   const theme = useTheme2();
   const { modalBackdrop } = getModalStyles(theme);
@@ -68,26 +78,35 @@ export const DateTimePicker: FC<Props> = ({ date, maxDate, label, onChange }) =>
       {isOpen ? (
         isFullscreen ? (
           <Portal>
-            <ClickOutsideWrapper onClick={() => setOpen(false)}>
-              <DateTimeCalendar
-                date={date}
-                onChange={onApply}
-                isFullscreen={true}
-                onClose={() => setOpen(false)}
-                maxDate={maxDate}
-                ref={setSelectorElement}
-                style={popper.styles.popper}
-              />
-            </ClickOutsideWrapper>
+            <FocusScope contain autoFocus restoreFocus>
+              <div ref={ref} {...overlayProps} {...dialogProps}>
+                <DateTimeCalendar
+                  date={date}
+                  onChange={onApply}
+                  isFullscreen={true}
+                  onClose={() => setOpen(false)}
+                  maxDate={maxDate}
+                  ref={setSelectorElement}
+                  style={popper.styles.popper}
+                />
+              </div>
+            </FocusScope>
           </Portal>
         ) : (
           <Portal>
-            <ClickOutsideWrapper onClick={() => setOpen(false)}>
-              <div className={styles.modal}>
-                <DateTimeCalendar date={date} onChange={onApply} isFullscreen={false} onClose={() => setOpen(false)} />
+            <div className={modalBackdrop} {...underlayProps} />
+            <FocusScope contain autoFocus restoreFocus>
+              <div ref={ref} {...overlayProps} {...dialogProps}>
+                <div className={styles.modal}>
+                  <DateTimeCalendar
+                    date={date}
+                    onChange={onApply}
+                    isFullscreen={false}
+                    onClose={() => setOpen(false)}
+                  />
+                </div>
               </div>
-              <div className={modalBackdrop} />
-            </ClickOutsideWrapper>
+            </FocusScope>
           </Portal>
         )
       ) : null}
@@ -140,16 +159,6 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
       });
     }, []);
 
-    const onFocus = useCallback(
-      (event: FormEvent<HTMLElement>) => {
-        if (!isFullscreen) {
-          return;
-        }
-        onOpen(event);
-      },
-      [isFullscreen, onOpen]
-    );
-
     const onBlur = useCallback(() => {
       if (isDateTime(internalDate.value)) {
         onChange(dateTime(internalDate.value));
@@ -169,7 +178,6 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
           onChange={onChangeDate}
           addonAfter={icon}
           value={internalDate.value}
-          onFocus={onFocus}
           onBlur={onBlur}
           data-testid="date-time-input"
           placeholder="Select date/time"
@@ -262,9 +270,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   modal: css`
     position: fixed;
-    top: 25%;
-    left: 25%;
-    width: 100%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: ${theme.zIndex.modal};
     max-width: 280px;
   `,
