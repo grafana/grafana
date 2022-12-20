@@ -229,6 +229,10 @@ lerna.json @grafana/frontend-ops
 /pkg/services/loginattempt @grafana/grafana-authnz-team
 /pkg/services/authn @grafana/grafana-authnz-team
 
+# Support bundles
+/public/app/features/support-bundles @grafana/grafana-authnz-team
+/pkg/infra/supportbundles @grafana/grafana-authnz-team
+
 # Grafana Partnerships Team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-partnerships-team
