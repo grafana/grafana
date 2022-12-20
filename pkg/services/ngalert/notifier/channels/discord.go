@@ -18,16 +18,16 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type DiscordNotifier struct {
 	*channels.Base
-	log      channels.Logger
-	ns       channels.WebhookSender
-	images   channels.ImageStore
-	tmpl     *template.Template
-	settings *discordSettings
+	log        channels.Logger
+	ns         channels.WebhookSender
+	images     channels.ImageStore
+	tmpl       *template.Template
+	settings   *discordSettings
+	appVersion string
 }
 
 type discordSettings struct {
@@ -83,12 +83,13 @@ func newDiscordNotifier(fc channels.FactoryConfig) (*DiscordNotifier, error) {
 		return nil, err
 	}
 	return &DiscordNotifier{
-		Base:     channels.NewBase(fc.Config),
-		log:      fc.Logger,
-		ns:       fc.NotificationService,
-		images:   fc.ImageStore,
-		tmpl:     fc.Template,
-		settings: settings,
+		Base:       channels.NewBase(fc.Config),
+		log:        fc.Logger,
+		ns:         fc.NotificationService,
+		images:     fc.ImageStore,
+		tmpl:       fc.Template,
+		settings:   settings,
+		appVersion: fc.GrafanaBuildVersion,
 	}, nil
 }
 
@@ -121,7 +122,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	footer := map[string]interface{}{
-		"text":     "Grafana v" + setting.BuildVersion,
+		"text":     "Grafana v" + d.appVersion,
 		"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 	}
 

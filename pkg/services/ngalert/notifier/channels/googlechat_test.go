@@ -3,6 +3,8 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"math/rand"
 	"net/url"
 	"testing"
 	"time"
@@ -13,13 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/alerting/alerting/notifier/channels"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestGoogleChatNotifier(t *testing.T) {
 	constNow := time.Now()
 	defer mockTimeNow(constNow)()
+	appVersion := fmt.Sprintf("%d.0.0", rand.Uint32())
 
 	cases := []struct {
 		name         string
@@ -75,7 +76,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -134,7 +135,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									},
 									textParagraphWidget{
 										Text: text{
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -194,7 +195,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -249,7 +250,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -304,7 +305,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -354,7 +355,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -399,7 +400,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -443,7 +444,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -476,6 +477,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				Template:            tmpl,
 				Logger:              &channels.FakeLogger{},
+				GrafanaBuildVersion: appVersion,
 			}
 
 			pn, err := newGoogleChatNotifier(fc)
