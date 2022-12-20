@@ -68,8 +68,8 @@ const RawListContainer = (props: RawListContainerProps) => {
     }
     const item = items[itemIndex];
 
-    // Height of a single line, plus the number of non value attributes times the height of additional lines plus padding
-    return singleLineHeight + (Object.keys(item).length - valueLabels.length) * additionalLineHeight + 15;
+    // Height of 1.5 lines, plus the number of non value attributes times the height of additional lines
+    return 1.5 * singleLineHeight + (Object.keys(item).length - valueLabels.length) * additionalLineHeight;
   };
 
   return (
@@ -106,6 +106,7 @@ const RawListContainer = (props: RawListContainerProps) => {
               return (
                 <div role="row" style={{ ...style, overflow: 'hidden' }}>
                   <RawListItem
+                    isExpandedView={isExpandedView}
                     valueLabels={filteredValueLabels}
                     totalNumberOfValues={filteredValueLabels.length}
                     listKey={index}
@@ -120,7 +121,7 @@ const RawListContainer = (props: RawListContainerProps) => {
         {/* DESKTOP VIEW AND COMPARING FEW VALUES */}
         {!isExpandedView && (
           <>
-            {valueLabels.length > 1 && <ItemLabels valueLabels={valueLabels} />}
+            {valueLabels.length > 1 && <ItemLabels valueLabels={valueLabels} expanded={isExpandedView} />}
             <List
               itemCount={items.length}
               className={styles.wrapper}
@@ -131,7 +132,12 @@ const RawListContainer = (props: RawListContainerProps) => {
               {({ index, style }) => {
                 return (
                   <div role="row" style={{ ...style, overflow: 'hidden' }}>
-                    <RawListItem totalNumberOfValues={valueLabels.length} listKey={index} listItemData={items[index]} />
+                    <RawListItem
+                      isExpandedView={isExpandedView}
+                      totalNumberOfValues={valueLabels.length}
+                      listKey={index}
+                      listItemData={items[index]}
+                    />
                   </div>
                 );
               }}

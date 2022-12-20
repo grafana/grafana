@@ -6,6 +6,7 @@ import { Field, GrafanaTheme } from '@grafana/data/src';
 import { IconButton, useStyles } from '@grafana/ui/src';
 
 import { ItemLabels } from './ItemLabels';
+import { ItemValues } from './ItemValues';
 import { instantQueryRawVirtualizedListData } from './RawListContainer';
 import RawListItemAttributes from './RawListItemAttributes';
 
@@ -14,29 +15,31 @@ interface RawListProps {
   listKey: number;
   totalNumberOfValues: number;
   valueLabels?: Field[];
+  isExpandedView: boolean;
 }
 
 export type RawListValue = { key: string; value: string };
 
-export const rawListItemColumnWidth = '80px';
 const extraSpaceAtEndOfLine = '20px';
-const paddingToHoldSpaceForCopyIcon = '25px';
-const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
+export const rawListItemColumnWidth = '80px';
+export const rawListpaddingToHoldSpaceForCopyIcon = '25px';
+const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number, isExpandedView: boolean) => ({
   rowWrapper: css`
     border-bottom: 1px solid ${theme.colors.border3};
     display: flex;
     position: relative;
     padding-left: 22px;
+    ${!isExpandedView ? 'height: calc(100% - 5px);' : ''}
   `,
   copyToClipboardWrapper: css`
     position: absolute;
     left: 0;
-    top: 0;
+    top: 3px;
     z-index: 1;
   `,
   rowLabelWrapWrap: css`
     position: relative;
-    width: calc(100% - (${totalNumberOfValues} * ${rawListItemColumnWidth}) - ${paddingToHoldSpaceForCopyIcon});
+    width: calc(100% - (${totalNumberOfValues} * ${rawListItemColumnWidth}) - ${rawListpaddingToHoldSpaceForCopyIcon});
   `,
   rowLabelWrap: css`
     white-space: nowrap;
@@ -58,16 +61,6 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
       top: 0;
       background: linear-gradient(to right, transparent calc(100% - ${extraSpaceAtEndOfLine}), ${theme.colors.bg1});
     }
-  `,
-  rowValue: css`
-    min-width: ${rawListItemColumnWidth};
-    font-weight: bold;
-  `,
-  rowValuesWrap: css`
-    padding-left: ${paddingToHoldSpaceForCopyIcon};
-    font-weight: bold;
-    width: calc(${totalNumberOfValues} * ${rawListItemColumnWidth});
-    display: flex;
   `,
 });
 
@@ -93,46 +86,11 @@ function getQueryValues(allLabels: Pick<instantQueryRawVirtualizedListData, 'Val
   };
 }
 
-const ItemValues = ({
-  totalNumberOfValues,
-  values,
-  hideFieldsWithoutValues,
-}: {
-  totalNumberOfValues: number;
-  values: RawListValue[];
-  hideFieldsWithoutValues: boolean;
-}) => {
-  const styles = useStyles((theme) => getStyles(theme, totalNumberOfValues));
-  return (
-    <div className={styles.rowValuesWrap}>
-      {values?.map((value) => {
-        if (hideFieldsWithoutValues) {
-          if (value.value !== undefined && value.value !== ' ') {
-            return (
-              <span key={value.key} className={styles.rowValue}>
-                {value.value}
-              </span>
-            );
-          } else {
-            return null;
-          }
-        } else {
-          return (
-            <span key={value.key} className={styles.rowValue}>
-              {value.value}
-            </span>
-          );
-        }
-      })}
-    </div>
-  );
-};
-
-const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels }: RawListProps) => {
+const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, isExpandedView }: RawListProps) => {
   const { __name__, ...allLabels } = listItemData;
   const [_, copyToClipboard] = useCopyToClipboard();
   const displayLength = valueLabels?.length ?? totalNumberOfValues;
-  const styles = useStyles((theme) => getStyles(theme, displayLength));
+  const styles = useStyles((theme) => getStyles(theme, displayLength, isExpandedView));
   const { values, attributeValues } = getQueryValues(allLabels);
 
   /**
@@ -153,7 +111,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels }
 
   return (
     <>
-      {valueLabels && valueLabels?.length && <ItemLabels valueLabels={valueLabels} />}
+      {valueLabels && valueLabels?.length && <ItemLabels valueLabels={valueLabels} expanded={true} />}
       <div key={listKey} className={styles.rowWrapper}>
         <span className={styles.copyToClipboardWrapper}>
           <IconButton tooltip="Copy to clipboard" onClick={() => copyToClipboard(stringRep)} name="copy" />
