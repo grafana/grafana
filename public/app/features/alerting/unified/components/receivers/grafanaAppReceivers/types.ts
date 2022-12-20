@@ -18,6 +18,6 @@ export const GRAFANA_APP_RECEIVERS_SOURCE_IMAGE = {
   GrafanaOnCall: 'public/img/alerting/oncall_logo.svg',
 };
 
-export enum GRAFANA_APP_PLUGGIN_IDS {
+export enum GRAFANA_APP_PLUGIN_IDS {
   GrafanaOnCall = 'grafana-oncall-app',
 }

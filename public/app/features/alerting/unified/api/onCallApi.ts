@@ -13,7 +13,7 @@ export const onCallApi = alertingApi.injectEndpoints({
         headers: {},
         url: '/api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/?search=',
       }),
-      providesTags: ['OnCallIntegrations'],
+      providesTags: ['AlertmanagerChoice'],
       transformResponse: (response: OnCallIntegrationsResponse) => response.map((result) => result.integration_url),
     }),
   }),
@@ -21,7 +21,7 @@ export const onCallApi = alertingApi.injectEndpoints({
 
 export const useGetOnCallIntegrations = (skip: boolean) => {
   const { data } = onCallApi.useGetOnCallIntegrationsQuery(undefined, {
-    skip: skip,
+    skip,
   });
   return data;
 };
