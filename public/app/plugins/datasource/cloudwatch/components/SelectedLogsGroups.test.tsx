@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { SelectedLogsGroups } from './SelectedLogsGroups';
@@ -56,6 +57,21 @@ describe('SelectedLogsGroups', () => {
       }));
       render(<SelectedLogsGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
       await waitFor(() => expect(screen.getByText('Clear selection')).toBeInTheDocument());
+    });
+
+    it('should display confirm dialog before clearing all selections', async () => {
+      const selectedLogGroups = Array(11).map((i) => ({
+        value: `logGroup${i}`,
+        text: `logGroup${i}`,
+        label: `logGroup${i}`,
+      }));
+      render(<SelectedLogsGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
+      await waitFor(() => userEvent.click(screen.getByText('Clear selection')));
+      await waitFor(() =>
+        expect(screen.getByText('Are you sure you want to clear all log groups?')).toBeInTheDocument()
+      );
+      await waitFor(() => userEvent.click(screen.getByLabelText('Confirm Modal Danger Button')));
+      expect(defaultProps.onChange).toHaveBeenCalledWith([]);
     });
   });
 

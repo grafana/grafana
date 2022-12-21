@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 
 import { SelectableResourceValue } from '../api';
 
@@ -15,6 +15,7 @@ const MAX_VISIBLE_LOG_GROUPS = 10;
 
 export const SelectedLogsGroups = ({ selectedLogGroups, onChange }: CrossAccountLogsQueryProps) => {
   const styles = useStyles2(getStyles);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [visibleSelectecLogGroups, setVisibleSelectecLogGroups] = useState(
     selectedLogGroups.slice(0, MAX_VISIBLE_LOG_GROUPS)
   );
@@ -24,45 +25,60 @@ export const SelectedLogsGroups = ({ selectedLogGroups, onChange }: CrossAccount
   }, [selectedLogGroups]);
 
   return (
-    <div className={styles.selectedLogGroupsContainer}>
-      {visibleSelectecLogGroups.map((lg) => (
-        <Button
-          key={lg.value}
-          size="sm"
-          variant="secondary"
-          icon="times"
-          className={styles.removeButton}
-          onClick={() => {
-            onChange(selectedLogGroups.filter((slg) => slg.value !== lg.value));
-          }}
-        >
-          {lg.label}
-        </Button>
-      ))}
-      {visibleSelectecLogGroups.length !== selectedLogGroups.length && (
-        <Button
-          size="sm"
-          variant="secondary"
-          icon="plus"
-          fill="outline"
-          className={styles.removeButton}
-          onClick={() => setVisibleSelectecLogGroups(selectedLogGroups)}
-        >
-          Show all
-        </Button>
-      )}
-      {selectedLogGroups.length > 0 && (
-        <Button
-          size="sm"
-          variant="secondary"
-          icon="times"
-          fill="outline"
-          className={styles.removeButton}
-          onClick={() => onChange([])}
-        >
-          Clear selection
-        </Button>
-      )}
-    </div>
+    <>
+      <div className={styles.selectedLogGroupsContainer}>
+        {visibleSelectecLogGroups.map((lg) => (
+          <Button
+            key={lg.value}
+            size="sm"
+            variant="secondary"
+            icon="times"
+            className={styles.removeButton}
+            onClick={() => {
+              onChange(selectedLogGroups.filter((slg) => slg.value !== lg.value));
+            }}
+          >
+            {lg.label}
+          </Button>
+        ))}
+        {visibleSelectecLogGroups.length !== selectedLogGroups.length && (
+          <Button
+            size="sm"
+            variant="secondary"
+            icon="plus"
+            fill="outline"
+            className={styles.removeButton}
+            onClick={() => setVisibleSelectecLogGroups(selectedLogGroups)}
+          >
+            Show all
+          </Button>
+        )}
+        {selectedLogGroups.length > 0 && (
+          <Button
+            size="sm"
+            variant="secondary"
+            icon="times"
+            fill="outline"
+            className={styles.removeButton}
+            onClick={() => setShowConfirm(true)}
+          >
+            Clear selection
+          </Button>
+        )}
+      </div>
+      <ConfirmModal
+        isOpen={showConfirm}
+        title="Clear Log Group Selection"
+        body="Are you sure you want to clear all log groups?"
+        confirmText="Yes"
+        dismissText="No"
+        icon="exclamation-triangle"
+        onConfirm={() => {
+          setShowConfirm(false);
+          onChange([]);
+        }}
+        onDismiss={() => setShowConfirm(false)}
+      />
+    </>
   );
 };
