@@ -15,7 +15,6 @@ const (
 	azureMonitorPublic       = "azuremonitor"
 	azureMonitorChina        = "chinaazuremonitor"
 	azureMonitorUSGovernment = "govazuremonitor"
-	azureMonitorGermany      = "germanyazuremonitor"
 	azureMonitorCustomized   = "customizedazuremonitor"
 )
 
