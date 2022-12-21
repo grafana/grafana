@@ -7,7 +7,7 @@ import (
 )
 
 type Service interface {
-	RegisterHealthCheck(ctx context.Context, config models.HealthCheckConfig, checker HealthChecker) error
+	RegisterHealthCheck(ctx context.Context, config models.HealthCheckConfig, checker HealthChecker) (*models.SendHealthFunc, error)
 	RunCoreHealthChecks(ctx context.Context) error
 	GetLatestHealth(ctx context.Context) (models.HealthStatus, map[string]map[string]string)
 	GetHealthCheck(ctx context.Context, name string) (bool, models.HealthCheck)

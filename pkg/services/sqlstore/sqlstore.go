@@ -85,11 +85,11 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	prometheus.MustRegister(newSQLStoreMetrics(db))
 
 	// register health checks
-	if err := healthchecks.RegisterHealthCheck(context.Background(), hcm.HealthCheckConfig{
+	if _, err := healthchecks.RegisterHealthCheck(context.Background(), hcm.HealthCheckConfig{
 		Name:     "sqlstore",
 		Type:     hcm.LivenessCheck,
 		Severity: hcm.SeverityFatal,
-		Strategy: hcm.StrategyChron,
+		Strategy: hcm.StrategyCron,
 		Interval: 5 * time.Second,
 	}, s); err != nil {
 		return nil, err

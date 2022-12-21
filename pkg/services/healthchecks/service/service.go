@@ -52,50 +52,56 @@ func (hcs *HealthChecksServiceImpl) RunCoreHealthChecks(ctx context.Context) err
 		return models.ErrCoreChecksNotRegistered
 	}
 
-	// Run all the core health checks. Return error if any fail.
+	// Run all the core health checks. Return error if any fail or are red. Return not ready if any are yellow.
 	for coreCheck := range coreChecks {
 		c := hcs.registeredChecks[coreCheck]
-		status, metrics, err := c.HealthCheckFunc(ctx, coreCheck)
-		if err != nil || status == models.StatusRed {
-			return fmt.Errorf("core check %s failed", coreCheck)
+		// if readiness check already ran and is green, continue
+		if !c.LatestUpdateTime.IsZero() && c.LatestStatus == models.StatusGreen {
+			continue
 		}
-
+		status, metrics, err := c.HealthCheckFunc(ctx, coreCheck)
 		c.LatestMetrics = metrics
 		c.LatestStatus = status
 		c.LatestUpdateTime = time.Now()
 		hcs.registeredChecks[coreCheck] = c
+
+		if err != nil || status == models.StatusRed {
+			return fmt.Errorf("core check %s failed", coreCheck)
+		} else if status == models.StatusYellow {
+			return models.ErrCoreChecksNotFinished
+		}
 	}
 
 	return nil
 }
 
-func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, config models.HealthCheckConfig, checker healthchecks.HealthChecker) error {
+func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, config models.HealthCheckConfig, checker healthchecks.HealthChecker) (*models.SendHealthFunc, error) {
 	hcs.mu.Lock()
 	defer hcs.mu.Unlock()
 
 	// valid name
 	if config.Name == "" {
-		return errors.New("received health check with empty name")
+		return nil, errors.New("received health check with empty name")
 	}
 
 	// unique names only
 	if _, has := hcs.registeredChecks[config.Name]; has {
-		return fmt.Errorf("health check %s already exists", config.Name)
+		return nil, fmt.Errorf("health check %s already exists", config.Name)
 	}
 
 	// no readiness checks not listed as core
 	if config.Type == models.ReadinessCheck && !coreChecks[config.Name] {
-		return fmt.Errorf("health check '%s' has type 'readiness' but it is not listed as a core check", config.Name)
+		return nil, fmt.Errorf("health check '%s' has type 'readiness' but it is not listed as a core check", config.Name)
 	}
 
 	// no check names reserved by core checks
 	if config.Type != models.ReadinessCheck && coreChecks[config.Name] {
-		return fmt.Errorf("health check name '%s' is reserved for a readiness check", config.Name)
+		return nil, fmt.Errorf("health check name '%s' is reserved for a readiness check", config.Name)
 	}
 
 	// valid intervals only
-	if config.Strategy == models.StrategyChron && config.Interval <= 0 {
-		return fmt.Errorf("health check '%s' has invalid interval of '%d'", config.Name, config.Interval)
+	if config.Strategy == models.StrategyCron && config.Interval <= 0 {
+		return nil, fmt.Errorf("health check '%s' has invalid interval of '%d'", config.Name, config.Interval)
 	}
 
 	healthCheck := models.HealthCheck{
@@ -107,10 +113,10 @@ func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, con
 
 	// if it's a readiness check, it will be run whenever the readiness endpoint is pinged
 	if config.Type == models.ReadinessCheck {
-		return nil
+		return nil, nil
 	}
 
-	if config.Strategy == models.StrategyChron {
+	if config.Strategy == models.StrategyCron {
 		startFunc := func() {
 			// run initially, then schedule follow-up jobs
 			hcs.runIndividualHealthCheck(ctx, healthCheck)
@@ -122,16 +128,25 @@ func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, con
 			}))
 		}
 
-		if config.InitialDelay >= 0 {
+		if config.InitialDelay > 0 {
 			time.AfterFunc(config.InitialDelay, startFunc)
 		} else {
 			startFunc()
 		}
 	} else if config.Strategy == models.StrategyOnce {
-		hcs.runIndividualHealthCheck(ctx, healthCheck)
+		if config.InitialDelay > 0 {
+			time.AfterFunc(config.InitialDelay, func() {
+				hcs.runIndividualHealthCheck(ctx, healthCheck)
+			})
+		} else {
+			hcs.runIndividualHealthCheck(ctx, healthCheck)
+		}
+	} else if config.Strategy == models.StrategyOnDemand {
+		// do something
+		return nil, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (hcs *HealthChecksServiceImpl) GetLatestHealth(ctx context.Context) (models.HealthStatus, map[string]map[string]string) {
