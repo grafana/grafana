@@ -1,4 +1,5 @@
-import { Team, TeamGroup, TeamMember, TeamPermissionLevel } from 'app/types';
+import { Permission as TeamPermissionLevel } from '@grafana/schema';
+import { Team, TeamGroup, TeamMember } from 'app/types';
 
 export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
   const teams: Team[] = [];
@@ -10,6 +11,10 @@ export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
       email: `test-${i}@test.com`,
       memberCount: i,
       permission: TeamPermissionLevel.Member,
+      accessControl: { isEditor: false },
+      created: 0,
+      orgId: 0,
+      updated: 0,
     });
   }
 
@@ -24,6 +29,10 @@ export const getMockTeam = (): Team => {
     email: 'test@test.com',
     memberCount: 1,
     permission: TeamPermissionLevel.Member,
+    accessControl: { isEditor: false },
+    created: 0,
+    orgId: 0,
+    updated: 0,
   };
 };
 

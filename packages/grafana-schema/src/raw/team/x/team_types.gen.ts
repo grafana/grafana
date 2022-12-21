@@ -11,6 +11,7 @@
 export enum Permission {
   Admin = 4,
   Editor = 2,
+  Member = 0,
   Viewer = 1,
 }
 

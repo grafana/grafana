@@ -1,5 +1,3 @@
-import { KeyValue } from '.';
-
 /**
  * With RBAC, the backend will return additional access control metadata to objects.
  * These metadata will contain user permissions associated to a given resource.
@@ -10,5 +8,6 @@ import { KeyValue } from '.';
  * }
  */
 export interface WithAccessControlMetadata {
-  accessControl?: KeyValue<boolean>;
+  // TODO Update to Record<string, boolean> when map generator bug is fixed
+  accessControl?: Record<string, unknown>;
 }
