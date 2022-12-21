@@ -74,6 +74,10 @@ exports[`getThresholdsForQueries should work for outside_range 1`] = `
           "value": -Infinity,
         },
         {
+          "color": "#D10E5C",
+          "value": 0,
+        },
+        {
           "color": "transparent",
           "value": 0,
         },
