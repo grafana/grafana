@@ -419,56 +419,85 @@ func TestIntegration_SecretsService(t *testing.T) {
 
 	tcs := map[string]func(*testing.T, *sqlstore.SQLStore, *SecretsService){
 		"regular": func(t *testing.T, _ *sqlstore.SQLStore, svc *SecretsService) {
+			// We encrypt some data normally, no transactions implied.
 			_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
 			require.NoError(t, err)
 		},
 		"within successful InTransaction": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
 			require.NoError(t, store.InTransaction(ctx, func(ctx context.Context) error {
+				// We encrypt some data within a transaction that shares the db session.
 				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
 				require.NoError(t, err)
+
+				// And the transition succeeds.
 				return nil
 			}))
 		},
 		"within unsuccessful InTransaction": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
 			require.NotNil(t, store.InTransaction(ctx, func(ctx context.Context) error {
+				// We encrypt some data within a transaction that shares the db session.
 				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
 				require.NoError(t, err)
+
+				// But the transaction fails.
 				return errors.New("error")
 			}))
 		},
 		"within unsuccessful InTransaction (plus forced db fetch)": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
 			require.NotNil(t, store.InTransaction(ctx, func(ctx context.Context) error {
+				// We encrypt some data within a transaction that shares the db session.
 				encrypted, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
 				require.NoError(t, err)
-				svc.dataKeyCache.flush()
+
+				// At this point the data key is not cached yet because
+				// the transaction haven't been committed yet,
+				// and won't, so we do a decrypt operation within the
+				// transaction to force the data key to be
+				// (potentially) cached (it shouldn't to prevent issues).
 				decrypted, err := svc.Decrypt(ctx, encrypted)
 				require.NoError(t, err)
 				assert.Equal(t, someData, decrypted)
+
+				// But the transaction fails.
 				return errors.New("error")
 			}))
 		},
 		"within successful WithTransactionalDbSession": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
 			require.NoError(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+				// We encrypt some data within a transaction that does not share the db session.
 				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
 				require.NoError(t, err)
+
+				// And the transition succeeds.
 				return nil
 			}))
 		},
 		"within unsuccessful WithTransactionalDbSession": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
 			require.NotNil(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+				// We encrypt some data within a transaction that does not share the db session.
 				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
 				require.NoError(t, err)
+
+				// But the transaction fails.
 				return errors.New("error")
 			}))
 		},
 		"within unsuccessful WithTransactionalDbSession (plus forced db fetch)": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
 			require.NotNil(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+				// We encrypt some data within a transaction that does not share the db session.
 				encrypted, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
 				require.NoError(t, err)
-				svc.dataKeyCache.flush()
+
+				// At this point the data key is not cached yet because
+				// the transaction haven't been committed yet,
+				// and won't, so we do a decrypt operation within the
+				// transaction to force the data key to be
+				// (potentially) cached (it shouldn't to prevent issues).
 				decrypted, err := svc.Decrypt(ctx, encrypted)
 				require.NoError(t, err)
 				assert.Equal(t, someData, decrypted)
+
+				// But the transaction fails.
 				return errors.New("error")
 			}))
 		},
