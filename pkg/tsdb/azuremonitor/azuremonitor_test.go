@@ -265,7 +265,7 @@ func TestCheckHealth(t *testing.T) {
 				if !fail {
 					return &http.Response{
 						StatusCode: 200,
-						Body:       io.NopCloser(bytes.NewBufferString("OK")),
+						Body:       io.NopCloser(bytes.NewBufferString("{\"value\": [{\"subscriptionId\": \"abcd-1234\"}]}")),
 						Header:     make(http.Header),
 					}, nil
 				} else {

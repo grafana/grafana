@@ -53,6 +53,7 @@ type SharePublicDashboardAcknowledgmentInputs = {
 
 export type SharePublicDashboardInputs = {
   isAnnotationsEnabled: boolean;
+  isTimeRangeEnabled: boolean;
   enabledSwitch: boolean;
 } & SharePublicDashboardAcknowledgmentInputs;
 
@@ -88,6 +89,7 @@ export const SharePublicDashboard = (props: Props) => {
       dataSourcesAcknowledgment: false,
       usageAcknowledgment: false,
       isAnnotationsEnabled: false,
+      isTimeRangeEnabled: false,
       enabledSwitch: false,
     },
   });
@@ -110,6 +112,7 @@ export const SharePublicDashboard = (props: Props) => {
       dataSourcesAcknowledgment: isPublicDashboardPersisted,
       usageAcknowledgment: isPublicDashboardPersisted,
       isAnnotationsEnabled: publicDashboard?.annotationsEnabled,
+      isTimeRangeEnabled: publicDashboard?.timeSelectionEnabled,
       enabledSwitch: publicDashboard?.isEnabled,
     });
   }, [publicDashboard, reset]);
@@ -151,6 +154,7 @@ export const SharePublicDashboard = (props: Props) => {
         ...publicDashboard!,
         isEnabled: values.enabledSwitch,
         annotationsEnabled: values.isAnnotationsEnabled,
+        timeSelectionEnabled: values.isTimeRangeEnabled,
       },
     };
 

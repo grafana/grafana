@@ -188,7 +188,7 @@ export function TraceView(props: Props) {
             setTrace={noop}
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
-            linksGetter={noop as any}
+            linksGetter={() => []}
             uiFind={props.search}
             createSpanLink={createSpanLink}
             scrollElement={props.scrollElement}

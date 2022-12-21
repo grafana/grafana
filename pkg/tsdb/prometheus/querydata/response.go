@@ -41,7 +41,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		}
 	}
 
-	r = processExemplars(q, r)
+	r = processExemplars(q, r, s.disablePrometheusExemplarSampling)
 	return r, nil
 }
 
@@ -136,8 +136,8 @@ func getName(q *models.Query, field *data.Field) string {
 	return legend
 }
 
-func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataResponse {
-	sampler := newExemplarSampler()
+func processExemplars(q *models.Query, dr *backend.DataResponse, disableSampling bool) *backend.DataResponse {
+	sampler := newExemplarSampler(disableSampling)
 
 	// we are moving from a multi-frame response returned
 	// by the converter to a single exemplar frame,

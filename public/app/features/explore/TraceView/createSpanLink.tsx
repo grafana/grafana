@@ -446,13 +446,13 @@ function buildMetricsQuery(query: TraceToMetricQuery, tags: Array<KeyValue<strin
   let expr = query.query;
   if (tags.length && expr.indexOf('$__tags') !== -1) {
     const spanTags = [...span.process.tags, ...span.tags];
-    const labels = tags.reduce((acc, tag) => {
+    const labels = tags.reduce<string[]>((acc, tag) => {
       const tagValue = spanTags.find((t) => t.key === tag.key)?.value;
       if (tagValue) {
         acc.push(`${tag.value ? tag.value : tag.key}="${tagValue}"`);
       }
       return acc;
-    }, [] as string[]);
+    }, []);
 
     const labelsQuery = labels?.join(', ');
     expr = expr.replace(/\$__tags/g, labelsQuery);
