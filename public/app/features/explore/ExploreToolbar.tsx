@@ -135,8 +135,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       syncedTimes,
       onChangeTimeZone,
       onChangeFiscalYearStartMonth,
-      refreshInterval,
-      loading,
       isPaused,
       hasLiveOption,
       containerWidth,
@@ -212,10 +210,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
       this.renderRefreshPicker(showSmallTimePicker),
 
-      refreshInterval && (
-        <SetInterval key="setInterval" func={this.onRunQuery} interval={refreshInterval} loading={loading} />
-      ),
-
       hasLiveOption && (
         <LiveTailControls key="liveControls" exploreId={exploreId}>
           {(c) => {
@@ -246,7 +240,8 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   };
 
   render() {
-    const { datasourceMissing, exploreId, splitted, containerWidth, topOfViewRef } = this.props;
+    const { datasourceMissing, exploreId, splitted, containerWidth, topOfViewRef, refreshInterval, loading } =
+      this.props;
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const isTopnav = config.featureToggles.topnav;
@@ -281,6 +276,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
     return (
       <div ref={topOfViewRef}>
+        {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
         {isTopnav && (
           <div ref={topOfViewRef}>
             <AppChromeUpdate actions={topNavActions} />
