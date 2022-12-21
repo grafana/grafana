@@ -180,7 +180,7 @@ type SearchOrgUsersQuery struct {
 
 type SearchOrgUsersQueryResult struct {
 	TotalCount int64         `json:"totalCount"`
-	OrgUsers   []*OrgUserDTO `json:"OrgUsers"`
+	OrgUsers   []*OrgUserDTO `json:"orgUsers"`
 	Page       int           `json:"page"`
 	PerPage    int           `json:"perPage"`
 }
