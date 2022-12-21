@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { lazy, PureComponent, RefObject, Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -35,6 +36,19 @@ import { LiveTailControls } from './useLiveTailControls';
 const AddToDashboard = lazy(() =>
   import('./AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
 );
+
+const getStyles = (exploreId: ExploreId, isLargerExploreId: boolean) => {
+  return {
+    rotateIcon: css({
+      '> div > svg': {
+        transform:
+          (exploreId === 'left' && isLargerExploreId) || (exploreId === 'right' && !isLargerExploreId)
+            ? 'rotate(180deg)'
+            : 'none',
+      },
+    }),
+  };
+};
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -136,8 +150,8 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       largerExploreId,
     } = this.props;
     const showSmallTimePicker = splitted || containerWidth < 1210;
-
     const isLargerExploreId = largerExploreId === exploreId;
+    const styles = getStyles(exploreId, isLargerExploreId);
 
     const showExploreToDashboard =
       contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
@@ -168,11 +182,9 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
             tooltip={`${isLargerExploreId ? 'Narrow' : 'Widen'} pane`}
             disabled={isLive}
             onClick={onClickResize}
-            icon={
-              (exploreId === 'left' && isLargerExploreId) || (exploreId === 'right' && !isLargerExploreId)
-                ? 'angle-left'
-                : 'angle-right'
-            }
+            icon={isLargerExploreId ? 'gf-movepane-left' : 'gf-movepane-right'}
+            iconOnly={true}
+            className={styles.rotateIcon}
           />
           <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
             Close

@@ -21,21 +21,6 @@ jest.mock('./monaco-query-field/MonacoQueryFieldLazy', () => {
   };
 });
 
-jest.mock('@grafana/runtime', () => {
-  const runtime = jest.requireActual('@grafana/runtime');
-  return {
-    __esModule: true,
-    ...runtime,
-    config: {
-      ...runtime.config,
-      featureToggles: {
-        ...runtime.config.featureToggles,
-        promQueryBuilder: true,
-      },
-    },
-  };
-});
-
 function setup(app: CoreApp): RenderResult & { onRunQuery: jest.Mock } {
   const dataSource = {
     createQuery: jest.fn((q) => q),

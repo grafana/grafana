@@ -29,7 +29,7 @@ When using Prometheus, contact points and notification policies are read-only in
 ## Provision the Alertmanager data source
 
 You can provision Alertmanager data sources by updating Grafana's configuration files.
-For more information on provisioning, and common settings available, refer to the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}).
+For more information on provisioning, and common settings available, refer to the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}}).
 
 Here is an example for provisioning the Alertmanager data source:
 

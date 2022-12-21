@@ -40,7 +40,7 @@ interface Props {
   index: number;
   thresholds: ThresholdsConfig;
   thresholdsType?: GraphTresholdsStyleMode;
-  onChangeThreshold: (thresholds: ThresholdsConfig, index: number) => void;
+  onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
 }
@@ -144,6 +144,7 @@ export const QueryWrapper: FC<Props> = ({
               currentPanel={pluginId}
               thresholds={thresholds}
               thresholdsType={thresholdsType}
+              onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : undefined}
             />
           ) : null
         }

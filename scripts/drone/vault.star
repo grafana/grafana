@@ -79,4 +79,19 @@ def secrets():
             'infra/data/ci/packages-publish/bucket-credentials',
             'Secret',
         ),
+        vault_secret(
+            'aws_region',
+            'secret/data/common/aws-marketplace',
+            'aws_region',
+        ),
+        vault_secret(
+            'aws_access_key_id',
+            'secret/data/common/aws-marketplace',
+            'aws_access_key_id',
+        ),
+        vault_secret(
+            'aws_secret_access_key',
+            'secret/data/common/aws-marketplace',
+            'aws_secret_access_key',
+        ),
     ]

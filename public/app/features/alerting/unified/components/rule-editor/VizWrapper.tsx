@@ -60,6 +60,7 @@ export const VizWrapper: FC<Props> = ({
     () => ({
       eventBus: appEvents,
       canEditThresholds: false,
+      showThresholds: true,
     }),
     []
   );

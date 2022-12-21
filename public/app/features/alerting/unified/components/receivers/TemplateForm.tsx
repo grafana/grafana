@@ -183,7 +183,7 @@ function TemplatingGuideline() {
         </div>
         <div>
           <LinkButton
-            href="https://grafana.com/docs/grafana/latest/alerting/contact-points/message-templating"
+            href="https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/"
             target="_blank"
             icon="external-link-alt"
           >

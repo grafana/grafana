@@ -2,90 +2,102 @@ package channels
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/alerting/alerting/notifier/channels"
 )
 
 // EmailNotifier is responsible for sending
 // alert notifications over email.
 type EmailNotifier struct {
-	*Base
-	Addresses   []string
-	SingleEmail bool
-	Message     string
-	Subject     string
-	log         log.Logger
-	ns          EmailSender
-	images      ImageStore
-	tmpl        *template.Template
+	*channels.Base
+	log      channels.Logger
+	ns       channels.EmailSender
+	images   channels.ImageStore
+	tmpl     *template.Template
+	settings *emailSettings
 }
 
-type EmailConfig struct {
-	*NotificationChannelConfig
+type emailSettings struct {
 	SingleEmail bool
 	Addresses   []string
 	Message     string
 	Subject     string
 }
 
-func EmailFactory(fc FactoryConfig) (NotificationChannel, error) {
-	cfg, err := NewEmailConfig(fc.Config)
+func EmailFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
+	notifier, err := buildEmailNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
 			Reason: err.Error(),
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewEmailNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
+	return notifier, nil
 }
 
-func NewEmailConfig(config *NotificationChannelConfig) (*EmailConfig, error) {
-	addressesString := config.Settings.Get("addresses").MustString()
-	if addressesString == "" {
+func buildEmailSettings(fc channels.FactoryConfig) (*emailSettings, error) {
+	type emailSettingsRaw struct {
+		SingleEmail bool   `json:"singleEmail,omitempty"`
+		Addresses   string `json:"addresses,omitempty"`
+		Message     string `json:"message,omitempty"`
+		Subject     string `json:"subject,omitempty"`
+	}
+
+	var settings emailSettingsRaw
+	err := json.Unmarshal(fc.Config.Settings, &settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+	if settings.Addresses == "" {
 		return nil, errors.New("could not find addresses in settings")
 	}
 	// split addresses with a few different ways
-	addresses := util.SplitEmails(addressesString)
-	return &EmailConfig{
-		NotificationChannelConfig: config,
-		SingleEmail:               config.Settings.Get("singleEmail").MustBool(false),
-		Message:                   config.Settings.Get("message").MustString(),
-		Subject:                   config.Settings.Get("subject").MustString(DefaultMessageTitleEmbed),
-		Addresses:                 addresses,
+	addresses := splitEmails(settings.Addresses)
+
+	if settings.Subject == "" {
+		settings.Subject = channels.DefaultMessageTitleEmbed
+	}
+
+	return &emailSettings{
+		SingleEmail: settings.SingleEmail,
+		Message:     settings.Message,
+		Subject:     settings.Subject,
+		Addresses:   addresses,
 	}, nil
 }
 
-// NewEmailNotifier is the constructor function
-// for the EmailNotifier.
-func NewEmailNotifier(config *EmailConfig, ns EmailSender, images ImageStore, t *template.Template) *EmailNotifier {
-	return &EmailNotifier{
-		Base:        NewBase(config.NotificationChannelConfig),
-		Addresses:   config.Addresses,
-		SingleEmail: config.SingleEmail,
-		Message:     config.Message,
-		Subject:     config.Subject,
-		log:         log.New("alerting.notifier.email"),
-		ns:          ns,
-		images:      images,
-		tmpl:        t,
+func buildEmailNotifier(fc channels.FactoryConfig) (*EmailNotifier, error) {
+	settings, err := buildEmailSettings(fc)
+	if err != nil {
+		return nil, err
 	}
+	return &EmailNotifier{
+		Base:     channels.NewBase(fc.Config),
+		log:      fc.Logger,
+		ns:       fc.NotificationService,
+		images:   fc.ImageStore,
+		tmpl:     fc.Template,
+		settings: settings,
+	}, nil
 }
 
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, error) {
 	var tmplErr error
-	tmpl, data := TmplText(ctx, en.tmpl, alerts, en.log, &tmplErr)
+	tmpl, data := channels.TmplText(ctx, en.tmpl, alerts, en.log, &tmplErr)
 
-	subject := tmpl(en.Subject)
+	subject := tmpl(en.settings.Subject)
 	alertPageURL := en.tmpl.ExternalURL.String()
 	ruleURL := en.tmpl.ExternalURL.String()
 	u, err := url.Parse(en.tmpl.ExternalURL.String())
@@ -102,7 +114,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 	// Extend alerts data with images, if available.
 	var embeddedFiles []string
 	_ = withStoredImages(ctx, en.log, en.images,
-		func(index int, image Image) error {
+		func(index int, image channels.Image) error {
 			if len(image.URL) != 0 {
 				data.Alerts[index].ImageURL = image.URL
 			} else if len(image.Path) != 0 {
@@ -117,11 +129,11 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 			return nil
 		}, alerts...)
 
-	cmd := &SendEmailSettings{
+	cmd := &channels.SendEmailSettings{
 		Subject: subject,
 		Data: map[string]interface{}{
 			"Title":             subject,
-			"Message":           tmpl(en.Message),
+			"Message":           tmpl(en.settings.Message),
 			"Status":            data.Status,
 			"Alerts":            data.Alerts,
 			"GroupLabels":       data.GroupLabels,
@@ -132,8 +144,8 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 			"AlertPageUrl":      alertPageURL,
 		},
 		EmbeddedFiles: embeddedFiles,
-		To:            en.Addresses,
-		SingleEmail:   en.SingleEmail,
+		To:            en.settings.Addresses,
+		SingleEmail:   en.settings.SingleEmail,
 		Template:      "ng_alert_notification",
 	}
 
@@ -150,4 +162,14 @@ func (en *EmailNotifier) Notify(ctx context.Context, alerts ...*types.Alert) (bo
 
 func (en *EmailNotifier) SendResolved() bool {
 	return !en.GetDisableResolveMessage()
+}
+
+func splitEmails(emails string) []string {
+	return strings.FieldsFunc(emails, func(r rune) bool {
+		switch r {
+		case ',', ';', '\n':
+			return true
+		}
+		return false
+	})
 }
