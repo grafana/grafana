@@ -20,6 +20,7 @@ type HealthCheckConfig struct {
 	Severity     HealthCheckSeverity
 	Strategy     HealthCheckStrategy
 	Interval     time.Duration
+	InitialDelay time.Duration
 	RequiresAuth bool
 }
 

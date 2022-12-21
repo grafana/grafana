@@ -111,12 +111,22 @@ func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, con
 	}
 
 	if config.Strategy == models.StrategyChron {
-		// TODO should we run these immediately? Or after a delay?
-		hcs.cron.Schedule(cron.ConstantDelaySchedule{
-			Delay: config.Interval,
-		}, cron.FuncJob(func() {
+		startFunc := func() {
+			// run initially, then schedule follow-up jobs
 			hcs.runIndividualHealthCheck(ctx, healthCheck)
-		}))
+
+			hcs.cron.Schedule(cron.ConstantDelaySchedule{
+				Delay: config.Interval,
+			}, cron.FuncJob(func() {
+				hcs.runIndividualHealthCheck(ctx, healthCheck)
+			}))
+		}
+
+		if config.InitialDelay >= 0 {
+			time.AfterFunc(config.InitialDelay, startFunc)
+		} else {
+			startFunc()
+		}
 	} else if config.Strategy == models.StrategyOnce {
 		hcs.runIndividualHealthCheck(ctx, healthCheck)
 	}
@@ -140,7 +150,9 @@ func (hcs *HealthChecksServiceImpl) GetLatestHealth(ctx context.Context) (models
 		if metrics == nil {
 			metrics = make(map[string]string)
 		}
-		metrics["latest_update_time"] = c.LatestUpdateTime.UTC().String()
+		if !c.LatestUpdateTime.IsZero() {
+			metrics["latest_update_time"] = c.LatestUpdateTime.UTC().String()
+		}
 		allMetrics[c.HealthCheckConfig.Name] = metrics
 	}
 	status := models.StatusGreen
