@@ -7,18 +7,17 @@ import (
 )
 
 type FakeDashboardVersionService struct {
-	ExpectedDashboardVersion     *dashver.DashboardVersion
-	ExpectedDashboardVersions    []*dashver.DashboardVersion
-	ExpectedListDashboarVersions []*dashver.DashboardVersionDTO
-	counter                      int
-	ExpectedError                error
+	ExpectedDashboardVersion  *dashver.DashboardVersionDTO
+	ExpectedDashboardVersions []*dashver.DashboardVersionDTO
+	counter                   int
+	ExpectedError             error
 }
 
 func NewDashboardVersionServiceFake() *FakeDashboardVersionService {
 	return &FakeDashboardVersionService{}
 }
 
-func (f *FakeDashboardVersionService) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
+func (f *FakeDashboardVersionService) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersionDTO, error) {
 	if len(f.ExpectedDashboardVersions) == 0 {
 		return f.ExpectedDashboardVersion, f.ExpectedError
 	}
@@ -31,5 +30,5 @@ func (f *FakeDashboardVersionService) DeleteExpired(ctx context.Context, cmd *da
 }
 
 func (f *FakeDashboardVersionService) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error) {
-	return f.ExpectedListDashboarVersions, f.ExpectedError
+	return f.ExpectedDashboardVersions, f.ExpectedError
 }

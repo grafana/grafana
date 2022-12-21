@@ -59,16 +59,15 @@ func (ss *sqlxStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpired
 	return deleted, err
 }
 
-func (ss *sqlxStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error) {
-	var dashboardVersion []*dashver.DashboardVersionDTO
+func (ss *sqlxStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersion, error) {
+	var dashboardVersion []*dashver.DashboardVersion
 	qr := `SELECT dashboard_version.id,
 				dashboard_version.dashboard_id,
 				dashboard_version.parent_version,
 				dashboard_version.restored_from,
 				dashboard_version.version,
 				dashboard_version.created,
-				dashboard_version.message,
-				"user".login as created_by_login
+				dashboard_version.message
 			FROM dashboard_version
 			LEFT JOIN "user" ON "user".id = dashboard_version.created_by
 			LEFT JOIN dashboard ON dashboard.id = dashboard_version.dashboard_id
@@ -83,5 +82,6 @@ func (ss *sqlxStore) List(ctx context.Context, query *dashver.ListDashboardVersi
 	if len(dashboardVersion) < 1 {
 		return nil, dashver.ErrNoVersionsForDashboardID
 	}
+
 	return dashboardVersion, nil
 }
