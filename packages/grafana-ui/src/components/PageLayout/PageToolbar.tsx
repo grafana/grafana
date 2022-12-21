@@ -190,7 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       min-width: 0;
     `,
     h1Styles: css`
-      margin: 0;
+      margin: 0 ${spacing(1)} 0 0;
       line-height: inherit;
       flex-grow: 1;
       min-width: 0;
@@ -229,7 +229,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       ${theme.breakpoints.up('md')} {
         align-items: center;
         display: flex;
-        padding-left: ${spacing(0.5)};
+        padding-right: ${spacing(0.5)};
       }
     `,
   };
