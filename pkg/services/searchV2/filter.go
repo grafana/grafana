@@ -35,7 +35,7 @@ func (r entityKind) supportsAuthzCheck() bool {
 }
 
 var (
-	permissionFilterFields                 = []string{documentFieldUID, documentFieldKind}
+	permissionFilterFields                 = []string{documentFieldUID, documentFieldKind, documentFieldLocation}
 	panelIdFieldRegex                      = regexp.MustCompile(`^(.*)#([0-9]{1,4})$`)
 	panelIdFieldDashboardUidSubmatchIndex  = 1
 	panelIdFieldPanelIdSubmatchIndex       = 2
@@ -80,7 +80,7 @@ func (q *PermissionFilter) canAccess(kind entityKind, id, location string) bool 
 		}
 		decision := q.filter(entityKindFolder, id, "")
 		q.logAccessDecision(decision, kind, id, "resourceFilter")
-		fallthrough
+		return decision
 	case entityKindDashboard:
 		decision := q.filter(entityKindDashboard, id, location)
 		q.logAccessDecision(decision, kind, id, "resourceFilter")

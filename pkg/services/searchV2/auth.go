@@ -53,7 +53,7 @@ func (a *simpleSQLAuthService) GetDashboardReadFilter(user *user.SignedInUser) (
 			if kind == entityKindFolder {
 				return canReadFolder(dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid))
 			} else if kind == entityKindDashboard {
-				return canReadDashboard(dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid), dashboards.ScopeFoldersProvider.GetResourceScopeName(parent))
+				return canReadDashboard(dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid), dashboards.ScopeFoldersProvider.GetResourceScopeUID(parent))
 			}
 			return false
 		}, nil
