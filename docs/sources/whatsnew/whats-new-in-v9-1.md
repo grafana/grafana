@@ -2,7 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v9-1/
+  - ../guides/whats-new-in-v9-1/
 description: Feature and improvement highlights for Grafana v9.1
 keywords:
   - grafana
@@ -45,7 +45,7 @@ You can now easily embed Grafana in other applications by adding a JWT token dir
 When the JWT token is passed through the request URL to Grafana, Grafana validates and authenticates the token linked to a specific user, allowing access to dashboards which that user can view.
 To see JWT URL embedding in action, see the [sample project](https://github.com/grafana/grafana-iframe-oauth-sample).
 
-> **Note:** JWT URL Embedding and `allow_embedding` are not available to Grafana Cloud users. For Grafana Cloud, use the [Public Dashboards]({{< relref "../dashboards/dashboard-public/" >}}) feature. To enable that, [open a ticket with our Support team](https://grafana.com/docs/grafana-cloud/account-management/support/).
+> **Note:** JWT URL Embedding and `allow_embedding` are not available to Grafana Cloud users. For Grafana Cloud, use the [Public Dashboards]({{< relref "../dashboards/dashboard-public/" >}}) feature. To enable that, [open a ticket with our Support team](/docs/grafana-cloud/account-management/support/).
 
 {{< figure src="/static/img/docs/dashboards/jwt-url-embedding-9-1.png" max-width="750px" caption="A JWT token used to embed Grafana" >}}
 

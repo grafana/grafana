@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/resource"
@@ -31,7 +30,6 @@ type Service struct {
 }
 
 type instance struct {
-	buffered     *buffered.Buffered
 	queryData    *querydata.QueryData
 	resource     *resource.Resource
 	versionCache *cache.Cache
@@ -47,7 +45,7 @@ func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, fe
 
 func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		// Creates a http roundTripper. Probably should be used for both buffered and streaming/querydata instances.
+		// Creates a http roundTripper.
 		opts, err := client.CreateTransportOptions(settings, cfg, plog)
 		if err != nil {
 			return nil, fmt.Errorf("error creating transport options: %v", err)
@@ -55,11 +53,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 		httpClient, err := httpClientProvider.New(*opts)
 		if err != nil {
 			return nil, fmt.Errorf("error creating http client: %v", err)
-		}
-		// Older version using standard Go Prometheus client
-		b, err := buffered.New(httpClient.Transport, tracer, settings, plog)
-		if err != nil {
-			return nil, err
 		}
 
 		// New version using custom client and better response parsing
@@ -75,7 +68,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 		}
 
 		return instance{
-			buffered:     b,
 			queryData:    qd,
 			resource:     r,
 			versionCache: cache.New(time.Minute*1, time.Minute*5),
@@ -91,10 +83,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	i, err := s.getInstance(req.PluginContext)
 	if err != nil {
 		return nil, err
-	}
-
-	if s.features.IsEnabled(featuremgmt.FlagPrometheusBufferedClient) {
-		return i.buffered.ExecuteTimeSeriesQuery(ctx, req)
 	}
 
 	return i.queryData.Execute(ctx, req)

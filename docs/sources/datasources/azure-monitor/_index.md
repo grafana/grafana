@@ -1,10 +1,9 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/azuremonitor/
-  - /docs/grafana/latest/features/datasources/azuremonitor/
-  - /docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/
-  - /docs/grafana/latest/datasources/azure-monitor/
-  - /docs/grafana/latest/data-sources/azure-monitor/
+  - ../data-sources/azure-monitor/
+  - ../features/datasources/azuremonitor/
+  - azuremonitor/
+  - azuremonitor/deprecated-application-insights/
 description: Guide for using Azure Monitor in Grafana
 keywords:
   - grafana
@@ -110,12 +109,11 @@ datasources:
 
 #### Supported cloud names
 
-| Azure Cloud                                          | `cloudName` Value          |
-| ---------------------------------------------------- | -------------------------- |
-| **Microsoft Azure public cloud**                     | `azuremonitor` (_Default_) |
-| **Microsoft Chinese national cloud**                 | `chinaazuremonitor`        |
-| **US Government cloud**                              | `govazuremonitor`          |
-| **Microsoft German national cloud ("Black Forest")** | `germanyazuremonitor`      |
+| Azure Cloud                          | `cloudName` Value          |
+| ------------------------------------ | -------------------------- |
+| **Microsoft Azure public cloud**     | `azuremonitor` (_Default_) |
+| **Microsoft Chinese national cloud** | `chinaazuremonitor`        |
+| **US Government cloud**              | `govazuremonitor`          |
 
 ### Configure Managed Identity
 

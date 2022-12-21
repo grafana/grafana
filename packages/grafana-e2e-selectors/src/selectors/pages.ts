@@ -188,11 +188,13 @@ export const Pages = {
       CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
       EnableSwitch: 'data-testid public dashboard on off switch',
       EnableAnnotationsSwitch: 'data-testid public dashboard on off switch for annotations',
+      EnableTimeRangeSwitch: 'data-testid public dashboard on off switch for time range',
       SaveConfigButton: 'data-testid public dashboard save config button',
       DeleteButton: 'data-testid public dashboard delete button',
       CopyUrlInput: 'data-testid public dashboard copy url input',
       CopyUrlButton: 'data-testid public dashboard copy url button',
       TemplateVariablesWarningAlert: 'data-testid public dashboard disabled template variables alert',
+      UnsupportedDatasourcesWarningAlert: 'data-testid public dashboard unsupported datasources',
     },
   },
   Explore: {

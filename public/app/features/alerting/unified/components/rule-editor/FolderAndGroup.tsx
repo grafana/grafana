@@ -15,6 +15,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
 import { RuleForm, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { isGrafanaRulerRule } from '../../utils/rules';
 import { InfoIcon } from '../InfoIcon';
 
 import { getIntervalForGroup } from './GrafanaEvaluationBehavior';
@@ -27,29 +28,46 @@ const useGetGroups = (groupfoldersForGrafana: RulerRulesConfigDTO | null | undef
     const groupsForFolderResult: Array<RulerRuleGroupDTO<RulerRuleDTO>> = groupfoldersForGrafana
       ? groupfoldersForGrafana[folderName] ?? []
       : [];
-    return groupsForFolderResult.map((group) => group.name);
+
+    const folderGroups = groupsForFolderResult.map((group) => ({
+      name: group.name,
+      provisioned: group.rules.some((rule) => isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance)),
+    }));
+
+    return folderGroups.filter((group) => !group.provisioned).map((group) => group.name);
   }, [groupfoldersForGrafana, folderName]);
 
   return groupOptions;
 };
 
-function mapGroupsToOptions(groups: string[]): Array<SelectableValue<string>> {
-  return groups.map((group) => ({ label: group, value: group }));
+function mapGroupsToOptions(
+  groupsForFolder: RulerRulesConfigDTO | null | undefined,
+  groups: string[],
+  folderTitle: string
+): Array<SelectableValue<string>> {
+  return groups.map((group) => ({
+    label: group,
+    value: group,
+    description: `${getIntervalForGroup(groupsForFolder, group, folderTitle)}`,
+  }));
 }
 interface FolderAndGroupProps {
   initialFolder: RuleForm | null;
 }
 
-export const useGetGroupOptionsFromFolder = (folderTilte: string) => {
+export const useGetGroupOptionsFromFolder = (folderTitle: string) => {
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
 
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
-  const groupOptions: Array<SelectableValue<string>> = mapGroupsToOptions(
-    useGetGroups(groupfoldersForGrafana?.result, folderTilte)
-  );
   const groupsForFolder = groupfoldersForGrafana?.result;
-  return { groupOptions, groupsForFolder, loading: groupfoldersForGrafana?.loading };
+
+  const groupOptions: Array<SelectableValue<string>> = mapGroupsToOptions(
+    groupsForFolder,
+    useGetGroups(groupfoldersForGrafana?.result, folderTitle),
+    folderTitle
+  );
+  return { groupOptions, loading: groupfoldersForGrafana?.loading };
 };
 
 const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
@@ -86,6 +104,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
     formState: { errors },
     watch,
     control,
+    setValue,
   } = useFormContext<RuleFormValues>();
 
   const styles = useStyles2(getStyles);
@@ -98,7 +117,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
   const [selectedGroup, setSelectedGroup] = useState(group);
   const initialRender = useRef(true);
 
-  const { groupOptions, groupsForFolder, loading } = useGetGroupOptionsFromFolder(folder?.title ?? '');
+  const { groupOptions, loading } = useGetGroupOptionsFromFolder(folder?.title ?? '');
 
   useEffect(() => setSelectedGroup(group), [group, setSelectedGroup]);
 
@@ -112,6 +131,10 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
     }
     initialRender.current = false;
   }, [group, folder?.title]);
+
+  useEffect(() => {
+    setValue('group', selectedGroup);
+  }, [selectedGroup, setValue]);
 
   const groupIsInGroupOptions = useCallback(
     (group_: string) => {
@@ -182,16 +205,15 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
               <LoadingPlaceholder text="Loading..." />
             ) : (
               <SelectWithAdd
+                disabled={!folder}
                 key={`my_unique_select_key__${folder?.title ?? ''}`}
                 {...field}
                 options={groupOptions}
-                getOptionLabel={(option: SelectableValue<string>) =>
-                  `${option.label}  (${getIntervalForGroup(groupsForFolder, option.label ?? '', folder?.title ?? '')})`
-                }
+                getOptionLabel={(option: SelectableValue<string>) => `${option.label}`}
                 value={selectedGroup}
                 custom={isAddingGroup}
                 onCustomChange={(custom: boolean) => setIsAddingGroup(custom)}
-                placeholder="Evaluation group name"
+                placeholder={isAddingGroup ? 'New evaluation group name' : 'Evaluation group name'}
                 onChange={(value: string) => {
                   field.onChange(value);
                   setSelectedGroup(value);

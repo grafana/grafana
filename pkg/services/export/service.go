@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -20,8 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -159,7 +159,7 @@ type StandardExport struct {
 	playlistService           playlist.Service
 	orgService                org.Service
 	datasourceService         datasources.DataSourceService
-	store                     object.ObjectStoreServer
+	store                     entity.EntityStoreServer
 
 	// updated with mutex
 	exportJob Job
@@ -167,7 +167,7 @@ type StandardExport struct {
 
 func ProvideService(db db.DB, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
 	dashboardsnapshotsService dashboardsnapshots.Service, playlistService playlist.Service, orgService org.Service,
-	datasourceService datasources.DataSourceService, store object.ObjectStoreServer) ExportService {
+	datasourceService datasources.DataSourceService, store entity.EntityStoreServer) ExportService {
 	if !features.IsEnabled(featuremgmt.FlagExport) {
 		return &StubExport{}
 	}
@@ -225,7 +225,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 		return response.Error(http.StatusLocked, "export already running", nil)
 	}
 
-	ctx := store.ContextWithUser(context.Background(), c.SignedInUser)
+	ctx := appcontext.WithUser(context.Background(), c.SignedInUser)
 	var job Job
 	broadcast := func(s ExportStatus) {
 		ex.broadcastStatus(c.OrgID, s)
@@ -233,8 +233,8 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 	switch cfg.Format {
 	case "dummy":
 		job, err = startDummyExportJob(cfg, broadcast)
-	case "objectStore":
-		job, err = startObjectStoreJob(ctx, cfg, broadcast, ex.db, ex.playlistService, ex.store, ex.dashboardsnapshotsService)
+	case "entityStore":
+		job, err = startEntityStoreJob(ctx, cfg, broadcast, ex.db, ex.playlistService, ex.store, ex.dashboardsnapshotsService)
 	case "git":
 		dir := filepath.Join(ex.dataDir, "export_git", fmt.Sprintf("git_%d", time.Now().Unix()))
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {

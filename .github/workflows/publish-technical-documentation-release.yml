@@ -3,7 +3,7 @@ name: "publish-technical-documentation-release"
 on:
   push:
     branches:
-      - v[0-9]+.[0-9]+.[0-9]+
+      - v[0-9]+.[0-9]+.x
     tags:
       - v[0-9]+.[0-9]+.[0-9]+
     paths:
@@ -12,6 +12,7 @@ on:
   workflow_dispatch:
 jobs:
   sync:
+    if: "github.repository == 'grafana/grafana'"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout Grafana repo"
@@ -34,7 +35,7 @@ jobs:
         with:
           ref_name: "${{ github.ref_name }}"
           release_tag_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
-          release_branch_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(?:0|[1-9]\\d*)$"
+          release_branch_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.x$"
 
       - name: "Determine technical documentation version"
         if: "steps.has-matching-release-tag.outputs.bool == 'true'"

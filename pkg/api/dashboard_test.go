@@ -42,7 +42,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
@@ -809,6 +808,13 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			teamSvc := &teamtest.FakeService{}
 			dashSvc := dashboards.NewFakeDashboardService(t)
 			dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil)
+			dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+				q := args.Get(1).(*models.GetDashboardQuery)
+				q.Result = &models.Dashboard{
+					OrgId: q.OrgId,
+					Id:    q.Id,
+				}
+			}).Return(nil)
 			guardian.InitLegacyGuardian(&sqlmock, dashSvc, teamSvc)
 		}
 
@@ -1114,7 +1120,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 }
 
 func postValidateScenario(t *testing.T, desc string, url string, routePattern string, cmd models.ValidateDashboardCommand,
-	role org.RoleType, fn scenarioFunc, sqlmock sqlstore.Store) {
+	role org.RoleType, fn scenarioFunc, sqlmock db.DB) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
 		hs := HTTPServer{
@@ -1150,9 +1156,11 @@ func postValidateScenario(t *testing.T, desc string, url string, routePattern st
 }
 
 func postDiffScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.CalculateDiffOptions,
-	role org.RoleType, fn scenarioFunc, sqlmock sqlstore.Store, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService) {
+	role org.RoleType, fn scenarioFunc, sqlmock db.DB, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
+
+		dashSvc := dashboards.NewFakeDashboardService(t)
 		hs := HTTPServer{
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
@@ -1164,6 +1172,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
 			Kinds:                   corekind.NewBase(nil),
+			DashboardService:        dashSvc,
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1188,7 +1197,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 
 func restoreDashboardVersionScenario(t *testing.T, desc string, url string, routePattern string,
 	mock *dashboards.FakeDashboardService, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService,
-	cmd dtos.RestoreDashboardVersionCommand, fn scenarioFunc, sqlStore sqlstore.Store) {
+	cmd dtos.RestoreDashboardVersionCommand, fn scenarioFunc, sqlStore db.DB) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
 		hs := HTTPServer{

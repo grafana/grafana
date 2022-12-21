@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/reference/templating/
-  - /docs/grafana/latest/variables/inspect-variable/
-  - /docs/grafana/latest/dashboards/variables/inspect-variable/
+  - ../../reference/templating/
+  - ../../variables/inspect-variable/
 keywords:
   - grafana
   - templating
@@ -16,7 +15,7 @@ weight: 200
 
 # Inspect variables
 
-The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add]({{< relref "./add-template-variables/" >}}) and [manage](../manage-variable/) variables from this page.
+The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add]({{< relref "./add-template-variables/" >}}) and [manage variables]({{< relref "./add-template-variables/#manage-variables" >}}) on this page.
 
 > **Note:** This feature is available in Grafana 7.4 and later versions.
 

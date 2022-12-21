@@ -70,6 +70,7 @@ export const publicDashboardApi = createApi({
           hasPublicDashboard: true,
           publicDashboardUid: data.uid,
           publicDashboardEnabled: data.isEnabled,
+          publicDashboardTimeSelectionEnabled: data.timeSelectionEnabled,
         });
       },
       invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
@@ -90,6 +91,7 @@ export const publicDashboardApi = createApi({
           hasPublicDashboard: true,
           publicDashboardUid: data.uid,
           publicDashboardEnabled: data.isEnabled,
+          publicDashboardTimeSelectionEnabled: data.timeSelectionEnabled,
         });
       },
       invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
