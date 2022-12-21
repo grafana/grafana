@@ -19,9 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
-	"xorm.io/xorm"
 )
 
 const (
@@ -152,10 +152,6 @@ func (s *SecretsService) encryptedWithEnvelopeEncryption(payload []byte) bool {
 var b64 = base64.RawStdEncoding
 
 func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
-	return s.EncryptWithDBSession(ctx, payload, opt, nil)
-}
-
-func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
 	// Use legacy encryption service if featuremgmt.FlagDisableEnvelopeEncryption toggle is on
 	if s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
@@ -175,7 +171,7 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 
 	var id string
 	var dataKey []byte
-	id, dataKey, err = s.currentDataKey(ctx, label, scope, sess)
+	id, dataKey, err = s.currentDataKey(ctx, label, scope)
 	if err != nil {
 		s.log.Error("Failed to get current data key", "error", err, "label", label)
 		return nil, err
@@ -203,7 +199,7 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 // currentDataKey looks up for current data key in cache or database by name, and decrypts it.
 // If there's no current data key in cache nor in database it generates a new random data key,
 // and stores it into both the in-memory cache and database (encrypted by the encryption provider).
-func (s *SecretsService) currentDataKey(ctx context.Context, label string, scope string, sess *xorm.Session) (string, []byte, error) {
+func (s *SecretsService) currentDataKey(ctx context.Context, label string, scope string) (string, []byte, error) {
 	// We want only one request fetching current data key at time to
 	// avoid the creation of multiple ones in case there's no one existing.
 	s.mtx.Lock()
@@ -217,7 +213,7 @@ func (s *SecretsService) currentDataKey(ctx context.Context, label string, scope
 
 	// If no existing data key was found, create a new one
 	if dataKey == nil {
-		id, dataKey, err = s.newDataKey(ctx, label, scope, sess)
+		id, dataKey, err = s.newDataKey(ctx, label, scope)
 		if err != nil {
 			return "", nil, err
 		}
@@ -267,7 +263,7 @@ func (s *SecretsService) dataKeyByLabel(ctx context.Context, label string) (stri
 }
 
 // newDataKey creates a new random data key, encrypts it and stores it into the database and cache.
-func (s *SecretsService) newDataKey(ctx context.Context, label string, scope string, sess *xorm.Session) (string, []byte, error) {
+func (s *SecretsService) newDataKey(ctx context.Context, label string, scope string) (string, []byte, error) {
 	// 1. Create new data key.
 	dataKey, err := newRandomDataKey()
 	if err != nil {
@@ -286,8 +282,21 @@ func (s *SecretsService) newDataKey(ctx context.Context, label string, scope str
 		return "", nil, err
 	}
 
-	// 3. Store its encrypted value into the DB.
+	// 3. Generate the data key id
 	id := util.GenerateShortUID()
+
+	// 4. Prepare the callback that will cache the data
+	// key only in case of successful data key creation.
+	onSuccessfulDataKeyCreation := func() {
+		s.dataKeyCache.add(&dataKeyCacheEntry{
+			id:      id,
+			label:   label,
+			dataKey: dataKey,
+			active:  true,
+		})
+	}
+
+	// 5. Store its encrypted value into the DB.
 	dbDataKey := secrets.DataKey{
 		Active:        true,
 		Id:            id,
@@ -297,23 +306,10 @@ func (s *SecretsService) newDataKey(ctx context.Context, label string, scope str
 		Scope:         scope,
 	}
 
-	if sess == nil {
-		err = s.store.CreateDataKey(ctx, &dbDataKey)
-	} else {
-		err = s.store.CreateDataKeyWithDBSession(ctx, &dbDataKey, sess)
-	}
-
+	err = s.store.CreateDataKey(ctx, &dbDataKey, onSuccessfulDataKeyCreation)
 	if err != nil {
 		return "", nil, err
 	}
-
-	// 4. Store the decrypted data key into the in-memory cache.
-	s.dataKeyCache.add(&dataKeyCacheEntry{
-		id:      id,
-		label:   label,
-		dataKey: dataKey,
-		active:  true,
-	})
 
 	return id, dataKey, nil
 }
@@ -388,13 +384,9 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 }
 
 func (s *SecretsService) EncryptJsonData(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions) (map[string][]byte, error) {
-	return s.EncryptJsonDataWithDBSession(ctx, kv, opt, nil)
-}
-
-func (s *SecretsService) EncryptJsonDataWithDBSession(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions, sess *xorm.Session) (map[string][]byte, error) {
 	encrypted := make(map[string][]byte)
 	for key, value := range kv {
-		encryptedData, err := s.EncryptWithDBSession(ctx, []byte(value), opt, sess)
+		encryptedData, err := s.Encrypt(ctx, []byte(value), opt)
 		if err != nil {
 			return nil, err
 		}

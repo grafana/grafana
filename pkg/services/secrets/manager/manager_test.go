@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -17,12 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestSecretsService_EnvelopeEncryption(t *testing.T) {
-	store := database.ProvideSecretsStore(db.InitTestDB(t))
+	testDB := db.InitTestDB(t)
+	store := database.ProvideSecretsStore(testDB, testDB.Bus())
 	svc := SetupTestService(t, store)
 	ctx := context.Background()
 
@@ -82,7 +85,8 @@ func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 }
 
 func TestSecretsService_DataKeys(t *testing.T) {
-	store := database.ProvideSecretsStore(db.InitTestDB(t))
+	testDB := db.InitTestDB(t)
+	store := database.ProvideSecretsStore(testDB, testDB.Bus())
 	ctx := context.Background()
 
 	dataKey := &secrets.DataKey{
@@ -160,7 +164,8 @@ func TestSecretsService_DataKeys(t *testing.T) {
 
 func TestSecretsService_UseCurrentProvider(t *testing.T) {
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
-		svc := SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+		testDB := db.InitTestDB(t)
+		svc := SetupTestService(t, database.ProvideSecretsStore(testDB, testDB.Bus()))
 		assert.Equal(t, secrets.ProviderID("secretKey.v1"), svc.currentProviderID)
 	})
 
@@ -187,7 +192,8 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 
 		features := featuremgmt.WithFeatures()
 		kms := newFakeKMS(osskmsproviders.ProvideService(encryptionService, settings, features))
-		secretStore := database.ProvideSecretsStore(db.InitTestDB(t))
+		testDB := db.InitTestDB(t)
+		secretStore := database.ProvideSecretsStore(testDB, testDB.Bus())
 
 		secretsService, err := ProvideSecretsService(
 			secretStore,
@@ -261,8 +267,8 @@ func (f *fakeKMS) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
 
 func TestSecretsService_Run(t *testing.T) {
 	ctx := context.Background()
-	sql := db.InitTestDB(t)
-	store := database.ProvideSecretsStore(sql)
+	testDB := db.InitTestDB(t)
+	store := database.ProvideSecretsStore(testDB, testDB.Bus())
 	svc := SetupTestService(t, store)
 
 	t.Run("should stop with no error once the context's finished", func(t *testing.T) {
@@ -301,8 +307,8 @@ func TestSecretsService_Run(t *testing.T) {
 
 func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 	ctx := context.Background()
-	sql := db.InitTestDB(t)
-	store := database.ProvideSecretsStore(sql)
+	testDB := db.InitTestDB(t)
+	store := database.ProvideSecretsStore(testDB, testDB.Bus())
 	svc := SetupTestService(t, store)
 
 	// Encrypt to generate data encryption key
@@ -342,7 +348,8 @@ func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 
 func TestSecretsService_Decrypt(t *testing.T) {
 	ctx := context.Background()
-	store := database.ProvideSecretsStore(db.InitTestDB(t))
+	testDB := db.InitTestDB(t)
+	store := database.ProvideSecretsStore(testDB, testDB.Bus())
 
 	t.Run("empty payload should fail", func(t *testing.T) {
 		svc := SetupTestService(t, store)
@@ -400,4 +407,79 @@ func TestSecretsService_Decrypt(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, []byte("grafana"), decrypted)
 	})
+}
+
+func TestIntegration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	someData := []byte(`some-data`)
+
+	tcs := map[string]func(*testing.T, *sqlstore.SQLStore, *SecretsService){
+		"regular": func(t *testing.T, _ *sqlstore.SQLStore, svc *SecretsService) {
+			_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
+			require.NoError(t, err)
+		},
+		"within successful InTransaction": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
+			require.NoError(t, store.InTransaction(ctx, func(ctx context.Context) error {
+				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
+				require.NoError(t, err)
+				return nil
+			}))
+		},
+		"within unsuccessful InTransaction": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
+			require.NotNil(t, store.InTransaction(ctx, func(ctx context.Context) error {
+				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
+				require.NoError(t, err)
+				return errors.New("error")
+			}))
+		},
+		"within successful WithTransactionalDbSession": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
+			require.NoError(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
+				require.NoError(t, err)
+				return nil
+			}))
+		},
+		"within unsuccessful WithTransactionalDbSession": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
+			require.NotNil(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
+				require.NoError(t, err)
+				return errors.New("error")
+			}))
+		},
+	}
+
+	for name, tc := range tcs {
+		t.Run(name, func(t *testing.T) {
+			testDB := db.InitTestDB(t)
+			svc := SetupTestService(t, database.ProvideSecretsStore(testDB, testDB.Bus()))
+
+			// Here's what actually matters and varies on each test: look at the test case name.
+			//
+			// For historical reasons, and in an old implementation, when a successful encryption
+			// operation happened within an unsuccessful transaction, the data key was used to be
+			// cached in memory for the next encryption operations, which caused some data to be
+			// encrypted with a data key that haven't actually been persisted into the database.
+			tc(t, testDB, svc)
+			// Therefore, the data encrypted after this point, become unrecoverable after a restart.
+			// So, the different test cases here are there to prevent that from happening again
+			// in the future, whatever it is what happens.
+
+			// So, we proceed with an encryption operation:
+			toEncrypt := []byte(`data-to-encrypt`)
+			encrypted, err := svc.Encrypt(ctx, toEncrypt, secrets.WithoutScope())
+			require.NoError(t, err)
+
+			// We simulate an instance restart. So, there's no data in the in-memory cache.
+			svc.dataKeyCache.flush()
+
+			// And then, we MUST still be able to decrypt the previously encrypted data:
+			decrypted, err := svc.Decrypt(ctx, encrypted)
+			require.NoError(t, err)
+			assert.Equal(t, toEncrypt, decrypted)
+		})
+	}
 }
