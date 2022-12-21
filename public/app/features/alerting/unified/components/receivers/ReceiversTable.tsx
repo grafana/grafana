@@ -375,7 +375,7 @@ function useGetColumns(
     {
       id: 'name',
       label: 'Contact point name',
-      renderCell: ({ data: { name, provisioned, grafanaAppReceiverType } }) => (
+      renderCell: ({ data: { name, provisioned } }) => (
         <Stack alignItems="center">
           <div>{name}</div>
           {provisioned && <ProvisioningBadge />}

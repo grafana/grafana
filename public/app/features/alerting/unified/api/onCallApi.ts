@@ -10,7 +10,7 @@ export const onCallApi = alertingApi.injectEndpoints({
     getOnCallIntegrations: build.query<OnCallIntegrationsUrls, void>({
       query: () => ({
         headers: {},
-        url: '/api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/?search=',
+        url: '/api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/',
       }),
       providesTags: ['AlertmanagerChoice'],
       transformResponse: (response: OnCallIntegrationsResponse) => response.map((result) => result.integration_url),

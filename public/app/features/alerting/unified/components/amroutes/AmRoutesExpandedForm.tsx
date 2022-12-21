@@ -32,11 +32,7 @@ import {
   commonGroupByOptions,
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
-import {
-  AmRouteReceiver,
-  GrafanaAppReceiverEnum,
-  GRAFANA_APP_RECEIVERS_SOURCE_IMAGE,
-} from '../receivers/grafanaAppReceivers/types';
+import { AmRouteReceiver, GrafanaAppReceiverEnum } from '../receivers/grafanaAppReceivers/types';
 
 import { getFormStyles } from './formStyles';
 
@@ -390,17 +386,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     noMatchersWarning: css`
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
-    `,
-    onCall: css`
-      &:before {
-        content: '';
-        background: url(${GRAFANA_APP_RECEIVERS_SOURCE_IMAGE}');
-        background-size: cover;
-        position: absolute;
-        width: 20px;
-        height: 20px;
-        margin-left: -20px;
-      }
     `,
   };
 };

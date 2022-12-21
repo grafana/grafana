@@ -1,4 +1,4 @@
-import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
+import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 export const isInOnCallIntegrations = (url: string, integrationsUrls: string[]) => {
   return integrationsUrls.includes(url);

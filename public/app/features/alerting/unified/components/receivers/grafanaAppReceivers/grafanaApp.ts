@@ -26,7 +26,7 @@ export const useGetGrafanaReceiverTypeChecker = () => {
       return GrafanaAppReceiverEnum.GRAFANA_ONCALL;
     }
     //WE WILL ADD IN HERE IF THERE ARE MORE TYPES TO CHECK
-    return;
+    return undefined;
   };
   return getGrafanaReceiverType;
 };
