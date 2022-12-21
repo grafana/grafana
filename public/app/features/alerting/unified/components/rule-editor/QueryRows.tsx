@@ -59,43 +59,6 @@ export class QueryRows extends PureComponent<Props> {
     );
   };
 
-  onChangeThreshold = (thresholds: ThresholdsConfig, index: number) => {
-    const { queries, onQueriesChange } = this.props;
-
-    const referencedRefId = queries[index].refId;
-
-    onQueriesChange(
-      queries.map((query) => {
-        if (!isExpressionQuery(query.model)) {
-          return query;
-        }
-
-        if (query.model.conditions && query.model.conditions[0].query.params[0] === referencedRefId) {
-          return {
-            ...query,
-            model: {
-              ...query.model,
-              conditions: query.model.conditions.map((condition, conditionIndex) => {
-                // Only update the first condition for a given refId.
-                if (condition.query.params[0] === referencedRefId && conditionIndex === 0) {
-                  return {
-                    ...condition,
-                    evaluator: {
-                      ...condition.evaluator,
-                      params: [parseFloat(thresholds.steps[1].value.toPrecision(3))],
-                    },
-                  };
-                }
-                return condition;
-              }),
-            },
-          };
-        }
-        return query;
-      })
-    );
-  };
-
   onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
@@ -253,7 +216,6 @@ export class QueryRows extends PureComponent<Props> {
                       onDuplicateQuery={this.props.onDuplicateQuery}
                       onChangeTimeRange={this.onChangeTimeRange}
                       thresholds={thresholdByRefId[query.refId]}
-                      onChangeThreshold={this.onChangeThreshold}
                       onRunQueries={this.props.onRunQueries}
                       condition={this.props.condition}
                       onSetCondition={this.props.onSetCondition}
