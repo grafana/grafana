@@ -44,7 +44,6 @@ func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool 
 
 // UserInfo is used for login credentials for the user
 func (s *SocialGrafanaCom) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
-	fmt.Printf("inside userinfo grafanacom")
 	var data struct {
 		Id    int         `json:"id"`
 		Name  string      `json:"name"`
