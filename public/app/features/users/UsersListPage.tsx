@@ -11,29 +11,29 @@ import InviteesTable from '../invites/InviteesTable';
 import { fetchInvitees } from '../invites/state/actions';
 import { selectInvitesMatchingQuery } from '../invites/state/selectors';
 
-import UsersActionBar from './UsersActionBar';
+import { UsersActionBar } from './UsersActionBar';
 import UsersTable from './UsersTable';
-import { loadUsers, removeUser, updateUser } from './state/actions';
-import { setUsersSearchQuery, setUsersSearchPage } from './state/reducers';
-import { getUsers, getUsersSearchQuery, getUsersSearchPage } from './state/selectors';
+import { loadUsers, removeUser, updateUser, changePage } from './state/actions';
+import { getUsers, getUsersSearchQuery } from './state/selectors';
 
 function mapStateToProps(state: StoreState) {
   const searchQuery = getUsersSearchQuery(state.users);
   return {
     users: getUsers(state.users),
     searchQuery: getUsersSearchQuery(state.users),
-    searchPage: getUsersSearchPage(state.users),
+    page: state.users.page,
+    totalPages: state.users.totalPages,
+    perPage: state.users.perPage,
     invitees: selectInvitesMatchingQuery(state.invites, searchQuery),
     externalUserMngInfo: state.users.externalUserMngInfo,
-    hasFetched: state.users.hasFetched,
+    isLoading: state.users.isLoading,
   };
 }
 
 const mapDispatchToProps = {
   loadUsers,
   fetchInvitees,
-  setUsersSearchQuery,
-  setUsersSearchPage,
+  changePage,
   updateUser,
   removeUser,
 };
@@ -45,8 +45,6 @@ export type Props = ConnectedProps<typeof connector>;
 export interface State {
   showInvites: boolean;
 }
-
-const pageLimit = 30;
 
 export class UsersListPageUnconnected extends PureComponent<Props, State> {
   declare externalUserMngInfoHtml: string;
@@ -88,15 +86,8 @@ export class UsersListPageUnconnected extends PureComponent<Props, State> {
     }));
   };
 
-  getPaginatedUsers = (users: OrgUser[]) => {
-    const offset = (this.props.searchPage - 1) * pageLimit;
-    return users.slice(offset, offset + pageLimit);
-  };
-
   renderTable() {
-    const { invitees, users, setUsersSearchPage } = this.props;
-    const paginatedUsers = this.getPaginatedUsers(users);
-    const totalPages = Math.ceil(users.length / pageLimit);
+    const { invitees, users, page, totalPages, changePage } = this.props;
 
     if (this.state.showInvites) {
       return <InviteesTable invitees={invitees} />;
@@ -104,15 +95,15 @@ export class UsersListPageUnconnected extends PureComponent<Props, State> {
       return (
         <VerticalGroup spacing="md">
           <UsersTable
-            users={paginatedUsers}
+            users={users}
             orgId={contextSrv.user.orgId}
             onRoleChange={(role, user) => this.onRoleChange(role, user)}
             onRemoveUser={(user) => this.props.removeUser(user.userId)}
           />
           <HorizontalGroup justify="flex-end">
             <Pagination
-              onNavigate={setUsersSearchPage}
-              currentPage={this.props.searchPage}
+              onNavigate={changePage}
+              currentPage={page}
               numberOfPages={totalPages}
               hideWhenSinglePage={true}
             />
@@ -123,16 +114,16 @@ export class UsersListPageUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { hasFetched } = this.props;
+    const { isLoading } = this.props;
     const externalUserMngInfoHtml = this.externalUserMngInfoHtml;
 
     return (
-      <Page.Contents isLoading={!hasFetched}>
+      <Page.Contents isLoading={!isLoading}>
         <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
         {externalUserMngInfoHtml && (
           <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
         )}
-        {hasFetched && this.renderTable()}
+        {isLoading && this.renderTable()}
       </Page.Contents>
     );
   }

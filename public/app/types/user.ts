@@ -73,7 +73,10 @@ export interface UsersState {
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
-  hasFetched: boolean;
+  isLoading: boolean;
+  page: number;
+  perPage: number;
+  totalPages: number;
 }
 
 export interface UserSession {
