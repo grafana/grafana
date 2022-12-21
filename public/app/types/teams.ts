@@ -4,6 +4,9 @@ export interface Team extends TeamBase {
   id: number; // TODO switch to UUID
 }
 
+// Represents the data sent via an API to create a team
+export interface TeamDTO extends Pick<TeamBase, 'name' | 'email'> {}
+
 export interface TeamMember {
   userId: number;
   teamId: number;
