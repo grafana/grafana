@@ -1773,7 +1773,7 @@ func newDataQuery(body string) (backend.QueryDataRequest, error) {
 	return backend.QueryDataRequest{
 		Queries: []backend.DataQuery{
 			{
-				JSON: json.RawMessage(body),
+				JSON:     json.RawMessage(body),
 				Interval: 10 * time.Second,
 			},
 		},
