@@ -3,6 +3,7 @@ import React, { useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { ConnectionCoordinates } from 'app/features/canvas';
 
 type Props = {
   setRef: (anchorElement: HTMLDivElement) => void;
@@ -39,6 +40,51 @@ export const ConnectionAnchors = ({ setRef }: Props) => {
 
   const connectionAnchorAlt = 'connection anchor';
 
+  // Unit is percentage from the middle of the element
+  // 0, 0 middle; -1, -1 bottom left; 1, 1 top right
+  const ANCHORS = [
+    { x: -1, y: 1 },
+    { x: -0.5, y: 1 },
+    { x: 0, y: 1 },
+    { x: 0.5, y: 1 },
+    { x: 1, y: 1 },
+    { x: 1, y: 0.5 },
+    { x: 1, y: 0 },
+    { x: 1, y: -0.5 },
+    { x: 1, y: -1 },
+    { x: 0.5, y: -1 },
+    { x: 0, y: -1 },
+    { x: -0.5, y: -1 },
+    { x: -1, y: -1 },
+    { x: -1, y: -0.5 },
+    { x: -1, y: 0 },
+    { x: -1, y: 0.5 },
+  ];
+
+  const generateAnchors = (anchors: ConnectionCoordinates[] = ANCHORS) => {
+    return anchors.map((anchor) => {
+      const id = `${anchor.x},${anchor.y}`;
+
+      // Convert anchor coords to relative percentage
+      const style = {
+        top: `calc(${-anchor.y * 50 + 50}% - ${halfSize}px)`,
+        left: `calc(${anchor.x * 50 + 50}% - ${halfSize}px)`,
+      };
+
+      return (
+        <img
+          id={id}
+          key={id}
+          alt={connectionAnchorAlt}
+          className={styles.anchor}
+          style={style}
+          src={anchorImage}
+          onMouseEnter={onMouseEnterAnchor}
+        />
+      );
+    });
+  };
+
   return (
     <div
       style={{
@@ -54,182 +100,7 @@ export const ConnectionAnchors = ({ setRef }: Props) => {
         onMouseEnter={onMouseEnterHighlightElement}
         onMouseLeave={onMouseLeaveHighlightElement}
       />
-      <img
-        alt={connectionAnchorAlt}
-        id="tl"
-        className={styles.anchor}
-        style={{
-          top: `-${halfSize}px`,
-          left: `-${halfSize}px`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="ttl"
-        className={styles.anchor}
-        style={{
-          top: `-${halfSize}px`,
-          left: `calc(25% - ${halfSize}px)`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="t"
-        className={styles.anchor}
-        style={{
-          left: `calc(50% - ${halfSize}px)`,
-          top: `-${halfSize}px`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="ttr"
-        className={styles.anchor}
-        style={{
-          left: `calc(75% - ${halfSize}px)`,
-          top: `-${halfSize}px`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="tr"
-        className={styles.anchor}
-        style={{
-          left: `calc(100% - ${halfSize}px)`,
-          top: `-${halfSize}px`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="rrt"
-        className={styles.anchor}
-        style={{
-          top: `calc(75% - ${halfSize}px)`,
-          left: `calc(100% - ${halfSize}px)`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="r"
-        className={styles.anchor}
-        style={{
-          top: `calc(50% - ${halfSize}px)`,
-          left: `calc(100% - ${halfSize}px)`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="rrb"
-        className={styles.anchor}
-        style={{
-          top: `calc(25% - ${halfSize}px)`,
-          left: `calc(100% - ${halfSize}px)`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="br"
-        className={styles.anchor}
-        style={{
-          left: `calc(100% - ${halfSize}px)`,
-          top: `calc(100% - ${halfSize}px)`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="bbr"
-        className={styles.anchor}
-        style={{
-          left: `calc(75% - ${halfSize}px)`,
-          top: `calc(100% - ${halfSize}px)`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="b"
-        className={styles.anchor}
-        style={{
-          left: `calc(50% - ${halfSize}px)`,
-          top: `calc(100% - ${halfSize}px)`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="bbl"
-        className={styles.anchor}
-        style={{
-          left: `calc(25% - ${halfSize}px)`,
-          top: `calc(100% - ${halfSize}px)`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="bl"
-        className={styles.anchor}
-        style={{
-          left: `-${halfSize}px`,
-          top: `calc(100% - ${halfSize}px)`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="llb"
-        className={styles.anchor}
-        style={{
-          top: `calc(75% - ${halfSize}px)`,
-          left: `-${halfSize}px`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="l"
-        className={styles.anchor}
-        style={{
-          top: `calc(50% - ${halfSize}px)`,
-          left: `-${halfSize}px`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
-      <img
-        alt={connectionAnchorAlt}
-        id="llt"
-        className={styles.anchor}
-        style={{
-          top: `calc(25% - ${halfSize}px)`,
-          left: `-${halfSize}px`,
-        }}
-        src={anchorImage}
-        onMouseEnter={onMouseEnterAnchor}
-      />
+      {generateAnchors()}
     </div>
   );
 };

@@ -31,8 +31,8 @@ export interface CanvasElementOptions<TConfig = any> {
 }
 
 // Unit is percentage from the middle of the element
-// 0, 0 middle; -1, -1 top left; 1, 1 bottom right
-interface ConnectionCoordinates {
+// 0, 0 middle; -1, -1 bottom left; 1, 1 top right
+export interface ConnectionCoordinates {
   x: number;
   y: number;
 }
