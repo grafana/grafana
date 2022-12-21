@@ -409,7 +409,7 @@ func TestSecretsService_Decrypt(t *testing.T) {
 	})
 }
 
-func TestIntegration(t *testing.T) {
+func TestIntegration_SecretsService(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -436,6 +436,17 @@ func TestIntegration(t *testing.T) {
 				return errors.New("error")
 			}))
 		},
+		"within unsuccessful InTransaction (plus forced db fetch)": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
+			require.NotNil(t, store.InTransaction(ctx, func(ctx context.Context) error {
+				encrypted, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
+				require.NoError(t, err)
+				svc.dataKeyCache.flush()
+				decrypted, err := svc.Decrypt(ctx, encrypted)
+				require.NoError(t, err)
+				assert.Equal(t, someData, decrypted)
+				return errors.New("error")
+			}))
+		},
 		"within successful WithTransactionalDbSession": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
 			require.NoError(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
@@ -447,6 +458,17 @@ func TestIntegration(t *testing.T) {
 			require.NotNil(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
 				require.NoError(t, err)
+				return errors.New("error")
+			}))
+		},
+		"within unsuccessful WithTransactionalDbSession (plus forced db fetch)": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
+			require.NotNil(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+				encrypted, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
+				require.NoError(t, err)
+				svc.dataKeyCache.flush()
+				decrypted, err := svc.Decrypt(ctx, encrypted)
+				require.NoError(t, err)
+				assert.Equal(t, someData, decrypted)
 				return errors.New("error")
 			}))
 		},
