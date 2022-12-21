@@ -16,6 +16,7 @@ type FakeUserService struct {
 	ExpectedUserProfileDTOs  []*user.UserProfileDTO
 
 	GetSignedInUserFn func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
+	CreateFn          func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error)
 
 	counter int
 }
@@ -25,6 +26,10 @@ func NewUserServiceFake() *FakeUserService {
 }
 
 func (f *FakeUserService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	if f.CreateFn != nil {
+		return f.CreateFn(ctx, cmd)
+	}
+
 	return f.ExpectedUser, f.ExpectedError
 }
 

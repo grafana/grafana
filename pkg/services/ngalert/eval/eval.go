@@ -223,9 +223,9 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 		// Note: The spelling of this headers is intentionally degenerate from the others for compatibility reasons.
 		// When sent over a network, the key of this header is canonicalized to "Fromalert".
 		// However, some datasources still compare against the string "FromAlert".
-		"FromAlert": "true",
+		models.FromAlertHeaderName: "true",
 
-		"X-Cache-Skip": "true",
+		models.CacheSkipHeaderName: "true",
 	}
 
 	key, ok := models.RuleKeyFromContext(ctx.Ctx)

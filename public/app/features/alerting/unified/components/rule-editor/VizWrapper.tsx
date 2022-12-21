@@ -52,7 +52,8 @@ export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel, onThres
   const context: PanelContext = useMemo(
     () => ({
       eventBus: appEvents,
-      canEditThresholds: true,
+      canEditThresholds: false,
+      showThresholds: true,
       onThresholdsChange: onThresholdsChange,
     }),
     [onThresholdsChange]

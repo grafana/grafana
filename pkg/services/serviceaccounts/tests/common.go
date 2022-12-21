@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -101,63 +100,6 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	return addKeyCmd.Result
 }
 
-// Service implements the API exposed methods for service accounts.
-type serviceAccountStore interface {
-	CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error)
-	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error)
-	UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
-		saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error)
-	SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error)
-	ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error)
-	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
-	GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (*serviceaccounts.APIKeysMigrationStatus, error)
-	HideApiKeysTab(ctx context.Context, orgID int64) error
-	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error
-	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
-	RevertApiKey(ctx context.Context, saId int64, keyId int64) error
-	// Service account tokens
-	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error
-	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
-}
-
-// create mock for serviceaccountservice
-type ServiceAccountMock struct {
-	Store             serviceAccountStore
-	Calls             Calls
-	Stats             *serviceaccounts.Stats
-	SecretScanEnabled bool
-	ExpectedTokens    []apikey.APIKey
-	ExpectedError     error
-}
-
-func (s *ServiceAccountMock) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
-	s.Calls.CreateServiceAccount = append(s.Calls.CreateServiceAccount, []interface{}{ctx, orgID, saForm})
-	return s.Store.CreateServiceAccount(ctx, orgID, saForm)
-}
-func (s *ServiceAccountMock) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {
-	s.Calls.DeleteServiceAccount = append(s.Calls.DeleteServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
-	return s.Store.DeleteServiceAccount(ctx, orgID, serviceAccountID)
-}
-
-func (s *ServiceAccountMock) RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	s.Calls.RetrieveServiceAccount = append(s.Calls.RetrieveServiceAccount, []interface{}{ctx, orgID, serviceAccountID})
-	return s.Store.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
-}
-
-func (s *ServiceAccountMock) UpdateServiceAccount(ctx context.Context,
-	orgID, serviceAccountID int64,
-	saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
-	s.Calls.UpdateServiceAccount = append(s.Calls.UpdateServiceAccount, []interface{}{ctx, orgID, serviceAccountID, saForm})
-	return s.Store.UpdateServiceAccount(ctx, orgID, serviceAccountID, saForm)
-}
-
-func (s *ServiceAccountMock) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
-	return 0, nil
-}
-func (s *ServiceAccountMock) Migrated(ctx context.Context, orgID int64) bool {
-	return false
-}
-
 func SetupMockAccesscontrol(t *testing.T,
 	userpermissionsfunc func(c context.Context, siu *user.SignedInUser, opt accesscontrol.Options) ([]accesscontrol.Permission, error),
 	disableAccessControl bool) *accesscontrolmock.Mock {
@@ -168,76 +110,4 @@ func SetupMockAccesscontrol(t *testing.T,
 	}
 	acmock.GetUserPermissionsFunc = userpermissionsfunc
 	return acmock
-}
-
-var _ serviceaccounts.Service = new(ServiceAccountMock)
-
-type Calls struct {
-	CreateServiceAccount            []interface{}
-	RetrieveServiceAccount          []interface{}
-	DeleteServiceAccount            []interface{}
-	GetAPIKeysMigrationStatus       []interface{}
-	HideApiKeysTab                  []interface{}
-	MigrateApiKeysToServiceAccounts []interface{}
-	MigrateApiKey                   []interface{}
-	RevertApiKey                    []interface{}
-	ListTokens                      []interface{}
-	DeleteServiceAccountToken       []interface{}
-	UpdateServiceAccount            []interface{}
-	AddServiceAccountToken          []interface{}
-	SearchOrgServiceAccounts        []interface{}
-	RetrieveServiceAccountIdByName  []interface{}
-}
-
-func (s *ServiceAccountMock) HideApiKeysTab(ctx context.Context, orgID int64) error {
-	s.Calls.HideApiKeysTab = append(s.Calls.HideApiKeysTab, []interface{}{ctx})
-	return nil
-}
-
-func (s *ServiceAccountMock) GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (*serviceaccounts.APIKeysMigrationStatus, error) {
-	s.Calls.GetAPIKeysMigrationStatus = append(s.Calls.GetAPIKeysMigrationStatus, []interface{}{ctx})
-	return nil, nil
-}
-
-func (s *ServiceAccountMock) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error {
-	s.Calls.MigrateApiKeysToServiceAccounts = append(s.Calls.MigrateApiKeysToServiceAccounts, []interface{}{ctx})
-	return nil
-}
-
-func (s *ServiceAccountMock) MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error {
-	s.Calls.MigrateApiKey = append(s.Calls.MigrateApiKey, []interface{}{ctx})
-	return nil
-}
-
-func (s *ServiceAccountMock) RevertApiKey(ctx context.Context, saId int64, keyId int64) error {
-	s.Calls.RevertApiKey = append(s.Calls.RevertApiKey, []interface{}{ctx})
-	return nil
-}
-
-func (s *ServiceAccountMock) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
-	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, query.OrgID, query.ServiceAccountID})
-	return s.ExpectedTokens, s.ExpectedError
-}
-
-func (s *ServiceAccountMock) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error) {
-	s.Calls.SearchOrgServiceAccounts = append(s.Calls.SearchOrgServiceAccounts, []interface{}{ctx, query})
-	return nil, nil
-}
-
-func (s *ServiceAccountMock) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
-	s.Calls.AddServiceAccountToken = append(s.Calls.AddServiceAccountToken, []interface{}{ctx, cmd})
-	return s.Store.AddServiceAccountToken(ctx, serviceAccountID, cmd)
-}
-
-func (s *ServiceAccountMock) DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error {
-	s.Calls.DeleteServiceAccountToken = append(s.Calls.DeleteServiceAccountToken, []interface{}{ctx, orgID, serviceAccountID, tokenID})
-	return s.Store.DeleteServiceAccountToken(ctx, orgID, serviceAccountID, tokenID)
-}
-
-func (s *ServiceAccountMock) GetUsageMetrics(ctx context.Context) (*serviceaccounts.Stats, error) {
-	if s.Stats == nil {
-		return &serviceaccounts.Stats{}, nil
-	}
-
-	return s.Stats, nil
 }

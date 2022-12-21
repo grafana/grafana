@@ -26,7 +26,6 @@ export enum AzureCloud {
   Public = 'AzureCloud',
   China = 'AzureChinaCloud',
   USGovernment = 'AzureUSGovernment',
-  Germany = 'AzureGermanCloud',
   None = '',
 }
 

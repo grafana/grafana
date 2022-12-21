@@ -8,14 +8,18 @@ import 'whatwg-fetch';
 import { BootData, DataQuery } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { setEchoSrv } from '@grafana/runtime/src';
+import { Panel } from '@grafana/schema';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { configureStore } from 'app/store/configureStore';
 
 import { ShareModal } from '../ShareModal';
+
+import { PublicDashboard } from './SharePublicDashboardUtils';
 
 const server = setupServer();
 
@@ -69,7 +73,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
-  mockDashboard = new DashboardModel({
+  mockDashboard = createDashboardModelFixture({
     uid: 'mockDashboardUid',
   });
 
@@ -158,6 +162,7 @@ describe('SharePublic', () => {
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeDisabled();
+    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
     expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
   });
@@ -176,6 +181,7 @@ describe('SharePublic', () => {
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeDisabled();
+    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeDisabled();
     expect(screen.getByText('Save public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
@@ -199,8 +205,8 @@ describe('SharePublic - New config setup', () => {
           datasource: { type: 'notSupportedDatasource', uid: 'abc123' },
         } as DataQuery,
       ] as DataQuery[],
-    } as PanelModel;
-    const dashboard = new DashboardModel({
+    } as unknown as Panel;
+    const dashboard = createDashboardModelFixture({
       id: 1,
       panels: [panelModel],
     });
@@ -218,6 +224,7 @@ describe('SharePublic - New config setup', () => {
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeEnabled();
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeEnabled();
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
+    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
     expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
 
     expect(screen.getByText('Create public dashboard')).toBeInTheDocument();
@@ -252,6 +259,15 @@ describe('SharePublic - New config setup', () => {
 });
 
 describe('SharePublic - Already persisted', () => {
+  const pubdashResponse: PublicDashboard = {
+    isEnabled: true,
+    annotationsEnabled: true,
+    timeSelectionEnabled: true,
+    uid: 'a-uid',
+    dashboardUid: '',
+    accessToken: 'an-access-token',
+  };
+
   beforeEach(() => {
     mockDashboard.meta.hasPublicDashboard = true;
     server.use(
@@ -259,11 +275,8 @@ describe('SharePublic - Already persisted', () => {
         return res(
           ctx.status(200),
           ctx.json({
-            isEnabled: true,
-            annotationsEnabled: true,
-            uid: 'a-uid',
+            ...pubdashResponse,
             dashboardUid: req.params.dashboardUid,
-            accessToken: 'an-access-token',
           })
         );
       })
@@ -292,6 +305,33 @@ describe('SharePublic - Already persisted', () => {
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeChecked();
   });
+  it('when modal is opened, then time range switch is enabled and checked when its checked in the db', async () => {
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+
+    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
+    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeChecked();
+  });
+
+  it('when modal is opened, then time range switch is enabled and not checked when its not checked in the db', async () => {
+    server.use(
+      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
+        return res(
+          ctx.status(200),
+          ctx.json({
+            ...pubdashResponse,
+            timeSelectionEnabled: false,
+          })
+        );
+      })
+    );
+
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+
+    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
+    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).not.toBeChecked();
+  });
   it('when fetch is done, then loader spinner is gone, inputs are disabled and save button is enabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
@@ -301,6 +341,7 @@ describe('SharePublic - Already persisted', () => {
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeDisabled();
 
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeEnabled();
+    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
     expect(screen.getByText('Save public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeEnabled();
     expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
