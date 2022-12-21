@@ -214,7 +214,6 @@ describe('DashboardModel', () => {
         panels: [
           {
             type: 'graph',
-            // @ts-expect-error
             y_formats: ['kbyte', 'ms'],
             grid: {
               threshold1: 200,
