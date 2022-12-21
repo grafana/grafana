@@ -36,7 +36,7 @@ func (s *Service) registerAPIEndpoints(routeRegister routing.RouteRegister) {
 }
 
 func (s *Service) handleList(ctx *models.ReqContext) response.Response {
-	bundles, err := s.List(ctx.Req.Context())
+	bundles, err := s.list(ctx.Req.Context())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to list bundles", err)
 	}
@@ -59,7 +59,7 @@ func (s *Service) handleCreate(ctx *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "failed to parse request", err)
 	}
 
-	bundle, err := s.Create(context.Background(), c.Collectors, ctx.SignedInUser)
+	bundle, err := s.create(context.Background(), c.Collectors, ctx.SignedInUser)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to create support bundle", err)
 	}
@@ -74,7 +74,7 @@ func (s *Service) handleCreate(ctx *models.ReqContext) response.Response {
 
 func (s *Service) handleDownload(ctx *models.ReqContext) {
 	uid := web.Params(ctx.Req)[":uid"]
-	bundle, err := s.Get(ctx.Req.Context(), uid)
+	bundle, err := s.get(ctx.Req.Context(), uid)
 	if err != nil {
 		ctx.Redirect("/admin/support-bundles")
 		return
@@ -102,7 +102,7 @@ func (s *Service) handleDownload(ctx *models.ReqContext) {
 
 func (s *Service) handleRemove(ctx *models.ReqContext) response.Response {
 	uid := web.Params(ctx.Req)[":uid"]
-	err := s.Remove(ctx.Req.Context(), uid)
+	err := s.remove(ctx.Req.Context(), uid)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to remove bundle", err)
 	}
@@ -111,5 +111,11 @@ func (s *Service) handleRemove(ctx *models.ReqContext) response.Response {
 }
 
 func (s *Service) handleGetCollectors(ctx *models.ReqContext) response.Response {
-	return response.JSON(http.StatusOK, s.collectors)
+	collectors := make([]supportbundles.Collector, 0, len(s.collectors))
+
+	for _, c := range s.collectors {
+		collectors = append(collectors, c)
+	}
+
+	return response.JSON(http.StatusOK, collectors)
 }

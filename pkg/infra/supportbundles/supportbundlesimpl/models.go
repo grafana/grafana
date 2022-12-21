@@ -35,7 +35,7 @@ var (
 	}
 )
 
-func DeclareFixedRoles(ac accesscontrol.Service) error {
+func declareFixedRoles(ac accesscontrol.Service) error {
 	bundleReader := accesscontrol.RoleRegistration{
 		Role:   bundleReaderRole,
 		Grants: []string{string(org.RoleAdmin)},
