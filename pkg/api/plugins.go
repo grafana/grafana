@@ -6,15 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"path"
-	"path/filepath"
-	"runtime"
-	"sort"
-	"strings"
-	"time"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -31,6 +22,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	"io"
+	"net/http"
+	"path"
+	"path/filepath"
+	"runtime"
+	"sort"
+	"strings"
 )
 
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
@@ -297,36 +295,6 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 	headers.Set("Content-Type", "text/plain")
 
 	return response.CreateNormalResponse(headers, resp.PrometheusMetrics, http.StatusOK)
-}
-
-// pluginAsset represents a plugin asset.
-type pluginAsset struct {
-	// readSeekCloser is the io.ReadSeekCloser that will be used to read the asset's content.
-	readSeekCloser io.ReadSeekCloser
-
-	// modTime is the latest edit time of the asset.
-	modTime time.Time
-
-	// Path is the relative path of the asset.
-	path string
-}
-
-// Close closes the readSeekCloser associated to the pluginAsset, if any.
-func (a pluginAsset) Close() error {
-	if a.readSeekCloser == nil {
-		return nil
-	}
-	return a.readSeekCloser.Close()
-}
-
-// nopCloserReadSeeker wraps io.ReadSeeker with a nop io.Closer.
-type nopCloserReadSeeker struct {
-	io.ReadSeeker
-}
-
-// Close does nothing.
-func (nopCloserReadSeeker) Close() error {
-	return nil
 }
 
 // serveLocalPluginAsset returns the content of a plugin asset file from the local filesystem to the http client.
