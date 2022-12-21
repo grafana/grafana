@@ -36,7 +36,6 @@ This topic includes techniques you can use to manage your Grafana dashboards, in
 
 - [Creating and managing dashboard folders](#create-and-manage-dashboard-folders)
 - [Exporting and importing dashboards](#export-and-import-dashboards)
-- [Configuring dashboard time range controls](#configure-dashboard-time-range-controls)
 - [Organizing dashboards](#organize-a-dashboard)
 - [Troubleshooting dashboards](#troubleshoot-dashboards)
 

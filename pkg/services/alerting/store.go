@@ -105,7 +105,7 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *db.Session, log
 
 func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *models.GetAlertsQuery) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		builder := db.NewSqlBuilder(ss.cfg)
+		builder := db.NewSqlBuilder(ss.cfg, ss.db.GetDialect())
 
 		builder.Write(`SELECT
 		alert.id,

@@ -391,11 +391,11 @@ providers:
 
 ## Alerting
 
-For information on provisioning Grafana Alerting, refer to [Provision Grafana Alerting resources](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/).
+For information on provisioning Grafana Alerting, refer to [Provision Grafana Alerting resources]({{< relref "../../alerting/set-up/provision-alerting-resources/"  >}}).
 
 ## Alert Notification Channels
 
-> **Note:** Alert Notification Channels are part of legacy alerting, which is deprecated and will be removed in Grafana 10. Use the Provision contact points section in [Create and manage alerting resources using file provisioning](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/).
+> **Note:** Alert Notification Channels are part of legacy alerting, which is deprecated and will be removed in Grafana 10. Use the Provision contact points section in [Create and manage alerting resources using file provisioning]({{< relref "../../alerting/set-up/provision-alerting-resources/file-provisioning" >}}).
 
 Alert Notification Channels can be provisioned by adding one or more YAML config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
 
@@ -642,6 +642,7 @@ The following sections detail the supported settings and secure settings for eac
 
 ## Grafana Enterprise
 
-Grafana Enterprise supports provisioning for the following resources:
+Grafana Enterprise supports:
 
-- [Role-based access control provisioning]({{< relref "../roles-and-permissions/access-control/rbac-provisioning/" >}})
+- [Provisioning role-based access control with Grafana]({{< relref "../roles-and-permissions/access-control/rbac-grafana-provisioning/" >}})
+- [Provisioning role-based access control with Terraform]({{< relref "../roles-and-permissions/access-control/rbac-terraform-provisioning/" >}})
