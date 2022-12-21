@@ -1,3 +1,14 @@
+# Sankey plugin
+
+## How to work with it?
+
+We created our fork of [snakey-panel](https://github.com/IsmaelMasharo/sankey-panel) ---> [our fork](https://github.com/fluxninja/sankey-panel) and if we want to add some changes to it we need to:
+- git clone our fork
+- add changes we want
+- build plugin using `yarn build` (if you want to test something use `yarn dev` because the normal build removes all console.logs)
+- copy-paste builded version of plugin into grafana `public/app/plugins/panel/sankey-panel-0.5.0`
+- refresh grafana
+
 
 # Troubleshooting
 
