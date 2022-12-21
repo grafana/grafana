@@ -16,6 +16,7 @@ import (
 //go:generate mockery --name Service --structname FakePublicDashboardService --inpackage --filename public_dashboard_service_mock.go
 type Service interface {
 	FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
+	FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error)
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
 	FindAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error)
 	FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*models.Dashboard, error)
