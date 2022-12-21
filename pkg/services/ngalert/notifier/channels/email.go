@@ -77,8 +77,6 @@ func buildEmailSettings(fc channels.FactoryConfig) (*emailSettings, error) {
 	}, nil
 }
 
-// NewEmailNotifier is the constructor function
-// for the EmailNotifier.
 func buildEmailNotifier(fc channels.FactoryConfig) (*EmailNotifier, error) {
 	settings, err := buildEmailSettings(fc)
 	if err != nil {
