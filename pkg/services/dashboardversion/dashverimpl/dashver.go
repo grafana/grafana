@@ -84,7 +84,7 @@ func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersions
 		query.Limit = 1000
 	}
 
-	var dashUID string = query.DashboardUID
+	var dashUID = query.DashboardUID
 	if dashUID == "" { // get the dashUID for the return DashboardVersionDTO
 		q := models.GetDashboardRefByIdQuery{Id: query.DashboardID}
 		err := s.dashSvc.GetDashboardUIDById(ctx, &q)
@@ -98,7 +98,7 @@ func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersions
 		if err != nil {
 			return nil, err
 		}
-		query.DashboardID = q.Id
+		query.DashboardID = q.Result.Id
 	}
 
 	versions, err := s.store.List(ctx, query)

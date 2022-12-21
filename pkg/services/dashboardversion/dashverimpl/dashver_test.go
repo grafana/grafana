@@ -65,11 +65,24 @@ func TestDeleteExpiredVersions(t *testing.T) {
 func TestListDashboardVersions(t *testing.T) {
 	dashboardVersionStore := newDashboardVersionStoreFake()
 	dashSvc := dashboards.NewFakeDashboardService(t)
-	dashSvc.On("GetDashboardUIDById", mock.Anything, mock.AnythingOfType("*models.GetDashboardRefByIdQuery")).Return(nil)
+
 	dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashSvc}
 
 	t.Run("Get all versions for a given Dashboard ID", func(t *testing.T) {
 		query := dashver.ListDashboardVersionsQuery{}
+		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{{}}
+		dashSvc.On("GetDashboardUIDById", mock.Anything, mock.AnythingOfType("*models.GetDashboardRefByIdQuery")).Return(nil)
+		res, err := dashboardVersionService.List(context.Background(), &query)
+		require.Nil(t, err)
+		require.Equal(t, 1, len(res))
+	})
+
+	t.Run("Get all versions for a given Dashboard UID", func(t *testing.T) {
+		query := dashver.ListDashboardVersionsQuery{DashboardUID: "test"}
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*models.GetDashboardQuery)
+			q.Result = &models.Dashboard{Id: 0}
+		}).Return(nil)
 		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{{}}
 		res, err := dashboardVersionService.List(context.Background(), &query)
 		require.Nil(t, err)
