@@ -29,21 +29,7 @@ func main() {
 		Version: version,
 		Commands: []*cli.Command{
 			gcli.CLICommand(version),
-			{
-				Name:  "server",
-				Usage: "server <server options>",
-				Action: func(context *cli.Context) error {
-					os.Exit(gsrv.RunServer(gsrv.ServerOptions{
-						Version:     version,
-						Commit:      commit,
-						BuildBranch: buildBranch,
-						BuildStamp:  buildstamp,
-						Args:        context.Args().Slice(),
-					}))
-					return nil
-				},
-				SkipFlagParsing: true,
-			},
+			gsrv.ServerCommand(version, commit, buildBranch, buildstamp),
 		},
 		CommandNotFound: cmdNotFound,
 	}

@@ -121,7 +121,10 @@ func (s *Server) init() error {
 	}
 	s.isInitialized = true
 
-	s.writePIDFile()
+	if err := s.writePIDFile(); err != nil {
+		return err
+	}
+
 	if err := metrics.SetEnvironmentInformation(s.cfg.MetricsGrafanaEnvironmentInfo); err != nil {
 		return err
 	}
@@ -203,36 +206,28 @@ func (s *Server) Shutdown(ctx context.Context, reason string) error {
 	return err
 }
 
-// ExitCode returns an exit code for a given error.
-func (s *Server) ExitCode(runError error) int {
-	if runError != nil {
-		s.log.Error("Server shutdown", "error", runError)
-		return 1
-	}
-	return 0
-}
-
 // writePIDFile retrieves the current process ID and writes it to file.
-func (s *Server) writePIDFile() {
+func (s *Server) writePIDFile() error {
 	if s.pidFile == "" {
-		return
+		return nil
 	}
 
 	// Ensure the required directory structure exists.
 	err := os.MkdirAll(filepath.Dir(s.pidFile), 0700)
 	if err != nil {
 		s.log.Error("Failed to verify pid directory", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("Failed to verify pid directory: %s", err)
 	}
 
 	// Retrieve the PID and write it to file.
 	pid := strconv.Itoa(os.Getpid())
 	if err := os.WriteFile(s.pidFile, []byte(pid), 0644); err != nil {
 		s.log.Error("Failed to write pidfile", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("Failed to write pidfile: %s", err)
 	}
 
 	s.log.Info("Writing PID file", "path", s.pidFile, "pid", pid)
+	return nil
 }
 
 // notifySystemd sends state notifications to systemd.
