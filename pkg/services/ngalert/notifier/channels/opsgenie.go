@@ -164,7 +164,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		// Don't need to run other templates.
 		if on.AutoClose {
 			bodyJSON := simplejson.New()
-			bodyJSON.Set("source", "Grafana")
+			bodyJSON.Set("source", "Logz.io Alert") // LOGZ.IO GRAFANA CHANGE - Remove grafana from notification body
 			apiURL = fmt.Sprintf("%s/%s/close?identifierType=alias", on.APIUrl, alias)
 			return bodyJSON, apiURL, nil
 		}
@@ -199,7 +199,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	}
 
 	bodyJSON.Set("message", title)
-	bodyJSON.Set("source", "Grafana")
+	bodyJSON.Set("source", "Logz.io Alert") // LOGZ.IO GRAFANA CHANGE - Remove grafana from notification body
 	bodyJSON.Set("alias", alias)
 	bodyJSON.Set("description", description)
 	details.Set("url", ruleURL)

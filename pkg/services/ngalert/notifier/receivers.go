@@ -205,7 +205,7 @@ func newTestAlert(c apimodels.TestReceiversConfigBodyParams, startsAt, updatedAt
 		}
 		defaultLabels = model.LabelSet{
 			"alertname": "TestAlert",
-			"instance":  "Grafana",
+			"instance":  "Logz.io Alerts", // LOGZ.IO GRAFANA CHANGE - Remove grafana from notification body
 		}
 	)
 

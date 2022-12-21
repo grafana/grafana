@@ -369,7 +369,11 @@ func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json,
 		keys = []string{"apiToken", "userKey"}
 	case "threema":
 		keys = []string{"api_secret"}
+	// LOGZ.IO GRAFANA CHANGE :: DEV-35483 - Add type to support logzio opsgenie integration
+	case "logzio_opsgenie":
+		keys = []string{"apiKey"}
 	}
+	// LOGZ.IO GRAFANA CHANGE :: end
 
 	newSecureSettings := secureSettings.Decrypt()
 	cloneSettings := simplejson.New()

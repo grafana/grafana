@@ -12,6 +12,10 @@ import { ChannelValues, CommonSettingsComponentType } from '../../../types/recei
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-35483 - Filter out logzio opsgenie type from creation
+const INTERNAL_CHANNEL_TYPE_PREFIX = 'logzio_';
+// LOGZ.IO GRAFANA CHANGE :: end
+
 interface Props<R> {
   defaultValues: R;
   pathPrefix: string;
@@ -104,7 +108,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                   menuShouldPortal
                   {...field}
                   width={37}
-                  options={typeOptions}
+                  options={typeOptions.filter((o) => !o.value.startsWith(INTERNAL_CHANNEL_TYPE_PREFIX))} // LOGZ.IO GRAFANA CHANGE :: DEV-35483 - Filter out logzio opsgenie type from creation
                   onChange={(value) => onChange(value?.value)}
                 />
               )}
