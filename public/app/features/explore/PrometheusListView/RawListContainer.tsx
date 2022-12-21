@@ -7,7 +7,10 @@ import { VariableSizeList as List } from 'react-window';
 import { DataFrame, Field } from '@grafana/data/src';
 import { Button, stylesFactory } from '@grafana/ui/src';
 
-import { getRawPrometheusListItemsFromDataFrame } from '../utils/getRawPrometheusListItemsFromDataFrame';
+import {
+  getRawPrometheusListItemsFromDataFrame,
+  RawPrometheusListItemEmptyValue,
+} from '../utils/getRawPrometheusListItemsFromDataFrame';
 
 import { ItemLabels } from './ItemLabels';
 import RawListItem from './RawListItem';
@@ -37,6 +40,9 @@ const getRawListContainerStyles = stylesFactory(() => {
   };
 });
 
+const mobileWidthThreshold = 480;
+const numberOfColumnsBeforeExpandedViewIsDefault = 2;
+
 /**
  * The container that provides the virtualized list to the child components
  * @param props
@@ -51,7 +57,9 @@ const RawListContainer = (props: RawListContainerProps) => {
   const valueLabels = dataFrame.fields.filter((field) => field.name.includes('Value'));
   const items = getRawPrometheusListItemsFromDataFrame(dataFrame);
   const { width } = useWindowSize();
-  const [isExpandedView, setIsExpandedView] = useState(width <= 480 || valueLabels.length > 2);
+  const [isExpandedView, setIsExpandedView] = useState(
+    width <= mobileWidthThreshold || valueLabels.length > numberOfColumnsBeforeExpandedViewIsDefault
+  );
 
   const onContentClick = () => {
     setIsExpandedView(!isExpandedView);
@@ -70,12 +78,12 @@ const RawListContainer = (props: RawListContainerProps) => {
     }
     const item = items[itemIndex];
 
-    // Height of 1.5 lines, plus the number of non value attributes times the height of additional lines
+    // Height of 1.5 lines, plus the number of non-value attributes times the height of additional lines
     return 1.5 * singleLineHeight + (Object.keys(item).length - valueLabels.length) * additionalLineHeight;
   };
 
   return (
-    <section data-testid={'raw-list-container'}>
+    <section>
       <header className={styles.header}>
         <Button
           variant="secondary"
@@ -111,7 +119,7 @@ const RawListContainer = (props: RawListContainerProps) => {
                 if (isExpandedView) {
                   filteredValueLabels = valueLabels.filter((valueLabel) => {
                     const itemWithValue = items[index][valueLabel.name];
-                    return itemWithValue && itemWithValue !== ' ';
+                    return itemWithValue && itemWithValue !== RawPrometheusListItemEmptyValue;
                   });
                 }
 

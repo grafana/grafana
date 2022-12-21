@@ -4,6 +4,8 @@ import React from 'react';
 import { GrafanaTheme } from '@grafana/data/src';
 import { useStyles } from '@grafana/ui/src';
 
+import { RawPrometheusListItemEmptyValue } from '../utils/getRawPrometheusListItemsFromDataFrame';
+
 import { rawListItemColumnWidth, rawListpaddingToHoldSpaceForCopyIcon, RawListValue } from './RawListItem';
 
 const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
@@ -56,7 +58,7 @@ export const ItemValues = ({
     <div className={styles.rowValuesWrap}>
       {values?.map((value) => {
         if (hideFieldsWithoutValues) {
-          if (value.value !== undefined && value.value !== ' ') {
+          if (value.value !== undefined && value.value !== RawPrometheusListItemEmptyValue) {
             return (
               <span key={value.key} className={styles.rowWrapper}>
                 <span className={styles.rowValue}>{value.value}</span>

@@ -19,10 +19,10 @@ export interface RawListProps {
 }
 
 export type RawListValue = { key: string; value: string };
-
 export const rawListExtraSpaceAtEndOfLine = '20px';
 export const rawListItemColumnWidth = '80px';
 export const rawListpaddingToHoldSpaceForCopyIcon = '25px';
+
 const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number, isExpandedView: boolean) => ({
   rowWrapper: css`
     border-bottom: 1px solid ${theme.colors.border3};
@@ -107,7 +107,9 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
     return value;
   };
 
+  // Convert the object back into a string
   const stringRep = `${__name__}{${attributeValues.map((value) => {
+    // For histograms the string representation currently in this object is not directly queryable in all situations, leading to broken copied queries. Omitting the attribute from the copied result gives a query which returns all le values, which I assume to be a more common use case.
     return value.key !== 'le' ? `${value.key}="${transformCopyValue(value.value)}"` : '';
   })}}`;
 

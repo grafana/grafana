@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { RawPrometheusListItemEmptyValue } from '../utils/getRawPrometheusListItemsFromDataFrame';
+
 import { ItemValues } from './ItemValues';
 import { RawListValue } from './RawListItem';
 
@@ -34,7 +36,7 @@ const defaultProps: {
     },
     {
       key: 'Value #C',
-      value: ' ', // Empty value
+      value: RawPrometheusListItemEmptyValue, // Empty value
     },
   ],
   hideFieldsWithoutValues: false,

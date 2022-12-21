@@ -4,6 +4,8 @@ import { instantQueryRawVirtualizedListData } from '../PrometheusListView/RawLis
 
 type instantQueryMetricList = { [index: string]: { [index: string]: instantQueryRawVirtualizedListData } };
 
+export const RawPrometheusListItemEmptyValue = ' ';
+
 /**
  * transform dataFrame to instantQueryRawVirtualizedListData
  * @param dataFrame
@@ -40,7 +42,7 @@ export const getRawPrometheusListItemsFromDataFrame = (dataFrame: DataFrame): in
           if (stringValue) {
             formattedMetric[label] = stringValue;
           } else if (label.includes('Value #')) {
-            formattedMetric[label] = ' ';
+            formattedMetric[label] = RawPrometheusListItemEmptyValue;
           }
         } else {
           console.warn('Field display method is missing!');
