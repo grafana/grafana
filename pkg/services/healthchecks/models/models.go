@@ -35,7 +35,6 @@ type HealthCheckConfig struct {
 }
 
 type GetHealthFunc func(ctx context.Context, name string) (HealthStatus, map[string]string, error)
-type SendHealthFunc func(ctx context.Context, name string, status HealthStatus, metrics map[string]string)
 
 type HealthCheckType string
 

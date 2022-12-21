@@ -75,7 +75,9 @@ func (hcs *HealthChecksServiceImpl) RunCoreHealthChecks(ctx context.Context) err
 	return nil
 }
 
-func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, config models.HealthCheckConfig, checker healthchecks.HealthChecker) (*models.SendHealthFunc, error) {
+// RegisterHealthCheck validates a health check config and adds it to the list of registered health checks.
+// If the health check strategy is StrategyCron, this function returns a function for sending a status, otherwise it returns nil.
+func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, config models.HealthCheckConfig, checker healthchecks.HealthChecker) (func(), error) {
 	hcs.mu.Lock()
 	defer hcs.mu.Unlock()
 
@@ -131,7 +133,7 @@ func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, con
 		if config.InitialDelay > 0 {
 			time.AfterFunc(config.InitialDelay, startFunc)
 		} else {
-			startFunc()
+			go startFunc()
 		}
 	} else if config.Strategy == models.StrategyOnce {
 		if config.InitialDelay > 0 {
@@ -139,11 +141,12 @@ func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, con
 				hcs.runIndividualHealthCheck(ctx, healthCheck)
 			})
 		} else {
-			hcs.runIndividualHealthCheck(ctx, healthCheck)
+			go hcs.runIndividualHealthCheck(ctx, healthCheck)
 		}
 	} else if config.Strategy == models.StrategyOnDemand {
-		// do something
-		return nil, nil
+		return func() {
+			hcs.runIndividualHealthCheck(ctx, healthCheck)
+		}, nil
 	}
 
 	return nil, nil
