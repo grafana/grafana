@@ -3,4 +3,4 @@
     ports:
       - "9104:9104"
     volumes:
-      - ./docker/blocks/mysql/mysql-exporter.cnf:/home/.my.cnf
+      - ./docker/blocks/mysql_exporter/mysql-exporter.cnf:/home/.my.cnf
