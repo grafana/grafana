@@ -4,14 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { config, DataSourcePicker, reportInteraction } from '@grafana/runtime';
-import {
-  defaultIntervals,
-  PageToolbar,
-  RefreshPicker,
-  SetInterval,
-  ToolbarButton,
-  ToolbarButtonRow,
-} from '@grafana/ui';
+import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -168,6 +161,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     return [
       !splitted ? (
         <ToolbarButton
+          variant="canvas"
           key="split"
           tooltip="Split the pane"
           onClick={this.onOpenSplitView}
@@ -177,8 +171,9 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
           Split
         </ToolbarButton>
       ) : (
-        <React.Fragment key="splitActions">
+        <ButtonGroup>
           <ToolbarButton
+            variant="canvas"
             tooltip={`${isLargerExploreId ? 'Narrow' : 'Widen'} pane`}
             disabled={isLive}
             onClick={onClickResize}
@@ -186,10 +181,10 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
             iconOnly={true}
             className={styles.rotateIcon}
           />
-          <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
+          <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times" variant="canvas">
             Close
           </ToolbarButton>
-        </React.Fragment>
+        </ButtonGroup>
       ),
 
       showExploreToDashboard && (
@@ -256,7 +251,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const isTopnav = config.featureToggles.topnav;
 
-    const getDashNav = () => (
+    const dashnav = (
       <DashNavButton
         key="share"
         tooltip="Copy shortened link"
@@ -278,39 +273,24 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         />
       );
 
-    const topNavActions = [
-      getDashNav(),
-      !splitted && getDataSourcePicker(),
-      <div style={{ flex: 1 }} key="spacer" />,
-      <ToolbarButtonRow key="actions" alignment="right">
-        {this.renderActions()}
-      </ToolbarButtonRow>,
-    ].filter(Boolean);
+    const topNavActions = [dashnav, <div style={{ flex: 1 }} key="spacer" />];
 
-    const toolbarLeftItems = [exploreId === ExploreId.left && getDashNav(), getDataSourcePicker()].filter(Boolean);
+    const toolbarLeftItems = [exploreId === ExploreId.left && !isTopnav && dashnav, getDataSourcePicker()].filter(
+      Boolean
+    );
 
-    const toolbarLeftItemsTopNav = [
-      exploreId === ExploreId.left && (
-        <AppChromeUpdate
-          actions={[getDashNav(), !splitted && getDataSourcePicker(), <div style={{ flex: 1 }} key="spacer" />].filter(
-            Boolean
-          )}
-        />
-      ),
-      getDataSourcePicker(),
-    ].filter(Boolean);
-
-    return isTopnav && !splitted ? (
+    return (
       <div ref={topOfViewRef}>
-        <AppChromeUpdate actions={topNavActions} />
-      </div>
-    ) : (
-      <div ref={topOfViewRef}>
+        {isTopnav && (
+          <div ref={topOfViewRef}>
+            <AppChromeUpdate actions={topNavActions} />
+          </div>
+        )}
         <PageToolbar
           aria-label="Explore toolbar"
           title={exploreId === ExploreId.left && !isTopnav ? 'Explore' : undefined}
           pageIcon={exploreId === ExploreId.left && !isTopnav ? 'compass' : undefined}
-          leftItems={isTopnav ? toolbarLeftItemsTopNav : toolbarLeftItems}
+          leftItems={toolbarLeftItems}
         >
           {this.renderActions()}
         </PageToolbar>
