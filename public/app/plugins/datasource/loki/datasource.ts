@@ -61,6 +61,8 @@ import {
   getParserPositions,
   toLabelFilter,
   addLineFilter,
+  findLastPosition,
+  getLabelFilterPositions,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
@@ -502,8 +504,10 @@ export class LokiDatasource
       }
       case 'ADD_LABEL_FILTER': {
         const parserPositions = getParserPositions(query.expr);
+        const labelFilterPositions = getLabelFilterPositions(query.expr);
+        const lastPosition = findLastPosition([...parserPositions, ...labelFilterPositions]);
         const filter = toLabelFilter('', '', '=');
-        expression = addFilterAsLabelFilter(expression, parserPositions, filter);
+        expression = addFilterAsLabelFilter(expression, [lastPosition], filter);
         break;
       }
       case 'ADD_LINE_FILTER': {
