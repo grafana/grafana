@@ -21,8 +21,6 @@ const Search = ({ searchFn, searchPhrase }: { searchPhrase: string; searchFn: (s
 
   return (
     <Input
-      className={styles.search}
-      width={64}
       aria-label="log group search"
       prefix={<Icon name="search" />}
       value={searchFilter}

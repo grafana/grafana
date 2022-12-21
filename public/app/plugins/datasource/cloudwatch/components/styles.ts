@@ -75,6 +75,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
   }),
 
+  searchField: css({
+    width: '100%',
+    marginRight: theme.spacing(1),
+  }),
+
   resultLimit: css({
     margin: '4px 0',
     fontStyle: 'italic',
@@ -87,10 +92,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0.5, 0, 0.5, 1),
     color: theme.colors.text.primary,
     fontSize: theme.typography.size.sm,
-  }),
-
-  search: css({
-    marginRight: '10px',
   }),
 
   removeButton: css({

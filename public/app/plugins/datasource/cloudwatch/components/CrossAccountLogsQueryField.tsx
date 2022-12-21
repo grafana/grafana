@@ -81,15 +81,17 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
     <>
       <Modal className={styles.modal} title="Select Log Groups" isOpen={isModalOpen} onDismiss={toggleModal}>
         <div className={styles.logGroupSelectionArea}>
-          <EditorField label="Log Group Name">
-            <Search
-              searchFn={(phrase) => {
-                searchFn(phrase, searchAccountId);
-                setSearchPhrase(phrase);
-              }}
-              searchPhrase={searchPhrase}
-            />
-          </EditorField>
+          <div className={styles.searchField}>
+            <EditorField label="Log Group Name">
+              <Search
+                searchFn={(phrase) => {
+                  searchFn(phrase, searchAccountId);
+                  setSearchPhrase(phrase);
+                }}
+                searchPhrase={searchPhrase}
+              />
+            </EditorField>
+          </div>
 
           <Account
             onChange={(accountId?: string) => {
