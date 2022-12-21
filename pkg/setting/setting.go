@@ -282,7 +282,6 @@ type Cfg struct {
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
 
-	PluginsCDNMode     PluginsCDNMode
 	PluginsCDNBasePath string
 
 	// Panels

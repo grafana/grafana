@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -332,9 +331,7 @@ func (nopCloserReadSeeker) Close() error {
 }
 
 var (
-	errAssetNotFound   = errutil.NewBase(errutil.StatusNotFound, "plugins.assetNotFound")
 	errLocalAssetLoad  = errutil.NewBase(errutil.StatusInternal, "plugins.localAssetLoad")
-	errRemoteAssetLoad = errutil.NewBase(errutil.StatusInternal, "plugins.remoteAssetLoad")
 )
 
 // getLocalPluginAssets returns a pluginAsset for a locally stored plugin.
@@ -346,8 +343,8 @@ var (
 func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.PluginDTO, path string) (pluginAsset, error) {
 	f, err := plugin.File(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return pluginAsset{}, errAssetNotFound.Errorf("plugin file not found")
+		if errors.Is(err, plugins.ErrFileNotExist) {
+			return pluginAsset{}, errLocalAssetLoad.Errorf("plugin file not found")
 		}
 		return pluginAsset{}, errLocalAssetLoad.Errorf("could not open plugin file: %w", err)
 	}
@@ -365,19 +362,17 @@ func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.
 			modTime:        fi.ModTime(),
 			path:           path,
 		}, nil
-	} else {
-		b, err := io.ReadAll(f)
-		if err != nil {
-			return pluginAsset{}, errLocalAssetLoad.Errorf("plugin file exists but could not open: %w", err)
-		}
-
-		return pluginAsset{
-			readSeekCloser: nopCloserReadSeeker{bytes.NewReader(b)},
-			modTime:        fi.ModTime(),
-			path:           path,
-		}, nil
 	}
 
+	b, err := io.ReadAll(f)
+	if err != nil {
+		return pluginAsset{}, errLocalAssetLoad.Errorf("plugin file exists but could not open: %w", err)
+	}
+	return pluginAsset{
+		readSeekCloser: nopCloserReadSeeker{bytes.NewReader(b)},
+		modTime:        fi.ModTime(),
+		path:           path,
+	}, nil
 }
 
 // getCDNPluginAssetRemoteURL takes a plugin and an asset file path and returns the URL for the asset on the CDN
@@ -397,46 +392,15 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugin
 	http.Redirect(c.Resp, c.Req, remoteURL, http.StatusFound)
 }
 
-// proxyCDNPluginAsset downloads the specified asset file in-memory from the plugins CDN and returns it as a pluginAsset.
-func (hs *HTTPServer) proxyCDNPluginAsset(c *models.ReqContext, plugin plugins.PluginDTO, path string) (pluginAsset, error) {
-	remoteURL := hs.getCDNPluginAssetRemoteURL(plugin, path)
-	req, err := http.NewRequestWithContext(c.Req.Context(), http.MethodGet, remoteURL, nil)
-	if err != nil {
-		return pluginAsset{}, errRemoteAssetLoad.Errorf("get %s: %w", remoteURL, err)
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return pluginAsset{}, errRemoteAssetLoad.Errorf("do request %s: %w", remoteURL, err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			hs.log.Warn("failed to close response body", "err", err)
-		}
-	}()
-	switch resp.StatusCode {
-	case http.StatusOK:
-		break
-	case http.StatusNotFound:
-		return pluginAsset{}, errAssetNotFound.Errorf("remote cdn returned 404")
-	default:
-		return pluginAsset{}, errRemoteAssetLoad.Errorf("remote cdn returned %d", resp.StatusCode)
-	}
-	// resp.Body is a reader, but we need an io.ReadSeekerCloser, so read it all in-memory and use that buffer instead.
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return pluginAsset{}, errRemoteAssetLoad.Errorf("readall: %w", err)
-	}
-	hs.log.Debug("remote downloaded", "url", remoteURL)
-	return pluginAsset{
-		// Wrap the io.ReadSeeker with a nop closer via nopCloserReadSeeker
-		readSeekCloser: nopCloserReadSeeker{bytes.NewReader(b)},
-		// TODO: plugins cdn: implement?
-		modTime: time.Now(),
-		path:    path,
-	}, nil
-}
 
 // getPluginAssets returns public plugin assets (images, JS, etc.)
+//
+// If the plugin has cdn = false in its config (default), it will always attempt to return the asset
+// from the local filesystem.
+//
+// If the plugin has cdn = true and hs.Cfg.PluginsCDNBasePath is empty, it will get the file
+// from the local filesystem. If hs.Cfg.PluginsCDNBasePath is not empty,
+// this handler returns a redirect to the plugin asset file on the specified CDN.
 //
 // /public/plugins/:pluginId/*
 func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
@@ -455,29 +419,14 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	if plugin.CDN && hs.Cfg.PluginsCDNMode == setting.PluginsCDNModeRedirect {
+	if hs.Cfg.PluginsCDNBasePath != "" && plugin.CDN {
 		// Send a redirect to the client
 		hs.redirectCDNPluginAsset(c, plugin, requestedFile)
 		return
 	}
 
-	// Make sure the plugins cdn mode is valid (either redirect or reverse proxy)
-	hs.log.Debug("using cdn value", "value", plugin.CDN)
-	if plugin.CDN && hs.Cfg.PluginsCDNMode != setting.PluginsCDNModeReverveProxy {
-		err = errors.New("invalid plugins cdn mode specified in settings")
-		c.JsonApiErr(500, err.Error(), err)
-		return
-	}
-
 	// Send the actual file to the client
-	var asset pluginAsset
-	if plugin.CDN {
-		// In-memory proxy from CDN
-		asset, err = hs.proxyCDNPluginAsset(c, plugin, requestedFile)
-	} else {
-		// Local filesystem
-		asset, err = hs.getLocalPluginAssets(c, plugin, requestedFile)
-	}
+	asset, err := hs.getLocalPluginAssets(c, plugin, requestedFile)
 	if err != nil {
 		response.Err(err)
 		return

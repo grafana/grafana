@@ -1,7 +1,6 @@
 package setting
 
 import (
-	"fmt"
 	"strings"
 
 	"gopkg.in/ini.v1"
@@ -23,21 +22,6 @@ func extractPluginSettings(sections []*ini.Section) PluginSettings {
 	}
 
 	return psMap
-}
-
-// PluginsCDNMode is the mode used to serve assets from the plugins CDN.
-type PluginsCDNMode string
-
-// Valid values for PluginsCDNMode
-
-const (
-	PluginsCDNModeRedirect     PluginsCDNMode = "redirect"
-	PluginsCDNModeReverveProxy PluginsCDNMode = "reverse_proxy"
-)
-
-// IsValid returns true if the PluginsCDNMode is equal to an allowed value.
-func (m PluginsCDNMode) IsValid() bool {
-	return m == PluginsCDNModeRedirect || m == PluginsCDNModeReverveProxy
 }
 
 // defaultHGPluginsCDNBaseURL is the default value for the CDN base path
@@ -70,10 +54,6 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	}
 
 	// Plugins CDN settings
-	cfg.PluginsCDNMode = PluginsCDNMode(pluginsCDNSection.Key("mode").MustString(string(PluginsCDNModeRedirect)))
-	if !cfg.PluginsCDNMode.IsValid() {
-		return fmt.Errorf("plugins cdn mode %q is not valid", cfg.PluginsCDNMode)
-	}
 	cfg.PluginsCDNBasePath = strings.TrimRight(pluginsCDNSection.Key("url").MustString(defaultHGPluginsCDNBaseURL), "/")
 
 	return nil
