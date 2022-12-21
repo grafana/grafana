@@ -20,11 +20,14 @@ export const ConnectionAnchors = ({ setRef }: Props) => {
     'data:image/svg+xml;base64,PCFET0NUWVBFIHN2ZyBQVUJMSUMgIi0vL1czQy8vRFREIFNWRyAxLjEvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj48c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSI1cHgiIGhlaWdodD0iNXB4IiB2ZXJzaW9uPSIxLjEiPjxwYXRoIGQ9Im0gMCAwIEwgNSA1IE0gMCA1IEwgNSAwIiBzdHJva2Utd2lkdGg9IjIiIHN0eWxlPSJzdHJva2Utb3BhY2l0eTowLjQiIHN0cm9rZT0iI2ZmZmZmZiIvPjxwYXRoIGQ9Im0gMCAwIEwgNSA1IE0gMCA1IEwgNSAwIiBzdHJva2U9IiMyOWI2ZjIiLz48L3N2Zz4=';
 
   const onMouseEnterAnchor = (event: React.MouseEvent) => {
-    const target = event.target as HTMLImageElement;
-    if (highlightEllipseRef.current && target.style) {
+    if (!(event.target instanceof HTMLImageElement)) {
+      return;
+    }
+
+    if (highlightEllipseRef.current && event.target.style) {
       highlightEllipseRef.current.style.display = 'block';
-      highlightEllipseRef.current.style.top = `calc(${target.style.top} - ${halfSizeHighlightEllipse}px)`;
-      highlightEllipseRef.current.style.left = `calc(${target.style.left} - ${halfSizeHighlightEllipse}px)`;
+      highlightEllipseRef.current.style.top = `calc(${event.target.style.top} - ${halfSizeHighlightEllipse}px)`;
+      highlightEllipseRef.current.style.left = `calc(${event.target.style.left} - ${halfSizeHighlightEllipse}px)`;
     }
   };
 

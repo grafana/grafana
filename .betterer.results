@@ -3054,8 +3054,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/canvas/runtime/scene.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/dashboard/components/AddPanelWidget/AddPanelWidget.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -6810,9 +6809,6 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/canvas/CanvasPanel.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/plugins/panel/canvas/ConnectionAnchors.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/canvas/InlineEdit.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

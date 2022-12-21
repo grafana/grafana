@@ -708,7 +708,11 @@ export class Scene {
 
   // TODO: Figure out why this is still glitchy
   handleMouseEnter = (event: React.MouseEvent) => {
-    const element = (event.target as HTMLElement).parentElement?.parentElement;
+    if (!(event.target instanceof HTMLElement)) {
+      return;
+    }
+
+    const element = event.target.parentElement?.parentElement;
     if (!element) {
       console.log('no element');
       return;
