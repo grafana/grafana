@@ -34,6 +34,10 @@ const defaultProps: Props = {
       avatarUrl: '/avatar/07d881f402480a2a511a9a15b5fa82c0',
       memberCount: 2000,
       permission: TeamPermissionLevel.Admin,
+      accessControl: { isEditor: false },
+      created: 0,
+      orgId: 0,
+      updated: 0,
     },
   ],
   orgs: [

@@ -97,6 +97,10 @@ describe('userReducer', () => {
                 avatarUrl: '/avatar/12345',
                 memberCount: 4,
                 permission: TeamPermissionLevel.Admin,
+                accessControl: { isEditor: false },
+                created: 0,
+                orgId: 0,
+                updated: 0,
               },
             ],
           })
@@ -112,6 +116,10 @@ describe('userReducer', () => {
               avatarUrl: '/avatar/12345',
               memberCount: 4,
               permission: TeamPermissionLevel.Admin,
+              accessControl: { isEditor: false },
+              created: 0,
+              orgId: 0,
+              updated: 0,
             },
           ],
         });
