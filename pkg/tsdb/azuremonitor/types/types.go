@@ -159,6 +159,12 @@ type AzureMonitorDimensionFilter struct {
 	Filter *string `json:"filter,omitempty"`
 }
 
+type AzureMonitorDimensionFilterBackend struct {
+	Key      string   `json:"key"`
+	Operator int      `json:"operator"`
+	Values   []string `json:"values"`
+}
+
 func (a AzureMonitorDimensionFilter) ConstructFiltersString() string {
 	var filterStrings []string
 	for _, filter := range a.Filters {
