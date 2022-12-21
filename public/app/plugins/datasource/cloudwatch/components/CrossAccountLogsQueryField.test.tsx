@@ -177,4 +177,36 @@ describe('CrossAccountLogsQueryField', () => {
       },
     ]);
   });
+
+  const labelText =
+    'Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your search.';
+  it('should not display max result info label in case less than 50 logs groups is being displayed', async () => {
+    const defer = new Deferred();
+    const fetchLogGroups = jest.fn(async () => {
+      await Promise.all([defer.promise]);
+      return [];
+    });
+    render(<CrossAccountLogsQueryField {...defaultProps} fetchLogGroups={fetchLogGroups} />);
+    await userEvent.click(screen.getByText('Select Log Groups'));
+    expect(screen.queryByText(labelText)).not.toBeInTheDocument();
+    defer.resolve();
+    await waitFor(() => expect(screen.queryByText(labelText)).not.toBeInTheDocument());
+  });
+
+  it('should display max result info label in case 50 or more logs groups are being displayed', async () => {
+    const defer = new Deferred();
+    const fetchLogGroups = jest.fn(async () => {
+      await Promise.all([defer.promise]);
+      return Array(50).map((i) => ({
+        logGroupName: `logGroup${i}`,
+        text: `logGroup${i}`,
+        label: `logGroup${i}`,
+      }));
+    });
+    render(<CrossAccountLogsQueryField {...defaultProps} fetchLogGroups={fetchLogGroups} />);
+    await userEvent.click(screen.getByText('Select Log Groups'));
+    expect(screen.queryByText(labelText)).not.toBeInTheDocument();
+    defer.resolve();
+    await waitFor(() => expect(screen.getByText(labelText)).toBeInTheDocument());
+  });
 });
