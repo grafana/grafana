@@ -58,3 +58,8 @@ func (c URLConstructor) RelativeBaseURL() (string, error) {
 	}
 	return strings.TrimRight(u, "/"), nil
 }
+
+func RelativeURLForSystemJS(s string) string {
+	const systemJSKey = "plugin-cdn/"
+	return systemJSKey + strings.Split(s, "/"+systemJSKey)[1]
+}

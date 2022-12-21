@@ -36,3 +36,11 @@ func TestURLConstructor_RelativeURLFor(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "/plugins-cdn-test/the-plugin/0.1/public/plugins/path/to/file.txt", u)
 }
+
+func TestRelativeURLForSystemJS(t *testing.T) {
+	var uc = NewCDNURLConstructor("https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/{id}/{version}/public/plugins/grafana-worldmap-panel/{assetPath}", "grafana-worldmap-panel", "0.3.3")
+	u, err := uc.RelativeURLFor("module")
+	require.NoError(t, err)
+	sysJSURL := RelativeURLForSystemJS(u)
+	assert.Equal(t, "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module", sysJSURL)
+}

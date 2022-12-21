@@ -494,7 +494,7 @@ func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string,
 		if err != nil {
 			return "", err
 		}
-		return strings.TrimLeft(u, "/"), nil
+		return pluginscdn.RelativeURLForSystemJS(u), nil
 	}
 	return path.Join("public/plugins", pluginJSON.ID), nil
 }
@@ -508,7 +508,7 @@ func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, 
 		if err != nil {
 			return "", err
 		}
-		return strings.TrimLeft(u, "/"), nil
+		return pluginscdn.RelativeURLForSystemJS(u), nil
 	}
 	return path.Join("plugins", pluginJSON.ID, "module"), nil
 }
