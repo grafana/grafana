@@ -280,11 +280,6 @@ export class TimeSrv {
   }
 
   setTime(time: RawTimeRange, updateUrl = true) {
-    // If we are in a public dashboard ignore time range changes
-    if (config.isPublicDashboardView) {
-      return;
-    }
-
     extend(this.time, time);
 
     // disable refresh if zoom in or zoom out
