@@ -342,17 +342,11 @@ func (hs *HTTPServer) serveLocalPluginAsset(c *models.ReqContext, plugin plugins
 	http.ServeContent(c.Resp, c.Req, assetPath, fi.ModTime(), bytes.NewReader(b))
 }
 
-// getCDNPluginAssetRemoteURL takes a plugin and an asset file path and returns the URL for the asset on the CDN
-// configured in hs.Cfg.PluginsCDNBasePath.
-func (hs *HTTPServer) getCDNPluginAssetRemoteURL(plugin plugins.PluginDTO, assetPath string) (string, error) {
-	return pluginscdn.NewCDNURLConstructor(
-		hs.Cfg.PluginsCDNBasePath, plugin.ID, plugin.Info.Version,
-	).StringURLFor(assetPath)
-}
-
 // redirectCDNPluginAsset redirects the http request to specified asset path on the configured plugins CDN.
 func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugins.PluginDTO, assetPath string) {
-	remoteURL, err := hs.getCDNPluginAssetRemoteURL(plugin, assetPath)
+	remoteURL, err := pluginscdn.NewCDNURLConstructor(
+		hs.Cfg.PluginsCDNBasePath, plugin.ID, plugin.Info.Version,
+	).StringURLFor(assetPath)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get CDN plugin asset remote URL", err)
 		return

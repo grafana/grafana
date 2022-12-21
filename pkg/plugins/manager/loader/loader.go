@@ -490,7 +490,9 @@ func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string,
 		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir)), nil
 	}
 	if isCDN {
-		u, err := pluginscdn.NewCDNURLConstructor(cdnBaseURL, pluginJSON.ID, pluginJSON.Info.Version).RelativeBaseURL()
+		u, err := pluginscdn.NewCDNURLConstructor(
+			cdnBaseURL, pluginJSON.ID, pluginJSON.Info.Version,
+		).StringURLFor("")
 		if err != nil {
 			return "", err
 		}
@@ -504,7 +506,9 @@ func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, 
 		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module"), nil
 	}
 	if isCDN {
-		u, err := pluginscdn.NewCDNURLConstructor(cdnBaseURL, pluginJSON.ID, pluginJSON.Info.Version).RelativeURLFor("module")
+		u, err := pluginscdn.NewCDNURLConstructor(
+			cdnBaseURL, pluginJSON.ID, pluginJSON.Info.Version,
+		).StringURLFor("module")
 		if err != nil {
 			return "", err
 		}
