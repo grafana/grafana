@@ -19,7 +19,7 @@ export interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
-  showFields?: string[];
+  displayedFields?: string[];
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   row: LogRowModel;
@@ -187,7 +187,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       parsedValue,
       isLabel,
       links,
-      showFields: showDetectedFields,
+      displayedFields,
       wrapLogMessage,
       onClickFilterLabel,
       onClickFilterOutLabel,
@@ -198,7 +198,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
 
     const toggleFieldButton =
-      showDetectedFields && showDetectedFields.includes(parsedKey) ? (
+      displayedFields && displayedFields.includes(parsedKey) ? (
         <ToolbarButton
           className={styles.showingField}
           tooltip="Hide this field"

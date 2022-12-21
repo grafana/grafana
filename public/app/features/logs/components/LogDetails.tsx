@@ -120,7 +120,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                         row={row}
                         app={app}
                         wrapLogMessage={wrapLogMessage}
-                        showFields={showFields}
+                        displayedFields={showFields}
                       />
                     );
                   })}
@@ -140,7 +140,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                           ? this.getStatsForField(key)
                           : calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())
                       }
-                      showFields={showFields}
+                      displayedFields={showFields}
                       wrapLogMessage={wrapLogMessage}
                       row={row}
                       app={app}
@@ -170,7 +170,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                           ? this.getStatsForField(key)
                           : calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())
                       }
-                      showFields={showFields}
+                      displayedFields={showFields}
                       wrapLogMessage={wrapLogMessage}
                       row={row}
                       app={app}

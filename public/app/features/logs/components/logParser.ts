@@ -24,7 +24,9 @@ export const getAllFields = memoizeOne(
   }
 );
 
-// creates fields from the dataframe-fields, adding data-links, when field.config.links exists
+/**
+ * creates fields from the dataframe-fields, adding data-links, when field.config.links exists
+ */
 const getDataframeFields = memoizeOne(
   (
     row: LogRowModel,
