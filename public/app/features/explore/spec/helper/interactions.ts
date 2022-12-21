@@ -23,7 +23,7 @@ export const inputQuery = async (query: string, exploreId: ExploreId = ExploreId
 export const runQuery = async (exploreId: ExploreId = ExploreId.left) => {
   const explore = withinExplore(exploreId);
   const toolbar = within(explore.getByLabelText('Explore toolbar'));
-  const button = toolbar.getByRole('button', { name: /run/i });
+  const button = toolbar.getByRole('button', { name: /run query/i });
   await userEvent.click(button);
 };
 
