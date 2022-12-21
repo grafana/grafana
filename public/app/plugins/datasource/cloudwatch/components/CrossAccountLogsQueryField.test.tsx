@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 // eslint-disable-next-line lodash/import-scope
 import lodash from 'lodash';
@@ -180,7 +180,7 @@ describe('CrossAccountLogsQueryField', () => {
 
   const labelText =
     'Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your search.';
-  it('should not display max result info label in case less than 50 logs groups is being displayed', async () => {
+  it('should not display max result info label in case less than 50 logs groups are being displayed', async () => {
     const defer = new Deferred();
     const fetchLogGroups = jest.fn(async () => {
       await Promise.all([defer.promise]);
