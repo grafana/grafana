@@ -29,13 +29,18 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number, isExpandedV
     display: flex;
     position: relative;
     padding-left: 22px;
-    ${!isExpandedView ? 'height: calc(100% - 5px);' : ''}
+    ${!isExpandedView ? 'align-items: center;' : ''}
+    ${!isExpandedView ? 'height: 100%;' : ''}
   `,
   copyToClipboardWrapper: css`
     position: absolute;
     left: 0;
-    top: 3px;
+    ${!isExpandedView ? 'bottom: 0;' : ''}
+    ${isExpandedView ? 'top: 4px;' : 'top: 0;'}
+    margin: auto;
     z-index: 1;
+    height: 16px;
+    width: 16px;
   `,
   rowLabelWrapWrap: css`
     position: relative;
@@ -51,6 +56,7 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number, isExpandedV
     &::-webkit-scrollbar {
       display: none; /* Chrome, Safari and Opera */
     }
+
     &:after {
       pointer-events: none;
       content: '';
