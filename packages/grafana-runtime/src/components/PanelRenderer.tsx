@@ -10,7 +10,7 @@ import { AbsoluteTimeRange, FieldConfigSource, PanelData } from '@grafana/data';
  *
  * @internal
  */
-export interface PanelRendererProps<P extends object = any, F extends object = any> {
+export interface PanelRendererPropsStub<P extends object = any, F extends object = any> {
   data?: PanelData;
   pluginId: string;
   title: string;
@@ -22,6 +22,20 @@ export interface PanelRendererProps<P extends object = any, F extends object = a
   timeZone?: string;
   width: number;
   height: number;
+}
+
+export type PanelRendererProps<P extends object = any, F extends object = any> = PanelRendererPropsStub<P, F> & (
+  {pluginId: 'barchart'; extraProps?: BarChartProps} |
+  {pluginId: 'timeseries'; extraProps?: TimeseriesProps} | 
+  {pluginId: string, extraProps?: never}
+); 
+
+export interface BarChartProps {
+  tooltipFn: any;
+}
+
+export interface TimeseriesProps {
+  someNewOption: string;
 }
 
 /**

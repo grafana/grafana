@@ -62,7 +62,15 @@ export interface PanelData {
   timeRange: TimeRange;
 }
 
-export interface PanelProps<T = any> {
+export interface BarChartProps {
+  tooltipFn: any;
+}
+
+export interface TimeseriesProps {
+  someNewOption: string;
+}
+
+export interface PanelProps<T = any, D = any> {
   /** ID of the panel within the current dashboard */
   id: number;
 
@@ -77,6 +85,9 @@ export interface PanelProps<T = any> {
 
   /** Panel options */
   options: T;
+
+  /** Panel extra props */
+  extraProps?: D;
 
   /** Indicates whether or not panel should be rendered transparent */
   transparent: boolean;

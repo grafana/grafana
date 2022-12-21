@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, PropsWithChildren } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
 import {
@@ -21,7 +21,7 @@ import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanel
 const defaultFieldConfig = { defaults: {}, overrides: [] };
 
 export function PanelRenderer<P extends object = any, F extends object = any>(
-  props: PropsWithChildren<PanelRendererProps<P, F>>
+  props: PanelRendererProps<P, F>
 ) {
   const {
     pluginId,
@@ -35,7 +35,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(
     onChangeTimeRange = () => {},
     onFieldConfigChange = () => {},
     fieldConfig = defaultFieldConfig,
-    children,
+    extraProps = {}
   } = props;
 
   const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
@@ -95,9 +95,8 @@ export function PanelRenderer<P extends object = any, F extends object = any>(
           onFieldConfigChange={onFieldConfigChange}
           onChangeTimeRange={onChangeTimeRange}
           eventBus={appEvents}
-        >
-          {pluginId === 'barchart' ? children : null}
-        </PanelComponent>
+          extraProps={extraProps}
+        />
       </PluginContextProvider>
     </ErrorBoundaryAlert>
   );
