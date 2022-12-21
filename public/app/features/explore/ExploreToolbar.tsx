@@ -171,7 +171,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
           Split
         </ToolbarButton>
       ) : (
-        <ButtonGroup>
+        <ButtonGroup key="split-controls">
           <ToolbarButton
             variant="canvas"
             tooltip={`${isLargerExploreId ? 'Narrow' : 'Widen'} pane`}
