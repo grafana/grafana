@@ -101,6 +101,13 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "publicDashboardsEmailSharing",
+			Description:     "Public dashboard email sharing",
+			State:           FeatureStateAlpha,
+			RequiresLicense: true,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "lokiLive",
 			Description: "Support WebSocket streaming for loki (early prototype)",
 			State:       FeatureStateAlpha,

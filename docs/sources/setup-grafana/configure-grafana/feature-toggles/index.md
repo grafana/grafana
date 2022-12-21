@@ -102,6 +102,7 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | -------------------------------------- | --------------------------------------------------------- |
 | `dashboardPreviewsAdmin`               | Manage the dashboard previews crawler process from the UI |
 | `showFeatureFlagsInUI`                 | Show feature flags in the settings UI                     |
+| `publicDashboardsEmailSharing`         | Public dashboard email sharing                            |
 | `k8s`                                  | Explore native k8s integrations                           |
 | `dashboardsFromStorage`                | Load dashboards from the generic storage interface        |
 | `export`                               | Export grafana instance (to git, etc)                     |

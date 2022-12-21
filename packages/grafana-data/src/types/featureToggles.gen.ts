@@ -33,6 +33,7 @@ export interface FeatureToggles {
   influxdbBackendMigration?: boolean;
   showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
+  publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;
   lokiDataframeApi?: boolean;
   lokiMonacoEditor?: boolean;
