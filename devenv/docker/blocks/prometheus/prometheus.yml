@@ -40,7 +40,7 @@ scrape_configs:
 
   - job_name: 'mysql'
     static_configs:
-      - targets: ['mysql-exporeter:9104']
+      - targets: ['mysql-exporter:9104']
   # - job_name: 'grafana-test-datasource'
   #   metrics_path: /metrics/plugins/grafana-test-datasource
   #   static_configs:
