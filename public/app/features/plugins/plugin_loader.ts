@@ -33,6 +33,7 @@ import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
 import { locateFromCDN, translateForCDN } from './pluginCDN';
+import { fetchCSS, locateCSS } from './pluginCSS';
 import { locateWithCache, registerPluginInCache } from './pluginCacheBuster';
 
 // Help the 6.4 to 6.5 migration
@@ -44,6 +45,7 @@ grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
 grafanaUI.AppPlugin = grafanaData.AppPlugin;
 grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
+grafanaRuntime.SystemJS.registry.set('css', grafanaRuntime.SystemJS.newModule({ locate: locateCSS, fetch: fetchCSS }));
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
 grafanaRuntime.SystemJS.registry.set(
   'cdn-loader',
@@ -63,7 +65,6 @@ grafanaRuntime.SystemJS.config({
   },
   map: {
     text: 'vendor/plugin-text/text.js',
-    css: 'vendor/plugin-css/css.js',
   },
   paths: {},
   meta: {
@@ -71,6 +72,9 @@ grafanaRuntime.SystemJS.config({
       esModule: true,
       authorization: true,
       loader: 'plugin-loader',
+    },
+    '*.css': {
+      loader: 'css',
     },
     'plugin-cdn/*': {
       esModule: true,
