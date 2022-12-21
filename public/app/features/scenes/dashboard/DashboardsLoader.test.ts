@@ -72,6 +72,7 @@ describe('DashboardLoader', () => {
         text: 'a',
         type: 'custom',
         value: 'a',
+        hide: 0,
       });
     });
     it('should migrate query variable', () => {
@@ -157,6 +158,7 @@ describe('DashboardLoader', () => {
         text: 'America',
         type: 'query',
         value: 'America',
+        hide: 0,
       });
     });
 
@@ -221,6 +223,8 @@ describe('DashboardLoader', () => {
         type: 'datasource',
         value: ['gdev-prometheus', 'gdev-slow-prometheus'],
         isMulti: true,
+        description: null,
+        hide: 0,
       });
     });
 
