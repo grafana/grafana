@@ -272,13 +272,33 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 	}
 
 	filteredUsers := make([]*org.OrgUserDTO, 0, len(result.OrgUsers))
+	userIDs := map[string]bool{}
+	authLabelsUserIDs := make([]int64, 0, len(result.OrgUsers))
 	for _, user := range result.OrgUsers {
 		if dtos.IsHiddenUser(user.Login, c.SignedInUser, hs.Cfg) {
 			continue
 		}
 		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
 
+		userIDs[fmt.Sprint(user.UserID)] = true
+		authLabelsUserIDs = append(authLabelsUserIDs, user.UserID)
 		filteredUsers = append(filteredUsers, user)
+	}
+
+	modules, err := hs.authInfoService.GetUserLabels(c.Req.Context(), models.GetUserLabelsQuery{
+		UserIDs: authLabelsUserIDs,
+	})
+	if err != nil {
+		hs.log.Warn("failed to retrieve users IDP label", err)
+	}
+
+	// Get accesscontrol metadata and IPD labels for users in the target org
+	accessControlMetadata := hs.getMultiAccessControlMetadata(c, query.OrgID, "users:id:", userIDs)
+	for i := range filteredUsers {
+		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
+		if module, ok := modules[filteredUsers[i].UserID]; ok {
+			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
+		}
 	}
 
 	result.OrgUsers = filteredUsers
