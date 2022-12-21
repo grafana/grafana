@@ -6,7 +6,7 @@ import { RawPrometheusListItemEmptyValue } from '../utils/getRawPrometheusListIt
 import { ItemValues } from './ItemValues';
 import { RawListValue } from './RawListItem';
 
-function getMockString(length: number) {
+export function getMockString(length: number) {
   let result = '';
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   const charactersLength = characters.length;
