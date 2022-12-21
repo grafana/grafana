@@ -26,92 +26,226 @@ import (
 	"golang.org/x/oauth2"
 )
 
+const loginCookieName = "grafana_session"
+
 func TestIntegrationBackendPlugins(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	regularQuery := func(t *testing.T, tsCtx *testScenarioContext) dtos.MetricRequest {
-		t.Helper()
-
-		return metricRequestWithQueries(t, fmt.Sprintf(`{
-			"datasource": {
-				"uid": "%s"
-			}
-		}`, tsCtx.uid))
+	oauthToken := &oauth2.Token{
+		TokenType:    "bearer",
+		AccessToken:  "access-token",
+		RefreshToken: "refresh-token",
+		Expiry:       time.Now().UTC().Add(24 * time.Hour),
 	}
+	oauthToken = oauthToken.WithExtra(map[string]interface{}{"id_token": "id-token"})
 
-	expressionQuery := func(t *testing.T, tsCtx *testScenarioContext) dtos.MetricRequest {
-		t.Helper()
+	newTestScenario(t, "Datasource with no custom HTTP settings",
+		options(
+			withIncomingRequest(func(req *http.Request) {
+				req.Header.Set("X-Custom", "custom")
+				req.AddCookie(&http.Cookie{Name: "cookie1"})
+				req.AddCookie(&http.Cookie{Name: "cookie2"})
+				req.AddCookie(&http.Cookie{Name: "cookie3"})
+				req.AddCookie(&http.Cookie{Name: loginCookieName})
+			}),
+		),
+		func(t *testing.T, tsCtx *testScenarioContext) {
+			verify := func(h backend.ForwardHTTPHeaders) {
+				require.NotNil(t, h)
+				require.Empty(t, h.GetHTTPHeader(backend.CookiesHeaderName))
+				require.Empty(t, h.GetHTTPHeader("Authorization"))
 
-		return metricRequestWithQueries(t, fmt.Sprintf(`{
-			"refId": "A",
-			"datasource": {
-				"uid": "%s",
-				"type": "%s"
+				require.NotNil(t, tsCtx.outgoingRequest)
+				require.NotEmpty(t, tsCtx.outgoingRequest.Header)
 			}
-		}`, tsCtx.uid, tsCtx.testPluginID), `{
-			"refId": "B",
-			"datasource": {
-				"type": "__expr__",
-				"uid": "__expr__",
-				"name": "Expression"
-			},
-			"type": "math",
-			"expression": "$A - 50"
-		}`)
-	}
 
-	newTestScenario(t, "When oauth token not available", func(t *testing.T, tsCtx *testScenarioContext) {
-		tsCtx.testEnv.OAuthTokenService.Token = nil
+			tsCtx.runCheckHealthTest(t, func(pReq *backend.CheckHealthRequest) {
+				verify(pReq)
+			})
 
-		tsCtx.runCheckHealthTest(t)
-		tsCtx.runCallResourceTest(t)
+			tsCtx.runCallResourceTest(t, func(pReq *backend.CallResourceRequest) {
+				verify(pReq)
+				require.Equal(t, "custom", pReq.GetHTTPHeader("X-Custom"))
+				require.Equal(t, "custom", tsCtx.outgoingRequest.Header.Get("X-Custom"))
+			})
 
-		t.Run("regular query", func(t *testing.T) {
-			tsCtx.runQueryDataTest(t, regularQuery(t, tsCtx))
+			verifyQueryData := func(pReq *backend.QueryDataRequest) {
+				verify(pReq)
+			}
+
+			t.Run("regular query", func(t *testing.T) {
+				tsCtx.runQueryDataTest(t, createRegularQuery(t, tsCtx), verifyQueryData)
+
+				t.Run("expression query", func(t *testing.T) {
+					tsCtx.runQueryDataTest(t, createExpressionQuery(t, tsCtx), verifyQueryData)
+				})
+			})
 		})
 
-		t.Run("expression query", func(t *testing.T) {
-			tsCtx.runQueryDataTest(t, expressionQuery(t, tsCtx))
+	newTestScenario(t, "Datasource with most HTTP settings set except oauthPassThru and oauth token available",
+		options(
+			withIncomingRequest(func(req *http.Request) {
+				req.AddCookie(&http.Cookie{Name: "cookie1"})
+				req.AddCookie(&http.Cookie{Name: "cookie2"})
+				req.AddCookie(&http.Cookie{Name: "cookie3"})
+				req.AddCookie(&http.Cookie{Name: loginCookieName})
+			}),
+			withOAuthToken(oauthToken),
+			withDsBasicAuth("basicAuthUser", "basicAuthPassword"),
+			withDsCustomHeader(map[string]string{"X-CUSTOM-HEADER": "custom-header-value"}),
+			withDsCookieForwarding([]string{"cookie1", "cookie3", loginCookieName}),
+		),
+		func(t *testing.T, tsCtx *testScenarioContext) {
+			verify := func(h backend.ForwardHTTPHeaders) {
+				require.NotNil(t, h)
+				require.Equal(t, "cookie1=; cookie3=", h.GetHTTPHeader(backend.CookiesHeaderName))
+				require.Empty(t, h.GetHTTPHeader(backend.OAuthIdentityTokenHeaderName))
+				require.Empty(t, h.GetHTTPHeader(backend.OAuthIdentityIDTokenHeaderName))
+
+				require.NotNil(t, tsCtx.outgoingRequest)
+				require.Equal(t, "cookie1=; cookie3=", tsCtx.outgoingRequest.Header.Get(backend.CookiesHeaderName))
+				require.Equal(t, "custom-header-value", tsCtx.outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
+
+				username, pwd, ok := tsCtx.outgoingRequest.BasicAuth()
+				require.True(t, ok)
+				require.Equal(t, "basicAuthUser", username)
+				require.Equal(t, "basicAuthPassword", pwd)
+			}
+
+			tsCtx.runCheckHealthTest(t, func(pReq *backend.CheckHealthRequest) {
+				verify(pReq)
+			})
+
+			tsCtx.runCallResourceTest(t, func(pReq *backend.CallResourceRequest) {
+				verify(pReq)
+			})
+
+			verifyQueryData := func(pReq *backend.QueryDataRequest) {
+				verify(pReq)
+			}
+
+			t.Run("regular query", func(t *testing.T) {
+				tsCtx.runQueryDataTest(t, createRegularQuery(t, tsCtx), verifyQueryData)
+
+				t.Run("expression query", func(t *testing.T) {
+					tsCtx.runQueryDataTest(t, createExpressionQuery(t, tsCtx), verifyQueryData)
+				})
+			})
 		})
-	})
 
-	newTestScenario(t, "When oauth token available", func(t *testing.T, tsCtx *testScenarioContext) {
-		token := &oauth2.Token{
-			TokenType:    "bearer",
-			AccessToken:  "access-token",
-			RefreshToken: "refresh-token",
-			Expiry:       time.Now().UTC().Add(24 * time.Hour),
-		}
-		token = token.WithExtra(map[string]interface{}{"id_token": "id-token"})
-		tsCtx.testEnv.OAuthTokenService.Token = token
+	newTestScenario(t, "Datasource with oauthPassThru and basic auth configured and oauth token available",
+		options(
+			withOAuthToken(oauthToken),
+			withDsOAuthForwarding(),
+			withDsBasicAuth("basicAuthUser", "basicAuthPassword"),
+		),
+		func(t *testing.T, tsCtx *testScenarioContext) {
+			verify := func(h backend.ForwardHTTPHeaders) {
+				require.NotNil(t, h)
 
-		tsCtx.runCheckHealthTest(t)
-		tsCtx.runCallResourceTest(t)
+				expectedAuthHeader := fmt.Sprintf("Bearer %s", oauthToken.AccessToken)
+				expectedTokenHeader := oauthToken.Extra("id_token").(string)
 
-		t.Run("regular query", func(t *testing.T) {
-			tsCtx.runQueryDataTest(t, regularQuery(t, tsCtx))
+				require.Equal(t, expectedAuthHeader, h.GetHTTPHeader(backend.OAuthIdentityTokenHeaderName))
+				require.Equal(t, expectedTokenHeader, h.GetHTTPHeader(backend.OAuthIdentityIDTokenHeaderName))
+
+				require.NotNil(t, tsCtx.outgoingRequest)
+				require.Equal(t, expectedAuthHeader, tsCtx.outgoingRequest.Header.Get(backend.OAuthIdentityTokenHeaderName))
+				require.Equal(t, expectedTokenHeader, tsCtx.outgoingRequest.Header.Get(backend.OAuthIdentityIDTokenHeaderName))
+			}
+
+			tsCtx.runCheckHealthTest(t, func(pReq *backend.CheckHealthRequest) {
+				verify(pReq)
+			})
+
+			tsCtx.runCallResourceTest(t, func(pReq *backend.CallResourceRequest) {
+				verify(pReq)
+			})
+
+			verifyQueryData := func(pReq *backend.QueryDataRequest) {
+				verify(pReq)
+			}
+
+			t.Run("regular query", func(t *testing.T) {
+				tsCtx.runQueryDataTest(t, createRegularQuery(t, tsCtx), verifyQueryData)
+
+				t.Run("expression query", func(t *testing.T) {
+					tsCtx.runQueryDataTest(t, createExpressionQuery(t, tsCtx), verifyQueryData)
+				})
+			})
 		})
-
-		t.Run("expression query", func(t *testing.T) {
-			tsCtx.runQueryDataTest(t, expressionQuery(t, tsCtx))
-		})
-	})
 }
 
 type testScenarioContext struct {
-	testPluginID         string
-	uid                  string
-	grafanaListeningAddr string
-	testEnv              *server.TestEnv
-	outgoingServer       *httptest.Server
-	outgoingRequest      *http.Request
-	backendTestPlugin    *testPlugin
-	rt                   http.RoundTripper
+	testPluginID          string
+	uid                   string
+	grafanaListeningAddr  string
+	testEnv               *server.TestEnv
+	outgoingServer        *httptest.Server
+	outgoingRequest       *http.Request
+	backendTestPlugin     *testPlugin
+	rt                    http.RoundTripper
+	modifyIncomingRequest func(req *http.Request)
 }
 
-func newTestScenario(t *testing.T, name string, callback func(t *testing.T, ctx *testScenarioContext)) {
+type testScenarioInput struct {
+	ds                    *datasources.AddDataSourceCommand
+	token                 *oauth2.Token
+	modifyIncomingRequest func(req *http.Request)
+}
+
+type testScenarioOption func(*testScenarioInput)
+
+func options(opts ...testScenarioOption) []testScenarioOption {
+	return opts
+}
+
+func withIncomingRequest(cb func(req *http.Request)) testScenarioOption {
+	return func(in *testScenarioInput) {
+		in.modifyIncomingRequest = cb
+	}
+}
+
+func withOAuthToken(token *oauth2.Token) testScenarioOption {
+	return func(in *testScenarioInput) {
+		in.token = token
+	}
+}
+
+func withDsBasicAuth(username, password string) testScenarioOption {
+	return func(in *testScenarioInput) {
+		in.ds.BasicAuth = true
+		in.ds.BasicAuthUser = username
+		in.ds.SecureJsonData["basicAuthPassword"] = password
+	}
+}
+
+func withDsCustomHeader(headers map[string]string) testScenarioOption {
+	return func(in *testScenarioInput) {
+		index := 1
+		for k, v := range headers {
+			in.ds.JsonData.Set(fmt.Sprintf("httpHeaderName%d", index), k)
+			in.ds.SecureJsonData[fmt.Sprintf("httpHeaderValue%d", index)] = v
+			index++
+		}
+	}
+}
+
+func withDsOAuthForwarding() testScenarioOption {
+	return func(in *testScenarioInput) {
+		in.ds.JsonData.Set("oauthPassThru", true)
+	}
+}
+
+func withDsCookieForwarding(names []string) testScenarioOption {
+	return func(in *testScenarioInput) {
+		in.ds.JsonData.Set("keepCookies", names)
+	}
+}
+
+func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callback func(t *testing.T, ctx *testScenarioContext)) {
 	tsCtx := testScenarioContext{
 		testPluginID: "test-plugin",
 	}
@@ -123,6 +257,7 @@ func newTestScenario(t *testing.T, name string, callback func(t *testing.T, ctx 
 
 	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
 	tsCtx.grafanaListeningAddr = grafanaListeningAddr
+	testEnv.SQLStore.Cfg.LoginCookieName = loginCookieName
 	tsCtx.testEnv = testEnv
 	ctx := context.Background()
 
@@ -143,29 +278,30 @@ func newTestScenario(t *testing.T, name string, callback func(t *testing.T, ctx 
 	err := testEnv.PluginRegistry.Add(ctx, testPlugin)
 	require.NoError(t, err)
 
-	jsonData := simplejson.NewFromAny(map[string]interface{}{
-		"httpHeaderName1": "X-CUSTOM-HEADER",
-		"oauthPassThru":   true,
-		"keepCookies":     []string{"cookie1", "cookie3", "grafana_session"},
-	})
-	secureJSONData := map[string]string{
-		"basicAuthPassword": "basicAuthPassword",
-		"httpHeaderValue1":  "custom-header-value",
-	}
+	jsonData := simplejson.New()
+	secureJSONData := map[string]string{}
 
 	tsCtx.uid = "test-plugin"
-	err = testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
+	cmd := &datasources.AddDataSourceCommand{
 		OrgId:          1,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "TestPlugin",
 		Type:           tsCtx.testPluginID,
 		Uid:            tsCtx.uid,
 		Url:            tsCtx.outgoingServer.URL,
-		BasicAuth:      true,
-		BasicAuthUser:  "basicAuthUser",
 		JsonData:       jsonData,
 		SecureJsonData: secureJSONData,
-	})
+	}
+
+	in := &testScenarioInput{ds: cmd}
+	for _, opt := range opts {
+		opt(in)
+	}
+
+	tsCtx.modifyIncomingRequest = in.modifyIncomingRequest
+	tsCtx.testEnv.OAuthTokenService.Token = in.token
+
+	err = testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, cmd)
 	require.NoError(t, err)
 
 	getDataSourceQuery := &datasources.GetDataSourceQuery{
@@ -185,17 +321,42 @@ func newTestScenario(t *testing.T, name string, callback func(t *testing.T, ctx 
 	})
 }
 
-func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricRequest) {
-	t.Run("When calling /api/ds/query should set expected headers on outgoing QueryData and HTTP request", func(t *testing.T) {
-		var received *struct {
-			ctx context.Context
-			req *backend.QueryDataRequest
+func createRegularQuery(t *testing.T, tsCtx *testScenarioContext) dtos.MetricRequest {
+	t.Helper()
+
+	return metricRequestWithQueries(t, fmt.Sprintf(`{
+		"datasource": {
+			"uid": "%s"
 		}
+	}`, tsCtx.uid))
+}
+
+func createExpressionQuery(t *testing.T, tsCtx *testScenarioContext) dtos.MetricRequest {
+	t.Helper()
+
+	return metricRequestWithQueries(t, fmt.Sprintf(`{
+		"refId": "A",
+		"datasource": {
+			"uid": "%s",
+			"type": "%s"
+		}
+	}`, tsCtx.uid, tsCtx.testPluginID), `{
+		"refId": "B",
+		"datasource": {
+			"type": "__expr__",
+			"uid": "__expr__",
+			"name": "Expression"
+		},
+		"type": "math",
+		"expression": "$A - 50"
+	}`)
+}
+
+func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricRequest, callback func(req *backend.QueryDataRequest)) {
+	t.Run("When calling /api/ds/query should set expected headers on outgoing QueryData and HTTP request", func(t *testing.T) {
+		var received *backend.QueryDataRequest
 		tsCtx.backendTestPlugin.QueryDataHandler = backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-			received = &struct {
-				ctx context.Context
-				req *backend.QueryDataRequest
-			}{ctx, req}
+			received = req
 
 			c := http.Client{
 				Transport: tsCtx.rt,
@@ -228,18 +389,10 @@ func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricR
 		req, err := http.NewRequest(http.MethodPost, u, buf1)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36")
-		req.AddCookie(&http.Cookie{
-			Name: "cookie1",
-		})
-		req.AddCookie(&http.Cookie{
-			Name: "cookie2",
-		})
-		req.AddCookie(&http.Cookie{
-			Name: "cookie3",
-		})
-		req.AddCookie(&http.Cookie{
-			Name: "grafana_session",
-		})
+
+		if tsCtx.modifyIncomingRequest != nil {
+			tsCtx.modifyIncomingRequest(req)
+		}
 
 		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
@@ -254,52 +407,18 @@ func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricR
 		_, err = io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		// backend query data request
-		require.NotNil(t, received)
-		require.Equal(t, "cookie1=; cookie3=", received.req.Headers["Cookie"])
-
-		token := tsCtx.testEnv.OAuthTokenService.Token
-
-		var expectedAuthHeader string
-		var expectedTokenHeader string
-
-		if token != nil {
-			expectedAuthHeader = fmt.Sprintf("Bearer %s", token.AccessToken)
-			expectedTokenHeader = token.Extra("id_token").(string)
-
-			require.Equal(t, expectedAuthHeader, received.req.Headers["Authorization"])
-			require.Equal(t, expectedTokenHeader, received.req.Headers["X-ID-Token"])
-		}
-
-		// outgoing HTTP request
-		require.NotNil(t, tsCtx.outgoingRequest)
-		require.Equal(t, "cookie1=; cookie3=", tsCtx.outgoingRequest.Header.Get("Cookie"))
-		require.Equal(t, "custom-header-value", tsCtx.outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
+		require.NotEmpty(t, tsCtx.outgoingRequest.Header.Get("Accept-Encoding"))
 		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.SQLStore.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
 
-		if token == nil {
-			username, pwd, ok := tsCtx.outgoingRequest.BasicAuth()
-			require.True(t, ok)
-			require.Equal(t, "basicAuthUser", username)
-			require.Equal(t, "basicAuthPassword", pwd)
-		} else {
-			require.Equal(t, expectedAuthHeader, tsCtx.outgoingRequest.Header.Get("Authorization"))
-			require.Equal(t, expectedTokenHeader, tsCtx.outgoingRequest.Header.Get("X-ID-Token"))
-		}
+		callback(received)
 	})
 }
 
-func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T) {
+func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T, callback func(req *backend.CheckHealthRequest)) {
 	t.Run("When calling /api/datasources/uid/:uid/health should set expected headers on outgoing CheckHealth and HTTP request", func(t *testing.T) {
-		var received *struct {
-			ctx context.Context
-			req *backend.CheckHealthRequest
-		}
+		var received *backend.CheckHealthRequest
 		tsCtx.backendTestPlugin.CheckHealthHandler = backend.CheckHealthHandlerFunc(func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-			received = &struct {
-				ctx context.Context
-				req *backend.CheckHealthRequest
-			}{ctx, req}
+			received = req
 
 			c := http.Client{
 				Transport: tsCtx.rt,
@@ -331,18 +450,10 @@ func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, u, nil)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36")
-		req.AddCookie(&http.Cookie{
-			Name: "cookie1",
-		})
-		req.AddCookie(&http.Cookie{
-			Name: "cookie2",
-		})
-		req.AddCookie(&http.Cookie{
-			Name: "cookie3",
-		})
-		req.AddCookie(&http.Cookie{
-			Name: "grafana_session",
-		})
+
+		if tsCtx.modifyIncomingRequest != nil {
+			tsCtx.modifyIncomingRequest(req)
+		}
 
 		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
@@ -357,52 +468,18 @@ func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T) {
 		_, err = io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		// backend query data request
-		require.NotNil(t, received)
-		require.Equal(t, "cookie1=; cookie3=", received.req.Headers["Cookie"])
-
-		token := tsCtx.testEnv.OAuthTokenService.Token
-
-		var expectedAuthHeader string
-		var expectedTokenHeader string
-
-		if token != nil {
-			expectedAuthHeader = fmt.Sprintf("Bearer %s", token.AccessToken)
-			expectedTokenHeader = token.Extra("id_token").(string)
-
-			require.Equal(t, expectedAuthHeader, received.req.Headers["Authorization"])
-			require.Equal(t, expectedTokenHeader, received.req.Headers["X-ID-Token"])
-		}
-
-		// outgoing HTTP request
-		require.NotNil(t, tsCtx.outgoingRequest)
-		require.Equal(t, "cookie1=; cookie3=", tsCtx.outgoingRequest.Header.Get("Cookie"))
-		require.Equal(t, "custom-header-value", tsCtx.outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
+		require.NotEmpty(t, tsCtx.outgoingRequest.Header.Get("Accept-Encoding"))
 		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.SQLStore.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
 
-		if token == nil {
-			username, pwd, ok := tsCtx.outgoingRequest.BasicAuth()
-			require.True(t, ok)
-			require.Equal(t, "basicAuthUser", username)
-			require.Equal(t, "basicAuthPassword", pwd)
-		} else {
-			require.Equal(t, expectedAuthHeader, tsCtx.outgoingRequest.Header.Get("Authorization"))
-			require.Equal(t, expectedTokenHeader, tsCtx.outgoingRequest.Header.Get("X-ID-Token"))
-		}
+		callback(received)
 	})
 }
 
-func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T) {
+func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T, callback func(req *backend.CallResourceRequest)) {
 	t.Run("When calling /api/datasources/uid/:uid/resources should set expected headers on outgoing CallResource and HTTP request", func(t *testing.T) {
-		var received *struct {
-			ctx context.Context
-			req *backend.CallResourceRequest
-		}
+		var received *backend.CallResourceRequest
 		tsCtx.backendTestPlugin.CallResourceHandler = backend.CallResourceHandlerFunc(func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-			received = &struct {
-				ctx context.Context
-				req *backend.CallResourceRequest
-			}{ctx, req}
+			received = req
 
 			c := http.Client{
 				Transport: tsCtx.rt,
@@ -454,20 +531,11 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T) {
 		req.Header.Set("Connection", "X-Some-Conn-Header")
 		req.Header.Set("X-Some-Conn-Header", "should be deleted")
 		req.Header.Set("Proxy-Connection", "should be deleted")
-		req.Header.Set("X-Custom", "custom")
 		req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36")
-		req.AddCookie(&http.Cookie{
-			Name: "cookie1",
-		})
-		req.AddCookie(&http.Cookie{
-			Name: "cookie2",
-		})
-		req.AddCookie(&http.Cookie{
-			Name: "cookie3",
-		})
-		req.AddCookie(&http.Cookie{
-			Name: "grafana_session",
-		})
+
+		if tsCtx.modifyIncomingRequest != nil {
+			tsCtx.modifyIncomingRequest(req)
+		}
 
 		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
@@ -489,46 +557,18 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T) {
 		require.Empty(t, resp.Header.Get("Set-Cookie"))
 		require.Equal(t, "should not be deleted", resp.Header.Get("X-Custom"))
 
-		// backend query data request
 		require.NotNil(t, received)
-		require.Equal(t, "cookie1=; cookie3=", received.req.Headers["Cookie"][0])
-		require.Empty(t, received.req.Headers["Connection"])
-		require.Empty(t, received.req.Headers["X-Some-Conn-Header"])
-		require.Empty(t, received.req.Headers["Proxy-Connection"])
-		require.Equal(t, "custom", received.req.Headers["X-Custom"][0])
+		require.Empty(t, received.Headers["Connection"])
+		require.Empty(t, received.Headers["X-Some-Conn-Header"])
+		require.Empty(t, received.Headers["Proxy-Connection"])
 
-		token := tsCtx.testEnv.OAuthTokenService.Token
-
-		var expectedAuthHeader string
-		var expectedTokenHeader string
-
-		if token != nil {
-			expectedAuthHeader = fmt.Sprintf("Bearer %s", token.AccessToken)
-			expectedTokenHeader = token.Extra("id_token").(string)
-
-			require.Equal(t, expectedAuthHeader, received.req.Headers["Authorization"][0])
-			require.Equal(t, expectedTokenHeader, received.req.Headers["X-ID-Token"][0])
-		}
-
-		// outgoing HTTP request
-		require.NotNil(t, tsCtx.outgoingRequest)
-		require.Equal(t, "cookie1=; cookie3=", tsCtx.outgoingRequest.Header.Get("Cookie"))
 		require.Empty(t, tsCtx.outgoingRequest.Header.Get("Connection"))
 		require.Empty(t, tsCtx.outgoingRequest.Header.Get("X-Some-Conn-Header"))
 		require.Empty(t, tsCtx.outgoingRequest.Header.Get("Proxy-Connection"))
-		require.Equal(t, "custom", tsCtx.outgoingRequest.Header.Get("X-Custom"))
-		require.Equal(t, "custom-header-value", tsCtx.outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
+		require.NotEmpty(t, tsCtx.outgoingRequest.Header.Get("Accept-Encoding"))
 		require.Equal(t, fmt.Sprintf("Grafana/%s", tsCtx.testEnv.SQLStore.Cfg.BuildVersion), tsCtx.outgoingRequest.Header.Get("User-Agent"))
 
-		if token == nil {
-			username, pwd, ok := tsCtx.outgoingRequest.BasicAuth()
-			require.True(t, ok)
-			require.Equal(t, "basicAuthUser", username)
-			require.Equal(t, "basicAuthPassword", pwd)
-		} else {
-			require.Equal(t, expectedAuthHeader, tsCtx.outgoingRequest.Header.Get("Authorization"))
-			require.Equal(t, expectedTokenHeader, tsCtx.outgoingRequest.Header.Get("X-ID-Token"))
-		}
+		callback(received)
 	})
 }
 
