@@ -15,10 +15,3 @@
       FD_SERVER: mysql
       FD_DATASOURCE: mysql
       FD_PORT: 3306
-
-  mysql-exporter:
-    image: prom/mysqld-exporter
-    ports:
-      - "9104:9104"
-    volumes:
-      - ./docker/blocks/mysql/mysql-exporter.cnf:/home/.my.cnf
