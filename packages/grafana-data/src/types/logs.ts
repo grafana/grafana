@@ -169,13 +169,15 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
   showContextToggle(row?: LogRowModel): boolean;
 }
 
-// TODO: When we upgrade to Typescript 9.4, we can type this as unknown and use improved in narrowing
-// https://devblogs.microsoft.com/typescript/announcing-typescript-4-9/#in-narrowing
-export const hasLogsContextSupport = (datasource: any): datasource is DataSourceWithLogsContextSupport => {
-  if (!datasource) {
-    return false;
+export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
+  if (datasource && typeof datasource === 'object') {
+    const hasGetLogRowContext = 'getLogRowContext' in datasource && datasource.getLogRowContext !== undefined;
+    const hasShowContextToggle = 'showContextToggle' in datasource && datasource.showContextToggle !== undefined;
+
+    return hasGetLogRowContext && hasShowContextToggle;
   }
-  return datasource.getLogRowContext !== undefined && datasource.showContextToggle !== undefined;
+
+  return false;
 };
 
 /**
@@ -186,13 +188,14 @@ export interface DataSourceWithLogsVolumeSupport<TQuery extends DataQuery> {
   getLogsVolumeDataProvider(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> | undefined;
 }
 
-// TODO: When we upgrade to Typescript 9.4, we can type this as unknown and use improved in narrowing
-// https://devblogs.microsoft.com/typescript/announcing-typescript-4-9/#in-narrowing
 export const hasLogsVolumeSupport = <TQuery extends DataQuery>(
-  datasource: any
+  datasource: unknown
 ): datasource is DataSourceWithLogsVolumeSupport<TQuery> => {
-  if (!datasource) {
-    return false;
+  if (datasource && typeof datasource === 'object') {
+    const hasGetLogsVolumeDataProvider =
+      'getLogsVolumeDataProvider' in datasource && datasource.getLogsVolumeDataProvider !== undefined;
+
+    return hasGetLogsVolumeDataProvider;
   }
-  return datasource.getLogsVolumeDataProvider !== undefined;
+  return false;
 };
