@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"math/rand"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -19,8 +21,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/alerting/alerting/notifier/channels"
 )
+
+var appVersion = fmt.Sprintf("%d.0.0", rand.Uint32())
 
 func TestSlackIncomingWebhook(t *testing.T) {
 	tests := []struct {
@@ -53,7 +57,7 @@ func TestSlackIncomingWebhook(t *testing.T) {
 					Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n",
 					Fallback:   "[FIRING:1]  (val1)",
 					Fields:     nil,
-					Footer:     "Grafana v" + setting.BuildVersion,
+					Footer:     "Grafana v" + appVersion,
 					FooterIcon: "https://grafana.com/static/assets/img/fav32.png",
 					Color:      "#D63232",
 				},
@@ -83,7 +87,7 @@ func TestSlackIncomingWebhook(t *testing.T) {
 					Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 					Fallback:   "[FIRING:1]  (val1)",
 					Fields:     nil,
-					Footer:     "Grafana v" + setting.BuildVersion,
+					Footer:     "Grafana v" + appVersion,
 					FooterIcon: "https://grafana.com/static/assets/img/fav32.png",
 					Color:      "#D63232",
 					ImageURL:   "https://www.example.com/test.png",
@@ -114,7 +118,7 @@ func TestSlackIncomingWebhook(t *testing.T) {
 					Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 					Fallback:   "[FIRING:1]  (val1)",
 					Fields:     nil,
-					Footer:     "Grafana v" + setting.BuildVersion,
+					Footer:     "Grafana v" + appVersion,
 					FooterIcon: "https://grafana.com/static/assets/img/fav32.png",
 					Color:      "#D63232",
 				},
@@ -196,7 +200,7 @@ func TestSlackPostMessage(t *testing.T) {
 					Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 					Fallback:   "[FIRING:1]  (val1)",
 					Fields:     nil,
-					Footer:     "Grafana v" + setting.BuildVersion,
+					Footer:     "Grafana v" + appVersion,
 					FooterIcon: "https://grafana.com/static/assets/img/fav32.png",
 					Color:      "#D63232",
 				},
@@ -232,7 +236,7 @@ func TestSlackPostMessage(t *testing.T) {
 					Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval2\n",
 					Fallback:   "2 firing, 0 resolved",
 					Fields:     nil,
-					Footer:     "Grafana v" + setting.BuildVersion,
+					Footer:     "Grafana v" + appVersion,
 					FooterIcon: "https://grafana.com/static/assets/img/fav32.png",
 					Color:      "#D63232",
 				},
@@ -262,7 +266,7 @@ func TestSlackPostMessage(t *testing.T) {
 					Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 					Fallback:   "[FIRING:1]  (val1)",
 					Fields:     nil,
-					Footer:     "Grafana v" + setting.BuildVersion,
+					Footer:     "Grafana v" + appVersion,
 					FooterIcon: "https://grafana.com/static/assets/img/fav32.png",
 					Color:      "#D63232",
 				},
@@ -302,7 +306,7 @@ func TestSlackPostMessage(t *testing.T) {
 					Text:       "**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\n",
 					Fallback:   "[FIRING:1]  (val1)",
 					Fields:     nil,
-					Footer:     "Grafana v" + setting.BuildVersion,
+					Footer:     "Grafana v" + appVersion,
 					FooterIcon: "https://grafana.com/static/assets/img/fav32.png",
 					Color:      "#D63232",
 				},
@@ -375,7 +379,7 @@ type slackRequestRecorder struct {
 	requests []*http.Request
 }
 
-func (s *slackRequestRecorder) fn(_ context.Context, r *http.Request, _ Logger) (string, error) {
+func (s *slackRequestRecorder) fn(_ context.Context, r *http.Request, _ channels.Logger) (string, error) {
 	s.requests = append(s.requests, r)
 	return "", nil
 }
@@ -411,7 +415,7 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 	})
 
 	images := &fakeImageStore{
-		Images: []*Image{{
+		Images: []*channels.Image{{
 			Token: "image-on-disk",
 			Path:  f.Name(),
 		}, {
@@ -421,8 +425,8 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 	}
 	notificationService := mockNotificationService()
 
-	c := FactoryConfig{
-		Config: &NotificationChannelConfig{
+	c := channels.FactoryConfig{
+		Config: &channels.NotificationChannelConfig{
 			Name:           "slack_testing",
 			Type:           "slack",
 			Settings:       json.RawMessage(settings),
@@ -433,8 +437,9 @@ func setupSlackForTests(t *testing.T, settings string) (*SlackNotifier, *slackRe
 		DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
 			return fallback
 		},
-		Template: tmpl,
-		Logger:   &FakeLogger{},
+		Template:            tmpl,
+		Logger:              &channels.FakeLogger{},
+		GrafanaBuildVersion: appVersion,
 	}
 
 	sn, err := buildSlackNotifier(c)
@@ -562,7 +567,7 @@ func TestSendSlackRequest(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, server.URL, nil)
 			require.NoError(tt, err)
 
-			_, err = sendSlackRequest(context.Background(), req, &FakeLogger{})
+			_, err = sendSlackRequest(context.Background(), req, &channels.FakeLogger{})
 			if !test.expectError {
 				require.NoError(tt, err)
 			} else {
