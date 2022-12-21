@@ -84,6 +84,7 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
       font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.bodySmall.fontSize};
       letter-spacing: ${theme.typography.bodySmall.letterSpacing};
+      text-align: left;
       padding: 0;
     `,
   };
