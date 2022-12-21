@@ -3,7 +3,15 @@ import React, { PureComponent } from 'react';
 
 import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2, LogRowModel, CoreApp } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { withTheme2, Themeable2, ClipboardButton, DataLinkButton, IconButton } from '@grafana/ui';
+import {
+  withTheme2,
+  Themeable2,
+  ClipboardButton,
+  DataLinkButton,
+  IconButton,
+  ToolbarButton,
+  ToolbarButtonRow,
+} from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -64,6 +72,26 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapLine: css`
       label: wrapLine;
       white-space: pre-wrap;
+    `,
+    toolbarButtonRow: css`
+      label: toolbarButtonRow;
+      gap: ${theme.spacing(0.5)};
+
+      max-width: calc(3 * ${theme.spacing(theme.components.height.sm)});
+      & > div {
+        height: ${theme.spacing(theme.components.height.sm)};
+        width: ${theme.spacing(theme.components.height.sm)};
+        & > button {
+          border: 0;
+          background-color: transparent;
+          height: inherit;
+
+          &:hover {
+            box-shadow: none;
+            border-radius: 50%;
+          }
+        }
+      }
     `,
   };
 };
@@ -183,31 +211,75 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
     const toggleFieldButton =
       showDetectedFields && showDetectedFields.includes(parsedKey) ? (
-        <IconButton name="eye" className={styles.showingField} title="Hide this field" onClick={this.hideField} />
+        <ToolbarButton
+          className={styles.showingField}
+          tooltip="Hide this field"
+          iconOnly
+          narrow
+          icon="eye"
+          onClick={this.hideField}
+        ></ToolbarButton>
       ) : (
-        <IconButton name="eye" title="Show this field instead of the message" onClick={this.showField} />
+        <ToolbarButton
+          tooltip="Show this field instead of the message"
+          iconOnly
+          narrow
+          icon="eye"
+          onClick={this.showField}
+        ></ToolbarButton>
       );
 
     return (
       <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
         {/* Action buttons - show stats/filter results */}
-        <td className={style.logsDetailsIcon}>
-          <IconButton name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} />
-        </td>
+        {/* <td className={style.logsDetailsIcon}>
+          {/* <IconButton name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} /> 
+        </td> */}
 
         {hasFilteringFunctionality && (
-          <>
-            <td className={style.logsDetailsIcon}>
-              <IconButton name="search-plus" title="Filter for value" onClick={this.filterLabel} />
-            </td>
-            <td className={style.logsDetailsIcon}>
-              <IconButton name="search-minus" title="Filter out value" onClick={this.filterOutLabel} />
-            </td>
-          </>
+          <td className={style.logsDetailsIcon}>
+            <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
+              <ToolbarButton
+                iconOnly
+                narrow
+                icon="search-plus"
+                tooltip="Filter for value"
+                onClick={this.filterLabel}
+              ></ToolbarButton>
+              <ToolbarButton
+                iconOnly
+                narrow
+                icon="search-minus"
+                tooltip="Filter out value"
+                onClick={this.filterOutLabel}
+              ></ToolbarButton>
+              {toggleFieldButton}
+              <ToolbarButton
+                iconOnly
+                narrow
+                icon="signal"
+                tooltip="Ad-hoc statistics"
+                onClick={this.showStats}
+              ></ToolbarButton>
+            </ToolbarButtonRow>
+          </td>
         )}
 
-        {hasDetectedFieldsFunctionality && <td className={style.logsDetailsIcon}>{toggleFieldButton}</td>}
-        {links?.length && <td colSpan={2}>&nbsp; </td>}
+        {/* {hasDetectedFieldsFunctionality && <td className={style.logsDetailsIcon}>{toggleFieldButton}</td>} */}
+        {links?.length && (
+          <td colSpan={1}>
+            <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
+              {toggleFieldButton}
+              <ToolbarButton
+                iconOnly
+                narrow
+                icon="signal"
+                tooltip="Ad-hoc statistics"
+                onClick={this.showStats}
+              ></ToolbarButton>
+            </ToolbarButtonRow>
+          </td>
+        )}
         {/* Key - value columns */}
         <td className={style.logDetailsLabel}>{parsedKey}</td>
         <td
@@ -215,34 +287,36 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           onMouseEnter={this.hoverValueCopy.bind(this)}
           onMouseLeave={this.hoverValueCopy.bind(this)}
         >
-          {parsedValue}
-          {mouseOver && (
-            <ClipboardButton
-              getText={() => parsedValue}
-              title="Copy value to clipboard"
-              fill="text"
-              variant="secondary"
-              icon="copy"
-              size="sm"
-              className={styles.hoverValueCopy}
-            />
-          )}
+          <div>
+            {parsedValue}
+            {mouseOver && (
+              <ClipboardButton
+                getText={() => parsedValue}
+                title="Copy value to clipboard"
+                fill="text"
+                variant="secondary"
+                icon="copy"
+                size="sm"
+                className={styles.hoverValueCopy}
+              />
+            )}
 
-          {links?.map((link) => (
-            <span key={link.title}>
-              &nbsp;
-              <DataLinkButton link={link} />
-            </span>
-          ))}
-          {showFieldsStats && (
-            <LogLabelStats
-              stats={fieldStats!}
-              label={parsedKey}
-              value={parsedValue}
-              rowCount={fieldCount}
-              isLabel={isLabel}
-            />
-          )}
+            {links?.map((link) => (
+              <span key={link.title}>
+                &nbsp;
+                <DataLinkButton link={link} />
+              </span>
+            ))}
+            {showFieldsStats && (
+              <LogLabelStats
+                stats={fieldStats!}
+                label={parsedKey}
+                value={parsedValue}
+                rowCount={fieldCount}
+                isLabel={isLabel}
+              />
+            )}
+          </div>
         </td>
       </tr>
     );
