@@ -32,6 +32,8 @@ type Cfg struct {
 	BuildVersion string // TODO Remove
 
 	LogDatasourceRequests bool
+
+	PluginsCDNBasePath string
 }
 
 func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
@@ -71,6 +73,7 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 			ManagedIdentityClientId: azure.KeyValue("managed_identity_client_id").MustString(grafanaCfg.Azure.ManagedIdentityClientId),
 		},
 		LogDatasourceRequests: grafanaCfg.IsFeatureToggleEnabled(featuremgmt.FlagDatasourceLogger),
+		PluginsCDNBasePath:    grafanaCfg.PluginsCDNBasePath,
 	}
 }
 

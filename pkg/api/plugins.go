@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"io"
 	"net/http"
 	"path"
@@ -342,17 +343,19 @@ func (hs *HTTPServer) serveLocalPluginAsset(c *models.ReqContext, plugin plugins
 
 // getCDNPluginAssetRemoteURL takes a plugin and an asset file path and returns the URL for the asset on the CDN
 // configured in hs.Cfg.PluginsCDNBasePath.
-func (hs *HTTPServer) getCDNPluginAssetRemoteURL(plugin plugins.PluginDTO, assetPath string) string {
-	return strings.NewReplacer(
-		"{id}", plugin.ID,
-		"{version}", plugin.Info.Version,
-		"{assetPath}", path.Clean(assetPath),
-	).Replace(hs.Cfg.PluginsCDNBasePath)
+func (hs *HTTPServer) getCDNPluginAssetRemoteURL(plugin plugins.PluginDTO, assetPath string) (string, error) {
+	return pluginscdn.NewCDNURLConstructor(
+		hs.Cfg.PluginsCDNBasePath, plugin.ID, plugin.Info.Version,
+	).StringURLFor(assetPath)
 }
 
 // redirectCDNPluginAsset redirects the http request to specified asset path on the configured plugins CDN.
 func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugins.PluginDTO, assetPath string) {
-	remoteURL := hs.getCDNPluginAssetRemoteURL(plugin, assetPath)
+	remoteURL, err := hs.getCDNPluginAssetRemoteURL(plugin, assetPath)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to get CDN plugin asset remote URL", err)
+		return
+	}
 	hs.log.Debug("redirected asset", "url", remoteURL)
 	http.Redirect(c.Resp, c.Req, remoteURL, http.StatusFound)
 }

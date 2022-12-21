@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"net/url"
 	"os"
 	"path"
@@ -127,7 +128,11 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			)
 			isCDN = false
 		}
-		plugin := createPluginBase(pluginJSON, class, pluginDir, isCDN)
+		plugin, err := createPluginBase(pluginJSON, class, pluginDir, isCDN, l.cfg.PluginsCDNBasePath)
+		if err != nil {
+			l.log.Warn("Could not create plugin base", "pluginID", pluginJSON.Info)
+			continue
+		}
 
 		// calculate initial signature state
 		sig, err := signature.Calculate(l.log, plugin)
@@ -324,29 +329,65 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	return plugin, nil
 }
 
-func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, isCDN bool) *plugins.Plugin {
+func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, isCDN bool, cdnBasePath string) (*plugins.Plugin, error) {
+	baseURL, err := baseURL(pluginJSON, class, pluginDir, isCDN, cdnBasePath)
+	if err != nil {
+		return nil, fmt.Errorf("base url: %w", err)
+	}
+	moduleURL, err := module(pluginJSON, class, pluginDir, isCDN, cdnBasePath)
+	if err != nil {
+		return nil, fmt.Errorf("module url: %w", err)
+	}
 	plugin := &plugins.Plugin{
 		JSONData:  pluginJSON,
 		PluginDir: pluginDir,
-		BaseURL:   baseURL(pluginJSON, class, pluginDir, isCDN),
-		Module:    module(pluginJSON, class, pluginDir, isCDN),
+		BaseURL:   baseURL,
+		Module:    moduleURL,
 		Class:     class,
 		CDN:       isCDN,
 	}
 
 	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
-	setImages(plugin)
+	if err := setImages(plugin, cdnBasePath); err != nil {
+		return nil, fmt.Errorf("set images: %w", err)
+	}
 
-	return plugin
+	return plugin, nil
 }
 
-func setImages(p *plugins.Plugin) {
-	p.Info.Logos.Small = pluginLogoURL(p.Type, p.Info.Logos.Small, p.BaseURL)
-	p.Info.Logos.Large = pluginLogoURL(p.Type, p.Info.Logos.Large, p.BaseURL)
+func setImages(p *plugins.Plugin, cdnBaseURL string) error {
+	if p.CDN {
+		u, err := cdnPluginLogoURL(p.Type, p.Info.Logos.Small, cdnBaseURL, p.ID, p.Info.Version)
+		if err != nil {
+			return fmt.Errorf("cdn plugin small logo url: %w", err)
+		}
+		p.Info.Logos.Small = u
+
+		u, err = cdnPluginLogoURL(p.Type, p.Info.Logos.Large, cdnBaseURL, p.ID, p.Info.Version)
+		if err != nil {
+			return fmt.Errorf("cdn plugin large logo url: %w", err)
+		}
+		p.Info.Logos.Large = u
+	} else {
+		p.Info.Logos.Small = pluginLogoURL(p.Type, p.Info.Logos.Small, p.BaseURL)
+		p.Info.Logos.Large = pluginLogoURL(p.Type, p.Info.Logos.Large, p.BaseURL)
+	}
 
 	for i := 0; i < len(p.Info.Screenshots); i++ {
-		p.Info.Screenshots[i].Path = evalRelativePluginURLPath(p.Info.Screenshots[i].Path, p.BaseURL, p.Type)
+		var path string
+		var err error
+		screenshot := &p.Info.Screenshots[i]
+		if p.CDN {
+			path, err = evalCDNPluginURLPath(screenshot.Path, cdnBaseURL, p.ID, p.Info.Version)
+			if err != nil {
+				return fmt.Errorf("screenshot %d eval cdn plugin path: %w", i, err)
+			}
+		} else {
+			path = evalRelativePluginURLPath(screenshot.Path, p.BaseURL, p.Type)
+		}
+		screenshot.Path = path
 	}
+	return nil
 }
 
 func setDefaultNavURL(p *plugins.Plugin) {
@@ -420,6 +461,17 @@ func evalRelativePluginURLPath(pathStr, baseURL string, pluginType plugins.Type)
 	return path.Join(baseURL, pathStr)
 }
 
+func cdnPluginLogoURL(pluginType plugins.Type, path, cdnBaseURL, pluginID, pluginVersion string) (string, error) {
+	if path == "" {
+		return defaultLogoPath(pluginType), nil
+	}
+	return evalCDNPluginURLPath(path, cdnBaseURL, pluginID, pluginVersion)
+}
+
+func evalCDNPluginURLPath(path string, cdnBaseURL, pluginID, pluginVersion string) (string, error) {
+	return pluginscdn.NewCDNURLConstructor(cdnBaseURL, pluginID, pluginVersion).StringURLFor(path)
+}
+
 func (l *Loader) PluginErrors() []*plugins.Error {
 	errs := make([]*plugins.Error, 0)
 	for _, err := range l.errs {
@@ -432,24 +484,32 @@ func (l *Loader) PluginErrors() []*plugins.Error {
 	return errs
 }
 
-func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, isCDN bool) string {
+func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, isCDN bool, cdnBaseURL string) (string, error) {
 	if class == plugins.Core {
-		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir))
+		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir)), nil
 	}
 	if isCDN {
-		return path.Join("plugin-cdn", pluginJSON.ID, pluginJSON.Info.Version, "public/plugins", pluginJSON.ID)
+		u, err := pluginscdn.NewCDNURLConstructor(cdnBaseURL, pluginJSON.ID, pluginJSON.Info.Version).RelativeBaseURL()
+		if err != nil {
+			return "", err
+		}
+		return strings.TrimLeft(u, "/"), nil
 	}
-	return path.Join("public/plugins", pluginJSON.ID)
+	return path.Join("public/plugins", pluginJSON.ID), nil
 }
 
-func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, isCDN bool) string {
+func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, isCDN bool, cdnBaseURL string) (string, error) {
 	if class == plugins.Core {
-		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module")
+		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module"), nil
 	}
 	if isCDN {
-		return path.Join("plugin-cdn", pluginJSON.ID, pluginJSON.Info.Version, "public/plugins", pluginJSON.ID, "module")
+		u, err := pluginscdn.NewCDNURLConstructor(cdnBaseURL, pluginJSON.ID, pluginJSON.Info.Version).RelativeURLFor("module")
+		if err != nil {
+			return "", err
+		}
+		return strings.TrimLeft(u, "/"), nil
 	}
-	return path.Join("plugins", pluginJSON.ID, "module")
+	return path.Join("plugins", pluginJSON.ID, "module"), nil
 }
 
 func validatePluginJSON(data plugins.JSONData) error {
