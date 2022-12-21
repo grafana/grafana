@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -39,21 +38,21 @@ type Manager struct {
 	historian     Historian
 	externalURL   *url.URL
 
-	FeatureToggles featuremgmt.FeatureToggles
+	doNotKeepNormalState bool
 }
 
-func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, images ImageCapturer, clock clock.Clock, historian Historian, featureToggle featuremgmt.FeatureToggles) *Manager {
+func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, images ImageCapturer, clock clock.Clock, historian Historian, doNotKeepNormalState bool) *Manager {
 	return &Manager{
-		cache:          newCache(),
-		ResendDelay:    ResendDelay, // TODO: make this configurable
-		log:            log.New("ngalert.state.manager"),
-		metrics:        metrics,
-		instanceStore:  instanceStore,
-		images:         images,
-		historian:      historian,
-		clock:          clock,
-		externalURL:    externalURL,
-		FeatureToggles: featureToggle,
+		cache:                newCache(),
+		ResendDelay:          ResendDelay, // TODO: make this configurable
+		log:                  log.New("ngalert.state.manager"),
+		metrics:              metrics,
+		instanceStore:        instanceStore,
+		images:               images,
+		historian:            historian,
+		clock:                clock,
+		externalURL:          externalURL,
+		doNotKeepNormalState: doNotKeepNormalState,
 	}
 }
 
@@ -109,7 +108,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 			RuleOrgID: orgId,
 		}
 
-		if st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState) {
+		if st.doNotKeepNormalState {
 			// do not load normal state.
 			cmd.ExcludeStates = []ngModels.InstanceStateType{
 				ngModels.InstanceStateNormal,
@@ -275,18 +274,19 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 func (st *Manager) GetAll(orgID int64) []*State {
 	allStates := st.cache.getAll(orgID)
-	if !st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState) {
-		return allStates
+	if st.doNotKeepNormalState {
+		return withoutNormalStates(allStates)
 	}
-	return withoutNormalStates(allStates)
+	return allStates
 }
 
 func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 	ruleStates := st.cache.getStatesForRuleUID(orgID, alertRuleUID)
-	if !st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState) {
-		return ruleStates
+	if st.doNotKeepNormalState {
+		return withoutNormalStates(ruleStates)
+
 	}
-	return withoutNormalStates(ruleStates)
+	return ruleStates
 }
 
 func withoutNormalStates(states []*State) []*State {
@@ -325,7 +325,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 		}
 
 		// Do not save normal state to database and remove transition to Normal state
-		if s.State.State == eval.Normal && st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState) {
+		if s.State.State == eval.Normal && st.doNotKeepNormalState {
 			if s.PreviousState != eval.Normal {
 				toDelete = append(toDelete, key)
 			}

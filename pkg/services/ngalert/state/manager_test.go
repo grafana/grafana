@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 )
 
 var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry())
@@ -103,7 +102,7 @@ func TestWarmStateCache(t *testing.T) {
 		Labels:            labels,
 	}
 	_ = dbstore.SaveAlertInstances(ctx, instance2)
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &state.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{}, &fakes.FakeFeatures{})
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &state.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{}, false)
 	st.Warm(ctx, dbstore)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -127,7 +126,7 @@ func TestDashboardAnnotations(t *testing.T) {
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{})
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &state.NoopImageService{}, clock.New(), hist, &fakes.FakeFeatures{})
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &state.NoopImageService{}, clock.New(), hist, false)
 
 	const mainOrgID int64 = 1
 
@@ -2108,7 +2107,7 @@ func TestProcessEvalResults(t *testing.T) {
 	for _, tc := range testCases {
 		fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 		hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{})
-		st := state.NewManager(testMetrics.GetStateMetrics(), nil, &state.FakeInstanceStore{}, &state.NotAvailableImageService{}, clock.New(), hist, &fakes.FakeFeatures{})
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, &state.FakeInstanceStore{}, &state.NotAvailableImageService{}, clock.New(), hist, false)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {
 				_ = st.ProcessEvalResults(context.Background(), evaluationTime, tc.alertRule, res, data.Labels{
@@ -2135,7 +2134,7 @@ func TestProcessEvalResults(t *testing.T) {
 	t.Run("should save state to database", func(t *testing.T) {
 		instanceStore := &state.FakeInstanceStore{}
 		clk := clock.New()
-		st := state.NewManager(testMetrics.GetStateMetrics(), nil, instanceStore, &state.NotAvailableImageService{}, clk, &state.FakeHistorian{}, &fakes.FakeFeatures{})
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, instanceStore, &state.NotAvailableImageService{}, clk, &state.FakeHistorian{}, false)
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
@@ -2264,7 +2263,7 @@ func TestStaleResultsHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx := context.Background()
-		st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &state.NoopImageService{}, clock.New(), &state.FakeHistorian{}, &fakes.FakeFeatures{})
+		st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &state.NoopImageService{}, clock.New(), &state.FakeHistorian{}, false)
 		st.Warm(ctx, dbstore)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 
@@ -2335,7 +2334,7 @@ func TestStaleResults(t *testing.T) {
 
 	store := &state.FakeInstanceStore{}
 
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, store, &state.NoopImageService{}, clk, &state.FakeHistorian{}, &fakes.FakeFeatures{})
+	st := state.NewManager(testMetrics.GetStateMetrics(), nil, store, &state.NoopImageService{}, clk, &state.FakeHistorian{}, false)
 
 	rule := models.AlertRuleGen(models.WithFor(0))()
 
