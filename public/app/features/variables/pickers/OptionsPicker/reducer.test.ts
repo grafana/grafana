@@ -766,7 +766,7 @@ describe('optionsPickerReducer', () => {
           options: [{ text: 'option:11256', value: 'option:11256', selected: false }],
           selectedValues: [],
           queryValue: 'option:11256',
-          highlightIndex: 0,
+          highlightIndex: -1,
         });
     });
   });
