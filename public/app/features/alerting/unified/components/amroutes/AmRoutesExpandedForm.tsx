@@ -32,7 +32,11 @@ import {
   commonGroupByOptions,
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
-import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
+import {
+  AmRouteReceiver,
+  GrafanaAppReceiverEnum,
+  GRAFANA_APP_RECEIVERS_SOURCE_IMAGE,
+} from '../receivers/grafanaAppReceivers/types';
 
 import { getFormStyles } from './formStyles';
 
@@ -48,6 +52,14 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
   const formStyles = useStyles2(getFormStyles);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
   const muteTimingOptions = useMuteTimingOptions();
+
+  const receiversWithOnCallOnTop = receivers.sort((receiver1, receiver2) => {
+    if (receiver1.grafanaAppReceiverType === GrafanaAppReceiverEnum.GRAFANA_ONCALL) {
+      return -1;
+    } else {
+      return 0;
+    }
+  });
 
   return (
     <Form defaultValues={routes} onSubmit={onSave}>
@@ -149,7 +161,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   {...field}
                   className={formStyles.input}
                   onChange={(value) => onChange(mapSelectValueToString(value))}
-                  options={receivers}
+                  options={receiversWithOnCallOnTop}
                 />
               )}
               control={control}
@@ -378,6 +390,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     noMatchersWarning: css`
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
+    `,
+    onCall: css`
+      &:before {
+        content: '';
+        background: url(${GRAFANA_APP_RECEIVERS_SOURCE_IMAGE}');
+        background-size: cover;
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        margin-left: -20px;
+      }
     `,
   };
 };
