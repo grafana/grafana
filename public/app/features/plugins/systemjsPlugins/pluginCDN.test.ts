@@ -1,4 +1,4 @@
-import { translateForCDN, extractPluginDeets } from './pluginCDN';
+import { translateForCDN, extractPluginNameVersionFromUrl } from './pluginCDN';
 
 describe('Plugin CDN', () => {
   describe('translateForCDN', () => {
@@ -89,7 +89,7 @@ describe('Plugin CDN', () => {
     });
   });
 
-  describe('extractPluginDeets', () => {
+  describe('extractPluginNameVersionFromUrl', () => {
     it('should extract the plugin name and version from a path', () => {
       const source =
         'http://localhost:3000/public/plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js';
@@ -97,7 +97,7 @@ describe('Plugin CDN', () => {
         name: 'grafana-worldmap-panel',
         version: '0.3.3',
       };
-      const expectedExtractedPluginDeets = extractPluginDeets(source);
+      const expectedExtractedPluginDeets = extractPluginNameVersionFromUrl(source);
       expect(expectedExtractedPluginDeets).toEqual(expected);
     });
   });

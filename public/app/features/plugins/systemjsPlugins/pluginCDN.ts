@@ -1,25 +1,24 @@
-// ⚠️ POC plugin CDN stuffs! ⚠️
+import type { SystemJSLoad } from './types';
+
+// ⚠️ Plugin cdn poc! ⚠️
 export const cdnHost = 'http://grafana-assets-staging.grafana.net.global.prod.fastly.net';
 
-export function extractPluginDeets(address: string) {
+export function extractPluginNameVersionFromUrl(address: string) {
   const path = new URL(address).pathname;
   const match = path.split('/');
   return { name: match[3], version: match[4] };
 }
 
-export function locateFromCDN(load: { address: string }): string {
+export function locateFromCDN(load: SystemJSLoad) {
   const { address } = load;
-  // http://localhost:3000/public/plugin-cdn/pluginID/version/module
   const pluginPath = address.split('/public/plugin-cdn/');
-  // http://grafana-assets-staging.grafana.net.global.prod.fastly.net/pluginID/version/module
   return `${cdnHost}/${pluginPath[1]}`;
 }
 
-export function translateForCDN(load: any): any {
-  const { name, version } = extractPluginDeets(load.name);
+export function translateForCDN(load: SystemJSLoad) {
+  const { name, version } = extractPluginNameVersionFromUrl(load.name);
   const baseAddress = `${cdnHost}/${name}/${version}`;
 
-  // @ts-ignore
   load.source = load.source.replace(/(\/?)(public\/plugins)/g, `${baseAddress}/$2`);
   load.source = load.source.replace(/(["|'])(plugins\/.+.css)(["|'])/g, `$1${baseAddress}/public/$2$3`);
   load.source = load.source.replace(

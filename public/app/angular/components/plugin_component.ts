@@ -6,10 +6,10 @@ import coreModule from 'app/angular/core_module';
 import config from 'app/core/config';
 
 import { importPanelPlugin } from '../../features/plugins/importPanelPlugin';
-import { cdnHost } from '../../features/plugins/pluginCDN';
 import { importDataSourcePlugin, importAppPlugin } from '../../features/plugins/plugin_loader';
+import { cdnHost } from '../../features/plugins/systemjsPlugins/pluginCDN';
 
-// ⚠️ POC plugin CDN stuffs! ⚠️
+// ⚠️ Plugin cdn poc! ⚠️
 export function relativeTemplateUrlToCDN(templateUrl: string, baseUrl: string) {
   if (!templateUrl) {
     return undefined;
@@ -20,7 +20,7 @@ export function relativeTemplateUrlToCDN(templateUrl: string, baseUrl: string) {
     return templateUrl;
   }
 
-  // We are using a path of 'plugin-cdn.(...)' to specify loading via cdn...
+  // use the 'plugin-cdn' key to load via cdnHost.
   return `${baseUrl.replace('plugin-cdn/', `${cdnHost}/`)}/${templateUrl}`;
 }
 
@@ -44,7 +44,6 @@ function pluginDirectiveLoader($compile: any, $http: any, $templateCache: any, $
       return undefined;
     }
     if (templateUrl.indexOf('public') === 0) {
-      // "public/wawdawd"
       return templateUrl;
     }
 

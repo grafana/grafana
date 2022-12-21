@@ -32,9 +32,9 @@ import * as ticks from 'app/core/utils/ticks';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
-import { locateFromCDN, translateForCDN } from './pluginCDN';
-import { fetchCSS, locateCSS } from './pluginCSS';
-import { locateWithCache, registerPluginInCache } from './pluginCacheBuster';
+import { locateFromCDN, translateForCDN } from './systemjsPlugins/pluginCDN';
+import { fetchCSS, locateCSS } from './systemjsPlugins/pluginCSS';
+import { locateWithCache, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
 
 // Help the 6.4 to 6.5 migration
 // The base classes were moved from @grafana/ui to @grafana/data
