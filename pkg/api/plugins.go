@@ -30,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -330,49 +329,46 @@ func (nopCloserReadSeeker) Close() error {
 	return nil
 }
 
-var (
-	errLocalAssetLoad  = errutil.NewBase(errutil.StatusInternal, "plugins.localAssetLoad")
-)
-
-// getLocalPluginAssets returns a pluginAsset for a locally stored plugin.
-// If err != nil, the file is opened and then caller should
-//
-//	defer call pluginAsset.Close()
-//
-// to close the opened file.
-func (hs *HTTPServer) getLocalPluginAssets(c *models.ReqContext, plugin plugins.PluginDTO, path string) (pluginAsset, error) {
-	f, err := plugin.File(path)
+// serveLocalPluginAsset returns the content of a plugin asset file from the local filesystem to the http client.
+func (hs *HTTPServer) serveLocalPluginAsset(c *models.ReqContext, plugin plugins.PluginDTO, assetPath string) {
+	f, err := plugin.File(assetPath)
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
-			return pluginAsset{}, errLocalAssetLoad.Errorf("plugin file not found")
+			c.JsonApiErr(404, "Plugin file not found", nil)
+			return
 		}
-		return pluginAsset{}, errLocalAssetLoad.Errorf("could not open plugin file: %w", err)
+		c.JsonApiErr(500, "Could not open plugin file", err)
+		return
 	}
-
-	// f.Close() should be called by caller by calling pluginAsset.Close()
+	defer func() {
+		if err = f.Close(); err != nil {
+			hs.log.Error("Failed to close plugin file", "err", err)
+		}
+	}()
 
 	fi, err := f.Stat()
 	if err != nil {
-		return pluginAsset{}, errLocalAssetLoad.Errorf("plugin file exists but could not open: %w", err)
+		c.JsonApiErr(500, "Plugin file exists but could not open", err)
+		return
+	}
+
+	if hs.Cfg.Env == setting.Dev {
+		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+	} else {
+		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
 	if rs, ok := f.(io.ReadSeekCloser); ok {
-		return pluginAsset{
-			readSeekCloser: rs,
-			modTime:        fi.ModTime(),
-			path:           path,
-		}, nil
+		http.ServeContent(c.Resp, c.Req, assetPath, fi.ModTime(), rs)
+		return
 	}
 
 	b, err := io.ReadAll(f)
 	if err != nil {
-		return pluginAsset{}, errLocalAssetLoad.Errorf("plugin file exists but could not open: %w", err)
+		c.JsonApiErr(500, "Plugin file exists but could not read", err)
+		return
 	}
-	return pluginAsset{
-		readSeekCloser: nopCloserReadSeeker{bytes.NewReader(b)},
-		modTime:        fi.ModTime(),
-		path:           path,
-	}, nil
+	http.ServeContent(c.Resp, c.Req, assetPath, fi.ModTime(), bytes.NewReader(b))
 }
 
 // getCDNPluginAssetRemoteURL takes a plugin and an asset file path and returns the URL for the asset on the CDN
@@ -425,23 +421,8 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	// Send the actual file to the client
-	asset, err := hs.getLocalPluginAssets(c, plugin, requestedFile)
-	if err != nil {
-		response.Err(err)
-		return
-	}
-	defer func() {
-		if err := asset.Close(); err != nil {
-			hs.log.Warn("Failed to close asset", "err", err)
-		}
-	}()
-	if hs.Cfg.Env == setting.Dev {
-		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
-	} else {
-		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
-	}
-	http.ServeContent(c.Resp, c.Req, asset.path, asset.modTime, asset.readSeekCloser)
+	// Send the actual file to the client from local filesystem
+	hs.serveLocalPluginAsset(c, plugin, requestedFile)
 }
 
 // CheckHealth returns the health of a plugin.
