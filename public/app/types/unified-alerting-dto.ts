@@ -23,6 +23,10 @@ type GrafanaAlertStateReason = ` (${string})` | '';
 
 export type GrafanaAlertStateWithReason = `${GrafanaAlertState}${GrafanaAlertStateReason}`;
 
+export function isPromAlertingRuleState(state: string): state is PromAlertingRuleState {
+  return Object.values<string>(PromAlertingRuleState).includes(state);
+}
+
 export function isGrafanaAlertState(state: string): state is GrafanaAlertState {
   return Object.values(GrafanaAlertState).some((promState) => promState === state);
 }

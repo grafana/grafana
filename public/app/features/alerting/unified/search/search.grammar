@@ -1,14 +1,27 @@
 @top AlertRuleSearch { expression+ }
 
-expression { FilterExpression expression }
+expression { (FilterExpression | FreeFormExpression) expression }
 
-FilterExpression { FilterType ":" FilterValue }
+FilterExpression { DataSourceFilter | NameSpaceFilter | LabelFilter | GroupFilter | RuleFilter | StateFilter | TypeFilter }
 
-FilterType { "ns" | "group" | "rule" | "ds" | "state" | "type" | "label" }
+DataSourceFilter { filterToken<"ds" | "datasource"> FilterValue }
+NameSpaceFilter { filterToken<"ns" | "namespace"> FilterValue }
+LabelFilter { filterToken<"l" | "label"> FilterValue }
+GroupFilter { filterToken<"g" | "group"> FilterValue }
+RuleFilter { filterToken<"r" | "rule"> FilterValue }
+StateFilter { filterToken<"s" | "state"> FilterValue }
+TypeFilter { filterToken<"t" | "type"> FilterValue }
 
-@skip { space }
+FreeFormExpression { word }
 
 @tokens {
-  space { @whitespace+ }
-  FilterValue { $[a-zA-Z0-9,./?=!@#$%^&*()+-]+ }
+  allowedInputChar { $[a-zA-Z0-9,./?=!@#$%^&*()+-] }
+
+  FilterValue { $[a-zA-Z0-9,./?=!@#$%^&*()+-]+ | ("\"" $[a-zA-Z0-9 ,./?=!@#$%^&*()+-]+ "\"") }
+
+  word { allowedInputChar+ }
+
+  filterToken<filterType> { (filterType ":") }
+
+  @precedence { filterToken, word }
 }

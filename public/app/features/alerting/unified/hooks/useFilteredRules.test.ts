@@ -31,7 +31,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], { queryString: 'cpu' });
+    const filtered = filterRules([ns], { queryString: 'cpu' }, ngFilters);
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('High CPU usage');
@@ -62,7 +62,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], { queryString: 'severity=critical' });
+    const filtered = filterRules([ns], { queryString: 'severity=critical' }, ngFilters);
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
@@ -84,7 +84,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], { queryString: 'severity=warning' });
+    const filtered = filterRules([ns], { queryString: 'severity=warning' }, ngFilters);
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('High CPU usage');
@@ -106,7 +106,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], { alertState: PromAlertingRuleState.Firing });
+    const filtered = filterRules([ns], { alertState: PromAlertingRuleState.Firing }, ngFilters);
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
@@ -132,7 +132,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], { dataSource: 'loki' });
+    const filtered = filterRules([ns], { dataSource: 'loki' }, ngFilters);
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');

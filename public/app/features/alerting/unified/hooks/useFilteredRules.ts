@@ -1,45 +1,32 @@
-import { capitalize } from 'lodash';
+import { trim } from 'lodash';
 import { useMemo } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { CombinedRuleGroup, CombinedRuleNamespace, FilterState } from 'app/types/unified-alerting';
+import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import {
-  GrafanaAlertState,
-  isGrafanaAlertState,
+  isPromAlertingRuleState,
+  PromAlertingRuleState,
   PromRuleType,
   RulerGrafanaRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { parser } from '../search/search';
 import * as terms from '../search/search.terms';
-import { labelsMatchMatchers, parseMatchers } from '../utils/alertmanager';
+import { labelsMatchMatchers, parseMatcher } from '../utils/alertmanager';
 import { isCloudRulesSource } from '../utils/datasource';
 import { getFiltersFromUrlParams } from '../utils/misc';
 import { isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
 
-enum FilterType {
-  ns = 'ns',
-  group = 'group',
-  rule = 'rule',
-  state = 'state', // Firing | Normal | Pending
-  type = 'type', // Alerting | Recording
-  ds = 'ds',
-  label = 'label',
-}
-
 interface SearchFilterState {
+  query?: string;
   namespace?: string;
   groupName?: string;
   ruleName?: string;
-  ruleState?: GrafanaAlertState; // Unify somehow with Prometheus rules
-  type?: PromRuleType;
+  ruleState?: PromAlertingRuleState; // Unify somehow with Prometheus rules
+  ruleType?: PromRuleType;
   dataSourceName?: string;
   labels: string[];
-}
-
-function isFilterType(filterType: string): filterType is FilterType {
-  return Object.values<string>(FilterType).includes(filterType);
 }
 
 function isPromRuleType(ruleType: string): ruleType is PromRuleType {
@@ -54,44 +41,43 @@ function getSearchFilterFromQuery(query: string): SearchFilterState {
   let cursor = parsed.cursor();
   do {
     if (cursor.node.type.id === terms.FilterExpression) {
-      const typeNode = cursor.node.getChild(terms.FilterType);
-      const valueNode = cursor.node.getChild(terms.FilterValue);
+      const valueNode = cursor.node.firstChild?.getChild(terms.FilterValue);
+      const filterValue = valueNode ? trim(query.substring(valueNode.from, valueNode.to), '"') : undefined;
 
-      if (typeNode && valueNode) {
-        const filterType = query.substring(typeNode.from, typeNode.to);
-        const filterValue = query.substring(valueNode.from, valueNode.to);
+      const filterType = cursor.node.firstChild?.type.id;
 
-        if (isFilterType(filterType)) {
-          switch (filterType) {
-            case FilterType.ds:
-              filterState.dataSourceName = filterValue;
-              break;
-            case FilterType.ns:
-              filterState.namespace = filterValue;
-              break;
-            case FilterType.group:
-              filterState.groupName = filterValue;
-              break;
-            case FilterType.rule:
-              filterState.ruleName = filterValue;
-              break;
-            case FilterType.label:
-              filterState.labels.push(filterValue);
-              break;
-            case FilterType.state:
-              const capitalized = capitalize(filterValue);
-              if (isGrafanaAlertState(capitalized)) {
-                filterState.ruleState = capitalized;
-              }
-              break;
-            case FilterType.type:
-              if (isPromRuleType(filterValue)) {
-                filterState.type = filterValue;
-              }
-              break;
-          }
+      if (filterType && filterValue) {
+        switch (filterType) {
+          case terms.DataSourceFilter:
+            filterState.dataSourceName = filterValue;
+            break;
+          case terms.NameSpaceFilter:
+            filterState.namespace = filterValue;
+            break;
+          case terms.GroupFilter:
+            filterState.groupName = filterValue;
+            break;
+          case terms.RuleFilter:
+            filterState.ruleName = filterValue;
+            break;
+          case terms.LabelFilter:
+            filterState.labels.push(filterValue);
+            break;
+          case terms.StateFilter:
+            const state = filterValue.toLowerCase();
+            if (isPromAlertingRuleState(state)) {
+              filterState.ruleState = state;
+            }
+            break;
+          case terms.TypeFilter:
+            if (isPromRuleType(filterValue)) {
+              filterState.ruleType = filterValue;
+            }
+            break;
         }
       }
+    } else if (cursor.node.type.id === terms.FreeFormExpression) {
+      filterState.query = query.substring(cursor.node.from, cursor.node.to);
     }
   } while (cursor.next());
 
@@ -103,27 +89,35 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
   const filters = getFiltersFromUrlParams(queryParams);
 
   const freeFormQuery = filters.queryString ?? '';
-  const searchFilters = getSearchFilterFromQuery(freeFormQuery);
+  const ngFilters = getSearchFilterFromQuery(freeFormQuery);
 
-  console.log(searchFilters);
+  console.log(ngFilters);
 
-  return useMemo(() => filterRules(namespaces, filters), [namespaces, filters]);
+  return useMemo(() => filterRules(namespaces, ngFilters), [namespaces, ngFilters]);
 };
 
-export const filterRules = (namespaces: CombinedRuleNamespace[], filters: FilterState): CombinedRuleNamespace[] => {
+export const filterRules = (
+  namespaces: CombinedRuleNamespace[],
+  ngFilters: SearchFilterState = { labels: [] }
+): CombinedRuleNamespace[] => {
   return (
     namespaces
+      .filter((ns) => (ngFilters.namespace ? ns.name.toLowerCase().includes(ngFilters.namespace.toLowerCase()) : true))
       .filter(({ rulesSource }) =>
-        filters.dataSource && isCloudRulesSource(rulesSource) ? rulesSource.name === filters.dataSource : true
+        ngFilters.dataSourceName && isCloudRulesSource(rulesSource)
+          ? rulesSource.name === ngFilters.dataSourceName
+          : true
       )
       // If a namespace and group have rules that match the rules filters then keep them.
-      .reduce(reduceNamespaces(filters), [] as CombinedRuleNamespace[])
+      .reduce(reduceNamespaces(ngFilters), [] as CombinedRuleNamespace[])
   );
 };
 
-const reduceNamespaces = (filters: FilterState) => {
+const reduceNamespaces = (ngFilters: SearchFilterState) => {
   return (namespaceAcc: CombinedRuleNamespace[], namespace: CombinedRuleNamespace) => {
-    const groups = namespace.groups.reduce(reduceGroups(filters), [] as CombinedRuleGroup[]);
+    const groups = namespace.groups
+      .filter((g) => (ngFilters.groupName ? g.name.toLowerCase().includes(ngFilters.groupName.toLowerCase()) : true))
+      .reduce(reduceGroups(ngFilters), [] as CombinedRuleGroup[]);
 
     if (groups.length) {
       namespaceAcc.push({
@@ -137,20 +131,27 @@ const reduceNamespaces = (filters: FilterState) => {
 };
 
 // Reduces groups to only groups that have rules matching the filters
-const reduceGroups = (filters: FilterState) => {
+const reduceGroups = (ngFilters: SearchFilterState) => {
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
     const rules = group.rules.filter((rule) => {
-      if (filters.ruleType && filters.ruleType !== rule.promRule?.type) {
+      if (ngFilters.ruleType && ngFilters.ruleType !== rule.promRule?.type) {
         return false;
       }
-      if (filters.dataSource && isGrafanaRulerRule(rule.rulerRule) && !isQueryingDataSource(rule.rulerRule, filters)) {
+      if (
+        ngFilters.dataSourceName &&
+        isGrafanaRulerRule(rule.rulerRule) &&
+        !isQueryingDataSource(rule.rulerRule, ngFilters)
+      ) {
+        return false;
+      }
+
+      if (ngFilters.ruleName && !rule.name?.toLocaleLowerCase().includes(ngFilters.ruleName.toLocaleLowerCase())) {
         return false;
       }
       // Query strings can match alert name, label keys, and label values
-      if (filters.queryString) {
-        const normalizedQueryString = filters.queryString.toLocaleLowerCase();
-        const doesNameContainsQueryString = rule.name?.toLocaleLowerCase().includes(normalizedQueryString);
-        const matchers = parseMatchers(filters.queryString);
+      if (ngFilters.labels.length > 0) {
+        // const matchers = parseMatchers(filters.queryString);
+        const matchers = ngFilters.labels.map(parseMatcher);
 
         const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(rule.labels, matchers);
         const doAlertsContainMatchingLabels =
@@ -160,13 +161,13 @@ const reduceGroups = (filters: FilterState) => {
           rule.promRule.alerts &&
           rule.promRule.alerts.some((alert) => labelsMatchMatchers(alert.labels, matchers));
 
-        if (!(doesNameContainsQueryString || doRuleLabelsMatchQuery || doAlertsContainMatchingLabels)) {
+        if (!(doRuleLabelsMatchQuery || doAlertsContainMatchingLabels)) {
           return false;
         }
       }
       if (
-        filters.alertState &&
-        !(rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state === filters.alertState)
+        ngFilters.ruleState &&
+        !(rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state === ngFilters.ruleState)
       ) {
         return false;
       }
@@ -183,8 +184,8 @@ const reduceGroups = (filters: FilterState) => {
   };
 };
 
-const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filter: FilterState): boolean => {
-  if (!filter.dataSource) {
+const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, ngFilter: SearchFilterState): boolean => {
+  if (!ngFilter.dataSourceName) {
     return true;
   }
 
@@ -193,6 +194,6 @@ const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filter: FilterStat
       return false;
     }
     const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-    return ds?.name === filter.dataSource;
+    return ds?.name === ngFilter.dataSourceName;
   });
 };
