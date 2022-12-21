@@ -61,5 +61,9 @@ func (c URLConstructor) RelativeBaseURL() (string, error) {
 
 func RelativeURLForSystemJS(s string) string {
 	const systemJSKey = "plugin-cdn/"
-	return systemJSKey + strings.Split(s, "/"+systemJSKey)[1]
+	parts := strings.SplitN(s, "/"+systemJSKey, 2)
+	if len(parts) < 2 {
+		return s
+	}
+	return systemJSKey + parts[1]
 }
