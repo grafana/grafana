@@ -66,7 +66,6 @@ grafanaRuntime.SystemJS.config({
   map: {
     text: 'vendor/plugin-text/text.js',
   },
-  paths: {},
   meta: {
     '/*': {
       esModule: true,
