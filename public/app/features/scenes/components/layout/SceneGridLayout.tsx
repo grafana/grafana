@@ -5,16 +5,9 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { DEFAULT_PANEL_SPAN, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
-import { sceneGraph } from '../../core/sceneGraph';
-import {
-  SceneComponentProps,
-  SceneLayoutChild,
-  SceneLayoutChildState,
-  SceneLayoutState,
-  SceneObject,
-  SceneLayoutChildOptions,
-} from '../../core/types';
-import { SceneDragHandle } from '../SceneDragHandle';
+import { SceneComponentProps, SceneLayoutChild, SceneLayoutState, SceneLayoutChildOptions } from '../../core/types';
+
+import { SceneGridRow } from './SceneGridRow';
 
 interface SceneGridLayoutState extends SceneLayoutState {}
 
@@ -26,9 +19,9 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   public constructor(state: SceneGridLayoutState) {
     super({
       ...state,
-      layout: {
+      placement: {
         isDraggable: true,
-        ...state.layout,
+        ...state.placement,
       },
       children: sortChildrenByPosition(state.children),
     });
@@ -55,8 +48,8 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     // Ok we are expanding row. We need to update row children y pos (incase they are incorrect) and push items below down
     // Code copied from DashboardModel toggleRow()
 
-    const rowY = row.state.layout?.y!;
-    const firstPanelYPos = rowChildren[0].state.layout?.y ?? rowY;
+    const rowY = row.state.placement?.y!;
+    const firstPanelYPos = rowChildren[0].state.placement?.y ?? rowY;
     const yDiff = firstPanelYPos - (rowY + 1);
 
     // y max will represent the bottom y pos after all panels have been added
@@ -65,12 +58,12 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
     for (const panel of rowChildren) {
       // set the y gridPos if it wasn't already set
-      const newSize = { ...panel.state.layout };
+      const newSize = { ...panel.state.placement };
       newSize.y = newSize.y ?? rowY;
       // make sure y is adjusted (in case row moved while collapsed)
       newSize.y -= yDiff;
-      if (newSize.y > panel.state.layout?.y!) {
-        panel.setState({ layout: newSize });
+      if (newSize.y > panel.state.placement?.y!) {
+        panel.setState({ placement: newSize });
       }
       // update insert post and y max
       yMax = Math.max(yMax, Number(newSize.y!) + Number(newSize.height!));
@@ -80,13 +73,13 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
     // push panels below down
     for (const child of this.state.children) {
-      if (child.state.layout?.y! > rowY) {
+      if (child.state.placement?.y! > rowY) {
         this.pushChildDown(child, pushDownAmount);
       }
 
       if (child instanceof SceneGridRow && child !== row) {
         for (const rowChild of child.state.children) {
-          if (rowChild.state.layout?.y! > rowY) {
+          if (rowChild.state.placement?.y! > rowY) {
             this.pushChildDown(rowChild, pushDownAmount);
           }
         }
@@ -115,10 +108,10 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
         height: item.h,
       };
 
-      if (!isItemSizeEqual(child.state.layout!, nextSize)) {
+      if (!isItemSizeEqual(child.state.placement!, nextSize)) {
         child.setState({
-          layout: {
-            ...child.state.layout,
+          placement: {
+            ...child.state.placement,
             ...nextSize,
           },
         });
@@ -152,8 +145,8 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   public onResizeStop: ReactGridLayout.ItemCallback = (_, o, n) => {
     const child = this.getSceneLayoutChild(n.i);
     child.setState({
-      layout: {
-        ...child.state.layout,
+      placement: {
+        ...child.state.placement,
         width: n.w,
         height: n.h,
       },
@@ -162,9 +155,9 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
 
   private pushChildDown(child: SceneLayoutChild, amount: number) {
     child.setState({
-      layout: {
-        ...child.state.layout,
-        y: child.state.layout?.y! + amount,
+      placement: {
+        ...child.state.placement,
+        y: child.state.placement?.y! + amount,
       },
     });
   }
@@ -238,12 +231,12 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
     for (let i = 0; i < gridLayout.length; i++) {
       const gridItem = gridLayout[i];
       const child = this.getSceneLayoutChild(gridItem.i)!;
-      const childSize = child.state.layout!;
+      const childSize = child.state.placement!;
 
       if (childSize?.x !== gridItem.x || childSize?.y !== gridItem.y) {
         child.setState({
-          layout: {
-            ...child.state.layout,
+          placement: {
+            ...child.state.placement,
             x: gridItem.x,
             y: gridItem.y,
           },
@@ -265,15 +258,15 @@ export class SceneGridLayout extends SceneObjectBase<SceneGridLayoutState> {
   };
 
   private toGridCell(child: SceneLayoutChild): ReactGridLayout.Layout {
-    const size = child.state.layout!;
+    const size = child.state.placement!;
 
     let x = size.x ?? 0;
     let y = size.y ?? 0;
     const w = Number.isInteger(Number(size.width)) ? Number(size.width) : DEFAULT_PANEL_SPAN;
     const h = Number.isInteger(Number(size.height)) ? Number(size.height) : DEFAULT_PANEL_SPAN;
 
-    let isDraggable = Boolean(child.state.layout?.isDraggable);
-    let isResizable = Boolean(child.state.layout?.isResizable);
+    let isDraggable = Boolean(child.state.placement?.isDraggable);
+    let isResizable = Boolean(child.state.placement?.isResizable);
 
     if (child instanceof SceneGridRow) {
       isDraggable = child.state.isCollapsed ? true : false;
@@ -373,11 +366,11 @@ function validateChildrenSize(children: SceneLayoutChild[]) {
   if (
     children.find(
       (c) =>
-        !c.state.layout ||
-        c.state.layout.height === undefined ||
-        c.state.layout.width === undefined ||
-        c.state.layout.x === undefined ||
-        c.state.layout.y === undefined
+        !c.state.placement ||
+        c.state.placement.height === undefined ||
+        c.state.placement.width === undefined ||
+        c.state.placement.x === undefined ||
+        c.state.placement.y === undefined
     )
   ) {
     throw new Error('All children must have a size specified');
@@ -390,7 +383,7 @@ function isItemSizeEqual(a: SceneLayoutChildOptions, b: SceneLayoutChildOptions)
 
 function sortChildrenByPosition(children: SceneLayoutChild[]) {
   return [...children].sort((a, b) => {
-    return a.state.layout?.y! - b.state.layout?.y! || a.state.layout?.x! - b.state.layout?.x!;
+    return a.state.placement?.y! - b.state.placement?.y! || a.state.placement?.x! - b.state.placement?.x!;
   });
 }
 

@@ -23,8 +23,8 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
   public onToggle = () => {
     this.setState({
       isCollapsed: !this.state.isCollapsed,
-      layout: {
-        ...this.state.layout,
+      placement: {
+        ...this.state.placement,
         ySizing: this.state.isCollapsed ? 'fill' : 'content',
       },
     });
@@ -81,7 +81,7 @@ export function NestedSceneRenderer({ model, isEditing }: SceneComponentProps<Ne
         </Stack>
         <div className={styles.actions}>{toolbarActions}</div>
       </div>
-      {!isCollapsed && <body.Component model={layout} isEditing={isEditing} />}
+      {!isCollapsed && <body.Component model={body} isEditing={isEditing} />}
     </div>
   );
 }

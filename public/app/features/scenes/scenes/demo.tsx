@@ -20,7 +20,7 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
       direction: 'row',
       children: [
         new VizPanel({
-          layout: { minWidth: '70%' },
+          placement: { minWidth: '70%' },
           pluginId: 'timeseries',
           title: 'Dynamic height and width',
           $data: getQueryRunnerWithRandomWalkQuery({}, { maxDataPointsFromWidth: true }),
@@ -37,13 +37,13 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
               title: 'Fill height',
             }),
             new SceneCanvasText({
-              layout: { ySizing: 'content' },
+              placement: { ySizing: 'content' },
               text: 'Size to content',
               fontSize: 20,
               align: 'center',
             }),
             new VizPanel({
-              layout: { height: 300 },
+              placement: { height: 300 },
               pluginId: 'timeseries',
               title: 'Fixed height',
             }),
@@ -75,7 +75,7 @@ export function getScenePanelRepeaterTest(standalone: boolean): Scene {
         children: [
           new SceneFlexLayout({
             direction: 'row',
-            layout: { minHeight: 200 },
+            placement: { minHeight: 200 },
             children: [
               new VizPanel({
                 pluginId: 'timeseries',
@@ -85,7 +85,7 @@ export function getScenePanelRepeaterTest(standalone: boolean): Scene {
                 },
               }),
               new VizPanel({
-                layout: { width: 300 },
+                placement: { width: 300 },
                 pluginId: 'stat',
                 fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
                 options: {

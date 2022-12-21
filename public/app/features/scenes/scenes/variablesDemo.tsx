@@ -54,7 +54,7 @@ export function getVariablesDemo(standalone: boolean): Scene {
         }),
       ],
     }),
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'row',
       children: [
         new SceneFlexLayout({
@@ -67,7 +67,7 @@ export function getVariablesDemo(standalone: boolean): Scene {
               }),
             }),
             new SceneCanvasText({
-              size: { width: '40%' },
+              placement: { width: '40%' },
               text: 'server: ${server} pod:${pod}',
               fontSize: 20,
               align: 'center',
@@ -138,7 +138,7 @@ export function getVariablesDemoWithAll(): Scene {
               }),
             }),
             new SceneCanvasText({
-              layout: { width: '40%' },
+              placement: { width: '40%' },
               text: 'server: ${server} pod:${pod}',
               fontSize: 20,
               align: 'center',

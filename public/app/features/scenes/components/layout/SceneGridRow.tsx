@@ -29,10 +29,10 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
     super({
       isCollapsible: true,
       ...state,
-      layout: {
+      placement: {
         isResizable: false,
         isDraggable: true,
-        ...state.layout,
+        ...state.placement,
         x: 0,
         height: 1,
         width: GRID_COLUMN_COUNT,
@@ -68,7 +68,7 @@ export class SceneGridRow extends SceneObjectBase<SceneGridRowState> {
 
 export function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   const styles = useStyles2(getSceneGridRowStyles);
-  const { isCollapsible, isCollapsed, isDraggable, title } = model.useState();
+  const { isCollapsible, isCollapsed, title, placement } = model.useState();
   const layout = sceneGraph.getLayout(model);
   const dragHandle = <SceneDragHandle layoutKey={layout.state.key!} />;
 
@@ -79,7 +79,7 @@ export function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow
           {isCollapsible && <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />}
           <span className={styles.rowTitle}>{title}</span>
         </div>
-        {isDraggable && isCollapsed && <div>{dragHandle}</div>}
+        {placement?.isDraggable && isCollapsed && <div>{dragHandle}</div>}
       </div>
     </div>
   );

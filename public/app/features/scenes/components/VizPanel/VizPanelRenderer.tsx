@@ -14,15 +14,15 @@ import { SceneDragHandle } from '../SceneDragHandle';
 import { VizPanel } from './VizPanel';
 
 export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
-  const { title, options, fieldConfig, pluginId, pluginLoadError, $data, layout: layoutOptions } = model.useState();
+  const { title, options, fieldConfig, pluginId, pluginLoadError, $data, placement } = model.useState();
   const [ref, { width, height }] = useMeasure();
   const plugin = model.getPlugin();
   const { data } = sceneGraph.getData(model).useState();
   const parentLayout = sceneGraph.getLayout(model);
 
-  // TODO: this should probably be parentLayout.isDraggingEnabled() ? layoutOptions?.isDraggable : false
+  // TODO: this should probably be parentLayout.isDraggingEnabled() ? placement?.isDraggable : false
   // The current logic is not correct, just because parent layout itself is not draggable does not mean children are not
-  const isDraggable = parentLayout.state.layout?.isDraggable ? layoutOptions?.isDraggable : false;
+  const isDraggable = parentLayout.state.placement?.isDraggable ? placement?.isDraggable : false;
   const dragHandle = <SceneDragHandle layoutKey={parentLayout.state.key!} />;
 
   const titleInterpolated = sceneGraph.interpolate(model, title);

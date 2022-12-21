@@ -59,7 +59,7 @@ function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) 
   return (
     <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Canvas} toolbar={pageToolbar}>
       <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
-        <body.Component model={layout} />
+        <body.Component model={body} />
       </div>
     </Page>
   );

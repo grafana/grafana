@@ -43,10 +43,10 @@ function FlexLayoutChildComponent({
   direction: FlexLayoutDirection;
   isEditing?: boolean;
 }) {
-  const { layout } = item.useState();
+  const { placement } = item.useState();
 
   return (
-    <div style={getItemStyles(direction, layout)}>
+    <div style={getItemStyles(direction, placement)}>
       <item.Component model={item} isEditing={isEditing} />
     </div>
   );

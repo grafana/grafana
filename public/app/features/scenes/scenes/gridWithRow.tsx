@@ -15,19 +15,19 @@ export function getGridWithRowLayoutTest(standalone: boolean): Scene {
           title: 'Row A',
           key: 'Row A',
           isCollapsed: true,
-          layout: { y: 0 },
+          placement: { y: 0 },
           children: [
             new VizPanel({
               pluginId: 'timeseries',
               title: 'Row A Child1',
               key: 'Row A Child1',
-              layout: { x: 0, y: 1, width: 12, height: 5, isResizable: true, isDraggable: true },
+              placement: { x: 0, y: 1, width: 12, height: 5, isResizable: true, isDraggable: true },
             }),
             new VizPanel({
               pluginId: 'timeseries',
               title: 'Row A Child2',
               key: 'Row A Child2',
-              layout: { x: 0, y: 5, width: 6, height: 5, isResizable: true, isDraggable: true },
+              placement: { x: 0, y: 5, width: 6, height: 5, isResizable: true, isDraggable: true },
             }),
           ],
         }),
@@ -35,19 +35,19 @@ export function getGridWithRowLayoutTest(standalone: boolean): Scene {
           title: 'Row B',
           key: 'Row B',
           isCollapsed: true,
-          layout: { y: 1 },
+          placement: { y: 1 },
           children: [
             new VizPanel({
               pluginId: 'timeseries',
               title: 'Row B Child1',
               key: 'Row B Child1',
-              layout: { x: 0, y: 2, width: 12, height: 5, isResizable: false, isDraggable: true },
+              placement: { x: 0, y: 2, width: 12, height: 5, isResizable: false, isDraggable: true },
             }),
             new VizPanel({
               pluginId: 'timeseries',
               title: 'Row B Child2',
               key: 'Row B Child2',
-              layout: { x: 0, y: 7, width: 6, height: 5, isResizable: false, isDraggable: true },
+              placement: { x: 0, y: 7, width: 6, height: 5, isResizable: false, isDraggable: true },
             }),
           ],
         }),
@@ -55,7 +55,7 @@ export function getGridWithRowLayoutTest(standalone: boolean): Scene {
           pluginId: 'timeseries',
           title: 'Outsider',
           key: 'Outsider',
-          layout: {
+          placement: {
             x: 2,
             y: 12,
             width: 12,

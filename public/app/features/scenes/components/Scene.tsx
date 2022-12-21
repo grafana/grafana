@@ -39,7 +39,7 @@ export class EmbeddedScene extends Scene {
 }
 
 function EmbeddedSceneRenderer({ model }: SceneComponentProps<Scene>) {
-  const { layout, isEditing, subMenu } = model.useState();
+  const { body, isEditing, subMenu } = model.useState();
   return (
     <div
       style={{
@@ -53,7 +53,7 @@ function EmbeddedSceneRenderer({ model }: SceneComponentProps<Scene>) {
     >
       {subMenu && <subMenu.Component model={subMenu} />}
       <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
-        <layout.Component model={layout} isEditing={isEditing} />
+        <body.Component model={body} isEditing={isEditing} />
       </div>
     </div>
   );
@@ -85,7 +85,7 @@ function SceneRenderer({ model }: SceneComponentProps<Scene>) {
       <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {subMenu && <subMenu.Component model={subMenu} />}
         <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
-          <body.Component model={layout} isEditing={isEditing} />
+          <body.Component model={body} isEditing={isEditing} />
           {$editor && <$editor.Component model={$editor} isEditing={isEditing} />}
         </div>
       </div>

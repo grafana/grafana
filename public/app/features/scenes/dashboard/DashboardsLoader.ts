@@ -81,7 +81,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
               new SceneGridRow({
                 title: panel.title,
                 isCollapsed: true,
-                layout: {
+                placement: {
                   y: panel.gridPos.y,
                 },
                 children: panel.panels ? panel.panels.map(createVizPanelFromPanelModel) : [],
@@ -98,7 +98,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
             panels.push(
               new SceneGridRow({
                 title: currentRow!.title,
-                layout: {
+                placement: {
                   y: currentRow.gridPos.y,
                 },
                 children: currentRowPanels,
@@ -126,7 +126,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
       panels.push(
         new SceneGridRow({
           title: currentRow!.title,
-          layout: {
+          placement: {
             y: currentRow.gridPos.y,
           },
           children: currentRowPanels,
@@ -142,7 +142,7 @@ function createVizPanelFromPanelModel(panel: PanelModel) {
   return new VizPanel({
     title: panel.title,
     pluginId: panel.type,
-    layout: {
+    placement: {
       x: panel.gridPos.x,
       y: panel.gridPos.y,
       width: panel.gridPos.w,

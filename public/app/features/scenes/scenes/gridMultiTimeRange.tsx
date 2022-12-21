@@ -24,19 +24,19 @@ export function getGridWithMultipleTimeRanges(standalone: boolean): Scene {
           title: 'Row A - has its own query, last year time range',
           key: 'Row A',
           isCollapsed: true,
-          layout: { y: 0 },
+          placement: { y: 0 },
           children: [
             new VizPanel({
               pluginId: 'timeseries',
               title: 'Row A Child1',
               key: 'Row A Child1',
-              layout: { x: 0, y: 1, width: 12, height: 5, isResizable: true, isDraggable: true },
+              placement: { x: 0, y: 1, width: 12, height: 5, isResizable: true, isDraggable: true },
             }),
             new VizPanel({
               pluginId: 'timeseries',
               title: 'Row A Child2',
               key: 'Row A Child2',
-              layout: { x: 0, y: 5, width: 6, height: 5, isResizable: true, isDraggable: true },
+              placement: { x: 0, y: 5, width: 6, height: 5, isResizable: true, isDraggable: true },
             }),
           ],
         }),
@@ -46,7 +46,7 @@ export function getGridWithMultipleTimeRanges(standalone: boolean): Scene {
           pluginId: 'timeseries',
           title: 'Outsider, has its own query',
           key: 'Outsider-own-query',
-          layout: {
+          placement: {
             x: 0,
             y: 12,
             width: 6,

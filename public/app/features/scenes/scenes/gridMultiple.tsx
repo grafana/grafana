@@ -16,7 +16,7 @@ export function getMultipleGridLayoutTest(standalone: boolean): Scene {
         new SceneGridLayout({
           children: [
             new VizPanel({
-              layout: {
+              placement: {
                 x: 0,
                 y: 0,
                 width: 12,
@@ -28,21 +28,21 @@ export function getMultipleGridLayoutTest(standalone: boolean): Scene {
               title: 'Dragabble and resizable',
             }),
             new VizPanel({
-              layout: { x: 12, y: 0, width: 12, height: 10, isResizable: false, isDraggable: true },
+              placement: { x: 12, y: 0, width: 12, height: 10, isResizable: false, isDraggable: true },
               pluginId: 'timeseries',
               title: 'Draggable only',
             }),
             new SceneFlexLayout({
-              layout: { x: 6, y: 11, width: 12, height: 10, isResizable: false, isDraggable: true },
+              placement: { x: 6, y: 11, width: 12, height: 10, isResizable: false, isDraggable: true },
               direction: 'column',
               children: [
                 new VizPanel({
-                  layout: { ySizing: 'fill' },
+                  placement: { ySizing: 'fill' },
                   pluginId: 'timeseries',
                   title: 'Fill height',
                 }),
                 new VizPanel({
-                  layout: { ySizing: 'fill' },
+                  placement: { ySizing: 'fill' },
                   pluginId: 'timeseries',
                   title: 'Fill height',
                 }),
@@ -54,7 +54,7 @@ export function getMultipleGridLayoutTest(standalone: boolean): Scene {
         new SceneGridLayout({
           children: [
             new VizPanel({
-              layout: {
+              placement: {
                 x: 0,
                 y: 0,
                 width: 12,
@@ -65,21 +65,21 @@ export function getMultipleGridLayoutTest(standalone: boolean): Scene {
               title: 'Fill height',
             }),
             new VizPanel({
-              layout: { x: 12, y: 0, width: 12, height: 10, isResizable: false, isDraggable: true },
+              placement: { x: 12, y: 0, width: 12, height: 10, isResizable: false, isDraggable: true },
               pluginId: 'timeseries',
               title: 'Fill height',
             }),
             new SceneFlexLayout({
-              layout: { x: 6, y: 11, width: 12, height: 10 },
+              placement: { x: 6, y: 11, width: 12, height: 10 },
               direction: 'column',
               children: [
                 new VizPanel({
-                  layout: { ySizing: 'fill', isDraggable: true },
+                  placement: { ySizing: 'fill', isDraggable: true },
                   pluginId: 'timeseries',
                   title: 'Fill height',
                 }),
                 new VizPanel({
-                  layout: { ySizing: 'fill', isDraggable: true },
+                  placement: { ySizing: 'fill', isDraggable: true },
                   pluginId: 'timeseries',
                   title: 'Fill height',
                 }),

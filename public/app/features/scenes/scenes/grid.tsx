@@ -16,7 +16,7 @@ export function getGridLayoutTest(standalone: boolean): Scene {
         new VizPanel({
           pluginId: 'timeseries',
           title: 'Draggable and resizable',
-          layout: {
+          placement: {
             x: 0,
             y: 0,
             width: 12,
@@ -29,20 +29,20 @@ export function getGridLayoutTest(standalone: boolean): Scene {
         new VizPanel({
           pluginId: 'timeseries',
           title: 'No drag and no resize',
-          layout: { x: 12, y: 0, width: 12, height: 10, isResizable: false, isDraggable: false },
+          placement: { x: 12, y: 0, width: 12, height: 10, isResizable: false, isDraggable: false },
         }),
 
         new SceneFlexLayout({
           direction: 'column',
-          layout: { x: 6, y: 11, width: 12, height: 10, isDraggable: true, isResizable: true },
+          placement: { x: 6, y: 11, width: 12, height: 10, isDraggable: true, isResizable: true },
           children: [
             new VizPanel({
-              layout: { ySizing: 'fill' },
+              placement: { ySizing: 'fill' },
               pluginId: 'timeseries',
               title: 'Child of flex layout',
             }),
             new VizPanel({
-              layout: { ySizing: 'fill' },
+              placement: { ySizing: 'fill' },
               pluginId: 'timeseries',
               title: 'Child of flex layout',
             }),
