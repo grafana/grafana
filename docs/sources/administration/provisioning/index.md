@@ -642,6 +642,7 @@ The following sections detail the supported settings and secure settings for eac
 
 ## Grafana Enterprise
 
-Grafana Enterprise supports provisioning for the following resources:
+Grafana Enterprise supports:
 
-- [Role-based access control provisioning]({{< relref "../roles-and-permissions/access-control/rbac-provisioning/" >}})
+- [Provisioning role-based access control with Grafana]({{< relref "../roles-and-permissions/access-control/rbac-grafana-provisioning/" >}})
+- [Provisioning role-based access control with Terraform]({{< relref "../roles-and-permissions/access-control/rbac-terraform-provisioning/" >}})
