@@ -42,7 +42,6 @@ func (api *Api) ViewPublicDashboard(c *models.ReqContext) response.Response {
 		IsFolder:                            false,
 		FolderId:                            dash.FolderId,
 		PublicDashboardAccessToken:          pubdash.AccessToken,
-		PublicDashboardUID:                  pubdash.Uid,
 		PublicDashboardTimeSelectionEnabled: pubdash.TimeSelectionEnabled,
 	}
 
