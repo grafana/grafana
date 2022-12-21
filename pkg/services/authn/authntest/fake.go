@@ -22,6 +22,10 @@ func (f *FakeClient) Authenticate(ctx context.Context, r *authn.Request) (*authn
 	return f.ExpectedIdentity, f.ExpectedErr
 }
 
+func (f *FakeClient) ClientParams() *authn.ClientParams {
+	return &authn.ClientParams{}
+}
+
 func (f *FakeClient) Test(ctx context.Context, r *authn.Request) bool {
 	return f.ExpectedTest
 }
