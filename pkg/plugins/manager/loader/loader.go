@@ -116,12 +116,20 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 
 	foundPlugins.stripDuplicates(registeredPlugins, l.log)
 
-	// calculate initial signature state
 	loadedPlugins := make(map[string]*plugins.Plugin)
 	for pluginDir, pluginJSON := range foundPlugins {
-		useCDN := l.cfg.PluginSettings[pluginJSON.ID]["cdn"] != ""
-		plugin := createPluginBase(pluginJSON, class, pluginDir, useCDN)
+		// Make sure that load CDN plugins only if they are external, otherwise disable CDN for this plugin
+		isCDN := l.cfg.PluginSettings[pluginJSON.ID]["cdn"] != ""
+		if class != plugins.External && isCDN {
+			l.log.Warn(
+				"Tried to load a non-external plugin as CDN, disabling CDN for this plugin",
+				"pluginID", pluginJSON.ID, "class", class,
+			)
+			isCDN = false
+		}
+		plugin := createPluginBase(pluginJSON, class, pluginDir, isCDN)
 
+		// calculate initial signature state
 		sig, err := signature.Calculate(l.log, plugin)
 		if err != nil {
 			l.log.Warn("Could not calculate plugin signature state", "pluginID", plugin.ID, "err", err)
