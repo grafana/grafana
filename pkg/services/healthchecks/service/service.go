@@ -76,34 +76,33 @@ func (hcs *HealthChecksServiceImpl) RunCoreHealthChecks(ctx context.Context) err
 }
 
 // RegisterHealthCheck validates a health check config and adds it to the list of registered health checks.
-// If the health check strategy is StrategyCron, this function returns a function for sending a status, otherwise it returns nil.
-func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, config models.HealthCheckConfig, checker healthchecks.HealthChecker) (func(), error) {
+func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, config models.HealthCheckConfig, checker healthchecks.HealthChecker) error {
 	hcs.mu.Lock()
 	defer hcs.mu.Unlock()
 
 	// valid name
 	if config.Name == "" {
-		return nil, errors.New("received health check with empty name")
+		return errors.New("received health check with empty name")
 	}
 
 	// unique names only
 	if _, has := hcs.registeredChecks[config.Name]; has {
-		return nil, fmt.Errorf("health check %s already exists", config.Name)
+		return fmt.Errorf("health check %s already exists", config.Name)
 	}
 
 	// no readiness checks not listed as core
 	if config.Type == models.ReadinessCheck && !coreChecks[config.Name] {
-		return nil, fmt.Errorf("health check '%s' has type 'readiness' but it is not listed as a core check", config.Name)
+		return fmt.Errorf("health check '%s' has type 'readiness' but it is not listed as a core check", config.Name)
 	}
 
 	// no check names reserved by core checks
 	if config.Type != models.ReadinessCheck && coreChecks[config.Name] {
-		return nil, fmt.Errorf("health check name '%s' is reserved for a readiness check", config.Name)
+		return fmt.Errorf("health check name '%s' is reserved for a readiness check", config.Name)
 	}
 
 	// valid intervals only
 	if config.Strategy == models.StrategyCron && config.Interval <= 0 {
-		return nil, fmt.Errorf("health check '%s' has invalid interval of '%d'", config.Name, config.Interval)
+		return fmt.Errorf("health check '%s' has invalid interval of '%d'", config.Name, config.Interval)
 	}
 
 	healthCheck := models.HealthCheck{
@@ -115,7 +114,7 @@ func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, con
 
 	// if it's a readiness check, it will be run whenever the readiness endpoint is pinged
 	if config.Type == models.ReadinessCheck {
-		return nil, nil
+		return nil
 	}
 
 	if config.Strategy == models.StrategyCron {
@@ -133,7 +132,7 @@ func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, con
 		if config.InitialDelay > 0 {
 			time.AfterFunc(config.InitialDelay, startFunc)
 		} else {
-			go startFunc()
+			startFunc()
 		}
 	} else if config.Strategy == models.StrategyOnce {
 		if config.InitialDelay > 0 {
@@ -141,15 +140,28 @@ func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, con
 				hcs.runIndividualHealthCheck(ctx, healthCheck)
 			})
 		} else {
-			go hcs.runIndividualHealthCheck(ctx, healthCheck)
-		}
-	} else if config.Strategy == models.StrategyOnDemand {
-		return func() {
 			hcs.runIndividualHealthCheck(ctx, healthCheck)
-		}, nil
+		}
 	}
 
-	return nil, nil
+	return nil
+}
+
+func (hcs *HealthChecksServiceImpl) RunOnDemandHealthCheck(ctx context.Context, name string) error {
+	hcs.mu.Lock()
+	defer hcs.mu.Unlock()
+
+	check, has := hcs.registeredChecks[name]
+	if !has {
+		return fmt.Errorf("received on-demand health check request for unregistered name %s", name)
+	}
+
+	if check.HealthCheckConfig.Strategy != models.StrategyOnDemand {
+		return fmt.Errorf("health check %s does not use the on-demand strategy", name)
+	}
+
+	hcs.runIndividualHealthCheck(ctx, check)
+	return nil
 }
 
 func (hcs *HealthChecksServiceImpl) GetLatestHealth(ctx context.Context) (models.HealthStatus, map[string]map[string]string) {
@@ -198,17 +210,21 @@ func (hcs *HealthChecksServiceImpl) ListHealthChecks(ctx context.Context) []mode
 }
 
 func (hcs *HealthChecksServiceImpl) runIndividualHealthCheck(ctx context.Context, hc models.HealthCheck) {
-	hcs.mu.Lock()
-	defer hcs.mu.Unlock()
-	hcs.log.Debug("Running health check", "name", hc.HealthCheckConfig.Name)
+	// avoid deadlocking and service disruptions
+	go func() {
+		hcs.mu.Lock()
+		defer hcs.mu.Unlock()
+		hcs.log.Debug("Running health check", "name", hc.HealthCheckConfig.Name)
 
-	status, metrics, err := hc.HealthCheckFunc(ctx, hc.HealthCheckConfig.Name)
-	if err != nil {
-		hcs.log.Error("Error running health check", "name", hc.HealthCheckConfig.Name, "error", err.Error())
-	}
-	check := hcs.registeredChecks[hc.HealthCheckConfig.Name]
-	check.LatestMetrics = metrics
-	check.LatestStatus = status
-	check.LatestUpdateTime = time.Now()
-	hcs.registeredChecks[hc.HealthCheckConfig.Name] = check
+		status, metrics, err := hc.HealthCheckFunc(ctx, hc.HealthCheckConfig.Name)
+		if err != nil {
+			hcs.log.Error("Error running health check", "name", hc.HealthCheckConfig.Name, "error", err.Error())
+			metrics["error_string"] = err.Error()
+		}
+		check := hcs.registeredChecks[hc.HealthCheckConfig.Name]
+		check.LatestMetrics = metrics
+		check.LatestStatus = status
+		check.LatestUpdateTime = time.Now()
+		hcs.registeredChecks[hc.HealthCheckConfig.Name] = check
+	}()
 }
