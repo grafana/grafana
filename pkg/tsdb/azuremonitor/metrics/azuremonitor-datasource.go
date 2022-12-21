@@ -55,8 +55,8 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, log
 		return nil, err
 	}
 
-	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, ctxLogger, query, dsInfo, client, url, tracer)
+	for i, query := range queries {
+		result.Responses[query.RefID] = e.executeQuery(ctx, ctxLogger, query, dsInfo, client, url, tracer, &originalQueries[i])
 	}
 
 	return result, nil
@@ -199,7 +199,7 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 }
 
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Logger, query *types.AzureMonitorQuery, dsInfo types.DatasourceInfo, cli *http.Client,
-	url string, tracer tracing.Tracer) backend.DataResponse {
+	url string, tracer tracing.Tracer, originalQuery *backend.DataQuery) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	req, err := e.createRequest(ctx, logger, url)
@@ -250,7 +250,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 		return dataResponse
 	}
 
-	dataResponse.Frames, err = e.parseResponse(data, query, azurePortalUrl)
+	dataResponse.Frames, err = e.parseResponse(data, query, azurePortalUrl, originalQuery)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
@@ -291,7 +291,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(logger log.Logger, res *http.
 	return data, nil
 }
 
-func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, query *types.AzureMonitorQuery, azurePortalUrl string) (data.Frames, error) {
+func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, query *types.AzureMonitorQuery, azurePortalUrl string, originalQuery *backend.DataQuery) (data.Frames, error) {
 	if len(amr.Value) == 0 {
 		return nil, nil
 	}
@@ -361,7 +361,15 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			frame.SetRow(i, point.TimeStamp, value)
 		}
 
-		queryUrl, err := getQueryUrl(query, azurePortalUrl, resourceID, resourceName)
+		queryJSONModel := types.AzureMonitorJSONQuery{}
+		err := json.Unmarshal(originalQuery.JSON, &queryJSONModel)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
+		}
+
+		dimensions := MigrateDimensionFilters(queryJSONModel.AzureMonitor.DimensionFilters)
+
+		queryUrl, err := getQueryUrl(query, azurePortalUrl, resourceID, resourceName, dimensions)
 		if err != nil {
 			return nil, err
 		}
@@ -374,7 +382,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 }
 
 // Gets the deep link for the given query
-func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, resourceName string) (string, error) {
+func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, resourceName string, dimensions []types.AzureMonitorDimensionFilter) (string, error) {
 	aggregationType := aggregationTypeMap["Average"]
 	aggregation := query.Params.Get("aggregation")
 	if aggregation != "" {
@@ -397,6 +405,34 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 	}
 	escapedTime := url.QueryEscape(string(timespan))
 
+	var filters []interface{}
+
+	if len(dimensions) > 0 {
+		for _, dimension := range dimensions {
+			var dimensionInt int
+			dimensionFilters := dimension.Filters
+			if len(dimension.Filters) == 0 {
+				dimensionFilters = []string{"*"}
+			}
+
+			switch dimension.Operator {
+			case "eq":
+				dimensionInt = 0
+			case "ne":
+				dimensionInt = 1
+			case "sw":
+				dimensionInt = 3
+			}
+
+			filter := map[string]interface{}{
+				"key":      dimension.Dimension,
+				"operator": dimensionInt,
+				"values":   dimensionFilters,
+			}
+			filters = append(filters, filter)
+		}
+	}
+
 	chartDef, err := json.Marshal(map[string]interface{}{
 		"v2charts": []interface{}{
 			map[string]interface{}{
@@ -413,6 +449,9 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 							ResourceDisplayName: resourceName,
 						},
 					},
+				},
+				"filterCollection": map[string]interface{}{
+					"filters": filters,
 				},
 			},
 		},
