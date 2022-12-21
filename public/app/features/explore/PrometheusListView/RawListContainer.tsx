@@ -27,10 +27,6 @@ const getRawListContainerStyles = stylesFactory(() => {
     mobileWrapper: css`
       height: 100%;
       overflow: scroll;
-      .list-item-attribute {
-        display: block;
-        text-indent: 1em;
-      }
     `,
     header: css`
       display: flex;

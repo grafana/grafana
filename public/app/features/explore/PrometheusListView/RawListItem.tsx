@@ -128,7 +128,13 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
             <span>{`{`}</span>
             <span>
               {attributeValues.map((value, index) => (
-                <RawListItemAttributes value={value} key={index} index={index} length={attributeValues.length} />
+                <RawListItemAttributes
+                  isExpandedView={isExpandedView}
+                  value={value}
+                  key={index}
+                  index={index}
+                  length={attributeValues.length}
+                />
               ))}
             </span>
             <span>{`}`}</span>

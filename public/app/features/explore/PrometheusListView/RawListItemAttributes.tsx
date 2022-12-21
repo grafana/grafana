@@ -18,10 +18,25 @@ const getStyles = (theme: GrafanaTheme) => {
     metricValue: css`
       color: ${reddish};
     `,
+    expanded: css`
+      display: block;
+      text-indent: 1em;
+    `,
+    contracted: css``,
   };
 };
 
-const RawListItemAttributes = ({ value, index, length }: { value: RawListValue; index: number; length: number }) => {
+const RawListItemAttributes = ({
+  value,
+  index,
+  length,
+  isExpandedView,
+}: {
+  value: RawListValue;
+  index: number;
+  length: number;
+  isExpandedView: boolean;
+}) => {
   const styles = useStyles(getStyles);
 
   // From the beginning of the string to the start of the `=`
@@ -31,7 +46,7 @@ const RawListItemAttributes = ({ value, index, length }: { value: RawListValue; 
   const attributeValue = value.value;
 
   return (
-    <span className={'list-item-attribute'} key={index}>
+    <span className={isExpandedView ? styles.expanded : styles.contracted} key={index}>
       <span className={styles.metricName}>{attributeName}</span>
       <span>=</span>
       <span>&quot;</span>
