@@ -80,6 +80,8 @@ const rule = createRule({
   defaultOptions: [],
 });
 
+module.exports = rule;
+
 /**
  * Finds identifiers (variables) mentioned in various types of expressions:
  *  - Identifier: `selectors` -> `selectors`
