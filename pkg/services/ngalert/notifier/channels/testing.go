@@ -3,17 +3,9 @@ package channels
 import (
 	"context"
 	"fmt"
-	"testing"
 	"time"
 
 	"github.com/grafana/alerting/alerting/notifier/channels"
-	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type fakeImageStore struct {
@@ -81,53 +73,3 @@ func (ns *notificationServiceMock) SendEmail(ctx context.Context, cmd *channels.
 }
 
 func mockNotificationService() *notificationServiceMock { return &notificationServiceMock{} }
-
-type emailSender struct {
-	ns *notifications.NotificationService
-}
-
-func (e emailSender) SendEmail(ctx context.Context, cmd *channels.SendEmailSettings) error {
-	attached := make([]*models.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
-	for _, file := range cmd.AttachedFiles {
-		attached = append(attached, &models.SendEmailAttachFile{
-			Name:    file.Name,
-			Content: file.Content,
-		})
-	}
-	return e.ns.SendEmailCommandHandlerSync(ctx, &models.SendEmailCommandSync{
-		SendEmailCommand: models.SendEmailCommand{
-			To:            cmd.To,
-			SingleEmail:   cmd.SingleEmail,
-			Template:      cmd.Template,
-			Subject:       cmd.Subject,
-			Data:          cmd.Data,
-			Info:          cmd.Info,
-			ReplyTo:       cmd.ReplyTo,
-			EmbeddedFiles: cmd.EmbeddedFiles,
-			AttachedFiles: attached,
-		},
-	})
-}
-
-func createEmailSender(t *testing.T) *emailSender {
-	t.Helper()
-
-	tracer := tracing.InitializeTracerForTest()
-	bus := bus.ProvideBus(tracer)
-
-	cfg := setting.NewCfg()
-	cfg.StaticRootPath = "../../../../../public/"
-	cfg.BuildVersion = "4.0.0"
-	cfg.Smtp.Enabled = true
-	cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
-	cfg.Smtp.FromAddress = "from@address.com"
-	cfg.Smtp.FromName = "Grafana Admin"
-	cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
-	cfg.Smtp.Host = "localhost:1234"
-	mailer := notifications.NewFakeMailer()
-
-	ns, err := notifications.ProvideService(bus, cfg, mailer, nil)
-	require.NoError(t, err)
-
-	return &emailSender{ns: ns}
-}
