@@ -35,7 +35,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		return nil, err
 	}
 
-	cdnPluginsBaseURLs := make([]string, 0)
 	pluginsToPreload := make([]*plugins.PreloadPlugin, 0)
 	for t, pluginsByType := range enabledPlugins {
 		for _, plugin := range pluginsByType {
@@ -44,9 +43,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 					Path:    plugin.Module,
 					Version: plugin.Info.Version,
 				})
-			}
-			if plugin.CDN {
-				cdnPluginsBaseURLs = append(cdnPluginsBaseURLs, plugin.BaseURL)
 			}
 		}
 	}
@@ -150,7 +146,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"editorsCanAdmin":                     hs.Cfg.EditorsCanAdmin,
 		"disableSanitizeHtml":                 hs.Cfg.DisableSanitizeHtml,
 		"pluginsToPreload":                    pluginsToPreload,
-		"cdnPluginsBaseURLs":                  cdnPluginsBaseURLs,
 		"auth": map[string]interface{}{
 			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
 			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),

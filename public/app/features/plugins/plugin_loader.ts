@@ -53,15 +53,6 @@ const meta: { [key: string]: {} } = {
   },
 };
 
-// Force "authorization: false" for all cdn plugins (do not pass auth data to CDN)
-config.bootData.settings?.cdnPluginsBaseURLs?.forEach((url: string) => {
-  meta[`/${url}/*`] = {
-    esModule: true,
-    authorization: false,
-    loader: 'plugin-loader',
-  };
-});
-
 grafanaRuntime.SystemJS.config({
   baseURL: 'public',
   defaultExtension: 'js',
