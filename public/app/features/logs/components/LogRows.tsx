@@ -43,8 +43,8 @@ export interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
-  onClickShowDetectedField?: (key: string) => void;
-  onClickHideDetectedField?: (key: string) => void;
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
 }
 
@@ -122,8 +122,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       getFieldLinks,
       logsSortOrder,
       showDetectedFields,
-      onClickShowDetectedField,
-      onClickHideDetectedField,
+      onClickShowField,
+      onClickHideField,
       forceEscape,
       onLogRowHover,
       app,
@@ -169,8 +169,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 enableLogDetails={enableLogDetails}
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
-                onClickShowDetectedField={onClickShowDetectedField}
-                onClickHideDetectedField={onClickHideDetectedField}
+                onClickShowField={onClickShowField}
+                onClickHideField={onClickHideField}
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
@@ -200,8 +200,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 enableLogDetails={enableLogDetails}
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
-                onClickShowDetectedField={onClickShowDetectedField}
-                onClickHideDetectedField={onClickHideDetectedField}
+                onClickShowField={onClickShowField}
+                onClickHideField={onClickHideField}
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}

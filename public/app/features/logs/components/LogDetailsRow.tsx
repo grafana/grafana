@@ -1,17 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2, LogRowModel, CoreApp } from '@grafana/data';
+import { CoreApp, Field, GrafanaTheme2, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import {
-  withTheme2,
-  Themeable2,
-  ClipboardButton,
-  DataLinkButton,
-  IconButton,
-  ToolbarButton,
-  ToolbarButtonRow,
-} from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, Themeable2, ToolbarButton, ToolbarButtonRow, withTheme2 } from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -27,9 +19,9 @@ export interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
-  showDetectedFields?: string[];
-  onClickShowDetectedField?: (key: string) => void;
-  onClickHideDetectedField?: (key: string) => void;
+  showFields?: string[];
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   row: LogRowModel;
   app?: CoreApp;
 }
@@ -105,7 +97,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   showField = () => {
-    const { onClickShowDetectedField, parsedKey, row } = this.props;
+    const { onClickShowField: onClickShowDetectedField, parsedKey, row } = this.props;
     if (onClickShowDetectedField) {
       onClickShowDetectedField(parsedKey);
     }
@@ -118,7 +110,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   hideField = () => {
-    const { onClickHideDetectedField, parsedKey, row } = this.props;
+    const { onClickHideField: onClickHideDetectedField, parsedKey, row } = this.props;
     if (onClickHideDetectedField) {
       onClickHideDetectedField(parsedKey);
     }
@@ -195,18 +187,14 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       parsedValue,
       isLabel,
       links,
-      showDetectedFields,
+      showFields: showDetectedFields,
       wrapLogMessage,
-      onClickShowDetectedField,
-      onClickHideDetectedField,
       onClickFilterLabel,
       onClickFilterOutLabel,
     } = this.props;
     const { showFieldsStats, fieldStats, fieldCount, mouseOver } = this.state;
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
-
-    const hasDetectedFieldsFunctionality = onClickShowDetectedField && onClickHideDetectedField;
     const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
 
     const toggleFieldButton =
@@ -231,14 +219,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
     return (
       <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
-        {/* Action buttons - show stats/filter results */}
-        {/* <td className={style.logsDetailsIcon}>
-          {/* <IconButton name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} /> 
-        </td> */}
-
-        {hasFilteringFunctionality && (
-          <td className={style.logsDetailsIcon}>
-            <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
+        <td className={style.logsDetailsIcon}>
+          <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
+            {hasFilteringFunctionality && (
               <ToolbarButton
                 iconOnly
                 narrow
@@ -246,6 +229,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                 tooltip="Filter for value"
                 onClick={this.filterLabel}
               ></ToolbarButton>
+            )}
+            {hasFilteringFunctionality && (
               <ToolbarButton
                 iconOnly
                 narrow
@@ -253,33 +238,18 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                 tooltip="Filter out value"
                 onClick={this.filterOutLabel}
               ></ToolbarButton>
-              {toggleFieldButton}
-              <ToolbarButton
-                iconOnly
-                narrow
-                icon="signal"
-                tooltip="Ad-hoc statistics"
-                onClick={this.showStats}
-              ></ToolbarButton>
-            </ToolbarButtonRow>
-          </td>
-        )}
+            )}
+            {toggleFieldButton}
+            <ToolbarButton
+              iconOnly
+              narrow
+              icon="signal"
+              tooltip="Ad-hoc statistics"
+              onClick={this.showStats}
+            ></ToolbarButton>
+          </ToolbarButtonRow>
+        </td>
 
-        {/* {hasDetectedFieldsFunctionality && <td className={style.logsDetailsIcon}>{toggleFieldButton}</td>} */}
-        {links?.length && (
-          <td colSpan={1}>
-            <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
-              {toggleFieldButton}
-              <ToolbarButton
-                iconOnly
-                narrow
-                icon="signal"
-                tooltip="Ad-hoc statistics"
-                onClick={this.showStats}
-              ></ToolbarButton>
-            </ToolbarButtonRow>
-          </td>
-        )}
         {/* Key - value columns */}
         <td className={style.logDetailsLabel}>{parsedKey}</td>
         <td

@@ -17,9 +17,9 @@ const setup = (propOverrides?: Partial<Props>) => {
     getStats: () => null,
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},
-    onClickShowDetectedField: () => {},
-    onClickHideDetectedField: () => {},
-    showDetectedFields: [],
+    onClickShowField: () => {},
+    onClickHideField: () => {},
+    showFields: [],
     row: {} as LogRowModel,
   };
 
@@ -81,8 +81,8 @@ describe('LogDetailsRow', () => {
     it('should not render a show toggleFieldButton button if no detected fields toggling functions provided', () => {
       setup({
         isLabel: false,
-        onClickShowDetectedField: undefined,
-        onClickHideDetectedField: undefined,
+        onClickShowField: undefined,
+        onClickHideField: undefined,
       });
       expect(screen.queryByTitle('Show this field instead of the message')).not.toBeInTheDocument();
     });

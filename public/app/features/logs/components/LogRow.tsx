@@ -55,8 +55,8 @@ interface Props extends Themeable2 {
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  onClickShowDetectedField?: (key: string) => void;
-  onClickHideDetectedField?: (key: string) => void;
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   toggleContextIsOpen?: () => void;
 }
@@ -149,8 +149,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       getRows,
       onClickFilterLabel,
       onClickFilterOutLabel,
-      onClickShowDetectedField,
-      onClickHideDetectedField,
+      onClickShowField,
+      onClickHideField,
       enableLogDetails,
       row,
       showDuplicates,
@@ -251,13 +251,13 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             getFieldLinks={getFieldLinks}
             onClickFilterLabel={onClickFilterLabel}
             onClickFilterOutLabel={onClickFilterOutLabel}
-            onClickShowDetectedField={onClickShowDetectedField}
-            onClickHideDetectedField={onClickHideDetectedField}
+            onClickShowField={onClickShowField}
+            onClickHideField={onClickHideField}
             getRows={getRows}
             row={processedRow}
             wrapLogMessage={wrapLogMessage}
             hasError={hasError}
-            showDetectedFields={showDetectedFields}
+            showFields={showDetectedFields}
             app={app}
           />
         )}

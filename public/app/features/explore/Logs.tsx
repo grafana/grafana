@@ -255,7 +255,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  showDetectedField = (key: string) => {
+  showField = (key: string) => {
     const index = this.state.showDetectedFields.indexOf(key);
 
     if (index === -1) {
@@ -267,7 +267,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  hideDetectedField = (key: string) => {
+  hideField = (key: string) => {
     const index = this.state.showDetectedFields.indexOf(key);
     if (index > -1) {
       this.setState((state) => {
@@ -501,8 +501,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 showDetectedFields={showDetectedFields}
-                onClickShowDetectedField={this.showDetectedField}
-                onClickHideDetectedField={this.hideDetectedField}
+                onClickShowField={this.showField}
+                onClickHideField={this.hideField}
                 app={CoreApp.Explore}
                 scrollElement={scrollElement}
                 onLogRowHover={this.onLogRowHover}
