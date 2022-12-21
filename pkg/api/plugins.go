@@ -6,6 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"path"
+	"path/filepath"
+	"runtime"
+	"sort"
+	"strings"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -22,13 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"io"
-	"net/http"
-	"path"
-	"path/filepath"
-	"runtime"
-	"sort"
-	"strings"
 )
 
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
@@ -355,7 +356,6 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugin
 	hs.log.Debug("redirected asset", "url", remoteURL)
 	http.Redirect(c.Resp, c.Req, remoteURL, http.StatusFound)
 }
-
 
 // getPluginAssets returns public plugin assets (images, JS, etc.)
 //
