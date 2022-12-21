@@ -36,14 +36,12 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	}
 
 	pluginsToPreload := make([]*plugins.PreloadPlugin, 0)
-	for t, pluginsByType := range enabledPlugins {
-		for _, plugin := range pluginsByType {
-			if t == plugins.App && plugin.Preload {
-				pluginsToPreload = append(pluginsToPreload, &plugins.PreloadPlugin{
-					Path:    plugin.Module,
-					Version: plugin.Info.Version,
-				})
-			}
+	for _, app := range enabledPlugins[plugins.App] {
+		if app.Preload {
+			pluginsToPreload = append(pluginsToPreload, &plugins.PreloadPlugin{
+				Path:    app.Module,
+				Version: app.Info.Version,
+			})
 		}
 	}
 
