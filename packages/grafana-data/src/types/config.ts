@@ -220,6 +220,8 @@ export interface GrafanaConfig {
 }
 
 export interface AuthSettings {
+  // deprecation notice
+  // in favor of setting one for each specific auth integration
   OAuthSkipOrgRoleUpdateSync?: boolean;
   SAMLSkipOrgRoleSync?: boolean;
   LDAPSkipOrgRoleSync?: boolean;
