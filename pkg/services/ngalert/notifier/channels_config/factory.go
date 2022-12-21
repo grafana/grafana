@@ -1,4 +1,4 @@
-package notifier
+package channels_config
 
 import (
 	"strings"

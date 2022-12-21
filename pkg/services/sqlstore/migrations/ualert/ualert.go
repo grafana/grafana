@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/alerting/alerting/notifier/channels"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -501,7 +501,7 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				}
 				return fallback
 			}
-			receiverFactory, exists := notifier.Factory(gr.Type)
+			receiverFactory, exists := channels_config.Factory(gr.Type)
 			if !exists {
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}
