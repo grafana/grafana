@@ -316,14 +316,14 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	return plugin, nil
 }
 
-func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, cdn bool) *plugins.Plugin {
+func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, isCDN bool) *plugins.Plugin {
 	plugin := &plugins.Plugin{
 		JSONData:  pluginJSON,
 		PluginDir: pluginDir,
-		BaseURL:   baseURL(pluginJSON, class, pluginDir),
-		Module:    module(pluginJSON, class, pluginDir),
+		BaseURL:   baseURL(pluginJSON, class, pluginDir, isCDN),
+		Module:    module(pluginJSON, class, pluginDir, isCDN),
 		Class:     class,
-		CDN:       cdn,
+		CDN:       isCDN,
 	}
 
 	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
@@ -424,16 +424,22 @@ func (l *Loader) PluginErrors() []*plugins.Error {
 	return errs
 }
 
-func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
+func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, isCDN bool) string {
 	if class == plugins.Core {
 		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir))
+	}
+	if isCDN {
+		return path.Join("plugin-cdn", pluginJSON.ID, pluginJSON.Info.Version, "public/plugins", pluginJSON.ID)
 	}
 	return path.Join("public/plugins", pluginJSON.ID)
 }
 
-func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
+func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, isCDN bool) string {
 	if class == plugins.Core {
 		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module")
+	}
+	if isCDN {
+		return path.Join("plugin-cdn", pluginJSON.ID, pluginJSON.Info.Version, "public/plugins", pluginJSON.ID, "module")
 	}
 	return path.Join("plugins", pluginJSON.ID, "module")
 }
