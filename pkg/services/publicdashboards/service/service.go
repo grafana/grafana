@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -11,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/healthchecks"
+	hcm "github.com/grafana/grafana/pkg/services/healthchecks/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -33,6 +36,7 @@ type PublicDashboardServiceImpl struct {
 	QueryDataService   *query.Service
 	AnnotationsRepo    annotations.Repository
 	ac                 accesscontrol.AccessControl
+	hcs                healthchecks.Service
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -49,8 +53,9 @@ func ProvideService(
 	qds *query.Service,
 	anno annotations.Repository,
 	ac accesscontrol.AccessControl,
+	hcs healthchecks.Service,
 ) *PublicDashboardServiceImpl {
-	return &PublicDashboardServiceImpl{
+	impl := &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
 		cfg:                cfg,
 		store:              store,
@@ -58,7 +63,41 @@ func ProvideService(
 		QueryDataService:   qds,
 		AnnotationsRepo:    anno,
 		ac:                 ac,
+		hcs:                hcs,
 	}
+	if err := hcs.RegisterHealthCheck(context.Background(), hcm.HealthCheckConfig{
+		Name:         "public-dashboards",
+		Type:         hcm.DomainCheck,
+		Severity:     hcm.SeverityMinor,
+		Strategy:     hcm.StrategyOnDemand,
+		RequiresAuth: true,
+	}, impl); err != nil {
+		impl.log.Error("error setting up pubdash health check", "error", err.Error())
+	}
+	return impl
+}
+
+// CheckHealth makes sure this service is healthy
+func (pd *PublicDashboardServiceImpl) CheckHealth(ctx context.Context, name string) (hcm.HealthStatus, map[string]string, error) {
+	metrics := make(map[string]string)
+	pdl, err := pd.store.FindAll(ctx, -1)
+	if err != nil {
+		return hcm.StatusRed, metrics, err
+	}
+	metrics["num_public_dashboards"] = fmt.Sprintf("%d", len(pdl))
+	for _, pde := range pdl {
+		pubdash, err := pd.store.Find(ctx, pde.Uid)
+		if err != nil {
+			return hcm.StatusRed, metrics, err
+		}
+		dash, err := pd.store.FindDashboard(ctx, pubdash.OrgId, pubdash.DashboardUid)
+		if err != nil {
+			return hcm.StatusRed, metrics, err
+		} else if dash == nil {
+			return hcm.StatusRed, metrics, fmt.Errorf("pubdash with Uid %s refers to missing dashboard with Uid %s", pubdash.Uid, pubdash.DashboardUid)
+		}
+	}
+	return hcm.StatusGreen, metrics, nil
 }
 
 // FindDashboard Gets a dashboard by Uid
@@ -314,6 +353,10 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, u
 
 	if affectedRows == 0 {
 		return ErrPublicDashboardNotFound.Errorf("Delete: Public dashboard not found by orgId: %d and Uid: %s", orgId, uid)
+	}
+
+	if err := pd.hcs.RunOnDemandHealthCheck(context.Background(), "public-dashboards"); err != nil {
+		pd.log.Error("error running pubdash health check", "error", err.Error())
 	}
 
 	return nil

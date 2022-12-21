@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/healthchecks"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -321,8 +322,9 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	store := publicdashboardsStore.ProvideStore(db)
 	cfg := setting.NewCfg()
 	ac := acmock.New()
+	hs := &healthchecks.MockHealthService{}
 	cfg.RBACEnabled = false
-	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac)
+	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, hs)
 	pubdash, err := service.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 

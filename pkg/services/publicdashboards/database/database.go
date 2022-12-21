@@ -34,16 +34,17 @@ func ProvideStore(sqlStore db.DB) *PublicDashboardStoreImpl {
 }
 
 // FindAll Returns a list of public dashboards by orgId
+// If the orgId is -1, all public dashbaords are returned
 func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
 	resp := make([]PublicDashboardListResponse, 0)
-
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Table("dashboard_public").Select(
 			"dashboard_public.uid, dashboard_public.access_token, dashboard.uid as dashboard_uid, dashboard_public.is_enabled, dashboard.title").
 			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id").
-			Where("dashboard_public.org_id = ?", orgId).
 			OrderBy(" is_enabled DESC, dashboard.title IS NULL, dashboard.title ASC")
-
+		if orgId > -1 {
+			sess.Where("dashboard_public.org_id = ?", orgId)
+		}
 		err := sess.Find(&resp)
 		return err
 	})
