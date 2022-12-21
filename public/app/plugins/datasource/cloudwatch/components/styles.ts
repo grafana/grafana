@@ -12,6 +12,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginLeft: theme.spacing(0.5),
     display: 'flex',
     flexFlow: 'wrap',
+    gap: theme.spacing(1),
+    button: {
+      margin: 'unset',
+    },
   }),
 
   limitLabel: css({
@@ -83,15 +87,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   resultLimit: css({
     margin: '4px 0',
     fontStyle: 'italic',
-  }),
-
-  selectedLogGroup: css({
-    background: theme.colors.background.secondary,
-    borderRadius: theme.shape.borderRadius(),
-    margin: theme.spacing(0, 1, 1, 0),
-    padding: theme.spacing(0.5, 0, 0.5, 1),
-    color: theme.colors.text.primary,
-    fontSize: theme.typography.size.sm,
   }),
 
   removeButton: css({

@@ -1,14 +1,16 @@
+import { stubTrue } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, Space } from '@grafana/experimental';
-import { Button, Checkbox, Icon, IconButton, Label, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Icon, Label, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
 
 import Search from '../Search';
 import { SelectableResourceValue } from '../api';
 import { DescribeLogGroupsRequest } from '../types';
 
 import { Account, ALL_ACCOUNTS_OPTION } from './Account';
+import { SelectedLogsGroups } from './SelectedLogsGroups';
 import getStyles from './styles';
 
 type CrossAccountLogsQueryProps = {
@@ -181,19 +183,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
         </Button>
       </div>
 
-      <div className={styles.selectedLogGroupsContainer}>
-        {props.selectedLogGroups.map((lg) => (
-          <div key={lg.value} className={styles.selectedLogGroup}>
-            {lg.label}
-            <IconButton
-              size="sm"
-              name="times"
-              className={styles.removeButton}
-              onClick={() => props.onChange(props.selectedLogGroups.filter((slg) => slg.value !== lg.value))}
-            />
-          </div>
-        ))}
-      </div>
+      <SelectedLogsGroups selectedLogGroups={props.selectedLogGroups} onChange={props.onChange}></SelectedLogsGroups>
     </>
   );
 };
