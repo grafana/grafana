@@ -23,6 +23,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 
+  logGroupCountLabel: css({
+    color: theme.colors.text.secondary,
+    maxWidth: 'none',
+  }),
+
   tableScroller: css({
     maxHeight: '50vh',
     overflow: 'auto',

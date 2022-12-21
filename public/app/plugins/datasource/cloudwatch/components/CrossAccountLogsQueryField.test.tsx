@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 // eslint-disable-next-line lodash/import-scope
 import lodash from 'lodash';
@@ -198,7 +198,7 @@ describe('CrossAccountLogsQueryField', () => {
     const fetchLogGroups = jest.fn(async () => {
       await Promise.all([defer.promise]);
       return Array(50).map((i) => ({
-        logGroupName: `logGroup${i}`,
+        value: `logGroup${i}`,
         text: `logGroup${i}`,
         label: `logGroup${i}`,
       }));
@@ -208,5 +208,13 @@ describe('CrossAccountLogsQueryField', () => {
     expect(screen.queryByText(labelText)).not.toBeInTheDocument();
     defer.resolve();
     await waitFor(() => expect(screen.getByText(labelText)).toBeInTheDocument());
+  });
+
+  it('should display log groups counter label', async () => {
+    render(<CrossAccountLogsQueryField {...defaultProps} selectedLogGroups={[]} />);
+    await userEvent.click(screen.getByText('Select Log Groups'));
+    await waitFor(() => expect(screen.getByText('0 log groups selected')).toBeInTheDocument());
+    await userEvent.click(screen.getByLabelText('logGroup2'));
+    await waitFor(() => expect(screen.getByText('1 log group selected')).toBeInTheDocument());
   });
 });

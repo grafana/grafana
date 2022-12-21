@@ -159,6 +159,10 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
           </div>
         </div>
         <Space layout="block" v={2} />
+        <Label className={styles.logGroupCountLabel}>
+          {selectedLogGroups.length} log group{selectedLogGroups.length !== 1 && 's'} selected
+        </Label>
+        <Space layout="block" v={1.5} />
         <div>
           <Button onClick={handleApply} type="button" className={styles.addBtn}>
             Add log groups
