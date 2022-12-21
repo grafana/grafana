@@ -11,7 +11,7 @@ weight: 100
 
 # Customize notifications
 
-Customize your notifications by creating message templates to use in the notifications sent to contact points.
+Customize your notifications with creating message templates.
 
 You can use message templates to change the title, message, and format of the message in your notifications.
 

@@ -80,7 +80,7 @@ func TestDingdingNotifier(t *testing.T) {
 			expMsgError: nil,
 		}, {
 			name:     "Default config with one alert and custom title and description",
-			settings: `{"url": "http://localhost", "title": "Alerts firing: {{ len .Alerts.Firing }}", "message": "customMessage"}}`,
+			settings: `{"url": "http://localhost", "title": "Alerts firing: {{ len .Alerts.Firing }}", "message": "customMessage"}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{

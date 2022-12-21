@@ -1,38 +1,31 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 
+import { useStyles2, getSelectStyles, useTheme2 } from '@grafana/ui';
 import { Role } from 'app/types';
 
 import { RoleMenuGroupOption } from './RoleMenuGroupOption';
 import { RoleMenuOption } from './RoleMenuOption';
 import { RolePickerSubMenu } from './RolePickerSubMenu';
+import { getStyles } from './styles';
 import { isNotDelegatable } from './utils';
 
 interface RoleMenuGroupsSectionProps {
   roles: Role[];
   renderedName: string;
-  menuSectionStyle: string;
-  groupHeaderStyle: string;
-  optionBodyStyle: string;
   showGroups?: boolean;
   optionGroups: Array<{
     name: string;
     options: Role[];
     value: string;
-    uid: string;
   }>;
-  onChange: (value: string) => void;
-  onOpenSubMenuRMGS: (value: string) => void;
-  onCloseSubMenu?: (value: string) => void;
+  onGroupChange: (value: string) => void;
   groupSelected: (group: string) => boolean;
   groupPartiallySelected: (group: string) => boolean;
   disabled?: boolean;
   subMenuNode?: HTMLDivElement;
-  showSubMenu: boolean;
-  openedMenuGroup: string;
-  subMenuOptions: Role[];
   selectedOptions: Role[];
-  onChangeSubMenu: (option: Role) => void;
-  onClearSubMenu: () => void;
+  onRoleChange: (option: Role) => void;
+  onClearSubMenu: (group: string) => void;
   showOnLeftSubMenu: boolean;
 }
 
@@ -41,53 +34,63 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
     {
       roles,
       renderedName,
-      menuSectionStyle,
-      groupHeaderStyle,
-      optionBodyStyle,
       showGroups,
       optionGroups,
-      onChange,
+      onGroupChange,
       groupSelected,
       groupPartiallySelected,
-      onOpenSubMenuRMGS,
-      onCloseSubMenu,
       subMenuNode,
-      showSubMenu,
-      openedMenuGroup,
-      subMenuOptions,
       selectedOptions,
-      onChangeSubMenu,
+      onRoleChange,
       onClearSubMenu,
       showOnLeftSubMenu,
     },
     _ref
   ) => {
+    const [showSubMenu, setShowSubMenu] = useState(false);
+    const [openedMenuGroup, setOpenedMenuGroup] = useState('');
+
+    const theme = useTheme2();
+    const selectStyles = getSelectStyles(theme);
+    const styles = useStyles2(getStyles);
+
+    const onOpenSubMenu = useCallback((value: string) => {
+      setOpenedMenuGroup(value);
+      setShowSubMenu(true);
+    }, []);
+
+    const onCloseSubMenu = useCallback(() => {
+      setShowSubMenu(false);
+      setOpenedMenuGroup('');
+    }, []);
+
     return (
       <div>
         {roles.length > 0 && (
-          <div className={menuSectionStyle}>
-            <div className={groupHeaderStyle}>{renderedName}</div>
-            <div className={optionBodyStyle}></div>
+          <div className={styles.menuSection}>
+            <div className={styles.groupHeader}>{renderedName}</div>
+            <div className={selectStyles.optionBody}></div>
             {showGroups && !!optionGroups?.length
-              ? optionGroups.map((option) => (
+              ? optionGroups.map((groupOption) => (
                   <RoleMenuGroupOption
-                    data={option}
-                    key={option.value}
-                    isSelected={groupSelected(option.value) || groupPartiallySelected(option.value)}
-                    partiallySelected={groupPartiallySelected(option.value)}
-                    disabled={option.options?.every(isNotDelegatable)}
-                    onChange={onChange}
-                    onOpenSubMenu={onOpenSubMenuRMGS}
+                    key={groupOption.value}
+                    name={groupOption.name}
+                    value={groupOption.value}
+                    isSelected={groupSelected(groupOption.value) || groupPartiallySelected(groupOption.value)}
+                    partiallySelected={groupPartiallySelected(groupOption.value)}
+                    disabled={groupOption.options?.every(isNotDelegatable)}
+                    onChange={onGroupChange}
+                    onOpenSubMenu={onOpenSubMenu}
                     onCloseSubMenu={onCloseSubMenu}
                     root={subMenuNode}
-                    isFocused={showSubMenu && openedMenuGroup === option.value}
+                    isFocused={showSubMenu && openedMenuGroup === groupOption.value}
                   >
-                    {showSubMenu && openedMenuGroup === option.value && (
+                    {showSubMenu && openedMenuGroup === groupOption.value && (
                       <RolePickerSubMenu
-                        options={subMenuOptions}
+                        options={groupOption.options}
                         selectedOptions={selectedOptions}
-                        onSelect={onChangeSubMenu}
-                        onClear={onClearSubMenu}
+                        onSelect={onRoleChange}
+                        onClear={() => onClearSubMenu(openedMenuGroup)}
                         showOnLeft={showOnLeftSubMenu}
                       />
                     )}
@@ -99,7 +102,7 @@ export const RoleMenuGroupsSection = React.forwardRef<HTMLDivElement, RoleMenuGr
                     key={option.uid}
                     isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
                     disabled={isNotDelegatable(option)}
-                    onChange={onChangeSubMenu}
+                    onChange={onRoleChange}
                     hideDescription
                   />
                 ))}

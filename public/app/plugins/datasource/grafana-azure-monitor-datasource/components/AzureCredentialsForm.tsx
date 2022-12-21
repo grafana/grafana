@@ -1,7 +1,7 @@
 import React, { ChangeEvent, FunctionComponent, useEffect, useReducer, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { InlineFormLabel, LegacyForms, Button, Select, InlineField } from '@grafana/ui';
+import { LegacyForms, Button, Select, InlineField } from '@grafana/ui';
 
 import { isCredentialsComplete } from '../credentials';
 import { selectors } from '../e2e/selectors';
@@ -230,19 +230,19 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
           </InlineField>
           {!disabled &&
             (typeof credentials.clientSecret === 'symbol' ? (
-              <div className="gf-form-inline">
-                <div className="gf-form">
-                  <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
-                  <Input data-testid="client-secret" className="width-25" placeholder="configured" disabled={true} />
+              <InlineField label="Client Secret" labelWidth={LABEL_WIDTH} htmlFor="client-secret">
+                <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
+                  <Input
+                    aria-label="Client Secret"
+                    placeholder="configured"
+                    disabled={true}
+                    data-testid={'client-secret'}
+                  />
+                  <Button variant="secondary" type="button" onClick={onClientSecretReset} disabled={disabled}>
+                    Reset
+                  </Button>
                 </div>
-                <div className="gf-form">
-                  <div className="max-width-30 gf-form-inline">
-                    <Button variant="secondary" type="button" onClick={onClientSecretReset} disabled={disabled}>
-                      reset
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              </InlineField>
             ) : (
               <InlineField
                 label="Client Secret"
@@ -256,6 +256,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                   value={credentials.clientSecret || ''}
                   onChange={onClientSecretChange}
+                  id="client-secret"
                   disabled={disabled}
                 />
               </InlineField>
@@ -263,45 +264,36 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
         </>
       )}
       {getSubscriptions && (
-        <>
-          <div className="gf-form-inline">
-            <div className="gf-form" data-testid={selectors.components.configEditor.defaultSubscription.input}>
-              <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
-              <div className="width-30">
-                <Select
-                  aria-label="Default Subscription"
-                  value={
-                    credentials.defaultSubscriptionId
-                      ? subscriptions.find((opt) => opt.value === credentials.defaultSubscriptionId)
-                      : undefined
-                  }
-                  options={subscriptions}
-                  onChange={onSubscriptionChange}
-                  disabled={disabled}
-                />
-              </div>
-            </div>
+        <InlineField
+          label="Default Subscription"
+          labelWidth={LABEL_WIDTH}
+          data-testid={selectors.components.configEditor.defaultSubscription.input}
+          htmlFor="default-subscription"
+        >
+          <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
+            <Select
+              inputId="default-subscription"
+              aria-label="Default Subscription"
+              value={
+                credentials.defaultSubscriptionId
+                  ? subscriptions.find((opt) => opt.value === credentials.defaultSubscriptionId)
+                  : undefined
+              }
+              options={subscriptions}
+              onChange={onSubscriptionChange}
+              disabled={disabled}
+            />
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={onLoadSubscriptions}
+              disabled={!hasRequiredFields || disabled}
+              data-testid={selectors.components.configEditor.loadSubscriptions.button}
+            >
+              Load Subscriptions
+            </Button>
           </div>
-          {!disabled && (
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <div className="max-width-30 gf-form-inline">
-                  <Button
-                    variant="secondary"
-                    aria-label="Load Subscriptions"
-                    size="sm"
-                    type="button"
-                    onClick={onLoadSubscriptions}
-                    disabled={!hasRequiredFields}
-                    data-testid={selectors.components.configEditor.loadSubscriptions.button}
-                  >
-                    Load Subscriptions
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </>
+        </InlineField>
       )}
       {props.children}
     </div>

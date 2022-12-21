@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 
 import { DataQuery } from '@grafana/data';
 import { locationService, setEchoSrv } from '@grafana/runtime';
+import { defaultDashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
@@ -194,7 +195,7 @@ describe('AddToDashboardButton', () => {
           const openSpy = jest.spyOn(global, 'open').mockReturnValue(true);
 
           jest.spyOn(backendSrv, 'getDashboardByUid').mockResolvedValue({
-            dashboard: { templating: { list: [] }, title: 'Dashboard Title', uid: 'someUid' },
+            dashboard: { ...defaultDashboard, templating: { list: [] }, title: 'Dashboard Title', uid: 'someUid' },
             meta: {},
           });
           jest.spyOn(backendSrv, 'search').mockResolvedValue([
@@ -236,7 +237,7 @@ describe('AddToDashboardButton', () => {
           const pushSpy = jest.spyOn(locationService, 'push');
 
           jest.spyOn(backendSrv, 'getDashboardByUid').mockResolvedValue({
-            dashboard: { templating: { list: [] }, title: 'Dashboard Title', uid: 'someUid' },
+            dashboard: { ...defaultDashboard, templating: { list: [] }, title: 'Dashboard Title', uid: 'someUid' },
             meta: {},
           });
           jest.spyOn(backendSrv, 'search').mockResolvedValue([

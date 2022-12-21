@@ -2,7 +2,9 @@ package channels
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/prometheus/alertmanager/notify"
@@ -12,9 +14,31 @@ import (
 
 	"github.com/grafana/alerting/alerting/notifier/channels"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 )
+
+type kafkaBody struct {
+	Records []kafkaRecordEnvelope `json:"records"`
+}
+
+type kafkaRecordEnvelope struct {
+	Value kafkaRecord `json:"value"`
+}
+
+type kafkaRecord struct {
+	Description string                `json:"description"`
+	Client      string                `json:"client,omitempty"`
+	Details     string                `json:"details,omitempty"`
+	AlertState  models.AlertStateType `json:"alert_state,omitempty"`
+	ClientURL   string                `json:"client_url,omitempty"`
+	Contexts    []kafkaContext        `json:"contexts,omitempty"`
+	IncidentKey string                `json:"incident_key,omitempty"`
+}
+
+type kafkaContext struct {
+	Type   string `json:"type"`
+	Source string `json:"src"`
+}
 
 // KafkaNotifier is responsible for sending
 // alert notifications to Kafka.
@@ -24,14 +48,36 @@ type KafkaNotifier struct {
 	images   channels.ImageStore
 	ns       channels.WebhookSender
 	tmpl     *template.Template
-	settings kafkaSettings
+	settings *kafkaSettings
 }
 
 type kafkaSettings struct {
-	Endpoint    string
-	Topic       string
-	Description string
-	Details     string
+	Endpoint    string `json:"kafkaRestProxy,omitempty" yaml:"kafkaRestProxy,omitempty"`
+	Topic       string `json:"kafkaTopic,omitempty" yaml:"kafkaTopic,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Details     string `json:"details,omitempty" yaml:"details,omitempty"`
+}
+
+func buildKafkaSettings(fc channels.FactoryConfig) (*kafkaSettings, error) {
+	var settings kafkaSettings
+	err := json.Unmarshal(fc.Config.Settings, &settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+
+	if settings.Endpoint == "" {
+		return nil, errors.New("could not find kafka rest proxy endpoint property in settings")
+	}
+	if settings.Topic == "" {
+		return nil, errors.New("could not find kafka topic property in settings")
+	}
+	if settings.Description == "" {
+		settings.Description = channels.DefaultMessageTitleEmbed
+	}
+	if settings.Details == "" {
+		settings.Details = channels.DefaultMessageEmbed
+	}
+	return &settings, nil
 }
 
 func KafkaFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
@@ -47,20 +93,10 @@ func KafkaFactory(fc channels.FactoryConfig) (channels.NotificationChannel, erro
 
 // newKafkaNotifier is the constructor function for the Kafka notifier.
 func newKafkaNotifier(fc channels.FactoryConfig) (*KafkaNotifier, error) {
-	settings, err := simplejson.NewJson(fc.Config.Settings)
+	settings, err := buildKafkaSettings(fc)
 	if err != nil {
 		return nil, err
 	}
-	endpoint := settings.Get("kafkaRestProxy").MustString()
-	if endpoint == "" {
-		return nil, errors.New("could not find kafka rest proxy endpoint property in settings")
-	}
-	topic := settings.Get("kafkaTopic").MustString()
-	if topic == "" {
-		return nil, errors.New("could not find kafka topic property in settings")
-	}
-	description := settings.Get("description").MustString(channels.DefaultMessageTitleEmbed)
-	details := settings.Get("details").MustString(channels.DefaultMessageEmbed)
 
 	return &KafkaNotifier{
 		Base:     channels.NewBase(fc.Config),
@@ -68,7 +104,7 @@ func newKafkaNotifier(fc channels.FactoryConfig) (*KafkaNotifier, error) {
 		images:   fc.ImageStore,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
-		settings: kafkaSettings{Endpoint: endpoint, Topic: topic, Description: description, Details: details},
+		settings: settings,
 	}, nil
 }
 
@@ -111,36 +147,36 @@ func (kn *KafkaNotifier) SendResolved() bool {
 }
 
 func (kn *KafkaNotifier) buildBody(ctx context.Context, tmpl func(string) string, as ...*types.Alert) (string, error) {
-	bodyJSON := simplejson.New()
-	bodyJSON.Set("client", "Grafana")
-	bodyJSON.Set("description", tmpl(kn.settings.Description))
-	bodyJSON.Set("details", tmpl(kn.settings.Details))
+	var record kafkaRecord
+	record.Client = "Grafana"
+	record.Description = tmpl(kn.settings.Description)
+	record.Details = tmpl(kn.settings.Details)
 
 	state := buildState(as...)
 	kn.log.Debug("notifying Kafka", "alert_state", state)
-	bodyJSON.Set("alert_state", state)
+	record.AlertState = state
 
 	ruleURL := joinUrlPath(kn.tmpl.ExternalURL.String(), "/alerting/list", kn.log)
-	bodyJSON.Set("client_url", ruleURL)
+	record.ClientURL = ruleURL
 
 	contexts := buildContextImages(ctx, kn.log, kn.images, as...)
 	if len(contexts) > 0 {
-		bodyJSON.Set("contexts", contexts)
+		record.Contexts = contexts
 	}
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
 	if err != nil {
 		return "", err
 	}
-	bodyJSON.Set("incident_key", groupKey.Hash())
+	record.IncidentKey = groupKey.Hash()
 
-	valueJSON := simplejson.New()
-	valueJSON.Set("value", bodyJSON)
+	records := kafkaBody{
+		Records: []kafkaRecordEnvelope{
+			{Value: record},
+		},
+	}
 
-	recordJSON := simplejson.New()
-	recordJSON.Set("records", []interface{}{valueJSON})
-
-	body, err := recordJSON.MarshalJSON()
+	body, err := json.Marshal(records)
 	if err != nil {
 		return "", err
 	}
@@ -156,15 +192,15 @@ func buildState(as ...*types.Alert) models.AlertStateType {
 	return models.AlertStateAlerting
 }
 
-func buildContextImages(ctx context.Context, l channels.Logger, imageStore channels.ImageStore, as ...*types.Alert) []interface{} {
-	var contexts []interface{}
+func buildContextImages(ctx context.Context, l channels.Logger, imageStore channels.ImageStore, as ...*types.Alert) []kafkaContext {
+	var contexts []kafkaContext
 	_ = withStoredImages(ctx, l, imageStore,
 		func(_ int, image channels.Image) error {
 			if image.URL != "" {
-				imageJSON := simplejson.New()
-				imageJSON.Set("type", "image")
-				imageJSON.Set("src", image.URL)
-				contexts = append(contexts, imageJSON)
+				contexts = append(contexts, kafkaContext{
+					Type:   "image",
+					Source: image.URL,
+				})
 			}
 			return nil
 		}, as...)
