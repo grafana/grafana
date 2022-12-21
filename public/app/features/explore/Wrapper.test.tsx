@@ -261,7 +261,7 @@ describe('Wrapper', () => {
       // to work
       await screen.findByText(`loki Editor input: { label="value"}`);
 
-      store.dispatch(mainState.splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
+      store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', query: { expr: 'error', refId: 'A' } }));
 
       // Editor renders the new query
       await screen.findByText(`elastic Editor input: error`);
@@ -318,7 +318,7 @@ describe('Wrapper', () => {
       // to work
       await screen.findByText(`loki Editor input: { label="value"}`);
 
-      store.dispatch(mainState.splitOpen<any>({ datasourceUid: 'elastic', query: { expr: 'error' } }) as any);
+      store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', query: { expr: 'error', refId: 'A' } }));
       await waitFor(() => expect(document.title).toEqual('Explore - loki | elastic - Grafana'));
     });
   });
