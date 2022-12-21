@@ -8,6 +8,7 @@ export interface ScenarioArguments {
   addScenarioDataSource?: boolean;
   addScenarioDashBoard?: boolean;
   loginViaApi?: boolean;
+  config?: Cypress.TestConfigOverrides;
 }
 
 export const e2eScenario = ({
@@ -18,6 +19,7 @@ export const e2eScenario = ({
   addScenarioDataSource = false,
   addScenarioDashBoard = false,
   loginViaApi = true,
+  config = {},
 }: ScenarioArguments) => {
   describe(describeName, () => {
     if (skipScenario) {
@@ -39,7 +41,7 @@ export const e2eScenario = ({
       afterEach(() => e2e.flows.revertAllChanges());
       after(() => e2e().clearCookies());
 
-      it(itName, () => scenario());
+      it(itName, { ...config }, () => scenario());
 
       // @todo remove when possible: https://github.com/cypress-io/cypress/issues/2831
       it('temporary', () => {});

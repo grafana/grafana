@@ -20,10 +20,11 @@ type AzureMonitorConfig = {
 
 type AzureMonitorProvision = { datasources: AzureMonitorConfig[] };
 
-const dataSourceName = `Azure Monitor E2E Tests - ${uuidv4()}`;
+let dataSourceName = '';
 
 function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) {
   const datasource = datasources[0].datasources[0];
+  dataSourceName = `Azure Monitor E2E Tests - ${uuidv4()}`;
 
   e2e()
     .intercept(/subscriptions/)
@@ -45,6 +46,7 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
       e2eSelectors.configEditor.defaultSubscription.input().find('input').type('datasources{enter}');
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
+    timeout: 10000,
   });
 }
 
@@ -127,6 +129,7 @@ e2e.scenario({
     }
     e2e.setScenarioContext({ addedDataSources: [] });
   },
+  config: { retries: 3 },
 });
 
 e2e.scenario({
