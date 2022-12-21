@@ -6,9 +6,8 @@ import { OrgUser, UsersState } from 'app/types';
 export const initialState: UsersState = {
   users: [] as OrgUser[],
   searchQuery: '',
-  searchPage: 1,
   page: 0,
-  perPage: 5,
+  perPage: 30,
   totalPages: 1,
   canInvite: !config.externalUserMngLinkName,
   externalUserMngInfo: config.externalUserMngInfo,
