@@ -18,6 +18,8 @@ import { isCloudRulesSource } from '../utils/datasource';
 import { getFiltersFromUrlParams } from '../utils/misc';
 import { isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
 
+import { useURLSearchParams } from './useURLSearchParams';
+
 interface SearchFilterState {
   query?: string;
   namespace?: string;
@@ -82,6 +84,15 @@ function getSearchFilterFromQuery(query: string): SearchFilterState {
   } while (cursor.next());
 
   return filterState;
+}
+
+export function useRulesFilter() {
+  const [queryParams] = useURLSearchParams();
+  const queryString = queryParams.get('queryString') ?? '';
+
+  const filters = getSearchFilterFromQuery(queryString);
+
+  return { filters, queryString };
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {

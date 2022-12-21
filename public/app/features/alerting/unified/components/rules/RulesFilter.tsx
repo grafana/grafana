@@ -10,6 +10,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { LogMessages } from '../../Analytics';
+import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { getFiltersFromUrlParams } from '../../utils/misc';
 import { alertStateToReadable } from '../../utils/rules';
 
@@ -53,7 +54,7 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
   const dataSourceKey = `dataSource-${filterKey}`;
   const queryStringKey = `queryString-${filterKey}`;
 
-  const { dataSource, alertState, queryString, ruleType } = getFiltersFromUrlParams(queryParams);
+  const { filters, queryString } = useRulesFilter();
 
   const styles = useStyles2(getStyles);
   const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
@@ -112,22 +113,18 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
             alerting
             noDefault
             placeholder="All data sources"
-            current={dataSource}
+            current={filters.dataSourceName}
             onChange={handleDataSourceChange}
             onClear={clearDataSource}
           />
         </Field>
         <div>
           <Label>State</Label>
-          <RadioButtonGroup options={stateOptions} value={alertState} onChange={handleAlertStateChange} />
+          <RadioButtonGroup options={stateOptions} value={filters.ruleState} onChange={handleAlertStateChange} />
         </div>
         <div>
           <Label>Rule type</Label>
-          <RadioButtonGroup
-            options={RuleTypeOptions}
-            value={ruleType as PromRuleType}
-            onChange={handleRuleTypeChange}
-          />
+          <RadioButtonGroup options={RuleTypeOptions} value={filters.ruleType} onChange={handleRuleTypeChange} />
         </div>
       </Stack>
       <Stack direction="column" gap={1}>
@@ -170,7 +167,14 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
             />
           </div>
         </Stack>
-        {(dataSource || alertState || queryString || ruleType) && (
+        {(filters.query ||
+          filters.dataSourceName ||
+          filters.namespace ||
+          filters.ruleType ||
+          filters.ruleState ||
+          filters.labels ||
+          filters.groupName ||
+          filters.ruleName) && (
           <div className={styles.flexRow}>
             <Button
               className={styles.clearButton}
