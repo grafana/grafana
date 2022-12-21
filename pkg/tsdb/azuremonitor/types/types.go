@@ -66,6 +66,7 @@ type AzureMonitorQuery struct {
 	Alias      string
 	TimeRange  backend.TimeRange
 	BodyFilter string
+	Dimensions []AzureMonitorDimensionFilter
 }
 
 // AzureMonitorResponse is the json response from the Azure Monitor API

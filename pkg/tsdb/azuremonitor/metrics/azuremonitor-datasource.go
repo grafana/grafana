@@ -55,8 +55,8 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, log
 		return nil, err
 	}
 
-	for i, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, ctxLogger, query, dsInfo, client, url, tracer, &originalQueries[i])
+	for _, query := range queries {
+		result.Responses[query.RefID] = e.executeQuery(ctx, ctxLogger, query, dsInfo, client, url, tracer)
 	}
 
 	return result, nil
@@ -178,12 +178,13 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 		}
 
 		query := &types.AzureMonitorQuery{
-			URL:       azureURL,
-			Target:    target,
-			Params:    params,
-			RefID:     query.RefID,
-			Alias:     alias,
-			TimeRange: query.TimeRange,
+			URL:        azureURL,
+			Target:     target,
+			Params:     params,
+			RefID:      query.RefID,
+			Alias:      alias,
+			TimeRange:  query.TimeRange,
+			Dimensions: azJSONModel.DimensionFilters,
 		}
 		if filterString != "" {
 			if filterInBody {
@@ -199,7 +200,7 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 }
 
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Logger, query *types.AzureMonitorQuery, dsInfo types.DatasourceInfo, cli *http.Client,
-	url string, tracer tracing.Tracer, originalQuery *backend.DataQuery) backend.DataResponse {
+	url string, tracer tracing.Tracer) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
 
 	req, err := e.createRequest(ctx, logger, url)
@@ -250,7 +251,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 		return dataResponse
 	}
 
-	dataResponse.Frames, err = e.parseResponse(data, query, azurePortalUrl, originalQuery)
+	dataResponse.Frames, err = e.parseResponse(data, query, azurePortalUrl)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
@@ -291,7 +292,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(logger log.Logger, res *http.
 	return data, nil
 }
 
-func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, query *types.AzureMonitorQuery, azurePortalUrl string, originalQuery *backend.DataQuery) (data.Frames, error) {
+func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, query *types.AzureMonitorQuery, azurePortalUrl string) (data.Frames, error) {
 	if len(amr.Value) == 0 {
 		return nil, nil
 	}
@@ -361,15 +362,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			frame.SetRow(i, point.TimeStamp, value)
 		}
 
-		queryJSONModel := types.AzureMonitorJSONQuery{}
-		err := json.Unmarshal(originalQuery.JSON, &queryJSONModel)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
-		}
-
-		dimensions := MigrateDimensionFilters(queryJSONModel.AzureMonitor.DimensionFilters)
-
-		queryUrl, err := getQueryUrl(query, azurePortalUrl, resourceID, resourceName, dimensions)
+		queryUrl, err := getQueryUrl(query, azurePortalUrl, resourceID, resourceName)
 		if err != nil {
 			return nil, err
 		}
@@ -382,7 +375,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 }
 
 // Gets the deep link for the given query
-func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, resourceName string, dimensions []types.AzureMonitorDimensionFilter) (string, error) {
+func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, resourceName string) (string, error) {
 	aggregationType := aggregationTypeMap["Average"]
 	aggregation := query.Params.Get("aggregation")
 	if aggregation != "" {
@@ -407,8 +400,8 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 
 	var filters []interface{}
 
-	if len(dimensions) > 0 {
-		for _, dimension := range dimensions {
+	if len(query.Dimensions) > 0 {
+		for _, dimension := range query.Dimensions {
 			var dimensionInt int
 			dimensionFilters := dimension.Filters
 			if len(dimension.Filters) == 0 {
