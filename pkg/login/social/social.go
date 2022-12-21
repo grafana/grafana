@@ -320,7 +320,6 @@ type groupStruct struct {
 }
 
 func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy bool) (org.RoleType, bool) {
-
 	if s.roleAttributePath == "" {
 		return s.defaultRole(legacy), false
 	}
