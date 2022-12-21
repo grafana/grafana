@@ -1,9 +1,10 @@
 package pluginscdn
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestURLConstructor_StringURLFor(t *testing.T) {
