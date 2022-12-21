@@ -45,14 +45,6 @@ grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
 
-const meta: { [key: string]: {} } = {
-  '/*': {
-    esModule: true,
-    authorization: true,
-    loader: 'plugin-loader',
-  },
-};
-
 grafanaRuntime.SystemJS.config({
   baseURL: 'public',
   defaultExtension: 'js',
@@ -65,7 +57,13 @@ grafanaRuntime.SystemJS.config({
     text: 'vendor/plugin-text/text.js',
     css: 'vendor/plugin-css/css.js',
   },
-  meta,
+  meta: {
+    '/*': {
+      esModule: true,
+      authorization: true,
+      loader: 'plugin-loader',
+    },
+  },
 });
 
 export function exposeToPlugin(name: string, component: any) {
