@@ -741,7 +741,8 @@ def cloud_plugins_e2e_tests_step(suite, edition, cloud, port=3001, video="false"
         when= dict(when, paths={
                 'include' : [
                     'pkg/tsdb/azuremonitor/**',
-                    'public/app/plugins/datasource/grafana-azure-monitor-datasource/**'
+                    'public/app/plugins/datasource/grafana-azure-monitor-datasource/**',
+                    'e2e/cloud-plugins-suite/azure-monitor.spec.ts',
                 ]
             })
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
