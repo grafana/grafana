@@ -115,7 +115,9 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
 
   return (
     <>
-      {valueLabels && valueLabels?.length && <ItemLabels valueLabels={valueLabels} expanded={true} />}
+      {valueLabels !== undefined && isExpandedView && (
+        <ItemLabels valueLabels={valueLabels} expanded={isExpandedView} />
+      )}
       <div key={listKey} className={styles.rowWrapper}>
         <span className={styles.copyToClipboardWrapper}>
           <IconButton tooltip="Copy to clipboard" onClick={() => copyToClipboard(stringRep)} name="copy" />

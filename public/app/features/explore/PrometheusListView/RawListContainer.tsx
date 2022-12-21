@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
-import { DataFrame } from '@grafana/data/src';
+import { DataFrame, Field } from '@grafana/data/src';
 import { Button, stylesFactory } from '@grafana/ui/src';
 
 import { getRawPrometheusListItemsFromDataFrame } from '../utils/getRawPrometheusListItemsFromDataFrame';
@@ -50,6 +50,7 @@ const RawListContainer = (props: RawListContainerProps) => {
   const { tableResult } = props;
   let dataFrame = cloneDeep(tableResult);
   const styles = getRawListContainerStyles();
+  let listRef = useRef<List | null>(null);
 
   const valueLabels = dataFrame.fields.filter((field) => field.name.includes('Value'));
   const items = getRawPrometheusListItemsFromDataFrame(dataFrame);
@@ -59,6 +60,11 @@ const RawListContainer = (props: RawListContainerProps) => {
   const onContentClick = () => {
     setIsExpandedView(!isExpandedView);
   };
+
+  useEffect(() => {
+    // After the expanded view has updated, tell the list to re-render
+    listRef.current?.resetAfterIndex(0, true);
+  }, [isExpandedView]);
 
   const getListItemHeight = (itemIndex: number) => {
     const singleLineHeight = 32;
@@ -88,52 +94,36 @@ const RawListContainer = (props: RawListContainerProps) => {
       </header>
 
       <div role={'table'}>
-        {/* Using one component and changing properties wasn't working well with the virtualized list */}
-        {/* MOBILE VIEW OR COMPARING MANY VALUES */}
-        {isExpandedView && (
-          <List
-            itemCount={items.length}
-            className={styles.mobileWrapper}
-            itemSize={getListItemHeight}
-            height={600}
-            width="100%"
-          >
-            {({ index, style }) => {
-              const filteredValueLabels = valueLabels.filter((valueLabel) => {
-                const itemWithValue = items[index][valueLabel.name];
-                return itemWithValue && itemWithValue !== ' ';
-              });
-              return (
-                <div role="row" style={{ ...style, overflow: 'hidden' }}>
-                  <RawListItem
-                    isExpandedView={isExpandedView}
-                    valueLabels={filteredValueLabels}
-                    totalNumberOfValues={filteredValueLabels.length}
-                    listKey={index}
-                    listItemData={items[index]}
-                  />
-                </div>
-              );
-            }}
-          </List>
-        )}
-
-        {/* DESKTOP VIEW AND COMPARING FEW VALUES */}
-        {!isExpandedView && (
+        {
           <>
-            {valueLabels.length > 1 && <ItemLabels valueLabels={valueLabels} expanded={isExpandedView} />}
+            {/* Show the value headings above all the values, but only if we're in the contracted view */}
+            {valueLabels.length > 1 && !isExpandedView && (
+              <ItemLabels valueLabels={valueLabels} expanded={isExpandedView} />
+            )}
             <List
+              ref={(list) => {
+                listRef.current = list;
+              }}
               itemCount={items.length}
-              className={styles.wrapper}
+              className={isExpandedView ? styles.mobileWrapper : styles.wrapper}
               itemSize={getListItemHeight}
               height={600}
               width="100%"
             >
               {({ index, style }) => {
+                let filteredValueLabels: Field[] | undefined;
+                if (isExpandedView) {
+                  filteredValueLabels = valueLabels.filter((valueLabel) => {
+                    const itemWithValue = items[index][valueLabel.name];
+                    return itemWithValue && itemWithValue !== ' ';
+                  });
+                }
+
                 return (
                   <div role="row" style={{ ...style, overflow: 'hidden' }}>
                     <RawListItem
                       isExpandedView={isExpandedView}
+                      valueLabels={filteredValueLabels}
                       totalNumberOfValues={valueLabels.length}
                       listKey={index}
                       listItemData={items[index]}
@@ -143,7 +133,7 @@ const RawListContainer = (props: RawListContainerProps) => {
               }}
             </List>
           </>
-        )}
+        }
       </div>
     </section>
   );
