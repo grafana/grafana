@@ -1,5 +1,10 @@
-import { CustomVariableModel, DataSourceVariableModel, QueryVariableModel } from '@grafana/data';
-import { VariableModel } from '@grafana/schema';
+import {
+  ConstantVariableModel,
+  CustomVariableModel,
+  DataSourceVariableModel,
+  QueryVariableModel,
+  VariableModel,
+} from '@grafana/data';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -12,6 +17,7 @@ import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
 import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
 import { SceneVariable } from '../variables/types';
+import { ConstantVariable } from '../variables/variants/ConstantVariable';
 import { CustomVariable } from '../variables/variants/CustomVariable';
 import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
 import { QueryVariable } from '../variables/variants/query/QueryVariable';
@@ -195,6 +201,7 @@ export function createVariableFromLegacyModel(variable: VariableModel): SceneVar
       includeAll: variable.includeAll,
       defaultToAll: Boolean(variable.includeAll),
       skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
     });
   } else if (isQueryVariable(variable)) {
     return new QueryVariable({
@@ -212,12 +219,14 @@ export function createVariableFromLegacyModel(variable: VariableModel): SceneVar
       defaultToAll: Boolean(variable.includeAll),
       isMulti: variable.multi,
       skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
     });
   } else if (isDataSourceVariable(variable)) {
     return new DataSourceVariable({
       ...commonProperties,
       value: variable.current.value,
       text: variable.current.text,
+      description: variable.description,
       regex: variable.regex,
       query: variable.query,
       allValue: variable.allValue || undefined,
@@ -225,6 +234,15 @@ export function createVariableFromLegacyModel(variable: VariableModel): SceneVar
       defaultToAll: Boolean(variable.includeAll),
       skipUrlSync: variable.skipUrlSync,
       isMulti: variable.multi,
+      hide: variable.hide,
+    });
+  } else if (isConstantVariable(variable)) {
+    return new ConstantVariable({
+      ...commonProperties,
+      description: variable.description,
+      value: variable.query,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
@@ -263,3 +281,4 @@ export function getDashboardLoader(): DashboardLoader {
 const isCustomVariable = (v: VariableModel): v is CustomVariableModel => v.type === 'custom';
 const isQueryVariable = (v: VariableModel): v is QueryVariableModel => v.type === 'query';
 const isDataSourceVariable = (v: VariableModel): v is DataSourceVariableModel => v.type === 'datasource';
+const isConstantVariable = (v: VariableModel): v is ConstantVariableModel => v.type === 'constant';

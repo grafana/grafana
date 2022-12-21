@@ -224,16 +224,56 @@ describe('DashboardLoader', () => {
       });
     });
 
-    it.each(['adhoc', 'constant', 'interval', 'textbox', 'system'])(
-      'should throw for unsupported (yet) variables',
-      (type) => {
-        const variable = {
-          name: 'query0',
-          type: type as VariableType,
-        };
+    it('should migrate constant variable', () => {
+      const variable = {
+        hide: 2,
+        label: 'constant',
+        name: 'constant',
+        skipUrlSync: false,
+        type: 'constant',
+        rootStateKey: 'N4XLmH5Vz',
+        current: {
+          selected: true,
+          text: 'test',
+          value: 'test',
+        },
+        options: [
+          {
+            selected: true,
+            text: 'test',
+            value: 'test',
+          },
+        ],
+        query: 'test',
+        id: 'constant',
+        global: false,
+        index: 3,
+        state: 'Done',
+        error: null,
+        description: null,
+      };
 
-        expect(() => createVariableFromLegacyModel(variable)).toThrow();
-      }
-    );
+      const migrated = createVariableFromLegacyModel(variable);
+      const { key, ...rest } = migrated.state;
+
+      expect(rest).toEqual({
+        description: null,
+        hide: 2,
+        label: 'constant',
+        name: 'constant',
+        skipUrlSync: false,
+        type: 'constant',
+        value: 'test',
+      });
+    });
+
+    it.each(['adhoc', 'interval', 'textbox', 'system'])('should throw for unsupported (yet) variables', (type) => {
+      const variable = {
+        name: 'query0',
+        type: type as VariableType,
+      };
+
+      expect(() => createVariableFromLegacyModel(variable)).toThrow();
+    });
   });
 });
