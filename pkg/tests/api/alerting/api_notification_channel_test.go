@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -24,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	ngchannels "github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -718,22 +719,22 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	mockChannel.responses["slack_recvX"] = `{"ok": true}`
 
 	// Overriding some URLs to send to the mock channel.
-	os, opa, ot, opu, ogb, ol, oth := channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
+	os, opa, ot, opu, ogb, ol, oth := ngchannels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 		channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
-		channels.LineNotifyURL, channels.ThreemaGwBaseURL
+		ngchannels.LineNotifyURL, channels.ThreemaGwBaseURL
 	originalTemplate := channels.DefaultTemplateString
 	t.Cleanup(func() {
-		channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
+		ngchannels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 			channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
-			channels.LineNotifyURL, channels.ThreemaGwBaseURL = os, opa, ot, opu, ogb, ol, oth
+			ngchannels.LineNotifyURL, channels.ThreemaGwBaseURL = os, opa, ot, opu, ogb, ol, oth
 		channels.DefaultTemplateString = originalTemplate
 	})
 	channels.DefaultTemplateString = channels.TemplateForTestsString
-	channels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
+	ngchannels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
 	channels.PagerdutyEventAPIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
 	channels.TelegramAPIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s/%%s", mockChannel.server.Addr)
 	channels.PushoverEndpoint = fmt.Sprintf("http://%s/pushover_recv/pushover_test", mockChannel.server.Addr)
-	channels.LineNotifyURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
+	ngchannels.LineNotifyURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
 	channels.ThreemaGwBaseURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
 	channels.GetBoundary = func() string { return "abcd" }
 

@@ -14,8 +14,10 @@ import (
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	ngchannels "github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -470,6 +472,10 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				secureSettings[k] = d
 			}
 
+			data, err := gr.Settings.MarshalJSON()
+			if err != nil {
+				return err
+			}
 			var (
 				cfg = &channels.NotificationChannelConfig{
 					UID:                   gr.UID,
@@ -477,10 +483,9 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 					Name:                  gr.Name,
 					Type:                  gr.Type,
 					DisableResolveMessage: gr.DisableResolveMessage,
-					Settings:              gr.Settings,
+					Settings:              data,
 					SecureSettings:        secureSettings,
 				}
-				err error
 			)
 
 			// decryptFunc represents the legacy way of decrypting data. Before the migration, we don't need any new way,
@@ -496,13 +501,13 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				}
 				return fallback
 			}
-			receiverFactory, exists := channels.Factory(gr.Type)
+			receiverFactory, exists := ngchannels.Factory(gr.Type)
 			if !exists {
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}
 			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) channels.Logger {
 				return &channels.FakeLogger{}
-			})
+			}, setting.BuildVersion)
 			if err != nil {
 				return err
 			}
@@ -875,47 +880,6 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 	if err != nil {
 		migrator.Logger.Error("failed to insert changes to alert_rule_version", "err", err)
 		return fmt.Errorf("unable to update alert rules with group index: %w", err)
-	}
-	return nil
-}
-
-func ExtractAlertmanagerConfigurationHistoryMigration(mg *migrator.Migrator) {
-	if !mg.Cfg.UnifiedAlerting.IsEnabled() {
-		return
-	}
-	mg.AddMigration("extract alertmanager configuration history to separate table", &extractAlertmanagerConfigurationHistory{})
-}
-
-type extractAlertmanagerConfigurationHistory struct {
-	migrator.MigrationBase
-}
-
-func (c extractAlertmanagerConfigurationHistory) SQL(migrator.Dialect) string {
-	return codeMigration
-}
-
-func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
-	var orgs []int64
-	if err := sess.Table("alert_configuration").Distinct("org_id").Find(&orgs); err != nil {
-		return fmt.Errorf("failed to retrieve the organizations with alerting configurations: %w", err)
-	}
-
-	// Quote the column called "default" because it's a reserved keyword in SQL.
-	fields := fmt.Sprintf("org_id, alertmanager_configuration, configuration_hash, configuration_version, created_at, %s", migrator.Dialect.Quote("default"))
-	for _, orgID := range orgs {
-		_, err := sess.Exec(`
-			INSERT INTO alert_configuration_history (`+fields+`)
-			SELECT `+fields+`
-			FROM alert_configuration
-			WHERE org_id = ? AND id != (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?)`,
-			orgID, orgID)
-		if err != nil {
-			return fmt.Errorf("failed to move old configurations to history table: %w", err)
-		}
-		_, err = sess.Exec("DELETE FROM alert_configuration WHERE org_id = ? AND id != (SELECT MAX(id) FROM alert_configuration WHERE org_id = ?)", orgID, orgID)
-		if err != nil {
-			return fmt.Errorf("failed to evict old configurations after moving to history table: %w", err)
-		}
 	}
 	return nil
 }

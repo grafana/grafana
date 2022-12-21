@@ -35,14 +35,15 @@ type ExemplarEvent struct {
 // QueryData handles querying but different from buffered package uses a custom client instead of default Go Prom
 // client.
 type QueryData struct {
-	intervalCalculator intervalv2.Calculator
-	tracer             tracing.Tracer
-	client             *client.Client
-	log                log.Logger
-	ID                 int64
-	URL                string
-	TimeInterval       string
-	enableWideSeries   bool
+	intervalCalculator                intervalv2.Calculator
+	tracer                            tracing.Tracer
+	client                            *client.Client
+	log                               log.Logger
+	ID                                int64
+	URL                               string
+	TimeInterval                      string
+	enableWideSeries                  bool
+	disablePrometheusExemplarSampling bool
 }
 
 func New(
@@ -66,14 +67,15 @@ func New(
 	promClient := client.NewClient(httpClient, httpMethod, settings.URL)
 
 	return &QueryData{
-		intervalCalculator: intervalv2.NewCalculator(),
-		tracer:             tracer,
-		log:                plog,
-		client:             promClient,
-		TimeInterval:       timeInterval,
-		ID:                 settings.ID,
-		URL:                settings.URL,
-		enableWideSeries:   features.IsEnabled(featuremgmt.FlagPrometheusWideSeries),
+		intervalCalculator:                intervalv2.NewCalculator(),
+		tracer:                            tracer,
+		log:                               plog,
+		client:                            promClient,
+		TimeInterval:                      timeInterval,
+		ID:                                settings.ID,
+		URL:                               settings.URL,
+		enableWideSeries:                  features.IsEnabled(featuremgmt.FlagPrometheusWideSeries),
+		disablePrometheusExemplarSampling: features.IsEnabled(featuremgmt.FlagDisablePrometheusExemplarSampling),
 	}, nil
 }
 
