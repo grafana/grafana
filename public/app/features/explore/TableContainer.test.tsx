@@ -52,12 +52,12 @@ const dataFrame = toDataFrame({
 });
 
 const defaultProps = {
-  exploreId: ExploreId.left as ExploreId,
+  exploreId: ExploreId.left,
   loading: false,
   width: 800,
   onCellFilterAdded: jest.fn(),
   tableResult: [dataFrame],
-  splitOpenFn: (() => {}) as any,
+  splitOpenFn: () => {},
   range: {} as any,
   timeZone: InternalTimeZones.utc,
   resultsStyle: TABLE_RESULTS_STYLE.raw,
@@ -97,13 +97,13 @@ describe('TableContainer', () => {
   });
 
   it('should render 0 series returned on no items', () => {
-    const emptyFrames = [
+    const emptyFrames: DataFrame[] = [
       {
         name: 'TableResultName',
         fields: [],
         length: 0,
       },
-    ] as DataFrame[];
+    ];
     render(<TableContainer {...defaultProps} tableResult={emptyFrames} />);
     expect(screen.getByText('0 series returned')).toBeInTheDocument();
   });

@@ -81,5 +81,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())
 	}
 
+	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
+
 	return middlewares
 }

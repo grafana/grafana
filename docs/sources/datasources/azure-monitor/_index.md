@@ -109,12 +109,11 @@ datasources:
 
 #### Supported cloud names
 
-| Azure Cloud                                          | `cloudName` Value          |
-| ---------------------------------------------------- | -------------------------- |
-| **Microsoft Azure public cloud**                     | `azuremonitor` (_Default_) |
-| **Microsoft Chinese national cloud**                 | `chinaazuremonitor`        |
-| **US Government cloud**                              | `govazuremonitor`          |
-| **Microsoft German national cloud ("Black Forest")** | `germanyazuremonitor`      |
+| Azure Cloud                          | `cloudName` Value          |
+| ------------------------------------ | -------------------------- |
+| **Microsoft Azure public cloud**     | `azuremonitor` (_Default_) |
+| **Microsoft Chinese national cloud** | `chinaazuremonitor`        |
+| **US Government cloud**              | `govazuremonitor`          |
 
 ### Configure Managed Identity
 
