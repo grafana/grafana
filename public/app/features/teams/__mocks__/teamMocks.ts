@@ -1,5 +1,4 @@
-import { Permission as TeamPermissionLevel } from '@grafana/schema';
-import { Team, TeamGroup, TeamMember } from 'app/types';
+import { Team, TeamGroup, TeamMember, TeamPermissionLevel } from 'app/types';
 
 export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
   const teams: Team[] = [];
