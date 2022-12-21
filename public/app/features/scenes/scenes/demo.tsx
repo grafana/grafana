@@ -8,7 +8,7 @@ import {
   VizPanel,
 } from '../components';
 import { EmbeddedScene } from '../components/Scene';
-import { typedPanels } from '../components/VizPanel/TypedVizPanels';
+import { panelBuilders } from '../components/VizPanel/panelBuilders';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
@@ -20,7 +20,7 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
     layout: new SceneFlexLayout({
       direction: 'row',
       children: [
-        typedPanels.newGraph({
+        panelBuilders.newGraph({
           size: { minWidth: '70%' },
           title: 'Dynamic height and width',
           $data: getQueryRunnerWithRandomWalkQuery({}, { maxDataPointsFromWidth: true }),
@@ -28,7 +28,7 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
         new SceneFlexLayout({
           direction: 'column',
           children: [
-            typedPanels.newGraph({
+            panelBuilders.newGraph({
               title: 'Fill height',
               options: {},
               fieldConfig: {
@@ -40,7 +40,7 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
                 overrides: [],
               },
             }),
-            typedPanels.newGraph({
+            panelBuilders.newGraph({
               title: 'Fill height',
             }),
             new SceneCanvasText({
@@ -49,7 +49,7 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
               fontSize: 20,
               align: 'center',
             }),
-            typedPanels.newGraph({
+            panelBuilders.newGraph({
               title: 'Fixed height',
               size: { height: 300 },
             }),

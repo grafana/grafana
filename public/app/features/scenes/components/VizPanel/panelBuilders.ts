@@ -10,7 +10,7 @@ export type TypedVizPanelState<TOptions, TFieldConfig> = Omit<
   'pluginId'
 >;
 
-export const typedPanels = {
+export const panelBuilders = {
   newTable: (state: TypedVizPanelState<TablePanelOptions, TableFieldOptions>) => {
     return new VizPanel<TablePanelOptions, TableFieldOptions>({
       ...state,
