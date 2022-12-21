@@ -6,7 +6,7 @@ import { FieldType, FormattedValue, toDataFrame } from '@grafana/data/src';
 import RawListContainer, { RawListContainerProps } from './RawListContainer';
 
 function getList(): HTMLElement {
-  return screen.getByTestId('raw-list-container');
+  return screen.getByRole('table');
 }
 
 const display = (input: string): FormattedValue => {

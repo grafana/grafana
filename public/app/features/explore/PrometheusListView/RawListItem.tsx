@@ -10,7 +10,7 @@ import { ItemValues } from './ItemValues';
 import { instantQueryRawVirtualizedListData } from './RawListContainer';
 import RawListItemAttributes from './RawListItemAttributes';
 
-interface RawListProps {
+export interface RawListProps {
   listItemData: instantQueryRawVirtualizedListData;
   listKey: number;
   totalNumberOfValues: number;
@@ -20,7 +20,7 @@ interface RawListProps {
 
 export type RawListValue = { key: string; value: string };
 
-const extraSpaceAtEndOfLine = '20px';
+export const rawListExtraSpaceAtEndOfLine = '20px';
 export const rawListItemColumnWidth = '80px';
 export const rawListpaddingToHoldSpaceForCopyIcon = '25px';
 const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number, isExpandedView: boolean) => ({
@@ -46,7 +46,7 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number, isExpandedV
     overflow-x: auto;
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
-    padding-right: ${extraSpaceAtEndOfLine};
+    padding-right: ${rawListExtraSpaceAtEndOfLine};
 
     &::-webkit-scrollbar {
       display: none; /* Chrome, Safari and Opera */
@@ -59,7 +59,11 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number, isExpandedV
       position: absolute;
       left: 0;
       top: 0;
-      background: linear-gradient(to right, transparent calc(100% - ${extraSpaceAtEndOfLine}), ${theme.colors.bg1});
+      background: linear-gradient(
+        to right,
+        transparent calc(100% - ${rawListExtraSpaceAtEndOfLine}),
+        ${theme.colors.bg1}
+      );
     }
   `,
 });

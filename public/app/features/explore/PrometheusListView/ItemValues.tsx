@@ -7,8 +7,33 @@ import { useStyles } from '@grafana/ui/src';
 import { rawListItemColumnWidth, rawListpaddingToHoldSpaceForCopyIcon, RawListValue } from './RawListItem';
 
 const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
-  rowValue: css`
+  rowWrapper: css`
+    position: relative;
     min-width: ${rawListItemColumnWidth};
+    padding-right: 5px;
+  `,
+  rowValue: css`
+    white-space: nowrap;
+    overflow-x: auto;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+    display: block;
+    padding-right: 10px;
+
+    &::-webkit-scrollbar {
+      display: none; /* Chrome, Safari and Opera */
+    }
+
+    &:before {
+      pointer-events: none;
+      content: '';
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+      background: linear-gradient(to right, transparent calc(100% - 25px), ${theme.colors.bg1});
+    }
   `,
   rowValuesWrap: css`
     padding-left: ${rawListpaddingToHoldSpaceForCopyIcon};
@@ -33,8 +58,8 @@ export const ItemValues = ({
         if (hideFieldsWithoutValues) {
           if (value.value !== undefined && value.value !== ' ') {
             return (
-              <span key={value.key} className={styles.rowValue}>
-                {value.value}
+              <span key={value.key} className={styles.rowWrapper}>
+                <span className={styles.rowValue}>{value.value}</span>
               </span>
             );
           } else {
@@ -42,8 +67,8 @@ export const ItemValues = ({
           }
         } else {
           return (
-            <span key={value.key} className={styles.rowValue}>
-              {value.value}
+            <span key={value.key} className={styles.rowWrapper}>
+              <span className={styles.rowValue}>{value.value}</span>
             </span>
           );
         }
