@@ -25,8 +25,16 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
     const containerRef = useRef<HTMLDivElement>(null);
     const [showOverflowItems, setShowOverflowItems] = useState(false);
     const overflowItemsRef = createRef<HTMLDivElement>();
+    const shouldCloseOnInteractOutside = (element: Element) => {
+      return !document.querySelector(`[data-testid="${OVERFLOW_BUTTON_ID}"]`)?.contains(element);
+    };
     const { overlayProps } = useOverlay(
-      { onClose: () => setShowOverflowItems(false), isDismissable: true, isOpen: showOverflowItems },
+      {
+        onClose: () => setShowOverflowItems(false),
+        isDismissable: true,
+        isOpen: showOverflowItems,
+        shouldCloseOnInteractOutside,
+      },
       overflowItemsRef
     );
     const { dialogProps } = useDialog({}, overflowItemsRef);
