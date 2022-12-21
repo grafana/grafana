@@ -377,7 +377,7 @@ func (hs *HTTPServer) getCDNPluginAssetRemoteURL(plugin plugins.PluginDTO, asset
 	return strings.NewReplacer(
 		"{id}", plugin.ID,
 		"{version}", plugin.Info.Version,
-		"{assetPath}", assetPath, // TODO: sanitize path
+		"{assetPath}", path.Clean(assetPath),
 	).Replace(hs.Cfg.PluginsCDNBasePath)
 }
 
