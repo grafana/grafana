@@ -105,13 +105,13 @@ export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
  * your style creator outside of a function component or use `useCallback()`.)
  * */
 /** @public */
-export function useStyles2<T>(callback: (theme: GrafanaTheme2) => T) {
+export function useStyles2<T>(getStyles: (theme: GrafanaTheme2) => T) {
   const theme = useTheme2();
 
-  let memoizedStyleCreator = memoizedStyleCreators.get(callback) as typeof callback;
+  let memoizedStyleCreator = memoizedStyleCreators.get(getStyles) as typeof getStyles;
   if (!memoizedStyleCreator) {
-    memoizedStyleCreator = stylesFactory(callback);
-    memoizedStyleCreators.set(callback, memoizedStyleCreator);
+    memoizedStyleCreator = stylesFactory(getStyles);
+    memoizedStyleCreators.set(getStyles, memoizedStyleCreator);
   }
 
   return memoizedStyleCreator(theme);

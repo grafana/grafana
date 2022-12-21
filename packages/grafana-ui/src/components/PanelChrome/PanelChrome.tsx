@@ -73,7 +73,7 @@ export function PanelChrome({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const handleClickStreaming = () => {
+  const onClickStreaming = () => {
     if (onStreamingStop) {
       onStreamingStop();
     }
@@ -115,7 +115,7 @@ export function PanelChrome({
               name="circle"
               iconType="mono"
               size="sm"
-              onClick={handleClickStreaming}
+              onClick={onClickStreaming}
               className={styles.streaming}
             />
           </div>
