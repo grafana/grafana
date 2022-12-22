@@ -72,10 +72,17 @@ func NewClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
 func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService) []plugins.ClientMiddleware {
 	skipCookiesNames := []string{cfg.LoginCookieName}
 	middlewares := []plugins.ClientMiddleware{
+		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 	}
+
+	if cfg.SendUserHeader {
+		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())
+	}
+
+	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
 
 	return middlewares
 }

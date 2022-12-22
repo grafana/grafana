@@ -21,13 +21,8 @@ import (
 
 func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 	ctxHdlr := getContextHandler(t)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	reqContext, _, err := initTokenRotationScenario(ctx, t, ctxHdlr)
-	require.NoError(t, err)
-
 	tryRotateCallCount := 0
-	uts := &authtest.FakeUserAuthTokenService{
+	ctxHdlr.AuthTokenService = &authtest.FakeUserAuthTokenService{
 		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP,
 			userAgent string) (bool, error) {
 			tryRotateCallCount++
@@ -35,9 +30,12 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 		},
 	}
 
-	token := &auth.UserToken{AuthToken: "oldtoken"}
+	ctx, cancel := context.WithCancel(context.Background())
+	reqContext, _, err := initTokenRotationScenario(ctx, t, ctxHdlr)
+	require.NoError(t, err)
+	reqContext.UserToken = &auth.UserToken{AuthToken: "oldtoken"}
 
-	fn := ctxHdlr.rotateEndOfRequestFunc(reqContext, uts, token)
+	fn := ctxHdlr.rotateEndOfRequestFunc(reqContext)
 	cancel()
 	fn(reqContext.Resp)
 
@@ -46,11 +44,7 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 
 func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	ctxHdlr := getContextHandler(t)
-
-	reqContext, rr, err := initTokenRotationScenario(context.Background(), t, ctxHdlr)
-	require.NoError(t, err)
-
-	uts := &authtest.FakeUserAuthTokenService{
+	ctxHdlr.AuthTokenService = &authtest.FakeUserAuthTokenService{
 		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP,
 			userAgent string) (bool, error) {
 			newToken, err := util.RandomHex(16)
@@ -60,10 +54,11 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 		},
 	}
 
-	token := &auth.UserToken{AuthToken: "oldtoken"}
+	reqContext, rr, err := initTokenRotationScenario(context.Background(), t, ctxHdlr)
+	require.NoError(t, err)
+	reqContext.UserToken = &auth.UserToken{AuthToken: "oldtoken"}
 
-	ctxHdlr.rotateEndOfRequestFunc(reqContext, uts, token)(reqContext.Resp)
-
+	ctxHdlr.rotateEndOfRequestFunc(reqContext)(reqContext.Resp)
 	foundLoginCookie := false
 	// nolint:bodyclose
 	resp := rr.Result()
@@ -74,7 +69,7 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	for _, c := range resp.Cookies() {
 		if c.Name == "login_token" {
 			foundLoginCookie = true
-			require.NotEqual(t, token.AuthToken, c.Value, "Auth token is still the same")
+			require.NotEqual(t, reqContext.UserToken.AuthToken, c.Value, "Auth token is still the same")
 		}
 	}
 

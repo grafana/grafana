@@ -47,7 +47,7 @@ This topic shows you how to create an API key using the Grafana UI. You can also
 ## Migrate API Keys to Grafana service accounts
 
 You can migrate one or all API keys to [Grafana service accounts]({{< relref "../service-accounts/" >}}). When you migrate an API key to a service account, a service account will be created with a service account token.
-The API key will continue to work, and you can find it in the [Grafana service account tokens]({{< relref "../service-accounts/#service-account-benefits/#service-account-tokens" >}}) details.
+The API key will continue to work, and you can find it in the [Grafana service account tokens]({{< relref "../service-accounts/#service-account-tokens" >}}) details.
 For more information about benefits of service accounts, refer to [Grafana service account benefits]({{< relref "../service-accounts/#service-account-benefits" >}}).
 
 You can choose to migrate a single API key or all API keys. Note that when you migrate all API keys, you can't create new API keys anymore and will have to use service accounts instead.

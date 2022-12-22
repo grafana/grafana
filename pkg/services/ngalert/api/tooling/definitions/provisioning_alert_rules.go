@@ -7,6 +7,13 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+// swagger:route GET /api/v1/provisioning/alert-rules provisioning stable RouteGetAlertRules
+//
+// Get all the alert rules.
+//
+//     Responses:
+//       200: ProvisionedAlertRules
+
 // swagger:route GET /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
 //
 // Get a specific alert rule by UID.
@@ -62,6 +69,9 @@ type AlertRuleHeaders struct {
 	// in:header
 	XDisableProvenance string `json:"X-Disable-Provenance"`
 }
+
+// swagger:model
+type ProvisionedAlertRules []ProvisionedAlertRule
 
 type ProvisionedAlertRule struct {
 	ID  int64  `json:"id"`
@@ -140,6 +150,14 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) Provision
 		Labels:       rule.Labels,
 		Provenance:   provenance,
 	}
+}
+
+func NewAlertRules(rules []*models.AlertRule) ProvisionedAlertRules {
+	result := make([]ProvisionedAlertRule, 0, len(rules))
+	for _, r := range rules {
+		result = append(result, NewAlertRule(*r, models.ProvenanceNone))
+	}
+	return result
 }
 
 // swagger:route GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup

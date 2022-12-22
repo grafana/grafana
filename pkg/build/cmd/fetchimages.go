@@ -20,12 +20,12 @@ const (
 func FetchImages(c *cli.Context) error {
 	if c.NArg() > 0 {
 		if err := cli.ShowSubcommandHelp(c); err != nil {
-			return cli.NewExitError(err.Error(), 1)
+			return cli.Exit(err.Error(), 1)
 		}
-		return cli.NewExitError("", 1)
+		return cli.Exit("", 1)
 	}
 
-	metadata, err := GenerateMetadata(c)
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}

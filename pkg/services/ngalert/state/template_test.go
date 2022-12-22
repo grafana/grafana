@@ -359,11 +359,11 @@ func TestExpandTemplate(t *testing.T) {
 	}, {
 		name:     "graphLink",
 		text:     `{{ graphLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}`,
-		expected: `/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":false,"range":true}]`,
+		expected: `/explore?left={"datasource":"gdev-prometheus","queries":[{"datasource":"gdev-prometheus","expr":"up","instant":false,"range":true,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`,
 	}, {
 		name:     "graphLink should escape both the expression and the datasource",
 		text:     `{{ graphLink "{\"expr\": \"process_open_fds > 0\", \"datasource\": \"gdev prometheus\"}" }}`,
-		expected: `/explore?left=["now-1h","now","gdev+prometheus",{"datasource":"gdev+prometheus","expr":"process_open_fds+%3E+0","instant":false,"range":true}]`,
+		expected: `/explore?left={"datasource":"gdev+prometheus","queries":[{"datasource":"gdev+prometheus","expr":"process_open_fds+%3E+0","instant":false,"range":true,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`,
 	}, {
 		name:     "check that graphLink returns an empty string when the query is not formatted correctly",
 		text:     "{{ graphLink \"up\" }}",
@@ -371,11 +371,11 @@ func TestExpandTemplate(t *testing.T) {
 	}, {
 		name:     "tableLink",
 		text:     `{{ tableLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}`,
-		expected: `/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":true,"range":false}]`,
+		expected: `/explore?left={"datasource":"gdev-prometheus","queries":[{"datasource":"gdev-prometheus","expr":"up","instant":true,"range":false,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`,
 	}, {
 		name:     "tableLink should escape both the expression and the datasource",
 		text:     `{{ tableLink "{\"expr\": \"process_open_fds > 0\", \"datasource\": \"gdev prometheus\"}" }}`,
-		expected: `/explore?left=["now-1h","now","gdev+prometheus",{"datasource":"gdev+prometheus","expr":"process_open_fds+%3E+0","instant":true,"range":false}]`,
+		expected: `/explore?left={"datasource":"gdev+prometheus","queries":[{"datasource":"gdev+prometheus","expr":"process_open_fds+%3E+0","instant":true,"range":false,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`,
 	}, {
 		name:     "check that tableLink returns an empty string  when the query is not formatted correctly",
 		text:     "{{ tableLink \"up\" }}",
