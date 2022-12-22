@@ -227,12 +227,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       top: 0,
       width: '100%',
+      overflow: 'hidden',
     }),
     content: css({
       label: 'panel-content',
       width: '100%',
       flexGrow: 1,
-      overflow: 'auto',
+      contain: 'strict',
     }),
     headerContainer: css({
       label: 'panel-header',
