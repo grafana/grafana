@@ -15,6 +15,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { exposeToPlugin } from 'app/features/plugins/plugin_loader';
+import { cdnHost } from 'app/features/plugins/systemjsPlugins/constants';
 import * as sdk from 'app/plugins/sdk';
 
 import { registerAngularDirectives } from './angular_wrappers';
@@ -43,13 +44,17 @@ export class AngularApp {
         $compileProvider: angular.ICompileProvider,
         $filterProvider: angular.IFilterProvider,
         $httpProvider: angular.IHttpProvider,
-        $provide: angular.auto.IProvideService
+        $provide: angular.auto.IProvideService,
+        $sceDelegateProvider: angular.ISCEDelegateProvider
       ) => {
         if (config.buildInfo.env !== 'development') {
           $compileProvider.debugInfoEnabled(false);
         }
 
         $httpProvider.useApplyAsync(true);
+        // ⚠️ Plugin cdn poc! ⚠️
+        // TODO: We need to use a config check before setting this value.
+        $sceDelegateProvider.trustedResourceUrlList(['self', `${cdnHost}/**`]);
 
         this.registerFunctions.controller = $controllerProvider.register;
         this.registerFunctions.directive = $compileProvider.directive;
