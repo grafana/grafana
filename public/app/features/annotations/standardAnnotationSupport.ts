@@ -10,6 +10,7 @@ import {
   AnnotationSupport,
   DataFrame,
   DataSourceApi,
+  DataTransformContext,
   Field,
   FieldType,
   getFieldDisplayName,
@@ -66,8 +67,12 @@ export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFr
           return of(data[0]);
         }
 
+        const ctx: DataTransformContext = {
+          interpolate: (v: string) => v,
+        };
+
         return of(data).pipe(
-          standardTransformers.mergeTransformer.operator({}),
+          standardTransformers.mergeTransformer.operator({}, ctx),
           map((d) => d[0])
         );
       })

@@ -6,6 +6,7 @@ import {
   DataTransformerID,
   SynchronousDataTransformerInfo,
   getFieldMatcher,
+  DataTransformContext,
 } from '@grafana/data';
 import { getMatcherConfig } from '@grafana/data/src/transformations/transformers/filterByName';
 import { noopTransformer } from '@grafana/data/src/transformations/transformers/noop';
@@ -49,14 +50,14 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
   description: `Splits a one-frame dataset into multiple series discriminated by unique/enum values in one or more fields.`,
   defaultOptions: {},
 
-  operator: (options) => (source) =>
-    source.pipe(map((data) => partitionByValuesTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => partitionByValuesTransformer.transformer(options, ctx)(data))),
 
-  transformer: (options: PartitionByValuesTransformerOptions) => {
+  transformer: (options: PartitionByValuesTransformerOptions, ctx: DataTransformContext) => {
     const matcherConfig = getMatcherConfig({ names: options.fields });
 
     if (!matcherConfig) {
-      return noopTransformer.transformer({});
+      return noopTransformer.transformer({}, ctx);
     }
 
     const matcher = getFieldMatcher(matcherConfig);

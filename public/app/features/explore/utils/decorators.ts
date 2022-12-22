@@ -127,13 +127,16 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
   });
 
   const hasOnlyTimeseries = data.tableFrames.every((df) => isTimeSeries(df));
+  const transformContext = {
+    interpolate: (v: string) => v,
+  };
 
   // If we have only timeseries we do join on default time column which makes more sense. If we are showing
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
   const transformer = hasOnlyTimeseries
-    ? of(data.tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}))
-    : of(data.tableFrames).pipe(standardTransformers.mergeTransformer.operator({}));
+    ? of(data.tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}, transformContext))
+    : of(data.tableFrames).pipe(standardTransformers.mergeTransformer.operator({}, transformContext));
 
   return transformer.pipe(
     map((frames) => {

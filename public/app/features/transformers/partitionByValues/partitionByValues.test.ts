@@ -2,6 +2,10 @@ import { toDataFrame, FieldType } from '@grafana/data';
 
 import { partitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
 
+const ctx = {
+  interpolate: (v: string) => v,
+};
+
 describe('Partition by values transformer', () => {
   it('should partition by one field', () => {
     const source = [
@@ -19,7 +23,7 @@ describe('Partition by values transformer', () => {
       fields: ['region'],
     };
 
-    let partitioned = partitionByValuesTransformer.transformer(config)(source);
+    let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);
 
     expect(partitioned.length).toEqual(2);
 
@@ -55,7 +59,7 @@ describe('Partition by values transformer', () => {
       fields: ['region', 'status'],
     };
 
-    let partitioned = partitionByValuesTransformer.transformer(config)(source);
+    let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);
 
     expect(partitioned.length).toEqual(4);
 
@@ -116,7 +120,7 @@ describe('Partition by values transformer', () => {
       },
     };
 
-    let partitioned = partitionByValuesTransformer.transformer(config)(source);
+    let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);
 
     expect(partitioned[0].name).toEqual('region=Europe status=OK');
     expect(partitioned[1].name).toEqual('region=Europe status=FAIL');
@@ -144,7 +148,7 @@ describe('Partition by values transformer', () => {
       },
     };
 
-    let partitioned = partitionByValuesTransformer.transformer(config)(source);
+    let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);
 
     expect(partitioned[0].name).toEqual('XYZ Europe OK');
     expect(partitioned[1].name).toEqual('XYZ Europe FAIL');
@@ -173,7 +177,7 @@ describe('Partition by values transformer', () => {
       },
     };
 
-    let partitioned = partitionByValuesTransformer.transformer(config)(source);
+    let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);
 
     expect(partitioned[0].name).toEqual('XYZ region=Europe status=OK');
     expect(partitioned[1].name).toEqual('XYZ region=Europe status=FAIL');

@@ -82,7 +82,8 @@ export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTrans
     fields: {},
   },
 
-  operator: (options) => (source) => source.pipe(map((data) => histogramTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => histogramTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: HistogramTransformerOptions) => (data: DataFrame[]) => {
     if (!Array.isArray(data) || data.length === 0) {
