@@ -76,7 +76,11 @@ export default function AlertmanagerConfig(): JSX.Element {
 
   const loading = isDeleting || isLoadingConfig || isSaving;
 
-  const onSubmit = (values: FormValues, fetchLatestConfig: boolean, oldConfig?: AlertManagerCortexConfig) => {
+  const onSubmit = (
+    values: FormValues,
+    checkConflictsWithExistingConfig: boolean,
+    oldConfig?: AlertManagerCortexConfig
+  ) => {
     if (alertManagerSourceName && oldConfig) {
       dispatch(
         updateAlertManagerConfigAction({
@@ -85,7 +89,7 @@ export default function AlertmanagerConfig(): JSX.Element {
           alertManagerSourceName,
           successMessage: 'Alertmanager configuration updated.',
           refetch: true,
-          fetchLatestConfig,
+          checkConflictsWithExistingConfig,
         })
       );
     }
