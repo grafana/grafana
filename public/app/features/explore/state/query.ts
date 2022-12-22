@@ -107,8 +107,8 @@ export interface StoreSuppQueryDataProvider {
 /**
  * Stores available logs volume provider after running the query. Used internally by runQueries().
  */
-export const StoreSuppQueryDataProviderAction = createAction<StoreSuppQueryDataProvider>(
-  'explore/StoreSuppQueryDataProviderAction'
+export const storeSuppQueryDataProviderAction = createAction<StoreSuppQueryDataProvider>(
+  'explore/storeSuppQueryDataProviderAction'
 );
 
 export const cleanSuppQueryVolumeAction = createAction<{ exploreId: ExploreId }>('explore/cleanSuppQueryVolumeAction');
@@ -232,7 +232,7 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
     dispatch(scanStopAction({ exploreId }));
     dispatch(cancelQueriesAction({ exploreId }));
     dispatch(
-      StoreSuppQueryDataProviderAction({
+      storeSuppQueryDataProviderAction({
         exploreId,
         suppQueryDataProvider: undefined,
       })
@@ -559,7 +559,7 @@ export const runQueries = (
 
       if (live) {
         dispatch(
-          StoreSuppQueryDataProviderAction({
+          storeSuppQueryDataProviderAction({
             exploreId,
             suppQueryDataProvider: undefined,
           })
@@ -578,7 +578,7 @@ export const runQueries = (
         };
         const suppQueryDataProvider = datasourceInstance.getLogsVolumeDataProvider(sourceRequest);
         dispatch(
-          StoreSuppQueryDataProviderAction({
+          storeSuppQueryDataProviderAction({
             exploreId,
             suppQueryDataProvider,
           })
@@ -592,7 +592,7 @@ export const runQueries = (
         }
       } else {
         dispatch(
-          StoreSuppQueryDataProviderAction({
+          storeSuppQueryDataProviderAction({
             exploreId,
             suppQueryDataProvider: undefined,
           })
@@ -784,7 +784,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (StoreSuppQueryDataProviderAction.match(action)) {
+  if (storeSuppQueryDataProviderAction.match(action)) {
     let { suppQueryDataProvider } = action.payload;
     if (state.suppQueryDataSubscription) {
       state.suppQueryDataSubscription.unsubscribe();

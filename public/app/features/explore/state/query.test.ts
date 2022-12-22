@@ -35,7 +35,7 @@ import {
   runQueries,
   scanStartAction,
   scanStopAction,
-  StoreSuppQueryDataProviderAction,
+  storeSuppQueryDataProviderAction,
   setSuppQueryEnabled,
 } from './query';
 import { LOGS_VOLUME_QUERY, makeExplorePaneState } from './utils';
@@ -181,7 +181,7 @@ describe('running queries', () => {
     expect(dispatchedActions).toEqual([
       scanStopAction({ exploreId }),
       cancelQueriesAction({ exploreId }),
-      StoreSuppQueryDataProviderAction({ exploreId, suppQueryDataProvider: undefined }),
+      storeSuppQueryDataProviderAction({ exploreId, suppQueryDataProvider: undefined }),
       cleanSuppQueryVolumeAction({ exploreId }),
     ]);
   });
