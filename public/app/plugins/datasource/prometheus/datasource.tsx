@@ -1153,6 +1153,15 @@ export class PrometheusDatasource
     return Math.ceil(date.valueOf() / 1000);
   }
 
+  /**
+   * This will return a time range that always includes the users current time range,
+   * and then a little extra padding to round up/down to the nearest nth minute,
+   * defined by the result of the getCacheDurationInMinutes.
+   *
+   * For longer cache durations, and shorter query durations, the window we're calculating might be much bigger then the user's current window,
+   * resulting in us returning labels/values that might not be applicable for the given window, this is a necessary trade off if we want to cache larger durations
+   *
+   */
   getQuantizedTimeRangeParams(): { start: string; end: string } {
     const range = this.timeSrv.timeRange();
 
@@ -1165,20 +1174,18 @@ export class PrometheusDatasource
     }
     // Otherwise round down to the nearest nth minute for the start time
     const startTime = this.getPrometheusTime(range.from, false);
-    const startTimeQuantized = roundSecToLastMin(startTime, this.getCacheDurationInMinutes()) * 60;
+    const startTimeQuantizedSeconds = roundSecToLastMin(startTime, this.getCacheDurationInMinutes()) * 60;
 
     // And round up to the nearest nth minute for the end time
     const endTime = this.getPrometheusTime(range.to, true);
-    const endTimeQuantized = roundSecToNextMin(endTime, this.getCacheDurationInMinutes()) * 60;
+    const endTimeQuantizedSeconds = roundSecToNextMin(endTime, this.getCacheDurationInMinutes()) * 60;
 
-    const start = startTimeQuantized.toString();
-    const end = endTimeQuantized.toString();
+    const start = startTimeQuantizedSeconds.toString();
+    const end = endTimeQuantizedSeconds.toString();
 
-    const regs = this.getTimeRangeParams();
-    console.log('Quantized:', { start, end });
-    console.log('Regs:', regs);
-    console.log('startDiff', parseInt(start, 10) - parseInt(regs.start, 10));
-    console.log('endDiff', parseInt(end, 10) - parseInt(regs.end, 10));
+    if (start === end) {
+      throw new Error('Start and end cannae be the sae value');
+    }
 
     return { start, end };
   }
@@ -1252,6 +1259,17 @@ export class PrometheusDatasource
         return 1200;
       default:
         return 300;
+    }
+  }
+
+  getCacheLength(): number {
+    switch (this.cacheLevel) {
+      case PrometheusCacheLevel.high:
+        return 20;
+      case PrometheusCacheLevel.medium:
+        return 15;
+      default:
+        return 10;
     }
   }
 
