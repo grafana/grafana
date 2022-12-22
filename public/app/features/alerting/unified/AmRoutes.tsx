@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
@@ -17,12 +16,14 @@ import { ProvisionedResource, ProvisioningAlert } from './components/Provisionin
 import { AmRootRoute } from './components/amroutes/AmRootRoute';
 import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
 import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
+import { useGetAmRouteReceiverWithGrafanaAppTypes } from './components/receivers/grafanaAppReceivers/grafanaApp';
+import { AmRouteReceiver } from './components/receivers/grafanaAppReceivers/types';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
-import { AmRouteReceiver, FormAmRoute } from './types/amroutes';
-import { amRouteToFormAmRoute, formAmRouteToAmRoute, stringsToSelectableValues } from './utils/amroutes';
+import { FormAmRoute } from './types/amroutes';
+import { amRouteToFormAmRoute, formAmRouteToAmRoute } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
@@ -56,9 +57,7 @@ const AmRoutes = () => {
   const config = result?.alertmanager_config;
   const [rootRoute, id2ExistingRoute] = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
 
-  const receivers = stringsToSelectableValues(
-    (config?.receivers ?? []).map((receiver: Receiver) => receiver.name)
-  ) as AmRouteReceiver[];
+  const receivers: AmRouteReceiver[] = useGetAmRouteReceiverWithGrafanaAppTypes(config?.receivers ?? []);
 
   const isProvisioned = useMemo(() => Boolean(config?.route?.provenance), [config?.route]);
 

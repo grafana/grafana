@@ -184,19 +184,12 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   private async buildDeepLink(customMeta: Record<string, any>) {
     const base64Enc = encodeURIComponent(customMeta.encodedQuery);
-    const workspaceId = customMeta.workspace;
-    const subscription = customMeta.subscription;
-
-    const details = await this.getWorkspaceDetails(workspaceId);
-    if (!details.workspace || !details.resourceGroup) {
-      return '';
-    }
+    const resource = encodeURIComponent(customMeta.resource);
 
     const url =
       `${this.azurePortalUrl}/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
       `AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/` +
-      `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22%2Fsubscriptions%2F${subscription}` +
-      `%2Fresourcegroups%2F${details.resourceGroup}%2Fproviders%2Fmicrosoft.operationalinsights%2Fworkspaces%2F${details.workspace}` +
+      `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22${resource}` +
       `%22%7D%5D%7D/query/${base64Enc}/isQueryBase64Compressed/true/timespanInIsoFormat/P1D`;
     return url;
   }

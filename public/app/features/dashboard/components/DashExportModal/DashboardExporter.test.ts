@@ -37,6 +37,7 @@ jest.mock('@grafana/runtime', () => ({
     featureToggles: {
       newVariables: false,
     },
+    angularSupportEnabled: true,
   },
 }));
 

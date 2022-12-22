@@ -59,13 +59,14 @@ type DatasourceInfo struct {
 // AzureMonitorQuery is the query for all the services as they have similar queries
 // with a url, a querystring and an alias field
 type AzureMonitorQuery struct {
-	URL       string
-	Target    string
-	Params    url.Values
-	RefID     string
-	Alias     string
-	TimeRange backend.TimeRange
-	Filter    string
+	URL        string
+	Target     string
+	Params     url.Values
+	RefID      string
+	Alias      string
+	TimeRange  backend.TimeRange
+	BodyFilter string
+	Dimensions []AzureMonitorDimensionFilter
 }
 
 // AzureMonitorResponse is the json response from the Azure Monitor API
@@ -156,6 +157,12 @@ type AzureMonitorDimensionFilter struct {
 	Filters   []string `json:"filters,omitempty"`
 	// Deprecated: To support multiselection, filters are passed in a slice now. Also migrated in frontend.
 	Filter *string `json:"filter,omitempty"`
+}
+
+type AzureMonitorDimensionFilterBackend struct {
+	Key      string   `json:"key"`
+	Operator int      `json:"operator"`
+	Values   []string `json:"values"`
 }
 
 func (a AzureMonitorDimensionFilter) ConstructFiltersString() string {

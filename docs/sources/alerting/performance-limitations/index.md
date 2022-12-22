@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/alerting-limitations/
-  - /docs/grafana/latest/alerting/performance-limitations/
+  - alerting-limitations/
 description: Performance considerations and limitations
 keywords:
   - grafana
@@ -42,10 +41,10 @@ We support the latest two minor versions of both Prometheus and Alertmanager. We
 
 As an example, if the current Prometheus version is `2.31.1`, we support >= `2.29.0`.
 
-## Grafana is not an alert receiver
+## The Grafana Alertmanager can only receive Grafana managed alerts
 
-Grafana is not an alert receiver; it is an alert generator. This means that Grafana cannot receive alerts from anything other than its internal alert generator.
+Grafana cannot be used to receive external alerts. You can only send alerts to the Grafana Alertmanager using Grafana managed alerts.
 
-Receiving alerts from Prometheus (or anything else) is not supported at the time.
+You have the option to send Grafana managed alerts to an external Alertmanager, you can find this option in the admin tab on the Alerting page.
 
-For more information, refer to [this GitHub discussion](https://github.com/grafana/grafana/discussions/45773).
+For more information, refer to [this GitHub discussion](https://github.com/grafana/grafana/discussions/45773). For more information on the different Alertmanagers, refer to [Alertmanager]([{{< relref "../manage-notifications/alertmanager/" >}}](https://grafana.com/docs/grafana/next/alerting/manage-notifications/alertmanager/).

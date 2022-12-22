@@ -2,9 +2,13 @@
 This module is a library of Drone steps and other pipeline components.
 """
 
-load("scripts/drone/vault.star", "drone_token", "from_secret", "github_token", "prerelease_bucket")
+load(
+    "scripts/drone/vault.star",
+    "from_secret",
+    "prerelease_bucket",
+)
 
-grabpl_version = "v3.0.17"
+grabpl_version = "v3.0.20"
 build_image = "grafana/build-container:1.6.4"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
@@ -14,7 +18,6 @@ windows_image = "mcr.microsoft.com/windows:1809"
 wix_image = "grafana/ci-wix:0.1.1"
 go_image = "golang:1.19.3"
 
-disable_tests = False
 trigger_oss = {
     "repo": [
         "grafana/grafana",
@@ -32,17 +35,14 @@ def slack_step(channel, template, secret):
         },
     }
 
-def yarn_install_step(edition = "oss"):
-    deps = []
-    if edition == "enterprise":
-        deps = ["init-enterprise"]
+def yarn_install_step():
     return {
         "name": "yarn-install",
         "image": build_image,
         "commands": [
             "yarn install --immutable",
         ],
-        "depends_on": deps,
+        "depends_on": [],
     }
 
 def wire_install_step():
@@ -58,15 +58,7 @@ def wire_install_step():
     }
 
 def identify_runner_step(platform = "linux"):
-    if platform == "windows":
-        return {
-            "name": "identify-runner",
-            "image": windows_image,
-            "commands": [
-                "echo $env:DRONE_RUNNER_NAME",
-            ],
-        }
-    else:
+    if platform == "linux":
         return {
             "name": "identify-runner",
             "image": alpine_image,
@@ -74,27 +66,29 @@ def identify_runner_step(platform = "linux"):
                 "echo $DRONE_RUNNER_NAME",
             ],
         }
+    else:
+        return {
+            "name": "identify-runner",
+            "image": windows_image,
+            "commands": [
+                "echo $env:DRONE_RUNNER_NAME",
+            ],
+        }
 
-def clone_enterprise_step(ver_mode):
+def clone_enterprise_step(committish = "${DRONE_COMMIT}"):
     """Clone the enterprise source into the ./grafana-enterprise directory.
 
     Args:
-      ver_mode: indirectly controls which revision of grafana-enterprise is cloned.
+      committish: controls which revision of grafana-enterprise is cloned.
 
     Returns:
       Drone step.
     """
-    if ver_mode == "release":
-        committish = "${DRONE_TAG}"
-    elif ver_mode == "release-branch":
-        committish = "${DRONE_BRANCH}"
-    else:
-        committish = "${DRONE_COMMIT}"
     return {
         "name": "clone-enterprise",
         "image": build_image,
         "environment": {
-            "GITHUB_TOKEN": from_secret(github_token),
+            "GITHUB_TOKEN": from_secret("github_token"),
         },
         "commands": [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
@@ -118,12 +112,12 @@ def init_enterprise_step(ver_mode):
     if ver_mode == "release":
         source_commit = " ${DRONE_TAG}"
         environment = {
-            "GITHUB_TOKEN": from_secret(github_token),
+            "GITHUB_TOKEN": from_secret("github_token"),
         }
         token = "--github-token $${GITHUB_TOKEN}"
     elif ver_mode == "release-branch":
         environment = {
-            "GITHUB_TOKEN": from_secret(github_token),
+            "GITHUB_TOKEN": from_secret("github_token"),
         }
         token = "--github-token $${GITHUB_TOKEN}"
     else:
@@ -140,7 +134,10 @@ def init_enterprise_step(ver_mode):
             "mv bin/grabpl /tmp/",
             "rmdir bin",
             "mv grafana-enterprise /tmp/",
-            "/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}".format(token, source_commit),
+            "/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}".format(
+                token,
+                source_commit,
+            ).rstrip(),
             "mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json",
             "mkdir bin",
             "mv /tmp/grabpl bin/",
@@ -205,20 +202,16 @@ def lint_starlark_step():
         ],
     }
 
-def enterprise_downstream_step(edition, ver_mode):
+def enterprise_downstream_step(ver_mode):
     """Triggers a downstream pipeline in the grafana-enterprise repository.
 
     Args:
-      edition: inhibits step behavior for enterprise pipelines.
       ver_mode: indirectly controls the revision used for downstream pipelines.
         It also used to allow the step to fail for pull requests without blocking merging.
 
     Returns:
       Drone step.
     """
-    if edition in ("enterprise", "enterprise2"):
-        return None
-
     repo = "grafana/grafana-enterprise@"
     if ver_mode == "pr":
         repo += "${DRONE_SOURCE_BRANCH}"
@@ -230,7 +223,7 @@ def enterprise_downstream_step(edition, ver_mode):
         "image": "grafana/drone-downstream",
         "settings": {
             "server": "https://drone.grafana.net",
-            "token": from_secret(drone_token),
+            "token": from_secret("drone_token"),
             "repositories": [
                 repo,
             ],
@@ -250,6 +243,7 @@ def enterprise_downstream_step(edition, ver_mode):
 def lint_backend_step():
     return {
         "name": "lint-backend",
+        # TODO: build_image or go_image?
         "image": go_image,
         "environment": {
             # We need CGO because of go-sqlite3
@@ -278,10 +272,7 @@ def benchmark_ldap_step():
         ],
     }
 
-def build_storybook_step(edition, ver_mode):
-    if edition in ("enterprise", "enterprise2"):
-        return None
-
+def build_storybook_step(ver_mode):
     return {
         "name": "build-storybook",
         "image": build_image,
@@ -295,16 +286,15 @@ def build_storybook_step(edition, ver_mode):
         },
         "commands": [
             "yarn storybook:build",
-            "./bin/grabpl verify-storybook",
+            "./bin/build verify-storybook",
         ],
         "when": get_trigger_storybook(ver_mode),
     }
 
-def store_storybook_step(edition, ver_mode, trigger = None):
+def store_storybook_step(ver_mode, trigger = None):
     """Publishes the Grafana UI components storybook.
 
     Args:
-      edition: prevents the publishing of storybooks for enterprise editions.
       ver_mode: controls whether a release or canary version is published.
       trigger: a Drone trigger for the step.
         Defaults to None.
@@ -312,24 +302,28 @@ def store_storybook_step(edition, ver_mode, trigger = None):
     Returns:
       Drone step.
     """
-    if edition in ("enterprise", "enterprise2"):
-        return None
-
     commands = []
     if ver_mode == "release":
-        commands.extend([
-            "./bin/build store-storybook --deployment latest",
-            "./bin/build store-storybook --deployment ${DRONE_TAG}",
-        ])
+        commands.extend(
+            [
+                "./bin/build store-storybook --deployment latest",
+                "./bin/build store-storybook --deployment ${DRONE_TAG}",
+            ],
+        )
 
     else:
         # main pipelines should deploy storybook to grafana-storybook/canary public bucket
-        commands = ["./bin/build store-storybook --deployment canary"]
+        commands = [
+            "./bin/build store-storybook --deployment canary",
+        ]
 
     step = {
         "name": "store-storybook",
         "image": publish_image,
-        "depends_on": ["build-storybook"] + end_to_end_tests_deps(),
+        "depends_on": [
+                          "build-storybook",
+                      ] +
+                      end_to_end_tests_deps(),
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
@@ -340,7 +334,9 @@ def store_storybook_step(edition, ver_mode, trigger = None):
     if trigger and ver_mode in ("release-branch", "main"):
         # no dict merge operation available, https://github.com/harness/drone-cli/pull/220
         when_cond = {
-            "repo": ["grafana/grafana"],
+            "repo": [
+                "grafana/grafana",
+            ],
             "paths": {
                 "include": [
                     "packages/grafana-ui/**",
@@ -350,9 +346,9 @@ def store_storybook_step(edition, ver_mode, trigger = None):
         step = dict(step, when = when_cond)
     return step
 
-def e2e_tests_artifacts(edition):
+def e2e_tests_artifacts():
     return {
-        "name": "e2e-tests-artifacts-upload" + enterprise2_suffix(edition),
+        "name": "e2e-tests-artifacts-upload",
         "image": "google/cloud-sdk:406.0.0",
         "depends_on": [
             "end-to-end-tests-dashboards-suite",
@@ -401,13 +397,17 @@ def upload_cdn_step(edition, ver_mode, trigger = None):
     """
     deps = []
     if edition in "enterprise2":
-        deps.extend([
-            "package" + enterprise2_suffix(edition),
-        ])
+        deps.extend(
+            [
+                "package" + enterprise2_suffix(edition),
+            ],
+        )
     else:
-        deps.extend([
-            "grafana-server",
-        ])
+        deps.extend(
+            [
+                "grafana-server",
+            ],
+        )
 
     step = {
         "name": "upload-cdn-assets" + enterprise2_suffix(edition),
@@ -659,13 +659,12 @@ def lint_frontend_step():
         ],
     }
 
-def test_a11y_frontend_step(ver_mode, edition, port = 3001):
+def test_a11y_frontend_step(ver_mode, port = 3001):
     """Runs automated accessiblity tests against the frontend.
 
     Args:
       ver_mode: controls whether the step is blocking or just reporting.
         If ver_mode == 'pr', the step causes the pipeline to fail.
-      edition: controls which edition of grafana-server to test against.
       port: which port to grafana-server is expected to be listening on.
         Defaults to 3001.
 
@@ -677,49 +676,50 @@ def test_a11y_frontend_step(ver_mode, edition, port = 3001):
     ]
     failure = "ignore"
     if ver_mode == "pr":
-        commands.extend([
-            "pa11y-ci --config .pa11yci-pr.conf.js",
-        ])
+        commands.extend(
+            [
+                "pa11y-ci --config .pa11yci-pr.conf.js",
+            ],
+        )
         failure = "always"
     else:
-        commands.extend([
-            "pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json",
-        ])
+        commands.extend(
+            [
+                "pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json",
+            ],
+        )
 
     return {
-        "name": "test-a11y-frontend" + enterprise2_suffix(edition),
+        "name": "test-a11y-frontend",
+        # TODO which image should be used?
         "image": "grafana/docker-puppeteer:1.1.0",
         "depends_on": [
-            "grafana-server" + enterprise2_suffix(edition),
+            "grafana-server",
         ],
         "environment": {
             "GRAFANA_MISC_STATS_API_KEY": from_secret("grafana_misc_stats_api_key"),
-            "HOST": "grafana-server" + enterprise2_suffix(edition),
+            "HOST": "grafana-server",
             "PORT": port,
         },
         "failure": failure,
         "commands": commands,
     }
 
-def frontend_metrics_step(edition, trigger = None):
+def frontend_metrics_step(trigger = None):
     """Reports frontend metrics to Grafana Cloud.
 
     Args:
-      edition: skips publishing of metrics for enterprise editions.
       trigger: a Drone trigger for the step.
         Defaults to None.
 
     Returns:
       Drone step.
     """
-    if edition in ("enterprise", "enterprise2"):
-        return None
-
     step = {
         "name": "publish-frontend-metrics",
         "image": build_image,
         "depends_on": [
-            "test-a11y-frontend" + enterprise2_suffix(edition),
+            "test-a11y-frontend",
         ],
         "environment": {
             "GRAFANA_MISC_STATS_API_KEY": from_secret("grafana_misc_stats_api_key"),
@@ -783,15 +783,15 @@ def package_step(edition, ver_mode, variants = None):
     else:
         sign_args = ""
         env = None
+
+        # TODO: env vars no longer needed by build if not signing
         test_args = ". scripts/build/gpg-test-vars.sh && "
 
     # TODO: Use percentage for jobs
     if ver_mode == "release":
         cmds = [
             "{}./bin/build package --jobs 8 --edition {} ".format(test_args, edition) +
-            "{} ${{DRONE_TAG}}".format(
-                sign_args,
-            ),
+            "{} ${{DRONE_TAG}}".format(sign_args),
         ]
     else:
         build_no = "${DRONE_BUILD_NUMBER}"
@@ -819,21 +819,12 @@ def grafana_server_step(edition, port = 3001):
     Returns:
       Drone step.
     """
-    package_file_pfx = ""
-    if edition == "enterprise2":
-        package_file_pfx = "grafana" + enterprise2_suffix(edition)
-    elif edition == "enterprise":
-        package_file_pfx = "grafana-" + edition
-
-    environment = {
-        "PORT": port,
-        "ARCH": "linux-amd64",
-    }
-    if package_file_pfx:
-        environment["RUNDIR"] = "scripts/grafana-server/tmp-{}".format(package_file_pfx)
+    environment = {"PORT": port, "ARCH": "linux-amd64"}
+    if edition == "enterprise":
+        environment["RUNDIR"] = "scripts/grafana-server/tmp-grafana-enterprise"
 
     return {
-        "name": "grafana-server" + enterprise2_suffix(edition),
+        "name": "grafana-server",
         "image": build_image,
         "detach": True,
         "depends_on": [
@@ -848,18 +839,18 @@ def grafana_server_step(edition, port = 3001):
         ],
     }
 
-def e2e_tests_step(suite, edition, port = 3001, tries = None):
+def e2e_tests_step(suite, port = 3001, tries = None):
     cmd = "./bin/build e2e-tests --port {} --suite {}".format(port, suite)
     if tries:
         cmd += " --tries {}".format(tries)
     return {
-        "name": "end-to-end-tests-{}".format(suite) + enterprise2_suffix(edition),
+        "name": "end-to-end-tests-{}".format(suite),
         "image": "cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97",
         "depends_on": [
             "grafana-server",
         ],
         "environment": {
-            "HOST": "grafana-server" + enterprise2_suffix(edition),
+            "HOST": "grafana-server",
         },
         "commands": [
             "apt-get install -y netcat",
@@ -867,13 +858,12 @@ def e2e_tests_step(suite, edition, port = 3001, tries = None):
         ],
     }
 
-def cloud_plugins_e2e_tests_step(suite, edition, cloud, trigger = None):
+def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     """Run cloud plugins end-to-end tests.
 
     Args:
       suite: affects the pipeline name.
         TODO: check if this actually affects step behavior.
-      edition: which edition of grafana-server to test against.
       cloud: used to determine cloud provider specific tests.
       trigger: a Drone trigger for the step.
         Defaults to None.
@@ -888,30 +878,31 @@ def cloud_plugins_e2e_tests_step(suite, edition, cloud, trigger = None):
     if cloud == "azure":
         environment = {
             "CYPRESS_CI": "true",
-            "HOST": "grafana-server" + enterprise2_suffix(edition),
+            "HOST": "grafana-server",
             "GITHUB_TOKEN": from_secret("github_token_pr"),
             "AZURE_SP_APP_ID": from_secret("azure_sp_app_id"),
             "AZURE_SP_PASSWORD": from_secret("azure_sp_app_pw"),
             "AZURE_TENANT": from_secret("azure_tenant"),
         }
-        when = dict(when, paths = {
-            "include": [
-                "pkg/tsdb/azuremonitor/**",
-                "public/app/plugins/datasource/grafana-azure-monitor-datasource/**",
-            ],
-        })
+        when = dict(
+            when,
+            paths = {
+                "include": [
+                    "pkg/tsdb/azuremonitor/**",
+                    "public/app/plugins/datasource/grafana-azure-monitor-datasource/**",
+                    "e2e/cloud-plugins-suite/azure-monitor.spec.ts",
+                ],
+            },
+        )
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
-        "name": "end-to-end-tests-{}-{}".format(suite, cloud) + enterprise2_suffix(edition),
+        "name": "end-to-end-tests-{}-{}".format(suite, cloud),
         "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest",
         "depends_on": [
             "grafana-server",
         ],
         "environment": environment,
-        "commands": [
-            "cd /",
-            "./cpp-e2e/scripts/ci-run.sh {} {}".format(cloud, branch),
-        ],
+        "commands": ["cd /", "./cpp-e2e/scripts/ci-run.sh {} {}".format(cloud, branch)],
     }
     step = dict(step, when = when)
     return step
@@ -973,7 +964,9 @@ def build_docker_images_step(edition, archs = None, ubuntu = False, publish = Fa
     }
 
     if edition == "enterprise2":
-        environment.update({"DOCKER_ENTERPRISE2_REPO": from_secret("docker_enterprise2_repo")})
+        environment.update(
+            {"DOCKER_ENTERPRISE2_REPO": from_secret("docker_enterprise2_repo")},
+        )
 
     return {
         "name": "build-docker-images" + ubuntu_sfx,
@@ -982,13 +975,8 @@ def build_docker_images_step(edition, archs = None, ubuntu = False, publish = Fa
             "copy-packages-for-docker",
             "compile-build-cmd",
         ],
-        "commands": [
-            cmd,
-        ],
-        "volumes": [{
-            "name": "docker",
-            "path": "/var/run/docker.sock",
-        }],
+        "commands": [cmd],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
         "environment": environment,
     }
 
@@ -1004,10 +992,7 @@ def fetch_images_step(edition):
         },
         "commands": ["./bin/build artifacts docker fetch --edition {}".format(edition)],
         "depends_on": ["compile-build-cmd"],
-        "volumes": [{
-            "name": "docker",
-            "path": "/var/run/docker.sock",
-        }],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
 def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
@@ -1040,19 +1025,28 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
         "DOCKER_PASSWORD": from_secret("docker_password"),
     }
 
-    cmd = "./bin/grabpl artifacts docker publish {}--dockerhub-repo {}".format(mode, docker_repo)
+    cmd = "./bin/grabpl artifacts docker publish {}--dockerhub-repo {}".format(
+        mode,
+        docker_repo,
+    )
 
+    deps = ["build-docker-images", "build-docker-images-ubuntu"]
     if ver_mode == "release":
         deps = ["fetch-images-{}".format(edition)]
         cmd += " --version-tag ${DRONE_TAG}"
-    else:
-        deps = ["build-docker-images", "build-docker-images-ubuntu"]
 
     if edition == "enterprise2":
         name = edition
         docker_repo = "$${DOCKER_ENTERPRISE2_REPO}"
-        environment.update({"GCP_KEY": from_secret("gcp_key_hg"), "DOCKER_ENTERPRISE2_REPO": from_secret("docker_enterprise2_repo")})
-        cmd = "./bin/build artifacts docker publish-enterprise2 --dockerhub-repo {}".format(docker_repo)
+        environment.update(
+            {
+                "GCP_KEY": from_secret("gcp_key_hg"),
+                "DOCKER_ENTERPRISE2_REPO": from_secret("docker_enterprise2_repo"),
+            },
+        )
+        cmd = "./bin/build artifacts docker publish-enterprise2 --dockerhub-repo {}".format(
+            docker_repo,
+        )
 
     step = {
         "name": "publish-images-{}".format(name),
@@ -1060,10 +1054,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
         "environment": environment,
         "commands": [cmd],
         "depends_on": deps,
-        "volumes": [{
-            "name": "docker",
-            "path": "/var/run/docker.sock",
-        }],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
     if trigger and ver_mode in ("release-branch", "main"):
         step = dict(step, when = trigger)
@@ -1142,20 +1133,16 @@ def memcached_integration_tests_step():
         ],
     }
 
-def release_canary_npm_packages_step(edition, trigger = None):
+def release_canary_npm_packages_step(trigger = None):
     """Releases canary NPM packages.
 
     Args:
-      edition: prevents releasing canary NPM packages for enterprise editions.
       trigger: a Drone trigger for the step.
         Defaults to None.
 
     Returns:
       Drone step.
     """
-    if edition in ("enterprise", "enterprise2"):
-        return None
-
     step = {
         "name": "release-canary-npm-packages",
         "image": build_image,
@@ -1189,26 +1176,17 @@ def upload_packages_step(edition, ver_mode, trigger = None):
     Returns:
       Drone step.
     """
-    if ver_mode == "main" and edition in ("enterprise", "enterprise2"):
-        return None
-
-    deps = []
-    if edition in "enterprise2" or not end_to_end_tests_deps():
-        deps.extend([
-            "package" + enterprise2_suffix(edition),
-        ])
-    else:
-        deps.extend(end_to_end_tests_deps())
-
     step = {
         "name": "upload-packages" + enterprise2_suffix(edition),
         "image": publish_image,
-        "depends_on": deps,
+        "depends_on": end_to_end_tests_deps(),
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
-        "commands": ["./bin/build upload-packages --edition {}".format(edition)],
+        "commands": [
+            "./bin/build upload-packages --edition {}".format(edition),
+        ],
     }
     if trigger and ver_mode in ("release-branch", "main"):
         step = dict(step, when = trigger)
@@ -1261,9 +1239,7 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
         "name": "publish-linux-packages-{}".format(package_manager),
         # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
         "image": "us.gcr.io/kubernetes-dev/package-publish:latest",
-        "depends_on": [
-            "grabpl",
-        ],
+        "depends_on": ["grabpl"],
         "privileged": True,
         "settings": {
             "access_key_id": from_secret("packages_access_key_id"),
@@ -1274,7 +1250,10 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
             "gpg_passphrase": from_secret("packages_gpg_passphrase"),
             "gpg_public_key": from_secret("packages_gpg_public_key"),
             "gpg_private_key": from_secret("packages_gpg_private_key"),
-            "package_path": "gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/{}/**.{}".format(edition, package_manager),
+            "package_path": "gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/{}/**.{}".format(
+                edition,
+                package_manager,
+            ),
         },
     }
 
@@ -1288,22 +1267,82 @@ def get_windows_steps(edition, ver_mode):
     Returns:
       List of Drone steps.
     """
-    init_cmds = []
-    if edition not in ("enterprise", "enterprise2"):
-        init_cmds.extend([
+    steps = [
+        identify_runner_step("windows"),
+    ]
+
+    if edition in ("enterprise", "enterprise2"):
+        if ver_mode == "release":
+            committish = "${DRONE_TAG}"
+        elif ver_mode == "release-branch":
+            committish = "$$env:DRONE_BRANCH"
+        else:
+            committish = "$$env:DRONE_COMMIT"
+
+        # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
+        download_grabpl_cmds = [
             '$$ProgressPreference = "SilentlyContinue"',
             "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe".format(
                 grabpl_version,
             ),
-        ])
-    steps = [
-        {
-            "name": "windows-init",
-            "image": wix_image,
-            "commands": init_cmds,
-        },
-    ]
-    if (ver_mode == "main" and (edition not in ("enterprise", "enterprise2"))) or ver_mode in (
+        ]
+
+        clone_cmds = [
+            'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
+            "cd grafana-enterprise",
+            "git checkout {}".format(committish),
+        ]
+
+        init_cmds = [
+            # Need to move grafana-enterprise out of the way, so directory is empty and can be cloned into
+            "cp -r grafana-enterprise C:\\App\\grafana-enterprise",
+            "rm -r -force grafana-enterprise",
+            "cp grabpl.exe C:\\App\\grabpl.exe",
+            "rm -force grabpl.exe",
+            "C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise",
+            "cp C:\\App\\grabpl.exe grabpl.exe",
+        ]
+
+        steps.extend(
+            [
+                {
+                    "name": "clone",
+                    "image": wix_image,
+                    "environment": {
+                        "GITHUB_TOKEN": from_secret("github_token"),
+                    },
+                    "commands": download_grabpl_cmds + clone_cmds,
+                },
+                {
+                    "name": "windows-init",
+                    "image": wix_image,
+                    "commands": init_cmds,
+                    "depends_on": ["clone"],
+                    "environment": {"GITHUB_TOKEN": from_secret("github_token")},
+                },
+            ],
+        )
+    else:
+        init_cmds = [
+            '$$ProgressPreference = "SilentlyContinue"',
+            "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe".format(
+                grabpl_version,
+            ),
+        ]
+
+        steps.extend(
+            [
+                {
+                    "name": "windows-init",
+                    "image": wix_image,
+                    "commands": init_cmds,
+                },
+            ],
+        )
+
+    if (
+        ver_mode == "main" and (edition not in ("enterprise", "enterprise2"))
+    ) or ver_mode in (
         "release",
         "release-branch",
     ):
@@ -1325,94 +1364,69 @@ def get_windows_steps(edition, ver_mode):
             "rm gcpkey.json",
             "cp C:\\App\\nssm-2.24.zip .",
         ]
-        if (ver_mode == "main" and (edition not in ("enterprise", "enterprise2"))) or ver_mode in (
-            "release",
-        ):
-            installer_commands.extend([
-                ".\\grabpl.exe windows-installer --edition {} {}".format(edition, ver_part),
-                '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
-            ])
+        if (
+            ver_mode == "main" and (edition not in ("enterprise", "enterprise2"))
+        ) or ver_mode in ("release",):
+            installer_commands.extend(
+                [
+                    ".\\grabpl.exe windows-installer --edition {} {}".format(
+                        edition,
+                        ver_part,
+                    ),
+                    '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
+                ],
+            )
             if ver_mode == "main":
-                installer_commands.extend([
-                    "gsutil cp $$fname gs://{}/{}/{}/".format(bucket, edition, dir),
-                    'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(bucket, edition, dir),
-                ])
+                installer_commands.extend(
+                    [
+                        "gsutil cp $$fname gs://{}/{}/{}/".format(bucket, edition, dir),
+                        'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(
+                            bucket,
+                            edition,
+                            dir,
+                        ),
+                    ],
+                )
             else:
-                installer_commands.extend([
-                    "gsutil cp $$fname gs://{}/{}/{}/{}/".format(bucket, ver_part, edition, dir),
-                    'gsutil cp "$$fname.sha256" gs://{}/{}/{}/{}/'.format(bucket, ver_part, edition, dir),
-                ])
-        steps.append({
-            "name": "build-windows-installer",
-            "image": wix_image,
-            "depends_on": [
-                "windows-init",
-            ],
-            "environment": {
-                "GCP_KEY": from_secret("gcp_key"),
-                "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
-                "GITHUB_TOKEN": from_secret("github_token"),
+                installer_commands.extend(
+                    [
+                        "gsutil cp $$fname gs://{}/{}/{}/{}/".format(
+                            bucket,
+                            ver_part,
+                            edition,
+                            dir,
+                        ),
+                        'gsutil cp "$$fname.sha256" gs://{}/{}/{}/{}/'.format(
+                            bucket,
+                            ver_part,
+                            edition,
+                            dir,
+                        ),
+                    ],
+                )
+        steps.append(
+            {
+                "name": "build-windows-installer",
+                "image": wix_image,
+                "depends_on": [
+                    "windows-init",
+                ],
+                "environment": {
+                    "GCP_KEY": from_secret("gcp_key"),
+                    "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
+                    "GITHUB_TOKEN": from_secret("github_token"),
+                },
+                "commands": installer_commands,
             },
-            "commands": installer_commands,
-        })
-
-    if edition in ("enterprise", "enterprise2"):
-        if ver_mode == "release":
-            committish = "${DRONE_TAG}"
-        elif ver_mode == "release-branch":
-            committish = "$$env:DRONE_BRANCH"
-        else:
-            committish = "$$env:DRONE_COMMIT"
-
-        # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
-        download_grabpl_step_cmds = [
-            '$$ProgressPreference = "SilentlyContinue"',
-            "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe".format(
-                grabpl_version,
-            ),
-        ]
-        clone_cmds = [
-            'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
-        ]
-        clone_cmds.extend([
-            "cd grafana-enterprise",
-            "git checkout {}".format(committish),
-        ])
-        steps.insert(0, {
-            "name": "clone",
-            "image": wix_image,
-            "environment": {
-                "GITHUB_TOKEN": from_secret(github_token),
-            },
-            "commands": download_grabpl_step_cmds + clone_cmds,
-        })
-        steps[1]["depends_on"] = [
-            "clone",
-        ]
-        steps[1]["commands"].extend([
-            # Need to move grafana-enterprise out of the way, so directory is empty and can be cloned into
-            "cp -r grafana-enterprise C:\\App\\grafana-enterprise",
-            "rm -r -force grafana-enterprise",
-            "cp grabpl.exe C:\\App\\grabpl.exe",
-            "rm -force grabpl.exe",
-            "C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise",
-            "cp C:\\App\\grabpl.exe grabpl.exe",
-        ])
-        if "environment" in steps[1]:
-            steps[1]["environment"].update({"GITHUB_TOKEN": from_secret(github_token)})
-        else:
-            steps[1]["environment"] = {"GITHUB_TOKEN": from_secret(github_token)}
+        )
 
     return steps
 
-def verify_gen_cue_step(edition):
-    deps = []
-    if edition in ("enterprise", "enterprise2"):
-        deps.extend(["init-enterprise"])
+def verify_gen_cue_step():
     return {
         "name": "verify-gen-cue",
         "image": build_image,
-        "depends_on": deps,
+        "depends_on": [],
         "commands": [
             "# It is required that code generated from Thema/CUE be committed and in sync with its inputs.",
             "# The following command will fail if running code generators produces any diff in output.",
@@ -1420,14 +1434,11 @@ def verify_gen_cue_step(edition):
         ],
     }
 
-def verify_gen_jsonnet_step(edition):
-    deps = []
-    if edition in ("enterprise", "enterprise2"):
-        deps.extend(["init-enterprise"])
+def verify_gen_jsonnet_step():
     return {
         "name": "verify-gen-jsonnet",
         "image": build_image,
-        "depends_on": deps,
+        "depends_on": [],
         "commands": [
             "# It is required that generated jsonnet is committed and in sync with its inputs.",
             "# The following command will fail if running code generators produces any diff in output.",
@@ -1485,8 +1496,6 @@ def artifacts_page_step():
     }
 
 def end_to_end_tests_deps():
-    if disable_tests:
-        return []
     return [
         "end-to-end-tests-dashboards-suite",
         "end-to-end-tests-panels-suite",
@@ -1497,7 +1506,9 @@ def end_to_end_tests_deps():
 def compile_build_cmd(edition = "oss"):
     dependencies = []
     if edition in ("enterprise", "enterprise2"):
-        dependencies = ["init-enterprise"]
+        dependencies = [
+            "init-enterprise",
+        ]
     return {
         "name": "compile-build-cmd",
         "image": go_image,
@@ -1521,9 +1532,7 @@ def get_trigger_storybook(ver_mode):
     """
     trigger_storybook = ""
     if ver_mode == "release":
-        trigger_storybook = {
-            "event": ["tag"],
-        }
+        trigger_storybook = {"event": ["tag"]}
     else:
         trigger_storybook = {
             "paths": {

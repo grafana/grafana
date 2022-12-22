@@ -51,6 +51,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting.title', 'Alerting');
     case 'alerting-legacy':
       return t('nav.alerting-legacy.title', 'Alerting (legacy)');
+    case 'alert-home':
+      return t('nav.alerting-home.title', 'Home');
     case 'alert-list':
       return t('nav.alerting-list.title', 'Alert rules');
     case 'receivers':
@@ -95,9 +97,11 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.service-accounts.title', 'Service accounts');
     case 'admin':
       return t('nav.admin.title', 'Server admin');
+    case 'support-bundles':
+      return t('nav.support-bundles.title', 'Support Bundles');
     case 'global-users':
       return config.featureToggles.topnav
-        ? t('nav.global-users.title', 'Users (All orgs)')
+        ? t('nav.global-users.title', 'Users')
         : t('nav.global-users.titleBeforeTopnav', 'Users');
     case 'global-orgs':
       return t('nav.global-orgs.title', 'Organizations');
@@ -184,13 +188,15 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'serviceaccounts':
       return t('nav.service-accounts.subtitle', 'Use service accounts to run automated workloads in Grafana');
     case 'global-users':
-      return t('nav.global-users.subtitle', 'Manage and create users across the whole Grafana server');
+      return t('nav.global-users.subtitle', 'Manage users in Grafana');
     case 'global-orgs':
       return t('nav.global-orgs.subtitle', 'Isolated instances of Grafana running on the same server');
     case 'server-settings':
       return t('nav.server-settings.subtitle', 'View the settings defined in your Grafana config');
     case 'storage':
       return t('nav.storage.subtitle', 'Manage file storage');
+    case 'support-bundles':
+      return t('nav.support-bundles.subtitle', 'Download support bundles');
     case 'admin':
       return config.featureToggles.topnav
         ? t(

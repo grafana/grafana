@@ -4,45 +4,28 @@
 //     kinds/gen.go
 // Using jennies:
 //     GoTypesJenny
+//     LatestJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 package playlist
 
-// Defines values for PlaylistItemType.
+// Defines values for ItemType.
 const (
-	PlaylistItemTypeDashboardById PlaylistItemType = "dashboard_by_id"
+	ItemTypeDashboardById ItemType = "dashboard_by_id"
 
-	PlaylistItemTypeDashboardByTag PlaylistItemType = "dashboard_by_tag"
+	ItemTypeDashboardByTag ItemType = "dashboard_by_tag"
 
-	PlaylistItemTypeDashboardByUid PlaylistItemType = "dashboard_by_uid"
+	ItemTypeDashboardByUid ItemType = "dashboard_by_uid"
 )
 
-// Playlist defines model for playlist.
-type Playlist struct {
-	// Interval sets the time between switching views in a playlist.
-	// FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
-	Interval string `json:"interval"`
-
-	// The ordered list of items that the playlist will iterate over.
-	// FIXME! This should not be optional, but changing it makes the godegen awkward
-	Items *[]PlaylistItem `json:"items,omitempty"`
-
-	// Name of the playlist.
-	Name string `json:"name"`
-
-	// Unique playlist identifier. Generated on creation, either by the
-	// creator of the playlist of by the application.
-	Uid string `json:"uid"`
-}
-
-// PlaylistItem defines model for playlist.Item.
-type PlaylistItem struct {
+// Item defines model for Item.
+type Item struct {
 	// Title is an unused property -- it will be removed in the future
 	Title *string `json:"title,omitempty"`
 
 	// Type of the item.
-	Type PlaylistItemType `json:"type"`
+	Type ItemType `json:"type"`
 
 	// Value depends on type and describes the playlist item.
 	//
@@ -56,4 +39,22 @@ type PlaylistItem struct {
 }
 
 // Type of the item.
-type PlaylistItemType string
+type ItemType string
+
+// Playlist defines model for playlist.
+type Playlist struct {
+	// Interval sets the time between switching views in a playlist.
+	// FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
+	Interval string `json:"interval"`
+
+	// The ordered list of items that the playlist will iterate over.
+	// FIXME! This should not be optional, but changing it makes the godegen awkward
+	Items *[]Item `json:"items,omitempty"`
+
+	// Name of the playlist.
+	Name string `json:"name"`
+
+	// Unique playlist identifier. Generated on creation, either by the
+	// creator of the playlist of by the application.
+	Uid string `json:"uid"`
+}

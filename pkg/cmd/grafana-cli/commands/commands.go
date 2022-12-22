@@ -78,7 +78,8 @@ func initCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 		Config:   cmd.ConfigFile(),
 		HomePath: cmd.HomePath(),
-		Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
+		// tailing arguments have precedence over the options string
+		Args: append(configOptions, cmd.Args().Slice()...),
 	})
 
 	if err != nil {
@@ -158,6 +159,11 @@ var adminCommands = []*cli.Command{
 				Name:  "password-from-stdin",
 				Usage: "Read the password from stdin",
 				Value: false,
+			},
+			&cli.IntFlag{
+				Name:  "user-id",
+				Usage: "The admin user's ID",
+				Value: DefaultAdminUserId,
 			},
 		},
 	},

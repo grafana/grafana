@@ -73,9 +73,7 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	treeRoot := &navtree.NavTreeRoot{}
 
-	if s.features.IsEnabled(featuremgmt.FlagTopnav) {
-		treeRoot.AddSection(s.getHomeNode(c, prefs))
-	}
+	treeRoot.AddSection(s.getHomeNode(c, prefs))
 
 	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)) {
 		starredItemsLinks, err := s.buildStarredItemsNavLinks(c)
@@ -224,7 +222,7 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 		}
 	}
 
-	return &navtree.NavLink{
+	homeNode := &navtree.NavLink{
 		Text:       "Home",
 		Id:         "home",
 		Url:        homeUrl,
@@ -232,6 +230,10 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 		Section:    navtree.NavSectionCore,
 		SortWeight: navtree.WeightHome,
 	}
+	if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
+		homeNode.HideFromMenu = true
+	}
+	return homeNode
 }
 
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqContext) {
@@ -239,6 +241,15 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqC
 		helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
 		if s.cfg.AnonymousHideVersion && !c.IsSignedIn {
 			helpVersion = setting.ApplicationName
+		}
+
+		supportBundleNode := &navtree.NavLink{
+			Text:       "Support bundles",
+			Id:         "support-bundles",
+			Url:        "/admin/support-bundles",
+			Icon:       "wrench",
+			Section:    navtree.NavSectionConfig,
+			SortWeight: navtree.WeightHelp,
 		}
 
 		treeRoot.AddSection(&navtree.NavLink{
@@ -249,7 +260,7 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqC
 			Icon:       "question-circle",
 			SortWeight: navtree.WeightHelp,
 			Section:    navtree.NavSectionConfig,
-			Children:   []*navtree.NavLink{},
+			Children:   []*navtree.NavLink{supportBundleNode},
 		})
 	}
 }
@@ -340,7 +351,7 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 		})
 		for _, starredItem := range starredDashboards {
 			starredItemsChildNavs = append(starredItemsChildNavs, &navtree.NavLink{
-				Id:   starredItem.Uid,
+				Id:   "starred/" + starredItem.Uid,
 				Text: starredItem.Title,
 				Url:  starredItem.GetUrl(),
 			})
@@ -473,6 +484,15 @@ func (s *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool)
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
 
+	if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+			Text: "Home",
+			Id:   "alert-home",
+			Url:  s.cfg.AppSubURL + "/alerting/home",
+			Icon: "home",
+		})
+	}
+
 	if hasAccess(ac.ReqViewer, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
@@ -528,7 +548,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool)
 		if s.features.IsEnabled(featuremgmt.FlagTopnav) {
 			alertNav.Url = s.cfg.AppSubURL + "/alerting"
 		} else {
-			alertNav.Url = s.cfg.AppSubURL + "/alerting/list"
+			alertNav.Url = s.cfg.AppSubURL + "/alerting/home"
 		}
 
 		return &alertNav
@@ -552,8 +572,8 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 		// Datasources
 		Children: []*navtree.NavLink{{
 			Id:       "connections-your-connections-datasources",
-			Text:     "Datasources",
-			SubTitle: "Manage your existing datasource connections",
+			Text:     "Data sources",
+			SubTitle: "View and manage your connected data source connections",
 			Url:      baseUrl + "/your-connections/datasources",
 		}},
 	})

@@ -2,28 +2,30 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { DataSourceSettings, LayoutModes } from '@grafana/data';
+import { LayoutModes } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
-import { DataSourcesState } from 'app/types';
 
 import { navIndex, getMockDataSources } from '../__mocks__';
+import { getDataSources } from '../api';
 import { initialState } from '../state';
 
 import { DataSourcesListPage } from './DataSourcesListPage';
 
-jest.mock('app/core/services/backend_srv', () => ({
-  ...jest.requireActual('app/core/services/backend_srv'),
-  getBackendSrv: () => ({ get: jest.fn().mockResolvedValue([]) }),
+jest.mock('app/core/services/context_srv');
+jest.mock('../api', () => ({
+  ...jest.requireActual('../api'),
+  getDataSources: jest.fn().mockResolvedValue([]),
 }));
 
-const setup = (stateOverride?: Partial<DataSourcesState>) => {
+const getDataSourcesMock = getDataSources as jest.Mock;
+
+const setup = (options: { isSortAscending: boolean }) => {
   const store = configureStore({
     dataSources: {
       ...initialState,
-      dataSources: [] as DataSourceSettings[],
       layoutMode: LayoutModes.Grid,
-      hasFetched: false,
-      ...stateOverride,
+      isSortAscending: options.isSortAscending,
     },
     navIndex,
   });
@@ -36,28 +38,70 @@ const setup = (stateOverride?: Partial<DataSourcesState>) => {
 };
 
 describe('Render', () => {
-  it('should render component', () => {
-    setup();
-
-    expect(screen.getByRole('heading', { name: 'Configuration' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Documentation' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Support' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Community' })).toBeInTheDocument();
+  beforeEach(() => {
+    (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
   });
 
-  it('should render action bar and datasources', () => {
-    setup({
-      dataSources: getMockDataSources(5),
-      dataSourcesCount: 5,
-      hasFetched: true,
-    });
+  it('should render component', async () => {
+    setup({ isSortAscending: true });
 
-    expect(screen.getByRole('link', { name: 'Add data source' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'dataSource-1' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'dataSource-2' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'dataSource-3' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'dataSource-4' })).toBeInTheDocument();
-    expect(screen.getAllByRole('img')).toHaveLength(5);
+    expect(await screen.findByRole('heading', { name: 'Configuration' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Add data source' })).toBeInTheDocument();
+  });
+
+  it('should disable the "Add data source" button if user has no permissions', async () => {
+    (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(false);
+    setup({ isSortAscending: true });
+
+    expect(await screen.findByRole('heading', { name: 'Configuration' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Add data source' })).toHaveStyle('pointer-events: none');
+  });
+
+  it('should render action bar and datasources', async () => {
+    getDataSourcesMock.mockResolvedValue(getMockDataSources(5));
+
+    setup({ isSortAscending: true });
+
+    expect(await screen.findByPlaceholderText('Search by name or type')).toBeInTheDocument();
+    expect(await screen.findByRole('combobox', { name: 'Sort' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'dataSource-1' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'dataSource-2' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'dataSource-3' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'dataSource-4' })).toBeInTheDocument();
+    expect(await screen.findAllByRole('img')).toHaveLength(5);
+  });
+
+  describe('should render elements in sort order', () => {
+    it('ascending', async () => {
+      getDataSourcesMock.mockResolvedValue(getMockDataSources(5));
+      setup({ isSortAscending: true });
+
+      expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
+      const dataSourceItems = await screen.findAllByRole('heading');
+
+      expect(dataSourceItems).toHaveLength(6);
+      expect(dataSourceItems[0]).toHaveTextContent('Configuration');
+      expect(dataSourceItems[1]).toHaveTextContent('dataSource-0');
+      expect(dataSourceItems[2]).toHaveTextContent('dataSource-1');
+    });
+    it('descending', async () => {
+      getDataSourcesMock.mockResolvedValue(getMockDataSources(5));
+      setup({ isSortAscending: false });
+
+      expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
+      const dataSourceItems = await screen.findAllByRole('heading');
+
+      expect(dataSourceItems).toHaveLength(6);
+      expect(dataSourceItems[0]).toHaveTextContent('Configuration');
+      expect(dataSourceItems[1]).toHaveTextContent('dataSource-4');
+      expect(dataSourceItems[2]).toHaveTextContent('dataSource-3');
+    });
   });
 });

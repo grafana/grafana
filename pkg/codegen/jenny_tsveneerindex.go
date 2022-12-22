@@ -48,15 +48,15 @@ func (gen *genTSVeneerIndex) Generate(decls ...*DeclForGen) (*codejen.File, erro
 
 		sch := decl.Lineage().Latest()
 		f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
-			RootName: decl.Meta.Common().Name,
-			Group:    decl.Meta.Common().LineageIsGroup,
+			RootName: decl.Properties.Common().Name,
+			Group:    decl.Properties.Common().LineageIsGroup,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", decl.Meta.Common().Name, err)
+			return nil, fmt.Errorf("%s: %w", decl.Properties.Common().Name, err)
 		}
 		elems, err := gen.extractTSIndexVeneerElements(decl, f)
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", decl.Meta.Common().Name, err)
+			return nil, fmt.Errorf("%s: %w", decl.Properties.Common().Name, err)
 		}
 		tsf.Nodes = append(tsf.Nodes, elems...)
 	}
@@ -66,7 +66,7 @@ func (gen *genTSVeneerIndex) Generate(decls ...*DeclForGen) (*codejen.File, erro
 
 func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *ast.File) ([]ast.Decl, error) {
 	lin := decl.Lineage()
-	comm := decl.Meta.Common()
+	comm := decl.Properties.Common()
 
 	// Check the root, then walk the tree
 	rootv := lin.Latest().Underlying()
@@ -79,7 +79,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *
 		sels := p.Selectors()
 		switch len(sels) {
 		case 0:
-			name = strings.Title(lin.Name())
+			name = comm.Name
 			fallthrough
 		case 1:
 			// Only deal with subpaths that are definitions, for now
@@ -110,12 +110,24 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *
 				has = has || tgt.target == "type"
 			}
 			if has {
-				custom = append(custom, *pair.T)
+				// enums can't use 'export type'
+				if pair.isEnum {
+					customD = append(customD, *pair.T)
+				} else {
+					custom = append(custom, *pair.T)
+				}
+
 				if pair.D != nil {
 					customD = append(customD, *pair.D)
 				}
 			} else {
-				raw = append(raw, *pair.T)
+				// enums can't use 'export type'
+				if pair.isEnum {
+					rawD = append(rawD, *pair.T)
+				} else {
+					raw = append(raw, *pair.T)
+				}
+
 				if pair.D != nil {
 					rawD = append(rawD, *pair.D)
 				}
@@ -131,7 +143,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *
 	}
 
 	vpath := fmt.Sprintf("v%v", thema.LatestVersion(lin)[0])
-	if decl.Meta.Common().Maturity.Less(kindsys.MaturityStable) {
+	if decl.Properties.Common().Maturity.Less(kindsys.MaturityStable) {
 		vpath = "x"
 	}
 
@@ -146,7 +158,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *
 	}
 	if len(rawD) > 0 {
 		ret = append(ret, ast.ExportSet{
-			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated default consts from %s kind.", lin.Name()), 80, false)},
+			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated enums and default consts from %s kind.", lin.Name()), 80, false)},
 			TypeOnly:    false,
 			Exports:     rawD,
 			From:        ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s_types.gen", comm.MachineName, vpath, comm.MachineName)},
@@ -187,7 +199,8 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *
 }
 
 type declPair struct {
-	T, D *ast.Ident
+	T, D   *ast.Ident
+	isEnum bool
 }
 
 type tsVeneerAttr struct {
@@ -206,6 +219,7 @@ func findDeclNode(name string, tf *ast.File) declPair {
 		case ast.TypeDecl:
 			if x.Name.Name == name {
 				p.T = &x.Name
+				_, p.isEnum = x.Type.(ast.EnumType)
 			}
 		case ast.VarDecl:
 			if x.Names.Idents[0].Name == "default"+name {
@@ -306,7 +320,7 @@ var allowedTSVeneers = map[string]bool{
 }
 
 func allowedTSVeneersString() string {
-	var list []string
+	list := make([]string, 0, len(allowedTSVeneers))
 	for tgt := range allowedTSVeneers {
 		list = append(list, tgt)
 	}

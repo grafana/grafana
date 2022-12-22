@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, noop } from 'lodash';
 import React, { FC, useState } from 'react';
 
 import {
@@ -39,7 +39,7 @@ interface Props {
   onRunQueries: () => void;
   index: number;
   thresholds: ThresholdsConfig;
-  onChangeThreshold: (thresholds: ThresholdsConfig, index: number) => void;
+  onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
 }
@@ -141,7 +141,7 @@ export const QueryWrapper: FC<Props> = ({
               changePanel={changePluginId}
               currentPanel={pluginId}
               thresholds={thresholds}
-              onThresholdsChange={(thresholds) => onChangeThreshold(thresholds, index)}
+              onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : noop}
             />
           ) : null
         }

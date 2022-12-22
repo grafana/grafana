@@ -27,6 +27,7 @@ import { fetchAlertManagerConfig, fetchStatus, testReceivers, updateAlertManager
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
 import { fetchNotifiers } from './api/grafana';
 import * as receiversApi from './api/receiversApi';
+import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
 import {
   mockDataSource,
   MockDataSourceSrv,
@@ -96,7 +97,7 @@ const dataSources = {
 const ui = {
   newContactPointButton: byRole('link', { name: /new contact point/i }),
   saveContactButton: byRole('button', { name: /save contact point/i }),
-  newContactPointTypeButton: byRole('button', { name: /new contact point type/i }),
+  newContactPointIntegrationButton: byRole('button', { name: /new contact point integration/i }),
   testContactPointButton: byRole('button', { name: /Test/ }),
   testContactPointModal: byRole('heading', { name: /test contact point/i }),
   customContactPointOption: byRole('radio', { name: /custom/i }),
@@ -143,6 +144,8 @@ const clickSelectOption = async (selectElement: HTMLElement, optionText: string)
 document.addEventListener('click', interceptLinkClicks);
 const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
 
+const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
+
 describe('Receivers', () => {
   const server = setupServer();
 
@@ -158,6 +161,7 @@ describe('Receivers', () => {
   beforeEach(() => {
     server.resetHandlers();
     jest.resetAllMocks();
+    useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
@@ -403,7 +407,7 @@ describe('Receivers', () => {
     await byText(/Fields \(1\)/i).get(slackContainer);
 
     // add another channel
-    await userEvent.click(ui.newContactPointTypeButton.get());
+    await userEvent.click(ui.newContactPointIntegrationButton.get());
     await clickSelectOption(await byTestId('items.2.type').find(), 'Webhook');
     await userEvent.type(await ui.inputs.webhook.URL.find(), 'http://webhookurl');
 

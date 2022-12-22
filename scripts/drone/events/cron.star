@@ -3,22 +3,21 @@ This module provides functions for cronjob pipelines and steps used within.
 """
 
 load("scripts/drone/vault.star", "from_secret")
-load("scripts/drone/steps/lib.star", "compile_build_cmd", "publish_image")
+load(
+    "scripts/drone/steps/lib.star",
+    "compile_build_cmd",
+    "publish_image",
+)
 
 aquasec_trivy_image = "aquasec/trivy:0.21.0"
 
-def cronjobs(edition):
-    grafana_com_nightly_pipeline = cron_job_pipeline(
-        cronName = "grafana-com-nightly",
-        name = "grafana-com-nightly",
-        steps = [compile_build_cmd(), post_to_grafana_com_step()],
-    )
+def cronjobs():
     return [
-        scan_docker_image_pipeline(edition, "latest"),
-        scan_docker_image_pipeline(edition, "main"),
-        scan_docker_image_pipeline(edition, "latest-ubuntu"),
-        scan_docker_image_pipeline(edition, "main-ubuntu"),
-        grafana_com_nightly_pipeline,
+        scan_docker_image_pipeline("latest"),
+        scan_docker_image_pipeline("main"),
+        scan_docker_image_pipeline("latest-ubuntu"),
+        scan_docker_image_pipeline("main-ubuntu"),
+        grafana_com_nightly_pipeline(),
     ]
 
 def cron_job_pipeline(cronName, name, steps):
@@ -40,23 +39,16 @@ def cron_job_pipeline(cronName, name, steps):
         "steps": steps,
     }
 
-def scan_docker_image_pipeline(edition, tag):
+def scan_docker_image_pipeline(tag):
     """Generates a cronjob pipeline for nightly scans of grafana Docker images.
 
     Args:
-      edition: distinguishes between OSS and enterprise images. Use 'oss' for OSS builds.
       tag: determines which image tag is scanned.
 
     Returns:
       Drone cronjob pipeline.
     """
-
-    if edition != "oss":
-        edition = "grafana-enterprise"
-    else:
-        edition = "grafana"
-
-    docker_image = "grafana/{}:{}".format(edition, tag)
+    docker_image = "grafana/grafana:{}".format(tag)
 
     return cron_job_pipeline(
         cronName = "nightly",
@@ -93,11 +85,11 @@ def slack_job_failed_step(channel, image):
         "settings": {
             "webhook": from_secret("slack_webhook_backend"),
             "channel": channel,
-            "template": "Nightly docker image scan job for " + image + " failed: {{build.link}}",
+            "template": "Nightly docker image scan job for " +
+                        image +
+                        " failed: {{build.link}}",
         },
-        "when": {
-            "status": "failure",
-        },
+        "when": {"status": "failure"},
     }
 
 def post_to_grafana_com_step():
@@ -111,3 +103,13 @@ def post_to_grafana_com_step():
         "depends_on": ["compile-build-cmd"],
         "commands": ["./bin/build publish grafana-com --edition oss"],
     }
+
+def grafana_com_nightly_pipeline():
+    return cron_job_pipeline(
+        cronName = "grafana-com-nightly",
+        name = "grafana-com-nightly",
+        steps = [
+            compile_build_cmd(),
+            post_to_grafana_com_step(),
+        ],
+    )

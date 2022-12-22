@@ -2,11 +2,7 @@
 This module returns a Drone step and pipeline for linting with shellcheck.
 """
 
-load(
-    "scripts/drone/steps/lib.star",
-    "build_image",
-    "compile_build_cmd",
-)
+load("scripts/drone/steps/lib.star", "build_image", "compile_build_cmd")
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
@@ -22,9 +18,7 @@ trigger = {
             "docs/**",
             "latest.json",
         ],
-        "include": [
-            "scripts/**/*.sh",
-        ],
+        "include": ["scripts/**/*.sh"],
     },
 }
 

@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/store/object"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type Service struct {
@@ -15,7 +15,7 @@ type Service struct {
 
 var _ playlist.Service = &Service{}
 
-func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver object.ObjectStoreServer) playlist.Service {
+func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver entity.EntityStoreServer) playlist.Service {
 	var sqlstore store
 
 	// 🐢🐢🐢 pick the store
@@ -31,11 +31,11 @@ func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver obje
 	svc := &Service{store: sqlstore}
 
 	// FlagObjectStore is only supported in development mode
-	if toggles.IsEnabled(featuremgmt.FlagObjectStore) {
-		impl := &objectStoreImpl{
-			sqlimpl:     svc,
-			objectstore: objserver,
-			sess:        db.GetSqlxSession(),
+	if toggles.IsEnabled(featuremgmt.FlagEntityStore) {
+		impl := &entityStoreImpl{
+			sqlimpl: svc,
+			store:   objserver,
+			sess:    db.GetSqlxSession(),
 		}
 		impl.sync() // load everythign from the existing SQL setup into the new object store
 		return impl

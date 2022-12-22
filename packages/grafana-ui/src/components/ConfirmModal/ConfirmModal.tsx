@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { HorizontalGroup, Input } from '..';
 import { useStyles2 } from '../../themes';
 import { IconName } from '../../types/icon';
-import { Button } from '../Button';
+import { Button, ButtonVariant } from '../Button';
 import { Modal } from '../Modal/Modal';
 
 export interface ConfirmModalProps {
@@ -21,8 +21,12 @@ export interface ConfirmModalProps {
   description?: React.ReactNode;
   /** Text for confirm button */
   confirmText: string;
+  /** Variant for confirm button */
+  confirmVariant?: ButtonVariant;
   /** Text for dismiss button */
   dismissText?: string;
+  /** Variant for dismiss button */
+  dismissVariant?: ButtonVariant;
   /** Icon for the modal header */
   icon?: IconName;
   /** Additional styling for modal container */
@@ -31,6 +35,8 @@ export interface ConfirmModalProps {
   confirmationText?: string;
   /** Text for alternative button */
   alternativeText?: string;
+  /** Confirm button variant */
+  confirmButtonVariant?: ButtonVariant;
   /** Confirm action callback */
   onConfirm(): void;
   /** Dismiss action callback */
@@ -45,14 +51,17 @@ export const ConfirmModal = ({
   body,
   description,
   confirmText,
+  confirmVariant = 'destructive',
   confirmationText,
   dismissText = 'Cancel',
+  dismissVariant = 'secondary',
   alternativeText,
   modalClass,
   icon = 'exclamation-triangle',
   onConfirm,
   onDismiss,
   onAlternative,
+  confirmButtonVariant = 'destructive',
 }: ConfirmModalProps): JSX.Element => {
   const [disabled, setDisabled] = useState(Boolean(confirmationText));
   const styles = useStyles2(getStyles);
@@ -82,11 +91,11 @@ export const ConfirmModal = ({
         ) : null}
       </div>
       <Modal.ButtonRow>
-        <Button variant="secondary" onClick={onDismiss} fill="outline">
+        <Button variant={dismissVariant} onClick={onDismiss} fill="outline">
           {dismissText}
         </Button>
         <Button
-          variant="destructive"
+          variant={confirmButtonVariant}
           onClick={onConfirm}
           disabled={disabled}
           ref={buttonRef}

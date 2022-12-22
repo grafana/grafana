@@ -7,32 +7,40 @@ import {
   SceneFlexLayout,
   VizPanel,
 } from '../components';
+import { EmbeddedScene } from '../components/Scene';
+import { panelBuilders } from '../components/VizPanel/panelBuilders';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getFlexLayoutTest(): Scene {
-  const scene = new Scene({
+export function getFlexLayoutTest(standalone: boolean): Scene {
+  const state = {
     title: 'Flex layout test',
     layout: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new VizPanel({
+        panelBuilders.newGraph({
           size: { minWidth: '70%' },
-          pluginId: 'timeseries',
           title: 'Dynamic height and width',
           $data: getQueryRunnerWithRandomWalkQuery({}, { maxDataPointsFromWidth: true }),
         }),
         new SceneFlexLayout({
           direction: 'column',
           children: [
-            new VizPanel({
-              pluginId: 'timeseries',
+            panelBuilders.newGraph({
               title: 'Fill height',
+              options: {},
+              fieldConfig: {
+                defaults: {
+                  custom: {
+                    fillOpacity: 20,
+                  },
+                },
+                overrides: [],
+              },
             }),
-            new VizPanel({
-              pluginId: 'timeseries',
+            panelBuilders.newGraph({
               title: 'Fill height',
             }),
             new SceneCanvasText({
@@ -41,10 +49,9 @@ export function getFlexLayoutTest(): Scene {
               fontSize: 20,
               align: 'center',
             }),
-            new VizPanel({
-              size: { height: 300 },
-              pluginId: 'timeseries',
+            panelBuilders.newGraph({
               title: 'Fixed height',
+              size: { height: 300 },
             }),
           ],
         }),
@@ -54,19 +61,19 @@ export function getFlexLayoutTest(): Scene {
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  });
+  };
 
-  return scene;
+  return standalone ? new Scene(state) : new EmbeddedScene(state);
 }
 
-export function getScenePanelRepeaterTest(): Scene {
+export function getScenePanelRepeaterTest(standalone: boolean): Scene {
   const queryRunner = getQueryRunnerWithRandomWalkQuery({
     seriesCount: 2,
     alias: '__server_names',
     scenarioId: 'random_walk',
   });
 
-  const scene = new Scene({
+  const state = {
     title: 'Panel repeater test',
     layout: new ScenePanelRepeater({
       layout: new SceneFlexLayout({
@@ -116,7 +123,7 @@ export function getScenePanelRepeaterTest(): Scene {
       }),
       new SceneTimePicker({}),
     ],
-  });
+  };
 
-  return scene;
+  return standalone ? new Scene(state) : new EmbeddedScene(state);
 }

@@ -1,7 +1,16 @@
-import { CoreApp, DataFrame, DataQueryRequest, DataSourceApi, dateTime, LoadingState, PanelData } from '@grafana/data';
+import {
+  CoreApp,
+  DataFrame,
+  DataQueryError,
+  DataQueryRequest,
+  DataSourceApi,
+  dateTime,
+  LoadingState,
+  PanelData,
+} from '@grafana/data';
 import { MetaAnalyticsEventName, reportMetaAnalytics } from '@grafana/runtime';
 
-import { DashboardModel } from '../../dashboard/state';
+import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 
 import { emitDataRequestEvent } from './queryAnalytics';
 
@@ -12,9 +21,10 @@ beforeEach(() => {
 const datasource = {
   name: 'test',
   id: 1,
+  uid: 'test',
 } as DataSourceApi;
 
-const dashboardModel = new DashboardModel(
+const dashboardModel = createDashboardModelFixture(
   { id: 1, title: 'Test Dashboard', uid: 'test' },
   { folderTitle: 'Test Folder' }
 );
@@ -91,6 +101,28 @@ function getTestData(requestApp: string, series: DataFrame[] = []): PanelData {
       to: dateTime(),
       raw: { from: '1h', to: 'now' },
     },
+  };
+}
+
+function getTestDataForExplore(requestApp: string, series: DataFrame[] = []): PanelData {
+  const now = dateTime();
+  const error: DataQueryError = { message: 'test error' };
+
+  return {
+    request: {
+      app: requestApp,
+      dashboardId: 0,
+      startTime: now.unix(),
+      endTime: now.add(1, 's').unix(),
+    } as DataQueryRequest,
+    series,
+    state: LoadingState.Done,
+    timeRange: {
+      from: dateTime(),
+      to: dateTime(),
+      raw: { from: '1h', to: 'now' },
+    },
+    error: error,
   };
 }
 
@@ -185,10 +217,35 @@ describe('emitDataRequestEvent - from a dashboard panel', () => {
   });
 });
 
+// Previously we filtered out Explore events due to too many errors being generated while a user is building a query
+// This tests that we send an event for Explore queries but do not record errors
 describe('emitDataRequestEvent - from Explore', () => {
-  const data = getTestData(CoreApp.Explore);
-  it('Should not report meta analytics', () => {
+  it('Should report meta analytics', () => {
+    const data = getTestDataForExplore(CoreApp.Explore);
     emitDataRequestEvent(datasource)(data);
-    expect(reportMetaAnalytics).not.toBeCalled();
+
+    expect(reportMetaAnalytics).toBeCalledTimes(1);
+    expect(reportMetaAnalytics).toBeCalledWith(
+      expect.objectContaining({
+        eventName: MetaAnalyticsEventName.DataRequest,
+        source: 'explore',
+        datasourceName: 'test',
+        datasourceId: 1,
+        datasourceUid: 'test',
+        dataSize: 0,
+        duration: 1,
+        totalQueries: 0,
+      })
+    );
+  });
+
+  describe('emitDataRequestEvent - from Explore', () => {
+    it('Should not report errors', () => {
+      const data = getTestDataForExplore(CoreApp.Explore);
+      emitDataRequestEvent(datasource)(data);
+
+      expect(reportMetaAnalytics).toBeCalledTimes(1);
+      expect(reportMetaAnalytics).toBeCalledWith(expect.not.objectContaining({ error: 'test error' }));
+    });
   });
 });

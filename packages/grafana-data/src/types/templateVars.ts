@@ -144,10 +144,11 @@ export interface SystemVariable<TProps extends { toString: () => string }> exten
   current: { value: TProps };
 }
 
-export interface BaseVariableModel extends VariableModel {
+export interface BaseVariableModel {
   name: string;
   label?: string;
   id: string;
+  type: VariableType;
   rootStateKey: string | null;
   global: boolean;
   hide: VariableHide;

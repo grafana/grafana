@@ -107,6 +107,7 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 		}
 
 		azureURL := BuildSubscriptionMetricsURL(queryJSONModel.Subscription)
+		filterInBody := true
 		if azJSONModel.Region != "" {
 			params.Add("region", azJSONModel.Region)
 		} else {
@@ -121,6 +122,8 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 				ResourceName:        azJSONModel.ResourceName,
 			}
 			azureURL = ub.BuildMetricsURL()
+			// POST requests are only supported at the subscription level
+			filterInBody = false
 		}
 
 		// old model
@@ -174,15 +177,23 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 			logger.Debug("Azuremonitor request", "params", params)
 		}
 
-		azureMonitorQueries = append(azureMonitorQueries, &types.AzureMonitorQuery{
-			URL:       azureURL,
-			Target:    target,
-			Params:    params,
-			RefID:     query.RefID,
-			Alias:     alias,
-			TimeRange: query.TimeRange,
-			Filter:    filterString,
-		})
+		query := &types.AzureMonitorQuery{
+			URL:        azureURL,
+			Target:     target,
+			Params:     params,
+			RefID:      query.RefID,
+			Alias:      alias,
+			TimeRange:  query.TimeRange,
+			Dimensions: azJSONModel.DimensionFilters,
+		}
+		if filterString != "" {
+			if filterInBody {
+				query.BodyFilter = filterString
+			} else {
+				query.Params.Add("$filter", filterString)
+			}
+		}
+		azureMonitorQueries = append(azureMonitorQueries, query)
 	}
 
 	return azureMonitorQueries, nil
@@ -200,9 +211,9 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
 	req.URL.RawQuery = query.Params.Encode()
-	if query.Filter != "" {
+	if query.BodyFilter != "" {
 		req.Method = http.MethodPost
-		req.Body = io.NopCloser(strings.NewReader(fmt.Sprintf(`{"filter": "%s"}`, query.Filter)))
+		req.Body = io.NopCloser(strings.NewReader(fmt.Sprintf(`{"filter": "%s"}`, query.BodyFilter)))
 	}
 
 	ctx, span := tracer.Start(ctx, "azuremonitor query")
@@ -387,24 +398,74 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 	}
 	escapedTime := url.QueryEscape(string(timespan))
 
-	chartDef, err := json.Marshal(map[string]interface{}{
-		"v2charts": []interface{}{
-			map[string]interface{}{
-				"metrics": []types.MetricChartDefinition{
-					{
-						ResourceMetadata: map[string]string{
-							"id": resourceID,
-						},
-						Name:            query.Params.Get("metricnames"),
-						AggregationType: aggregationType,
-						Namespace:       query.Params.Get("metricnamespace"),
-						MetricVisualization: types.MetricVisualization{
-							DisplayName:         query.Params.Get("metricnames"),
-							ResourceDisplayName: resourceName,
-						},
-					},
+	var filters []types.AzureMonitorDimensionFilterBackend
+	var grouping map[string]interface{}
+
+	if len(query.Dimensions) > 0 {
+		for _, dimension := range query.Dimensions {
+			var dimensionInt int
+			dimensionFilters := dimension.Filters
+
+			// Only the first dimension determines the splitting shown in the Azure Portal
+			if grouping == nil {
+				grouping = map[string]interface{}{
+					"dimension": dimension.Dimension,
+					"sort":      2,
+					"top":       10,
+				}
+			}
+
+			if len(dimension.Filters) == 0 {
+				continue
+			}
+
+			switch dimension.Operator {
+			case "eq":
+				dimensionInt = 0
+			case "ne":
+				dimensionInt = 1
+			case "sw":
+				dimensionInt = 3
+			}
+
+			filter := types.AzureMonitorDimensionFilterBackend{
+				Key:      dimension.Dimension,
+				Operator: dimensionInt,
+				Values:   dimensionFilters,
+			}
+			filters = append(filters, filter)
+		}
+	}
+
+	chart := map[string]interface{}{
+		"metrics": []types.MetricChartDefinition{
+			{
+				ResourceMetadata: map[string]string{
+					"id": resourceID,
+				},
+				Name:            query.Params.Get("metricnames"),
+				AggregationType: aggregationType,
+				Namespace:       query.Params.Get("metricnamespace"),
+				MetricVisualization: types.MetricVisualization{
+					DisplayName:         query.Params.Get("metricnames"),
+					ResourceDisplayName: resourceName,
 				},
 			},
+		},
+	}
+
+	if filters != nil {
+		chart["filterCollection"] = map[string]interface{}{
+			"filters": filters,
+		}
+	}
+	if grouping != nil {
+		chart["grouping"] = grouping
+	}
+
+	chartDef, err := json.Marshal(map[string]interface{}{
+		"v2charts": []interface{}{
+			chart,
 		},
 	})
 	if err != nil {

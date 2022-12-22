@@ -49,15 +49,10 @@ def pipeline(
     """
     if platform != "windows":
         platform_conf = {
-            "platform": {
-                "os": "linux",
-                "arch": "amd64",
-            },
+            "platform": {"os": "linux", "arch": "amd64"},
             # A shared cache is used on the host
             # To avoid issues with parallel builds, we run this repo on single build agents
-            "node": {
-                "type": "no-parallel",
-            },
+            "node": {"type": "no-parallel"},
         }
     else:
         platform_conf = {
@@ -78,19 +73,23 @@ def pipeline(
         "clone": {
             "retries": 3,
         },
-        "volumes": [{
-            "name": "docker",
-            "host": {
-                "path": "/var/run/docker.sock",
+        "volumes": [
+            {
+                "name": "docker",
+                "host": {
+                    "path": "/var/run/docker.sock",
+                },
             },
-        }],
+        ],
         "depends_on": depends_on,
         "image_pull_secrets": [pull_secret],
     }
     if environment:
-        pipeline.update({
-            "environment": environment,
-        })
+        pipeline.update(
+            {
+                "environment": environment,
+            },
+        )
 
     pipeline["volumes"].extend(volumes)
     pipeline.update(platform_conf)
@@ -103,7 +102,13 @@ def pipeline(
 
     return pipeline
 
-def notify_pipeline(name, slack_channel, trigger, depends_on = [], template = None, secret = None):
+def notify_pipeline(
+        name,
+        slack_channel,
+        trigger,
+        depends_on = [],
+        template = None,
+        secret = None):
     trigger = dict(trigger)
     return {
         "kind": "pipeline",
@@ -122,3 +127,10 @@ def notify_pipeline(name, slack_channel, trigger, depends_on = [], template = No
         },
         "depends_on": depends_on,
     }
+
+# TODO: this overrides any existing dependencies because we're following the existing logic
+# it should append to any existing dependencies
+def with_deps(steps, deps = []):
+    for step in steps:
+        step["depends_on"] = deps
+    return steps

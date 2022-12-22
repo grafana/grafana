@@ -17,10 +17,9 @@ export type Props = {
   query: CloudWatchMetricsQuery;
   datasource: CloudWatchDatasource;
   onChange: (value: CloudWatchMetricsQuery) => void;
-  onRunQuery: () => void;
 };
 
-export function SQLBuilderEditor({ query, datasource, onChange, onRunQuery }: React.PropsWithChildren<Props>) {
+export function SQLBuilderEditor({ query, datasource, onChange }: React.PropsWithChildren<Props>) {
   const sql = query.sql ?? {};
 
   const onQueryChange = useCallback(
@@ -33,9 +32,8 @@ export function SQLBuilderEditor({ query, datasource, onChange, onRunQuery }: Re
       };
 
       onChange(fullQuery);
-      onRunQuery();
     },
-    [onChange, onRunQuery]
+    [onChange]
   );
 
   const [sqlPreview, setSQLPreview] = useState<string | undefined>();

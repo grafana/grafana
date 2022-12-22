@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/access-control/custom-role-actions-scopes/
-  - /docs/grafana/latest/enterprise/access-control/permissions/
-  - /docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
+  - ../../../enterprise/access-control/custom-role-actions-scopes/
+  - ../../../enterprise/access-control/permissions/
 description: Learn about Grafana RBAC permissions, actions, and scopes.
 menuTitle: RBAC permissions, actions, and scopes
 title: Grafana RBAC permissions, actions, and scopes
@@ -11,7 +10,7 @@ weight: 80
 
 # RBAC permissions, actions, and scopes
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
 
 A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resource(s) on which they can perform those actions.
 
@@ -160,7 +159,7 @@ The following list contains role-based access control scopes.
 | `orgs:*` <br> `orgs:id:*`                       | Restrict an action to a set of organizations. For example, `orgs:*` matches any organization and `orgs:id:1` matches the organization whose ID is `1`.                                                                                             |
 | `permissions:type:delegate`                     | The scope is only applicable for roles associated with the Access Control itself and indicates that you can delegate your permissions only, or a subset of it, by creating a new role or making an assignment.                                     |
 | `permissions:type:escalate`                     | The scope is required to trigger the reset of basic roles permissions. It indicates that users might acquire additional permissions they did not previously have.                                                                                  |
-| `provisioners:*`                                | Restrict an action to a set of provisioners. For example, `provisioners:*` matches any provisioner, and `provisioners:accesscontrol` matches the role-based access control [provisioner]({{< relref "./rbac-provisioning/" >}}).                   |
+| `provisioners:*`                                | Restrict an action to a set of provisioners. For example, `provisioners:*` matches any provisioner, and `provisioners:accesscontrol` matches the role-based access control [provisioner]({{< relref "./rbac-grafana-provisioning/" >}}).           |
 | `reports:*` <br> `reports:id:*`                 | Restrict an action to a set of reports. For example, `reports:*` matches any report and `reports:id:1` matches the report whose ID is `1`.                                                                                                         |
 | `roles:*` <br> `roles:uid:*`                    | Restrict an action to a set of roles. For example, `roles:*` matches any role and `roles:uid:randomuid` matches only the role whose UID is `randomuid`.                                                                                            |
 | `services:accesscontrol`                        | Restrict an action to target only the role-based access control service. You can use this in conjunction with the `status:accesscontrol` actions.                                                                                                  |

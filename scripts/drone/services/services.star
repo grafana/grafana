@@ -5,10 +5,7 @@ This module has functions for Drone services to be used in pipelines.
 def integration_test_services_volumes():
     return [
         {"name": "postgres", "temp": {"medium": "memory"}},
-        {
-            "name": "mysql",
-            "temp": {"medium": "memory"},
-        },
+        {"name": "mysql", "temp": {"medium": "memory"}},
     ]
 
 def integration_test_services(edition):
@@ -22,10 +19,9 @@ def integration_test_services(edition):
                 "POSTGRES_DB": "grafanatest",
                 "PGDATA": "/var/lib/postgresql/data/pgdata",
             },
-            "volumes": [{
-                "name": "postgres",
-                "path": "/var/lib/postgresql/data/pgdata",
-            }],
+            "volumes": [
+                {"name": "postgres", "path": "/var/lib/postgresql/data/pgdata"},
+            ],
         },
         {
             "name": "mysql",
@@ -36,23 +32,25 @@ def integration_test_services(edition):
                 "MYSQL_USER": "grafana",
                 "MYSQL_PASSWORD": "password",
             },
-            "volumes": [{
-                "name": "mysql",
-                "path": "/var/lib/mysql",
-            }],
+            "volumes": [{"name": "mysql", "path": "/var/lib/mysql"}],
         },
     ]
 
     if edition in ("enterprise", "enterprise2"):
-        services.extend([{
-            "name": "redis",
-            "image": "redis:6.2.1-alpine",
-            "environment": {},
-        }, {
-            "name": "memcached",
-            "image": "memcached:1.6.9-alpine",
-            "environment": {},
-        }])
+        services.extend(
+            [
+                {
+                    "name": "redis",
+                    "image": "redis:6.2.1-alpine",
+                    "environment": {},
+                },
+                {
+                    "name": "memcached",
+                    "image": "memcached:1.6.9-alpine",
+                    "environment": {},
+                },
+            ],
+        )
 
     return services
 

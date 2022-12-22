@@ -75,6 +75,7 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
       window.rudderanalytics?.identify?.(identifier, {
         email: options.user.email,
         orgId: options.user.orgId,
+        language: options.user.language,
       });
     }
   }

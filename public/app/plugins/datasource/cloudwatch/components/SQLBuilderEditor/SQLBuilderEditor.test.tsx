@@ -8,7 +8,7 @@ import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpressio
 
 const { datasource } = setupMockedDataSource();
 
-const makeSQLQuery = (sql?: SQLExpression): CloudWatchMetricsQuery => ({
+export const makeSQLQuery = (sql?: SQLExpression): CloudWatchMetricsQuery => ({
   queryMode: 'Metrics',
   refId: '',
   id: '',
@@ -32,7 +32,6 @@ describe('Cloudwatch SQLBuilderEditor', () => {
     query: makeSQLQuery(),
     datasource,
     onChange: () => {},
-    onRunQuery: () => {},
   };
 
   it('Displays the namespace', async () => {
