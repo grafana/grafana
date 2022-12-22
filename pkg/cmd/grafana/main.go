@@ -31,7 +31,8 @@ func main() {
 			gcli.CLICommand(version),
 			gsrv.ServerCommand(version, commit, buildBranch, buildstamp),
 		},
-		CommandNotFound: cmdNotFound,
+		CommandNotFound:      cmdNotFound,
+		EnableBashCompletion: true,
 	}
 
 	if err := app.Run(os.Args); err != nil {
