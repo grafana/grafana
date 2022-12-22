@@ -49,12 +49,6 @@ func (d *Dashboard) SetUid(uid string) {
 	d.Data.Set("uid", uid)
 }
 
-func (d *Dashboard) SetTimePickerHidden(hidden bool) {
-	timepicker := d.Data.Get("timepicker")
-	timepicker.Set("hidden", hidden)
-	d.Data.Set("timepicker", timepicker)
-}
-
 func (d *Dashboard) SetVersion(version int) {
 	d.Version = version
 	d.Data.Set("version", version)
