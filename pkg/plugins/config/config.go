@@ -33,7 +33,7 @@ type Cfg struct {
 
 	LogDatasourceRequests bool
 
-	PluginsCDNBasePath string
+	PluginsCDNURLTemplate string
 }
 
 func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
@@ -73,7 +73,7 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 			ManagedIdentityClientId: azure.KeyValue("managed_identity_client_id").MustString(grafanaCfg.Azure.ManagedIdentityClientId),
 		},
 		LogDatasourceRequests: grafanaCfg.IsFeatureToggleEnabled(featuremgmt.FlagDatasourceLogger),
-		PluginsCDNBasePath:    grafanaCfg.PluginsCDNBasePath,
+		PluginsCDNURLTemplate: grafanaCfg.PluginsCDNURLTemplate,
 	}
 }
 

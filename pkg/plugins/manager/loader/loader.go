@@ -129,7 +129,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			)
 			isCDN = false
 		}
-		plugin, err := createPluginBase(pluginJSON, class, pluginDir, isCDN, l.cfg.PluginsCDNBasePath)
+		plugin, err := createPluginBase(pluginJSON, class, pluginDir, isCDN, l.cfg.PluginsCDNURLTemplate)
 		if err != nil {
 			l.log.Warn("Could not create plugin base", "pluginID", pluginJSON.Info)
 			continue
@@ -487,13 +487,13 @@ func (l *Loader) PluginErrors() []*plugins.Error {
 	return errs
 }
 
-func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, isCDN bool, cdnBaseURL string) (string, error) {
+func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, isCDN bool, cdnURLTemplate string) (string, error) {
 	if class == plugins.Core {
 		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir)), nil
 	}
 	if isCDN {
 		u, err := pluginscdn.NewCDNURLConstructor(
-			cdnBaseURL, pluginJSON.ID, pluginJSON.Info.Version,
+			cdnURLTemplate, pluginJSON.ID, pluginJSON.Info.Version,
 		).URLFor("")
 		if err != nil {
 			return "", err
@@ -503,13 +503,13 @@ func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string,
 	return path.Join("public/plugins", pluginJSON.ID), nil
 }
 
-func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, isCDN bool, cdnBaseURL string) (string, error) {
+func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, isCDN bool, cdnURLTemplate string) (string, error) {
 	if class == plugins.Core {
 		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module"), nil
 	}
 	if isCDN {
 		u, err := pluginscdn.NewCDNURLConstructor(
-			cdnBaseURL, pluginJSON.ID, pluginJSON.Info.Version,
+			cdnURLTemplate, pluginJSON.ID, pluginJSON.Info.Version,
 		).URLFor("module")
 		if err != nil {
 			return "", err

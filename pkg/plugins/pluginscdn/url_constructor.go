@@ -70,11 +70,11 @@ func (c URLConstructor) StringURLFor(assetPath string) (string, error) {
 }
 
 // CDNBaseURL returns the base url from a plugins CDN template string.
-func CDNBaseURL(cdnTemplateString string) (string, error) {
-	if cdnTemplateString == "" {
+func CDNBaseURL(cdnURLTemplate string) (string, error) {
+	if cdnURLTemplate == "" {
 		return "", nil
 	}
-	u, err := url.Parse(cdnTemplateString)
+	u, err := url.Parse(cdnURLTemplate)
 	if err != nil {
 		return "", fmt.Errorf("url parse: %w", err)
 	}

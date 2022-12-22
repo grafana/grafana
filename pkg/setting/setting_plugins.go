@@ -24,9 +24,9 @@ func extractPluginSettings(sections []*ini.Section) PluginSettings {
 	return psMap
 }
 
-// defaultHGPluginsCDNBaseURL is the default value for the CDN base path
+// defaultHGPluginsCDNURLTemplate is the default value for the CDN base path
 // TODO: remove/change this before deploying to HG
-const defaultHGPluginsCDNBaseURL = "https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/{id}/{version}/public/plugins/{id}/{assetPath}"
+const defaultHGPluginsCDNURLTemplate = "https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/{id}/{version}/public/plugins/{id}/{assetPath}"
 
 func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	pluginsSection := iniFile.Section("plugins")
@@ -54,7 +54,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	}
 
 	// Plugins CDN settings
-	cfg.PluginsCDNBasePath = strings.TrimRight(pluginsCDNSection.Key("url").MustString(defaultHGPluginsCDNBaseURL), "/")
+	cfg.PluginsCDNURLTemplate = strings.TrimRight(pluginsCDNSection.Key("url").MustString(defaultHGPluginsCDNURLTemplate), "/")
 
 	return nil
 }

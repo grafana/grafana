@@ -345,7 +345,7 @@ func (hs *HTTPServer) serveLocalPluginAsset(c *models.ReqContext, plugin plugins
 // redirectCDNPluginAsset redirects the http request to specified asset path on the configured plugins CDN.
 func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugins.PluginDTO, assetPath string) {
 	remoteURL, err := pluginscdn.NewCDNURLConstructor(
-		hs.Cfg.PluginsCDNBasePath, plugin.ID, plugin.Info.Version,
+		hs.Cfg.PluginsCDNURLTemplate, plugin.ID, plugin.Info.Version,
 	).StringURLFor(assetPath)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get CDN plugin asset remote URL", err)
@@ -366,8 +366,8 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugin
 // If the plugin has cdn = false in its config (default), it will always attempt to return the asset
 // from the local filesystem.
 //
-// If the plugin has cdn = true and hs.Cfg.PluginsCDNBasePath is empty, it will get the file
-// from the local filesystem. If hs.Cfg.PluginsCDNBasePath is not empty,
+// If the plugin has cdn = true and hs.Cfg.PluginsCDNURLTemplate is empty, it will get the file
+// from the local filesystem. If hs.Cfg.PluginsCDNURLTemplate is not empty,
 // this handler returns a redirect to the plugin asset file on the specified CDN.
 //
 // /public/plugins/:pluginId/*
@@ -387,7 +387,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	if hs.Cfg.PluginsCDNBasePath != "" && plugin.CDN {
+	if hs.Cfg.PluginsCDNURLTemplate != "" && plugin.CDN {
 		// Send a redirect to the client
 		hs.redirectCDNPluginAsset(c, plugin, requestedFile)
 		return

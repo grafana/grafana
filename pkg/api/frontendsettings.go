@@ -3,9 +3,10 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"net/http"
 	"strconv"
+
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -99,8 +100,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 
 	var cdnBaseURL string
-	if hs.Cfg.PluginsCDNBasePath != "" {
-		cdnBaseURL, err = pluginscdn.CDNBaseURL(hs.Cfg.PluginsCDNBasePath)
+	if hs.Cfg.PluginsCDNURLTemplate != "" {
+		cdnBaseURL, err = pluginscdn.CDNBaseURL(hs.Cfg.PluginsCDNURLTemplate)
 		if err != nil {
 			return nil, fmt.Errorf("plugins cdn base url: %w", err)
 		}
@@ -154,7 +155,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"editorsCanAdmin":                     hs.Cfg.EditorsCanAdmin,
 		"disableSanitizeHtml":                 hs.Cfg.DisableSanitizeHtml,
 		"pluginsToPreload":                    pluginsToPreload,
-		"pluginsCDNBaseURL": 				   cdnBaseURL,
+		"pluginsCDNBaseURL":                   cdnBaseURL,
 		"auth": map[string]interface{}{
 			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
 			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
