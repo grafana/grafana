@@ -51,9 +51,14 @@ import {
   makeError,
   replaceVariables,
 } from '../../prometheus/querybuilder/shared/parsingUtils';
-import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../../prometheus/querybuilder/shared/types';
+import {
+  QueryBuilderLabelFilter,
+  QueryBuilderOperation,
+  QueryBuilderOperationParamValue,
+} from '../../prometheus/querybuilder/shared/types';
 
 import { binaryScalarDefs } from './binaryScalarOperations';
+import { checkParamsAreValid, getOperationById } from './operations';
 import { LokiOperationId, LokiVisualQuery, LokiVisualQueryBinary } from './types';
 
 interface Context {
@@ -256,7 +261,12 @@ function getLabelParser(expr: string, node: SyntaxNode): QueryBuilderOperation {
   const parser = getString(expr, parserNode);
 
   const string = handleQuotes(getString(expr, node.getChild(String)));
-  const params = !!string ? [string] : [];
+  let params: QueryBuilderOperationParamValue[] = !!string ? [string] : [];
+  const defaultOperation = getOperationById(parser);
+  if (defaultOperation && !checkParamsAreValid(defaultOperation, params)) {
+    params = defaultOperation?.defaultParams || [];
+  }
+
   return {
     id: parser,
     params,
@@ -267,7 +277,7 @@ function getJsonExpressionParser(expr: string, node: SyntaxNode): QueryBuilderOp
   const parserNode = node.getChild(Json);
   const parser = getString(expr, parserNode);
 
-  const params = [...getAllByType(expr, node, JsonExpression)];
+  let params = [...getAllByType(expr, node, JsonExpression)];
   return {
     id: parser,
     params,

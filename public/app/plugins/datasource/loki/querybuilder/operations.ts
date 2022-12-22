@@ -2,7 +2,7 @@ import {
   createAggregationOperation,
   createAggregationOperationWithParam,
 } from '../../prometheus/querybuilder/shared/operationUtils';
-import { QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
+import { QueryBuilderOperationDef, QueryBuilderOperationParamValue } from '../../prometheus/querybuilder/shared/types';
 
 import { binaryScalarOperations } from './binaryScalarOperations';
 import { UnwrapParamEditor } from './components/UnwrapParamEditor';
@@ -479,4 +479,17 @@ export function explainOperator(id: LokiOperationId | string): string {
 
   // Strip markdown links
   return explain.replace(/\[(.*)\]\(.*\)/g, '$1');
+}
+
+export function getOperationById(id: string): QueryBuilderOperationDef | undefined {
+  return definitions.find((x) => x.id === id);
+}
+
+export function checkParamsAreValid(op: QueryBuilderOperationDef, params: QueryBuilderOperationParamValue[]): boolean {
+  // For now we only check if the operation has all the required params.
+  if (params.length < op.params.filter((param) => !param.optional).length) {
+    return false;
+  }
+
+  return true;
 }
