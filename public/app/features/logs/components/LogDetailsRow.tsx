@@ -96,8 +96,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
     logDetailsStats: css`
-      label: logDetailsStats;
-      margin: ${theme.spacing(1, 0, 0, 0)};
+      padding: 0 ${theme.spacing(1)};
     `,
     logDetailsValue: css`
       display: table-cell;
