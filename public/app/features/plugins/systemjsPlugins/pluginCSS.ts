@@ -1,6 +1,6 @@
 import { noop } from 'lodash';
 
-import { cdnHost } from './pluginCDN';
+import { cdnHost } from './constants';
 import type { SystemJSLoad } from './types';
 
 /*
