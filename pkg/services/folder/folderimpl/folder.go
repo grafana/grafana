@@ -97,41 +97,61 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		f, err := s.store.Get(ctx, *cmd)
-
-		if err != nil {
-			return nil, err
-		}
-
-		// do not get guardian by the folder ID because it differs from the nested folder ID
-		// and the legacy folder ID has been associated with the permissions:
-		// use the folde UID instead that is the same for both
-		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
-		if err != nil {
-			return nil, err
-		}
-
-		if canView, err := g.CanView(); err != nil || !canView {
-			if err != nil {
-				return nil, toFolderError(err)
-			}
-			return nil, dashboards.ErrFolderAccessDenied
-		}
-
-		return f, err
-	}
-
+	var dashFolder *folder.Folder
+	var err error
 	switch {
 	case cmd.UID != nil:
-		return s.getFolderByUID(ctx, cmd.SignedInUser, cmd.OrgID, *cmd.UID)
+		dashFolder, err = s.getFolderByUID(ctx, cmd.SignedInUser, cmd.OrgID, *cmd.UID)
+		if err != nil {
+			return nil, err
+		}
 	case cmd.ID != nil:
-		return s.getFolderByID(ctx, cmd.SignedInUser, *cmd.ID, cmd.OrgID)
+		dashFolder, err = s.getFolderByID(ctx, cmd.SignedInUser, *cmd.ID, cmd.OrgID)
+		if err != nil {
+			return nil, err
+		}
 	case cmd.Title != nil:
-		return s.getFolderByTitle(ctx, cmd.SignedInUser, cmd.OrgID, *cmd.Title)
+		dashFolder, err = s.getFolderByTitle(ctx, cmd.SignedInUser, cmd.OrgID, *cmd.Title)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
 	}
+
+	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		return dashFolder, nil
+	}
+
+	if cmd.ID != nil {
+		cmd.ID = nil
+		cmd.UID = &dashFolder.UID
+	}
+	f, err := s.store.Get(ctx, *cmd)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// do not get guardian by the folder ID because it differs from the nested folder ID
+	// and the legacy folder ID has been associated with the permissions:
+	// use the folde UID instead that is the same for both
+	g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
+	if err != nil {
+		return nil, err
+	}
+
+	if canView, err := g.CanView(); err != nil || !canView {
+		if err != nil {
+			return nil, toFolderError(err)
+		}
+		return nil, dashboards.ErrFolderAccessDenied
+	}
+
+	// always expose the dashboard store sequential ID
+	f.ID = dashFolder.ID
+
+	return f, err
 }
 
 func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
@@ -147,12 +167,21 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 
 		filtered := make([]*folder.Folder, 0, len(children))
 		for _, f := range children {
+			// fetch folder from dashboard store
+			dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, f.OrgID, f.UID)
+			if err != nil {
+				s.log.Error("failed to fetch folder by UID: %s from dashboad store", f.UID, err)
+				continue
+			}
+
 			g, err := guardian.New(ctx, f.ID, f.OrgID, cmd.SignedInUser)
 			if err != nil {
 				return nil, err
 			}
 			canView, err := g.CanView()
 			if err != nil || canView {
+				// always expose the dashboard store sequential ID
+				f.ID = dashFolder.ID
 				filtered = append(filtered, f)
 			}
 		}
@@ -372,33 +401,38 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 	}
 	user := cmd.SignedInUser
 
-	foldr, err := s.legacyUpdate(ctx, cmd)
+	dashFolder, err := s.legacyUpdate(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		if cmd.NewUID != nil && *cmd.NewUID != "" {
-			if !util.IsValidShortUID(*cmd.NewUID) {
-				return nil, dashboards.ErrDashboardInvalidUid
-			} else if util.IsShortUIDTooLong(*cmd.NewUID) {
-				return nil, dashboards.ErrDashboardUidTooLong
-			}
-		}
-
-		foldr, err := s.store.Update(ctx, folder.UpdateFolderCommand{
-			UID:            cmd.UID,
-			OrgID:          cmd.OrgID,
-			NewUID:         cmd.NewUID,
-			NewTitle:       cmd.NewTitle,
-			NewDescription: cmd.NewDescription,
-			SignedInUser:   user,
-		})
-		if err != nil {
-			return nil, err
-		}
-		return foldr, nil
+	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		return dashFolder, nil
 	}
+
+	if cmd.NewUID != nil && *cmd.NewUID != "" {
+		if !util.IsValidShortUID(*cmd.NewUID) {
+			return nil, dashboards.ErrDashboardInvalidUid
+		} else if util.IsShortUIDTooLong(*cmd.NewUID) {
+			return nil, dashboards.ErrDashboardUidTooLong
+		}
+	}
+
+	foldr, err := s.store.Update(ctx, folder.UpdateFolderCommand{
+		UID:            cmd.UID,
+		OrgID:          cmd.OrgID,
+		NewUID:         cmd.NewUID,
+		NewTitle:       cmd.NewTitle,
+		NewDescription: cmd.NewDescription,
+		SignedInUser:   user,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// always expose the dashboard store sequential ID
+	foldr.ID = dashFolder.ID
+
 	return foldr, nil
 }
 
