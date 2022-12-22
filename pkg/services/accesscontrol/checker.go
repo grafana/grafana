@@ -1,8 +1,6 @@
 package accesscontrol
 
 import (
-	"strings"
-
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -16,16 +14,16 @@ func Checker(user *user.SignedInUser, action string) func(scopes ...string) bool
 		return func(scopes ...string) bool { return false }
 	}
 
-	lookup := make(map[string]bool, len(userScopes)-1)
+	lookup := make(map[string]bool, len(userScopes))
 	for i := range userScopes {
 		lookup[userScopes[i]] = true
 	}
 
-	var cached bool
+	var checkedWildcards bool
 	var hasWildcard bool
 
 	return func(scopes ...string) bool {
-		if !cached {
+		if !checkedWildcards {
 			wildcards := wildcardsFromScopes(scopes...)
 			for _, w := range wildcards {
 				if _, ok := lookup[w]; ok {
@@ -33,7 +31,7 @@ func Checker(user *user.SignedInUser, action string) func(scopes ...string) bool
 					break
 				}
 			}
-			cached = true
+			checkedWildcards = true
 		}
 
 		if hasWildcard {
@@ -55,25 +53,5 @@ func wildcardsFromScopes(scopes ...string) Wildcards {
 		prefixes = append(prefixes, ScopePrefix(scope))
 	}
 
-	return WildcardsFromPrefixes(prefixes...)
-}
-
-// WildcardsFromPrefixes generates valid wildcards from prefix
-// datasource:uid: => "*", "datasource:*", "datasource:uid:*"
-func WildcardsFromPrefixes(prefixes ...string) Wildcards {
-	var b strings.Builder
-	wildcards := Wildcards{"*"}
-	for _, prefix := range prefixes {
-		parts := strings.Split(prefix, ":")
-		for _, p := range parts {
-			if p == "" {
-				continue
-			}
-			b.WriteString(p)
-			b.WriteRune(':')
-			wildcards = append(wildcards, b.String()+"*")
-		}
-		b.Reset()
-	}
-	return wildcards
+	return WildcardsFromPrefixes(prefixes)
 }

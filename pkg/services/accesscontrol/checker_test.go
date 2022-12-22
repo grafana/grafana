@@ -40,7 +40,7 @@ func Test_Checker(t *testing.T) {
 	}
 	tests := []testCase{
 		{
-			desc: "should pass for every entity with wildcard scope for action",
+			desc: "should pass for every entity with dashboard wildcard scope",
 			user: &user.SignedInUser{
 				OrgID:       1,
 				Permissions: map[int64]map[string][]string{1: {"dashboards:read": {"dashboards:*"}}},
@@ -48,7 +48,7 @@ func Test_Checker(t *testing.T) {
 			expectedLen: len(data),
 		},
 		{
-			desc: "should pass for every entity with wildcard scope for action",
+			desc: "should pass for every entity with folder wildcard scope",
 			user: &user.SignedInUser{
 				OrgID:       1,
 				Permissions: map[int64]map[string][]string{1: {"dashboards:read": {"folders:*"}}},
@@ -70,6 +70,22 @@ func Test_Checker(t *testing.T) {
 				Permissions: map[int64]map[string][]string{1: {"dashboards:read": {"folders:uid:104", "folders:uid:150", "folders:uid:154", "folders:uid:199"}}},
 			},
 			expectedLen: 4,
+		},
+		{
+			desc: "should only pass 4 with some dashboard and some folder scopes",
+			user: &user.SignedInUser{
+				OrgID:       1,
+				Permissions: map[int64]map[string][]string{1: {"dashboards:read": {"dashboards:uid:1", "dashboards:uid:2", "folders:uid:154", "folders:uid:199"}}},
+			},
+			expectedLen: 4,
+		},
+		{
+			desc: "should only pass 2 with overlapping dashboard and folder scopes",
+			user: &user.SignedInUser{
+				OrgID:       1,
+				Permissions: map[int64]map[string][]string{1: {"dashboards:read": {"dashboards:uid:101", "dashboards:uid:2", "folders:uid:101", "folders:uid:102"}}},
+			},
+			expectedLen: 2,
 		},
 		{
 			desc: "should pass none for missing action",
