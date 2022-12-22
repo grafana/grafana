@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { renderMarkdown } from '@grafana/data';
@@ -46,50 +46,37 @@ export interface State {
   showInvites: boolean;
 }
 
-export class UsersListPageUnconnected extends PureComponent<Props, State> {
-  declare externalUserMngInfoHtml: string;
+export const UsersListPageUnconnected = ({
+  users,
+  page,
+  totalPages,
+  invitees,
+  externalUserMngInfo,
+  isLoading,
+  loadUsers,
+  fetchInvitees,
+  changePage,
+  updateUser,
+  removeUser,
+}: Props): JSX.Element => {
+  const [showInvites, setShowInvites] = useState(false);
+  const externalUserMngInfoHtml = externalUserMngInfo ? renderMarkdown(externalUserMngInfo) : '';
 
-  constructor(props: Props) {
-    super(props);
+  useEffect(() => {
+    loadUsers();
+    fetchInvitees();
+  }, [fetchInvitees, loadUsers]);
 
-    if (this.props.externalUserMngInfo) {
-      this.externalUserMngInfoHtml = renderMarkdown(this.props.externalUserMngInfo);
-    }
-
-    this.state = {
-      showInvites: false,
-    };
-  }
-
-  componentDidMount() {
-    this.fetchUsers();
-    this.fetchInvitees();
-  }
-
-  async fetchUsers() {
-    return await this.props.loadUsers();
-  }
-
-  async fetchInvitees() {
-    return await this.props.fetchInvitees();
-  }
-
-  onRoleChange = (role: OrgRole, user: OrgUser) => {
-    const updatedUser = { ...user, role: role };
-
-    this.props.updateUser(updatedUser);
+  const onRoleChange = (role: OrgRole, user: OrgUser) => {
+    updateUser({ ...user, role: role });
   };
 
-  onShowInvites = () => {
-    this.setState((prevState) => ({
-      showInvites: !prevState.showInvites,
-    }));
+  const onShowInvites = () => {
+    setShowInvites(!showInvites);
   };
 
-  renderTable() {
-    const { invitees, users, page, totalPages, changePage } = this.props;
-
-    if (this.state.showInvites) {
+  const renderTable = () => {
+    if (showInvites) {
       return <InviteesTable invitees={invitees} />;
     } else {
       return (
@@ -97,8 +84,8 @@ export class UsersListPageUnconnected extends PureComponent<Props, State> {
           <UsersTable
             users={users}
             orgId={contextSrv.user.orgId}
-            onRoleChange={(role, user) => this.onRoleChange(role, user)}
-            onRemoveUser={(user) => this.props.removeUser(user.userId)}
+            onRoleChange={(role, user) => onRoleChange(role, user)}
+            onRemoveUser={(user) => removeUser(user.userId)}
           />
           <HorizontalGroup justify="flex-end">
             <Pagination
@@ -111,23 +98,18 @@ export class UsersListPageUnconnected extends PureComponent<Props, State> {
         </VerticalGroup>
       );
     }
-  }
+  };
 
-  render() {
-    const { isLoading } = this.props;
-    const externalUserMngInfoHtml = this.externalUserMngInfoHtml;
-
-    return (
-      <Page.Contents isLoading={!isLoading}>
-        <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
-        {externalUserMngInfoHtml && (
-          <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
-        )}
-        {isLoading && this.renderTable()}
-      </Page.Contents>
-    );
-  }
-}
+  return (
+    <Page.Contents isLoading={!isLoading}>
+      <UsersActionBar onShowInvites={onShowInvites} showInvites={showInvites} />
+      {externalUserMngInfoHtml && (
+        <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
+      )}
+      {isLoading && renderTable()}
+    </Page.Contents>
+  );
+};
 
 export const UsersListPageContent = connector(UsersListPageUnconnected);
 
