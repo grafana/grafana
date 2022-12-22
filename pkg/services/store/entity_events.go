@@ -148,6 +148,10 @@ func (e *entityEventService) Run(ctx context.Context) error {
 type dummyEntityEventsService struct {
 }
 
+func NewDummyEntityEventsService() EntityEventsService {
+	return dummyEntityEventsService{}
+}
+
 func (d dummyEntityEventsService) Run(ctx context.Context) error {
 	return nil
 }

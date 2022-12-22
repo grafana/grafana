@@ -31,11 +31,11 @@ func (t *testDashboardLoader) LoadDashboards(_ context.Context, _ int64, _ strin
 
 var testLogger = log.New("index-test-logger")
 
-var testAllowAllFilter = func(uid string) bool {
+var testAllowAllFilter = func(kind entityKind, uid, parent string) bool {
 	return true
 }
 
-var testDisallowAllFilter = func(uid string) bool {
+var testDisallowAllFilter = func(kind entityKind, uid, parent string) bool {
 	return false
 }
 
