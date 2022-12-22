@@ -146,7 +146,7 @@ func (f *fakeConfigStore) UpdateAlertmanagerConfiguration(_ context.Context, cmd
 	return errors.New("config not found or hash not valid")
 }
 
-func (f *fakeConfigStore) MarkAlertmanagerConfigurationAsSuccessfullyApplied(_ context.Context, configID int64) error {
+func (f *fakeConfigStore) MarkAlertmanagerConfigurationAsSuccessful(_ context.Context, configID int64) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -158,7 +158,7 @@ func (f *fakeConfigStore) MarkAlertmanagerConfigurationAsSuccessfullyApplied(_ c
 	return errors.New("config not found")
 }
 
-func (f *fakeConfigStore) GetSuccessfullyAppliedAlertmanagerConfigurations(_ context.Context, query *models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery) error {
+func (f *fakeConfigStore) GetSuccessfulAlertmanagerConfigurations(_ context.Context, query *models.GetSuccessfulAlertmanagerConfigurationsQuery) error {
 	f.mtx.RLock()
 	defer f.mtx.RUnlock()
 

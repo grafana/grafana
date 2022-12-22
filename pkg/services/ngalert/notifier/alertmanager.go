@@ -268,7 +268,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		if err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration)); err != nil {
 			return err
 		}
-		if err := am.Store.MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx, cmd.ResultID); err != nil {
+		if err := am.Store.MarkAlertmanagerConfigurationAsSuccessful(ctx, cmd.ResultID); err != nil {
 			am.logger.Error("Failed to mark Alertmanager config as successfully applied", "id", cmd.ResultID, "error", err)
 		}
 		return nil

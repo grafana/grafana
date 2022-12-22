@@ -48,7 +48,7 @@ import (
 //       200: GettableUserConfig
 //       400: ValidationError
 
-// swagger:route GET /api/alertmanager/grafana/config/history alertmanager RouteGetGrafanaSuccessfullyAppliedAlertingConfigs
+// swagger:route GET /api/alertmanager/grafana/config/history alertmanager RouteGetGrafanaSuccessfulAlertingConfigs
 //
 // gets Alerting configurations that were successfully applied in the past
 //
@@ -454,8 +454,8 @@ type BodyAlertingConfig struct {
 	Body PostableUserConfig
 }
 
-// swagger:parameters RouteGetGrafanaSuccessfullyAppliedAlertingConfigs
-type RouteGetGrafanaSuccessfullyAppliedAlertingConfigsParams struct {
+// swagger:parameters RouteGetGrafanaSuccessfulAlertingConfigs
+type RouteGetGrafanaSuccessfulAlertingConfigsParams struct {
 	// Limit response to X number of alerting configurations.
 	// in:query
 	Limit int `json:"limit"`

@@ -134,7 +134,9 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 	})
 }
 
-func (st *DBstore) MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx context.Context, configurationID int64) error {
+// MarkAlertmanagerConfigurationAsSuccessful sets the `successfully_applied_at` field to a current UNIX timestamp,
+// indicating that a given configuration was applied with no errors and when it was applied.
+func (st *DBstore) MarkAlertmanagerConfigurationAsSuccessful(ctx context.Context, configurationID int64) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		res, err := sess.Exec("UPDATE alert_configuration SET successfully_applied_at = ? WHERE id = ?", time.Now().UTC().Unix(), configurationID)
 		if err != nil {
@@ -154,8 +156,8 @@ func (st *DBstore) MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx contex
 	})
 }
 
-// GetSuccessfullyAppliedAlertmanagerConfigurations returns the latest n valid configurations for an org.
-func (st *DBstore) GetSuccessfullyAppliedAlertmanagerConfigurations(ctx context.Context, query *models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery) error {
+// GetSuccessfulAlertmanagerConfigurations returns the last n configurations marked as "successfully applied" in the DB for an org.
+func (st *DBstore) GetSuccessfulAlertmanagerConfigurations(ctx context.Context, query *models.GetSuccessfulAlertmanagerConfigurationsQuery) error {
 	var result []*models.AlertConfiguration
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		err := sess.Table("alert_configuration").Where("org_id = ? AND successfully_applied_at != 0", query.OrgID).Desc("id").Limit(query.Limit).Find(&result)

@@ -47,13 +47,14 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 	return result, nil
 }
 
-func (moa *MultiOrgAlertmanager) GetSuccessfullyAppliedAlertmanagerConfigurations(ctx context.Context, org int64, limit int) (definitions.GettableUserConfigs, error) {
+// GetSuccessfulAlertmanagerConfigurations returns the last n configurations marked as "successfully applied" for a given org.
+func (moa *MultiOrgAlertmanager) GetSuccessfulAlertmanagerConfigurations(ctx context.Context, org int64, limit int) (definitions.GettableUserConfigs, error) {
 	if limit < 1 || limit > store.ConfigRecordsLimit {
 		limit = store.ConfigRecordsLimit
 	}
 
-	query := models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery{OrgID: org, Limit: limit}
-	err := moa.configStore.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, &query)
+	query := models.GetSuccessfulAlertmanagerConfigurationsQuery{OrgID: org, Limit: limit}
+	err := moa.configStore.GetSuccessfulAlertmanagerConfigurations(ctx, &query)
 	if err != nil {
 		return definitions.GettableUserConfigs{}, fmt.Errorf("failed to get successfully applied configurations: %w", err)
 	}

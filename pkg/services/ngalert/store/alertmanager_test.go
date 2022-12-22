@@ -290,7 +290,7 @@ func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
 	})
 }
 
-func TestMarkAlertmanagerConfigurationAsSuccessfullyApplied(t *testing.T) {
+func TestMarkAlertmanagerConfigurationAsSuccessful(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -301,7 +301,7 @@ func TestMarkAlertmanagerConfigurationAsSuccessfullyApplied(t *testing.T) {
 	}
 
 	t.Run("attempting to mark a non existent config as successful should fail", func(tt *testing.T) {
-		err := store.MarkAlertmanagerConfigurationAsSuccessfullyApplied(context.Background(), 1)
+		err := store.MarkAlertmanagerConfigurationAsSuccessful(context.Background(), 1)
 		require.Error(tt, err)
 	})
 
@@ -327,7 +327,7 @@ func TestMarkAlertmanagerConfigurationAsSuccessfullyApplied(t *testing.T) {
 		// Config should not be marked as valid yet.
 		require.Zero(tt, query.Result.SuccessfullyAppliedAt)
 
-		err = store.MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx, query.Result.ID)
+		err = store.MarkAlertmanagerConfigurationAsSuccessful(ctx, query.Result.ID)
 		require.NoError(tt, err)
 
 		// Config should now be marked as valid.
@@ -341,7 +341,7 @@ func TestMarkAlertmanagerConfigurationAsSuccessfullyApplied(t *testing.T) {
 	})
 }
 
-func TestGetSuccessfullyAppliedAlertmanagerConfigurations(t *testing.T) {
+func TestGetSuccessfulAlertmanagerConfigurations(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -352,11 +352,11 @@ func TestGetSuccessfullyAppliedAlertmanagerConfigurations(t *testing.T) {
 	}
 
 	t.Run("when no configurations are found an empty slice should be returned", func(tt *testing.T) {
-		query := models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery{
+		query := models.GetSuccessfulAlertmanagerConfigurationsQuery{
 			OrgID: 1,
 			Limit: 10,
 		}
-		err := store.GetSuccessfullyAppliedAlertmanagerConfigurations(context.Background(), &query)
+		err := store.GetSuccessfulAlertmanagerConfigurations(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Len(t, query.Result, 0)
@@ -383,27 +383,27 @@ func TestGetSuccessfullyAppliedAlertmanagerConfigurations(t *testing.T) {
 			err = store.GetLatestAlertmanagerConfiguration(ctx, &query)
 			require.NoError(tt, err)
 
-			err = store.MarkAlertmanagerConfigurationAsSuccessfullyApplied(ctx, query.Result.ID)
+			err = store.MarkAlertmanagerConfigurationAsSuccessful(ctx, query.Result.ID)
 			require.NoError(tt, err)
 		}
 
-		query := models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery{
+		query := models.GetSuccessfulAlertmanagerConfigurationsQuery{
 			OrgID: orgID,
 			Limit: 10,
 		}
 
-		err := store.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, &query)
+		err := store.GetSuccessfulAlertmanagerConfigurations(ctx, &query)
 		require.NoError(tt, err)
 
 		require.Len(tt, query.Result, numConfigs)
 
 		// Let's try with a limit that's lower than the actual number of configs.
-		query = models.GetSuccessfullyAppliedAlertmanagerConfigurationsQuery{
+		query = models.GetSuccessfulAlertmanagerConfigurationsQuery{
 			OrgID: orgID,
 			Limit: 2,
 		}
 
-		err = store.GetSuccessfullyAppliedAlertmanagerConfigurations(ctx, &query)
+		err = store.GetSuccessfulAlertmanagerConfigurations(ctx, &query)
 		require.NoError(tt, err)
 
 		require.Len(tt, query.Result, 2)

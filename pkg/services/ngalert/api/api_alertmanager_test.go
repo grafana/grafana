@@ -290,7 +290,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 	})
 }
 
-func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
+func TestRouteGetSuccessfulAlertingConfigs(t *testing.T) {
 	sut := createSut(t, nil)
 
 	t.Run("assert 200 and empty slice when no successfully applied configurations are found", func(tt *testing.T) {
@@ -309,7 +309,7 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 			},
 		}
 
-		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
+		response := sut.RouteGetSuccessfulAlertingConfigs(&rc)
 		require.Equal(tt, 200, response.Status())
 
 		var configs apimodels.GettableUserConfigs
@@ -335,7 +335,7 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 			},
 		}
 
-		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
+		response := sut.RouteGetSuccessfulAlertingConfigs(&rc)
 		require.Equal(tt, 200, response.Status())
 
 		var configs apimodels.GettableUserConfigs
@@ -355,7 +355,7 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 			},
 		}
 
-		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
+		response := sut.RouteGetSuccessfulAlertingConfigs(&rc)
 		require.Equal(tt, 200, response.Status())
 
 		configs := asGettableUserConfigs(tt, response)
@@ -380,7 +380,7 @@ func TestRouteGetSuccessfullyAppliedAlertingConfigs(t *testing.T) {
 			},
 		}
 
-		response := sut.RouteGetSuccessfullyAppliedAlertingConfigs(&rc)
+		response := sut.RouteGetSuccessfulAlertingConfigs(&rc)
 		require.Equal(tt, 200, response.Status())
 
 		configs := asGettableUserConfigs(tt, response)

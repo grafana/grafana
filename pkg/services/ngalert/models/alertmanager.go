@@ -21,9 +21,9 @@ type GetLatestAlertmanagerConfigurationQuery struct {
 	Result *AlertConfiguration
 }
 
-// GetSuccessfullyAppliedAlertmanagerConfigurationsQuery is the query
+// GetSuccessfulAlertmanagerConfigurationsQuery is the query
 // to get configurations that were successfully applied in the past for a given organization.
-type GetSuccessfullyAppliedAlertmanagerConfigurationsQuery struct {
+type GetSuccessfulAlertmanagerConfigurationsQuery struct {
 	OrgID  int64
 	Limit  int
 	Result []*AlertConfiguration
