@@ -473,6 +473,8 @@ func evalCDNPluginURLPath(path string, cdnBaseURL, pluginID, pluginVersion strin
 	return pluginscdn.NewCDNURLConstructor(cdnBaseURL, pluginID, pluginVersion).StringURLFor(path)
 }
 
+const systemJSCDNKeyword = "plugin-cdn"
+
 func (l *Loader) PluginErrors() []*plugins.Error {
 	errs := make([]*plugins.Error, 0)
 	for _, err := range l.errs {
@@ -492,11 +494,11 @@ func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string,
 	if isCDN {
 		u, err := pluginscdn.NewCDNURLConstructor(
 			cdnBaseURL, pluginJSON.ID, pluginJSON.Info.Version,
-		).StringURLFor("")
+		).URLFor("")
 		if err != nil {
 			return "", err
 		}
-		return pluginscdn.RelativeURLForSystemJS(u), nil
+		return path.Join(systemJSCDNKeyword, u.Path), nil
 	}
 	return path.Join("public/plugins", pluginJSON.ID), nil
 }
@@ -508,11 +510,11 @@ func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, 
 	if isCDN {
 		u, err := pluginscdn.NewCDNURLConstructor(
 			cdnBaseURL, pluginJSON.ID, pluginJSON.Info.Version,
-		).StringURLFor("module")
+		).URLFor("module")
 		if err != nil {
 			return "", err
 		}
-		return pluginscdn.RelativeURLForSystemJS(u), nil
+		return path.Join(systemJSCDNKeyword, u.Path), nil
 	}
 	return path.Join("plugins", pluginJSON.ID, "module"), nil
 }

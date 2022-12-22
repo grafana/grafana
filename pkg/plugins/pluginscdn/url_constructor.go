@@ -69,28 +69,14 @@ func (c URLConstructor) StringURLFor(assetPath string) (string, error) {
 	return u.String(), nil
 }
 
-// RelativeURLForSystemJS is a function that takes a string, which is an absolute or relative URL, and it returns
-// that URL but in a format that can be used by System.js to load plugins from a remote CDN.
-//
-// System.js uses "plugin-cdn" as a keyword to identify plugins to load from a CDN, but it requires
-// a relative path starting with "plugin-cdn/" to load the plugin correctly.
-//
-//	some/folder/plugin-cdn/plugin/version/the/file -> plugin-cdn/plugin/version/the/file
-//
-// The returned value does not have a leading slash.
-//
-// If s does not contain the keyword, the function returns the original string.
-func RelativeURLForSystemJS(s string) string {
-	const systemJSKeyword = "plugin-cdn"
-	// Treat as "/plugin-cdn/", because we only care if it's a path, and we don't want to
-	// consider it if it's part of the name of another folder or part of the domain
-	// (e.g.: https://plugin-cdn.com).
-	// Also limit up to 2 splits, so that we split only on the first occurrence.
-	parts := strings.SplitN(s, "/"+systemJSKeyword+"/", 2)
-	if len(parts) < 2 {
-		// "/plugin-cdn/" keyword is not present, return original string
-		return s
+// CDNBaseURL returns the base url from a plugins CDN template string.
+func CDNBaseURL(cdnTemplateString string) (string, error) {
+	if cdnTemplateString == "" {
+		return "", nil
 	}
-	// Return the keyword + rest of the path after the keyword
-	return path.Join(systemJSKeyword, parts[1])
+	u, err := url.Parse(cdnTemplateString)
+	if err != nil {
+		return "", fmt.Errorf("url parse: %w", err)
+	}
+	return u.Scheme + "://" + u.Host, nil
 }
