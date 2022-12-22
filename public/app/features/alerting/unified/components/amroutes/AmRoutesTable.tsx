@@ -1,7 +1,7 @@
 import { intersectionWith, isEqual } from 'lodash';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Button, ConfirmModal, HorizontalGroup, IconButton } from '@grafana/ui';
+import { Badge, Button, ConfirmModal, HorizontalGroup, IconButton, Tooltip } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { FormAmRoute } from '../../types/amroutes';
@@ -95,6 +95,10 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   const expandItem = useCallback((item: RouteTableItemProps) => setExpandedId(item.id), []);
   const collapseItem = useCallback(() => setExpandedId(undefined), []);
 
+  const missingReceiver = (route: FormAmRoute) => {
+    return Boolean(route.receiver) === false;
+  };
+
   const cols: RouteTableColumnProps[] = [
     {
       id: 'matchingCriteria',
@@ -120,12 +124,21 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
       label: 'Contact point',
       renderCell: (item) => {
         const type = getGrafanaAppReceiverType(receivers, item.data.receiver);
-        return item.data.receiver ? (
-          <>
-            {item.data.receiver} {type && <GrafanaAppBadge grafanaAppType={type} />}
-          </>
-        ) : (
-          '-'
+
+        if (!missingReceiver(item.data)) {
+          return (
+            <>
+              {item.data.receiver} {type && <GrafanaAppBadge grafanaAppType={type} />}
+            </>
+          );
+        }
+
+        return (
+          <Tooltip content={'No notifications will be delivered until a contact point is configured.'} placement="top">
+            <span>
+              <Badge color="orange" icon="exclamation-triangle" text="None" />
+            </span>
+          </Tooltip>
         );
       },
       size: 5,
