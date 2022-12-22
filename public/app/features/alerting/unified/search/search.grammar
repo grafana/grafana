@@ -4,7 +4,7 @@ expression { (FilterExpression | FreeFormExpression) expression }
 
 FilterExpression { DataSourceFilter | NameSpaceFilter | LabelFilter | GroupFilter | RuleFilter | StateFilter | TypeFilter }
 
-DataSourceFilter { filterToken<"ds" | "datasource"> FilterValue }
+DataSourceFilter { DsFilterToken { filterToken<"ds" | "datasource"> } FilterValue }
 NameSpaceFilter { filterToken<"ns" | "namespace"> FilterValue }
 LabelFilter { filterToken<"l" | "label"> FilterValue }
 GroupFilter { filterToken<"g" | "group"> FilterValue }
@@ -17,7 +17,7 @@ FreeFormExpression { word }
 @tokens {
   allowedInputChar { $[a-zA-Z0-9,./?=!@#$%^&*()+-] }
 
-  FilterValue { $[a-zA-Z0-9,./?=!@#$%^&*()+-]+ | ("\"" $[a-zA-Z0-9 ,./?=!@#$%^&*()+-]+ "\"") }
+  FilterValue { $[a-zA-Z0-9_,./?=!@#$%^&*()+-]+ | ("\"" $[a-zA-Z0-9_ ,./?=!@#$%^&*()+-]+ "\"") }
 
   word { allowedInputChar+ }
 

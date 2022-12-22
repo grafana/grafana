@@ -10,7 +10,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { LogMessages } from '../../Analytics';
-import { useRulesFilter } from '../../hooks/useFilteredRules';
+import { SearchFilterState, useRulesFilter } from '../../hooks/useFilteredRules';
 import { getFiltersFromUrlParams } from '../../utils/misc';
 import { alertStateToReadable } from '../../utils/rules';
 
@@ -54,7 +54,7 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
   const dataSourceKey = `dataSource-${filterKey}`;
   const queryStringKey = `queryString-${filterKey}`;
 
-  const { filters, queryString } = useRulesFilter();
+  const { filters, queryString, updateFilters } = useRulesFilter();
 
   const styles = useStyles2(getStyles);
   const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
@@ -63,11 +63,13 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
   }));
 
   const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings) => {
-    setQueryParams({ dataSource: dataSourceValue.name });
+    updateFilters({ ...filters, dataSourceName: dataSourceValue.name });
+    setFilterKey((key) => key + 1);
   };
 
   const clearDataSource = () => {
-    setQueryParams({ dataSource: null });
+    updateFilters({ ...filters, dataSourceName: undefined });
+    setFilterKey((key) => key + 1);
   };
 
   const handleQueryStringChange = debounce((e: FormEvent<HTMLInputElement>) => {
@@ -75,9 +77,10 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
     setQueryParams({ queryString: target.value || null });
   }, 600);
 
-  const handleAlertStateChange = (value: string) => {
+  const handleAlertStateChange = (value: PromAlertingRuleState) => {
     logInfo(LogMessages.clickingAlertStateFilters);
-    setQueryParams({ alertState: value });
+    updateFilters({ ...filters, ruleState: value });
+    setFilterKey((key) => key + 1);
   };
 
   const handleViewChange = (view: string) => {
@@ -85,7 +88,8 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
   };
 
   const handleRuleTypeChange = (ruleType: PromRuleType) => {
-    setQueryParams({ ruleType });
+    updateFilters({ ...filters, ruleType });
+    setFilterKey((key) => key + 1);
   };
 
   const handleClearFiltersClick = () => {

@@ -1,5 +1,6 @@
+import { SyntaxNode } from '@lezer/common';
 import { trim } from 'lodash';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -20,7 +21,7 @@ import { isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
 
 import { useURLSearchParams } from './useURLSearchParams';
 
-interface SearchFilterState {
+export interface SearchFilterState {
   query?: string;
   namespace?: string;
   groupName?: string;
@@ -30,6 +31,16 @@ interface SearchFilterState {
   dataSourceName?: string;
   labels: string[];
 }
+
+const filterTermToTypeMap: Record<number, string> = {
+  [terms.DataSourceFilter]: 'ds',
+  [terms.NameSpaceFilter]: 'ns',
+  [terms.LabelFilter]: 'l',
+  [terms.RuleFilter]: 'r',
+  [terms.StateFilter]: 's',
+  [terms.TypeFilter]: 't',
+  [terms.GroupFilter]: 'g',
+};
 
 function isPromRuleType(ruleType: string): ruleType is PromRuleType {
   return Object.values<string>(PromRuleType).includes(ruleType);
@@ -43,9 +54,12 @@ function getSearchFilterFromQuery(query: string): SearchFilterState {
   let cursor = parsed.cursor();
   do {
     if (cursor.node.type.id === terms.FilterExpression) {
+      // ds:prom FilterExpression
+      // ds: DataSourceFilter prom FilterValue
       const valueNode = cursor.node.firstChild?.getChild(terms.FilterValue);
       const filterValue = valueNode ? trim(query.substring(valueNode.from, valueNode.to), '"') : undefined;
 
+      // ds | ns | group | etc...
       const filterType = cursor.node.firstChild?.type.id;
 
       if (filterType && filterValue) {
@@ -86,13 +100,84 @@ function getSearchFilterFromQuery(query: string): SearchFilterState {
   return filterState;
 }
 
+function updateSearchFilterQuery(query: string, filter: SearchFilterState): string {
+  const parsed = parser.parse(query);
+
+  let cursor = parsed.cursor();
+
+  const filterStateArray: Array<{ type: number; value: string }> = [];
+  if (filter.query) {
+    filterStateArray.push({ type: terms.FreeFormExpression, value: filter.query });
+  }
+  if (filter.dataSourceName) {
+    filterStateArray.push({ type: terms.DataSourceFilter, value: filter.dataSourceName });
+  }
+  if (filter.namespace) {
+    filterStateArray.push({ type: terms.NameSpaceFilter, value: filter.namespace });
+  }
+  if (filter.groupName) {
+    filterStateArray.push({ type: terms.GroupFilter, value: filter.groupName });
+  }
+  if (filter.ruleName) {
+    filterStateArray.push({ type: terms.RuleFilter, value: filter.ruleName });
+  }
+  if (filter.ruleState) {
+    filterStateArray.push({ type: terms.StateFilter, value: filter.ruleState });
+  }
+  if (filter.ruleType) {
+    filterStateArray.push({ type: terms.TypeFilter, value: filter.ruleType });
+  }
+  if (filter.labels) {
+    filterStateArray.push(...filter.labels.map((l) => ({ type: terms.LabelFilter, value: l })));
+  }
+
+  const existingTreeFilters: SyntaxNode[] = [];
+
+  do {
+    if (cursor.node.type.id === terms.FilterExpression && cursor.node.firstChild) {
+      existingTreeFilters.push(cursor.node.firstChild);
+    }
+  } while (cursor.next());
+
+  let newQueryExpressions: string[] = [];
+
+  existingTreeFilters.map((filterNode) => {
+    const matchingFilterIdx = filterStateArray.findIndex((f) => f.type === filterNode.type.id);
+    const filterValueNode = filterNode.getChild(terms.FilterValue);
+    if (matchingFilterIdx !== -1 && filterValueNode) {
+      const filterToken = query.substring(filterNode.from, filterValueNode.from); // Extract the filter type only
+      const filterItem = filterStateArray.splice(matchingFilterIdx, 1)[0];
+      newQueryExpressions.push(`${filterToken}${getSafeFilterValue(filterItem.value)}`);
+    }
+  });
+
+  filterStateArray.forEach((fs) => {
+    newQueryExpressions.push(`${filterTermToTypeMap[fs.type]}:${getSafeFilterValue(fs.value)}`);
+  });
+
+  return newQueryExpressions.join(' ');
+}
+
+function getSafeFilterValue(filterValue: string) {
+  const containsWhiteSpaces = /\s/.test(filterValue);
+  return containsWhiteSpaces ? `\"${filterValue}\"` : filterValue;
+}
+
 export function useRulesFilter() {
-  const [queryParams] = useURLSearchParams();
+  const [queryParams, updateQueryParams] = useURLSearchParams();
   const queryString = queryParams.get('queryString') ?? '';
 
   const filters = getSearchFilterFromQuery(queryString);
 
-  return { filters, queryString };
+  const updateFilters = useCallback(
+    (newFilter: SearchFilterState) => {
+      const newQueryString = updateSearchFilterQuery(queryString, newFilter);
+      updateQueryParams({ queryString: newQueryString });
+    },
+    [queryString, updateQueryParams]
+  );
+
+  return { filters, queryString, updateFilters };
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
