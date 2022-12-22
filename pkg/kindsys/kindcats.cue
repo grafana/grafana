@@ -121,14 +121,6 @@ _sharedKind: {
 }
 
 // TODO
-#CustomStructured: {
-	#Structured
-
-	lineageIsGroup: false
-	...
-}
-
-// TODO
 #CoreStructured: {
 	#Structured
 

@@ -38,6 +38,8 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 
 jest.spyOn(config, 'getAllDataSources');
 
+jest.setTimeout(60 * 1000);
+
 const mocks = {
   getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
@@ -61,7 +63,7 @@ describe('RuleEditor recording rules', () => {
   });
 
   disableRBAC();
-  it.skip('can create a new cloud recording rule', async () => {
+  it('can create a new cloud recording rule', async () => {
     const dataSources = {
       default: mockDataSource(
         {

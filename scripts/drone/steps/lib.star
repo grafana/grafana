@@ -628,7 +628,7 @@ def codespell_step():
     }
 
 
-def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
+def package_step(edition, ver_mode, variants=None):
     deps = [
         'build-plugins',
         'build-backend' + enterprise2_suffix(edition),
@@ -739,6 +739,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, port=3001, video="false", trigger
                 'include': [
                     'pkg/tsdb/azuremonitor/**',
                     'public/app/plugins/datasource/grafana-azure-monitor-datasource/**',
+                    'e2e/cloud-plugins-suite/azure-monitor.spec.ts',
                 ]
             },
         )
