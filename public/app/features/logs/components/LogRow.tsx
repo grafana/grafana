@@ -44,19 +44,19 @@ interface Props extends Themeable2 {
   enableLogDetails: boolean;
   logsSortOrder?: LogsSortOrder | null;
   forceEscape?: boolean;
-  displayedFields: string[];
   scrollElement?: HTMLDivElement;
   showRowMenu?: boolean;
   app?: CoreApp;
+  displayedFields?: string[];
   getRows: () => LogRowModel[];
-  onClickFilterLabel: (key: string, value: string) => void;
-  onClickFilterOutLabel: (key: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  onClickShowField: (key: string) => void;
-  onClickHideField: (key: string) => void;
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   toggleContextIsOpen?: () => void;
 }

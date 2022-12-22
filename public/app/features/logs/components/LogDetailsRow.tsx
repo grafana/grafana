@@ -19,9 +19,9 @@ export interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
-  displayedFields: string[];
-  onClickShowField: (key: string) => void;
-  onClickHideField: (key: string) => void;
+  displayedFields?: string[];
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   row: LogRowModel;
   app?: CoreApp;
 }
@@ -30,7 +30,6 @@ interface State {
   showFieldsStats: boolean;
   fieldCount: number;
   fieldStats: LogLabelStatsModel[] | null;
-  mouseOver: boolean;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -123,7 +122,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     showFieldsStats: false,
     fieldCount: 0,
     fieldStats: null,
-    mouseOver: false,
   };
 
   showField = () => {
@@ -205,11 +203,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   }
 
-  hoverValueCopy() {
-    const mouseOver = !this.state.mouseOver;
-    this.setState({ mouseOver });
-  }
-
   render() {
     const {
       theme,
@@ -222,7 +215,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       onClickFilterLabel,
       onClickFilterOutLabel,
     } = this.props;
-    const { showFieldsStats, fieldStats, fieldCount, mouseOver } = this.state;
+    const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
     const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
@@ -270,7 +263,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                   onClick={this.filterOutLabel}
                 ></ToolbarButton>
               )}
-              {toggleFieldButton}
+              {displayedFields && toggleFieldButton}
               <ToolbarButton
                 iconOnly
                 className={showFieldsStats ? styles.showingField : ''}
@@ -284,11 +277,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
           {/* Key - value columns */}
           <td className={style.logDetailsLabel}>{parsedKey}</td>
-          <td
-            className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}
-            onMouseEnter={this.hoverValueCopy.bind(this)}
-            onMouseLeave={this.hoverValueCopy.bind(this)}
-          >
+          <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
             <div className={styles.logDetailsValue}>
               {parsedValue}
 

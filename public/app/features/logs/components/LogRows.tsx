@@ -35,16 +35,16 @@ export interface Props extends Themeable2 {
   logsSortOrder?: LogsSortOrder | null;
   previewLimit?: number;
   forceEscape?: boolean;
-  displayedFields: string[];
+  displayedFields?: string[];
   app?: CoreApp;
   scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  onClickFilterLabel: (key: string, value: string) => void;
-  onClickFilterOutLabel: (key: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
-  onClickShowField: (key: string) => void;
-  onClickHideField: (key: string) => void;
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
 }
 

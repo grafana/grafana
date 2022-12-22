@@ -25,9 +25,9 @@ export interface Props extends Themeable2 {
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
-  displayedFields: string[];
-  onClickShowField: (key: string) => void;
-  onClickHideField: (key: string) => void;
+  displayedFields?: string[];
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -70,7 +70,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
       className,
       onClickShowField,
       onClickHideField,
-      displayedFields: showFields,
+      displayedFields,
       getFieldLinks,
       wrapLogMessage,
     } = this.props;
@@ -120,7 +120,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                         row={row}
                         app={app}
                         wrapLogMessage={wrapLogMessage}
-                        displayedFields={showFields}
+                        displayedFields={displayedFields}
                       />
                     );
                   })}
@@ -140,7 +140,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                           ? this.getStatsForField(key)
                           : calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())
                       }
-                      displayedFields={showFields}
+                      displayedFields={displayedFields}
                       wrapLogMessage={wrapLogMessage}
                       row={row}
                       app={app}
@@ -170,7 +170,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                           ? this.getStatsForField(key)
                           : calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())
                       }
-                      displayedFields={showFields}
+                      displayedFields={displayedFields}
                       wrapLogMessage={wrapLogMessage}
                       row={row}
                       app={app}
