@@ -20,33 +20,34 @@ func GetBackendUserFromContext(ctx context.Context) (*backend.User, bool) {
 }
 
 func InstrumentQueryDataRequest(ctx context.Context, req *http.Request, dsInfo types.DatasourceInfo, client *http.Client, logger log.Logger, logMessage string) (*http.Response, error) {
-	status := "ok"
-
-	start := time.Now()
-
-	res, err := client.Do(req)
-	if err != nil {
-		status = "error"
-	} else {
-		status = res.Status
-	}
-
-	elapsed := time.Since(start)
-
 	logParams := []interface{}{
 		"url", req.URL.Host,
 		"method", req.Method,
 		"path", req.URL.Path,
 		"cloud", dsInfo.Cloud,
-		"authType", dsInfo.JSONData["azureAuthType"],
-		"subId", dsInfo.Settings.SubscriptionId,
 		"datasourceID", dsInfo.DatasourceID,
-		"status", status,
-		"duration", elapsed,
+		"subId", dsInfo.Settings.SubscriptionId,
+	}
+
+	start := time.Now()
+	req.URL = nil
+	res, err := client.Do(req)
+	elapsed := time.Since(start)
+
+	if err != nil {
+		logParams = append(logParams, "status", "internal error")
+		logParams = append(logParams, "error", err.Error())
+	} else {
+		logParams = append(logParams, "status", res.StatusCode)
+	}
+
+	logParams = append(logParams, "duration", elapsed)
+
+	if dsInfo.Credentials != nil {
+		logParams = append(logParams, "authType", dsInfo.Credentials.AzureAuthType())
 	}
 
 	user, ok := GetBackendUserFromContext(ctx)
-
 	if ok {
 		logParams = append(logParams, "uname", user.Email)
 	}
