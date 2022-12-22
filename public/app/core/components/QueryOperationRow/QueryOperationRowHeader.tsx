@@ -114,7 +114,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     align-items: center;
     flex-grow: 1;
-    cursor: pointer;
     overflow: hidden;
     margin-right: ${theme.spacing(0.5)};
   `,
