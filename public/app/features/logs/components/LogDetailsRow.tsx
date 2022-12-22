@@ -248,80 +248,96 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       );
 
     return (
-      <tr className={cx(style.logDetailsValue)}>
-        <td className={style.logsDetailsIcon}>
-          <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
-            {hasFilteringFunctionality && (
+      <>
+        <tr className={cx(style.logDetailsValue)}>
+          <td className={style.logsDetailsIcon}>
+            <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
+              {hasFilteringFunctionality && (
+                <ToolbarButton
+                  iconOnly
+                  narrow
+                  icon="search-plus"
+                  tooltip="Filter for value"
+                  onClick={this.filterLabel}
+                ></ToolbarButton>
+              )}
+              {hasFilteringFunctionality && (
+                <ToolbarButton
+                  iconOnly
+                  narrow
+                  icon="search-minus"
+                  tooltip="Filter out value"
+                  onClick={this.filterOutLabel}
+                ></ToolbarButton>
+              )}
+              {toggleFieldButton}
               <ToolbarButton
                 iconOnly
+                className={showFieldsStats ? styles.showingField : ''}
                 narrow
-                icon="search-plus"
-                tooltip="Filter for value"
-                onClick={this.filterLabel}
+                icon="signal"
+                tooltip="Ad-hoc statistics"
+                onClick={this.showStats}
               ></ToolbarButton>
-            )}
-            {hasFilteringFunctionality && (
+            </ToolbarButtonRow>
+          </td>
+
+          {/* Key - value columns */}
+          <td className={style.logDetailsLabel}>{parsedKey}</td>
+          <td
+            className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}
+            onMouseEnter={this.hoverValueCopy.bind(this)}
+            onMouseLeave={this.hoverValueCopy.bind(this)}
+          >
+            <div className={styles.logDetailsValue}>
+              {parsedValue}
+
+              <div className={cx('show-on-hover', styles.copyButton)}>
+                <ClipboardButton
+                  getText={() => parsedValue}
+                  title="Copy value to clipboard"
+                  fill="text"
+                  variant="secondary"
+                  icon="copy"
+                  size="md"
+                />
+              </div>
+
+              {links?.map((link) => (
+                <span key={link.title}>
+                  &nbsp;
+                  <DataLinkButton link={link} />
+                </span>
+              ))}
+            </div>
+          </td>
+        </tr>
+        {showFieldsStats && (
+          <tr>
+            <td>
               <ToolbarButton
                 iconOnly
+                className={showFieldsStats ? styles.showingField : ''}
                 narrow
-                icon="search-minus"
-                tooltip="Filter out value"
-                onClick={this.filterOutLabel}
+                icon="signal"
+                tooltip="Hide ad-hoc statistics"
+                onClick={this.showStats}
               ></ToolbarButton>
-            )}
-            {toggleFieldButton}
-            <ToolbarButton
-              iconOnly
-              className={showFieldsStats ? styles.showingField : ''}
-              narrow
-              icon="signal"
-              tooltip="Ad-hoc statistics"
-              onClick={this.showStats}
-            ></ToolbarButton>
-          </ToolbarButtonRow>
-        </td>
-
-        {/* Key - value columns */}
-        <td className={style.logDetailsLabel}>{parsedKey}</td>
-        <td
-          className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}
-          onMouseEnter={this.hoverValueCopy.bind(this)}
-          onMouseLeave={this.hoverValueCopy.bind(this)}
-        >
-          <div className={styles.logDetailsValue}>
-            {parsedValue}
-
-            <div className={cx('show-on-hover', styles.copyButton)}>
-              <ClipboardButton
-                getText={() => parsedValue}
-                title="Copy value to clipboard"
-                fill="text"
-                variant="secondary"
-                icon="copy"
-                size="md"
-              />
-            </div>
-
-            {links?.map((link) => (
-              <span key={link.title}>
-                &nbsp;
-                <DataLinkButton link={link} />
-              </span>
-            ))}
-          </div>
-          {showFieldsStats && (
-            <div className={styles.logDetailsStats}>
-              <LogLabelStats
-                stats={fieldStats!}
-                label={parsedKey}
-                value={parsedValue}
-                rowCount={fieldCount}
-                isLabel={isLabel}
-              />
-            </div>
-          )}
-        </td>
-      </tr>
+            </td>
+            <td colSpan={2}>
+              <div className={styles.logDetailsStats}>
+                <LogLabelStats
+                  stats={fieldStats!}
+                  label={parsedKey}
+                  value={parsedValue}
+                  rowCount={fieldCount}
+                  isLabel={isLabel}
+                />
+              </div>
+            </td>
+          </tr>
+        )}
+      </>
     );
   }
 }
