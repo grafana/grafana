@@ -23,7 +23,7 @@ import {
   parseSelector,
   processHistogramMetrics,
   processLabels,
-  roundSecToMin,
+  roundSecToLastMin,
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
@@ -83,6 +83,7 @@ const PREFIX_DELIMITER_REGEX =
 interface AutocompleteContext {
   history?: Array<HistoryItem<PromQuery>>;
 }
+
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics: string[];
   timeRange?: { start: number; end: number };
@@ -478,7 +479,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param key
    */
   fetchLabelValues = async (key: string): Promise<string[]> => {
-    const params = this.datasource.getTimeRangeParams();
+    const params = this.datasource.getQuantizedTimeRangeParams();
     const url = `/api/v1/label/${this.datasource.interpolateString(key)}/values`;
     return await this.request(url, [], params);
   };
@@ -492,7 +493,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   async fetchLabels(): Promise<string[]> {
     const url = '/api/v1/labels';
-    const params = this.datasource.getTimeRangeParams();
+    const params = this.datasource.getQuantizedTimeRangeParams();
     this.labelFetchTs = Date.now().valueOf();
 
     const res = await this.request(url, [], params);
@@ -525,7 +526,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesValuesWithMatch = async (name: string, match?: string): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
-    const range = this.datasource.getTimeRangeParams();
+    const range = this.datasource.getQuantizedTimeRangeParams();
     const urlParams = {
       ...range,
       ...(match && { 'match[]': match }),
@@ -573,6 +574,15 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
     return possibleLabelNames.filter((l) => !usedLabelNames.has(l));
+  };
+
+  quantizeRange = (range: { start: string; end: string }): { start: number; end: number } => {
+    const cacheDurationInMinutes = this.datasource.getCacheDurationInMinutes();
+    console.log('cache duration in minutes', cacheDurationInMinutes)
+    return {
+      start: roundSecToLastMin(parseInt(range.start, 10) * 60, cacheDurationInMinutes),
+      end: roundSecToLastMin(parseInt(range.end, 10) * 60, cacheDurationInMinutes),
+    };
   };
 
   /**

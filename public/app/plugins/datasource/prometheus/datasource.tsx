@@ -46,7 +46,7 @@ import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import PrometheusLanguageProvider from './language_provider';
-import { expandRecordingRules } from './language_utils';
+import {expandRecordingRules, roundSecToLastMin, roundSecToNextMin} from './language_utils';
 import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
@@ -67,6 +67,12 @@ import { PrometheusVariableSupport } from './variables';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
+
+export enum PrometheusCacheLevel {
+  low = 'low',
+  medium = 'medium',
+  high = 'high',
+}
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
@@ -94,6 +100,7 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
+  cacheLevel: PrometheusCacheLevel;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -127,6 +134,7 @@ export class PrometheusDatasource
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
+    this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.low;
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.
@@ -1144,6 +1152,19 @@ export class PrometheusDatasource
     return Math.ceil(date.valueOf() / 1000);
   }
 
+  getQuantizedTimeRangeParams(): { start: string; end: string } {
+    const range = this.timeSrv.timeRange();
+    const startTime = this.getPrometheusTime(range.from, false);
+    const startTimeQuantized = roundSecToLastMin(startTime, this.getCacheDurationInMinutes());
+    const endTime = this.getPrometheusTime(range.to, true);
+    const endTimeQuantized = roundSecToNextMin(endTime, this.getCacheDurationInMinutes())
+    const start = startTimeQuantized.toString();
+    const end = endTimeQuantized.toString()
+
+    return { start, end };
+  }
+
+
   getTimeRangeParams(): { start: string; end: string } {
     const range = this.timeSrv.timeRange();
     return {
@@ -1203,6 +1224,28 @@ export class PrometheusDatasource
 
   interpolateString(string: string) {
     return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
+  }
+
+  getDebounceTimeInMilliseconds(): number {
+    switch (this.cacheLevel) {
+      case PrometheusCacheLevel.medium:
+        return 600;
+      case PrometheusCacheLevel.high:
+        return 1200;
+      default:
+        return 300;
+    }
+  }
+
+  getCacheDurationInMinutes(): number {
+    switch (this.cacheLevel) {
+      case PrometheusCacheLevel.medium:
+        return 10;
+      case PrometheusCacheLevel.high:
+        return 60;
+      default:
+        return 1;
+    }
   }
 }
 

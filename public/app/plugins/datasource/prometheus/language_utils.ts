@@ -55,6 +55,7 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
 // const cleanSelectorRegexp = /\{(\w+="[^"\n]*?")(,\w+="[^"\n]*?")*\}/;
 export const selectorRegexp = /\{[^}]*?(\}|$)/;
 export const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")/g;
+
 export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any[]; selector: string } {
   if (!query.match(selectorRegexp)) {
     // Special matcher for metrics
@@ -224,11 +225,15 @@ export function fixSummariesMetadata(metadata: { [metric: string]: PromMetricsMe
 }
 
 export function roundMsToMin(milliseconds: number): number {
-  return roundSecToMin(milliseconds / 1000);
+  return roundSecToLastMin(milliseconds / 1000);
 }
 
-export function roundSecToMin(seconds: number): number {
-  return Math.floor(seconds / 60);
+export function roundSecToLastMin(seconds: number, minutes: number = 1): number {
+  return Math.floor(seconds / 60) - (Math.floor(seconds / 60) % (minutes * 60));
+}
+
+export function roundSecToNextMin(seconds: number, minutes: number = 1): number {
+  return Math.ceil(seconds / 60) - (Math.floor(seconds / 60) % (minutes * 60));
 }
 
 export function limitSuggestions(items: string[]) {
@@ -248,6 +253,7 @@ export function addLimitInfo(items: any[] | undefined): string {
 // the list of metacharacters is: *+?()|\.[]{}^$
 // we make a javascript regular expression that matches those characters:
 const RE2_METACHARACTERS = /[*+?()|\\.\[\]{}^$]/g;
+
 function escapePrometheusRegexp(value: string): string {
   return value.replace(RE2_METACHARACTERS, '\\$&');
 }
