@@ -1,10 +1,11 @@
+import { valid, gte } from 'semver';
+
 import {
   isMetricAggregationWithField,
   MetricAggregation,
   MetricAggregationWithInlineScript,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { valid } from 'semver';
 
 export const describeMetric = (metric: MetricAggregation) => {
   if (!isMetricAggregationWithField(metric)) {
@@ -21,7 +22,7 @@ export const describeMetric = (metric: MetricAggregation) => {
  * recursing over nested objects (not arrays).
  * @param obj
  */
-export const removeEmpty = <T>(obj: T): Partial<T> =>
+export const removeEmpty = <T extends {}>(obj: T): Partial<T> =>
   Object.entries(obj).reduce((acc, [key, value]) => {
     // Removing nullish values (null & undefined)
     if (value == null) {
@@ -34,7 +35,7 @@ export const removeEmpty = <T>(obj: T): Partial<T> =>
     }
 
     // Removing empty strings
-    if (value?.length === 0) {
+    if (typeof value === 'string' && value.length === 0) {
       return { ...acc };
     }
 
@@ -94,26 +95,35 @@ export const getScriptValue = (metric: MetricAggregationWithInlineScript) =>
   (typeof metric.settings?.script === 'object' ? metric.settings?.script?.inline : metric.settings?.script) || '';
 
 /**
- * Coerces the a version string/number to a valid semver string.
+ * Coerces the version to a valid semver string.
  * It takes care of also converting from the legacy format (numeric) to the new one.
  * @param version
  */
-export const coerceESVersion = (version: string | number): string => {
+export const coerceESVersion = (version: string | number | undefined): string => {
   if (typeof version === 'string') {
-    return valid(version) || '5.0.0';
+    return valid(version) || '8.0.0';
   }
 
   switch (version) {
     case 2:
       return '2.0.0';
+    case 5:
+      return '5.0.0';
     case 56:
       return '5.6.0';
     case 60:
       return '6.0.0';
     case 70:
       return '7.0.0';
-    case 5:
     default:
-      return '5.0.0';
+      return '8.0.0';
   }
+};
+
+export const isSupportedVersion = (version: string): boolean => {
+  if (gte(version, '7.10.0')) {
+    return true;
+  }
+
+  return false;
 };

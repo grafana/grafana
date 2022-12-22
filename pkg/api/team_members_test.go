@@ -12,13 +12,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
 	"github.com/grafana/grafana/pkg/services/teamguardian/manager"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,25 +34,36 @@ type TeamGuardianMock struct {
 	result error
 }
 
-func (t *TeamGuardianMock) CanAdmin(ctx context.Context, orgId int64, teamId int64, user *models.SignedInUser) error {
+func (t *TeamGuardianMock) CanAdmin(ctx context.Context, orgId int64, teamId int64, user *user.SignedInUser) error {
+	return t.result
+}
+
+func (t *TeamGuardianMock) DeleteByUser(ctx context.Context, userID int64) error {
 	return t.result
 }
 
 func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	const testOrgID int64 = 1
-	var userCmd models.CreateUserCommand
-	team, err := sqlStore.CreateTeam("group1 name", "test1@test.com", testOrgID)
+	var userCmd user.CreateUserCommand
+	teamSvc := teamimpl.ProvideService(sqlStore, setting.NewCfg())
+	team, err := teamSvc.CreateTeam("group1 name", "test1@test.com", testOrgID)
 	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService)
+	require.NoError(t, err)
+
 	for i := 0; i < 3; i++ {
-		userCmd = models.CreateUserCommand{
+		userCmd = user.CreateUserCommand{
 			Email: fmt.Sprint("user", i, "@test.com"),
 			Name:  fmt.Sprint("user", i),
 			Login: fmt.Sprint("loginuser", i),
 		}
 		// user
-		user, err := sqlStore.CreateUser(context.Background(), userCmd)
+		user, err := usrSvc.CreateUserForTests(context.Background(), &userCmd)
 		require.NoError(t, err)
-		err = sqlStore.AddTeamMember(user.Id, testOrgID, team.Id, false, 1)
+		err = teamSvc.AddTeamMember(user.ID, testOrgID, team.Id, false, 1)
 		require.NoError(t, err)
 	}
 }
@@ -52,16 +71,17 @@ func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 	hs := setupSimpleHTTPServer(nil)
 	settings := hs.Cfg
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	sqlStore.Cfg = settings
 
 	hs.SQLStore = sqlStore
+	hs.teamService = teamimpl.ProvideService(sqlStore, settings)
 	hs.License = &licensing.OSSLicensingService{}
 	hs.teamGuardian = &TeamGuardianMock{}
 	mock := mockstore.NewSQLStoreMock()
 
 	loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "api/teams/1/members",
-		"api/teams/:teamId/members", models.ROLE_ADMIN, func(sc *scenarioContext) {
+		"api/teams/:teamId/members", org.RoleAdmin, func(sc *scenarioContext) {
 			setUpGetTeamMembersHandler(t, sqlStore)
 
 			sc.handlerFunc = hs.GetTeamMembers
@@ -83,7 +103,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 		t.Cleanup(func() { settings.HiddenUsers = make(map[string]struct{}) })
 
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "api/teams/1/members",
-			"api/teams/:teamId/members", models.ROLE_ADMIN, func(sc *scenarioContext) {
+			"api/teams/:teamId/members", org.RoleAdmin, func(sc *scenarioContext) {
 				setUpGetTeamMembersHandler(t, sqlStore)
 
 				sc.handlerFunc = hs.GetTeamMembers
@@ -102,35 +122,47 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 	})
 }
 
-func createUser(db *sqlstore.SQLStore, orgId int64, t *testing.T) int64 {
-	user, err := db.CreateUser(context.Background(), models.CreateUserCommand{
+func createUser(db db.DB, orgId int64, t *testing.T) int64 {
+	quotaService := quotaimpl.ProvideService(db, setting.NewCfg())
+	orgService, err := orgimpl.ProvideService(db, setting.NewCfg(), quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(db, orgService, setting.NewCfg(), nil, nil, quotaService)
+	require.NoError(t, err)
+
+	user, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{
 		Login:    fmt.Sprintf("TestUser%d", rand.Int()),
-		OrgId:    orgId,
+		OrgID:    orgId,
 		Password: "password",
 	})
 	require.NoError(t, err)
 
-	return user.Id
+	return user.ID
 }
 
-func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, t *testing.T) int64 {
-	user, err := db.CreateUser(context.Background(), models.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
-	require.NoError(t, err)
-	testOrg, err := db.CreateOrgWithMember("TestOrg", user.Id)
+func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, orgService org.Service, t *testing.T) int64 {
+	teamService := teamimpl.ProvideService(db, setting.NewCfg()) // FIXME
+	quotaService := quotaimpl.ProvideService(db, db.Cfg)
+	usrSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, teamService, nil, quotaService)
 	require.NoError(t, err)
 
-	team, err := db.CreateTeam("test", "test@test.com", testOrg.Id)
+	user, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
+	require.NoError(t, err)
+	cmd := &org.CreateOrgCommand{Name: "TestOrg", UserID: user.ID}
+	testOrg, err := orgService.CreateWithMember(context.Background(), cmd)
+	require.NoError(t, err)
+
+	team, err := teamService.CreateTeam("test", "test@test.com", testOrg.ID)
 	require.NoError(t, err)
 
 	for i := 0; i < userCount; i++ {
-		userId := createUser(db, testOrg.Id, t)
+		userId := createUser(db, testOrg.ID, t)
 		require.NoError(t, err)
 
-		err = db.AddTeamMember(userId, testOrg.Id, team.Id, false, 0)
+		err = teamService.AddTeamMember(userId, testOrg.ID, team.Id, false, 0)
 		require.NoError(t, err)
 	}
 
-	return testOrg.Id
+	return testOrg.ID
 }
 
 var (
@@ -144,13 +176,15 @@ var (
 
 func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
-	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
+	sc := setupHTTPServerWithCfg(t, true, cfg)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, cfg, quotatest.New(false, nil))
+	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db, sc.teamService))
 	sc.hs.teamGuardian = guardian
 
 	teamMemberCount := 3
-	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, t)
+	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	newUserId := createUser(sc.db, testOrgId, t)
@@ -169,7 +203,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err := sc.db.AddTeamMember(sc.initCtx.UserId, 1, 1, false, 0)
+	err := sc.teamService.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
 	require.NoError(t, err)
 	input = strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUserId))
 	t.Run("Team members cannot add team members", func(t *testing.T) {
@@ -177,8 +211,8 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err = sc.db.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-		UserId:     sc.initCtx.UserId,
+	err = sc.teamService.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
+		UserId:     sc.initCtx.UserID,
 		OrgId:      1,
 		TeamId:     1,
 		Permission: models.PERMISSION_ADMIN,
@@ -191,18 +225,19 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	})
 }
 
-func TestGetTeamMembersAPIEndpoint_FGAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+func TestGetTeamMembersAPIEndpoint_RBAC(t *testing.T) {
+	sc := setupHTTPServer(t, true)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
 	// setupTeamTestScenario sets up 3 user (id: 2,3,4) in the team (id: 1)
-	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, t)
+	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control allows getting a team members with the right permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock,
-			[]*ac.Permission{
+			[]ac.Permission{
 				{Action: ac.ActionTeamsPermissionsRead, Scope: ac.Scope("teams", "id", "1")},
 				{Action: ac.ActionOrgUsersRead, Scope: ac.ScopeUsersAll},
 			},
@@ -220,7 +255,7 @@ func TestGetTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	t.Run("Access control filters team members based on user permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock,
-			[]*ac.Permission{
+			[]ac.Permission{
 				{Action: ac.ActionTeamsPermissionsRead, Scope: ac.Scope("teams", "id", "1")},
 				{Action: ac.ActionOrgUsersRead, Scope: ac.Scope("users", "id", "2")},
 				{Action: ac.ActionOrgUsersRead, Scope: ac.Scope("users", "id", "3")},
@@ -238,25 +273,26 @@ func TestGetTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control prevents getting a team member with incorrect scope", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock,
-			[]*ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: ac.Scope("teams", "id", "2")}},
+			[]ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: ac.Scope("teams", "id", "2")}},
 			testOrgId)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(teamMemberGetRoute, "1"), nil, t)
 		require.Equal(t, http.StatusForbidden, response.Code)
 	})
 }
 
-func TestAddTeamMembersAPIEndpoint_FGAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+func TestAddTeamMembersAPIEndpoint_RBAC(t *testing.T) {
+	sc := setupHTTPServer(t, true)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
-	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, t)
+	testOrgId := setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	newUserId := createUser(sc.db, testOrgId, t)
 	input := strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUserId))
 	t.Run("Access control allows adding a team member with the right permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
@@ -265,14 +301,14 @@ func TestAddTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	newUserId = createUser(sc.db, testOrgId, t)
 	input = strings.NewReader(fmt.Sprintf(teamCmd, newUserId))
 	t.Run("Access control prevents from adding a team member with the wrong permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control prevents adding a team member with incorrect scope", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(teamMemberAddRoute, "1"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -280,13 +316,15 @@ func TestAddTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 
 func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
-	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
+	sc := setupHTTPServerWithCfg(t, true, cfg)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, cfg, quotatest.New(false, nil))
+	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db, sc.teamService))
 	sc.hs.teamGuardian = guardian
 
 	teamMemberCount := 3
-	setupTeamTestScenario(teamMemberCount, sc.db, t)
+	setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(updateTeamMemberCmd, models.PERMISSION_ADMIN))
@@ -303,7 +341,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err := sc.db.AddTeamMember(sc.initCtx.UserId, 1, 1, false, 0)
+	err := sc.teamService.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
 	require.NoError(t, err)
 	input = strings.NewReader(fmt.Sprintf(updateTeamMemberCmd, 0))
 	t.Run("Team members cannot update team members", func(t *testing.T) {
@@ -311,8 +349,8 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err = sc.db.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-		UserId:     sc.initCtx.UserId,
+	err = sc.teamService.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
+		UserId:     sc.initCtx.UserID,
 		OrgId:      1,
 		TeamId:     1,
 		Permission: models.PERMISSION_ADMIN,
@@ -325,17 +363,18 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	})
 }
 
-func TestUpdateTeamMembersAPIEndpoint_FGAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+func TestUpdateTeamMembersAPIEndpoint_RBAC(t *testing.T) {
+	sc := setupHTTPServer(t, true)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
-	setupTeamTestScenario(teamMemberCount, sc.db, t)
+	setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(updateTeamMemberCmd, models.PERMISSION_ADMIN))
 	t.Run("Access control allows updating a team member with the right permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(teamMemberUpdateRoute, "1", "2"), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
@@ -343,14 +382,14 @@ func TestUpdateTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	input = strings.NewReader(fmt.Sprintf(updateTeamMemberCmd, models.PERMISSION_ADMIN))
 	t.Run("Access control prevents updating a team member with the wrong permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(teamMemberUpdateRoute, "1", "2"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control prevents updating a team member with incorrect scope", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(teamMemberUpdateRoute, "1", "2"), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -358,13 +397,15 @@ func TestUpdateTeamMembersAPIEndpoint_FGAC(t *testing.T) {
 
 func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
-	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
+	sc := setupHTTPServerWithCfg(t, true, cfg)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
+	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db, sc.teamService))
 	sc.hs.teamGuardian = guardian
 
 	teamMemberCount := 3
-	setupTeamTestScenario(teamMemberCount, sc.db, t)
+	setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	t.Run("Organisation admins can remove a team member", func(t *testing.T) {
@@ -379,15 +420,15 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err := sc.db.AddTeamMember(sc.initCtx.UserId, 1, 1, false, 0)
+	err := sc.teamService.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
 	require.NoError(t, err)
 	t.Run("Team members cannot remove team members", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(teamMemberDeleteRoute, "1", "3"), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err = sc.db.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-		UserId:     sc.initCtx.UserId,
+	err = sc.teamService.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
+		UserId:     sc.initCtx.UserID,
 		OrgId:      1,
 		TeamId:     1,
 		Permission: models.PERMISSION_ADMIN,
@@ -399,30 +440,31 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	})
 }
 
-func TestDeleteTeamMembersAPIEndpoint_FGAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+func TestDeleteTeamMembersAPIEndpoint_RBAC(t *testing.T) {
+	sc := setupHTTPServer(t, true)
+	sc.hs.orgService, _ = orgimpl.ProvideService(sc.db, sc.cfg, quotatest.New(false, nil))
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
-	setupTeamTestScenario(teamMemberCount, sc.db, t)
+	setupTeamTestScenario(teamMemberCount, sc.db, sc.hs.orgService, t)
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control allows removing a team member with the right permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(teamMemberDeleteRoute, "1", "2"), nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	t.Run("Access control prevents removing a team member with the wrong permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(teamMemberDeleteRoute, "1", "3"), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	t.Run("Access control prevents removing a team member with incorrect scope", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
+		setAccessControlPermissions(sc.acmock, []ac.Permission{{Action: ac.ActionTeamsPermissionsWrite, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(teamMemberDeleteRoute, "1", "3"), nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})

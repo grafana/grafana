@@ -12,20 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grafanaschema
+package grafanaplugin
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    // empty/missing will default to grafana blog
-                    feedUrl?: string
-                    useProxy?: bool
-                    showImage?: bool | *true
-                }
-            }
-        ]
-    ]
-    migrations: []
+import "github.com/grafana/thema"
+
+Panel: thema.#Lineage & {
+	name: "news"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						// empty/missing will default to grafana blog
+						feedUrl?:   string
+						showImage?: bool | *true
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

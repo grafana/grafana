@@ -1,5 +1,6 @@
-import { TraceResponse } from './types';
 import { ArrayVector, FieldDTO } from '@grafana/data';
+
+import { TraceResponse } from './types';
 
 export const testResponse: TraceResponse = {
   traceID: '3fa414edcef6ad90',
@@ -111,9 +112,9 @@ export function toNodesFrame(values: any[]) {
   return toVectors([
     { name: 'id', values: values[0] },
     { name: 'title', values: values[1] },
-    { name: 'subTitle', values: values[2] },
-    { name: 'mainStat', values: values[3] },
-    { name: 'secondaryStat', values: values[4] },
+    { name: 'subtitle', values: values[2] },
+    { name: 'mainstat', values: values[3] },
+    { name: 'secondarystat', values: values[4] },
     {
       name: 'color',
       config: {

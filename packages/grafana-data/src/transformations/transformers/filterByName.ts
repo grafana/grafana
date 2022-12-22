@@ -1,8 +1,9 @@
-import { DataTransformerID } from './ids';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { FieldMatcherID } from '../matchers/ids';
-import { filterFieldsTransformer } from './filter';
 import { RegexpOrNamesMatcherOptions } from '../matchers/nameMatcher';
+
+import { filterFieldsTransformer } from './filter';
+import { DataTransformerID } from './ids';
 
 export interface FilterFieldsByNameTransformerOptions {
   include?: RegexpOrNamesMatcherOptions;
@@ -19,16 +20,20 @@ export const filterFieldsByNameTransformer: DataTransformerInfo<FilterFieldsByNa
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: (options) => (source) =>
+  operator: (options, replace) => (source) =>
     source.pipe(
-      filterFieldsTransformer.operator({
-        include: getMatcherConfig(options.include),
-        exclude: getMatcherConfig(options.exclude),
-      })
+      filterFieldsTransformer.operator(
+        {
+          include: getMatcherConfig(options.include),
+          exclude: getMatcherConfig(options.exclude),
+        },
+        replace
+      )
     ),
 };
 
-const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig | undefined => {
+// Exported to share with other implementations, but not exported to `@grafana/data`
+export const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig | undefined => {
   if (!options) {
     return undefined;
   }

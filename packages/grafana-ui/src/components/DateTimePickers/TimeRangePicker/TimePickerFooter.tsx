@@ -1,15 +1,18 @@
-import React, { FC, useCallback, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import { isString } from 'lodash';
+import React, { FC, useCallback, useState } from 'react';
+
 import { getTimeZoneInfo, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { Field, RadioButtonGroup, Select } from '../..';
 import { stylesFactory, useTheme2 } from '../../../themes';
-import { TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
-import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
-import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
+import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { TimeZonePicker } from '../TimeZonePicker';
-import { isString } from 'lodash';
-import { selectors } from '@grafana/e2e-selectors';
-import { Field, RadioButtonGroup, Select } from '../..';
+import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
+import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
+import { TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
 import { monthOptions } from '../options';
 
 interface Props {
@@ -56,7 +59,10 @@ export const TimePickerFooter: FC<Props> = (props) => {
 
   return (
     <div>
-      <section aria-label="Time zone selection" className={style.container}>
+      <section
+        aria-label={t('time-picker.footer.time-zone-selection', 'Time zone selection')}
+        className={style.container}
+      >
         <div className={style.timeZoneContainer}>
           <div className={style.timeZone}>
             <TimeZoneTitle title={info.name} />
@@ -67,7 +73,7 @@ export const TimePickerFooter: FC<Props> = (props) => {
         </div>
         <div className={style.spacer} />
         <Button variant="secondary" onClick={onToggleChangeTimeSettings} size="sm">
-          Change time settings
+          <Trans i18nKey="time-picker.footer.change-settings-button">Change time settings</Trans>
         </Button>
       </section>
       {isEditing ? (
@@ -76,8 +82,8 @@ export const TimePickerFooter: FC<Props> = (props) => {
             <RadioButtonGroup
               value={editMode}
               options={[
-                { label: 'Time Zone', value: 'tz' },
-                { label: 'Fiscal year', value: 'fy' },
+                { label: t('time-picker.footer.time-zone-option', 'Time zone'), value: 'tz' },
+                { label: t('time-picker.footer.fiscal-year-option', 'Fiscal year'), value: 'fy' },
               ]}
               onChange={setEditMode}
             ></RadioButtonGroup>
@@ -104,9 +110,13 @@ export const TimePickerFooter: FC<Props> = (props) => {
               aria-label={selectors.components.TimeZonePicker.containerV2}
               className={cx(style.timeZoneContainer, style.timeSettingContainer)}
             >
-              <Field className={style.fiscalYearField} label={'Fiscal year start month'}>
+              <Field
+                className={style.fiscalYearField}
+                label={t('time-picker.footer.fiscal-year-start', 'Fiscal year start month')}
+              >
                 <Select
                   value={fiscalYearStartMonth}
+                  menuShouldPortal={false}
                   options={monthOptions}
                   onChange={(value) => {
                     if (onChangeFiscalYearStartMonth) {

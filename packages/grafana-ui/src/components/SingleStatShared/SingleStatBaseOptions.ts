@@ -1,6 +1,5 @@
 import { cloneDeep, isNumber, omit } from 'lodash';
 
-import { OptionsWithTextFormatting } from '@grafana/schema';
 import {
   convertOldAngularValueMappings,
   FieldColorModeId,
@@ -17,6 +16,7 @@ import {
   ValueMapping,
   VizOrientation,
 } from '@grafana/data';
+import { OptionsWithTextFormatting } from '@grafana/schema';
 
 export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   reduceOptions: ReduceDataOptions;

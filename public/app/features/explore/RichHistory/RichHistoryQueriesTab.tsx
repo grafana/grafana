@@ -1,74 +1,69 @@
-import React, { useState, useEffect } from 'react';
 import { css } from '@emotion/css';
-import { uniqBy } from 'lodash';
+import React, { useEffect, useCallback } from 'react';
 
-// Types
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
-
-// Utils
-import { stylesFactory, useTheme, RangeSlider, MultiSelect, Select, FilterInput } from '@grafana/ui';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
-
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
 import {
-  SortOrder,
+  createDatasourcesList,
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,
-  createDatasourcesList,
-  filterAndSortQueries,
+  SortOrder,
+  RichHistorySearchFilters,
+  RichHistorySettings,
 } from 'app/core/utils/richHistory';
+import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 
-// Components
+import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
-import { sortOrderOptions } from './RichHistory';
-import { useDebounce } from 'react-use';
 
 export interface Props {
   queries: RichHistoryQuery[];
-  sortOrder: SortOrder;
-  activeDatasourceOnly: boolean;
-  datasourceFilters: SelectableValue[];
-  retentionPeriod: number;
+  totalQueries: number;
+  loading: boolean;
+  activeDatasourceInstance: string;
+  updateFilters: (filtersToUpdate?: Partial<RichHistorySearchFilters>) => void;
+  clearRichHistoryResults: () => void;
+  loadMoreRichHistory: () => void;
+  richHistorySettings: RichHistorySettings;
+  richHistorySearchFilters?: RichHistorySearchFilters;
   exploreId: ExploreId;
   height: number;
-  onChangeSortOrder: (sortOrder: SortOrder) => void;
-  onSelectDatasourceFilters: (value: SelectableValue[]) => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
-  const bgColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark4;
+const getStyles = (theme: GrafanaTheme2, height: number) => {
+  const bgColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.dark4;
 
-  /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
-  const cardWidth = '100% - 134px';
-  const sliderHeight = `${height - 180}px`;
   return {
     container: css`
       display: flex;
-      .label-slider {
-        font-size: ${theme.typography.size.sm};
-        &:last-of-type {
-          margin-top: ${theme.spacing.lg};
-        }
-        &:first-of-type {
-          font-weight: ${theme.typography.weight.semibold};
-          margin-bottom: ${theme.spacing.md};
-        }
+    `,
+    labelSlider: css`
+      font-size: ${theme.typography.bodySmall.fontSize};
+      &:last-of-type {
+        margin-top: ${theme.spacing(3)};
+      }
+      &:first-of-type {
+        font-weight: ${theme.typography.fontWeightMedium};
+        margin-bottom: ${theme.spacing(2)};
       }
     `,
     containerContent: css`
-      width: calc(${cardWidth});
+      /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
+      width: calc(100% - 134px);
     `,
     containerSlider: css`
       width: 129px;
-      margin-right: ${theme.spacing.sm};
-      .slider {
-        bottom: 10px;
-        height: ${sliderHeight};
-        width: 129px;
-        padding: ${theme.spacing.sm} 0;
-      }
+      margin-right: ${theme.spacing(1)};
+    `,
+    fixedSlider: css`
+      position: fixed;
     `,
     slider: css`
-      position: fixed;
+      bottom: 10px;
+      height: ${height - 180}px;
+      width: 129px;
+      padding: ${theme.spacing(1)} 0;
     `,
     selectors: css`
       display: flex;
@@ -76,15 +71,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
       flex-wrap: wrap;
     `,
     filterInput: css`
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
     `,
     multiselect: css`
       width: 100%;
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
       .gf-form-select-box__multi-value {
         background-color: ${bgColor};
-        padding: ${theme.spacing.xxs} ${theme.spacing.xs} ${theme.spacing.xxs} ${theme.spacing.sm};
-        border-radius: ${theme.border.radius.sm};
+        padding: ${theme.spacing(0.25, 0.5, 0.25, 1)};
+        border-radius: ${theme.shape.borderRadius(1)};
       }
     `,
     sort: css`
@@ -94,163 +89,179 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
-      margin-top: ${theme.spacing.lg};
+      margin-top: ${theme.spacing(3)};
       h4 {
         margin: 0 10px 0 0;
       }
     `,
     heading: css`
-      font-size: ${theme.typography.heading.h4};
-      margin: ${theme.spacing.md} ${theme.spacing.xxs} ${theme.spacing.sm} ${theme.spacing.xxs};
+      font-size: ${theme.typography.h4.fontSize};
+      margin: ${theme.spacing(2, 0.25, 1, 0.25)};
     `,
     footer: css`
       height: 60px;
-      margin: ${theme.spacing.lg} auto;
+      margin: ${theme.spacing(3)} auto;
       display: flex;
       justify-content: center;
-      font-weight: ${theme.typography.weight.light};
-      font-size: ${theme.typography.size.sm};
+      font-weight: ${theme.typography.fontWeightLight};
+      font-size: ${theme.typography.bodySmall.fontSize};
       a {
-        font-weight: ${theme.typography.weight.semibold};
-        margin-left: ${theme.spacing.xxs};
+        font-weight: ${theme.typography.fontWeightMedium};
+        margin-left: ${theme.spacing(0.25)};
       }
     `,
     queries: css`
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.regular};
-      margin-left: ${theme.spacing.xs};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      font-weight: ${theme.typography.fontWeightRegular};
+      margin-left: ${theme.spacing(0.5)};
     `,
   };
-});
+};
 
 export function RichHistoryQueriesTab(props: Props) {
   const {
-    datasourceFilters,
-    onSelectDatasourceFilters,
     queries,
-    onChangeSortOrder,
-    sortOrder,
-    activeDatasourceOnly,
-    retentionPeriod,
+    totalQueries,
+    loading,
+    richHistorySearchFilters,
+    updateFilters,
+    clearRichHistoryResults,
+    loadMoreRichHistory,
+    richHistorySettings,
     exploreId,
     height,
+    activeDatasourceInstance,
   } = props;
 
-  const [timeFilter, setTimeFilter] = useState<[number, number]>([0, retentionPeriod]);
-  const [data, setData] = useState<[RichHistoryQuery[], ReturnType<typeof createDatasourcesList>]>([[], []]);
-  const [searchInput, setSearchInput] = useState('');
-  const [debouncedSearchInput, setDebouncedSearchInput] = useState('');
+  const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getStyles(theme, height), [height]));
 
-  const theme = useTheme();
-  const styles = getStyles(theme, height);
-
-  useDebounce(
-    () => {
-      setDebouncedSearchInput(searchInput);
-    },
-    300,
-    [searchInput]
-  );
+  const listOfDatasources = createDatasourcesList();
 
   useEffect(() => {
-    const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
-    const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
+    const datasourceFilters =
+      !richHistorySettings.activeDatasourceOnly && richHistorySettings.lastUsedDatasourceFilters
+        ? richHistorySettings.lastUsedDatasourceFilters
+        : [activeDatasourceInstance];
+    const filters: RichHistorySearchFilters = {
+      search: '',
+      sortOrder: SortOrder.Descending,
+      datasourceFilters,
+      from: 0,
+      to: richHistorySettings.retentionPeriod,
+      starred: false,
+    };
+    updateFilters(filters);
 
-    setData([
-      filterAndSortQueries(
-        queries,
-        sortOrder,
-        datasourceFilters.map((d) => d.value),
-        debouncedSearchInput,
-        timeFilter
-      ),
-      listOfDatasources,
-    ]);
-  }, [timeFilter, queries, sortOrder, datasourceFilters, debouncedSearchInput]);
+    return () => {
+      clearRichHistoryResults();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const [filteredQueries, listOfDatasources] = data;
+  if (!richHistorySearchFilters) {
+    return <span>Loading...</span>;
+  }
 
   /* mappedQueriesToHeadings is an object where query headings (stringified dates/data sources)
    * are keys and arrays with queries that belong to that headings are values.
    */
-  const mappedQueriesToHeadings = mapQueriesToHeadings(filteredQueries, sortOrder);
+  const mappedQueriesToHeadings = mapQueriesToHeadings(queries, richHistorySearchFilters.sortOrder);
+  const sortOrderOptions = getSortOrderOptions();
+  const partialResults = queries.length && queries.length !== totalQueries;
 
   return (
     <div className={styles.container}>
       <div className={styles.containerSlider}>
-        <div className={styles.slider}>
-          <div className="label-slider">Filter history</div>
-          <div className="label-slider">{mapNumbertoTimeInSlider(timeFilter[0])}</div>
-          <div className="slider">
+        <div className={styles.fixedSlider}>
+          <div className={styles.labelSlider}>Filter history</div>
+          <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(richHistorySearchFilters.from)}</div>
+          <div className={styles.slider}>
             <RangeSlider
               tooltipAlwaysVisible={false}
               min={0}
-              max={retentionPeriod}
-              value={timeFilter}
+              max={richHistorySettings.retentionPeriod}
+              value={[richHistorySearchFilters.from, richHistorySearchFilters.to]}
               orientation="vertical"
               formatTooltipResult={mapNumbertoTimeInSlider}
               reverse={true}
-              onAfterChange={setTimeFilter as () => number[]}
+              onAfterChange={(value) => {
+                updateFilters({ from: value![0], to: value![1] });
+              }}
             />
           </div>
-          <div className="label-slider">{mapNumbertoTimeInSlider(timeFilter[1])}</div>
+          <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(richHistorySearchFilters.to)}</div>
         </div>
       </div>
 
       <div className={styles.containerContent}>
         <div className={styles.selectors}>
-          {!activeDatasourceOnly && (
-            <div aria-label="Filter datasources" className={styles.multiselect}>
-              <MultiSelect
-                menuShouldPortal
-                options={listOfDatasources}
-                value={datasourceFilters}
-                placeholder="Filter queries for data sources(s)"
-                onChange={onSelectDatasourceFilters}
-              />
-            </div>
+          {!richHistorySettings.activeDatasourceOnly && (
+            <MultiSelect
+              className={styles.multiselect}
+              options={listOfDatasources.map((ds) => {
+                return { value: ds.name, label: ds.name };
+              })}
+              value={richHistorySearchFilters.datasourceFilters}
+              placeholder="Filter queries for data sources(s)"
+              aria-label="Filter queries for data sources(s)"
+              onChange={(options: SelectableValue[]) => {
+                updateFilters({ datasourceFilters: options.map((option) => option.value) });
+              }}
+            />
           )}
           <div className={styles.filterInput}>
             <FilterInput
               placeholder="Search queries"
-              value={searchInput}
-              onChange={(value: string) => {
-                setSearchInput(value);
-              }}
+              value={richHistorySearchFilters.search}
+              onChange={(search: string) => updateFilters({ search })}
             />
           </div>
           <div aria-label="Sort queries" className={styles.sort}>
             <Select
-              menuShouldPortal
-              value={sortOrderOptions.filter((order) => order.value === sortOrder)}
+              value={sortOrderOptions.filter((order) => order.value === richHistorySearchFilters.sortOrder)}
               options={sortOrderOptions}
               placeholder="Sort queries by"
-              onChange={(e) => onChangeSortOrder(e.value as SortOrder)}
+              onChange={(e: SelectableValue<SortOrder>) => updateFilters({ sortOrder: e.value })}
             />
           </div>
         </div>
-        {Object.keys(mappedQueriesToHeadings).map((heading) => {
-          return (
-            <div key={heading}>
-              <div className={styles.heading}>
-                {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
+
+        {loading && <span>Loading results...</span>}
+
+        {!loading &&
+          Object.keys(mappedQueriesToHeadings).map((heading) => {
+            return (
+              <div key={heading}>
+                <div className={styles.heading}>
+                  {heading}{' '}
+                  <span className={styles.queries}>
+                    {partialResults ? 'Displaying ' : ''}
+                    {mappedQueriesToHeadings[heading].length} queries
+                  </span>
+                </div>
+                {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
+                  const idx = listOfDatasources.findIndex((d) => d.uid === q.datasourceUid);
+                  return (
+                    <RichHistoryCard
+                      query={q}
+                      key={q.id}
+                      exploreId={exploreId}
+                      dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
+                      isRemoved={idx === -1}
+                    />
+                  );
+                })}
               </div>
-              {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
-                const idx = listOfDatasources.findIndex((d) => d.label === q.datasourceName);
-                return (
-                  <RichHistoryCard
-                    query={q}
-                    key={q.ts}
-                    exploreId={exploreId}
-                    dsImg={listOfDatasources[idx].imgUrl}
-                    isRemoved={listOfDatasources[idx].isRemoved}
-                  />
-                );
-              })}
-            </div>
-          );
-        })}
-        <div className={styles.footer}>The history is local to your browser and is not shared with others.</div>
+            );
+          })}
+        {partialResults ? (
+          <div>
+            Showing {queries.length} of {totalQueries} <Button onClick={loadMoreRichHistory}>Load more</Button>
+          </div>
+        ) : null}
+        <div className={styles.footer}>
+          {!config.queryHistoryEnabled ? 'The history is local to your browser and is not shared with others.' : ''}
+        </div>
       </div>
     </div>
   );

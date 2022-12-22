@@ -1,6 +1,7 @@
 export interface SystemDateFormatSettings {
   fullDate: string;
   interval: {
+    millisecond: string;
     second: string;
     minute: string;
     hour: string;
@@ -12,10 +13,13 @@ export interface SystemDateFormatSettings {
 }
 
 const DEFAULT_SYSTEM_DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
+const DEFAULT_SYSTEM_DATE_MS_FORMAT = 'YYYY-MM-DD HH:mm:ss.SSS';
 
 export class SystemDateFormatsState {
   fullDate = DEFAULT_SYSTEM_DATE_FORMAT;
+  fullDateMS = DEFAULT_SYSTEM_DATE_MS_FORMAT;
   interval = {
+    millisecond: 'HH:mm:ss.SSS',
     second: 'HH:mm:ss',
     minute: 'HH:mm',
     hour: 'MM/DD HH:mm',
@@ -33,11 +37,6 @@ export class SystemDateFormatsState {
     }
   }
 
-  get fullDateMS() {
-    // Add millisecond to seconds part
-    return this.fullDate.replace('ss', 'ss.SSS');
-  }
-
   useBrowserLocale() {
     this.fullDate = localTimeFormat({
       year: 'numeric',
@@ -48,6 +47,15 @@ export class SystemDateFormatsState {
       second: '2-digit',
     });
 
+    // ES5 doesn't support `DateTimeFormatOptions.fractionalSecondDigits` so we have to use
+    // a hack with string replacement.
+    this.fullDateMS = this.fullDate.replace('ss', 'ss.SSS');
+
+    this.interval.millisecond = localTimeFormat(
+      { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false },
+      null,
+      this.interval.second
+    ).replace('ss', 'ss.SSS');
     this.interval.second = localTimeFormat(
       { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false },
       null,

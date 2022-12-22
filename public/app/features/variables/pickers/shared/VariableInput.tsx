@@ -1,4 +1,7 @@
 import React, { PureComponent } from 'react';
+
+import { t } from 'app/core/internationalization';
+
 import { NavigationKey } from '../types';
 
 export interface Props extends Omit<React.HTMLProps<HTMLInputElement>, 'onChange' | 'value'> {
@@ -36,7 +39,7 @@ export class VariableInput extends PureComponent<Props> {
         value={value ?? ''}
         onChange={this.onChange}
         onKeyDown={this.onKeyDown}
-        placeholder="Enter variable value"
+        placeholder={t('variable.picker.input', 'Enter variable value')}
       />
     );
   }

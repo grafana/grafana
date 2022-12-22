@@ -1,10 +1,12 @@
+import { css, cx } from '@emotion/css';
 import React, { memo, CSSProperties } from 'react';
-import { areEqual, FixedSizeGrid as Grid } from 'react-window';
+import SVG from 'react-inlinesvg';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { areEqual, FixedSizeGrid as Grid } from 'react-window';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2, stylesFactory } from '@grafana/ui';
-import SVG from 'react-inlinesvg';
-import { css, cx } from '@emotion/css';
+
 import { ResourceItem } from './FolderPickerTab';
 
 interface CellProps {
@@ -38,9 +40,9 @@ function Cell(props: CellProps) {
           {card.imgUrl.endsWith('.svg') ? (
             <SVG src={card.imgUrl} className={styles.img} />
           ) : (
-            <img src={card.imgUrl} className={styles.img} />
+            <img src={card.imgUrl} alt="" className={styles.img} />
           )}
-          <h6 className={styles.text}>{card.label.substr(0, card.label.length - 4)}</h6>
+          <h6 className={styles.text}>{card.label.slice(0, -4)}</h6>
         </div>
       )}
     </div>

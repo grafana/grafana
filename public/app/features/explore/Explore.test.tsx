@@ -1,18 +1,46 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  DataSourceApi,
-  LoadingState,
-  toUtc,
-  DataQueryError,
-  DataQueryRequest,
-  CoreApp,
-  createTheme,
-} from '@grafana/data';
+import { Provider } from 'react-redux';
+import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+
+import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv } from '@grafana/data';
+import { configureStore } from 'app/store/configureStore';
 import { ExploreId } from 'app/types/explore';
-import { shallow } from 'enzyme';
+
 import { Explore, Props } from './Explore';
 import { scanStopAction } from './state/query';
-import { SecondaryActions } from './SecondaryActions';
+import { createEmptyQueryResponse } from './state/utils';
+
+const makeEmptyQueryResponse = (loadingState: LoadingState) => {
+  const baseEmptyResponse = createEmptyQueryResponse();
+
+  baseEmptyResponse.request = {
+    requestId: '1',
+    intervalMs: 0,
+    interval: '1s',
+    dashboardId: 0,
+    panelId: 1,
+    range: baseEmptyResponse.timeRange,
+    scopedVars: {
+      apps: {
+        value: 'value',
+        text: 'text',
+      },
+    },
+    targets: [
+      {
+        refId: 'A',
+      },
+    ],
+    timezone: 'UTC',
+    app: CoreApp.Explore,
+    startTime: 0,
+  };
+
+  baseEmptyResponse.state = loadingState;
+
+  return baseEmptyResponse;
+};
 
 const dummyProps: Props = {
   logsResult: undefined,
@@ -34,6 +62,7 @@ const dummyProps: Props = {
   scanStopAction: scanStopAction,
   setQueries: jest.fn(),
   queryKeys: [],
+  queries: [],
   isLive: false,
   syncedTimes: false,
   updateTimeRange: jest.fn(),
@@ -44,38 +73,7 @@ const dummyProps: Props = {
     to: 0,
   },
   timeZone: 'UTC',
-  queryResponse: {
-    state: LoadingState.NotStarted,
-    series: [],
-    request: {
-      requestId: '1',
-      dashboardId: 0,
-      interval: '1s',
-      panelId: 1,
-      scopedVars: {
-        apps: {
-          value: 'value',
-        },
-      },
-      targets: [
-        {
-          refId: 'A',
-        },
-      ],
-      timezone: 'UTC',
-      app: CoreApp.Explore,
-      startTime: 0,
-    } as unknown as DataQueryRequest,
-    error: {} as DataQueryError,
-    timeRange: {
-      from: toUtc('2019-01-01 10:00:00'),
-      to: toUtc('2019-01-01 16:00:00'),
-      raw: {
-        from: 'now-6h',
-        to: 'now',
-      },
-    },
-  },
+  queryResponse: makeEmptyQueryResponse(LoadingState.NotStarted),
   addQueryRow: jest.fn(),
   theme: createTheme(),
   showMetrics: true,
@@ -83,22 +81,54 @@ const dummyProps: Props = {
   showTable: true,
   showTrace: true,
   showNodeGraph: true,
-  splitOpen: (() => {}) as any,
-  logsVolumeData: undefined,
-  loadLogsVolumeData: () => {},
-  changeGraphStyle: () => {},
-  graphStyle: 'lines',
+  showFlameGraph: true,
+  splitOpen: () => {},
+  splitted: false,
+  isFromCompactUrl: false,
+  eventBus: new EventBusSrv(),
+};
+
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
+  return {
+    getDataSourceSrv: () => ({
+      get: () => Promise.resolve({}),
+      getList: () => [],
+      getInstanceSettings: () => {},
+    }),
+  };
+});
+
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasAccess: () => true,
+  },
+}));
+
+// for the AutoSizer component to have a width
+jest.mock('react-virtualized-auto-sizer', () => {
+  return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
+});
+
+const setup = (overrideProps?: Partial<Props>) => {
+  const store = configureStore();
+  const exploreProps = { ...dummyProps, ...overrideProps };
+
+  return render(
+    <Provider store={store}>
+      <Explore {...exploreProps} />
+    </Provider>
+  );
 };
 
 describe('Explore', () => {
-  it('should render component', () => {
-    const wrapper = shallow(<Explore {...dummyProps} />);
-    expect(wrapper).toMatchSnapshot();
+  it('should not render no data with not started loading state', () => {
+    setup();
+    expect(screen.queryByTestId('explore-no-data')).not.toBeInTheDocument();
   });
 
-  it('renders SecondaryActions and add row button', () => {
-    const wrapper = shallow(<Explore {...dummyProps} />);
-    expect(wrapper.find(SecondaryActions)).toHaveLength(1);
-    expect(wrapper.find(SecondaryActions).props().addQueryRowButtonHidden).toBe(false);
+  it('should render no data with done loading state', async () => {
+    const queryResp = makeEmptyQueryResponse(LoadingState.Done);
+    setup({ queryResponse: queryResp });
+    expect(screen.getByTestId('explore-no-data')).toBeInTheDocument();
   });
 });

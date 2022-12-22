@@ -1,7 +1,10 @@
+import React from 'react';
+
 import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from 'app/core/internationalization';
+
 import { InspectStatsTable } from './InspectStatsTable';
-import React from 'react';
 
 interface InspectStatsTabProps {
   data: PanelData;
@@ -24,13 +27,27 @@ export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, timeZone
   }
 
   if (requestTime > 0) {
-    stats.push({ displayName: 'Total request time', value: requestTime, unit: 'ms' });
+    stats.push({
+      displayName: t('dashboard.inspect-stats.request-time', 'Total request time'),
+      value: requestTime,
+      unit: 'ms',
+    });
   }
   if (processingTime > 0) {
-    stats.push({ displayName: 'Data processing time', value: processingTime, unit: 'ms' });
+    stats.push({
+      displayName: t('dashboard.inspect-stats.processing-time', 'Data processing time'),
+      value: processingTime,
+      unit: 'ms',
+    });
   }
-  stats.push({ displayName: 'Number of queries', value: data.request.targets.length });
-  stats.push({ displayName: 'Total number rows', value: dataRows });
+  stats.push({
+    displayName: t('dashboard.inspect-stats.queries', 'Number of queries'),
+    value: data.request.targets.length,
+  });
+  stats.push({
+    displayName: t('dashboard.inspect-stats.rows', 'Total number rows'),
+    value: dataRows,
+  });
 
   let dataStats: QueryResultMetaStat[] = [];
 
@@ -40,10 +57,13 @@ export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, timeZone
     }
   }
 
+  const statsTableName = t('dashboard.inspect-stats.table-title', 'Stats');
+  const dataStatsTableName = t('dashboard.inspect-stats.data-title', 'Data source stats');
+
   return (
     <div aria-label={selectors.components.PanelInspector.Stats.content}>
-      <InspectStatsTable timeZone={timeZone} name={'Stats'} stats={stats} />
-      <InspectStatsTable timeZone={timeZone} name={'Data source stats'} stats={dataStats} />
+      <InspectStatsTable timeZone={timeZone} name={statsTableName} stats={stats} />
+      <InspectStatsTable timeZone={timeZone} name={dataStatsTableName} stats={dataStats} />
     </div>
   );
 };

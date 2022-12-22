@@ -1,16 +1,10 @@
-// Libraries
+import { debounce, DebouncedFuncLeading, isNil } from 'lodash';
 import React, { Component } from 'react';
-import { debounce, isNil } from 'lodash';
 
-// Components
-import { AsyncSelect } from '@grafana/ui';
-
-// Utils & Services
-import { getBackendSrv } from '@grafana/runtime';
-
-// Types
-import { OrgUser } from 'app/types';
 import { SelectableValue } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
+import { AsyncSelect } from '@grafana/ui';
+import { OrgUser } from 'app/types';
 
 export interface Props {
   onSelected: (user: SelectableValue<OrgUser['userId']>) => void;
@@ -23,7 +17,7 @@ export interface State {
 }
 
 export class UserPicker extends Component<Props, State> {
-  debouncedSearch: any;
+  debouncedSearch: DebouncedFuncLeading<typeof this.search>;
 
   constructor(props: Props) {
     super(props);
@@ -66,7 +60,6 @@ export class UserPicker extends Component<Props, State> {
     return (
       <div className="user-picker" data-testid="userPicker">
         <AsyncSelect
-          menuShouldPortal
           isClearable
           className={className}
           inputId={inputId}

@@ -1,5 +1,6 @@
-import { RichHistoryQuery } from '../../types';
 import { omit } from 'lodash';
+
+import { RichHistoryQuery } from '../../types';
 import { SortOrder } from '../utils/richHistoryTypes';
 
 /**
@@ -7,6 +8,22 @@ import { SortOrder } from '../utils/richHistoryTypes';
  *
  * Should be migrated to RichHistoryLocalStorage.ts
  */
+
+export function filterAndSortQueries(
+  queries: RichHistoryQuery[],
+  sortOrder: SortOrder,
+  listOfDatasourceFilters: string[],
+  searchFilter: string,
+  timeFilter?: [number, number]
+) {
+  const filteredQueriesByDs = filterQueriesByDataSource(queries, listOfDatasourceFilters);
+  const filteredQueriesByDsAndSearchFilter = filterQueriesBySearchFilter(filteredQueriesByDs, searchFilter);
+  const filteredQueriesToBeSorted = timeFilter
+    ? filterQueriesByTime(filteredQueriesByDsAndSearchFilter, timeFilter)
+    : filteredQueriesByDsAndSearchFilter;
+
+  return sortQueries(filteredQueriesToBeSorted, sortOrder);
+}
 
 export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) => {
   const today = new Date();
@@ -20,19 +37,19 @@ export const createRetentionPeriodBoundary = (days: number, isLastTs: boolean) =
   return boundary;
 };
 
-export function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
+function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
   const filter1 = createRetentionPeriodBoundary(timeFilter[0], true); // probably the vars should have a different name
   const filter2 = createRetentionPeriodBoundary(timeFilter[1], false);
-  return queries.filter((q) => q.ts < filter1 && q.ts > filter2);
+  return queries.filter((q) => q.createdAt < filter1 && q.createdAt > filter2);
 }
 
-export function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[]) {
+function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[]) {
   return listOfDatasourceFilters.length > 0
     ? queries.filter((q) => listOfDatasourceFilters.includes(q.datasourceName))
     : queries;
 }
 
-export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: string) {
+function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchFilter: string) {
   return queries.filter((query) => {
     if (query.comment.includes(searchFilter)) {
       return true;
@@ -53,10 +70,12 @@ export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => 
   let sortFunc;
 
   if (sortOrder === SortOrder.Ascending) {
-    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0);
+    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
+      a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0;
   }
   if (sortOrder === SortOrder.Descending) {
-    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0);
+    sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
+      a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0;
   }
 
   if (sortOrder === SortOrder.DatasourceZA) {
@@ -77,4 +96,5 @@ export const RICH_HISTORY_SETTING_KEYS = {
   starredTabAsFirstTab: 'grafana.explore.richHistory.starredTabAsFirstTab',
   activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
   datasourceFilters: 'grafana.explore.richHistory.datasourceFilters',
+  migrated: 'grafana.explore.richHistory.migrated',
 };

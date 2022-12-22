@@ -1,18 +1,26 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Input, Label, useStyles2 } from '@grafana/ui';
 import React, { FC, useState } from 'react';
 import { useDebounce } from 'react-use';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Icon, Input, Label, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+
+import { Authorize } from '../../components/Authorize';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
-import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import { FormAmRoute } from '../../types/amroutes';
+import { getNotificationsPermissions } from '../../utils/access-control';
 import { emptyArrayFieldMatcher, emptyRoute } from '../../utils/amroutes';
 import { getNotificationPoliciesFilters } from '../../utils/misc';
-import { MatcherFilter } from '../alert-groups/MatcherFilter';
 import { EmptyArea } from '../EmptyArea';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
+import { MatcherFilter } from '../alert-groups/MatcherFilter';
+import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
+
 import { AmRoutesTable } from './AmRoutesTable';
 
 export interface AmSpecificRoutingProps {
+  alertManagerSourceName: string;
   onChange: (routes: FormAmRoute) => void;
   onRootRouteEdit: () => void;
   receivers: AmRouteReceiver[];
@@ -26,6 +34,7 @@ interface Filters {
 }
 
 export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
+  alertManagerSourceName,
   onChange,
   onRootRouteEdit,
   receivers,
@@ -34,6 +43,8 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
 }) => {
   const [actualRoutes, setActualRoutes] = useState([...routes.routes]);
   const [isAddMode, setIsAddMode] = useState(false);
+  const permissions = getNotificationsPermissions(alertManagerSourceName);
+  const canCreateNotifications = contextSrv.hasPermission(permissions.create);
 
   const [searchParams, setSearchParams] = useURLSearchParams();
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
@@ -97,6 +108,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
             buttonLabel="Set a default contact point"
             onButtonClick={onRootRouteEdit}
             text="You haven't set a default contact point for the root route yet."
+            showButton={canCreateNotifications}
           />
         )
       ) : actualRoutes.length > 0 ? (
@@ -108,7 +120,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
                   onFilterChange={(filter) =>
                     setFilters((currentFilters) => ({ ...currentFilters, queryString: filter }))
                   }
-                  queryString={filters.queryString ?? ''}
+                  defaultQueryString={filters.queryString ?? ''}
                   className={styles.filterInput}
                 />
                 <div className={styles.filterInput}>
@@ -132,11 +144,13 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
             )}
 
             {!isAddMode && !readOnly && (
-              <div className={styles.addMatcherBtnRow}>
-                <Button className={styles.addMatcherBtn} icon="plus" onClick={addNewRoute} type="button">
-                  New policy
-                </Button>
-              </div>
+              <Authorize actions={[permissions.create]}>
+                <div className={styles.addMatcherBtnRow}>
+                  <Button className={styles.addMatcherBtn} icon="plus" onClick={addNewRoute} type="button">
+                    New policy
+                  </Button>
+                </div>
+              </Authorize>
             )}
           </div>
           <AmRoutesTable
@@ -147,6 +161,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
             receivers={receivers}
             routes={actualRoutes}
             filters={{ queryString, contactPoint }}
+            alertManagerSourceName={alertManagerSourceName}
           />
         </>
       ) : readOnly ? (
@@ -159,6 +174,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
           buttonLabel="New specific policy"
           onButtonClick={addNewRoute}
           text="You haven't created any specific policies yet."
+          showButton={canCreateNotifications}
         />
       )}
     </div>

@@ -1,5 +1,8 @@
+import { render, screen } from '@testing-library/react';
+
 import { DataQueryRequest, dateTime, LoadingState, PanelData, toDataFrame } from '@grafana/data';
-import { filterPanelDataToQuery } from './QueryEditorRow';
+
+import { filterPanelDataToQuery, QueryEditorRow } from './QueryEditorRow';
 
 function makePretendRequest(requestId: string, subRequests?: DataQueryRequest[]): DataQueryRequest {
   return {
@@ -54,10 +57,145 @@ describe('filterPanelDataToQuery', () => {
 
     const panelData = filterPanelDataToQuery(withError, 'B');
     expect(panelData).toBeDefined();
+    expect(panelData?.state).toBe(LoadingState.Error);
+    expect(panelData?.error).toBe(withError.error);
+  });
 
-    // @ts-ignore typescript doesn't understand that panelData can't be undefined here
-    expect(panelData.state).toBe(LoadingState.Error);
-    // @ts-ignore typescript doesn't understand that panelData can't be undefined here
-    expect(panelData.error).toBe(withError.error);
+  it('should set the state to done if the frame has no errors', () => {
+    const withError = {
+      ...data,
+    };
+    withError.state = LoadingState.Error;
+
+    const panelDataB = filterPanelDataToQuery(withError, 'B');
+    expect(panelDataB?.series.length).toBe(3);
+    expect(panelDataB?.series[0].refId).toBe('B');
+    expect(panelDataB?.state).toBe(LoadingState.Error);
+
+    const panelDataA = filterPanelDataToQuery(withError, 'A');
+    expect(panelDataA?.series.length).toBe(1);
+    expect(panelDataA?.series[0].refId).toBe('A');
+    expect(panelDataA?.state).toBe(LoadingState.Done);
+  });
+
+  it('should return error for query that returns no data, but another query does return data', () => {
+    const withError = {
+      ...data,
+      state: LoadingState.Error,
+      error: {
+        message: 'Sad',
+        refId: 'Q',
+      },
+    };
+
+    const panelDataB = filterPanelDataToQuery(withError, 'Q');
+    expect(panelDataB?.series.length).toBe(0);
+    expect(panelDataB?.error?.refId).toBe('Q');
+  });
+
+  it('should not set the state to done if the frame is loading and has no errors', () => {
+    const loadingData: PanelData = {
+      state: LoadingState.Loading,
+      series: [
+        toDataFrame({ refId: 'A', fields: [{ name: 'AAA' }], meta: {} }),
+        toDataFrame({ refId: 'B', fields: [{ name: 'B111' }], meta: {} }),
+      ],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+
+    const panelDataB = filterPanelDataToQuery(loadingData, 'B');
+    expect(panelDataB?.state).toBe(LoadingState.Loading);
+
+    const panelDataA = filterPanelDataToQuery(loadingData, 'A');
+    expect(panelDataA?.state).toBe(LoadingState.Loading);
+  });
+
+  it('should not set the state to error if the frame is still loading', () => {
+    const loadingData: PanelData = {
+      state: LoadingState.Loading,
+      series: [],
+      error: {
+        refId: 'B',
+        message: 'Error',
+      },
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+
+    const panelDataA = filterPanelDataToQuery(loadingData, 'A');
+    expect(panelDataA?.state).toBe(LoadingState.Loading);
+  });
+});
+
+describe('frame results with warnings', () => {
+  const meta = {
+    notices: [
+      {
+        severity: 'warning',
+        text: 'Reduce operation is not needed. Input query or expression A is already reduced data.',
+      },
+    ],
+  };
+
+  const dataWithWarnings: PanelData = {
+    state: LoadingState.Done,
+    series: [
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'B1' }],
+        meta,
+      }),
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'B2' }],
+        meta,
+      }),
+    ],
+    timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+  };
+
+  const dataWithoutWarnings: PanelData = {
+    state: LoadingState.Done,
+    series: [
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'B1' }],
+        meta: {},
+      }),
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'B2' }],
+        meta: {},
+      }),
+    ],
+    timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+  };
+
+  it('should show a warning badge and de-duplicate warning messages', () => {
+    // @ts-ignore: there are _way_ too many props to inject here :(
+    const editorRow = new QueryEditorRow({
+      data: dataWithWarnings,
+      query: {
+        refId: 'B',
+      },
+    });
+
+    const warningsComponent = editorRow.renderWarnings();
+    expect(warningsComponent).not.toBe(null);
+
+    render(warningsComponent!);
+    expect(screen.getByText('1 warning')).toBeInTheDocument();
+  });
+
+  it('should not show a warning badge when there are no warnings', () => {
+    // @ts-ignore: there are _way_ too many props to inject here :(
+    const editorRow = new QueryEditorRow({
+      data: dataWithoutWarnings,
+      query: {
+        refId: 'B',
+      },
+    });
+
+    const warningsComponent = editorRow.renderWarnings();
+    expect(warningsComponent).toBe(null);
   });
 });

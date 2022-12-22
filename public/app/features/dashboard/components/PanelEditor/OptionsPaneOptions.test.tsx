@@ -1,5 +1,8 @@
-import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import React from 'react';
+import { Provider } from 'react-redux';
+import configureMockStore from 'redux-mock-store';
+
 import {
   FieldConfigSource,
   FieldType,
@@ -9,23 +12,23 @@ import {
   standardFieldConfigEditorRegistry,
   toDataFrame,
 } from '@grafana/data';
-
 import { selectors } from '@grafana/e2e-selectors';
-import { OptionsPaneOptions } from './OptionsPaneOptions';
-import { DashboardModel, PanelModel } from '../../state';
-import { Provider } from 'react-redux';
-import configureMockStore from 'redux-mock-store';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+
+import { PanelModel } from '../../state';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
+
+import { OptionsPaneOptions } from './OptionsPaneOptions';
 import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './state/getOptionOverrides';
-import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/editors/registry';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
-const mockStore = configureMockStore<any, any>();
+const mockStore = configureMockStore();
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
 jest.mock('react-router-dom', () => ({
-  ...(jest.requireActual('react-router-dom') as any),
+  ...jest.requireActual('react-router-dom'),
   useLocation: () => ({
     pathname: 'localhost:3000/example/path',
   }),
@@ -86,7 +89,7 @@ class OptionsPaneOptionsTestScenario {
     options: {},
   });
 
-  dashboard = new DashboardModel({});
+  dashboard = createDashboardModelFixture();
   store = mockStore({
     dashboard: { panels: [] },
     templating: {

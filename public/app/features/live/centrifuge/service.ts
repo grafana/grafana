@@ -1,12 +1,6 @@
-import Centrifuge from 'centrifuge/dist/centrifuge';
-import {
-  GrafanaLiveSrv,
-  LiveDataStreamOptions,
-  LiveQueryDataOptions,
-  StreamingFrameAction,
-  StreamingFrameOptions,
-} from '@grafana/runtime/src/services/live';
+import { Centrifuge, State } from 'centrifuge';
 import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
+
 import {
   DataQueryError,
   DataQueryResponse,
@@ -15,13 +9,23 @@ import {
   LiveChannelId,
   toLiveChannelId,
 } from '@grafana/data';
-import { CentrifugeLiveChannel } from './channel';
-import { LiveDataStream } from './LiveDataStream';
-import { StreamingResponseData } from '../data/utils';
-import { BackendDataSourceResponse } from '@grafana/runtime/src/utils/queryResponse';
 import { FetchResponse } from '@grafana/runtime/src/services/backendSrv';
+import {
+  GrafanaLiveSrv,
+  LiveDataStreamOptions,
+  LiveQueryDataOptions,
+  StreamingFrameAction,
+  StreamingFrameOptions,
+} from '@grafana/runtime/src/services/live';
+import { BackendDataSourceResponse } from '@grafana/runtime/src/utils/queryResponse';
+
+import { StreamingResponseData } from '../data/utils';
+
+import { LiveDataStream } from './LiveDataStream';
+import { CentrifugeLiveChannel } from './channel';
 
 export type CentrifugeSrvDeps = {
+  grafanaAuthToken: string | null;
   appUrl: string;
   orgId: number;
   orgRole: string;
@@ -63,34 +67,38 @@ export class CentrifugeService implements CentrifugeSrv {
 
   constructor(private deps: CentrifugeSrvDeps) {
     this.dataStreamSubscriberReadiness = deps.dataStreamSubscriberReadiness.pipe(share(), startWith(true));
-    const liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
+
+    let liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
+
+    const token = deps.grafanaAuthToken;
+    if (token !== null && token !== '') {
+      liveUrl += '?auth_token=' + token;
+    }
+
     this.centrifuge = new Centrifuge(liveUrl, {
       timeout: 30000,
     });
-    this.centrifuge.setConnectData({
-      sessionId: deps.sessionId,
-      orgId: deps.orgId,
-    });
-    // orgRole is set when logged in *or* anonomus users can use grafana
+    // orgRole is set when logged in *or* anonymous users can use grafana
     if (deps.liveEnabled && deps.orgRole !== '') {
       this.centrifuge.connect(); // do connection
     }
-    this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
+    this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.state === State.Connected);
     this.connectionBlocker = new Promise<void>((resolve) => {
-      if (this.centrifuge.isConnected()) {
+      if (this.centrifuge.state === State.Connected) {
         return resolve();
       }
       const connectListener = () => {
         resolve();
-        this.centrifuge.removeListener('connect', connectListener);
+        this.centrifuge.removeListener('connected', connectListener);
       };
-      this.centrifuge.addListener('connect', connectListener);
+      this.centrifuge.addListener('connected', connectListener);
     });
 
     // Register global listeners
-    this.centrifuge.on('connect', this.onConnect);
-    this.centrifuge.on('disconnect', this.onDisconnect);
-    this.centrifuge.on('publish', this.onServerSideMessage);
+    this.centrifuge.on('connected', this.onConnect);
+    this.centrifuge.on('connecting', this.onDisconnect);
+    this.centrifuge.on('disconnected', this.onDisconnect);
+    this.centrifuge.on('publication', this.onServerSideMessage);
   }
 
   //----------------------------------------------------------
@@ -143,11 +151,15 @@ export class CentrifugeService implements CentrifugeSrv {
   }
 
   private async initChannel(channel: CentrifugeLiveChannel): Promise<void> {
-    const events = channel.initalize();
-    if (!this.centrifuge.isConnected()) {
+    if (this.centrifuge.state !== State.Connected) {
       await this.connectionBlocker;
     }
-    channel.subscription = this.centrifuge.subscribe(channel.id, events, { data: channel.addr.data });
+    const subscription = this.centrifuge.newSubscription(channel.id, {
+      data: channel.addr.data,
+    });
+    channel.subscription = subscription;
+    channel.initalize();
+    subscription.subscribe();
     return;
   }
 
@@ -209,10 +221,10 @@ export class CentrifugeService implements CentrifugeSrv {
    * Since the initial request and subscription are on the same socket, this will support HA setups
    */
   getQueryData: CentrifugeSrv['getQueryData'] = async (options) => {
-    if (!this.centrifuge.isConnected()) {
+    if (this.centrifuge.state !== State.Connected) {
       await this.connectionBlocker;
     }
-    return this.centrifuge.namedRPC('grafana.query', options.body);
+    return this.centrifuge.rpc('grafana.query', options.body);
   };
 
   /**

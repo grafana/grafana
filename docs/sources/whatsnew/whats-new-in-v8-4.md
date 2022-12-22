@@ -1,14 +1,20 @@
-+++
-title = "What's new in Grafana v8.4"
-description = "Feature and improvement highlights for Grafana v8.4"
-keywords = ["grafana", "new", "documentation", "8.4", "release notes"]
-weight = -33
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-4/"]
-[_build]
-list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - ../guides/whats-new-in-v8-4/
+description: Feature and improvement highlights for Grafana v8.4
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '8.4'
+  - release notes
+title: What's new in Grafana v8.4
+weight: -33
+---
 
-# What’s new in Grafana v8.4
+# What's new in Grafana v8.4
 
 We’re excited to announce Grafana v8.4, with a variety of improvements that focus on Grafana’s usability, performance, and security. Read on to learn about Alerting enhancements like a WeCom contact point, improved Alert panel and custom mute timings, as well as visualization improvements and details to help you share playlists more easily. In Grafana Enterprise, we’ve made caching more powerful to save you time and money while loading dashboards, boosted database encryption to keep secrets safe in your Grafana database, and made usability improvements to Recorded Queries, which allow you to track any data point over time.
 
@@ -24,9 +30,9 @@ You can now share links to your playlists the same way as with dashboards, to ea
 
 {{< figure src="/static/img/docs/dashboards/share-playlists-8-4.png" max-width="1200px" caption="Share playlist" >}}
 
-### $**interval and $**interval_ms in panel title
+### `$__interval` and `$__interval_ms` in panel title
 
-We’ve expanded the functionality of this existing and popular feature. You can now use $**interval and $**interval_ms in panel titles. This new function displays the interval that’s used in a specific panel without requiring edit mode.
+We’ve expanded the functionality of this existing and popular feature. You can now use `$__interval` and `$__interval_ms` in panel titles. This new function displays the interval that’s used in a specific panel without requiring edit mode.
 
 {{< figure src="/static/img/docs/panels/interval-8-4.png" max-width="1200px" caption="Time intervals" >}}
 
@@ -99,33 +105,33 @@ Geomap now supports tooltips with data-links across multiple layers.
 
 The HTTP API details are now [specified](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/papagian/api-spec/public/api-merged.json) using OpenAPI v2.
 
-The grafana server serves a [SwaggerUI](https://swagger.io/tools/swagger-ui/) editor via the /swagger-ui endpoint that enables users to make requests to the HTTP API via the browser. This is disabled by default and it’s enabled when the swagger-ui feature toggle is set.
+The grafana server serves a [SwaggerUI](https://swagger.io/tools/swagger-ui/) editor via the /swagger-ui endpoint that enables users to make requests to the HTTP API via the browser. This is disabled by default and it’s enabled when the `swaggerUi` feature toggle is set.
 
 # Grafana Enterprise
 
 ## Security improvements
 
-### Fine-grained access control works for teams
+### Role-based access control works for teams
 
-Occasionally, Viewer, Editor, and Admin roles don’t fit what a certain user needs to do in Grafana. Now you can assign fine-grained roles directly to users so they can create reports, use Explore mode, create data sources, and perform other specific actions in Grafana. Fine-grained access control is currently in beta.
+Occasionally, Viewer, Editor, and Admin roles don’t fit what a certain user needs to do in Grafana. Now you can assign role-based roles directly to users so they can create reports, use Explore mode, create data sources, and perform other specific actions in Grafana. Role-based access control is currently in beta.
 
 In Grafana 8.4, you can assign roles to teams, which apply to all members of that team. This is a convenient way to grant certain permissions to a group of users all at once. It also makes permissions easier to manage when you synchronize groups from an SSO provider, like Google Oauth or Okta, to teams in Grafana.
 
 In 8.4 you can also control access to Team and API key functionality itself, like viewing or editing API keys and adding members to certain teams.
 
-Enable fine-grained access control by adding the term `accesscontrol` to the list of feature toggles in your [Grafana configuration](https://grafana.com/docs/grafana/next/administration/configuration/#feature_toggles?mdm=email), or by sending a request to support if you use Grafana Cloud. Learn more about fine-grained access control in the [fine-grained access control section of the docs](https://grafana.com/docs/grafana/next/enterprise/access-control/).
+Enable role-based access control by adding the term `accesscontrol` to the list of feature toggles in your [Grafana configuration](https://grafana.com/docs/grafana/next/administration/configuration/#feature_toggles?mdm=email), or by sending a request to support if you use Grafana Cloud. Learn more about role-based access control in the [role-based access control section of the docs](https://grafana.com/docs/grafana/next/enterprise/access-control/).
 
 {{< figure src="/static/img/docs/enterprise/8-4-fine-grain-access-control.png" max-width="1200px" caption="Assign SAML users role" >}}
 
 ### Assign SAML users different roles in different Organizations
 
-You can use Grafana’s SAML integration to map organizations in your SAML service to [Organizations](​​https://grafana.com/docs/grafana/latest/manage-users/server-admin/server-admin-manage-orgs/) in Grafana so that users who authenticate using SAML have the right permissions. Previously, you could only choose a single role (Viewer, Editor, or Admin) for users, which would apply to all of their Organizations. Now, you can map a given SAML user or org to different roles in different Organizations, so that, for example, they can be a Viewer in one Organization and an Admin in another.
+You can use Grafana's SAML integration to map organizations in your SAML service to [Organizations]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/#configure-organization-mapping" >}}) in Grafana so that users who authenticate using SAML have the right permissions. Previously, you could only choose a single role (Viewer, Editor, or Admin) for users, which would apply to all of their Organizations. Now, you can map a given SAML user or org to different roles in different Organizations, so that, for example, they can be a Viewer in one Organization and an Admin in another.
 
 Additionally, you can now grant multiple SAML organizations access to Grafana, using the `allowed_organizations` attribute. Previously, you could only map one.
 
 {{< figure src="/static/img/docs/enterprise/8-4-SAML-auth.png" max-width="1200px" caption="Assign SAML users role" >}}
 
-Learn more in our [SAML docs](https://grafana.com/docs/grafana/next/enterprise/saml/).
+Learn more in our [SAML docs]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/" >}}).
 
 ## Performance improvements
 

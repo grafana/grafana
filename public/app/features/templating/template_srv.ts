@@ -1,13 +1,26 @@
 import { escape, isString, property } from 'lodash';
-import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
-import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
-import { variableRegex } from '../variables/utils';
-import { isAdHoc } from '../variables/guard';
-import { AdHocVariableFilter, AdHocVariableModel, VariableModel } from '../variables/types';
+
+import {
+  deprecationWarning,
+  ScopedVars,
+  TimeRange,
+  AdHocVariableFilter,
+  AdHocVariableModel,
+  TypedVariableModel,
+} from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
-import { FormatOptions, formatRegistry, FormatRegistryID } from './formatRegistry';
+
+import { SceneObjectBase } from '../scenes/core/SceneObjectBase';
+import { sceneGraph } from '../scenes/core/sceneGraph';
+import { formatRegistry, FormatRegistryID } from '../scenes/variables/interpolation/formatRegistry';
+import { CustomFormatterFn } from '../scenes/variables/interpolation/sceneInterpolator';
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
+import { isAdHoc } from '../variables/guard';
+import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
+import { variableRegex } from '../variables/utils';
+
+import { getVariableWrapper } from './LegacyVariableWrapper';
 
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
@@ -29,7 +42,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   private _variables: any[];
   private regex = variableRegex;
   private index: any = {};
-  private grafanaVariables: any = {};
+  private grafanaVariables = new Map<string, any>();
   private timeRange?: TimeRange | null = null;
   private fieldAccessorCache: FieldAccessorCache = {};
 
@@ -53,7 +66,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return this.getVariables();
   }
 
-  getVariables(): VariableModel[] {
+  getVariables(): TypedVariableModel[] {
     return this.dependencies.getVariables();
   }
 
@@ -103,7 +116,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     for (const variable of this.getAdHocVariables()) {
       const variableUid = variable.datasource?.uid;
 
-      if (variableUid === ds.uid || (variable.datasource == null && ds?.isDefault)) {
+      if (variableUid === ds.uid) {
         filters = filters.concat(variable.filters);
       } else if (variableUid?.indexOf('$') === 0) {
         if (this.replace(variableUid) === datasourceName) {
@@ -156,12 +169,12 @@ export class TemplateSrv implements BaseTemplateSrv {
       formatItem = formatRegistry.get(FormatRegistryID.glob);
     }
 
-    const options: FormatOptions = { value, args, text: text ?? value };
-    return formatItem.formatter(options, variable);
+    const formatVariable = getVariableWrapper(variable, value, text ?? value);
+    return formatItem.formatter(value, args, formatVariable);
   }
 
   setGrafanaVariable(name: string, value: any) {
-    this.grafanaVariables[name] = value;
+    this.grafanaVariables.set(name, value);
   }
 
   /**
@@ -189,10 +202,18 @@ export class TemplateSrv implements BaseTemplateSrv {
     return variableName;
   }
 
-  variableExists(expression: string): boolean {
-    const name = this.getVariableName(expression);
+  containsTemplate(target: string | undefined): boolean {
+    if (!target) {
+      return false;
+    }
+    const name = this.getVariableName(target);
     const variable = name && this.getVariableAtIndex(name);
     return variable !== null && variable !== undefined;
+  }
+
+  variableExists(expression: string): boolean {
+    deprecationWarning('template_srv.ts', 'variableExists', 'containsTemplate');
+    return this.containsTemplate(expression);
   }
 
   highlightVariablesAsHtml(str: string) {
@@ -258,6 +279,15 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
+    if (scopedVars && scopedVars.__sceneObject && scopedVars.__sceneObject.value instanceof SceneObjectBase) {
+      return sceneGraph.interpolate(
+        scopedVars.__sceneObject.value,
+        target,
+        scopedVars,
+        format as string | CustomFormatterFn | undefined
+      );
+    }
+
     if (!target) {
       return target ?? '';
     }
@@ -289,7 +319,7 @@ export class TemplateSrv implements BaseTemplateSrv {
         return this.formatValue(value, fmt, variable, text);
       }
 
-      const systemValue = this.grafanaVariables[variable.current.value];
+      const systemValue = this.grafanaVariables.get(variable.current.value);
       if (systemValue) {
         return this.formatValue(systemValue, fmt, variable);
       }

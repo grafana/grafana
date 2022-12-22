@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package mysql
 
 import (
@@ -13,11 +10,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 // To run this test, set runMySqlTests=true
@@ -28,12 +26,15 @@ import (
 // There is also a datasource and dashboard provisioned by devenv scripts that you can
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
-func TestMySQL(t *testing.T) {
+func TestIntegrationMySQL(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	// change to true to run the MySQL tests
 	runMySQLTests := false
 	// runMySqlTests := true
 
-	if !(sqlstore.IsTestDbMySQL() || runMySQLTests) {
+	if !(db.IsTestDbMySQL() || runMySQLTests) {
 		t.Skip()
 	}
 
@@ -71,9 +72,7 @@ func TestMySQL(t *testing.T) {
 		RowLimit:          1000000,
 	}
 
-	rowTransformer := mysqlQueryResultTransformer{
-		log: logger,
-	}
+	rowTransformer := mysqlQueryResultTransformer{}
 
 	exe, err := sqleng.NewQueryDataHandler(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
 
@@ -906,7 +905,7 @@ func TestMySQL(t *testing.T) {
 		require.NoError(t, err)
 
 		events := []*event{}
-		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), 60*time.Minute, 25*time.Minute) {
+		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), time.Hour, 25*time.Minute) {
 			events = append(events, &event{
 				TimeSec:     t.Unix(),
 				Description: "Someone deployed something",
@@ -1164,9 +1163,7 @@ func TestMySQL(t *testing.T) {
 				RowLimit:          1,
 			}
 
-			queryResultTransformer := mysqlQueryResultTransformer{
-				log: logger,
-			}
+			queryResultTransformer := mysqlQueryResultTransformer{}
 
 			handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMysqlMacroEngine(logger), logger)
 			require.NoError(t, err)

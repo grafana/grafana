@@ -1,9 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Select, MultiSelect } from '@grafana/ui';
 
+import { selectors } from '../e2e/selectors';
 import { AzureMonitorQuery, AzureQueryEditorFieldProps, AzureMonitorOption, AzureQueryType } from '../types';
 import { findOptions } from '../utils/common';
+
 import { Field } from './Field';
 
 interface SubscriptionFieldProps extends AzureQueryEditorFieldProps {
@@ -34,7 +37,6 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
         newQuery.azureMonitor = {
           ...newQuery.azureMonitor,
           resourceGroup: undefined,
-          metricDefinition: undefined,
           metricNamespace: undefined,
           resourceName: undefined,
           metricName: undefined,
@@ -55,9 +57,10 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
         return;
       }
 
-      query.subscriptions = change.map((c) => c.value ?? '');
-
-      onQueryChange(query);
+      onQueryChange({
+        ...query,
+        subscriptions: change.map((c) => c.value ?? ''),
+      });
     },
     [query, onQueryChange]
   );
@@ -65,9 +68,8 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
   const options = useMemo(() => [...subscriptions, variableOptionGroup], [subscriptions, variableOptionGroup]);
 
   return multiSelect ? (
-    <Field label="Subscriptions">
+    <Field label="Subscriptions" data-testid={selectors.components.queryEditor.argsQueryEditor.subscriptions.input}>
       <MultiSelect
-        menuShouldPortal
         isClearable
         value={findOptions([...subscriptions, ...variableOptionGroup.options], query.subscriptions)}
         inputId="azure-monitor-subscriptions-field"
@@ -77,9 +79,8 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
       />
     </Field>
   ) : (
-    <Field label="Subscription">
+    <Field label="Subscription" data-testid={selectors.components.queryEditor.argsQueryEditor.subscriptions.input}>
       <Select
-        menuShouldPortal
         value={query.subscription}
         inputId="azure-monitor-subscriptions-field"
         onChange={handleChange}

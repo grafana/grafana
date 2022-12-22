@@ -100,6 +100,11 @@ func GetReduceFunc(rFunc string) (ReducerFunc, error) {
 	}
 }
 
+// GetSupportedReduceFuncs returns collection of supported function names
+func GetSupportedReduceFuncs() []string {
+	return []string{"sum", "mean", "min", "max", "count", "last"}
+}
+
 // Reduce turns the Series into a Number based on the given reduction function
 // if ReduceMapper is defined it applies it to the provided series and performs reduction of the resulting series.
 // Otherwise, the reduction operation is done against the original series.
@@ -118,7 +123,7 @@ func (s Series) Reduce(refID, rFunc string, mapper ReduceMapper) (Number, error)
 	floatField := Float64Field(*fVec)
 	reduceFunc, err := GetReduceFunc(rFunc)
 	if err != nil {
-		return number, err
+		return number, fmt.Errorf("invalid expression '%s': %w", refID, err)
 	}
 	f = reduceFunc(&floatField)
 	if f != nil && mapper != nil {

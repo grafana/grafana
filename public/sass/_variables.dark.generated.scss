@@ -112,8 +112,8 @@ $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
 
 // gradients
-$brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
-$brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
+$brand-gradient-horizontal: linear-gradient(270deg, #F55F3E 0%, #FF8833 100%);
+$brand-gradient-vertical: linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%);
 
 // Links
 // -------------------------
@@ -237,7 +237,7 @@ $dropdownBackground: #181b1f;
 $dropdownBorder: rgba(204, 204, 220, 0.07);
 $dropdownDividerTop: rgba(204, 204, 220, 0.07);
 $dropdownDividerBottom: rgba(204, 204, 220, 0.07);
-$dropdownShadow: 0px 10px 20px rgb(20,20,20);
+$dropdownShadow: 0px 8px 24px rgb(1,4,9);
 
 $dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
@@ -267,7 +267,7 @@ $side-menu-header-color: rgb(204, 204, 220);
 // -------------------------
 $menu-dropdown-bg: #181b1f;
 $menu-dropdown-hover-bg: rgba(204, 204, 220, 0.16);
-$menu-dropdown-shadow: 0px 10px 20px rgb(20,20,20);
+$menu-dropdown-shadow: 0px 8px 24px rgb(1,4,9);
 
 // Tabs
 // -------------------------
@@ -291,9 +291,9 @@ $tooltipLinkColor: $link-color;
 $tooltipExternalLinkColor: $external-link-color;
 $graph-tooltip-bg: $dark-1;
 
-$tooltipBackground: #35383e;
+$tooltipBackground: #22252b;
 $tooltipColor: rgb(204, 204, 220);
-$tooltipArrowColor: #35383e;
+$tooltipArrowColor: #22252b;
 $tooltipBackgroundError: #D10E5C;
 $tooltipShadow: 0px 4px 8px rgba(24, 26, 27, 0.75);
 
@@ -301,7 +301,7 @@ $popover-bg: #181b1f;
 $popover-color: rgb(204, 204, 220);
 $popover-border-color: rgba(204, 204, 220, 0.07);
 $popover-header-bg: #22252b;
-$popover-shadow: 0px 10px 20px rgb(20,20,20);
+$popover-shadow: 0px 8px 24px rgb(1,4,9);
 
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $text-color;

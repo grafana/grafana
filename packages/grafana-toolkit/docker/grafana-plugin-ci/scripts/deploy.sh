@@ -2,16 +2,16 @@
 source "./deploy-common.sh"
 
 # Install Go
-filename="go1.17.linux-amd64.tar.gz"
-get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "6bf89fc4f5ad763871cf7eac80a2d594492de7a818303283f1366a7f6a30372d"
+filename="go1.19.4.linux-amd64.tar.gz"
+get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "c9c08f783325c4cf840a94333159cc937f05f75d36a8b307951d5bd959cf2ab8"
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
-GOLANGCILINT_VERSION=1.37.0
+GOLANGCILINT_VERSION=1.50.0
 filename="golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64"
 get_file "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/$filename.tar.gz" \
     "/tmp/$filename.tar.gz" \
-    "5fe9852e754b621c5264fb8ac810a75033e7f18e972315a60c5c3f8a37b3cb88"
+    "b4b329efcd913082c87d0e9606711ecb57415b5e6ddf233fde9e76c69d9b4e8b"
 untar_file "/tmp/$filename.tar.gz"
 ln -s /usr/local/${filename}/golangci-lint /usr/local/bin/golangci-lint
 ln -s /usr/local/go/bin/go /usr/local/bin/go
@@ -24,10 +24,10 @@ apt-get update -y && apt-get install -y adduser libfontconfig1 locate && /bin/rm
 # Install code climate
 get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64" \
     "/usr/local/bin/cc-test-reporter" \
-    "e1be1930379bd169d3a8e82135cf57216ad52ecfaf520b5804f269721e4dcc3d"
+    "20d1d4e2b399d0287d91e65faeee8ffbef08e3262b0be5eda7def7b3c2799ddd"
 chmod 755 /usr/local/bin/cc-test-reporter
 
-wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.38/grabpl"
+wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.27/grabpl"
 chmod +x /usr/local/bin/grabpl
 
 # Install Mage
@@ -36,8 +36,8 @@ git clone https://github.com/magefile/mage.git /tmp/mage
 pushd /tmp/mage && go run bootstrap.go && popd
 mv $HOME/go/bin/mage /usr/local/bin
 
-GOOGLE_SDK_VERSION=316.0.0
-GOOGLE_SDK_CHECKSUM=96a0b75474dbfa9f3d46dcdec7a4d68a664cb7d57fade5710fe88b1fdf6babb3
+GOOGLE_SDK_VERSION=365.0.1
+GOOGLE_SDK_CHECKSUM=17003cdba67a868c2518ac16efa60dc6175533b7a9fb87304459784308e30fb0
 
 curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz
 echo "${GOOGLE_SDK_CHECKSUM} google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz" | sha256sum --check --status

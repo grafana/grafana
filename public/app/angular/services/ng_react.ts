@@ -9,10 +9,10 @@
 // - reactComponent (generic directive for delegating off to React Components)
 // - reactDirective (factory for creating specific directives that correspond to reactComponent directives)
 
+import angular, { auto } from 'angular';
 import { kebabCase } from 'lodash';
 import React, { ComponentType } from 'react';
 import ReactDOM from 'react-dom';
-import angular, { auto } from 'angular';
 
 // get a react component from name (components can be an angular injectable e.g. value, factory or
 // available on window

@@ -1,7 +1,9 @@
 import { combineLatest, Observable, of } from 'rxjs';
-import { ArrayDataFrame, PanelData } from '@grafana/data';
-import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
 import { mergeMap } from 'rxjs/operators';
+
+import { ArrayDataFrame, PanelData } from '@grafana/data';
+
+import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
 
 export function mergePanelAndDashData(
   panelObservable: Observable<PanelData>,

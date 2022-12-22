@@ -1,18 +1,18 @@
-// Libraries
 import React, { PureComponent } from 'react';
+import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
 
-// Types
 import {
   CoreApp,
   DataQuery,
   DataSourceInstanceSettings,
+  DataSourceRef,
   EventBusExtended,
   HistoryItem,
   PanelData,
 } from '@grafana/data';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+
 import { QueryEditorRow } from './QueryEditorRow';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { getDataSourceSrv } from '@grafana/runtime';
 
 interface Props {
   // The query configuration
@@ -31,6 +31,10 @@ interface Props {
   app?: CoreApp;
   history?: Array<HistoryItem<DataQuery>>;
   eventBus?: EventBusExtended;
+  onQueryCopied?: () => void;
+  onQueryRemoved?: () => void;
+  onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  onDatasourceChange?: (dataSource: DataSourceInstanceSettings, query: DataQuery) => void;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -55,11 +59,20 @@ export class QueryEditorRows extends PureComponent<Props> {
   onDataSourceChange(dataSource: DataSourceInstanceSettings, index: number) {
     const { queries, onQueriesChange } = this.props;
 
+    if (this.props.onDatasourceChange) {
+      this.props.onDatasourceChange(dataSource, queries[index]);
+    }
+
     onQueriesChange(
       queries.map((item, itemIndex) => {
         if (itemIndex !== index) {
           return item;
         }
+
+        const dataSourceRef: DataSourceRef = {
+          type: dataSource.type,
+          uid: dataSource.uid,
+        };
 
         if (item.datasource) {
           const previous = getDataSourceSrv().getInstanceSettings(item.datasource);
@@ -67,7 +80,7 @@ export class QueryEditorRows extends PureComponent<Props> {
           if (previous?.type === dataSource.type) {
             return {
               ...item,
-              datasource: { uid: dataSource.uid },
+              datasource: dataSourceRef,
             };
           }
         }
@@ -75,14 +88,24 @@ export class QueryEditorRows extends PureComponent<Props> {
         return {
           refId: item.refId,
           hide: item.hide,
-          datasource: { uid: dataSource.uid },
+          datasource: dataSourceRef,
         };
       })
     );
   }
 
+  onDragStart = (result: DragStart) => {
+    const { queries, dsSettings } = this.props;
+
+    reportInteraction('query_row_reorder_started', {
+      startIndex: result.source.index,
+      numberOfQueries: queries.length,
+      datasourceType: dsSettings.type,
+    });
+  };
+
   onDragEnd = (result: DropResult) => {
-    const { queries, onQueriesChange } = this.props;
+    const { queries, onQueriesChange, dsSettings } = this.props;
 
     if (!result || !result.destination) {
       return;
@@ -91,6 +114,12 @@ export class QueryEditorRows extends PureComponent<Props> {
     const startIndex = result.source.index;
     const endIndex = result.destination.index;
     if (startIndex === endIndex) {
+      reportInteraction('query_row_reorder_canceled', {
+        startIndex,
+        endIndex,
+        numberOfQueries: queries.length,
+        datasourceType: dsSettings.type,
+      });
       return;
     }
 
@@ -98,13 +127,32 @@ export class QueryEditorRows extends PureComponent<Props> {
     const [removed] = update.splice(startIndex, 1);
     update.splice(endIndex, 0, removed);
     onQueriesChange(update);
+
+    reportInteraction('query_row_reorder_ended', {
+      startIndex,
+      endIndex,
+      numberOfQueries: queries.length,
+      datasourceType: dsSettings.type,
+    });
   };
 
   render() {
-    const { dsSettings, data, queries, app, history, eventBus } = this.props;
+    const {
+      dsSettings,
+      data,
+      queries,
+      app,
+      history,
+      eventBus,
+      onAddQuery,
+      onRunQueries,
+      onQueryCopied,
+      onQueryRemoved,
+      onQueryToggled,
+    } = this.props;
 
     return (
-      <DragDropContext onDragEnd={this.onDragEnd}>
+      <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
         <Droppable droppableId="transformations-list" direction="vertical">
           {(provided) => {
             return (
@@ -126,8 +174,11 @@ export class QueryEditorRows extends PureComponent<Props> {
                       onChangeDataSource={onChangeDataSourceSettings}
                       onChange={(query) => this.onChangeQuery(query, index)}
                       onRemoveQuery={this.onRemoveQuery}
-                      onAddQuery={this.props.onAddQuery}
-                      onRunQuery={this.props.onRunQueries}
+                      onAddQuery={onAddQuery}
+                      onRunQuery={onRunQueries}
+                      onQueryCopied={onQueryCopied}
+                      onQueryRemoved={onQueryRemoved}
+                      onQueryToggled={onQueryToggled}
                       queries={queries}
                       app={app}
                       history={history}

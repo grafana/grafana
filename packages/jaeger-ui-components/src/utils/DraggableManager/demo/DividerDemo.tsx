@@ -15,8 +15,8 @@
 import React from 'react';
 
 import { DraggableBounds, DraggingUpdate } from '..';
-import DraggableManager from '../DraggableManager';
 import TNil from '../../../types/TNil';
+import DraggableManager from '../DraggableManager';
 
 import './DividerDemo.css';
 

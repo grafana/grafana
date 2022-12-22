@@ -89,7 +89,7 @@ func (w *FileLogWriter) Init() error {
 	if err := w.StartLogger(); err != nil {
 		return err
 	}
-	w.logger = log.NewLogfmtLogger(log.NewSyncWriter(w))
+	w.logger = w.Format(log.NewSyncWriter(w))
 	return nil
 }
 

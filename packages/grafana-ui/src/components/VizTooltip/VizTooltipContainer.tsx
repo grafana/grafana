@@ -1,9 +1,12 @@
-import React, { useState, HTMLAttributes, useMemo, useRef, useLayoutEffect } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { useState, HTMLAttributes, useMemo, useRef, useLayoutEffect } from 'react';
+import { useWindowSize } from 'react-use';
+
+import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
 import { getTooltipContainerStyles } from '../../themes/mixins';
-import useWindowSize from 'react-use/lib/useWindowSize';
-import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
+
 import { calculateTooltipPosition } from './utils';
 
 /**
@@ -23,7 +26,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
   position: { x: positionX, y: positionY },
   offset: { x: offsetX, y: offsetY },
   children,
-  allowPointerEvents,
+  allowPointerEvents = false,
   className,
   ...otherProps
 }) => {
@@ -45,13 +48,13 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
           const tH = Math.floor(entry.contentRect.height + 2 * 8);
           if (tooltipMeasurement.width !== tW || tooltipMeasurement.height !== tH) {
             setTooltipMeasurement({
-              width: tW,
-              height: tH,
+              width: Math.min(tW, width),
+              height: Math.min(tH, height),
             });
           }
         }
       }),
-    [tooltipMeasurement]
+    [tooltipMeasurement, width, height]
   );
 
   useLayoutEffect(() => {

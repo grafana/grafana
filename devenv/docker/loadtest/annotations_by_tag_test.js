@@ -57,7 +57,7 @@ export default (data) => {
         requests.push({ method: 'GET', url: '/api/annotations?from=1580825186534&to=1580846786535' });
 
         for (let n = 0; n < batchCount; n++) {
-          requests.push({ method: 'POST', url: '/api/tsdb/query', body: payload });
+          requests.push({ method: 'POST', url: '/api/ds/query', body: payload });
         }
 
         let responses = client.batch(requests);

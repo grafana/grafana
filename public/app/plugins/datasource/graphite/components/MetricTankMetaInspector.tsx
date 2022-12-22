@@ -1,11 +1,13 @@
 import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
+
 import { MetadataInspectorProps, rangeUtil } from '@grafana/data';
-import { GraphiteDatasource } from '../datasource';
-import { GraphiteQuery, GraphiteOptions, MetricTankSeriesMeta } from '../types';
-import { parseSchemaRetentions, getRollupNotice, getRuntimeConsolidationNotice } from '../meta';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
+
+import { GraphiteDatasource } from '../datasource';
+import { parseSchemaRetentions, getRollupNotice, getRuntimeConsolidationNotice } from '../meta';
+import { GraphiteQuery, GraphiteOptions, MetricTankSeriesMeta } from '../types';
 
 export type Props = MetadataInspectorProps<GraphiteDatasource, GraphiteQuery, GraphiteOptions>;
 
@@ -94,7 +96,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     const seriesMetas: Record<string, MetricTankSeriesMeta> = {};
 
     for (const series of data) {
-      if (series.meta && series.meta.custom) {
+      if (series?.meta?.custom?.seriesMetaList) {
         for (const metaItem of series.meta.custom.seriesMetaList as MetricTankSeriesMeta[]) {
           // key is to dedupe as many series will have identitical meta
           const key = `${JSON.stringify(metaItem)}`;

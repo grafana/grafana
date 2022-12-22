@@ -1,3 +1,26 @@
+import { EMPTY, interval, Observable, of } from 'rxjs';
+import { thunkTester } from 'test/core/thunk/thunkTester';
+import { assertIsDefined } from 'test/helpers/asserts';
+
+import {
+  ArrayVector,
+  DataQuery,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceJsonData,
+  DataSourceWithLogsVolumeSupport,
+  LoadingState,
+  MutableDataFrame,
+  RawTimeRange,
+} from '@grafana/data';
+import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
+
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { configureStore } from '../../../store/configureStore';
+import { setTimeSrv } from '../../dashboard/services/TimeSrv';
+
+import { createDefaultInitialState } from './helpers';
+import { saveCorrelationsAction } from './main';
 import {
   addQueryRowAction,
   addResultsToCache,
@@ -11,70 +34,55 @@ import {
   scanStartAction,
   scanStopAction,
   storeLogsVolumeDataProviderAction,
+  setLogsVolumeEnabled,
 } from './query';
-import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
-import { EMPTY, interval, Observable, of } from 'rxjs';
-import {
-  ArrayVector,
-  DataFrame,
-  DataQuery,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceJsonData,
-  DefaultTimeZone,
-  LoadingState,
-  MutableDataFrame,
-  PanelData,
-  RawTimeRange,
-  toUtc,
-} from '@grafana/data';
-import { thunkTester } from 'test/core/thunk/thunkTester';
 import { makeExplorePaneState } from './utils';
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { configureStore } from '../../../store/configureStore';
-import { setTimeSrv } from '../../dashboard/services/TimeSrv';
-import Mock = jest.Mock;
 
-const t = toUtc();
-const testRange = {
-  from: t,
-  to: t,
-  raw: {
-    from: t,
-    to: t,
-  },
-};
-const defaultInitialState = {
-  user: {
-    orgId: '1',
-    timeZone: DefaultTimeZone,
-  },
-  explore: {
-    [ExploreId.left]: {
-      datasourceInstance: {
-        query: jest.fn(),
-        getRef: jest.fn(),
-        meta: {
-          id: 'something',
-        },
-      },
-      initialized: true,
-      containerWidth: 1920,
-      eventBridge: { emit: () => {} } as any,
-      queries: [{ expr: 'test' }] as any[],
-      range: testRange,
-      history: [],
-      refreshInterval: {
-        label: 'Off',
-        value: 0,
-      },
-      cache: [],
+const { testRange, defaultInitialState } = createDefaultInitialState();
+
+const datasources: DataSourceApi[] = [
+  {
+    name: 'testDs',
+    type: 'postgres',
+    uid: 'ds1',
+    getRef: () => {
+      return { type: 'postgres', uid: 'ds1' };
     },
+  } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+  {
+    name: 'testDs2',
+    type: 'postgres',
+    uid: 'ds2',
+    getRef: () => {
+      return { type: 'postgres', uid: 'ds2' };
+    },
+  } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+];
+
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
+  getTimeSrv: () => ({
+    init: jest.fn(),
+    timeRange: jest.fn().mockReturnValue({}),
+  }),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    updateTimeRange: jest.fn(),
+  }),
+  getDataSourceSrv: () => {
+    return {
+      get: (uid?: string) => datasources.find((ds) => ds.uid === uid) || datasources[0],
+    };
   },
-};
+}));
 
 function setupQueryResponse(state: StoreState) {
-  (state.explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(
+  const leftDatasourceInstance = assertIsDefined(state.explore[ExploreId.left].datasourceInstance);
+
+  jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(
     of({
       error: { message: 'test error' },
       data: [
@@ -90,26 +98,55 @@ function setupQueryResponse(state: StoreState) {
 }
 
 describe('runQueries', () => {
-  it('should pass dataFrames to state even if there is error in response', async () => {
+  const setupTests = () => {
     setTimeSrv({ init() {} } as any);
-    const { dispatch, getState } = configureStore({
+    return configureStore({
       ...(defaultInitialState as any),
     });
+  };
+
+  it('should pass dataFrames to state even if there is error in response', async () => {
+    const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
+    await dispatch(saveCorrelationsAction([]));
     await dispatch(runQueries(ExploreId.left));
     expect(getState().explore[ExploreId.left].showMetrics).toBeTruthy();
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
   });
 
+  it('should modify the request-id for log-volume queries', async () => {
+    const { dispatch, getState } = setupTests();
+    setupQueryResponse(getState());
+    await dispatch(saveCorrelationsAction([]));
+    await dispatch(runQueries(ExploreId.left));
+
+    const state = getState().explore[ExploreId.left];
+    expect(state.queryResponse.request?.requestId).toBe('explore_left');
+    const datasource = state.datasourceInstance as unknown as DataSourceWithLogsVolumeSupport<DataQuery>;
+    expect(datasource.getLogsVolumeDataProvider).toBeCalledWith(
+      expect.objectContaining({
+        requestId: 'explore_left_log_volume',
+      })
+    );
+  });
+
   it('should set state to done if query completes without emitting', async () => {
-    setTimeSrv({ init() {} } as any);
-    const { dispatch, getState } = configureStore({
-      ...(defaultInitialState as any),
-    });
-    (getState().explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(EMPTY);
+    const { dispatch, getState } = setupTests();
+    const leftDatasourceInstance = assertIsDefined(getState().explore[ExploreId.left].datasourceInstance);
+    jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(EMPTY);
+    await dispatch(saveCorrelationsAction([]));
     await dispatch(runQueries(ExploreId.left));
     await new Promise((resolve) => setTimeout(() => resolve(''), 500));
     expect(getState().explore[ExploreId.left].queryResponse.state).toBe(LoadingState.Done);
+  });
+
+  it('shows results only after correlations are loaded', async () => {
+    const { dispatch, getState } = setupTests();
+    setupQueryResponse(getState());
+    await dispatch(runQueries(ExploreId.left));
+    expect(getState().explore[ExploreId.left].graphResult).not.toBeDefined();
+    await dispatch(saveCorrelationsAction([]));
+    expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
   });
 });
 
@@ -156,7 +193,7 @@ describe('importing queries', () => {
         explore: {
           [ExploreId.left]: {
             ...defaultInitialState.explore[ExploreId.left],
-            datasourceInstance: { name: 'testDs', type: 'postgres' },
+            datasourceInstance: datasources[0],
           },
         },
       });
@@ -165,18 +202,18 @@ describe('importing queries', () => {
         importQueries(
           ExploreId.left,
           [
-            { datasource: { type: 'postgresql' }, refId: 'refId_A' },
-            { datasource: { type: 'postgresql' }, refId: 'refId_B' },
+            { datasource: { type: 'postgresql', uid: 'ds1' }, refId: 'refId_A' },
+            { datasource: { type: 'postgresql', uid: 'ds1' }, refId: 'refId_B' },
           ],
-          { name: 'Postgres1', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
-          { name: 'Postgres2', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>
+          datasources[0],
+          datasources[1]
         )
       );
 
       expect(getState().explore[ExploreId.left].queries[0]).toHaveProperty('refId', 'refId_A');
       expect(getState().explore[ExploreId.left].queries[1]).toHaveProperty('refId', 'refId_B');
-      expect(getState().explore[ExploreId.left].queries[0]).not.toHaveProperty('datasource');
-      expect(getState().explore[ExploreId.left].queries[1]).not.toHaveProperty('datasource');
+      expect(getState().explore[ExploreId.left].queries[0]).toHaveProperty('datasource.uid', 'ds2');
+      expect(getState().explore[ExploreId.left].queries[1]).toHaveProperty('datasource.uid', 'ds2');
     });
   });
 });
@@ -243,9 +280,9 @@ describe('reducer', () => {
           [ExploreId.left]: {
             ...defaultInitialState.explore[ExploreId.left],
             queryResponse: {
-              series: [{ name: 'test name' }] as DataFrame[],
+              series: [{ name: 'test name' }],
               state: LoadingState.Done,
-            } as PanelData,
+            },
             absoluteRange: { from: 1621348027000, to: 1621348050000 },
           },
         },
@@ -264,7 +301,7 @@ describe('reducer', () => {
         explore: {
           [ExploreId.left]: {
             ...defaultInitialState.explore[ExploreId.left],
-            queryResponse: { series: [{ name: 'test name' }] as DataFrame[], state: LoadingState.Loading } as PanelData,
+            queryResponse: { series: [{ name: 'test name' }], state: LoadingState.Loading },
             absoluteRange: { from: 1621348027000, to: 1621348050000 },
           },
         },
@@ -282,9 +319,9 @@ describe('reducer', () => {
           [ExploreId.left]: {
             ...defaultInitialState.explore[ExploreId.left],
             queryResponse: {
-              series: [{ name: 'test name' }] as DataFrame[],
+              series: [{ name: 'test name' }],
               state: LoadingState.Done,
-            } as PanelData,
+            },
             absoluteRange: { from: 1621348027000, to: 1621348050000 },
             cache: [
               {
@@ -437,6 +474,35 @@ describe('reducer', () => {
       expect(getState().explore[ExploreId.left].logsVolumeData).toBeDefined();
       expect(getState().explore[ExploreId.left].logsVolumeData!.state).toBe(LoadingState.Done);
       expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeUndefined();
+    });
+
+    it('do not load logsVolume data when disabled', async () => {
+      // turn logsvolume off
+      dispatch(setLogsVolumeEnabled(ExploreId.left, false));
+      expect(getState().explore[ExploreId.left].logsVolumeEnabled).toBe(false);
+
+      // verify that if we run a query, it will not do logsvolume, but the Provider will still be set
+      await dispatch(runQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeData).toBeUndefined();
+      expect(getState().explore[ExploreId.left].logsVolumeDataSubscription).toBeUndefined();
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
+    });
+
+    it('load logsVolume data when it gets enabled', async () => {
+      // first it is disabled
+      dispatch(setLogsVolumeEnabled(ExploreId.left, false));
+
+      // runQueries sets up the logsVolume query, but does not run it
+      await dispatch(runQueries(ExploreId.left));
+      expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
+
+      // we turn logsvolume on
+      await dispatch(setLogsVolumeEnabled(ExploreId.left, true));
+
+      // verify it was turned on
+      expect(getState().explore[ExploreId.left].logsVolumeEnabled).toBe(true);
+
+      expect(getState().explore[ExploreId.left].logsVolumeDataSubscription).toBeDefined();
     });
   });
 });

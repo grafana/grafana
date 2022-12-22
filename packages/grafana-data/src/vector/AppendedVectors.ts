@@ -1,4 +1,5 @@
 import { Vector } from '../types/vector';
+
 import { vectorToArray } from './vectorToArray';
 
 interface AppendedVectorInfo<T> {

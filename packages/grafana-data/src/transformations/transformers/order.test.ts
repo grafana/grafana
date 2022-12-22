@@ -1,13 +1,11 @@
-import {
-  ArrayVector,
-  DataTransformerConfig,
-  DataTransformerID,
-  FieldType,
-  toDataFrame,
-  transformDataFrame,
-} from '@grafana/data';
-import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
+import { toDataFrame } from '../../dataframe';
+import { FieldType, DataTransformerConfig } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { ArrayVector } from '../../vector';
+import { transformDataFrame } from '../transformDataFrame';
+
+import { DataTransformerID } from './ids';
+import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
 
 describe('Order Transformer', () => {
   beforeAll(() => {
@@ -47,6 +45,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'temperature',
+              multipleFrames: false,
             },
           },
           {
@@ -57,6 +56,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'humidity',
+              multipleFrames: false,
             },
           },
           {
@@ -67,6 +67,61 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'time',
+              multipleFrames: false,
+            },
+          },
+        ]);
+      });
+    });
+
+    it('should disable order according to config', async () => {
+      const cfg: DataTransformerConfig<OrderFieldsTransformerOptions> = {
+        id: DataTransformerID.order,
+        disabled: true,
+        options: {
+          indexByName: {
+            time: 2,
+            temperature: 0,
+            humidity: 1,
+          },
+        },
+      };
+
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const ordered = data[0];
+        expect(ordered.fields).toEqual([
+          {
+            config: {},
+            name: 'time',
+            type: FieldType.time,
+            values: new ArrayVector([3000, 4000, 5000, 6000]),
+            labels: undefined,
+            state: {
+              displayName: 'time',
+              multipleFrames: false,
+            },
+          },
+          {
+            config: {},
+            name: 'temperature',
+            type: FieldType.number,
+            values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
+            labels: undefined,
+            state: {
+              displayName: 'temperature',
+              multipleFrames: false,
+            },
+          },
+          {
+            config: {},
+            name: 'humidity',
+            type: FieldType.number,
+            values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
+            labels: undefined,
+            state: {
+              displayName: 'humidity',
+              multipleFrames: false,
             },
           },
         ]);
@@ -108,6 +163,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'humidity',
+              multipleFrames: false,
             },
           },
           {
@@ -118,6 +174,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'time',
+              multipleFrames: false,
             },
           },
           {
@@ -128,6 +185,7 @@ describe('Order Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'pressure',
+              multipleFrames: false,
             },
           },
         ]);

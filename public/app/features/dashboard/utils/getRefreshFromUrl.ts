@@ -1,7 +1,7 @@
 import { defaultIntervals } from '@grafana/ui';
 
 interface Args {
-  params: Record<string, string>;
+  urlRefresh: string | null;
   currentRefresh: string | boolean | undefined;
   isAllowedIntervalFn: (interval: string) => boolean;
   minRefreshInterval: string;
@@ -13,18 +13,18 @@ interface Args {
 // try to find the first refresh interval that matches the minRefreshInterval (min_refresh_interval in ini)
 // or just take the first interval.
 export function getRefreshFromUrl({
-  params,
+  urlRefresh,
   currentRefresh,
   isAllowedIntervalFn,
   minRefreshInterval,
   refreshIntervals = defaultIntervals,
 }: Args): string | boolean | undefined {
-  if (!params.refresh) {
+  if (!urlRefresh) {
     return currentRefresh;
   }
 
-  const isAllowedInterval = isAllowedIntervalFn(params.refresh);
-  const isExistingInterval = refreshIntervals.find((interval) => interval === params.refresh);
+  const isAllowedInterval = isAllowedIntervalFn(urlRefresh);
+  const isExistingInterval = refreshIntervals.find((interval) => interval === urlRefresh);
 
   if (!isAllowedInterval || !isExistingInterval) {
     const minRefreshIntervalInIntervals = minRefreshInterval
@@ -35,5 +35,5 @@ export function getRefreshFromUrl({
     return minRefreshIntervalInIntervals ?? lowestRefreshInterval ?? currentRefresh;
   }
 
-  return params.refresh || currentRefresh;
+  return urlRefresh || currentRefresh;
 }

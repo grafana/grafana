@@ -1,14 +1,16 @@
-  # datasource URL: http://localhost:3100/
   loki:
     image: grafana/loki:latest
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./docker/blocks/loki/loki-config.yaml:/etc/loki/loki-config.yaml
     ports:
       - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-  promtail:
-    image: grafana/promtail:latest
-    volumes:
-      - ./docker/blocks/loki/config.yaml:/etc/promtail/docker-config.yaml
-      - /var/log:/var/log
-      - ../data/log:/var/log/grafana
-    command:
-      -config.file=/etc/promtail/docker-config.yaml
+
+  loki-data:
+    build: docker/blocks/loki/data
+    command: node /home/node/data.js http://loki:3100
+    depends_on:
+      - loki
+    # when loki starts, there might be some time while it is not
+    # accepting requests, so we allow data.js to restart on failure.
+    restart: "on-failure"

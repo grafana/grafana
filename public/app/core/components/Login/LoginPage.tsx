@@ -1,24 +1,26 @@
 // Libraries
-import React, { FC } from 'react';
 import { css } from '@emotion/css';
+import React from 'react';
 
 // Components
-import { UserSignup } from './UserSignup';
-import { LoginServiceButtons } from './LoginServiceButtons';
+import { HorizontalGroup, LinkButton } from '@grafana/ui';
+import { Branding } from 'app/core/components/Branding/Branding';
+import config from 'app/core/config';
+
+import { ChangePassword } from '../ForgottenPassword/ChangePassword';
+
 import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
-import { ChangePassword } from '../ForgottenPassword/ChangePassword';
-import { Branding } from 'app/core/components/Branding/Branding';
-import { HorizontalGroup, LinkButton } from '@grafana/ui';
 import { LoginLayout, InnerBox } from './LoginLayout';
-import config from 'app/core/config';
+import { LoginServiceButtons } from './LoginServiceButtons';
+import { UserSignup } from './UserSignup';
 
 const forgottenPasswordStyles = css`
   padding: 0;
   margin-top: 4px;
 `;
 
-export const LoginPage: FC = () => {
+export const LoginPage = () => {
   document.title = Branding.AppTitle;
   return (
     <LoginLayout>
@@ -26,8 +28,6 @@ export const LoginPage: FC = () => {
         {({
           loginHint,
           passwordHint,
-          ldapEnabled,
-          authProxyEnabled,
           disableLoginForm,
           disableUserSignUp,
           login,
@@ -46,19 +46,15 @@ export const LoginPage: FC = () => {
                     passwordHint={passwordHint}
                     isLoggingIn={isLoggingIn}
                   >
-                    {!(ldapEnabled || authProxyEnabled) ? (
-                      <HorizontalGroup justify="flex-end">
-                        <LinkButton
-                          className={forgottenPasswordStyles}
-                          fill="text"
-                          href={`${config.appSubUrl}/user/password/send-reset-email`}
-                        >
-                          Forgot your password?
-                        </LinkButton>
-                      </HorizontalGroup>
-                    ) : (
-                      <></>
-                    )}
+                    <HorizontalGroup justify="flex-end">
+                      <LinkButton
+                        className={forgottenPasswordStyles}
+                        fill="text"
+                        href={`${config.appSubUrl}/user/password/send-reset-email`}
+                      >
+                        Forgot your password?
+                      </LinkButton>
+                    </HorizontalGroup>
                   </LoginForm>
                 )}
                 <LoginServiceButtons />

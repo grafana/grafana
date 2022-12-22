@@ -1,12 +1,14 @@
-import React, { PureComponent, SyntheticEvent } from 'react';
 import { cx, css } from '@emotion/css';
-import { stylesFactory, withTheme } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
-import { Themeable } from '../../types';
+import React, { PureComponent, SyntheticEvent } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory, withTheme2 } from '../../themes';
+import { Themeable2 } from '../../types';
 import { ComponentSize } from '../../types/size';
 import { Button, ButtonVariant } from '../Button';
 
-export interface Props extends Themeable {
+export interface Props extends Themeable2 {
   /** Confirm action callback */
   onConfirm(): void;
   /** Custom button styles */
@@ -34,7 +36,7 @@ interface State {
   showConfirm: boolean;
 }
 
-class UnThemedConfirmButton extends PureComponent<Props, State> {
+class UnThemedConfirmButton extends PureComponent<React.PropsWithChildren<Props>, State> {
   mainButtonRef = React.createRef<HTMLButtonElement>();
   confirmButtonRef = React.createRef<HTMLButtonElement>();
   state: State = {
@@ -115,17 +117,19 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
 
     return (
       <span className={styles.buttonContainer}>
-        {typeof children === 'string' ? (
-          <span className={buttonClass}>
-            <Button size={size} fill="text" onClick={onClick} ref={this.mainButtonRef}>
+        <div className={cx(disabled && styles.disabled)}>
+          {typeof children === 'string' ? (
+            <span className={buttonClass}>
+              <Button size={size} fill="text" onClick={onClick} ref={this.mainButtonRef}>
+                {children}
+              </Button>
+            </span>
+          ) : (
+            <span className={buttonClass} onClick={onClick}>
               {children}
-            </Button>
-          </span>
-        ) : (
-          <span className={buttonClass} onClick={onClick}>
-            {children}
-          </span>
-        )}
+            </span>
+          )}
+        </div>
         <span className={confirmButtonClass}>
           <Button size={size} variant={confirmButtonVariant} onClick={this.onConfirm} ref={this.confirmButtonRef}>
             {confirmText}
@@ -139,9 +143,9 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
   }
 }
 
-export const ConfirmButton = withTheme(UnThemedConfirmButton);
+export const ConfirmButton = withTheme2(UnThemedConfirmButton);
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     buttonContainer: css`
       display: flex;
@@ -150,9 +154,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     buttonDisabled: css`
       text-decoration: none;
-      color: ${theme.colors.text};
+      color: ${theme.colors.text.primary};
       opacity: 0.65;
-      cursor: not-allowed;
       pointer-events: none;
     `,
     buttonShow: css`
@@ -168,7 +171,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     confirmButton: css`
       align-items: flex-start;
-      background: ${theme.colors.bg1};
+      background: ${theme.colors.background.primary};
       display: flex;
       position: absolute;
       pointer-events: none;
@@ -185,6 +188,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       visibility: hidden;
       transition: opacity 0.12s ease-in, transform 0.14s ease-in, visibility 0s 0.12s;
       transform: translateX(100px);
+    `,
+    disabled: css`
+      cursor: not-allowed;
     `,
   };
 });

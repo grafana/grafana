@@ -1,4 +1,5 @@
 import { Event, Severity } from '@sentry/browser';
+import { Response } from '@sentry/types';
 import {
   logger,
   makePromiseBuffer,
@@ -7,7 +8,7 @@ import {
   supportsReferrerPolicy,
   SyncPromise,
 } from '@sentry/utils';
-import { Response } from '@sentry/types';
+
 import { BaseTransport } from '../types';
 
 export interface CustomEndpointTransportOptions {
@@ -17,6 +18,8 @@ export interface CustomEndpointTransportOptions {
 }
 
 const DEFAULT_MAX_CONCURRENT_REQUESTS = 3;
+
+const DEFAULT_RATE_LIMIT_TIMEOUT_MS = 5000;
 
 /**
  * This is a copy of sentry's FetchTransport, edited to be able to push to any custom url
@@ -81,7 +84,7 @@ export class CustomEndpointTransport implements BaseTransport {
       // https://caniuse.com/#feat=referrer-policy
       // It doesn't. And it throw exception instead of ignoring this parameter...
       // REF: https://github.com/getsentry/raven-js/issues/1233
-      referrerPolicy: (supportsReferrerPolicy() ? 'origin' : '') as ReferrerPolicy,
+      referrerPolicy: supportsReferrerPolicy() ? 'origin' : '',
     };
 
     if (this.options.fetchParameters !== undefined) {
@@ -103,7 +106,11 @@ export class CustomEndpointTransport implements BaseTransport {
                 if (response.status === 429) {
                   const now = Date.now();
                   const retryAfterHeader = response.headers.get('Retry-After');
-                  this._disabledUntil = new Date(now + parseRetryAfterHeader(now, retryAfterHeader));
+                  if (retryAfterHeader) {
+                    this._disabledUntil = new Date(now + parseRetryAfterHeader(retryAfterHeader, now));
+                  } else {
+                    this._disabledUntil = new Date(now + DEFAULT_RATE_LIMIT_TIMEOUT_MS);
+                  }
                   logger.warn(`Too many requests, backing off till: ${this._disabledUntil}`);
                 }
 

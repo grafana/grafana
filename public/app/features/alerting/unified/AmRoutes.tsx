@@ -1,31 +1,40 @@
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
-import { useDispatch } from 'react-redux';
-import { Redirect } from 'react-router-dom';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
+
 import { useCleanup } from '../../../core/hooks/useCleanup';
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+
+import { alertmanagerApi } from './api/alertmanagerApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
+import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
+import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
+import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { AmRootRoute } from './components/amroutes/AmRootRoute';
 import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
+import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
+import { useGetAmRouteReceiverWithGrafanaAppTypes } from './components/receivers/grafanaAppReceivers/grafanaApp';
+import { AmRouteReceiver } from './components/receivers/grafanaAppReceivers/types';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
+import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
-import { AmRouteReceiver, FormAmRoute } from './types/amroutes';
-import { amRouteToFormAmRoute, formAmRouteToAmRoute, stringsToSelectableValues } from './utils/amroutes';
-import { initialAsyncRequestState } from './utils/redux';
+import { FormAmRoute } from './types/amroutes';
+import { amRouteToFormAmRoute, formAmRouteToAmRoute } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
-import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
+import { initialAsyncRequestState } from './utils/redux';
 
-const AmRoutes: FC = () => {
+const AmRoutes = () => {
   const dispatch = useDispatch();
+  const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
   const styles = useStyles2(getStyles);
   const [isRootRouteEditMode, setIsRootRouteEditMode] = useState(false);
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
-
-  const readOnly = alertManagerSourceName ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) : true;
+  const alertManagers = useAlertManagersByPermission('notification');
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
+  const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
@@ -48,9 +57,9 @@ const AmRoutes: FC = () => {
   const config = result?.alertmanager_config;
   const [rootRoute, id2ExistingRoute] = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
 
-  const receivers = stringsToSelectableValues(
-    (config?.receivers ?? []).map((receiver: Receiver) => receiver.name)
-  ) as AmRouteReceiver[];
+  const receivers: AmRouteReceiver[] = useGetAmRouteReceiverWithGrafanaAppTypes(config?.receivers ?? []);
+
+  const isProvisioned = useMemo(() => Boolean(config?.route?.provenance), [config?.route]);
 
   const enterRootRouteEditMode = () => {
     setIsRootRouteEditMode(true);
@@ -60,7 +69,8 @@ const AmRoutes: FC = () => {
     setIsRootRouteEditMode(false);
   };
 
-  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
+
   const handleSave = (data: Partial<FormAmRoute>) => {
     if (!result) {
       return;
@@ -97,21 +107,39 @@ const AmRoutes: FC = () => {
   };
 
   if (!alertManagerSourceName) {
-    return <Redirect to="/alerting/routes" />;
+    return (
+      <AlertingPageWrapper pageId="am-routes">
+        <NoAlertManagerWarning availableAlertManagers={alertManagers} />
+      </AlertingPageWrapper>
+    );
   }
+
+  const readOnly = alertManagerSourceName
+    ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) || isProvisioned
+    : true;
 
   return (
     <AlertingPageWrapper pageId="am-routes">
-      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      <AlertManagerPicker
+        current={alertManagerSourceName}
+        onChange={setAlertManagerSourceName}
+        dataSources={alertManagers}
+      />
       {resultError && !resultLoading && (
         <Alert severity="error" title="Error loading Alertmanager config">
           {resultError.message || 'Unknown error.'}
         </Alert>
       )}
+      <GrafanaAlertmanagerDeliveryWarning
+        currentAlertmanager={alertManagerSourceName}
+        alertmanagerChoice={alertmanagerChoice}
+      />
+      {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
       {resultLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
       {result && !resultLoading && !resultError && (
         <>
           <AmRootRoute
+            readOnly={readOnly}
             alertManagerSourceName={alertManagerSourceName}
             isEditMode={isRootRouteEditMode}
             onSave={handleSave}
@@ -122,6 +150,7 @@ const AmRoutes: FC = () => {
           />
           <div className={styles.break} />
           <AmSpecificRouting
+            alertManagerSourceName={alertManagerSourceName}
             onChange={handleSave}
             readOnly={readOnly}
             onRootRouteEdit={enterRootRouteEditMode}

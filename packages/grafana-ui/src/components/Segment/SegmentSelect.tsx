@@ -1,14 +1,16 @@
 import React, { HTMLProps, useRef } from 'react';
+
 import { SelectableValue } from '@grafana/data';
-import { AsyncSelect, Select } from '../Select/Select';
+
 import { useTheme2 } from '../../themes/ThemeContext';
+import { AsyncSelect, Select } from '../Select/Select';
 
 /** @internal
  * Should be used only internally by Segment/SegmentAsync which can guarantee that SegmentSelect is hidden
  * when a value is selected. See comment below on closeMenuOnSelect()
  */
 export interface Props<T> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
-  value?: SelectableValue<T>;
+  value?: T | SelectableValue<T>;
   options: Array<SelectableValue<T>>;
   onChange: (item: SelectableValue<T>) => void;
   /**
@@ -58,7 +60,6 @@ export function SegmentSelect<T>({
   return (
     <div {...rest} ref={ref}>
       <Component
-        menuShouldPortal
         width={width}
         noOptionsMessage={noOptionsMessage}
         placeholder={placeholder}

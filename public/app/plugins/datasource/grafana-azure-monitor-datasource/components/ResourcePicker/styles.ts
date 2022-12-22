@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -63,6 +64,43 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
+  }),
+
+  resourceField: css({
+    maxWidth: theme.spacing(36),
+    overflow: 'hidden',
+  }),
+
+  resourceFieldButton: css({
+    padding: '7px',
+    textAlign: 'left',
+  }),
+
+  nestedRowCheckbox: css({
+    zIndex: 0,
+  }),
+
+  selectionFooter: css({
+    position: 'sticky',
+    bottom: 0,
+    background: theme.colors.background.primary,
+    paddingTop: theme.spacing(2),
+  }),
+
+  loadingWrapper: css({
+    textAlign: 'center',
+    paddingTop: theme.spacing(2),
+    paddingBottom: theme.spacing(2),
+    color: theme.colors.text.secondary,
+  }),
+
+  resultLimit: css({
+    margin: '4px 0',
+    fontStyle: 'italic',
+  }),
+
+  modal: css({
+    width: theme.breakpoints.values.lg,
   }),
 });
 

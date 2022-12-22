@@ -1,4 +1,5 @@
 import { createTheme, FieldType, MutableDataFrame, toDataFrame } from '@grafana/data';
+
 import { prepareGraphableFields } from './utils';
 
 describe('prepare timeseries graph', () => {
@@ -42,12 +43,12 @@ describe('prepare timeseries graph', () => {
     const frames = prepareGraphableFields(input, createTheme());
     const out = frames![0];
 
-    expect(out.fields.map((f) => f.name)).toEqual(['a', 'c', 'd']);
+    expect(out.fields.map((f) => f.name)).toEqual(['a', 'b', 'c', 'd']);
 
     const field = out.fields.find((f) => f.name === 'c');
     expect(field?.display).toBeDefined();
     expect(field!.display!(1)).toMatchInlineSnapshot(`
-      Object {
+      {
         "color": "#808080",
         "numeric": 1,
         "percent": 1,
@@ -69,7 +70,7 @@ describe('prepare timeseries graph', () => {
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values.toArray()).toMatchInlineSnapshot(`
-      Array [
+      [
         -10,
         null,
         10,
@@ -77,5 +78,52 @@ describe('prepare timeseries graph', () => {
         null,
       ]
     `);
+  });
+
+  it('will insert nulls given an interval value', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, config: { interval: 1 }, values: [1, 3, 6] },
+        { name: 'a', values: [1, 2, 3] },
+      ],
+    });
+    const frames = prepareGraphableFields([df], createTheme());
+
+    const field = frames![0].fields.find((f) => f.name === 'a');
+    expect(field!.values.toArray()).toMatchInlineSnapshot(`
+      [
+        1,
+        null,
+        2,
+        null,
+        null,
+        3,
+      ]
+    `);
+
+    expect(frames![0].length).toEqual(6);
+  });
+
+  it('will insert and convert nulls to a configure "no value" value', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, config: { interval: 1 }, values: [1, 3, 6] },
+        { name: 'a', config: { noValue: '20' }, values: [1, 2, 3] },
+      ],
+    });
+    const frames = prepareGraphableFields([df], createTheme());
+
+    const field = frames![0].fields.find((f) => f.name === 'a');
+    expect(field!.values.toArray()).toMatchInlineSnapshot(`
+      [
+        1,
+        20,
+        2,
+        20,
+        20,
+        3,
+      ]
+    `);
+    expect(frames![0].length).toEqual(6);
   });
 });

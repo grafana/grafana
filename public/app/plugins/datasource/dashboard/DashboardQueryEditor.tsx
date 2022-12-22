@@ -1,18 +1,16 @@
-import React, { useCallback, useMemo } from 'react';
 import { css } from '@emotion/css';
-import pluralize from 'pluralize';
 import { useId } from '@react-aria/utils';
+import pluralize from 'pluralize';
+import React, { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { InlineField, Select, useStyles2, VerticalGroup } from '@grafana/ui';
-import { DataQuery, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
-
+import { DataQuery, GrafanaTheme2, PanelData, SelectableValue, DataTopic } from '@grafana/data';
+import { Field, Select, useStyles2, VerticalGroup, Spinner, Switch, RadioButtonGroup, Icon } from '@grafana/ui';
 import config from 'app/core/config';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { PanelModel } from 'app/features/dashboard/state';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { PanelModel } from 'app/features/dashboard/state';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
-import { DashboardQueryRow } from './DashboardQueryRow';
 
 import { DashboardQuery, ResultInfo, SHARED_DASHBOARD_QUERY } from './types';
 
@@ -27,25 +25,30 @@ interface Props {
   onRunQueries: () => void;
 }
 
+const topics = [
+  { label: 'All data', value: false },
+  { label: 'Annotations', value: true, description: 'Include annotations as regular data' },
+];
+
 export function DashboardQueryEditor({ panelData, queries, onChange, onRunQueries }: Props) {
   const { value: defaultDatasource } = useAsync(() => getDatasourceSrv().get());
-  const { value: results, loading: loadingResults } = useAsync(async (): Promise<ResultInfo[]> => {
-    const query = queries[0] as DashboardQuery;
-    const dashboard = getDashboardSrv().getCurrent();
-    const panel = dashboard?.getPanelById(query.panelId ?? -124134);
+  const query = queries[0] as DashboardQuery;
 
+  const panel = useMemo(() => {
+    const dashboard = getDashboardSrv().getCurrent();
+    return dashboard?.getPanelById(query.panelId ?? -124134);
+  }, [query.panelId]);
+
+  const { value: results, loading: loadingResults } = useAsync(async (): Promise<ResultInfo[]> => {
     if (!panel) {
       return [];
     }
-
     const mainDS = await getDatasourceSrv().get(panel.datasource);
     return Promise.all(
       panel.targets.map(async (query) => {
         const ds = query.datasource ? await getDatasourceSrv().get(query.datasource) : mainDS;
         const fmt = ds.getQueryDisplayText || getQueryDisplayText;
-
         const queryData = filterPanelDataToQuery(panelData, query.refId) ?? panelData;
-
         return {
           refId: query.refId,
           query: fmt(query),
@@ -55,21 +58,41 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
         };
       })
     );
-  }, [panelData, queries]);
+  }, [panelData, panel]);
 
-  const query = queries[0] as DashboardQuery;
+  const onUpdateQuery = useCallback(
+    (query: DashboardQuery) => {
+      onChange([query]);
+      onRunQueries();
+    },
+    [onChange, onRunQueries]
+  );
 
   const onPanelChanged = useCallback(
     (id: number) => {
-      onChange([
-        {
-          ...query,
-          panelId: id,
-        } as DashboardQuery,
-      ]);
-      onRunQueries();
+      onUpdateQuery({
+        ...query,
+        panelId: id,
+      });
     },
-    [query, onChange, onRunQueries]
+    [query, onUpdateQuery]
+  );
+
+  const onTransformToggle = useCallback(() => {
+    onUpdateQuery({
+      ...query,
+      withTransforms: !query.withTransforms,
+    });
+  }, [query, onUpdateQuery]);
+
+  const onTopicChanged = useCallback(
+    (t: boolean) => {
+      onUpdateQuery({
+        ...query,
+        topic: t ? DataTopic.Annotations : undefined,
+      });
+    },
+    [query, onUpdateQuery]
   );
 
   const getPanelDescription = useCallback(
@@ -120,12 +143,12 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
   const selected = panels.find((panel) => panel.value === query.panelId);
   // Same as current URL, but different panelId
   const editURL = `d/${dashboard.uid}/${dashboard.title}?&editPanel=${query.panelId}`;
+  const showTransforms = Boolean(query.withTransforms || panel?.transformations?.length);
 
   return (
     <>
-      <InlineField label="Use results from panel" grow>
+      <Field label="Source" description="Use the same results as panel">
         <Select
-          menuShouldPortal
           inputId={selectId}
           placeholder="Choose panel"
           isSearchable={true}
@@ -133,19 +156,45 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
           value={selected}
           onChange={(item) => onPanelChanged(item.value!)}
         />
-      </InlineField>
+      </Field>
 
-      {results && !loadingResults && (
-        <div className={styles.results}>
-          {query.panelId && (
-            <VerticalGroup spacing="sm">
-              {results.map((target, i) => (
-                <DashboardQueryRow editURL={editURL} target={target} key={`DashboardQueryRow-${i}`} />
-              ))}
-            </VerticalGroup>
+      {loadingResults ? (
+        <Spinner />
+      ) : (
+        <>
+          {results && Boolean(results.length) && (
+            <Field label="Queries">
+              <VerticalGroup spacing="sm">
+                {results.map((target, i) => (
+                  <div className={styles.queryEditorRowHeader} key={`DashboardQueryRow-${i}`}>
+                    <div>
+                      <img src={target.img} alt="" width={16} />
+                      <span className={styles.refId}>{target.refId}:</span>
+                    </div>
+                    <div>
+                      <a href={editURL}>
+                        {target.query}
+                        &nbsp;
+                        <Icon name="external-link-alt" />
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </VerticalGroup>
+            </Field>
           )}
-        </div>
+        </>
       )}
+
+      {showTransforms && (
+        <Field label="Transform" description="Apply panel transformations from the source panel">
+          <Switch value={Boolean(query.withTransforms)} onChange={onTransformToggle} />
+        </Field>
+      )}
+
+      <Field label="Data">
+        <RadioButtonGroup options={topics} value={query.topic === DataTopic.Annotations} onChange={onTopicChanged} />
+      </Field>
     </>
   );
 }
@@ -158,5 +207,16 @@ function getStyles(theme: GrafanaTheme2) {
     noQueriesText: css({
       padding: theme.spacing(1.25),
     }),
+    refId: css({
+      padding: theme.spacing(1.25),
+    }),
+    queryEditorRowHeader: css`
+      label: queryEditorRowHeader;
+      display: flex;
+      padding: 4px 8px;
+      flex-flow: row wrap;
+      background: ${theme.colors.background.secondary};
+      align-items: center;
+    `,
   };
 }

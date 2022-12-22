@@ -36,8 +36,19 @@ export * from './live';
 export * from './variables';
 export * from './geometry';
 export { isUnsignedPluginSignature } from './pluginSignature';
-export { GrafanaConfig, BuildInfo, LicenseInfo, PreloadPlugin } from './config';
-export { FeatureToggles } from './featureToggles.gen';
+export type {
+  CurrentUserDTO,
+  BootData,
+  OAuth,
+  OAuthSettings,
+  AuthSettings,
+  GrafanaConfig,
+  BuildInfo,
+  LicenseInfo,
+  PreloadPlugin,
+} from './config';
+export type { FeatureToggles } from './featureToggles.gen';
 export * from './alerts';
 export * from './slider';
 export * from './accesscontrol';
+export * from './icon';

@@ -4,7 +4,6 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
-
 package api
 
 import (
@@ -12,44 +11,67 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type TestingApiForkingService interface {
+type TestingApi interface {
+	BacktestConfig(*models.ReqContext) response.Response
 	RouteEvalQueries(*models.ReqContext) response.Response
 	RouteTestRuleConfig(*models.ReqContext) response.Response
 	RouteTestRuleGrafanaConfig(*models.ReqContext) response.Response
 }
 
-func (f *ForkedTestingApi) RouteEvalQueries(ctx *models.ReqContext) response.Response {
+func (f *TestingApiHandler) BacktestConfig(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
+	conf := apimodels.BacktestConfig{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.handleBacktestingConfig(ctx, conf)
+}
+func (f *TestingApiHandler) RouteEvalQueries(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.EvalQueriesPayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRouteEvalQueries(ctx, conf)
+	return f.handleRouteEvalQueries(ctx, conf)
 }
-
-func (f *ForkedTestingApi) RouteTestRuleConfig(ctx *models.ReqContext) response.Response {
+func (f *TestingApiHandler) RouteTestRuleConfig(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
+	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	// Parse Request Body
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRouteTestRuleConfig(ctx, conf)
+	return f.handleRouteTestRuleConfig(ctx, conf, datasourceUIDParam)
 }
-
-func (f *ForkedTestingApi) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) response.Response {
+func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRouteTestRuleGrafanaConfig(ctx, conf)
+	return f.handleRouteTestRuleGrafanaConfig(ctx, conf)
 }
 
-func (api *API) RegisterTestingApiEndpoints(srv TestingApiForkingService, m *metrics.API) {
+func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
+		group.Post(
+			toMacaronPath("/api/v1/rule/backtest"),
+			api.authorize(http.MethodPost, "/api/v1/rule/backtest"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/v1/rule/backtest",
+				srv.BacktestConfig,
+				m,
+			),
+		)
 		group.Post(
 			toMacaronPath("/api/v1/eval"),
 			api.authorize(http.MethodPost, "/api/v1/eval"),
@@ -61,11 +83,11 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApiForkingService, m *met
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/v1/rule/test/{Recipient}"),
-			api.authorize(http.MethodPost, "/api/v1/rule/test/{Recipient}"),
+			toMacaronPath("/api/v1/rule/test/{DatasourceUID}"),
+			api.authorize(http.MethodPost, "/api/v1/rule/test/{DatasourceUID}"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/v1/rule/test/{Recipient}",
+				"/api/v1/rule/test/{DatasourceUID}",
 				srv.RouteTestRuleConfig,
 				m,
 			),
@@ -80,5 +102,5 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApiForkingService, m *met
 				m,
 			),
 		)
-	})
+	}, middleware.ReqSignedIn)
 }

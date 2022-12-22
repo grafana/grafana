@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { Component } from 'react';
+import { Subscription } from 'rxjs';
+import { throttleTime } from 'rxjs/operators';
 import uPlot, { AlignedData } from 'uplot';
-import { Themeable2 } from '../../types';
-import { findMidPointYPosition, pluginLog } from '../uPlot/utils';
+
 import {
   DataFrame,
   DataHoverClearEvent,
@@ -13,17 +14,19 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 import { VizLegendOptions } from '@grafana/schema';
+
+import { Themeable2 } from '../../types';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
-import { Subscription } from 'rxjs';
-import { throttleTime } from 'rxjs/operators';
-import { GraphNGLegendEvent, XYFieldMatchers } from './types';
-import { Renderers, UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { UPlotChart } from '../uPlot/Plot';
-import { ScaleProps } from '../uPlot/config/UPlotScaleBuilder';
 import { AxisProps } from '../uPlot/config/UPlotAxisBuilder';
+import { Renderers, UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+import { ScaleProps } from '../uPlot/config/UPlotScaleBuilder';
+import { findMidPointYPosition, pluginLog } from '../uPlot/utils';
+
+import { GraphNGLegendEvent, XYFieldMatchers } from './types';
+import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 
 /**
  * @internal -- not a public API
@@ -41,7 +44,7 @@ export interface GraphNGProps extends Themeable2 {
   width: number;
   height: number;
   timeRange: TimeRange;
-  timeZone: TimeZone;
+  timeZone: TimeZone[] | TimeZone;
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   renderers?: Renderers;
@@ -82,14 +85,14 @@ function sameProps(prevProps: any, nextProps: any, propsToDiff: Array<string | P
  */
 export interface GraphNGState {
   alignedFrame: DataFrame;
-  alignedData: AlignedData;
+  alignedData?: AlignedData;
   config?: UPlotConfigBuilder;
 }
 
 /**
  * "Time as X" core component, expects ascending x
  */
-export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
+export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
   private plotInstance: React.RefObject<uPlot>;
@@ -98,7 +101,9 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
   constructor(props: GraphNGProps) {
     super(props);
-    this.state = this.prepState(props);
+    let state = this.prepState(props);
+    state.alignedData = state.config!.prepData!([state.alignedFrame]) as AlignedData;
+    this.state = state;
     this.plotInstance = React.createRef();
   }
 
@@ -116,7 +121,8 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
       fields || {
         x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
         y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
-      }
+      },
+      props.timeRange
     );
     pluginLog('GraphNG', false, 'data aligned', alignedFrame);
 
@@ -130,7 +136,6 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
       state = {
         alignedFrame,
-        alignedData: config!.prepData!([alignedFrame]) as AlignedData,
         config,
       };
 
@@ -215,7 +220,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
 
-    if (frames !== prevProps.frames || propsChanged) {
+    if (frames !== prevProps.frames || propsChanged || timeZone !== prevProps.timeZone) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
@@ -228,12 +233,13 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
         if (shouldReconfig) {
           newState.config = this.props.prepConfig(newState.alignedFrame, this.props.frames, this.getTimeRange);
-          newState.alignedData = newState.config.prepData!([newState.alignedFrame]) as AlignedData;
           pluginLog('GraphNG', false, 'config recreated', newState.config);
         }
-      }
 
-      newState && this.setState(newState);
+        newState.alignedData = newState.config!.prepData!([newState.alignedFrame]) as AlignedData;
+
+        this.setState(newState);
+      }
     }
   }
 
@@ -254,7 +260,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart
             config={config}
-            data={alignedData}
+            data={alignedData!}
             width={vizWidth}
             height={vizHeight}
             timeRange={timeRange}

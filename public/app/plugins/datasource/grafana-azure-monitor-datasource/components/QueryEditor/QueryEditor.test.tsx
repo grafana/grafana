@@ -1,14 +1,15 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import selectEvent from 'react-select-event';
+import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+
+import * as ui from '@grafana/ui';
+
+import createMockDatasource from '../../__mocks__/datasource';
+import { invalidNamespaceError } from '../../__mocks__/errors';
+import createMockQuery from '../../__mocks__/query';
+import { AzureQueryType } from '../../types';
 
 import QueryEditor from './QueryEditor';
-
-import createMockQuery from '../../__mocks__/query';
-import createMockDatasource from '../../__mocks__/datasource';
-import { AzureQueryType } from '../../types';
-import { invalidNamespaceError } from '../../__mocks__/errors';
-import * as ui from '@grafana/ui';
 
 // Have to mock CodeEditor because it doesnt seem to work in tests???
 jest.mock('@grafana/ui', () => ({
@@ -27,7 +28,9 @@ describe('Azure Monitor QueryEditor', () => {
     };
 
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
-    await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('azure-monitor-metrics-query-editor-with-experimental-ui')).toBeInTheDocument()
+    );
   });
 
   it('renders the Logs query editor when the query type is Logs', async () => {
@@ -38,35 +41,9 @@ describe('Azure Monitor QueryEditor', () => {
     };
 
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
-    await waitFor(() => expect(screen.queryByTestId('azure-monitor-logs-query-editor')).toBeInTheDocument());
-  });
-
-  it('renders the ApplicationInsights query editor when the query type is Application Insights and renders values in disabled inputs', async () => {
-    const mockDatasource = createMockDatasource();
-    const mockQuery = {
-      ...createMockQuery(),
-      queryType: AzureQueryType.ApplicationInsights,
-      appInsights: {
-        metricName: 'requests/count',
-        timeGrain: 'PT1H',
-        timeGrainCount: '1',
-        timeGrainType: 'specific',
-        timeGrainUnit: 'hour',
-        aggregation: 'average',
-        dimension: ['request/name'],
-        dimensionFilter: "request/name eq 'GET Home/Index'",
-        alias: '{{ request/name }}',
-      },
-    };
-
-    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
     await waitFor(() =>
-      expect(screen.queryByTestId('azure-monitor-application-insights-query-editor')).toBeInTheDocument()
+      expect(screen.queryByTestId('azure-monitor-logs-query-editor-with-experimental-ui')).toBeInTheDocument()
     );
-
-    const metricInput = await screen.getByLabelText('Metric');
-    expect(metricInput).toBeDisabled();
-    expect(metricInput).toHaveValue('requests/count');
   });
 
   it('changes the query type when selected', async () => {
@@ -76,8 +53,8 @@ describe('Azure Monitor QueryEditor', () => {
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={onChange} onRunQuery={() => {}} />);
     await waitFor(() => expect(screen.getByTestId('azure-monitor-query-editor')).toBeInTheDocument());
 
-    const metrics = await screen.findByLabelText('Service');
-    await ui.selectOptionInTest(metrics, 'Logs');
+    const metrics = await screen.findByLabelText(/Service/);
+    await selectOptionInTest(metrics, 'Logs');
 
     expect(onChange).toHaveBeenCalledWith({
       ...mockQuery,
@@ -87,16 +64,17 @@ describe('Azure Monitor QueryEditor', () => {
 
   it('displays error messages from frontend Azure calls', async () => {
     const mockDatasource = createMockDatasource();
-    mockDatasource.azureMonitorDatasource.getSubscriptions = jest.fn().mockRejectedValue(invalidNamespaceError());
+    mockDatasource.azureMonitorDatasource.getMetricNamespaces = jest.fn().mockRejectedValue(invalidNamespaceError());
     render(
       <QueryEditor query={createMockQuery()} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />
     );
-    await waitFor(() => expect(screen.getByTestId('azure-monitor-query-editor')).toBeInTheDocument());
-
-    expect(screen.getByText("The resource namespace 'grafanadev' is invalid.")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId('azure-monitor-metrics-query-editor-with-experimental-ui')).toBeInTheDocument()
+    );
+    expect(screen.getByText('An error occurred while requesting metadata from Azure Monitor')).toBeInTheDocument();
   });
 
-  it('hides deprecated services', async () => {
+  it('should render the experimental QueryHeader when feature toggle is enabled', async () => {
     const mockDatasource = createMockDatasource();
     const mockQuery = {
       ...createMockQuery(),
@@ -104,31 +82,9 @@ describe('Azure Monitor QueryEditor', () => {
     };
 
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
-    await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
 
-    const metrics = await screen.findByLabelText('Service');
-    selectEvent.openMenu(metrics);
-
-    expect(screen.queryByText('Application Insights')).not.toBeInTheDocument();
-  });
-
-  it("shows deprecated services when they're selected", async () => {
-    const mockDatasource = createMockDatasource();
-    const mockQuery = {
-      ...createMockQuery(),
-      queryType: AzureQueryType.ApplicationInsights,
-    };
-
-    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
     await waitFor(() =>
-      expect(screen.getByTestId('azure-monitor-application-insights-query-editor')).toBeInTheDocument()
+      expect(screen.getByTestId('data-testid azure-monitor-experimental-header')).toBeInTheDocument()
     );
-
-    expect(screen.queryByText('Application Insights')).toBeInTheDocument();
-
-    const metrics = await screen.findByLabelText('Service');
-    await ui.selectOptionInTest(metrics, 'Logs');
-
-    expect(screen.queryByText('Application Insights')).toBeInTheDocument();
   });
 });

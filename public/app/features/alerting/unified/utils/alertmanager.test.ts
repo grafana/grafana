@@ -1,6 +1,13 @@
 import { Matcher, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
-import { parseMatcher, parseMatchers, labelsMatchMatchers, removeMuteTimingFromRoute } from './alertmanager';
+
+import {
+  parseMatcher,
+  parseMatchers,
+  labelsMatchMatchers,
+  removeMuteTimingFromRoute,
+  matchersToString,
+} from './alertmanager';
 
 describe('Alertmanager utils', () => {
   describe('parseMatcher', () => {
@@ -31,16 +38,23 @@ describe('Alertmanager utils', () => {
       });
     });
 
-    it('should parse escaped values correctly', () => {
-      expect(parseMatcher('foo=~"bar\\"baz\\""')).toEqual<Matcher>({
+    // Alertmanager has some strict requirements for label values;
+    // we should not automatically encode or decode any values sent
+    // and instead let AM return any errors like (matcher value contains unescaped double quote: bar"baz")
+    // and allow the user to update the values to the correct format
+    //
+    // see https://github.com/prometheus/alertmanager/blob/4030e3670b359b8814aa8340ea1144f32b1f5ab3/pkg/labels/parse.go#L55-L99
+    // and https://github.com/prometheus/alertmanager/blob/4030e3670b359b8814aa8340ea1144f32b1f5ab3/pkg/labels/parse.go#L101-L178
+    it('should not parse escaped values', () => {
+      expect(parseMatcher('foo="^[a-z0-9-]{1}[a-z0-9-]{0,30}$"')).toEqual<Matcher>({
         name: 'foo',
-        value: 'bar"baz"',
-        isRegex: true,
+        value: '"^[a-z0-9-]{1}[a-z0-9-]{0,30}$"',
+        isRegex: false,
         isEqual: true,
       });
       expect(parseMatcher('foo=~bar\\"baz\\"')).toEqual<Matcher>({
         name: 'foo',
-        value: 'bar"baz"',
+        value: 'bar\\"baz\\"',
         isRegex: true,
         isEqual: true,
       });
@@ -153,6 +167,21 @@ describe('Alertmanager utils', () => {
           },
         ],
       });
+    });
+  });
+
+  describe('matchersToString', () => {
+    it('Should create a comma-separated list of labels and values wrapped into curly brackets', () => {
+      const matchers: Matcher[] = [
+        { name: 'severity', value: 'critical', isEqual: true, isRegex: false },
+        { name: 'resource', value: 'cpu', isEqual: true, isRegex: true },
+        { name: 'rule_uid', value: '2Otf8canzz', isEqual: false, isRegex: false },
+        { name: 'cluster', value: 'prom', isEqual: false, isRegex: true },
+      ];
+
+      const matchersString = matchersToString(matchers);
+
+      expect(matchersString).toBe('{severity="critical",resource=~"cpu",rule_uid!="2Otf8canzz",cluster!~"prom"}');
     });
   });
 });

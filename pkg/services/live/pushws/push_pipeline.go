@@ -71,7 +71,7 @@ func (s *PipelinePushHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 			"bodyLength", len(body),
 		)
 
-		ruleFound, err := s.pipeline.ProcessInput(r.Context(), user.OrgId, channelID, body)
+		ruleFound, err := s.pipeline.ProcessInput(r.Context(), user.OrgID, channelID, body)
 		if err != nil {
 			logger.Error("Pipeline input processing error", "error", err, "body", string(body))
 			return

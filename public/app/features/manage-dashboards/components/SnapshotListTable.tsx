@@ -1,8 +1,10 @@
-import React, { FC, useState, useCallback } from 'react';
-import { ConfirmModal, Button, LinkButton } from '@grafana/ui';
-import { getBackendSrv, locationService } from '@grafana/runtime';
-import { Snapshot } from '../types';
+import React, { useState, useCallback } from 'react';
 import useAsync from 'react-use/lib/useAsync';
+
+import { getBackendSrv, locationService } from '@grafana/runtime';
+import { ConfirmModal, Button, LinkButton } from '@grafana/ui';
+
+import { Snapshot } from '../types';
 
 export function getSnapshots() {
   return getBackendSrv()
@@ -14,12 +16,12 @@ export function getSnapshots() {
       }));
     });
 }
-export const SnapshotListTable: FC = () => {
+export const SnapshotListTable = () => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot | undefined>();
   const currentPath = locationService.getLocation().pathname;
   const fullUrl = window.location.href;
-  const baseUrl = fullUrl.substr(0, fullUrl.indexOf(currentPath));
+  const baseUrl = fullUrl.substring(0, fullUrl.indexOf(currentPath));
 
   useAsync(async () => {
     const response = await getSnapshots();

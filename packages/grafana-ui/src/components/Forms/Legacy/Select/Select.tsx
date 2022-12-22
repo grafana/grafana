@@ -1,22 +1,24 @@
 // Libraries
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
-import { default as ReactSelect, components } from 'react-select';
-import Creatable from 'react-select/creatable';
+import { default as ReactSelect, components, MenuListProps } from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
+import Creatable from 'react-select/creatable';
 
 // Components
-import { SelectOption } from './SelectOption';
+import { SelectableValue } from '@grafana/data';
+
+import { ThemeContext } from '../../../../themes';
+import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
 import { SelectOptionGroup } from '../../../Select/SelectOptionGroup';
 import { SingleValue } from '../../../Select/SingleValue';
+import resetSelectStyles from '../../../Select/resetSelectStyles';
 import { SelectCommonProps, SelectAsyncProps } from '../../../Select/types';
+import { Tooltip, PopoverContent } from '../../../Tooltip';
+
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
-import resetSelectStyles from '../../../Select/resetSelectStyles';
-import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
-import { Tooltip, PopoverContent } from '../../../Tooltip';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { ThemeContext } from '../../../../themes';
+import { SelectOption } from './SelectOption';
 
 /**
  * Changes in new selects:
@@ -40,7 +42,7 @@ export interface LegacySelectProps<T> extends LegacyCommonProps<T> {
   value?: SelectableValue<T>;
 }
 
-export const MenuList = (props: any) => {
+export const MenuList = (props: MenuListProps) => {
   return (
     <components.MenuList {...props}>
       <CustomScrollbar autoHide={false} autoHeightMax="inherit">
@@ -50,9 +52,10 @@ export const MenuList = (props: any) => {
   );
 };
 export class Select<T> extends PureComponent<LegacySelectProps<T>> {
+  declare context: React.ContextType<typeof ThemeContext>;
   static contextType = ThemeContext;
 
-  static defaultProps: Partial<LegacySelectProps<any>> = {
+  static defaultProps: Partial<LegacySelectProps<unknown>> = {
     className: '',
     isDisabled: false,
     isSearchable: true,
@@ -116,7 +119,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
     const creatableOptions: any = {};
 
     if (allowCustomValue) {
-      SelectComponent = Creatable as any;
+      SelectComponent = Creatable;
       creatableOptions.formatCreateLabel = formatCreateLabel ?? ((input: string) => input);
     }
 
@@ -140,7 +143,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
               onChange={onChange}
               options={options}
               placeholder={placeholder || 'Choose'}
-              styles={resetSelectStyles(this.context as GrafanaTheme2)}
+              styles={resetSelectStyles(this.context)}
               isDisabled={isDisabled}
               isLoading={isLoading}
               isClearable={isClearable}
@@ -166,7 +169,9 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
 }
 
 export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
-  static defaultProps: Partial<AsyncProps<any>> = {
+  static contextType = ThemeContext;
+
+  static defaultProps: Partial<AsyncProps<unknown>> = {
     className: '',
     components: {},
     loadingMessage: () => 'Loading...',
@@ -237,15 +242,14 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               getOptionLabel={getOptionLabel}
               getOptionValue={getOptionValue}
               menuShouldScrollIntoView={false}
-              //@ts-expect-error
               onChange={onChange}
               loadOptions={loadOptions}
               isLoading={isLoading}
               defaultOptions={defaultOptions}
               placeholder={placeholder || 'Choose'}
               //@ts-expect-error
-              styles={resetSelectStyles()}
-              loadingMessage={() => loadingMessage}
+              styles={resetSelectStyles(this.context)}
+              loadingMessage={loadingMessage}
               noOptionsMessage={noOptionsMessage}
               isDisabled={isDisabled}
               isSearchable={isSearchable}

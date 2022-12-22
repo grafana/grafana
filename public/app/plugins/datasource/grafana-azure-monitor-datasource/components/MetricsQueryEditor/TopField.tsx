@@ -1,8 +1,10 @@
 import React, { useCallback, useState } from 'react';
+
 import { Input } from '@grafana/ui';
 
-import { Field } from '../Field';
 import { AzureQueryEditorFieldProps } from '../../types';
+import { Field } from '../Field';
+
 import { setTop } from './setQueryValue';
 
 const TopField: React.FC<AzureQueryEditorFieldProps> = ({ onQueryChange, query }) => {

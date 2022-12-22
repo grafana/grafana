@@ -1,11 +1,13 @@
-import React, { FC } from 'react';
 import { css } from '@emotion/css';
-import { Button, Field, Form, HorizontalGroup, LinkButton } from '@grafana/ui';
+import React, { FC } from 'react';
 
+import { Button, Field, Form, HorizontalGroup, LinkButton } from '@grafana/ui';
 import config from 'app/core/config';
 import { UserDTO } from 'app/types';
-import { ChangePasswordFields } from './types';
+
 import { PasswordField } from '../../core/components/PasswordField/PasswordField';
+
+import { ChangePasswordFields } from './types';
 
 export interface Props {
   user: UserDTO;
@@ -14,11 +16,11 @@ export interface Props {
 }
 
 export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving }) => {
-  const { ldapEnabled, authProxyEnabled, disableLoginForm } = config;
+  const { disableLoginForm } = config;
   const authSource = user.authLabels?.length && user.authLabels[0];
 
-  if (ldapEnabled || authProxyEnabled) {
-    return <p>You cannot change password when LDAP or auth proxy authentication is enabled.</p>;
+  if (authSource === 'LDAP' || authSource === 'Auth Proxy') {
+    return <p>You cannot change password when signed in with LDAP or auth proxy.</p>;
   }
   if (authSource && disableLoginForm) {
     return <p>Password cannot be changed here.</p>;
@@ -67,7 +69,7 @@ export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving
                 />
               </Field>
               <HorizontalGroup>
-                <Button variant="primary" disabled={isSaving}>
+                <Button variant="primary" disabled={isSaving} type="submit">
                   Change Password
                 </Button>
                 <LinkButton variant="secondary" href={`${config.appSubUrl}/profile`} fill="outline">

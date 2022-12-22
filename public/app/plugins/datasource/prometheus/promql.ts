@@ -1,8 +1,9 @@
 import { Grammar } from 'prismjs';
+
 import { CompletionItem } from '@grafana/ui';
 
 // When changing RATE_RANGES, check if Loki/LogQL ranges should be changed too
-// @see public/app/plugins/datasource/loki/language_provider.ts
+// @see public/app/plugins/datasource/loki/LanguageProvider.ts
 export const RATE_RANGES: CompletionItem[] = [
   { label: '$__interval', sortValue: '$__interval' },
   { label: '$__rate_interval', sortValue: '$__rate_interval' },
@@ -17,6 +18,81 @@ export const RATE_RANGES: CompletionItem[] = [
 
 export const OPERATORS = ['by', 'group_left', 'group_right', 'ignoring', 'on', 'offset', 'without'];
 export const LOGICAL_OPERATORS = ['or', 'and', 'unless'];
+
+const TRIGONOMETRIC_FUNCTIONS: CompletionItem[] = [
+  {
+    label: 'acos',
+    insertText: 'acos',
+    detail: 'acos(v instant-vector)',
+    documentation: 'calculates the arccosine of all elements in v',
+  },
+  {
+    label: 'acosh',
+    insertText: 'acosh',
+    detail: 'acosh(v instant-vector)',
+    documentation: 'calculates the inverse hyperbolic cosine of all elements in v',
+  },
+  {
+    label: 'asin',
+    insertText: 'asin',
+    detail: 'asin(v instant-vector)',
+    documentation: 'calculates the arcsine of all elements in v',
+  },
+  {
+    label: 'asinh',
+    insertText: 'asinh',
+    detail: 'asinh(v instant-vector)',
+    documentation: 'calculates the inverse hyperbolic sine of all elements in v',
+  },
+  {
+    label: 'atan',
+    insertText: 'atan',
+    detail: 'atan(v instant-vector)',
+    documentation: 'calculates the arctangent of all elements in v',
+  },
+  {
+    label: 'atanh',
+    insertText: 'atanh',
+    detail: 'atanh(v instant-vector)',
+    documentation: 'calculates the inverse hyperbolic tangent of all elements in v',
+  },
+  {
+    label: 'cos',
+    insertText: 'cos',
+    detail: 'cos(v instant-vector)',
+    documentation: 'calculates the cosine of all elements in v',
+  },
+  {
+    label: 'cosh',
+    insertText: 'cosh',
+    detail: 'cosh(v instant-vector)',
+    documentation: 'calculates the hyperbolic cosine of all elements in v',
+  },
+  {
+    label: 'sin',
+    insertText: 'sin',
+    detail: 'sin(v instant-vector)',
+    documentation: 'calculates the sine of all elements in v',
+  },
+  {
+    label: 'sinh',
+    insertText: 'sinh',
+    detail: 'sinh(v instant-vector)',
+    documentation: 'calculates the hyperbolic sine of all elements in v',
+  },
+  {
+    label: 'tan',
+    insertText: 'tan',
+    detail: 'tan(v instant-vector)',
+    documentation: 'calculates the tangent of all elements in v',
+  },
+  {
+    label: 'tanh',
+    insertText: 'tanh',
+    detail: 'tanh(v instant-vector)',
+    documentation: 'calculates the hyperbolic tangent of all elements in v',
+  },
+];
 
 const AGGREGATION_OPERATORS: CompletionItem[] = [
   {
@@ -83,6 +159,7 @@ const AGGREGATION_OPERATORS: CompletionItem[] = [
 
 export const FUNCTIONS = [
   ...AGGREGATION_OPERATORS,
+  ...TRIGONOMETRIC_FUNCTIONS,
   {
     insertText: 'abs',
     label: 'abs',
@@ -141,6 +218,12 @@ export const FUNCTIONS = [
     detail: 'count_scalar(v instant-vector)',
     documentation:
       'Returns the number of elements in a time series vector as a scalar. This is in contrast to the `count()` aggregation operator, which always returns a vector (an empty one if the input vector is empty) and allows grouping by labels via a `by` clause.',
+  },
+  {
+    insertText: 'deg',
+    label: 'deg',
+    detail: 'deg(v instant-vector)',
+    documentation: 'Converts radians to degrees for all elements in v',
   },
   {
     insertText: 'day_of_month',
@@ -287,11 +370,23 @@ export const FUNCTIONS = [
       'Returns the month of the year for each of the given times in UTC. Returned values are from 1 to 12, where 1 means January etc.',
   },
   {
+    insertText: 'pi',
+    label: 'pi',
+    detail: 'pi()',
+    documentation: 'Returns pi',
+  },
+  {
     insertText: 'predict_linear',
     label: 'predict_linear',
     detail: 'predict_linear(v range-vector, t scalar)',
     documentation:
       'Predicts the value of time series `t` seconds from now, based on the range vector `v`, using simple linear regression.',
+  },
+  {
+    insertText: 'rad',
+    label: 'rad',
+    detail: 'rad(v instant-vector)',
+    documentation: 'Converts degrees to radians for all elements in v',
   },
   {
     insertText: 'rate',

@@ -1,3 +1,7 @@
+import { TypedVariableModel, VariableSupportType, VariableType } from '@grafana/data';
+
+import { LegacyVariableQueryEditor } from './editor/LegacyVariableQueryEditor';
+import { StandardVariableQueryEditor } from './editor/getVariableQueryEditor';
 import {
   hasCustomVariableSupport,
   hasDatasourceVariableSupport,
@@ -5,10 +9,22 @@ import {
   hasStandardVariableSupport,
   isLegacyQueryEditor,
   isQueryEditor,
+  isMulti,
+  hasOptions,
+  hasCurrent,
 } from './guard';
-import { LegacyVariableQueryEditor } from './editor/LegacyVariableQueryEditor';
-import { StandardVariableQueryEditor } from './editor/getVariableQueryEditor';
-import { VariableSupportType } from '@grafana/data';
+import {
+  createAdhocVariable,
+  createConstantVariable,
+  createCustomVariable,
+  createDashboardVariable,
+  createDatasourceVariable,
+  createIntervalVariable,
+  createOrgVariable,
+  createQueryVariable,
+  createTextBoxVariable,
+  createUserVariable,
+} from './state/__tests__/fixtures';
 
 describe('type guards', () => {
   describe('hasLegacyVariableSupport', () => {
@@ -134,6 +150,53 @@ describe('type guards', () => {
       });
     });
   });
+
+  interface VariableFacts {
+    variable: TypedVariableModel;
+    isMulti: boolean;
+    hasOptions: boolean;
+    hasCurrent: boolean;
+  }
+  // This structure is typed (because the key is a const string union) to ensure that we always
+  // test every type of variable, as new variables are added
+  type ExtraVariableTypes = 'org' | 'dashboard' | 'user';
+  // prettier-ignore
+  const variableFactsObj: Record<VariableType | ExtraVariableTypes, VariableFacts> = {
+    query:      { variable: createQueryVariable(),      isMulti: true,  hasOptions: true,  hasCurrent: true },
+    adhoc:      { variable: createAdhocVariable(),      isMulti: false, hasOptions: false, hasCurrent: false },
+    constant:   { variable: createConstantVariable(),   isMulti: false, hasOptions: true,  hasCurrent: true },
+    datasource: { variable: createDatasourceVariable(), isMulti: true,  hasOptions: true,  hasCurrent: true },
+    interval:   { variable: createIntervalVariable(),   isMulti: false, hasOptions: true,  hasCurrent: true },
+    textbox:    { variable: createTextBoxVariable(),    isMulti: false, hasOptions: true,  hasCurrent: true },
+    system:     { variable: createUserVariable(),       isMulti: false, hasOptions: false, hasCurrent: true },
+    user:       { variable: createUserVariable(),       isMulti: false, hasOptions: false, hasCurrent: true },
+    org:        { variable: createOrgVariable(),        isMulti: false, hasOptions: false, hasCurrent: true },
+    dashboard:  { variable: createDashboardVariable(),  isMulti: false, hasOptions: false, hasCurrent: true },
+    custom:     { variable: createCustomVariable(),     isMulti: true,  hasOptions: true,  hasCurrent: true },
+  };
+
+  const variableFacts = Object.values(variableFactsObj);
+
+  it.each(variableFacts)(
+    'isMulti correctly identifies variables with multi support: $variable.type should be $isMulti',
+    ({ variable, isMulti: expected }) => {
+      expect(isMulti(variable)).toBe(expected);
+    }
+  );
+
+  it.each(variableFacts)(
+    'hasOptions correctly identifies variables with options support: $variable.type should be $hasOptions',
+    ({ variable, hasOptions: expected }) => {
+      expect(hasOptions(variable)).toBe(expected);
+    }
+  );
+
+  it.each(variableFacts)(
+    'hasCurrent correctly identifies variables with options support: $variable.type should be $hasCurrent',
+    ({ variable, hasCurrent: expected }) => {
+      expect(hasCurrent(variable)).toBe(expected);
+    }
+  );
 });
 
 describe('isLegacyQueryEditor', () => {

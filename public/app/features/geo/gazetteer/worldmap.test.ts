@@ -1,8 +1,10 @@
+import { toLonLat } from 'ol/proj';
+
+import countriesJSON from '../../../../gazetteer/countries.json';
+
 import { getGazetteer } from './gazetteer';
 
 let backendResults: any = { hello: 'world' };
-import countriesJSON from '../../../../gazetteer/countries.json';
-import { toLonLat } from 'ol/proj';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -21,7 +23,7 @@ describe('Placename lookup from worldmap format', () => {
     const gaz = await getGazetteer('countries');
     expect(gaz.error).toBeUndefined();
     expect(toLonLat(gaz.find('US')?.point()?.getCoordinates()!)).toMatchInlineSnapshot(`
-      Array [
+      [
         -95.712891,
         37.09023999999998,
       ]

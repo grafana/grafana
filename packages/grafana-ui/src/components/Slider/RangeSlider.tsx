@@ -1,8 +1,11 @@
-import React, { FunctionComponent } from 'react';
-import { Range as RangeComponent, createSliderWithTooltip } from 'rc-slider';
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
+import Slider, { SliderProps } from 'rc-slider';
+import React, { FunctionComponent, useCallback } from 'react';
+
 import { useTheme2 } from '../../themes/ThemeContext';
+
+import HandleTooltip from './HandleTooltip';
 import { getStyles } from './styles';
 import { RangeSliderProps } from './types';
 
@@ -23,31 +26,57 @@ export const RangeSlider: FunctionComponent<RangeSliderProps> = ({
   value,
   tooltipAlwaysVisible = true,
 }) => {
+  const handleChange = useCallback(
+    (v: number | number[]) => {
+      const value = typeof v === 'number' ? [v, v] : v;
+      onChange?.(value);
+    },
+    [onChange]
+  );
+
+  const handleAfterChange = useCallback(
+    (v: number | number[]) => {
+      const value = typeof v === 'number' ? [v, v] : v;
+      onAfterChange?.(value);
+    },
+    [onAfterChange]
+  );
+
   const isHorizontal = orientation === 'horizontal';
   const theme = useTheme2();
   const styles = getStyles(theme, isHorizontal);
-  const RangeWithTooltip = createSliderWithTooltip(RangeComponent);
+
+  const tipHandleRender: SliderProps['handleRender'] = (node, handleProps) => {
+    return (
+      <HandleTooltip
+        value={handleProps.value}
+        visible={tooltipAlwaysVisible || handleProps.dragging}
+        tipFormatter={formatTooltipResult}
+        placement={isHorizontal ? 'top' : 'right'}
+      >
+        {node}
+      </HandleTooltip>
+    );
+  };
+
   return (
     <div className={cx(styles.container, styles.slider)}>
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.tooltip} />
-      <RangeWithTooltip
-        tipProps={{
-          visible: tooltipAlwaysVisible,
-          placement: isHorizontal ? 'top' : 'right',
-        }}
+      <Slider
         min={min}
         max={max}
         step={step}
         defaultValue={value}
-        tipFormatter={(value: number) => (formatTooltipResult ? formatTooltipResult(value) : value)}
-        onChange={onChange}
-        onAfterChange={onAfterChange}
+        range={true}
+        onChange={handleChange}
+        onAfterChange={handleAfterChange}
         vertical={!isHorizontal}
         reverse={reverse}
+        handleRender={tipHandleRender}
       />
     </div>
   );
 };
 
-RangeSlider.displayName = 'Range';
+RangeSlider.displayName = 'RangeSlider';

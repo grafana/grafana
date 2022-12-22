@@ -1,6 +1,9 @@
-import { DataFrame, FieldType, QueryResultMeta } from '@grafana/data';
-import TableModel from 'app/core/table_model';
-import { each, groupBy, isArray } from 'lodash';
+import { each, flatten, groupBy, isArray } from 'lodash';
+
+import { AnnotationEvent, DataFrame, DataQuery, FieldType, QueryResultMeta } from '@grafana/data';
+import { toDataQueryResponse } from '@grafana/runtime';
+import TableModel from 'app/core/TableModel';
+
 import { InfluxQuery } from './types';
 
 export default class ResponseParser {
@@ -67,7 +70,7 @@ export default class ResponseParser {
       table = getTableCols(dfs, table, target);
 
       // if group by tag(s) added
-      if (dfs[0].fields[1].labels) {
+      if (dfs[0].fields[1] && dfs[0].fields[1].labels) {
         let dfsByLabels: any = groupBy(dfs, (df: DataFrame) =>
           df.fields[1].labels ? Object.values(df.fields[1].labels!) : null
         );
@@ -84,6 +87,82 @@ export default class ResponseParser {
 
     return table;
   }
+
+  async transformAnnotationResponse(annotation: any, data: any, target: InfluxQuery): Promise<AnnotationEvent[]> {
+    const rsp = toDataQueryResponse(data, [target] as DataQuery[]);
+
+    if (rsp) {
+      const table = this.getTable(rsp.data, target, {});
+      const list: any[] = [];
+      let titleCol: any = null;
+      let timeCol: any = null;
+      let timeEndCol: any = null;
+      const tagsCol: any = [];
+      let textCol: any = null;
+
+      each(table.columns, (column, index) => {
+        if (column.text.toLowerCase() === 'time') {
+          timeCol = index;
+          return;
+        }
+        if (column.text === annotation.titleColumn) {
+          titleCol = index;
+          return;
+        }
+        if (colContainsTag(column.text, annotation.tagsColumn)) {
+          tagsCol.push(index);
+          return;
+        }
+        if (column.text.includes(annotation.textColumn)) {
+          textCol = index;
+          return;
+        }
+        if (column.text === annotation.timeEndColumn) {
+          timeEndCol = index;
+          return;
+        }
+        // legacy case
+        if (!titleCol && textCol !== index) {
+          titleCol = index;
+        }
+      });
+
+      each(table.rows, (value) => {
+        const data = {
+          annotation: annotation,
+          time: +new Date(value[timeCol]),
+          title: value[titleCol],
+          timeEnd: value[timeEndCol],
+          // Remove empty values, then split in different tags for comma separated values
+          tags: flatten(
+            tagsCol
+              .filter((t: any) => {
+                return value[t];
+              })
+              .map((t: any) => {
+                return value[t].split(',');
+              })
+          ),
+          text: value[textCol],
+        };
+
+        list.push(data);
+      });
+
+      return list;
+    }
+    return [];
+  }
+}
+
+function colContainsTag(colText: string, tagsColumn: string): boolean {
+  const tags = (tagsColumn || '').replace(' ', '').split(',');
+  for (const tag of tags) {
+    if (colText.includes(tag)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery): TableModel {
@@ -105,6 +184,15 @@ function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery):
     }
   });
 
+  // Get cols for annotationQuery
+  if (dfs[0].refId === 'metricFindQuery') {
+    dfs.forEach((field) => {
+      if (field.name) {
+        table.columns.push({ text: field.name });
+      }
+    });
+  }
+
   // Select (metric) column(s)
   for (let i = 0; i < selectedParams.length; i++) {
     table.columns.push({ text: selectedParams[i] });
@@ -119,9 +207,11 @@ function getTableRows(dfs: DataFrame[], table: TableModel, labels: string[]): Ta
   for (let i = 0; i < values.length; i++) {
     const time = values[i];
     const metrics = dfs.map((df: DataFrame) => {
-      return df.fields[1].values.toArray()[i];
+      return df.fields[1] ? df.fields[1].values.toArray()[i] : null;
     });
-    table.rows.push([time, ...labels, ...metrics]);
+    if (metrics.indexOf(null) < 0) {
+      table.rows.push([time, ...labels, ...metrics]);
+    }
   }
   return table;
 }

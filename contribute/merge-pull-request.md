@@ -27,9 +27,14 @@ Before you can merge a pull request, it must have a review approval, and all the
 
 ### Format the pull request title
 
-The pull request title should be formatted according to `<Area>: <Summary>`. Keep the summary short and understandable for the community as a whole.
+The pull request title should be formatted according to `<Area>: <Summary>` (Both "Area" and "Summary" should start with a capital letter).
+
+Keep the summary short and understandable for the community as a whole.
 
 All commits in a pull request are squashed when merged and the pull request title will be the default subject line of the squashed commit message. It's also used for [changelog/release notes](#include-in-changelog-and-release-notes).
+
+**Example:**
+`Docs: Change url to URL in all documentation files`
 
 See [formatting guidelines](create-pull-request.md#formatting-guidelines) for more information.
 
@@ -43,11 +48,31 @@ This makes it easier to track what changes go into a certain release. Without th
 
 At Grafana we generate the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) and [release notes](https://grafana.com/docs/grafana/latest/release-notes/) based on merged pull requests. Including changes in the changelog/release notes is very important to provide a somewhat complete picture of what changes a Grafana release actually includes.
 
-Exactly what changes should be added to the changelog is hard to answer but some general guidance would be any change that you think would be interesting for the community as a whole. Use your best judgement and/or ask other maintainers for advice.
-
 There's a GitHub action available in the repository named [Update changelog](https://github.com/grafana/grafana/blob/main/.github/workflows/update-changelog.yml) that can manually be triggered to re-generate the changelog and release notes for any release.
 
-To include a pull request in the changelog/release notes the general rule of thumb is that a milestone should be assigned and labeled with `add to changelog`.
+Exactly what changes should be added to the changelog is hard to answer but here's some general guidance:
+
+- Include any bug fix in general.
+- Include any change that you think would be interesting for the community as a whole.
+- Skip larger features divided in multiple pull requests since they might go into the release blog post/What's New article.
+- Use your best judgement and/or ask other maintainers for advice.
+- Including a change in error rather than skipping one that should have been there is better.
+- Always keep [Format the pull request title](#format-the-pull-request-title) in mind.
+
+An active decision to include change in changelog/release notes needs to be taken for every pull request. There's a pull request check named **Changelog Check** that will enforce this. By adding/removing labels on the pull request or updating the pull request title/description the check will be re-evaluated.
+
+#### Skip changelog
+
+If you don't want to include your change in changelog/release notes you need to add a label named **no-changelog** to the pull request.
+
+#### Include in changelog/release notes
+
+To include a pull request in the changelog/release notes you need to add a label named `add to changelog` to the pull request. Then additional validation rules is checked:
+
+- Title need to be formatted according to [Format the pull request title](#format-the-pull-request-title)
+- Description needs to include a breaking change notice if change is labeled to be a breaking change, see Breaking changes below for more information.
+
+Not complying with above rules can make the **Changelog Check** fail with validation errors.
 
 The changelog/release notes are divided into sections and here's a description of how you make a pull request show up in a certain section.
 
@@ -93,7 +118,7 @@ If you don't want to backport you need to add a label named **no-backport** to t
 
 #### Backport
 
-If your pull request has changes that need to go into one or several existing release branches you need to backport the changes. Please refer to [Backport PR](.github/bot.md#backport-pr) for detailed instructions.
+If your pull request has changes that need to go into one or several existing release branches you need to backport the changes. Please refer to [Backport PR](/.github/bot.md#backport-pr) for detailed instructions.
 
 The general rule of thumb regarding what changes goes into what release is:
 
@@ -109,6 +134,14 @@ Some examples when backport is required:
 Some examples when backport is not required:
 
 - The change is supposed to be released in the next major/minor release, e.g. v8.0.0, but the release branch, e.g. v8.0.x, has not yet been created.
+
+#### Required labels
+
+To ensure that we don't backport pull requests that don't need to be backported, i.e. implement new features, and only backport pull requests that address bugs, have a product approval, or refer to docs changes, backport labels need to be followed by either:
+
+- `type/bug` label: Pull requests which address bugs,
+- `product-approved` label: Urgent fixes which need product approval, in order to get merged,
+- `type/docs` label: Docs changes`.
 
 > **Note:** You can still backport a pull request after it's been merged.
 

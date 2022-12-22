@@ -1,5 +1,5 @@
-import { ArrayVector } from './ArrayVector';
 import { AppendedVectors } from './AppendedVectors';
+import { ArrayVector } from './ArrayVector';
 
 describe('Check Appending Vector', () => {
   it('should transparently join them', () => {

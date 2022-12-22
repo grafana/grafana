@@ -1,11 +1,14 @@
-import { defaultBucketAgg } from '../../../../query_def';
-import { ElasticsearchQuery } from '../../../../types';
-import { metricAggregationConfig } from '../../MetricAggregationsEditor/utils';
-import { BucketAggregation, Terms } from '../aggregations';
-import { initQuery } from '../../state';
-import { bucketAggregationConfig } from '../utils';
-import { removeEmpty } from '../../../../utils';
 import { Action } from '@reduxjs/toolkit';
+
+import { defaultBucketAgg } from '../../../../queryDef';
+import { ElasticsearchQuery } from '../../../../types';
+import { removeEmpty } from '../../../../utils';
+import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
+import { metricAggregationConfig } from '../../MetricAggregationsEditor/utils';
+import { initQuery } from '../../state';
+import { BucketAggregation, Terms } from '../aggregations';
+import { bucketAggregationConfig } from '../utils';
+
 import {
   addBucketAggregation,
   changeBucketAggregationField,
@@ -13,7 +16,6 @@ import {
   changeBucketAggregationType,
   removeBucketAggregation,
 } from './actions';
-import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 
 export const createReducer =
   (defaultTimeField: string) =>

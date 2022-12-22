@@ -2,32 +2,9 @@ package es
 
 import (
 	"encoding/json"
-	"net/http"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
-
-type response struct {
-	httpResponse *http.Response
-	reqInfo      *SearchRequestInfo
-}
-
-type SearchRequestInfo struct {
-	Method string `json:"method"`
-	Url    string `json:"url"`
-	Data   string `json:"data"`
-}
-
-type SearchResponseInfo struct {
-	Status int              `json:"status"`
-	Data   *simplejson.Json `json:"data"`
-}
-
-type SearchDebugInfo struct {
-	Request  *SearchRequestInfo  `json:"request"`
-	Response *SearchResponseInfo `json:"response"`
-}
 
 // SearchRequest represents a search request
 type SearchRequest struct {
@@ -83,7 +60,6 @@ type MultiSearchRequest struct {
 type MultiSearchResponse struct {
 	Status    int               `json:"status,omitempty"`
 	Responses []*SearchResponse `json:"responses"`
-	DebugInfo *SearchDebugInfo  `json:"-"`
 }
 
 // Query represents a query
@@ -238,7 +214,6 @@ type HistogramAgg struct {
 // DateHistogramAgg represents a date histogram aggregation
 type DateHistogramAgg struct {
 	Field          string          `json:"field"`
-	Interval       string          `json:"interval,omitempty"`
 	FixedInterval  string          `json:"fixed_interval,omitempty"`
 	MinDocCount    int             `json:"min_doc_count"`
 	Missing        *string         `json:"missing,omitempty"`

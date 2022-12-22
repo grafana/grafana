@@ -1,7 +1,9 @@
-import React from 'react';
-import { Tooltip, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css, CSSObject } from '@emotion/css';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Tooltip, useStyles2 } from '@grafana/ui';
+
 import { OptionPaneItemOverrideInfo } from './types';
 
 export interface Props {

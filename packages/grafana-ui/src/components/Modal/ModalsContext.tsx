@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 
 interface ModalsContextState {
   component: React.ComponentType<any> | null;
@@ -7,7 +7,7 @@ interface ModalsContextState {
   hideModal: () => void;
 }
 
-const ModalsContext = React.createContext<ModalsContextState>({
+export const ModalsContext = React.createContext<ModalsContextState>({
   component: null,
   props: {},
   showModal: () => {},
@@ -22,7 +22,7 @@ interface ModalsProviderProps {
   props?: any;
 }
 
-export class ModalsProvider extends React.Component<ModalsProviderProps, ModalsContextState> {
+export class ModalsProvider extends Component<ModalsProviderProps, ModalsContextState> {
   constructor(props: ModalsProviderProps) {
     super(props);
     this.state = {

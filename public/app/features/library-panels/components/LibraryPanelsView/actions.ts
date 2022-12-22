@@ -1,9 +1,10 @@
-import { Dispatch } from 'react';
 import { AnyAction } from '@reduxjs/toolkit';
+import { Dispatch } from 'react';
 import { from, merge, of, Subscription, timer } from 'rxjs';
 import { catchError, finalize, mapTo, mergeMap, share, takeUntil } from 'rxjs/operators';
 
 import { deleteLibraryPanel as apiDeleteLibraryPanel, getLibraryPanels } from '../../state/api';
+
 import { initialLibraryPanelsViewState, initSearch, searchCompleted } from './reducer';
 
 type DispatchResult = (dispatch: Dispatch<AnyAction>) => void;
@@ -13,7 +14,7 @@ interface SearchArgs {
   searchString: string;
   sortDirection?: string;
   panelFilter?: string[];
-  folderFilter?: string[];
+  folderFilterUIDs?: string[];
   currentPanelId?: string;
 }
 
@@ -28,7 +29,7 @@ export function searchForLibraryPanels(args: SearchArgs): DispatchResult {
         excludeUid: args.currentPanelId,
         sortDirection: args.sortDirection,
         typeFilter: args.panelFilter,
-        folderFilter: args.folderFilter,
+        folderFilterUIDs: args.folderFilterUIDs,
       })
     ).pipe(
       mergeMap(({ perPage, elements: libraryPanels, page, totalCount }) =>

@@ -1,7 +1,11 @@
 import { combineReducers } from '@reduxjs/toolkit';
-import { LoadingState } from '@grafana/data';
 
-import { VariablesState } from './types';
+import { TypedVariableModel } from '@grafana/data';
+import { dashboardReducer } from 'app/features/dashboard/state/reducers';
+
+import { DashboardState, StoreState } from '../../../types';
+import { VariableAdapter } from '../adapters';
+import { NEW_VARIABLE_ID } from '../constants';
 import {
   DashboardVariableModel,
   initialVariableModelState,
@@ -11,19 +15,18 @@ import {
   VariableModel,
 } from '../types';
 
-import { VariableAdapter } from '../adapters';
-import { dashboardReducer } from 'app/features/dashboard/state/reducers';
-import { templatingReducers, TemplatingState } from './reducers';
-import { DashboardState } from '../../../types';
-import { NEW_VARIABLE_ID } from '../constants';
+import { createQueryVariable } from './__tests__/fixtures';
+import { keyedVariablesReducer, KeyedVariablesState } from './keyedVariablesReducer';
+import { getInitialTemplatingState, TemplatingState } from './reducers';
+import { VariablesState } from './types';
 
 export const getVariableState = (
   noOfVariables: number,
   inEditorIndex = -1,
   includeEmpty = false,
   includeSystem = false
-): Record<string, VariableModel> => {
-  const variables: Record<string, VariableModel> = {};
+): VariablesState => {
+  const variables: Record<string, TypedVariableModel> = {};
 
   if (includeSystem) {
     const dashboardModel: DashboardVariableModel = {
@@ -84,49 +87,40 @@ export const getVariableState = (
   }
 
   for (let index = 0; index < noOfVariables; index++) {
-    variables[index] = {
+    variables[index] = createQueryVariable({
       id: index.toString(),
-      type: 'query',
       name: `Name-${index}`,
-      hide: VariableHide.dontHide,
-      index,
       label: `Label-${index}`,
-      skipUrlSync: false,
-      global: false,
-      state: LoadingState.NotStarted,
-      error: null,
-      description: null,
-    };
+      index,
+    });
   }
 
   if (includeEmpty) {
-    variables[NEW_VARIABLE_ID] = {
+    variables[NEW_VARIABLE_ID] = createQueryVariable({
       id: NEW_VARIABLE_ID,
-      type: 'query',
       name: `Name-${NEW_VARIABLE_ID}`,
-      hide: VariableHide.dontHide,
-      index: noOfVariables,
       label: `Label-${NEW_VARIABLE_ID}`,
-      skipUrlSync: false,
-      global: false,
-      state: LoadingState.NotStarted,
-      error: null,
-      description: null,
-    };
+      index: noOfVariables,
+    });
   }
 
   return variables;
 };
 
-export const getVariableTestContext = <Model extends VariableModel>(
+export const getVariableTestContext = <Model extends TypedVariableModel>(
   adapter: VariableAdapter<Model>,
   variableOverrides: Partial<Model> = {}
 ) => {
-  const defaultVariable = {
-    ...adapter.initialState,
+  const defaults: Partial<VariableModel> = {
     id: '0',
+    rootStateKey: 'key',
     index: 0,
     name: '0',
+  };
+
+  const defaultVariable = {
+    ...adapter.initialState,
+    ...defaults,
   };
 
   const initialState: VariablesState = {
@@ -139,14 +133,31 @@ export const getVariableTestContext = <Model extends VariableModel>(
 export const getRootReducer = () =>
   combineReducers({
     dashboard: dashboardReducer,
-    templating: templatingReducers,
+    templating: keyedVariablesReducer,
   });
 
-export type RootReducerType = { dashboard: DashboardState; templating: TemplatingState };
+export type RootReducerType = { dashboard: DashboardState; templating: KeyedVariablesState };
 
 export const getTemplatingRootReducer = () =>
   combineReducers({
-    templating: templatingReducers,
+    templating: keyedVariablesReducer,
   });
 
-export type TemplatingReducerType = { templating: TemplatingState };
+export type TemplatingReducerType = { templating: KeyedVariablesState };
+
+export function getPreloadedState(
+  key: string,
+  templatingState: Partial<TemplatingState>
+): Pick<StoreState, 'templating'> {
+  return {
+    templating: {
+      lastKey: key,
+      keys: {
+        [key]: {
+          ...getInitialTemplatingState(),
+          ...templatingState,
+        },
+      },
+    },
+  };
+}

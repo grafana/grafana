@@ -1,13 +1,14 @@
 import { useMemo } from 'react';
 
-import { CombinedRuleGroup, CombinedRuleNamespace, FilterState } from 'app/types/unified-alerting';
-import { isCloudRulesSource } from '../utils/datasource';
-import { isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
-import { getFiltersFromUrlParams } from '../utils/misc';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { CombinedRuleGroup, CombinedRuleNamespace, FilterState } from 'app/types/unified-alerting';
+import { PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+
 import { labelsMatchMatchers, parseMatchers } from '../utils/alertmanager';
+import { isCloudRulesSource } from '../utils/datasource';
+import { getFiltersFromUrlParams } from '../utils/misc';
+import { isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
   const [queryParams] = useQueryParams();

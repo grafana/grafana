@@ -102,7 +102,7 @@ e2e.scenario({
     e2e.components.PanelEditor.DataPane.content().should('be.visible');
 
     // Field & Overrides tabs (need to switch to React based vis, i.e. Table)
-    e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Show header').should('be.visible');
+    e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Show table header').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Column width').should('be.visible');
   },
 });

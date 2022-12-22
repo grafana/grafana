@@ -1,18 +1,22 @@
-import React, { PropsWithChildren } from 'react';
 import { css, cx } from '@emotion/css';
+import { isString } from 'lodash';
+import React, { PropsWithChildren, RefCallback } from 'react';
+
 import { GrafanaTheme2, SelectableValue, getTimeZoneInfo } from '@grafana/data';
+
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { stylesFactory } from '../../../themes/stylesFactory';
 import { Icon } from '../../Icon/Icon';
-import { TimeZoneOffset } from './TimeZoneOffset';
+
 import { TimeZoneDescription } from './TimeZoneDescription';
+import { TimeZoneOffset } from './TimeZoneOffset';
 import { TimeZoneTitle } from './TimeZoneTitle';
-import { isString } from 'lodash';
 
 interface Props {
   isFocused: boolean;
   isSelected: boolean;
-  innerProps: any;
+  innerProps: JSX.IntrinsicElements['div'];
+  innerRef: RefCallback<HTMLDivElement>;
   data: SelectableZone;
 }
 
@@ -23,7 +27,7 @@ export interface SelectableZone extends SelectableValue<string> {
 }
 
 export const WideTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, ref) => {
-  const { children, innerProps, data, isSelected, isFocused } = props;
+  const { children, innerProps, innerRef, data, isSelected, isFocused } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
   const timestamp = Date.now();
@@ -33,16 +37,24 @@ export const WideTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, re
     return null;
   }
 
+  const timeZoneInfo = getTimeZoneInfo(data.value, timestamp);
+
   return (
-    <div className={containerStyles} {...innerProps} aria-label="Select option">
+    <div className={containerStyles} {...innerProps} ref={innerRef} aria-label="Select option">
       <div className={cx(styles.leftColumn, styles.row)}>
         <div className={cx(styles.leftColumn, styles.wideRow)}>
           <TimeZoneTitle title={children} />
           <div className={styles.spacer} />
-          <TimeZoneDescription info={getTimeZoneInfo(data.value, timestamp)} />
+          <TimeZoneDescription info={timeZoneInfo} />
         </div>
         <div className={styles.rightColumn}>
-          <TimeZoneOffset timeZone={data.value} timestamp={timestamp} className={offsetClassName} />
+          <TimeZoneOffset
+            /* Use the timeZoneInfo to pass the correct timeZone name,
+               as 'Default' has value '' which defaults to browser timezone */
+            timeZone={timeZoneInfo?.ianaName || data.value}
+            timestamp={timestamp}
+            className={offsetClassName}
+          />
           {isSelected && (
             <span>
               <Icon name="check" />
@@ -54,8 +66,8 @@ export const WideTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, re
   );
 };
 
-export const CompactTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props, ref) => {
-  const { children, innerProps, data, isSelected, isFocused } = props;
+export const CompactTimeZoneOption: React.FC<React.PropsWithChildren<Props>> = (props, ref) => {
+  const { children, innerProps, innerRef, data, isSelected, isFocused } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);
   const timestamp = Date.now();
@@ -65,8 +77,10 @@ export const CompactTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props,
     return null;
   }
 
+  const timeZoneInfo = getTimeZoneInfo(data.value, timestamp);
+
   return (
-    <div className={containerStyles} {...innerProps} aria-label="Select option">
+    <div className={containerStyles} {...innerProps} ref={innerRef} aria-label="Select option">
       <div className={styles.body}>
         <div className={styles.row}>
           <div className={styles.leftColumn}>
@@ -82,10 +96,16 @@ export const CompactTimeZoneOption: React.FC<PropsWithChildren<Props>> = (props,
         </div>
         <div className={styles.row}>
           <div className={styles.leftColumn}>
-            <TimeZoneDescription info={getTimeZoneInfo(data.value, timestamp)} />
+            <TimeZoneDescription info={timeZoneInfo} />
           </div>
           <div className={styles.rightColumn}>
-            <TimeZoneOffset timestamp={timestamp} timeZone={data.value} className={offsetClassName} />
+            <TimeZoneOffset
+              timestamp={timestamp}
+              /* Use the timeZoneInfo to pass the correct timeZone name,
+                 as 'Default' has value '' which defaults to browser timezone */
+              timeZone={timeZoneInfo?.ianaName || data.value}
+              className={offsetClassName}
+            />
           </div>
         </div>
       </div>

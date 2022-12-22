@@ -1,12 +1,12 @@
-+++
-title = "Build a logs data source plugin"
-+++
+---
+title: Build a logs data source plugin
+---
 
 # Build a logs data source plugin
 
 This guide explains how to build a logs data source plugin.
 
-Data sources in Grafana supports both metrics and log data. The steps to build a logs data source plugin are largely the same as for a metrics data source. This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "/tutorials/build-a-data-source-plugin.md" >}}) for metrics.
+Data sources in Grafana supports both metrics and log data. The steps to build a logs data source plugin are largely the same as for a metrics data source. This guide assumes that you're already familiar with how to [Build a data source plugin]({{< ref "build-a-data-source-plugin.md" >}}) for metrics.
 
 ## Add logs support to your data source
 
@@ -18,7 +18,7 @@ To add logs support to an existing data source, you need to:
 
 ### Enable logs support
 
-Tell Grafana that your data source plugin can return log data, by adding `"logs": true` to the [plugin.json]({{< relref "metadata.md" >}}) file.
+Tell Grafana that your data source plugin can return log data, by adding `"logs": true` to the [plugin.json]({{< relref "metadata/" >}}) file.
 
 ```json
 {
@@ -28,7 +28,7 @@ Tell Grafana that your data source plugin can return log data, by adding `"logs"
 
 ### Construct the log data
 
-Just like for metrics data, Grafana expects your plugin to return log data as a [data frame]({{< relref "data-frames.md" >}}).
+Just like for metrics data, Grafana expects your plugin to return log data as a [data frame]({{< relref "data-frames/" >}}).
 
 To return log data, return a data frame with at least one time field and one text field from the data source's `query` method.
 
@@ -47,13 +47,13 @@ frame.add({ time: 1589189388597, content: 'user registered' });
 frame.add({ time: 1589189406480, content: 'user logged in' });
 ```
 
-That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../explore/_index.md" >}}) or by adding a [Logs panel]({{< relref "../../visualizations/logs-panel.md" >}}).
+That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../explore/" >}}) or by adding a [Logs panel]({{< relref "../../panels-visualizations/visualizations/logs/" >}}).
 
 Congratulations, you just wrote your first logs data source plugin! Next, let's look at a couple of features that can further improve the experience for the user.
 
 ### (Optional) Add preferred visualisation type hint to the data frame
 
-To make sure Grafana recognizes data as logs and shows logs visualization automatically in Explore you have do set `meta.preferredVisualisationType` to `'logs'` in the returned data frame. See [Selecting preferred visualisation section]({{< relref "add-support-for-explore-queries.md#selecting-preferred-visualisation" >}})
+To make sure Grafana recognizes data as logs and shows logs visualization automatically in Explore you have do set `meta.preferredVisualisationType` to `'logs'` in the returned data frame. See [Selecting preferred visualisation section]({{< relref "add-support-for-explore-queries/#selecting-preferred-visualisation" >}})
 
 **Example:**
 
@@ -95,7 +95,7 @@ frame.add({ time: 1589189406480, content: 'user logged in' });
 
 You can add additional information about each log line by adding more data frame fields.
 
-If a data frame has more than one text field, then Grafana assumes the first field in the data frame to be the actual log line. Any subsequent text fields are treated as [detected fields]({{< relref "../../explore/_index.md#labels-and-detected-fields" >}}).
+If a data frame has more than one text field, then Grafana assumes the first field in the data frame to be the actual log line. Any subsequent text fields are treated as [detected fields]({{< relref "../../explore/#labels-and-detected-fields" >}}).
 
 While you can add any number of custom fields to your data frame, Grafana comes with a couple of dedicated fields: `levels` and `id`. Let's have a closer look at each one.
 

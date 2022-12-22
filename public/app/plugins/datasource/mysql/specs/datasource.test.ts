@@ -1,22 +1,23 @@
 import { of } from 'rxjs';
+
 import {
   dataFrameToJSON,
   DataQueryRequest,
   DataSourceInstanceSettings,
   dateTime,
   MutableDataFrame,
-  toUtc,
 } from '@grafana/data';
-
-import { MysqlDatasource } from '../datasource';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { FetchResponse, setBackendSrv } from '@grafana/runtime';
-import { MySQLOptions, MySQLQuery } from './../types';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { SQLQuery } from 'app/features/plugins/sql/types';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
+
+import { MySqlDatasource } from '../MySqlDatasource';
+import { MySQLOptions } from '../types';
 
 describe('MySQLDatasource', () => {
-  const setupTextContext = (response: any) => {
+  const setupTextContext = (response: unknown) => {
     jest.clearAllMocks();
     setBackendSrv(backendSrv);
     const fetchMock = jest.spyOn(backendSrv, 'fetch');
@@ -27,20 +28,10 @@ describe('MySQLDatasource', () => {
     } as unknown as DataSourceInstanceSettings<MySQLOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
     const variable = { ...initialCustomVariableModelState };
-    const raw = {
-      from: toUtc('2018-04-25 10:00'),
-      to: toUtc('2018-04-25 11:00'),
-    };
-    const timeSrvMock: any = {
-      timeRange: () => ({
-        from: raw.from,
-        to: raw.to,
-        raw: raw,
-      }),
-    };
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
-    const ds = new MysqlDatasource(instanceSettings, templateSrv, timeSrvMock);
+    const ds = new MySqlDatasource(instanceSettings);
+    Reflect.set(ds, 'templateSrv', templateSrv);
 
     return { ds, variable, templateSrv, fetchMock };
   };
@@ -62,7 +53,7 @@ describe('MySQLDatasource', () => {
             hide: true,
           },
         ],
-      } as unknown as DataQueryRequest<MySQLQuery>;
+      } as unknown as DataQueryRequest<SQLQuery>;
 
       const { ds, fetchMock } = setupTextContext({});
 
@@ -70,54 +61,6 @@ describe('MySQLDatasource', () => {
         expect(received[0]).toEqual({ data: [] });
         expect(fetchMock).not.toHaveBeenCalled();
       });
-    });
-  });
-
-  describe('When performing annotationQuery', () => {
-    let results: any;
-    const annotationName = 'MyAnno';
-    const options = {
-      annotation: {
-        name: annotationName,
-        rawQuery: 'select time_sec, text, tags from table;',
-      },
-      range: {
-        from: dateTime(1432288354),
-        to: dateTime(1432288401),
-      },
-    };
-    const response = {
-      results: {
-        MyAnno: {
-          frames: [
-            dataFrameToJSON(
-              new MutableDataFrame({
-                fields: [
-                  { name: 'time_sec', values: [1432288355, 1432288390, 1432288400] },
-                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
-                  { name: 'tags', values: ['TagA,TagB', ' TagB , TagC', null] },
-                ],
-              })
-            ),
-          ],
-        },
-      },
-    };
-
-    beforeEach(async () => {
-      const { ds } = setupTextContext(response);
-      const data = await ds.annotationQuery(options);
-      results = data;
-    });
-
-    it('should return annotation list', async () => {
-      expect(results.length).toBe(3);
-      expect(results[0].text).toBe('some text');
-      expect(results[0].tags[0]).toBe('TagA');
-      expect(results[0].tags[1]).toBe('TagB');
-      expect(results[1].tags[0]).toBe('TagB');
-      expect(results[1].tags[1]).toBe('TagC');
-      expect(results[2].tags.length).toBe(0);
     });
   });
 
@@ -386,6 +329,7 @@ describe('MySQLDatasource', () => {
       grafana_metric
     WHERE
       $__timeFilter(createdAt) AND
+      foo = 'bar' AND
       measurement = 'logins.count' AND
       hostname IN($host)
     GROUP BY 1, 3
@@ -393,6 +337,7 @@ describe('MySQLDatasource', () => {
       const query = {
         rawSql,
         rawQuery: true,
+        refId: '',
       };
       templateSrv.init([
         { type: 'query', name: 'summarize', current: { value: '1m' } },
@@ -417,6 +362,7 @@ describe('MySQLDatasource', () => {
       const query = {
         rawSql,
         rawQuery: true,
+        refId: '',
       };
       templateSrv.init([
         { type: 'query', name: 'summarize', current: { value: '1m' } },

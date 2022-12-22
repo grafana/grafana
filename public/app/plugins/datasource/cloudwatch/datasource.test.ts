@@ -1,33 +1,125 @@
-import { lastValueFrom, of } from 'rxjs';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { ArrayVector, DataFrame, dataFrameToJSON, dateTime, Field, MutableDataFrame } from '@grafana/data';
-
+import { lastValueFrom } from 'rxjs';
 import { toArray } from 'rxjs/operators';
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, CloudWatchLogsQueryStatus } from './types';
+
+import { CoreApp, dateTime, Field } from '@grafana/data';
+
 import {
+  CloudWatchSettings,
+  fieldsVariable,
+  logGroupNamesVariable,
+  regionVariable,
   setupMockedDataSource,
-  namespaceVariable,
-  metricVariable,
-  labelsVariable,
-  limitVariable,
 } from './__mocks__/CloudWatchDataSource';
-import { CloudWatchDatasource } from './datasource';
+import { setupForLogs } from './__mocks__/logsTestContext';
+import { validLogsQuery, validMetricSearchBuilderQuery } from './__mocks__/queries';
+import { TimeRangeMock } from './__mocks__/timeRange';
+import {
+  CloudWatchLogsQuery,
+  CloudWatchMetricsQuery,
+  CloudWatchQuery,
+  CloudWatchDefaultQuery,
+  MetricEditorMode,
+  MetricQueryType,
+} from './types';
 
 describe('datasource', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
   describe('query', () => {
-    it('should return error if log query and log groups is not specified', async () => {
-      const { datasource } = setupMockedDataSource();
-      const observable = datasource.query({ targets: [{ queryMode: 'Logs' as 'Logs' }] } as any);
+    it('should not run a query if log groups is not specified', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource();
+      await lastValueFrom(
+        datasource.query({
+          targets: [
+            {
+              queryMode: 'Logs',
+              id: '',
+              refId: '',
+              region: '',
+              expression: 'some query string', // missing logGroups and logGroupNames, this query will be not be run
+            },
+            {
+              queryMode: 'Logs',
+              id: '',
+              refId: '',
+              region: '',
+              logGroupNames: ['/some/group'],
+              expression: 'some query string',
+            },
+          ],
+          requestId: '',
+          interval: '',
+          intervalMs: 0,
+          range: TimeRangeMock,
+          scopedVars: {},
+          timezone: '',
+          app: '',
+          startTime: 0,
+        })
+      );
 
-      await expect(observable).toEmitValuesWith((received) => {
-        const response = received[0];
-        expect(response.error?.message).toBe('Log group is required');
+      expect(fetchMock.mock.calls[0][0].data.queries).toHaveLength(1);
+      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
+        queryString: 'some query string',
+        logGroupNames: ['/some/group'],
+        region: 'us-west-1',
+      });
+    });
+
+    it('should not run a query if query expression is not specified', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource();
+      await lastValueFrom(
+        datasource.query({
+          targets: [
+            {
+              queryMode: 'Logs',
+              id: '',
+              refId: '',
+              region: '',
+              logGroupNames: ['/some/group'], // missing query expression, this query will be not be run
+            },
+            {
+              queryMode: 'Logs',
+              id: '',
+              refId: '',
+              region: '',
+              logGroupNames: ['/some/group'],
+              expression: 'some query string',
+            },
+          ],
+          requestId: '',
+          interval: '',
+          intervalMs: 0,
+          range: TimeRangeMock,
+          scopedVars: {},
+          timezone: '',
+          app: '',
+          startTime: 0,
+        })
+      );
+
+      expect(fetchMock.mock.calls[0][0].data.queries).toHaveLength(1);
+      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
+        queryString: 'some query string',
+        logGroupNames: ['/some/group'],
+        region: 'us-west-1',
       });
     });
 
     it('should return empty response if queries are hidden', async () => {
       const { datasource } = setupMockedDataSource();
-      const observable = datasource.query({ targets: [{ queryMode: 'Logs' as 'Logs', hide: true }] } as any);
+      const observable = datasource.query({
+        targets: [{ queryMode: 'Logs', hide: true, id: '', refId: '', region: '' }],
+        requestId: '',
+        interval: '',
+        intervalMs: 0,
+        range: TimeRangeMock,
+        scopedVars: {},
+        timezone: '',
+        app: '',
+        startTime: 0,
+      });
 
       await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
@@ -35,40 +127,125 @@ describe('datasource', () => {
       });
     });
 
+    const testTable: Array<{ query: CloudWatchQuery; valid: boolean }> = [
+      { query: { ...validLogsQuery, hide: true }, valid: false },
+      { query: { ...validLogsQuery, hide: false }, valid: true },
+      { query: { ...validMetricSearchBuilderQuery, hide: true }, valid: false },
+      { query: { ...validMetricSearchBuilderQuery, hide: true, id: 'queryA' }, valid: true },
+      { query: { ...validMetricSearchBuilderQuery, hide: false }, valid: true },
+    ];
+
+    test.each(testTable)('should filter out hidden queries unless id is provided', ({ query, valid }) => {
+      const { datasource } = setupMockedDataSource();
+      expect(datasource.filterQuery(query)).toEqual(valid);
+    });
+
     it('should interpolate variables in the query', async () => {
-      const { datasource, fetchMock } = setupMockedDataSource();
+      const { datasource, fetchMock } = setupMockedDataSource({
+        variables: [fieldsVariable, regionVariable],
+      });
       await lastValueFrom(
         datasource
           .query({
             targets: [
               {
+                id: '',
+                refId: '',
                 queryMode: 'Logs',
                 region: '$region',
                 expression: 'fields $fields',
-                logGroupNames: ['/some/$group'],
+                logGroupNames: ['/some/group'],
               },
             ],
-          } as any)
+            requestId: '',
+            interval: '',
+            intervalMs: 0,
+            range: TimeRangeMock,
+            scopedVars: {},
+            timezone: '',
+            app: '',
+            startTime: 0,
+          })
           .pipe(toArray())
       );
       expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
         queryString: 'fields templatedField',
-        logGroupNames: ['/some/templatedGroup'],
+        logGroupNames: ['/some/group'],
+        region: 'templatedRegion',
+      });
+    });
+
+    it('should interpolate multi-value template variable for log group names in the query', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource({
+        variables: [fieldsVariable, logGroupNamesVariable, regionVariable],
+        mockGetVariableName: false,
+      });
+      await lastValueFrom(
+        datasource
+          .query({
+            targets: [
+              {
+                id: '',
+                refId: '',
+                queryMode: 'Logs',
+                region: '$region',
+                expression: 'fields $fields',
+                logGroupNames: ['$groups'],
+              },
+            ],
+            requestId: '',
+            interval: '',
+            intervalMs: 0,
+            range: TimeRangeMock,
+            scopedVars: {},
+            timezone: '',
+            app: '',
+            startTime: 0,
+          })
+          .pipe(toArray())
+      );
+      expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject({
+        queryString: 'fields templatedField',
+        logGroupNames: ['templatedGroup-1', 'templatedGroup-2'],
         region: 'templatedRegion',
       });
     });
 
     it('should add links to log queries', async () => {
-      const { datasource } = setupForLogs();
+      const { datasource, timeSrv } = setupForLogs();
+      timeSrv.timeRange = () => {
+        const time = dateTime('2021-01-01T01:00:00Z');
+        const range = {
+          from: time.subtract(6, 'hour'),
+          to: time,
+        };
+
+        return {
+          ...range,
+          raw: range,
+        };
+      };
+
       const observable = datasource.query({
         targets: [
           {
+            id: '',
+            region: '',
             queryMode: 'Logs',
             logGroupNames: ['test'],
+            expression: 'some query',
             refId: 'a',
           },
         ],
-      } as any);
+        requestId: '',
+        interval: '',
+        intervalMs: 0,
+        range: TimeRangeMock,
+        scopedVars: {},
+        timezone: '',
+        app: '',
+        startTime: 0,
+      });
 
       const emits = await lastValueFrom(observable.pipe(toArray()));
       expect(emits).toHaveLength(1);
@@ -87,263 +264,116 @@ describe('datasource', () => {
       expect(emits[0].data[0].fields.find((f: Field) => f.name === '@message').config.links).toMatchObject([
         {
           title: 'View in CloudWatch console',
-          url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2020-12-31T19*3a00*3a00.000Z~start~'2020-12-31T19*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'~isLiveTail~false~source~(~'test))",
+          url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2020-12-31T19*3a00*3a00.000Z~start~'2020-12-31T19*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'some*20query~isLiveTail~false~source~(~'test))",
         },
       ]);
     });
   });
 
-  describe('filterMetricQuery', () => {
-    let baseQuery: CloudWatchMetricsQuery;
-    let datasource: CloudWatchDatasource;
+  describe('resource requests', () => {
+    it('should map resource response to metric response', async () => {
+      const datasource = setupMockedDataSource({
+        getMock: jest.fn().mockResolvedValue([
+          { value: { namespace: 'AWS/EC2', name: 'CPUUtilization' } },
+          {
+            value: { namespace: 'AWS/Redshift', name: 'CPUPercentage' },
+          },
+        ]),
+      }).datasource;
+      const allMetrics = await datasource.api.getAllMetrics({ region: 'us-east-2' });
+      expect(allMetrics[0].metricName).toEqual('CPUUtilization');
+      expect(allMetrics[0].namespace).toEqual('AWS/EC2');
+      expect(allMetrics[1].metricName).toEqual('CPUPercentage');
+      expect(allMetrics[1].namespace).toEqual('AWS/Redshift');
+    });
+  });
 
-    beforeEach(() => {
-      datasource = setupMockedDataSource().datasource;
-      baseQuery = {
+  describe('when interpolating variables', () => {
+    it('should return an empty array if no queries are provided', () => {
+      const { datasource } = setupMockedDataSource();
+
+      expect(datasource.interpolateVariablesInQueries([], {})).toHaveLength(0);
+    });
+
+    it('should replace correct variables in CloudWatchLogsQuery', () => {
+      const { datasource, templateService } = setupMockedDataSource();
+      templateService.replace = jest.fn();
+      const variableName = 'someVar';
+      const logQuery: CloudWatchLogsQuery = {
+        queryMode: 'Logs',
+        expression: `$${variableName}`,
+        region: `$${variableName}`,
         id: '',
-        region: 'us-east-2',
-        namespace: '',
-        period: '',
-        alias: '',
-        metricName: '',
-        dimensions: {},
-        matchExact: true,
-        statistic: '',
-        expression: '',
         refId: '',
       };
+
+      datasource.interpolateVariablesInQueries([logQuery], {});
+
+      expect(templateService.replace).toHaveBeenCalledWith(`$${variableName}`, {});
+      expect(templateService.replace).toHaveBeenCalledTimes(1);
     });
 
-    it('should error if invalid mode', async () => {
-      expect(() => datasource.filterMetricQuery(baseQuery)).toThrowError('invalid metric editor mode');
-    });
+    it('should replace correct variables in CloudWatchMetricsQuery', () => {
+      const { datasource, templateService } = setupMockedDataSource();
+      templateService.replace = jest.fn();
+      templateService.getVariableName = jest.fn();
+      const variableName = 'someVar';
+      const metricsQuery: CloudWatchMetricsQuery = {
+        queryMode: 'Metrics',
+        id: 'someId',
+        refId: 'someRefId',
+        expression: `$${variableName}`,
+        region: `$${variableName}`,
+        period: `$${variableName}`,
+        alias: `$${variableName}`,
+        metricName: `$${variableName}`,
+        namespace: `$${variableName}`,
+        dimensions: {
+          [`$${variableName}`]: `$${variableName}`,
+        },
+        matchExact: false,
+        statistic: '',
+        sqlExpression: `$${variableName}`,
+      };
 
-    describe('metric search queries', () => {
-      beforeEach(() => {
-        datasource = setupMockedDataSource().datasource;
-        baseQuery = {
-          ...baseQuery,
-          namespace: 'AWS/EC2',
-          metricName: 'CPUUtilization',
-          statistic: 'Average',
-          metricQueryType: MetricQueryType.Search,
-          metricEditorMode: MetricEditorMode.Builder,
-        };
-      });
+      datasource.interpolateVariablesInQueries([metricsQuery], {});
 
-      it('should not allow builder queries that dont have namespace, metric or statistic', async () => {
-        expect(datasource.filterMetricQuery({ ...baseQuery, statistic: undefined })).toBeFalsy();
-        expect(datasource.filterMetricQuery({ ...baseQuery, metricName: undefined })).toBeFalsy();
-        expect(datasource.filterMetricQuery({ ...baseQuery, namespace: '' })).toBeFalsy();
-      });
+      // We interpolate `expression`, `region`, `period`, `alias`, `metricName`, and `nameSpace` in CloudWatchMetricsQuery
+      expect(templateService.replace).toHaveBeenCalledWith(`$${variableName}`, {});
+      expect(templateService.replace).toHaveBeenCalledTimes(7);
 
-      it('should allow builder queries that have namespace, metric or statistic', async () => {
-        expect(datasource.filterMetricQuery(baseQuery)).toBeTruthy();
-      });
-
-      it('should not allow code queries that dont have an expression', async () => {
-        expect(
-          datasource.filterMetricQuery({ ...baseQuery, expression: undefined, metricEditorMode: MetricEditorMode.Code })
-        ).toBeFalsy();
-      });
-
-      it('should allow code queries that have an expression', async () => {
-        expect(
-          datasource.filterMetricQuery({ ...baseQuery, expression: 'x * 2', metricEditorMode: MetricEditorMode.Code })
-        ).toBeTruthy();
-      });
-    });
-
-    describe('metric search expression queries', () => {
-      beforeEach(() => {
-        datasource = setupMockedDataSource().datasource;
-        baseQuery = {
-          ...baseQuery,
-          metricQueryType: MetricQueryType.Search,
-          metricEditorMode: MetricEditorMode.Code,
-        };
-      });
-
-      it('should not allow queries that dont have an expresssion', async () => {
-        const valid = datasource.filterMetricQuery(baseQuery);
-        expect(valid).toBeFalsy();
-      });
-
-      it('should allow queries that have an expresssion', async () => {
-        baseQuery.expression = 'SUM([a,x])';
-        const valid = datasource.filterMetricQuery(baseQuery);
-        expect(valid).toBeTruthy();
-      });
-    });
-
-    describe('metric query queries', () => {
-      beforeEach(() => {
-        datasource = setupMockedDataSource().datasource;
-        baseQuery = {
-          ...baseQuery,
-          metricQueryType: MetricQueryType.Query,
-          metricEditorMode: MetricEditorMode.Code,
-        };
-      });
-
-      it('should not allow queries that dont have a sql expresssion', async () => {
-        const valid = datasource.filterMetricQuery(baseQuery);
-        expect(valid).toBeFalsy();
-      });
-
-      it('should allow queries that have a sql expresssion', async () => {
-        baseQuery.sqlExpression = 'select SUM(CPUUtilization) from "AWS/EC2"';
-        const valid = datasource.filterMetricQuery(baseQuery);
-        expect(valid).toBeTruthy();
-      });
+      expect(templateService.getVariableName).toHaveBeenCalledWith(`$${variableName}`);
+      expect(templateService.getVariableName).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('performTimeSeriesQuery', () => {
-    it('should return the same length of data as result', async () => {
+  describe('when setting default query', () => {
+    it('should set default query to be a Metrics query', () => {
+      const { datasource } = setupMockedDataSource();
+      expect(datasource.getDefaultQuery(CoreApp.PanelEditor).queryMode).toEqual('Metrics');
+    });
+    it('should set default log groups in default query', () => {
       const { datasource } = setupMockedDataSource({
-        data: {
-          results: {
-            a: { refId: 'a', series: [{ name: 'cpu', points: [1, 1] }], meta: {} },
-            b: { refId: 'b', series: [{ name: 'memory', points: [2, 2] }], meta: {} },
-          },
+        customInstanceSettings: {
+          ...CloudWatchSettings,
+          jsonData: { ...CloudWatchSettings.jsonData, defaultLogGroups: ['testLogGroup'] },
         },
       });
-
-      const observable = datasource.performTimeSeriesQuery(
-        {
-          queries: [
-            { datasourceId: 1, refId: 'a' },
-            { datasourceId: 1, refId: 'b' },
-          ],
-        } as any,
-        { from: dateTime(), to: dateTime() } as any
-      );
-
-      await expect(observable).toEmitValuesWith((received) => {
-        const response = received[0];
-        expect(response.data.length).toEqual(2);
-      });
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).logGroupNames).toEqual([
+        'testLogGroup',
+      ]);
     });
-  });
-
-  describe('describeLogGroup', () => {
-    it('replaces region correctly in the query', async () => {
-      const { datasource, fetchMock } = setupMockedDataSource();
-      await datasource.describeLogGroups({ region: 'default' });
-      expect(fetchMock.mock.calls[0][0].data.queries[0].region).toBe('us-west-1');
-
-      await datasource.describeLogGroups({ region: 'eu-east' });
-      expect(fetchMock.mock.calls[1][0].data.queries[0].region).toBe('eu-east');
-    });
-  });
-
-  describe('template variable interpolation', () => {
-    it('interpolates variables correctly', async () => {
-      const { datasource, fetchMock } = setupMockedDataSource({
-        variables: [namespaceVariable, metricVariable, labelsVariable, limitVariable],
-      });
-      datasource.handleMetricQueries(
-        [
-          {
-            id: '',
-            refId: 'a',
-            region: 'us-east-2',
-            namespace: '',
-            period: '',
-            alias: '',
-            metricName: '',
-            dimensions: {},
-            matchExact: true,
-            statistic: '',
-            expression: '',
-            metricQueryType: MetricQueryType.Query,
-            metricEditorMode: MetricEditorMode.Code,
-            sqlExpression: 'SELECT SUM($metric) FROM "$namespace" GROUP BY ${labels:raw} LIMIT $limit',
-          },
-        ],
-        { range: { from: dateTime(), to: dateTime() } } as any
+    it('should set default values from metrics query', () => {
+      const { datasource } = setupMockedDataSource();
+      expect(datasource.getDefaultQuery(CoreApp.PanelEditor).region).toEqual('default');
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).statistic).toEqual('Average');
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).metricQueryType).toEqual(
+        MetricQueryType.Search
       );
-      expect(fetchMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            queries: expect.arrayContaining([
-              expect.objectContaining({
-                sqlExpression: `SELECT SUM(CPUUtilization) FROM "AWS/EC2" GROUP BY InstanceId,InstanceType LIMIT 100`,
-              }),
-            ]),
-          }),
-        })
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).metricEditorMode).toEqual(
+        MetricEditorMode.Builder
       );
-    });
-  });
-
-  describe('getLogGroupFields', () => {
-    it('passes region correctly', async () => {
-      const { datasource, fetchMock } = setupMockedDataSource();
-      fetchMock.mockReturnValueOnce(
-        of({
-          data: {
-            results: {
-              A: {
-                frames: [
-                  dataFrameToJSON(
-                    new MutableDataFrame({
-                      fields: [
-                        { name: 'key', values: [] },
-                        { name: 'val', values: [] },
-                      ],
-                    })
-                  ),
-                ],
-              },
-            },
-          },
-        })
-      );
-      await datasource.getLogGroupFields({ region: 'us-west-1', logGroupName: 'test' });
-      expect(fetchMock.mock.calls[0][0].data.queries[0].region).toBe('us-west-1');
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).matchExact).toEqual(true);
     });
   });
 });
-
-function setupForLogs() {
-  function envelope(frame: DataFrame) {
-    return { data: { results: { a: { refId: 'a', frames: [dataFrameToJSON(frame)] } } } };
-  }
-
-  const { datasource, fetchMock } = setupMockedDataSource();
-
-  const startQueryFrame = new MutableDataFrame({ fields: [{ name: 'queryId', values: ['queryid'] }] });
-  fetchMock.mockReturnValueOnce(of(envelope(startQueryFrame)));
-
-  const logsFrame = new MutableDataFrame({
-    fields: [
-      {
-        name: '@message',
-        values: new ArrayVector(['something']),
-      },
-      {
-        name: '@timestamp',
-        values: new ArrayVector([1]),
-      },
-      {
-        name: '@xrayTraceId',
-        values: new ArrayVector(['1-613f0d6b-3e7cb34375b60662359611bd']),
-      },
-    ],
-    meta: { custom: { Status: CloudWatchLogsQueryStatus.Complete } },
-  });
-
-  fetchMock.mockReturnValueOnce(of(envelope(logsFrame)));
-
-  setDataSourceSrv({
-    async get() {
-      return {
-        name: 'Xray',
-      };
-    },
-  } as any);
-
-  return { datasource, fetchMock };
-}

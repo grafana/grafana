@@ -1,7 +1,9 @@
-import { stylesFactory } from '../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
-import { css as cssCore } from '@emotion/react';
 import { css } from '@emotion/css';
+import { css as cssCore } from '@emotion/react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory } from '../../themes';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: boolean, hasMarks = false) => {
   const { spacing } = theme;
@@ -42,14 +44,27 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: bool
         background-color: ${handleColor};
         box-shadow: ${theme.shadows.z1};
         cursor: pointer;
+        opacity: 1;
       }
+
       .rc-slider-handle:hover,
       .rc-slider-handle:active,
-      .rc-slider-handle:focus,
-      .rc-slider-handle-click-focused:focus,
-      .rc-slider-dot-active {
+      .rc-slider-handle-click-focused:focus {
         ${hoverSyle};
       }
+
+      // The triple class names is needed because that's the specificity used in the source css :(
+      .rc-slider-handle-dragging.rc-slider-handle-dragging.rc-slider-handle-dragging,
+      .rc-slider-handle:focus-visible {
+        box-shadow: 0 0 0 5px ${theme.colors.text.primary};
+      }
+
+      .rc-slider-dot,
+      .rc-slider-dot-active {
+        background-color: ${theme.colors.text.primary};
+        border-color: ${theme.colors.text.primary};
+      }
+
       .rc-slider-track {
         background-color: ${trackColor};
       }

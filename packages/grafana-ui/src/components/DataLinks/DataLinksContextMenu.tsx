@@ -1,16 +1,18 @@
-import React from 'react';
-import { FieldConfig, LinkModel } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { css } from '@emotion/css';
-import { WithContextMenu } from '../ContextMenu/WithContextMenu';
+import React, { CSSProperties } from 'react';
+
+import { LinkModel } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { linkModelToContextMenuItems } from '../../utils/dataLinks';
+import { WithContextMenu } from '../ContextMenu/WithContextMenu';
 import { MenuGroup, MenuItemsGroup } from '../Menu/MenuGroup';
 import { MenuItem } from '../Menu/MenuItem';
 
-interface DataLinksContextMenuProps {
+export interface DataLinksContextMenuProps {
   children: (props: DataLinksContextMenuApi) => JSX.Element;
   links: () => LinkModel[];
-  config: FieldConfig;
+  style?: CSSProperties;
 }
 
 export interface DataLinksContextMenuApi {
@@ -18,9 +20,9 @@ export interface DataLinksContextMenuApi {
   targetClassName?: string;
 }
 
-export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ children, links, config }) => {
-  const linksCounter = config.links!.length;
+export const DataLinksContextMenu = ({ children, links, style }: DataLinksContextMenuProps) => {
   const itemsGroup: MenuItemsGroup[] = [{ items: linkModelToContextMenuItems(links), label: 'Data links' }];
+  const linksCounter = itemsGroup[0].items.length;
   const renderMenuGroupItems = () => {
     return itemsGroup.map((group, index) => (
       <MenuGroup key={`${group.label}${index}`} label={group.label}>
@@ -60,7 +62,7 @@ export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ chil
         onClick={linkModel.onClick}
         target={linkModel.target}
         title={linkModel.title}
-        style={{ display: 'flex' }}
+        style={{ ...style, overflow: 'hidden', display: 'flex', flexGrow: 1 }}
         aria-label={selectors.components.DataLinksContextMenu.singleLink}
       >
         {children({})}

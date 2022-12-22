@@ -1,13 +1,11 @@
-import {
-  ArrayVector,
-  DataTransformerConfig,
-  DataTransformerID,
-  FieldType,
-  toDataFrame,
-  transformDataFrame,
-} from '@grafana/data';
-import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
+import { toDataFrame } from '../../dataframe';
+import { FieldType, DataTransformerConfig } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { ArrayVector } from '../../vector';
+import { transformDataFrame } from '../transformDataFrame';
+
+import { DataTransformerID } from './ids';
+import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
 
 describe('Rename Transformer', () => {
   beforeAll(() => {
@@ -48,6 +46,7 @@ describe('Rename Transformer', () => {
             name: 'time',
             state: {
               displayName: 'Total time',
+              multipleFrames: false,
             },
             type: FieldType.time,
             values: new ArrayVector([3000, 4000, 5000, 6000]),
@@ -60,6 +59,7 @@ describe('Rename Transformer', () => {
             name: 'temperature',
             state: {
               displayName: 'how cold is it?',
+              multipleFrames: false,
             },
             type: FieldType.number,
             values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
@@ -72,6 +72,7 @@ describe('Rename Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'Moistness',
+              multipleFrames: false,
             },
             type: FieldType.number,
             values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
@@ -115,6 +116,7 @@ describe('Rename Transformer', () => {
             labels: undefined,
             state: {
               displayName: 'ttl',
+              multipleFrames: false,
             },
             type: FieldType.time,
             values: new ArrayVector([3000, 4000, 5000, 6000]),
@@ -125,6 +127,7 @@ describe('Rename Transformer', () => {
             name: 'pressure',
             state: {
               displayName: 'pressure',
+              multipleFrames: false,
             },
             type: FieldType.number,
             values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
@@ -137,6 +140,7 @@ describe('Rename Transformer', () => {
             name: 'humidity',
             state: {
               displayName: 'hum',
+              multipleFrames: false,
             },
             type: FieldType.number,
             values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),

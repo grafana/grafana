@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,7 +52,7 @@ func TestAlert_GetTagsFromSettings(t *testing.T) {
 		Message:  "Message",
 	}
 
-	expectedTags := []*Tag{
+	expectedTags := []*tag.Tag{
 		{Id: 0, Key: "foo", Value: "bar"},
 		{Id: 0, Key: "waldo", Value: "fred"},
 		{Id: 0, Key: "tagMap", Value: ""},

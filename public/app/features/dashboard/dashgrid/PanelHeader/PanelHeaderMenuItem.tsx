@@ -1,44 +1,37 @@
-import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
-import { PanelMenuItem } from '@grafana/data';
-import { Icon, IconName, useTheme } from '@grafana/ui';
+import React, { FC, useState } from 'react';
+
+import { PanelMenuItem, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Icon, toIconName, useStyles2 } from '@grafana/ui';
 
 interface Props {
-  children?: any;
+  children?: React.ReactNode;
 }
 
 export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = (props) => {
   const [ref, setRef] = useState<HTMLLIElement | null>(null);
   const isSubMenu = props.type === 'submenu';
   const isDivider = props.type === 'divider';
-  const theme = useTheme();
-  const menuIconClassName = css`
-    margin-right: ${theme.spacing.sm};
-    a::after {
-      display: none;
-    }
-  `;
-  const shortcutIconClassName = css`
-    position: absolute;
-    top: 7px;
-    right: ${theme.spacing.xs};
-    color: ${theme.colors.textWeak};
-  `;
+  const styles = useStyles2(getStyles);
+
+  const icon = props.iconClassName ? toIconName(props.iconClassName) : undefined;
 
   return isDivider ? (
     <li className="divider" />
   ) : (
     <li className={isSubMenu ? `dropdown-submenu ${getDropdownLocationCssClass(ref)}` : undefined} ref={setRef}>
       <a onClick={props.onClick} href={props.href}>
-        {props.iconClassName && <Icon name={props.iconClassName as IconName} className={menuIconClassName} />}
+        {icon && <Icon name={icon} className={styles.menuIconClassName} />}
+
         <span className="dropdown-item-text" aria-label={selectors.components.Panels.Panel.headerItems(props.text)}>
           {props.text}
-          {isSubMenu && <Icon name="angle-right" className={shortcutIconClassName} />}
+          {isSubMenu && <Icon name="angle-right" className={styles.shortcutIconClassName} />}
         </span>
+
         {props.shortcut && (
           <span className="dropdown-menu-item-shortcut">
-            <Icon name="keyboard" className={menuIconClassName} /> {props.shortcut}
+            <Icon name="keyboard" className={styles.menuIconClassName} /> {props.shortcut}
           </span>
         )}
       </a>
@@ -64,4 +57,21 @@ function getDropdownLocationCssClass(element: HTMLElement | null) {
   } else {
     return 'pull-right';
   }
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    menuIconClassName: css({
+      marginRight: theme.spacing(1),
+      'a::after': {
+        display: 'none',
+      },
+    }),
+    shortcutIconClassName: css({
+      position: 'absolute',
+      top: '7px',
+      right: theme.spacing(0.5),
+      color: theme.colors.text.secondary,
+    }),
+  };
 }

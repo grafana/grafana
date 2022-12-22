@@ -1,0 +1,937 @@
+{
+  "__inputs": [],
+  "__elements": [],
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "gauge",
+      "name": "Gauge",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "geomap",
+      "name": "Geomap",
+      "version": ""
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "8.5.1"
+    },
+    {
+      "type": "datasource",
+      "id": "grafana-azure-monitor-datasource",
+      "name": "Azure Monitor",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
+  "editable": true,
+  "id": null,
+  "iteration": null,
+  "liveNow": false,
+  "panels": [
+    {
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 18,
+      "options": {
+        "content": "<div style=\"padding: 1em; text-align: center\">\n  <p> This dashboard helps you visualize data on availability tests for your Application Insights. Note that even if you have an App Insights resource configured, if you have no tests configured for it, no data will show. You can configure the following:</p>\n  <ul style=\"display: inline-block; text-align:left\">\n\n      <li>The regions (Select one or more)</li>\n\n      <li>The Availability tests (Select one or more)</li>\n\n      <li>The colors and thresholds in the Geo Maps to make the dashboard more relevant to your environment.</li>\n  </ul>\n</div>",
+        "mode": "html"
+      },
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "avg_percentage"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "green",
+                      "value": 100
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latitude"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "degree"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latitude"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "degree"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 14,
+        "x": 0,
+        "y": 0
+      },
+      "id": 10,
+      "options": {
+        "basemap": {
+          "config": {},
+          "name": "Layer 0",
+          "type": "default"
+        },
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showDebug": false,
+          "showScale": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "showLegend": true,
+              "style": {
+                "color": {
+                  "field": "avg_percentage",
+                  "fixed": "dark-green"
+                },
+                "opacity": 0.4,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "field": "avg_percentage",
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "Layer 1",
+            "tooltip": true,
+            "type": "markers"
+          }
+        ],
+        "view": {
+          "id": "zero",
+          "lat": 0,
+          "lon": 0,
+          "zoom": 1
+        }
+      },
+      "targets": [
+        {
+          "azureLogAnalytics": {
+            "query": "let regToCoords = dynamic({\r\n  \"East Asia\":\r\n    {\r\n      \"latitude\": 22.267,\r\n      \"longitude\": 114.188\r\n    },\r\n  \"Southeast Asia\":\r\n    {\r\n      \"latitude\": 1.283,\r\n      \"longitude\": 103.833\r\n    },\r\n  \"Central US\":\r\n    {\r\n      \"latitude\": 41.5908,\r\n      \"longitude\": -93.6208\r\n    },\r\n    \"East US\":\r\n    {\r\n      \"latitude\": 37.3719,\r\n      \"longitude\": -79.8164\r\n    },\r\n    \"East US 2\":\r\n    {\r\n      \"latitude\": 36.6681,\r\n      \"longitude\": -78.3889\r\n    },\r\n    \"West US\":\r\n    {\r\n      \"latitude\": 37.783,\r\n      \"longitude\": -122.417\r\n    },\r\n    \"North Central US\":\r\n    {\r\n      \"latitude\": 41.8819,\r\n      \"longitude\": -87.6278\r\n    },\r\n    \"South Central US\":\r\n    {\r\n      \"latitude\": 29.4167,\r\n      \"longitude\": -98.5\r\n    },\r\n    \"North Europe\":\r\n    {\r\n      \"latitude\": 53.3478,\r\n      \"longitude\": -6.2597\r\n    },\r\n    \"West Europe\":\r\n    {\r\n      \"latitude\": 52.3667,\r\n      \"longitude\": 4.9\r\n    },\r\n    \"Japan West\":\r\n    {\r\n      \"latitude\": 34.6939,\r\n      \"longitude\": 135.5022\r\n    },\r\n    \"Japan East\":\r\n    {\r\n      \"latitude\": 35.68,\r\n      \"longitude\": 139.77\r\n    },\r\n    \"Brazil South\":\r\n    {\r\n      \"latitude\": -23.55,\r\n      \"longitude\": -46.633\r\n    },\r\n    \"Australia East\" : \r\n    {\r\n    \"latitude\": -33.86, \r\n    \"longitude\": 151.2094\r\n    }, \r\n    \"Australia Southeast\":\r\n    {\r\n      \"latitude\": -37.8136,\r\n      \"longitude\": 144.9631\r\n    },\r\n    \"South India\":\r\n    {\r\n      \"latitude\": 12.9822,\r\n      \"longitude\": 80.1636\r\n    },\r\n    \"Central India\":\r\n    {\r\n      \"latitude\": 18.5822,\r\n      \"longitude\": 73.9197\r\n    },\r\n    \"West India\":\r\n    {\r\n      \"latitude\": 19.088,\r\n      \"longitude\": 72.868\r\n    },\r\n    \"Canada Central\":\r\n    {\r\n      \"latitude\": 43.653,\r\n      \"longitude\": -79.383\r\n    },\r\n    \"Canada East\":\r\n    {\r\n      \"latitude\": 46.817,\r\n      \"longitude\": -71.217\r\n    },\r\n    \"UK South\":\r\n    {\r\n      \"latitude\": 50.941,\r\n      \"longitude\": -0.799\r\n    },\r\n  \"UK West\": \r\n    {\r\n      \"latitude\": 53.427, \r\n      \"longitude\": -3.084\r\n    },\r\n  \"West Central US\": \r\n    {\r\n      \"latitude\": 40.890, \r\n      \"longitude\": -110.234\r\n    },\r\n    \"West US 2\": \r\n    {\r\n      \"latitude\": 47.233, \r\n      \"longitude\": -119.852\r\n    },\r\n    \"Korea Central\": \r\n    {\r\n      \"latitude\": 37.5665, \r\n      \"longitude\": 126.9780\r\n    },\r\n    \"Korea South\": \r\n    {\r\n      \"latitude\": 35.1796, \r\n      \"longitude\": 129.0756\r\n    },\r\n    \"France Central\": \r\n    {\r\n      \"latitude\": 46.3772, \r\n      \"longitude\": 2.3730\r\n    },\r\n    \"France South\": \r\n    {\r\n      \"latitude\": 43.8345, \r\n      \"longitude\": 2.1972\r\n   },\r\n   \"Australia Central\": \r\n    {\r\n      \"latitude\": -35.3075, \r\n      \"longitude\": 149.1244\r\n    },\r\n    \"Australia Central 2\": \r\n    {\r\n      \"latitude\": -35.3075, \r\n      \"longitude\": 149.1244\r\n    },\r\n    \"UAE Central\": \r\n    {\r\n      \"latitude\": 24.466667, \r\n      \"longitude\": 54.366669\r\n    },\r\n    \"UAE North\": \r\n    {\r\n      \"latitude\": 25.266666, \r\n      \"longitude\": 55.316666\r\n    },\r\n    \"South Africa North\": \r\n    {\r\n      \"latitude\": -25.731340, \r\n      \"longitude\": 28.218370\r\n    },\r\n    \"South Africa West\": \r\n    {\r\n      \"latitude\": -34.075691, \r\n      \"longitude\": 18.843266\r\n    }\r\n});\r\navailabilityResults\r\n| where timestamp >= $__timeFrom and timestamp < $__timeTo\r\n| where name in ($avTest) and location in ($reg)\r\n| extend latitude = tostring(regToCoords[location][\"latitude\"])\r\n| extend longitude = tostring(regToCoords[location][\"longitude\"])\r\n| extend percentage = toint(success) * 100\r\n| summarize avg(percentage) by name, location, latitude, longitude",
+            "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "queryType": "Azure Log Analytics",
+          "refId": "A",
+          "subscription": ""
+        }
+      ],
+      "title": "Availability test: ${avTest}",
+      "type": "geomap"
+    },
+    {
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "description": "The dashboard provides geographic insights of availability tests on Azure Apps via different metrics for app monitoring through Application Insights.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "noValue": "--",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "avTestResults"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Successful"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 14,
+        "y": 0
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": true
+        },
+        "text": {},
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "azureLogAnalytics": {
+            "query": "availabilityResults\r\n| where timestamp >= $__timeFrom and timestamp < $__timeTo\r\n| where name in ($avTest) and success == 1 and location in ($reg)\r\n| summarize ['avTestResults'] = sum(itemCount) by success",
+            "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "queryType": "Azure Log Analytics",
+          "refId": "A",
+          "subscription": ""
+        }
+      ],
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "noValue": "--",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "avTestResults"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Failed"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 5,
+        "x": 19,
+        "y": 0
+      },
+      "id": 16,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "azureLogAnalytics": {
+            "query": "availabilityResults\r\n| where timestamp >= $__timeFrom and timestamp < $__timeTo\r\n| where name in ($avTest) and success == 0 and location in ($reg)\r\n| summarize ['avTestResults'] = sum(itemCount) by success",
+            "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "queryType": "Azure Log Analytics",
+          "refId": "A",
+          "subscription": ""
+        }
+      ],
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 4,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 10,
+        "x": 14,
+        "y": 4
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": ["mean"],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "azureLogAnalytics": {
+            "query": "availabilityResults\r\n| where timestamp > $__timeFrom and timestamp < $__timeTo \r\n| where true and name in ($avTest)\r\n| extend percentage = toint(success) * 100\r\n| summarize avg(percentage) by name, bin(timestamp, 1h)\r\n| sort by timestamp asc\r\n| render timechart",
+            "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "hide": false,
+          "queryType": "Azure Log Analytics",
+          "refId": "A",
+          "subscription": ""
+        }
+      ],
+      "title": "Availability test : ${avTest}",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "(.*)\\s(.*)",
+            "renamePattern": "$2"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "dark-blue",
+            "mode": "fixed"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 288
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latitude"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "degree"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "longitude"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "degree"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 14,
+        "x": 0,
+        "y": 15
+      },
+      "id": 8,
+      "options": {
+        "basemap": {
+          "config": {},
+          "name": "Layer 0",
+          "type": "default"
+        },
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showDebug": false,
+          "showScale": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "showLegend": true,
+              "style": {
+                "color": {
+                  "field": "avTestResults",
+                  "fixed": "dark-green"
+                },
+                "opacity": 0.4,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "field": "avTestResults",
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "text": {
+                  "fixed": "",
+                  "mode": "field"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "Layer 1",
+            "tooltip": true,
+            "type": "markers"
+          }
+        ],
+        "view": {
+          "id": "zero",
+          "lat": 0,
+          "lon": 0,
+          "zoom": 1
+        }
+      },
+      "targets": [
+        {
+          "azureLogAnalytics": {
+            "query": "let regToCoords = dynamic({\r\n  \"East Asia\":\r\n    {\r\n      \"latitude\": 22.267,\r\n      \"longitude\": 114.188\r\n    },\r\n  \"Southeast Asia\":\r\n    {\r\n      \"latitude\": 1.283,\r\n      \"longitude\": 103.833\r\n    },\r\n  \"Central US\":\r\n    {\r\n      \"latitude\": 41.5908,\r\n      \"longitude\": -93.6208\r\n    },\r\n    \"East US\":\r\n    {\r\n      \"latitude\": 37.3719,\r\n      \"longitude\": -79.8164\r\n    },\r\n    \"East US 2\":\r\n    {\r\n      \"latitude\": 36.6681,\r\n      \"longitude\": -78.3889\r\n    },\r\n    \"West US\":\r\n    {\r\n      \"latitude\": 37.783,\r\n      \"longitude\": -122.417\r\n    },\r\n    \"North Central US\":\r\n    {\r\n      \"latitude\": 41.8819,\r\n      \"longitude\": -87.6278\r\n    },\r\n    \"South Central US\":\r\n    {\r\n      \"latitude\": 29.4167,\r\n      \"longitude\": -98.5\r\n    },\r\n    \"North Europe\":\r\n    {\r\n      \"latitude\": 53.3478,\r\n      \"longitude\": -6.2597\r\n    },\r\n    \"West Europe\":\r\n    {\r\n      \"latitude\": 52.3667,\r\n      \"longitude\": 4.9\r\n    },\r\n    \"Japan West\":\r\n    {\r\n      \"latitude\": 34.6939,\r\n      \"longitude\": 135.5022\r\n    },\r\n    \"Japan East\":\r\n    {\r\n      \"latitude\": 35.68,\r\n      \"longitude\": 139.77\r\n    },\r\n    \"Brazil South\":\r\n    {\r\n      \"latitude\": -23.55,\r\n      \"longitude\": -46.633\r\n    },\r\n    \"Australia East\" : \r\n    {\r\n    \"latitude\": -33.86, \r\n    \"longitude\": 151.2094\r\n    }, \r\n    \"Australia Southeast\":\r\n    {\r\n      \"latitude\": -37.8136,\r\n      \"longitude\": 144.9631\r\n    },\r\n    \"South India\":\r\n    {\r\n      \"latitude\": 12.9822,\r\n      \"longitude\": 80.1636\r\n    },\r\n    \"Central India\":\r\n    {\r\n      \"latitude\": 18.5822,\r\n      \"longitude\": 73.9197\r\n    },\r\n    \"West India\":\r\n    {\r\n      \"latitude\": 19.088,\r\n      \"longitude\": 72.868\r\n    },\r\n    \"Canada Central\":\r\n    {\r\n      \"latitude\": 43.653,\r\n      \"longitude\": -79.383\r\n    },\r\n    \"Canada East\":\r\n    {\r\n      \"latitude\": 46.817,\r\n      \"longitude\": -71.217\r\n    },\r\n    \"UK South\":\r\n    {\r\n      \"latitude\": 50.941,\r\n      \"longitude\": -0.799\r\n    },\r\n  \"UK West\": \r\n    {\r\n      \"latitude\": 53.427, \r\n      \"longitude\": -3.084\r\n    },\r\n  \"West Central US\": \r\n    {\r\n      \"latitude\": 40.890, \r\n      \"longitude\": -110.234\r\n    },\r\n    \"West US 2\": \r\n    {\r\n      \"latitude\": 47.233, \r\n      \"longitude\": -119.852\r\n    },\r\n    \"Korea Central\": \r\n    {\r\n      \"latitude\": 37.5665, \r\n      \"longitude\": 126.9780\r\n    },\r\n    \"Korea South\": \r\n    {\r\n      \"latitude\": 35.1796, \r\n      \"longitude\": 129.0756\r\n    },\r\n    \"France Central\": \r\n    {\r\n      \"latitude\": 46.3772, \r\n      \"longitude\": 2.3730\r\n    },\r\n    \"France South\": \r\n    {\r\n      \"latitude\": 43.8345, \r\n      \"longitude\": 2.1972\r\n   },\r\n   \"Australia Central\": \r\n    {\r\n      \"latitude\": -35.3075, \r\n      \"longitude\": 149.1244\r\n    },\r\n    \"Australia Central 2\": \r\n    {\r\n      \"latitude\": -35.3075, \r\n      \"longitude\": 149.1244\r\n    },\r\n    \"UAE Central\": \r\n    {\r\n      \"latitude\": 24.466667, \r\n      \"longitude\": 54.366669\r\n    },\r\n    \"UAE North\": \r\n    {\r\n      \"latitude\": 25.266666, \r\n      \"longitude\": 55.316666\r\n    },\r\n    \"South Africa North\": \r\n    {\r\n      \"latitude\": -25.731340, \r\n      \"longitude\": 28.218370\r\n    },\r\n    \"South Africa West\": \r\n    {\r\n      \"latitude\": -34.075691, \r\n      \"longitude\": 18.843266\r\n    }\r\n});\r\navailabilityResults\r\n| where timestamp >= $__timeFrom and timestamp < $__timeTo and location in ($reg)\r\n| extend latitude = tostring(regToCoords[location][\"latitude\"])\r\n| extend longitude = tostring(regToCoords[location][\"longitude\"])\r\n| extend availabilityResult_duration = iif(itemType == 'availabilityResult', duration, todouble(''))\r\n| summarize ['avTestResults'] = sum(itemCount) by location, latitude, longitude",
+            "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "queryType": "Azure Log Analytics",
+          "refId": "A",
+          "subscription": ""
+        }
+      ],
+      "title": "Availability test results count (Sum)",
+      "type": "geomap"
+    },
+    {
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "dark-blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 288
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 10,
+        "x": 14,
+        "y": 15
+      },
+      "id": 4,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^avTestResults$/",
+          "values": true
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": false
+      },
+      "targets": [
+        {
+          "azureLogAnalytics": {
+            "query": "availabilityResults\r\n| where timestamp >= $__timeFrom and timestamp < $__timeTo and location in ($reg)\r\n| summarize ['avTestResults'] = sum(itemCount) by location",
+            "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
+          },
+          "datasource": {
+            "type": "grafana-azure-monitor-datasource",
+            "uid": "${ds}"
+          },
+          "queryType": "Azure Log Analytics",
+          "refId": "A",
+          "subscription": ""
+        }
+      ],
+      "title": "Test result count by Location",
+      "transformations": [],
+      "type": "gauge"
+    }
+  ],
+  "schemaVersion": 36,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datasource",
+        "multi": false,
+        "name": "ds",
+        "options": [],
+        "query": "grafana-azure-monitor-datasource",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Subscription",
+        "multi": false,
+        "name": "sub",
+        "options": [],
+        "query": {
+          "grafanaTemplateVariableFn": {
+            "kind": "SubscriptionsQuery",
+            "rawQuery": "Subscriptions()"
+          },
+          "queryType": "Grafana Template Variable Function",
+          "refId": "A",
+          "subscription": ""
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Resource Group",
+        "multi": false,
+        "name": "rg",
+        "options": [],
+        "query": {
+          "grafanaTemplateVariableFn": {
+            "kind": "ResourceGroupsQuery",
+            "rawQuery": "ResourceGroups($sub)",
+            "subscription": "$sub"
+          },
+          "queryType": "Grafana Template Variable Function",
+          "refId": "A",
+          "subscription": ""
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
+        "hide": 2,
+        "includeAll": false,
+        "label": "Namespace",
+        "multi": false,
+        "name": "ns",
+        "options": [],
+        "query": {
+          "grafanaTemplateVariableFn": {
+            "kind": "MetricNamespaceQuery",
+            "rawQuery": "Namespaces($sub, $rg)",
+            "resourceGroup": "$rg",
+            "subscription": "$sub"
+          },
+          "queryType": "Grafana Template Variable Function",
+          "refId": "A",
+          "subscription": ""
+        },
+        "refresh": 1,
+        "regex": "([mM](icrosoft)\\.[iI](nsights)/(components))",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Resource",
+        "multi": false,
+        "name": "res",
+        "options": [],
+        "query": {
+          "grafanaTemplateVariableFn": {
+            "kind": "ResourceNamesQuery",
+            "metricDefinition": "$ns",
+            "rawQuery": "ResourceNames($sub, $rg, $ns)",
+            "resourceGroup": "$rg",
+            "subscription": "$sub"
+          },
+          "queryType": "Grafana Template Variable Function",
+          "refId": "A",
+          "subscription": ""
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Region",
+        "multi": true,
+        "name": "reg",
+        "options": [],
+        "query": {
+          "azureLogAnalytics": {
+            "query": "availabilityResults\r\n| distinct location",
+            "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
+          },
+          "queryType": "Azure Log Analytics",
+          "refId": "A",
+          "subscription": ""
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": "",
+        "current": {},
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Availability Test",
+        "multi": true,
+        "name": "avTest",
+        "options": [],
+        "query": {
+          "azureLogAnalytics": {
+            "query": "availabilityResults\r\n| where location in ($reg)\r\n| distinct name",
+            "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
+          },
+          "queryType": "Azure Log Analytics",
+          "refId": "A",
+          "subscription": ""
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "title": "Azure / Insights / Applications Test Availability Geo Map",
+  "uid": "AppInsightsAvTestGeoMap",
+  "version": 33
+}

@@ -1,11 +1,13 @@
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
-import { Story } from '@storybook/react';
-import { Tooltip } from './Tooltip';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Button } from '../Button';
 import mdx from '../Tooltip/Tooltip.mdx';
 
-export default {
+import { Tooltip } from './Tooltip';
+
+const meta: ComponentMeta<typeof Tooltip> = {
   title: 'Overlays/Tooltip',
   component: Tooltip,
   decorators: [withCenteredStory],
@@ -54,7 +56,7 @@ export default {
   },
 };
 
-export const Basic: Story = ({ content, ...args }) => {
+export const Basic: ComponentStory<typeof Tooltip> = ({ content, ...args }) => {
   return (
     <Tooltip content={content} {...args}>
       <Button>Hover me for Tooltip </Button>
@@ -68,3 +70,5 @@ Basic.args = {
   show: undefined,
   placement: 'auto',
 };
+
+export default meta;

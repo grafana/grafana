@@ -1,8 +1,10 @@
+import { css, cx } from '@emotion/css';
+import { isEqual } from 'lodash';
 import React, { PureComponent } from 'react';
 import { Unsubscribable, PartialObserver } from 'rxjs';
-import { Alert, stylesFactory, Button, JSONFormatter, CustomScrollbar, CodeEditor } from '@grafana/ui';
+
 import {
-  GrafanaTheme,
+  GrafanaTheme2,
   PanelProps,
   LiveChannelStatusEvent,
   isValidLiveChannelAddress,
@@ -15,12 +17,13 @@ import {
   applyFieldOverrides,
   LiveChannelAddress,
 } from '@grafana/data';
-import { TablePanel } from '../table/TablePanel';
-import { LivePanelOptions, MessageDisplayMode } from './types';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
-import { css, cx } from '@emotion/css';
-import { isEqual } from 'lodash';
+import { Alert, stylesFactory, Button, JSONFormatter, CustomScrollbar, CodeEditor } from '@grafana/ui';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
+
+import { TablePanel } from '../table/TablePanel';
+
+import { LivePanelOptions, MessageDisplayMode } from './types';
 
 interface Props extends PanelProps<LivePanelOptions> {}
 
@@ -35,7 +38,7 @@ interface State {
 export class LivePanel extends PureComponent<Props, State> {
   private readonly isValid: boolean;
   subscription?: Unsubscribable;
-  styles = getStyles(config.theme);
+  styles = getStyles(config.theme2);
 
   constructor(props: Props) {
     super(props);
@@ -298,28 +301,31 @@ export class LivePanel extends PureComponent<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   statusWrap: css`
     margin: auto;
     position: absolute;
     top: 0;
     right: 0;
-    background: ${theme.colors.panelBg};
+    background: ${theme.components.panel.background};
     padding: 10px;
     z-index: ${theme.zIndex.modal};
   `,
   status: {
     [LiveChannelConnectionState.Pending]: css`
-      border: 1px solid ${theme.palette.brandPrimary};
+      border: 1px solid ${theme.v1.palette.orange};
     `,
     [LiveChannelConnectionState.Connected]: css`
-      border: 1px solid ${theme.palette.brandSuccess};
+      border: 1px solid ${theme.colors.success.main};
+    `,
+    [LiveChannelConnectionState.Connecting]: css`
+      border: 1px solid ${theme.v1.palette.brandWarning};
     `,
     [LiveChannelConnectionState.Disconnected]: css`
-      border: 1px solid ${theme.palette.brandWarning};
+      border: 1px solid ${theme.colors.warning.main};
     `,
     [LiveChannelConnectionState.Shutdown]: css`
-      border: 1px solid ${theme.palette.brandDanger};
+      border: 1px solid ${theme.colors.error.main};
     `,
     [LiveChannelConnectionState.Invalid]: css`
       border: 1px solid red;

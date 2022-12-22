@@ -1,9 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`UiFindInput rendering renders as expected 1`] = `
-<Input
-  onChange={[Function]}
-  placeholder="Find..."
-  suffix={<React.Fragment />}
-/>
-`;

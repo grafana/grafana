@@ -1,11 +1,16 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { intersection } from 'lodash';
+import React, { useState, useMemo } from 'react';
+
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
+
 import Datasource from '../../datasource';
-import { InlineFieldRow } from '@grafana/ui';
+import { selectors } from '../../e2e/selectors';
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import SubscriptionField from '../SubscriptionField';
+
 import QueryField from './QueryField';
 
-interface LogsQueryEditorProps {
+interface ArgQueryEditorProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
   subscriptionId?: string;
@@ -15,7 +20,29 @@ interface LogsQueryEditorProps {
 }
 
 const ERROR_SOURCE = 'arg-subscriptions';
-const ArgQueryEditor: React.FC<LogsQueryEditorProps> = ({
+
+function selectSubscriptions(
+  fetchedSubscriptions: string[],
+  currentSubscriptions?: string[],
+  currentSubscription?: string
+) {
+  let querySubscriptions = currentSubscriptions || [];
+  if (querySubscriptions.length === 0 && currentSubscription) {
+    querySubscriptions = [currentSubscription];
+  }
+  if (querySubscriptions.length === 0 && fetchedSubscriptions.length) {
+    querySubscriptions = [fetchedSubscriptions[0]];
+  }
+  const commonSubscriptions = intersection(querySubscriptions, fetchedSubscriptions);
+  if (fetchedSubscriptions.length && querySubscriptions.length > commonSubscriptions.length) {
+    // If not all of the query subscriptions are in the list of fetched subscriptions, then
+    // select only the ones present (or the first one if none is present)
+    querySubscriptions = commonSubscriptions.length > 0 ? commonSubscriptions : [fetchedSubscriptions[0]];
+  }
+  return querySubscriptions;
+}
+
+const ArgQueryEditor: React.FC<ArgQueryEditorProps> = ({
   query,
   datasource,
   subscriptionId,
@@ -23,47 +50,47 @@ const ArgQueryEditor: React.FC<LogsQueryEditorProps> = ({
   onChange,
   setError,
 }) => {
-  const fetchedRef = useRef(false);
   const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
-
-  useEffect(() => {
-    if (fetchedRef.current) {
-      return;
-    }
-
-    fetchedRef.current = true;
-    datasource.azureMonitorDatasource
+  useMemo(() => {
+    datasource
       .getSubscriptions()
       .then((results) => {
         const fetchedSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
         setSubscriptions(fetchedSubscriptions);
         setError(ERROR_SOURCE, undefined);
 
-        if (!query.subscriptions?.length && fetchedSubscriptions?.length) {
-          onChange({
-            ...query,
-            subscriptions: [query.subscription ?? fetchedSubscriptions[0].value],
-          });
-        }
+        onChange({
+          ...query,
+          subscriptions: selectSubscriptions(
+            fetchedSubscriptions.map((v) => v.value),
+            query.subscriptions,
+            query.subscription
+          ),
+        });
       })
       .catch((err) => setError(ERROR_SOURCE, err));
-  }, [datasource, onChange, query, setError]);
+    // We are only interested in re-fetching subscriptions if the data source changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [datasource]);
 
   return (
-    <div data-testid="azure-monitor-logs-query-editor">
-      <InlineFieldRow>
-        <SubscriptionField
-          multiSelect
-          subscriptions={subscriptions}
-          query={query}
-          datasource={datasource}
-          subscriptionId={subscriptionId}
-          variableOptionGroup={variableOptionGroup}
-          onQueryChange={onChange}
-          setError={setError}
-        />
-      </InlineFieldRow>
-
+    <span data-testid={selectors.components.queryEditor.argsQueryEditor.container.input}>
+      <EditorRows>
+        <EditorRow>
+          <EditorFieldGroup>
+            <SubscriptionField
+              multiSelect
+              subscriptions={subscriptions}
+              query={query}
+              datasource={datasource}
+              subscriptionId={subscriptionId}
+              variableOptionGroup={variableOptionGroup}
+              onQueryChange={onChange}
+              setError={setError}
+            />
+          </EditorFieldGroup>
+        </EditorRow>
+      </EditorRows>
       <QueryField
         query={query}
         datasource={datasource}
@@ -72,7 +99,7 @@ const ArgQueryEditor: React.FC<LogsQueryEditorProps> = ({
         onQueryChange={onChange}
         setError={setError}
       />
-    </div>
+    </span>
   );
 };
 

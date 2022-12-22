@@ -1,9 +1,10 @@
 import { NavModel, NavModelItem } from '@grafana/data';
-
-import { FolderDTO } from 'app/types';
+import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction, FolderDTO } from 'app/types';
 
 export function buildNavModel(folder: FolderDTO): NavModelItem {
-  const model = {
+  const model: NavModelItem = {
     icon: 'folder',
     id: 'manage-folder',
     subTitle: 'Manage folder dashboards and permissions',
@@ -21,7 +22,7 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
     ],
   };
 
-  model.children.push({
+  model.children!.push({
     active: false,
     icon: 'library-panel',
     id: `folder-library-panels-${folder.uid}`,
@@ -29,8 +30,18 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
     url: `${folder.url}/library-panels`,
   });
 
+  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
+    model.children!.push({
+      active: false,
+      icon: 'bell',
+      id: `folder-alerting-${folder.uid}`,
+      text: 'Alert rules',
+      url: `${folder.url}/alerting`,
+    });
+  }
+
   if (folder.canAdmin) {
-    model.children.push({
+    model.children!.push({
       active: false,
       icon: 'lock',
       id: `folder-permissions-${folder.uid}`,
@@ -40,7 +51,7 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
   }
 
   if (folder.canSave) {
-    model.children.push({
+    model.children!.push({
       active: false,
       icon: 'cog',
       id: `folder-settings-${folder.uid}`,
@@ -61,6 +72,7 @@ export function getLoadingNav(tabIndex: number): NavModel {
     canSave: true,
     canEdit: true,
     canAdmin: true,
+    canDelete: true,
     version: 0,
   });
 

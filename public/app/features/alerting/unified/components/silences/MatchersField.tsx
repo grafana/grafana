@@ -1,10 +1,12 @@
-import React, { FC } from 'react';
-import { Button, Field, Input, IconButton, InputControl, useStyles2, Select } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import React, { FC } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { SilenceFormFields } from '../../types/silence-form';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Field, Input, IconButton, InputControl, useStyles2, Select } from '@grafana/ui';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
+
+import { SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldOptions } from '../../utils/alertmanager';
 
 interface Props {
@@ -49,7 +51,6 @@ const MatchersField: FC<Props> = ({ className }) => {
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
                           {...field}
-                          menuShouldPortal
                           onChange={(value) => onChange(value.value)}
                           className={styles.matcherOptions}
                           options={matcherFieldOptions}

@@ -1,7 +1,18 @@
+import {
+  CoreApp,
+  DataFrame,
+  DataQueryError,
+  DataQueryRequest,
+  DataSourceApi,
+  dateTime,
+  LoadingState,
+  PanelData,
+} from '@grafana/data';
 import { MetaAnalyticsEventName, reportMetaAnalytics } from '@grafana/runtime';
-import { CoreApp, DataQueryRequest, DataSourceApi, dateTime, LoadingState, PanelData } from '@grafana/data';
+
+import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
+
 import { emitDataRequestEvent } from './queryAnalytics';
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -10,9 +21,10 @@ beforeEach(() => {
 const datasource = {
   name: 'test',
   id: 1,
+  uid: 'test',
 } as DataSourceApi;
 
-const dashboardModel = new DashboardModel(
+const dashboardModel = createDashboardModelFixture(
   { id: 1, title: 'Test Dashboard', uid: 'test' },
   { folderTitle: 'Test Folder' }
 );
@@ -26,7 +38,7 @@ jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as any),
+  ...jest.requireActual('@grafana/runtime'),
   reportMetaAnalytics: jest.fn(),
 }));
 
@@ -34,13 +46,45 @@ const mockGetUrlSearchParams = jest.fn(() => {
   return {};
 });
 jest.mock('@grafana/data', () => ({
-  ...(jest.requireActual('@grafana/data') as any),
+  ...jest.requireActual('@grafana/data'),
   urlUtil: {
     getUrlSearchParams: () => mockGetUrlSearchParams(),
   },
 }));
 
-function getTestData(requestApp: string): PanelData {
+const partiallyCachedSeries = [
+  {
+    refId: 'A',
+    meta: {
+      isCachedResponse: true,
+    },
+    fields: [],
+    length: 0,
+  },
+  {
+    refId: 'B',
+    fields: [],
+    length: 0,
+  },
+];
+
+const multipleDataframesWithSameRefId = [
+  {
+    refId: 'A',
+    meta: {
+      isCachedResponse: true,
+    },
+    fields: [],
+    length: 0,
+  },
+  {
+    refId: 'A',
+    fields: [],
+    length: 0,
+  },
+];
+
+function getTestData(requestApp: string, series: DataFrame[] = []): PanelData {
   const now = dateTime();
   return {
     request: {
@@ -50,7 +94,7 @@ function getTestData(requestApp: string): PanelData {
       startTime: now.unix(),
       endTime: now.add(1, 's').unix(),
     } as DataQueryRequest,
-    series: [],
+    series,
     state: LoadingState.Done,
     timeRange: {
       from: dateTime(),
@@ -60,11 +104,32 @@ function getTestData(requestApp: string): PanelData {
   };
 }
 
+function getTestDataForExplore(requestApp: string, series: DataFrame[] = []): PanelData {
+  const now = dateTime();
+  const error: DataQueryError = { message: 'test error' };
+
+  return {
+    request: {
+      app: requestApp,
+      dashboardId: 0,
+      startTime: now.unix(),
+      endTime: now.add(1, 's').unix(),
+    } as DataQueryRequest,
+    series,
+    state: LoadingState.Done,
+    timeRange: {
+      from: dateTime(),
+      to: dateTime(),
+      raw: { from: '1h', to: 'now' },
+    },
+    error: error,
+  };
+}
+
 describe('emitDataRequestEvent - from a dashboard panel', () => {
-  const data = getTestData(CoreApp.Dashboard);
-  const fn = emitDataRequestEvent(datasource);
   it('Should report meta analytics', () => {
-    fn(data);
+    const data = getTestData(CoreApp.Dashboard);
+    emitDataRequestEvent(datasource)(data);
 
     expect(reportMetaAnalytics).toBeCalledTimes(1);
     expect(reportMetaAnalytics).toBeCalledWith(
@@ -72,6 +137,7 @@ describe('emitDataRequestEvent - from a dashboard panel', () => {
         eventName: MetaAnalyticsEventName.DataRequest,
         datasourceName: datasource.name,
         datasourceId: datasource.id,
+        datasourceUid: datasource.uid,
         panelId: 2,
         dashboardId: 1,
         dashboardName: 'Test Dashboard',
@@ -79,28 +145,107 @@ describe('emitDataRequestEvent - from a dashboard panel', () => {
         folderName: 'Test Folder',
         dataSize: 0,
         duration: 1,
+        totalQueries: 0,
+        cachedQueries: 0,
+      })
+    );
+  });
+
+  it('Should report meta analytics with counts for cached and total queries', () => {
+    const data = getTestData(CoreApp.Dashboard, partiallyCachedSeries);
+    emitDataRequestEvent(datasource)(data);
+
+    expect(reportMetaAnalytics).toBeCalledTimes(1);
+    expect(reportMetaAnalytics).toBeCalledWith(
+      expect.objectContaining({
+        eventName: MetaAnalyticsEventName.DataRequest,
+        datasourceName: datasource.name,
+        datasourceId: datasource.id,
+        datasourceUid: datasource.uid,
+        panelId: 2,
+        dashboardId: 1,
+        dashboardName: 'Test Dashboard',
+        dashboardUid: 'test',
+        folderName: 'Test Folder',
+        dataSize: 2,
+        duration: 1,
+        totalQueries: 2,
+        cachedQueries: 1,
+      })
+    );
+  });
+
+  it('Should report meta analytics with counts for cached and total queries when same refId spread across multiple DataFrames', () => {
+    const data = getTestData(CoreApp.Dashboard, multipleDataframesWithSameRefId);
+    emitDataRequestEvent(datasource)(data);
+
+    expect(reportMetaAnalytics).toBeCalledTimes(1);
+    expect(reportMetaAnalytics).toBeCalledWith(
+      expect.objectContaining({
+        eventName: MetaAnalyticsEventName.DataRequest,
+        datasourceName: datasource.name,
+        datasourceId: datasource.id,
+        datasourceUid: datasource.uid,
+        panelId: 2,
+        dashboardId: 1,
+        dashboardName: 'Test Dashboard',
+        dashboardUid: 'test',
+        folderName: 'Test Folder',
+        dataSize: 2,
+        duration: 1,
+        totalQueries: 1,
+        cachedQueries: 1,
       })
     );
   });
 
   it('Should not report meta analytics twice if the request receives multiple responses', () => {
+    const data = getTestData(CoreApp.Dashboard);
+    const fn = emitDataRequestEvent(datasource);
     fn(data);
-    expect(reportMetaAnalytics).not.toBeCalled();
+    fn(data);
+    expect(reportMetaAnalytics).toBeCalledTimes(1);
   });
 
   it('Should not report meta analytics in edit mode', () => {
     mockGetUrlSearchParams.mockImplementationOnce(() => {
       return { editPanel: 2 };
     });
+    const data = getTestData(CoreApp.Dashboard);
     emitDataRequestEvent(datasource)(data);
     expect(reportMetaAnalytics).not.toBeCalled();
   });
 });
 
+// Previously we filtered out Explore events due to too many errors being generated while a user is building a query
+// This tests that we send an event for Explore queries but do not record errors
 describe('emitDataRequestEvent - from Explore', () => {
-  const data = getTestData(CoreApp.Explore);
-  it('Should not report meta analytics', () => {
+  it('Should report meta analytics', () => {
+    const data = getTestDataForExplore(CoreApp.Explore);
     emitDataRequestEvent(datasource)(data);
-    expect(reportMetaAnalytics).not.toBeCalled();
+
+    expect(reportMetaAnalytics).toBeCalledTimes(1);
+    expect(reportMetaAnalytics).toBeCalledWith(
+      expect.objectContaining({
+        eventName: MetaAnalyticsEventName.DataRequest,
+        source: 'explore',
+        datasourceName: 'test',
+        datasourceId: 1,
+        datasourceUid: 'test',
+        dataSize: 0,
+        duration: 1,
+        totalQueries: 0,
+      })
+    );
+  });
+
+  describe('emitDataRequestEvent - from Explore', () => {
+    it('Should not report errors', () => {
+      const data = getTestDataForExplore(CoreApp.Explore);
+      emitDataRequestEvent(datasource)(data);
+
+      expect(reportMetaAnalytics).toBeCalledTimes(1);
+      expect(reportMetaAnalytics).toBeCalledWith(expect.not.objectContaining({ error: 'test error' }));
+    });
   });
 });

@@ -2,26 +2,26 @@ package filters
 
 import (
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const activeLast30Days = "activeLast30Days"
 
 type OSSSearchUserFilter struct {
-	filters map[string]models.FilterHandler
+	filters map[string]user.FilterHandler
 }
 
 var fltlog = log.New("filters")
 
 func ProvideOSSSearchUserFilter() *OSSSearchUserFilter {
-	filters := make(map[string]models.FilterHandler)
+	filters := make(map[string]user.FilterHandler)
 	filters[activeLast30Days] = NewActiveLast30DaysFilter
 	return &OSSSearchUserFilter{
 		filters: filters,
 	}
 }
 
-func (o *OSSSearchUserFilter) GetFilter(filterName string, params []string) models.Filter {
+func (o *OSSSearchUserFilter) GetFilter(filterName string, params []string) user.Filter {
 	f, ok := o.filters[filterName]
 	if !ok || len(params) == 0 {
 		return nil
@@ -34,6 +34,6 @@ func (o *OSSSearchUserFilter) GetFilter(filterName string, params []string) mode
 	return filter
 }
 
-func (o *OSSSearchUserFilter) GetFilterList() map[string]models.FilterHandler {
+func (o *OSSSearchUserFilter) GetFilterList() map[string]user.FilterHandler {
 	return o.filters
 }

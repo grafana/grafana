@@ -12,21 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { shallow } from 'enzyme';
 
 import { TimelineCollapser } from './TimelineCollapser';
 
-describe('<TimelineCollapser>', () => {
+const setup = () => {
+  const props = {
+    onCollapseAll: () => {},
+    onCollapseOne: () => {},
+    onExpandAll: () => {},
+    onExpandOne: () => {},
+  };
+  return render(<TimelineCollapser {...props} />);
+};
+
+describe('TimelineCollapser test', () => {
   it('renders without exploding', () => {
-    const props = {
-      onCollapseAll: () => {},
-      onCollapseOne: () => {},
-      onExpandAll: () => {},
-      onExpandOne: () => {},
-    };
-    const wrapper = shallow(<TimelineCollapser {...props} />);
-    expect(wrapper).toBeDefined();
-    expect(wrapper.find('[data-test-id="TimelineCollapser"]').length).toBe(1);
+    expect(() => setup()).not.toThrow();
+  });
+
+  it('renders correctly', () => {
+    setup();
+
+    expect(screen.getByTestId('TimelineCollapser')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Expand All' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Collapse All' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Expand +1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Collapse +1' })).toBeInTheDocument();
   });
 });

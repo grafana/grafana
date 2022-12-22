@@ -1,9 +1,13 @@
-import React, { PropsWithChildren } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
-import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
-import { useNextId } from './useNextId';
-import { ElasticsearchQuery } from '../types';
+import React, { PropsWithChildren } from 'react';
+
 import { getDefaultTimeRange } from '@grafana/data';
+
+import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
+import { ElasticDatasource } from '../datasource';
+import { ElasticsearchQuery } from '../types';
+
+import { useNextId } from './useNextId';
 
 describe('useNextId', () => {
   it('Should return the next available id', () => {
@@ -17,7 +21,7 @@ describe('useNextId', () => {
       return (
         <ElasticsearchProvider
           query={query}
-          datasource={{} as any}
+          datasource={{} as ElasticDatasource}
           onChange={() => {}}
           onRunQuery={() => {}}
           range={getDefaultTimeRange()}

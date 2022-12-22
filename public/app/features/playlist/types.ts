@@ -1,8 +1,6 @@
-export interface PlaylistDTO {
-  id: number;
-  name: string;
-  startUrl?: string;
-}
+import { PlaylistItem as PlaylistItemFromSchema } from '@grafana/schema';
+
+import { DashboardQueryResult } from '../search/service';
 
 export type PlaylistMode = boolean | 'tv';
 
@@ -14,16 +12,13 @@ export interface PlayListItemDTO {
 }
 
 export interface Playlist {
+  uid: string;
   name: string;
   interval: string;
   items?: PlaylistItem[];
 }
 
-export interface PlaylistItem {
-  id?: number;
-  value: string; //tag or id.toString()
-  type: 'dashboard_by_id' | 'dashboard_by_tag';
-  order: number;
-  title: string;
-  playlistId?: number;
+export interface PlaylistItem extends PlaylistItemFromSchema {
+  // Loaded in the frontend
+  dashboards?: DashboardQueryResult[];
 }

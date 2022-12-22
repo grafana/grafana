@@ -1,47 +1,29 @@
-import { DataQuery, DefaultTimeZone, EventBusExtended, serializeStateToUrlParam, toUtc } from '@grafana/data';
-import { ExploreId, StoreState, ThunkDispatch } from 'app/types';
-import { refreshExplore } from './explorePane';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { configureStore } from '../../../store/configureStore';
 import { of } from 'rxjs';
+
+import { serializeStateToUrlParam } from '@grafana/data';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { ExploreId, StoreState, ThunkDispatch } from 'app/types';
+
+import { configureStore } from '../../../store/configureStore';
+
+import { refreshExplore } from './explorePane';
+import { createDefaultInitialState } from './helpers';
 
 jest.mock('../../dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
     init: jest.fn(),
+    timeRange: jest.fn().mockReturnValue({}),
   }),
 }));
 
-const t = toUtc();
-const testRange = {
-  from: t,
-  to: t,
-  raw: {
-    from: t,
-    to: t,
-  },
-};
+const { testRange, defaultInitialState } = createDefaultInitialState();
 
-const defaultInitialState = {
-  user: {
-    orgId: '1',
-    timeZone: DefaultTimeZone,
-  },
-  explore: {
-    [ExploreId.left]: {
-      initialized: true,
-      containerWidth: 1920,
-      eventBridge: {} as EventBusExtended,
-      queries: [] as DataQuery[],
-      range: testRange,
-      history: [],
-      refreshInterval: {
-        label: 'Off',
-        value: 0,
-      },
-      cache: [],
-    },
-  },
-};
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getTemplateSrv: () => ({
+    updateTimeRange: jest.fn(),
+  }),
+}));
 
 function setupStore(state?: any) {
   return configureStore({
@@ -90,6 +72,9 @@ function setup(state?: any) {
               testDatasource: jest.fn(),
               init: jest.fn(),
               name: 'default',
+              getRef() {
+                return { type: 'default', uid: 'default' };
+              },
             }
       );
     },

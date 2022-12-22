@@ -1,4 +1,5 @@
 import { dataFrameToJSON, FieldType } from '@grafana/data';
+
 import { frameFromGeoJSON } from './geojson';
 
 describe('Read GeoJSON', () => {
@@ -44,30 +45,30 @@ describe('Read GeoJSON', () => {
     });
     const msg = dataFrameToJSON(frame);
     expect(msg.schema).toMatchInlineSnapshot(`
-      Object {
-        "fields": Array [
-          Object {
-            "config": Object {},
+      {
+        "fields": [
+          {
+            "config": {},
             "name": "id",
             "type": "string",
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "geo",
             "type": "geo",
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "hello",
             "type": "string",
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "number",
             "type": "number",
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "mixed",
             "type": "string",
           },
@@ -86,23 +87,23 @@ describe('Read GeoJSON', () => {
         return acc;
       }, {} as any)
     ).toMatchInlineSnapshot(`
-      Object {
-        "hello": Array [
+      {
+        "hello": [
           "A",
           "B",
           null,
         ],
-        "id": Array [
+        "id": [
           "A",
           null,
           null,
         ],
-        "mixed": Array [
+        "mixed": [
           null,
           "first",
           "2",
         ],
-        "number": Array [
+        "number": [
           null,
           1.2,
           2.3,

@@ -1,11 +1,3 @@
-import { react2AngularDirective } from 'app/angular/react2angular';
-import { QueryEditor as CloudMonitoringQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/QueryEditor';
-import { AnnotationQueryEditor as CloudMonitoringAnnotationQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/AnnotationQueryEditor';
-import { AnnotationQueryEditor as CloudWatchAnnotationQueryEditor } from 'app/plugins/datasource/cloudwatch/components/AnnotationQueryEditor';
-import PageHeader from '../core/components/PageHeader/PageHeader';
-import EmptyListCTA from '../core/components/EmptyListCTA/EmptyListCTA';
-import { TagFilter } from '../core/components/TagFilter/TagFilter';
-import { MetricSelect } from '../core/components/Select/MetricSelect';
 import {
   ClipboardButton,
   ColorPicker,
@@ -18,13 +10,17 @@ import {
   Spinner,
   UnitPicker,
 } from '@grafana/ui';
-import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
-import { HelpModal } from '../core/components/help/HelpModal';
-import { Footer } from '../core/components/Footer/Footer';
+import { react2AngularDirective } from 'app/angular/react2angular';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
-import QueryEditor from 'app/plugins/datasource/grafana-azure-monitor-datasource/components/QueryEditor/QueryEditor';
+import { QueryEditor as CloudMonitoringQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/QueryEditor';
+
+import EmptyListCTA from '../core/components/EmptyListCTA/EmptyListCTA';
+import { Footer } from '../core/components/Footer/Footer';
+import { PageHeader } from '../core/components/PageHeader/PageHeader';
+import { MetricSelect } from '../core/components/Select/MetricSelect';
+import { TagFilter } from '../core/components/TagFilter/TagFilter';
+import { HelpModal } from '../core/components/help/HelpModal';
 
 const { SecretFormField } = LegacyForms;
 
@@ -51,35 +47,6 @@ export function registerAngularDirectives() {
     'proTipTarget',
     'infoBox',
     'infoBoxTitle',
-  ]);
-  //Search
-  react2AngularDirective('searchField', SearchField, [
-    'query',
-    'autoFocus',
-    ['onChange', { watchDepth: 'reference' }],
-    ['onKeyDown', { watchDepth: 'reference' }],
-  ]);
-  react2AngularDirective('searchResults', SearchResults, [
-    'results',
-    'editable',
-    'selectors',
-    ['onSelectionChanged', { watchDepth: 'reference' }],
-    ['onTagSelected', { watchDepth: 'reference' }],
-    ['onFolderExpanding', { watchDepth: 'reference' }],
-    ['onToggleSelection', { watchDepth: 'reference' }],
-  ]);
-  react2AngularDirective('searchFilters', SearchResultsFilter, [
-    'allChecked',
-    'canMove',
-    'canDelete',
-    'tagFilterOptions',
-    'selectedStarredFilter',
-    'selectedTagFilter',
-    ['onSelectAllChanged', { watchDepth: 'reference' }],
-    ['deleteItem', { watchDepth: 'reference' }],
-    ['moveTo', { watchDepth: 'reference' }],
-    ['onStarredFilterChange', { watchDepth: 'reference' }],
-    ['onTagFilterChange', { watchDepth: 'reference' }],
   ]);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
@@ -118,17 +85,6 @@ export function registerAngularDirectives() {
     ['datasource', { watchDepth: 'reference' }],
     ['templateSrv', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('cloudMonitoringAnnotationQueryEditor', CloudMonitoringAnnotationQueryEditor, [
-    'target',
-    'onQueryChange',
-    ['datasource', { watchDepth: 'reference' }],
-    ['templateSrv', { watchDepth: 'reference' }],
-  ]);
-  react2AngularDirective('cloudwatchAnnotationQueryEditor', CloudWatchAnnotationQueryEditor, [
-    'query',
-    'onChange',
-    ['datasource', { watchDepth: 'reference' }],
-  ]);
   react2AngularDirective('secretFormField', SecretFormField, [
     'value',
     'isConfigured',
@@ -156,13 +112,6 @@ export function registerAngularDirectives() {
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
 
-  react2AngularDirective('lokiAnnotationsQueryEditor', LokiAnnotationsQueryEditor, [
-    'expr',
-    'maxLines',
-    'instant',
-    'onChange',
-    ['datasource', { watchDepth: 'reference' }],
-  ]);
   react2AngularDirective('datasourceHttpSettingsNext', DataSourceHttpSettings, [
     'defaultUrl',
     'showAccessOptions',
@@ -195,12 +144,6 @@ export function registerAngularDirectives() {
     ['onRefreshIntervalChange', { watchDepth: 'reference', wrapApply: true }],
     ['onNowDelayChange', { watchDepth: 'reference', wrapApply: true }],
     ['onHideTimePickerChange', { watchDepth: 'reference', wrapApply: true }],
-  ]);
-
-  react2AngularDirective('azureMonitorQueryEditor', QueryEditor, [
-    'query',
-    ['datasource', { watchDepth: 'reference' }],
-    'onChange',
   ]);
 
   react2AngularDirective('clipboardButton', ClipboardButton, [

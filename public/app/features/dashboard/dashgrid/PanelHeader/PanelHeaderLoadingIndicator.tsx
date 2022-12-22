@@ -1,7 +1,8 @@
-import React, { FC } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme, LoadingState } from '@grafana/data';
-import { Icon, Tooltip, useStyles } from '@grafana/ui';
+import React, { FC } from 'react';
+
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 interface Props {
   state: LoadingState;
@@ -9,7 +10,7 @@ interface Props {
 }
 
 export const PanelHeaderLoadingIndicator: FC<Props> = ({ state, onClick }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   if (state === LoadingState.Loading) {
     return (
@@ -32,13 +33,13 @@ export const PanelHeaderLoadingIndicator: FC<Props> = ({ state, onClick }) => {
   return null;
 };
 
-function getStyles(theme: GrafanaTheme) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     streamIndicator: css`
       width: 10px;
       height: 10px;
-      background: ${theme.colors.textFaint};
-      box-shadow: 0 0 2px ${theme.colors.textFaint};
+      background: ${theme.colors.text.disabled};
+      box-shadow: 0 0 2px ${theme.colors.text.disabled};
       border-radius: 50%;
       position: relative;
       top: 6px;

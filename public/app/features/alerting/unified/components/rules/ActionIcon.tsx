@@ -1,18 +1,16 @@
-import { Icon, IconName, useStyles, Tooltip } from '@grafana/ui';
-import { PopoverContent, TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 import React, { FC } from 'react';
-import { css, cx } from '@emotion/css';
-import { Link } from 'react-router-dom';
+
+import { IconName, Tooltip, LinkButton, Button } from '@grafana/ui';
+import { PopoverContent, TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 
 interface Props {
   tooltip: PopoverContent;
   icon: IconName;
-
   className?: string;
   tooltipPlacement?: TooltipPlacement;
   to?: string;
   target?: string;
-  onClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+  onClick?: () => void;
   'data-testid'?: string;
 }
 
@@ -27,53 +25,33 @@ export const ActionIcon: FC<Props> = ({
   ...rest
 }) => {
   const ariaLabel = typeof tooltip === 'string' ? tooltip : undefined;
-  const iconEl = (
-    <Icon
-      role="button"
-      className={cx(useStyles(getStyle), className)}
-      onClick={onClick}
-      name={icon}
-      {...rest}
-      aria-label={ariaLabel}
-    />
-  );
 
   return (
     <Tooltip content={tooltip} placement={tooltipPlacement}>
       {to ? (
-        <GoTo url={to} label={ariaLabel} target={target}>
-          {iconEl}
-        </GoTo>
+        <LinkButton
+          variant="secondary"
+          fill="text"
+          icon={icon}
+          href={to}
+          size="sm"
+          target={target}
+          {...rest}
+          aria-label={ariaLabel}
+        />
       ) : (
-        iconEl
+        <Button
+          className={className}
+          variant="secondary"
+          fill="text"
+          size="sm"
+          icon={icon}
+          type="button"
+          onClick={onClick}
+          {...rest}
+          aria-label={ariaLabel}
+        />
       )}
     </Tooltip>
   );
 };
-
-interface GoToProps {
-  url: string;
-  label?: string;
-  target?: string;
-  children?: React.ReactNode;
-}
-
-const GoTo = React.forwardRef<HTMLAnchorElement, GoToProps>(({ url, label, target, children }, ref) => {
-  const absoluteUrl = url?.startsWith('http');
-
-  return absoluteUrl ? (
-    <a ref={ref} aria-label={label} href={url} target={target}>
-      {children}
-    </a>
-  ) : (
-    <Link ref={ref} aria-label={label} to={url} target={target}>
-      {children}
-    </Link>
-  );
-});
-
-GoTo.displayName = 'GoTo';
-
-export const getStyle = () => css`
-  cursor: pointer;
-`;

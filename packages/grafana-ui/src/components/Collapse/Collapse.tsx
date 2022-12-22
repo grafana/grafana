@@ -1,14 +1,24 @@
-import React, { FunctionComponent, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FunctionComponent, useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { clearButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
-import { GrafanaTheme2 } from '@grafana/data';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   collapse: css`
     label: collapse;
     margin-bottom: ${theme.spacing(1)};
+    background-color: ${theme.colors.background.primary};
+    border: 1px solid ${theme.colors.border.medium};
+    position: relative;
+    border-radius: 3px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
   `,
   collapseBody: css`
     label: collapse__body;
@@ -60,15 +70,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   header: css`
     label: collapse__header;
-    padding: ${theme.spacing(1, 2, 0.5, 2)};
+    padding: ${theme.spacing(1, 2, 1, 2)};
     display: flex;
-    cursor: inherit;
     transition: all 0.1s linear;
-    cursor: pointer;
   `,
   headerCollapsed: css`
     label: collapse__header--collapsed;
-    padding: ${theme.spacing(1, 2, 0.5, 2)};
+    padding: ${theme.spacing(1, 2, 1, 2)};
   `,
   headerLabel: css`
     label: collapse__header-label;
@@ -78,7 +86,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   icon: css`
     label: collapse__icon;
-    margin: ${theme.spacing(0, 1, 0, -1)};
+    margin: ${theme.spacing(0.25, 1, 0, -1)};
   `,
 });
 
@@ -114,7 +122,7 @@ export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle,
   );
 };
 
-export const Collapse: FunctionComponent<Props> = ({
+export const Collapse = ({
   isOpen,
   label,
   loading,
@@ -122,7 +130,8 @@ export const Collapse: FunctionComponent<Props> = ({
   onToggle,
   className,
   children,
-}) => {
+}: React.PropsWithChildren<Props>) => {
+  const buttonStyles = useStyles2(clearButtonStyles);
   const style = useStyles2(getStyles);
   const onClickToggle = () => {
     if (onToggle) {
@@ -130,16 +139,16 @@ export const Collapse: FunctionComponent<Props> = ({
     }
   };
 
-  const panelClass = cx([style.collapse, 'panel-container', className]);
+  const panelClass = cx([style.collapse, className]);
   const loaderClass = loading ? cx([style.loader, style.loaderActive]) : cx([style.loader]);
   const headerClass = collapsible ? cx([style.header]) : cx([style.headerCollapsed]);
 
   return (
     <div className={panelClass}>
-      <div className={headerClass} onClick={onClickToggle}>
-        {collapsible && <Icon className={style.icon} name={isOpen ? 'angle-up' : 'angle-down'} />}
+      <button type="button" className={cx(buttonStyles, headerClass)} onClick={onClickToggle}>
+        {collapsible && <Icon className={style.icon} name={isOpen ? 'angle-down' : 'angle-right'} />}
         <div className={cx([style.headerLabel])}>{label}</div>
-      </div>
+      </button>
       {isOpen && (
         <div className={cx([style.collapseBody])}>
           <div className={loaderClass} />

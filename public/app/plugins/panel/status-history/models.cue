@@ -12,31 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grafanaschema
+package grafanaplugin
 
 import (
-    ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+	"github.com/grafana/thema"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    ui.OptionsWithLegend
-                    ui.OptionsWithTooltip
-                    showValue: ui.VisibilityMode
-                    rowHeight: number
-                    colWidth?: number
-                    alignValue: "center" | *"left" | "right"
-                }
-                PanelFieldConfig: {
-                    ui.HideableFieldConfig
-                    lineWidth?: number | *1
-                    fillOpacity?: number | *70
-                }
-            }
-        ]
-    ]
-    migrations: []
+Panel: thema.#Lineage & {
+	name: "status-history"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						ui.OptionsWithLegend
+						ui.OptionsWithTooltip
+						ui.OptionsWithTimezones
+						showValue:  ui.VisibilityMode
+						rowHeight:  number
+						colWidth?:  number
+						alignValue: "center" | *"left" | "right"
+					} @cuetsy(kind="interface")
+					PanelFieldConfig: {
+						ui.HideableFieldConfig
+						lineWidth?:   number | *1
+						fillOpacity?: number | *70
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

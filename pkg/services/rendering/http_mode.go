@@ -28,9 +28,12 @@ var netClient = &http.Client{
 	Transport: netTransport,
 }
 
+const authTokenHeader = "X-Auth-Token" //#nosec G101 -- This is a false positive
+
 var (
-	remoteVersionFetchInterval time.Duration = time.Second * 15
-	remoteVersionFetchRetries  uint          = 4
+	remoteVersionFetchInterval   time.Duration = time.Second * 15
+	remoteVersionFetchRetries    uint          = 4
+	remoteVersionRefreshInterval               = time.Minute * 15
 )
 
 func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
@@ -45,7 +48,8 @@ func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderKey string,
 	}
 
 	queryParams := rendererURL.Query()
-	queryParams.Add("url", rs.getURL(opts.Path))
+	url := rs.getURL(opts.Path)
+	queryParams.Add("url", url)
 	queryParams.Add("renderKey", renderKey)
 	queryParams.Add("width", strconv.Itoa(opts.Width))
 	queryParams.Add("height", strconv.Itoa(opts.Height))
@@ -73,7 +77,7 @@ func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderKey string,
 		}
 	}()
 
-	err = rs.readFileResponse(reqContext, resp, filePath)
+	err = rs.readFileResponse(reqContext, resp, filePath, url)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +97,8 @@ func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey stri
 	}
 
 	queryParams := rendererURL.Query()
-	queryParams.Add("url", rs.getURL(opts.Path))
+	url := rs.getURL(opts.Path)
+	queryParams.Add("url", url)
 	queryParams.Add("renderKey", renderKey)
 	queryParams.Add("domain", rs.domain)
 	queryParams.Add("timezone", isoTimeOffsetToPosixTz(opts.Timezone))
@@ -124,7 +129,7 @@ func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey stri
 	}
 	downloadFileName := params["filename"]
 
-	err = rs.readFileResponse(reqContext, resp, filePath)
+	err = rs.readFileResponse(reqContext, resp, filePath, url)
 	if err != nil {
 		return nil, err
 	}
@@ -132,30 +137,37 @@ func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey stri
 	return &RenderCSVResult{FilePath: filePath, FileName: downloadFileName}, nil
 }
 
-func (rs *RenderingService) doRequest(ctx context.Context, url *url.URL, headers map[string][]string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", url.String(), nil)
+func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers map[string][]string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 
+	req.Header.Set(authTokenHeader, rs.Cfg.RendererAuthToken)
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", rs.Cfg.BuildVersion))
 	for k, v := range headers {
 		req.Header[k] = v
 	}
 
-	rs.log.Debug("calling remote rendering service", "url", url)
+	rs.log.Debug("calling remote rendering service", "url", u)
 
 	// make request to renderer server
 	resp, err := netClient.Do(req)
 	if err != nil {
 		rs.log.Error("Failed to send request to remote rendering service", "error", err)
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			if urlErr.Timeout() {
+				return nil, ErrServerTimeout
+			}
+		}
 		return nil, fmt.Errorf("failed to send request to remote rendering service: %w", err)
 	}
 
 	return resp, nil
 }
 
-func (rs *RenderingService) readFileResponse(ctx context.Context, resp *http.Response, filePath string) error {
+func (rs *RenderingService) readFileResponse(ctx context.Context, resp *http.Response, filePath string, url string) error {
 	// check for timeout first
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		rs.log.Info("Rendering timed out")
@@ -164,11 +176,12 @@ func (rs *RenderingService) readFileResponse(ctx context.Context, resp *http.Res
 
 	// if we didn't get a 200 response, something went wrong.
 	if resp.StatusCode != http.StatusOK {
-		rs.log.Error("Remote rendering request failed", "error", resp.Status)
+		rs.log.Error("Remote rendering request failed", "error", resp.Status, "url", url)
 		return fmt.Errorf("remote rendering request failed, status code: %d, status: %s", resp.StatusCode,
 			resp.Status)
 	}
 
+	//nolint:gosec
 	out, err := os.Create(filePath)
 	if err != nil {
 		return err
@@ -250,4 +263,27 @@ func (rs *RenderingService) getRemotePluginVersion() (string, error) {
 		return "", err
 	}
 	return info.Version, nil
+}
+
+func (rs *RenderingService) refreshRemotePluginVersion() {
+	newVersion, err := rs.getRemotePluginVersion()
+	if err != nil {
+		rs.log.Info("Failed to refresh remote plugin version", "err", err)
+		return
+	}
+
+	if newVersion == "" {
+		// the image-renderer could have been temporary unavailable - skip updating the version
+		rs.log.Debug("Received empty version when trying to refresh remote plugin version")
+		return
+	}
+
+	currentVersion := rs.Version()
+	if currentVersion != newVersion {
+		rs.versionMutex.Lock()
+		defer rs.versionMutex.Unlock()
+
+		rs.log.Info("Updating remote plugin version", "currentVersion", currentVersion, "newVersion", newVersion)
+		rs.version = newVersion
+	}
 }

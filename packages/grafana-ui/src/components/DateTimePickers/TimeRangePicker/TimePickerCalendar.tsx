@@ -1,19 +1,23 @@
-import React, { FormEvent, memo } from 'react';
 import { css } from '@emotion/css';
-import { DateTime, GrafanaTheme2, TimeZone } from '@grafana/data';
-import { useTheme2 } from '../../../themes';
-import { Header } from './CalendarHeader';
-import { selectors } from '@grafana/e2e-selectors';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
+import React, { FormEvent, memo } from 'react';
+
+import { DateTime, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { useTheme2 } from '../../../themes';
+import { getModalStyles } from '../../Modal/getModalStyles';
+
 import { Body } from './CalendarBody';
 import { Footer } from './CalendarFooter';
+import { Header } from './CalendarHeader';
 
 export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
   return {
     container: css`
-      top: -1px;
+      top: 0px;
       position: absolute;
       ${isReversed ? 'left' : 'right'}: 544px;
       box-shadow: ${theme.shadows.z3};
@@ -35,26 +39,16 @@ export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
       }
     `,
     modal: css`
+      box-shadow: ${theme.shadows.z3};
+      left: 50%;
       position: fixed;
-      top: 20%;
-      left: 25%;
-      width: 100%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       z-index: ${theme.zIndex.modal};
     `,
     content: css`
       margin: 0 auto;
       width: 268px;
-    `,
-    backdrop: css`
-      position: fixed;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
-      background: #202226;
-      opacity: 0.7;
-      z-index: ${theme.zIndex.modalBackdrop};
-      text-align: center;
     `,
   };
 };
@@ -71,10 +65,9 @@ export interface TimePickerCalendarProps {
   isReversed?: boolean;
 }
 
-const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
-
 function TimePickerCalendar(props: TimePickerCalendarProps) {
   const theme = useTheme2();
+  const { modalBackdrop } = getModalStyles(theme);
   const styles = getStyles(theme, props.isReversed);
   const { isOpen, isFullscreen, onClose } = props;
   const ref = React.createRef<HTMLElement>();
@@ -100,7 +93,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   if (isFullscreen) {
     return (
       <FocusScope contain restoreFocus autoFocus>
-        <section className={styles.container} onClick={stopPropagation} ref={ref} {...overlayProps} {...dialogProps}>
+        <section className={styles.container} ref={ref} {...overlayProps} {...dialogProps}>
           <Header {...props} />
           <Body {...props} />
         </section>
@@ -110,8 +103,9 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
 
   return (
     <OverlayContainer>
+      <div className={modalBackdrop} />
       <FocusScope contain autoFocus restoreFocus>
-        <section className={styles.modal} onClick={stopPropagation} ref={ref} {...overlayProps} {...dialogProps}>
+        <section className={styles.modal} ref={ref} {...overlayProps} {...dialogProps}>
           <div className={styles.content} aria-label={selectors.components.TimePicker.calendar.label}>
             <Header {...props} />
             <Body {...props} />
@@ -119,7 +113,6 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
           </div>
         </section>
       </FocusScope>
-      <div className={styles.backdrop} onClick={stopPropagation} />
     </OverlayContainer>
   );
 }

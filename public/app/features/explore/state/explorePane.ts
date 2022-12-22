@@ -1,27 +1,7 @@
-import { AnyAction } from 'redux';
-import { isEqual } from 'lodash';
-
-import {
-  DEFAULT_RANGE,
-  getQueryKeys,
-  parseUrlState,
-  ensureQueries,
-  generateNewKeyAndAddRefIdIfMissing,
-  getTimeRangeFromUrl,
-} from 'app/core/utils/explore';
-import { ExploreGraphStyle, ExploreId, ExploreItemState } from 'app/types/explore';
-import { queryReducer, runQueries, setQueriesAction } from './query';
-import { datasourceReducer } from './datasource';
-import { timeReducer, updateTime } from './time';
-import { historyReducer } from './history';
-import {
-  makeExplorePaneState,
-  loadAndInitDatasource,
-  createEmptyQueryResponse,
-  getUrlStateFromPaneState,
-  storeGraphStyle,
-} from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
+import { isEqual } from 'lodash';
+import { AnyAction } from 'redux';
+
 import {
   EventBusExtended,
   DataQuery,
@@ -31,13 +11,33 @@ import {
   DataSourceApi,
   ExplorePanelsState,
   PreferredVisualisationType,
+  DataSourceRef,
 } from '@grafana/data';
-// Types
-import { ThunkResult } from 'app/types';
-import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { getRichHistory } from '../../../core/utils/richHistory';
-import { richHistoryUpdatedAction, stateSave } from './main';
+import {
+  DEFAULT_RANGE,
+  getQueryKeys,
+  parseUrlState,
+  ensureQueries,
+  generateNewKeyAndAddRefIdIfMissing,
+  getTimeRangeFromUrl,
+} from 'app/core/utils/explore';
+import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
+import { ThunkResult } from 'app/types';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
+
+import { datasourceReducer } from './datasource';
+import { historyReducer } from './history';
+import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction, stateSave } from './main';
+import { queryReducer, runQueries, setQueriesAction } from './query';
+import { timeReducer, updateTime } from './time';
+import {
+  makeExplorePaneState,
+  loadAndInitDatasource,
+  createEmptyQueryResponse,
+  getUrlStateFromPaneState,
+} from './utils';
+// Types
 
 //
 // Actions and Payloads
@@ -98,6 +98,7 @@ export interface InitializeExplorePayload {
   range: TimeRange;
   history: HistoryItem[];
   datasourceInstance?: DataSourceApi;
+  isFromCompactUrl?: boolean;
 }
 export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
 
@@ -117,32 +118,23 @@ export function changeSize(
   return changeSizeAction({ exploreId, height, width });
 }
 
-interface ChangeGraphStylePayload {
-  exploreId: ExploreId;
-  graphStyle: ExploreGraphStyle;
-}
-
-const changeGraphStyleAction = createAction<ChangeGraphStylePayload>('explore/changeGraphStyle');
-
-export function changeGraphStyle(exploreId: ExploreId, graphStyle: ExploreGraphStyle): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    storeGraphStyle(graphStyle);
-    dispatch(changeGraphStyleAction({ exploreId, graphStyle }));
-  };
-}
-
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
+ *
+ * The `datasource` param will be passed to the datasource service `get` function
+ * and can be either a string that is the name or uid, or a datasourceRef
+ * This is to maximize compatability with how datasources are accessed from the URL param.
  */
 export function initializeExplore(
   exploreId: ExploreId,
-  datasourceNameOrUid: string,
+  datasource: DataSourceRef | string,
   queries: DataQuery[],
   range: TimeRange,
   containerWidth: number,
   eventBridge: EventBusExtended,
-  panelsState?: ExplorePanelsState
+  panelsState?: ExplorePanelsState,
+  isFromCompactUrl?: boolean
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const exploreDatasources = getDataSourceSrv().getList();
@@ -151,7 +143,7 @@ export function initializeExplore(
 
     if (exploreDatasources.length >= 1) {
       const orgId = getState().user.orgId;
-      const loadResult = await loadAndInitDatasource(orgId, datasourceNameOrUid);
+      const loadResult = await loadAndInitDatasource(orgId, datasource);
       instance = loadResult.instance;
       history = loadResult.history;
     }
@@ -165,6 +157,7 @@ export function initializeExplore(
         range,
         datasourceInstance: instance,
         history,
+        isFromCompactUrl,
       })
     );
     if (panelsState !== undefined) {
@@ -178,9 +171,6 @@ export function initializeExplore(
       // user to go back to previous url.
       dispatch(runQueries(exploreId, { replaceUrl: true }));
     }
-
-    const richHistory = await getRichHistory();
-    dispatch(richHistoryUpdatedAction({ richHistory }));
   };
 }
 
@@ -190,8 +180,8 @@ export function initializeExplore(
  */
 export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const itemState = getState().explore[exploreId]!;
-    if (!itemState.initialized) {
+    const itemState = getState().explore[exploreId];
+    if (!itemState?.initialized) {
       return;
     }
 
@@ -201,6 +191,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 
     const { containerWidth, eventBridge } = itemState;
 
+    // datasource will either be name or UID here
     const { datasource, queries, range: urlRange, panelsState } = newUrlState;
     const refreshQueries: DataQuery[] = [];
 
@@ -216,7 +207,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
     // commit changes based on the diff of new url vs old url
 
     if (update.datasource) {
-      const initialQueries = ensureQueries(queries);
+      const initialQueries = await ensureQueries(queries);
       await dispatch(
         initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, panelsState)
       );
@@ -256,14 +247,26 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   state = timeReducer(state, action);
   state = historyReducer(state, action);
 
+  if (richHistoryUpdatedAction.match(action)) {
+    const { richHistory, total } = action.payload.richHistoryResults;
+    return {
+      ...state,
+      richHistory,
+      richHistoryTotal: total,
+    };
+  }
+
+  if (richHistorySearchFiltersUpdatedAction.match(action)) {
+    const richHistorySearchFilters = action.payload.filters;
+    return {
+      ...state,
+      richHistorySearchFilters,
+    };
+  }
+
   if (changeSizeAction.match(action)) {
     const containerWidth = action.payload.width;
     return { ...state, containerWidth };
-  }
-
-  if (changeGraphStyleAction.match(action)) {
-    const { graphStyle } = action.payload;
-    return { ...state, graphStyle };
   }
 
   if (changePanelsStateAction.match(action)) {
@@ -272,7 +275,8 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, datasourceInstance, history } = action.payload;
+    const { containerWidth, eventBridge, queries, range, datasourceInstance, history, isFromCompactUrl } =
+      action.payload;
 
     return {
       ...state,
@@ -281,12 +285,13 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       range,
       queries,
       initialized: true,
-      queryKeys: getQueryKeys(queries, datasourceInstance),
+      queryKeys: getQueryKeys(queries),
       datasourceInstance,
       history,
       datasourceMissing: !datasourceInstance,
       queryResponse: createEmptyQueryResponse(),
       cache: [],
+      isFromCompactUrl: isFromCompactUrl || false,
     };
   }
 

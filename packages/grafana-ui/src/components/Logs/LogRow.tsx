@@ -1,4 +1,6 @@
+import { cx, css } from '@emotion/css';
 import React, { PureComponent } from 'react';
+
 import {
   Field,
   LinkModel,
@@ -11,10 +13,14 @@ import {
   escapeUnescapedString,
   GrafanaTheme2,
 } from '@grafana/data';
+
+import { styleMixins, withTheme2 } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { cx, css } from '@emotion/css';
 
+import { LogDetails } from './LogDetails';
+import { LogLabels } from './LogLabels';
 import {
   LogRowContextRows,
   LogRowContextQueryErrors,
@@ -22,15 +28,11 @@ import {
   LogRowContextProvider,
   RowContextOptions,
 } from './LogRowContextProvider';
-import { Themeable2 } from '../../types/theme';
-import { styleMixins, withTheme2 } from '../../themes/index';
+import { LogRowMessage } from './LogRowMessage';
+import { LogRowMessageDetectedFields } from './LogRowMessageDetectedFields';
 import { getLogRowStyles } from './getLogRowStyles';
 
 //Components
-import { LogDetails } from './LogDetails';
-import { LogRowMessageDetectedFields } from './LogRowMessageDetectedFields';
-import { LogRowMessage } from './LogRowMessage';
-import { LogLabels } from './LogLabels';
 
 interface Props extends Themeable2 {
   row: LogRowModel;
@@ -65,8 +67,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     topVerticalAlign: css`
       label: topVerticalAlign;
-      vertical-align: top;
-      margin-top: -${theme.spacing(0.5)};
+      margin-top: -${theme.spacing(0.9)};
       margin-left: -${theme.spacing(0.25)};
     `,
     detailsOpen: css`
@@ -255,5 +256,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   }
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogRow = withTheme2(UnThemedLogRow);
 LogRow.displayName = 'LogRow';

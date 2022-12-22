@@ -1,9 +1,12 @@
-import React from 'react';
-import { useStyles2 } from '../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { Icon } from '../Icon/Icon';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
+import { clearButtonStyles } from '../Button';
+import { Icon } from '../Icon/Icon';
 
 export interface FilterPillProps {
   selected: boolean;
@@ -14,28 +17,28 @@ export interface FilterPillProps {
 
 export const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick, icon = 'check' }) => {
   const styles = useStyles2(getStyles);
+  const clearButton = useStyles2(clearButtonStyles);
   return (
-    <div className={cx(styles.wrapper, selected && styles.selected)} onClick={onClick}>
+    <button type="button" className={cx(clearButton, styles.wrapper, selected && styles.selected)} onClick={onClick}>
       <span>{label}</span>
       {selected && <Icon name={icon} className={styles.icon} />}
-    </div>
+    </button>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
-      padding: ${theme.spacing(0.25)} ${theme.spacing(1)};
       background: ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius(8)};
       padding: ${theme.spacing(0, 2)};
+      font-size: ${theme.typography.bodySmall.fontSize};
       font-weight: ${theme.typography.fontWeightMedium};
-      font-size: ${theme.typography.size.sm};
+      line-height: ${theme.typography.bodySmall.lineHeight};
       color: ${theme.colors.text.secondary};
       display: flex;
       align-items: center;
       height: 32px;
-      cursor: pointer;
 
       &:hover {
         background: ${theme.colors.action.hover};

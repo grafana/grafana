@@ -1,66 +1,51 @@
-import React, { FC, memo } from 'react';
 import { css } from '@emotion/css';
-import { CustomScrollbar, IconButton, stylesFactory, useTheme2 } from '@grafana/ui';
+import React, { useEffect } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { useSearchQuery } from '../hooks/useSearchQuery';
-import { useDashboardSearch } from '../hooks/useDashboardSearch';
-import { SearchField } from './SearchField';
-import { SearchResults } from './SearchResults';
-import { ActionRow } from './ActionRow';
+import { IconButton, stylesFactory, useStyles2 } from '@grafana/ui';
 
-export interface Props {
-  onCloseSearch: () => void;
-}
+import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
+import { SearchView } from '../page/components/SearchView';
+import { getSearchStateManager } from '../state/SearchStateManager';
 
-export const DashboardSearch: FC<Props> = memo(({ onCloseSearch }) => {
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery({});
-  const { results, loading, onToggleSection, onKeyDown, showPreviews, onShowPreviewsChange } = useDashboardSearch(
-    query,
-    onCloseSearch
-  );
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+export interface Props {}
+
+export function DashboardSearch({}: Props) {
+  const styles = useStyles2(getStyles);
+  const stateManager = getSearchStateManager();
+  const state = stateManager.useState();
+
+  useEffect(() => stateManager.initStateFromUrl(), [stateManager]);
+
+  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
   return (
-    <div tabIndex={0} className={styles.overlay}>
+    <div className={styles.overlay}>
       <div className={styles.container}>
         <div className={styles.searchField}>
-          <SearchField query={query} onChange={onQueryChange} onKeyDown={onKeyDown} autoFocus clearable />
+          <div>
+            <input
+              type="text"
+              placeholder={state.includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
+              value={state.query ?? ''}
+              onChange={(e) => stateManager.onQueryChange(e.currentTarget.value)}
+              onKeyDown={onKeyDown}
+              spellCheck={false}
+              className={styles.input}
+            />
+          </div>
+
           <div className={styles.closeBtn}>
-            <IconButton name="times" surface="panel" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+            <IconButton name="times" onClick={stateManager.onCloseSearch} size="xxl" tooltip="Close search" />
           </div>
         </div>
         <div className={styles.search}>
-          <ActionRow
-            {...{
-              onLayoutChange,
-              onShowPreviewsChange: (ev) => onShowPreviewsChange(ev.target.checked),
-              onSortChange,
-              onTagFilterChange,
-              query,
-              showPreviews,
-            }}
-          />
-          <CustomScrollbar>
-            <SearchResults
-              results={results}
-              loading={loading}
-              onTagSelected={onTagAdd}
-              editable={false}
-              onToggleSection={onToggleSection}
-              layout={query.layout}
-              showPreviews={showPreviews}
-            />
-          </CustomScrollbar>
+          <SearchView showManage={false} keyboardEvents={keyboardEvents} />
         </div>
       </div>
     </div>
   );
-});
-
-DashboardSearch.displayName = 'DashboardSearch';
-
-export default DashboardSearch;
+}
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
@@ -72,21 +57,26 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       z-index: ${theme.zIndex.sidemenu};
       position: fixed;
       background: ${theme.colors.background.canvas};
+      padding: ${theme.spacing(1)};
 
       ${theme.breakpoints.up('md')} {
         left: ${theme.components.sidemenu.width}px;
         z-index: ${theme.zIndex.navbarFixed + 1};
+        padding: ${theme.spacing(2)};
       }
     `,
     container: css`
+      display: flex;
+      flex-direction: column;
       max-width: 1400px;
       margin: 0 auto;
-      padding: ${theme.spacing(2)};
-
+      padding: ${theme.spacing(1)};
+      background: ${theme.colors.background.primary};
+      border: 1px solid ${theme.components.panel.borderColor};
       height: 100%;
 
       ${theme.breakpoints.up('md')} {
-        padding: ${theme.spacing(4)};
+        padding: ${theme.spacing(3)};
       }
     `,
     closeBtn: css`
@@ -101,8 +91,23 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     search: css`
       display: flex;
       flex-direction: column;
+      overflow: hidden;
       height: 100%;
-      padding-bottom: ${theme.spacing(3)};
+      padding: ${theme.spacing(2, 0, 3, 0)};
+    `,
+    input: css`
+      box-sizing: border-box;
+      outline: none;
+      background-color: transparent;
+      background: transparent;
+      border-bottom: 2px solid ${theme.v1.colors.border1};
+      font-size: 20px;
+      line-height: 38px;
+      width: 100%;
+
+      &::placeholder {
+        color: ${theme.v1.colors.textWeak};
+      }
     `,
   };
 });

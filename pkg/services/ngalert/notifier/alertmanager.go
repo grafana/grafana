@@ -15,6 +15,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/alertmanager/config"
@@ -38,7 +39,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	ngchannels "github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
@@ -49,8 +50,6 @@ const (
 	silencesFilename        = "silences"
 
 	workingDir = "alerting"
-	// How long should we keep silences and notification entries on-disk after they've served their purpose.
-	retentionNotificationsAndSilences = 5 * 24 * time.Hour
 	// maintenanceNotificationAndSilences how often should we flush and gargabe collect notifications and silences
 	maintenanceNotificationAndSilences = 15 * time.Minute
 	// defaultResolveTimeout is the default timeout used for resolving an alert
@@ -59,6 +58,10 @@ const (
 	// memoryAlertsGCInterval is the interval at which we'll remove resolved alerts from memory.
 	memoryAlertsGCInterval = 30 * time.Minute
 )
+
+// How long should we keep silences and notification entries on-disk after they've served their purpose.
+var retentionNotificationsAndSilences = 5 * 24 * time.Hour
+var silenceMaintenanceInterval = 15 * time.Minute
 
 func init() {
 	silence.ValidateMatcher = func(m *pb.Matcher) error {
@@ -84,11 +87,16 @@ type ClusterPeer interface {
 	WaitReady(context.Context) error
 }
 
+type AlertingStore interface {
+	store.AlertingStore
+	store.ImageStore
+}
+
 type Alertmanager struct {
 	logger log.Logger
 
 	Settings            *setting.Cfg
-	Store               store.AlertingStore
+	Store               AlertingStore
 	fileStore           *FileStore
 	Metrics             *metrics.Alertmanager
 	NotificationService notifications.Service
@@ -111,6 +119,8 @@ type Alertmanager struct {
 	silencer *silence.Silencer
 	silences *silence.Silences
 
+	receivers []*notify.Receiver
+
 	// muteTimes is a map where the key is the name of the mute_time_interval
 	// and the value represents all configured time_interval(s)
 	muteTimes map[string][]timeinterval.TimeInterval
@@ -126,7 +136,7 @@ type Alertmanager struct {
 	decryptFn channels.GetDecryptedValueFn
 }
 
-func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store store.AlertingStore, kvStore kvstore.KVStore,
+func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
 	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, ns notifications.Service, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:            cfg,
@@ -185,14 +195,21 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store s
 
 	am.wg.Add(1)
 	go func() {
-		am.silences.Maintenance(15*time.Minute, silencesFilePath, am.stopc, func() (int64, error) {
+		am.silences.Maintenance(silenceMaintenanceInterval, silencesFilePath, am.stopc, func() (int64, error) {
+			// Delete silences older than the retention period.
+			if _, err := am.silences.GC(); err != nil {
+				am.logger.Error("silence garbage collection", "error", err)
+				// Don't return here - we need to snapshot our state first.
+			}
+
+			// Snapshot our silences to the Grafana KV store
 			return am.fileStore.Persist(ctx, silencesFilename, am.silences)
 		})
 		am.wg.Done()
 	}()
 
 	// Initialize in-memory alerts
-	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, nil, am.logger)
+	am.alerts, err = mem.NewAlerts(context.Background(), am.marker, memoryAlertsGCInterval, nil, am.logger, m.Registerer)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the alert provider component of alerting: %w", err)
 	}
@@ -407,13 +424,21 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	inhibitionStage := notify.NewMuteStage(am.inhibitor)
 	timeMuteStage := notify.NewTimeMuteStage(am.muteTimes)
 	silencingStage := notify.NewMuteStage(am.silencer)
-	for name := range integrationsMap {
-		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
-		routingStage[name] = notify.MultiStage{meshStage, silencingStage, timeMuteStage, inhibitionStage, stage}
-	}
 
 	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route.AsAMRoute(), nil)
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.logger, am.dispatcherMetrics)
+
+	// Check which receivers are active and create the receiver stage.
+	var receivers []*notify.Receiver
+	activeReceivers := am.getActiveReceiversMap(am.route)
+	for name := range integrationsMap {
+		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
+		routingStage[name] = notify.MultiStage{meshStage, silencingStage, timeMuteStage, inhibitionStage, stage}
+		_, isActive := activeReceivers[name]
+
+		receivers = append(receivers, notify.NewReceiver(name, isActive, integrationsMap[name]))
+	}
+	am.receivers = receivers
 
 	am.wg.Add(1)
 	go func() {
@@ -438,8 +463,8 @@ func (am *Alertmanager) WorkingDirPath() string {
 }
 
 // buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
-func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *template.Template) (map[string][]notify.Integration, error) {
-	integrationsMap := make(map[string][]notify.Integration, len(receivers))
+func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *template.Template) (map[string][]*notify.Integration, error) {
+	integrationsMap := make(map[string][]*notify.Integration, len(receivers))
 	for _, receiver := range receivers {
 		integrations, err := am.buildReceiverIntegrations(receiver, templates)
 		if err != nil {
@@ -451,14 +476,9 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiR
 	return integrationsMap, nil
 }
 
-type NotificationChannel interface {
-	notify.Notifier
-	notify.ResolvedSender
-}
-
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]notify.Integration, error) {
-	var integrations []notify.Integration
+func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]*notify.Integration, error) {
+	var integrations []*notify.Integration
 	for i, r := range receiver.GrafanaManagedReceivers {
 		n, err := am.buildReceiverIntegration(r, tmpl)
 		if err != nil {
@@ -469,7 +489,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 	return integrations, nil
 }
 
-func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaReceiver, tmpl *template.Template) (NotificationChannel, error) {
+func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaReceiver, tmpl *template.Template) (channels.NotificationChannel, error) {
 	// secure settings are already encrypted at this point
 	secureSettings := make(map[string][]byte, len(r.SecureSettings))
 
@@ -491,63 +511,31 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 			Name:                  r.Name,
 			Type:                  r.Type,
 			DisableResolveMessage: r.DisableResolveMessage,
-			Settings:              r.Settings,
+			Settings:              json.RawMessage(r.Settings),
 			SecureSettings:        secureSettings,
 		}
-		n   NotificationChannel
-		err error
 	)
-	switch r.Type {
-	case "email":
-		n, err = channels.NewEmailNotifier(cfg, am.NotificationService, tmpl) // Email notifier already has a default template.
-	case "pagerduty":
-		n, err = channels.NewPagerdutyNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "pushover":
-		n, err = channels.NewPushoverNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "slack":
-		n, err = channels.NewSlackNotifier(cfg, tmpl, am.decryptFn)
-	case "telegram":
-		n, err = channels.NewTelegramNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "victorops":
-		n, err = channels.NewVictoropsNotifier(cfg, am.NotificationService, tmpl)
-	case "teams":
-		n, err = channels.NewTeamsNotifier(cfg, am.NotificationService, tmpl)
-	case "dingding":
-		n, err = channels.NewDingDingNotifier(cfg, am.NotificationService, tmpl)
-	case "kafka":
-		n, err = channels.NewKafkaNotifier(cfg, am.NotificationService, tmpl)
-	case "webhook":
-		n, err = channels.NewWebHookNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "wecom":
-		n, err = channels.NewWeComNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "sensugo":
-		n, err = channels.NewSensuGoNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "discord":
-		n, err = channels.NewDiscordNotifier(cfg, am.NotificationService, tmpl)
-	case "googlechat":
-		n, err = channels.NewGoogleChatNotifier(cfg, am.NotificationService, tmpl)
-	case "LINE":
-		n, err = channels.NewLineNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "threema":
-		n, err = channels.NewThreemaNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "opsgenie":
-		n, err = channels.NewOpsgenieNotifier(cfg, am.NotificationService, tmpl, am.decryptFn)
-	case "prometheus-alertmanager":
-		n, err = channels.NewAlertmanagerNotifier(cfg, tmpl, am.decryptFn)
-	default:
-		return nil, InvalidReceiverError{
-			Receiver: r,
-			Err:      fmt.Errorf("notifier %s is not supported", r.Type),
-		}
-	}
-
+	factoryConfig, err := channels.NewFactoryConfig(cfg, NewNotificationSender(am.NotificationService), am.decryptFn, tmpl, newImageStore(am.Store), LoggerFactory, setting.BuildVersion)
 	if err != nil {
 		return nil, InvalidReceiverError{
 			Receiver: r,
 			Err:      err,
 		}
 	}
-
+	receiverFactory, exists := ngchannels.Factory(r.Type)
+	if !exists {
+		return nil, InvalidReceiverError{
+			Receiver: r,
+			Err:      fmt.Errorf("notifier %s is not supported", r.Type),
+		}
+	}
+	n, err := receiverFactory(factoryConfig)
+	if err != nil {
+		return nil, InvalidReceiverError{
+			Receiver: r,
+			Err:      err,
+		}
+	}
 	return n, nil
 }
 
@@ -690,23 +678,34 @@ func (e AlertValidationError) Error() string {
 }
 
 // createReceiverStage creates a pipeline of stages for a receiver.
-func (am *Alertmanager) createReceiverStage(name string, integrations []notify.Integration, wait func() time.Duration, notificationLog notify.NotificationLog) notify.Stage {
+func (am *Alertmanager) createReceiverStage(name string, integrations []*notify.Integration, wait func() time.Duration, notificationLog notify.NotificationLog) notify.Stage {
 	var fs notify.FanoutStage
-	for i := range integrations {
+	for _, integration := range integrations {
 		recv := &nflogpb.Receiver{
 			GroupName:   name,
-			Integration: integrations[i].Name(),
-			Idx:         uint32(integrations[i].Index()),
+			Integration: integration.Name(),
+			Idx:         uint32(integration.Index()),
 		}
 		var s notify.MultiStage
 		s = append(s, notify.NewWaitStage(wait))
-		s = append(s, notify.NewDedupStage(&integrations[i], notificationLog, recv))
-		s = append(s, notify.NewRetryStage(integrations[i], name, am.stageMetrics))
+		s = append(s, notify.NewDedupStage(integration, notificationLog, recv))
+		s = append(s, notify.NewRetryStage(integration, name, am.stageMetrics))
 		s = append(s, notify.NewSetNotifiesStage(notificationLog, recv))
 
 		fs = append(fs, s)
 	}
 	return fs
+}
+
+// getActiveReceiversMap returns all receivers that are in use by a route.
+func (am *Alertmanager) getActiveReceiversMap(r *dispatch.Route) map[string]struct{} {
+	receiversMap := make(map[string]struct{})
+	visitFunc := func(r *dispatch.Route) {
+		receiversMap[r.RouteOpts.Receiver] = struct{}{}
+	}
+	r.Walk(visitFunc)
+
+	return receiversMap
 }
 
 func (am *Alertmanager) waitFunc() time.Duration {

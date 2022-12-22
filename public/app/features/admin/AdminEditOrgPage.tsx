@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import Page from 'app/core/components/Page/Page';
-import { useSelector } from 'react-redux';
-import { StoreState, OrgUser, AccessControlAction } from 'app/types';
-import { getNavModel } from 'app/core/selectors/navModel';
-import UsersTable from '../users/UsersTable';
-import { useAsyncFn } from 'react-use';
-import { getBackendSrv } from '@grafana/runtime';
-import { UrlQueryValue } from '@grafana/data';
-import { Form, Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import React, { useState, useEffect } from 'react';
+import { useAsyncFn } from 'react-use';
+
+import { NavModelItem, UrlQueryValue } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
+import { Form, Field, Input, Button, Legend, Alert } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { OrgUser, AccessControlAction } from 'app/types';
+
+import UsersTable from '../users/UsersTable';
 
 interface OrgNameDTO {
   orgName: string;
@@ -22,7 +23,7 @@ const getOrg = async (orgId: UrlQueryValue) => {
 
 const getOrgUsers = async (orgId: UrlQueryValue) => {
   if (contextSrv.hasPermission(AccessControlAction.OrgUsersRead)) {
-    return await getBackendSrv().get(`/api/orgs/${orgId}/users`);
+    return await getBackendSrv().get(`/api/orgs/${orgId}/users`, accessControlQueryParam());
   }
   return [];
 };
@@ -38,8 +39,6 @@ const removeOrgUser = async (orgUser: OrgUser, orgId: UrlQueryValue) => {
 interface Props extends GrafanaRouteComponentProps<{ id: string }> {}
 
 export default function AdminEditOrgPage({ match }: Props) {
-  const navIndex = useSelector((state: StoreState) => state.navIndex);
-  const navModel = getNavModel(navIndex, 'global-orgs');
   const orgId = parseInt(match.params.id, 10);
   const canWriteOrg = contextSrv.hasPermission(AccessControlAction.OrgsWrite);
   const canReadUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
@@ -67,8 +66,15 @@ export default function AdminEditOrgPage({ match }: Props) {
     );
   };
 
+  const pageNav: NavModelItem = {
+    text: orgState?.value?.name ?? '',
+    icon: 'shield',
+    breadcrumbs: [{ title: 'Orgs', url: 'admin/orgs' }],
+    subTitle: 'Manage settings and user roles for an organization.',
+  };
+
   return (
-    <Page navModel={navModel}>
+    <Page navId="global-orgs" pageNav={pageNav} subTitle="Manage settings for this specific org.">
       <Page.Contents>
         <>
           <Legend>Edit organization</Legend>
@@ -82,7 +88,9 @@ export default function AdminEditOrgPage({ match }: Props) {
                   <Field label="Name" invalid={!!errors.orgName} error="Name is required" disabled={!canWriteOrg}>
                     <Input {...register('orgName', { required: true })} id="org-name-input" />
                   </Field>
-                  <Button disabled={!canWriteOrg}>Update</Button>
+                  <Button type="submit" disabled={!canWriteOrg}>
+                    Update
+                  </Button>
                 </>
               )}
             </Form>

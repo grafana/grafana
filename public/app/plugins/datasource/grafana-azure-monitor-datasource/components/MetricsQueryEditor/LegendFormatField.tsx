@@ -1,8 +1,10 @@
 import React, { useCallback, useState } from 'react';
+
 import { Input } from '@grafana/ui';
 
-import { Field } from '../Field';
 import { AzureQueryEditorFieldProps } from '../../types';
+import { Field } from '../Field';
+
 import { setLegendAlias } from './setQueryValue';
 
 const LegendFormatField: React.FC<AzureQueryEditorFieldProps> = ({ onQueryChange, query }) => {

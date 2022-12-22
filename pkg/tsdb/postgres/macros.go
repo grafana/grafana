@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -65,7 +66,7 @@ func (m *postgresMacroEngine) Interpolate(query *backend.DataQuery, timeRange ba
 	return sql, nil
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *backend.DataQuery, name string, args []string) (string, error) {
 	switch name {
 	case "__time":
@@ -146,7 +147,7 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 				return "", err
 			}
 		}
-		return fmt.Sprintf("floor(%s/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
+		return fmt.Sprintf("floor((%s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochGroupAlias":
 		tg, err := m.evaluateMacro(timeRange, query, "__unixEpochGroup", args)
 		if err == nil {

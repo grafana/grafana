@@ -4,19 +4,23 @@ import {
   FieldConfigProperty,
   FieldType,
   getFieldDisplayName,
+  identityOverrideProcessor,
   PanelPlugin,
   VizOrientation,
 } from '@grafana/data';
-import { BarChartPanel } from './BarChartPanel';
-import { StackingMode, VisibilityMode } from '@grafana/schema';
+import { config } from '@grafana/runtime';
+import { GraphTransform, GraphTresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
-import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig, defaultPanelOptions } from './models.gen';
+
+import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
+
+import { BarChartPanel } from './BarChartPanel';
+import { TickSpacingEditor } from './TickSpacingEditor';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './models.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { prepareBarChartDisplayValues } from './utils';
-import { config } from '@grafana/runtime';
-import { TickSpacingEditor } from './TickSpacingEditor';
 
-export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChartPanel)
+export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPanel)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -30,7 +34,7 @@ export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChar
       },
     },
     useCustomConfig: (builder) => {
-      const cfg = defaultBarChartFieldConfig;
+      const cfg = defaultPanelFieldConfig;
 
       builder
         .addSliderInput({
@@ -62,6 +66,43 @@ export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChar
           },
         });
 
+      builder.addSelect({
+        category: ['Graph styles'],
+        name: 'Transform',
+        path: 'transform',
+        settings: {
+          options: [
+            {
+              label: 'Constant',
+              value: GraphTransform.Constant,
+              description: 'The first value will be shown as a constant line',
+            },
+            {
+              label: 'Negative Y',
+              value: GraphTransform.NegativeY,
+              description: 'Flip the results to negative values on the y axis',
+            },
+          ],
+          isClearable: true,
+        },
+        hideFromDefaults: true,
+      });
+
+      builder.addCustomEditor({
+        id: 'thresholdsStyle',
+        path: 'thresholdsStyle',
+        name: 'Show thresholds',
+        category: ['Thresholds'],
+        defaultValue: { mode: GraphTresholdsStyleMode.Off },
+        settings: {
+          options: graphFieldOptions.thresholdsDisplayModes,
+        },
+        editor: ThresholdsStyleEditor,
+        override: ThresholdsStyleEditor,
+        process: identityOverrideProcessor,
+        shouldApply: () => true,
+      });
+
       commonOptionsBuilder.addAxisConfig(builder, cfg, false);
       commonOptionsBuilder.addHideFrom(builder);
     },
@@ -69,7 +110,7 @@ export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChar
   .setPanelOptions((builder, context) => {
     const disp = prepareBarChartDisplayValues(context.data, config.theme2, context.options ?? ({} as any));
     let xaxisPlaceholder = 'First string or time field';
-    const viz = disp.viz ? disp.viz[0] : undefined;
+    const viz = 'viz' in disp ? disp.viz[0] : undefined;
     if (viz?.fields?.length) {
       const first = viz.fields[0];
       xaxisPlaceholder += ` (${getFieldDisplayName(first, viz)})`;
@@ -97,7 +138,7 @@ export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChar
       })
       .addSliderInput({
         path: 'xTickLabelRotation',
-        name: 'Rotate bar labels',
+        name: 'Rotate X tick labels',
         defaultValue: defaultPanelOptions.xTickLabelRotation,
         settings: {
           min: -90,
@@ -106,18 +147,16 @@ export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChar
           marks: { '-90': '-90°', '-45': '-45°', 0: '0°', 45: '45°', 90: '90°' },
           included: false,
         },
-        showIf: (opts) => {
-          return opts.orientation === VizOrientation.Auto || opts.orientation === VizOrientation.Vertical;
-        },
       })
       .addNumberInput({
         path: 'xTickLabelMaxLength',
-        name: 'Bar label max length',
-        description: 'Bar labels will be truncated to the length provided',
+        name: 'X tick label max length',
+        description: 'X labels will be truncated to the length provided',
         settings: {
           placeholder: 'None',
           min: 0,
         },
+        showIf: (opts) => opts.xTickLabelRotation !== 0,
       })
       .addCustomEditor({
         id: 'xTickLabelSpacing',

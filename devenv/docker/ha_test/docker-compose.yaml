@@ -16,7 +16,7 @@ services:
         tag: nginx
 
   db:
-    image: mysql:5.6
+    image: mysql:5.7.39
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: grafana
@@ -24,7 +24,7 @@ services:
       MYSQL_PASSWORD: password
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all, --max-connections=1001]
     ports:
-      - 3306
+      - "3306:3306"
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 10s
@@ -41,13 +41,13 @@ services:
         condition: service_healthy
 
   # db:
-  #   image: postgres:9.3
+  #   image: postgres:10.15
   #   environment:
   #     POSTGRES_DATABASE: grafana
   #     POSTGRES_USER: grafana
   #     POSTGRES_PASSWORD: password
   #   ports:
-  #     - 5432
+  #     - "5432:5432"
   #   healthcheck:
   #     test: ["CMD-SHELL", "pg_isready -d grafana -U grafana"]
   #     timeout: 10s
@@ -66,13 +66,9 @@ services:
       - GF_DATABASE_TYPE=mysql
       - GF_DATABASE_HOST=db:3306
       - GF_DATABASE_MAX_OPEN_CONN=300
-      - GF_SESSION_PROVIDER=mysql
-      - GF_SESSION_PROVIDER_CONFIG=grafana:password@tcp(db:3306)/grafana?allowNativePasswords=true
       # - GF_DATABASE_TYPE=postgres
       # - GF_DATABASE_HOST=db:5432
       # - GF_DATABASE_SSL_MODE=disable
-      # - GF_SESSION_PROVIDER=postgres
-      # - GF_SESSION_PROVIDER_CONFIG=user=grafana password=password host=db port=5432 dbname=grafana sslmode=disable
       - GF_SERVER_ROUTER_LOGGING=true
       - GF_LOG_CONSOLE_FORMAT=json
       - GF_LOG_FILTERS=alerting.notifier:debug,alerting.notifier.slack:debug,auth:debug

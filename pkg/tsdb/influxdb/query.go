@@ -85,7 +85,7 @@ func (query *Query) renderTags() []string {
 
 func (query *Query) renderTimeFilter(queryContext *backend.QueryDataRequest) string {
 	from, to := epochMStoInfluxTime(&queryContext.Queries[0].TimeRange)
-	return fmt.Sprintf("time > %s and time < %s", from, to)
+	return fmt.Sprintf("time >= %s and time <= %s", from, to)
 }
 
 func (query *Query) renderSelectors(queryContext *backend.QueryDataRequest) string {

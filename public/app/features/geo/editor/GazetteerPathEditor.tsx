@@ -1,8 +1,10 @@
-import React, { FC, useMemo, useState, useEffect } from 'react';
+import { css } from '@emotion/css';
+import React, { useMemo, useState, useEffect } from 'react';
+
 import { StandardEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Alert, Select, stylesFactory, useTheme2 } from '@grafana/ui';
+
 import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
-import { css } from '@emotion/css';
 
 const defaultPaths: Array<SelectableValue<string>> = [
   {
@@ -26,15 +28,15 @@ export interface GazetteerPathEditorConfigSettings {
   options?: Array<SelectableValue<string>>;
 }
 
-export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any, GazetteerPathEditorConfigSettings>> = ({
+export const GazetteerPathEditor = ({
   value,
   onChange,
   context,
   item,
-}) => {
+}: StandardEditorProps<string, GazetteerPathEditorConfigSettings>) => {
   const styles = getStyles(useTheme2());
   const [gaz, setGaz] = useState<Gazetteer>();
-  const settings = item.settings as any;
+  const settings = item.settings;
 
   useEffect(() => {
     async function fetchData() {
@@ -60,7 +62,6 @@ export const GazetteerPathEditor: FC<StandardEditorProps<string, any, any, Gazet
   return (
     <>
       <Select
-        menuShouldPortal
         value={current}
         options={options}
         onChange={(v) => onChange(v.value)}

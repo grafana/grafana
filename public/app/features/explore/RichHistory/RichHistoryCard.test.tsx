@@ -1,26 +1,67 @@
+import { render, screen, fireEvent, getByText } from '@testing-library/react';
 import React from 'react';
-import { shallow } from 'enzyme';
-import { RichHistoryCard, Props } from './RichHistoryCard';
-import { ExploreId } from '../../../types/explore';
-import { DataSourceApi, DataQuery } from '@grafana/data';
 
-const setup = (propOverrides?: Partial<Props>) => {
-  const props: Props = {
+import { DataSourceApi, DataQuery } from '@grafana/data';
+import appEvents from 'app/core/app_events';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+import { ShowConfirmModalEvent } from 'app/types/events';
+import { ExploreId, RichHistoryQuery } from 'app/types/explore';
+
+import { RichHistoryCard, Props } from './RichHistoryCard';
+
+const starRichHistoryMock = jest.fn();
+const deleteRichHistoryMock = jest.fn();
+
+const mockDS = mockDataSource({
+  name: 'CloudManager',
+  type: DataSourceType.Alertmanager,
+});
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
+  return {
+    getDataSourceSrv: () => ({
+      get: () => Promise.resolve(mockDS),
+      getList: () => [mockDS],
+      getInstanceSettings: () => mockDS,
+    }),
+  };
+});
+
+jest.mock('app/core/app_events', () => ({
+  publish: jest.fn(),
+}));
+
+interface MockQuery extends DataQuery {
+  query: string;
+}
+
+const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
+  const props: Props<MockQuery> = {
     query: {
-      ts: 1,
+      id: '1',
+      createdAt: 1,
+      datasourceUid: 'Test datasource uid',
       datasourceName: 'Test datasource',
       starred: false,
       comment: '',
       queries: [
-        { expr: 'query1', refId: 'A' } as DataQuery,
-        { expr: 'query2', refId: 'B' } as DataQuery,
-        { expr: 'query3', refId: 'C' } as DataQuery,
+        { query: 'query1', refId: 'A' },
+        { query: 'query2', refId: 'B' },
+        { query: 'query3', refId: 'C' },
       ],
     },
     dsImg: '/app/img',
     isRemoved: false,
     changeDatasource: jest.fn(),
-    updateRichHistory: jest.fn(),
+    starHistoryItem: starRichHistoryMock,
+    deleteHistoryItem: deleteRichHistoryMock,
+    commentHistoryItem: jest.fn(),
     setQueries: jest.fn(),
     exploreId: ExploreId.left,
     datasourceInstance: { name: 'Datasource' } as DataSourceApi,
@@ -28,12 +69,13 @@ const setup = (propOverrides?: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  const wrapper = shallow(<RichHistoryCard {...props} />);
-  return wrapper;
+  render(<RichHistoryCard {...props} />);
 };
 
-const starredQueryWithComment = {
-  ts: 1,
+const starredQueryWithComment: RichHistoryQuery<MockQuery> = {
+  id: '1',
+  createdAt: 1,
+  datasourceUid: 'Test datasource uid',
   datasourceName: 'Test datasource',
   starred: true,
   comment: 'test comment',
@@ -44,87 +86,140 @@ const starredQueryWithComment = {
   ],
 };
 
+afterEach(() => {
+  jest.clearAllMocks();
+});
+
 describe('RichHistoryCard', () => {
-  it('should render all queries', () => {
-    const wrapper = setup();
-    expect(wrapper.find({ 'aria-label': 'Query text' })).toHaveLength(3);
-    expect(wrapper.find({ 'aria-label': 'Query text' }).at(0).text()).toEqual('{"expr":"query1"}');
-    expect(wrapper.find({ 'aria-label': 'Query text' }).at(1).text()).toEqual('{"expr":"query2"}');
-    expect(wrapper.find({ 'aria-label': 'Query text' }).at(2).text()).toEqual('{"expr":"query3"}');
+  it('should render all queries', async () => {
+    setup();
+    const queries = await screen.findAllByLabelText('Query text');
+    expect(queries).toHaveLength(3);
+    expect(queries[0]).toHaveTextContent('query1');
+    expect(queries[1]).toHaveTextContent('query2');
+    expect(queries[2]).toHaveTextContent('query3');
   });
-  it('should render data source icon', () => {
-    const wrapper = setup();
-    expect(wrapper.find({ 'aria-label': 'Data source icon' })).toHaveLength(1);
+  it('should render data source icon and name', async () => {
+    setup();
+    const datasourceIcon = await screen.findByLabelText('Data source icon');
+    const datasourceName = screen.getByLabelText('Data source name');
+    expect(datasourceIcon).toBeInTheDocument();
+    expect(datasourceName).toBeInTheDocument();
   });
-  it('should render data source name', () => {
-    const wrapper = setup();
-    expect(wrapper.find({ 'aria-label': 'Data source name' }).text()).toEqual('Test datasource');
-  });
-  it('should render "Data source does not exist anymore" if removed data source', () => {
-    const wrapper = setup({ isRemoved: true });
-    expect(wrapper.find({ 'aria-label': 'Data source name' }).text()).toEqual('Data source does not exist anymore');
+  it('should render "Data source does not exist anymore" if removed data source', async () => {
+    setup({ isRemoved: true });
+    const datasourceName = await screen.findByLabelText('Data source name');
+    expect(datasourceName).toHaveTextContent('Data source does not exist anymore');
   });
 
   describe('commenting', () => {
-    it('should render comment, if comment present', () => {
-      const wrapper = setup({ query: starredQueryWithComment });
-      expect(wrapper.find({ 'aria-label': 'Query comment' })).toHaveLength(1);
-      expect(wrapper.find({ 'aria-label': 'Query comment' }).text()).toEqual('test comment');
+    it('should render comment, if comment present', async () => {
+      setup({ query: starredQueryWithComment });
+      const queryComment = await screen.findByLabelText('Query comment');
+      expect(queryComment).toBeInTheDocument();
+      expect(queryComment).toHaveTextContent('test comment');
     });
-    it('should have title "Edit comment" at comment icon, if comment present', () => {
-      const wrapper = setup({ query: starredQueryWithComment });
-      expect(wrapper.find({ title: 'Edit comment' })).toHaveLength(1);
-      expect(wrapper.find({ title: 'Add comment' })).toHaveLength(0);
+    it('should have title "Edit comment" at comment icon, if comment present', async () => {
+      setup({ query: starredQueryWithComment });
+      const editComment = await screen.findByTitle('Edit comment');
+      const addComment = screen.queryByTitle('Add comment');
+      expect(editComment).toBeInTheDocument();
+      expect(addComment).not.toBeInTheDocument();
     });
-    it('should have title "Add comment" at comment icon, if no comment present', () => {
-      const wrapper = setup();
-      expect(wrapper.find({ title: 'Add comment' })).toHaveLength(1);
-      expect(wrapper.find({ title: 'Edit comment' })).toHaveLength(0);
+    it('should have title "Add comment" at comment icon, if no comment present', async () => {
+      setup();
+      const addComment = await screen.findByTitle('Add comment');
+      const editComment = await screen.queryByTitle('Edit comment');
+      expect(addComment).toBeInTheDocument();
+      expect(editComment).not.toBeInTheDocument();
     });
-    it('should open update comment form when edit comment button clicked', () => {
-      const wrapper = setup({ query: starredQueryWithComment });
-      const editCommentButton = wrapper.find({ title: 'Edit comment' });
-      editCommentButton.simulate('click');
-      expect(wrapper.find({ 'aria-label': 'Update comment form' })).toHaveLength(1);
+    it('should open update comment form when edit comment button clicked', async () => {
+      setup({ query: starredQueryWithComment });
+      const editComment = await screen.findByTitle('Edit comment');
+      fireEvent.click(editComment);
+      const updateCommentForm = await screen.findByLabelText('Update comment form');
+      expect(updateCommentForm).toBeInTheDocument();
     });
-    it('should close update comment form when escape key pressed', () => {
-      const wrapper = setup({ query: starredQueryWithComment });
-      const editCommentButton = wrapper.find({ title: 'Edit comment' });
-      editCommentButton.simulate('click');
-      wrapper.simulate('keydown', { key: 'Escape' });
-      expect(wrapper.find({ 'aria-label': 'Update comment form' })).toHaveLength(0);
+    it('should close update comment form when escape key pressed', async () => {
+      setup({ query: starredQueryWithComment });
+      const editComment = await screen.findByTitle('Edit comment');
+      fireEvent.click(editComment);
+      const updateCommentForm = await screen.findByLabelText('Update comment form');
+      fireEvent.keyDown(getByText(updateCommentForm, starredQueryWithComment.comment), {
+        key: 'Escape',
+      });
+      const findCommentForm = screen.queryByLabelText('Update comment form');
+      expect(findCommentForm).not.toBeInTheDocument();
     });
-    it('should close update comment form when enter and shift keys pressed', () => {
-      const wrapper = setup({ query: starredQueryWithComment });
-      const editCommentButton = wrapper.find({ title: 'Edit comment' });
-      editCommentButton.simulate('click');
-      wrapper.simulate('keydown', { key: 'Enter', shiftKey: true });
-      expect(wrapper.find({ 'aria-label': 'Update comment form' })).toHaveLength(0);
+    it('should close update comment form when enter and shift keys pressed', async () => {
+      setup({ query: starredQueryWithComment });
+      const editComment = await screen.findByTitle('Edit comment');
+      fireEvent.click(editComment);
+      const updateCommentForm = await screen.findByLabelText('Update comment form');
+      fireEvent.keyDown(getByText(updateCommentForm, starredQueryWithComment.comment), {
+        key: 'Enter',
+        shiftKey: true,
+      });
+      const findCommentForm = screen.queryByLabelText('Update comment form');
+      expect(findCommentForm).not.toBeInTheDocument();
     });
-    it('should close update comment form when enter and ctrl keys pressed', () => {
-      const wrapper = setup({ query: starredQueryWithComment });
-      const editCommentButton = wrapper.find({ title: 'Edit comment' });
-      editCommentButton.simulate('click');
-      wrapper.simulate('keydown', { key: 'Enter', ctrlKey: true });
-      expect(wrapper.find({ 'aria-label': 'Update comment form' })).toHaveLength(0);
+    it('should close update comment form when enter and ctrl keys pressed', async () => {
+      setup({ query: starredQueryWithComment });
+      const editComment = await screen.findByTitle('Edit comment');
+      fireEvent.click(editComment);
+      const updateCommentForm = await screen.findByLabelText('Update comment form');
+      fireEvent.keyDown(getByText(updateCommentForm, starredQueryWithComment.comment), {
+        key: 'Enter',
+        ctrlKey: true,
+      });
+      const findCommentForm = screen.queryByLabelText('Update comment form');
+      expect(findCommentForm).not.toBeInTheDocument();
     });
-    it('should not close update comment form when enter key pressed', () => {
-      const wrapper = setup({ query: starredQueryWithComment });
-      const editCommentButton = wrapper.find({ title: 'Edit comment' });
-      editCommentButton.simulate('click');
-      wrapper.simulate('keydown', { key: 'Enter', shiftKey: false });
-      expect(wrapper.find({ 'aria-label': 'Update comment form' })).toHaveLength(1);
+    it('should not close update comment form when enter key pressed', async () => {
+      setup({ query: starredQueryWithComment });
+      const editComment = await screen.findByTitle('Edit comment');
+      fireEvent.click(editComment);
+      const updateCommentForm = await screen.findByLabelText('Update comment form');
+      fireEvent.keyDown(getByText(updateCommentForm, starredQueryWithComment.comment), {
+        key: 'Enter',
+        shiftKey: false,
+      });
+      const findCommentForm = screen.queryByLabelText('Update comment form');
+      expect(findCommentForm).toBeInTheDocument();
     });
   });
 
   describe('starring', () => {
-    it('should have title "Star query", if not starred', () => {
-      const wrapper = setup();
-      expect(wrapper.find({ title: 'Star query' })).toHaveLength(1);
+    it('should have title "Star query", if not starred', async () => {
+      setup();
+      const starButton = await screen.findByTitle('Star query');
+      expect(starButton).toBeInTheDocument();
+      fireEvent.click(starButton);
+      expect(starRichHistoryMock).toBeCalledWith(starredQueryWithComment.id, true);
     });
-    it('should have title "Unstar query", if not starred', () => {
-      const wrapper = setup({ query: starredQueryWithComment });
-      expect(wrapper.find({ title: 'Unstar query' })).toHaveLength(1);
+    it('should have title "Unstar query", if not starred', async () => {
+      setup({ query: starredQueryWithComment });
+      const unstarButton = await screen.findByTitle('Unstar query');
+      expect(unstarButton).toBeInTheDocument();
+      fireEvent.click(unstarButton);
+      expect(starRichHistoryMock).toBeCalledWith(starredQueryWithComment.id, false);
+    });
+  });
+
+  describe('deleting', () => {
+    it('should delete if not starred', async () => {
+      setup();
+      const deleteButton = await screen.findByTitle('Delete query');
+      expect(deleteButton).toBeInTheDocument();
+      fireEvent.click(deleteButton);
+      expect(deleteRichHistoryMock).toBeCalledWith(starredQueryWithComment.id);
+    });
+    it('should display modal before deleting if starred', async () => {
+      setup({ query: starredQueryWithComment });
+      const deleteButton = await screen.findByTitle('Delete query');
+      fireEvent.click(deleteButton);
+      expect(deleteRichHistoryMock).not.toBeCalled();
+      expect(appEvents.publish).toHaveBeenCalledWith(new ShowConfirmModalEvent(expect.anything()));
     });
   });
 });

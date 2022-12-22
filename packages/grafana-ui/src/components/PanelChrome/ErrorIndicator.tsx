@@ -1,9 +1,10 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
+import { useStyles2 } from '../../themes';
+import { commonColorsPalette } from '../../themes/default';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { useStyles } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
 
 /**
  * @internal
@@ -17,7 +18,7 @@ export type ErrorIndicatorProps = {
  * @internal
  */
 export const ErrorIndicator: React.FC<ErrorIndicatorProps> = ({ error, onClick }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   if (!error) {
     return null;
@@ -35,13 +36,13 @@ export const ErrorIndicator: React.FC<ErrorIndicatorProps> = ({ error, onClick }
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = () => {
   return {
-    clickable: css`
-      cursor: pointer;
-    `,
-    icon: css`
-      color: ${theme.palette.red88};
-    `,
+    clickable: css({
+      cursor: 'pointer',
+    }),
+    icon: css({
+      color: `${commonColorsPalette.red88}`,
+    }),
   };
 };

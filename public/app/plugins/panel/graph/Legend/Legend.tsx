@@ -1,7 +1,9 @@
 import { sortBy as _sortBy } from 'lodash';
 import React, { PureComponent } from 'react';
-import { TimeSeries } from 'app/core/core';
+
 import { CustomScrollbar, Icon } from '@grafana/ui';
+import { TimeSeries } from 'app/core/core';
+
 import { LegendStat, LegendItem, LEGEND_STATS } from './LegendSeriesItem';
 
 interface LegendProps {
@@ -263,7 +265,7 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
     }
 
     return (
-      <table>
+      <table role="grid">
         <colgroup>
           <col style={{ width: '100%' }} />
         </colgroup>

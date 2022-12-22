@@ -1,20 +1,21 @@
-import { sharedSingleStatPanelChangedHandler, sharedSingleStatMigrationHandler } from '@grafana/ui';
 import { PanelModel } from '@grafana/data';
-import { GaugeOptions } from './types';
+import { sharedSingleStatPanelChangedHandler, sharedSingleStatMigrationHandler } from '@grafana/ui';
+
+import { PanelOptions } from './models.gen';
 
 // This is called when the panel first loads
-export const gaugePanelMigrationHandler = (panel: PanelModel<GaugeOptions>): Partial<GaugeOptions> => {
+export const gaugePanelMigrationHandler = (panel: PanelModel<PanelOptions>): Partial<PanelOptions> => {
   return sharedSingleStatMigrationHandler(panel);
 };
 
 // This is called when the panel changes from another panel
 export const gaugePanelChangedHandler = (
-  panel: PanelModel<Partial<GaugeOptions>> | any,
+  panel: PanelModel<Partial<PanelOptions>> | any,
   prevPluginId: string,
   prevOptions: any
 ) => {
   // This handles most config changes
-  const opts = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions) as GaugeOptions;
+  const opts = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions) as PanelOptions;
 
   // Changing from angular singlestat
   if (prevPluginId === 'singlestat' && prevOptions.angular) {

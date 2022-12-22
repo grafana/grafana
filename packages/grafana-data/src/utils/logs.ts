@@ -1,7 +1,7 @@
 import { countBy, chain, escapeRegExp } from 'lodash';
 
-import { LogLevel, LogRowModel, LogLabelStatsModel, LogsParser, LogsModel, LogsSortOrder } from '../types/logs';
 import { DataFrame, FieldType } from '../types/index';
+import { LogLevel, LogRowModel, LogLabelStatsModel, LogsParser, LogsModel, LogsSortOrder } from '../types/logs';
 import { ArrayVector } from '../vector/ArrayVector';
 
 // This matches:
@@ -16,6 +16,7 @@ const LOGFMT_REGEXP = /(?:^|\s)([\w\(\)\[\]\{\}]+)=(""|(?:".*?[^\\]"|[^"\s]\S*))
  *
  * Example: `getLogLevel('WARN 1999-12-31 this is great') // LogLevel.warn`
  */
+/** @deprecated will be removed in the next major version */
 export function getLogLevel(line: string): LogLevel {
   if (!line) {
     return LogLevel.unknown;
@@ -37,6 +38,7 @@ export function getLogLevel(line: string): LogLevel {
   return level;
 }
 
+/** @deprecated will be removed in the next major version */
 export function getLogLevelFromKey(key: string | number): LogLevel {
   const level = (LogLevel as any)[key.toString().toLowerCase()];
   if (level) {
@@ -46,6 +48,7 @@ export function getLogLevelFromKey(key: string | number): LogLevel {
   return LogLevel.unknown;
 }
 
+/** @deprecated will be removed in the next major version */
 export function addLogLevelToSeries(series: DataFrame, lineIndex: number): DataFrame {
   const levels = new ArrayVector<LogLevel>();
   const lines = series.fields[lineIndex];
@@ -68,6 +71,7 @@ export function addLogLevelToSeries(series: DataFrame, lineIndex: number): DataF
   };
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogsParsers: { [name: string]: LogsParser } = {
   JSON: {
     buildMatcher: (label) => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"?([\\d\\.]+|[^"]*)"?`),
@@ -109,6 +113,7 @@ export const LogsParsers: { [name: string]: LogsParser } = {
   },
 };
 
+/** @deprecated will be removed in the next major version */
 export function calculateFieldStats(rows: LogRowModel[], extractor: RegExp): LogLabelStatsModel[] {
   // Consider only rows that satisfy the matcher
   const rowsWithField = rows.filter((row) => extractor.test(row.entry));
@@ -124,6 +129,7 @@ export function calculateFieldStats(rows: LogRowModel[], extractor: RegExp): Log
   return getSortedCounts(countsByValue, rowCount);
 }
 
+/** @deprecated will be removed in the next major version */
 export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
   // Consider only rows that have the given label
   const rowsWithLabel = rows.filter((row) => row.labels[label] !== undefined);
@@ -134,7 +140,8 @@ export function calculateLogsLabelStats(rows: LogRowModel[], label: string): Log
   return getSortedCounts(countsByValue, rowCount);
 }
 
-export function calculateStats(values: any[]): LogLabelStatsModel[] {
+/** @deprecated will be removed in the next major version */
+export function calculateStats(values: unknown[]): LogLabelStatsModel[] {
   const nonEmptyValues = values.filter((value) => value !== undefined && value !== null);
   const countsByValue = countBy(nonEmptyValues);
   return getSortedCounts(countsByValue, nonEmptyValues.length);
@@ -148,6 +155,7 @@ const getSortedCounts = (countsByValue: { [value: string]: number }, rowCount: n
     .value();
 };
 
+/** @deprecated will be removed in the next major version */
 export function getParser(line: string): LogsParser | undefined {
   let parser;
   try {
@@ -163,6 +171,7 @@ export function getParser(line: string): LogsParser | undefined {
   return parser;
 }
 
+/** @deprecated will be removed in the next major version */
 export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
   // compare milliseconds
   if (a.timeEpochMs < b.timeEpochMs) {
@@ -185,6 +194,7 @@ export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
   return 0;
 };
 
+/** @deprecated will be removed in the next major version */
 export const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
   // compare milliseconds
   if (a.timeEpochMs > b.timeEpochMs) {
@@ -207,15 +217,18 @@ export const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
   return 0;
 };
 
+/** @deprecated will be removed in the next major version */
 export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: LogsSortOrder): LogsModel => {
   const rows = logsResult ? sortLogRows(logsResult.rows, sortOrder) : [];
   return logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
 };
 
+/** @deprecated will be removed in the next major version */
 export const sortLogRows = (logRows: LogRowModel[], sortOrder: LogsSortOrder) =>
   sortOrder === LogsSortOrder.Ascending ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
 
 // Currently supports only error condition in Loki logs
+/** @deprecated will be removed in the next major version */
 export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorMessage?: string } => {
   if (logRow.labels.__error__) {
     return {
@@ -228,5 +241,6 @@ export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorM
   };
 };
 
+/** @deprecated will be removed in the next major version */
 export const escapeUnescapedString = (string: string) =>
-  string.replace(/\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
+  string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));

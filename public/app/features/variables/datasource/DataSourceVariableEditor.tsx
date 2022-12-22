@@ -1,23 +1,39 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 
-import { DataSourceVariableModel, VariableWithMultiSupport } from '../types';
-import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
-import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { initDataSourceVariableEditor } from './actions';
-import { StoreState } from '../../../types';
-import { changeVariableMultiValue } from '../state/actions';
-import { VariableSectionHeader } from '../editor/VariableSectionHeader';
-import { VariableSelectField } from '../editor/VariableSelectField';
 import { SelectableValue } from '@grafana/data';
-import { VariableTextField } from '../editor/VariableTextField';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDatasourceVariableEditorState } from '../editor/selectors';
 
-const mapStateToProps = (state: StoreState) => ({
-  extended: getDatasourceVariableEditorState(state.templating.editor),
-});
+import { StoreState } from '../../../types';
+import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
+import { VariableLegend } from '../editor/VariableLegend';
+import { VariableSelectField } from '../editor/VariableSelectField';
+import { VariableTextField } from '../editor/VariableTextField';
+import { initialVariableEditorState } from '../editor/reducer';
+import { getDatasourceVariableEditorState } from '../editor/selectors';
+import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
+import { changeVariableMultiValue } from '../state/actions';
+import { getVariablesState } from '../state/selectors';
+import { DataSourceVariableModel, VariableWithMultiSupport } from '../types';
+
+import { initDataSourceVariableEditor } from './actions';
+
+const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
+  const {
+    variable: { rootStateKey },
+  } = ownProps;
+  if (!rootStateKey) {
+    console.error('DataSourceVariableEditor: variable has no rootStateKey');
+    return {
+      extended: getDatasourceVariableEditorState(initialVariableEditorState),
+    };
+  }
+
+  const { editor } = getVariablesState(rootStateKey, state);
+  return {
+    extended: getDatasourceVariableEditorState(editor),
+  };
+};
 
 const mapDispatchToProps = {
   initDataSourceVariableEditor,
@@ -32,7 +48,13 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
   componentDidMount() {
-    this.props.initDataSourceVariableEditor();
+    const { rootStateKey } = this.props.variable;
+    if (!rootStateKey) {
+      console.error('DataSourceVariableEditor: variable has no rootStateKey');
+      return;
+    }
+
+    this.props.initDataSourceVariableEditor(rootStateKey);
   }
 
   onRegExChange = (event: FormEvent<HTMLInputElement>) => {
@@ -80,48 +102,40 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
     const typeValue = typeOptions.find((o) => o.value === variable.query) ?? typeOptions[0];
 
     return (
-      <VerticalGroup spacing="xs">
-        <VariableSectionHeader name="Data source options" />
-        <VerticalGroup spacing="md">
-          <VerticalGroup spacing="xs">
-            <InlineFieldRow>
-              <VariableSelectField
-                name="Type"
-                value={typeValue}
-                options={typeOptions}
-                onChange={this.onDataSourceTypeChanged}
-                labelWidth={10}
-                testId={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect}
-              />
-            </InlineFieldRow>
-            <InlineFieldRow>
-              <VariableTextField
-                value={this.props.variable.regex}
-                name="Instance name filter"
-                placeholder="/.*-(.*)-.*/"
-                onChange={this.onRegExChange}
-                onBlur={this.onRegExBlur}
-                labelWidth={20}
-                tooltip={
-                  <div>
-                    Regex filter for which data source instances to choose from in the variable value list. Leave empty
-                    for all.
-                    <br />
-                    <br />
-                    Example: <code>/^prod/</code>
-                  </div>
-                }
-              />
-            </InlineFieldRow>
-          </VerticalGroup>
+      <>
+        <VariableLegend>Data source options</VariableLegend>
+        <VariableSelectField
+          name="Type"
+          value={typeValue}
+          options={typeOptions}
+          onChange={this.onDataSourceTypeChanged}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect}
+        />
 
-          <SelectionOptionsEditor
-            variable={variable}
-            onPropChange={this.onSelectionOptionsChange}
-            onMultiChanged={changeVariableMultiValue}
-          />
-        </VerticalGroup>
-      </VerticalGroup>
+        <VariableTextField
+          value={this.props.variable.regex}
+          name="Instance name filter"
+          placeholder="/.*-(.*)-.*/"
+          onChange={this.onRegExChange}
+          onBlur={this.onRegExBlur}
+          description={
+            <div>
+              Regex filter for which data source instances to choose from in the variable value list. Leave empty for
+              all.
+              <br />
+              <br />
+              Example: <code>/^prod/</code>
+            </div>
+          }
+        />
+
+        <VariableLegend>Selection options</VariableLegend>
+        <SelectionOptionsEditor
+          variable={variable}
+          onPropChange={this.onSelectionOptionsChange}
+          onMultiChanged={changeVariableMultiValue}
+        />
+      </>
     );
   }
 }

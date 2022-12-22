@@ -1,7 +1,11 @@
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
+
+import { CloudWatchAPI } from '../../api';
+import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
+import { LinkedToken } from '../../monarch/LinkedToken';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
 import { SuggestionKind, CompletionItemPriority, StatementPosition } from '../../monarch/types';
-import { LinkedToken } from '../../monarch/LinkedToken';
 import {
   METRIC_MATH_FNS,
   METRIC_MATH_KEYWORDS,
@@ -9,18 +13,16 @@ import {
   METRIC_MATH_PERIODS,
   METRIC_MATH_STATISTIC_KEYWORD_STRINGS,
 } from '../language';
-import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
-import { MetricMathTokenTypes } from './types';
-import { CloudWatchDatasource } from '../../datasource';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+
 import { getStatementPosition } from './statementPosition';
 import { getSuggestionKinds } from './suggestionKind';
+import { MetricMathTokenTypes } from './types';
 
 type CompletionItem = monacoTypes.languages.CompletionItem;
 
 export class MetricMathCompletionItemProvider extends CompletionItemProvider {
-  constructor(datasource: CloudWatchDatasource, templateSrv: TemplateSrv = getTemplateSrv()) {
-    super(datasource, templateSrv);
+  constructor(api: CloudWatchAPI, templateSrv: TemplateSrv = getTemplateSrv()) {
+    super(api, templateSrv);
     this.getStatementPosition = getStatementPosition;
     this.getSuggestionKinds = getSuggestionKinds;
     this.tokenTypes = MetricMathTokenTypes;
@@ -108,11 +110,12 @@ export class MetricMathCompletionItemProvider extends CompletionItemProvider {
     }
 
     // always suggest template variables
-    this.templateVariables.map((v) => {
-      addSuggestion(v, {
+    this.templateSrv.getVariables().map((v) => {
+      const variable = `$${v.name}`;
+      addSuggestion(variable, {
         range,
-        label: v,
-        insertText: v,
+        label: variable,
+        insertText: variable,
         kind: monaco.languages.CompletionItemKind.Variable,
         sortText: CompletionItemPriority.Low,
       });

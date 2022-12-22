@@ -1,6 +1,7 @@
+import React, { FC, useEffect, useMemo, useRef, useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Input, Select } from '@grafana/ui';
-import React, { FC, useEffect, useMemo, useState } from 'react';
 
 interface Props {
   onChange: (value: string) => void;
@@ -14,6 +15,7 @@ interface Props {
   width?: number;
   disabled?: boolean;
   'aria-label'?: string;
+  getOptionLabel?: ((item: SelectableValue<string>) => React.ReactNode) | undefined;
 }
 
 export const SelectWithAdd: FC<Props> = ({
@@ -28,19 +30,26 @@ export const SelectWithAdd: FC<Props> = ({
   disabled = false,
   addLabel = '+ Add new',
   'aria-label': ariaLabel,
+  getOptionLabel,
 }) => {
   const [isCustom, setIsCustom] = useState(custom);
 
   useEffect(() => {
-    if (custom) {
-      setIsCustom(custom);
-    }
+    setIsCustom(custom);
   }, [custom]);
 
   const _options = useMemo(
     (): Array<SelectableValue<string>> => [...options, { value: '__add__', label: addLabel }],
     [options, addLabel]
   );
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (inputRef.current && isCustom) {
+      inputRef.current.focus();
+    }
+  }, [isCustom]);
 
   if (isCustom) {
     return (
@@ -52,19 +61,20 @@ export const SelectWithAdd: FC<Props> = ({
         placeholder={placeholder}
         className={className}
         disabled={disabled}
-        onChange={(e) => onChange((e.target as HTMLInputElement).value)}
+        ref={inputRef}
+        onChange={(e) => onChange(e.currentTarget.value)}
       />
     );
   } else {
     return (
       <Select
-        menuShouldPortal
         aria-label={ariaLabel}
         width={width}
         options={_options}
         value={value}
         className={className}
         placeholder={placeholder}
+        getOptionLabel={getOptionLabel}
         disabled={disabled}
         onChange={(val: SelectableValue) => {
           const value = val?.value;

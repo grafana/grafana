@@ -1,9 +1,12 @@
 import { config, getBackendSrv, getGrafanaLiveSrv, setGrafanaLiveSrv } from '@grafana/runtime';
-import { GrafanaLiveService } from './live';
-import { contextSrv } from '../../core/services/context_srv';
-import { CentrifugeServiceWorkerProxy } from './centrifuge/serviceWorkerProxy';
-import { CentrifugeService } from './centrifuge/service';
 import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
+
+import { contextSrv } from '../../core/services/context_srv';
+import { loadUrlToken } from '../../core/utils/urlToken';
+
+import { CentrifugeService } from './centrifuge/service';
+import { CentrifugeServiceWorkerProxy } from './centrifuge/serviceWorkerProxy';
+import { GrafanaLiveService } from './live';
 
 export const sessionId =
   (window as any)?.grafanaBootData?.user?.id +
@@ -20,6 +23,7 @@ export function initGrafanaLive() {
     liveEnabled: config.liveEnabled,
     sessionId,
     dataStreamSubscriberReadiness: liveTimer.ok.asObservable(),
+    grafanaAuthToken: loadUrlToken(),
   };
 
   const centrifugeSrv = config.featureToggles['live-service-web-worker']

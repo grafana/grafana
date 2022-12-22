@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/common/model"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/prometheus/promql"
@@ -26,7 +28,7 @@ import (
 //     Responses:
 //       200: TestRuleResponse
 
-// swagger:route Post /api/v1/rule/test/{Recipient} testing RouteTestRuleConfig
+// swagger:route Post /api/v1/rule/test/{DatasourceUID} testing RouteTestRuleConfig
 //
 // Test a rule against external data source ruler
 //
@@ -38,6 +40,7 @@ import (
 //
 //     Responses:
 //       200: TestRuleResponse
+//       404: NotFound
 
 // swagger:route Post /api/v1/eval testing RouteEvalQueries
 //
@@ -51,6 +54,19 @@ import (
 //
 //     Responses:
 //       200: EvalQueriesResponse
+
+// swagger:route Post /api/v1/rule/backtest testing BacktestConfig
+//
+// Test rule
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       200: BacktestResult
 
 // swagger:parameters RouteTestReceiverConfig
 type TestReceiverRequest struct {
@@ -69,7 +85,7 @@ type TestRulePayload struct {
 	// Example: (node_filesystem_avail_bytes{fstype!="",job="integrations/node_exporter"} node_filesystem_size_bytes{fstype!="",job="integrations/node_exporter"} * 100 < 5 and node_filesystem_readonly{fstype!="",job="integrations/node_exporter"} == 0)
 	Expr string `json:"expr,omitempty"`
 	// GrafanaManagedCondition for grafana alerts
-	GrafanaManagedCondition *models.EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
+	GrafanaManagedCondition *EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
 }
 
 // swagger:parameters RouteEvalQueries
@@ -159,3 +175,23 @@ type Failure ResponseDetails
 type ResponseDetails struct {
 	Msg string `json:"msg"`
 }
+
+// swagger:model
+type BacktestConfig struct {
+	From     time.Time      `json:"from"`
+	To       time.Time      `json:"to"`
+	Interval model.Duration `json:"interval,omitempty"`
+
+	Condition string              `json:"condition"`
+	Data      []models.AlertQuery `json:"data"` // TODO yuri. Create API model for AlertQuery
+	For       model.Duration      `json:"for,omitempty"`
+
+	Title       string            `json:"title"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	NoDataState NoDataState `json:"no_data_state"`
+}
+
+// swagger:model
+type BacktestResult data.Frame

@@ -1,9 +1,11 @@
 import React from 'react';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { createTheme, GrafanaTheme2 } from '@grafana/data';
-import { RenderFunction } from '../../types';
 import { useDarkMode } from 'storybook-dark-mode';
+
+import { createTheme, GrafanaTheme2 } from '@grafana/data';
+
 import { GlobalStyles } from '../../themes/GlobalStyles/GlobalStyles';
+import { ThemeContext } from '../../themes/ThemeContext';
+import { RenderFunction } from '../../types';
 
 type SassThemeChangeHandler = (theme: GrafanaTheme2) => void;
 const ThemeableStory: React.FunctionComponent<{ handleSassThemeChange: SassThemeChangeHandler }> = ({
@@ -14,20 +16,20 @@ const ThemeableStory: React.FunctionComponent<{ handleSassThemeChange: SassTheme
 
   handleSassThemeChange(theme);
 
+  const css = `#root {
+    width: 100%;
+    padding: 20px;
+    display: flex;
+    height: 100%;
+    min-height: 100%;
+    background: ${theme.colors.background.primary};
+  }`;
+
   return (
     <ThemeContext.Provider value={theme}>
-      <div
-        style={{
-          width: '100%',
-          padding: '20px',
-          display: 'flex',
-          minHeight: '100%',
-          background: `${theme.colors.background.primary}`,
-        }}
-      >
-        <GlobalStyles />
-        {children}
-      </div>
+      <GlobalStyles />
+      <style>{css}</style>
+      {children}
     </ThemeContext.Provider>
   );
 };

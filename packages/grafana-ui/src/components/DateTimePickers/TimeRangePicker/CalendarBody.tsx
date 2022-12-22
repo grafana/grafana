@@ -1,10 +1,13 @@
-import React, { useCallback } from 'react';
-import { useStyles2 } from '../../../themes';
-import Calendar from 'react-calendar';
 import { css } from '@emotion/css';
-import { Icon } from '../../Icon/Icon';
-import { TimePickerCalendarProps } from './TimePickerCalendar';
+import React, { useCallback } from 'react';
+import Calendar from 'react-calendar';
+
 import { GrafanaTheme2, dateTime, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
+
+import { useStyles2 } from '../../../themes';
+import { Icon } from '../../Icon/Icon';
+
+import { TimePickerCalendarProps } from './TimePickerCalendar';
 
 export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) {
   const value = inputToValue(from, to);
@@ -29,7 +32,7 @@ export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) 
 
 Body.displayName = 'Body';
 
-export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): Date[] {
+export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): [Date, Date] {
   const fromAsDate = from.toDate();
   const toAsDate = to.toDate();
   const fromAsValidDate = dateTime(fromAsDate).isValid() ? fromAsDate : invalidDateDefault;
@@ -62,9 +65,12 @@ function dateInfo(date: Date): number[] {
 }
 
 export const getBodyStyles = (theme: GrafanaTheme2) => {
+  // If a time range is part of only 1 day but does not encompass the whole day,
+  // the class that react-calendar uses is '--hasActive' by itself (without being part of a '--range')
+  const hasActiveSelector = `.react-calendar__tile--hasActive:not(.react-calendar__tile--range)`;
   return {
     title: css`
-      color: ${theme.colors.text};
+      color: ${theme.colors.text.primary};
       background-color: ${theme.colors.background.primary};
       font-size: ${theme.typography.size.md};
       border: 1px solid transparent;
@@ -87,7 +93,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
       .react-calendar__navigation {
         padding-top: 4px;
         background-color: inherit;
-        color: ${theme.colors.text};
+        color: ${theme.colors.text.primary};
         border: 0;
         font-weight: ${theme.typography.fontWeightMedium};
       }
@@ -123,6 +129,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
         outline: 0;
       }
 
+      ${hasActiveSelector},
       .react-calendar__tile--active,
       .react-calendar__tile--active:hover {
         color: ${theme.colors.primary.contrastText};
@@ -149,11 +156,13 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
         }
       }
 
+      ${hasActiveSelector},
       .react-calendar__tile--rangeStart {
         border-top-left-radius: 20px;
         border-bottom-left-radius: 20px;
       }
 
+      ${hasActiveSelector},
       .react-calendar__tile--rangeEnd {
         border-top-right-radius: 20px;
         border-bottom-right-radius: 20px;

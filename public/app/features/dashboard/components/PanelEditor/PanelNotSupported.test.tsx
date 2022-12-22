@@ -1,7 +1,9 @@
-import { locationService } from '@grafana/runtime';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+
+import { locationService } from '@grafana/runtime';
+
 import { PanelNotSupported, Props } from './PanelNotSupported';
 import { PanelEditorTabId } from './types';
 
@@ -28,9 +30,9 @@ describe('PanelNotSupported', () => {
   });
 
   describe('when the back to queries button is clicked', () => {
-    it('then correct action should be dispatched', () => {
+    it('then correct action should be dispatched', async () => {
       setupTestContext({});
-      userEvent.click(screen.getByRole('button', { name: /go back to queries/i }));
+      await userEvent.click(screen.getByRole('button', { name: /go back to queries/i }));
       expect(locationService.getSearchObject().tab).toBe(PanelEditorTabId.Query);
     });
   });

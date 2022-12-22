@@ -1,6 +1,8 @@
 import React, { useCallback } from 'react';
+
 import { SeriesColorPicker } from '../ColorPicker/ColorPicker';
 import { usePanelContext } from '../PanelChrome';
+
 import { SeriesIcon } from './SeriesIcon';
 
 interface Props {
@@ -13,7 +15,7 @@ interface Props {
 /**
  * @internal
  */
-export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ seriesName, color, gradient, readonly }) => {
+export const VizLegendSeriesIcon = React.memo(({ seriesName, color, gradient, readonly }: Props) => {
   const { onSeriesColorChange } = usePanelContext();
   const onChange = useCallback(
     (color: string) => {
@@ -38,6 +40,6 @@ export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ seriesName
     );
   }
   return <SeriesIcon color={color} gradient={gradient} />;
-};
+});
 
 VizLegendSeriesIcon.displayName = 'VizLegendSeriesIcon';

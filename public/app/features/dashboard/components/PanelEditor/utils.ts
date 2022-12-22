@@ -1,8 +1,11 @@
 import { omit } from 'lodash';
+
 import { FieldConfigSource, PanelPlugin } from '@grafana/data';
-import { PanelModel } from '../../state/PanelModel';
-import { DisplayMode } from './types';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
+
+import { PanelModel } from '../../state/PanelModel';
+
+import { DisplayMode } from './types';
 
 export function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel) {
   if (mode === DisplayMode.Fill) {
@@ -71,7 +74,7 @@ export function setOptionImmutably<T extends object>(options: T, path: string | 
   if (key.endsWith(']')) {
     const idx = key.lastIndexOf('[');
     const index = +key.substring(idx + 1, key.length - 1);
-    const propKey = key.substr(0, idx);
+    const propKey = key.substring(0, idx);
     let current = (options as Record<string, any>)[propKey];
     const arr = Array.isArray(current) ? [...current] : [];
     if (splat.length) {

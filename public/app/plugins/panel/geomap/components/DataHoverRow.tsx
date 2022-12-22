@@ -1,5 +1,6 @@
-import React from 'react';
 import { FeatureLike } from 'ol/Feature';
+import React from 'react';
+
 import { ArrayDataFrame, DataFrame } from '@grafana/data';
 
 import { DataHoverView } from './DataHoverView';
@@ -23,5 +24,5 @@ export const DataHoverRow = ({ feature }: Props) => {
     data = new ArrayDataFrame([properties]);
   }
 
-  return <DataHoverView data={data} rowIndex={rowIndex} />;
+  return <DataHoverView data={data} rowIndex={rowIndex} displayExemplarHeader={false} />;
 };

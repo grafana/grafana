@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -11,17 +12,21 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/gosimple/slug"
-
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/plugins/storage"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -33,42 +38,51 @@ var (
 var _ plugins.ErrorResolver = (*Loader)(nil)
 
 type Loader struct {
-	cfg                *plugins.Cfg
 	pluginFinder       finder.Finder
+	processManager     process.Service
+	pluginRegistry     registry.Service
+	roleRegistry       plugins.RoleRegistry
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
+	pluginStorage      storage.Manager
 	log                log.Logger
 
 	errs map[string]*plugins.SignatureError
 }
 
-func ProvideService(cfg *setting.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	backendProvider plugins.BackendFactoryProvider) (*Loader, error) {
-	return New(plugins.FromGrafanaCfg(cfg), license, authorizer, backendProvider), nil
+func ProvideService(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
+	roleRegistry plugins.RoleRegistry) *Loader {
+	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
+		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath), roleRegistry)
 }
 
-func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	backendProvider plugins.BackendFactoryProvider) *Loader {
+func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
+	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry) *Loader {
 	return &Loader{
-		cfg:                cfg,
 		pluginFinder:       finder.New(),
+		pluginRegistry:     pluginRegistry,
 		pluginInitializer:  initializer.New(cfg, backendProvider, license),
 		signatureValidator: signature.NewValidator(authorizer),
+		processManager:     processManager,
+		pluginStorage:      pluginStorage,
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                log.New("plugin.loader"),
+		roleRegistry:       roleRegistry,
 	}
 }
 
-func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
+func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find(paths)
 	if err != nil {
 		return nil, err
 	}
 
-	return l.loadPlugins(ctx, class, pluginJSONPaths, ignore)
+	return l.loadPlugins(ctx, class, pluginJSONPaths)
 }
 
-func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSONPaths []string, existingPlugins map[string]struct{}) ([]*plugins.Plugin, error) {
+func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSONPaths []string) ([]*plugins.Plugin, error) {
 	var foundPlugins = foundPlugins{}
 
 	// load plugin.json files and map directory to JSON data
@@ -92,12 +106,18 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
 	}
 
-	foundPlugins.stripDuplicates(existingPlugins, l.log)
+	// get all registered plugins
+	registeredPlugins := make(map[string]struct{})
+	for _, p := range l.pluginRegistry.Plugins(ctx) {
+		registeredPlugins[p.ID] = struct{}{}
+	}
+
+	foundPlugins.stripDuplicates(registeredPlugins, l.log)
 
 	// calculate initial signature state
 	loadedPlugins := make(map[string]*plugins.Plugin)
 	for pluginDir, pluginJSON := range foundPlugins {
-		plugin := createPluginBase(pluginJSON, class, pluginDir, l.log)
+		plugin := createPluginBase(pluginJSON, class, pluginDir)
 
 		sig, err := signature.Calculate(l.log, plugin)
 		if err != nil {
@@ -107,7 +127,6 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		plugin.Signature = sig.Status
 		plugin.SignatureType = sig.Type
 		plugin.SignatureOrg = sig.SigningOrg
-		plugin.SignedFiles = sig.Files
 
 		loadedPlugins[plugin.PluginDir] = plugin
 	}
@@ -165,7 +184,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		}
 
 		if plugin.Parent != nil && plugin.Parent.IsApp() {
-			configureAppChildOPlugin(plugin.Parent, plugin)
+			configureAppChildPlugin(plugin.Parent, plugin)
 		}
 
 		verifiedPlugins = append(verifiedPlugins, plugin)
@@ -177,9 +196,72 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			return nil, err
 		}
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
+
+		if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); errDeclareRoles != nil {
+			l.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "path", p.PluginDir, "error", errDeclareRoles)
+		}
+	}
+
+	for _, p := range verifiedPlugins {
+		if err := l.load(ctx, p); err != nil {
+			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
+		}
 	}
 
 	return verifiedPlugins, nil
+}
+
+func (l *Loader) Unload(ctx context.Context, pluginID string) error {
+	plugin, exists := l.pluginRegistry.Plugin(ctx, pluginID)
+	if !exists {
+		return plugins.ErrPluginNotInstalled
+	}
+
+	if !plugin.IsExternalPlugin() {
+		return plugins.ErrUninstallCorePlugin
+	}
+
+	if err := l.unload(ctx, plugin); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (l *Loader) load(ctx context.Context, p *plugins.Plugin) error {
+	if err := l.pluginRegistry.Add(ctx, p); err != nil {
+		return err
+	}
+
+	if !p.IsCorePlugin() {
+		l.log.Info("Plugin registered", "pluginID", p.ID)
+	}
+
+	if p.IsExternalPlugin() {
+		if err := l.pluginStorage.Register(ctx, p.ID, p.PluginDir); err != nil {
+			return err
+		}
+	}
+
+	return l.processManager.Start(ctx, p.ID)
+}
+
+func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
+	l.log.Debug("Stopping plugin process", "pluginId", p.ID)
+
+	// TODO confirm the sequence of events is safe
+	if err := l.processManager.Stop(ctx, p.ID); err != nil {
+		return err
+	}
+
+	if err := l.pluginRegistry.Remove(ctx, p.ID); err != nil {
+		return err
+	}
+	l.log.Debug("Plugin unregistered", "pluginId", p.ID)
+
+	if err := l.pluginStorage.Remove(ctx, p.ID); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
@@ -198,15 +280,15 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	}
 
 	plugin := plugins.JSONData{}
-	if err := json.NewDecoder(reader).Decode(&plugin); err != nil {
+	if err = json.NewDecoder(reader).Decode(&plugin); err != nil {
 		return plugins.JSONData{}, err
 	}
 
-	if err := reader.Close(); err != nil {
+	if err = reader.Close(); err != nil {
 		l.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
 	}
 
-	if err := validatePluginJSON(plugin); err != nil {
+	if err = validatePluginJSON(plugin); err != nil {
 		return plugins.JSONData{}, err
 	}
 
@@ -224,14 +306,14 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 
 	for _, include := range plugin.Includes {
 		if include.Role == "" {
-			include.Role = models.ROLE_VIEWER
+			include.Role = org.RoleViewer
 		}
 	}
 
 	return plugin, nil
 }
 
-func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, logger log.Logger) *plugins.Plugin {
+func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) *plugins.Plugin {
 	plugin := &plugins.Plugin{
 		JSONData:  pluginJSON,
 		PluginDir: pluginDir,
@@ -240,7 +322,7 @@ func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDi
 		Class:     class,
 	}
 
-	plugin.SetLogger(logger.New("pluginID", plugin.ID))
+	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
 	setImages(plugin)
 
 	return plugin
@@ -259,7 +341,7 @@ func setDefaultNavURL(p *plugins.Plugin) {
 	// slugify pages
 	for _, include := range p.Includes {
 		if include.Slug == "" {
-			include.Slug = slug.Make(include.Name)
+			include.Slug = slugify.Slugify(include.Name)
 		}
 
 		if !include.DefaultNav {
@@ -270,12 +352,18 @@ func setDefaultNavURL(p *plugins.Plugin) {
 			p.DefaultNavURL = path.Join("/plugins/", p.ID, "/page/", include.Slug)
 		}
 		if include.Type == "dashboard" {
-			p.DefaultNavURL = path.Join("/dashboard/db/", include.Slug)
+			dboardURL := include.DashboardURLPath()
+			if dboardURL == "" {
+				p.Logger().Warn("Included dashboard is missing a UID field")
+				continue
+			}
+
+			p.DefaultNavURL = dboardURL
 		}
 	}
 }
 
-func configureAppChildOPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
+func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	if !parent.IsApp() {
 		return
 	}
@@ -336,7 +424,6 @@ func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string)
 	if class == plugins.Core {
 		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir))
 	}
-
 	return path.Join("public/plugins", pluginJSON.ID)
 }
 
@@ -344,7 +431,6 @@ func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) 
 	if class == plugins.Core {
 		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module")
 	}
-
 	return path.Join("plugins", pluginJSON.ID, "module")
 }
 

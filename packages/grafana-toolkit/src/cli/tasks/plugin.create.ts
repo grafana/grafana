@@ -1,6 +1,8 @@
 import { prompt } from 'inquirer';
 import path from 'path';
+
 import { promptConfirm } from '../utils/prompt';
+
 import {
   fetchTemplate,
   formatPluginDetails,

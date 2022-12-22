@@ -1,5 +1,6 @@
-import React, { FC } from 'react';
 import { cx, css } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
@@ -31,7 +32,7 @@ export const Spinner: FC<Props> = (props: Props) => {
   const { className, inline = false, iconClassName, style, size = 16 } = props;
   const styles = getStyles(size, inline);
   return (
-    <div style={style} className={cx(styles.wrapper, className)}>
+    <div data-testid="Spinner" style={style} className={cx(styles.wrapper, className)}>
       <Icon className={cx('fa-spin', iconClassName)} name="fa fa-spinner" />
     </div>
   );

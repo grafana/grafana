@@ -1,10 +1,12 @@
 import { marked } from 'marked';
+
 import { sanitize, sanitizeTextPanelContent } from './sanitize';
 
 let hasInitialized = false;
 
 export interface RenderMarkdownOptions {
   noSanitize?: boolean;
+  breaks?: boolean;
 }
 
 const markdownOptions = {
@@ -13,6 +15,7 @@ const markdownOptions = {
   smartLists: true,
   smartypants: false,
   xhtml: false,
+  breaks: false,
 };
 
 export function renderMarkdown(str?: string, options?: RenderMarkdownOptions): string {
@@ -21,7 +24,15 @@ export function renderMarkdown(str?: string, options?: RenderMarkdownOptions): s
     hasInitialized = true;
   }
 
-  const html = marked(str || '');
+  let opts = undefined;
+  if (options?.breaks) {
+    opts = {
+      ...markdownOptions,
+      breaks: true,
+    };
+  }
+  const html = marked(str || '', opts);
+
   if (options?.noSanitize) {
     return html;
   }

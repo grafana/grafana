@@ -1,25 +1,27 @@
-import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
+import React, { ReactElement } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
+import { Button, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { hasOptions, isAdHoc, isQuery } from '../guard';
-import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
+import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
+import { KeyedVariableIdentifier } from '../state/types';
 import { VariableModel } from '../types';
+import { toKeyedVariableIdentifier } from '../utils';
 
 export interface VariableEditorListRowProps {
   index: number;
   variable: VariableModel;
   usageTree: VariableUsageTree[];
   usagesNetwork: UsagesToNetwork[];
-  onEdit: (identifier: VariableIdentifier) => void;
-  onDuplicate: (identifier: VariableIdentifier) => void;
-  onDelete: (identifier: VariableIdentifier) => void;
+  onEdit: (identifier: KeyedVariableIdentifier) => void;
+  onDuplicate: (identifier: KeyedVariableIdentifier) => void;
+  onDelete: (identifier: KeyedVariableIdentifier) => void;
 }
 
 export function VariableEditorListRow({
@@ -36,7 +38,7 @@ export function VariableEditorListRow({
   const definition = getDefinition(variable);
   const usages = getVariableUsages(variable.id, usageTree);
   const passed = usages > 0 || isAdHoc(variable);
-  const identifier = toVariableIdentifier(variable);
+  const identifier = toKeyedVariableIdentifier(variable);
 
   return (
     <Draggable draggableId={JSON.stringify(identifier)} index={index}>
@@ -50,8 +52,10 @@ export function VariableEditorListRow({
             ...provided.draggableProps.style,
           }}
         >
-          <td className={styles.column}>
-            <span
+          <td role="gridcell" className={styles.column}>
+            <Button
+              size="xs"
+              fill="text"
               onClick={(event) => {
                 event.preventDefault();
                 propsOnEdit(identifier);
@@ -60,9 +64,10 @@ export function VariableEditorListRow({
               aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowNameFields(variable.name)}
             >
               {variable.name}
-            </span>
+            </Button>
           </td>
           <td
+            role="gridcell"
             className={styles.definitionColumn}
             onClick={(event) => {
               event.preventDefault();
@@ -73,15 +78,15 @@ export function VariableEditorListRow({
             {definition}
           </td>
 
-          <td className={styles.column}>
+          <td role="gridcell" className={styles.column}>
             <VariableCheckIndicator passed={passed} />
           </td>
 
-          <td className={styles.column}>
+          <td role="gridcell" className={styles.column}>
             <VariableUsagesButton id={variable.id} isAdhoc={isAdHoc(variable)} usages={usagesNetwork} />
           </td>
 
-          <td className={styles.column}>
+          <td role="gridcell" className={styles.column}>
             <IconButton
               onClick={(event) => {
                 event.preventDefault();
@@ -94,7 +99,7 @@ export function VariableEditorListRow({
             />
           </td>
 
-          <td className={styles.column}>
+          <td role="gridcell" className={styles.column}>
             <IconButton
               onClick={(event) => {
                 event.preventDefault();
@@ -106,7 +111,7 @@ export function VariableEditorListRow({
               aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
             />
           </td>
-          <td className={styles.column}>
+          <td role="gridcell" className={styles.column}>
             <div {...provided.dragHandleProps} className={styles.dragHandle}>
               <Icon name="draggabledots" size="lg" />
             </div>

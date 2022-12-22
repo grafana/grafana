@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
-import { get as _get } from 'lodash';
-import IoChevronRight from 'react-icons/lib/io/chevron-right';
-import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { get as _get } from 'lodash';
+import React from 'react';
+import IoChevronRight from 'react-icons/lib/io/chevron-right';
+import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
+import { autoColor } from '../Theme';
 import { TraceSpan } from '../types/trace';
 import spanAncestorIds from '../utils/span-ancestor-ids';
-import { autoColor } from '../Theme';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
@@ -137,7 +138,14 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
     const { childrenVisible, onClick, showChildrenIcon, span, theme } = this.props;
     const { hasChildren, spanID } = span;
     const wrapperProps = hasChildren ? { onClick, role: 'switch', 'aria-checked': childrenVisible } : null;
-    const icon = showChildrenIcon && hasChildren && (childrenVisible ? <IoIosArrowDown /> : <IoChevronRight />);
+    const icon =
+      showChildrenIcon &&
+      hasChildren &&
+      (childrenVisible ? (
+        <IoIosArrowDown data-testid="icon-arrow-down" />
+      ) : (
+        <IoChevronRight data-testid="icon-arrow-right" />
+      ));
     const styles = getStyles(theme);
     return (
       <span className={cx(styles.SpanTreeOffset, { [styles.SpanTreeOffsetParent]: hasChildren })} {...wrapperProps}>
@@ -148,7 +156,7 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
               [styles.indentGuideActive]: this.props.hoverIndentGuideIds.has(ancestorId),
             })}
             data-ancestor-id={ancestorId}
-            data-test-id="SpanTreeOffset--indentGuide"
+            data-testid="SpanTreeOffset--indentGuide"
             onMouseEnter={(event) => this.handleMouseEnter(event, ancestorId)}
             onMouseLeave={(event) => this.handleMouseLeave(event, ancestorId)}
           />
@@ -158,7 +166,7 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
             className={styles.iconWrapper}
             onMouseEnter={(event) => this.handleMouseEnter(event, spanID)}
             onMouseLeave={(event) => this.handleMouseLeave(event, spanID)}
-            data-test-id="icon-wrapper"
+            data-testid="icon-wrapper"
           >
             {icon}
           </span>

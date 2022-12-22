@@ -1,5 +1,6 @@
-import { Registry } from './Registry';
 import { FieldReducerInfo, fieldReducers, ReducerID } from '../transformations';
+
+import { Registry } from './Registry';
 
 describe('Registry', () => {
   describe('selectOptions', () => {

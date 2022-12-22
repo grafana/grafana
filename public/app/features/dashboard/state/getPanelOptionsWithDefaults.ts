@@ -1,3 +1,5 @@
+import { mergeWith, isArray, isObject, unset, isEqual } from 'lodash';
+
 import {
   ConfigOverrideRule,
   DynamicConfigValue,
@@ -11,7 +13,6 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
-import { mergeWith, isArray, isObject, unset, isEqual } from 'lodash';
 
 export interface Props {
   plugin: PanelPlugin;

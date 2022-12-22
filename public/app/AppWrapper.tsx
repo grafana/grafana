@@ -1,29 +1,34 @@
+import { Action, KBarProvider } from 'kbar';
 import React, { ComponentType } from 'react';
-import { Router, Route, Redirect, Switch } from 'react-router-dom';
-import { config, locationService, navigationLogger } from '@grafana/runtime';
 import { Provider } from 'react-redux';
-import { store } from 'app/store/store';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider } from '@grafana/ui';
-import { GrafanaApp } from './app';
+import { Router, Route, Redirect, Switch } from 'react-router-dom';
+
+import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
+import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
+import { SearchWrapper } from 'app/features/search';
 import { getAppRoutes } from 'app/routes/routes';
-import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
+import { store } from 'app/store/store';
+
+import { AngularRoot } from './angular/AngularRoot';
+import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
+import { GrafanaApp } from './app';
+import { AppChrome } from './core/components/AppChrome/AppChrome';
+import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
+import { NavBar } from './core/components/NavBar/NavBar';
+import { GrafanaContext } from './core/context/GrafanaContext';
+import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
-import { NavBar } from './core/components/NavBar/NavBar';
-import { NavBarNext } from './core/components/NavBar/NavBarNext';
-import { GrafanaRoute } from './core/navigation/GrafanaRoute';
-import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
-import { SearchWrapper } from 'app/features/search';
+import { ThemeProvider } from './core/utils/ConfigProvider';
+import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
-import { AngularRoot } from './angular/AngularRoot';
-import { I18nProvider } from './core/localisation';
 
 interface AppWrapperProps {
   app: GrafanaApp;
 }
 
 interface AppWrapperState {
-  ngInjector: any;
+  ready?: boolean;
 }
 
 /** Used by enterprise */
@@ -39,27 +44,14 @@ export function addPageBanner(fn: ComponentType) {
 }
 
 export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
-  container = React.createRef<HTMLDivElement>();
-
   constructor(props: AppWrapperProps) {
     super(props);
-
-    this.state = {
-      ngInjector: null,
-    };
+    this.state = {};
   }
 
-  componentDidMount() {
-    if (this.container) {
-      this.bootstrapNgApp();
-    } else {
-      throw new Error('Failed to boot angular app, no container to attach to');
-    }
-  }
-
-  bootstrapNgApp() {
-    const injector = this.props.app.angularApp.bootstrap();
-    this.setState({ ngInjector: injector });
+  async componentDidMount() {
+    await loadAndInitAngularIfEnabled();
+    this.setState({ ready: true });
     $('.preloader').remove();
   }
 
@@ -90,45 +82,76 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     return <Switch>{getAppRoutes().map((r) => this.renderRoute(r))}</Switch>;
   }
 
+  renderNavBar() {
+    if (config.isPublicDashboardView || !this.state.ready || config.featureToggles.topnav) {
+      return null;
+    }
+
+    return <NavBar />;
+  }
+
+  commandPaletteEnabled() {
+    return config.featureToggles.commandPalette && !config.isPublicDashboardView;
+  }
+
+  searchBarEnabled() {
+    return !config.isPublicDashboardView;
+  }
+
   render() {
+    const { app } = this.props;
+    const { ready } = this.state;
+
     navigationLogger('AppWrapper', false, 'rendering');
 
-    const newNavigationEnabled = Boolean(config.featureToggles.newNavigation);
+    const commandPaletteActionSelected = (action: Action) => {
+      reportInteraction('command_palette_action_selected', {
+        actionId: action.id,
+        actionName: action.name,
+      });
+    };
 
     return (
-      <Provider store={store}>
-        <I18nProvider>
+      <React.StrictMode>
+        <Provider store={store}>
           <ErrorBoundaryAlert style="page">
-            <ConfigContext.Provider value={config}>
-              <ThemeProvider>
-                <ModalsProvider>
-                  <GlobalStyles />
-                  <div className="grafana-app">
-                    <Router history={locationService.getHistory()}>
-                      {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
-                      <main className="main-view">
-                        {pageBanners.map((Banner, index) => (
-                          <Banner key={index.toString()} />
-                        ))}
+            <GrafanaContext.Provider value={app.context}>
+              <ThemeProvider value={config.theme2}>
+                <KBarProvider
+                  actions={[]}
+                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                >
+                  <ModalsProvider>
+                    <GlobalStyles />
+                    {this.commandPaletteEnabled() && <CommandPalette />}
+                    <div className="grafana-app">
+                      <Router history={locationService.getHistory()}>
+                        {this.renderNavBar()}
+                        <AppChrome>
+                          {pageBanners.map((Banner, index) => (
+                            <Banner key={index.toString()} />
+                          ))}
 
-                        <AngularRoot ref={this.container} />
-                        <AppNotificationList />
-                        <SearchWrapper />
-                        {this.state.ngInjector && this.renderRoutes()}
-                        {bodyRenderHooks.map((Hook, index) => (
-                          <Hook key={index.toString()} />
-                        ))}
-                      </main>
-                    </Router>
-                  </div>
-                  <LiveConnectionWarning />
-                  <ModalRoot />
-                </ModalsProvider>
+                          <AngularRoot />
+                          <AppNotificationList />
+                          {this.searchBarEnabled() && <SearchWrapper />}
+                          {ready && this.renderRoutes()}
+                          {bodyRenderHooks.map((Hook, index) => (
+                            <Hook key={index.toString()} />
+                          ))}
+                        </AppChrome>
+                      </Router>
+                    </div>
+                    <LiveConnectionWarning />
+                    <ModalRoot />
+                    <PortalContainer />
+                  </ModalsProvider>
+                </KBarProvider>
               </ThemeProvider>
-            </ConfigContext.Provider>
+            </GrafanaContext.Provider>
           </ErrorBoundaryAlert>
-        </I18nProvider>
-      </Provider>
+        </Provider>
+      </React.StrictMode>
     );
   }
 }

@@ -1,11 +1,15 @@
-import React, { HTMLProps } from 'react';
 import { cx } from '@emotion/css';
 import { isObject } from 'lodash';
+import React, { HTMLProps } from 'react';
+
 import { SelectableValue } from '@grafana/data';
-import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
-import { getSegmentStyles } from './styles';
+
+import { useStyles2 } from '../../themes';
 import { InlineLabel } from '../Forms/InlineLabel';
-import { useStyles } from '../../themes';
+
+import { getSegmentStyles } from './styles';
+
+import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
 
 export interface SegmentSyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
@@ -32,7 +36,7 @@ export function Segment<T>({
 }: React.PropsWithChildren<SegmentSyncProps<T>>) {
   const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
   const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
-  const styles = useStyles(getSegmentStyles);
+  const styles = useStyles2(getSegmentStyles);
 
   if (!expanded) {
     const label = isObject(value) ? value.label : value;

@@ -1,11 +1,13 @@
-import React from 'react';
-import { Meta, Story } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import mdx from './CodeEditor.mdx';
-import { CodeEditor } from './CodeEditor';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
+import React from 'react';
 
-export default {
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { CodeEditor } from './CodeEditor';
+import mdx from './CodeEditor.mdx';
+
+const meta: ComponentMeta<typeof CodeEditor> = {
   title: 'CodeEditor',
   component: CodeEditor,
   decorators: [withCenteredStory],
@@ -22,9 +24,9 @@ export default {
     height: { control: { type: 'range', min: 100, max: 800, step: 10 } },
     language: { control: { type: 'select' }, options: ['sql', 'json'] },
   },
-} as Meta;
+};
 
-export const Basic: Story = (args) => {
+export const Basic: ComponentStory<typeof CodeEditor> = (args) => {
   return (
     <CodeEditor
       width={args.width}
@@ -60,3 +62,5 @@ SELECT * FROM Persons LIMIT 10 '
   showMiniMap: false,
   readOnly: false,
 };
+
+export default meta;

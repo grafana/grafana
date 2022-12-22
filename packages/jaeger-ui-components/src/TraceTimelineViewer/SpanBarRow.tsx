@@ -12,26 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { css, keyframes } from '@emotion/css';
+import cx from 'classnames';
 import * as React from 'react';
 import IoAlert from 'react-icons/lib/io/alert';
 import IoArrowRightA from 'react-icons/lib/io/arrow-right-a';
-import IoNetwork from 'react-icons/lib/io/network';
-import MdFileUpload from 'react-icons/lib/md/file-upload';
-import { css, keyframes } from '@emotion/css';
-import cx from 'classnames';
-import { stylesFactory, withTheme2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 
-import ReferencesButton from './ReferencesButton';
+import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
+
+import { autoColor } from '../Theme';
+import { DURATION, NONE, TAG } from '../settings/SpanBarSettings';
+import { SpanBarOptions, SpanLinkFunc, TNil } from '../types';
+import { SpanLinks } from '../types/links';
+import { TraceSpan } from '../types/trace';
+
+import SpanBar from './SpanBar';
+import { SpanLinksMenu } from './SpanLinks';
+import SpanTreeOffset from './SpanTreeOffset';
+import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
 import { formatDuration, ViewedBoundsFunctionType } from './utils';
-import SpanTreeOffset from './SpanTreeOffset';
-import SpanBar from './SpanBar';
-import Ticks from './Ticks';
-
-import { SpanLinkFunc, TNil } from '../types';
-import { TraceSpan } from '../types/trace';
-import { autoColor } from '../Theme';
 
 const spanBarClassName = 'spanBar';
 const spanBarLabelClassName = 'spanBarLabel';
@@ -166,17 +167,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     rowMatchingFilter: css`
       label: rowMatchingFilter;
-      background-color: ${autoColor(theme, '#fffce4')};
+      background-color: ${autoColor(theme, '#fffbde')};
       &:hover .${nameWrapperClassName} {
         background: linear-gradient(
           90deg,
-          ${autoColor(theme, '#fff5e1')},
-          ${autoColor(theme, '#fff5e1')} 75%,
-          ${autoColor(theme, '#ffe6c9')}
+          ${autoColor(theme, '#fffbde')},
+          ${autoColor(theme, '#fffbde')} 75%,
+          ${autoColor(theme, '#f7f1c6')}
         );
       }
       &:hover .${viewClassName} {
-        background-color: ${autoColor(theme, '#fff3d7')};
+        background-color: ${autoColor(theme, '#f7f1c6')};
         outline: 1px solid ${autoColor(theme, '#ddd')};
       }
     `,
@@ -213,11 +214,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       cursor: pointer;
       flex: 1 1 auto;
       outline: none;
-      overflow: hidden;
+      overflow-y: hidden;
+      overflow-x: auto;
+      margin-right: 8px;
       padding-left: 4px;
       padding-right: 0.25em;
       position: relative;
-      text-overflow: ellipsis;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      &::-webkit-scrollbar {
+        display: none;
+      }
       &::before {
         content: ' ';
         position: absolute;
@@ -227,23 +234,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
         border-left: 4px solid;
         border-left-color: inherit;
       }
-
-      /* This is so the hit area of the span-name extends the rest of the width of the span-name column */
-      &::after {
-        background: transparent;
-        bottom: 0;
-        content: ' ';
-        left: 0;
-        position: absolute;
-        top: 0;
-        width: 1000px;
-      }
       &:focus {
         text-decoration: none;
       }
       &:hover > small {
         color: ${autoColor(theme, '#000')};
       }
+      text-align: left;
+      background: transparent;
+      border: none;
     `,
     nameDetailExpanded: css`
       label: nameDetailExpanded;
@@ -295,6 +294,7 @@ type SpanBarRowProps = {
   className?: string;
   theme: GrafanaTheme2;
   color: string;
+  spanBarOptions: SpanBarOptions | undefined;
   columnDivision: number;
   isChildrenExpanded: boolean;
   isDetailExpanded: boolean;
@@ -322,7 +322,6 @@ type SpanBarRowProps = {
   getViewedBounds: ViewedBoundsFunctionType;
   traceStartTime: number;
   span: TraceSpan;
-  focusSpan: (spanID: string) => void;
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
@@ -358,6 +357,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
     const {
       className,
       color,
+      spanBarOptions,
       columnDivision,
       isChildrenExpanded,
       isDetailExpanded,
@@ -370,7 +370,6 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       getViewedBounds,
       traceStartTime,
       span,
-      focusSpan,
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
@@ -386,6 +385,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       process: { serviceName },
     } = span;
     const label = formatDuration(duration);
+
     const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
     const viewStart = viewBounds.start;
     const viewEnd = viewBounds.end;
@@ -401,6 +401,14 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       longLabel = `${label} | ${labelDetail}`;
       hintClassName = styles.labelRight;
     }
+
+    const countLinks = (links?: SpanLinks): number => {
+      if (!links) {
+        return 0;
+      }
+
+      return Object.values(links).reduce((count, arr) => count + arr.length, 0);
+    };
 
     return (
       <TimelineRow
@@ -425,14 +433,15 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             })}
           >
             <SpanTreeOffset
+              onClick={isParent ? this._childrenToggle : undefined}
               childrenVisible={isChildrenExpanded}
               span={span}
-              onClick={isParent ? this._childrenToggle : undefined}
               hoverIndentGuideIds={hoverIndentGuideIds}
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}
             />
-            <a
+            <button
+              type="button"
               className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
               aria-checked={isDetailExpanded}
               title={labelDetail}
@@ -472,12 +481,18 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                 )}
               </span>
               <small className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</small>
-              <small className={styles.endpointName}> | {label}</small>
-            </a>
+              <small className={styles.endpointName}> {this.getSpanBarLabel(span, spanBarOptions, label)}</small>
+            </button>
             {createSpanLink &&
               (() => {
-                const link = createSpanLink(span);
-                if (link) {
+                const links = createSpanLink(span);
+                const count = countLinks(links);
+                if (links && count === 1) {
+                  const link = links.logLinks?.[0] ?? links.metricLinks?.[0] ?? links.traceLinks?.[0] ?? undefined;
+                  if (!link) {
+                    return null;
+                  }
+
                   return (
                     <a
                       href={link.href}
@@ -499,31 +514,12 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                       {link.content}
                     </a>
                   );
+                } else if (links && count > 1) {
+                  return <SpanLinksMenu links={links} />;
                 } else {
                   return null;
                 }
               })()}
-
-            {span.references && span.references.length > 1 && (
-              <ReferencesButton
-                references={span.references}
-                tooltipText="Contains multiple references"
-                focusSpan={focusSpan}
-              >
-                <IoNetwork />
-              </ReferencesButton>
-            )}
-            {span.subsidiarilyReferencedBy && span.subsidiarilyReferencedBy.length > 0 && (
-              <ReferencesButton
-                references={span.subsidiarilyReferencedBy}
-                tooltipText={`This span is referenced by ${
-                  span.subsidiarilyReferencedBy.length === 1 ? 'another span' : 'multiple other spans'
-                }`}
-                focusSpan={focusSpan}
-              >
-                <MdFileUpload />
-              </ReferencesButton>
-            )}
           </div>
         </TimelineRow.Cell>
         <TimelineRow.Cell
@@ -531,7 +527,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             [styles.viewExpanded]: isDetailExpanded,
             [styles.viewExpandedAndMatchingFilter]: isMatchingFilter && isDetailExpanded,
           })}
-          data-test-id="span-view"
+          data-testid="span-view"
           style={{ cursor: 'pointer' }}
           width={1 - columnDivision}
           onClick={this._detailToggle}
@@ -554,6 +550,35 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       </TimelineRow>
     );
   }
+
+  getSpanBarLabel = (span: TraceSpan, spanBarOptions: SpanBarOptions | undefined, duration: string) => {
+    const type = spanBarOptions?.type ?? '';
+
+    if (type === NONE) {
+      return '';
+    } else if (type === '' || type === DURATION) {
+      return `(${duration})`;
+    } else if (type === TAG) {
+      const tagKey = spanBarOptions?.tag?.trim() ?? '';
+      if (tagKey !== '' && span.tags) {
+        const tag = span.tags?.find((tag: TraceKeyValuePair) => {
+          return tag.key === tagKey;
+        });
+        const process = span.process?.tags?.find((process: TraceKeyValuePair) => {
+          return process.key === tagKey;
+        });
+
+        if (tag) {
+          return `(${tag.value})`;
+        }
+        if (process) {
+          return `(${process.value})`;
+        }
+      }
+    }
+
+    return '';
+  };
 }
 
 export default withTheme2(UnthemedSpanBarRow);

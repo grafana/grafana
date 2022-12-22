@@ -1,5 +1,7 @@
-import { PanelModel as IPanelModel } from '@grafana/data';
 import { isEqualWith } from 'lodash';
+
+import { PanelModel as IPanelModel } from '@grafana/data';
+
 import { PanelModel } from '../state';
 
 export interface PanelMergeInfo {

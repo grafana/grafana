@@ -1,7 +1,8 @@
-import { FieldType, DataFrameDTO } from '../types/dataFrame';
 import { DateTime } from '../datetime/moment_wrapper';
-import { MutableDataFrame } from './MutableDataFrame';
+import { FieldType, DataFrameDTO } from '../types/dataFrame';
+
 import { DataFrameView } from './DataFrameView';
+import { MutableDataFrame } from './MutableDataFrame';
 
 interface MySpecialObject {
   time: DateTime;

@@ -4,20 +4,38 @@
   "id": "grafana-azure-monitor-datasource",
   "category": "cloud",
   "includes": [
-    { "type": "dashboard", "name": "Azure Monitor Storage Insights", "path": "dashboards/storage.json" },
-    { "type": "dashboard", "name": "Azure Monitor CosmosDB Insights", "path": "dashboards/cosmosdb.json" },
-    { "type": "dashboard", "name": "Azure Monitor Key Vault Insights", "path": "dashboards/keyvault.json" },
-    { "type": "dashboard", "name": "Azure SQL Database Insights", "path": "dashboards/sqldb.json" },
-    { "type": "dashboard", "name": "Azure Data Explorer Insights", "path": "dashboards/adx.json" },
-    { "type": "dashboard", "name": "Azure Resource Overview", "path": "dashboards/arg.json" },
-    { "type": "dashboard", "name": "Azure Alert Consumption", "path": "dashboards/v1Alerts.json" },
-    { "type": "dashboard", "name": "Azure Alert Rules", "path": "dashboards/alertRules.json" },
-    { "type": "dashboard", "name": "Azure Alert Consumption Overview", "path": "dashboards/v1AlertsAtScale.json" },
+    { "type": "dashboard", "name": "Azure / Alert Consumption", "path": "dashboards/v1Alerts.json" },
     {
       "type": "dashboard",
-      "name": "Azure App Monitoring - Application Insights",
+      "name": "Azure / Insights / Applications",
       "path": "dashboards/appInsights.json"
-    }
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Applications Test Availability Geo Map",
+      "path": "dashboards/appInsightsGeoMap.json"
+    },
+    { "type": "dashboard", "name": "Azure / Insights / CosmosDB", "path": "dashboards/cosmosdb.json" },
+    { "type": "dashboard", "name": "Azure / Insights / Data Explorer Clusters", "path": "dashboards/adx.json" },
+    { "type": "dashboard", "name": "Azure / Insights / Key Vaults", "path": "dashboards/keyvault.json" },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Networks",
+      "path": "dashboards/networkInsightsDashboard.json"
+    },
+    { "type": "dashboard", "name": "Azure / Insights / SQL Database", "path": "dashboards/sqldb.json" },
+    { "type": "dashboard", "name": "Azure / Insights / Storage Accounts", "path": "dashboards/storage.json" },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Virtual Machines by Resource Group",
+      "path": "dashboards/vMInsightsRG.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Virtual Machines by Workspace",
+      "path": "dashboards/vMInsightsWorkspace.json"
+    },
+    { "type": "dashboard", "name": "Azure / Resources Overview", "path": "dashboards/arg.json" }
   ],
 
   "info": {
@@ -32,7 +50,7 @@
       "large": "img/logo.jpg"
     },
     "links": [
-      { "name": "Learn more", "url": "https://github.com/grafana/azure-monitor-datasource" },
+      { "name": "Learn more", "url": "https://grafana.com/docs/grafana/latest/datasources/azuremonitor/" },
       { "name": "Apache License", "url": "https://github.com/grafana/azure-monitor-datasource/blob/master/LICENSE" }
     ],
     "screenshots": [
@@ -40,8 +58,7 @@
       { "name": "Azure Monitor Network", "path": "img/azure_monitor_network.png" },
       { "name": "Azure Monitor CPU", "path": "img/azure_monitor_cpu.png" }
     ],
-    "version": "0.3.0",
-    "updated": "2018-12-06"
+    "version": "1.0.0"
   },
 
   "dependencies": {

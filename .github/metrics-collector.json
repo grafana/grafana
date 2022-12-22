@@ -17,16 +17,16 @@
       "query": "label:\"needs more info\" is:open"
     },
     {
+      "name": "triage_needs_confirmation",
+      "query": "label:\"triage/needs-confirmation\" is:open"
+    },
+    {
       "name": "unlabeled",
       "query": "is:open is:issue no:label"
     },
     {
       "name": "open_prs",
       "query": "is:open is:pr"
-    },
-    {
-      "name": "milestone_7_4_open",
-      "query": "is:open is:issue milestone:7.4"
     }
   ]
 }

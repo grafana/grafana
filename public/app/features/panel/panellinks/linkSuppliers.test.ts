@@ -1,7 +1,9 @@
-import { getFieldLinksSupplier } from './linkSuppliers';
 import { applyFieldOverrides, createTheme, DataFrameView, dateTime, FieldDisplay, toDataFrame } from '@grafana/data';
-import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from './link_srv';
+
 import { TemplateSrv } from '../../templating/template_srv';
+
+import { getFieldLinksSupplier } from './linkSuppliers';
+import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from './link_srv';
 
 // We do not need more here and TimeSrv is hard to setup fully.
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
@@ -118,36 +120,36 @@ describe('getFieldLinksSupplier', () => {
       };
     });
     expect(links).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "href": "http://go/100.200 kW",
           "title": "By Name",
         },
-        Object {
+        {
           "href": "http://go/100.200 kW",
           "title": "By Index",
         },
-        Object {
+        {
           "href": "http://go/100.200 kW",
           "title": "By Title",
         },
-        Object {
+        {
           "href": "http://go/100.2000001",
           "title": "Numeric Value",
         },
-        Object {
+        {
           "href": "http://go/100.200",
           "title": "Text (no suffix)",
         },
-        Object {
+        {
           "href": "http://go/\${__data.fields.XYZ}",
           "title": "Unknown Field",
         },
-        Object {
+        {
           "href": "http://go/Hello Templates",
           "title": "Data Frame name",
         },
-        Object {
+        {
           "href": "http://go/ZZZ",
           "title": "Data Frame refId",
         },

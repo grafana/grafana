@@ -1,14 +1,16 @@
 import { cx } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
-import { OverlayContainer } from '@react-aria/overlays';
-import React, { PropsWithChildren, useCallback, useEffect } from 'react';
+import { OverlayContainer, useOverlay } from '@react-aria/overlays';
+import React, { PropsWithChildren, useRef } from 'react';
 
 import { useTheme2 } from '../../themes';
 import { IconName } from '../../types';
 import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
-import { getModalStyles } from './getModalStyles';
+
 import { ModalHeader } from './ModalHeader';
+import { getModalStyles } from './getModalStyles';
 
 export interface Props {
   /** @deprecated no longer used */
@@ -39,33 +41,24 @@ export function Modal(props: PropsWithChildren<Props>) {
     closeOnBackdropClick = true,
     className,
     contentClassName,
-    onDismiss: propsOnDismiss,
+    onDismiss,
     onClickBackdrop,
     trapFocus = true,
   } = props;
   const theme = useTheme2();
   const styles = getModalStyles(theme);
-  const onDismiss = useCallback(() => {
-    if (propsOnDismiss) {
-      propsOnDismiss();
-    }
-  }, [propsOnDismiss]);
 
-  useEffect(() => {
-    const onEscKey = (ev: KeyboardEvent) => {
-      if (ev.key === 'Esc' || ev.key === 'Escape') {
-        onDismiss();
-      }
-    };
-    if (isOpen && closeOnEscape) {
-      document.addEventListener('keydown', onEscKey, false);
-    } else {
-      document.removeEventListener('keydown', onEscKey, false);
-    }
-    return () => {
-      document.removeEventListener('keydown', onEscKey, false);
-    };
-  }, [closeOnEscape, isOpen, onDismiss]);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Handle interacting outside the dialog and pressing
+  // the Escape key to close the modal.
+  const { overlayProps, underlayProps } = useOverlay(
+    { isKeyboardDismissDisabled: !closeOnEscape, isOpen, onClose: onDismiss },
+    ref
+  );
+
+  // Get props for the dialog and its title
+  const { dialogProps, titleProps } = useDialog({}, ref);
 
   if (!isOpen) {
     return null;
@@ -76,20 +69,22 @@ export function Modal(props: PropsWithChildren<Props>) {
   return (
     <OverlayContainer>
       <div
+        role="presentation"
         className={styles.modalBackdrop}
         onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
+        {...underlayProps}
       />
       <FocusScope contain={trapFocus} autoFocus restoreFocus>
-        {/*
-          tabIndex=-1 is needed here to support highlighting text within the modal when using FocusScope
-          see https://github.com/adobe/react-spectrum/issues/1604#issuecomment-781574668
-        */}
-        <div tabIndex={-1} className={cx(styles.modal, className)}>
+        <div className={cx(styles.modal, className)} ref={ref} {...overlayProps} {...dialogProps}>
           <div className={headerClass}>
-            {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
-            {typeof title !== 'string' && title}
+            {typeof title === 'string' && <DefaultModalHeader {...props} title={title} id={titleProps.id} />}
+            {
+              // FIXME: custom title components won't get an accessible title.
+              // Do we really want to support them or shall we just limit this ModalTabsHeader?
+              typeof title !== 'string' && title
+            }
             <div className={styles.modalHeaderClose}>
-              <IconButton aria-label="Close dialogue" surface="header" name="times" size="xl" onClick={onDismiss} />
+              <IconButton aria-label="Close dialogue" name="times" size="xl" onClick={onDismiss} />
             </div>
           </div>
           <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
@@ -130,11 +125,12 @@ function ModalButtonRow({ leftItems, children }: { leftItems?: React.ReactNode; 
 Modal.ButtonRow = ModalButtonRow;
 
 interface DefaultModalHeaderProps {
+  id?: string;
   title: string;
   icon?: IconName;
   iconTooltip?: string;
 }
 
-function DefaultModalHeader({ icon, iconTooltip, title }: DefaultModalHeaderProps): JSX.Element {
-  return <ModalHeader icon={icon} iconTooltip={iconTooltip} title={title} />;
+function DefaultModalHeader({ icon, iconTooltip, title, id }: DefaultModalHeaderProps): JSX.Element {
+  return <ModalHeader icon={icon} iconTooltip={iconTooltip} title={title} id={id} />;
 }

@@ -5,46 +5,47 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-	"github.com/stretchr/testify/require"
 )
 
 func TestHandleRequest(t *testing.T) {
 	t.Run("Should invoke plugin manager QueryData when handling request for query", func(t *testing.T) {
-		origOAuthIsOAuthPassThruEnabledFunc := oAuthIsOAuthPassThruEnabledFunc
-		oAuthIsOAuthPassThruEnabledFunc = func(oAuthTokenService oauthtoken.OAuthTokenService, ds *models.DataSource) bool {
-			return false
-		}
-
-		t.Cleanup(func() {
-			oAuthIsOAuthPassThruEnabledFunc = origOAuthIsOAuthPassThruEnabledFunc
-		})
-
 		client := &fakePluginsClient{}
 		var actualReq *backend.QueryDataRequest
 		client.QueryDataHandlerFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			actualReq = req
 			return backend.NewQueryDataResponse(), nil
 		}
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		dsService := datasources.ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		datasourcePermissions := acmock.NewMockedPermissionsService()
+		quotaService := quotatest.New(false, nil)
+		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, sqlStore.Cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions, quotaService)
+		require.NoError(t, err)
+
 		s := ProvideService(client, nil, dsService)
 
-		ds := &models.DataSource{Id: 12, Type: "unregisteredType", JsonData: simplejson.New()}
+		ds := &datasources.DataSource{Id: 12, Type: "unregisteredType", JsonData: simplejson.New()}
 		req := legacydata.DataQuery{
 			TimeRange: &legacydata.DataTimeRange{},
 			Queries: []legacydata.DataSubQuery{
-				{RefID: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}, Model: simplejson.New()},
-				{RefID: "B", DataSource: &models.DataSource{Id: 1, Type: "test"}, Model: simplejson.New()},
+				{RefID: "A", DataSource: &datasources.DataSource{Id: 1, Type: "test"}, Model: simplejson.New()},
+				{RefID: "B", DataSource: &datasources.DataSource{Id: 1, Type: "test"}, Model: simplejson.New()},
 			},
 		}
 		res, err := s.HandleRequest(context.Background(), ds, req)

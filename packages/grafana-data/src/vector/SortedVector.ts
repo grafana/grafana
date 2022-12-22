@@ -1,4 +1,5 @@
 import { Vector } from '../types/vector';
+
 import { vectorToArray } from './vectorToArray';
 
 /**
@@ -21,5 +22,9 @@ export class SortedVector<T = any> implements Vector<T> {
 
   toJSON(): T[] {
     return vectorToArray(this);
+  }
+
+  getOrderArray(): number[] {
+    return this.order;
   }
 }

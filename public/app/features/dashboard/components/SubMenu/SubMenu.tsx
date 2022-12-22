@@ -1,15 +1,18 @@
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
+
+import { AnnotationQuery, DataQuery } from '@grafana/data';
+
 import { StoreState } from '../../../../types';
-import { getSubMenuVariables } from '../../../variables/state/selectors';
+import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
 import { VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
-import { DashboardLinks } from './DashboardLinks';
-import { Annotations } from './Annotations';
-import { SubMenuItems } from './SubMenuItems';
 import { DashboardLink } from '../../state/DashboardModel';
-import { AnnotationQuery } from '@grafana/data';
-import { css } from '@emotion/css';
+
+import { Annotations } from './Annotations';
+import { DashboardLinks } from './DashboardLinks';
+import { SubMenuItems } from './SubMenuItems';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -26,7 +29,7 @@ interface DispatchProps {}
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class SubMenuUnConnected extends PureComponent<Props> {
-  onAnnotationStateChanged = (updatedAnnotation: any) => {
+  onAnnotationStateChanged = (updatedAnnotation: AnnotationQuery<DataQuery>) => {
     // we're mutating dashboard state directly here until annotations are in Redux.
     for (let index = 0; index < this.props.dashboard.annotations.list.length; index++) {
       const annotation = this.props.dashboard.annotations.list[index];
@@ -46,10 +49,12 @@ class SubMenuUnConnected extends PureComponent<Props> {
       return null;
     }
 
+    const readOnlyVariables = dashboard.meta.isSnapshot ?? false;
+
     return (
       <div className="submenu-controls">
         <form aria-label="Template variables" className={styles}>
-          <SubMenuItems variables={variables} />
+          <SubMenuItems variables={variables} readOnly={readOnlyVariables} />
         </form>
         <Annotations
           annotations={annotations}
@@ -58,15 +63,16 @@ class SubMenuUnConnected extends PureComponent<Props> {
         />
         <div className="gf-form gf-form--grow" />
         {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
-        <div className="clearfix" />
       </div>
     );
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => {
+  const { uid } = ownProps.dashboard;
+  const templatingState = getVariablesState(uid, state);
   return {
-    variables: getSubMenuVariables(state.templating.variables),
+    variables: getSubMenuVariables(uid, templatingState.variables),
   };
 };
 

@@ -1,4 +1,5 @@
 import { createTheme, toDataFrame } from '@grafana/data';
+
 import { prepareCandlestickFields } from './fields';
 import { CandlestickOptions, VizDisplayMode } from './models.gen';
 
@@ -43,7 +44,7 @@ describe('Candlestick data', () => {
       theme
     );
     expect(info?.names).toMatchInlineSnapshot(`
-      Object {
+      {
         "close": "Next open",
         "high": "MAX",
         "low": "min",
@@ -81,13 +82,13 @@ describe('Candlestick data', () => {
 
     // Close should be offset by one and dupliate last point
     expect({ open: info.open!.values.toArray(), close: info.close!.values.toArray() }).toMatchInlineSnapshot(`
-      Object {
-        "close": Array [
+      {
+        "close": [
           5,
           6,
           6,
         ],
-        "open": Array [
+        "open": [
           4,
           5,
           6,

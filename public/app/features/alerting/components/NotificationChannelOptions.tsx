@@ -1,9 +1,12 @@
 import React, { FC } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Button, Checkbox, Field, Input } from '@grafana/ui';
-import { OptionElement } from './OptionElement';
+
 import { NotificationChannelDTO, NotificationChannelOption, NotificationChannelSecureFields } from '../../../types';
+
 import { NotificationSettingsProps } from './NotificationChannelForm';
+import { OptionElement } from './OptionElement';
 
 interface Props extends NotificationSettingsProps {
   selectedChannelOptions: NotificationChannelOption[];

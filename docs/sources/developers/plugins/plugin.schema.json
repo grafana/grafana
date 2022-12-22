@@ -14,12 +14,12 @@
     "id": {
       "type": "string",
       "description": "Unique name of the plugin. If the plugin is published on grafana.com, then the plugin id has to follow the naming conventions.",
-      "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
+      "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
     },
     "type": {
       "type": "string",
       "description": "Plugin type.",
-      "enum": ["app", "datasource", "panel"]
+      "enum": ["app", "datasource", "panel", "secretsmanager"]
     },
     "name": {
       "type": "string",
@@ -68,7 +68,7 @@
           },
           "type": {
             "type": "string",
-            "enum": ["dashboard", "page", "panel", "datasource"]
+            "enum": ["dashboard", "page", "panel", "datasource", "secretsmanager"]
           },
           "name": {
             "type": "string"
@@ -146,7 +146,7 @@
         "grafanaDependency": {
           "type": "string",
           "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
-          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
+          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
         },
         "plugins": {
           "type": "array",
@@ -159,11 +159,11 @@
             "properties": {
               "id": {
                 "type": "string",
-                "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
+                "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
               },
               "type": {
                 "type": "string",
-                "enum": ["app", "datasource", "panel"]
+                "enum": ["app", "datasource", "panel", "secretsmanager"]
               },
               "name": {
                 "type": "string"
@@ -303,7 +303,7 @@
         "version": {
           "type": "string",
           "description": "Project version of this commit, e.g. `6.7.x`.",
-          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*$|\\%VERSION\\%)"
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)|(\\%VERSION\\%)$"
         }
       }
     },
@@ -379,7 +379,7 @@
               "params": {
                 "type": "object",
                 "description": "Parameters for the token authentication request.",
-                "additionalProperties": false,
+                "additionalProperties": true,
                 "properties": {
                   "grant_type": {
                     "type": "string",
@@ -404,7 +404,7 @@
           "jwtTokenAuth": {
             "type": "object",
             "description": "For data source plugins. Token authentication section used with an JWT OAuth API.",
-            "additionalProperties": false,
+            "additionalProperties": true,
             "properties": {
               "url": {
                 "type": "string",
@@ -435,6 +435,24 @@
                     "type": "string",
                     "description": ""
                   }
+                }
+              }
+            }
+          },
+          "urlParams": {
+            "type": "array",
+            "description": "Add URL parameters to a proxy route",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the URL parameter"
+                },
+                "content": {
+                  "type": "string",
+                  "description": "Value of the URL parameter"
                 }
               }
             }

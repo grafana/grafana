@@ -1,6 +1,6 @@
-import { e2e } from '../index';
 import { DeleteDashboardConfig } from '../flows/deleteDashboard';
 import { DeleteDataSourceConfig } from '../flows/deleteDataSource';
+import { e2e } from '../index';
 
 export interface ScenarioContext {
   addedDashboards: DeleteDashboardConfig[];

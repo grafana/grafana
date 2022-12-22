@@ -1,11 +1,14 @@
+import { mockStandardFieldConfigOptions } from 'test/helpers/fieldConfig';
+
+import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
-import { thunkTester } from '../../../../test/core/thunk/thunkTester';
-import { changePanelPlugin } from './actions';
-import { panelModelAndPluginReady } from './reducers';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 import { panelPluginLoaded } from 'app/features/plugins/admin/state/actions';
-import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
-import { mockStandardFieldConfigOptions } from 'test/helpers/fieldConfig';
+
+import { thunkTester } from '../../../../test/core/thunk/thunkTester';
+
+import { changePanelPlugin } from './actions';
+import { panelModelAndPluginReady } from './reducers';
 
 jest.mock('app/features/plugins/importPanelPlugin', () => {
   return {

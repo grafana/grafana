@@ -1,17 +1,11 @@
+import { capitalize } from 'lodash';
+
 import { AlertState } from '@grafana/data';
-import {
-  GrafanaAlertState,
-  PromAlertingRuleState,
-  PromRuleType,
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRecordingRuleDTO,
-  RulerRuleDTO,
-} from 'app/types/unified-alerting-dto';
 import {
   Alert,
   AlertingRule,
   CloudRuleIdentifier,
+  CombinedRuleGroup,
   GrafanaRuleIdentifier,
   PrometheusRuleIdentifier,
   PromRuleWithLocation,
@@ -20,17 +14,29 @@ import {
   RuleIdentifier,
   RuleNamespace,
 } from 'app/types/unified-alerting';
-import { AsyncRequestState } from './redux';
-import { RULER_NOT_SUPPORTED_MSG } from './constants';
-import { capitalize } from 'lodash';
+import {
+  GrafanaAlertState,
+  GrafanaAlertStateWithReason,
+  mapStateWithReasonToBaseState,
+  PromAlertingRuleState,
+  PromRuleType,
+  RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
+  RulerRecordingRuleDTO,
+  RulerRuleDTO,
+} from 'app/types/unified-alerting-dto';
+
 import { State } from '../components/StateTag';
+
+import { RULER_NOT_SUPPORTED_MSG } from './constants';
+import { AsyncRequestState } from './redux';
 
 export function isAlertingRule(rule: Rule | undefined): rule is AlertingRule {
   return typeof rule === 'object' && rule.type === PromRuleType.Alerting;
 }
 
-export function isRecordingRule(rule: Rule): rule is RecordingRule {
-  return rule.type === PromRuleType.Recording;
+export function isRecordingRule(rule: Rule | undefined): rule is RecordingRule {
+  return typeof rule === 'object' && rule.type === PromRuleType.Recording;
 }
 
 export function isAlertingRulerRule(rule?: RulerRuleDTO): rule is RulerAlertingRuleDTO {
@@ -65,7 +71,7 @@ export function isPrometheusRuleIdentifier(identifier: RuleIdentifier): identifi
   return 'ruleHash' in identifier;
 }
 
-export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertState | AlertState): string {
+export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {
   if (state === PromAlertingRuleState.Inactive) {
     return 'Normal';
   }
@@ -85,7 +91,18 @@ export const flattenRules = (rules: RuleNamespace[]) => {
   }, []);
 };
 
-export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState | AlertState, State> = {
+export function alertStateToState(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): State {
+  let key: PromAlertingRuleState | GrafanaAlertState | AlertState;
+  if (Object.values(AlertState).includes(state as AlertState)) {
+    key = state as AlertState;
+  } else {
+    key = mapStateWithReasonToBaseState(state as GrafanaAlertStateWithReason | PromAlertingRuleState);
+  }
+
+  return alertStateToStateMap[key];
+}
+
+const alertStateToStateMap: Record<PromAlertingRuleState | GrafanaAlertState | AlertState, State> = {
   [PromAlertingRuleState.Inactive]: 'good',
   [PromAlertingRuleState.Firing]: 'bad',
   [PromAlertingRuleState.Pending]: 'warning',
@@ -107,7 +124,9 @@ export function getFirstActiveAt(promRule: AlertingRule) {
     return null;
   }
   return promRule.alerts.reduce((prev, alert) => {
-    if (alert.activeAt && alert.state !== GrafanaAlertState.Normal) {
+    const isNotNormal =
+      mapStateWithReasonToBaseState(alert.state as GrafanaAlertStateWithReason) !== GrafanaAlertState.Normal;
+    if (alert.activeAt && isNotNormal) {
       const activeAt = new Date(alert.activeAt);
       if (prev === null || prev.getTime() > activeAt.getTime()) {
         return activeAt;
@@ -115,4 +134,29 @@ export function getFirstActiveAt(promRule: AlertingRule) {
     }
     return prev;
   }, null as Date | null);
+}
+
+/**
+ * A rule group is "federated" when it has at least one "source_tenants" entry, federated rule groups will evaluate rules in multiple tenants
+ * Non-federated rules do not have this property
+ *
+ * see https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation
+ */
+export function isFederatedRuleGroup(group: CombinedRuleGroup) {
+  return Array.isArray(group.source_tenants);
+}
+
+export function getRuleName(rule: RulerRuleDTO) {
+  if (isGrafanaRulerRule(rule)) {
+    return rule.grafana_alert.title;
+  }
+  if (isAlertingRulerRule(rule)) {
+    return rule.alert;
+  }
+
+  if (isRecordingRulerRule(rule)) {
+    return rule.record;
+  }
+
+  return '';
 }

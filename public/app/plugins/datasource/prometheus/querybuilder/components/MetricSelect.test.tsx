@@ -1,18 +1,59 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data/src';
+
+import { PrometheusDatasource } from '../../datasource';
+import { PromOptions } from '../../types';
+
 import { MetricSelect } from './MetricSelect';
 
+const instanceSettings = {
+  url: 'proxied',
+  id: 1,
+  directUrl: 'direct',
+  user: 'test',
+  password: 'mupp',
+  jsonData: { httpMethod: 'GET' },
+} as unknown as DataSourceInstanceSettings<PromOptions>;
+
+const dataSourceMock = new PrometheusDatasource(instanceSettings);
+const mockValues = [{ label: 'random_metric' }, { label: 'unique_metric' }, { label: 'more_unique_metric' }];
+
+// Mock metricFindQuery which will call backend API
+//@ts-ignore
+dataSourceMock.metricFindQuery = jest.fn((query: string) => {
+  // Use the label values regex to get the values inside the label_values function call
+  const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
+  const queryValueArray = query.match(labelValuesRegex) as RegExpMatchArray;
+  const queryValueRaw = queryValueArray[1] as string;
+
+  // Remove the wrapping regex
+  const queryValue = queryValueRaw.substring(queryValueRaw.indexOf('".*') + 3, queryValueRaw.indexOf('.*"'));
+
+  // Run the regex that we'd pass into prometheus API against the strings in the test
+  return Promise.resolve(
+    mockValues
+      .filter((value) => value.label.match(queryValue))
+      .map((result) => {
+        return {
+          text: result.label,
+        };
+      }) as MetricFindValue[]
+  );
+});
+
 const props = {
+  labelsFilters: [],
+  datasource: dataSourceMock,
   query: {
     metric: '',
     labels: [],
     operations: [],
   },
   onChange: jest.fn(),
-  onGetMetrics: jest
-    .fn()
-    .mockResolvedValue([{ label: 'random_metric' }, { label: 'unique_metric' }, { label: 'more_unique_metric' }]),
+  onGetMetrics: jest.fn().mockResolvedValue(mockValues),
 };
 
 describe('MetricSelect', () => {
@@ -25,19 +66,19 @@ describe('MetricSelect', () => {
     await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(3));
   });
 
-  it('shows option to create metric when typing', async () => {
+  it('shows option to set custom value when typing', async () => {
     render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'new');
-    await waitFor(() => expect(screen.getByText('Create: new')).toBeInTheDocument());
+    await userEvent.type(input, 'custom value');
+    await waitFor(() => expect(screen.getByText('custom value')).toBeInTheDocument());
   });
 
   it('shows searched options when typing', async () => {
     render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'unique');
+    await userEvent.type(input, 'unique');
     await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(3));
   });
 
@@ -45,7 +86,7 @@ describe('MetricSelect', () => {
     render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'more unique');
+    await userEvent.type(input, 'more unique');
     await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(2));
   });
 
@@ -53,44 +94,44 @@ describe('MetricSelect', () => {
     render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'more unique metric');
+    await userEvent.type(input, 'more unique metric');
     await waitFor(() => expect(screen.getAllByLabelText('Select option')).toHaveLength(2));
   });
 
-  it('highlihts matching string', async () => {
-    const { container } = render(<MetricSelect {...props} />);
+  it('highlights matching string', async () => {
+    render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'more');
-    await waitFor(() => expect(container.querySelectorAll('mark')).toHaveLength(1));
+    await userEvent.type(input, 'more');
+    await waitFor(() => expect(document.querySelectorAll('mark')).toHaveLength(1));
   });
 
-  it('highlihts multiple matching strings in 1 input row', async () => {
-    const { container } = render(<MetricSelect {...props} />);
+  it('highlights multiple matching strings in 1 input row', async () => {
+    render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'more metric');
-    await waitFor(() => expect(container.querySelectorAll('mark')).toHaveLength(2));
+    await userEvent.type(input, 'more metric');
+    await waitFor(() => expect(document.querySelectorAll('mark')).toHaveLength(2));
   });
 
-  it('highlihts multiple matching strings in multiple input rows', async () => {
-    const { container } = render(<MetricSelect {...props} />);
+  it('highlights multiple matching strings in multiple input rows', async () => {
+    render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'unique metric');
-    await waitFor(() => expect(container.querySelectorAll('mark')).toHaveLength(4));
+    await userEvent.type(input, 'unique metric');
+    await waitFor(() => expect(document.querySelectorAll('mark')).toHaveLength(4));
   });
 
   it('does not highlight matching string in create option', async () => {
-    const { container } = render(<MetricSelect {...props} />);
+    render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
-    userEvent.type(input, 'new');
-    await waitFor(() => expect(container.querySelector('mark')).not.toBeInTheDocument());
+    await userEvent.type(input, 'new');
+    await waitFor(() => expect(document.querySelector('mark')).not.toBeInTheDocument());
   });
 });
 
 async function openMetricSelect() {
-  const select = await screen.getByText('Select metric').parentElement!;
-  userEvent.click(select);
+  const select = screen.getByText('Select metric').parentElement!;
+  await userEvent.click(select);
 }

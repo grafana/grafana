@@ -1,20 +1,20 @@
-+++
-title = "Add support for Explore queries"
-+++
+---
+title: Add support for Explore queries
+---
 
 # Add support for Explore queries
 
-This guide explains how to improve support for [Explore]({{< relref "../../explore/_index.md" >}}) in an existing data source plugin.
+This guide explains how to improve support for [Explore]({{< relref "../../explore/" >}}) in an existing data source plugin.
 
-This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "/tutorials/build-a-data-source-plugin.md" >}}).
+This guide assumes that you're already familiar with how to [Build a data source plugin]({{< ref "build-a-data-source-plugin.md" >}}).
 
 With Explore, users can make ad-hoc queries without the use of a dashboard. This is useful when users want to troubleshoot or to learn more about the data.
 
-Your data source already supports Explore by default, and will use the existing query editor for the data source. If you want to offer extended Explore functionality for your data source however, you can define a Explore-specific query editor.
+Your data source supports Explore by default and uses the existing query editor for the data source.
 
-## Add a query editor for Explore
+## Add an Explore-specific query editor
 
-The query editor for Explore is similar to the query editor for the data source itself. In fact, you'll probably reuse the same components for both query editors.
+To extend Explore functionality for your data source, you can define an Explore-specific query editor.
 
 1. Create a file `ExploreQueryEditor.tsx` in the `src` directory of your plugin, with the following content:
 
@@ -26,60 +26,31 @@ The query editor for Explore is similar to the query editor for the data source 
    import { DataSource } from './DataSource';
    import { MyQuery, MyDataSourceOptions } from './types';
 
-   export type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
+   type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
    export default (props: Props) => {
-     return <h2>My query editor</h2>;
+     return <h2>My Explore-specific query editor</h2>;
    };
    ```
 
-1. Configure the plugin to use the `ExploreQueryEditor`.
+1. Modify your base query editor in `QueryEditor.tsx` to render the Explore-specific query editor. For example:
 
    ```ts
+   // [...]
+   import { CoreApp } from '@grafana/data';
    import ExploreQueryEditor from './ExploreQueryEditor';
-   ```
 
-   ```ts
-   export const plugin = new DataSourcePlugin<DataSource, MyQuery, MyDataSourceOptions>(DataSource)
-     .setConfigEditor(ConfigEditor)
-     .setQueryEditor(QueryEditor)
-     .setExploreQueryField(ExploreQueryEditor);
-   ```
+   type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
-1. Add a `QueryField` to `ExploreQueryEditor`.
-
-   ```ts
-   import { QueryField } from '@grafana/ui';
-   ```
-
-   ```ts
    export default (props: Props) => {
-     const { query } = props;
+     const { app } = props;
 
-     const onQueryChange = (value: string, override?: boolean) => {
-       const { query, onChange, onRunQuery } = props;
-
-       if (onChange) {
-         // Update the query whenever the query field changes.
-         onChange({ ...query, queryText: value });
-
-         // Run the query on Enter.
-         if (override && onRunQuery) {
-           onRunQuery();
-         }
-       }
-     };
-
-     return (
-       <QueryField
-         portalOrigin="mock-origin"
-         onChange={onQueryChange}
-         onRunQuery={props.onRunQuery}
-         onBlur={props.onBlur}
-         query={query.queryText || ''}
-         placeholder="Enter a query"
-       />
-     );
+     switch (app) {
+       case CoreApp.Explore:
+         return <ExploreQueryEditor {...props} />;
+       default:
+         return <div>My base query editor</div>;
+     }
    };
    ```
 
@@ -100,4 +71,4 @@ const firstResult = new MutableDataFrame({
 });
 ```
 
-For possible options, refer to [PreferredVisualisationType](https://grafana.com/docs/grafana/latest/packages_api/data/preferredvisualisationtype/).
+For possible options, refer to [PreferredVisualisationType](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/data.ts#L25).

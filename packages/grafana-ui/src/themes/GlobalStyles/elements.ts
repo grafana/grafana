@@ -1,5 +1,7 @@
 import { css } from '@emotion/react';
+
 import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
+
 import { getFocusStyles } from '../mixins';
 
 export function getElementStyles(theme: GrafanaTheme2) {
@@ -12,6 +14,10 @@ export function getElementStyles(theme: GrafanaTheme2) {
       font-family: ${theme.typography.fontFamily};
       line-height: ${theme.typography.body.lineHeight};
       font-kerning: normal;
+    }
+
+    :root {
+      color-scheme: ${theme.colors.mode};
     }
 
     body {
@@ -153,13 +159,19 @@ export function getElementStyles(theme: GrafanaTheme2) {
     .text-center {
       text-align: center;
     }
+
+    .highlight-search-match {
+      background: ${theme.components.textHighlight.background};
+      color: ${theme.components.textHighlight.text};
+      padding: 0;
+    }
   `;
 }
 
 export function getVariantStyles(variant: ThemeTypographyVariant) {
   return `
     margin: 0;
-    font-size: ${variant.fontSize};    
+    font-size: ${variant.fontSize};
     line-height: ${variant.lineHeight};
     font-weight: ${variant.fontWeight};
     letter-spacing: ${variant.letterSpacing};

@@ -1,10 +1,14 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2, toOption } from '@grafana/data';
-import { FlexItem } from '@grafana/experimental';
-import { IconButton, Input, Select, useStyles2 } from '@grafana/ui';
 import React from 'react';
+
+import { GrafanaTheme2, toOption } from '@grafana/data';
+import { EditorRows, FlexItem } from '@grafana/experimental';
+import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
+
 import { PrometheusDatasource } from '../../datasource';
+import { binaryScalarDefs } from '../binaryScalarOperations';
 import { PromVisualQueryBinary } from '../types';
+
 import { PromQueryBuilder } from './PromQueryBuilder';
 
 export interface Props {
@@ -14,9 +18,11 @@ export interface Props {
   onChange: (index: number, update: PromVisualQueryBinary) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
+  showExplain: boolean;
 }
 
-export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, onChange, onRemove, onRunQuery }) => {
+export const NestedQuery = React.memo<Props>((props) => {
+  const { nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain } = props;
   const styles = useStyles2(getStyles);
 
   return (
@@ -35,70 +41,89 @@ export const NestedQuery = React.memo<Props>(({ nestedQuery, index, datasource, 
           }}
         />
         <div className={styles.name}>Vector matches</div>
-
-        <Input
-          width={20}
-          defaultValue={nestedQuery.vectorMatches}
-          onBlur={(evt) => {
-            onChange(index, {
-              ...nestedQuery,
-              vectorMatches: evt.currentTarget.value,
-            });
-          }}
-        />
-
+        <div className={styles.vectorMatchWrapper}>
+          <Select<PromVisualQueryBinary['vectorMatchesType']>
+            width="auto"
+            value={nestedQuery.vectorMatchesType || 'on'}
+            allowCustomValue
+            options={[
+              { value: 'on', label: 'on' },
+              { value: 'ignoring', label: 'ignoring' },
+            ]}
+            onChange={(val) => {
+              onChange(index, {
+                ...nestedQuery,
+                vectorMatchesType: val.value,
+              });
+            }}
+          />
+          <AutoSizeInput
+            className={styles.vectorMatchInput}
+            minWidth={20}
+            defaultValue={nestedQuery.vectorMatches}
+            onCommitChange={(evt) => {
+              onChange(index, {
+                ...nestedQuery,
+                vectorMatches: evt.currentTarget.value,
+                vectorMatchesType: nestedQuery.vectorMatchesType || 'on',
+              });
+            }}
+          />
+        </div>
         <FlexItem grow={1} />
         <IconButton name="times" size="sm" onClick={() => onRemove(index)} />
       </div>
       <div className={styles.body}>
-        <PromQueryBuilder
-          query={nestedQuery.query}
-          datasource={datasource}
-          nested={true}
-          onRunQuery={onRunQuery}
-          onChange={(update) => {
-            onChange(index, { ...nestedQuery, query: update });
-          }}
-        />
+        <EditorRows>
+          <PromQueryBuilder
+            showExplain={showExplain}
+            query={nestedQuery.query}
+            datasource={datasource}
+            onRunQuery={onRunQuery}
+            onChange={(update) => {
+              onChange(index, { ...nestedQuery, query: update });
+            }}
+          />
+        </EditorRows>
       </div>
     </div>
   );
 });
 
-const operators = [
-  { label: '/', value: '/' },
-  { label: '*', value: '*' },
-  { label: '+', value: '+' },
-  { label: '==', value: '==' },
-  { label: '>', value: '>' },
-  { label: '<', value: '<' },
-];
+const operators = binaryScalarDefs.map((def) => ({ label: def.sign, value: def.sign }));
 
 NestedQuery.displayName = 'NestedQuery';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     card: css({
-      background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.medium}`,
+      label: 'card',
       display: 'flex',
       flexDirection: 'column',
-      cursor: 'grab',
-      borderRadius: theme.shape.borderRadius(1),
+      gap: theme.spacing(0.5),
     }),
     header: css({
-      borderBottom: `1px solid ${theme.colors.border.medium}`,
+      label: 'header',
       padding: theme.spacing(0.5, 0.5, 0.5, 1),
       gap: theme.spacing(1),
       display: 'flex',
       alignItems: 'center',
     }),
     name: css({
+      label: 'name',
       whiteSpace: 'nowrap',
     }),
     body: css({
-      margin: theme.spacing(1, 1, 0.5, 1),
-      display: 'table',
+      label: 'body',
+      paddingLeft: theme.spacing(2),
+    }),
+    vectorMatchInput: css({
+      label: 'vectorMatchInput',
+      marginLeft: -1,
+    }),
+    vectorMatchWrapper: css({
+      label: 'vectorMatchWrapper',
+      display: 'flex',
     }),
   };
 };

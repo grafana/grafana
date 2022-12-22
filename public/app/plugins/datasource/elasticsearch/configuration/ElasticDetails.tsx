@@ -1,9 +1,10 @@
 import React from 'react';
+import { valid } from 'semver';
+
+import { DataSourceSettings, SelectableValue, isTruthy } from '@grafana/data';
 import { FieldSet, InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
+
 import { ElasticsearchOptions, Interval } from '../types';
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { gte, lt, valid } from 'semver';
-import { isTruthy } from './utils';
 
 const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'No pattern', value: 'none' },
@@ -15,12 +16,6 @@ const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
 ];
 
 const esVersions: SelectableValue[] = [
-  { label: '2.x', value: '2.0.0' },
-  { label: '5.x', value: '5.0.0' },
-  { label: '5.6+', value: '5.6.0' },
-  { label: '6.0+', value: '6.0.0' },
-  { label: '7.0+', value: '7.0.0' },
-  { label: '7.7+', value: '7.7.0' },
   { label: '7.10+', value: '7.10.0' },
   {
     label: '8.0+',
@@ -65,7 +60,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             options={indexPatternTypes}
             onChange={intervalHandler(value, onChange)}
             width={24}
-            menuShouldPortal
           />
         </InlineField>
 
@@ -86,8 +80,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             options={[customOption, ...esVersions].filter(isTruthy)}
             onChange={(option) => {
               const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
-                value.jsonData.maxConcurrentShardRequests,
-                option.value!
+                value.jsonData.maxConcurrentShardRequests
               );
               onChange({
                 ...value,
@@ -100,20 +93,17 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             }}
             value={currentVersion || customOption}
             width={24}
-            menuShouldPortal
           />
         </InlineField>
 
-        {gte(value.jsonData.esVersion, '5.6.0') && (
-          <InlineField label="Max concurrent Shard Requests" labelWidth={26}>
-            <Input
-              id="es_config_shardRequests"
-              value={value.jsonData.maxConcurrentShardRequests || ''}
-              onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
-              width={24}
-            />
-          </InlineField>
-        )}
+        <InlineField label="Max concurrent Shard Requests" labelWidth={26}>
+          <Input
+            id="es_config_shardRequests"
+            value={value.jsonData.maxConcurrentShardRequests || ''}
+            onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
+            width={24}
+          />
+        </InlineField>
 
         <InlineField
           label="Min time interval"
@@ -144,7 +134,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           />
         </InlineField>
 
-        {gte(value.jsonData.esVersion, '6.6.0') && value.jsonData.xpack && (
+        {value.jsonData.xpack && (
           <InlineField label="Include Frozen Indices" labelWidth={26}>
             <InlineSwitch
               id="es_config_frozenIndices"
@@ -229,18 +219,14 @@ const intervalHandler =
     }
   };
 
-function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined, version: string): number {
-  if (maxConcurrentShardRequests === 5 && lt(version, '7.0.0')) {
-    return 256;
-  }
-
-  if (maxConcurrentShardRequests === 256 && gte(version, '7.0.0')) {
+function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined): number {
+  if (maxConcurrentShardRequests === 256) {
     return 5;
   }
 
-  return maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(version);
+  return maxConcurrentShardRequests || defaultMaxConcurrentShardRequests();
 }
 
-export function defaultMaxConcurrentShardRequests(version: string) {
-  return gte(version, '7.0.0') ? 5 : 256;
+export function defaultMaxConcurrentShardRequests() {
+  return 5;
 }

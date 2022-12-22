@@ -1,18 +1,19 @@
-import React, { useState } from 'react';
-import { Button, CodeEditor, Table, useStyles, Field } from '@grafana/ui';
-import { ChannelFrame, Rule } from './types';
-import { getBackendSrv, config } from '@grafana/runtime';
 import { css } from '@emotion/css';
-import { dataFrameFromJSON, getDisplayProcessor, GrafanaTheme } from '@grafana/data';
+import React, { useState } from 'react';
+
+import { dataFrameFromJSON, getDisplayProcessor } from '@grafana/data';
+import { getBackendSrv, config } from '@grafana/runtime';
+import { Button, CodeEditor, Table, Field } from '@grafana/ui';
+
+import { ChannelFrame, Rule } from './types';
 
 interface Props {
   rule: Rule;
 }
 
-export const RuleTest: React.FC<Props> = (props) => {
+export const RuleTest = (props: Props) => {
   const [response, setResponse] = useState<ChannelFrame[]>();
   const [data, setData] = useState<string>();
-  const styles = useStyles(getStyles);
 
   const onBlur = (text: string) => {
     setData(text);
@@ -70,10 +71,8 @@ export const RuleTest: React.FC<Props> = (props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
-  return {
-    margin: css`
-      margin-bottom: 15px;
-    `,
-  };
+const styles = {
+  margin: css`
+    margin-bottom: 15px;
+  `,
 };

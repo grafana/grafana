@@ -1,7 +1,7 @@
-import { once, chain, difference } from 'lodash';
+import { chain, difference, once } from 'lodash';
 import LRU from 'lru-cache';
-import { Value } from 'slate';
 import Prism from 'prismjs';
+import { Value } from 'slate';
 
 import {
   AbstractLabelMatcher,
@@ -11,8 +11,10 @@ import {
   HistoryItem,
   LanguageProvider,
 } from '@grafana/data';
+import { BackendSrvRequest } from '@grafana/runtime';
 import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
+import { PrometheusDatasource } from './datasource';
 import {
   addLimitInfo,
   extractLabelMatchers,
@@ -24,8 +26,6 @@ import {
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
-
-import { PrometheusDatasource } from './datasource';
 import { PromMetricsMetadata, PromQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
@@ -63,10 +63,17 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
 function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): CompletionItem {
   const item: CompletionItem = { label: metric };
   if (metadata && metadata[metric]) {
-    const { type, help } = metadata[metric];
-    item.documentation = `${type.toUpperCase()}: ${help}`;
+    item.documentation = getMetadataString(metric, metadata);
   }
   return item;
+}
+
+export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  if (!metadata[metric]) {
+    return undefined;
+  }
+  const { type, help } = metadata[metric];
+  return `${type.toUpperCase()}: ${help}`;
 }
 
 const PREFIX_DELIMITER_REGEX =
@@ -90,7 +97,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    *  not account for different size of a response. If that is needed a `length` function can be added in the options.
    *  10 as a max size is totally arbitrary right now.
    */
-  private labelsCache = new LRU<string, Record<string, string[]>>(10);
+  private labelsCache = new LRU<string, Record<string, string[]>>({ max: 10 });
 
   constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
     super();
@@ -114,9 +121,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return PromqlSyntax;
   }
 
-  request = async (url: string, defaultValue: any, params = {}): Promise<any> => {
+  request = async (url: string, defaultValue: any, params = {}, options?: Partial<BackendSrvRequest>): Promise<any> => {
     try {
-      const res = await this.datasource.metadataRequest(url, params);
+      const res = await this.datasource.metadataRequest(url, params, options);
       return res.data.data;
     } catch (error) {
       console.error(error);
@@ -133,10 +140,16 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // TODO #33976: make those requests parallel
     await this.fetchLabels();
     this.metrics = (await this.fetchLabelValues('__name__')) || [];
-    this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
+    await this.loadMetricsMetadata();
     this.histogramMetrics = processHistogramMetrics(this.metrics).sort();
     return [];
   };
+
+  async loadMetricsMetadata() {
+    this.metricsMetadata = fixSummariesMetadata(
+      await this.request('/api/v1/metadata', {}, {}, { showErrorAlert: false })
+    );
+  }
 
   getLabelKeys(): string[] {
     return this.labelKeys;
@@ -458,6 +471,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
   }
 
+  /**
+   * @todo cache
+   * @param key
+   */
   fetchLabelValues = async (key: string): Promise<string[]> => {
     const params = this.datasource.getTimeRangeParams();
     const url = `/api/v1/label/${this.datasource.interpolateString(key)}/values`;
@@ -485,7 +502,22 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetch labels for a series. This is cached by it's args but also by the global timeRange currently selected as
+   * Fetches all values for a label, with optional match[]
+   * @param name
+   * @param match
+   */
+  fetchSeriesValues = async (name: string, match?: string): Promise<string[]> => {
+    const interpolatedName = name ? this.datasource.interpolateString(name) : null;
+    const range = this.datasource.getTimeRangeParams();
+    const urlParams = {
+      ...range,
+      ...(interpolatedName && { 'match[]': match }),
+    };
+    return await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
+  };
+
+  /**
+   * Fetch labels for a series using /series endpoint. This is cached by its args but also by the global timeRange currently selected as
    * they can change over requested time.
    * @param name
    * @param withName
@@ -515,6 +547,42 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       const data = await this.request(url, [], urlParams);
       const { values } = processLabels(data, withName);
       value = values;
+      this.labelsCache.set(cacheKey, value);
+    }
+    return value;
+  };
+
+  /**
+   * Fetch labels for a series using /labels endpoint.  This is cached by its args but also by the global timeRange currently selected as
+   * they can change over requested time.
+   * @param name
+   * @param withName
+   */
+  fetchSeriesLabelsMatch = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
+    const interpolatedName = this.datasource.interpolateString(name);
+    const range = this.datasource.getTimeRangeParams();
+    const urlParams = {
+      ...range,
+      'match[]': interpolatedName,
+    };
+    const url = `/api/v1/labels`;
+    // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
+    // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
+    // millisecond while still actually getting all the keys for the correct interval. This still can create problems
+    // when user does not the newest values for a minute if already cached.
+    const cacheParams = new URLSearchParams({
+      'match[]': interpolatedName,
+      start: roundSecToMin(parseInt(range.start, 10)).toString(),
+      end: roundSecToMin(parseInt(range.end, 10)).toString(),
+      withName: withName ? 'true' : 'false',
+    });
+
+    const cacheKey = `${url}?${cacheParams.toString()}`;
+    let value = this.labelsCache.get(cacheKey);
+    if (!value) {
+      const data: string[] = await this.request(url, [], urlParams);
+      // Convert string array to Record<string , []>
+      value = data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
       this.labelsCache.set(cacheKey, value);
     }
     return value;

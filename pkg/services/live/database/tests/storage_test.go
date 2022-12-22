@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package tests
 
 import (
@@ -12,7 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLiveMessage(t *testing.T) {
+func TestIntegrationLiveMessage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	storage := SetupTestStorage(t)
 
 	getQuery := &models.GetLiveMessageQuery{

@@ -27,7 +27,7 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 	if plugin.Parent != nil {
 		if plugin.IsCorePlugin() || plugin.Signature == plugins.SignatureInternal {
 			s.log.Debug("Not setting descendant plugin's signature to that of root since it's core or internal",
-				"plugin", plugin.ID, "signature", plugin.Signature, "isCore", plugin.IsCorePlugin)
+				"plugin", plugin.ID, "signature", plugin.Signature, "isCore", plugin.IsCorePlugin())
 		} else {
 			s.log.Debug("Setting descendant plugin's signature to that of root", "plugin", plugin.ID,
 				"root", plugin.Parent.ID, "signature", plugin.Signature, "rootSignature", plugin.Parent.Signature)
@@ -54,7 +54,7 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 				SignatureStatus: plugins.SignatureUnsigned,
 			}
 		}
-		s.log.Warn("Permitting unsigned plugin. This is not recommended", "pluginID", plugin.ID, "pluginDir", plugin.PluginDir)
+		s.log.Warn("Permitting unsigned plugin. This is not recommended", "pluginID", plugin.ID)
 		return nil
 	case plugins.SignatureInvalid:
 		s.log.Debug("Plugin has an invalid signature", "pluginID", plugin.ID)

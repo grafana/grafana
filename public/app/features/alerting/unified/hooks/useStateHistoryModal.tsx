@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
+
 import { Modal } from '@grafana/ui';
+
 import { StateHistory } from '../components/rules/StateHistory';
 
 function useStateHistoryModal(alertId: string) {

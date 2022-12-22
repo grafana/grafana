@@ -7,14 +7,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	fd "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,15 +49,11 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 // A mock implementation of the AlertStore interface, allowing to override certain methods individually
 type AlertStoreMock struct {
 	getAllAlerts                       func(context.Context, *models.GetAllAlertsQuery) error
-	getDataSource                      func(context.Context, *models.GetDataSourceQuery) error
 	getAlertNotificationsWithUidToSend func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
 	getOrCreateNotificationState       func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error
 }
 
-func (a *AlertStoreMock) GetDataSource(c context.Context, cmd *models.GetDataSourceQuery) error {
-	if a.getDataSource != nil {
-		return a.getDataSource(c, cmd)
-	}
+func (a *AlertStoreMock) GetAlertById(c context.Context, cmd *models.GetAlertByIdQuery) error {
 	return nil
 }
 
@@ -62,6 +61,10 @@ func (a *AlertStoreMock) GetAllAlertQueryHandler(c context.Context, cmd *models.
 	if a.getAllAlerts != nil {
 		return a.getAllAlerts(c, cmd)
 	}
+	return nil
+}
+
+func (a *AlertStoreMock) GetAlertNotificationUidWithId(c context.Context, query *models.GetAlertNotificationUidQuery) error {
 	return nil
 }
 
@@ -95,14 +98,38 @@ func (a *AlertStoreMock) SetAlertState(_ context.Context, _ *models.SetAlertStat
 	return nil
 }
 
+func (a *AlertStoreMock) GetAlertStatesForDashboard(_ context.Context, _ *models.GetAlertStatesForDashboardQuery) error {
+	return nil
+}
+
+func (a *AlertStoreMock) HandleAlertsQuery(context.Context, *models.GetAlertsQuery) error {
+	return nil
+}
+
+func (a *AlertStoreMock) PauseAlert(context.Context, *models.PauseAlertCommand) error {
+	return nil
+}
+
+func (a *AlertStoreMock) PauseAllAlerts(context.Context, *models.PauseAllAlertCommand) error {
+	return nil
+}
+
 func TestEngineProcessJob(t *testing.T) {
-	bus := bus.New()
 	usMock := &usagestats.UsageStatsMock{T: t}
-	tracer, err := tracing.InitializeTracerForTest()
+
+	encProvider := encryptionprovider.ProvideEncryptionProvider()
+	cfg := setting.NewCfg()
+	settings := &setting.OSSImpl{Cfg: cfg}
+
+	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, settings)
 	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	store := &AlertStoreMock{}
-	engine := ProvideAlertEngine(nil, bus, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg())
+	dsMock := &fd.FakeDataSourceService{
+		DataSources: []*datasources.DataSource{{Id: 1, Type: datasources.DS_PROMETHEUS}},
+	}
+	engine := ProvideAlertEngine(nil, nil, nil, usMock, encService, nil, tracer, store, setting.NewCfg(), nil, nil, localcache.New(time.Minute, time.Minute), dsMock, annotationstest.NewFakeAnnotationsRepo())
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
@@ -116,11 +143,6 @@ func TestEngineProcessJob(t *testing.T) {
 				return err
 			}
 			q.Result = []*models.Alert{{Settings: settings}}
-			return nil
-		}
-
-		store.getDataSource = func(ctx context.Context, q *models.GetDataSourceQuery) error {
-			q.Result = &models.DataSource{Id: 1, Type: models.DS_PROMETHEUS}
 			return nil
 		}
 

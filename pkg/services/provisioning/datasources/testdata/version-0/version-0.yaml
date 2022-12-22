@@ -4,12 +4,10 @@ datasources:
     access: proxy
     org_id: 2
     url: url
-    password: password
     user: user
     database: database
     basic_auth: true
     basic_auth_user: basic_auth_user
-    basic_auth_password: basic_auth_password
     with_credentials: true
     is_default: true
     json_data:

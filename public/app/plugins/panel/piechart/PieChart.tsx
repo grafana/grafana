@@ -1,5 +1,13 @@
+import { css } from '@emotion/css';
+import { localPoint } from '@visx/event';
+import { RadialGradient } from '@visx/gradient';
+import { Group } from '@visx/group';
+import Pie, { PieArcDatum, ProvidedProps } from '@visx/shape/lib/shapes/Pie';
+import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
+import { UseTooltipParams } from '@visx/tooltip/lib/hooks/useTooltip';
 import React, { FC, useCallback } from 'react';
-import { VizTooltipOptions } from '@grafana/schema';
+import tinycolor from 'tinycolor2';
+
 import {
   FieldDisplay,
   FALLBACK_COLOR,
@@ -8,6 +16,8 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { VizTooltipOptions } from '@grafana/schema';
 import {
   useTheme2,
   useStyles2,
@@ -16,19 +26,10 @@ import {
   SeriesTable,
   usePanelContext,
 } from '@grafana/ui';
-import { PieChartType, PieChartLabels } from './types';
-import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
-import Pie, { PieArcDatum, ProvidedProps } from '@visx/shape/lib/shapes/Pie';
-import { UseTooltipParams } from '@visx/tooltip/lib/hooks/useTooltip';
-import { RadialGradient } from '@visx/gradient';
-import { localPoint } from '@visx/event';
-import { Group } from '@visx/group';
-import tinycolor from 'tinycolor2';
-import { css } from '@emotion/css';
-
-import { useComponentInstanceId } from '@grafana/ui/src/utils/useComponetInstanceId';
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
-import { selectors } from '@grafana/e2e-selectors';
+import { useComponentInstanceId } from '@grafana/ui/src/utils/useComponetInstanceId';
+
+import { PieChartType, PieChartLabels } from './models.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 /**
@@ -117,7 +118,7 @@ export const PieChart: FC<PieChartProps> = ({
 
                   if (arc.data.hasLinks && arc.data.getLinks) {
                     return (
-                      <DataLinksContextMenu config={arc.data.field} key={arc.index} links={arc.data.getLinks}>
+                      <DataLinksContextMenu key={arc.index} links={arc.data.getLinks}>
                         {(api) => (
                           <PieSlice
                             tooltip={tooltip}
@@ -198,7 +199,7 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
   const { eventBus } = usePanelContext();
 
   const onMouseOut = useCallback(
-    (event: any) => {
+    (event: React.MouseEvent<SVGGElement>) => {
       eventBus?.publish({
         type: DataHoverClearEvent.type,
         payload: {
@@ -214,7 +215,7 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
   );
 
   const onMouseMoveOverArc = useCallback(
-    (event: any) => {
+    (event: React.MouseEvent<SVGGElement>) => {
       eventBus?.publish({
         type: DataHoverEvent.type,
         payload: {
@@ -225,12 +226,16 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
         },
       });
 
-      const coords = localPoint(event.target.ownerSVGElement, event);
-      tooltip.showTooltip({
-        tooltipLeft: coords!.x,
-        tooltipTop: coords!.y,
-        tooltipData: getTooltipData(pie, arc, tooltipOptions),
-      });
+      const owner = event.currentTarget.ownerSVGElement;
+
+      if (owner) {
+        const coords = localPoint(owner, event);
+        tooltip.showTooltip({
+          tooltipLeft: coords!.x,
+          tooltipTop: coords!.y,
+          tooltipData: getTooltipData(pie, arc, tooltipOptions),
+        });
+      }
     },
     [eventBus, arc, tooltip, pie, tooltipOptions]
   );
@@ -313,14 +318,19 @@ function getTooltipData(
   tooltipOptions: VizTooltipOptions
 ) {
   if (tooltipOptions.mode === 'multi') {
-    return pie.arcs.map((pieArc) => {
-      return {
-        color: pieArc.data.display.color ?? FALLBACK_COLOR,
-        label: pieArc.data.display.title,
-        value: formattedValueToString(pieArc.data.display),
-        isActive: pieArc.index === arc.index,
-      };
-    });
+    return pie.arcs
+      .filter((pa) => {
+        const field = pa.data.field;
+        return field && !field.custom?.hideFrom?.tooltip && !field.custom?.hideFrom?.viz;
+      })
+      .map((pieArc) => {
+        return {
+          color: pieArc.data.display.color ?? FALLBACK_COLOR,
+          label: pieArc.data.display.title,
+          value: formattedValueToString(pieArc.data.display),
+          isActive: pieArc.index === arc.index,
+        };
+      });
   }
   return [
     {

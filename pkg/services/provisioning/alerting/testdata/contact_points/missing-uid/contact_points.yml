@@ -1,0 +1,7 @@
+apiVersion: 1
+contactPoints:
+  - name: cp_1
+    receivers:
+    - type: prometheus-alertmanager
+      settings:
+        url: http://test:9000

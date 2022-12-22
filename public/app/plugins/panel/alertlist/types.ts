@@ -18,6 +18,11 @@ export enum GroupMode {
   Custom = 'custom',
 }
 
+export enum ViewMode {
+  List = 'list',
+  Stat = 'stat',
+}
+
 export interface AlertListOptions {
   showOptions: ShowOption;
   maxItems: number;
@@ -40,7 +45,7 @@ export interface AlertListOptions {
 interface StateFilter {
   firing: boolean;
   pending: boolean;
-  inactive: boolean;
+  inactive?: boolean; // backwards compat
   noData: boolean;
   normal: boolean;
   error: boolean;
@@ -58,6 +63,7 @@ export interface UnifiedAlertListOptions {
   stateFilter: StateFilter;
   alertInstanceLabelFilter: string;
   datasource: string;
+  viewMode: ViewMode;
 }
 
 export type GroupedRules = Map<string, Alert[]>;

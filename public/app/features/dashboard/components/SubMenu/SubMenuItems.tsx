@@ -1,13 +1,16 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { VariableHide, VariableModel } from '../../../variables/types';
+
 import { selectors } from '@grafana/e2e-selectors';
+
 import { PickerRenderer } from '../../../variables/pickers/PickerRenderer';
+import { VariableHide, VariableModel } from '../../../variables/types';
 
 interface Props {
   variables: VariableModel[];
+  readOnly?: boolean;
 }
 
-export const SubMenuItems: FunctionComponent<Props> = ({ variables }) => {
+export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly }) => {
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
 
   useEffect(() => {
@@ -27,7 +30,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables }) => {
             className="submenu-item gf-form-inline"
             data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
           >
-            <PickerRenderer variable={variable} />
+            <PickerRenderer variable={variable} readOnly={readOnly} />
           </div>
         );
       })}

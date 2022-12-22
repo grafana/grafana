@@ -1,7 +1,8 @@
-import { SearchSrv } from 'app/core/services/search_srv';
-import impressionSrv from 'app/core/services/impression_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { beforeEach } from 'test/lib/common';
+import impressionSrv from 'app/core/services/impression_srv';
+import { SearchSrv } from 'app/core/services/search_srv';
+import { DashboardSearchItem } from 'app/features/search/types';
+
 import { backendSrv } from '../services/backend_srv';
 
 jest.mock('app/core/store', () => {
@@ -26,7 +27,7 @@ describe('SearchSrv', () => {
     searchSrv = new SearchSrv();
 
     contextSrv.isSignedIn = true;
-    impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([]);
+    impressionSrv.getDashboardOpened = jest.fn().mockResolvedValue([]);
     jest.clearAllMocks();
   });
 
@@ -34,19 +35,17 @@ describe('SearchSrv', () => {
     let results: any;
 
     beforeEach(() => {
-      searchMock.mockImplementation(
-        jest
-          .fn()
-          .mockReturnValueOnce(
-            Promise.resolve([
-              { id: 2, title: 'second but first' },
-              { id: 1, title: 'first but second' },
-            ])
-          )
-          .mockReturnValue(Promise.resolve([]))
-      );
+      searchMock.mockImplementation((options) => {
+        if (options.dashboardUIDs) {
+          return Promise.resolve([
+            { uid: 'DSNdW0gVk', title: 'second but first' },
+            { uid: 'srx16xR4z', title: 'first but second' },
+          ] as DashboardSearchItem[]);
+        }
+        return Promise.resolve([]);
+      });
 
-      impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([1, 2]);
+      impressionSrv.getDashboardOpened = jest.fn().mockResolvedValue(['srx16xR4z', 'DSNdW0gVk']);
 
       return searchSrv.search({ query: '' }).then((res) => {
         results = res;
@@ -66,19 +65,19 @@ describe('SearchSrv', () => {
       let results: any;
 
       beforeEach(() => {
-        searchMock.mockImplementation(
-          jest
-            .fn()
-            .mockReturnValueOnce(
-              Promise.resolve([
-                { id: 2, title: 'two' },
-                { id: 1, title: 'one' },
-              ])
-            )
-            .mockReturnValue(Promise.resolve([]))
-        );
+        searchMock.mockImplementation((options) => {
+          if (options.dashboardUIDs) {
+            return Promise.resolve([
+              { uid: 'DSNdW0gVk', title: 'two' },
+              { uid: 'srx16xR4z', title: 'one' },
+            ] as DashboardSearchItem[]);
+          }
+          return Promise.resolve([]);
+        });
 
-        impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([4, 5, 1, 2, 3]);
+        impressionSrv.getDashboardOpened = jest
+          .fn()
+          .mockResolvedValue(['Xrx16x4z', 'CSxdW0gYA', 'srx16xR4z', 'DSNdW0gVk', 'xSxdW0gYA']);
 
         return searchSrv.search({ query: '' }).then((res) => {
           results = res;
@@ -87,8 +86,8 @@ describe('SearchSrv', () => {
 
       it('should return 2 dashboards', () => {
         expect(results[0].items.length).toBe(2);
-        expect(results[0].items[0].id).toBe(1);
-        expect(results[0].items[1].id).toBe(2);
+        expect(results[0].items[0].uid).toBe('srx16xR4z');
+        expect(results[0].items[1].uid).toBe('DSNdW0gVk');
       });
     });
   });
@@ -97,7 +96,12 @@ describe('SearchSrv', () => {
     let results: any;
 
     beforeEach(() => {
-      searchMock.mockImplementation(jest.fn().mockReturnValue(Promise.resolve([{ id: 1, title: 'starred' }])));
+      searchMock.mockImplementation((options) => {
+        if (options.starred) {
+          return Promise.resolve([{ uid: '1', title: 'starred' }] as DashboardSearchItem[]);
+        }
+        return Promise.resolve([]);
+      });
 
       return searchSrv.search({ query: '' }).then((res) => {
         results = res;
@@ -114,19 +118,17 @@ describe('SearchSrv', () => {
     let results: any;
 
     beforeEach(() => {
-      searchMock.mockImplementation(
-        jest
-          .fn()
-          .mockReturnValueOnce(
-            Promise.resolve([
-              { id: 1, title: 'starred and recent', isStarred: true },
-              { id: 2, title: 'recent' },
-            ])
-          )
-          .mockReturnValue(Promise.resolve([{ id: 1, title: 'starred and recent' }]))
-      );
+      searchMock.mockImplementation((options) => {
+        if (options.dashboardUIDs) {
+          return Promise.resolve([
+            { uid: 'srx16xR4z', title: 'starred and recent', isStarred: true },
+            { uid: 'DSNdW0gVk', title: 'recent' },
+          ] as DashboardSearchItem[]);
+        }
+        return Promise.resolve([{ uid: 'srx16xR4z', title: 'starred and recent' }] as DashboardSearchItem[]);
+      });
 
-      impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([1, 2]);
+      impressionSrv.getDashboardOpened = jest.fn().mockResolvedValue(['srx16xR4z', 'DSNdW0gVk']);
       return searchSrv.search({ query: '' }).then((res) => {
         results = res;
       });
@@ -150,30 +152,30 @@ describe('SearchSrv', () => {
       searchMock.mockImplementation(
         jest
           .fn()
-          .mockReturnValueOnce(Promise.resolve([]))
-          .mockReturnValue(
+          .mockResolvedValueOnce(Promise.resolve([]))
+          .mockResolvedValue(
             Promise.resolve([
               {
                 title: 'folder1',
                 type: 'dash-folder',
-                id: 1,
+                uid: 'folder-1',
               },
               {
                 title: 'dash with no folder',
                 type: 'dash-db',
-                id: 2,
+                uid: '2',
               },
               {
                 title: 'dash in folder1 1',
                 type: 'dash-db',
-                id: 3,
-                folderId: 1,
+                uid: '3',
+                folderUid: 'folder-1',
               },
               {
                 title: 'dash in folder1 2',
                 type: 'dash-db',
-                id: 4,
-                folderId: 1,
+                uid: '4',
+                folderUid: 'folder-1',
               },
             ])
           )
@@ -198,24 +200,20 @@ describe('SearchSrv', () => {
 
     beforeEach(() => {
       searchMock.mockImplementation(
-        jest.fn().mockReturnValue(
-          Promise.resolve([
-            {
-              id: 2,
-              title: 'dash with no folder',
-              type: 'dash-db',
-            },
-            {
-              id: 3,
-              title: 'dash in folder1 1',
-              type: 'dash-db',
-              folderId: 1,
-              folderUid: 'uid',
-              folderTitle: 'folder1',
-              folderUrl: '/dashboards/f/uid/folder1',
-            },
-          ])
-        )
+        jest.fn().mockResolvedValue([
+          {
+            folderUid: 'dash-with-no-folder-uid',
+            title: 'dash with no folder',
+            type: 'dash-db',
+          },
+          {
+            title: 'dash in folder1 1',
+            type: 'dash-db',
+            folderUid: 'uid',
+            folderTitle: 'folder1',
+            folderUrl: '/dashboards/f/uid/folder1',
+          },
+        ])
       );
 
       return searchSrv.search({ query: 'search' }).then((res) => {
@@ -229,8 +227,7 @@ describe('SearchSrv', () => {
 
     it('should group results by folder', () => {
       expect(results).toHaveLength(2);
-      expect(results[0].id).toEqual(0);
-      expect(results[1].id).toEqual(1);
+      expect(results[0].uid).toEqual('dash-with-no-folder-uid');
       expect(results[1].uid).toEqual('uid');
       expect(results[1].title).toEqual('folder1');
       expect(results[1].url).toEqual('/dashboards/f/uid/folder1');
@@ -239,7 +236,7 @@ describe('SearchSrv', () => {
 
   describe('with tags', () => {
     beforeEach(() => {
-      searchMock.mockImplementation(jest.fn().mockReturnValue(Promise.resolve([])));
+      searchMock.mockImplementation(jest.fn().mockResolvedValue(Promise.resolve([])));
 
       return searchSrv.search({ tag: ['atag'] }).then(() => {});
     });
@@ -251,7 +248,7 @@ describe('SearchSrv', () => {
 
   describe('with starred', () => {
     beforeEach(() => {
-      searchMock.mockImplementation(jest.fn().mockReturnValue(Promise.resolve([])));
+      searchMock.mockImplementation(jest.fn().mockResolvedValue(Promise.resolve([])));
 
       return searchSrv.search({ starred: true }).then(() => {});
     });
@@ -265,7 +262,7 @@ describe('SearchSrv', () => {
     let getRecentDashboardsCalled = false;
 
     beforeEach(() => {
-      searchMock.mockImplementation(jest.fn().mockReturnValue(Promise.resolve([])));
+      searchMock.mockImplementation(jest.fn().mockResolvedValue(Promise.resolve([])));
 
       searchSrv['getRecentDashboards'] = () => {
         getRecentDashboardsCalled = true;
@@ -284,8 +281,8 @@ describe('SearchSrv', () => {
     let getStarredCalled = false;
 
     beforeEach(() => {
-      searchMock.mockImplementation(jest.fn().mockReturnValue(Promise.resolve([])));
-      impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([]);
+      searchMock.mockImplementation(jest.fn().mockResolvedValue(Promise.resolve([])));
+      impressionSrv.getDashboardOpened = jest.fn().mockResolvedValue([]);
 
       searchSrv['getStarred'] = () => {
         getStarredCalled = true;

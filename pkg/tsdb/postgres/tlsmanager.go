@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -122,7 +121,7 @@ func writeCertFile(logger log.Logger, fileContent string, generatedFilePath stri
 	fileContent = strings.TrimSpace(fileContent)
 	if fileContent != "" {
 		logger.Debug("Writing cert file", "path", generatedFilePath)
-		if err := ioutil.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
+		if err := os.WriteFile(generatedFilePath, []byte(fileContent), 0600); err != nil {
 			return err
 		}
 		// Make sure the file has the permissions expected by the Postgresql driver, otherwise it will bail

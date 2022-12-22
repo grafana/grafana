@@ -1,8 +1,9 @@
-import { SelectableValue } from '@grafana/data';
-import { Select } from '@grafana/ui';
 import React, { FC, useMemo } from 'react';
 
-import { QueryEditorField } from '.';
+import { SelectableValue } from '@grafana/data';
+import { EditorField } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
+
 import { getAggregationOptionsByMetric } from '../functions';
 import { MetricDescriptor, MetricKind, ValueTypes } from '../types';
 
@@ -20,15 +21,9 @@ export const Aggregation: FC<Props> = (props) => {
   const selected = useSelectedFromOptions(aggOptions, props);
 
   return (
-    <QueryEditorField
-      labelWidth={18}
-      label="Group by function"
-      data-testid="cloud-monitoring-aggregation"
-      htmlFor={`${props.refId}-group-by-function`}
-    >
+    <EditorField label="Group by function" data-testid="cloud-monitoring-aggregation">
       <Select
-        menuShouldPortal
-        width={16}
+        width="auto"
         onChange={({ value }) => props.onChange(value!)}
         value={selected}
         options={[
@@ -44,8 +39,9 @@ export const Aggregation: FC<Props> = (props) => {
         ]}
         placeholder="Select Reducer"
         inputId={`${props.refId}-group-by-function`}
+        menuPlacement="top"
       />
-    </QueryEditorField>
+    </EditorField>
   );
 };
 

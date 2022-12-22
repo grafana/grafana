@@ -75,26 +75,6 @@ func addDataSourceMigration(mg *Migrator) {
 	// add v2 indíces
 	addTableIndicesMigrations(mg, "v2", tableV2)
 
-	//------- copy data from v1 to v2 -------------------
-	mg.AddMigration("copy data_source v1 to v2", NewCopyTableDataMigration("data_source", "data_source_v1", map[string]string{
-		"id":                  "id",
-		"org_id":              "account_id",
-		"version":             "version",
-		"type":                "type",
-		"name":                "name",
-		"access":              "access",
-		"url":                 "url",
-		"user":                "user",
-		"password":            "password",
-		"database":            "database",
-		"basic_auth":          "basic_auth",
-		"basic_auth_user":     "basic_auth_user",
-		"basic_auth_password": "basic_auth_password",
-		"is_default":          "is_default",
-		"created":             "created",
-		"updated":             "updated",
-	}))
-
 	mg.AddMigration("Drop old table data_source_v1 #2", NewDropTableMigration("data_source_v1"))
 
 	// add column to activate withCredentials option

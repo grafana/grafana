@@ -1,8 +1,10 @@
-import { isArray, isNull, isObject, isUndefined } from 'lodash';
 import angular from 'angular';
-import coreModule from '../core_module';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { isArray, isNull, isObject, isUndefined } from 'lodash';
+
 import { dateTime } from '@grafana/data';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+
+import coreModule from '../core_module';
 
 coreModule.filter('stringSort', () => {
   return (input: any) => {

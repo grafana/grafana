@@ -1,6 +1,6 @@
+import { css } from '@emotion/css';
 import React from 'react';
-import { ContextMenu, ContextMenuProps } from '../ContextMenu/ContextMenu';
-import { GraphDimensions } from './GraphTooltip/types';
+
 import {
   FlotDataPoint,
   getValueFromDimension,
@@ -8,14 +8,18 @@ import {
   dateTimeFormat,
   TimeZone,
   FormattedValue,
+  GrafanaTheme2,
 } from '@grafana/data';
-import { useTheme } from '../../themes';
-import { HorizontalGroup } from '../Layout/Layout';
+
+import { useStyles2 } from '../../themes';
+import { ContextMenu, ContextMenuProps } from '../ContextMenu/ContextMenu';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
-import { SeriesIcon } from '../VizLegend/SeriesIcon';
-import { css } from '@emotion/css';
+import { HorizontalGroup } from '../Layout/Layout';
 import { MenuGroup, MenuGroupProps } from '../Menu/MenuGroup';
 import { MenuItem } from '../Menu/MenuItem';
+import { SeriesIcon } from '../VizLegend/SeriesIcon';
+
+import { GraphDimensions } from './GraphTooltip/types';
 
 export type ContextDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
 
@@ -110,31 +114,32 @@ export const GraphContextMenuHeader = ({
   displayName: string;
   displayValue: FormattedValue;
 }) => {
-  const theme = useTheme();
+  const styles = useStyles2(getStyles);
 
   return (
-    <div
-      className={css`
-        padding: ${theme.spacing.xs} ${theme.spacing.sm};
-        font-size: ${theme.typography.size.sm};
-        z-index: ${theme.zIndex.tooltip};
-      `}
-    >
+    <div className={styles.wrapper}>
       <strong>{timestamp}</strong>
       <HorizontalGroup>
         <div>
           <SeriesIcon color={seriesColor} />
-          <span
-            className={css`
-              white-space: nowrap;
-              padding-left: ${theme.spacing.xs};
-            `}
-          >
-            {displayName}
-          </span>
+          <span className={styles.displayName}>{displayName}</span>
         </div>
         {displayValue && <FormattedValueDisplay value={displayValue} />}
       </HorizontalGroup>
     </div>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    wrapper: css`
+      padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
+      font-size: ${theme.typography.size.sm};
+      z-index: ${theme.zIndex.tooltip};
+    `,
+    displayName: css`
+      white-space: nowrap;
+      padding-left: ${theme.spacing(0.5)};
+    `,
+  };
+}

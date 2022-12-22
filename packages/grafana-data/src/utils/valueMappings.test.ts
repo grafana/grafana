@@ -1,5 +1,6 @@
-import { getValueMappingResult, isNumeric } from './valueMappings';
 import { ValueMapping, MappingType, SpecialValueMatch } from '../types';
+
+import { getValueMappingResult, isNumeric } from './valueMappings';
 
 const testSet1: ValueMapping[] = [
   {
@@ -80,6 +81,16 @@ const testSet2: ValueMapping[] = [
     options: {
       pattern: '/hello/',
       result: { color: 'red' },
+    },
+  },
+];
+
+const testSet3: ValueMapping[] = [
+  {
+    type: MappingType.RegexToText,
+    options: {
+      pattern: '/.*/s',
+      result: { text: 'WOW IT REPLACED EVERYTHING OVER MULTIPLE LINES' },
     },
   },
 ];
@@ -192,6 +203,12 @@ describe('Format value with regex mappings', () => {
 
   it('should not replace match when replace text is null', () => {
     expect(getValueMappingResult(testSet2, 'hello my name is')).toEqual({ color: 'red' });
+  });
+
+  it('supports replacing over multiple lines', () => {
+    expect(getValueMappingResult(testSet3, 'hello \n my name is')).toEqual({
+      text: 'WOW IT REPLACED EVERYTHING OVER MULTIPLE LINES',
+    });
   });
 });
 

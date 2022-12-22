@@ -1,16 +1,18 @@
-import React from 'react';
-import { CoreApp, GrafanaTheme2, PanelDataSummary, VisualizationSuggestionsBuilder } from '@grafana/data';
-import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
+import React from 'react';
+
+import { CoreApp, GrafanaTheme2, PanelDataSummary, VisualizationSuggestionsBuilder } from '@grafana/data';
 import { PanelDataErrorViewProps } from '@grafana/runtime';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';
-import { useDispatch } from 'react-redux';
-import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
-import { changePanelPlugin } from '../state/actions';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import store from 'app/core/store';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
+import store from 'app/core/store';
+import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { useDispatch } from 'app/types';
+
+import { changePanelPlugin } from '../state/actions';
 
 export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const styles = useStyles2(getStyles);
@@ -57,7 +59,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
 }
 
 function getMessageFor(
-  { data, message, needsNumberField, needsTimeField, needsStringField }: PanelDataErrorViewProps,
+  { data, fieldConfig, message, needsNumberField, needsTimeField, needsStringField }: PanelDataErrorViewProps,
   dataSummary: PanelDataSummary
 ): string {
   if (message) {
@@ -65,8 +67,8 @@ function getMessageFor(
   }
 
   // In some cases there is a data frame but with no fields
-  if (!data.series || data.series.length === 0 || (data.series.length === 1 && data.series[0].fields.length === 0)) {
-    return 'No data';
+  if (!data.series || data.series.length === 0 || (data.series.length === 1 && data.series[0].length === 0)) {
+    return fieldConfig?.defaults.noValue ?? 'No data';
   }
 
   if (needsStringField && !dataSummary.hasStringField) {

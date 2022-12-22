@@ -1,17 +1,22 @@
-import { DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
-import { AwsAuthDataSourceSecureJsonData, AwsAuthDataSourceJsonData } from '@grafana/aws-sdk';
+import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
+import { DataFrame, DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 
-export interface Dimensions {
-  [key: string]: string | string[];
-}
-
+import { SelectableResourceValue } from './api';
 import {
   QueryEditorArrayExpression,
   QueryEditorFunctionExpression,
   QueryEditorPropertyExpression,
 } from './expressions';
 
-export type CloudWatchQueryMode = 'Metrics' | 'Logs';
+export interface Dimensions {
+  [key: string]: string | string[];
+}
+
+export interface MultiFilters {
+  [key: string]: string[];
+}
+
+export type CloudWatchQueryMode = 'Metrics' | 'Logs' | 'Annotations';
 
 export enum MetricQueryType {
   'Search',
@@ -35,34 +40,37 @@ export interface SQLExpression {
   limit?: number;
 }
 
-export interface CloudWatchMetricsQuery extends DataQuery {
-  queryMode?: 'Metrics';
+export interface CloudWatchMetricsQuery extends MetricStat, DataQuery {
+  queryMode?: CloudWatchQueryMode;
   metricQueryType?: MetricQueryType;
   metricEditorMode?: MetricEditorMode;
 
   //common props
   id: string;
-  region: string;
-  namespace: string;
-  period?: string;
-  alias?: string;
 
-  //Basic editor builder props
-  metricName?: string;
-  dimensions?: Dimensions;
-  matchExact?: boolean;
-  statistic?: string;
-  /**
-   * @deprecated use statistic
-   */
-  statistics?: string[];
+  alias?: string;
+  label?: string;
 
   // Math expression query
   expression?: string;
 
   sqlExpression?: string;
-
   sql?: SQLExpression;
+}
+
+export interface MetricStat {
+  region: string;
+  namespace: string;
+  metricName?: string;
+  dimensions?: Dimensions;
+  matchExact?: boolean;
+  period?: string;
+  accountId?: string;
+  statistic?: string;
+  /**
+   * @deprecated use statistic
+   */
+  statistics?: string[];
 }
 
 export interface CloudWatchMathExpressionQuery extends DataQuery {
@@ -71,6 +79,7 @@ export interface CloudWatchMathExpressionQuery extends DataQuery {
 
 export type LogAction =
   | 'DescribeLogGroups'
+  | 'DescribeAllLogGroups'
   | 'GetQueryResults'
   | 'GetLogGroupFields'
   | 'GetLogEvents'
@@ -87,30 +96,30 @@ export enum CloudWatchLogsQueryStatus {
 }
 
 export interface CloudWatchLogsQuery extends DataQuery {
-  queryMode: 'Logs';
-
+  queryMode: CloudWatchQueryMode;
   id: string;
   region: string;
   expression?: string;
-  logGroupNames?: string[];
   statsGroups?: string[];
+  logGroups?: SelectableResourceValue[];
+  /* not quite deprecated yet, but will be soon */
+  logGroupNames?: string[];
 }
+// We want to allow setting defaults for both Logs and Metrics queries
+export type CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery;
 
-export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery;
+export type CloudWatchQuery =
+  | CloudWatchMetricsQuery
+  | CloudWatchLogsQuery
+  | CloudWatchAnnotationQuery
+  | CloudWatchDefaultQuery;
 
-export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
-  (cloudwatchQuery as CloudWatchLogsQuery).queryMode === 'Logs';
-
-interface AnnotationProperties {
-  enable: boolean;
-  name: string;
-  iconColor: string;
-  prefixMatching: boolean;
-  actionPrefix: string;
-  alarmNamePrefix: string;
+export interface CloudWatchAnnotationQuery extends MetricStat, DataQuery {
+  queryMode: CloudWatchQueryMode;
+  prefixMatching?: boolean;
+  actionPrefix?: string;
+  alarmNamePrefix?: string;
 }
-
-export type CloudWatchAnnotationQuery = CloudWatchMetricsQuery & AnnotationProperties;
 
 export type SelectableStrings = Array<SelectableValue<string>>;
 
@@ -123,6 +132,7 @@ export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
   logsTimeout?: string;
   // Used to create links if logs contain traceId.
   tracingDatasourceUid?: string;
+  defaultLogGroups?: string[];
 }
 
 export interface CloudWatchSecureJsonData extends AwsAuthDataSourceSecureJsonData {
@@ -200,6 +210,7 @@ export interface GetLogEventsRequest {
    * If the value is true, the earliest log events are returned first. If the value is false, the latest log events are returned first. The default value is false. If you are using nextToken in this operation, you must specify true for startFromHead.
    */
   startFromHead?: boolean;
+  region?: string;
 }
 
 export interface GetQueryResultsResponse {
@@ -216,24 +227,6 @@ export interface GetQueryResultsResponse {
    */
   status?: QueryStatus;
 }
-
-export interface DescribeLogGroupsRequest {
-  /**
-   * The prefix to match.
-   */
-  logGroupNamePrefix?: string;
-  /**
-   * The token for the next set of items to return. (You received this token from a previous call.)
-   */
-  nextToken?: string;
-  /**
-   * The maximum number of items returned. If you don't specify a value, the default is up to 50 items.
-   */
-  limit?: number;
-  refId?: string;
-  region: string;
-}
-
 export interface TSDBResponse<T = any> {
   results: Record<string, TSDBQueryResult<T>>;
   message?: string;
@@ -243,6 +236,7 @@ export interface TSDBQueryResult<T = any> {
   refId: string;
   series: TSDBTimeSeries[];
   tables: Array<TSDBTable<T>>;
+  frames: DataFrame[];
 
   error?: string;
   meta?: any;
@@ -251,6 +245,15 @@ export interface TSDBQueryResult<T = any> {
 export interface TSDBTable<T = any> {
   columns: Array<{ text: string }>;
   rows: T[];
+}
+
+export interface DataQueryError<CloudWatchMetricsQuery> {
+  data?: {
+    message?: string;
+    error?: string;
+    results: Record<string, TSDBQueryResult<CloudWatchMetricsQuery>>;
+  };
+  message?: string;
 }
 
 export interface TSDBTimeSeries {
@@ -334,7 +337,8 @@ export interface StartQueryRequest {
   /**
    * The list of log groups to be queried. You can include up to 20 log groups. A StartQuery operation must include a logGroupNames or a logGroupName parameter, but not both.
    */
-  logGroupNames?: string[];
+  logGroupNames?: string[] /* not quite deprecated yet, but will be soon */;
+  logGroups?: SelectableResourceValue[];
   /**
    * The query string to use. For more information, see CloudWatch Logs Insights Query Syntax.
    */
@@ -362,14 +366,138 @@ export interface MetricRequest {
 
 export interface MetricQuery {
   [key: string]: any;
-  datasource: DataSourceRef;
+  datasource?: DataSourceRef;
   refId?: string;
   maxDataPoints?: number;
   intervalMs?: number;
 }
 
-export interface MetricFindSuggestData {
-  text: string;
+export enum VariableQueryType {
+  Regions = 'regions',
+  Namespaces = 'namespaces',
+  Metrics = 'metrics',
+  DimensionKeys = 'dimensionKeys',
+  DimensionValues = 'dimensionValues',
+  EBSVolumeIDs = 'ebsVolumeIDs',
+  EC2InstanceAttributes = 'ec2InstanceAttributes',
+  ResourceArns = 'resourceARNs',
+  Statistics = 'statistics',
+  LogGroups = 'logGroups',
+  Accounts = 'accounts',
+}
+
+export interface OldVariableQuery extends DataQuery {
+  queryType: VariableQueryType;
+  namespace: string;
+  region: string;
+  metricName: string;
+  dimensionKey: string;
+  dimensionFilters: string;
+  ec2Filters: string;
+  instanceID: string;
+  attributeName: string;
+  resourceType: string;
+  tags: string;
+}
+
+export interface VariableQuery extends DataQuery {
+  queryType: VariableQueryType;
+  namespace: string;
+  region: string;
+  metricName: string;
+  dimensionKey: string;
+  dimensionFilters?: Dimensions;
+  ec2Filters?: MultiFilters;
+  instanceID: string;
+  attributeName: string;
+  resourceType: string;
+  tags?: MultiFilters;
+  logGroupPrefix?: string;
+}
+
+export interface LegacyAnnotationQuery extends MetricStat, DataQuery {
+  actionPrefix: string;
+  alarmNamePrefix: string;
+  alias: string;
+  builtIn: number;
+  datasource: any;
+  dimensions: Dimensions;
+  enable: boolean;
+  expression: string;
+  hide: boolean;
+  iconColor: string;
+  id: string;
+  matchExact: boolean;
+  metricName: string;
+  name: string;
+  namespace: string;
+  period: string;
+  prefixMatching: boolean;
+  region: string;
+  statistic: string;
+  statistics: string[];
+  target: {
+    limit: number;
+    matchAny: boolean;
+    tags: any[];
+    type: string;
+  };
+  type: string;
+}
+
+export interface MetricResponse {
+  name: string;
+  namespace: string;
+}
+
+export interface ResourceRequest {
+  region: string;
+  accountId?: string;
+}
+
+export interface GetDimensionKeysRequest extends ResourceRequest {
+  metricName?: string;
+  namespace?: string;
+  dimensionFilters?: Dimensions;
+}
+
+export interface GetDimensionValuesRequest extends ResourceRequest {
+  dimensionKey: string;
+  namespace: string;
+  metricName?: string;
+  dimensionFilters?: Dimensions;
+}
+
+export interface GetMetricsRequest extends ResourceRequest {
+  namespace?: string;
+}
+
+export interface DescribeLogGroupsRequest extends ResourceRequest {
+  logGroupNamePrefix?: string;
+  logGroupPattern?: string;
+  // used by legacy requests, in the future deprecate these fields
+  refId?: string;
+  limit?: number;
+}
+
+export interface Account {
+  arn: string;
+  id: string;
   label: string;
-  value: string;
+  isMonitoringAccount: boolean;
+}
+
+export interface LogGroupResponse {
+  arn: string;
+  name: string;
+}
+
+export interface MetricResponse {
+  name: string;
+  namespace: string;
+}
+
+export interface ResourceResponse<T> {
+  accountId?: string;
+  value: T;
 }

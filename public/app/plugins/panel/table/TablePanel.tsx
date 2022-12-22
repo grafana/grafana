@@ -1,5 +1,6 @@
+import { css } from '@emotion/css';
 import React, { Component } from 'react';
-import { Select, Table } from '@grafana/ui';
+
 import {
   DataFrame,
   FieldMatcherID,
@@ -8,15 +9,17 @@ import {
   PanelProps,
   SelectableValue,
 } from '@grafana/data';
-import { PanelOptions } from './models.gen';
-import { css } from '@emotion/css';
-import { config } from 'app/core/config';
+import { PanelDataErrorView } from '@grafana/runtime';
+import { Select, Table } from '@grafana/ui';
 import { FilterItem, TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
-import { dispatch } from '../../../store/store';
-import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
-import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
-import { getFooterCells } from './footer';
+import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+
+import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { applyFilterFromTable } from '../../../features/variables/adhoc/actions';
+import { dispatch } from '../../../store/store';
+
+import { PanelOptions } from './models.gen';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -91,9 +94,8 @@ export class TablePanel extends Component<Props> {
     dispatch(applyFilterFromTable({ datasource: datasourceRef, key, operator, value }));
   };
 
-  renderTable(frame: DataFrame, width: number, height: number) {
+  renderTable(frame: DataFrame, width: number, height: number, subData?: DataFrame[]) {
     const { options } = this.props;
-    const footerValues = options.footer?.show ? getFooterCells(frame, options.footer) : undefined;
 
     return (
       <Table
@@ -107,7 +109,9 @@ export class TablePanel extends Component<Props> {
         onSortByChange={this.onSortByChange}
         onColumnResize={this.onColumnResize}
         onCellFilterAdded={this.onCellFilterAdded}
-        footerValues={footerValues}
+        footerOptions={options.footer}
+        enablePagination={options.footer?.enablePagination}
+        subData={subData}
       />
     );
   }
@@ -117,43 +121,43 @@ export class TablePanel extends Component<Props> {
   }
 
   render() {
-    const { data, height, width, options } = this.props;
+    const { data, height, width, options, fieldConfig, id } = this.props;
 
     const frames = data.series;
-    const count = frames?.length;
-    const hasFields = frames[0]?.fields.length;
+    const mainFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex === undefined);
+    const subFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex !== undefined);
+    const count = mainFrames?.length;
+    const hasFields = mainFrames[0]?.fields.length;
 
     if (!count || !hasFields) {
-      return <div className={tableStyles.noData}>No data</div>;
+      return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
     }
 
     if (count > 1) {
-      const inputHeight = config.theme.spacing.formInputHeight;
+      const inputHeight = config.theme2.spacing.gridSize * config.theme2.components.height.md;
       const padding = 8 * 2;
-      const currentIndex = this.getCurrentFrameIndex(frames, options);
-      const names = frames.map((frame, index) => {
+      const currentIndex = this.getCurrentFrameIndex(mainFrames, options);
+      const names = mainFrames.map((frame, index) => {
         return {
           label: getFrameDisplayName(frame),
           value: index,
         };
       });
 
+      const main = mainFrames[currentIndex];
+      const subData = subFrames.filter((f) => f.refId === main.refId);
       return (
         <div className={tableStyles.wrapper}>
-          {this.renderTable(data.series[currentIndex], width, height - inputHeight + padding)}
+          {this.renderTable(main, width, height - inputHeight - padding, subData)}
           <div className={tableStyles.selectWrapper}>
-            <Select
-              menuShouldPortal
-              options={names}
-              value={names[currentIndex]}
-              onChange={this.onChangeTableSelection}
-            />
+            <Select options={names} value={names[currentIndex]} onChange={this.onChangeTableSelection} />
           </div>
         </div>
       );
     }
 
-    return this.renderTable(data.series[0], width, height);
+    const subData = frames.filter((f) => f.meta?.custom?.parentRowIndex !== undefined);
+    return this.renderTable(data.series[0], width, height, subData);
   }
 }
 

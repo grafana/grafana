@@ -1,8 +1,9 @@
-import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, InlineFieldRow, InlineLabel, InlineSegmentGroup, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
 import React, { PropsWithChildren } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { IconButton, InlineFieldRow, InlineLabel, InlineSegmentGroup, useStyles2 } from '@grafana/ui';
 
 interface Props {
   label: string;
@@ -30,21 +31,21 @@ export const QueryEditorRow = ({
               <IconButton
                 name={hidden ? 'eye-slash' : 'eye'}
                 onClick={onHideClick}
-                surface="header"
                 size="sm"
                 aria-pressed={hidden}
                 aria-label="hide metric"
                 className={styles.icon}
+                type="button"
               />
             )}
             <IconButton
               name="trash-alt"
-              surface="header"
               size="sm"
               className={styles.icon}
               onClick={onRemoveClick || noop}
               disabled={!onRemoveClick}
               aria-label="remove metric"
+              type="button"
             />
           </span>
         </InlineLabel>

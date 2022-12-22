@@ -107,8 +107,8 @@ $text-blue: #1F62E0;
 $text-shadow-faint: none;
 
 // gradients
-$brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
-$brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
+$brand-gradient-horizontal: linear-gradient(90deg, #FF8833 0%, #F53E4C 100%);
+$brand-gradient-vertical: linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);
 
 // Links
 // -------------------------
@@ -282,9 +282,9 @@ $alert-warning-bg: #FAD34A;
 $alert-info-bg: #FAD34A;
 
 // Tooltips and popovers
-$tooltipBackground: #555;
-$tooltipColor: #FFF;
-$tooltipArrowColor: #555;
+$tooltipBackground: #F4F5F5;
+$tooltipColor: rgba(36, 41, 46, 1);
+$tooltipArrowColor: #F4F5F5;
 $tooltipBackgroundError: #E0226E;
 $tooltipShadow: 0px 4px 8px rgba(24, 26, 27, 0.2);
 

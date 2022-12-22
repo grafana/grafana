@@ -16,8 +16,6 @@
 #   org_id: 1
 #   # <string> url
 #   url: http://localhost:8080
-#   # <string> database password, if used
-#   password:
 #   # <string> database user, if used
 #   user:
 #   # <string> database name, if used
@@ -26,8 +24,6 @@
 #   basic_auth:
 #   # <string> basic auth username
 #   basic_auth_user:
-#   # <string> basic auth password
-#   basic_auth_password:
 #   # <bool> enable/disable with credentials headers
 #   with_credentials:
 #   # <bool> mark as default datasource. Max one per org

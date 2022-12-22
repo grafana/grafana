@@ -1,11 +1,16 @@
-import React, { FC, FormEvent, useCallback, useState } from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { Icon } from '../index';
-import { stylesFactory, useTheme2 } from '../../themes';
+import React, { FormEvent, useCallback, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { useStyles2 } from '../../themes';
+import { getFocusStyles } from '../../themes/mixins';
 import { ComponentSize } from '../../types/size';
-import { getButtonStyles } from '../Button';
 import { trimFileName } from '../../utils/file';
+import { getButtonStyles } from '../Button';
+import { Icon } from '../index';
 
 export interface Props {
   /** Callback function to handle uploaded file  */
@@ -16,18 +21,20 @@ export interface Props {
   className?: string;
   /** Button size */
   size?: ComponentSize;
+  /** Show the file name */
+  showFileName?: boolean;
 }
 
-export const FileUpload: FC<Props> = ({
+export const FileUpload = ({
   onFileUpload,
   className,
   children = 'Upload file',
   accept = '*',
   size = 'md',
-}) => {
-  const theme = useTheme2();
-  const style = getStyles(theme, size);
+}: React.PropsWithChildren<Props>) => {
+  const style = useStyles2(getStyles(size));
   const [fileName, setFileName] = useState('');
+  const id = uuidv4();
 
   const onChange = useCallback(
     (event: FormEvent<HTMLInputElement>) => {
@@ -42,20 +49,26 @@ export const FileUpload: FC<Props> = ({
 
   return (
     <>
-      <label className={cx(style.button, className)}>
+      <input
+        type="file"
+        id={id}
+        className={style.fileUpload}
+        onChange={onChange}
+        multiple={false}
+        accept={accept}
+        data-testid={selectors.components.FileUpload.inputField}
+      />
+      <label htmlFor={id} className={cx(style.labelWrapper, className)}>
         <Icon name="upload" className={style.icon} />
         {children}
-        <input
-          type="file"
-          id="fileUpload"
-          className={style.fileUpload}
-          onChange={onChange}
-          multiple={false}
-          accept={accept}
-        />
       </label>
+
       {fileName && (
-        <span aria-label="File name" className={style.fileName}>
+        <span
+          aria-label="File name"
+          className={style.fileName}
+          data-testid={selectors.components.FileUpload.fileNameSpan}
+        >
           {trimFileName(fileName)}
         </span>
       )}
@@ -63,16 +76,25 @@ export const FileUpload: FC<Props> = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, size: ComponentSize) => {
+const getStyles = (size: ComponentSize) => (theme: GrafanaTheme2) => {
   const buttonStyles = getButtonStyles({ theme, variant: 'primary', size, iconOnly: false });
+  const focusStyle = getFocusStyles(theme);
+
   return {
-    fileUpload: css`
-      display: none;
-    `,
-    button: buttonStyles.button,
+    fileUpload: css({
+      height: '0.1px',
+      opacity: '0',
+      overflow: 'hidden',
+      position: 'absolute',
+      width: '0.1px',
+      zIndex: -1,
+      '&:focus + label': focusStyle,
+      '&:focus-visible + label': focusStyle,
+    }),
+    labelWrapper: buttonStyles.button,
     icon: buttonStyles.icon,
-    fileName: css`
-      margin-left: ${theme.spacing(0.5)};
-    `,
+    fileName: css({
+      marginLeft: theme.spacing(0.5),
+    }),
   };
-});
+};

@@ -1,10 +1,12 @@
 import { PanelMenuItem } from '@grafana/data';
-import { DashboardModel, PanelModel } from '../state';
-import { getPanelMenu } from './getPanelMenu';
-import { describe } from '../../../../test/lib/common';
-import { setStore } from 'app/store/store';
 import config from 'app/core/config';
 import * as actions from 'app/features/explore/state/main';
+import { setStore } from 'app/store/store';
+
+import { PanelModel } from '../state';
+import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
+
+import { getPanelMenu } from './getPanelMenu';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
@@ -15,41 +17,41 @@ jest.mock('app/core/services/context_srv', () => ({
 describe('getPanelMenu', () => {
   it('should return the correct panel menu items', () => {
     const panel = new PanelModel({});
-    const dashboard = new DashboardModel({});
+    const dashboard = createDashboardModelFixture({});
 
     const menuItems = getPanelMenu(dashboard, panel);
     expect(menuItems).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "iconClassName": "eye",
           "onClick": [Function],
           "shortcut": "v",
           "text": "View",
         },
-        Object {
+        {
           "iconClassName": "edit",
           "onClick": [Function],
           "shortcut": "e",
           "text": "Edit",
         },
-        Object {
+        {
           "iconClassName": "share-alt",
           "onClick": [Function],
           "shortcut": "p s",
           "text": "Share",
         },
-        Object {
+        {
           "iconClassName": "compass",
           "onClick": [Function],
           "shortcut": "x",
           "text": "Explore",
         },
-        Object {
+        {
           "iconClassName": "info-circle",
           "onClick": [Function],
           "shortcut": "i",
-          "subMenu": Array [
-            Object {
+          "subMenu": [
+            {
               "onClick": [Function],
               "text": "Panel JSON",
             },
@@ -57,20 +59,20 @@ describe('getPanelMenu', () => {
           "text": "Inspect",
           "type": "submenu",
         },
-        Object {
+        {
           "iconClassName": "cube",
           "onClick": [Function],
-          "subMenu": Array [
-            Object {
+          "subMenu": [
+            {
               "onClick": [Function],
               "shortcut": "p d",
               "text": "Duplicate",
             },
-            Object {
+            {
               "onClick": [Function],
               "text": "Copy",
             },
-            Object {
+            {
               "onClick": [Function],
               "text": "Create library panel",
             },
@@ -78,11 +80,11 @@ describe('getPanelMenu', () => {
           "text": "More...",
           "type": "submenu",
         },
-        Object {
+        {
           "text": "",
           "type": "divider",
         },
-        Object {
+        {
           "iconClassName": "trash-alt",
           "onClick": [Function],
           "shortcut": "p r",
@@ -99,41 +101,41 @@ describe('getPanelMenu', () => {
       const scope: any = { $$childHead: { ctrl } };
       const angularComponent: any = { getScope: () => scope };
       const panel = new PanelModel({ isViewing: true });
-      const dashboard = new DashboardModel({});
+      const dashboard = createDashboardModelFixture({});
 
       const menuItems = getPanelMenu(dashboard, panel, angularComponent);
       expect(menuItems).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "iconClassName": "eye",
             "onClick": [Function],
             "shortcut": "v",
             "text": "View",
           },
-          Object {
+          {
             "iconClassName": "edit",
             "onClick": [Function],
             "shortcut": "e",
             "text": "Edit",
           },
-          Object {
+          {
             "iconClassName": "share-alt",
             "onClick": [Function],
             "shortcut": "p s",
             "text": "Share",
           },
-          Object {
+          {
             "iconClassName": "compass",
             "onClick": [Function],
             "shortcut": "x",
             "text": "Explore",
           },
-          Object {
+          {
             "iconClassName": "info-circle",
             "onClick": [Function],
             "shortcut": "i",
-            "subMenu": Array [
-              Object {
+            "subMenu": [
+              {
                 "onClick": [Function],
                 "text": "Panel JSON",
               },
@@ -141,11 +143,11 @@ describe('getPanelMenu', () => {
             "text": "Inspect",
             "type": "submenu",
           },
-          Object {
+          {
             "iconClassName": "cube",
             "onClick": [Function],
-            "subMenu": Array [
-              Object {
+            "subMenu": [
+              {
                 "href": undefined,
                 "onClick": [Function],
                 "shortcut": "p l",
@@ -170,7 +172,7 @@ describe('getPanelMenu', () => {
 
     beforeAll(() => {
       const panel = new PanelModel({});
-      const dashboard = new DashboardModel({});
+      const dashboard = createDashboardModelFixture({});
       const menuItems = getPanelMenu(dashboard, panel);
       explore = menuItems.find((item) => item.text === 'Explore') as PanelMenuItem;
       navigateSpy = jest.spyOn(actions, 'navigateToExplore');

@@ -8,6 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 
 	"github.com/stretchr/testify/require"
+
+	//TODO(sh0rez): remove once import cycle resolved
+	_ "github.com/grafana/grafana/pkg/api/response"
 )
 
 func TestMultiLDAP(t *testing.T) {
@@ -96,6 +99,7 @@ func TestMultiLDAP(t *testing.T) {
 
 		t.Run("Should call underlying LDAP methods", func(t *testing.T) {
 			mock := setup()
+			mock.loginErrReturn = ErrInvalidCredentials
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
@@ -106,7 +110,7 @@ func TestMultiLDAP(t *testing.T) {
 			require.Equal(t, 2, mock.loginCalledTimes)
 			require.Equal(t, 2, mock.closeCalledTimes)
 
-			require.Equal(t, ErrInvalidCredentials, err)
+			require.Equal(t, ldap.ErrInvalidCredentials, err)
 
 			teardown()
 		})
@@ -147,7 +151,7 @@ func TestMultiLDAP(t *testing.T) {
 			require.Equal(t, 2, mock.loginCalledTimes)
 			require.Equal(t, 2, mock.closeCalledTimes)
 
-			require.Equal(t, ErrInvalidCredentials, err)
+			require.Equal(t, ErrCouldNotFindUser, err)
 
 			teardown()
 		})

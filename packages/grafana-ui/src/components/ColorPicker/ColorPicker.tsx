@@ -1,14 +1,16 @@
-import React, { Component, createRef } from 'react';
-import { PopoverController } from '../Tooltip/PopoverController';
-import { Popover } from '../Tooltip/Popover';
-import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
-import { GrafanaTheme2 } from '@grafana/data';
-import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
-
 import { css } from '@emotion/css';
+import React, { Component, createRef } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { withTheme2, stylesFactory } from '../../themes';
-import { ColorSwatch } from './ColorSwatch';
 import { closePopover } from '../../utils/closePopover';
+import { Popover } from '../Tooltip/Popover';
+import { PopoverController } from '../Tooltip/PopoverController';
+
+import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
+import { ColorSwatch } from './ColorSwatch';
+import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
 /**
  * If you need custom trigger for the color picker you can do that with a render prop pattern and supply a function
@@ -25,26 +27,19 @@ type ColorPickerTriggerRenderer = (props: {
 }) => React.ReactNode;
 
 export const colorPickerFactory = <T extends ColorPickerProps>(
-  popover: React.ComponentType<T>,
+  popover: React.ComponentType<React.PropsWithChildren<T>>,
   displayName = 'ColorPicker'
 ) => {
   return class ColorPicker extends Component<T & { children?: ColorPickerTriggerRenderer }, any> {
     static displayName = displayName;
     pickerTriggerRef = createRef<any>();
 
-    onColorChange = (color: string) => {
-      const { onColorChange, onChange } = this.props;
-      const changeHandler = (onColorChange || onChange) as ColorPickerChangeHandler;
-
-      return changeHandler(color);
-    };
-
     render() {
-      const { theme, children } = this.props;
+      const { theme, children, onChange } = this.props;
       const styles = getStyles(theme);
       const popoverElement = React.createElement(popover, {
         ...{ ...this.props, children: null },
-        onChange: this.onColorChange,
+        onChange,
       });
 
       return (

@@ -123,6 +123,10 @@ export interface FetchError<T = any> {
   config: BackendSrvRequest;
 }
 
+export function isFetchError(e: unknown): e is FetchError {
+  return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
+}
+
 /**
  * Used to communicate via http(s) to a remote backend such as the Grafana backend,
  * a datasource etc. The BackendSrv is using the {@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API | Fetch API}
@@ -139,17 +143,18 @@ export interface FetchError<T = any> {
  * @public
  */
 export interface BackendSrv {
-  get(url: string, params?: any, requestId?: string): Promise<any>;
-  delete(url: string, data?: any): Promise<any>;
-  post(url: string, data?: any): Promise<any>;
-  patch(url: string, data?: any): Promise<any>;
-  put(url: string, data?: any): Promise<any>;
+  get<T = any>(url: string, params?: any, requestId?: string, options?: Partial<BackendSrvRequest>): Promise<T>;
+  delete<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>): Promise<T>;
+  post<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>): Promise<T>;
+  patch<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>): Promise<T>;
+  put<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>): Promise<T>;
 
   /**
-   * @deprecated Use the fetch function instead. If you prefer to work with a promise
-   * wrap the Observable returned by fetch with the lastValueFrom function.
+   * @deprecated Use the `.fetch()` function instead. If you prefer to work with a promise
+   * wrap the Observable returned by fetch with the lastValueFrom function, or use the get|delete|post|patch|put methods.
+   * This method is going to be private from Grafana 10.
    */
-  request(options: BackendSrvRequest): Promise<any>;
+  request<T = any>(options: BackendSrvRequest): Promise<T>;
 
   /**
    * Special function used to communicate with datasources that will emit core

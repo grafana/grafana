@@ -1,35 +1,71 @@
-+++
-title = "Alerts"
-weight = 110
-+++
+---
+aliases:
+  - about-alerting/
+  - unified-alerting/alerting/
+title: Alerting
+weight: 114
+---
 
-# Grafana alerts
+# Alerting
 
-Alerts allow you to learn about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
+Grafana Alerting allows you to learn about problems in your systems moments after they occur. Create, manage, and take action on your alerts in a single, consolidated view, and improve your team’s ability to identify and resolve issues quickly.
 
-Grafana 8.0 introduced new and improved alerting that centralizes alerting information in a single, searchable view. It allows you to:
+Grafana Alerting is available for Grafana OSS, Grafana Enterprise, or Grafana Cloud. With Mimir and Loki alert rules you can run alert expressions closer to your data and at massive scale, all managed by the Grafana UI you are already familiar with.
 
-- Create and manage Grafana alerts
-- Create and manage Cortex and Loki managed alerts
-- View alerting information from Prometheus and Alertmanager compatible data sources
+Watch this video to learn more about Grafana Alerting: {{< vimeo 720001629 >}}
 
-Grafana alerting is enabled by default for new OSS installations. For older installations, it is still an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature.
+## Overview
 
-| Release                  | Cloud         | Enterprise    | OSS                              |
-| ------------------------ | ------------- | ------------- | -------------------------------- |
-| Grafana 8.2              | On by default | Opt-in        | Opt-in                           |
-| Grafana 8.3              | On by default | Opt-in        | On by default for new installs\* |
-| Grafana 9.0 (unreleased) | On by default | On by default | On by default                    |
+The following diagram gives you an overview of how Grafana Alerting works and introduces you to some of the key concepts that work together and form the core of our flexible and powerful alerting engine.
 
-> **Note:** New installs include existing installs which do not have any alerts configured.
+{{< figure src="/static/img/docs/alerting/unified/about-alerting-flow-diagram-latest.png" caption="Grafana Alerting overview" >}}
 
-Grafana alerting has four key components:
+1. Alert rules
 
-- Alerting rule - Evaluation criteria that determine whether an alert will fire. It consists of one or more queries and expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
-- Contact point - Channel for sending notifications when the conditions of an alerting rule are met.
-- Notification policy - Set of matching and grouping criteria used to determine where and how frequently to send notifications.
-- Silences - Date and matching criteria used to silence notifications.
+   Set evaluation criteria that determines whether an alert instance will fire. An alert rule consists of one or more queries and expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
 
-To learn more, see [What's New with Grafana alerting]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}).
+   Grafana managed alerts support multi-dimensional alerting, which means that each alert rule can create multiple alert instances. This is exceptionally powerful if you are observing multiple series in a single expression.
 
-For information on how to create and manage Grafana alerts and notifications, refer to [Overview of Grafana alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}) and [Create and manage Grafana alerting rules]({{< relref "./unified-alerting/alerting-rules/_index.md" >}}).
+   Once an alert rule has been created, they go through various states and transitions. The state and health of alert rules help you understand several key status indicators about your alerts.
+
+1. Labels
+
+   Match an alert rule and its instances to notification policies and silences. They can also be used to group your alerts by severity.
+
+1. Notification policies
+
+   Set where, when, and how the alerts get routed. Each notification policy specifies a set of label matchers to indicate which alerts they are responsible for. A notification policy has a contact point assigned to it that consists of one or more notifiers.
+
+1. Contact points
+
+   Define how your contacts are notified when an alert fires. We support a multitude of ChatOps tools to ensure the alerts come to your team.
+
+## Features
+
+**One page for all alerts**
+
+A single Grafana Alerting page consolidates both Grafana-managed alerts and alerts that reside in your Prometheus-compatible data source in one single place.
+
+**Multi-dimensional alerts**
+
+Alert rules can create multiple individual alert instances per alert rule, known as multi-dimensional alerts, giving you the power and flexibility to gain visibility into your entire system with just a single alert.
+
+**Routing alerts**
+
+Route each alert instance to a specific contact point based on labels you define. Notification policies are the set of rules for where, when, and how the alerts are routed to contact points.
+
+**Silencing alerts**
+
+Silences allow you to stop receiving persistent notifications from one or more alerting rules. You can also partially pause an alert based on certain criteria. Silences have their own dedicated section for better organization and visibility, so that you can scan your paused alert rules without cluttering the main alerting view.
+
+**Mute timings**
+
+With mute timings, you can specify a time interval when you don’t want new notifications to be generated or sent. You can also freeze alert notifications for recurring periods of time, such as during a maintenance period.
+
+## Useful links
+
+- [Fundamental concepts]({{< relref "fundamentals/" >}}) of Grafana Alerting.
+
+- [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise.
+
+- [High availability](https://grafana.com/docs/grafana/next/alerting/fundamentals/high-availability/)

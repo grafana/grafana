@@ -1,19 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`BarChart utils preparePlotConfigBuilder orientation 1`] = `
-Object {
-  "axes": Array [
-    Object {
+{
+  "axes": [
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
-      "grid": Object {
+      "grid": {
         "show": false,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -21,7 +22,7 @@ Object {
       "space": [Function],
       "splits": [Function],
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": false,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -30,17 +31,18 @@ Object {
       "timeZone": undefined,
       "values": [Function],
     },
-    Object {
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
-      "grid": Object {
+      "grid": {
         "show": true,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -48,7 +50,7 @@ Object {
       "space": [Function],
       "splits": undefined,
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": true,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -58,16 +60,19 @@ Object {
       "values": [Function],
     },
   ],
-  "cursor": Object {
-    "drag": Object {
+  "cursor": {
+    "dataIdx": [Function],
+    "drag": {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
-    "focus": Object {
+    "focus": {
       "prox": 30,
     },
-    "points": Object {
-      "fill": [Function],
-      "show": false,
+    "points": {
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -75,21 +80,34 @@ Object {
     "x": false,
     "y": false,
   },
-  "hooks": Object {
-    "draw": Array [
+  "focus": {
+    "alpha": 1,
+  },
+  "hooks": {
+    "draw": [
       [Function],
     ],
-    "drawClear": Array [
+    "drawClear": [
       [Function],
     ],
-    "init": Array [
+    "init": [
       [Function],
     ],
   },
+  "legend": {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
-  "scales": Object {
-    "m/s": Object {
+  "ms": 1,
+  "padding": [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
+  "scales": {
+    "m/s": {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -98,7 +116,8 @@ Object {
       "range": [Function],
       "time": undefined,
     },
-    "x": Object {
+    "x": {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -109,15 +128,15 @@ Object {
     },
   },
   "select": undefined,
-  "series": Array [
-    Object {
+  "series": [
+    {
       "value": [Function],
     },
-    Object {
+    {
       "facets": undefined,
       "fill": [Function],
       "paths": [Function],
-      "points": Object {
+      "points": {
         "fill": "#808080",
         "filter": undefined,
         "size": undefined,
@@ -137,19 +156,20 @@ Object {
 `;
 
 exports[`BarChart utils preparePlotConfigBuilder orientation 2`] = `
-Object {
-  "axes": Array [
-    Object {
+{
+  "axes": [
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
-      "grid": Object {
+      "grid": {
         "show": false,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -157,7 +177,7 @@ Object {
       "space": [Function],
       "splits": [Function],
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": false,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -166,17 +186,18 @@ Object {
       "timeZone": undefined,
       "values": [Function],
     },
-    Object {
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
-      "grid": Object {
+      "grid": {
         "show": true,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -184,7 +205,7 @@ Object {
       "space": [Function],
       "splits": undefined,
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": true,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -194,16 +215,19 @@ Object {
       "values": [Function],
     },
   ],
-  "cursor": Object {
-    "drag": Object {
+  "cursor": {
+    "dataIdx": [Function],
+    "drag": {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
-    "focus": Object {
+    "focus": {
       "prox": 30,
     },
-    "points": Object {
-      "fill": [Function],
-      "show": false,
+    "points": {
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -211,21 +235,34 @@ Object {
     "x": false,
     "y": false,
   },
-  "hooks": Object {
-    "draw": Array [
+  "focus": {
+    "alpha": 1,
+  },
+  "hooks": {
+    "draw": [
       [Function],
     ],
-    "drawClear": Array [
+    "drawClear": [
       [Function],
     ],
-    "init": Array [
+    "init": [
       [Function],
     ],
   },
+  "legend": {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
-  "scales": Object {
-    "m/s": Object {
+  "ms": 1,
+  "padding": [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
+  "scales": {
+    "m/s": {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -234,7 +271,8 @@ Object {
       "range": [Function],
       "time": undefined,
     },
-    "x": Object {
+    "x": {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -245,15 +283,15 @@ Object {
     },
   },
   "select": undefined,
-  "series": Array [
-    Object {
+  "series": [
+    {
       "value": [Function],
     },
-    Object {
+    {
       "facets": undefined,
       "fill": [Function],
       "paths": [Function],
-      "points": Object {
+      "points": {
         "fill": "#808080",
         "filter": undefined,
         "size": undefined,
@@ -273,17 +311,18 @@ Object {
 `;
 
 exports[`BarChart utils preparePlotConfigBuilder orientation 3`] = `
-Object {
-  "axes": Array [
-    Object {
+{
+  "axes": [
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
-      "grid": Object {
+      "grid": {
         "show": false,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
       "rotate": -0,
       "scale": "x",
@@ -293,7 +332,7 @@ Object {
       "space": [Function],
       "splits": [Function],
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": false,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -302,17 +341,18 @@ Object {
       "timeZone": undefined,
       "values": [Function],
     },
-    Object {
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
-      "grid": Object {
+      "grid": {
         "show": true,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": 0,
       "scale": "m/s",
       "show": true,
       "side": 3,
@@ -320,7 +360,7 @@ Object {
       "space": [Function],
       "splits": undefined,
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": true,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -330,16 +370,19 @@ Object {
       "values": [Function],
     },
   ],
-  "cursor": Object {
-    "drag": Object {
+  "cursor": {
+    "dataIdx": [Function],
+    "drag": {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
-    "focus": Object {
+    "focus": {
       "prox": 30,
     },
-    "points": Object {
-      "fill": [Function],
-      "show": false,
+    "points": {
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -347,21 +390,34 @@ Object {
     "x": false,
     "y": false,
   },
-  "hooks": Object {
-    "draw": Array [
+  "focus": {
+    "alpha": 1,
+  },
+  "hooks": {
+    "draw": [
       [Function],
     ],
-    "drawClear": Array [
+    "drawClear": [
       [Function],
     ],
-    "init": Array [
+    "init": [
       [Function],
     ],
   },
+  "legend": {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
-  "scales": Object {
-    "m/s": Object {
+  "ms": 1,
+  "padding": [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
+  "scales": {
+    "m/s": {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -370,7 +426,8 @@ Object {
       "range": [Function],
       "time": undefined,
     },
-    "x": Object {
+    "x": {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 2,
@@ -381,15 +438,15 @@ Object {
     },
   },
   "select": undefined,
-  "series": Array [
-    Object {
+  "series": [
+    {
       "value": [Function],
     },
-    Object {
+    {
       "facets": undefined,
       "fill": [Function],
       "paths": [Function],
-      "points": Object {
+      "points": {
         "fill": "#808080",
         "filter": undefined,
         "size": undefined,
@@ -409,19 +466,20 @@ Object {
 `;
 
 exports[`BarChart utils preparePlotConfigBuilder stacking 1`] = `
-Object {
-  "axes": Array [
-    Object {
+{
+  "axes": [
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
-      "grid": Object {
+      "grid": {
         "show": false,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -429,7 +487,7 @@ Object {
       "space": [Function],
       "splits": [Function],
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": false,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -438,17 +496,18 @@ Object {
       "timeZone": undefined,
       "values": [Function],
     },
-    Object {
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
-      "grid": Object {
+      "grid": {
         "show": true,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -456,7 +515,7 @@ Object {
       "space": [Function],
       "splits": undefined,
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": true,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -466,16 +525,19 @@ Object {
       "values": [Function],
     },
   ],
-  "cursor": Object {
-    "drag": Object {
+  "cursor": {
+    "dataIdx": [Function],
+    "drag": {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
-    "focus": Object {
+    "focus": {
       "prox": 30,
     },
-    "points": Object {
-      "fill": [Function],
-      "show": false,
+    "points": {
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -483,21 +545,34 @@ Object {
     "x": false,
     "y": false,
   },
-  "hooks": Object {
-    "draw": Array [
+  "focus": {
+    "alpha": 1,
+  },
+  "hooks": {
+    "draw": [
       [Function],
     ],
-    "drawClear": Array [
+    "drawClear": [
       [Function],
     ],
-    "init": Array [
+    "init": [
       [Function],
     ],
   },
+  "legend": {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
-  "scales": Object {
-    "m/s": Object {
+  "ms": 1,
+  "padding": [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
+  "scales": {
+    "m/s": {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -506,7 +581,8 @@ Object {
       "range": [Function],
       "time": undefined,
     },
-    "x": Object {
+    "x": {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -517,15 +593,15 @@ Object {
     },
   },
   "select": undefined,
-  "series": Array [
-    Object {
+  "series": [
+    {
       "value": [Function],
     },
-    Object {
+    {
       "facets": undefined,
       "fill": [Function],
       "paths": [Function],
-      "points": Object {
+      "points": {
         "fill": "#808080",
         "filter": undefined,
         "size": undefined,
@@ -545,19 +621,20 @@ Object {
 `;
 
 exports[`BarChart utils preparePlotConfigBuilder stacking 2`] = `
-Object {
-  "axes": Array [
-    Object {
+{
+  "axes": [
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
-      "grid": Object {
+      "grid": {
         "show": false,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -565,7 +642,7 @@ Object {
       "space": [Function],
       "splits": [Function],
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": false,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -574,17 +651,18 @@ Object {
       "timeZone": undefined,
       "values": [Function],
     },
-    Object {
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
-      "grid": Object {
+      "grid": {
         "show": true,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -592,7 +670,7 @@ Object {
       "space": [Function],
       "splits": undefined,
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": true,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -602,16 +680,19 @@ Object {
       "values": [Function],
     },
   ],
-  "cursor": Object {
-    "drag": Object {
+  "cursor": {
+    "dataIdx": [Function],
+    "drag": {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
-    "focus": Object {
+    "focus": {
       "prox": 30,
     },
-    "points": Object {
-      "fill": [Function],
-      "show": false,
+    "points": {
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -619,21 +700,34 @@ Object {
     "x": false,
     "y": false,
   },
-  "hooks": Object {
-    "draw": Array [
+  "focus": {
+    "alpha": 1,
+  },
+  "hooks": {
+    "draw": [
       [Function],
     ],
-    "drawClear": Array [
+    "drawClear": [
       [Function],
     ],
-    "init": Array [
+    "init": [
       [Function],
     ],
   },
+  "legend": {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
-  "scales": Object {
-    "m/s": Object {
+  "ms": 1,
+  "padding": [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
+  "scales": {
+    "m/s": {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -642,7 +736,8 @@ Object {
       "range": [Function],
       "time": undefined,
     },
-    "x": Object {
+    "x": {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -653,15 +748,15 @@ Object {
     },
   },
   "select": undefined,
-  "series": Array [
-    Object {
+  "series": [
+    {
       "value": [Function],
     },
-    Object {
+    {
       "facets": undefined,
       "fill": [Function],
       "paths": [Function],
-      "points": Object {
+      "points": {
         "fill": "#808080",
         "filter": undefined,
         "size": undefined,
@@ -681,19 +776,20 @@ Object {
 `;
 
 exports[`BarChart utils preparePlotConfigBuilder stacking 3`] = `
-Object {
-  "axes": Array [
-    Object {
+{
+  "axes": [
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
-      "grid": Object {
+      "grid": {
         "show": false,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -701,7 +797,7 @@ Object {
       "space": [Function],
       "splits": [Function],
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": false,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -710,17 +806,18 @@ Object {
       "timeZone": undefined,
       "values": [Function],
     },
-    Object {
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
-      "grid": Object {
+      "grid": {
         "show": true,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -728,7 +825,7 @@ Object {
       "space": [Function],
       "splits": undefined,
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": true,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -738,16 +835,19 @@ Object {
       "values": [Function],
     },
   ],
-  "cursor": Object {
-    "drag": Object {
+  "cursor": {
+    "dataIdx": [Function],
+    "drag": {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
-    "focus": Object {
+    "focus": {
       "prox": 30,
     },
-    "points": Object {
-      "fill": [Function],
-      "show": false,
+    "points": {
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -755,21 +855,34 @@ Object {
     "x": false,
     "y": false,
   },
-  "hooks": Object {
-    "draw": Array [
+  "focus": {
+    "alpha": 1,
+  },
+  "hooks": {
+    "draw": [
       [Function],
     ],
-    "drawClear": Array [
+    "drawClear": [
       [Function],
     ],
-    "init": Array [
+    "init": [
       [Function],
     ],
   },
+  "legend": {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
-  "scales": Object {
-    "m/s": Object {
+  "ms": 1,
+  "padding": [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
+  "scales": {
+    "m/s": {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -778,7 +891,8 @@ Object {
       "range": [Function],
       "time": undefined,
     },
-    "x": Object {
+    "x": {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -789,15 +903,15 @@ Object {
     },
   },
   "select": undefined,
-  "series": Array [
-    Object {
+  "series": [
+    {
       "value": [Function],
     },
-    Object {
+    {
       "facets": undefined,
       "fill": [Function],
       "paths": [Function],
-      "points": Object {
+      "points": {
         "fill": "#808080",
         "filter": undefined,
         "size": undefined,
@@ -817,19 +931,20 @@ Object {
 `;
 
 exports[`BarChart utils preparePlotConfigBuilder value visibility 1`] = `
-Object {
-  "axes": Array [
-    Object {
+{
+  "axes": [
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
-      "grid": Object {
+      "grid": {
         "show": false,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -837,7 +952,7 @@ Object {
       "space": [Function],
       "splits": [Function],
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": false,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -846,17 +961,18 @@ Object {
       "timeZone": undefined,
       "values": [Function],
     },
-    Object {
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
-      "grid": Object {
+      "grid": {
         "show": true,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -864,7 +980,7 @@ Object {
       "space": [Function],
       "splits": undefined,
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": true,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -874,16 +990,19 @@ Object {
       "values": [Function],
     },
   ],
-  "cursor": Object {
-    "drag": Object {
+  "cursor": {
+    "dataIdx": [Function],
+    "drag": {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
-    "focus": Object {
+    "focus": {
       "prox": 30,
     },
-    "points": Object {
-      "fill": [Function],
-      "show": false,
+    "points": {
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -891,21 +1010,34 @@ Object {
     "x": false,
     "y": false,
   },
-  "hooks": Object {
-    "draw": Array [
+  "focus": {
+    "alpha": 1,
+  },
+  "hooks": {
+    "draw": [
       [Function],
     ],
-    "drawClear": Array [
+    "drawClear": [
       [Function],
     ],
-    "init": Array [
+    "init": [
       [Function],
     ],
   },
+  "legend": {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
-  "scales": Object {
-    "m/s": Object {
+  "ms": 1,
+  "padding": [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
+  "scales": {
+    "m/s": {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -914,7 +1046,8 @@ Object {
       "range": [Function],
       "time": undefined,
     },
-    "x": Object {
+    "x": {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -925,15 +1058,15 @@ Object {
     },
   },
   "select": undefined,
-  "series": Array [
-    Object {
+  "series": [
+    {
       "value": [Function],
     },
-    Object {
+    {
       "facets": undefined,
       "fill": [Function],
       "paths": [Function],
-      "points": Object {
+      "points": {
         "fill": "#808080",
         "filter": undefined,
         "size": undefined,
@@ -953,19 +1086,20 @@ Object {
 `;
 
 exports[`BarChart utils preparePlotConfigBuilder value visibility 2`] = `
-Object {
-  "axes": Array [
-    Object {
+{
+  "axes": [
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 15,
-      "grid": Object {
+      "grid": {
         "show": false,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": -0,
+      "rotate": 0,
       "scale": "x",
       "show": true,
       "side": 3,
@@ -973,7 +1107,7 @@ Object {
       "space": [Function],
       "splits": [Function],
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": false,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -982,17 +1116,18 @@ Object {
       "timeZone": undefined,
       "values": [Function],
     },
-    Object {
+    {
       "filter": undefined,
-      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
-      "grid": Object {
+      "grid": {
         "show": true,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
+      "incrs": undefined,
       "labelGap": 0,
-      "rotate": undefined,
+      "rotate": -0,
       "scale": "m/s",
       "show": true,
       "side": 2,
@@ -1000,7 +1135,7 @@ Object {
       "space": [Function],
       "splits": undefined,
       "stroke": "rgb(204, 204, 220)",
-      "ticks": Object {
+      "ticks": {
         "show": true,
         "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
@@ -1010,16 +1145,19 @@ Object {
       "values": [Function],
     },
   ],
-  "cursor": Object {
-    "drag": Object {
+  "cursor": {
+    "dataIdx": [Function],
+    "drag": {
       "setScale": false,
+      "x": false,
+      "y": false,
     },
-    "focus": Object {
+    "focus": {
       "prox": 30,
     },
-    "points": Object {
-      "fill": [Function],
-      "show": false,
+    "points": {
+      "bbox": [Function],
+      "fill": "rgba(255,255,255,0.4)",
       "size": [Function],
       "stroke": [Function],
       "width": [Function],
@@ -1027,21 +1165,34 @@ Object {
     "x": false,
     "y": false,
   },
-  "hooks": Object {
-    "draw": Array [
+  "focus": {
+    "alpha": 1,
+  },
+  "hooks": {
+    "draw": [
       [Function],
     ],
-    "drawClear": Array [
+    "drawClear": [
       [Function],
     ],
-    "init": Array [
+    "init": [
       [Function],
     ],
   },
+  "legend": {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
-  "scales": Object {
-    "m/s": Object {
+  "ms": 1,
+  "padding": [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
+  "scales": {
+    "m/s": {
+      "asinh": undefined,
       "auto": true,
       "dir": 1,
       "distr": 1,
@@ -1050,7 +1201,8 @@ Object {
       "range": [Function],
       "time": undefined,
     },
-    "x": Object {
+    "x": {
+      "asinh": undefined,
       "auto": true,
       "dir": -1,
       "distr": 2,
@@ -1061,15 +1213,15 @@ Object {
     },
   },
   "select": undefined,
-  "series": Array [
-    Object {
+  "series": [
+    {
       "value": [Function],
     },
-    Object {
+    {
       "facets": undefined,
       "fill": [Function],
       "paths": [Function],
-      "points": Object {
+      "points": {
         "fill": "#808080",
         "filter": undefined,
         "size": undefined,

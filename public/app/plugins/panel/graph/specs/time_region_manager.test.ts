@@ -1,5 +1,6 @@
-import { TimeRegionManager, colorModes } from '../time_region_manager';
 import { dateTime } from '@grafana/data';
+
+import { TimeRegionManager, colorModes } from '../time_region_manager';
 
 describe('TimeRegionManager', () => {
   function plotOptionsScenario(desc: string, func: any) {

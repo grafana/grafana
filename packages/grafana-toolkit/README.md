@@ -166,6 +166,16 @@ Currently we support following Jest configuration properties:
 - [`snapshotSerializers`](https://jest-bot.github.io/jest/docs/configuration.html#snapshotserializers-array-string)
 - [`moduleNameMapper`](https://jestjs.io/docs/en/configuration#modulenamemapper-object-string-string)
 
+### I want to use monaco-editor, is there anything particular I should pay attention?
+
+Yes there is.
+We already bundled monaco-editor in grafana. See [webpack config](https://github.
+com/grafana/grafana/blob/main/scripts/webpack/webpack.common.js#L49-L58).
+We use `@monaco-editor/react` package with loader-config https://github.com/suren-atoyan/monaco-react#loader-config
+By default, monaco files are being downloaded from CDN. We use the bundled version.
+Initialization: https://github.com/grafana/grafana/blob/main/scripts/webpack/webpack.common.js#L49-L58t
+We suggest to use the bundled version to prevent unwanted issues related to version mismatch.
+
 ### How can I customize Webpack rules or plugins?
 
 You can provide your own `webpack.config.js` file that exports a `getWebpackConfig` function. We recommend that you extend the standard configuration, but you are free to create your own:
@@ -326,12 +336,44 @@ You can contribute to grafana-toolkit by helping develop it or by debugging it.
 
 ### Develop grafana-toolkit
 
-Typically plugins should be developed using the `@grafana/toolkit` installed from npm. However, when working on the toolkit, you might want to use the local version. Follow the steps below to develop with a local version:
+Typically plugins should be developed using the `@grafana/toolkit` installed from npm. However, when working on the toolkit, you might want to use the local version. There are two ways to run the local toolkit version:
+
+### Using `NODE_OPTIONS` to load the yarn pnp file:
+
+You can run grafana toolkit directly from the grafana repository with this command.
+
+`NODE_OPTIONS="--require $GRAFANA_REPO/.pnp.cjs" $GRAFANA_REPO/packages/grafana-toolkit/dist/bin/grafana-toolkit.js [command]`
+
+You can replace `$GRAFANA_REPO` with the path to your grafana clone or set it in your environment. e.g.: `export GRAFANA_REPO=/home/dev/your_grafana_clone`
+
+> Note: This will run grafana toolkit from your local clone but it won't change the dependencies of what you are trying to build.
+
+### Using yarn berry linking.
+
+#### Prerequisites
+
+For the following to work make sure to have a plugin that uses yarn berry and yarn PnP to test changes against. Feel free to clone the panel plugin [here](https://github.com/jackw/plugin-yarn-berry) if need be.
 
 1. Clone [Grafana repository](https://github.com/grafana/grafana).
 2. Navigate to the directory you have cloned Grafana repo to and then run `yarn install --immutable`.
-3. Navigate to `<GRAFANA_DIR>/packages/grafana-toolkit` and then run `yarn link`.
-4. Navigate to the directory where your plugin code is and then run `npx grafana-toolkit plugin:dev --yarnlink`. This adds all dependencies required by grafana-toolkit to your project, as well as link your local grafana-toolkit version to be used by the plugin.
+3. Open `packages/grafana-toolkit/package.json`, delete any mention of `@grafana/data` and `@grafana/ui`. Then add the following:
+
+```
+  "devDependencies": {
+    "@grafana/data": "workspace:*",
+    "@grafana/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "@grafana/data": "*",
+    "@grafana/ui": "*"
+  }
+```
+
+**DO NOT commit this `package.json` code change. It is required to resolve these `@grafana` packages from the plugin for development purposes only.**
+
+4. Run `yarn` in the grafana repo.
+5. Navigate to the directory where your plugin code is and then run `yarn link <GRAFANA_DIR>/packages/grafana-toolkit`. This uses yarn berry's `portal` protocol to "link" the grafana-toolkit package and resolve it's dependencies into your plugin code allowing you to develop toolkit and test changes against plugin code.
+6. Make the required changes to Grafana toolkit.
 
 ### Debug grafana-toolkit
 

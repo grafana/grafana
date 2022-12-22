@@ -1,5 +1,6 @@
-import React, { InputHTMLAttributes, FunctionComponent } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { InputHTMLAttributes, FunctionComponent } from 'react';
+
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { PopoverContent } from '../Tooltip';
 
@@ -10,6 +11,8 @@ export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   // If null no width will be specified not even default one
   inputWidth?: number | null;
   inputEl?: React.ReactNode;
+  /** Make tooltip interactive */
+  interactive?: boolean;
 }
 
 const defaultProps = {
@@ -28,12 +31,13 @@ export const FormField: FunctionComponent<Props> = ({
   inputWidth,
   inputEl,
   className,
+  interactive,
   ...inputProps
 }) => {
   const styles = getStyles();
   return (
     <div className={cx(styles.formField, className)}>
-      <InlineFormLabel width={labelWidth} tooltip={tooltip}>
+      <InlineFormLabel width={labelWidth} tooltip={tooltip} interactive={interactive}>
         {label}
       </InlineFormLabel>
       {inputEl || (

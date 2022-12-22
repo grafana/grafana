@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
-import { Field } from '@grafana/data';
-import { useNodeLimit } from './useNodeLimit';
-import useMountedState from 'react-use/lib/useMountedState';
-import { graphBounds } from './utils';
-import { createWorker } from './createLayoutWorker';
 import { useUnmount } from 'react-use';
+import useMountedState from 'react-use/lib/useMountedState';
+
+import { Field } from '@grafana/data';
+
+import { createWorker } from './createLayoutWorker';
+import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
+import { useNodeLimit } from './useNodeLimit';
+import { graphBounds } from './utils';
 
 export interface Config {
   linkDistance: number;
@@ -197,7 +199,7 @@ function gridLayout(
       const val1 = sort!.field.values.get(node1.dataFrameRowIndex);
       const val2 = sort!.field.values.get(node2.dataFrameRowIndex);
 
-      // Lets pretend we don't care about type of the stats for a while (they can be strings)
+      // Let's pretend we don't care about type of the stats for a while (they can be strings)
       return sort!.ascending ? val1 - val2 : val2 - val1;
     });
   }

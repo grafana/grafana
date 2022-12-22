@@ -1,7 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 
-import { FolderInfo, PermissionLevelString } from '../../../../types';
 import { getFolderById, searchFolders } from '../../../../features/manage-dashboards/state/actions';
+import { FolderInfo, PermissionLevelString } from '../../../../types';
+
 import { PermissionLevel } from './types';
 
 interface GetFoldersArgs {

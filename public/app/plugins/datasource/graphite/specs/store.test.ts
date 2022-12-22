@@ -1,7 +1,8 @@
-import { dispatch } from 'app/store/store';
-import gfunc from '../gfunc';
 import { TemplateSrvStub } from 'test/specs/helpers';
-import { silenceConsoleOutput } from 'test/core/utils/silenceConsoleOutput';
+
+import { dispatch } from 'app/store/store';
+
+import gfunc from '../gfunc';
 import { actions } from '../state/actions';
 import {
   getAltSegmentsSelectables,
@@ -9,8 +10,8 @@ import {
   getTagsAsSegmentsSelectables,
   getTagValuesSelectables,
 } from '../state/providers';
-import { GraphiteSegment } from '../types';
 import { createStore } from '../state/store';
+import { GraphiteSegment } from '../types';
 
 jest.mock('app/angular/promiseToDigest', () => ({
   promiseToDigest: (scope: any) => {
@@ -93,12 +94,6 @@ describe('Graphite actions', () => {
       expect(ctx.datasource.metricFindQuery.mock.calls[lastCallIndex][0]).toBe('test.prod.*');
     });
 
-    it('should delete last segment if no metrics are found', () => {
-      expect(ctx.state.segments[0].value).toBe('test');
-      expect(ctx.state.segments[1].value).toBe('prod');
-      expect(ctx.state.segments[2].value).toBe('select metric');
-    });
-
     it('should parse expression and build function model', () => {
       expect(ctx.state.queryModel.functions.length).toBe(2);
     });
@@ -113,12 +108,6 @@ describe('Graphite actions', () => {
     it('should validate metric key exists', () => {
       const lastCallIndex = ctx.datasource.metricFindQuery.mock.calls.length - 1;
       expect(ctx.datasource.metricFindQuery.mock.calls[lastCallIndex][0]).toBe('test.test.*');
-    });
-
-    it('should delete last segment if no metrics are found', () => {
-      expect(ctx.state.segments[0].value).toBe('test');
-      expect(ctx.state.segments[1].value).toBe('test');
-      expect(ctx.state.segments[2].value).toBe('select metric');
     });
 
     it('should parse expression and build function model', () => {
@@ -165,7 +154,7 @@ describe('Graphite actions', () => {
     });
 
     it('should add 2 segments', () => {
-      expect(ctx.state.segments.length).toBe(2);
+      expect(ctx.state.segments.length).toBe(3);
     });
 
     it('should add function param', () => {
@@ -196,7 +185,7 @@ describe('Graphite actions', () => {
     });
 
     it('should add segments', () => {
-      expect(ctx.state.segments.length).toBe(3);
+      expect(ctx.state.segments.length).toBe(4);
     });
 
     it('should have correct func params', () => {
@@ -236,7 +225,6 @@ describe('Graphite actions', () => {
   });
 
   describe('when autocomplete for metric names is not available', () => {
-    silenceConsoleOutput();
     beforeEach(() => {
       ctx.state.datasource.getTagsAutoComplete = jest.fn().mockReturnValue(Promise.resolve([]));
       ctx.state.datasource.metricFindQuery = jest.fn().mockReturnValue(
@@ -267,7 +255,6 @@ describe('Graphite actions', () => {
   });
 
   describe('when autocomplete for tags is not available', () => {
-    silenceConsoleOutput();
     beforeEach(() => {
       ctx.datasource.metricFindQuery = jest.fn().mockReturnValue(Promise.resolve([]));
       ctx.datasource.getTagsAutoComplete = jest.fn().mockReturnValue(

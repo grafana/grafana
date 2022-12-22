@@ -1,8 +1,15 @@
-+++
-title = "Backend plugins"
-keywords = ["grafana", "plugins", "backend", "plugin", "backend-plugins", "documentation"]
-aliases = ["/docs/grafana/latest/plugins/developing/backend-plugins-guide/"]
-+++
+---
+aliases:
+  - ../../plugins/developing/backend-plugins-guide/
+keywords:
+  - grafana
+  - plugins
+  - backend
+  - plugin
+  - backend-plugins
+  - documentation
+title: Backend plugins
+---
 
 # Backend plugins
 
@@ -12,13 +19,13 @@ However, one limitation with these plugins are that they execute on the client-s
 
 We use the term _backend plugin_ to denote that a plugin has a backend component. Still, normally a backend plugin requires frontend components as well. This is for example true for backend data source plugins which normally need configuration and query editor components implemented for the frontend.
 
-Data source plugins can be extended with a backend component. In the future we plan to support additional types and possibly new kinds of plugins, such as [notifiers for Grafana Alerting]({{< relref "../../../alerting/old-alerting/notifications.md" >}}) and custom authentication to name a few.
+Data source plugins can be extended with a backend component. In the future we plan to support additional types and possibly new kinds of plugins, such as notifiers for Grafana Alerting and custom authentication to name a few.
 
 ## Use cases for implementing a backend plugin
 
 The following examples gives you an idea of why you'd consider implementing a backend plugin:
 
-- Enable [Grafana Alerting]({{< relref "../../../alerting" >}}) for data sources.
+- Enable [Grafana Alerting]({{< relref "../../../alerting/" >}}) for data sources.
 - Connect to non-HTTP services that normally can't be connected to from a web browser, e.g. SQL database servers.
 - Keep state between users, e.g. query caching for data sources.
 - Use custom authentication methods and/or authorization checks that aren't supported in Grafana.
@@ -41,7 +48,7 @@ Grafana's backend plugin system exposes a couple of different capabilities, or b
 
 ### Query data
 
-The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../dashboards/_index.md" >}}), [Explore]({{< relref "../../../explore/_index.md" >}}) or [Grafana Alerting]({{< relref "../../../alerting" >}}). The response contains [data frames]({{< relref "../data-frames.md" >}}), which are used to visualize metrics, logs, and traces. The query data capability is required to implement for a backend data source plugin.
+The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../dashboards/" >}}), [Explore]({{< relref "../../../explore/" >}}) or [Grafana Alerting]({{< relref "../../../alerting/" >}}). The response contains [data frames]({{< relref "../data-frames/" >}}), which are used to visualize metrics, logs, and traces. The query data capability is required to implement for a backend data source plugin.
 
 ### Resources
 
@@ -49,7 +56,7 @@ The resources capability allows a backend plugin to handle custom HTTP requests 
 
 Examples of use cases for implementing resources:
 
-- Implement a custom data source proxy in case certain authentication/authorization or other requirements are required/needed that are not supported in Grafana's [built-in data proxy]({{< relref "../../../http_api/data_source.md#data-source-proxy-calls" >}}).
+- Implement a custom data source proxy in case certain authentication/authorization or other requirements are required/needed that are not supported in Grafana's [built-in data proxy]({{< relref "../../http_api/data_source/#data-source-proxy-calls" >}}).
 - Return data or information in a format suitable to use within a data source query editor to provide auto-complete functionality.
 - Return static resources, such as images or files.
 - Send a command to a device, such as a micro controller or IOT device.
@@ -63,6 +70,6 @@ The health checks capability allows a backend plugin to return the status of the
 
 ### Collect metrics
 
-A backend plugin can collect and return runtime, process and custom metrics using the text-based Prometheus [exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/). If you’re using the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go.md" >}}) to implement your backend plugin, then the [Prometheus instrumentation library for Go applications](https://github.com/prometheus/client_golang) is built-in, and gives you Go runtime metrics and process metrics out of the box. By using the [Prometheus instrumentation library](https://github.com/prometheus/client_golang) you can add custom metrics to instrument your backend plugin.
+A backend plugin can collect and return runtime, process and custom metrics using the text-based Prometheus [exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/). If you’re using the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go/" >}}) to implement your backend plugin, then the [Prometheus instrumentation library for Go applications](https://github.com/prometheus/client_golang) is built-in, and gives you Go runtime metrics and process metrics out of the box. By using the [Prometheus instrumentation library](https://github.com/prometheus/client_golang) you can add custom metrics to instrument your backend plugin.
 
 A metrics endpoint (`/api/plugins/<plugin id>/metrics`) for a plugin is available in the Grafana HTTP API and allows a Prometheus instance to be configured to scrape the metrics.

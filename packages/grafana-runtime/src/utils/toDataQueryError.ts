@@ -6,19 +6,21 @@ import { DataQueryError } from '@grafana/data';
  *
  * @public
  */
-export function toDataQueryError(err: DataQueryError | string | Object): DataQueryError {
-  const error = (err || {}) as DataQueryError;
+export function toDataQueryError(err: DataQueryError | string | unknown): DataQueryError {
+  const error: DataQueryError = err || {};
 
   if (!error.message) {
-    if (typeof err === 'string' || err instanceof String) {
-      return { message: err } as DataQueryError;
+    if (typeof err === 'string') {
+      return { message: err };
     }
 
     let message = 'Query error';
     if (error.message) {
       message = error.message;
-    } else if (error.data && error.data.message) {
+    } else if (error.data && error.data.message && error.data?.message !== 'Query data error') {
       message = error.data.message;
+    } else if (error?.data?.message === 'Query data error' && error?.data?.error) {
+      message = error.data.error;
     } else if (error.data && error.data.error) {
       message = error.data.error;
     } else if (error.status) {

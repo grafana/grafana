@@ -19,9 +19,82 @@ export enum GrafanaAlertState {
   Error = 'Error',
 }
 
+type GrafanaAlertStateReason = ` (${string})` | '';
+
+export type GrafanaAlertStateWithReason = `${GrafanaAlertState}${GrafanaAlertStateReason}`;
+
+export function isGrafanaAlertState(state: string): state is GrafanaAlertState {
+  return Object.values(GrafanaAlertState).some((promState) => promState === state);
+}
+
+/** We need this to disambiguate the union PromAlertingRuleState | GrafanaAlertStateWithReason
+ */
+export function isAlertStateWithReason(
+  state: PromAlertingRuleState | GrafanaAlertStateWithReason
+): state is GrafanaAlertStateWithReason {
+  return (
+    state !== null &&
+    typeof state !== 'undefined' &&
+    !Object.values(PromAlertingRuleState).includes(state as PromAlertingRuleState)
+  );
+}
+
+export function mapStateWithReasonToBaseState(
+  state: GrafanaAlertStateWithReason | PromAlertingRuleState
+): GrafanaAlertState | PromAlertingRuleState {
+  if (isAlertStateWithReason(state)) {
+    const fields = state.split(' ');
+    return fields[0] as GrafanaAlertState;
+  } else {
+    return state;
+  }
+}
+
 export enum PromRuleType {
   Alerting = 'alerting',
   Recording = 'recording',
+}
+
+export enum PromApplication {
+  Cortex = 'Cortex',
+  Mimir = 'Mimir',
+  Prometheus = 'Prometheus',
+  Thanos = 'Thanos',
+}
+
+export interface PromBuildInfoResponse {
+  data: {
+    application?: string;
+    version: string;
+    revision: string;
+    features?: {
+      ruler_config_api?: 'true' | 'false';
+      alertmanager_config_api?: 'true' | 'false';
+      query_sharding?: 'true' | 'false';
+      federated_rules?: 'true' | 'false';
+    };
+  };
+  status: 'success';
+}
+
+export interface PromApiFeatures {
+  application?: PromApplication;
+  features: {
+    rulerApiEnabled: boolean;
+  };
+}
+
+export interface AlertmanagerApiFeatures {
+  /**
+   * Some Alertmanager implementations (Mimir) are multi-tenant systems.
+   *
+   * To save on compute costs, tenants are not active until they have a configuration set.
+   * If there is no fallback_config_file set, Alertmanager endpoints will respond with HTTP 404
+   *
+   * Despite that, it is possible to create a configuration for such datasource
+   * by posting a new config to the `/api/v1/alerts` endpoint
+   */
+  lazyConfigInit: boolean;
 }
 
 interface PromRuleDTOBase {
@@ -37,7 +110,7 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
   alerts: Array<{
     labels: Labels;
     annotations: Annotations;
-    state: Exclude<PromAlertingRuleState | GrafanaAlertState, PromAlertingRuleState.Inactive>;
+    state: Exclude<PromAlertingRuleState | GrafanaAlertStateWithReason, PromAlertingRuleState.Inactive>;
     activeAt: string;
     value: string;
   }>;
@@ -105,6 +178,7 @@ export enum GrafanaAlertStateDecision {
 export interface AlertDataQuery extends DataQuery {
   maxDataPoints?: number;
   intervalMs?: number;
+  expression?: string;
 }
 
 export interface AlertQuery {
@@ -128,6 +202,7 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   uid: string;
   namespace_uid: string;
   namespace_id: number;
+  provenance?: string;
 }
 
 export interface RulerGrafanaRuleDTO {
@@ -151,6 +226,7 @@ export type PostableRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO | Pos
 export type RulerRuleGroupDTO<R = RulerRuleDTO> = {
   name: string;
   interval?: string;
+  source_tenants?: string[];
   rules: R[];
 };
 

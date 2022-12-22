@@ -1,11 +1,14 @@
-import React, { HTMLAttributes, useRef } from 'react';
 import { css, cx } from '@emotion/css';
-import { Button, Field, Form, HorizontalGroup, InputControl, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
-import { AnnotationEventUIModel, GrafanaTheme2 } from '@grafana/data';
-import useClickAway from 'react-use/lib/useClickAway';
+import React, { HTMLAttributes, useRef } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
+import useClickAway from 'react-use/lib/useClickAway';
+
+import { AnnotationEventUIModel, GrafanaTheme2 } from '@grafana/data';
+import { Button, Field, Form, HorizontalGroup, InputControl, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { getAnnotationTags } from 'app/features/annotations/api';
+
+import { AnnotationsDataFrameViewDTO } from '../types';
 
 interface AnnotationEditFormDTO {
   description: string;

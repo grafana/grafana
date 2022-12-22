@@ -1,8 +1,13 @@
-import { defaultBucketAgg } from 'app/plugins/datasource/elasticsearch/query_def';
 import { reducerTester } from 'test/core/redux/reducerTester';
+
+import { defaultBucketAgg } from 'app/plugins/datasource/elasticsearch/queryDef';
+import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
+
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
+import { initQuery } from '../../state';
 import { BucketAggregation, DateHistogram } from '../aggregations';
 import { bucketAggregationConfig } from '../utils';
+
 import {
   addBucketAggregation,
   changeBucketAggregationField,
@@ -11,8 +16,6 @@ import {
   removeBucketAggregation,
 } from './actions';
 import { createReducer } from './reducer';
-import { initQuery } from '../../state';
-import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
 
 describe('Bucket Aggregations Reducer', () => {
   it('Should correctly add new aggregations', () => {

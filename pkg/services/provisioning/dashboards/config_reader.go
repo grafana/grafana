@@ -3,27 +3,29 @@ package dashboards
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type configReader struct {
-	path string
-	log  log.Logger
+	path       string
+	log        log.Logger
+	orgService org.Service
 }
 
-func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
+func (cr *configReader) parseConfigs(file fs.DirEntry) ([]*config, error) {
 	filename, _ := filepath.Abs(filepath.Join(cr.path, file.Name()))
 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +68,7 @@ func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
 func (cr *configReader) readConfig(ctx context.Context) ([]*config, error) {
 	var dashboards []*config
 
-	files, err := ioutil.ReadDir(cr.path)
+	files, err := os.ReadDir(cr.path)
 	if err != nil {
 		cr.log.Error("can't read dashboard provisioning files from directory", "path", cr.path, "error", err)
 		return dashboards, nil
@@ -93,7 +95,7 @@ func (cr *configReader) readConfig(ctx context.Context) ([]*config, error) {
 			dashboard.OrgID = 1
 		}
 
-		if err := utils.CheckOrgExists(ctx, dashboard.OrgID); err != nil {
+		if err := utils.CheckOrgExists(ctx, cr.orgService, dashboard.OrgID); err != nil {
 			return nil, fmt.Errorf("failed to provision dashboards with %q reader: %w", dashboard.Name, err)
 		}
 

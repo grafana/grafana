@@ -1,19 +1,20 @@
-import React from 'react';
 import { css } from '@emotion/css';
-import { ReactMonacoEditorLazy } from './ReactMonacoEditorLazy';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
-import { selectors } from '@grafana/e2e-selectors';
+import React, { PureComponent } from 'react';
+
 import { GrafanaTheme2, monacoLanguageRegistry } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { withTheme2 } from '../../themes';
 import { Themeable2 } from '../../types';
 
-import { CodeEditorProps, Monaco, MonacoEditor as MonacoEditorType, MonacoOptions } from './types';
+import { ReactMonacoEditorLazy } from './ReactMonacoEditorLazy';
 import { registerSuggestions } from './suggestions';
+import { CodeEditorProps, Monaco, MonacoEditor as MonacoEditorType, MonacoOptions } from './types';
 
 type Props = CodeEditorProps & Themeable2;
 
-class UnthemedCodeEditor extends React.PureComponent<Props> {
+class UnthemedCodeEditor extends PureComponent<Props> {
   completionCancel?: monacoType.IDisposable;
   monaco?: Monaco;
 
@@ -94,7 +95,8 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
   };
 
   handleOnMount = (editor: MonacoEditorType, monaco: Monaco) => {
-    const { onEditorDidMount } = this.props;
+    const { onChange, onEditorDidMount } = this.props;
+
     this.getEditorValue = () => editor.getValue();
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, this.onSave);
@@ -102,6 +104,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
 
     if (onEditorDidMount) {
       languagePromise.then(() => onEditorDidMount(editor, monaco));
+      editor.getModel()?.onDidChangeContent(() => onChange?.(editor.getValue()));
     }
   };
 
@@ -110,7 +113,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     const value = this.props.value ?? '';
     const longText = value.length > 100;
 
-    const styles = getStyles(theme);
+    const containerStyles = this.props.containerStyles ?? getStyles(theme).container;
 
     const options: MonacoOptions = {
       wordWrap: 'off',
@@ -142,7 +145,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     }
 
     return (
-      <div className={styles.container} onBlur={this.onBlur} aria-label={selectors.components.CodeEditor.container}>
+      <div className={containerStyles} onBlur={this.onBlur} aria-label={selectors.components.CodeEditor.container}>
         <ReactMonacoEditorLazy
           width={width}
           height={height}

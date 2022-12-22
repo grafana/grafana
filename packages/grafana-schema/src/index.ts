@@ -3,4 +3,5 @@
  *
  * @packageDocumentation
  */
-export * from './schema/graph.gen';
+export * from './schema/mudball.gen';
+export * from './index.gen';

@@ -41,6 +41,7 @@
     "type":"label",
     "name":"bot/no new info",
     "action":"close",
+    "removeLabel":"needs more info",
     "comment":"We've closed this issue since it needs more information and hasn't had any activity recently. We can re-open it after you you add more information. To avoid having your issue closed in the future, please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/main/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
   },
   {
@@ -79,7 +80,7 @@
     "name":"datasource/Azure",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/97"
+      "url":"https://github.com/orgs/grafana/projects/190"
     }
   },
   {
@@ -103,7 +104,7 @@
     "name":"datasource/GoogleCloudMonitoring",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/97"
+      "url":"https://github.com/orgs/grafana/projects/190"
     }
   },
   {
@@ -140,18 +141,10 @@
   },
   {
     "type":"label",
-    "name":"datasource/OpenSearch",
-    "action":"addToProject",
-    "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/110"
-    }
-  },
-  {
-    "type":"label",
     "name":"datasource/Loki",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/110"
+      "url":"https://github.com/orgs/grafana/projects/203"
     }
   },
   {
@@ -159,7 +152,23 @@
     "name":"datasource/Tempo",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/110"
+      "url":"https://github.com/orgs/grafana/projects/221"
+    }
+  },
+  {
+    "type":"label",
+    "name":"datasource/Phlare",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/221"
+    }
+  },
+  {
+    "type":"label",
+    "name":"datasource/Parca",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/221"
     }
   },
   {
@@ -167,7 +176,7 @@
     "name":"datasource/Elasticsearch",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/110"
+      "url":"https://github.com/orgs/grafana/projects/203"
     }
   },
   {
@@ -175,7 +184,7 @@
     "name":"datasource/Jaeger",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/110"
+      "url":"https://github.com/orgs/grafana/projects/221"
     }
   },
   {
@@ -183,7 +192,7 @@
     "name":"datasource/Zipkin",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/110"
+      "url":"https://github.com/orgs/grafana/projects/221"
     }
   },
   {
@@ -208,6 +217,102 @@
     "action":"removeFromProject",
     "removeFromProject":{
       "url":"https://github.com/grafana/grafana/projects/33"
+    }
+  },
+  {
+    "type": "label",
+    "name": "team/grafana-partners",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/87"
+    }
+  },
+  {
+    "type": "label",
+    "name": "team/grafana-authnz",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/rbac",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/serviceaccount",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/authproxy",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/oauth",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/ldap",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/saml",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/apikeys",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/dspermissions",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/auth/teamsync",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/86"
     }
   }
 ]

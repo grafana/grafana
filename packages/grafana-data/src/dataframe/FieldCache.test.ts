@@ -1,5 +1,6 @@
-import { FieldCache } from './FieldCache';
 import { FieldType } from '../types/dataFrame';
+
+import { FieldCache } from './FieldCache';
 import { toDataFrame } from './processDataFrame';
 
 describe('FieldCache', () => {

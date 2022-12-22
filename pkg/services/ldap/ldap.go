@@ -5,17 +5,19 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"net"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // IConnection is interface for LDAP connection manipulation
@@ -98,7 +100,7 @@ func (server *Server) Dial() error {
 		for _, caCertFile := range strings.Split(server.Config.RootCACert, " ") {
 			// nolint:gosec
 			// We can ignore the gosec G304 warning on this one because `caCertFile` comes from ldap config.
-			pem, err := ioutil.ReadFile(caCertFile)
+			pem, err := os.ReadFile(caCertFile)
 			if err != nil {
 				return err
 			}
@@ -114,6 +116,9 @@ func (server *Server) Dial() error {
 			return err
 		}
 	}
+
+	timeout := time.Duration(server.Config.Timeout) * time.Second
+
 	for _, host := range strings.Split(server.Config.Host, " ") {
 		// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 		host = strings.TrimSuffix(strings.TrimPrefix(host, "["), "]")
@@ -128,17 +133,17 @@ func (server *Server) Dial() error {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
 			}
 			if server.Config.StartTLS {
-				server.Connection, err = ldap.Dial("tcp", address)
+				server.Connection, err = dialWithTimeout("tcp", address, timeout)
 				if err == nil {
 					if err = server.Connection.StartTLS(tlsCfg); err == nil {
 						return nil
 					}
 				}
 			} else {
-				server.Connection, err = ldap.DialTLS("tcp", address, tlsCfg)
+				server.Connection, err = dialTLSWithTimeout("tcp", address, tlsCfg, timeout)
 			}
 		} else {
-			server.Connection, err = ldap.Dial("tcp", address)
+			server.Connection, err = dialWithTimeout("tcp", address, timeout)
 		}
 
 		if err == nil {
@@ -146,6 +151,30 @@ func (server *Server) Dial() error {
 		}
 	}
 	return err
+}
+
+// dialWithTimeout applies the specified timeout
+// and connects to the given address on the given network using net.Dial
+func dialWithTimeout(network, addr string, timeout time.Duration) (*ldap.Conn, error) {
+	c, err := net.DialTimeout(network, addr, timeout)
+	if err != nil {
+		return nil, err
+	}
+	conn := ldap.NewConn(c, false)
+	conn.Start()
+	return conn, nil
+}
+
+// dialTLSWithTimeout applies the specified timeout
+// connects to the given address on the given network using tls.Dial
+func dialTLSWithTimeout(network, addr string, config *tls.Config, timeout time.Duration) (*ldap.Conn, error) {
+	c, err := tls.DialWithDialer(&net.Dialer{Timeout: timeout}, network, addr, config)
+	if err != nil {
+		return nil, err
+	}
+	conn := ldap.NewConn(c, true)
+	conn.Start()
+	return conn, nil
 }
 
 // Close closes the LDAP connection
@@ -273,7 +302,7 @@ func (server *Server) Users(logins []string) (
 	}
 
 	server.log.Debug(
-		"LDAP users found", "users", spew.Sdump(serializedUsers),
+		"LDAP users found", "users", fmt.Sprintf("%v", serializedUsers),
 	)
 
 	return serializedUsers, nil
@@ -333,7 +362,8 @@ func (server *Server) users(logins []string) (
 // If there are no ldap group mappings access is true
 // otherwise a single group must match
 func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
-	if len(server.Config.Groups) > 0 && len(user.OrgRoles) < 1 {
+	if !SkipOrgRoleSync() && len(server.Config.Groups) > 0 &&
+		(len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
 		server.log.Error(
 			"User does not belong in any of the specified LDAP groups",
 			"username", user.Login,
@@ -401,7 +431,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 
 	attrs := server.Config.Attr
 	extUser := &models.ExternalUserInfo{
-		AuthModule: models.AuthModuleLDAP,
+		AuthModule: login.LDAPAuthModule,
 		AuthId:     user.DN,
 		Name: strings.TrimSpace(
 			fmt.Sprintf(
@@ -413,7 +443,13 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 		Login:    getAttribute(attrs.Username, user),
 		Email:    getAttribute(attrs.Email, user),
 		Groups:   memberOf,
-		OrgRoles: map[int64]models.RoleType{},
+		OrgRoles: map[int64]org.RoleType{},
+	}
+
+	// Skipping org role sync
+	if SkipOrgRoleSync() {
+		server.log.Debug("skipping organization role mapping.")
+		return extUser, nil
 	}
 
 	for _, group := range server.Config.Groups {
@@ -422,8 +458,11 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 			continue
 		}
 
-		if isMemberOf(memberOf, group.GroupDN) {
-			extUser.OrgRoles[group.OrgId] = group.OrgRole
+		if IsMemberOf(memberOf, group.GroupDN) {
+			if group.OrgRole != "" {
+				extUser.OrgRoles[group.OrgId] = group.OrgRole
+			}
+
 			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
 			}
@@ -432,7 +471,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 
 	// If there are group org mappings configured, but no matching mappings,
 	// the user will not be able to login and will be disabled
-	if len(server.Config.Groups) > 0 && len(extUser.OrgRoles) == 0 {
+	if len(server.Config.Groups) > 0 && (len(extUser.OrgRoles) == 0 && (extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin)) {
 		extUser.IsDisabled = true
 	}
 
@@ -463,7 +502,7 @@ func (server *Server) AdminBind() error {
 	err := server.userBind(server.Config.BindDN, server.Config.BindPassword)
 	if err != nil {
 		server.log.Error(
-			"Cannot authenticate admin user in LDAP",
+			"Cannot authenticate admin user in LDAP. Verify bind configuration",
 			"error",
 			err,
 		)

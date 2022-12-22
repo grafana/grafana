@@ -1,8 +1,10 @@
-import React from 'react';
 import { screen, render, within } from '@testing-library/react';
-import { TableContainer } from './TableContainer';
+import React from 'react';
+
 import { DataFrame, toDataFrame, FieldType, InternalTimeZones } from '@grafana/data';
 import { ExploreId } from 'app/types/explore';
+
+import { TableContainer } from './TableContainer';
 
 function getTable(): HTMLElement {
   return screen.getAllByRole('table')[0];
@@ -46,12 +48,12 @@ const dataFrame = toDataFrame({
 });
 
 const defaultProps = {
-  exploreId: ExploreId.left as ExploreId,
+  exploreId: ExploreId.left,
   loading: false,
   width: 800,
   onCellFilterAdded: jest.fn(),
-  tableResult: dataFrame,
-  splitOpen: (() => {}) as any,
+  tableResult: [dataFrame],
+  splitOpenFn: () => {},
   range: {} as any,
   timeZone: InternalTimeZones.utc,
 };
@@ -71,11 +73,13 @@ describe('TableContainer', () => {
   });
 
   it('should render 0 series returned on no items', () => {
-    const emptyFrames = {
-      name: 'TableResultName',
-      fields: [],
-      length: 0,
-    } as DataFrame;
+    const emptyFrames: DataFrame[] = [
+      {
+        name: 'TableResultName',
+        fields: [],
+        length: 0,
+      },
+    ];
     render(<TableContainer {...defaultProps} tableResult={emptyFrames} />);
     expect(screen.getByText('0 series returned')).toBeInTheDocument();
   });

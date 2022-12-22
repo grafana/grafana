@@ -1,6 +1,6 @@
-+++
-title = "Working with data frames"
-+++
+---
+title: Working with data frames
+---
 
 # Working with data frames
 
@@ -8,7 +8,7 @@ The data frame is a columnar data structure which allows efficient querying of l
 
 The DataFrame interface contains a `name` and an array of `fields` where each field contains the name, type, and the values for the field.
 
-> **Note:** If you're looking to migrate an existing plugin to use the data frame format, refer to [Migrate to data frames]({{< relref "migration-guide.md#migrate-to-data-frames" >}}).
+> **Note:** If you're looking to migrate an existing plugin to use the data frame format, refer to [Migrate to data frames]({{< relref "migration-guide/#migrate-to-data-frames" >}}).
 
 ## Create a data frame
 
@@ -50,11 +50,11 @@ frame.name = 'http_requests_total';
 When you're building a panel plugin, the data frames returned by the data source are available from the `data` prop in your panel component.
 
 ```ts
-const SimplePanel: React.FC<Props> = ({ data }) => {
+function SimplePanel({ data: Props }) {
   const frame = data.series[0];
 
   // ...
-};
+}
 ```
 
 Before you start reading the data, think about what data you expect. For example, to visualize a time series we'd need at least one time field, and one number field.

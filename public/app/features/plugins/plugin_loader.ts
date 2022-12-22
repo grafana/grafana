@@ -1,40 +1,37 @@
-// eslint-disable-next-line lodash/import-scope
-import _ from 'lodash';
-import * as sdk from 'app/plugins/sdk';
-import kbn from 'app/core/utils/kbn';
-import moment from 'moment'; // eslint-disable-line no-restricted-imports
-import angular from 'angular';
+import * as emotion from '@emotion/css';
+import * as emotionReact from '@emotion/react';
+import * as d3 from 'd3';
 import jquery from 'jquery';
-
-// Experimental module exports
+import _ from 'lodash'; // eslint-disable-line lodash/import-scope
+import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import prismjs from 'prismjs';
-import slate from 'slate';
-// @ts-ignore
-import slateReact from '@grafana/slate-react';
-// @ts-ignore
-import slatePlain from 'slate-plain-serializer';
 import react from 'react';
 import reactDom from 'react-dom';
-import * as reactRedux from 'react-redux';
+import * as reactRedux from 'react-redux'; // eslint-disable-line no-restricted-imports
+import * as reactRouter from 'react-router-dom';
 import * as redux from 'redux';
+import * as rxjs from 'rxjs';
+import * as rxjsOperators from 'rxjs/operators';
+import slate from 'slate';
+import slatePlain from 'slate-plain-serializer';
+import slateReact from 'slate-react';
 
-import config from 'app/core/config';
-import TimeSeries from 'app/core/time_series2';
-import TableModel from 'app/core/table_model';
-import { coreModule } from 'app/angular/core_module';
-import { appEvents, contextSrv } from 'app/core/core';
-import * as flatten from 'app/core/utils/flatten';
-import * as ticks from 'app/core/utils/ticks';
-import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
-import { promiseToDigest } from 'app/angular/promiseToDigest';
-import impressionSrv from 'app/core/services/impression_srv';
-import builtInPlugins from './built_in_plugins';
-import * as d3 from 'd3';
-import * as emotion from '@emotion/css';
 import * as grafanaData from '@grafana/data';
-import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
-import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
+import * as grafanaUIraw from '@grafana/ui';
+import TableModel from 'app/core/TableModel';
+import config from 'app/core/config';
+import { appEvents, contextSrv } from 'app/core/core';
+import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
+import impressionSrv from 'app/core/services/impression_srv';
+import TimeSeries from 'app/core/time_series2';
+import * as flatten from 'app/core/utils/flatten';
+import kbn from 'app/core/utils/kbn';
+import * as ticks from 'app/core/utils/ticks';
+
+import { GenericDataSourcePlugin } from '../datasources/types';
+
+import builtInPlugins from './built_in_plugins';
 import { locateWithCache, registerPluginInCache } from './pluginCacheBuster';
 
 // Help the 6.4 to 6.5 migration
@@ -45,12 +42,6 @@ grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
 grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
 grafanaUI.AppPlugin = grafanaData.AppPlugin;
 grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
-
-// rxjs
-import * as rxjs from 'rxjs';
-import * as rxjsOperators from 'rxjs/operators';
-// routing
-import * as reactRouter from 'react-router-dom';
 
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
 
@@ -75,7 +66,7 @@ grafanaRuntime.SystemJS.config({
   },
 });
 
-function exposeToPlugin(name: string, component: any) {
+export function exposeToPlugin(name: string, component: any) {
   grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
     module.exports = component;
   });
@@ -87,7 +78,6 @@ exposeToPlugin('@grafana/runtime', grafanaRuntime);
 exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
-exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs', rxjs);
 exposeToPlugin('rxjs/operators', rxjsOperators);
@@ -96,7 +86,8 @@ exposeToPlugin('react-router-dom', reactRouter);
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
 exposeToPlugin('slate', slate);
-exposeToPlugin('@grafana/slate-react', slateReact);
+exposeToPlugin('slate-react', slateReact);
+exposeToPlugin('@grafana/slate-react', slateReact); // for backwards compatibility with older plugins
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
@@ -104,6 +95,7 @@ exposeToPlugin('react-redux', reactRedux);
 exposeToPlugin('redux', redux);
 exposeToPlugin('emotion', emotion);
 exposeToPlugin('@emotion/css', emotion);
+exposeToPlugin('@emotion/react', emotionReact);
 
 exposeToPlugin('app/features/dashboard/impression_store', {
   impressions: impressionSrv,
@@ -120,24 +112,16 @@ exposeToPlugin('app/core/services/backend_srv', {
   getBackendSrv,
 });
 
-exposeToPlugin('app/plugins/sdk', sdk);
 exposeToPlugin('app/core/utils/datemath', grafanaData.dateMath);
 exposeToPlugin('app/core/utils/flatten', flatten);
 exposeToPlugin('app/core/utils/kbn', kbn);
 exposeToPlugin('app/core/utils/ticks', ticks);
-exposeToPlugin('app/core/utils/promiseToDigest', {
-  promiseToDigest: promiseToDigest,
-  __esModule: true,
-});
-
 exposeToPlugin('app/core/config', config);
 exposeToPlugin('app/core/time_series', TimeSeries);
 exposeToPlugin('app/core/time_series2', TimeSeries);
 exposeToPlugin('app/core/table_model', TableModel);
 exposeToPlugin('app/core/app_events', appEvents);
-exposeToPlugin('app/core/core_module', coreModule);
 exposeToPlugin('app/core/core', {
-  coreModule: coreModule,
   appEvents: appEvents,
   contextSrv: contextSrv,
   __esModule: true,

@@ -1,8 +1,11 @@
 import React from 'react';
-import { Badge, Button, HorizontalGroup, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
-import { CatalogPlugin } from '../../types';
-import { getBadgeColor } from './sharedStyles';
+
 import { featureEnabled } from '@grafana/runtime';
+import { Badge, Button, HorizontalGroup, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+
+import { CatalogPlugin } from '../../types';
+
+import { getBadgeColor } from './sharedStyles';
 
 type Props = { plugin: CatalogPlugin };
 

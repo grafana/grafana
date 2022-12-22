@@ -1,11 +1,12 @@
-import { Field, FieldType, DataFrame } from '../types/dataFrame';
-import { vectorToArray } from '../vector/vectorToArray';
 import { Vector, QueryResultMeta } from '../types';
-import { guessFieldTypeFromNameAndValue, toDataFrameDTO } from './processDataFrame';
+import { Field, FieldType, DataFrame } from '../types/dataFrame';
 import { FunctionalVector } from '../vector/FunctionalVector';
+import { vectorToArray } from '../vector/vectorToArray';
+
+import { guessFieldTypeFromNameAndValue, toDataFrameDTO } from './processDataFrame';
 
 /** @public */
-export type ValueConverter<T = any> = (val: any) => T;
+export type ValueConverter<T = any> = (val: unknown) => T;
 
 const NOOP: ValueConverter = (v) => v;
 
@@ -66,7 +67,7 @@ export class ArrayDataFrame<T = any> extends FunctionalVector<T> implements Data
   /**
    * Add a field for each property in the object.  This will guess the type
    */
-  setFieldsFromObject(obj: any) {
+  setFieldsFromObject(obj: Record<string, unknown>) {
     this.fields = Object.keys(obj).map((name) => {
       return {
         name,

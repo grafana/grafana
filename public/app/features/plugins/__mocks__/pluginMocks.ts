@@ -1,6 +1,7 @@
-import { defaultsDeep } from 'lodash';
-import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin, PanelProps } from '@grafana/data';
 import { ComponentType } from 'enzyme';
+import { defaultsDeep } from 'lodash';
+
+import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin, PanelProps } from '@grafana/data';
 
 export const getMockPlugins = (amount: number): PluginMeta[] => {
   const plugins = [];
@@ -62,7 +63,7 @@ export function getPanelPlugin(
       version: '',
     },
     hideFromList: options.hideFromList === true,
-    module: '',
+    module: options.module ?? '',
     baseUrl: '',
   };
   return plugin;

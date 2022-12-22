@@ -1,23 +1,37 @@
+import { css } from '@emotion/css';
+import { isEmpty } from 'lodash';
 import React, { FC, useEffect } from 'react';
+import { useFormContext, FieldError, DeepMap } from 'react-hook-form';
+
 import { Checkbox, Field, Input, InputControl, Select, TextArea } from '@grafana/ui';
 import { NotificationChannelOption } from 'app/types';
-import { useFormContext, FieldError, DeepMap } from 'react-hook-form';
-import { SubformField } from './SubformField';
-import { css } from '@emotion/css';
+
 import { KeyValueMapInput } from './KeyValueMapInput';
-import { SubformArrayField } from './SubformArrayField';
 import { StringArrayInput } from './StringArrayInput';
+import { SubformArrayField } from './SubformArrayField';
+import { SubformField } from './SubformField';
 
 interface Props {
   defaultValue: any;
   option: NotificationChannelOption;
   invalid?: boolean;
   pathPrefix: string;
+  pathSuffix?: string;
   error?: FieldError | DeepMap<any, FieldError>;
   readOnly?: boolean;
 }
 
-export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, defaultValue, readOnly = false }) => {
+export const OptionField: FC<Props> = ({
+  option,
+  invalid,
+  pathPrefix,
+  pathSuffix = '',
+  error,
+  defaultValue,
+  readOnly = false,
+}) => {
+  const optionPath = `${pathPrefix}${pathSuffix}`;
+
   if (option.element === 'subform') {
     return (
       <SubformField
@@ -25,7 +39,7 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
         defaultValue={defaultValue}
         option={option}
         errors={error as DeepMap<any, FieldError> | undefined}
-        pathPrefix={pathPrefix}
+        pathPrefix={optionPath}
       />
     );
   }
@@ -35,7 +49,7 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
         readOnly={readOnly}
         defaultValues={defaultValue}
         option={option}
-        pathPrefix={pathPrefix}
+        pathPrefix={optionPath}
         errors={error as Array<DeepMap<any, FieldError>> | undefined}
       />
     );
@@ -48,19 +62,27 @@ export const OptionField: FC<Props> = ({ option, invalid, pathPrefix, error, def
       error={error?.message}
     >
       <OptionInput
-        id={`${pathPrefix}${option.propertyName}`}
+        id={`${optionPath}${option.propertyName}`}
         defaultValue={defaultValue}
         option={option}
         invalid={invalid}
-        pathPrefix={pathPrefix}
+        pathPrefix={optionPath}
         readOnly={readOnly}
+        pathIndex={pathPrefix}
       />
     </Field>
   );
 };
 
-const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPrefix = '', readOnly = false }) => {
-  const { control, register, unregister } = useFormContext();
+const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
+  option,
+  invalid,
+  id,
+  pathPrefix = '',
+  pathIndex = '',
+  readOnly = false,
+}) => {
+  const { control, register, unregister, getValues } = useFormContext();
   const name = `${pathPrefix}${option.propertyName}`;
 
   // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
@@ -87,11 +109,11 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
       return (
         <Input
           id={id}
-          readOnly={readOnly}
+          readOnly={readOnly || determineReadOnly(option, getValues, pathIndex)}
           invalid={invalid}
           type={option.inputType}
           {...register(name, {
-            required: option.required ? 'Required' : false,
+            required: determineRequired(option, getValues, pathIndex),
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
           })}
           placeholder={option.placeholder}
@@ -104,7 +126,6 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
           render={({ field: { onChange, ref, ...field } }) => (
             <Select
               disabled={readOnly}
-              menuShouldPortal
               {...field}
               options={option.selectOptions ?? undefined}
               invalid={invalid}
@@ -122,6 +143,7 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
           id={id}
           readOnly={readOnly}
           invalid={invalid}
+          placeholder={option.placeholder}
           {...register(name, {
             required: option.required ? 'Required' : false,
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
@@ -157,10 +179,34 @@ const OptionInput: FC<Props & { id: string }> = ({ option, invalid, id, pathPref
 
 const styles = {
   checkbox: css`
-    height: auto; // native chekbox has fixed height which does not take into account description
+    height: auto; // native checkbox has fixed height which does not take into account description
   `,
 };
 
 const validateOption = (value: string, validationRule: string) => {
   return RegExp(validationRule).test(value) ? true : 'Invalid format';
+};
+
+const determineRequired = (option: NotificationChannelOption, getValues: any, pathIndex: string) => {
+  if (!option.dependsOn) {
+    return option.required ? 'Required' : false;
+  }
+  if (isEmpty(getValues(`${pathIndex}secureFields`))) {
+    const dependentOn = getValues(`${pathIndex}secureSettings.${option.dependsOn}`);
+    return !Boolean(dependentOn) && option.required ? 'Required' : false;
+  } else {
+    const dependentOn: boolean = getValues(`${pathIndex}secureFields.${option.dependsOn}`);
+    return !dependentOn && option.required ? 'Required' : false;
+  }
+};
+
+const determineReadOnly = (option: NotificationChannelOption, getValues: any, pathIndex: string) => {
+  if (!option.dependsOn) {
+    return false;
+  }
+  if (isEmpty(getValues(`${pathIndex}secureFields`))) {
+    return getValues(`${pathIndex}secureSettings.${option.dependsOn}`);
+  } else {
+    return getValues(`${pathIndex}secureFields.${option.dependsOn}`);
+  }
 };

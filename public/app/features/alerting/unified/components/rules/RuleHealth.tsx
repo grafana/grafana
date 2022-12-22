@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { Rule } from 'app/types/unified-alerting';
-import React, { FC } from 'react';
 
 interface Prom {
   rule: Rule;
@@ -10,6 +11,7 @@ interface Prom {
 
 export const RuleHealth: FC<Prom> = ({ rule }) => {
   const style = useStyles2(getStyle);
+
   if (rule.health === 'err' || rule.health === 'error') {
     return (
       <Tooltip theme="error" content={rule.lastError || 'No error message provided.'}>
@@ -20,6 +22,7 @@ export const RuleHealth: FC<Prom> = ({ rule }) => {
       </Tooltip>
     );
   }
+
   return <>{rule.health}</>;
 };
 
@@ -27,9 +30,9 @@ const getStyle = (theme: GrafanaTheme2) => ({
   warn: css`
     display: inline-flex;
     flex-direction: row;
+    align-items: center;
+    gap: ${theme.spacing(1)};
+
     color: ${theme.colors.warning.text};
-    & > * + * {
-      margin-left: ${theme.spacing(1)};
-    }
   `,
 });

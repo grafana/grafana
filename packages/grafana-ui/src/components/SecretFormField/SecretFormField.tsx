@@ -1,8 +1,9 @@
+import { css, cx } from '@emotion/css';
 import { omit } from 'lodash';
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
-import { FormField } from '../FormField/FormField';
+
 import { Button } from '../Button/Button';
-import { css, cx } from '@emotion/css';
+import { FormField } from '../FormField/FormField';
 import { PopoverContent } from '../Tooltip';
 
 export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
@@ -17,6 +18,7 @@ export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onRe
   inputWidth?: number;
   // Placeholder of the input field when in non configured state.
   placeholder?: string;
+  interactive?: boolean;
 }
 
 const getSecretFormFieldStyles = () => {
@@ -45,6 +47,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
   isConfigured,
   tooltip,
   placeholder = 'Password',
+  interactive,
   ...inputProps
 }: Props) => {
   const styles = getSecretFormFieldStyles();
@@ -52,6 +55,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
     <FormField
       label={label!}
       tooltip={tooltip}
+      interactive={interactive}
       labelWidth={labelWidth}
       inputEl={
         isConfigured ? (

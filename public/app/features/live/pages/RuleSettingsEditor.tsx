@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { CodeEditor, Select } from '@grafana/ui';
+
 import { RuleType, RuleSetting, PipeLineEntitiesInfo } from './types';
 
 interface Props {
@@ -9,11 +11,10 @@ interface Props {
   entitiesInfo: PipeLineEntitiesInfo;
 }
 
-export const RuleSettingsEditor: React.FC<Props> = ({ onChange, value, ruleType, entitiesInfo }) => {
+export const RuleSettingsEditor = ({ onChange, value, ruleType, entitiesInfo }: Props) => {
   return (
     <>
       <Select
-        menuShouldPortal={true}
         key={ruleType}
         options={entitiesInfo[ruleType]}
         placeholder="Select an option"

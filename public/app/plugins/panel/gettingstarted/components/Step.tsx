@@ -1,18 +1,20 @@
-import React, { FC } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme } from '@grafana/ui';
-import { TutorialCard } from './TutorialCard';
-import { Card, SetupStep, TutorialCardType } from '../types';
+import React, { FC } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
+import { SetupStep, TutorialCardType } from '../types';
+
 import { DocsCard } from './DocsCard';
+import { TutorialCard } from './TutorialCard';
 
 interface Props {
   step: SetupStep;
 }
 
 export const Step: FC<Props> = ({ step }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.setup}>
@@ -21,7 +23,7 @@ export const Step: FC<Props> = ({ step }) => {
         <p>{step.info}</p>
       </div>
       <div className={styles.cards}>
-        {step.cards.map((card: Card | TutorialCardType, index: number) => {
+        {step.cards.map((card, index) => {
           const key = `${card.title}-${index}`;
           if (card.type === 'tutorial') {
             return <TutorialCard key={key} card={card as TutorialCardType} />;
@@ -33,7 +35,7 @@ export const Step: FC<Props> = ({ step }) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     setup: css`
       display: flex;
@@ -43,15 +45,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       width: 172px;
       margin-right: 5%;
 
-      @media only screen and (max-width: ${theme.breakpoints.xxl}) {
-        margin-right: ${theme.spacing.xl};
+      ${theme.breakpoints.down('xxl')} {
+        margin-right: ${theme.spacing(4)};
       }
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
+      ${theme.breakpoints.down('sm')} {
         display: none;
       }
     `,
     title: css`
-      color: ${theme.palette.blue95};
+      color: ${theme.v1.palette.blue95};
     `,
     cards: css`
       overflow-x: scroll;
@@ -60,9 +62,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       justify-content: center;
 
-      @media only screen and (max-width: ${theme.breakpoints.xxl}) {
+      ${theme.breakpoints.down('xxl')} {
         justify-content: flex-start;
       }
     `,
   };
-});
+};

@@ -1,5 +1,6 @@
 import { AnnotationEvent } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+
 import { AnnotationTagsResponse } from './types';
 
 export function saveAnnotation(annotation: AnnotationEvent) {

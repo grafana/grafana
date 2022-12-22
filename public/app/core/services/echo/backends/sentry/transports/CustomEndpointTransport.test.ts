@@ -1,9 +1,21 @@
 import { Event, Severity } from '@sentry/browser';
+
 import { CustomEndpointTransport } from './CustomEndpointTransport';
 
 describe('CustomEndpointTransport', () => {
   const fetchSpy = (window.fetch = jest.fn());
-  beforeEach(() => jest.resetAllMocks());
+  let consoleSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    // The code logs a warning to console
+    // Let's stub this out so we don't pollute the test output
+    consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
+  });
   const now = new Date();
 
   const event: Event = {
@@ -21,7 +33,7 @@ describe('CustomEndpointTransport', () => {
   };
 
   it('will send received event to backend using window.fetch', async () => {
-    fetchSpy.mockResolvedValue({ status: 200 } as Response);
+    fetchSpy.mockResolvedValue({ status: 200 });
     const transport = new CustomEndpointTransport({ endpoint: '/log' });
     await transport.sendEvent(event);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
@@ -31,7 +43,7 @@ describe('CustomEndpointTransport', () => {
     expect(reqInit.headers).toEqual({
       'Content-Type': 'application/json',
     });
-    expect(JSON.parse(reqInit.body as string)).toEqual({
+    expect(JSON.parse(reqInit.body!.toString())).toEqual({
       ...event,
       timestamp: now.toISOString(),
     });
@@ -43,9 +55,9 @@ describe('CustomEndpointTransport', () => {
       ok: false,
       headers: new Headers({
         'Retry-After': '1', // 1 second
-      }) as any as Headers,
+      }),
     } as Response;
-    fetchSpy.mockResolvedValueOnce(rateLimiterResponse).mockResolvedValueOnce({ status: 200 } as Response);
+    fetchSpy.mockResolvedValueOnce(rateLimiterResponse).mockResolvedValueOnce({ status: 200 });
     const transport = new CustomEndpointTransport({ endpoint: '/log' });
 
     // first call - backend is called, rejected because of 429
@@ -68,9 +80,9 @@ describe('CustomEndpointTransport', () => {
       ok: false,
       headers: new Headers({
         'Retry-After': '1', // 1 second
-      }) as any as Headers,
+      }),
     } as Response;
-    fetchSpy.mockResolvedValueOnce(rateLimiterResponse).mockResolvedValueOnce({ status: 200 } as Response);
+    fetchSpy.mockResolvedValueOnce(rateLimiterResponse).mockResolvedValueOnce({ status: 200 });
     const transport = new CustomEndpointTransport({ endpoint: '/log' });
 
     // first call - backend is called, rejected because of 429
@@ -87,7 +99,7 @@ describe('CustomEndpointTransport', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('will drop events if max concurrency is reached', async () => {
+  it('will drop events and log a warning to console if max concurrency is reached', async () => {
     const calls: Array<(value: unknown) => void> = [];
     fetchSpy.mockImplementation(
       () =>

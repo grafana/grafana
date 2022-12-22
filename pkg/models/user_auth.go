@@ -1,14 +1,14 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/oauth2"
-)
 
-const (
-	AuthModuleLDAP = "ldap"
+	"golang.org/x/oauth2"
 )
 
 type UserAuth struct {
@@ -33,14 +33,18 @@ type ExternalUserInfo struct {
 	Login          string
 	Name           string
 	Groups         []string
-	OrgRoles       map[int64]RoleType
+	OrgRoles       map[int64]org.RoleType
 	IsGrafanaAdmin *bool // This is a pointer to know if we should sync this or not (nil = ignore sync)
 	IsDisabled     bool
 }
 
+func (e *ExternalUserInfo) String() string {
+	return fmt.Sprintf("%+v", *e)
+}
+
 type LoginInfo struct {
 	AuthModule    string
-	User          *User
+	User          *user.User
 	ExternalUser  ExternalUserInfo
 	LoginUsername string
 	HTTPStatus    int
@@ -55,11 +59,12 @@ type RequestURIKey struct{}
 // COMMANDS
 
 type UpsertUserCommand struct {
-	ReqContext    *ReqContext
-	ExternalUser  *ExternalUserInfo
+	ReqContext   *ReqContext
+	ExternalUser *ExternalUserInfo
+	UserLookupParams
 	SignupAllowed bool
 
-	Result *User
+	Result *user.User
 }
 
 type SetAuthInfoCommand struct {
@@ -87,7 +92,7 @@ type LoginUserQuery struct {
 	ReqContext *ReqContext
 	Username   string
 	Password   string
-	User       *User
+	User       *user.User
 	IpAddress  string
 	AuthModule string
 	Cfg        *setting.Cfg
@@ -96,9 +101,14 @@ type LoginUserQuery struct {
 type GetUserByAuthInfoQuery struct {
 	AuthModule string
 	AuthId     string
-	UserId     int64
-	Email      string
-	Login      string
+	UserLookupParams
+}
+
+type UserLookupParams struct {
+	// Describes lookup order as well
+	UserID *int64  // if set, will try to find the user by id
+	Email  *string // if set, will try to find the user by email
+	Login  *string // if set, will try to find the user by login
 }
 
 type GetExternalUserInfoByLoginQuery struct {
@@ -113,6 +123,10 @@ type GetAuthInfoQuery struct {
 	AuthId     string
 
 	Result *UserAuth
+}
+
+type GetUserLabelsQuery struct {
+	UserIDs []int64
 }
 
 type TeamOrgGroupDTO struct {

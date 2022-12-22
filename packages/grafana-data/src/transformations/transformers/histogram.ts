@@ -1,12 +1,13 @@
-import { SynchronousDataTransformerInfo } from '../../types';
 import { map } from 'rxjs/operators';
 
-import { DataTransformerID } from './ids';
-import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
-import { ArrayVector } from '../../vector/ArrayVector';
-import { AlignedData, join } from './joinDataFrames';
 import { getDisplayProcessor } from '../../field';
 import { createTheme, GrafanaTheme2 } from '../../themes';
+import { SynchronousDataTransformerInfo } from '../../types';
+import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
+import { ArrayVector } from '../../vector/ArrayVector';
+
+import { DataTransformerID } from './ids';
+import { AlignedData, join } from './joinDataFrames';
 
 /**
  * @internal
@@ -152,7 +153,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   let bucketOffset = options?.bucketOffset ?? 0;
 
   // if bucket size is auto, try to calc from all numeric fields
-  if (!bucketSize) {
+  if (!bucketSize || bucketSize < 0) {
     let allValues: number[] = [];
 
     // TODO: include field configs!
@@ -163,6 +164,8 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
         }
       }
     }
+
+    allValues = allValues.filter((v) => v != null);
 
     allValues.sort((a, b) => a - b);
 
@@ -201,6 +204,9 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
 
   const getBucket = (v: number) => incrRoundDn(v - bucketOffset, bucketSize!) + bucketOffset;
 
+  // guess number of decimals
+  let bucketDecimals = (('' + bucketSize).match(/\.\d+$/) ?? ['.'])[0].length - 1;
+
   let histograms: AlignedData[] = [];
   let counts: Field[] = [];
   let config: FieldConfig | undefined = undefined;
@@ -214,7 +220,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
           ...field,
           config: {
             ...field.config,
-            unit: undefined,
+            unit: field.config.unit === 'short' ? 'short' : undefined,
           },
         });
         if (!config && field.config.unit) {
@@ -248,7 +254,13 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     values: new ArrayVector(joinedHists[0]),
     type: FieldType.number,
     state: undefined,
-    config: config ?? {},
+    config:
+      bucketDecimals === 0
+        ? config ?? {}
+        : {
+            ...config,
+            decimals: bucketDecimals,
+          },
   };
   const bucketMax = {
     ...bucketMin,
@@ -285,15 +297,24 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   };
 }
 
-// function incrRound(num: number, incr: number) {
-//   return Math.round(num / incr) * incr;
-// }
+/**
+ * @internal
+ */
+export function incrRound(num: number, incr: number) {
+  return Math.round(num / incr) * incr;
+}
 
-// function incrRoundUp(num: number, incr: number) {
-//   return Math.ceil(num / incr) * incr;
-// }
+/**
+ * @internal
+ */
+export function incrRoundUp(num: number, incr: number) {
+  return Math.ceil(num / incr) * incr;
+}
 
-function incrRoundDn(num: number, incr: number) {
+/**
+ * @internal
+ */
+export function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
 }
 
@@ -350,6 +371,13 @@ export function histogramFieldsToFrame(info: HistogramFields, theme?: GrafanaThe
     info.bucketMin.display = display;
     info.bucketMax.display = display;
   }
+
+  // ensure updated units are reflected on the count field used for y axis formatting
+  info.counts[0].display = getDisplayProcessor({
+    field: info.counts[0],
+    theme: theme ?? createTheme(),
+  });
+
   return {
     fields: [info.bucketMin, info.bucketMax, ...info.counts],
     length: info.bucketMin.values.length,

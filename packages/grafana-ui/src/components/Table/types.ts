@@ -1,10 +1,12 @@
-import { CellProps, Column, Row } from 'react-table';
-import { Field, KeyValue, SelectableValue } from '@grafana/data';
-import { TableStyles } from './styles';
-import { FC } from 'react';
 import { Property } from 'csstype';
+import { FC } from 'react';
+import { CellProps, Column, Row } from 'react-table';
 
-export { TableFieldOptions, TableCellDisplayMode, FieldTextAlignment } from '@grafana/schema';
+import { Field, KeyValue, SelectableValue } from '@grafana/data';
+
+import { TableStyles } from './styles';
+
+export { type TableFieldOptions, TableCellDisplayMode, type FieldTextAlignment } from '@grafana/schema';
 
 export interface TableRow {
   [x: string]: any;
@@ -27,7 +29,7 @@ export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;
   cellProps: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
   field: Field;
-  onCellFilterAdded: TableFilterActionCallback;
+  onCellFilterAdded?: TableFilterActionCallback;
   innerWidth: number;
 }
 
@@ -42,3 +44,11 @@ export type GrafanaTableColumn = Column & {
   justifyContent: Property.JustifyContent;
   minWidth: number;
 };
+
+export interface TableFooterCalc {
+  show: boolean;
+  reducer: string[]; // actually 1 value
+  fields?: string[];
+  enablePagination?: boolean;
+  countRows?: boolean;
+}

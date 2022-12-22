@@ -21,7 +21,7 @@ func TestIsMemberOf(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(fmt.Sprintf("isMemberOf(%v, \"%s\") = %v", tc.memberOf, tc.group, tc.expected), func(t *testing.T) {
-			assert.Equal(t, tc.expected, isMemberOf(tc.memberOf, tc.group))
+			assert.Equal(t, tc.expected, IsMemberOf(tc.memberOf, tc.group))
 		})
 	}
 }
@@ -83,6 +83,20 @@ func TestGetAttribute(t *testing.T) {
 		assert.Equal(t, value, result)
 	})
 
+	t.Run("letter case mismatch", func(t *testing.T) {
+		value := "roelgerrits"
+		entry := &ldap.Entry{
+			Attributes: []*ldap.EntryAttribute{
+				{
+					Name: "sAMAccountName", Values: []string{value},
+				},
+			},
+		}
+
+		result := getAttribute("samaccountname", entry)
+		assert.Equal(t, value, result)
+	})
+
 	t.Run("no result", func(t *testing.T) {
 		value := []string{"roelgerrits"}
 		entry := &ldap.Entry{
@@ -120,6 +134,21 @@ func TestGetArrayAttribute(t *testing.T) {
 		}
 
 		result := getArrayAttribute("username", entry)
+
+		assert.EqualValues(t, value, result)
+	})
+
+	t.Run("letter case mismatch", func(t *testing.T) {
+		value := []string{"CN=Administrators,CN=Builtin,DC=grafana,DC=org"}
+		entry := &ldap.Entry{
+			Attributes: []*ldap.EntryAttribute{
+				{
+					Name: "memberOf", Values: value,
+				},
+			},
+		}
+
+		result := getArrayAttribute("memberof", entry)
 
 		assert.EqualValues(t, value, result)
 	})

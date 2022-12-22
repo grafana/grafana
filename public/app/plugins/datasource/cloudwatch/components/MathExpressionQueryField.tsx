@@ -1,24 +1,20 @@
-import React, { useCallback, useRef } from 'react';
-import { CodeEditor, Monaco } from '@grafana/ui';
-import language from '../metric-math/definition';
-import { registerLanguage } from '../monarch/register';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
-import { TRIGGER_SUGGEST } from '../monarch/commands';
+import React, { useCallback, useRef } from 'react';
+
+import { CodeEditor, Monaco } from '@grafana/ui';
+
 import { CloudWatchDatasource } from '../datasource';
+import language from '../metric-math/definition';
+import { TRIGGER_SUGGEST } from '../monarch/commands';
+import { registerLanguage } from '../monarch/register';
 
 export interface Props {
   onChange: (query: string) => void;
-  onRunQuery: () => void;
   expression: string;
   datasource: CloudWatchDatasource;
 }
 
-export function MathExpressionQueryField({
-  expression: query,
-  onChange,
-  onRunQuery,
-  datasource,
-}: React.PropsWithChildren<Props>) {
+export function MathExpressionQueryField({ expression: query, onChange, datasource }: React.PropsWithChildren<Props>) {
   const containerRef = useRef<HTMLDivElement>(null);
   const onEditorMount = useCallback(
     (editor: monacoType.editor.IStandaloneCodeEditor, monaco: Monaco) => {
@@ -26,7 +22,6 @@ export function MathExpressionQueryField({
       editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
         const text = editor.getValue();
         onChange(text);
-        onRunQuery();
       });
 
       // auto resizes the editor to be the height of the content it holds
@@ -35,7 +30,7 @@ export function MathExpressionQueryField({
       const updateElementHeight = () => {
         const containerDiv = containerRef.current;
         if (containerDiv !== null && editor.getContentHeight() < 200) {
-          const pixelHeight = editor.getContentHeight();
+          const pixelHeight = Math.max(32, editor.getContentHeight());
           containerDiv.style.height = `${pixelHeight}px`;
           containerDiv.style.width = '100%';
           const pixelWidth = containerDiv.clientWidth;
@@ -46,7 +41,7 @@ export function MathExpressionQueryField({
       editor.onDidContentSizeChange(updateElementHeight);
       updateElementHeight();
     },
-    [onChange, onRunQuery]
+    [onChange]
   );
 
   return (
@@ -66,6 +61,9 @@ export function MathExpressionQueryField({
           },
           suggestFontSize: 12,
           wordWrap: 'on',
+          padding: {
+            top: 6,
+          },
         }}
         language={language.id}
         value={query}

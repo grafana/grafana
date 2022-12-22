@@ -3,6 +3,7 @@ package notifiers
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -53,7 +54,8 @@ type GoogleChatNotifier struct {
 	log log.Logger
 }
 
-/**
+/*
+*
 Structs used to build a custom Google Hangouts Chat message card.
 See: https://developers.google.com/hangouts/chat/reference/message-formats/cards
 */
@@ -171,21 +173,25 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	}
 
-	// add a button widget (link to Grafana)
-	widgets = append(widgets, buttonWidget{
-		Buttons: []button{
-			{
-				TextButton: textButton{
-					Text: "OPEN IN GRAFANA",
-					OnClick: onClick{
-						OpenLink: openLink{
-							URL: ruleURL,
+	if gcn.isUrlAbsolute(ruleURL) {
+		// add a button widget (link to Grafana)
+		widgets = append(widgets, buttonWidget{
+			Buttons: []button{
+				{
+					TextButton: textButton{
+						Text: "OPEN IN GRAFANA",
+						OnClick: onClick{
+							OpenLink: openLink{
+								URL: ruleURL,
+							},
 						},
 					},
 				},
 			},
-		},
-	})
+		})
+	} else {
+		gcn.log.Warn("Grafana External URL setting is missing or invalid. Skipping 'open in grafana' button to prevent google from displaying empty alerts.", "ruleURL", ruleURL)
+	}
 
 	// add text paragraph widget for the build version and timestamp
 	widgets = append(widgets, textParagraphWidget{
@@ -226,4 +232,14 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	return nil
+}
+
+func (gcn *GoogleChatNotifier) isUrlAbsolute(urlToCheck string) bool {
+	parsed, err := url.Parse(urlToCheck)
+	if err != nil {
+		gcn.log.Warn("Could not parse URL", "urlToCheck", urlToCheck)
+		return false
+	}
+
+	return parsed.IsAbs()
 }

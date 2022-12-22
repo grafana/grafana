@@ -1,11 +1,14 @@
+import { css, cx } from '@emotion/css';
+import { isEqual } from 'lodash';
 import React, { memo, useCallback } from 'react';
 import { usePrevious } from 'react-use';
-import { isEqual } from 'lodash';
-import { css, cx } from '@emotion/css';
+
 import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
-import { PromQuery } from '../types';
-import { PromExemplarField } from './PromExemplarField';
+
 import { PrometheusDatasource } from '../datasource';
+import { PromQuery } from '../types';
+
+import { PromExemplarField } from './PromExemplarField';
 
 export interface PromExploreExtraFieldProps {
   query: PromQuery;
@@ -124,7 +127,7 @@ export function getQueryTypeOptions(includeBoth: boolean) {
 export function getQueryTypeChangeHandler(query: PromQuery, onChange: (update: PromQuery) => void) {
   return (queryType: string) => {
     if (queryType === 'instant') {
-      onChange({ ...query, instant: true, range: false });
+      onChange({ ...query, instant: true, range: false, exemplar: false });
     } else if (queryType === 'range') {
       onChange({ ...query, instant: false, range: true });
     } else {

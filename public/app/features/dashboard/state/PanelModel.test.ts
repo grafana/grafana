@@ -1,5 +1,5 @@
-import { PanelModel } from './PanelModel';
-import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
+import { ComponentClass } from 'react';
+
 import {
   DataLinkBuiltInVars,
   FieldConfigProperty,
@@ -10,16 +10,19 @@ import {
   dateTime,
   TimeRange,
 } from '@grafana/data';
-import { ComponentClass } from 'react';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { setTimeSrv } from '../services/TimeSrv';
-import { TemplateSrv } from '../../templating/template_srv';
 import { setTemplateSrv } from '@grafana/runtime';
+import { queryBuilder } from 'app/features/variables/shared/testing/builders';
+
+import { mockStandardFieldConfigOptions } from '../../../../test/helpers/fieldConfig';
+import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
+import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../../variables/adapters';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
-import { mockStandardFieldConfigOptions } from '../../../../test/helpers/fieldConfig';
-import { queryBuilder } from 'app/features/variables/shared/testing/builders';
+import { setTimeSrv } from '../services/TimeSrv';
 import { TimeOverrideResult } from '../utils/panel';
+
+import { PanelModel } from './PanelModel';
 
 standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
 standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
@@ -194,11 +197,6 @@ describe('PanelModel', () => {
     it('getSaveModel should remove defaults', () => {
       const saveModel = model.getSaveModel();
       expect(saveModel.gridPos).toBe(undefined);
-    });
-
-    it('getSaveModel should not remove datasource default', () => {
-      const saveModel = model.getSaveModel();
-      expect(saveModel.datasource).toBe(null);
     });
 
     it('getSaveModel should remove nonPersistedProperties', () => {
@@ -437,6 +435,26 @@ describe('PanelModel', () => {
       });
     });
 
+    describe('updateGridPos', () => {
+      it('Should not have changes if no change', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 1, h: 1, x: 1, y: 2 });
+        expect(model.hasChanged).toBe(false);
+      });
+
+      it('Should have changes if gridPos is different', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 10, h: 1, x: 1, y: 2 });
+        expect(model.hasChanged).toBe(true);
+      });
+
+      it('Should not have changes if not manually updated', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 10, h: 1, x: 1, y: 2 }, false);
+        expect(model.hasChanged).toBe(false);
+      });
+    });
+
     describe('destroy', () => {
       it('Should still preserve last query result', () => {
         model.getQueryRunner().useLastResultFrom({
@@ -474,6 +492,7 @@ describe('PanelModel', () => {
           run: jest.fn(),
         });
         const dashboardId = 123;
+        const dashboardUID = 'ggHbN42mk';
         const dashboardTimezone = 'browser';
         const width = 860;
         const timeData = {
@@ -488,7 +507,7 @@ describe('PanelModel', () => {
           } as TimeRange,
         } as TimeOverrideResult;
 
-        model.runAllPanelQueries(dashboardId, dashboardTimezone, timeData, width);
+        model.runAllPanelQueries({ dashboardId, dashboardUID, dashboardTimezone, timeData, width });
 
         expect(model.getQueryRunner).toBeCalled();
       });

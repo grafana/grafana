@@ -1,53 +1,52 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
-import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
 import { startCase, uniqBy } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { QueryEditorField, QueryEditorRow } from '.';
-import { INNER_LABEL_WIDTH, LABEL_WIDTH, SELECT_WIDTH } from '../constants';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
+import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
+
 import CloudMonitoringDatasource from '../datasource';
-import { MetricDescriptor } from '../types';
+import { MetricDescriptor, TimeSeriesList } from '../types';
+
+import { Project } from './Project';
 
 export interface Props {
   refId: string;
   onChange: (metricDescriptor: MetricDescriptor) => void;
-  templateSrv: TemplateSrv;
   templateVariableOptions: Array<SelectableValue<string>>;
   datasource: CloudMonitoringDatasource;
   projectName: string;
   metricType: string;
+  query: TimeSeriesList;
   children: (metricDescriptor?: MetricDescriptor) => JSX.Element;
-}
-
-interface State {
-  metricDescriptors: MetricDescriptor[];
-  metrics: any[];
-  services: any[];
-  service: string;
-  metric: string;
-  metricDescriptor?: MetricDescriptor;
-  projectName: string | null;
+  onProjectChange: (query: TimeSeriesList) => void;
 }
 
 export function Metrics(props: Props) {
-  const [state, setState] = useState<State>({
-    metricDescriptors: [],
-    metrics: [],
-    services: [],
-    service: '',
-    metric: '',
-    projectName: null,
-  });
+  const [metricDescriptors, setMetricDescriptors] = useState<MetricDescriptor[]>([]);
+  const [metricDescriptor, setMetricDescriptor] = useState<MetricDescriptor>();
+  const [metrics, setMetrics] = useState<Array<SelectableValue<string>>>([]);
+  const [services, setServices] = useState<Array<SelectableValue<string>>>([]);
+  const [service, setService] = useState<string>('');
 
   const theme = useTheme2();
   const selectStyles = getSelectStyles(theme);
 
   const customStyle = useStyles2(getStyles);
 
-  const { services, service, metrics, metricDescriptors } = state;
-  const { metricType, templateVariableOptions, projectName, templateSrv, datasource, onChange, children } = props;
+  const {
+    onProjectChange,
+    query,
+    refId,
+    metricType,
+    templateVariableOptions,
+    projectName,
+    datasource,
+    onChange,
+    children,
+  } = props;
+  const { templateSrv } = datasource;
 
   const getSelectedMetricDescriptor = useCallback(
     (metricDescriptors: MetricDescriptor[], metricType: string) => {
@@ -55,6 +54,18 @@ export function Metrics(props: Props) {
     },
     [templateSrv]
   );
+
+  useEffect(() => {
+    const loadMetricDescriptors = async () => {
+      if (projectName) {
+        const metricDescriptors = await datasource.getMetricTypes(projectName);
+        const services = getServicesList(metricDescriptors);
+        setMetricDescriptors(metricDescriptors);
+        setServices(services);
+      }
+    };
+    loadMetricDescriptors();
+  }, [datasource, projectName, customStyle, selectStyles.optionDescription]);
 
   useEffect(() => {
     const getMetricsList = (metricDescriptors: MetricDescriptor[]) => {
@@ -81,25 +92,13 @@ export function Metrics(props: Props) {
       return metricsByService;
     };
 
-    const loadMetricDescriptors = async () => {
-      if (projectName) {
-        const metricDescriptors = await datasource.getMetricTypes(projectName);
-        const services = getServicesList(metricDescriptors);
-        const metrics = getMetricsList(metricDescriptors);
-        const service = metrics.length > 0 ? metrics[0].service : '';
-        const metricDescriptor = getSelectedMetricDescriptor(metricDescriptors, metricType);
-        setState((prevState) => ({
-          ...prevState,
-          metricDescriptors,
-          services,
-          metrics,
-          service: service,
-          metricDescriptor,
-        }));
-      }
-    };
-    loadMetricDescriptors();
-  }, [datasource, getSelectedMetricDescriptor, metricType, projectName, customStyle, selectStyles.optionDescription]);
+    const metrics = getMetricsList(metricDescriptors);
+    const service = metrics.length > 0 ? metrics[0].service : '';
+    const metricDescriptor = getSelectedMetricDescriptor(metricDescriptors, metricType);
+    setMetricDescriptor(metricDescriptor);
+    setMetrics(metrics);
+    setService(service);
+  }, [metricDescriptors, getSelectedMetricDescriptor, metricType, customStyle, selectStyles.optionDescription]);
 
   const onServiceChange = ({ value: service }: any) => {
     const metrics = metricDescriptors
@@ -112,15 +111,18 @@ export function Metrics(props: Props) {
       }));
 
     if (metrics.length > 0 && !metrics.some((m) => m.value === templateSrv.replace(metricType))) {
-      onMetricTypeChange(metrics[0], { service, metrics });
+      onMetricTypeChange(metrics[0]);
+      setService(service);
+      setMetrics(metrics);
     } else {
-      setState({ ...state, service, metrics });
+      setService(service);
+      setMetrics(metrics);
     }
   };
 
-  const onMetricTypeChange = ({ value }: SelectableValue<string>, extra: any = {}) => {
-    const metricDescriptor = getSelectedMetricDescriptor(state.metricDescriptors, value!);
-    setState({ ...state, metricDescriptor, ...extra });
+  const onMetricTypeChange = ({ value }: SelectableValue<string>) => {
+    const metricDescriptor = getSelectedMetricDescriptor(metricDescriptors, value!);
+    setMetricDescriptor(metricDescriptor);
     onChange({ ...metricDescriptor, type: value! });
   };
 
@@ -135,44 +137,54 @@ export function Metrics(props: Props) {
 
   return (
     <>
-      <QueryEditorRow>
-        <QueryEditorField labelWidth={LABEL_WIDTH} label="Service" htmlFor={`${props.refId}-service`}>
-          <Select
-            menuShouldPortal
-            width={SELECT_WIDTH}
-            onChange={onServiceChange}
-            value={[...services, ...templateVariableOptions].find((s) => s.value === service)}
-            options={[
-              {
-                label: 'Template Variables',
-                options: templateVariableOptions,
-              },
-              ...services,
-            ]}
-            placeholder="Select Services"
-            inputId={`${props.refId}-service`}
-          ></Select>
-        </QueryEditorField>
-        <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH} htmlFor={`${props.refId}-select-metric`}>
-          <Select
-            menuShouldPortal
-            width={SELECT_WIDTH}
-            onChange={onMetricTypeChange}
-            value={[...metrics, ...templateVariableOptions].find((s) => s.value === metricType)}
-            options={[
-              {
-                label: 'Template Variables',
-                options: templateVariableOptions,
-              },
-              ...metrics,
-            ]}
-            placeholder="Select Metric"
-            inputId={`${props.refId}-select-metric`}
-          ></Select>
-        </QueryEditorField>
-      </QueryEditorRow>
+      <EditorRow>
+        <EditorFieldGroup>
+          <Project
+            refId={refId}
+            templateVariableOptions={templateVariableOptions}
+            projectName={projectName}
+            datasource={datasource}
+            onChange={(projectName) => {
+              onProjectChange({ ...query, projectName });
+            }}
+          />
 
-      {children(state.metricDescriptor)}
+          <EditorField label="Service" width="auto">
+            <Select
+              width="auto"
+              onChange={onServiceChange}
+              value={[...services, ...templateVariableOptions].find((s) => s.value === service)}
+              options={[
+                {
+                  label: 'Template Variables',
+                  options: templateVariableOptions,
+                },
+                ...services,
+              ]}
+              placeholder="Select Services"
+              inputId={`${props.refId}-service`}
+            />
+          </EditorField>
+          <EditorField label="Metric name" width="auto">
+            <Select
+              width="auto"
+              onChange={onMetricTypeChange}
+              value={[...metrics, ...templateVariableOptions].find((s) => s.value === metricType)}
+              options={[
+                {
+                  label: 'Template Variables',
+                  options: templateVariableOptions,
+                },
+                ...metrics,
+              ]}
+              placeholder="Select Metric"
+              inputId={`${props.refId}-select-metric`}
+            />
+          </EditorField>
+        </EditorFieldGroup>
+      </EditorRow>
+
+      {children(metricDescriptor)}
     </>
   );
 }

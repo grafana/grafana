@@ -1,5 +1,6 @@
 import React from 'react';
 import { connect, Provider } from 'react-redux';
+
 import { store } from '../../store/store';
 
 export function connectWithStore(WrappedComponent: any, ...args: any[]) {

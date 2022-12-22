@@ -1,9 +1,9 @@
 [run]
 init_cmds = [
   ["make", "gen-go"],
-  ["go", "run", "build.go", "-dev", "build-cli"],
-  ["go", "run", "build.go", "-dev", "build-server"],
-  ["./bin/grafana-server", "-packaging=dev", "cfg:app_mode=development"]
+  ["make", "gen-jsonnet"],
+  ["GO_BUILD_DEV=1", "make", "build-go"],
+  ["./bin/grafana", "server", "-packaging=dev", "cfg:app_mode=development"]
 ]
 watch_all = true
 follow_symlinks = true
@@ -11,12 +11,14 @@ watch_dirs = [
   "$WORKDIR/pkg",
   "$WORKDIR/public/views",
   "$WORKDIR/conf",
+  "$WORKDIR/devenv/dev-dashboards",
 ]
 watch_exts = [".go", ".ini", ".toml", ".template.html"]
-ignore_files = ["wire_gen.go"] 
+ignore_files = [".*_gen.go"]
 build_delay = 1500
 cmds = [
   ["make", "gen-go"],
-  ["go", "run", "build.go", "-dev", "build-server"],
-  ["./bin/grafana-server", "-packaging=dev", "cfg:app_mode=development"]
+  ["make", "gen-jsonnet"],
+  ["GO_BUILD_DEV=1", "make", "build-go"],
+  ["./bin/grafana", "server", "-packaging=dev", "cfg:app_mode=development"]
 ]

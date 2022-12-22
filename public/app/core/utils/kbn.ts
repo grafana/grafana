@@ -24,7 +24,7 @@ const kbn = {
     s: 1,
     ms: 0.001,
   } as { [index: string]: number },
-  regexEscape: (value: string) => value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&'),
+  regexEscape: (value: string): string => value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&'),
 
   /** @deprecated since 7.2, use grafana/data */
   roundInterval: (interval: number) => {
@@ -50,7 +50,7 @@ const kbn = {
   addSlashes: (str: string) => str.replace(/[\'\"\\0]/g, '\\$&'),
   /** @deprecated since 7.2, use grafana/data */
   describeInterval: (str: string) => {
-    deprecationWarning('kbn.ts', 'kbn.stringToJsRegex()', '@grafana/data');
+    deprecationWarning('kbn.ts', 'kbn.describeInterval()', '@grafana/data');
     return rangeUtil.describeInterval(str);
   },
   /** @deprecated since 7.2, use grafana/data */
@@ -105,7 +105,7 @@ const kbn = {
       const decimalPos = formatted.indexOf('.');
       const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
       if (precision < decimals) {
-        return (precision ? formatted : formatted + '.') + String(factor).substr(1, decimals - precision);
+        return (precision ? formatted : formatted + '.') + String(factor).slice(1, decimals - precision + 1);
       }
     }
 

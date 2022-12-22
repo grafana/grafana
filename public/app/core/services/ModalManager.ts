@@ -1,14 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import { textUtil } from '@grafana/data';
+import { config, CopyPanelEvent } from '@grafana/runtime';
+import { ConfirmModal, ConfirmModalProps } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { copyPanel } from 'app/features/dashboard/utils/panel';
+
+import {
+  ShowConfirmModalEvent,
+  ShowConfirmModalPayload,
+  ShowModalReactEvent,
+  ShowModalReactPayload,
+} from '../../types/events';
 import { AngularModalProxy } from '../components/modals/AngularModalProxy';
 import { provideTheme } from '../utils/ConfigProvider';
-import { ShowConfirmModalEvent, ShowConfirmModalPayload, ShowModalReactEvent } from '../../types/events';
-import { ConfirmModal, ConfirmModalProps } from '@grafana/ui';
-import { textUtil } from '@grafana/data';
-import { CopyPanelEvent } from '@grafana/runtime';
-import { copyPanel } from 'app/features/dashboard/utils/panel';
 
 export class ModalManager {
   reactModalRoot = document.body;
@@ -20,7 +26,7 @@ export class ModalManager {
     appEvents.subscribe(CopyPanelEvent, (e) => copyPanel(e.payload));
   }
 
-  showModalReact(options: any) {
+  showModalReact(options: ShowModalReactPayload) {
     const { component, props } = options;
     const modalProps = {
       component,
@@ -31,7 +37,7 @@ export class ModalManager {
       },
     };
 
-    const elem = React.createElement(provideTheme(AngularModalProxy), modalProps);
+    const elem = React.createElement(provideTheme(AngularModalProxy, config.theme2), modalProps);
     this.reactModalRoot.appendChild(this.reactModalNode);
     ReactDOM.render(elem, this.reactModalNode);
   }
@@ -45,6 +51,7 @@ export class ModalManager {
     const {
       confirmText,
       onConfirm = () => undefined,
+      onDismiss,
       text2,
       altActionText,
       onAltAction,
@@ -54,9 +61,11 @@ export class ModalManager {
       yesText = 'Yes',
       icon,
       title = 'Confirm',
+      yesButtonVariant,
     } = payload;
     const props: ConfirmModalProps = {
       confirmText: yesText,
+      confirmButtonVariant: yesButtonVariant,
       confirmationText: confirmText,
       icon,
       title,
@@ -68,7 +77,10 @@ export class ModalManager {
         onConfirm();
         this.onReactModalDismiss();
       },
-      onDismiss: this.onReactModalDismiss,
+      onDismiss: () => {
+        onDismiss?.();
+        this.onReactModalDismiss();
+      },
       onAlternative: onAltAction
         ? () => {
             onAltAction();
@@ -82,7 +94,7 @@ export class ModalManager {
       props,
     };
 
-    const elem = React.createElement(provideTheme(AngularModalProxy), modalProps);
+    const elem = React.createElement(provideTheme(AngularModalProxy, config.theme2), modalProps);
     this.reactModalRoot.appendChild(this.reactModalNode);
     ReactDOM.render(elem, this.reactModalNode);
   }

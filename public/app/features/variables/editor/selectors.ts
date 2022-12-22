@@ -9,7 +9,7 @@ import {
  * Narrows generic variable editor state down to specific Adhoc variable extended editor state
  */
 export function getAdhocVariableEditorState(editorState: VariableEditorState): AdHocVariableEditorState | null {
-  if (editorState.extended && 'dataSources' in editorState.extended) {
+  if (editorState.extended && 'infoText' in editorState.extended) {
     return editorState.extended;
   }
 

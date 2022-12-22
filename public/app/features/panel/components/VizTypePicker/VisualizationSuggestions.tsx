@@ -1,12 +1,15 @@
-import React from 'react';
-import { useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelModel, VisualizationSuggestion } from '@grafana/data';
 import { css } from '@emotion/css';
-import { VizTypeChangeDetails } from './types';
-import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
-import { getAllSuggestions } from '../../state/getAllSuggestions';
-import { useAsync, useLocalStorage } from 'react-use';
+import React from 'react';
+import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
+
+import { GrafanaTheme2, PanelData, PanelPluginMeta, PanelModel, VisualizationSuggestion } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
+import { getAllSuggestions } from '../../state/getAllSuggestions';
+
+import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
+import { VizTypeChangeDetails } from './types';
 
 export interface Props {
   current: PanelPluginMeta;
@@ -20,8 +23,6 @@ export interface Props {
 export function VisualizationSuggestions({ onChange, data, panel, searchQuery }: Props) {
   const styles = useStyles2(getStyles);
   const { value: suggestions } = useAsync(() => getAllSuggestions(data, panel), [data, panel]);
-  // temp test
-  const [showTitle, setShowTitle] = useLocalStorage(`VisualizationSuggestions.showTitle`, false);
   const filteredSuggestions = filterSuggestionsBySearch(searchQuery, suggestions);
 
   return (
@@ -38,9 +39,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery }:
         return (
           <div>
             <div className={styles.filterRow}>
-              <div className={styles.infoText} onClick={() => setShowTitle(!showTitle)}>
-                Based on current data
-              </div>
+              <div className={styles.infoText}>Based on current data</div>
             </div>
             <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth - 1}px)` }}>
               {filteredSuggestions.map((suggestion, index) => (
@@ -50,7 +49,6 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery }:
                   suggestion={suggestion}
                   onChange={onChange}
                   width={previewWidth}
-                  showTitle={showTitle}
                 />
               ))}
               {searchQuery && filteredSuggestions.length === 0 && (

@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
-import cx from 'classnames';
 import { css } from '@emotion/css';
+import cx from 'classnames';
+import React from 'react';
+
 import { useStyles2 } from '@grafana/ui';
 
 export const getStyles = () => {
@@ -71,7 +72,7 @@ export const getStyles = () => {
   };
 };
 
-type ScrubberProps = {
+export type ScrubberProps = {
   isDragging: boolean;
   position: number;
   onMouseDown: (evt: React.MouseEvent<any>) => void;
@@ -84,8 +85,9 @@ export default function Scrubber({ isDragging, onMouseDown, onMouseEnter, onMous
   const styles = useStyles2(getStyles);
   const className = cx({ [styles.ScrubberDragging]: isDragging });
   return (
-    <g className={className}>
+    <g className={className} data-testid="scrubber-component">
       <g
+        data-testid="scrubber-component-g"
         className={styles.ScrubberHandles}
         onMouseDown={onMouseDown}
         onMouseEnter={onMouseEnter}
@@ -93,6 +95,7 @@ export default function Scrubber({ isDragging, onMouseDown, onMouseEnter, onMous
       >
         {/* handleExpansion is only visible when `isDragging` is true */}
         <rect
+          data-testid="scrubber-component-rect-1"
           x={xPercent}
           className={styles.ScrubberHandleExpansion}
           style={{ transform: `translate(-4.5px)` }}
@@ -100,6 +103,7 @@ export default function Scrubber({ isDragging, onMouseDown, onMouseEnter, onMous
           height="20"
         />
         <rect
+          data-testid="scrubber-component-rect-2"
           x={xPercent}
           className={styles.ScrubberHandle}
           style={{ transform: `translate(-1.5px)` }}
@@ -107,7 +111,13 @@ export default function Scrubber({ isDragging, onMouseDown, onMouseEnter, onMous
           height="20"
         />
       </g>
-      <line className={styles.ScrubberLine} y2="100%" x1={xPercent} x2={xPercent} />
+      <line
+        className={styles.ScrubberLine}
+        y2="100%"
+        x1={xPercent}
+        x2={xPercent}
+        data-testid="scrubber-component-line"
+      />
     </g>
   );
 }

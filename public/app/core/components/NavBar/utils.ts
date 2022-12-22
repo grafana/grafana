@@ -1,73 +1,76 @@
 import { Location } from 'history';
-import { NavModelItem, NavSection } from '@grafana/data';
-import { getConfig } from 'app/core/config';
+
+import { locationUtil, NavModelItem, NavSection } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
+
 import { ShowModalReactEvent } from '../../../types/events';
 import appEvents from '../../app_events';
-import { getFooterLinks } from '../Footer/Footer';
+import { FooterLink, getFooterLinks } from '../Footer/Footer';
+import { OrgSwitcher } from '../OrgSwitcher';
 import { HelpModal } from '../help/HelpModal';
 
 export const SEARCH_ITEM_ID = 'search';
+export const NAV_MENU_PORTAL_CONTAINER_ID = 'navbar-menu-portal-container';
 
-export const getForcedLoginUrl = (url: string) => {
-  const queryParams = new URLSearchParams(url.split('?')[1]);
-  queryParams.append('forceLogin', 'true');
+export const getNavMenuPortalContainer = () => document.getElementById(NAV_MENU_PORTAL_CONTAINER_ID) ?? document.body;
 
-  return `${getConfig().appSubUrl}${url.split('?')[0]}?${queryParams.toString()}`;
-};
-
-export const enrichConfigItems = (
-  items: NavModelItem[],
-  location: Location<unknown>,
-  toggleOrgSwitcher: () => void
-) => {
+export const enrichConfigItems = (items: NavModelItem[], location: Location<unknown>) => {
   const { isSignedIn, user } = contextSrv;
   const onOpenShortcuts = () => {
     appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
   };
 
-  if (user && user.orgCount > 1) {
+  const onOpenOrgSwitcher = () => {
+    appEvents.publish(new ShowModalReactEvent({ component: OrgSwitcher }));
+  };
+
+  if (!config.featureToggles.topnav && user && user.orgCount > 1) {
     const profileNode = items.find((bottomNavItem) => bottomNavItem.id === 'profile');
     if (profileNode) {
       profileNode.showOrgSwitcher = true;
-      profileNode.subTitle = `Current Org.: ${user?.orgName}`;
+      profileNode.subTitle = `Organization: ${user?.orgName}`;
     }
   }
 
-  if (!isSignedIn) {
-    const forcedLoginUrl = getForcedLoginUrl(location.pathname + location.search);
+  if (!isSignedIn && !config.featureToggles.topnav) {
+    const loginUrl = locationUtil.getUrlForPartial(location, { forceLogin: 'true' });
 
     items.unshift({
       icon: 'signout',
-      id: 'signin',
+      id: 'sign-in',
       section: NavSection.Config,
       target: '_self',
-      text: 'Sign in',
-      url: forcedLoginUrl,
+      text: t('nav.sign-in', 'Sign in'),
+      url: loginUrl,
     });
   }
 
-  items.forEach((link, index) => {
+  items.forEach((link) => {
     let menuItems = link.children || [];
 
     if (link.id === 'help') {
       link.children = [
         ...getFooterLinks(),
+        ...getSupportBundleFooterLinks(),
         {
-          text: 'Keyboard shortcuts',
+          id: 'keyboard-shortcuts',
+          text: t('nav.help/keyboard-shortcuts', 'Keyboard shortcuts'),
           icon: 'keyboard',
           onClick: onOpenShortcuts,
         },
       ];
     }
 
-    if (link.showOrgSwitcher) {
+    if (!config.featureToggles.topnav && link.showOrgSwitcher) {
       link.children = [
         ...menuItems,
         {
-          text: 'Switch organization',
+          id: 'switch-organization',
+          text: t('nav.profile/switch-org', 'Switch organization'),
           icon: 'arrow-random',
-          onClick: toggleOrgSwitcher,
+          onClick: onOpenOrgSwitcher,
         },
       ];
     }
@@ -75,8 +78,51 @@ export const enrichConfigItems = (
   return items;
 };
 
+export let getSupportBundleFooterLinks = (cfg = config): FooterLink[] => {
+  if (!cfg.featureToggles.supportBundles) {
+    return [];
+  }
+
+  return [
+    {
+      target: '_self',
+      id: 'support-bundle',
+      text: t('nav.help/support-bundle', 'Support Bundles'),
+      icon: 'question-circle',
+      url: '/admin/support-bundles',
+    },
+  ];
+};
+
+export const enrichWithInteractionTracking = (item: NavModelItem, expandedState: boolean) => {
+  const onClick = item.onClick;
+  item.onClick = () => {
+    reportInteraction('grafana_navigation_item_clicked', {
+      path: item.url ?? item.id,
+      state: expandedState ? 'expanded' : 'collapsed',
+    });
+    onClick?.();
+  };
+  if (item.children) {
+    item.children = item.children.map((item) => enrichWithInteractionTracking(item, expandedState));
+  }
+  return item;
+};
+
 export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {
-  return Boolean(itemToCheck === searchItem || itemToCheck.children?.some((child) => child === searchItem));
+  return Boolean(itemToCheck === searchItem || hasChildMatch(itemToCheck, searchItem));
+};
+
+export const hasChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem): boolean => {
+  return Boolean(
+    itemToCheck.children?.some((child) => {
+      if (child === searchItem) {
+        return true;
+      } else {
+        return hasChildMatch(child, searchItem);
+      }
+    })
+  );
 };
 
 const stripQueryParams = (url?: string) => {
@@ -94,11 +140,11 @@ export const getActiveItem = (
   pathname: string,
   currentBestMatch?: NavModelItem
 ): NavModelItem | undefined => {
-  const newNavigationEnabled = getConfig().featureToggles.newNavigation;
-  const dashboardLinkMatch = newNavigationEnabled ? '/dashboards' : '/';
+  const dashboardLinkMatch = '/dashboards';
 
   for (const link of navTree) {
-    const linkPathname = stripQueryParams(link.url);
+    const linkWithoutParams = stripQueryParams(link.url);
+    const linkPathname = locationUtil.stripBaseFromUrl(linkWithoutParams);
     if (linkPathname) {
       if (linkPathname === pathname) {
         // exact match

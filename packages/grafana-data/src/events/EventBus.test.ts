@@ -1,7 +1,7 @@
 import { EventBusSrv } from './EventBus';
-import { BusEvent, BusEventWithPayload } from './types';
-import { eventFactory } from './eventFactory';
 import { DataHoverEvent } from './common';
+import { eventFactory } from './eventFactory';
+import { BusEvent, BusEventWithPayload } from './types';
 
 interface LoginEventPayload {
   logins: number;
@@ -181,15 +181,18 @@ describe('EventBus', () => {
     it('removeAllListeners should unsubscribe to all', () => {
       const bus = new EventBusSrv();
       const events: LoginEvent[] = [];
+      let completed = false;
 
-      bus.subscribe(LoginEvent, (event) => {
-        events.push(event);
+      bus.getStream(LoginEvent).subscribe({
+        next: (evt) => events.push(evt),
+        complete: () => (completed = true),
       });
 
       bus.removeAllListeners();
       bus.publish(new LoginEvent({ logins: 10 }));
 
       expect(events.length).toBe(0);
+      expect(completed).toBe(true);
     });
   });
 });

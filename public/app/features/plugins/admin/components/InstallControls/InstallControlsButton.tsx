@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+
 import { AppEvents } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-import { CatalogPlugin, PluginStatus, Version } from '../../types';
 import { useInstallStatus, useUninstallStatus, useInstall, useUninstall } from '../../state/hooks';
+import { CatalogPlugin, PluginStatus, PluginTabIds, Version } from '../../types';
 
 type InstallControlsButtonProps = {
   plugin: CatalogPlugin;
@@ -13,6 +17,8 @@ type InstallControlsButtonProps = {
 };
 
 export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVersion }: InstallControlsButtonProps) {
+  const [queryParams] = useQueryParams();
+  const location = useLocation();
   const { isInstalling, error: errorInstalling } = useInstallStatus();
   const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
   const install = useInstall();
@@ -33,6 +39,12 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
     hideConfirmModal();
     await uninstall(plugin.id);
     if (!errorUninstalling) {
+      // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
+      const activePageId = queryParams.page;
+      const isViewingAppConfigPage = activePageId !== PluginTabIds.OVERVIEW && activePageId !== PluginTabIds.VERSIONS;
+      if (isViewingAppConfigPage) {
+        locationService.replace(`${location.pathname}?page=${PluginTabIds.OVERVIEW}`);
+      }
       appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
     }
   };
@@ -56,7 +68,7 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
           onConfirm={onUninstall}
           onDismiss={hideConfirmModal}
         />
-        <HorizontalGroup height="auto">
+        <HorizontalGroup align="flex-start" width="auto" height="auto">
           <Button variant="destructive" disabled={isUninstalling} onClick={showConfirmModal}>
             {uninstallBtnText}
           </Button>
@@ -67,7 +79,7 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
 
   if (pluginStatus === PluginStatus.UPDATE) {
     return (
-      <HorizontalGroup height="auto">
+      <HorizontalGroup align="flex-start" width="auto" height="auto">
         <Button disabled={isInstalling} onClick={onUpdate}>
           {isInstalling ? 'Updating' : 'Update'}
         </Button>

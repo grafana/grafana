@@ -1,5 +1,7 @@
 import { each, filter, keys } from 'lodash';
 import tinycolor from 'tinycolor2';
+
+import { AnnotationEvent } from '@grafana/data';
 import {
   ALERTING_COLOR,
   DEFAULT_ANNOTATION_COLOR,
@@ -9,8 +11,6 @@ import {
   REGION_FILL_ALPHA,
 } from '@grafana/ui';
 import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
-
-import { AnnotationEvent } from '@grafana/data';
 
 export class EventManager {
   event: AnnotationEvent | null = null;
@@ -31,7 +31,7 @@ export class EventManager {
   updateTime(range: { from: any; to: any }) {
     if (!this.event) {
       this.event = {};
-      this.event.dashboardId = this.panelCtrl.dashboard.id;
+      this.event.dashboardUID = this.panelCtrl.dashboard.uid;
       this.event.panelId = this.panelCtrl.panel.id;
     }
 

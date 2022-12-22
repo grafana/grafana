@@ -1,10 +1,12 @@
-import { Task, TaskRunner } from './task';
 import fs from 'fs';
-import { template as _template } from 'lodash';
 import { prompt } from 'inquirer';
+import { template as _template } from 'lodash';
+
+import { componentTpl, docsTpl, storyTpl, testTpl } from '../templates';
 import { pascalCase } from '../utils/pascalCase';
 import { promptConfirm, promptInput, promptList } from '../utils/prompt';
-import { componentTpl, docsTpl, storyTpl, testTpl } from '../templates';
+
+import { Task, TaskRunner } from './task';
 
 interface Details {
   name?: string;

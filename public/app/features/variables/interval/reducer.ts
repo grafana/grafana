@@ -1,7 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { initialVariableModelState, IntervalVariableModel, VariableOption, VariableRefresh } from '../types';
-import { getInstanceState, VariablePayload, initialVariablesState, VariablesState } from '../state/types';
 import { map } from 'lodash';
+
+import { getInstanceState } from '../state/selectors';
+import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
+import { initialVariableModelState, IntervalVariableModel, VariableOption, VariableRefresh } from '../types';
 
 export const initialIntervalVariableModelState: IntervalVariableModel = {
   ...initialVariableModelState,
@@ -20,7 +22,10 @@ export const intervalVariableSlice = createSlice({
   initialState: initialVariablesState,
   reducers: {
     createIntervalOptions: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState<IntervalVariableModel>(state, action.payload.id);
+      const instanceState = getInstanceState(state, action.payload.id);
+      if (instanceState.type !== 'interval') {
+        return;
+      }
       const options: VariableOption[] = map(instanceState.query.match(/(["'])(.*?)\1|\w+/g), (text) => {
         text = text.replace(/["']+/g, '');
         return { text: text.trim(), value: text.trim(), selected: false };

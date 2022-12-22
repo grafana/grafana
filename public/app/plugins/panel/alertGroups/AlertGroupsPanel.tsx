@@ -1,18 +1,18 @@
 import React, { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { PanelProps } from '@grafana/data';
-import { CustomScrollbar } from '@grafana/ui';
-import { config } from '@grafana/runtime';
 
-import { AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { fetchAlertGroupsAction } from 'app/features/alerting/unified/state/actions';
-import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
-import { NOTIFICATIONS_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
+import { PanelProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { CustomScrollbar } from '@grafana/ui';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
+import { fetchAlertGroupsAction } from 'app/features/alerting/unified/state/actions';
+import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
+import { NOTIFICATIONS_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
+import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
+import { AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { AlertGroup } from './AlertGroup';
 import { AlertGroupPanelOptions } from './types';
-import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { useFilteredGroups } from './useFilteredGroups';
 
 export const AlertGroupsPanel = (props: PanelProps<AlertGroupPanelOptions>) => {

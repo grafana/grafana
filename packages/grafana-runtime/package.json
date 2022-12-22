@@ -2,58 +2,82 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "8.5.0-pre",
+  "version": "9.4.0-pre",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
     "typescript"
   ],
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-runtime"
   },
   "main": "src/index.ts",
+  "types": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js",
+    "module": "dist/esm/index.js",
+    "types": "dist/index.d.ts",
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "./README.md",
+    "./CHANGELOG.md",
+    "LICENSE_APACHE2"
+  ],
   "scripts": {
-    "build": "grafana-toolkit package:build --scope=runtime",
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "bundle": "rollup -c rollup.config.ts",
-    "clean": "rimraf ./dist ./compiled",
-    "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
-    "typecheck": "tsc --noEmit"
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
+    "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
-    "@grafana/data": "8.5.0-pre",
-    "@grafana/e2e-selectors": "8.5.0-pre",
-    "@grafana/ui": "8.5.0-pre",
-    "@sentry/browser": "6.17.4",
+    "@grafana/data": "9.4.0-pre",
+    "@grafana/e2e-selectors": "9.4.0-pre",
+    "@grafana/faro-web-sdk": "1.0.0-beta2",
+    "@grafana/ui": "9.4.0-pre",
+    "@sentry/browser": "6.19.7",
     "history": "4.10.1",
+    "lodash": "4.17.21",
+    "rxjs": "7.5.7",
+    "systemjs": "0.20.19",
+    "tslib": "2.4.1"
+  },
+  "devDependencies": {
+    "@grafana/tsconfig": "^1.2.0-rc1",
+    "@rollup/plugin-commonjs": "23.0.2",
+    "@rollup/plugin-node-resolve": "15.0.1",
+    "@testing-library/dom": "8.19.0",
+    "@testing-library/react": "12.1.4",
+    "@testing-library/react-hooks": "8.0.1",
+    "@testing-library/user-event": "14.4.3",
+    "@types/angular": "1.8.4",
+    "@types/history": "4.7.11",
+    "@types/jest": "29.2.3",
+    "@types/lodash": "4.14.187",
+    "@types/react": "17.0.42",
+    "@types/react-dom": "17.0.14",
+    "@types/systemjs": "^0.20.6",
+    "esbuild": "0.16.7",
     "lodash": "4.17.21",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "rxjs": "7.5.2",
-    "systemjs": "0.20.19",
-    "tslib": "2.3.1"
-  },
-  "devDependencies": {
-    "@grafana/tsconfig": "^1.0.0-rc1",
-    "@rollup/plugin-commonjs": "21.0.1",
-    "@rollup/plugin-node-resolve": "13.1.3",
-    "@testing-library/dom": "8.11.3",
-    "@testing-library/react": "^12.1.2",
-    "@testing-library/user-event": "^13.5.0",
-    "@types/angular": "1.8.4",
-    "@types/history": "4.7.11",
-    "@types/jest": "27.4.0",
-    "@types/lodash": "4.14.149",
-    "@types/react": "17.0.39",
-    "@types/react-dom": "17.0.11",
-    "@types/systemjs": "^0.20.6",
-    "lodash": "4.17.21",
     "rimraf": "3.0.2",
-    "rollup": "2.67.1",
+    "rollup": "2.79.1",
+    "rollup-plugin-dts": "^5.0.0",
+    "rollup-plugin-esbuild": "5.0.0",
+    "rollup-plugin-node-externals": "^5.0.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "typescript": "4.4.4"
+    "typescript": "4.9.3"
   },
-  "types": "src/index.ts"
+  "peerDependencies": {
+    "react": "17.0.2",
+    "react-dom": "17.0.2"
+  }
 }

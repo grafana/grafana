@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
+
 import { DataFrame, Field, getFieldDisplayName, SelectableValue } from '@grafana/data';
+
 import { getFieldTypeIcon } from '../../types';
 
 /**
@@ -27,7 +29,7 @@ export function frameHasName(name: string | undefined, names: FrameFieldsDisplay
 }
 
 /**
- * Retuns the distinct names in a set of frames
+ * Returns the distinct names in a set of frames
  */
 function getFrameFieldsDisplayNames(data: DataFrame[], filter?: (field: Field) => boolean): FrameFieldsDisplayNames {
   const names: FrameFieldsDisplayNames = {

@@ -12,17 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
-import { css } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { withTheme2, stylesFactory, Button } from '@grafana/ui';
 
-import GraphTicks from './GraphTicks';
-import Scrubber from './Scrubber';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate, TNil } from '../..';
 import { autoColor } from '../../Theme';
 import DraggableManager, { DraggableBounds, DraggingUpdate, EUpdateTypes } from '../../utils/DraggableManager';
+
+import GraphTicks from './GraphTicks';
+import Scrubber from './Scrubber';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   // Need this cause emotion will merge emotion generated classes into single className if used with cx from emotion
@@ -87,7 +89,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-type ViewingLayerProps = {
+export type ViewingLayerProps = {
   height: number;
   numTicks: number;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;

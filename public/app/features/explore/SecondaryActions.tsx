@@ -1,11 +1,13 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, HorizontalGroup, useTheme2 } from '@grafana/ui';
 
 type Props = {
   addQueryRowButtonDisabled?: boolean;
   addQueryRowButtonHidden?: boolean;
+  richHistoryRowButtonHidden?: boolean;
   richHistoryButtonActive?: boolean;
   queryInspectorButtonActive?: boolean;
 
@@ -38,15 +40,17 @@ export function SecondaryActions(props: Props) {
             Add query
           </Button>
         )}
-        <Button
-          variant="secondary"
-          aria-label="Rich history button"
-          className={cx({ ['explore-active-button']: props.richHistoryButtonActive })}
-          onClick={props.onClickRichHistoryButton}
-          icon="history"
-        >
-          Query history
-        </Button>
+        {!props.richHistoryRowButtonHidden && (
+          <Button
+            variant="secondary"
+            aria-label="Rich history button"
+            className={cx({ ['explore-active-button']: props.richHistoryButtonActive })}
+            onClick={props.onClickRichHistoryButton}
+            icon="history"
+          >
+            Query history
+          </Button>
+        )}
         <Button
           variant="secondary"
           aria-label="Query inspector button"

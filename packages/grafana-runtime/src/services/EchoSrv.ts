@@ -82,6 +82,7 @@ export enum EchoEventType {
   Pageview = 'pageview',
   Interaction = 'interaction',
   ExperimentView = 'experimentview',
+  GrafanaJavascriptAgent = 'grafana-javascript-agent',
 }
 
 /**
@@ -129,6 +130,10 @@ export function setEchoSrv(instance: EchoSrv) {
  * @public
  */
 export function getEchoSrv(): EchoSrv {
+  if (!singletonInstance) {
+    singletonInstance = new FakeEchoSrv();
+  }
+
   return singletonInstance;
 }
 
@@ -141,3 +146,17 @@ export function getEchoSrv(): EchoSrv {
 export const registerEchoBackend = (backend: EchoBackend) => {
   getEchoSrv().addBackend(backend);
 };
+
+export class FakeEchoSrv implements EchoSrv {
+  events: Array<Omit<EchoEvent, 'meta'>> = [];
+
+  flush(): void {
+    this.events = [];
+  }
+
+  addBackend(backend: EchoBackend): void {}
+
+  addEvent<T extends EchoEvent>(event: Omit<T, 'meta'>, meta?: {} | undefined): void {
+    this.events.push(event);
+  }
+}

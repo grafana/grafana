@@ -1,10 +1,10 @@
 import 'vendor/flot/jquery.flot';
 import $ from 'jquery';
 import { isNumber } from 'lodash';
-import { getColorForTheme } from '@grafana/data';
-import { CoreEvents } from 'app/types';
+
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import { config } from 'app/core/config';
+import { CoreEvents } from 'app/types';
 
 export class ThresholdManager {
   plot: any;
@@ -234,12 +234,12 @@ export class ThresholdManager {
         if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
           options.grid.markings.push({
             y2axis: { from: threshold.value, to: limit },
-            color: getColorForTheme(fillColor, config.theme),
+            color: config.theme2.visualization.getColorByName(fillColor),
           });
         } else {
           options.grid.markings.push({
             yaxis: { from: threshold.value, to: limit },
-            color: getColorForTheme(fillColor, config.theme),
+            color: config.theme2.visualization.getColorByName(fillColor),
           });
         }
       }
@@ -247,12 +247,12 @@ export class ThresholdManager {
         if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
           options.grid.markings.push({
             y2axis: { from: threshold.value, to: threshold.value },
-            color: getColorForTheme(lineColor, config.theme),
+            color: config.theme2.visualization.getColorByName(lineColor),
           });
         } else {
           options.grid.markings.push({
             yaxis: { from: threshold.value, to: threshold.value },
-            color: getColorForTheme(lineColor, config.theme),
+            color: config.theme2.visualization.getColorByName(lineColor),
           });
         }
       }

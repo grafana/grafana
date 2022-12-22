@@ -1,7 +1,9 @@
 import execa from 'execa';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
+
 import { KeyValue } from '@grafana/data';
+
 import { ExtensionSize, ZipFileInfo, GitLogInfo } from './types';
 
 const md5File = require('md5-file');

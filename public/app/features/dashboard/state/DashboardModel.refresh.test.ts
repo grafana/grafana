@@ -1,9 +1,9 @@
-import { DashboardModel } from './DashboardModel';
 import { appEvents } from '../../../core/core';
 import { VariablesChanged } from '../../variables/types';
-import { PanelModel } from './PanelModel';
 import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
-import { afterEach, beforeEach } from '../../../../test/lib/common';
+
+import { PanelModel } from './PanelModel';
+import { createDashboardModelFixture } from './__fixtures__/dashboardFixtures';
 
 function getTestContext({
   usePanelInEdit,
@@ -12,7 +12,7 @@ function getTestContext({
 }: { usePanelInEdit?: boolean; usePanelInView?: boolean; refreshAll?: boolean } = {}) {
   jest.clearAllMocks();
 
-  const dashboard = new DashboardModel({});
+  const dashboard = createDashboardModelFixture();
   const startRefreshMock = jest.fn();
   dashboard.startRefresh = startRefreshMock;
   const panelInView = new PanelModel({ id: 99 });

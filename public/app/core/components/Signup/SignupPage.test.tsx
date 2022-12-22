@@ -1,12 +1,15 @@
-import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+import { render } from 'test/redux-rtl';
+
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 import { SignupPage } from './SignupPage';
 
 const postMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     post: postMock,
   }),
@@ -58,10 +61,10 @@ describe('Signup Page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(await screen.findByText('Email is required')).toBeInTheDocument();
 
-    userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test');
+    await userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test');
     await waitFor(() => expect(screen.queryByText('Email is invalid')).toBeInTheDocument());
 
-    userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test@gmail.com');
+    await userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test@gmail.com');
     await waitFor(() => expect(screen.queryByText('Email is invalid')).not.toBeInTheDocument());
   });
   it('should pass validation checks for password and confirm password field', async () => {
@@ -71,11 +74,11 @@ describe('Signup Page', () => {
     expect(await screen.findByText('Password is required')).toBeInTheDocument();
     expect(await screen.findByText('Confirmed password is required')).toBeInTheDocument();
 
-    userEvent.type(screen.getByLabelText('Password'), 'admin');
-    userEvent.type(screen.getByLabelText('Confirm password'), 'a');
+    await userEvent.type(screen.getByLabelText('Password'), 'admin');
+    await userEvent.type(screen.getByLabelText('Confirm password'), 'a');
     await waitFor(() => expect(screen.queryByText('Passwords must match!')).toBeInTheDocument());
 
-    userEvent.type(screen.getByLabelText('Confirm password'), 'dmin');
+    await userEvent.type(screen.getByLabelText('Confirm password'), 'dmin');
     await waitFor(() => expect(screen.queryByText('Passwords must match!')).not.toBeInTheDocument());
   });
   it('should navigate to default url if signup is successful', async () => {
@@ -87,10 +90,10 @@ describe('Signup Page', () => {
     postMock.mockResolvedValueOnce({ message: 'Logged in' });
     render(<SignupPage {...props} />);
 
-    userEvent.type(screen.getByRole('textbox', { name: 'Your name' }), 'test-user');
-    userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test@gmail.com');
-    userEvent.type(screen.getByLabelText('Password'), 'admin');
-    userEvent.type(screen.getByLabelText('Confirm password'), 'admin');
+    await userEvent.type(screen.getByRole('textbox', { name: 'Your name' }), 'test-user');
+    await userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test@gmail.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'admin');
+    await userEvent.type(screen.getByLabelText('Confirm password'), 'admin');
     fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
     await waitFor(() =>

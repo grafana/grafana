@@ -3,81 +3,105 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/prometheus/alertmanager/template"
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
 )
 
-// GetDecryptedValueFn is a function that returns the decrypted value of
-// the given key. If the key is not present, then it returns the fallback value.
-type GetDecryptedValueFn func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string
+type AlertmanagerConfig struct {
+	*channels.NotificationChannelConfig
+	URLs              []*url.URL
+	BasicAuthUser     string
+	BasicAuthPassword string
+}
 
-// NewAlertmanagerNotifier returns a new Alertmanager notifier.
-func NewAlertmanagerNotifier(model *NotificationChannelConfig, _ *template.Template, fn GetDecryptedValueFn) (*AlertmanagerNotifier, error) {
-	if model.Settings == nil {
-		return nil, receiverInitError{Reason: "no settings supplied"}
+type alertmanagerSettings struct {
+	URLs     []*url.URL
+	User     string
+	Password string
+}
+
+func AlertmanagerFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
+	ch, err := buildAlertmanagerNotifier(fc)
+	if err != nil {
+		return nil, receiverInitError{
+			Reason: err.Error(),
+			Cfg:    *fc.Config,
+		}
 	}
-	if model.SecureSettings == nil {
-		return nil, receiverInitError{Cfg: *model, Reason: "no secure settings supplied"}
+	return ch, nil
+}
+
+func buildAlertmanagerNotifier(fc channels.FactoryConfig) (*AlertmanagerNotifier, error) {
+	var settings struct {
+		URL      channels.CommaSeparatedStrings `json:"url,omitempty" yaml:"url,omitempty"`
+		User     string                         `json:"basicAuthUser,omitempty" yaml:"basicAuthUser,omitempty"`
+		Password string                         `json:"basicAuthPassword,omitempty" yaml:"basicAuthPassword,omitempty"`
 	}
-	urlStr := model.Settings.Get("url").MustString()
-	if urlStr == "" {
-		return nil, receiverInitError{Reason: "could not find url property in settings", Cfg: *model}
+	err := json.Unmarshal(fc.Config.Settings, &settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
 	}
 
-	var urls []*url.URL
-	for _, uS := range strings.Split(urlStr, ",") {
+	urls := make([]*url.URL, 0, len(settings.URL))
+	for _, uS := range settings.URL {
 		uS = strings.TrimSpace(uS)
 		if uS == "" {
 			continue
 		}
-
 		uS = strings.TrimSuffix(uS, "/") + "/api/v1/alerts"
 		u, err := url.Parse(uS)
 		if err != nil {
-			return nil, receiverInitError{Reason: "invalid url property in settings", Cfg: *model, Err: err}
+			return nil, fmt.Errorf("invalid url property in settings: %w", err)
 		}
-
 		urls = append(urls, u)
 	}
-	basicAuthUser := model.Settings.Get("basicAuthUser").MustString()
-	basicAuthPassword := fn(context.Background(), model.SecureSettings, "basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString())
+	if len(settings.URL) == 0 || len(urls) == 0 {
+		return nil, errors.New("could not find url property in settings")
+	}
+	settings.Password = fc.DecryptFunc(context.Background(), fc.Config.SecureSettings, "basicAuthPassword", settings.Password)
 
 	return &AlertmanagerNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   model.UID,
-			Name:                  model.Name,
-			DisableResolveMessage: model.DisableResolveMessage,
-			Settings:              model.Settings,
-		}),
-		urls:              urls,
-		basicAuthUser:     basicAuthUser,
-		basicAuthPassword: basicAuthPassword,
-		logger:            log.New("alerting.notifier.prometheus-alertmanager"),
+		Base:   channels.NewBase(fc.Config),
+		images: fc.ImageStore,
+		settings: alertmanagerSettings{
+			URLs:     urls,
+			User:     settings.User,
+			Password: settings.Password,
+		},
+		logger: fc.Logger,
 	}, nil
 }
 
 // AlertmanagerNotifier sends alert notifications to the alert manager
 type AlertmanagerNotifier struct {
-	*Base
-
-	urls              []*url.URL
-	basicAuthUser     string
-	basicAuthPassword string
-	logger            log.Logger
+	*channels.Base
+	images   channels.ImageStore
+	settings alertmanagerSettings
+	logger   channels.Logger
 }
 
 // Notify sends alert notifications to Alertmanager.
 func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	n.logger.Debug("Sending Alertmanager alert", "alertmanager", n.Name)
+	n.logger.Debug("sending Alertmanager alert", "alertmanager", n.Name)
 	if len(as) == 0 {
 		return true, nil
 	}
+
+	_ = withStoredImages(ctx, n.logger, n.images,
+		func(index int, image channels.Image) error {
+			// If there is an image for this alert and the image has been uploaded
+			// to a public URL then include it as an annotation
+			if image.URL != "" {
+				as[index].Annotations["image"] = model.LabelValue(image.URL)
+			}
+			return nil
+		}, as...)
 
 	body, err := json.Marshal(as)
 	if err != nil {
@@ -88,21 +112,21 @@ func (n *AlertmanagerNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		lastErr error
 		numErrs int
 	)
-	for _, u := range n.urls {
+	for _, u := range n.settings.URLs {
 		if _, err := sendHTTPRequest(ctx, u, httpCfg{
-			user:     n.basicAuthUser,
-			password: n.basicAuthPassword,
+			user:     n.settings.User,
+			password: n.settings.Password,
 			body:     body,
 		}, n.logger); err != nil {
-			n.logger.Warn("Failed to send to Alertmanager", "error", err, "alertmanager", n.Name, "url", u.String())
+			n.logger.Warn("failed to send to Alertmanager", "error", err, "alertmanager", n.Name, "url", u.String())
 			lastErr = err
 			numErrs++
 		}
 	}
 
-	if numErrs == len(n.urls) {
+	if numErrs == len(n.settings.URLs) {
 		// All attempts to send alerts have failed
-		n.logger.Warn("All attempts to send to Alertmanager failed", "alertmanager", n.Name)
+		n.logger.Warn("all attempts to send to Alertmanager failed", "alertmanager", n.Name)
 		return false, fmt.Errorf("failed to send alert to Alertmanager: %w", lastErr)
 	}
 

@@ -7,15 +7,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/models"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/alertmanager/api/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/util/ticker"
+
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -45,13 +46,17 @@ type NGAlert struct {
 }
 
 type Scheduler struct {
-	Registerer               prometheus.Registerer
-	BehindSeconds            prometheus.Gauge
-	EvalTotal                *prometheus.CounterVec
-	EvalFailures             *prometheus.CounterVec
-	EvalDuration             *prometheus.SummaryVec
-	GetAlertRulesDuration    prometheus.Histogram
-	SchedulePeriodicDuration prometheus.Histogram
+	Registerer                          prometheus.Registerer
+	BehindSeconds                       prometheus.Gauge
+	EvalTotal                           *prometheus.CounterVec
+	EvalFailures                        *prometheus.CounterVec
+	EvalDuration                        *prometheus.HistogramVec
+	SchedulePeriodicDuration            prometheus.Histogram
+	SchedulableAlertRules               prometheus.Gauge
+	SchedulableAlertRulesHash           prometheus.Gauge
+	UpdateSchedulableAlertRulesDuration prometheus.Histogram
+	Ticker                              *ticker.Metrics
+	EvaluationMissed                    *prometheus.CounterVec
 }
 
 type MultiOrgAlertmanager struct {
@@ -95,7 +100,7 @@ func (ng *NGAlert) GetMultiOrgAlertmanagerMetrics() *MultiOrgAlertmanager {
 func NewNGAlert(r prometheus.Registerer) *NGAlert {
 	return &NGAlert{
 		Registerer:                  r,
-		schedulerMetrics:            newSchedulerMetrics(r),
+		schedulerMetrics:            NewSchedulerMetrics(r),
 		stateMetrics:                newStateMetrics(r),
 		multiOrgAlertmanagerMetrics: newMultiOrgAlertmanagerMetrics(r),
 		apiMetrics:                  newAPIMetrics(r),
@@ -120,7 +125,7 @@ func (moa *MultiOrgAlertmanager) GetOrCreateOrgRegistry(id int64) prometheus.Reg
 	return moa.registries.GetOrCreateOrgRegistry(id)
 }
 
-func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
+func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 	return &Scheduler{
 		Registerer: r,
 		BehindSeconds: promauto.With(r).NewGauge(prometheus.GaugeOpts{
@@ -151,24 +156,15 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org"},
 		),
-		EvalDuration: promauto.With(r).NewSummaryVec(
-			prometheus.SummaryOpts{
-				Namespace:  Namespace,
-				Subsystem:  Subsystem,
-				Name:       "rule_evaluation_duration_seconds",
-				Help:       "The duration for a rule to execute.",
-				Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-			},
-			[]string{"org"},
-		),
-		GetAlertRulesDuration: promauto.With(r).NewHistogram(
+		EvalDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: Namespace,
 				Subsystem: Subsystem,
-				Name:      "get_alert_rules_duration_seconds",
-				Help:      "The time taken to get all alert rules.",
-				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
+				Name:      "rule_evaluation_duration_seconds",
+				Help:      "The duration for a rule to execute.",
+				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 			},
+			[]string{"org"},
 		),
 		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
@@ -178,6 +174,40 @@ func newSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Help:      "The time taken to run the scheduler.",
 				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
 			},
+		),
+		SchedulableAlertRules: promauto.With(r).NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_alert_rules",
+				Help:      "The number of alert rules that could be considered for evaluation at the next tick.",
+			},
+		),
+		SchedulableAlertRulesHash: promauto.With(r).NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_alert_rules_hash",
+				Help:      "A hash of the alert rules that could be considered for evaluation at the next tick.",
+			}),
+		UpdateSchedulableAlertRulesDuration: promauto.With(r).NewHistogram(
+			prometheus.HistogramOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_query_alert_rules_duration_seconds",
+				Help:      "The time taken to fetch alert rules from the database.",
+				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
+			},
+		),
+		Ticker: ticker.NewMetrics(r, "alerting"),
+		EvaluationMissed: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "schedule_rule_evaluations_missed_total",
+				Help:      "The total number of rule evaluations missed due to a slow rule evaluation.",
+			},
+			[]string{"org", "name"},
 		),
 	}
 }
@@ -275,25 +305,19 @@ func (m *OrgRegistries) RemoveOrgRegistry(org int64) {
 func Instrument(
 	method,
 	path string,
-	action interface{},
+	action func(*models.ReqContext) response.Response,
 	metrics *API,
 ) web.Handler {
 	normalizedPath := MakeLabelValue(path)
 
 	return func(c *models.ReqContext) {
 		start := time.Now()
-		var res response.Response
-		val, err := c.Invoke(action)
-		if err == nil && val != nil && len(val) > 0 {
-			res = val[0].Interface().(response.Response)
-		} else {
-			res = routing.ServerError(err)
-		}
+		res := action(c)
 
 		// TODO: We could look up the datasource type via our datasource service
 		var backend string
-		recipient := web.Params(c.Req)[":Recipient"]
-		if recipient == apimodels.GrafanaBackend.String() || recipient == "" {
+		datasourceID := web.Params(c.Req)[":DatasourceID"]
+		if datasourceID == apimodels.GrafanaBackend.String() || datasourceID == "" {
 			backend = GrafanaBackend
 		} else {
 			backend = ProxyBackend

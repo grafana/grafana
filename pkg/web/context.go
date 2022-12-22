@@ -17,60 +17,46 @@ package web
 import (
 	"encoding/json"
 	"html/template"
+	"net"
 	"net/http"
 	"net/url"
-	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 )
-
-// ContextInvoker is an inject.FastInvoker wrapper of func(ctx *Context).
-type ContextInvoker func(ctx *Context)
-
-// Invoke implements inject.FastInvoker which simplifies calls of `func(ctx *Context)` function.
-func (invoke ContextInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
-	invoke(params[0].(*Context))
-	return nil, nil
-}
 
 // Context represents the runtime context of current request of Macaron instance.
 // It is the integration of most frequently used middlewares and helper methods.
 type Context struct {
-	Injector
-	handlers []Handler
-	index    int
+	mws []Middleware
 
-	*Router
 	Req      *http.Request
 	Resp     ResponseWriter
 	template *template.Template
 }
 
-func (ctx *Context) handler() Handler {
-	if ctx.index < len(ctx.handlers) {
-		return ctx.handlers[ctx.index]
-	}
-	if ctx.index == len(ctx.handlers) {
-		return func() {}
-	}
-	panic("invalid index for context handler")
-}
-
-// Next runs the next handler in the context chain
-func (ctx *Context) Next() {
-	ctx.index++
-	ctx.run()
-}
+var errMissingWrite = errutil.NewBase(errutil.StatusInternal, "web.missingWrite")
 
 func (ctx *Context) run() {
-	for ctx.index <= len(ctx.handlers) {
-		if _, err := ctx.Invoke(ctx.handler()); err != nil {
-			panic(err)
-		}
-		ctx.index++
-		if ctx.Resp.Written() {
-			return
-		}
+	h := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	for i := len(ctx.mws) - 1; i >= 0; i-- {
+		h = ctx.mws[i](h)
+	}
+
+	rw := ctx.Resp
+	h.ServeHTTP(ctx.Resp, ctx.Req)
+
+	// Prevent the handler chain from not writing anything.
+	// This indicates nearly always that a middleware is misbehaving and not calling its next.ServeHTTP().
+	// In rare cases where a blank http.StatusOK without any body is wished, explicitly state that using w.WriteStatus(http.StatusOK)
+	if !rw.Written() {
+		errhttp.Write(
+			ctx.Req.Context(),
+			errMissingWrite.Errorf("chain did not write HTTP response: %s", ctx.Req.URL.Path),
+			rw,
+		)
 	}
 }
 
@@ -84,12 +70,21 @@ func (ctx *Context) RemoteAddr() string {
 		addr = strings.TrimSpace(strings.Split(ctx.Req.Header.Get("X-Forwarded-For"), ",")[0])
 	}
 
+	// parse user inputs from headers to prevent log forgery
+	if len(addr) > 0 {
+		if parsedIP := net.ParseIP(addr); parsedIP == nil {
+			// if parsedIP is nil we clean addr and populate with RemoteAddr below
+			addr = ""
+		}
+	}
+
 	if len(addr) == 0 {
 		addr = ctx.Req.RemoteAddr
 		if i := strings.LastIndex(addr, ":"); i > -1 {
 			addr = addr[:i]
 		}
 	}
+
 	return addr
 }
 

@@ -2,25 +2,43 @@ package alerting
 
 import (
 	"context"
+	"strings"
 	"testing"
+	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/models"
+	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestService(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := &sqlStore{
+		db:    db.InitTestDB(t),
+		log:   &log.ConcreteLogger{},
+		cache: localcache.New(time.Minute, time.Minute),
+	}
 
 	nType := "test"
 	registerTestNotifier(nType)
 
-	s := ProvideService(bus.New(), sqlStore, ossencryption.ProvideService(), nil)
+	usMock := &usagestats.UsageStatsMock{T: t}
+
+	encProvider := encryptionprovider.ProvideEncryptionProvider()
+	settings := &setting.OSSImpl{Cfg: setting.NewCfg()}
+
+	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, settings)
+	require.NoError(t, err)
+
+	s := ProvideService(sqlStore.db, encService, nil)
 
 	origSecret := setting.SecretKey
 	setting.SecretKey = "alert_notification_service_test"
@@ -112,6 +130,26 @@ func TestService(t *testing.T) {
 		}
 		err = s.DeleteAlertNotification(context.Background(), &delCmd)
 		require.NoError(t, err)
+	})
+
+	t.Run("create alert notification should reject an invalid command", func(t *testing.T) {
+		uid := strings.Repeat("A", 41)
+
+		err := s.CreateAlertNotificationCommand(context.Background(), &models.CreateAlertNotificationCommand{Uid: uid})
+		require.ErrorIs(t, err, ValidationError{Reason: "Invalid UID: Must be 40 characters or less"})
+	})
+
+	t.Run("update alert notification should reject an invalid command", func(t *testing.T) {
+		ctx := context.Background()
+
+		uid := strings.Repeat("A", 41)
+		expectedErr := ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
+
+		err := s.UpdateAlertNotification(ctx, &models.UpdateAlertNotificationCommand{Uid: uid})
+		require.ErrorIs(t, err, expectedErr)
+
+		err = s.UpdateAlertNotificationWithUid(ctx, &models.UpdateAlertNotificationWithUidCommand{NewUid: uid})
+		require.ErrorIs(t, err, expectedErr)
 	})
 }
 

@@ -1,11 +1,13 @@
 import { merge } from 'lodash';
-import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
+
 import { toDataFrame } from '../dataframe/processDataFrame';
+import { createTheme } from '../themes';
 import { ReducerID } from '../transformations/fieldReducer';
 import { MappingType, SpecialValueMatch, ValueMapping } from '../types';
-import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
-import { createTheme } from '../themes';
+
 import { getDisplayProcessor } from './displayProcessor';
+import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
+import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
 describe('FieldDisplay', () => {
   beforeAll(() => {
@@ -319,7 +321,7 @@ describe('FieldDisplay', () => {
       });
 
       const cache = { numeric: 10, text: 'Value' };
-      options.data![0].fields[1].display = (v: any) => {
+      options.data![0].fields[1].display = () => {
         return cache;
       };
 
@@ -526,5 +528,5 @@ function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}
     theme: createTheme(),
   };
 
-  return merge<GetFieldDisplayValuesOptions, any>(options, extend);
+  return merge(options, extend);
 }

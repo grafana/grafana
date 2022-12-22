@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <generator uri="https://jekyllrb.com/" version="3.9.0">Jekyll</generator>
+  <link href="https://www.example.com/feed.xml" rel="self" type="application/atom+xml" />
+  <link href="https://www.example.com/" rel="alternate" type="text/html" />
+  <updated>2022-02-15T07:00:47+00:00</updated>
+  <id>https://www.example.com/feed.xml</id>
+  <title type="html">Test Feed</title>
+  <subtitle>An example of an atom feed, for testing</subtitle>
+  <author>
+    <name>Bobby Test</name>
+  </author>
+  <entry>
+    <title type="html">Why Testing Is The Best</title>
+    <link href="https://www.example.com/2022/02/12/why-testing-is-the-best/" rel="alternate" type="text/html" title="Why Testing Is The Best" />
+    <published>2022-02-12T08:00:00+00:00</published>
+    <updated>2022-02-12T08:00:00+00:00</updated>
+    <id>https://www.example.com/2022/02/12/why-testing-is-the-best</id>
+    <content type="html" xml:base="https://www.hugohaggmark.com/2022/02/12/why-testing-is-the-best/">
+      Testing is the best because it lets you know your code isn't broken, probably.
+    </content>
+    <author>
+      <name>Bobby Test</name>
+    </author>
+    <category term="Testing" />
+    <summary type="html">An example of a summary.</summary>
+  </entry>
+</feed>

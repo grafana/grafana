@@ -1,13 +1,15 @@
+import { css, cx } from '@emotion/css';
 import React, { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
-import { css, cx } from '@emotion/css';
-import { Pagination, useStyles } from '@grafana/ui';
-import { GrafanaTheme, LoadingState } from '@grafana/data';
 
-import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { Pagination, useStyles2 } from '@grafana/ui';
+
 import { LibraryElementDTO } from '../../types';
-import { changePage, initialLibraryPanelsViewState, libraryPanelsViewReducer } from './reducer';
+import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
+
 import { asyncDispatcher, deleteLibraryPanel, searchForLibraryPanels } from './actions';
+import { changePage, initialLibraryPanelsViewState, libraryPanelsViewReducer } from './reducer';
 
 interface LibraryPanelViewProps {
   className?: string;
@@ -32,7 +34,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   currentPanelId: currentPanel,
   perPage: propsPerPage = 40,
 }) => {
-  const styles = useStyles(getPanelViewStyles);
+  const styles = useStyles2(getPanelViewStyles);
   const [{ libraryPanels, page, perPage, numberOfPages, loadingState, currentPanelId }, dispatch] = useReducer(
     libraryPanelsViewReducer,
     {
@@ -49,7 +51,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
           searchString,
           sortDirection,
           panelFilter,
-          folderFilter,
+          folderFilterUIDs: folderFilter,
           page,
           perPage,
           currentPanelId,
@@ -95,7 +97,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   );
 };
 
-const getPanelViewStyles = (theme: GrafanaTheme) => {
+const getPanelViewStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       display: flex;
@@ -105,7 +107,7 @@ const getPanelViewStyles = (theme: GrafanaTheme) => {
     libraryPanelList: css`
       max-width: 100%;
       display: grid;
-      grid-gap: ${theme.spacing.sm};
+      grid-gap: ${theme.spacing(1)};
     `,
     searchHeader: css`
       display: flex;
@@ -116,7 +118,7 @@ const getPanelViewStyles = (theme: GrafanaTheme) => {
     `,
     pagination: css`
       align-self: center;
-      margin-top: ${theme.spacing.sm};
+      margin-top: ${theme.spacing(1)};
     `,
     noPanelsFound: css`
       label: noPanelsFound;

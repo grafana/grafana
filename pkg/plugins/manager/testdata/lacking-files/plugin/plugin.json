@@ -1,7 +1,7 @@
 {
   "type": "datasource",
   "name": "Test",
-  "id": "test",
+  "id": "test-datasource",
   "backend": true,
   "info": {
     "description": "Test",

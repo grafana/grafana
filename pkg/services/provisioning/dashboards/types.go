@@ -67,14 +67,14 @@ func createDashboardJSON(data *simplejson.Json, lastModified time.Time, cfg *con
 	dash.Dashboard.FolderId = folderID
 
 	if dash.Dashboard.Title == "" {
-		return nil, models.ErrDashboardTitleEmpty
+		return nil, dashboards.ErrDashboardTitleEmpty
 	}
 
 	return dash, nil
 }
 
 func mapV0ToDashboardsAsConfig(v0 []*configV0) ([]*config, error) {
-	var r []*config
+	r := make([]*config, 0, len(v0))
 	seen := make(map[string]bool)
 
 	for _, v := range v0 {
@@ -101,7 +101,7 @@ func mapV0ToDashboardsAsConfig(v0 []*configV0) ([]*config, error) {
 }
 
 func (dc *configV1) mapToDashboardsAsConfig() ([]*config, error) {
-	var r []*config
+	r := make([]*config, 0, len(dc.Providers))
 	seen := make(map[string]bool)
 
 	for _, v := range dc.Providers {

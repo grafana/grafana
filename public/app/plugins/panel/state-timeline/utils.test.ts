@@ -1,5 +1,6 @@
-import { ArrayVector, createTheme, FieldType, ThresholdsMode, toDataFrame } from '@grafana/data';
-import { LegendDisplayMode } from '@grafana/schema';
+import { ArrayVector, createTheme, FieldType, ThresholdsMode, TimeRange, toDataFrame, dateTime } from '@grafana/data';
+import { LegendDisplayMode, VizLegendOptions } from '@grafana/schema';
+
 import {
   findNextStateIndex,
   fmtDuration,
@@ -11,6 +12,14 @@ import {
 const theme = createTheme();
 
 describe('prepare timeline graph', () => {
+  const timeRange: TimeRange = {
+    from: dateTime(1),
+    to: dateTime(3),
+    raw: {
+      from: dateTime(1),
+      to: dateTime(3),
+    },
+  };
   it('errors with no time fields', () => {
     const frames = [
       toDataFrame({
@@ -20,7 +29,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
     expect(info.warn).toEqual('Data does not have a time field');
   });
 
@@ -33,7 +42,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
     expect(info.warn).toEqual('No graphable fields');
   });
 
@@ -46,14 +55,14 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true, theme);
+    const info = prepareTimelineFields(frames, true, timeRange, theme);
     expect(info.warn).toBeUndefined();
 
     const out = info.frames![0];
 
     const field = out.fields.find((f) => f.name === 'b');
     expect(field?.values.toArray()).toMatchInlineSnapshot(`
-      Array [
+      [
         1,
         1,
         undefined,
@@ -66,6 +75,18 @@ describe('prepare timeline graph', () => {
       ]
     `);
   });
+  it('should try to sort time fields', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'a', type: FieldType.time, values: [4, 3, 1, 2] },
+          { name: 'b', values: [1, 1, 2, 2] },
+        ],
+      }),
+    ];
+    const result = prepareTimelineFields(frames, true, timeRange, theme);
+    expect(result.frames?.[0].fields[0].values.toArray()).toEqual([1, 2, 3, 4]);
+  });
 });
 
 describe('findNextStateIndex', () => {
@@ -74,7 +95,8 @@ describe('findNextStateIndex', () => {
       name: 'time',
       type: FieldType.number,
       values: new ArrayVector([1, undefined, undefined, 2, undefined, undefined]),
-    } as any;
+      config: {},
+    };
     const result = findNextStateIndex(field, 0);
     expect(result).toEqual(3);
   });
@@ -84,7 +106,8 @@ describe('findNextStateIndex', () => {
       name: 'time',
       type: FieldType.number,
       values: new ArrayVector([1, undefined, undefined, 2, undefined, 3]),
-    } as any;
+      config: {},
+    };
     const result = findNextStateIndex(field, 5);
     expect(result).toEqual(null);
   });
@@ -94,7 +117,8 @@ describe('findNextStateIndex', () => {
       name: 'time',
       type: FieldType.number,
       values: new ArrayVector([1, undefined, undefined, 2, undefined, 3, undefined]),
-    } as any;
+      config: {},
+    };
     const result = findNextStateIndex(field, 5);
     expect(result).toEqual(null);
   });
@@ -116,7 +140,8 @@ describe('findNextStateIndex', () => {
         undefined,
         undefined,
       ]),
-    } as any;
+      config: {},
+    };
     const result = findNextStateIndex(field, 3);
     expect(result).toEqual(8);
   });
@@ -126,7 +151,8 @@ describe('findNextStateIndex', () => {
       name: 'time',
       type: FieldType.number,
       values: new ArrayVector([1, 3, 2]),
-    } as any;
+      config: {},
+    };
 
     test('leading', () => {
       const result = findNextStateIndex(field, 0);
@@ -156,7 +182,7 @@ describe('getThresholdItems', () => {
 });
 
 describe('prepareTimelineLegendItems', () => {
-  it('should return legend items', () => {
+  it('should return legend items without crashing when single (base) threshold', () => {
     const frame: any = [
       {
         refId: 'A',
@@ -214,7 +240,11 @@ describe('prepareTimelineLegendItems', () => {
       },
     ];
 
-    const result = prepareTimelineLegendItems(frame, { displayMode: LegendDisplayMode.List } as any, theme);
+    const result = prepareTimelineLegendItems(
+      frame,
+      { displayMode: LegendDisplayMode.List } as VizLegendOptions,
+      theme
+    );
 
     expect(result).toHaveLength(1);
   });

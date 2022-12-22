@@ -1,18 +1,12 @@
-// Libaries
 import React, { Component } from 'react';
 
-// Types
-import { ExploreId } from 'app/types';
 import { TimeRange, TimeZone, RawTimeRange, dateTimeForTimeZone, dateMath } from '@grafana/data';
-
-// State
-
-// Components
-import { TimeSyncButton } from './TimeSyncButton';
+import { reportInteraction } from '@grafana/runtime';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
-
-// Utils & Services
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { ExploreId } from 'app/types';
+
+import { TimeSyncButton } from './TimeSyncButton';
 
 export interface Props {
   exploreId: ExploreId;
@@ -50,6 +44,11 @@ export class ExploreTimeControls extends Component<Props> {
     this.props.onChangeTime({
       from: adjustedFrom,
       to: adjustedTo,
+    });
+
+    reportInteraction('grafana_explore_time_picker_time_range_changed', {
+      timeRangeFrom: adjustedFrom,
+      timeRangeTo: adjustedTo,
     });
   };
 
@@ -92,6 +91,7 @@ export class ExploreTimeControls extends Component<Props> {
         {...timePickerCommonProps}
         timeSyncButton={timeSyncButton}
         isSynced={syncedTimes}
+        widthOverride={splitted ? window.innerWidth / 2 : undefined}
         onChange={this.onChangeTimePicker}
         onChangeTimeZone={onChangeTimeZone}
         onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}

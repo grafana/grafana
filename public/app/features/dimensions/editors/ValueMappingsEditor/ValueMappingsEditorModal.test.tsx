@@ -1,9 +1,11 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { ValueMappingsEditorModal, Props } from './ValueMappingsEditorModal';
+import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+
 import { MappingType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { selectOptionInTest } from '@grafana/ui';
+
+import { ValueMappingsEditorModal, Props } from './ValueMappingsEditorModal';
 
 const setup = (spy?: any, propOverrides?: object) => {
   const props: Props = {

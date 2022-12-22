@@ -1,14 +1,15 @@
 import { of, throwError } from 'rxjs';
-import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-import CloudMonitoringDataSource from '../datasource';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CloudMonitoringOptions } from '../types';
+import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { CustomVariableModel } from '../../../../features/variables/types';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { CustomVariableModel } from '../../../../features/variables/types';
+import CloudMonitoringDataSource from '../datasource';
+import { CloudMonitoringOptions } from '../types';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -93,10 +94,10 @@ describe('CloudMonitoringDataSource', () => {
         const { ds } = getTestcontext();
         await ds.getLabels('cpu', 'a', 'default-proj');
 
-        await expect(fetchMock.mock.calls[0][0].data.queries[0].metricQuery).toMatchObject({
+        await expect(fetchMock.mock.calls[0][0].data.queries[0].timeSeriesList).toMatchObject({
           crossSeriesReducer: 'REDUCE_NONE',
           groupBys: [],
-          metricType: 'cpu',
+          filters: ['metric.type', '=', 'cpu'],
           projectName: 'default-proj',
           view: 'HEADERS',
         });
@@ -111,10 +112,10 @@ describe('CloudMonitoringDataSource', () => {
           groupBys: ['metadata.system_label.name'],
         });
 
-        await expect(fetchMock.mock.calls[0][0].data.queries[0].metricQuery).toMatchObject({
+        await expect(fetchMock.mock.calls[0][0].data.queries[0].timeSeriesList).toMatchObject({
           crossSeriesReducer: 'REDUCE_MEAN',
           groupBys: ['metadata.system_label.name'],
-          metricType: 'sql',
+          filters: ['metric.type', '=', 'sql'],
           projectName: 'default-proj',
           view: 'HEADERS',
         });

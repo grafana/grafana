@@ -1,188 +1,253 @@
-import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { cx } from '@emotion/css';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
-import ResourcePickerData from '../../resourcePicker/resourcePickerData';
+import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+
+import { selectors } from '../../e2e/selectors';
+import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
+import { AzureMetricResource } from '../../types';
 import messageFromError from '../../utils/messageFromError';
 import { Space } from '../Space';
-import NestedResourceTable from './NestedResourceTable';
+
+import Advanced from './Advanced';
+import NestedRow from './NestedRow';
+import Search from './Search';
+import getStyles from './styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
-import { addResources, findRow, parseResourceURI } from './utils';
+import { findRow, parseResourceDetails, resourceToString } from './utils';
 
-interface ResourcePickerProps {
+interface ResourcePickerProps<T> {
   resourcePickerData: ResourcePickerData;
-  resourceURI: string | undefined;
-  templateVariables: string[];
+  resource: T;
+  selectableEntryTypes: ResourceRowType[];
+  queryType: ResourcePickerQueryType;
 
-  onApply: (resourceURI: string | undefined) => void;
+  onApply: (resource?: T) => void;
   onCancel: () => void;
 }
 
 const ResourcePicker = ({
   resourcePickerData,
-  resourceURI,
-  templateVariables,
+  resource,
   onApply,
   onCancel,
-}: ResourcePickerProps) => {
+  selectableEntryTypes,
+  queryType,
+}: ResourcePickerProps<string | AzureMetricResource>) => {
   const styles = useStyles2(getStyles);
 
-  type LoadingStatus = 'NotStarted' | 'Started' | 'Done';
-  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>('NotStarted');
-  const [azureRows, setAzureRows] = useState<ResourceRowGroup>([]);
-  const [internalSelected, setInternalSelected] = useState<string | undefined>(resourceURI);
+  const [isLoading, setIsLoading] = useState(false);
+  const [rows, setRows] = useState<ResourceRowGroup>([]);
+  const [selectedRows, setSelectedRows] = useState<ResourceRowGroup>([]);
+  const [internalSelected, setInternalSelected] = useState(resource);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [shouldShowLimitFlag, setShouldShowLimitFlag] = useState(false);
 
   // Sync the resourceURI prop to internal state
   useEffect(() => {
-    setInternalSelected(resourceURI);
-  }, [resourceURI]);
+    setInternalSelected(resource);
+  }, [resource]);
 
-  // Request initial data on first mount
-  useEffect(() => {
-    if (loadingStatus === 'NotStarted') {
-      const loadInitialData = async () => {
-        try {
-          setLoadingStatus('Started');
-          let resources = await resourcePickerData.getSubscriptions();
-          if (!internalSelected) {
-            setAzureRows(resources);
-            setLoadingStatus('Done');
-            return;
-          }
-
-          const parsedURI = parseResourceURI(internalSelected ?? '');
-          if (parsedURI) {
-            const resourceGroupURI = `/subscriptions/${parsedURI.subscriptionID}/resourceGroups/${parsedURI.resourceGroup}`;
-
-            // if a resource group was previously selected, but the resource groups under the parent subscription have not been loaded yet
-            if (parsedURI.resourceGroup && !findRow(resources, resourceGroupURI)) {
-              const resourceGroups = await resourcePickerData.getResourceGroupsBySubscriptionId(
-                parsedURI.subscriptionID
-              );
-              resources = addResources(resources, parsedURI.subscriptionID, resourceGroups);
-            }
-
-            // if a resource was previously selected, but the resources under the parent resource group have not been loaded yet
-            if (parsedURI.resource && !findRow(azureRows, parsedURI.resource ?? '')) {
-              const resourcesForResourceGroup = await resourcePickerData.getResourcesForResourceGroup(resourceGroupURI);
-              resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
-            }
-          }
-          setAzureRows(resources);
-          setLoadingStatus('Done');
-        } catch (error) {
-          setLoadingStatus('Done');
-          setErrorMessage(messageFromError(error));
-        }
-      };
-
-      loadInitialData();
+  const loadInitialData = useCallback(async () => {
+    if (!isLoading) {
+      try {
+        setIsLoading(true);
+        const resources = await resourcePickerData.fetchInitialRows(
+          queryType,
+          parseResourceDetails(internalSelected ?? {})
+        );
+        setRows(resources);
+      } catch (error) {
+        setErrorMessage(messageFromError(error));
+      }
+      setIsLoading(false);
     }
-  }, [resourcePickerData, internalSelected, azureRows, loadingStatus]);
+  }, [internalSelected, isLoading, resourcePickerData, queryType]);
 
-  const rows = useMemo(() => {
-    const templateVariableRow = resourcePickerData.transformVariablesToRow(templateVariables);
-    return templateVariables.length ? [...azureRows, templateVariableRow] : azureRows;
-  }, [resourcePickerData, azureRows, templateVariables]);
+  useEffectOnce(() => {
+    loadInitialData();
+  });
 
-  // Map the selected item into an array of rows
-  const selectedResourceRows = useMemo(() => {
-    const found = internalSelected && findRow(rows, internalSelected);
-    return found
-      ? [
-          {
-            ...found,
-            children: undefined,
-          },
-        ]
-      : [];
+  // set selected row data whenever row or selection changes
+  useEffect(() => {
+    if (!internalSelected) {
+      setSelectedRows([]);
+    }
+
+    const found = internalSelected && findRow(rows, resourceToString(internalSelected));
+    if (found) {
+      return setSelectedRows([
+        {
+          ...found,
+          children: undefined,
+        },
+      ]);
+    }
+    return setSelectedRows([]);
   }, [internalSelected, rows]);
 
-  // Request resources for a expanded resource group
+  // Request resources for an expanded resource group
   const requestNestedRows = useCallback(
-    async (resourceGroupOrSubscription: ResourceRow) => {
+    async (parentRow: ResourceRow) => {
       // clear error message (also when loading cached resources)
       setErrorMessage(undefined);
 
-      // If we already have children, we don't need to re-fetch them. Also abort if we're expanding the special
-      // template variable group, though that shouldn't happen in practice
-      if (
-        resourceGroupOrSubscription.children?.length ||
-        resourceGroupOrSubscription.id === ResourcePickerData.templateVariableGroupID
-      ) {
+      // If we already have children, we don't need to re-fetch them.
+      if (parentRow.children?.length) {
         return;
       }
 
       try {
-        const rows =
-          resourceGroupOrSubscription.type === ResourceRowType.Subscription
-            ? await resourcePickerData.getResourceGroupsBySubscriptionId(resourceGroupOrSubscription.id)
-            : await resourcePickerData.getResourcesForResourceGroup(resourceGroupOrSubscription.id);
-
-        const newRows = addResources(azureRows, resourceGroupOrSubscription.id, rows);
-
-        setAzureRows(newRows);
+        const nestedRows = await resourcePickerData.fetchAndAppendNestedRow(rows, parentRow, queryType);
+        setRows(nestedRows);
       } catch (error) {
         setErrorMessage(messageFromError(error));
         throw error;
       }
     },
-    [resourcePickerData, azureRows]
+    [resourcePickerData, rows, queryType]
   );
 
-  // Select
-  const handleSelectionChanged = useCallback((row: ResourceRow, isSelected: boolean) => {
-    isSelected ? setInternalSelected(row.id) : setInternalSelected(undefined);
-  }, []);
+  const resourceIsString = typeof resource === 'string';
+  const handleSelectionChanged = useCallback(
+    (row: ResourceRow, isSelected: boolean) => {
+      isSelected
+        ? setInternalSelected(resourceIsString ? row.uri : parseResourceDetails(row.uri))
+        : setInternalSelected(resourceIsString ? '' : {});
+    },
+    [resourceIsString]
+  );
 
   const handleApply = useCallback(() => {
-    onApply(internalSelected);
-  }, [internalSelected, onApply]);
+    if (internalSelected) {
+      onApply(resourceIsString ? internalSelected : parseResourceDetails(internalSelected));
+    }
+  }, [resourceIsString, internalSelected, onApply]);
+
+  const handleSearch = useCallback(
+    async (searchWord: string) => {
+      // clear errors and warnings
+      setErrorMessage(undefined);
+      setShouldShowLimitFlag(false);
+
+      if (!searchWord) {
+        loadInitialData();
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const searchResults = await resourcePickerData.search(searchWord, queryType);
+        setRows(searchResults);
+        if (searchResults.length >= resourcePickerData.resultLimit) {
+          setShouldShowLimitFlag(true);
+        }
+      } catch (err) {
+        setErrorMessage(messageFromError(err));
+      }
+      setIsLoading(false);
+    },
+    [loadInitialData, resourcePickerData, queryType]
+  );
 
   return (
     <div>
-      {loadingStatus === 'Started' ? (
-        <div className={styles.loadingWrapper}>
-          <LoadingPlaceholder text={'Loading...'} />
-        </div>
+      <Search searchFn={handleSearch} />
+      {shouldShowLimitFlag ? (
+        <p className={styles.resultLimit}>Showing first {resourcePickerData.resultLimit} results</p>
       ) : (
-        <>
-          <NestedResourceTable
-            rows={rows}
-            requestNestedRows={requestNestedRows}
-            onRowSelectedChange={handleSelectionChanged}
-            selectedRows={selectedResourceRows}
-          />
+        <Space v={2} />
+      )}
 
-          <div className={styles.selectionFooter}>
-            {selectedResourceRows.length > 0 && (
-              <>
-                <Space v={2} />
-                <h5>Selection</h5>
-                <NestedResourceTable
-                  rows={selectedResourceRows}
+      <table className={styles.table}>
+        <thead>
+          <tr className={cx(styles.row, styles.header)}>
+            <td className={styles.cell}>Scope</td>
+            <td className={styles.cell}>Type</td>
+            <td className={styles.cell}>Location</td>
+          </tr>
+        </thead>
+      </table>
+
+      <div className={styles.tableScroller}>
+        <table className={styles.table}>
+          <tbody>
+            {isLoading && (
+              <tr className={cx(styles.row)}>
+                <td className={styles.cell}>
+                  <LoadingPlaceholder text={'Loading...'} />
+                </td>
+              </tr>
+            )}
+            {!isLoading && rows.length === 0 && (
+              <tr className={cx(styles.row)}>
+                <td className={styles.cell} aria-live="polite">
+                  No resources found
+                </td>
+              </tr>
+            )}
+            {!isLoading &&
+              rows.map((row) => (
+                <NestedRow
+                  key={row.uri}
+                  row={row}
+                  selectedRows={selectedRows}
+                  level={0}
                   requestNestedRows={requestNestedRows}
                   onRowSelectedChange={handleSelectionChanged}
-                  selectedRows={selectedResourceRows}
-                  noHeader={true}
+                  selectableEntryTypes={selectableEntryTypes}
+                  scrollIntoView={true}
                 />
-              </>
-            )}
+              ))}
+          </tbody>
+        </table>
+      </div>
 
+      <div className={styles.selectionFooter}>
+        {selectedRows.length > 0 && (
+          <>
+            <h5>Selection</h5>
+
+            <div className={styles.tableScroller}>
+              <table className={styles.table}>
+                <tbody>
+                  {selectedRows.map((row) => (
+                    <NestedRow
+                      key={row.uri}
+                      row={row}
+                      selectedRows={selectedRows}
+                      level={0}
+                      requestNestedRows={requestNestedRows}
+                      onRowSelectedChange={handleSelectionChanged}
+                      selectableEntryTypes={selectableEntryTypes}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <Space v={2} />
+          </>
+        )}
 
-            <Button disabled={!!errorMessage} onClick={handleApply}>
-              Apply
-            </Button>
-            <Space layout="inline" h={1} />
-            <Button onClick={onCancel} variant="secondary">
-              Cancel
-            </Button>
-          </div>
-        </>
-      )}
+        <Advanced resource={internalSelected} onChange={(r) => setInternalSelected(r)} />
+        <Space v={2} />
+
+        <Button
+          disabled={!!errorMessage}
+          onClick={handleApply}
+          data-testid={selectors.components.queryEditor.resourcePicker.apply.button}
+        >
+          Apply
+        </Button>
+
+        <Space layout="inline" h={1} />
+
+        <Button onClick={onCancel} variant="secondary">
+          Cancel
+        </Button>
+      </div>
+
       {errorMessage && (
         <>
           <Space v={2} />
@@ -196,18 +261,3 @@ const ResourcePicker = ({
 };
 
 export default ResourcePicker;
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  selectionFooter: css({
-    position: 'sticky',
-    bottom: 0,
-    background: theme.colors.background.primary,
-    paddingTop: theme.spacing(2),
-  }),
-  loadingWrapper: css({
-    textAlign: 'center',
-    paddingTop: theme.spacing(2),
-    paddingBottom: theme.spacing(2),
-    color: theme.colors.text.secondary,
-  }),
-});

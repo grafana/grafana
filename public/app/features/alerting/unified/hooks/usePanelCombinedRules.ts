@@ -1,14 +1,18 @@
 import { SerializedError } from '@reduxjs/toolkit';
+import { useEffect, useMemo } from 'react';
+
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { useDispatch } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
-import { useDispatch } from 'react-redux';
+
 import { fetchPromRulesAction, fetchRulerRulesAction } from '../state/actions';
 import { Annotation, RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { initialAsyncRequestState } from '../utils/redux';
+
 import { useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
-import { useEffect, useMemo } from 'react';
+
 interface Options {
   dashboard: DashboardModel;
   panel: PanelModel;

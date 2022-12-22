@@ -17,6 +17,7 @@ function option(
     placeholder: '',
     validationRule: '',
     showWhen: { field: '', is: '' },
+    dependsOn: '',
     ...rest,
   };
 }
@@ -326,6 +327,26 @@ export const cloudNotifierTypes: NotifierDTO[] = [
         'The maximum number of alerts to include in a single webhook message. Alerts above this threshold are truncated. When leaving this at its default value of 0, all alerts are included.',
         { placeholder: '0', validationRule: '(^\\d+$|^$)' }
       ),
+      httpConfigOption,
+    ],
+  },
+  {
+    name: 'Discord',
+    description: 'Sends notifications to Discord',
+    type: 'discord',
+    info: '',
+    heading: 'Discord settings',
+    options: [
+      option('title', 'Title', 'Templated title of the message', {
+        placeholder: '{{ template "discord.default.title" . }}',
+      }),
+      option(
+        'message',
+        'Message Content',
+        'Mention a group using @ or a user using <@ID> when notifying in a channel',
+        { placeholder: '{{ template "discord.default.message" . }}' }
+      ),
+      option('webhook_url', 'Webhook URL', '', { placeholder: 'Discord webhook URL', required: true }),
       httpConfigOption,
     ],
   },

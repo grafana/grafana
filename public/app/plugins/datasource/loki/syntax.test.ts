@@ -1,5 +1,6 @@
-import syntax from './syntax';
 import Prism from 'prismjs';
+
+import syntax from './syntax';
 
 describe('Loki syntax', () => {
   it('should highlight Loki query correctly', () => {
@@ -20,6 +21,9 @@ describe('Loki syntax', () => {
     );
     expect(Prism.highlight('{key="value"', syntax, 'loki')).toBe(
       '<span class="token context-labels"><span class="token punctuation">{</span><span class="token label-key attr-name">key</span>=<span class="token label-value attr-value">"value"</span></span>'
+    );
+    expect(Prism.highlight('{Key="value"', syntax, 'loki')).toBe(
+      '<span class="token context-labels"><span class="token punctuation">{</span><span class="token label-key attr-name">Key</span>=<span class="token label-value attr-value">"value"</span></span>'
     );
   });
   it('should highlight functions in Loki query correctly', () => {

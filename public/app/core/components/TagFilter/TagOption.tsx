@@ -1,9 +1,10 @@
-import React, { FC } from 'react';
 import { css, cx } from '@emotion/css';
-import { useTheme, stylesFactory } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
-
+import React, { FC } from 'react';
 import { OptionProps } from 'react-select';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+
 import { TagBadge } from './TagBadge';
 
 // https://github.com/JedWatson/react-select/issues/3038
@@ -12,19 +13,18 @@ interface ExtendedOptionProps extends OptionProps<any, any> {
 }
 
 export const TagOption: FC<ExtendedOptionProps> = ({ data, className, label, isFocused, innerProps }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={cx(styles.option, isFocused && styles.optionFocused)} aria-label="Tag option" {...innerProps}>
       <div className={`tag-filter-option ${className || ''}`}>
-        <TagBadge label={label} removeIcon={false} count={data.count ?? 0} />
+        {typeof label === 'string' ? <TagBadge label={label} removeIcon={false} count={data.count ?? 0} /> : label}
       </div>
     </div>
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     option: css`
       padding: 8px;
@@ -32,11 +32,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       cursor: pointer;
       border-left: 2px solid transparent;
       &:hover {
-        background: ${theme.colors.dropdownOptionHoverBg};
+        background: ${theme.colors.background.secondary};
       }
     `,
     optionFocused: css`
-      background: ${theme.colors.dropdownOptionHoverBg};
+      background: ${theme.colors.background.secondary};
       border-style: solid;
       border-top: 0;
       border-right: 0;
@@ -44,4 +44,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       border-left-width: 2px;
     `,
   };
-});
+};

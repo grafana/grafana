@@ -1,4 +1,3 @@
-import { getColorForTheme } from './namedColorsPalette';
 import { createTheme } from '../themes';
 
 describe('colors', () => {
@@ -6,11 +5,11 @@ describe('colors', () => {
 
   describe('getColorFromHexRgbOrName', () => {
     it('returns black for unknown color', () => {
-      expect(getColorForTheme('aruba-sunshine', theme.v1)).toBe('aruba-sunshine');
+      expect(theme.visualization.getColorByName('aruba-sunshine')).toBe('aruba-sunshine');
     });
 
     it('returns dark hex variant for known color if theme not specified', () => {
-      expect(getColorForTheme('semi-dark-blue', theme.v1)).toBe('#3274D9');
+      expect(theme.visualization.getColorByName('semi-dark-blue')).toBe('#3274D9');
     });
   });
 });

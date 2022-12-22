@@ -9,24 +9,34 @@ import {
   Subscription,
   throwError,
 } from 'rxjs';
-import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
+import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
-import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
-import { AppEvents, DataQueryErrorType } from '@grafana/data';
 
+import { AppEvents, DataQueryErrorType } from '@grafana/data';
+import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
-import { DashboardSearchHit } from 'app/features/search/types';
-import { FolderDTO } from 'app/types';
-import { ContextSrv, contextSrv } from './context_srv';
-import { parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
-import { isDataQuery, isLocalUrl } from '../utils/query';
-import { FetchQueue } from './FetchQueue';
-import { ResponseQueue } from './ResponseQueue';
-import { FetchQueueWorker } from './FetchQueueWorker';
+import { loadUrlToken } from 'app/core/utils/urlToken';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { DashboardSearchItem } from 'app/features/search/types';
+import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
+import { DashboardDTO, FolderDTO } from 'app/types';
+
 import { ShowModalReactEvent } from '../../types/events';
+import {
+  isContentTypeApplicationJson,
+  parseInitFromOptions,
+  parseResponseBody,
+  parseUrlFromOptions,
+} from '../utils/fetch';
+import { isDataQuery, isLocalUrl } from '../utils/query';
+
+import { FetchQueue } from './FetchQueue';
+import { FetchQueueWorker } from './FetchQueueWorker';
+import { ResponseQueue } from './ResponseQueue';
+import { ContextSrv, contextSrv } from './context_srv';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
@@ -35,6 +45,10 @@ export interface BackendSrvDependencies {
   appEvents: typeof appEvents;
   contextSrv: ContextSrv;
   logout: () => void;
+}
+
+export interface FolderRequestOptions {
+  withAccessControl?: boolean;
 }
 
 export class BackendSrv implements BackendService {
@@ -116,6 +130,17 @@ export class BackendSrv implements BackendService {
 
     options = this.parseRequestOptions(options);
 
+    const token = loadUrlToken();
+    if (token !== null && token !== '') {
+      if (!options.headers) {
+        options.headers = {};
+      }
+
+      if (config.jwtUrlLogin && config.jwtHeaderName) {
+        options.headers[config.jwtHeaderName] = `${token}`;
+      }
+    }
+
     const fromFetchStream = this.getFromFetchStream<T>(options);
     const failureStream = fromFetchStream.pipe(this.toFailureStream<T>(options));
     const successStream = fromFetchStream.pipe(
@@ -187,7 +212,9 @@ export class BackendSrv implements BackendService {
       mergeMap(async (response) => {
         const { status, statusText, ok, headers, url, type, redirected } = response;
 
-        const data = await parseResponseBody<T>(response, options.responseType);
+        const responseType = options.responseType ?? (isContentTypeApplicationJson(headers) ? 'json' : undefined);
+
+        const data = await parseResponseBody<T>(response, responseType);
         const fetchResponse: FetchResponse<T> = {
           status,
           statusText,
@@ -303,6 +330,7 @@ export class BackendSrv implements BackendService {
     this.dependencies.appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [
       message,
       description,
+      err.data.traceID,
     ]);
   }
 
@@ -380,24 +408,29 @@ export class BackendSrv implements BackendService {
     return this.inspectorStream;
   }
 
-  async get<T = any>(url: string, params?: any, requestId?: string): Promise<T> {
-    return await this.request({ method: 'GET', url, params, requestId });
+  async get<T = any>(
+    url: string,
+    params?: BackendSrvRequest['params'],
+    requestId?: BackendSrvRequest['requestId'],
+    options?: Partial<BackendSrvRequest>
+  ) {
+    return this.request<T>({ ...options, method: 'GET', url, params, requestId });
   }
 
-  async delete(url: string, data?: any) {
-    return await this.request({ method: 'DELETE', url, data });
+  async delete<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'DELETE', url, data });
   }
 
-  async post(url: string, data?: any) {
-    return await this.request({ method: 'POST', url, data });
+  async post<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'POST', url, data });
   }
 
-  async patch(url: string, data: any) {
-    return await this.request({ method: 'PATCH', url, data });
+  async patch<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>) {
+    return this.request<T>({ ...options, method: 'PATCH', url, data });
   }
 
-  async put(url: string, data: any) {
-    return await this.request({ method: 'PUT', url, data });
+  async put<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>): Promise<T> {
+    return this.request<T>({ ...options, method: 'PUT', url, data });
   }
 
   withNoBackendCache(callback: any) {
@@ -411,19 +444,57 @@ export class BackendSrv implements BackendService {
     return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
   }
 
-  search(query: any): Promise<DashboardSearchHit[]> {
+  /** @deprecated */
+  search(query: any): Promise<DashboardSearchItem[]> {
     return this.get('/api/search', query);
   }
 
-  getDashboardByUid(uid: string) {
-    return this.get(`/api/dashboards/uid/${uid}`);
+  getDashboardByUid(uid: string): Promise<DashboardDTO> {
+    if (uid.indexOf('/') > 0 && config.featureToggles.dashboardsFromStorage) {
+      return getGrafanaStorage().getDashboard(uid);
+    }
+    return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 
-  getFolderByUid(uid: string) {
-    return this.get<FolderDTO>(`/api/folders/${uid}`);
+  validateDashboard(dashboard: DashboardModel) {
+    // We want to send the dashboard as a JSON string (in the JSON body payload) so we can get accurate error line numbers back
+    const dashboardJson = JSON.stringify(dashboard, replaceJsonNulls, 2);
+
+    return this.request<ValidateDashboardResponse>({
+      method: 'POST',
+      url: `/api/dashboards/validate`,
+      data: { dashboard: dashboardJson },
+      showSuccessAlert: false,
+      showErrorAlert: false,
+    });
+  }
+
+  getPublicDashboardByUid(uid: string) {
+    return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
+  }
+
+  getFolderByUid(uid: string, options: FolderRequestOptions = {}) {
+    const queryParams = new URLSearchParams();
+    if (options.withAccessControl) {
+      queryParams.set('accesscontrol', 'true');
+    }
+
+    return this.get<FolderDTO>(`/api/folders/${uid}?${queryParams.toString()}`);
   }
 }
 
 // Used for testing and things that really need BackendSrv
 export const backendSrv = new BackendSrv();
 export const getBackendSrv = (): BackendSrv => backendSrv;
+
+interface ValidateDashboardResponse {
+  isValid: boolean;
+  message?: string;
+}
+
+function replaceJsonNulls<T extends unknown>(key: string, value: T): T | undefined {
+  if (typeof value === 'number' && !Number.isFinite(value)) {
+    return undefined;
+  }
+  return value;
+}

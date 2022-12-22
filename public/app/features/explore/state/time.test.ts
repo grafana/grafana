@@ -1,11 +1,48 @@
-import { dateTime, LoadingState } from '@grafana/data';
-
-import { makeExplorePaneState } from './utils';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
-import { changeRangeAction, changeRefreshIntervalAction, timeReducer } from './time';
+
+import { dateTime, LoadingState } from '@grafana/data';
+import { configureStore } from 'app/store/configureStore';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
+
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+
+import { createDefaultInitialState } from './helpers';
+import { changeRangeAction, changeRefreshIntervalAction, timeReducer, updateTime } from './time';
+import { makeExplorePaneState } from './utils';
+
+const MOCK_TIME_RANGE = {};
+
+const mockTimeSrv = {
+  init: jest.fn(),
+  timeRange: jest.fn().mockReturnValue(MOCK_TIME_RANGE),
+};
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
+  getTimeSrv: () => mockTimeSrv,
+}));
+
+const mockTemplateSrv = {
+  updateTimeRange: jest.fn(),
+};
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => mockTemplateSrv,
+}));
 
 describe('Explore item reducer', () => {
+  silenceConsoleOutput();
+
+  describe('When time is updated', () => {
+    it('Time service is re-initialized and template service is updated with the new time range', async () => {
+      const { dispatch } = configureStore({
+        ...(createDefaultInitialState() as any),
+      });
+      await dispatch(updateTime({ exploreId: ExploreId.left }));
+      expect(mockTimeSrv.init).toBeCalled();
+      expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(MOCK_TIME_RANGE);
+    });
+  });
+
   describe('changing refresh intervals', () => {
     it("should result in 'streaming' state, when live-tailing is active", () => {
       const initialState = makeExplorePaneState();
@@ -16,7 +53,7 @@ describe('Explore item reducer', () => {
         loading: true,
         logsResult: {
           hasUniqueLabels: false,
-          rows: [] as any[],
+          rows: [],
         },
         queryResponse: {
           ...initialState.queryResponse,
@@ -36,7 +73,7 @@ describe('Explore item reducer', () => {
         refreshInterval: '',
         logsResult: {
           hasUniqueLabels: false,
-          rows: [] as any[],
+          rows: [],
         },
         queryResponse: {
           ...initialState.queryResponse,

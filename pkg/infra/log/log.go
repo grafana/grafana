@@ -5,6 +5,7 @@
 package log
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -15,13 +16,14 @@ import (
 	"time"
 
 	gokitlog "github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/go-stack/stack"
-	"github.com/grafana/grafana/pkg/infra/log/level"
-	"github.com/grafana/grafana/pkg/infra/log/term"
-	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/mattn/go-isatty"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/infra/log/term"
+	"github.com/grafana/grafana/pkg/infra/log/text"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -29,6 +31,8 @@ var (
 	loggersToReload []ReloadableHandler
 	root            *logManager
 	now             = time.Now
+	logTimeFormat   = time.RFC3339Nano
+	ctxLogProviders = []ContextualLogProviderFunc{}
 )
 
 const (
@@ -41,8 +45,10 @@ func init() {
 	loggersToClose = make([]DisposableHandler, 0)
 	loggersToReload = make([]ReloadableHandler, 0)
 
-	// Use console by default
-	format := getLogFormat("console")
+	// Use discard by default
+	format := func(w io.Writer) gokitlog.Logger {
+		return gokitlog.NewLogfmtLogger(gokitlog.NewSyncWriter(io.Discard))
+	}
 	logger := level.NewFilter(format(os.Stderr), level.AllowInfo())
 	root = newManager(logger)
 }
@@ -169,6 +175,11 @@ func (cl *ConcreteLogger) Debug(msg string, args ...interface{}) {
 	_ = cl.log(msg, level.DebugValue(), args...)
 }
 
+func (cl *ConcreteLogger) Log(ctx ...interface{}) error {
+	logger := gokitlog.With(&cl.SwapLogger, "t", gokitlog.TimestampFormat(now, logTimeFormat))
+	return logger.Log(ctx...)
+}
+
 func (cl *ConcreteLogger) Error(msg string, args ...interface{}) {
 	_ = cl.log(msg, level.ErrorValue(), args...)
 }
@@ -178,10 +189,23 @@ func (cl *ConcreteLogger) Info(msg string, args ...interface{}) {
 }
 
 func (cl *ConcreteLogger) log(msg string, logLevel level.Value, args ...interface{}) error {
-	logger := gokitlog.With(&cl.SwapLogger, "t", gokitlog.TimestampFormat(now, "2006-01-02T15:04:05.99-0700"))
-	args = append([]interface{}{level.Key(), logLevel, "msg", msg}, args...)
+	return cl.Log(append([]interface{}{level.Key(), logLevel, "msg", msg}, args...)...)
+}
 
-	return logger.Log(args...)
+func (cl *ConcreteLogger) FromContext(ctx context.Context) Logger {
+	args := []interface{}{}
+
+	for _, p := range ctxLogProviders {
+		if pArgs, exists := p(ctx); exists {
+			args = append(args, pArgs...)
+		}
+	}
+
+	if len(args) > 0 {
+		return cl.New(args...)
+	}
+
+	return cl
 }
 
 func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
@@ -192,6 +216,18 @@ func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
 	return newConcreteLogger(gokitlog.With(&cl.SwapLogger), ctx...)
 }
 
+// New creates a new logger.
+// First ctx argument is expected to be the name of the logger.
+// Note: For a contextual logger, i.e. a logger with a shared
+// name plus additional contextual information, you must use the
+// Logger interface New method for it to work as expected.
+// Example creating a shared logger:
+//
+//	requestLogger := log.New("request-logger")
+//
+// Example creating a contextual logger:
+//
+//	contextualLogger := requestLogger.New("username", "user123")
 func New(ctx ...interface{}) *ConcreteLogger {
 	if len(ctx) == 0 {
 		return root.New()
@@ -201,12 +237,17 @@ func New(ctx ...interface{}) *ConcreteLogger {
 	return root.New(ctx...)
 }
 
+// NewNopLogger returns a logger that doesn't do anything.
+func NewNopLogger() *ConcreteLogger {
+	return newConcreteLogger(gokitlog.NewNopLogger())
+}
+
 func with(ctxLogger *ConcreteLogger, withFunc func(gokitlog.Logger, ...interface{}) gokitlog.Logger, ctx []interface{}) *ConcreteLogger {
 	if len(ctx) == 0 {
 		return ctxLogger
 	}
 
-	ctxLogger.Swap(withFunc(&ctxLogger.SwapLogger, ctx...))
+	ctxLogger.Swap(withFunc(ctxLogger.GetLogger(), ctx...))
 	return ctxLogger
 }
 
@@ -218,6 +259,15 @@ func WithPrefix(ctxLogger *ConcreteLogger, ctx ...interface{}) *ConcreteLogger {
 // WithSuffix adds context that will be appended at the end of the log message
 func WithSuffix(ctxLogger *ConcreteLogger, ctx ...interface{}) *ConcreteLogger {
 	return with(ctxLogger, gokitlog.WithSuffix, ctx)
+}
+
+// ContextualLogProviderFunc contextual log provider function definition.
+type ContextualLogProviderFunc func(ctx context.Context) ([]interface{}, bool)
+
+// RegisterContextualLogProvider registers a ContextualLogProviderFunc
+// that will be used to provide context when Logger.FromContext is called.
+func RegisterContextualLogProvider(mw ContextualLogProviderFunc) {
+	ctxLogProviders = append(ctxLogProviders, mw)
 }
 
 var logLevels = map[string]level.Option{
@@ -251,7 +301,16 @@ func getLogLevelFromString(levelName string) level.Option {
 func getFilters(filterStrArray []string) map[string]level.Option {
 	filterMap := make(map[string]level.Option)
 
-	for _, filterStr := range filterStrArray {
+	for i := 0; i < len(filterStrArray); i++ {
+		filterStr := strings.TrimSpace(filterStrArray[i])
+
+		if strings.HasPrefix(filterStr, ";") || strings.HasPrefix(filterStr, "#") {
+			if len(filterStr) == 1 {
+				i++
+			}
+			continue
+		}
+
 		parts := strings.Split(filterStr, ":")
 		if len(parts) > 1 {
 			filterMap[parts[0]] = getLogLevelFromString(parts[1])
@@ -291,11 +350,11 @@ func getLogFormat(format string) Formatedlogger {
 			}
 		}
 		return func(w io.Writer) gokitlog.Logger {
-			return gokitlog.NewLogfmtLogger(w)
+			return text.NewTextLogger(w)
 		}
 	case "text":
 		return func(w io.Writer) gokitlog.Logger {
-			return gokitlog.NewLogfmtLogger(w)
+			return text.NewTextLogger(w)
 		}
 	case "json":
 		return func(w io.Writer) gokitlog.Logger {
@@ -303,7 +362,7 @@ func getLogFormat(format string) Formatedlogger {
 		}
 	default:
 		return func(w io.Writer) gokitlog.Logger {
-			return gokitlog.NewLogfmtLogger(w)
+			return text.NewTextLogger(w)
 		}
 	}
 }
@@ -343,6 +402,11 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		return err
 	}
 
+	logEnabled := cfg.Section("log").Key("enabled").MustBool(true)
+	if !logEnabled {
+		return nil
+	}
+
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
 	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))
 
@@ -352,7 +416,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		sec, err := cfg.GetSection("log." + mode)
 		if err != nil {
 			_ = level.Error(root).Log("Unknown log mode", "mode", mode)
-			return errutil.Wrapf(err, "failed to get config section log.%s", mode)
+			return fmt.Errorf("failed to get config section log. %s: %w", mode, err)
 		}
 
 		// Log level.
@@ -409,7 +473,6 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		handler.maxLevel = leveloption
 		configLoggers = append(configLoggers, handler)
 	}
-
 	if len(configLoggers) > 0 {
 		root.initialize(configLoggers)
 	}

@@ -1,10 +1,13 @@
-import React, { ReactNode } from 'react';
 import { cx } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import React, { Component, ReactNode } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { withTheme2 } from '../../themes/ThemeContext';
+
 import { getSelectStyles } from './getSelectStyles';
 
-class UnthemedValueContainer extends React.Component<any & { theme: GrafanaTheme }> {
+class UnthemedValueContainer extends Component<any & { theme: GrafanaTheme2 }> {
   render() {
     const { children } = this.props;
     const { selectProps } = this.props;

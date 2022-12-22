@@ -1,5 +1,6 @@
 import { PanelData } from '@grafana/data';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
+
 import { RuleFormType } from './rule-form';
 
 export type PreviewRuleRequest = GrafanaPreviewRuleRequest | CloudPreviewRuleRequest;
@@ -13,6 +14,7 @@ export type GrafanaPreviewRuleRequest = {
 };
 
 export type CloudPreviewRuleRequest = {
+  dataSourceUid: string;
   dataSourceName: string;
   expr: string;
 };

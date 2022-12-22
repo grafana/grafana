@@ -1,4 +1,5 @@
 import { FieldType } from '../types/dataFrame';
+
 import { compareDataFrameStructures, compareArrayValues } from './frameComparisons';
 import { toDataFrame } from './processDataFrame';
 
@@ -182,7 +183,7 @@ describe('test comparisons', () => {
       expect(compareDataFrameStructures(a, b)).toBeFalsy();
     });
 
-    it('does not compare deeply', () => {
+    it('does deep comparison', () => {
       const a = {
         ...frameB,
         fields: [
@@ -217,7 +218,7 @@ describe('test comparisons', () => {
         ],
       };
 
-      expect(compareDataFrameStructures(a, b)).toBeFalsy();
+      expect(compareDataFrameStructures(a, b)).toBeTruthy();
     });
   });
 });

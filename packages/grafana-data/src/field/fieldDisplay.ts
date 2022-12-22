@@ -1,6 +1,11 @@
 import { toString, isEmpty } from 'lodash';
 
-import { getDisplayProcessor } from './displayProcessor';
+import { DataFrameView } from '../dataframe/DataFrameView';
+import { getTimeField } from '../dataframe/processDataFrame';
+import { GrafanaTheme2 } from '../themes';
+import { getFieldMatcher } from '../transformations';
+import { reduceField, ReducerID } from '../transformations/fieldReducer';
+import { FieldMatcherID } from '../transformations/matchers/ids';
 import {
   DataFrame,
   DisplayValue,
@@ -14,13 +19,9 @@ import {
   TimeRange,
   TimeZone,
 } from '../types';
-import { DataFrameView } from '../dataframe/DataFrameView';
-import { GrafanaTheme2 } from '../themes';
-import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
-import { getTimeField } from '../dataframe/processDataFrame';
-import { getFieldMatcher } from '../transformations';
-import { FieldMatcherID } from '../transformations/matchers/ids';
+
+import { getDisplayProcessor } from './displayProcessor';
 import { getFieldDisplayName } from './fieldState';
 
 /**

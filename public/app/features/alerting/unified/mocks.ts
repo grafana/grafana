@@ -1,3 +1,5 @@
+import produce from 'immer';
+
 import {
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -6,19 +8,9 @@ import {
   DataSourceRef,
   ScopedVars,
 } from '@grafana/data';
-import {
-  GrafanaAlertStateDecision,
-  GrafanaRuleDefinition,
-  PromAlertingRuleState,
-  PromRuleType,
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
-} from 'app/types/unified-alerting-dto';
-import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace, CombinedRule } from 'app/types/unified-alerting';
-import DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
+import { config, DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -29,6 +21,19 @@ import {
   Silence,
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
+import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction, FolderDTO, StoreState } from 'app/types';
+import { Alert, AlertingRule, CombinedRule, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
+import {
+  GrafanaAlertStateDecision,
+  GrafanaRuleDefinition,
+  PromAlertingRuleState,
+  PromRuleType,
+  RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 
 let nextDataSourceId = 1;
 
@@ -53,7 +58,8 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
         },
       },
       ...meta,
-    } as any as DataSourcePluginMeta,
+    } as unknown as DataSourcePluginMeta,
+    readOnly: false,
     ...partial,
   };
 }
@@ -115,6 +121,7 @@ export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {
   annotations: {
     summary: 'test alert',
   },
+  ...partial,
 });
 
 export const mockRulerRuleGroup = (partial: Partial<RulerRuleGroupDTO> = {}): RulerRuleGroupDTO => ({
@@ -449,3 +456,63 @@ export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule 
   rulerRule: mockRulerAlertingRule(),
   ...partial,
 });
+
+export const mockFolder = (partial?: Partial<FolderDTO>): FolderDTO => {
+  return {
+    id: 1,
+    uid: 'gdev-1',
+    title: 'Gdev',
+    version: 1,
+    url: '',
+    canAdmin: true,
+    canDelete: true,
+    canEdit: true,
+    canSave: true,
+    ...partial,
+  };
+};
+
+export const enableRBAC = () => {
+  jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
+};
+
+export const disableRBAC = () => {
+  jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(false);
+};
+
+export const grantUserPermissions = (permissions: AccessControlAction[]) => {
+  jest
+    .spyOn(contextSrv, 'hasPermission')
+    .mockImplementation((action) => permissions.includes(action as AccessControlAction));
+};
+
+export function mockDataSourcesStore(partial?: Partial<StoreState['dataSources']>) {
+  const defaultState = configureStore().getState();
+  const store = configureStore({
+    ...defaultState,
+    dataSources: {
+      ...defaultState.dataSources,
+      ...partial,
+    },
+  });
+
+  return store;
+}
+
+export function mockUnifiedAlertingStore(unifiedAlerting?: Partial<StoreState['unifiedAlerting']>) {
+  const defaultState = configureStore().getState();
+
+  return configureStore({
+    ...defaultState,
+    unifiedAlerting: {
+      ...defaultState.unifiedAlerting,
+      ...unifiedAlerting,
+    },
+  });
+}
+
+export function mockStore(recipe: (state: StoreState) => void) {
+  const defaultState = configureStore().getState();
+
+  return configureStore(produce(defaultState, recipe));
+}

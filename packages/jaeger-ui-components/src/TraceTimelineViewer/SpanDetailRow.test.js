@@ -12,88 +12,69 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { shallow } from 'enzyme';
+
 import { createTheme } from '@grafana/data';
 
-import { UnthemedSpanDetailRow } from './SpanDetailRow';
-import SpanDetail from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
-import SpanTreeOffset from './SpanTreeOffset';
+import { UnthemedSpanDetailRow } from './SpanDetailRow';
 
-jest.mock('./SpanTreeOffset');
-
-describe('<SpanDetailRow>', () => {
-  const spanID = 'some-id';
+const testSpan = {
+  spanID: 'testSpanID',
+  traceID: 'testTraceID',
+  depth: 3,
+  process: {
+    serviceName: 'some-service',
+    tags: [{ key: 'tag-key', value: 'tag-value' }],
+  },
+};
+const setup = (propOverrides) => {
   const props = {
     color: 'some-color',
     columnDivision: 0.5,
     detailState: new DetailState(),
     onDetailToggled: jest.fn(),
-    linksGetter: jest.fn(),
     isFilteredOut: false,
     logItemToggle: jest.fn(),
     logsToggle: jest.fn(),
     processToggle: jest.fn(),
-    span: { spanID, depth: 3 },
+    createFocusSpanLink: jest.fn(),
+    hoverIndentGuideIds: new Map(),
+    span: testSpan,
     tagsToggle: jest.fn(),
     traceStartTime: 1000,
     theme: createTheme(),
+    ...propOverrides,
   };
+  return render(<UnthemedSpanDetailRow {...props} />);
+};
 
-  let wrapper;
-
-  beforeEach(() => {
-    props.onDetailToggled.mockReset();
-    props.linksGetter.mockReset();
-    props.logItemToggle.mockReset();
-    props.logsToggle.mockReset();
-    props.processToggle.mockReset();
-    props.tagsToggle.mockReset();
-    wrapper = shallow(<UnthemedSpanDetailRow {...props} />);
-  });
-
+describe('SpanDetailRow tests', () => {
   it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
+    expect(() => setup()).not.toThrow();
   });
 
-  it('escalates toggle detail', () => {
-    const calls = props.onDetailToggled.mock.calls;
-    expect(calls.length).toBe(0);
-    wrapper.find('[data-test-id="detail-row-expanded-accent"]').prop('onClick')();
-    expect(calls).toEqual([[spanID]]);
+  it('calls toggle on click', async () => {
+    const mockToggle = jest.fn();
+    setup({ onDetailToggled: mockToggle });
+    expect(mockToggle).not.toHaveBeenCalled();
+
+    const detailRow = screen.getByTestId('detail-row-expanded-accent');
+    await userEvent.click(detailRow);
+    expect(mockToggle).toHaveBeenCalled();
   });
 
   it('renders the span tree offset', () => {
-    const spanTreeOffset = <SpanTreeOffset span={props.span} showChildrenIcon={false} />;
-    expect(wrapper.contains(spanTreeOffset)).toBe(true);
+    setup();
+
+    expect(screen.getByTestId('SpanTreeOffset--indentGuide')).toBeInTheDocument();
   });
 
   it('renders the SpanDetail', () => {
-    const spanDetail = (
-      <SpanDetail
-        detailState={props.detailState}
-        linksGetter={wrapper.instance()._linksGetter}
-        logItemToggle={props.logItemToggle}
-        logsToggle={props.logsToggle}
-        processToggle={props.processToggle}
-        span={props.span}
-        tagsToggle={props.tagsToggle}
-        traceStartTime={props.traceStartTime}
-      />
-    );
-    expect(wrapper.contains(spanDetail)).toBe(true);
-  });
+    setup();
 
-  it('adds span when calling linksGetter', () => {
-    const spanDetail = wrapper.find(SpanDetail);
-    const linksGetter = spanDetail.prop('linksGetter');
-    const tags = [{ key: 'myKey', value: 'myValue' }];
-    const linksGetterResponse = {};
-    props.linksGetter.mockReturnValueOnce(linksGetterResponse);
-    const result = linksGetter(tags, 0);
-    expect(result).toBe(linksGetterResponse);
-    expect(props.linksGetter).toHaveBeenCalledTimes(1);
-    expect(props.linksGetter).toHaveBeenCalledWith(props.span, tags, 0);
+    expect(screen.getByTestId('span-detail-component')).toBeInTheDocument();
   });
 });

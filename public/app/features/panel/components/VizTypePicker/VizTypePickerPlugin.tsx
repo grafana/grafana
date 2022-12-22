@@ -1,5 +1,7 @@
 import React, { MouseEventHandler } from 'react';
+
 import { PanelPluginMeta } from '@grafana/data';
+
 import { PanelTypeCard } from './PanelTypeCard';
 
 interface Props {
@@ -9,7 +11,7 @@ interface Props {
   disabled: boolean;
 }
 
-export const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disabled }) => {
+export const VizTypePickerPlugin = ({ isCurrent, plugin, onClick, disabled }: Props) => {
   return (
     <PanelTypeCard
       title={plugin.name}

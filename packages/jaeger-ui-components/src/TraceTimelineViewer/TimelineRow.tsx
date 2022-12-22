@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import * as React from 'react';
+
 import { useStyles2 } from '@grafana/ui';
+
 import { ubRelative } from '../uberUtilityStyles';
 
 const getStyles = () => {
@@ -59,7 +61,7 @@ export function TimelineRowCell(props: TimelineRowCellProps) {
   const widthPercent = `${width * 100}%`;
   const mergedStyle = { ...style, flexBasis: widthPercent, maxWidth: widthPercent };
   return (
-    <div className={cx(ubRelative, className)} style={mergedStyle} {...(rest as any)}>
+    <div className={cx(ubRelative, className)} style={mergedStyle} data-testid="TimelineRowCell" {...rest}>
       {children}
     </div>
   );

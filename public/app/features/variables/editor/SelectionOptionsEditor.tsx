@@ -1,17 +1,19 @@
 import React, { ChangeEvent, FormEvent, FunctionComponent, useCallback } from 'react';
-import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
 
+import { selectors } from '@grafana/e2e-selectors';
+import { VerticalGroup } from '@grafana/ui';
+
+import { KeyedVariableIdentifier } from '../state/types';
 import { VariableWithMultiSupport } from '../types';
-import { VariableEditorProps } from './types';
-import { toVariableIdentifier, VariableIdentifier } from '../state/types';
-import { VariableSectionHeader } from './VariableSectionHeader';
-import { VariableSwitchField } from './VariableSwitchField';
+import { toKeyedVariableIdentifier } from '../utils';
+
+import { VariableCheckboxField } from './VariableCheckboxField';
 import { VariableTextField } from './VariableTextField';
+import { VariableEditorProps } from './types';
 
 export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupport = VariableWithMultiSupport>
   extends VariableEditorProps<Model> {
-  onMultiChanged: (identifier: VariableIdentifier, value: boolean) => void;
+  onMultiChanged: (identifier: KeyedVariableIdentifier, value: boolean) => void;
 }
 
 export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = ({
@@ -21,7 +23,7 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
 }) => {
   const onMultiChanged = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      onMultiChangedProps(toVariableIdentifier(variable), event.target.checked);
+      onMultiChangedProps(toKeyedVariableIdentifier(variable), event.target.checked);
     },
     [onMultiChangedProps, variable]
   );
@@ -41,37 +43,27 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
   );
 
   return (
-    <VerticalGroup spacing="none">
-      <VariableSectionHeader name="Selection options" />
-      <InlineFieldRow>
-        <VariableSwitchField
-          value={variable.multi}
-          name="Multi-value"
-          tooltip="Enables multiple values to be selected at the same time"
-          onChange={onMultiChanged}
-          ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}
-        />
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <VariableSwitchField
-          value={variable.includeAll}
-          name="Include All option"
-          tooltip="Enables an option to include all variables"
-          onChange={onIncludeAllChanged}
-          ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch}
-        />
-      </InlineFieldRow>
+    <VerticalGroup spacing="md" height="inherit">
+      <VariableCheckboxField
+        value={variable.multi}
+        name="Multi-value"
+        description="Enables multiple values to be selected at the same time"
+        onChange={onMultiChanged}
+      />
+      <VariableCheckboxField
+        value={variable.includeAll}
+        name="Include All option"
+        description="Enables an option to include all variables"
+        onChange={onIncludeAllChanged}
+      />
       {variable.includeAll && (
-        <InlineFieldRow>
-          <VariableTextField
-            value={variable.allValue ?? ''}
-            onChange={onAllValueChanged}
-            name="Custom all value"
-            placeholder="blank = auto"
-            testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2}
-            labelWidth={20}
-          />
-        </InlineFieldRow>
+        <VariableTextField
+          value={variable.allValue ?? ''}
+          onChange={onAllValueChanged}
+          name="Custom all value"
+          placeholder="blank = auto"
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2}
+        />
       )}
     </VerticalGroup>
   );

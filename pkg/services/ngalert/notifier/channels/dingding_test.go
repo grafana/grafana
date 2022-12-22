@@ -6,12 +6,11 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestDingdingNotifier(t *testing.T) {
@@ -36,7 +35,7 @@ func TestDingdingNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__value_string__": "1234"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__values__": "{\"A\": 1234}", "__value_string__": "1234"},
 					},
 				},
 			},
@@ -44,7 +43,7 @@ func TestDingdingNotifier(t *testing.T) {
 				"msgtype": "link",
 				"link": map[string]interface{}{
 					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
-					"text":       "**Firing**\n\nValue: 1234\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+					"text":       "**Firing**\n\nValue: A=1234\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 					"title":      "[FIRING:1]  (val1)",
 				},
 			},
@@ -80,25 +79,105 @@ func TestDingdingNotifier(t *testing.T) {
 			},
 			expMsgError: nil,
 		}, {
+			name:     "Default config with one alert and custom title and description",
+			settings: `{"url": "http://localhost", "title": "Alerts firing: {{ len .Alerts.Firing }}", "message": "customMessage"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh", "__values__": "{\"A\": 1234}", "__value_string__": "1234"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"msgtype": "link",
+				"link": map[string]interface{}{
+					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
+					"text":       "customMessage",
+					"title":      "Alerts firing: 1",
+				},
+			},
+			expMsgError: nil,
+		}, {
+			name: "Missing field in template",
+			settings: `{
+				"url": "http://localhost",
+				"message": "I'm a custom template {{ .NotAField }} bad template",
+				"msgType": "actionCard"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"link": map[string]interface{}{
+					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
+					"text":       "I'm a custom template ",
+					"title":      "",
+				},
+				"msgtype": "link",
+			},
+			expMsgError: nil,
+		}, {
+			name: "Invalid template",
+			settings: `{
+				"url": "http://localhost",
+				"message": "I'm a custom template {{ {.NotAField }} bad template",
+				"msgType": "actionCard"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val2"},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: map[string]interface{}{
+				"link": map[string]interface{}{
+					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
+					"text":       "",
+					"title":      "",
+				},
+				"msgtype": "link",
+			},
+			expMsgError: nil,
+		}, {
 			name:         "Error in initing",
 			settings:     `{}`,
-			expInitError: `failed to validate receiver "dingding_testing" of type "dingding": could not find url property in settings`,
+			expInitError: `could not find url property in settings`,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
-			require.NoError(t, err)
-
-			m := &NotificationChannelConfig{
-				Name:     "dingding_testing",
-				Type:     "dingding",
-				Settings: settingsJSON,
-			}
-
 			webhookSender := mockNotificationService()
-			pn, err := NewDingDingNotifier(m, webhookSender, tmpl)
+			fc := channels.FactoryConfig{
+				Config: &channels.NotificationChannelConfig{
+					Name:     "dingding_testing",
+					Type:     "dingding",
+					Settings: json.RawMessage(c.settings),
+				},
+				// TODO: allow changing the associated values for different tests.
+				NotificationService: webhookSender,
+				Template:            tmpl,
+				Logger:              &channels.FakeLogger{},
+			}
+			pn, err := newDingDingNotifier(fc)
 			if c.expInitError != "" {
 				require.Equal(t, c.expInitError, err.Error())
 				return
@@ -116,6 +195,8 @@ func TestDingdingNotifier(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.True(t, ok)
+
+			require.NotEmpty(t, webhookSender.Webhook.URL)
 
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)

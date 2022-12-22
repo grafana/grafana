@@ -1,6 +1,7 @@
 import React from 'react';
-import { Icon } from '../../../Icon/Icon';
 import { components } from 'react-select';
+
+import { Icon } from '../../../Icon/Icon';
 
 export const IndicatorsContainer = (props: any) => {
   const isOpen = props.selectProps.menuIsOpen;

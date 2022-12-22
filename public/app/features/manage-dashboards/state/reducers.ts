@@ -1,5 +1,7 @@
 import { createSlice, Draft, PayloadAction } from '@reduxjs/toolkit';
+
 import { DataSourceInstanceSettings, LoadingState } from '@grafana/data';
+
 import { LibraryElementDTO } from '../../library-panels/types';
 
 export enum DashboardSource {
@@ -14,7 +16,7 @@ export interface ImportDashboardDTO {
   constants: string[];
   dataSources: DataSourceInstanceSettings[];
   elements: LibraryElementDTO[];
-  folder: { id: number; title?: string };
+  folder: { uid: string; title?: string };
 }
 
 export enum InputType {
@@ -25,7 +27,7 @@ export enum InputType {
 
 export enum LibraryPanelInputState {
   New = 'new',
-  Exits = 'exists',
+  Exists = 'exists',
   Different = 'different',
 }
 

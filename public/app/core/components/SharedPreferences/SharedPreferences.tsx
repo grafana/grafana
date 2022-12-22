@@ -1,103 +1,100 @@
-import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
+import React, { PureComponent } from 'react';
 
+import { FeatureState, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Field,
   FieldSet,
   Form,
-  Icon,
   Label,
   RadioButtonGroup,
   Select,
   stylesFactory,
   TimeZonePicker,
-  Tooltip,
   WeekStartPicker,
+  FeatureBadge,
 } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-
-import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
+import { t, Trans } from 'app/core/internationalization';
+import { LANGUAGES } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
-import { t, Trans } from '@lingui/macro';
+import { UserPreferencesDTO } from 'app/types';
 
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
+  preferenceType: 'org' | 'team' | 'user';
+  onConfirm?: () => Promise<boolean>;
 }
 
-export interface State {
-  homeDashboardId: number;
-  theme: string;
-  timezone: string;
-  weekStart: string;
-  dashboards: DashboardSearchHit[];
+export type State = UserPreferencesDTO;
+
+function getLanguageOptions(): Array<SelectableValue<string>> {
+  const languageOptions = LANGUAGES.map((v) => ({
+    value: v.code,
+    label: v.name,
+  }));
+
+  const options = [
+    {
+      value: '',
+      label: t('common.locale.default', 'Default'),
+    },
+    ...languageOptions,
+  ];
+
+  return options;
 }
 
-const themes: SelectableValue[] = [
-  { value: '', label: t({ id: 'shared-preferences.theme.default-label', message: 'Default' }) },
-  { value: 'dark', label: t({ id: 'shared-preferences.theme.dark-label', message: 'Dark' }) },
-  { value: 'light', label: t({ id: 'shared-preferences.theme.light-label', message: 'Light' }) },
-];
+const i18nFlag = Boolean(config.featureToggles.internationalization);
 
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
+  themeOptions: SelectableValue[];
 
   constructor(props: Props) {
     super(props);
 
     this.service = new PreferencesService(props.resourceUri);
     this.state = {
-      homeDashboardId: 0,
       theme: '',
       timezone: '',
       weekStart: '',
-      dashboards: [],
+      language: '',
+      queryHistory: { homeTab: '' },
     };
+
+    this.themeOptions = [
+      { value: '', label: t('shared-preferences.theme.default-label', 'Default') },
+      { value: 'dark', label: t('shared-preferences.theme.dark-label', 'Dark') },
+      { value: 'light', label: t('shared-preferences.theme.light-label', 'Light') },
+    ];
   }
 
   async componentDidMount() {
     const prefs = await this.service.load();
-    const dashboards = await backendSrv.search({ starred: true });
-    const defaultDashboardHit: DashboardSearchHit = {
-      id: 0,
-      title: 'Default',
-      tags: [],
-      type: '' as DashboardSearchItemType,
-      uid: '',
-      uri: '',
-      url: '',
-      folderId: 0,
-      folderTitle: '',
-      folderUid: '',
-      folderUrl: '',
-      isStarred: false,
-      slug: '',
-      items: [],
-    };
-
-    if (prefs.homeDashboardId > 0 && !dashboards.find((d) => d.id === prefs.homeDashboardId)) {
-      const missing = await backendSrv.search({ dashboardIds: [prefs.homeDashboardId] });
-      if (missing && missing.length > 0) {
-        dashboards.push(missing[0]);
-      }
-    }
 
     this.setState({
-      homeDashboardId: prefs.homeDashboardId,
+      homeDashboardUID: prefs.homeDashboardUID,
       theme: prefs.theme,
       timezone: prefs.timezone,
       weekStart: prefs.weekStart,
-      dashboards: [defaultDashboardHit, ...dashboards],
+      language: prefs.language,
+      queryHistory: prefs.queryHistory,
     });
   }
 
   onSubmitForm = async () => {
-    const { homeDashboardId, theme, timezone, weekStart } = this.state;
-    await this.service.update({ homeDashboardId, theme, timezone, weekStart });
-    window.location.reload();
+    const confirmationResult = this.props.onConfirm ? await this.props.onConfirm() : true;
+
+    if (confirmationResult) {
+      const { homeDashboardUID, theme, timezone, weekStart, language, queryHistory } = this.state;
+      await this.service.update({ homeDashboardUID, theme, timezone, weekStart, language, queryHistory });
+      window.location.reload();
+    }
   };
 
   onThemeChanged = (value: string) => {
@@ -115,43 +112,34 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ weekStart: weekStart });
   };
 
-  onHomeDashboardChanged = (dashboardId: number) => {
-    this.setState({ homeDashboardId: dashboardId });
+  onHomeDashboardChanged = (dashboardUID: string) => {
+    this.setState({ homeDashboardUID: dashboardUID });
   };
 
-  getFullDashName = (dashboard: SelectableValue<DashboardSearchHit>) => {
-    if (typeof dashboard.folderTitle === 'undefined' || dashboard.folderTitle === '') {
-      return dashboard.title;
-    }
-    return dashboard.folderTitle + ' / ' + dashboard.title;
+  onLanguageChanged = (language: string) => {
+    this.setState({ language });
+
+    reportInteraction('grafana_preferences_language_changed', {
+      toLanguage: language,
+      preferenceType: this.props.preferenceType,
+    });
   };
 
   render() {
-    const { theme, timezone, weekStart, homeDashboardId, dashboards } = this.state;
+    const { theme, timezone, weekStart, homeDashboardUID, language } = this.state;
     const { disabled } = this.props;
     const styles = getStyles();
-
-    const homeDashboardTooltip = (
-      <Tooltip
-        content={
-          <Trans id="shared-preferences.fields.home-dashboard-tooltip">
-            Not finding the dashboard you want? Star it first, then it should appear in this select box.
-          </Trans>
-        }
-      >
-        <Icon name="info-circle" />
-      </Tooltip>
-    );
+    const languages = getLanguageOptions();
 
     return (
       <Form onSubmit={this.onSubmitForm}>
         {() => {
           return (
-            <FieldSet label={<Trans id="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
-              <Field label={t({ id: 'shared-preferences.fields.theme-label', message: 'UI Theme' })}>
+            <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
+              <Field label={t('shared-preferences.fields.theme-label', 'UI Theme')}>
                 <RadioButtonGroup
-                  options={themes}
-                  value={themes.find((item) => item.value === theme)?.value}
+                  options={this.themeOptions}
+                  value={this.themeOptions.find((item) => item.value === theme)?.value}
                   onChange={this.onThemeChanged}
                 />
               </Field>
@@ -160,33 +148,24 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 label={
                   <Label htmlFor="home-dashboard-select">
                     <span className={styles.labelText}>
-                      <Trans id="shared-preferences.fields.home-dashboard-label">Home Dashboard</Trans>
+                      <Trans i18nKey="shared-preferences.fields.home-dashboard-label">Home Dashboard</Trans>
                     </span>
-
-                    {homeDashboardTooltip}
                   </Label>
                 }
                 data-testid="User preferences home dashboard drop down"
               >
-                <Select
-                  menuShouldPortal
-                  value={dashboards.find((dashboard) => dashboard.id === homeDashboardId)}
-                  getOptionValue={(i) => i.id}
-                  getOptionLabel={this.getFullDashName}
-                  onChange={(dashboard: SelectableValue<DashboardSearchHit>) =>
-                    this.onHomeDashboardChanged(dashboard.id)
-                  }
-                  options={dashboards}
-                  placeholder={t({
-                    id: 'shared-preferences.fields.home-dashboard-placeholder',
-                    message: 'Choose default dashboard',
-                  })}
+                <DashboardPicker
+                  value={homeDashboardUID}
+                  onChange={(v) => this.onHomeDashboardChanged(v?.uid ?? '')}
+                  defaultOptions={true}
+                  isClearable={true}
+                  placeholder={t('shared-preferences.fields.home-dashboard-placeholder', 'Default dashboard')}
                   inputId="home-dashboard-select"
                 />
               </Field>
 
               <Field
-                label={t({ id: 'shared-dashboard.fields.timezone-label', message: 'Timezone' })}
+                label={t('shared-dashboard.fields.timezone-label', 'Timezone')}
                 data-testid={selectors.components.TimeZonePicker.containerV2}
               >
                 <TimeZonePicker
@@ -198,7 +177,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
               </Field>
 
               <Field
-                label={t({ id: 'shared-preferences.fields.week-start-label', message: 'Week start' })}
+                label={t('shared-preferences.fields.week-start-label', 'Week start')}
                 data-testid={selectors.components.WeekStartPicker.containerV2}
               >
                 <WeekStartPicker
@@ -208,9 +187,35 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 />
               </Field>
 
+              {i18nFlag ? (
+                <Field
+                  label={
+                    <Label htmlFor="locale-select">
+                      <span className={styles.labelText}>
+                        <Trans i18nKey="shared-preferences.fields.locale-label">Language</Trans>
+                      </span>
+                      <FeatureBadge featureState={FeatureState.beta} />
+                    </Label>
+                  }
+                  data-testid="User preferences language drop down"
+                >
+                  <Select
+                    value={languages.find((lang) => lang.value === language)}
+                    onChange={(lang: SelectableValue<string>) => this.onLanguageChanged(lang.value ?? '')}
+                    options={languages}
+                    placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
+                    inputId="locale-select"
+                  />
+                </Field>
+              ) : null}
+
               <div className="gf-form-button-row">
-                <Button variant="primary" data-testid={selectors.components.UserProfile.preferencesSaveButton}>
-                  <Trans id="common.save">Save</Trans>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  data-testid={selectors.components.UserProfile.preferencesSaveButton}
+                >
+                  <Trans i18nKey="common.save">Save</Trans>
                 </Button>
               </div>
             </FieldSet>

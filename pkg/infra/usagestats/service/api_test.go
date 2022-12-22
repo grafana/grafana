@@ -1,25 +1,27 @@
 package service
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 func TestApi_getUsageStats(t *testing.T) {
 	type getUsageStatsTestCase struct {
 		desc           string
 		expectedStatus int
-		expectedCall   bool
 		IsGrafanaAdmin bool
 		enabled        bool
 	}
@@ -28,63 +30,36 @@ func TestApi_getUsageStats(t *testing.T) {
 			desc:           "expect usage stats",
 			enabled:        true,
 			IsGrafanaAdmin: true,
-			expectedCall:   true,
 			expectedStatus: 200,
 		},
 		{
 			desc:           "expect usage stat preview still there after disabling",
 			enabled:        false,
 			IsGrafanaAdmin: true,
-			expectedCall:   true,
 			expectedStatus: 200,
 		},
 		{
 			desc:           "expect http status 403 when not admin",
 			enabled:        false,
 			IsGrafanaAdmin: false,
-			expectedCall:   false,
 			expectedStatus: 403,
 		},
 	}
-
-	uss := createService(t, setting.Cfg{})
+	sqlStore := mockstore.NewSQLStoreMock()
+	uss := createService(t, setting.Cfg{}, sqlStore, false)
 	uss.registerAPIEndpoints()
-	getSystemStatsWasCalled := false
 
-	uss.Bus.AddHandler(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
-		query.Result = &models.SystemStats{}
-		getSystemStatsWasCalled = true
-		return nil
-	})
-
-	uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
-		query.Result = []*models.DataSourceStats{}
-		return nil
-	})
-
-	uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourcesByTypeQuery) error {
-		query.Result = []*models.DataSource{}
-		return nil
-	})
-
-	uss.Bus.AddHandler(func(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
-		query.Result = []*models.DataSourceAccessStats{}
-		return nil
-	})
-
-	uss.Bus.AddHandler(func(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
-		query.Result = []*models.NotifierUsageStats{}
-		return nil
-	})
+	sqlStore.ExpectedSystemStats = &models.SystemStats{}
+	sqlStore.ExpectedDataSourceStats = []*models.DataSourceStats{}
+	sqlStore.ExpectedDataSourcesAccessStats = []*models.DataSourceAccessStats{}
+	sqlStore.ExpectedNotifierUsageStats = []*models.NotifierUsageStats{}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			getSystemStatsWasCalled = false
 			uss.Cfg.ReportingEnabled = tt.enabled
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, IsGrafanaAdmin: tt.IsGrafanaAdmin}, uss)
+			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, IsGrafanaAdmin: tt.IsGrafanaAdmin}, uss)
 
 			usageStats, recorder := getUsageStats(t, server)
-			require.Equal(t, tt.expectedCall, getSystemStatsWasCalled)
 			require.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
@@ -100,14 +75,14 @@ func getUsageStats(t *testing.T, server *web.Mux) (*models.SystemStats, *httptes
 	recorder := httptest.NewRecorder()
 	server.ServeHTTP(recorder, req)
 
-	var usageStats *models.SystemStats
+	var usageStats models.SystemStats
 	if recorder.Code == http.StatusOK {
 		require.NoError(t, json.NewDecoder(recorder.Body).Decode(&usageStats))
 	}
-	return usageStats, recorder
+	return &usageStats, recorder
 }
 
-func setupTestServer(t *testing.T, user *models.SignedInUser, service *UsageStats) *web.Mux {
+func setupTestServer(t *testing.T, user *user.SignedInUser, service *UsageStats) *web.Mux {
 	server := web.New()
 	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
@@ -116,7 +91,7 @@ func setupTestServer(t *testing.T, user *models.SignedInUser, service *UsageStat
 }
 
 type testContext struct {
-	user *models.SignedInUser
+	user *user.SignedInUser
 }
 
 func contextProvider(tc *testContext) web.Handler {
@@ -129,6 +104,6 @@ func contextProvider(tc *testContext) web.Handler {
 			SkipCache:    true,
 			Logger:       log.New("test"),
 		}
-		c.Map(reqCtx)
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
 	}
 }

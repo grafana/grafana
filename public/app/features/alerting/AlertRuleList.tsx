@@ -1,24 +1,25 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import Page from 'app/core/components/Page/Page';
-import AlertRuleItem from './AlertRuleItem';
-import appEvents from 'app/core/app_events';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { AlertRule, StoreState } from 'app/types';
-import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
-import { getAlertRuleItems, getSearchQuery } from './state/selectors';
+
 import { SelectableValue } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { setSearchQuery } from './state/reducers';
 import { Button, FilterInput, LinkButton, Select, VerticalGroup } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
+import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { AlertRule, StoreState } from 'app/types';
+
 import { ShowModalReactEvent } from '../../types/events';
+
 import { AlertHowToModal } from './AlertHowToModal';
-import { UnifiedAlertingPromotion } from './components/UnifiedAlertingPromotion';
+import AlertRuleItem from './AlertRuleItem';
+import { DeprecationNotice } from './components/DeprecationNotice';
+import { getAlertRulesAsync, togglePauseAlertRule } from './state/actions';
+import { setSearchQuery } from './state/reducers';
+import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 
 function mapStateToProps(state: StoreState) {
   return {
-    navModel: getNavModel(state.navIndex, 'alert-list'),
     alertRules: getAlertRuleItems(state),
     search: getSearchQuery(state.alertRules),
     isLoading: state.alertRules.isLoading,
@@ -91,10 +92,10 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
   };
 
   render() {
-    const { navModel, alertRules, search, isLoading } = this.props;
+    const { alertRules, search, isLoading } = this.props;
 
     return (
-      <Page navModel={navModel}>
+      <Page navId="alert-list">
         <Page.Contents isLoading={isLoading}>
           <div className="page-action-bar">
             <div className="gf-form gf-form--grow">
@@ -108,7 +109,6 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
               <div className="width-13">
                 <Select
                   inputId={'alert-state-filter'}
-                  menuShouldPortal
                   options={this.stateFilters}
                   onChange={this.onStateFilterChanged}
                   value={this.getStateFilter()}
@@ -125,15 +125,15 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
               How to add an alert
             </Button>
           </div>
-          <UnifiedAlertingPromotion />
+          <DeprecationNotice />
           <VerticalGroup spacing="none">
             {alertRules.map((rule) => {
               return (
                 <AlertRuleItem
-                  rule={rule as AlertRule}
+                  rule={rule}
                   key={rule.id}
                   search={search}
-                  onTogglePause={() => this.onTogglePause(rule as AlertRule)}
+                  onTogglePause={() => this.onTogglePause(rule)}
                 />
               );
             })}

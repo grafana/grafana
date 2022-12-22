@@ -4,28 +4,19 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestMiddlewareQuota(t *testing.T) {
 	t.Run("With user not logged in", func(t *testing.T) {
 		middlewareScenario(t, "and global quota not reached", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
-				query.Result = &models.GlobalQuotaDTO{
-					Target: query.Target,
-					Limit:  query.Default,
-					Used:   4,
-				}
-				return nil
-			})
-
-			quotaHandler := getQuotaHandler(sc, "user")
+			quotaHandler := getQuotaHandler(false, "user")
 
 			sc.m.Get("/user", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/user").exec()
@@ -33,186 +24,116 @@ func TestMiddlewareQuota(t *testing.T) {
 		}, configure)
 
 		middlewareScenario(t, "and global quota reached", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
-				query.Result = &models.GlobalQuotaDTO{
-					Target: query.Target,
-					Limit:  query.Default,
-					Used:   4,
-				}
-				return nil
-			})
-
-			quotaHandler := getQuotaHandler(sc, "user")
+			quotaHandler := getQuotaHandler(true, "user")
 			sc.m.Get("/user", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/user").exec()
 			assert.Equal(t, 403, sc.resp.Code)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-
-			cfg.Quota.Global.User = 4
 		})
 
 		middlewareScenario(t, "and global session quota not reached", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
-				query.Result = &models.GlobalQuotaDTO{
-					Target: query.Target,
-					Limit:  query.Default,
-					Used:   4,
-				}
-				return nil
-			})
-
-			quotaHandler := getQuotaHandler(sc, "session")
+			quotaHandler := getQuotaHandler(false, "session")
 			sc.m.Get("/user", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/user").exec()
 			assert.Equal(t, 200, sc.resp.Code)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-
-			cfg.Quota.Global.Session = 10
 		})
 
 		middlewareScenario(t, "and global session quota reached", func(t *testing.T, sc *scenarioContext) {
-			quotaHandler := getQuotaHandler(sc, "session")
+			quotaHandler := getQuotaHandler(true, "session")
 			sc.m.Get("/user", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/user").exec()
 			assert.Equal(t, 403, sc.resp.Code)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-
-			cfg.Quota.Global.Session = 1
 		})
 	})
 
 	t.Run("with user logged in", func(t *testing.T) {
-		const quotaUsed = 4
-
 		setUp := func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
-			bus.AddHandler("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
-				return nil
-			})
-
-			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-				return &models.UserToken{
+			sc.userService.ExpectedSignedInUser = &user.SignedInUser{UserID: 12}
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+				return &auth.UserToken{
 					UserId:        12,
 					UnhashedToken: "",
 				}, nil
 			}
-
-			bus.AddHandler("globalQuota", func(_ context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
-				query.Result = &models.GlobalQuotaDTO{
-					Target: query.Target,
-					Limit:  query.Default,
-					Used:   quotaUsed,
-				}
-				return nil
-			})
-
-			bus.AddHandler("userQuota", func(_ context.Context, query *models.GetUserQuotaByTargetQuery) error {
-				query.Result = &models.UserQuotaDTO{
-					Target: query.Target,
-					Limit:  query.Default,
-					Used:   quotaUsed,
-				}
-				return nil
-			})
-
-			bus.AddHandler("orgQuota", func(_ context.Context, query *models.GetOrgQuotaByTargetQuery) error {
-				query.Result = &models.OrgQuotaDTO{
-					Target: query.Target,
-					Limit:  query.Default,
-					Used:   quotaUsed,
-				}
-				return nil
-			})
 		}
 
 		middlewareScenario(t, "global datasource quota reached", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
-			quotaHandler := getQuotaHandler(sc, "data_source")
+			quotaHandler := getQuotaHandler(true, "data_source")
 			sc.m.Get("/ds", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/ds").exec()
 			assert.Equal(t, 403, sc.resp.Code)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-
-			cfg.Quota.Global.DataSource = quotaUsed
 		})
 
 		middlewareScenario(t, "user Org quota not reached", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
-			quotaHandler := getQuotaHandler(sc, "org")
+			quotaHandler := getQuotaHandler(false, "org")
 
 			sc.m.Get("/org", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/org").exec()
 			assert.Equal(t, 200, sc.resp.Code)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-
-			cfg.Quota.User.Org = quotaUsed + 1
 		})
 
 		middlewareScenario(t, "user Org quota reached", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
-			quotaHandler := getQuotaHandler(sc, "org")
+			quotaHandler := getQuotaHandler(true, "org")
 			sc.m.Get("/org", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/org").exec()
 			assert.Equal(t, 403, sc.resp.Code)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-
-			cfg.Quota.User.Org = quotaUsed
 		})
 
 		middlewareScenario(t, "org dashboard quota not reached", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
-			quotaHandler := getQuotaHandler(sc, "dashboard")
+			quotaHandler := getQuotaHandler(false, "dashboard")
 			sc.m.Get("/dashboard", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/dashboard").exec()
 			assert.Equal(t, 200, sc.resp.Code)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-
-			cfg.Quota.Org.Dashboard = quotaUsed + 1
 		})
 
 		middlewareScenario(t, "org dashboard quota reached", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
-			quotaHandler := getQuotaHandler(sc, "dashboard")
+			quotaHandler := getQuotaHandler(true, "dashboard")
 			sc.m.Get("/dashboard", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/dashboard").exec()
 			assert.Equal(t, 403, sc.resp.Code)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-
-			cfg.Quota.Org.Dashboard = quotaUsed
 		})
 
 		middlewareScenario(t, "org dashboard quota reached, but quotas disabled", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
-			quotaHandler := getQuotaHandler(sc, "dashboard")
+			quotaHandler := getQuotaHandler(false, "dashboard")
 			sc.m.Get("/dashboard", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/dashboard").exec()
 			assert.Equal(t, 200, sc.resp.Code)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-
-			cfg.Quota.Org.Dashboard = quotaUsed
-			cfg.Quota.Enabled = false
 		})
 
 		middlewareScenario(t, "org alert quota reached and unified alerting is enabled", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
-			quotaHandler := getQuotaHandler(sc, "alert_rule")
+			quotaHandler := getQuotaHandler(true, "alert_rule")
 			sc.m.Get("/alert_rule", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/alert_rule").exec()
 			assert.Equal(t, 403, sc.resp.Code)
@@ -221,13 +142,12 @@ func TestMiddlewareQuota(t *testing.T) {
 
 			cfg.UnifiedAlerting.Enabled = new(bool)
 			*cfg.UnifiedAlerting.Enabled = true
-			cfg.Quota.Org.AlertRule = quotaUsed
 		})
 
 		middlewareScenario(t, "org alert quota not reached and unified alerting is enabled", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
-			quotaHandler := getQuotaHandler(sc, "alert_rule")
+			quotaHandler := getQuotaHandler(false, "alert_rule")
 			sc.m.Get("/alert_rule", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/alert_rule").exec()
 			assert.Equal(t, 200, sc.resp.Code)
@@ -236,70 +156,38 @@ func TestMiddlewareQuota(t *testing.T) {
 
 			cfg.UnifiedAlerting.Enabled = new(bool)
 			*cfg.UnifiedAlerting.Enabled = true
-			cfg.Quota.Org.AlertRule = quotaUsed + 1
 		})
 
 		middlewareScenario(t, "org alert quota reached but ngalert disabled", func(t *testing.T, sc *scenarioContext) {
 			// this scenario can only happen if the feature was enabled and later disabled
 			setUp(sc)
 
-			quotaHandler := getQuotaHandler(sc, "alert_rule")
+			quotaHandler := getQuotaHandler(true, "alert_rule")
 			sc.m.Get("/alert_rule", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/alert_rule").exec()
 			assert.Equal(t, 403, sc.resp.Code)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-
-			cfg.Quota.Org.AlertRule = quotaUsed
 		})
 
 		middlewareScenario(t, "org alert quota not reached but ngalert disabled", func(t *testing.T, sc *scenarioContext) {
 			setUp(sc)
 
-			quotaHandler := getQuotaHandler(sc, "alert_rule")
+			quotaHandler := getQuotaHandler(false, "alert_rule")
 			sc.m.Get("/alert_rule", quotaHandler, sc.defaultHandler)
 			sc.fakeReq("GET", "/alert_rule").exec()
 			assert.Equal(t, 200, sc.resp.Code)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-
-			cfg.Quota.Org.AlertRule = quotaUsed + 1
 		})
 	})
 }
 
-func getQuotaHandler(sc *scenarioContext, target string) web.Handler {
-	fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
-	qs := &quota.QuotaService{
-		AuthTokenService: fakeAuthTokenService,
-		Cfg:              sc.cfg,
-	}
-
+func getQuotaHandler(reached bool, target string) web.Handler {
+	qs := quotatest.New(reached, nil)
 	return Quota(qs)(target)
 }
 
 func configure(cfg *setting.Cfg) {
 	cfg.AnonymousEnabled = false
-	cfg.Quota = setting.QuotaSettings{
-		Enabled: true,
-		Org: &setting.OrgQuota{
-			User:       5,
-			Dashboard:  5,
-			DataSource: 5,
-			ApiKey:     5,
-			AlertRule:  5,
-		},
-		User: &setting.UserQuota{
-			Org: 5,
-		},
-		Global: &setting.GlobalQuota{
-			Org:        5,
-			User:       5,
-			Dashboard:  5,
-			DataSource: 5,
-			ApiKey:     5,
-			Session:    5,
-			AlertRule:  5,
-		},
-	}
 }

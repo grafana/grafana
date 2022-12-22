@@ -1,21 +1,23 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { getRootReducer, RootReducerType } from '../state/helpers';
-import { toVariableIdentifier, toVariablePayload } from '../state/types';
+import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { variableAdapters } from '../adapters';
-import { createDataSourceVariableAdapter } from './adapter';
+import { changeVariableEditorExtended } from '../editor/reducer';
+import { datasourceBuilder } from '../shared/testing/builders';
+import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
+import { getRootReducer, RootReducerType } from '../state/helpers';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
 import {
   DataSourceVariableActionDependencies,
   initDataSourceVariableEditor,
   updateDataSourceVariableOptions,
 } from './actions';
-import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
+import { createDataSourceVariableAdapter } from './adapter';
 import { createDataSourceOptions } from './reducer';
-import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
-import { changeVariableEditorExtended } from '../editor/reducer';
-import { datasourceBuilder } from '../shared/testing/builders';
-import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
 
 interface Args {
   sources?: DataSourceInstanceSettings[];
@@ -27,7 +29,7 @@ function getTestContext({ sources = [], query, regex }: Args = {}) {
   const getListMock = jest.fn().mockReturnValue(sources);
   const getDatasourceSrvMock = jest.fn().mockReturnValue({ getList: getListMock });
   const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
-  const datasource = datasourceBuilder().withId('0').withQuery(query).withRegEx(regex).build();
+  const datasource = datasourceBuilder().withId('0').withRootStateKey('key').withQuery(query).withRegEx(regex).build();
 
   return { getListMock, getDatasourceSrvMock, dependencies, datasource };
 }
@@ -51,27 +53,36 @@ describe('data source actions', () => {
         const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
-            addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
+            toKeyedAction(
+              'key',
+              addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
+            )
           )
           .whenAsyncActionIsDispatched(
-            updateDataSourceVariableOptions(toVariableIdentifier(datasource), dependencies),
+            updateDataSourceVariableOptions(toKeyedVariableIdentifier(datasource), dependencies),
             true
           );
 
         tester.thenDispatchedActionsShouldEqual(
-          createDataSourceOptions(
-            toVariablePayload(
-              { type: 'datasource', id: '0' },
-              {
-                sources,
-                regex: undefined as unknown as RegExp,
-              }
+          toKeyedAction(
+            'key',
+            createDataSourceOptions(
+              toVariablePayload(
+                { type: 'datasource', id: '0' },
+                {
+                  sources,
+                  regex: undefined as unknown as RegExp,
+                }
+              )
             )
           ),
-          setCurrentVariableValue(
-            toVariablePayload(
-              { type: 'datasource', id: '0' },
-              { option: { text: 'first-name', value: 'first-name', selected: false } }
+          toKeyedAction(
+            'key',
+            setCurrentVariableValue(
+              toVariablePayload(
+                { type: 'datasource', id: '0' },
+                { option: { text: 'first-name', value: 'first-name', selected: false } }
+              )
             )
           )
         );
@@ -99,27 +110,36 @@ describe('data source actions', () => {
         const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
-            addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
+            toKeyedAction(
+              'key',
+              addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
+            )
           )
           .whenAsyncActionIsDispatched(
-            updateDataSourceVariableOptions(toVariableIdentifier(datasource), dependencies),
+            updateDataSourceVariableOptions(toKeyedVariableIdentifier(datasource), dependencies),
             true
           );
 
         tester.thenDispatchedActionsShouldEqual(
-          createDataSourceOptions(
-            toVariablePayload(
-              { type: 'datasource', id: '0' },
-              {
-                sources,
-                regex: /.*(second-name).*/,
-              }
+          toKeyedAction(
+            'key',
+            createDataSourceOptions(
+              toVariablePayload(
+                { type: 'datasource', id: '0' },
+                {
+                  sources,
+                  regex: /.*(second-name).*/,
+                }
+              )
             )
           ),
-          setCurrentVariableValue(
-            toVariablePayload(
-              { type: 'datasource', id: '0' },
-              { option: { text: 'second-name', value: 'second-name', selected: false } }
+          toKeyedAction(
+            'key',
+            setCurrentVariableValue(
+              toVariablePayload(
+                { type: 'datasource', id: '0' },
+                { option: { text: 'second-name', value: 'second-name', selected: false } }
+              )
             )
           )
         );
@@ -143,14 +163,17 @@ describe('data source actions', () => {
 
       reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(initDataSourceVariableEditor(dependencies))
+        .whenActionIsDispatched(initDataSourceVariableEditor('key', dependencies))
         .thenDispatchedActionsShouldEqual(
-          changeVariableEditorExtended({
-            dataSourceTypes: [
-              { text: '', value: '' },
-              { text: 'mock-data-name', value: 'mock-data-id' },
-            ],
-          })
+          toKeyedAction(
+            'key',
+            changeVariableEditorExtended({
+              dataSourceTypes: [
+                { text: '', value: '' },
+                { text: 'mock-data-name', value: 'mock-data-id' },
+              ],
+            })
+          )
         );
 
       expect(getListMock).toHaveBeenCalledTimes(1);

@@ -1,24 +1,42 @@
-import { css, cx } from '@emotion/css';
+import { css, CSSObject } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { getScrollbarWidth } from '../../utils';
 
 export const getTableStyles = (theme: GrafanaTheme2) => {
-  const { colors } = theme;
-  const headerBg = theme.colors.background.secondary;
   const borderColor = theme.colors.border.weak;
   const resizerColor = theme.colors.primary.border;
   const cellPadding = 6;
   const lineHeight = theme.typography.body.lineHeight;
   const bodyFontSize = 14;
   const cellHeight = cellPadding * 2 + bodyFontSize * lineHeight;
+  const rowHeight = cellHeight + 2;
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
-  const lastChildExtraPadding = Math.max(getScrollbarWidth(), cellPadding);
 
-  const buildCellContainerStyle = (color?: string, background?: string) => {
+  const buildCellContainerStyle = (color?: string, background?: string, overflowOnHover?: boolean) => {
+    const cellActionsOverflow: CSSObject = {
+      margin: theme.spacing(0, -0.5, 0, 0.5),
+    };
+    const cellActionsNoOverflow: CSSObject = {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      margin: 'auto',
+    };
+
+    const onHoverOverflow: CSSObject = {
+      overflow: 'visible',
+      width: 'auto !important',
+      boxShadow: `0 0 2px ${theme.colors.primary.main}`,
+      background: background ?? rowHoverBg,
+      zIndex: 1,
+    };
+
     return css`
+      label: ${overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow'};
       padding: ${cellPadding}px;
       width: 100%;
-      height: 100%;
+      // Cell height need to account for row border
+      height: ${rowHeight - 1}px;
       display: flex;
       align-items: center;
       border-right: 1px solid ${borderColor};
@@ -29,22 +47,44 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
 
       &:last-child:not(:only-child) {
         border-right: none;
-        padding-right: ${lastChildExtraPadding}px;
       }
 
       &:hover {
-        overflow: visible;
-        width: auto !important;
-        box-shadow: 0 0 2px ${theme.colors.primary.main};
-        background: ${background ?? rowHoverBg};
-        z-index: 1;
-
-        .cell-filter-actions  {
-          display: inline-flex;
+        ${overflowOnHover && onHoverOverflow};
+        .cellActions {
+          visibility: visible;
+          opacity: 1;
+          width: auto;
         }
       }
+
       a {
         color: inherit;
+      }
+
+      .cellActions {
+        display: flex;
+        ${overflowOnHover ? cellActionsOverflow : cellActionsNoOverflow}
+        visibility: hidden;
+        opacity: 0;
+        width: 0;
+        align-items: center;
+        height: 100%;
+        padding: ${theme.spacing(1, 0.5, 1, 0.5)};
+        background: ${background ? 'none' : theme.colors.emphasize(theme.colors.background.primary, 0.03)};
+
+        svg {
+          color: ${color};
+        }
+      }
+
+      .cellActionsLeft {
+        right: auto !important;
+        left: 0;
+      }
+
+      .cellActionsTransparent {
+        background: none;
       }
     `;
   };
@@ -54,38 +94,40 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     cellHeight,
     buildCellContainerStyle,
     cellPadding,
-    lastChildExtraPadding,
     cellHeightInner: bodyFontSize * lineHeight,
-    rowHeight: cellHeight + 2,
+    rowHeight,
     table: css`
       height: 100%;
       width: 100%;
       overflow: auto;
       display: flex;
+      flex-direction: column;
     `,
     thead: css`
       label: thead;
-      height: ${cellHeight}px;
+      height: ${rowHeight}px;
       overflow-y: auto;
       overflow-x: hidden;
-      background: ${headerBg};
       position: relative;
     `,
     tfoot: css`
       label: tfoot;
-      height: ${cellHeight}px;
+      height: ${rowHeight}px;
+      border-top: 1px solid ${borderColor};
       overflow-y: auto;
       overflow-x: hidden;
-      background: ${headerBg};
       position: relative;
+    `,
+    headerRow: css`
+      label: row;
+      border-bottom: 1px solid ${borderColor};
     `,
     headerCell: css`
       padding: ${cellPadding}px;
       overflow: hidden;
       white-space: nowrap;
-      color: ${colors.primary.text};
-      border-right: 1px solid ${theme.colors.border.weak};
       display: flex;
+      font-weight: ${theme.typography.fontWeightMedium};
 
       &:last-child {
         border-right: none;
@@ -99,15 +141,26 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      font-weight: ${theme.typography.fontWeightMedium};
       display: flex;
+      align-items: center;
       margin-right: ${theme.spacing(0.5)};
+
+      &:hover {
+        text-decoration: underline;
+        color: ${theme.colors.text.link};
+      }
     `,
-    cellContainer: buildCellContainerStyle(),
+    cellContainer: buildCellContainerStyle(undefined, undefined, true),
+    cellContainerNoOverflow: buildCellContainerStyle(undefined, undefined, false),
     cellText: css`
       overflow: hidden;
       text-overflow: ellipsis;
       user-select: text;
       white-space: nowrap;
+    `,
+    sortIcon: css`
+      margin-left: ${theme.spacing(0.5)};
     `,
     cellLink: css`
       cursor: pointer;
@@ -120,13 +173,51 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     imageCellLink: css`
       cursor: pointer;
       overflow: hidden;
-      width: 100%;
       height: 100%;
     `,
     headerFilter: css`
+      background: transparent;
+      border: none;
       label: headerFilter;
-      cursor: pointer;
+      padding: 0;
     `,
+    paginationWrapper: css`
+      display: flex;
+      height: ${cellHeight}px;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      li {
+        margin-bottom: 0;
+      }
+    `,
+    paginationItem: css`
+      flex: 20%;
+    `,
+    paginationCenterItem: css`
+      flex: 100%;
+      display: flex;
+      justify-content: center;
+    `,
+    paginationSummary: css`
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      display: flex;
+      justify-content: flex-end;
+      flex: 20%;
+      padding-right: ${theme.spacing(1)};
+    `,
+
+    tableContentWrapper: (totalColumnsWidth: number) => {
+      const width = totalColumnsWidth !== undefined ? `${totalColumnsWidth}px` : '100%';
+
+      return css`
+        label: tableContentWrapper;
+        width: ${width};
+        display: flex;
+        flex-direction: column;
+      `;
+    },
     row: css`
       label: row;
       border-bottom: 1px solid ${borderColor};
@@ -161,22 +252,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
         opacity: 1;
       }
     `,
-    filterWrapper: cx(
-      css`
-        label: filterWrapper;
-        display: none;
-        justify-content: flex-end;
-        flex-grow: 1;
-        opacity: 0.6;
-        padding-left: ${theme.spacing(0.25)};
-      `,
-      'cell-filter-actions'
-    ),
-    filterItem: css`
-      label: filterItem;
-      cursor: pointer;
-      padding: 0 ${theme.spacing(0.025)};
-    `,
     typeIcon: css`
       margin-right: ${theme.spacing(1)};
       color: ${theme.colors.text.secondary};
@@ -187,6 +262,13 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       height: 100%;
       justify-content: center;
       width: 100%;
+    `,
+    expanderCell: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: ${rowHeight}px;
+      cursor: pointer;
     `,
   };
 };

@@ -1,8 +1,11 @@
-import React from 'react';
-import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
-import { getTheme } from '@grafana/ui';
+import { createTheme } from '@grafana/data';
+
+import PromQlLanguageProvider from '../language_provider';
+
 import {
   buildSelector,
   facetLabels,
@@ -10,7 +13,6 @@ import {
   UnthemedPrometheusMetricsBrowser,
   BrowserProps,
 } from './PrometheusMetricsBrowser';
-import PromQlLanguageProvider from '../language_provider';
 
 describe('buildSelector()', () => {
   it('returns an empty selector for no labels', () => {
@@ -129,7 +131,7 @@ describe('PrometheusMetricsBrowser', () => {
     };
 
     const defaults: BrowserProps = {
-      theme: getTheme(),
+      theme: createTheme({ colors: { mode: 'dark' } }),
       onChange: () => {},
       autoSelect: 0,
       languageProvider: mockLanguageProvider as unknown as PromQlLanguageProvider,
@@ -142,9 +144,9 @@ describe('PrometheusMetricsBrowser', () => {
   };
 
   // Clear label selection manually because it's saved in localStorage
-  afterEach(() => {
+  afterEach(async () => {
     const clearBtn = screen.getByLabelText('Selector clear button');
-    userEvent.click(clearBtn);
+    await userEvent.click(clearBtn);
   });
 
   it('renders and loader shows when empty, and then first set of labels', async () => {
@@ -167,35 +169,34 @@ describe('PrometheusMetricsBrowser', () => {
     const props = setupProps();
     render(<UnthemedPrometheusMetricsBrowser {...props} />);
     // Selecting label2
-    const label2 = await screen.findByRole('option', { name: /label2/, selected: false });
+    const label2 = await screen.findByRole('option', { name: 'label2', selected: false });
     expect(screen.queryByRole('list', { name: /Values/ })).not.toBeInTheDocument();
-    userEvent.click(label2);
-    expect(screen.queryByRole('option', { name: /label2/, selected: true })).toBeInTheDocument();
+    await userEvent.click(label2);
+    expect(screen.queryByRole('option', { name: 'label2', selected: true })).toBeInTheDocument();
     // List of values for label2 appears
-    expect(await screen.findAllByRole('list')).toHaveLength(1);
     expect(screen.queryByLabelText(/Values for/)).toHaveTextContent('label2');
     expect(screen.queryByRole('option', { name: 'value2-1' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'value2-2' })).toBeInTheDocument();
     expect(screen.queryByLabelText('selector')).toHaveTextContent('{}');
     // Selecting label1, list for its values appears
-    const label1 = await screen.findByRole('option', { name: /label1/, selected: false });
-    userEvent.click(label1);
-    expect(screen.queryByRole('option', { name: /label1/, selected: true })).toBeInTheDocument();
+    const label1 = await screen.findByRole('option', { name: 'label1', selected: false });
+    await userEvent.click(label1);
+    expect(screen.queryByRole('option', { name: 'label1', selected: true })).toBeInTheDocument();
     await screen.findByLabelText('Values for label1');
     expect(await screen.findAllByRole('list', { name: /Values/ })).toHaveLength(2);
     // Selecting value2-2 of label2
     const value = await screen.findByRole('option', { name: 'value2-2', selected: false });
-    userEvent.click(value);
+    await userEvent.click(value);
     await screen.findByRole('option', { name: 'value2-2', selected: true });
     expect(screen.queryByLabelText('selector')).toHaveTextContent('{label2="value2-2"}');
     // Selecting value2-1 of label2, both values now selected
     const value2 = await screen.findByRole('option', { name: 'value2-1', selected: false });
-    userEvent.click(value2);
+    await userEvent.click(value2);
     // await screen.findByRole('option', {name: 'value2-1', selected: true});
     await screen.findByText('{label2=~"value2-1|value2-2"}');
     // Deselecting value2-2, one value should remain
     const selectedValue = await screen.findByRole('option', { name: 'value2-2', selected: true });
-    userEvent.click(selectedValue);
+    await userEvent.click(selectedValue);
     await screen.findByRole('option', { name: 'value2-1', selected: true });
     await screen.findByRole('option', { name: 'value2-2', selected: false });
     expect(screen.queryByLabelText('selector')).toHaveTextContent('{label2="value2-1"}');
@@ -206,29 +207,31 @@ describe('PrometheusMetricsBrowser', () => {
     render(<UnthemedPrometheusMetricsBrowser {...props} />);
 
     // Selecting label2
-    const label2 = await screen.findByRole('option', { name: /label2/, selected: false });
-    userEvent.click(label2);
+    const label2 = await screen.findByRole('option', { name: 'label2', selected: false });
+    await userEvent.click(label2);
     // List of values for label2 appears
-    expect(await screen.findAllByRole('list')).toHaveLength(1);
+    expect(screen.queryByLabelText(/Values for/)).toHaveTextContent('label2');
+    expect(screen.queryByRole('option', { name: 'value2-1' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'value2-2' })).toBeInTheDocument();
     expect(screen.queryByLabelText('selector')).toHaveTextContent('{}');
     // Selecting label1, list for its values appears
-    const label1 = await screen.findByRole('option', { name: /label1/, selected: false });
-    userEvent.click(label1);
+    const label1 = await screen.findByRole('option', { name: 'label1', selected: false });
+    await userEvent.click(label1);
     await screen.findByLabelText('Values for label1');
     expect(await screen.findAllByRole('list', { name: /Values/ })).toHaveLength(2);
     // Selecting value2-1 of label2
     const value2 = await screen.findByRole('option', { name: 'value2-1', selected: false });
-    userEvent.click(value2);
+    await userEvent.click(value2);
     await screen.findByText('{label2="value2-1"}');
 
     // Selecting value from label1 for combined selector
     const value1 = await screen.findByRole('option', { name: 'value1-2', selected: false });
-    userEvent.click(value1);
+    await userEvent.click(value1);
     await screen.findByRole('option', { name: 'value1-2', selected: true });
     await screen.findByText('{label1="value1-2",label2="value2-1"}');
     // Deselect label1 should remove label and value
     const selectedLabel = (await screen.findAllByRole('option', { name: /label1/, selected: true }))[0];
-    userEvent.click(selectedLabel);
+    await userEvent.click(selectedLabel);
     await screen.findByRole('option', { name: /label1/, selected: false });
     expect(await screen.findAllByRole('list', { name: /Values/ })).toHaveLength(1);
     expect(screen.queryByLabelText('selector')).toHaveTextContent('{label2="value2-1"}');
@@ -239,25 +242,27 @@ describe('PrometheusMetricsBrowser', () => {
     render(<UnthemedPrometheusMetricsBrowser {...props} />);
 
     // Selecting label2
-    const label2 = await screen.findByRole('option', { name: /label2/, selected: false });
-    userEvent.click(label2);
+    const label2 = await screen.findByRole('option', { name: 'label2', selected: false });
+    await userEvent.click(label2);
     // List of values for label2 appears
-    expect(await screen.findAllByRole('list')).toHaveLength(1);
+    expect(screen.queryByLabelText(/Values for/)).toHaveTextContent('label2');
+    expect(screen.queryByRole('option', { name: 'value2-1' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'value2-2' })).toBeInTheDocument();
     expect(screen.queryByLabelText('selector')).toHaveTextContent('{}');
     // Selecting label1, list for its values appears
-    const label1 = await screen.findByRole('option', { name: /label1/, selected: false });
-    userEvent.click(label1);
+    const label1 = await screen.findByRole('option', { name: 'label1', selected: false });
+    await userEvent.click(label1);
     await screen.findByLabelText('Values for label1');
     expect(await screen.findAllByRole('list', { name: /Values/ })).toHaveLength(2);
     // Selecting value2-1 of label2
     const value2 = await screen.findByRole('option', { name: 'value2-1', selected: false });
-    userEvent.click(value2);
+    await userEvent.click(value2);
     await screen.findByText('{label2="value2-1"}');
 
     // Clear selector
     const clearBtn = screen.getByLabelText('Selector clear button');
-    userEvent.click(clearBtn);
-    await screen.findByRole('option', { name: /label2/, selected: false });
+    await userEvent.click(clearBtn);
+    await screen.findByRole('option', { name: 'label2', selected: false });
     expect(screen.queryByLabelText('selector')).toHaveTextContent('{}');
   });
 
@@ -266,14 +271,14 @@ describe('PrometheusMetricsBrowser', () => {
     render(<UnthemedPrometheusMetricsBrowser {...props} />);
     // Selecting label2 and label1
     const label2 = await screen.findByRole('option', { name: /label2/, selected: false });
-    userEvent.click(label2);
+    await userEvent.click(label2);
     const label1 = await screen.findByRole('option', { name: /label1/, selected: false });
-    userEvent.click(label1);
+    await userEvent.click(label1);
     await screen.findByLabelText('Values for label1');
     await screen.findByLabelText('Values for label2');
     expect(await screen.findAllByRole('option', { name: /value/ })).toHaveLength(4);
     // Typing '1' to filter for values
-    userEvent.type(screen.getByLabelText('Filter expression for label values'), '1');
+    await userEvent.type(screen.getByLabelText('Filter expression for label values'), '1');
     expect(screen.getByLabelText('Filter expression for label values')).toHaveValue('1');
     expect(await screen.findAllByRole('option', { name: /value/ })).toHaveLength(3);
     expect(screen.queryByRole('option', { name: 'value2-2' })).not.toBeInTheDocument();
@@ -284,26 +289,26 @@ describe('PrometheusMetricsBrowser', () => {
     render(<UnthemedPrometheusMetricsBrowser {...props} />);
     // Selecting label2 and label1
     const label2 = await screen.findByRole('option', { name: /label2/, selected: false });
-    userEvent.click(label2);
+    await userEvent.click(label2);
     const label1 = await screen.findByRole('option', { name: /label1/, selected: false });
-    userEvent.click(label1);
+    await userEvent.click(label1);
     await screen.findByLabelText('Values for label1');
     await screen.findByLabelText('Values for label2');
     expect(await screen.findAllByRole('option', { name: /value/ })).toHaveLength(4);
     expect(screen.queryByRole('option', { name: /label3/ })).toHaveTextContent('label3');
     // Click value1-1 which triggers facetting for value3-x, and still show all value1-x
     const value1 = await screen.findByRole('option', { name: 'value1-1', selected: false });
-    userEvent.click(value1);
-    await waitForElementToBeRemoved(screen.queryByRole('option', { name: 'value2-2' }));
+    await userEvent.click(value1);
+    await waitFor(() => expect(screen.queryByRole('option', { name: 'value2-2' })).not.toBeInTheDocument());
     expect(screen.queryByRole('option', { name: 'value1-2' })).toBeInTheDocument();
     expect(screen.queryByLabelText('selector')).toHaveTextContent('{label1="value1-1"}');
     expect(screen.queryByRole('option', { name: /label3/ })).toHaveTextContent('label3 (1)');
     // Click value1-2 for which facetting will allow more values for value3-x
     const value12 = await screen.findByRole('option', { name: 'value1-2', selected: false });
-    userEvent.click(value12);
+    await userEvent.click(value12);
     await screen.findByRole('option', { name: 'value1-2', selected: true });
     await screen.findByRole('option', { name: /label3/, selected: false });
-    userEvent.click(screen.getByRole('option', { name: /label3/ }));
+    await userEvent.click(screen.getByRole('option', { name: /label3/ }));
     await screen.findByLabelText('Values for label3');
     expect(screen.queryByRole('option', { name: 'value1-1', selected: true })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'value1-2', selected: true })).toBeInTheDocument();

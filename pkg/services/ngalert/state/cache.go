@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"strings"
 	"sync"
@@ -13,56 +14,106 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	prometheusModel "github.com/prometheus/common/model"
 )
 
-type cache struct {
-	states      map[int64]map[string]map[string]*State // orgID > alertRuleUID > stateID > state
-	mtxStates   sync.RWMutex
-	log         log.Logger
-	metrics     *metrics.State
-	externalURL *url.URL
+type ruleStates struct {
+	states map[string]*State
 }
 
-func newCache(logger log.Logger, metrics *metrics.State, externalURL *url.URL) *cache {
+type cache struct {
+	states    map[int64]map[string]*ruleStates // orgID > alertRuleUID > stateID > state
+	mtxStates sync.RWMutex
+}
+
+func newCache() *cache {
 	return &cache{
-		states:      make(map[int64]map[string]map[string]*State),
-		log:         logger,
-		metrics:     metrics,
-		externalURL: externalURL,
+		states: make(map[int64]map[string]*ruleStates),
 	}
 }
 
-func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
+func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
+	var orgStates map[string]*ruleStates
+	var ok bool
+	if orgStates, ok = c.states[alertRule.OrgID]; !ok {
+		orgStates = make(map[string]*ruleStates)
+		c.states[alertRule.OrgID] = orgStates
+	}
+	var states *ruleStates
+	if states, ok = orgStates[alertRule.UID]; !ok {
+		states = &ruleStates{states: make(map[string]*State)}
+		c.states[alertRule.OrgID][alertRule.UID] = states
+	}
+	return states.getOrCreate(ctx, log, alertRule, result, extraLabels, externalURL)
+}
 
-	// clone the labels so we don't change eval.Result
-	labels := result.Instance.Copy()
-	attachRuleLabels(labels, alertRule)
-	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(ctx, alertRule, labels, result)
+func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
+	ruleLabels, annotations := rs.expandRuleLabelsAndAnnotations(ctx, log, alertRule, result, extraLabels, externalURL)
 
-	// if duplicate labels exist, alertRule label will take precedence
-	lbs := mergeLabels(ruleLabels, result.Instance)
-	attachRuleLabels(lbs, alertRule)
+	values := make(map[string]float64)
+	for _, v := range result.Values {
+		if v.Value != nil {
+			values[v.Var] = *v.Value
+		} else {
+			values[v.Var] = math.NaN()
+		}
+	}
+
+	lbs := make(data.Labels, len(extraLabels)+len(ruleLabels)+len(result.Instance))
+	dupes := make(data.Labels)
+	for key, val := range extraLabels {
+		lbs[key] = val
+	}
+	for key, val := range ruleLabels {
+		ruleVal, ok := lbs[key]
+		// if duplicate labels exist, reserved label will take precedence
+		if ok {
+			if ruleVal != val {
+				dupes[key] = val
+			}
+		} else {
+			lbs[key] = val
+		}
+	}
+	if len(dupes) > 0 {
+		log.Warn("Rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
+	}
+	dupes = make(data.Labels)
+	for key, val := range result.Instance {
+		_, ok := lbs[key]
+		// if duplicate labels exist, reserved or alert rule label will take precedence
+		if ok {
+			dupes[key] = val
+		} else {
+			lbs[key] = val
+		}
+	}
+	if len(dupes) > 0 {
+		log.Warn("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
+	}
 
 	il := ngModels.InstanceLabels(lbs)
 	id, err := il.StringKey()
 	if err != nil {
-		c.log.Error("error getting cacheId for entry", "err", err.Error())
+		log.Error("Error getting cacheId for entry", "error", err)
 	}
 
-	if _, ok := c.states[alertRule.OrgID]; !ok {
-		c.states[alertRule.OrgID] = make(map[string]map[string]*State)
-	}
-	if _, ok := c.states[alertRule.OrgID][alertRule.UID]; !ok {
-		c.states[alertRule.OrgID][alertRule.UID] = make(map[string]*State)
-	}
-
-	if state, ok := c.states[alertRule.OrgID][alertRule.UID][id]; ok {
-		// Annotations can change over time for the same alert.
+	if state, ok := rs.states[id]; ok {
+		// Annotations can change over time, however we also want to maintain
+		// certain annotations across evaluations
+		for k, v := range state.Annotations {
+			if _, ok := ngModels.InternalAnnotationNameSet[k]; ok {
+				// If the annotation is not present then it should be copied from the
+				// previous state to the next state
+				if _, ok := annotations[k]; !ok {
+					annotations[k] = v
+				}
+			}
+		}
 		state.Annotations = annotations
-		c.states[alertRule.OrgID][alertRule.UID][id] = state
+		state.Values = values
+		rs.states[id] = state
 		return state
 	}
 
@@ -71,32 +122,30 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 	newState := &State{
 		AlertRuleUID:       alertRule.UID,
 		OrgID:              alertRule.OrgID,
-		CacheId:            id,
+		CacheID:            id,
 		Labels:             lbs,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
+		Values:             values,
 	}
 	if result.State == eval.Alerting {
 		newState.StartsAt = result.EvaluatedAt
 	}
-	c.states[alertRule.OrgID][alertRule.UID][id] = newState
+	rs.states[id] = newState
 	return newState
 }
 
-func attachRuleLabels(m map[string]string, alertRule *ngModels.AlertRule) {
-	m[ngModels.RuleUIDLabel] = alertRule.UID
-	m[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
-	m[prometheusModel.AlertNameLabel] = alertRule.Title
-}
+func (rs *ruleStates) expandRuleLabelsAndAnnotations(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, alertInstance eval.Result, extraLabels data.Labels, externalURL *url.URL) (data.Labels, data.Labels) {
+	// use labels from the result and extra labels to expand the labels and annotations declared by the rule
+	templateLabels := mergeLabels(extraLabels, alertInstance.Instance)
 
-func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, alertRule *ngModels.AlertRule, labels map[string]string, alertInstance eval.Result) (map[string]string, map[string]string) {
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := expandTemplate(ctx, alertRule.Title, v, labels, alertInstance, c.externalURL)
+			ev, err := expandTemplate(ctx, alertRule.Title, v, templateLabels, alertInstance, externalURL)
 			expanded[k] = ev
 			if err != nil {
-				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
+				log.Error("Error in expanding template", "name", k, "value", v, "error", err)
 				// Store the original template on error.
 				expanded[k] = v
 			}
@@ -107,25 +156,57 @@ func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, alertRule *n
 	return expand(alertRule.Labels), expand(alertRule.Annotations)
 }
 
+func (rs *ruleStates) deleteStates(predicate func(s *State) bool) []*State {
+	deleted := make([]*State, 0)
+	for id, state := range rs.states {
+		if predicate(state) {
+			delete(rs.states, id)
+			deleted = append(deleted, state)
+		}
+	}
+	return deleted
+}
+
+func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) []*State {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	ruleStates, ok := c.states[ruleKey.OrgID][ruleKey.UID]
+	if ok {
+		return ruleStates.deleteStates(predicate)
+	}
+	return nil
+}
+
+func (c *cache) setAllStates(newStates map[int64]map[string]*ruleStates) {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	c.states = newStates
+}
+
 func (c *cache) set(entry *State) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 	if _, ok := c.states[entry.OrgID]; !ok {
-		c.states[entry.OrgID] = make(map[string]map[string]*State)
+		c.states[entry.OrgID] = make(map[string]*ruleStates)
 	}
 	if _, ok := c.states[entry.OrgID][entry.AlertRuleUID]; !ok {
-		c.states[entry.OrgID][entry.AlertRuleUID] = make(map[string]*State)
+		c.states[entry.OrgID][entry.AlertRuleUID] = &ruleStates{states: make(map[string]*State)}
 	}
-	c.states[entry.OrgID][entry.AlertRuleUID][entry.CacheId] = entry
+	c.states[entry.OrgID][entry.AlertRuleUID].states[entry.CacheID] = entry
 }
 
-func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*State, error) {
+func (c *cache) get(orgID int64, alertRuleUID, stateId string) *State {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
-	if state, ok := c.states[orgID][alertRuleUID][stateId]; ok {
-		return state, nil
+	ruleStates, ok := c.states[orgID][alertRuleUID]
+	if ok {
+		var state *State
+		state, ok = ruleStates.states[stateId]
+		if ok {
+			return state
+		}
 	}
-	return nil, fmt.Errorf("no entry for %s:%s was found", alertRuleUID, stateId)
+	return nil
 }
 
 func (c *cache) getAll(orgID int64) []*State {
@@ -133,7 +214,7 @@ func (c *cache) getAll(orgID int64) []*State {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	for _, v1 := range c.states[orgID] {
-		for _, v2 := range v1 {
+		for _, v2 := range v1.states {
 			states = append(states, v2)
 		}
 	}
@@ -141,29 +222,47 @@ func (c *cache) getAll(orgID int64) []*State {
 }
 
 func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
-	var ruleStates []*State
+	var result []*State
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
-	for _, state := range c.states[orgID][alertRuleUID] {
-		ruleStates = append(ruleStates, state)
+	orgRules, ok := c.states[orgID]
+	if !ok {
+		return nil
 	}
-	return ruleStates
+	rs, ok := orgRules[alertRuleUID]
+	if !ok {
+		return nil
+	}
+	for _, state := range rs.states {
+		result = append(result, state)
+	}
+	return result
 }
 
-// removeByRuleUID deletes all entries in the state cache that match the given UID.
-func (c *cache) removeByRuleUID(orgID int64, uid string) {
+// removeByRuleUID deletes all entries in the state cache that match the given UID. Returns removed states
+func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
+	orgStates, ok := c.states[orgID]
+	if !ok {
+		return nil
+	}
+	rs, ok := orgStates[uid]
+	if !ok {
+		return nil
+	}
 	delete(c.states[orgID], uid)
+	if len(rs.states) == 0 {
+		return nil
+	}
+	states := make([]*State, 0, len(rs.states))
+	for _, state := range rs.states {
+		states = append(states, state)
+	}
+	return states
 }
 
-func (c *cache) reset() {
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
-	c.states = make(map[int64]map[string]map[string]*State)
-}
-
-func (c *cache) recordMetrics() {
+func (c *cache) recordMetrics(metrics *metrics.State) {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 
@@ -178,9 +277,9 @@ func (c *cache) recordMetrics() {
 	}
 
 	for org, orgMap := range c.states {
-		c.metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(len(orgMap)))
+		metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(len(orgMap)))
 		for _, rule := range orgMap {
-			for _, state := range rule {
+			for _, state := range rule.states {
 				n := ct[state.State]
 				ct[state.State] = n + 1
 			}
@@ -188,13 +287,13 @@ func (c *cache) recordMetrics() {
 	}
 
 	for k, n := range ct {
-		c.metrics.AlertState.WithLabelValues(strings.ToLower(k.String())).Set(float64(n))
+		metrics.AlertState.WithLabelValues(strings.ToLower(k.String())).Set(float64(n))
 	}
 }
 
 // if duplicate labels exist, keep the value from the first set
 func mergeLabels(a, b data.Labels) data.Labels {
-	newLbs := data.Labels{}
+	newLbs := make(data.Labels, len(a)+len(b))
 	for k, v := range a {
 		newLbs[k] = v
 	}
@@ -204,10 +303,4 @@ func mergeLabels(a, b data.Labels) data.Labels {
 		}
 	}
 	return newLbs
-}
-
-func (c *cache) deleteEntry(orgID int64, alertRuleUID, cacheID string) {
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
-	delete(c.states[orgID][alertRuleUID], cacheID)
 }

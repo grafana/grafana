@@ -1,10 +1,14 @@
-import React, { FC } from 'react';
-import { Well } from './Well';
-import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
-import { Tooltip, useStyles } from '@grafana/ui';
-import { DetailsField } from './DetailsField';
+import React, { FC } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Tooltip, useStyles2 } from '@grafana/ui';
+
 import { Annotation, annotationLabels } from '../utils/constants';
+
+import { DetailsField } from './DetailsField';
+import { Tokenize } from './Tokenize';
+import { Well } from './Well';
 
 const wellableAnnotationKeys = ['message', 'description'];
 
@@ -30,25 +34,34 @@ export const AnnotationDetailsField: FC<Props> = ({ annotationKey, value }) => {
 };
 
 const AnnotationValue: FC<Props> = ({ annotationKey, value }) => {
-  const styles = useStyles(getStyles);
-  if (wellableAnnotationKeys.includes(annotationKey)) {
-    return <Well>{value}</Well>;
-  } else if (value && value.startsWith('http')) {
+  const styles = useStyles2(getStyles);
+
+  const needsWell = wellableAnnotationKeys.includes(annotationKey);
+  const needsLink = value && value.startsWith('http');
+
+  const tokenizeValue = <Tokenize input={value} delimiter={['{{', '}}']} />;
+
+  if (needsWell) {
+    return <Well className={styles.well}>{tokenizeValue}</Well>;
+  }
+
+  if (needsLink) {
     return (
       <a href={value} target="__blank" className={styles.link}>
         {value}
       </a>
     );
   }
-  return <>{value}</>;
+
+  return <>{tokenizeValue}</>;
 };
 
-export const getStyles = (theme: GrafanaTheme) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   well: css`
-    word-break: break-all;
+    word-break: break-word;
   `,
   link: css`
     word-break: break-all;
-    color: ${theme.colors.textBlue};
+    color: ${theme.colors.primary.text};
   `,
 });

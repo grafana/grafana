@@ -1,9 +1,13 @@
+import { render, screen } from '@testing-library/react';
+import $ from 'jquery';
 import React from 'react';
-import { mount } from 'enzyme';
-import Graph from './Graph';
-import { TooltipDisplayMode } from '@grafana/schema';
-import { VizTooltip } from '../VizTooltip';
+
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId, DisplayProcessor } from '@grafana/data';
+import { TooltipDisplayMode } from '@grafana/schema';
+
+import { VizTooltip } from '../VizTooltip';
+
+import Graph from './Graph';
 
 const display: DisplayProcessor = (v) => ({ numeric: v, text: String(v), color: 'red' });
 
@@ -85,9 +89,10 @@ const mockGraphProps = (multiSeries = false) => {
   };
 };
 
-(window as any).ResizeObserver = class ResizeObserver {
+window.ResizeObserver = class ResizeObserver {
   constructor() {}
   observe() {}
+  unobserve() {}
   disconnect() {}
 };
 
@@ -100,10 +105,16 @@ describe('Graph', () => {
             <VizTooltip mode={TooltipDisplayMode.Single} />
           </Graph>
         );
+        render(graphWithTooltip);
 
-        const container = mount(graphWithTooltip);
-        const tooltip = container.find('GraphTooltip');
-        expect(tooltip).toHaveLength(0);
+        const timestamp = screen.queryByLabelText('Timestamp');
+        const tableRow = screen.queryByTestId('SeriesTableRow');
+        const seriesIcon = screen.queryByTestId('series-icon');
+
+        expect(timestamp).toBeFalsy();
+        expect(timestamp?.parentElement).toBeFalsy();
+        expect(tableRow?.parentElement).toBeFalsy();
+        expect(seriesIcon).toBeFalsy();
       });
 
       it('renders tooltip when hovering over a datapoint', () => {
@@ -113,14 +124,8 @@ describe('Graph', () => {
             <VizTooltip mode={TooltipDisplayMode.Single} />
           </Graph>
         );
-        const container = mount(graphWithTooltip);
-
-        // When
-        // Simulating state set by $.flot plothover event when interacting with the canvas with Graph
-        // Unfortunately I haven't found a way to perfom the actual mouse hover interaction in JSDOM, hence I'm simulating the state
-        container.setState({
-          isTooltipVisible: true,
-          // This "is" close by middle point, Flot would have pick the middle point at this position
+        render(graphWithTooltip);
+        const eventArgs = {
           pos: {
             x: 120,
             y: 50,
@@ -130,18 +135,13 @@ describe('Graph', () => {
             dataIndex: 1,
             series: { seriesIndex: 0 },
           },
-        });
+        };
+        $('div.graph-panel__chart').trigger('plothover', [eventArgs.pos, eventArgs.activeItem]);
+        const timestamp = screen.getByLabelText('Timestamp');
+        const tooltip = screen.getByTestId('SeriesTableRow').parentElement;
 
-        // Then
-        const tooltip = container.find('GraphTooltip');
-        const time = tooltip.find("[aria-label='Timestamp']");
-        // Each series should have icon rendered by default GraphTooltip component
-        // We are using this to make sure correct amount of series were rendered
-        const seriesIcons = tooltip.find('SeriesIcon');
-
-        expect(time).toHaveLength(1);
-        expect(tooltip).toHaveLength(1);
-        expect(seriesIcons).toHaveLength(1);
+        expect(timestamp.parentElement?.isEqualNode(tooltip)).toBe(true);
+        expect(screen.getAllByTestId('series-icon')).toHaveLength(1);
       });
     });
 
@@ -153,27 +153,28 @@ describe('Graph', () => {
             <VizTooltip mode={TooltipDisplayMode.Multi} />
           </Graph>
         );
-        const container = mount(graphWithTooltip);
+        render(graphWithTooltip);
 
         // When
-        container.setState({
-          isTooltipVisible: true,
+        const eventArgs = {
           // This "is" more or less between first and middle point. Flot would not have picked any point as active one at this position
           pos: {
             x: 80,
             y: 50,
           },
           activeItem: null,
-        });
-
+        };
         // Then
-        const tooltip = container.find('GraphTooltip');
-        const time = tooltip.find("[aria-label='Timestamp']");
-        const seriesIcons = tooltip.find('SeriesIcon');
+        $('div.graph-panel__chart').trigger('plothover', [eventArgs.pos, eventArgs.activeItem]);
+        const timestamp = screen.getByLabelText('Timestamp');
 
-        expect(time).toHaveLength(1);
-        expect(tooltip).toHaveLength(1);
-        expect(seriesIcons).toHaveLength(2);
+        const tableRows = screen.getAllByTestId('SeriesTableRow');
+        expect(tableRows).toHaveLength(2);
+        expect(timestamp.parentElement?.isEqualNode(tableRows[0].parentElement)).toBe(true);
+        expect(timestamp.parentElement?.isEqualNode(tableRows[1].parentElement)).toBe(true);
+
+        const seriesIcon = screen.getAllByTestId('series-icon');
+        expect(seriesIcon).toHaveLength(2);
       });
     });
   });

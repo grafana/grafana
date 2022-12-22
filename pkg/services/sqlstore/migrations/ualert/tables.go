@@ -6,6 +6,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
+// DefaultFieldMaxLength is the standard size for most user-settable string fields in Alerting. Use this for typical string fields, unless you have a special reason not to.
+const DefaultFieldMaxLength = 190
+
+// UIDMaxLength is the standard size for fields that contain UIDs.
+const UIDMaxLength = 40
+
 // AddMigration defines database migrations.
 func AddTablesMigrations(mg *migrator.Migrator) {
 	AddAlertDefinitionMigrations(mg, 60)
@@ -25,6 +31,10 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 
 	// Create provisioning data table
 	AddProvisioningMigrations(mg)
+
+	AddAlertImageMigrations(mg)
+
+	AddAlertmanagerConfigHistoryMigrations(mg)
 }
 
 // AddAlertDefinitionMigrations should not be modified.
@@ -36,13 +46,13 @@ func AddAlertDefinitionMigrations(mg *migrator.Migrator, defaultIntervalSeconds 
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "title", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "condition", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
+			{Name: "condition", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
 			{Name: "data", Type: migrator.DB_Text, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "interval_seconds", Type: migrator.DB_BigInt, Nullable: false, Default: fmt.Sprintf("%d", defaultIntervalSeconds)},
 			{Name: "version", Type: migrator.DB_Int, Nullable: false, Default: "0"},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false, Default: "0"},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"org_id", "title"}, Type: migrator.IndexType},
@@ -85,13 +95,13 @@ func AddAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "alert_definition_id", Type: migrator.DB_BigInt},
-			{Name: "alert_definition_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			{Name: "alert_definition_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false, Default: "0"},
 			{Name: "parent_version", Type: migrator.DB_Int, Nullable: false},
 			{Name: "restored_from", Type: migrator.DB_Int, Nullable: false},
 			{Name: "version", Type: migrator.DB_Int, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
-			{Name: "title", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "condition", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
+			{Name: "condition", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
 			{Name: "data", Type: migrator.DB_Text, Nullable: false},
 			{Name: "interval_seconds", Type: migrator.DB_BigInt, Nullable: false},
 		},
@@ -114,10 +124,10 @@ func AlertInstanceMigration(mg *migrator.Migrator) {
 		Name: "alert_instance",
 		Columns: []*migrator.Column{
 			{Name: "def_org_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "def_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			{Name: "def_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false, Default: "0"},
 			{Name: "labels", Type: migrator.DB_Text, Nullable: false},
-			{Name: "labels_hash", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "current_state", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "labels_hash", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
+			{Name: "current_state", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
 			{Name: "current_state_since", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "last_eval_time", Type: migrator.DB_BigInt, Nullable: false},
 		},
@@ -153,6 +163,11 @@ func AlertInstanceMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add index rule_org_id, current_state on alert_instance", migrator.NewAddIndexMigration(alertInstance, &migrator.Index{
 		Cols: []string{"rule_org_id", "current_state"}, Type: migrator.IndexType,
 	}))
+
+	mg.AddMigration("add current_reason column related to current_state",
+		migrator.NewAddColumnMigration(alertInstance, &migrator.Column{
+			Name: "current_reason", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: true,
+		}))
 }
 
 func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
@@ -161,16 +176,16 @@ func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "title", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "condition", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
+			{Name: "condition", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
 			{Name: "data", Type: migrator.DB_Text, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "interval_seconds", Type: migrator.DB_BigInt, Nullable: false, Default: fmt.Sprintf("%d", defaultIntervalSeconds)},
 			{Name: "version", Type: migrator.DB_Int, Nullable: false, Default: "0"},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false, Default: "0"},
 			// the following fields will correspond to a dashboard (or folder) UIID
-			{Name: "namespace_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
-			{Name: "rule_group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "namespace_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false},
+			{Name: "rule_group", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
 			{Name: "no_data_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: "'NoData'"},
 			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: "'Alerting'"},
 		},
@@ -234,6 +249,16 @@ func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 			Cols: []string{"org_id", "dashboard_uid", "panel_id"},
 		},
 	))
+
+	mg.AddMigration("add rule_group_idx column to alert_rule", migrator.NewAddColumnMigration(
+		migrator.Table{Name: "alert_rule"},
+		&migrator.Column{
+			Name:     "rule_group_idx",
+			Type:     migrator.DB_Int,
+			Nullable: false,
+			Default:  "1",
+		},
+	))
 }
 
 func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
@@ -242,16 +267,16 @@ func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "rule_org_id", Type: migrator.DB_BigInt},
-			{Name: "rule_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			{Name: "rule_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false, Default: "0"},
 			// the following fields will correspond to a dashboard (or folder) UID
-			{Name: "rule_namespace_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
-			{Name: "rule_group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "rule_namespace_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false},
+			{Name: "rule_group", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
 			{Name: "parent_version", Type: migrator.DB_Int, Nullable: false},
 			{Name: "restored_from", Type: migrator.DB_Int, Nullable: false},
 			{Name: "version", Type: migrator.DB_Int, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
-			{Name: "title", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "condition", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
+			{Name: "condition", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
 			{Name: "data", Type: migrator.DB_Text, Nullable: false},
 			{Name: "interval_seconds", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "no_data_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: "'NoData'"},
@@ -277,6 +302,16 @@ func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
 
 	// add labels column
 	mg.AddMigration("add column labels to alert_rule_version", migrator.NewAddColumnMigration(alertRuleVersion, &migrator.Column{Name: "labels", Type: migrator.DB_Text, Nullable: true}))
+
+	mg.AddMigration("add rule_group_idx column to alert_rule_version", migrator.NewAddColumnMigration(
+		migrator.Table{Name: "alert_rule_version"},
+		&migrator.Column{
+			Name:     "rule_group_idx",
+			Type:     migrator.DB_Int,
+			Nullable: false,
+			Default:  "1",
+		},
+	))
 }
 
 func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
@@ -306,6 +341,30 @@ func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add index in alert_configuration table on org_id column", migrator.NewAddIndexMigration(alertConfiguration, &migrator.Index{
 		Cols: []string{"org_id"},
 	}))
+
+	mg.AddMigration("add configuration_hash column to alert_configuration", migrator.NewAddColumnMigration(alertConfiguration, &migrator.Column{
+		Name: "configuration_hash", Type: migrator.DB_Varchar, Nullable: false, Default: "'not-yet-calculated'", Length: 32,
+	}))
+}
+
+func AddAlertmanagerConfigHistoryMigrations(mg *migrator.Migrator) {
+	alertConfigHistory := migrator.Table{
+		Name: "alert_configuration_history",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false, Default: "0"},
+			{Name: "alertmanager_configuration", Type: migrator.DB_MediumText, Nullable: false},
+			{Name: "configuration_hash", Type: migrator.DB_Varchar, Nullable: false, Default: "'not-yet-calculated'", Length: 32},
+			{Name: "configuration_version", Type: migrator.DB_NVarchar, Length: 3}, // In a format of vXX e.g. v1, v2, v10, etc
+			{Name: "created_at", Type: migrator.DB_Int, Nullable: false},
+			{Name: "default", Type: migrator.DB_Bool, Nullable: false, Default: "0"},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"org_id"}},
+		},
+	}
+
+	mg.AddMigration("create_alert_configuration_history_table", migrator.NewAddTableMigration(alertConfigHistory))
 }
 
 func AddAlertAdminConfigMigrations(mg *migrator.Migrator) {
@@ -327,7 +386,7 @@ func AddAlertAdminConfigMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("create_ngalert_configuration_table", migrator.NewAddTableMigration(adminConfiguration))
 	mg.AddMigration("add index in ngalert_configuration on org_id column", migrator.NewAddIndexMigration(adminConfiguration, adminConfiguration.Indices[0]))
 	mg.AddMigration("add column send_alerts_to in ngalert_configuration", migrator.NewAddColumnMigration(adminConfiguration, &migrator.Column{
-		Name: "send_alerts_to", Type: migrator.DB_SmallInt, Nullable: false,
+		Name: "send_alerts_to", Type: migrator.DB_SmallInt, Nullable: false, Default: "0",
 	}))
 }
 
@@ -337,9 +396,9 @@ func AddProvisioningMigrations(mg *migrator.Migrator) {
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "record_key", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "record_type", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "provenance", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "record_key", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
+			{Name: "record_type", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
+			{Name: "provenance", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"record_type", "record_key", "org_id"}, Type: migrator.UniqueIndex},
@@ -348,4 +407,28 @@ func AddProvisioningMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("create provenance_type table", migrator.NewAddTableMigration(provisioningTable))
 	mg.AddMigration("add index to uniquify (record_key, record_type, org_id) columns", migrator.NewAddIndexMigration(provisioningTable, provisioningTable.Indices[0]))
+}
+
+func AddAlertImageMigrations(mg *migrator.Migrator) {
+	imageTable := migrator.Table{
+		Name: "alert_image",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "token", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
+			{Name: "path", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
+			{Name: "url", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: false},
+			{Name: "created_at", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "expires_at", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"token"}, Type: migrator.UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("create alert_image table", migrator.NewAddTableMigration(imageTable))
+	mg.AddMigration("add unique index on token to alert_image table", migrator.NewAddIndexMigration(imageTable, imageTable.Indices[0]))
+
+	mg.AddMigration("support longer URLs in alert_image table", migrator.NewRawSQLMigration("").
+		Postgres("ALTER TABLE alert_image ALTER COLUMN url TYPE VARCHAR(2048);").
+		Mysql("ALTER TABLE alert_image MODIFY url VARCHAR(2048) NOT NULL;"))
 }

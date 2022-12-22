@@ -1,5 +1,6 @@
-import { e2e } from '../index';
+import { e2e } from '..';
 import { getScenarioContext } from '../support/scenarioContext';
+
 import { selectOption } from './selectOption';
 import { setDashboardTimeRange } from './setDashboardTimeRange';
 import { TimeRangeConfig } from './setTimeRange';
@@ -89,7 +90,13 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       e2e.components.Panels.Panel.title(panelTitle).click();
       e2e.components.Panels.Panel.headerItems('Edit').click();
     } else {
-      e2e.components.PageToolbar.item('Add panel').click();
+      try {
+        e2e.components.PageToolbar.item('Add panel').click();
+      } catch (e) {
+        // Depending on the screen size, the "Add panel" button might be hidden
+        e2e.components.PageToolbar.item('Show more items').click();
+        e2e.components.PageToolbar.item('Add panel').last().click();
+      }
       e2e.pages.AddDashboard.addNewPanel().click();
     }
 
@@ -147,7 +154,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     //e2e().wait('@chartData');
 
     // Avoid annotations flakiness
-    e2e.components.RefreshPicker.runButton().should('be.visible').click();
+    e2e.components.RefreshPicker.runButtonV2().first().click({ force: true });
 
     e2e().wait('@chartData');
 

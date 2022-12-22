@@ -1,14 +1,20 @@
 import React from 'react';
+
+import { reportInteraction } from '@grafana/runtime/src';
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
+import { SharePublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
+
+import { ShareEmbed } from './ShareEmbed';
+import { ShareExport } from './ShareExport';
+import { ShareLibraryPanel } from './ShareLibraryPanel';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
-import { ShareExport } from './ShareExport';
-import { ShareEmbed } from './ShareEmbed';
 import { ShareModalTabModel } from './types';
-import { contextSrv } from 'app/core/core';
-import { ShareLibraryPanel } from './ShareLibraryPanel';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
 const customPanelTabs: ShareModalTabModel[] = [];
@@ -22,40 +28,56 @@ export function addPanelShareTab(tab: ShareModalTabModel) {
 }
 
 function getInitialState(props: Props): State {
-  const tabs = getTabs(props);
+  const { tabs, activeTab } = getTabs(props);
+
   return {
     tabs,
-    activeTab: tabs[0].value,
+    activeTab,
   };
 }
 
 function getTabs(props: Props) {
-  const { panel } = props;
+  const { panel, activeTab } = props;
 
-  const tabs: ShareModalTabModel[] = [{ label: 'Link', value: 'link', component: ShareLink }];
+  const linkLabel = t('share-modal.tab-title.link', 'Link');
+  const tabs: ShareModalTabModel[] = [{ label: linkLabel, value: 'link', component: ShareLink }];
 
   if (contextSrv.isSignedIn) {
-    tabs.push({ label: 'Snapshot', value: 'snapshot', component: ShareSnapshot });
+    const snapshotLabel = t('share-modal.tab-title.snapshot', 'Snapshot');
+    tabs.push({ label: snapshotLabel, value: 'snapshot', component: ShareSnapshot });
   }
 
   if (panel) {
-    tabs.push({ label: 'Embed', value: 'embed', component: ShareEmbed });
+    const embedLabel = t('share-modal.tab-title.embed', 'Embed');
+    tabs.push({ label: embedLabel, value: 'embed', component: ShareEmbed });
 
     if (!isPanelModelLibraryPanel(panel)) {
-      tabs.push({ label: 'Library panel', value: 'library_panel', component: ShareLibraryPanel });
+      const libraryPanelLabel = t('share-modal.tab-title.library-panel', 'Library panel');
+      tabs.push({ label: libraryPanelLabel, value: 'library_panel', component: ShareLibraryPanel });
     }
     tabs.push(...customPanelTabs);
   } else {
-    tabs.push({ label: 'Export', value: 'export', component: ShareExport });
+    const exportLabel = t('share-modal.tab-title.export', 'Export');
+    tabs.push({ label: exportLabel, value: 'export', component: ShareExport });
     tabs.push(...customDashboardTabs);
   }
 
-  return tabs;
+  if (Boolean(config.featureToggles['publicDashboards'])) {
+    tabs.push({ label: 'Public dashboard', value: 'share', component: SharePublicDashboard });
+  }
+
+  const at = tabs.find((t) => t.value === activeTab);
+
+  return {
+    tabs,
+    activeTab: at?.value ?? tabs[0].value,
+  };
 }
 
 interface Props {
   dashboard: DashboardModel;
   panel?: PanelModel;
+  activeTab?: string;
 
   onDismiss(): void;
 }
@@ -71,17 +93,16 @@ export class ShareModal extends React.Component<Props, State> {
     this.state = getInitialState(props);
   }
 
-  // onDismiss = () => {
-  //   //this.setState(getInitialState(this.props));
-  //   this.props.onDismiss();
-  // };
+  componentDidMount() {
+    reportInteraction('grafana_dashboards_share_modal_viewed');
+  }
 
   onSelectTab = (t: any) => {
     this.setState({ activeTab: t.value });
   };
 
   getTabs() {
-    return getTabs(this.props);
+    return getTabs(this.props).tabs;
   }
 
   getActiveTab() {
@@ -92,14 +113,13 @@ export class ShareModal extends React.Component<Props, State> {
   renderTitle() {
     const { panel } = this.props;
     const { activeTab } = this.state;
-    const title = panel ? 'Share Panel' : 'Share';
-    const tabs = this.getTabs();
+    const title = panel ? t('share-modal.panel.title', 'Share Panel') : t('share-modal.dashboard.title', 'Share');
 
     return (
       <ModalTabsHeader
         title={title}
         icon="share-alt"
-        tabs={tabs}
+        tabs={this.getTabs()}
         activeTab={activeTab}
         onChangeTab={this.onSelectTab}
       />

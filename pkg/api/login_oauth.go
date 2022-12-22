@@ -11,16 +11,18 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/grafana/grafana/pkg/api/response"
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"golang.org/x/oauth2"
 )
 
 var (
@@ -67,7 +69,7 @@ func genPKCECode() (string, string, error) {
 	return string(ascii), pkce, nil
 }
 
-func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
+func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	loginInfo := models.LoginInfo{
 		AuthModule: "oauth",
 	}
@@ -75,20 +77,14 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 	loginInfo.AuthModule = name
 	provider := hs.SocialService.GetOAuthInfoProvider(name)
 	if provider == nil {
-		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
-			HttpStatus:    http.StatusNotFound,
-			PublicMessage: "OAuth not enabled",
-		})
-		return nil
+		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, errors.New("OAuth not enabled"))
+		return
 	}
 
 	connect, err := hs.SocialService.GetConnector(name)
 	if err != nil {
-		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
-			HttpStatus:    http.StatusNotFound,
-			PublicMessage: fmt.Sprintf("No OAuth with name %s configured", name),
-		})
-		return nil
+		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, fmt.Errorf("no OAuth with name %s configured", name))
+		return
 	}
 
 	errorParam := ctx.Query("error")
@@ -96,13 +92,12 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 		errorDesc := ctx.Query("error_description")
 		oauthLogger.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
-		return nil
+		return
 	}
 
 	code := ctx.Query("code")
 	if code == "" {
-		opts := []oauth2.AuthCodeOption{oauth2.AccessTypeOnline}
-
+		var opts []oauth2.AuthCodeOption
 		if provider.UsePKCE {
 			ascii, pkce, err := genPKCECode()
 			if err != nil {
@@ -128,17 +123,17 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 				HttpStatus:    http.StatusInternalServerError,
 				PublicMessage: "An internal error occurred",
 			})
-			return nil
+			return
 		}
 
-		hashedState := hashStatecode(state, provider.ClientSecret)
+		hashedState := hs.hashStatecode(state, provider.ClientSecret)
 		cookies.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
 		if provider.HostedDomain != "" {
 			opts = append(opts, oauth2.SetAuthURLParam("hd", provider.HostedDomain))
 		}
 
 		ctx.Redirect(connect.AuthCodeURL(state, opts...))
-		return nil
+		return
 	}
 
 	cookieState := ctx.GetCookie(OauthStateCookieName)
@@ -151,17 +146,17 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 			HttpStatus:    http.StatusInternalServerError,
 			PublicMessage: "login.OAuthLogin(missing saved state)",
 		})
-		return nil
+		return
 	}
 
-	queryState := hashStatecode(ctx.Query("state"), provider.ClientSecret)
+	queryState := hs.hashStatecode(ctx.Query("state"), provider.ClientSecret)
 	oauthLogger.Info("state check", "queryState", queryState, "cookieState", cookieState)
 	if cookieState != queryState {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 			HttpStatus:    http.StatusInternalServerError,
 			PublicMessage: "login.OAuthLogin(state mismatch)",
 		})
-		return nil
+		return
 	}
 
 	oauthClient, err := hs.SocialService.GetOAuthHttpClient(name)
@@ -171,7 +166,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 			HttpStatus:    http.StatusInternalServerError,
 			PublicMessage: "login.OAuthLogin(" + err.Error() + ")",
 		})
-		return nil
+		return
 	}
 
 	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, oauthClient)
@@ -193,12 +188,25 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 			PublicMessage: "login.OAuthLogin(NewTransportWithCode)",
 			Err:           err,
 		})
-		return nil
+		return
 	}
 	// token.TokenType was defaulting to "bearer", which is out of spec, so we explicitly set to "Bearer"
 	token.TokenType = "Bearer"
 
-	oauthLogger.Debug("OAuthLogin Got token", "token", token)
+	if hs.Cfg.Env != setting.Dev {
+		oauthLogger.Debug("OAuthLogin: got token",
+			"expiry", fmt.Sprintf("%v", token.Expiry),
+			"type", token.TokenType,
+			"has_refresh_token", token.RefreshToken != "",
+		)
+	} else {
+		oauthLogger.Debug("OAuthLogin: got token",
+			"expiry", fmt.Sprintf("%v", token.Expiry),
+			"type", token.TokenType,
+			"access_token", fmt.Sprintf("%v", token.AccessToken),
+			"refresh_token", fmt.Sprintf("%v", token.RefreshToken),
+		)
+	}
 
 	// set up oauth2 client
 	client := connect.Client(oauthCtx, token)
@@ -216,34 +224,34 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 				Err:           err,
 			})
 		}
-		return nil
+		return
 	}
 
-	oauthLogger.Debug("OAuthLogin got user info", "userInfo", userInfo)
+	oauthLogger.Debug("OAuthLogin got user info", "userInfo", fmt.Sprintf("%v", userInfo))
 
 	// validate that we got at least an email address
 	if userInfo.Email == "" {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrNoEmail)
-		return nil
+		return
 	}
 
 	// validate that the email is allowed to login to grafana
 	if !connect.IsEmailAllowed(userInfo.Email) {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrEmailNotAllowed)
-		return nil
+		return
 	}
 
-	loginInfo.ExternalUser = *buildExternalUserInfo(token, userInfo, name)
+	loginInfo.ExternalUser = *hs.buildExternalUserInfo(token, userInfo, name)
 	loginInfo.User, err = hs.SyncUser(ctx, &loginInfo.ExternalUser, connect)
 	if err != nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
-		return nil
+		return
 	}
 
 	// login
 	if err := hs.loginUserWithUser(loginInfo.User, ctx); err != nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
-		return nil
+		return
 	}
 
 	loginInfo.HTTPStatus = http.StatusOK
@@ -254,37 +262,37 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) response.Response {
 		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
 			cookies.DeleteCookie(ctx.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 			ctx.Redirect(redirectTo)
-			return nil
+			return
 		}
 		ctx.Logger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
 	}
 
 	ctx.Redirect(setting.AppSubUrl + "/")
-	return nil
 }
 
 // buildExternalUserInfo returns a ExternalUserInfo struct from OAuth user profile
-func buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, name string) *models.ExternalUserInfo {
+func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, name string) *models.ExternalUserInfo {
 	oauthLogger.Debug("Building external user info from OAuth user info")
 
 	extUser := &models.ExternalUserInfo{
-		AuthModule: fmt.Sprintf("oauth_%s", name),
-		OAuthToken: token,
-		AuthId:     userInfo.Id,
-		Name:       userInfo.Name,
-		Login:      userInfo.Login,
-		Email:      userInfo.Email,
-		OrgRoles:   map[int64]models.RoleType{},
-		Groups:     userInfo.Groups,
+		AuthModule:     fmt.Sprintf("oauth_%s", name),
+		OAuthToken:     token,
+		AuthId:         userInfo.Id,
+		Name:           userInfo.Name,
+		Login:          userInfo.Login,
+		Email:          userInfo.Email,
+		OrgRoles:       map[int64]org.RoleType{},
+		Groups:         userInfo.Groups,
+		IsGrafanaAdmin: userInfo.IsGrafanaAdmin,
 	}
 
-	if userInfo.Role != "" {
-		rt := models.RoleType(userInfo.Role)
+	if userInfo.Role != "" && !hs.Cfg.OAuthSkipOrgRoleUpdateSync {
+		rt := userInfo.Role
 		if rt.IsValid() {
 			// The user will be assigned a role in either the auto-assigned organization or in the default one
 			var orgID int64
-			if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
-				orgID = int64(setting.AutoAssignOrgId)
+			if hs.Cfg.AutoAssignOrg && hs.Cfg.AutoAssignOrgId > 0 {
+				orgID = int64(hs.Cfg.AutoAssignOrgId)
 				plog.Debug("The user has a role assignment and organization membership is auto-assigned",
 					"role", userInfo.Role, "orgId", orgID)
 			} else {
@@ -304,13 +312,18 @@ func (hs *HTTPServer) SyncUser(
 	ctx *models.ReqContext,
 	extUser *models.ExternalUserInfo,
 	connect social.SocialConnector,
-) (*models.User, error) {
+) (*user.User, error) {
 	oauthLogger.Debug("Syncing Grafana user with corresponding OAuth profile")
 	// add/update user in Grafana
 	cmd := &models.UpsertUserCommand{
 		ReqContext:    ctx,
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
+		UserLookupParams: models.UserLookupParams{
+			Email:  &extUser.Email,
+			UserID: nil,
+			Login:  nil,
+		},
 	}
 
 	if err := hs.Login.UpsertUser(ctx.Req.Context(), cmd); err != nil {
@@ -327,8 +340,8 @@ func (hs *HTTPServer) SyncUser(
 	return cmd.Result, nil
 }
 
-func hashStatecode(code, seed string) string {
-	hashBytes := sha256.Sum256([]byte(code + setting.SecretKey + seed))
+func (hs *HTTPServer) hashStatecode(code, seed string) string {
+	hashBytes := sha256.Sum256([]byte(code + hs.Cfg.SecretKey + seed))
 	return hex.EncodeToString(hashBytes[:])
 }
 

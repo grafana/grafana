@@ -1,18 +1,24 @@
-+++
-title = "What's new in Grafana v8.3"
-description = "Feature and improvement highlights for Grafana v8.3"
-keywords = ["grafana", "new", "documentation", "8.3", "release notes"]
-weight = -33
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-3/"]
-[_build]
-list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - ../guides/whats-new-in-v8-3/
+description: Feature and improvement highlights for Grafana v8.3
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '8.3'
+  - release notes
+title: What's new in Grafana v8.3
+weight: -33
+---
 
-# What’s new in Grafana v8.3
+# What's new in Grafana v8.3
 
 Grafana 8.3 is an exciting release for Grafana Labs. This release includes the new Candlestick Panel, a new visualization suggestions engine and, for enterprise users, Recorded Queries.
 
-For Open Source users it also marks the first time Grafana Alerting, formerly unified alerting, is enabled by default for new Grafana installations. Grafana Alerting in 8.3 is the flexible, single pane of glass for all your alerts. Included in this release is expanded provisioning support for notifiers, contact points, and alert rules, alongside auditing and fine-grained access control for our Enterprise customers.
+For Open Source users it also marks the first time Grafana Alerting, formerly unified alerting, is enabled by default for new Grafana installations. Grafana Alerting in 8.3 is the flexible, single pane of glass for all your alerts. Included in this release is expanded provisioning support for notifiers, contact points, and alert rules, alongside auditing and role-based access control for our Enterprise customers.
 
 We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post as well. If you’d like all the details you can check out the complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
@@ -72,15 +78,15 @@ Recorded queries allow you to export the results of certain non-time series quer
 
 This new feature is especially helpful for Enterprise customers using plugins because many new plugins, like ServiceNow and Jira, don’t return time series so customers weren’t able to plot historical data over time. With recorded queries, now they can! For more information
 
-## Assign fine-grained permissions directly to users with the new role picker (beta)
+## Assign role-based permissions directly to users with the new role picker (beta)
 
-Sometimes the Viewer, Editor, and Admin roles just don’t fit what a certain user needs to do in Grafana. Now you can assign fine-grained roles directly to users, so they can create reports, use Explore mode, create data sources, and perform other specific actions in Grafana. The role picker can be access from the Grafana Admin user management page.
+Sometimes the Viewer, Editor, and Admin roles just don’t fit what a certain user needs to do in Grafana. Now you can assign role-based roles directly to users, so they can create reports, use Explore mode, create data sources, and perform other specific actions in Grafana. The role picker can be access from the Grafana Admin user management page.
 
 {{< figure src="/static/img/docs/enterprise/enterprise_role_picker_8_3.png" max-width="1200px" caption="Grafana Enterprise Role Picker" >}}
 
-## Use fine-grained access control for Organizations and Licensing (beta)
+## Use role-based access control for Organizations and Licensing (beta)
 
-We’ve added new permissions to fine-grained access control to help you specify actions that users can perform. Now you can assign permissions to manage Organizations and License functions in Grafana, in addition to Users, Data Sources, Reports, and other resources. Fine-grained access control remains in beta and we will continue to add new permissions until all of Grafana’s endpoints are covered. For a complete list of the actions you can permit using fine-grained access control, see the [reference](https://grafana.com/docs/grafana/next/enterprise/access-control/fine-grained-access-control-references/).
+We’ve added new permissions to role-based access control to help you specify actions that users can perform. Now you can assign permissions to manage Organizations and License functions in Grafana, in addition to Users, Data Sources, Reports, and other resources. Role-based access control remains in beta and we will continue to add new permissions until all of Grafana’s endpoints are covered. For a complete list of the actions you can permit using role-based access control, see the [reference](https://grafana.com/docs/grafana/next/enterprise/access-control/fine-grained-access-control-references/).
 
 ## Get your encryption key from a Key Management Service
 

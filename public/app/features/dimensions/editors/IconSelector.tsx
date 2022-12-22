@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Select } from '@grafana/ui';
+
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+import { Select } from '@grafana/ui';
 
 interface Props {
   value: string;
   onChange: (v: string) => void;
 }
 
-const IconSelector: React.FC<Props> = ({ value, onChange }) => {
+const IconSelector = ({ value, onChange }: Props) => {
   const [icons, setIcons] = useState<SelectableValue[]>(value ? [{ value, label: value }] : []);
   const [icon, setIcon] = useState<string>();
   const iconRoot = (window as any).__grafana_public_path__ + 'img/icons/unicons/';
@@ -30,7 +31,6 @@ const IconSelector: React.FC<Props> = ({ value, onChange }) => {
   }, [iconRoot]);
   return (
     <Select
-      menuShouldPortal
       options={icons}
       value={icon}
       onChange={(selectedValue) => {

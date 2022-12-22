@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+
 import {
   AzureAuthType,
   AzureCloud,
@@ -36,8 +37,6 @@ function getDefaultAzureCloud(): string {
       return 'chinaazuremonitor';
     case AzureCloud.USGovernment:
       return 'govazuremonitor';
-    case AzureCloud.Germany:
-      return 'germanyazuremonitor';
     default:
       throw new Error(`The cloud '${config.azure.cloud}' not supported.`);
   }
@@ -51,8 +50,6 @@ export function getAzurePortalUrl(azureCloud: string): string {
       return 'https://portal.azure.cn';
     case 'govazuremonitor':
       return 'https://portal.azure.us';
-    case 'germanyazuremonitor':
-      return 'https://portal.microsoftazure.de';
     default:
       throw new Error('The cloud not supported.');
   }
@@ -151,10 +148,7 @@ export function updateCredentials(
         },
         secureJsonData: {
           ...options.secureJsonData,
-          clientSecret:
-            typeof credentials.clientSecret === 'string' && credentials.clientSecret.length > 0
-              ? credentials.clientSecret
-              : undefined,
+          clientSecret: typeof credentials.clientSecret === 'string' ? credentials.clientSecret : undefined,
         },
         secureJsonFields: {
           ...options.secureJsonFields,
@@ -164,8 +158,4 @@ export function updateCredentials(
 
       return options;
   }
-}
-
-export function isAppInsightsConfigured(options: AzureDataSourceSettings) {
-  return !!(options.jsonData.appInsightsAppId && options.secureJsonFields.appInsightsApiKey);
 }

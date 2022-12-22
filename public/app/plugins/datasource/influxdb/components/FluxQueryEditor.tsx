@@ -1,7 +1,8 @@
-import React, { PureComponent } from 'react';
-import { InfluxQuery } from '../types';
-import { SelectableValue } from '@grafana/data';
 import { cx, css } from '@emotion/css';
+import React, { PureComponent } from 'react';
+
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import {
   InlineFormLabel,
   LinkButton,
@@ -10,11 +11,14 @@ import {
   MonacoEditor,
   CodeEditorSuggestionItem,
   CodeEditorSuggestionItemKind,
+  withTheme2,
+  Themeable2,
 } from '@grafana/ui';
-import { getTemplateSrv } from '@grafana/runtime';
-import InfluxDatasource from '../datasource';
 
-type Props = {
+import InfluxDatasource from '../datasource';
+import { InfluxQuery } from '../types';
+
+interface Props extends Themeable2 {
   onChange: (query: InfluxQuery) => void;
   onRunQuery: () => void;
   query: InfluxQuery;
@@ -23,7 +27,7 @@ type Props = {
   // query-editor gets converted to react we can stop using this component directly
   // and then we can probably remove the datasource attribute.
   datasource: InfluxDatasource;
-};
+}
 
 const samples: Array<SelectableValue<string>> = [
   { label: 'Show buckets', description: 'List the available buckets (table)', value: 'buckets()' },
@@ -91,7 +95,7 @@ v1.tagValues(
   },
 ];
 
-export class FluxQueryEditor extends PureComponent<Props> {
+class UnthemedFluxQueryEditor extends PureComponent<Props> {
   onFluxQueryChange = (query: string) => {
     this.props.onChange({ ...this.props.query, query });
     this.props.onRunQuery();
@@ -162,7 +166,8 @@ export class FluxQueryEditor extends PureComponent<Props> {
   };
 
   render() {
-    const { query } = this.props;
+    const { query, theme } = this.props;
+    const styles = getStyles(theme);
 
     const helpTooltip = (
       <div>
@@ -174,7 +179,8 @@ export class FluxQueryEditor extends PureComponent<Props> {
     return (
       <>
         <CodeEditor
-          height={'200px'}
+          height={'100%'}
+          containerStyles={styles.editorContainerStyles}
           language="sql"
           value={query.query || ''}
           onBlur={this.onFluxQueryChange}
@@ -184,14 +190,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
           getSuggestions={this.getSuggestions}
           onEditorDidMount={this.editorDidMountCallbackHack}
         />
-        <div
-          className={cx(
-            'gf-form-inline',
-            css`
-              margin-top: 6px;
-            `
-          )}
-        >
+        <div className={cx('gf-form-inline', styles.editorActions)}>
           <LinkButton
             icon="external-link-alt"
             variant="secondary"
@@ -212,3 +211,19 @@ export class FluxQueryEditor extends PureComponent<Props> {
     );
   }
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  editorContainerStyles: css`
+    height: 200px;
+    max-width: 100%;
+    resize: vertical;
+    overflow: auto;
+    background-color: ${theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary};
+    padding-bottom: ${theme.spacing(1)};
+  `,
+  editorActions: css`
+    margin-top: 6px;
+  `,
+});
+
+export const FluxQueryEditor = withTheme2(UnthemedFluxQueryEditor);

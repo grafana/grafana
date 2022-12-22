@@ -1,42 +1,24 @@
 import React from 'react';
-import { PromVisualQuery } from '../types';
-import { useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
-import { promQueryModeller } from '../PromQueryModeller';
-import { css, cx } from '@emotion/css';
-import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
-import Prism from 'prismjs';
-import { promqlGrammar } from '../../promql';
+
+import { EditorFieldGroup, EditorRow } from '@grafana/experimental';
+
+import promqlGrammar from '../../promql';
+import { RawQuery } from '../shared/RawQuery';
 
 export interface Props {
-  query: PromVisualQuery;
+  query: string;
 }
 
 export function QueryPreview({ query }: Props) {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
-  const hightlighted = Prism.highlight(promQueryModeller.renderQuery(query), promqlGrammar, 'promql');
+  if (!query) {
+    return null;
+  }
 
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Preview">
-          <div
-            className={cx(styles.editorField, 'prism-syntax-highlight')}
-            aria-label="selector"
-            dangerouslySetInnerHTML={{ __html: hightlighted }}
-          />
-        </EditorField>
+        <RawQuery query={query} lang={{ grammar: promqlGrammar, name: 'promql' }} />
       </EditorFieldGroup>
     </EditorRow>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    editorField: css({
-      fontFamily: theme.typography.fontFamilyMonospace,
-      fontSize: theme.typography.bodySmall.fontSize,
-    }),
-  };
-};

@@ -1,7 +1,8 @@
-import { RssFeed } from './types';
 import { ArrayVector, FieldType, DataFrame, dateTime } from '@grafana/data';
 
-export function feedToDataFrame(feed: RssFeed): DataFrame {
+import { Feed } from './types';
+
+export function feedToDataFrame(feed: Feed): DataFrame {
   const date = new ArrayVector<number>([]);
   const title = new ArrayVector<string>([]);
   const link = new ArrayVector<string>([]);

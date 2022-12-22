@@ -1,34 +1,36 @@
-import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { LogLabelStatsModel, GrafanaTheme } from '@grafana/data';
+import React, { PureComponent } from 'react';
 
-import { Themeable } from '../../types/theme';
+import { LogLabelStatsModel, GrafanaTheme2 } from '@grafana/data';
+
 import { stylesFactory } from '../../themes';
-import { withTheme } from '../../themes/index';
+import { withTheme2 } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
 
 //Components
 import { LogLabelStatsRow } from './LogLabelStatsRow';
 
 const STATS_ROW_LIMIT = 5;
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     logsStats: css`
       label: logs-stats;
-      column-span: 2;
       background: inherit;
-      color: ${theme.colors.text};
+      color: ${theme.colors.text.primary};
       word-break: break-all;
+      width: fit-content;
+      max-width: 100%;
     `,
     logsStatsHeader: css`
       label: logs-stats__header;
-      border-bottom: 1px solid ${theme.colors.border2};
+      border-bottom: 1px solid ${theme.colors.border.medium};
       display: flex;
     `,
     logsStatsTitle: css`
       label: logs-stats__title;
-      font-weight: ${theme.typography.weight.semibold};
-      padding-right: ${theme.spacing.d};
+      font-weight: ${theme.typography.fontWeightMedium};
+      padding-right: ${theme.spacing(2)};
       display: inline-block;
       white-space: nowrap;
       text-overflow: ellipsis;
@@ -45,7 +47,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-interface Props extends Themeable {
+interface Props extends Themeable2 {
   stats: LogLabelStatsModel[];
   label: string;
   value: string;
@@ -74,7 +76,7 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
     const otherProportion = otherCount / total;
 
     return (
-      <td className={style.logsStats} data-testid="logLabelStats">
+      <div className={style.logsStats} data-testid="logLabelStats">
         <div className={style.logsStatsHeader}>
           <div className={style.logsStatsTitle}>
             {label}: {total} of {rowCount} rows have that {isLabel ? 'label' : 'field'}
@@ -89,10 +91,11 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
             <LogLabelStatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />
           )}
         </div>
-      </td>
+      </div>
     );
   }
 }
 
-export const LogLabelStats = withTheme(UnThemedLogLabelStats);
+/** @deprecated will be removed in the next major version */
+export const LogLabelStats = withTheme2(UnThemedLogLabelStats);
 LogLabelStats.displayName = 'LogLabelStats';

@@ -1,6 +1,8 @@
 import { LoadingState } from '@grafana/data';
 
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
+import { LibraryElementDTO, LibraryElementKind } from '../../types';
+
 import {
   changePage,
   initialLibraryPanelsViewState,
@@ -9,7 +11,6 @@ import {
   LibraryPanelsViewState,
   searchCompleted,
 } from './reducer';
-import { LibraryElementDTO, LibraryElementKind } from '../../types';
 
 describe('libraryPanelsViewReducer', () => {
   describe('when initSearch is dispatched', () => {
@@ -105,7 +106,7 @@ function mockLibraryPanel({
   uid = '1',
   id = 1,
   orgId = 1,
-  folderId = 0,
+  folderUid = '',
   name = 'Test Panel',
   model = { type: 'text', title: 'Test Panel' },
   meta = {
@@ -125,7 +126,7 @@ function mockLibraryPanel({
     uid,
     id,
     orgId,
-    folderId,
+    folderUid,
     name,
     kind: LibraryElementKind.Panel,
     model,

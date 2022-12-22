@@ -1,6 +1,6 @@
-import { InfluxQueryTag } from './types';
 import InfluxDatasource from './datasource';
 import { InfluxQueryBuilder } from './query_builder';
+import { InfluxQueryTag } from './types';
 
 const runExploreQuery = (
   type: string,

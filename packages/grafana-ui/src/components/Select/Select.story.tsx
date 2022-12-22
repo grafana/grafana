@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
-import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { SelectableValue } from '@grafana/data';
-import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
-import { getAvailableIcons, IconName } from '../../types';
-import { SelectCommonProps } from './types';
-import { Meta, Story } from '@storybook/react';
-import { generateOptions } from './mockOptions';
-import mdx from './Select.mdx';
 import { auto } from '@popperjs/core';
 import { action } from '@storybook/addon-actions';
+import { Meta, Story } from '@storybook/react';
+import React, { useState } from 'react';
 
-export default {
+import { SelectableValue, toIconName } from '@grafana/data';
+import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
+
+import { getAvailableIcons } from '../../types';
+import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import mdx from './Select.mdx';
+import { generateOptions, generateThousandsOfOptions } from './mockOptions';
+import { SelectCommonProps } from './types';
+
+const meta: Meta = {
   title: 'Forms/Select',
   component: Select,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
@@ -66,7 +69,7 @@ export default {
       },
     },
   },
-} as Meta;
+};
 
 const loadAsyncOptions = () => {
   return new Promise<Array<SelectableValue<string>>>((resolve) => {
@@ -77,7 +80,7 @@ const loadAsyncOptions = () => {
 };
 
 const getPrefix = (prefix: string) => {
-  const prefixEl = <Icon name={prefix as IconName} />;
+  const prefixEl = <Icon name={toIconName(prefix) ?? 'question-circle'} />;
   return prefixEl;
 };
 
@@ -91,8 +94,25 @@ export const Basic: Story<StoryProps> = (args) => {
   return (
     <>
       <Select
-        menuShouldPortal
         options={generateOptions()}
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          action('onChange')(v);
+        }}
+        {...args}
+      />
+    </>
+  );
+};
+export const BasicVirtualizedList: Story<StoryProps> = (args) => {
+  const [value, setValue] = useState<SelectableValue<string>>();
+
+  return (
+    <>
+      <Select
+        options={generateThousandsOfOptions()}
+        virtualized
         value={value}
         onChange={(v) => {
           setValue(v);
@@ -111,7 +131,6 @@ export const BasicSelectPlainValue: Story<StoryProps> = (args) => {
   return (
     <>
       <Select
-        menuShouldPortal
         options={generateOptions()}
         value={value}
         onChange={(v) => {
@@ -145,7 +164,6 @@ export const SelectWithOptionDescriptions: Story = (args) => {
   return (
     <>
       <Select
-        menuShouldPortal
         options={options}
         value={value}
         onChange={(v) => {
@@ -168,7 +186,6 @@ export const MultiPlainValue: Story = (args) => {
   return (
     <>
       <MultiSelect
-        menuShouldPortal
         options={generateOptions()}
         value={value}
         onChange={(v) => {
@@ -187,7 +204,6 @@ export const MultiSelectWithOptionGroups: Story = (args) => {
   return (
     <>
       <MultiSelect
-        menuShouldPortal
         options={[
           { label: '1', value: '1' },
           { label: '2', value: '2', options: [{ label: '5', value: '5' }] },
@@ -210,7 +226,6 @@ export const MultiSelectBasic: Story = (args) => {
   return (
     <>
       <MultiSelect
-        menuShouldPortal
         options={generateOptions()}
         value={value}
         onChange={(v) => {
@@ -234,7 +249,6 @@ export const MultiSelectAsync: Story = (args) => {
 
   return (
     <AsyncMultiSelect
-      menuShouldPortal
       loadOptions={loadAsyncOptions}
       defaultOptions
       value={value}
@@ -256,7 +270,6 @@ export const BasicSelectAsync: Story = (args) => {
 
   return (
     <AsyncSelect
-      menuShouldPortal
       loadOptions={loadAsyncOptions}
       defaultOptions
       value={value}
@@ -277,7 +290,6 @@ export const AutoMenuPlacement: Story = (args) => {
     <>
       <div style={{ width: '100%', height: '95vh', display: 'flex', alignItems: 'flex-end' }}>
         <Select
-          menuShouldPortal
           options={generateOptions()}
           value={value}
           onChange={(v) => {
@@ -302,7 +314,6 @@ export const WidthAuto: Story = (args) => {
     <>
       <div style={{ width: '100%' }}>
         <Select
-          menuShouldPortal
           options={generateOptions()}
           value={value}
           onChange={(v) => {
@@ -325,7 +336,6 @@ export const CustomValueCreation: Story = (args) => {
   return (
     <>
       <Select
-        menuShouldPortal
         options={[...options, ...customOptions]}
         value={value}
         onChange={(v) => {
@@ -348,3 +358,5 @@ export const CustomValueCreation: Story = (args) => {
 CustomValueCreation.args = {
   allowCustomValue: true,
 };
+
+export default meta;

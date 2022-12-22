@@ -1,11 +1,12 @@
-import React from 'react';
-import { Story, Meta } from '@storybook/react';
-import { List } from './List';
 import { css, cx } from '@emotion/css';
+import { Story, Meta } from '@storybook/react';
+import React from 'react';
 import tinycolor from 'tinycolor2';
-import { InlineList } from './InlineList';
 
-export default {
+import { InlineList } from './InlineList';
+import { List } from './List';
+
+const meta: Meta = {
   title: 'Layout/List',
   component: List,
   parameters: {
@@ -25,7 +26,9 @@ export default {
       },
     },
   },
-} as Meta;
+};
+
+export default meta;
 
 const generateListItems = (numberOfItems: number) => {
   return [...new Array(numberOfItems)].map((item, i) => {
@@ -37,8 +40,8 @@ const generateListItems = (numberOfItems: number) => {
 };
 
 const getItem = (inline = false) => {
-  const rawRenderer = (item: any) => <>{item.name}</>;
-  const customRenderer = (item: any, index: number) => (
+  const rawRenderer = (item: ReturnType<typeof generateListItems>[0]) => <>{item.name}</>;
+  const customRenderer = (item: ReturnType<typeof generateListItems>[0], index: number) => (
     <div
       className={cx([
         css`

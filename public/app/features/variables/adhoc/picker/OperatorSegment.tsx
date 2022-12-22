@@ -1,10 +1,12 @@
 import React, { FC } from 'react';
-import { Segment } from '@grafana/ui';
+
 import { SelectableValue } from '@grafana/data';
+import { Segment } from '@grafana/ui';
 
 interface Props {
   value: string;
   onChange: (item: SelectableValue<string>) => void;
+  disabled?: boolean;
 }
 
 const options = ['=', '!=', '<', '>', '=~', '!~'].map<SelectableValue<string>>((value) => ({
@@ -12,6 +14,14 @@ const options = ['=', '!=', '<', '>', '=~', '!~'].map<SelectableValue<string>>((
   value,
 }));
 
-export const OperatorSegment: FC<Props> = ({ value, onChange }) => {
-  return <Segment className="query-segment-operator" value={value} options={options} onChange={onChange} />;
+export const OperatorSegment: FC<Props> = ({ value, disabled, onChange }) => {
+  return (
+    <Segment
+      className="query-segment-operator"
+      value={value}
+      disabled={disabled}
+      options={options}
+      onChange={onChange}
+    />
+  );
 };

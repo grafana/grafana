@@ -1,22 +1,20 @@
-import {
-  getAdhocVariableEditorState,
-  getDatasourceVariableEditorState,
-  getQueryVariableEditorState,
-} from './selectors';
+import { DataSourceApi } from '@grafana/data';
+
+import { LegacyVariableQueryEditor } from './LegacyVariableQueryEditor';
 import {
   AdHocVariableEditorState,
   DataSourceVariableEditorState,
   initialVariableEditorState,
   QueryVariableEditorState,
 } from './reducer';
-import { LegacyVariableQueryEditor } from './LegacyVariableQueryEditor';
-import { DataSourceApi } from '@grafana/data';
+import {
+  getAdhocVariableEditorState,
+  getDatasourceVariableEditorState,
+  getQueryVariableEditorState,
+} from './selectors';
 
 const adhocExtended: AdHocVariableEditorState = {
-  dataSources: [
-    { text: 'Prometheus', value: null }, // default datasource
-    { text: 'Loki', value: { type: 'loki-ds', uid: 'abc' } },
-  ],
+  infoText: 'infoText',
 };
 
 const datasourceExtended: DataSourceVariableEditorState = {

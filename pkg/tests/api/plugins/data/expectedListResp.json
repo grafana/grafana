@@ -36,6 +36,47 @@
     "signatureOrg": ""
   },
   {
+    "name": "Alertmanager",
+    "type": "datasource",
+    "id": "alertmanager",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Prometheus alertmanager",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://prometheus.io/docs/alerting/latest/alertmanager/"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/alertmanager/img/logo.svg",
+        "large": "public/app/plugins/datasource/alertmanager/img/logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/alertmanager/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
     "name": "Annotations list",
     "type": "panel",
     "id": "annolist",
@@ -86,7 +127,7 @@
       "links": [
         {
           "name": "Learn more",
-          "url": "https://github.com/grafana/azure-monitor-datasource"
+          "url": "https://grafana.com/docs/grafana/latest/datasources/azuremonitor/"
         },
         {
           "name": "Apache License",
@@ -112,8 +153,8 @@
           "path": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/azure_monitor_cpu.png"
         }
       ],
-      "version": "0.3.0",
-      "updated": "2018-12-06"
+      "version": "1.0.0",
+      "updated": ""
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -160,7 +201,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/barchart/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -231,6 +272,42 @@
     "latestVersion": "",
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/candlestick/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Canvas",
+    "type": "panel",
+    "id": "canvas",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Explicit element placement",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/canvas/img/icn-canvas.svg",
+        "large": "public/app/plugins/panel/canvas/img/icn-canvas.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/canvas/",
     "category": "",
     "state": "beta",
     "signature": "internal",
@@ -351,6 +428,42 @@
     "signatureOrg": ""
   },
   {
+    "name": "Flame Graph",
+    "type": "panel",
+    "id": "flamegraph",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg",
+        "large": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/flamegraph/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
     "name": "Gauge",
     "type": "panel",
     "id": "gauge",
@@ -417,7 +530,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/geomap/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -525,7 +638,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/graph/",
     "category": "",
-    "state": "",
+    "state": "deprecated",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -587,16 +700,7 @@
         "url": "https://grafana.com"
       },
       "description": "Like a histogram over time",
-      "links": [
-        {
-          "name": "Brendan Gregg - Heatmaps",
-          "url": "http://www.brendangregg.com/heatmaps.html"
-        },
-        {
-          "name": "Brendan Gregg - Latency Heatmaps",
-          "url": " http://www.brendangregg.com/HeatMaps/latency.html"
-        }
-      ],
+      "links": null,
       "logos": {
         "small": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg",
         "large": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg"
@@ -651,7 +755,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/histogram/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -1035,42 +1139,6 @@
     "signatureOrg": ""
   },
   {
-    "name": "Plugin list",
-    "type": "panel",
-    "id": "pluginlist",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Plugin List for Grafana",
-      "links": null,
-      "logos": {
-        "small": "public/app/plugins/panel/pluginlist/img/icn-dashlist-panel.svg",
-        "large": "public/app/plugins/panel/pluginlist/img/icn-dashlist-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": ""
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": []
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/pluginlist/",
-    "category": "",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": ""
-  },
-  {
     "name": "PostgreSQL",
     "type": "datasource",
     "id": "postgres",
@@ -1214,7 +1282,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/state-timeline/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -1250,7 +1318,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/status-history/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -1477,6 +1545,42 @@
     "signatureOrg": ""
   },
   {
+    "name": "Traces",
+    "type": "panel",
+    "id": "traces",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/traces/img/traces-panel.svg",
+        "large": "public/app/plugins/panel/traces/img/traces-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/traces/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
     "name": "Welcome",
     "type": "panel",
     "id": "welcome",
@@ -1508,6 +1612,42 @@
     "defaultNavUrl": "/plugins/welcome/",
     "category": "",
     "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "XY Chart",
+    "type": "panel",
+    "id": "xychart",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/xychart/img/icn-xychart.svg",
+        "large": "public/app/plugins/panel/xychart/img/icn-xychart.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/xychart/",
+    "category": "",
+    "state": "beta",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""

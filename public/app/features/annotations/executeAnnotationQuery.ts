@@ -1,10 +1,12 @@
 import { Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
+
 import { CoreApp, DataQueryRequest, DataSourceApi, rangeUtil, ScopedVars } from '@grafana/data';
 
-import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
-import { standardAnnotationSupport } from './standardAnnotationSupport';
 import { runRequest } from '../query/state/runRequest';
+
+import { standardAnnotationSupport } from './standardAnnotationSupport';
+import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
 
 let counter = 100;
 function getNextRequestId() {
@@ -51,6 +53,7 @@ export function executeAnnotationQuery(
     scopedVars,
     ...interval,
     app: CoreApp.Dashboard,
+    publicDashboardAccessToken: options.dashboard.meta.publicDashboardAccessToken,
 
     timezone: options.dashboard.timezone,
 

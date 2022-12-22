@@ -1,32 +1,34 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"net/url"
-	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
-	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/plugins/storage"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/grafana/grafana/pkg/util/proxyutil"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -34,20 +36,33 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
+	// "" => no filter
+	// "0" => filter out core plugins
+	// "1" => filter out non-core plugins
 	coreFilter := c.Query("core")
 
-	// For users with viewer role we only return core plugins
-	if !c.HasRole(models.ROLE_ADMIN) {
-		coreFilter = "1"
-	}
+	// FIXME: while we don't have permissions for listing plugins we need this complex check:
+	// When using access control, should be able to list non-core plugins:
+	//  * anyone that can create a data source
+	//  * anyone that can install a plugin
+	// Fallback to only letting admins list non-core plugins
+	reqOrgAdmin := ac.ReqHasRole(org.RoleAdmin)
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
+	canListNonCorePlugins := reqOrgAdmin(c) || hasAccess(reqOrgAdmin, ac.EvalAny(
+		ac.EvalPermission(datasources.ActionCreate),
+		ac.EvalPermission(plugins.ActionInstall),
+	))
 
-	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgId)
+	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgID)
 	if err != nil {
-		return response.Error(500, "Failed to get list of plugins", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get list of plugins", err)
 	}
 
-	result := make(dtos.PluginList, 0)
-	for _, pluginDef := range hs.pluginStore.Plugins(c.Req.Context()) {
+	// Filter plugins
+	pluginDefinitions := hs.pluginStore.Plugins(c.Req.Context())
+	filteredPluginDefinitions := []plugins.PluginDTO{}
+	filteredPluginIDs := map[string]bool{}
+	for _, pluginDef := range pluginDefinitions {
 		// filter out app sub plugins
 		if embeddedFilter == "0" && pluginDef.IncludedInAppID != "" {
 			continue
@@ -55,6 +70,17 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 
 		// filter out core plugins
 		if (coreFilter == "0" && pluginDef.IsCorePlugin()) || (coreFilter == "1" && !pluginDef.IsCorePlugin()) {
+			continue
+		}
+
+		// FIXME: while we don't have permissions for listing plugins we need this complex check:
+		// When using access control, should be able to list non-core plugins:
+		//  * anyone that can create a data source
+		//  * anyone that can install a plugin
+		// Should be able to list this installed plugin:
+		//  * anyone that can edit its settings
+		if !pluginDef.IsCorePlugin() && !canListNonCorePlugins && !hasAccess(reqOrgAdmin,
+			ac.EvalPermission(plugins.ActionWrite, plugins.ScopeProvider.GetResourceScope(pluginDef.ID))) {
 			continue
 		}
 
@@ -67,6 +93,33 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			continue
 		}
 
+		// filter out built in plugins
+		if pluginDef.BuiltIn {
+			continue
+		}
+
+		// filter out disabled plugins
+		if pluginSetting, exists := pluginSettingsMap[pluginDef.ID]; exists {
+			if enabledFilter == "1" && !pluginSetting.Enabled {
+				continue
+			}
+		}
+
+		if (pluginDef.ID == "parca" || pluginDef.ID == "phlare") && !hs.Features.IsEnabled(featuremgmt.FlagFlameGraph) {
+			continue
+		}
+
+		filteredPluginDefinitions = append(filteredPluginDefinitions, pluginDef)
+		filteredPluginIDs[pluginDef.ID] = true
+	}
+
+	// Compute metadata
+	pluginsMetadata := hs.getMultiAccessControlMetadata(c, c.OrgID,
+		plugins.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
+
+	// Prepare DTO
+	result := make(dtos.PluginList, 0)
+	for _, pluginDef := range filteredPluginDefinitions {
 		listItem := dtos.PluginListItem{
 			Id:            pluginDef.ID,
 			Name:          pluginDef.Name,
@@ -79,6 +132,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			Signature:     pluginDef.Signature,
 			SignatureType: pluginDef.SignatureType,
 			SignatureOrg:  pluginDef.SignatureOrg,
+			AccessControl: pluginsMetadata[pluginDef.ID],
 		}
 
 		update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), pluginDef.ID)
@@ -96,21 +150,11 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			listItem.DefaultNavUrl = hs.Cfg.AppSubURL + "/plugins/" + listItem.Id + "/"
 		}
 
-		// filter out disabled plugins
-		if enabledFilter == "1" && !listItem.Enabled {
-			continue
-		}
-
-		// filter out built in plugins
-		if pluginDef.BuiltIn {
-			continue
-		}
-
 		result = append(result, listItem)
 	}
 
 	sort.Sort(result)
-	return response.JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
 func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Response {
@@ -118,23 +162,34 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
-		return response.Error(404, "Plugin not found, no installed plugin with that id", nil)
+		return response.Error(http.StatusNotFound, "Plugin not found, no installed plugin with that id", nil)
+	}
+
+	// In a first iteration, we only have one permission for app plugins.
+	// We will need a different permission to allow users to configure the plugin without needing access to it.
+	if plugin.IsApp() {
+		hasAccess := ac.HasAccess(hs.AccessControl, c)
+		if !hasAccess(ac.ReqSignedIn,
+			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
+			return response.Error(http.StatusForbidden, "Access Denied", nil)
+		}
 	}
 
 	dto := &dtos.PluginSetting{
-		Type:          string(plugin.Type),
-		Id:            plugin.ID,
-		Name:          plugin.Name,
-		Info:          plugin.Info,
-		Dependencies:  plugin.Dependencies,
-		Includes:      plugin.Includes,
-		BaseUrl:       plugin.BaseURL,
-		Module:        plugin.Module,
-		DefaultNavUrl: path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
-		State:         plugin.State,
-		Signature:     plugin.Signature,
-		SignatureType: plugin.SignatureType,
-		SignatureOrg:  plugin.SignatureOrg,
+		Type:             string(plugin.Type),
+		Id:               plugin.ID,
+		Name:             plugin.Name,
+		Info:             plugin.Info,
+		Dependencies:     plugin.Dependencies,
+		Includes:         plugin.Includes,
+		BaseUrl:          plugin.BaseURL,
+		Module:           plugin.Module,
+		DefaultNavUrl:    path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
+		State:            plugin.State,
+		Signature:        plugin.Signature,
+		SignatureType:    plugin.SignatureType,
+		SignatureOrg:     plugin.SignatureOrg,
+		SecureJsonFields: map[string]bool{},
 	}
 
 	if plugin.IsApp() {
@@ -142,15 +197,24 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		dto.Pinned = plugin.AutoEnabled
 	}
 
-	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
-	if err := hs.SQLStore.GetPluginSettingById(c.Req.Context(), &query); err != nil {
+	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
+		PluginID: pluginID,
+		OrgID:    c.OrgID,
+	})
+	if err != nil {
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
-			return response.Error(500, "Failed to get login settings", nil)
+			return response.Error(http.StatusInternalServerError, "Failed to get plugin settings", nil)
 		}
 	} else {
-		dto.Enabled = query.Result.Enabled
-		dto.Pinned = query.Result.Pinned
-		dto.JsonData = query.Result.JsonData
+		dto.Enabled = ps.Enabled
+		dto.Pinned = ps.Pinned
+		dto.JsonData = ps.JSONData
+
+		for k, v := range hs.PluginSettings.DecryptedValues(ps) {
+			if len(v) > 0 {
+				dto.SecureJsonFields[k] = true
+			}
+		}
 	}
 
 	update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), plugin.ID)
@@ -159,7 +223,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		dto.HasUpdate = true
 	}
 
-	return response.JSON(200, dto)
+	return response.JSON(http.StatusOK, dto)
 }
 
 func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Response {
@@ -173,29 +237,22 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Respons
 		return response.Error(404, "Plugin not installed", nil)
 	}
 
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 	cmd.PluginId = pluginID
-	if err := hs.SQLStore.UpdatePluginSetting(c.Req.Context(), &cmd); err != nil {
+	if err := hs.PluginSettings.UpdatePluginSetting(c.Req.Context(), &pluginsettings.UpdateArgs{
+		Enabled:                 cmd.Enabled,
+		Pinned:                  cmd.Pinned,
+		JSONData:                cmd.JsonData,
+		SecureJSONData:          cmd.SecureJsonData,
+		PluginVersion:           cmd.PluginVersion,
+		PluginID:                cmd.PluginId,
+		OrgID:                   cmd.OrgId,
+		EncryptedSecureJSONData: cmd.EncryptedSecureJsonData,
+	}); err != nil {
 		return response.Error(500, "Failed to update plugin setting", err)
 	}
 
 	return response.Success("Plugin settings updated")
-}
-
-func (hs *HTTPServer) GetPluginDashboards(c *models.ReqContext) response.Response {
-	pluginID := web.Params(c.Req)[":pluginId"]
-
-	list, err := hs.pluginDashboardManager.GetPluginDashboards(c.Req.Context(), c.OrgId, pluginID)
-	if err != nil {
-		var notFound plugins.NotFoundError
-		if errors.As(err, &notFound) {
-			return response.Error(404, notFound.Error(), nil)
-		}
-
-		return response.Error(500, "Failed to get plugin dashboards", err)
-	}
-
-	return response.JSON(200, list)
 }
 
 func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response {
@@ -214,13 +271,13 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 
 	// fallback try readme
 	if len(content) == 0 {
-		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "readme")
+		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "help")
 		if err != nil {
 			return response.Error(501, "Could not get markdown file", err)
 		}
 	}
 
-	resp := response.Respond(200, content)
+	resp := response.Respond(http.StatusOK, content)
 	resp.SetHeader("Content-Type", "text/plain; charset=utf-8")
 	return resp
 }
@@ -253,41 +310,25 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	}
 
 	// prepend slash for cleaning relative paths
-	requestedFile := filepath.Clean(filepath.Join("/", web.Params(c.Req)["*"]))
-	rel, err := filepath.Rel("/", requestedFile)
+	requestedFile, err := util.CleanRelativePath(web.Params(c.Req)["*"])
 	if err != nil {
 		// slash is prepended above therefore this is not expected to fail
-		c.JsonApiErr(500, "Failed to get the relative path", err)
+		c.JsonApiErr(500, "Failed to clean relative file path", err)
 		return
 	}
 
-	if !plugin.IncludedInSignature(rel) {
-		hs.log.Warn("Access to requested plugin file will be forbidden in upcoming Grafana versions as the file "+
-			"is not included in the plugin signature", "file", requestedFile)
-	}
-
-	absPluginDir, err := filepath.Abs(plugin.PluginDir)
+	f, err := plugin.File(requestedFile)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to get plugin absolute path", nil)
-		return
-	}
-
-	pluginFilePath := filepath.Join(absPluginDir, rel)
-	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	// nolint:gosec
-	f, err := os.Open(pluginFilePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			c.JsonApiErr(404, "Plugin file not found", err)
+		if errors.Is(err, plugins.ErrFileNotExist) {
+			c.JsonApiErr(404, "Plugin file not found", nil)
 			return
 		}
 		c.JsonApiErr(500, "Could not open plugin file", err)
 		return
 	}
 	defer func() {
-		if err := f.Close(); err != nil {
-			hs.log.Error("Failed to close file", "err", err)
+		if err = f.Close(); err != nil {
+			hs.log.Error("Failed to close plugin file", "err", err)
 		}
 	}()
 
@@ -303,7 +344,16 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
-	http.ServeContent(c.Resp, c.Req, pluginFilePath, fi.ModTime(), f)
+	if rs, ok := f.(io.ReadSeeker); ok {
+		http.ServeContent(c.Resp, c.Req, requestedFile, fi.ModTime(), rs)
+	} else {
+		b, err := io.ReadAll(f)
+		if err != nil {
+			c.JsonApiErr(500, "Plugin file exists but could not read", err)
+			return
+		}
+		http.ServeContent(c.Resp, c.Req, requestedFile, fi.ModTime(), bytes.NewReader(b))
+	}
 }
 
 // CheckHealth returns the health of a plugin.
@@ -311,7 +361,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, "", c.SignedInUser, false)
+	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser)
 	if err != nil {
 		return response.Error(500, "Failed to get plugin settings", err)
 	}
@@ -321,6 +371,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 
 	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), &backend.CheckHealthRequest{
 		PluginContext: pCtx,
+		Headers:       map[string]string{},
 	})
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
@@ -346,18 +397,11 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 		return response.JSON(503, payload)
 	}
 
-	return response.JSON(200, payload)
-}
-
-// CallResource passes a resource call from a plugin to the backend plugin.
-//
-// /api/plugins/:pluginId/resources/*
-func (hs *HTTPServer) CallResource(c *models.ReqContext) {
-	hs.callPluginResource(c, web.Params(c.Req)[":pluginId"], "")
+	return response.JSON(http.StatusOK, payload)
 }
 
 func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Response {
-	return response.JSON(200, hs.pluginErrorResolver.PluginErrors())
+	return response.JSON(http.StatusOK, hs.pluginErrorResolver.PluginErrors())
 }
 
 func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
@@ -367,21 +411,25 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginStore.Add(c.Req.Context(), pluginID, dto.Version)
+	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
+		GrafanaVersion: hs.Cfg.BuildVersion,
+		OS:             runtime.GOOS,
+		Arch:           runtime.GOARCH,
+	})
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
 			return response.Error(http.StatusConflict, "Plugin already installed", err)
 		}
-		var versionUnsupportedErr installer.ErrVersionUnsupported
+		var versionUnsupportedErr repo.ErrVersionUnsupported
 		if errors.As(err, &versionUnsupportedErr) {
 			return response.Error(http.StatusConflict, "Plugin version not supported", err)
 		}
-		var versionNotFoundErr installer.ErrVersionNotFound
+		var versionNotFoundErr repo.ErrVersionNotFound
 		if errors.As(err, &versionNotFoundErr) {
 			return response.Error(http.StatusNotFound, "Plugin version not found", err)
 		}
-		var clientError installer.Response4xxError
+		var clientError repo.Response4xxError
 		if errors.As(err, &clientError) {
 			return response.Error(clientError.StatusCode, clientError.Message, err)
 		}
@@ -398,7 +446,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginStore.Remove(c.Req.Context(), pluginID)
+	err := hs.pluginInstaller.Remove(c.Req.Context(), pluginID)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
 			return response.Error(http.StatusNotFound, "Plugin not installed", err)
@@ -406,7 +454,7 @@ func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 		if errors.Is(err, plugins.ErrUninstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot uninstall a Core plugin", err)
 		}
-		if errors.Is(err, plugins.ErrUninstallOutsideOfPluginDir) {
+		if errors.Is(err, storage.ErrUninstallOutsideOfPluginDir) {
 			return response.Error(http.StatusForbidden, "Cannot uninstall a plugin outside of the plugins directory", err)
 		}
 
@@ -441,254 +489,26 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 		return nil, plugins.NotFoundError{PluginID: pluginId}
 	}
 
-	// nolint:gosec
-	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	path := filepath.Join(plugin.PluginDir, mdFilepath(strings.ToUpper(name)))
-	exists, err := fs.Exists(path)
+	md, err := plugin.File(mdFilepath(strings.ToUpper(name)))
 	if err != nil {
-		return nil, err
+		md, err = plugin.File(mdFilepath(strings.ToUpper(name)))
+		if err != nil {
+			return make([]byte, 0), nil
+		}
 	}
-	if !exists {
-		path = filepath.Join(plugin.PluginDir, mdFilepath(strings.ToLower(name)))
-	}
+	defer func() {
+		if err = md.Close(); err != nil {
+			hs.log.Error("Failed to close plugin markdown file", "err", err)
+		}
+	}()
 
-	exists, err = fs.Exists(path)
+	d, err := io.ReadAll(md)
 	if err != nil {
-		return nil, err
-	}
-	if !exists {
 		return make([]byte, 0), nil
 	}
-
-	// nolint:gosec
-	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
-	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+	return d, nil
 }
 
 func mdFilepath(mdFilename string) string {
 	return filepath.Clean(filepath.Join("/", fmt.Sprintf("%s.md", mdFilename)))
-}
-
-func (hs *HTTPServer) callPluginResource(c *models.ReqContext, pluginID, dsUID string) {
-	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, dsUID, c.SignedInUser, false)
-	if err != nil {
-		c.JsonApiErr(500, "Failed to get plugin settings", err)
-		return
-	}
-	if !found {
-		c.JsonApiErr(404, "Plugin not found", nil)
-		return
-	}
-
-	var dsURL string
-	if pCtx.DataSourceInstanceSettings != nil {
-		dsURL = pCtx.DataSourceInstanceSettings.URL
-	}
-
-	err = hs.PluginRequestValidator.Validate(dsURL, c.Req)
-	if err != nil {
-		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
-		return
-	}
-
-	clonedReq := c.Req.Clone(c.Req.Context())
-	rawURL := web.Params(c.Req)["*"]
-	if clonedReq.URL.RawQuery != "" {
-		rawURL += "?" + clonedReq.URL.RawQuery
-	}
-	urlPath, err := url.Parse(rawURL)
-	if err != nil {
-		handleCallResourceError(err, c)
-		return
-	}
-	clonedReq.URL = urlPath
-
-	if err = hs.makePluginResourceRequest(c.Resp, clonedReq, pCtx); err != nil {
-		handleCallResourceError(err, c)
-	}
-}
-
-func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
-	keepCookieModel := struct {
-		KeepCookies []string `json:"keepCookies"`
-	}{}
-	if dis := pCtx.DataSourceInstanceSettings; dis != nil {
-		err := json.Unmarshal(dis.JSONData, &keepCookieModel)
-		if err != nil {
-			hs.log.Warn("failed to to unpack JSONData in datasource instance settings", "err", err)
-		}
-	}
-	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
-	proxyutil.PrepareProxyRequest(req)
-
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read request body: %w", err)
-	}
-
-	crReq := &backend.CallResourceRequest{
-		PluginContext: pCtx,
-		Path:          req.URL.Path,
-		Method:        req.Method,
-		URL:           req.URL.String(),
-		Headers:       req.Header,
-		Body:          body,
-	}
-
-	childCtx, cancel := context.WithCancel(req.Context())
-	defer cancel()
-	stream := newCallResourceResponseStream(childCtx)
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	defer func() {
-		if err := stream.Close(); err != nil {
-			hs.log.Warn("Failed to close plugin resource stream", "err", err)
-		}
-		wg.Wait()
-	}()
-
-	var flushStreamErr error
-	go func() {
-		flushStreamErr = hs.flushStream(stream, w)
-		wg.Done()
-	}()
-
-	if err := hs.pluginClient.CallResource(req.Context(), crReq, stream); err != nil {
-		return err
-	}
-
-	return flushStreamErr
-}
-
-func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w http.ResponseWriter) error {
-	processedStreams := 0
-
-	for {
-		resp, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
-			if processedStreams == 0 {
-				return errors.New("received empty resource response")
-			}
-			return nil
-		}
-		if err != nil {
-			if processedStreams == 0 {
-				return errutil.Wrap("failed to receive response from resource call", err)
-			}
-
-			hs.log.Error("Failed to receive response from resource call", "err", err)
-			return stream.Close()
-		}
-
-		// Expected that headers and status are only part of first stream
-		if processedStreams == 0 && resp.Headers != nil {
-			// Make sure a content type always is returned in response
-			if _, exists := resp.Headers["Content-Type"]; !exists {
-				resp.Headers["Content-Type"] = []string{"application/json"}
-			}
-
-			for k, values := range resp.Headers {
-				// Due to security reasons we don't want to forward
-				// cookies from a backend plugin to clients/browsers.
-				if k == "Set-Cookie" {
-					continue
-				}
-
-				for _, v := range values {
-					// TODO: Figure out if we should use Set here instead
-					// nolint:gocritic
-					w.Header().Add(k, v)
-				}
-			}
-
-			proxyutil.SetProxyResponseHeaders(w.Header())
-
-			w.WriteHeader(resp.Status)
-		}
-
-		if _, err := w.Write(resp.Body); err != nil {
-			hs.log.Error("Failed to write resource response", "err", err)
-		}
-
-		if flusher, ok := w.(http.Flusher); ok {
-			flusher.Flush()
-		}
-		processedStreams++
-	}
-}
-
-func handleCallResourceError(err error, reqCtx *models.ReqContext) {
-	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-		reqCtx.JsonApiErr(503, "Plugin unavailable", err)
-		return
-	}
-
-	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-		reqCtx.JsonApiErr(404, "Not found", err)
-		return
-	}
-
-	reqCtx.JsonApiErr(500, "Failed to call resource", err)
-}
-
-// callResourceClientResponseStream is used for receiving resource call responses.
-type callResourceClientResponseStream interface {
-	Recv() (*backend.CallResourceResponse, error)
-	Close() error
-}
-
-type callResourceResponseStream struct {
-	ctx    context.Context
-	stream chan *backend.CallResourceResponse
-	closed bool
-}
-
-func newCallResourceResponseStream(ctx context.Context) *callResourceResponseStream {
-	return &callResourceResponseStream{
-		ctx:    ctx,
-		stream: make(chan *backend.CallResourceResponse),
-	}
-}
-
-func (s *callResourceResponseStream) Send(res *backend.CallResourceResponse) error {
-	if s.closed {
-		return errors.New("cannot send to a closed stream")
-	}
-
-	select {
-	case <-s.ctx.Done():
-		return errors.New("cancelled")
-	case s.stream <- res:
-		return nil
-	}
-}
-
-func (s *callResourceResponseStream) Recv() (*backend.CallResourceResponse, error) {
-	select {
-	case <-s.ctx.Done():
-		return nil, s.ctx.Err()
-	case res, ok := <-s.stream:
-		if !ok {
-			return nil, io.EOF
-		}
-		return res, nil
-	}
-}
-
-func (s *callResourceResponseStream) Close() error {
-	if s.closed {
-		return errors.New("cannot close a closed stream")
-	}
-
-	close(s.stream)
-	s.closed = true
-	return nil
 }

@@ -1,24 +1,23 @@
-// Libraries
+import classNames from 'classnames';
 import React, { PureComponent, CSSProperties } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
-import classNames from 'classnames';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { Subscription } from 'rxjs';
 
-// Components
+import { config } from '@grafana/runtime';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
+import { DashboardPanelsChangedEvent } from 'app/types/events';
+
 import { AddPanelWidget } from '../components/AddPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
-
-// Types
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
-import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
-import { Subscription } from 'rxjs';
-import { DashboardPanelsChangedEvent } from 'app/types/events';
 import { GridPos } from '../state/PanelModel';
-import { config } from '@grafana/runtime';
+
+import { DashboardPanel } from './DashboardPanel';
 
 export interface Props {
   dashboard: DashboardModel;
+  isEditable: boolean;
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
 }
@@ -54,7 +53,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
   }
 
   buildLayout() {
-    const layout = [];
+    const layout: ReactGridLayout.Layout[] = [];
     this.panelMap = {};
 
     for (const panel of this.props.dashboard.panels) {
@@ -68,7 +67,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
         continue;
       }
 
-      const panelPos: any = {
+      const panelPos: ReactGridLayout.Layout = {
         i: panel.key,
         x: panel.gridPos.x,
         y: panel.gridPos.y,
@@ -91,7 +90,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   onLayoutChange = (newLayout: ReactGridLayout.Layout[]) => {
     for (const newPos of newLayout) {
-      this.panelMap[newPos.i!].updateGridPos(newPos);
+      this.panelMap[newPos.i!].updateGridPos(newPos, this.state.isLayoutInitialized);
     }
 
     this.props.dashboard.sortPanelsByGridPos();
@@ -113,7 +112,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
   onResize: ItemCallback = (layout, oldItem, newItem) => {
     const panel = this.panelMap[newItem.i!];
     panel.updateGridPos(newItem);
-    panel.configRev++; // trigger change handler
   };
 
   onResizeStop: ItemCallback = (layout, oldItem, newItem) => {
@@ -179,7 +177,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     return panelElements;
   }
 
-  renderPanel(panel: PanelModel, width: any, height: any) {
+  renderPanel(panel: PanelModel, width: number, height: number) {
     if (panel.type === 'row') {
       return <DashboardRow key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
@@ -203,7 +201,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard } = this.props;
+    const { isEditable } = this.props;
 
     /**
      * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
@@ -218,14 +216,13 @@ export class DashboardGrid extends PureComponent<Props, State> {
               return null;
             }
 
-            const draggable = width <= 769 ? false : dashboard.meta.canEdit;
+            const draggable = width <= 769 ? false : isEditable;
 
             /*
             Disable draggable if mobile device, solving an issue with unintentionally
             moving panels. https://github.com/grafana/grafana/issues/18497
             theme.breakpoints.md = 769
           */
-
             return (
               /**
                * The children is using a width of 100% so we need to guarantee that it is wrapped
@@ -236,7 +233,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
                 <ReactGridLayout
                   width={width}
                   isDraggable={draggable}
-                  isResizable={dashboard.meta.canEdit}
+                  isResizable={isEditable}
                   containerPadding={[0, 0]}
                   useCSSTransforms={false}
                   margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}

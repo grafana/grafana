@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
-import { DataFrame, FieldType, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import { isString } from 'lodash';
 import { FeatureLike } from 'ol/Feature';
+import React, { useState } from 'react';
+
+import { DataFrame, FieldType, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
+import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
 
 import { GeomapLayerHover } from '../event';
+
 import { DataHoverRow } from './DataHoverRow';
-import { isString } from 'lodash';
 
 type Props = {
   layers: GeomapLayerHover[];
@@ -61,7 +63,7 @@ export const generateLabel = (feature: FeatureLike, idx: number): string => {
   const names = ['Name', 'name', 'Title', 'ID', 'id'];
   let props = feature.getProperties();
   let first = '';
-  const frame = feature.get('frame') as DataFrame;
+  const frame = feature.get('frame') as DataFrame; // eslint-disable-line
   if (frame) {
     const rowIndex = feature.get('rowIndex');
     for (const f of frame.fields) {

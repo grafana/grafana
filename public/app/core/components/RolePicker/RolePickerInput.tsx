@@ -1,17 +1,21 @@
-import React, { FormEvent, HTMLProps, MutableRefObject, useEffect, useRef } from 'react';
 import { css, cx } from '@emotion/css';
-import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Icon } from '@grafana/ui';
+import React, { FormEvent, HTMLProps, useEffect, useRef } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { ValueContainer } from './ValueContainer';
+import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Icon } from '@grafana/ui';
+
 import { Role } from '../../../types';
+
+import { ValueContainer } from './ValueContainer';
+import { ROLE_PICKER_WIDTH } from './constants';
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
 
 interface InputProps extends HTMLProps<HTMLInputElement> {
   appliedRoles: Role[];
-  builtInRole?: string;
+  basicRole?: string;
   query: string;
-  showBuiltInRole?: boolean;
+  showBasicRole?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
   onQueryChange: (query?: string) => void;
@@ -21,11 +25,11 @@ interface InputProps extends HTMLProps<HTMLInputElement> {
 
 export const RolePickerInput = ({
   appliedRoles,
-  builtInRole,
+  basicRole,
   disabled,
   isFocused,
   query,
-  showBuiltInRole,
+  showBasicRole,
   onOpen,
   onClose,
   onQueryChange,
@@ -36,7 +40,7 @@ export const RolePickerInput = ({
 
   useEffect(() => {
     if (isFocused) {
-      (inputRef as MutableRefObject<HTMLInputElement>).current?.focus();
+      inputRef.current?.focus();
     }
   });
 
@@ -48,13 +52,13 @@ export const RolePickerInput = ({
   const numberOfRoles = appliedRoles.length;
 
   return !isFocused ? (
-    <div className={styles.selectedRoles} onMouseDown={onOpen}>
-      {showBuiltInRole && <ValueContainer>{builtInRole}</ValueContainer>}
-      <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} showBuiltInRole={showBuiltInRole} />
+    <div className={cx(styles.wrapper, styles.selectedRoles)} onMouseDown={onOpen}>
+      {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
+      <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} showBuiltInRole={showBasicRole} />
     </div>
   ) : (
     <div className={styles.wrapper}>
-      {showBuiltInRole && <ValueContainer>{builtInRole}</ValueContainer>}
+      {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
       {appliedRoles.map((role) => (
         <ValueContainer key={role.uid}>{role.displayName}</ValueContainer>
       ))}
@@ -101,18 +105,12 @@ export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: Rol
             </div>
           }
         >
-          <div>
-            <ValueContainer>{`${showBuiltInRole ? '+' : ''}${numberOfRoles} role${
-              numberOfRoles > 1 ? 's' : ''
-            }`}</ValueContainer>
-          </div>
+          <ValueContainer>{`${showBuiltInRole ? '+' : ''}${numberOfRoles} role${
+            numberOfRoles > 1 ? 's' : ''
+          }`}</ValueContainer>
         </Tooltip>
       ) : (
-        !showBuiltInRole && (
-          <div>
-            <ValueContainer>No roles assigned</ValueContainer>
-          </div>
-        )
+        !showBuiltInRole && <ValueContainer>No roles assigned</ValueContainer>
       )}
     </>
   );
@@ -137,7 +135,7 @@ const getRolePickerInputStyles = (
         `,
       disabled && styles.inputDisabled,
       css`
-        width: 520px;
+        min-width: ${ROLE_PICKER_WIDTH}px;
         min-height: 32px;
         height: auto;
         flex-direction: row;

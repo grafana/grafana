@@ -1,9 +1,11 @@
-import React, { FC, ReactNode, useRef, useState } from 'react';
-import { uniqueId } from 'lodash';
 import { css, cx } from '@emotion/css';
-import { useStyles2 } from '../../themes';
-import { Icon, Spinner } from '..';
+import { uniqueId } from 'lodash';
+import React, { FC, ReactNode, useRef, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { Icon, Spinner } from '..';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 
 export interface Props {
@@ -16,6 +18,8 @@ export interface Props {
   contentClassName?: string;
   loading?: boolean;
   labelId?: string;
+  headerDataTestId?: string;
+  contentDataTestId?: string;
 }
 
 export const CollapsableSection: FC<Props> = ({
@@ -27,10 +31,12 @@ export const CollapsableSection: FC<Props> = ({
   children,
   labelId,
   loading = false,
+  headerDataTestId,
+  contentDataTestId,
 }) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
-  const tooltip = `Click to ${open ? 'collapse' : 'expand'}`;
+
   const onClick = (e: React.MouseEvent) => {
     if (e.target instanceof HTMLElement && e.target.tagName === 'A') {
       return;
@@ -48,7 +54,7 @@ export const CollapsableSection: FC<Props> = ({
 
   return (
     <>
-      <div onClick={onClick} className={cx(styles.header, className)} title={tooltip}>
+      <div onClick={onClick} className={cx(styles.header, className)}>
         <button
           id={`collapse-button-${id}`}
           className={styles.button}
@@ -60,15 +66,19 @@ export const CollapsableSection: FC<Props> = ({
           {loading ? (
             <Spinner className={styles.spinner} />
           ) : (
-            <Icon name={open ? 'angle-down' : 'angle-right'} className={styles.icon} />
+            <Icon name={open ? 'angle-up' : 'angle-down'} className={styles.icon} />
           )}
         </button>
-        <div className={styles.label} id={`collapse-label-${id}`}>
+        <div className={styles.label} id={`collapse-label-${id}`} data-testid={headerDataTestId}>
           {label}
         </div>
       </div>
       {open && (
-        <div id={`collapse-content-${id}`} className={cx(styles.content, contentClassName)}>
+        <div
+          id={`collapse-content-${id}`}
+          className={cx(styles.content, contentClassName)}
+          data-testid={contentDataTestId}
+        >
           {children}
         </div>
       )}
@@ -88,9 +98,6 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
     padding: `${theme.spacing(0.5)} 0`,
     '&:focus-within': getFocusStyles(theme),
   }),
-  headerClosed: css({
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-  }),
   button: css({
     all: 'unset',
     '&:focus-visible': {
@@ -109,7 +116,7 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   spinner: css({
     display: 'flex',
     alignItems: 'center',
-    width: theme.v1.spacing.md,
+    width: theme.spacing(2),
   }),
   label: css({
     display: 'flex',

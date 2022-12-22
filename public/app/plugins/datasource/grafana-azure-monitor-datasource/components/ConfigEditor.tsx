@@ -1,21 +1,14 @@
 import React, { PureComponent } from 'react';
-import {
-  DataSourcePluginOptionsEditorProps,
-  SelectableValue,
-  updateDatasourcePluginJsonDataOption,
-  updateDatasourcePluginOption,
-  updateDatasourcePluginResetOption,
-  updateDatasourcePluginSecureJsonDataOption,
-} from '@grafana/data';
+
+import { DataSourcePluginOptionsEditorProps, SelectableValue, updateDatasourcePluginOption } from '@grafana/data';
+import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
-import { MonitorConfig } from './MonitorConfig';
-import { AnalyticsConfig } from './AnalyticsConfig';
-import { getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { InsightsConfig } from './InsightsConfig';
+
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
-import { isAppInsightsConfigured } from '../credentials';
 import { routeNames } from '../utils/common';
+
+import { MonitorConfig } from './MonitorConfig';
 
 export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
@@ -27,7 +20,6 @@ interface ErrorMessage {
 
 export interface State {
   unsaved: boolean;
-  appInsightsInitiallyConfigured: boolean;
   error?: ErrorMessage;
 }
 
@@ -40,7 +32,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     this.state = {
       unsaved: false,
-      appInsightsInitiallyConfigured: isAppInsightsConfigured(props.options),
     };
     this.baseURL = `/api/datasources/${this.props.options.id}/resources/${routeNames.azureMonitor}/subscriptions`;
   }
@@ -79,33 +70,17 @@ export class ConfigEditor extends PureComponent<Props, State> {
       this.setState({ error: undefined });
       return ResponseParser.parseSubscriptionsForSelect(result);
     } catch (err) {
-      this.setState({
-        error: {
-          title: 'Error requesting subscriptions',
-          description: 'Could not request subscriptions from Azure. Check your credentials and try again.',
-          details: err?.data?.message,
-        },
-      });
+      if (isFetchError(err)) {
+        this.setState({
+          error: {
+            title: 'Error requesting subscriptions',
+            description: 'Could not request subscriptions from Azure. Check your credentials and try again.',
+            details: err?.data?.message,
+          },
+        });
+      }
       return Promise.resolve([]);
     }
-  };
-
-  // TODO: Used only by InsightsConfig
-  private onUpdateJsonDataOption =
-    (key: keyof AzureDataSourceJsonData) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
-      updateDatasourcePluginJsonDataOption(this.props, key, event.currentTarget.value);
-    };
-
-  // TODO: Used only by InsightsConfig
-  private onUpdateSecureJsonDataOption =
-    (key: keyof AzureDataSourceSecureJsonData) =>
-    (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
-      updateDatasourcePluginSecureJsonDataOption(this.props, key, event.currentTarget.value);
-    };
-
-  // TODO: Used only by InsightsConfig
-  private resetSecureKey = (key: keyof AzureDataSourceSecureJsonData) => {
-    updateDatasourcePluginResetOption(this.props, key);
   };
 
   render() {
@@ -115,16 +90,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return (
       <>
         <MonitorConfig options={options} updateOptions={this.updateOptions} getSubscriptions={this.getSubscriptions} />
-        <AnalyticsConfig options={options} updateOptions={this.updateOptions} />
-        {this.state.appInsightsInitiallyConfigured && (
-          <InsightsConfig
-            options={options}
-            onUpdateJsonDataOption={this.onUpdateJsonDataOption}
-            onUpdateSecureJsonDataOption={this.onUpdateSecureJsonDataOption}
-            onResetOptionKey={this.resetSecureKey}
-          />
-        )}
-
         {error && (
           <Alert severity="error" title={error.title}>
             <p>{error.description}</p>

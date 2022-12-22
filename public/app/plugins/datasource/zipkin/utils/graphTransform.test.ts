@@ -1,3 +1,5 @@
+import { ZipkinSpan } from '../types';
+
 import { createGraphFrames } from './graphTransform';
 import {
   testResponse,
@@ -6,7 +8,6 @@ import {
   toEdgesFrame,
   toNodesFrame,
 } from './testResponse';
-import { ZipkinSpan } from '../types';
 
 describe('createGraphFrames', () => {
   it('transforms basic response into nodes and edges frame', async () => {

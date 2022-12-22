@@ -3,12 +3,13 @@ package migrator
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/lib/pq"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/xorm"
 )
 
@@ -42,6 +43,10 @@ func (db *PostgresDialect) AutoIncrStr() string {
 
 func (db *PostgresDialect) BooleanStr(value bool) string {
 	return strconv.FormatBool(value)
+}
+
+func (db *PostgresDialect) BatchSize() int {
+	return 1000
 }
 
 func (db *PostgresDialect) Default(col *Column) string {
@@ -131,11 +136,11 @@ func (db *PostgresDialect) CleanDB() error {
 	defer sess.Close()
 
 	if _, err := sess.Exec("DROP SCHEMA public CASCADE;"); err != nil {
-		return errutil.Wrap("failed to drop schema public", err)
+		return fmt.Errorf("%v: %w", "failed to drop schema public", err)
 	}
 
 	if _, err := sess.Exec("CREATE SCHEMA public;"); err != nil {
-		return errutil.Wrap("failed to create schema public", err)
+		return fmt.Errorf("%v: %w", "failed to create schema public", err)
 	}
 
 	return nil
@@ -160,17 +165,17 @@ func (db *PostgresDialect) TruncateDBTables() error {
 		case "dashboard_acl":
 			// keep default dashboard permissions
 			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", db.Quote(table.Name))); err != nil {
-				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
 			}
 			if _, err := sess.Exec(fmt.Sprintf("ALTER SEQUENCE %v RESTART WITH 3;", db.Quote(fmt.Sprintf("%v_id_seq", table.Name)))); err != nil {
-				return errutil.Wrapf(err, "failed to reset table %q", table.Name)
+				return fmt.Errorf("failed to reset table %q: %w", table.Name, err)
 			}
 		default:
 			if _, err := sess.Exec(fmt.Sprintf("TRUNCATE TABLE %v RESTART IDENTITY CASCADE;", db.Quote(table.Name))); err != nil {
 				if db.isUndefinedTable(err) {
 					continue
 				}
-				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
 			}
 		}
 	}
@@ -216,16 +221,24 @@ func (db *PostgresDialect) PostInsertId(table string, sess *xorm.Session) error 
 
 	// sync primary key sequence of org table
 	if _, err := sess.Exec("SELECT setval('org_id_seq', (SELECT max(id) FROM org));"); err != nil {
-		return errutil.Wrapf(err, "failed to sync primary key for org table")
+		return fmt.Errorf("failed to sync primary key for org table: %w", err)
 	}
 	return nil
 }
 
 // UpsertSQL returns the upsert sql statement for PostgreSQL dialect
 func (db *PostgresDialect) UpsertSQL(tableName string, keyCols, updateCols []string) string {
+	str, _ := db.UpsertMultipleSQL(tableName, keyCols, updateCols, 1)
+	return str
+}
+
+// UpsertMultipleSQL returns the upsert sql statement for PostgreSQL dialect
+func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCols []string, count int) (string, error) {
+	if count < 1 {
+		return "", fmt.Errorf("upsert statement must have count >= 1. Got %v", count)
+	}
 	columnsStr := strings.Builder{}
 	onConflictStr := strings.Builder{}
-	colPlaceHoldersStr := strings.Builder{}
 	setStr := strings.Builder{}
 
 	const separator = ", "
@@ -236,8 +249,7 @@ func (db *PostgresDialect) UpsertSQL(tableName string, keyCols, updateCols []str
 		}
 
 		columnsStr.WriteString(fmt.Sprintf("%s%s", db.Quote(c), separatorVar))
-		colPlaceHoldersStr.WriteString(fmt.Sprintf("?%s", separatorVar))
-		setStr.WriteString(fmt.Sprintf("%s=excluded.%s%s", db.Quote(c), db.Quote(c), separatorVar))
+		setStr.WriteString(fmt.Sprintf("%s=EXCLUDED.%s%s", db.Quote(c), db.Quote(c), separatorVar))
 	}
 
 	separatorVar = separator
@@ -248,12 +260,123 @@ func (db *PostgresDialect) UpsertSQL(tableName string, keyCols, updateCols []str
 		onConflictStr.WriteString(fmt.Sprintf("%s%s", db.Quote(c), separatorVar))
 	}
 
-	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s) ON CONFLICT(%s) DO UPDATE SET %s`,
+	valuesStr := strings.Builder{}
+	separatorVar = separator
+	nextPlaceHolder := 1
+
+	for i := 0; i < count; i++ {
+		if i == count-1 {
+			separatorVar = ""
+		}
+
+		colPlaceHoldersStr := strings.Builder{}
+		placeHolderSep := separator
+		for j := 1; j <= len(updateCols); j++ {
+			if j == len(updateCols) {
+				placeHolderSep = ""
+			}
+			placeHolder := fmt.Sprintf("$%v%s", nextPlaceHolder, placeHolderSep)
+			nextPlaceHolder++
+			colPlaceHoldersStr.WriteString(placeHolder)
+		}
+		colPlaceHolders := colPlaceHoldersStr.String()
+
+		valuesStr.WriteString(fmt.Sprintf("(%s)%s", colPlaceHolders, separatorVar))
+	}
+
+	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES %s ON CONFLICT (%s) DO UPDATE SET %s;`,
 		tableName,
 		columnsStr.String(),
-		colPlaceHoldersStr.String(),
+		valuesStr.String(),
 		onConflictStr.String(),
 		setStr.String(),
 	)
-	return s
+
+	return s, nil
+}
+
+func (db *PostgresDialect) Lock(cfg LockCfg) error {
+	// trying to obtain the lock for a resource identified by a 64-bit or 32-bit key value
+	// the lock is exclusive: multiple lock requests stack, so that if the same resource is locked three times
+	// it must then be unlocked three times to be released for other sessions' use.
+	// it will either obtain the lock immediately and return true,
+	// or return false if the lock cannot be acquired immediately.
+	query := "SELECT pg_try_advisory_lock(?)"
+	var success bool
+
+	key, err := db.getLockKey()
+	if err != nil {
+		return fmt.Errorf("failed to generate advisory lock key: %w", err)
+	}
+	_, err = cfg.Session.SQL(query, key).Get(&success)
+	if err != nil {
+		return err
+	}
+	if !success {
+		return ErrLockDB
+	}
+
+	return nil
+}
+
+// OrderBy normalizes ordering so that nulls end up last in sorting, which they do by default in both sqlite and mysql but not postgres
+// order should be a string like `dashboard.id ASC`
+func (db *PostgresDialect) OrderBy(order string) string {
+	nullSort := "FIRST"
+	normalizedOrder := strings.ToUpper(strings.TrimSpace(order))
+
+	if strings.HasSuffix(normalizedOrder, " DESC") {
+		nullSort = "LAST"
+	}
+
+	return fmt.Sprintf("%s NULLS %s", order, nullSort)
+}
+
+func (db *PostgresDialect) Unlock(cfg LockCfg) error {
+	// trying to release a previously-acquired exclusive session level advisory lock.
+	// it will either return true if the lock is successfully released or
+	// false if the lock was not held (in addition an SQL warning will be reported by the server)
+	query := "SELECT pg_advisory_unlock(?)"
+	var success bool
+
+	key, err := db.getLockKey()
+	if err != nil {
+		return fmt.Errorf("failed to generate advisory lock key: %w", err)
+	}
+	_, err = cfg.Session.SQL(query, key).Get(&success)
+	if err != nil {
+		return err
+	}
+	if !success {
+		return ErrReleaseLockDB
+	}
+	return nil
+}
+
+func getDBName(dsn string) (string, error) {
+	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
+		parsedDSN, err := pq.ParseURL(dsn)
+		if err != nil {
+			return "", err
+		}
+		dsn = parsedDSN
+	}
+	re := regexp.MustCompile(`dbname=(\w+)`)
+	submatch := re.FindSubmatch([]byte(dsn))
+	if len(submatch) < 2 {
+		return "", fmt.Errorf("failed to get database name")
+	}
+	return string(submatch[1]), nil
+}
+
+func (db *PostgresDialect) getLockKey() (string, error) {
+	dbName, err := getDBName(db.engine.DataSourceName())
+	if err != nil {
+		return "", err
+	}
+	key, err := database.GenerateAdvisoryLockId(dbName)
+	if err != nil {
+		return "", err
+	}
+	return key, nil
 }

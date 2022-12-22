@@ -60,7 +60,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 					alertState.Labels[ngModels.RuleUIDLabel] = alertState.AlertRuleUID
 					result := stateToPostableAlert(alertState, appURL)
 					u := *appURL
-					u.Path = u.Path + "/alerting/" + alertState.AlertRuleUID + "/edit"
+					u.Path = u.Path + "/alerting/grafana/" + alertState.AlertRuleUID + "/view"
 					require.Equal(t, u.String(), result.Alert.GeneratorURL.String())
 				})
 
@@ -117,6 +117,29 @@ func Test_stateToPostableAlert(t *testing.T) {
 					result = stateToPostableAlert(alertState, appURL)
 					require.Equal(t, expected, result.Annotations)
 				})
+
+				t.Run("add __alertImageToken__ if there is an image token", func(t *testing.T) {
+					alertState := randomState(tc.state)
+					alertState.Annotations = randomMapOfStrings()
+					alertState.Image = &ngModels.Image{Token: "test_token"}
+
+					result := stateToPostableAlert(alertState, appURL)
+
+					expected := make(models.LabelSet, len(alertState.Annotations)+1)
+					for k, v := range alertState.Annotations {
+						expected[k] = v
+					}
+					expected["__alertImageToken__"] = alertState.Image.Token
+
+					require.Equal(t, expected, result.Annotations)
+				})
+			})
+
+			t.Run("should add state reason annotation if not empty", func(t *testing.T) {
+				alertState := randomState(tc.state)
+				alertState.StateReason = "TEST_STATE_REASON"
+				result := stateToPostableAlert(alertState, appURL)
+				require.Equal(t, alertState.StateReason, result.Annotations[ngModels.StateReasonAnnotation])
 			})
 
 			switch tc.state {
@@ -253,5 +276,6 @@ func randomState(evalState eval.State) *state.State {
 		LastSentAt:         randomTimeInPast(),
 		Annotations:        make(map[string]string),
 		Labels:             make(map[string]string),
+		Values:             make(map[string]float64),
 	}
 }

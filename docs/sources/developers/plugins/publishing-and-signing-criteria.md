@@ -1,6 +1,6 @@
-+++
-title = "Plugin publishing and signing criteria"
-+++
+---
+title: Plugin publishing and signing criteria
+---
 
 # Plugin publishing and signing criteria
 

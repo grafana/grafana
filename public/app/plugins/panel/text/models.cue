@@ -12,23 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grafanaschema
+package grafanaplugin
 
-Panel: {
-    lineages: [
-        [
-            {
-                TextMode: "html" | "markdown" @cuetsy(kind="enum",memberNames="HTML|Markdown")
-                PanelOptions: {
-                    mode: TextMode | *"markdown" 
-                    content: string | *"""
+import "github.com/grafana/thema"
+
+Panel: thema.#Lineage & {
+	name: "text"
+	seqs: [
+		{
+			schemas: [
+				{
+					TextMode: "html" | "markdown" | "code" @cuetsy(kind="enum",memberNames="HTML|Markdown|Code")
+
+					CodeLanguage: "json" | "yaml" | "xml" | "typescript" | "sql" | "go" | "markdown" | "html" | *"plaintext"  @cuetsy(kind="enum")
+
+					CodeOptions: {
+						// The language passed to monaco code editor
+						language:  CodeLanguage
+						showLineNumbers: bool | *false
+						showMiniMap: bool | *false
+					} @cuetsy(kind="interface")
+
+					PanelOptions: {
+						mode:    TextMode | *"markdown"
+						code?: CodeOptions
+						content: string | *"""
                     # Title
 
                     For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
                     """
-                }
-            }
-        ]
-    ]
-    migrations: []
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

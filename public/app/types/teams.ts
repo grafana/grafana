@@ -1,4 +1,5 @@
 import { WithAccessControlMetadata } from '@grafana/data';
+
 import { TeamPermissionLevel } from './acl';
 
 export interface Team extends WithAccessControlMetadata {
@@ -28,8 +29,11 @@ export interface TeamGroup {
 
 export interface TeamsState {
   teams: Team[];
-  searchQuery: string;
-  searchPage: number;
+  page: number;
+  query: string;
+  perPage: number;
+  noTeams: boolean;
+  totalPages: number;
   hasFetched: boolean;
 }
 

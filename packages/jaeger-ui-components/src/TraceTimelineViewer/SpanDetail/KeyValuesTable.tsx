@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
-import jsonMarkup from 'json-markup';
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { Icon, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
+import jsonMarkup from 'json-markup';
+import * as React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
+
+import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
 import { TNil } from '../../types';
 import { TraceKeyValuePair, TraceLink } from '../../types/trace';
-import { autoColor } from '../../Theme';
 import { ubInlineBlock, uWidth100 } from '../../uberUtilityStyles';
 
 const copyIconClassName = 'copyIcon';
@@ -33,7 +34,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       label: KeyValueTable;
       background: ${autoColor(theme, '#fff')};
       border: 1px solid ${autoColor(theme, '#ddd')};
-      margin-bottom: 0.7em;
+      margin-bottom: 0.5rem;
       max-height: 450px;
       overflow: auto;
     `,
@@ -44,9 +45,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
     row: css`
       label: row;
       & > td {
-        padding: 0.25rem 0.5rem;
-        padding: 0.25rem 0.5rem;
-        vertical-align: top;
+        padding: 0rem 0.5rem;
+        height: 30px;
       }
       &:nth-child(2n) > td {
         background: ${autoColor(theme, '#f5f5f5')};
@@ -75,7 +75,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
 const jsonObjectOrArrayStartRegex = /^(\[|\{)/;
 
-function parseIfComplexJson(value: any) {
+function parseIfComplexJson(value: unknown) {
   // if the value is a string representing actual json object or array, then use json-markup
   if (typeof value === 'string' && jsonObjectOrArrayStartRegex.test(value)) {
     // otherwise just return as is
@@ -99,7 +99,7 @@ LinkValue.defaultProps = {
   title: '',
 };
 
-type KeyValuesTableProps = {
+export type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
   linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
 };
@@ -108,7 +108,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
   const { data, linksGetter } = props;
   const styles = useStyles2(getStyles);
   return (
-    <div className={cx(styles.KeyValueTable)} data-test-id="KeyValueTable">
+    <div className={cx(styles.KeyValueTable)} data-testid="KeyValueTable">
       <table className={uWidth100}>
         <tbody className={styles.body}>
           {data.map((row, i) => {
@@ -133,7 +133,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
             return (
               // `i` is necessary in the key because row.key can repeat
               <tr className={styles.row} key={`${row.key}-${i}`}>
-                <td className={styles.keyColumn} data-test-id="KeyValueTable--keyColumn">
+                <td className={styles.keyColumn} data-testid="KeyValueTable--keyColumn">
                   {row.key}
                 </td>
                 <td>{valueMarkup}</td>

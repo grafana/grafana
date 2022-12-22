@@ -1,16 +1,14 @@
-// Libraries
 import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
-// Utils
-import { formattedValueToString, DisplayValue, FieldConfig, FieldType } from '@grafana/data';
-import { calculateFontSize } from '../../utils/measureText';
-
-// Types
-import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
-import { getTextColorForBackground } from '../../utils';
+import { formattedValueToString, DisplayValue, FieldConfig, FieldType, VizOrientation } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
+
+import { getTextColorForAlphaBackground } from '../../utils';
+import { calculateFontSize } from '../../utils/measureText';
 import { Sparkline } from '../Sparkline/Sparkline';
+
+import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
@@ -38,8 +36,8 @@ export abstract class BigValueLayout {
     this.justifyCenter = shouldJustifyCenter(props.justifyMode, this.textValues.title);
     this.valueToAlignTo = this.textValues.valueToAlignTo;
     this.titleToAlignTo = this.textValues.titleToAlignTo;
-    this.titleFontSize = 14;
-    this.valueFontSize = 14;
+    this.titleFontSize = 0;
+    this.valueFontSize = 0;
     this.chartHeight = 0;
     this.chartWidth = 0;
     this.maxTextWidth = width - this.panelPadding * 2;
@@ -64,8 +62,12 @@ export abstract class BigValueLayout {
       lineHeight: LINE_HEIGHT,
     };
 
+    if (this.props.parentOrientation === VizOrientation.Horizontal && this.justifyCenter) {
+      styles.paddingRight = '0.75ch';
+    }
+
     if (this.props.colorMode === BigValueColorMode.Background) {
-      styles.color = getTextColorForBackground(this.valueColor);
+      styles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
     }
 
     return styles;
@@ -89,7 +91,7 @@ export abstract class BigValueLayout {
         styles.color = this.valueColor;
         break;
       case BigValueColorMode.Background:
-        styles.color = getTextColorForBackground(this.valueColor);
+        styles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
         break;
       case BigValueColorMode.None:
         styles.color = this.props.theme.colors.text.primary;
@@ -335,8 +337,9 @@ export class StackedWithChartLayout extends BigValueLayout {
         LINE_HEIGHT,
         MAX_TITLE_SIZE
       );
+
+      titleHeight = this.titleFontSize * LINE_HEIGHT;
     }
-    titleHeight = this.titleFontSize * LINE_HEIGHT;
 
     if (this.valueToAlignTo.length) {
       this.valueFontSize = calculateFontSize(
@@ -399,8 +402,10 @@ export class StackedWithNoChartLayout extends BigValueLayout {
       );
     }
 
-    // make title fontsize it's a bit smaller than valueFontSize
-    this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
+    if (this.titleToAlignTo?.length) {
+      // make title fontsize it's a bit smaller than valueFontSize
+      this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
+    }
   }
 
   getValueAndTitleContainerStyles() {
@@ -422,7 +427,7 @@ export function buildLayout(props: Props): BigValueLayout {
   const useWideLayout = width / height > 2.5;
 
   if (useWideLayout) {
-    if (height > 50 && !!sparkline) {
+    if (height > 50 && !!sparkline && sparkline.y.values.length > 1) {
       return new WideWithChartLayout(props);
     } else {
       return new WideNoChartLayout(props);
@@ -430,7 +435,7 @@ export function buildLayout(props: Props): BigValueLayout {
   }
 
   // stacked layouts
-  if (height > 100 && !!sparkline) {
+  if (height > 100 && sparkline && sparkline.y.values.length > 1) {
     return new StackedWithChartLayout(props);
   } else {
     return new StackedWithNoChartLayout(props);

@@ -1,13 +1,21 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { configureStore } from 'app/store/configureStore';
+import React from 'react';
 import { Provider } from 'react-redux';
-import { QueryRows } from './QueryRows';
-import { ExploreId, ExploreState } from 'app/types';
-import { makeExplorePaneState } from './state/utils';
+
+import { DataQuery } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { configureStore } from 'app/store/configureStore';
+import { ExploreId, ExploreState } from 'app/types';
+
 import { UserState } from '../profile/state/reducers';
-import { DataQuery } from '../../../../packages/grafana-data/src';
+
+import { QueryRows } from './QueryRows';
+import { makeExplorePaneState } from './state/utils';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: () => null,
+}));
 
 function setup(queries: DataQuery[]) {
   const defaultDs = {
@@ -44,14 +52,16 @@ function setup(queries: DataQuery[]) {
   const initialState: ExploreState = {
     left: {
       ...leftState,
+      richHistory: [],
       datasourceInstance: datasources['someDs-uid'],
       queries,
     },
     syncedTimes: false,
+    correlations: [],
     right: undefined,
-    richHistory: [],
     richHistoryStorageFull: false,
     richHistoryLimitExceededWarningShown: false,
+    richHistoryMigrationFailed: false,
   };
   const store = configureStore({ explore: initialState, user: { orgId: 1 } as UserState });
 
@@ -74,7 +84,7 @@ describe('Explore QueryRows', () => {
     // waiting for the d&d component to fully render.
     await screen.findAllByText('someDs query editor');
 
-    let duplicateButton = screen.getByTitle('Duplicate query');
+    let duplicateButton = screen.getByLabelText(/Duplicate query/i);
 
     fireEvent.click(duplicateButton);
 

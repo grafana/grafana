@@ -1,14 +1,17 @@
-import React, { useCallback, useEffect, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { RadioButtonSize, RadioButton } from './RadioButton';
-import { Icon } from '../../Icon/Icon';
-import { IconName } from '../../../types/icon';
+import React, { useCallback, useEffect, useRef } from 'react';
+
+import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
+
 import { useStyles2 } from '../../../themes';
+import { Icon } from '../../Icon/Icon';
+
+import { RadioButtonSize, RadioButton } from './RadioButton';
 
 export interface RadioButtonGroupProps<T> {
   value?: T;
+  id?: string;
   disabled?: boolean;
   disabledOptions?: T[];
   options: Array<SelectableValue<T>>;
@@ -28,6 +31,7 @@ export function RadioButtonGroup<T>({
   disabled,
   disabledOptions,
   size = 'md',
+  id,
   className,
   fullWidth = false,
   autoFocus = false,
@@ -52,8 +56,9 @@ export function RadioButtonGroup<T>({
     },
     [onClick]
   );
-  const id = uniqueId('radiogroup-');
-  const groupName = useRef(id);
+
+  const internalId = id ?? uniqueId('radiogroup-');
+  const groupName = useRef(internalId);
   const styles = useStyles2(getStyles);
 
   const activeButtonRef = useRef<HTMLInputElement | null>(null);
@@ -65,26 +70,28 @@ export function RadioButtonGroup<T>({
 
   return (
     <div className={cx(styles.radioGroup, fullWidth && styles.fullWidth, className)}>
-      {options.map((o, i) => {
-        const isItemDisabled = disabledOptions && o.value && disabledOptions.includes(o.value);
+      {options.map((opt, i) => {
+        const isItemDisabled = disabledOptions && opt.value && disabledOptions.includes(opt.value);
+        const icon = opt.icon ? toIconName(opt.icon) : undefined;
+
         return (
           <RadioButton
             size={size}
             disabled={isItemDisabled || disabled}
-            active={value === o.value}
+            active={value === opt.value}
             key={`o.label-${i}`}
-            aria-label={o.ariaLabel}
-            onChange={handleOnChange(o)}
-            onClick={handleOnClick(o)}
-            id={`option-${o.value}-${id}`}
+            aria-label={opt.ariaLabel}
+            onChange={handleOnChange(opt)}
+            onClick={handleOnClick(opt)}
+            id={`option-${opt.value}-${internalId}`}
             name={groupName.current}
-            description={o.description}
+            description={opt.description}
             fullWidth={fullWidth}
-            ref={value === o.value ? activeButtonRef : undefined}
+            ref={value === opt.value ? activeButtonRef : undefined}
           >
-            {o.icon && <Icon name={o.icon as IconName} className={styles.icon} />}
-            {o.imgUrl && <img src={o.imgUrl} alt={o.label} className={styles.img} />}
-            {o.label}
+            {icon && <Icon name={icon} className={styles.icon} />}
+            {opt.imgUrl && <img src={opt.imgUrl} alt={opt.label} className={styles.img} />}
+            {opt.label} {opt.component ? <opt.component /> : null}
           </RadioButton>
         );
       })}

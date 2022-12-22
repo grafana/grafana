@@ -1,9 +1,9 @@
+import { dateTimeFormat, dateTimeFormatTimeAgo, localTimeFormat, systemDateFormats } from '../datetime';
 import { toDuration as duration, toUtc, dateTime } from '../datetime/moment_wrapper';
+import { TimeZone } from '../types';
+import { DecimalCount } from '../types/displayValue';
 
 import { toFixed, toFixedScaled, FormattedValue, ValueFormatter } from './valueFormats';
-import { DecimalCount } from '../types/displayValue';
-import { TimeZone } from '../types';
-import { dateTimeFormat, dateTimeFormatTimeAgo, localTimeFormat, systemDateFormats } from '../datetime';
 
 interface IntervalsInSeconds {
   [interval: string]: number;

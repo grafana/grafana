@@ -1,13 +1,15 @@
-import React, { FC, useEffect } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Button, FormAPI, HorizontalGroup, stylesFactory, useTheme, Spinner } from '@grafana/ui';
+import React, { FC, useEffect } from 'react';
+
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Button, FormAPI, HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
+import config from 'app/core/config';
+
 import { NotificationChannelType, NotificationChannelDTO, NotificationChannelSecureFields } from '../../../types';
-import { NotificationSettings } from './NotificationSettings';
+
 import { BasicSettings } from './BasicSettings';
 import { ChannelSettings } from './ChannelSettings';
-
-import config from 'app/core/config';
+import { NotificationSettings } from './NotificationSettings';
 
 interface Props
   extends Pick<FormAPI<NotificationChannelDTO>, 'control' | 'errors' | 'register' | 'watch' | 'getValues'> {
@@ -37,11 +39,11 @@ export const NotificationChannelForm: FC<Props> = ({
   resetSecureField,
   secureFields,
 }) => {
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     /*
-      Finds fields that have dependencies on other fields and removes duplicates.
+      Find fields that have dependencies on other fields and removes duplicates.
       Needs to be prefixed with settings.
     */
     const fieldsToWatch =
@@ -115,15 +117,15 @@ export const NotificationChannelForm: FC<Props> = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     formContainer: css``,
     formItem: css`
       flex-grow: 1;
-      padding-top: ${theme.spacing.md};
+      padding-top: ${theme.spacing(2)};
     `,
     formButtons: css`
-      padding-top: ${theme.spacing.xl};
+      padding-top: ${theme.spacing(4)};
     `,
   };
-});
+};

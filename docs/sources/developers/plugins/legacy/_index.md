@@ -1,11 +1,16 @@
-+++
-title = "Legacy plugins"
-aliases = ["/docs/grafana/latest/plugins/development/", "/docs/grafana/next/plugins/datasources/", "/docs/grafana/next/plugins/apps/", "/docs/grafana/next/plugins/panels/", "/docs/grafana/next/plugins/developing/development/"]
-+++
+---
+aliases:
+  - ../../plugins/development/
+  - /docs/grafana/next/plugins/apps/
+  - /docs/grafana/next/plugins/datasources/
+  - /docs/grafana/next/plugins/developing/development/
+  - /docs/grafana/next/plugins/panels/
+title: Legacy plugins
+---
 
 # Legacy plugins
 
-> **Note:** Since Grafana 7.0, writing plugins using Angular is no longer recommended. If you're looking to build a new plugin, refer to [Plugins]({{< relref "../_index.md" >}}).
+> **Note:** Since Grafana 7.0, writing plugins using Angular is no longer recommended. If you're looking to build a new plugin, refer to [Plugins]({{< relref "../" >}}).
 
 You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins).
 
@@ -44,20 +49,20 @@ Grafana that can impact your plugin.
 
 ## Metadata
 
-See the [coding styleguide]({{< relref "style-guide.md" >}}) for details on the metadata.
+See the [coding styleguide]({{< relref "style-guide/" >}}) for details on the metadata.
 
 ## module.(js|ts)
 
 This is the entry point for every plugin. This is the place where you should export
 your plugin implementation. Depending on what kind of plugin you are developing you
-will be expected to export different things. You can find what's expected for [datasource]({{< relref "data-sources.md" >}}), [panels]({{< relref "panels.md" >}})
-and [apps]({{< relref "apps.md" >}}) plugins in the documentation.
+will be expected to export different things. You can find what's expected for [datasource]({{< relref "data-sources/" >}}), [panels]({{< relref "panels/" >}})
+and [apps]({{< relref "apps/" >}}) plugins in the documentation.
 
 The Grafana SDK is quite small so far and can be found here:
 
 - [SDK file in Grafana](https://github.com/grafana/grafana/blob/main/public/app/plugins/sdk.ts)
 
-The SDK contains three different plugin classes: PanelCtrl, MetricsPanelCtrl and QueryCtrl. For plugins of the panel type, the module.js file should export one of these. There are some extra classes for [data sources]({{< relref "data-sources.md" >}}).
+The SDK contains three different plugin classes: PanelCtrl, MetricsPanelCtrl and QueryCtrl. For plugins of the panel type, the module.js file should export one of these. There are some extra classes for [data sources]({{< relref "data-sources/" >}}).
 
 Example:
 
@@ -105,7 +110,7 @@ There are a number of Grafana events that a plugin can hook into:
 - `data-snapshot-load` is an event triggered to load data when in snapshot mode.
 - `data-error` is used to handle errors on dashboard refresh.
 
-If a panel receives data and hooks into the `data-received` event then it should handle snapshot mode too. Otherwise the panel will not work if saved as a snapshot. [Getting Plugins to work in Snapshot Mode]({{< relref "snapshot-mode.md" >}}) describes how to add support for this.
+If a panel receives data and hooks into the `data-received` event then it should handle snapshot mode too. Otherwise the panel will not work if saved as a snapshot. [Getting Plugins to work in Snapshot Mode]({{< relref "snapshot-mode/" >}}) describes how to add support for this.
 
 ## Examples
 
@@ -119,9 +124,9 @@ We have three different examples that you can fork/download to get started devel
 
 ## Other Articles
 
-- [Getting Plugins to work in Snapshot Mode]({{< relref "snapshot-mode.md" >}})
-- [Plugin Defaults and Editor Mode]({{< relref "defaults-and-editor-mode.md" >}})
-- [Grafana Plugin Code Styleguide]({{< relref "style-guide.md" >}})
-- [Grafana Apps]({{< relref "apps.md" >}})
-- [Grafana Data Sources]({{< relref "data-sources.md" >}})
-- [plugin.json Schema]({{< relref "../metadata.md" >}})
+- [Getting Plugins to work in Snapshot Mode]({{< relref "snapshot-mode/" >}})
+- [Plugin Defaults and Editor Mode]({{< relref "defaults-and-editor-mode/" >}})
+- [Grafana Plugin Code Styleguide]({{< relref "style-guide/" >}})
+- [Grafana Apps]({{< relref "apps/" >}})
+- [Grafana Data Sources]({{< relref "data-sources/" >}})
+- [plugin.json Schema]({{< relref "../metadata/" >}})

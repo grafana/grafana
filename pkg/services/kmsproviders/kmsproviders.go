@@ -17,3 +17,11 @@ const (
 type Service interface {
 	Provide() (map[secrets.ProviderID]secrets.Provider, error)
 }
+
+func NormalizeProviderID(id secrets.ProviderID) secrets.ProviderID {
+	if id == Legacy {
+		return Default
+	}
+
+	return id
+}

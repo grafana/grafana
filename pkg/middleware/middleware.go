@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -16,8 +17,8 @@ var (
 	})
 	ReqSignedIn            = Auth(&AuthOptions{ReqSignedIn: true})
 	ReqSignedInNoAnonymous = Auth(&AuthOptions{ReqSignedIn: true, ReqNoAnonynmous: true})
-	ReqEditorRole          = RoleAuth(models.ROLE_EDITOR, models.ROLE_ADMIN)
-	ReqOrgAdmin            = RoleAuth(models.ROLE_ADMIN)
+	ReqEditorRole          = RoleAuth(org.RoleEditor, org.RoleAdmin)
+	ReqOrgAdmin            = RoleAuth(org.RoleAdmin)
 )
 
 func HandleNoCacheHeader(ctx *models.ReqContext) {
@@ -75,4 +76,22 @@ func addNoCacheHeaders(w web.ResponseWriter) {
 
 func addXFrameOptionsDenyHeader(w web.ResponseWriter) {
 	w.Header().Set("X-Frame-Options", "deny")
+}
+
+func AddCustomResponseHeaders(cfg *setting.Cfg) web.Handler {
+	return func(c *web.Context) {
+		c.Resp.Before(func(w web.ResponseWriter) {
+			if w.Written() {
+				return
+			}
+
+			for header, value := range cfg.CustomResponseHeaders {
+				// do not override existing headers
+				if w.Header().Get(header) != "" {
+					continue
+				}
+				w.Header().Set(header, value)
+			}
+		})
+	}
 }

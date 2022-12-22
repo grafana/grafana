@@ -14,13 +14,14 @@
 
 import { get as _get } from 'lodash';
 
+import { TNil } from '../../types';
+
 import EUpdateTypes from './EUpdateTypes';
 import { DraggableBounds, DraggingUpdate } from './types';
-import { TNil } from '../../types';
 
 const LEFT_MOUSE_BUTTON = 0;
 
-type DraggableManagerOptions = {
+export type DraggableManagerOptions = {
   getBounds: (tag: string | TNil) => DraggableBounds;
   onMouseEnter?: (update: DraggingUpdate) => void;
   onMouseLeave?: (update: DraggingUpdate) => void;
@@ -59,10 +60,10 @@ export default class DraggableManager {
   tag: string | TNil;
 
   // handlers for integration with DOM elements
-  handleMouseEnter: (event: React.MouseEvent<any>) => void;
-  handleMouseMove: (event: React.MouseEvent<any>) => void;
-  handleMouseLeave: (event: React.MouseEvent<any>) => void;
-  handleMouseDown: (event: React.MouseEvent<any>) => void;
+  handleMouseEnter: (event: React.MouseEvent) => void;
+  handleMouseMove: (event: React.MouseEvent) => void;
+  handleMouseLeave: (event: React.MouseEvent) => void;
+  handleMouseDown: (event: React.MouseEvent) => void;
 
   constructor({ getBounds, tag, resetBoundsOnResize = true, ...rest }: DraggableManagerOptions) {
     this.handleMouseDown = this._handleDragEvent;
@@ -112,7 +113,7 @@ export default class DraggableManager {
     window.removeEventListener('mouseup', this._handleDragEvent);
     const style = _get(document, 'body.style');
     if (style) {
-      style.userSelect = null;
+      style.userSelect = 'auto';
     }
     this._isDragging = false;
   }
@@ -141,7 +142,7 @@ export default class DraggableManager {
     this._bounds = undefined;
   };
 
-  _handleMinorMouseEvent = (event: React.MouseEvent<any>) => {
+  _handleMinorMouseEvent = (event: React.MouseEvent) => {
     const { button, clientX, type: eventType } = event;
     if (this._isDragging || button !== LEFT_MOUSE_BUTTON) {
       return;
@@ -174,7 +175,7 @@ export default class DraggableManager {
     });
   };
 
-  _handleDragEvent = (event: MouseEvent | React.MouseEvent<any>) => {
+  _handleDragEvent = (event: MouseEvent | React.MouseEvent) => {
     const { button, clientX, type: eventType } = event;
     let type: EUpdateTypes | null = null;
     let handler: ((update: DraggingUpdate) => void) | TNil;

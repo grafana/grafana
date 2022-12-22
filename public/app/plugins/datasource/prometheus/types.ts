@@ -1,6 +1,8 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+
+import { PromApplication } from '../../../types/unified-alerting-dto';
+
 import { QueryEditorMode } from './querybuilder/shared/types';
-import { PromVisualQuery } from './querybuilder/types';
 
 export interface PromQuery extends DataQuery {
   expr: string;
@@ -20,10 +22,6 @@ export interface PromQuery extends DataQuery {
   showingTable?: boolean;
   /** Code, Builder or Explain */
   editorMode?: QueryEditorMode;
-  /** Controls if the query preview is shown */
-  editorPreview?: boolean;
-  /** Temporary until we have a parser */
-  visualQuery?: PromVisualQuery;
 }
 
 export interface PromOptions extends DataSourceJsonData {
@@ -34,10 +32,8 @@ export interface PromOptions extends DataSourceJsonData {
   customQueryParameters?: string;
   disableMetricsLookup?: boolean;
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
-}
-
-export enum PromQueryType {
-  timeSeriesQuery = 'timeSeriesQuery',
+  prometheusType?: PromApplication;
+  prometheusVersion?: string;
 }
 
 export type ExemplarTraceIdDestination = {
@@ -155,4 +151,15 @@ export interface PromLabelQueryResponse {
     data: string[];
   };
   cancelled?: boolean;
+}
+
+/**
+ * Auto = query.legendFormat == '__auto'
+ * Verbose = query.legendFormat == null/undefined/''
+ * Custom query.legendFormat.length > 0 && query.legendFormat !== '__auto'
+ */
+export enum LegendFormatMode {
+  Auto = '__auto',
+  Verbose = '__verbose',
+  Custom = '__custom',
 }

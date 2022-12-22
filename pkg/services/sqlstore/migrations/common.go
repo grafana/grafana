@@ -20,6 +20,8 @@ func addTableIndicesMigrations(mg *Migrator, versionSuffix string, table Table) 
 	}
 }
 
+// addTableRenameMigration may cause breaking changes.
+// DEPRECATED: It should no longer be used. Kept only for legacy reasons.
 func addTableRenameMigration(mg *Migrator, oldName string, newName string, versionSuffix string) {
 	migrationId := fmt.Sprintf("Rename table %s to %s - %s", oldName, newName, versionSuffix)
 	mg.AddMigration(migrationId, NewRenameTableMigration(oldName, newName))

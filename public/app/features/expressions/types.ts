@@ -1,4 +1,5 @@
 import { DataQuery, ReducerID, SelectableValue } from '@grafana/data';
+
 import { EvalFunction } from '../alerting/state/alertDef';
 
 export enum ExpressionQueryType {
@@ -6,13 +7,38 @@ export enum ExpressionQueryType {
   reduce = 'reduce',
   resample = 'resample',
   classic = 'classic_conditions',
+  threshold = 'threshold',
 }
 
 export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
-  { value: ExpressionQueryType.math, label: 'Math' },
-  { value: ExpressionQueryType.reduce, label: 'Reduce' },
-  { value: ExpressionQueryType.resample, label: 'Resample' },
-  { value: ExpressionQueryType.classic, label: 'Classic condition' },
+  {
+    value: ExpressionQueryType.math,
+    label: 'Math',
+    description: 'Free-form math formulas on time series or number data.',
+  },
+  {
+    value: ExpressionQueryType.reduce,
+    label: 'Reduce',
+    description:
+      'Takes one or more time series returned from a query or an expression and turns each series into a single number.',
+  },
+  {
+    value: ExpressionQueryType.resample,
+    label: 'Resample',
+    description: 'Changes the time stamps in each time series to have a consistent time interval.',
+  },
+  {
+    value: ExpressionQueryType.classic,
+    label: 'Classic condition',
+    description:
+      'Takes one or more time series returned from a query or an expression and checks if any of the series match the condition.',
+  },
+  {
+    value: ExpressionQueryType.threshold,
+    label: 'Threshold',
+    description:
+      'Takes one or more time series returned from a query or an expression and checks if any of the series match the threshold condition.',
+  },
 ];
 
 export const reducerTypes: Array<SelectableValue<string>> = [
@@ -30,7 +56,7 @@ export enum ReducerMode {
   DropNonNumbers = 'dropNN',
 }
 
-export const reducerMode: Array<SelectableValue<ReducerMode>> = [
+export const reducerModes: Array<SelectableValue<ReducerMode>> = [
   {
     value: ReducerMode.Strict,
     label: 'Strict',
@@ -49,6 +75,7 @@ export const reducerMode: Array<SelectableValue<ReducerMode>> = [
 ];
 
 export const downsamplingTypes: Array<SelectableValue<string>> = [
+  { value: ReducerID.last, label: 'Last', description: 'Fill with the last value' },
   { value: ReducerID.min, label: 'Min', description: 'Fill with the minimum value' },
   { value: ReducerID.max, label: 'Max', description: 'Fill with the maximum value' },
   { value: ReducerID.mean, label: 'Mean', description: 'Fill with the average value' },
@@ -59,6 +86,13 @@ export const upsamplingTypes: Array<SelectableValue<string>> = [
   { value: 'pad', label: 'pad', description: 'fill with the last known value' },
   { value: 'backfilling', label: 'backfilling', description: 'fill with the next known value' },
   { value: 'fillna', label: 'fillna', description: 'Fill with NaNs' },
+];
+
+export const thresholdFunctions: Array<SelectableValue<EvalFunction>> = [
+  { value: EvalFunction.IsAbove, label: 'Is above' },
+  { value: EvalFunction.IsBelow, label: 'Is below' },
+  { value: EvalFunction.IsWithinRange, label: 'Is within range' },
+  { value: EvalFunction.IsOutsideRange, label: 'Is outside range' },
 ];
 
 /**

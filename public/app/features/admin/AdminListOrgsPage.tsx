@@ -1,14 +1,13 @@
 import React, { useEffect } from 'react';
-import { getNavModel } from 'app/core/selectors/navModel';
-import Page from 'app/core/components/Page/Page';
-import { useSelector } from 'react-redux';
-import { StoreState } from 'app/types/store';
-import { LinkButton } from '@grafana/ui';
-import { getBackendSrv } from '@grafana/runtime';
-import { AdminOrgsTable } from './AdminOrgsTable';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
+
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { LinkButton } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
+
+import { AdminOrgsTable } from './AdminOrgsTable';
 
 const deleteOrg = async (orgId: number) => {
   return await getBackendSrv().delete('/api/orgs/' + orgId);
@@ -18,13 +17,11 @@ const getOrgs = async () => {
   return await getBackendSrv().get('/api/orgs');
 };
 
-const getErrorMessage = (error: any) => {
-  return error?.data?.message || 'An unexpected error happened.';
+const getErrorMessage = (error: Error) => {
+  return isFetchError(error) ? error?.data?.message : 'An unexpected error happened.';
 };
 
 export default function AdminListOrgsPages() {
-  const navIndex = useSelector((state: StoreState) => state.navIndex);
-  const navModel = getNavModel(navIndex, 'global-orgs');
   const [state, fetchOrgs] = useAsyncFn(async () => await getOrgs(), []);
   const canCreateOrg = contextSrv.hasPermission(AccessControlAction.OrgsCreate);
 
@@ -33,7 +30,7 @@ export default function AdminListOrgsPages() {
   }, [fetchOrgs]);
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="global-orgs">
       <Page.Contents>
         <>
           <div className="page-action-bar">

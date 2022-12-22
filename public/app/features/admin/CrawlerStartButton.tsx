@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
 import { css } from '@emotion/css';
-import { Button, CodeEditor, Modal, useTheme2 } from '@grafana/ui';
+import React, { useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv, config } from '@grafana/runtime';
+import { Button, CodeEditor, Modal, useTheme2 } from '@grafana/ui';
 
 export const CrawlerStartButton = () => {
   const styles = getStyles(useTheme2());
@@ -38,7 +39,9 @@ export const CrawlerStartButton = () => {
           />
         </div>
         <Modal.ButtonRow>
-          <Button onClick={doStart}>Start</Button>
+          <Button type="submit" onClick={doStart}>
+            Start
+          </Button>
           <Button variant="secondary" onClick={onDismiss}>
             Cancel
           </Button>

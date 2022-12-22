@@ -1,21 +1,33 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
-import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
+import { cloneDeep } from 'lodash';
 
+import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
+
+export const HOME_NAV_ID = 'home';
 
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
-  const rootNodes = config.bootData.navTree as NavModelItem[];
-  buildNavIndex(navIndex, rootNodes);
+  const rootNodes = cloneDeep(config.bootData.navTree);
+  const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
+  const otherRootNodes = rootNodes.filter((node) => node.id !== HOME_NAV_ID);
+
+  if (homeNav) {
+    buildNavIndex(navIndex, [homeNav]);
+  }
+  // set home as parent for the other rootNodes
+  buildNavIndex(navIndex, otherRootNodes, homeNav);
+
   return navIndex;
 }
 
 function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {
   for (const node of children) {
-    navIndex[node.id!] = {
-      ...node,
-      parentItem: parentItem,
-    };
+    node.parentItem = parentItem;
+
+    if (node.id) {
+      navIndex[node.id] = node;
+    }
 
     if (node.children) {
       buildNavIndex(navIndex, node.children, node);
@@ -23,16 +35,16 @@ function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?
   }
 
   navIndex['not-found'] = { ...buildWarningNav('Page not found', '404 Error').node };
+  navIndex['error'] = { ...buildWarningNav('Page error', 'An unexpected error').node };
 }
 
 function buildWarningNav(text: string, subTitle?: string): NavModel {
   const node = {
     text,
     subTitle,
-    icon: 'exclamation-triangle',
+    icon: 'exclamation-triangle' as const,
   };
   return {
-    breadcrumbs: [node],
     node: node,
     main: node,
   };
@@ -78,6 +90,7 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
       ...state,
       cfg: { ...state.cfg, subTitle },
       datasources: getItemWithNewSubTitle(state.datasources, subTitle),
+      correlations: getItemWithNewSubTitle(state.correlations, subTitle),
       users: getItemWithNewSubTitle(state.users, subTitle),
       teams: getItemWithNewSubTitle(state.teams, subTitle),
       plugins: getItemWithNewSubTitle(state.plugins, subTitle),

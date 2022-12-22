@@ -1,3 +1,10 @@
+import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { RefreshPicker } from '@grafana/ui';
+import store from 'app/core/store';
+
+import { ExploreId } from '../../types';
+
 import {
   buildQueryTransaction,
   clearHistory,
@@ -13,11 +20,6 @@ import {
   getTimeRangeFromUrl,
   getTimeRange,
 } from './explore';
-import store from 'app/core/store';
-import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
-import { RefreshPicker } from '@grafana/ui';
-import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
-import { ExploreId } from '../../types';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: '',
@@ -113,31 +115,6 @@ describe('state functions', () => {
           '{"expr":"super{foo=\\"x/z\\"}","refId":"B"}],"range":{"from":"now-5h","to":"now"}}'
       );
     });
-
-    // TODO: remove in 9.0
-    it('returns url parameter value for a state object', () => {
-      const state = {
-        ...DEFAULT_EXPLORE_STATE,
-        datasource: 'foo',
-        queries: [
-          {
-            expr: 'metric{test="a/b"}',
-            refId: 'A',
-          },
-          {
-            expr: 'super{foo="x/z"}',
-            refId: 'B',
-          },
-        ],
-        range: {
-          from: 'now-5h',
-          to: 'now',
-        },
-      };
-      expect(serializeStateToUrlParam(state, true)).toBe(
-        '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}","refId":"A"},{"expr":"super{foo=\\"x/z\\"}","refId":"B"}],"range":{"from":"now-5h","to":"now"}}'
-      );
-    });
   });
 
   describe('interplay', () => {
@@ -145,6 +122,7 @@ describe('state functions', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
         datasource: 'foo',
+        isFromCompactUrl: false,
         queries: [
           {
             expr: 'metric{test="a/b"}',
@@ -165,36 +143,11 @@ describe('state functions', () => {
       expect(state).toMatchObject(parsed);
     });
 
-    // TODO: remove in 9.0
-    it('can parse the compact serialized state into the original state', () => {
-      const state = {
-        ...DEFAULT_EXPLORE_STATE,
-        datasource: 'foo',
-        queries: [
-          {
-            expr: 'metric{test="a/b"}',
-            refId: 'A',
-          },
-          {
-            expr: 'super{foo="x/z"}',
-            refId: 'B',
-          },
-        ],
-        range: {
-          from: 'now - 5h',
-          to: 'now',
-        },
-        panelsState: undefined,
-      };
-      const serialized = serializeStateToUrlParam(state, true);
-      const parsed = parseUrlState(serialized);
-      expect(state).toMatchObject(parsed);
-    });
-
     it('can parse serialized panelsState into the original state', () => {
       const state = {
         ...DEFAULT_EXPLORE_STATE,
         datasource: 'foo',
+        isFromCompactUrl: false,
         queries: [
           {
             expr: 'metric{test="a/b"}',
@@ -215,7 +168,7 @@ describe('state functions', () => {
           },
         },
       };
-      const serialized = serializeStateToUrlParam(state, true);
+      const serialized = serializeStateToUrlParam(state);
       const parsed = parseUrlState(serialized);
       expect(state).toMatchObject(parsed);
     });
@@ -284,7 +237,7 @@ describe('hasNonEmptyQuery', () => {
 describe('hasRefId', () => {
   describe('when called with a null value', () => {
     it('then it should return undefined', () => {
-      const input: any = null;
+      const input = null;
       const result = getValueWithRefId(input);
 
       expect(result).toBeUndefined();
@@ -377,7 +330,7 @@ describe('getTimeRange', () => {
 describe('getRefIds', () => {
   describe('when called with a null value', () => {
     it('then it should return empty array', () => {
-      const input: any = null;
+      const input = null;
       const result = getRefIds(input);
 
       expect(result).toEqual([]);
@@ -413,7 +366,7 @@ describe('getRefIds', () => {
 
   describe('when called with an object that has refIds somewhere in the object tree', () => {
     it('then it should return return an array with unique refIds', () => {
-      const input: any = {
+      const input = {
         data: [
           123,
           null,

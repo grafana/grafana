@@ -3,29 +3,34 @@ package cloudmonitoring
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
+type annotationEvent struct {
+	Title string
+	Time  time.Time
+	Tags  string
+	Text  string
+}
+
+func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo, queries []cloudMonitoringQueryExecutor) (
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-
-	queries, err := s.buildQueryExecutors(req)
-	if err != nil {
-		return resp, err
-	}
-
 	queryRes, dr, _, err := queries[0].run(ctx, req, s, dsInfo, s.tracer)
 	if err != nil {
 		return resp, err
 	}
 
 	mq := struct {
-		Title string `json:"title"`
-		Text  string `json:"text"`
+		MetricQuery struct {
+			Title string `json:"title"`
+			Text  string `json:"text"`
+		} `json:"metricQuery"`
 	}{}
 
 	firstQuery := req.Queries[0]
@@ -33,33 +38,46 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	if err != nil {
 		return resp, nil
 	}
-	err = queries[0].parseToAnnotations(queryRes, dr, mq.Title, mq.Text)
+	err = parseToAnnotations(req.Queries[0].RefID, queryRes, dr, mq.MetricQuery.Title, mq.MetricQuery.Text)
 	resp.Responses[firstQuery.RefID] = *queryRes
 
 	return resp, err
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) transformAnnotationToFrame(annotations []map[string]string, result *backend.DataResponse) {
-	frames := data.Frames{}
-	for _, a := range annotations {
-		frame := &data.Frame{
-			RefID: timeSeriesQuery.getRefID(),
-			Fields: []*data.Field{
-				data.NewField("time", nil, a["time"]),
-				data.NewField("title", nil, a["title"]),
-				data.NewField("tags", nil, a["tags"]),
-				data.NewField("text", nil, a["text"]),
-			},
-			Meta: &data.FrameMeta{
-				Custom: map[string]interface{}{
-					"rowCount": len(a),
-				},
-			},
+func parseToAnnotations(refID string, dr *backend.DataResponse,
+	response cloudMonitoringResponse, title, text string) error {
+	frame := data.NewFrame(refID,
+		data.NewField("time", nil, []time.Time{}),
+		data.NewField("title", nil, []string{}),
+		data.NewField("tags", nil, []string{}),
+		data.NewField("text", nil, []string{}),
+	)
+
+	for _, series := range response.TimeSeries {
+		if len(series.Points) == 0 {
+			continue
 		}
-		frames = append(frames, frame)
+
+		for i := len(series.Points) - 1; i >= 0; i-- {
+			point := series.Points[i]
+			value := strconv.FormatFloat(point.Value.DoubleValue, 'f', 6, 64)
+			if series.ValueType == "STRING" {
+				value = point.Value.StringValue
+			}
+			annotation := &annotationEvent{
+				Time: point.Interval.EndTime,
+				Title: formatAnnotationText(title, value, series.Metric.Type,
+					series.Metric.Labels, series.Resource.Labels),
+				Tags: "",
+				Text: formatAnnotationText(text, value, series.Metric.Type,
+					series.Metric.Labels, series.Resource.Labels),
+			}
+			frame.AppendRow(annotation.Time, annotation.Title, annotation.Tags, annotation.Text)
+		}
 	}
-	result.Frames = frames
-	slog.Info("anno", "len", len(annotations))
+	dr.Frames = append(dr.Frames, frame)
+
+	return nil
 }
 
 func formatAnnotationText(annotationText string, pointValue string, metricType string, metricLabels map[string]string, resourceLabels map[string]string) string {

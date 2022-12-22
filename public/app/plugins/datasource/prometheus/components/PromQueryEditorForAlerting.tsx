@@ -1,4 +1,5 @@
 import React from 'react';
+
 import PromQueryField from './PromQueryField';
 import { PromQueryEditorProps } from './types';
 

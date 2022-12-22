@@ -1,7 +1,9 @@
-import { PanelModel, FieldConfigSource } from '@grafana/data';
-import { graphPanelChangedHandler } from './migrations';
 import { cloneDeep } from 'lodash';
+
+import { PanelModel, FieldConfigSource, FieldMatcherID } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
+
+import { graphPanelChangedHandler } from './migrations';
 
 describe('Graph Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
@@ -76,6 +78,8 @@ describe('Graph Migrations', () => {
     const panel = {} as PanelModel;
     panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
     expect(panel).toMatchSnapshot();
+    expect(panel.fieldConfig.overrides[0].matcher.id).toBe(FieldMatcherID.byRegexp);
+    expect(panel.fieldConfig.overrides[1].matcher.id).toBe(FieldMatcherID.byRegexp);
   });
 
   describe('legend', () => {
@@ -122,6 +126,23 @@ describe('Graph Migrations', () => {
       const panel = {} as PanelModel;
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel).toMatchSnapshot();
+    });
+    test('with sideWidth', () => {
+      const old: any = {
+        angular: {
+          legend: {
+            alignAsTable: true,
+            rightSide: true,
+            show: true,
+            sideWidth: 200,
+            total: true,
+            values: true,
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.options.legend.width).toBe(200);
     });
   });
 
@@ -172,16 +193,16 @@ describe('Graph Migrations', () => {
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('area');
       expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "color": "transparent",
             "value": -Infinity,
           },
-          Object {
+          {
             "color": "orange",
             "value": 50,
           },
-          Object {
+          {
             "color": "red",
             "value": 80,
           },
@@ -217,16 +238,16 @@ describe('Graph Migrations', () => {
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('line+area');
       expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "color": "orange",
             "value": -Infinity,
           },
-          Object {
+          {
             "color": "transparent",
             "value": 40,
           },
-          Object {
+          {
             "color": "red",
             "value": 80,
           },
@@ -254,12 +275,12 @@ describe('Graph Migrations', () => {
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('line+area');
       expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "color": "orange",
             "value": -Infinity,
           },
-          Object {
+          {
             "color": "transparent",
             "value": 40,
           },
@@ -406,6 +427,47 @@ describe('Graph Migrations', () => {
       expect(panel.fieldConfig).toMatchSnapshot();
     });
   });
+
+  describe('transforms', () => {
+    test.each(['negative-Y', 'constant'])('should preserve %p transform', (transform) => {
+      const old: any = {
+        angular: {
+          seriesOverrides: [
+            {
+              alias: 'out',
+              transform,
+            },
+          ],
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig).toMatchSnapshot();
+    });
+  });
+
+  describe('null values', () => {
+    test('nullPointMode = null', () => {
+      const old: any = {
+        angular: {
+          nullPointMode: 'null',
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig.defaults.custom.spanNulls).toBeFalsy();
+    });
+    test('nullPointMode = connected', () => {
+      const old: any = {
+        angular: {
+          nullPointMode: 'connected',
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig.defaults.custom.spanNulls).toBeTruthy();
+    });
+  });
 });
 
 const customColor = {
@@ -435,6 +497,11 @@ const customColor = {
       $$hashKey: 'object:12',
       alias: 'A-series',
       color: 'rgba(165, 72, 170, 0.77)',
+    },
+    {
+      $$hashKey: 'object:13',
+      alias: 'B-series',
+      color: 'rgba(16, 72, 170, 0.77)',
     },
   ],
   spaceLength: 10,
@@ -493,6 +560,7 @@ const customColor = {
 
 const customColorRegex = cloneDeep(customColor);
 customColorRegex.seriesOverrides[0].alias = '/^A-/';
+customColorRegex.seriesOverrides[1].alias = '/.*Status: 2[0-9]+.*/i';
 
 const stairscase = {
   aliasColors: {},

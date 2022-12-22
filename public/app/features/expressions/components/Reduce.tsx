@@ -1,16 +1,18 @@
 import React, { FC } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
-import { ExpressionQuery, ExpressionQuerySettings, ReducerMode, reducerMode, reducerTypes } from '../types';
+
+import { ExpressionQuery, ExpressionQuerySettings, ReducerMode, reducerModes, reducerTypes } from '../types';
 
 interface Props {
-  labelWidth: number;
+  labelWidth?: number | 'auto';
   refIds: Array<SelectableValue<string>>;
   query: ExpressionQuery;
   onChange: (query: ExpressionQuery) => void;
 }
 
-export const Reduce: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
+export const Reduce: FC<Props> = ({ labelWidth = 'auto', onChange, refIds, query }) => {
   const reducer = reducerTypes.find((o) => o.value === query.reducer);
 
   const onRefIdChange = (value: SelectableValue<string>) => {
@@ -65,17 +67,21 @@ export const Reduce: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
   };
 
   return (
-    <InlineFieldRow>
-      <InlineField label="Function" labelWidth={labelWidth}>
-        <Select menuShouldPortal options={reducerTypes} value={reducer} onChange={onSelectReducer} width={25} />
-      </InlineField>
-      <InlineField label="Input" labelWidth={labelWidth}>
-        <Select menuShouldPortal onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
-      </InlineField>
-      <InlineField label="Mode" labelWidth={labelWidth}>
-        <Select menuShouldPortal onChange={onModeChanged} options={reducerMode} value={mode} width={25} />
-      </InlineField>
-      {replaceWithNumber()}
-    </InlineFieldRow>
+    <>
+      <InlineFieldRow>
+        <InlineField label="Function" labelWidth={labelWidth}>
+          <Select options={reducerTypes} value={reducer} onChange={onSelectReducer} width={20} />
+        </InlineField>
+        <InlineField label="Input" labelWidth={labelWidth}>
+          <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={'auto'} />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Mode" labelWidth={labelWidth}>
+          <Select onChange={onModeChanged} options={reducerModes} value={mode} width={25} />
+        </InlineField>
+        {replaceWithNumber()}
+      </InlineFieldRow>
+    </>
   );
 };

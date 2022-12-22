@@ -1,4 +1,5 @@
 import { createAction } from '@reduxjs/toolkit';
+
 import { Filter } from '../../../aggregations';
 
 export const addFilter = createAction('@bucketAggregations/filter/add');

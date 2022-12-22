@@ -1,9 +1,13 @@
 import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+
 import { PluginError } from '@grafana/data';
+import { useDispatch, useSelector } from 'app/types';
+
+import { sortPlugins, Sorters } from '../helpers';
+import { CatalogPlugin, PluginListDisplayMode } from '../types';
+
+import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall, fetchAllLocal } from './actions';
 import { setDisplayMode } from './reducer';
-import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall } from './actions';
-import { CatalogPlugin, PluginCatalogStoreState, PluginListDisplayMode } from '../types';
 import {
   find,
   selectAll,
@@ -14,10 +18,9 @@ import {
   selectDisplayMode,
   selectPluginErrors,
 } from './selectors';
-import { sortPlugins, Sorters } from '../helpers';
 
 type Filters = {
-  query?: string;
+  query?: string; // Note: this will be an escaped regex string as it comes from `FilterInput`
   filterBy?: string;
   filterByType?: string;
   sortBy?: Sorters;
@@ -52,7 +55,12 @@ export const useGetSingle = (id: string): CatalogPlugin | undefined => {
   useFetchAll();
   useFetchDetails(id);
 
-  return useSelector((state: PluginCatalogStoreState) => selectById(state, id));
+  return useSelector((state) => selectById(state, id));
+};
+
+export const useGetSingleLocalWithoutDetails = (id: string): CatalogPlugin | undefined => {
+  useFetchAllLocal();
+  return useSelector((state) => selectById(state, id));
 };
 
 export const useGetErrors = (): PluginError[] => {
@@ -115,9 +123,19 @@ export const useFetchAll = () => {
   }, []); // eslint-disable-line
 };
 
+// Only fetches in case they were not fetched yet
+export const useFetchAllLocal = () => {
+  const dispatch = useDispatch();
+  const isNotFetched = useSelector(selectIsRequestNotFetched(fetchAllLocal.typePrefix));
+
+  useEffect(() => {
+    isNotFetched && dispatch(fetchAllLocal());
+  }, []); // eslint-disable-line
+};
+
 export const useFetchDetails = (id: string) => {
   const dispatch = useDispatch();
-  const plugin = useSelector((state: PluginCatalogStoreState) => selectById(state, id));
+  const plugin = useSelector((state) => selectById(state, id));
   const isNotFetching = !useSelector(selectIsRequestPending(fetchDetails.typePrefix));
   const shouldFetch = isNotFetching && plugin && !plugin.details;
 

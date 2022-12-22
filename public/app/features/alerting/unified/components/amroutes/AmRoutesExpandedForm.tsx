@@ -1,5 +1,6 @@
-import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FC, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
@@ -14,8 +15,13 @@ import {
   Select,
   Switch,
   useStyles2,
+  Badge,
+  VerticalGroup,
 } from '@grafana/ui';
-import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+
+import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
+import { FormAmRoute } from '../../types/amroutes';
+import { matcherFieldOptions } from '../../utils/alertmanager';
 import {
   emptyArrayFieldMatcher,
   mapMultiSelectValueToStrings,
@@ -23,11 +29,12 @@ import {
   optionalPositiveInteger,
   stringToSelectableValue,
   stringsToSelectableValues,
+  commonGroupByOptions,
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
+import { AmRouteReceiver, GrafanaAppReceiverEnum } from '../receivers/grafanaAppReceivers/types';
+
 import { getFormStyles } from './formStyles';
-import { matcherFieldOptions } from '../../utils/alertmanager';
-import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
 
 export interface AmRoutesExpandedFormProps {
   onCancel: () => void;
@@ -39,16 +46,20 @@ export interface AmRoutesExpandedFormProps {
 export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, onSave, receivers, routes }) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
-  const [overrideGrouping, setOverrideGrouping] = useState(routes.groupBy.length > 0);
-  const [overrideTimings, setOverrideTimings] = useState(
-    !!routes.groupWaitValue || !!routes.groupIntervalValue || !!routes.repeatIntervalValue
-  );
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
   const muteTimingOptions = useMuteTimingOptions();
 
+  const receiversWithOnCallOnTop = receivers.sort((receiver1, receiver2) => {
+    if (receiver1.grafanaAppReceiverType === GrafanaAppReceiverEnum.GRAFANA_ONCALL) {
+      return -1;
+    } else {
+      return 0;
+    }
+  });
+
   return (
     <Form defaultValues={routes} onSubmit={onSave}>
-      {({ control, register, errors, setValue }) => (
+      {({ control, register, errors, setValue, watch }) => (
         <>
           {/* @ts-ignore-check: react-hook-form made me do this */}
           <input type="hidden" {...register('id')} />
@@ -56,73 +67,84 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
           <FieldArray name="object_matchers" control={control}>
             {({ fields, append, remove }) => (
               <>
-                <div>Matching labels</div>
-                <div className={styles.matchersContainer}>
-                  {fields.map((field, index) => {
-                    const localPath = `object_matchers[${index}]`;
-                    return (
-                      <HorizontalGroup key={field.id} align="flex-start">
-                        <Field
-                          label="Label"
-                          invalid={!!errors.object_matchers?.[index]?.name}
-                          error={errors.object_matchers?.[index]?.name?.message}
-                        >
-                          <Input
-                            {...register(`${localPath}.name`, { required: 'Field is required' })}
-                            defaultValue={field.name}
-                            placeholder="label"
-                          />
-                        </Field>
-                        <Field label={'Operator'}>
-                          <InputControl
-                            render={({ field: { onChange, ref, ...field } }) => (
-                              <Select
-                                {...field}
-                                className={styles.matchersOperator}
-                                onChange={(value) => onChange(value?.value)}
-                                options={matcherFieldOptions}
-                                aria-label="Operator"
-                                menuShouldPortal
+                <VerticalGroup justify="flex-start" spacing="md">
+                  <div>Matching labels</div>
+                  {fields.length === 0 && (
+                    <Badge
+                      color="orange"
+                      className={styles.noMatchersWarning}
+                      icon="exclamation-triangle"
+                      text="If no matchers are specified, this notification policy will handle all alert instances."
+                    />
+                  )}
+                  {fields.length > 0 && (
+                    <div className={styles.matchersContainer}>
+                      {fields.map((field, index) => {
+                        const localPath = `object_matchers[${index}]`;
+                        return (
+                          <HorizontalGroup key={field.id} align="flex-start" height="auto">
+                            <Field
+                              label="Label"
+                              invalid={!!errors.object_matchers?.[index]?.name}
+                              error={errors.object_matchers?.[index]?.name?.message}
+                            >
+                              <Input
+                                {...register(`${localPath}.name`, { required: 'Field is required' })}
+                                defaultValue={field.name}
+                                placeholder="label"
                               />
-                            )}
-                            defaultValue={field.operator}
-                            control={control}
-                            name={`${localPath}.operator` as const}
-                            rules={{ required: { value: true, message: 'Required.' } }}
-                          />
-                        </Field>
-                        <Field
-                          label="Value"
-                          invalid={!!errors.object_matchers?.[index]?.value}
-                          error={errors.object_matchers?.[index]?.value?.message}
-                        >
-                          <Input
-                            {...register(`${localPath}.value`, { required: 'Field is required' })}
-                            defaultValue={field.value}
-                            placeholder="value"
-                          />
-                        </Field>
-                        <IconButton
-                          className={styles.removeButton}
-                          tooltip="Remove matcher"
-                          name={'trash-alt'}
-                          onClick={() => remove(index)}
-                        >
-                          Remove
-                        </IconButton>
-                      </HorizontalGroup>
-                    );
-                  })}
-                </div>
-                <Button
-                  className={styles.addMatcherBtn}
-                  icon="plus"
-                  onClick={() => append(emptyArrayFieldMatcher)}
-                  variant="secondary"
-                  type="button"
-                >
-                  Add matcher
-                </Button>
+                            </Field>
+                            <Field label={'Operator'}>
+                              <InputControl
+                                render={({ field: { onChange, ref, ...field } }) => (
+                                  <Select
+                                    {...field}
+                                    className={styles.matchersOperator}
+                                    onChange={(value) => onChange(value?.value)}
+                                    options={matcherFieldOptions}
+                                    aria-label="Operator"
+                                  />
+                                )}
+                                defaultValue={field.operator}
+                                control={control}
+                                name={`${localPath}.operator` as const}
+                                rules={{ required: { value: true, message: 'Required.' } }}
+                              />
+                            </Field>
+                            <Field
+                              label="Value"
+                              invalid={!!errors.object_matchers?.[index]?.value}
+                              error={errors.object_matchers?.[index]?.value?.message}
+                            >
+                              <Input
+                                {...register(`${localPath}.value`, { required: 'Field is required' })}
+                                defaultValue={field.value}
+                                placeholder="value"
+                              />
+                            </Field>
+                            <IconButton
+                              className={styles.removeButton}
+                              tooltip="Remove matcher"
+                              name={'trash-alt'}
+                              onClick={() => remove(index)}
+                            >
+                              Remove
+                            </IconButton>
+                          </HorizontalGroup>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <Button
+                    className={styles.addMatcherBtn}
+                    icon="plus"
+                    onClick={() => append(emptyArrayFieldMatcher)}
+                    variant="secondary"
+                    type="button"
+                  >
+                    Add matcher
+                  </Button>
+                </VerticalGroup>
               </>
             )}
           </FieldArray>
@@ -135,8 +157,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   {...field}
                   className={formStyles.input}
                   onChange={(value) => onChange(mapSelectValueToString(value))}
-                  options={receivers}
-                  menuShouldPortal
+                  options={receiversWithOnCallOnTop}
                 />
               )}
               control={control}
@@ -147,19 +168,17 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             <Switch id="continue-toggle" {...register('continue')} />
           </Field>
           <Field label="Override grouping">
-            <Switch
-              id="override-grouping-toggle"
-              value={overrideGrouping}
-              onChange={() => setOverrideGrouping((overrideGrouping) => !overrideGrouping)}
-            />
+            <Switch id="override-grouping-toggle" {...register('overrideGrouping')} />
           </Field>
-          {overrideGrouping && (
-            <Field label="Group by" description="Group alerts when you receive a notification based on labels.">
+          {watch().overrideGrouping && (
+            <Field
+              label="Group by"
+              description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the parent policy."
+            >
               <InputControl
                 render={({ field: { onChange, ref, ...field } }) => (
                   <MultiSelect
                     aria-label="Group by"
-                    menuShouldPortal
                     {...field}
                     allowCustomValue
                     className={formStyles.input}
@@ -170,7 +189,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                       setValue('groupBy', [...field.value, opt]);
                     }}
                     onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
-                    options={groupByOptions}
+                    options={[...commonGroupByOptions, ...groupByOptions]}
                   />
                 )}
                 control={control}
@@ -179,17 +198,13 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
             </Field>
           )}
           <Field label="Override general timings">
-            <Switch
-              id="override-timings-toggle"
-              value={overrideTimings}
-              onChange={() => setOverrideTimings((overrideTimings) => !overrideTimings)}
-            />
+            <Switch id="override-timings-toggle" {...register('overrideTimings')} />
           </Field>
-          {overrideTimings && (
+          {watch().overrideTimings && (
             <>
               <Field
                 label="Group wait"
-                description="The waiting time until the initial notification is sent for a new group created by an incoming alert."
+                description="The waiting time until the initial notification is sent for a new group created by an incoming alert. If empty it will be inherited from the parent policy."
                 invalid={!!errors.groupWaitValue}
                 error={errors.groupWaitValue?.message}
               >
@@ -201,7 +216,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           {...field}
                           className={formStyles.smallInput}
                           invalid={invalid}
-                          placeholder="Time"
                           aria-label="Group wait value"
                         />
                       )}
@@ -214,7 +228,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                     <InputControl
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
-                          menuShouldPortal
                           {...field}
                           className={formStyles.input}
                           onChange={(value) => onChange(mapSelectValueToString(value))}
@@ -230,7 +243,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               </Field>
               <Field
                 label="Group interval"
-                description="The waiting time to send a batch of new alerts for that group after the first notification was sent."
+                description="The waiting time to send a batch of new alerts for that group after the first notification was sent. If empty it will be inherited from the parent policy."
                 invalid={!!errors.groupIntervalValue}
                 error={errors.groupIntervalValue?.message}
               >
@@ -242,7 +255,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           {...field}
                           className={formStyles.smallInput}
                           invalid={invalid}
-                          placeholder="Time"
                           aria-label="Group interval value"
                         />
                       )}
@@ -255,7 +267,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                     <InputControl
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
-                          menuShouldPortal
                           {...field}
                           className={formStyles.input}
                           onChange={(value) => onChange(mapSelectValueToString(value))}
@@ -283,7 +294,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           {...field}
                           className={formStyles.smallInput}
                           invalid={invalid}
-                          placeholder="Time"
                           aria-label="Repeat interval value"
                         />
                       )}
@@ -296,7 +306,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                     <InputControl
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
-                          menuShouldPortal
                           {...field}
                           className={formStyles.input}
                           menuPlacement="top"
@@ -323,7 +332,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               render={({ field: { onChange, ref, ...field } }) => (
                 <MultiSelect
                   aria-label="Mute timings"
-                  menuShouldPortal
                   {...field}
                   className={formStyles.input}
                   onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
@@ -375,6 +383,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       & > * + * {
         margin-left: ${theme.spacing(1.5)};
       }
+    `,
+    noMatchersWarning: css`
+      padding: ${theme.spacing(1)} ${theme.spacing(2)};
     `,
   };
 };

@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
+
 import { labelsMatchMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { useMemo } from 'react';
 
 export const useFilteredGroups = (groups: AlertmanagerGroup[], matchers: Matcher[]): AlertmanagerGroup[] => {
   return useMemo(() => {

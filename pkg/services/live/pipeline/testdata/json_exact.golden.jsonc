@@ -1,0 +1,68 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: 
+//  Dimensions: 3 Fields by 1 Rows
+//  +-------------------------------+------------------+----------------------------+
+//  | Name: time                    | Name: ax         | Name: key1                 |
+//  | Labels:                       | Labels:          | Labels: label1=3, label2=3 |
+//  | Type: []time.Time             | Type: []*float64 | Type: []*float64           |
+//  +-------------------------------+------------------+----------------------------+
+//  | 2021-01-01 12:12:12 +0000 UTC | 1                | 2                          |
+//  +-------------------------------+------------------+----------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "labels": {}
+          },
+          {
+            "name": "ax",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {}
+          },
+          {
+            "name": "key1",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "label1": "3",
+              "label2": "3"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1609503132000
+          ],
+          [
+            1
+          ],
+          [
+            2
+          ]
+        ]
+      }
+    }
+  ]
+}

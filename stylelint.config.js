@@ -15,11 +15,11 @@ module.exports = {
     ],
     // Disable equivalent "borderZero" sass-lint rule
     'declaration-property-value-disallowed-list': {
-      border: [0],
-      'border-top': [0],
-      'border-right': [0],
-      'border-bottom': [0],
-      'border-left': [0],
+      border: [],
+      'border-bottom': [],
+      'border-left': [],
+      'border-right': [],
+      'border-top': [],
     },
     'function-comma-space-after': null,
     'function-url-quotes': null,

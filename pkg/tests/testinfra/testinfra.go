@@ -3,7 +3,6 @@ package testinfra
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -13,15 +12,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api"
-	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/extensions"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // StartGrafana starts a Grafana server.
@@ -35,6 +41,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	t.Helper()
 	ctx := context.Background()
 
+	setting.IsEnterprise = extensions.IsEnterprise
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 	cmdLineArgs := setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir}
@@ -77,31 +84,23 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 func SetUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
 	t.Helper()
 
-	sqlStore := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{
 		EnsureDefaultOrgAndUser: true,
 	})
-	// We need the main org, since it's used for anonymous access
-	org, err := sqlStore.GetOrgByName(sqlstore.MainOrgName)
-	require.NoError(t, err)
-	require.NotNil(t, org)
 
 	// Make sure changes are synced with other goroutines
-	err = sqlStore.Sync()
+	err := sqlStore.Sync()
 	require.NoError(t, err)
 
 	return sqlStore
 }
 
 // CreateGrafDir creates the Grafana directory.
+// The log by default is muted in the regression test, to activate it, pass option EnableLog = true
 func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	t.Helper()
 
-	tmpDir, err := ioutil.TempDir("", "")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		err := os.RemoveAll(tmpDir)
-		assert.NoError(t, err)
-	})
+	tmpDir := t.TempDir()
 
 	// Search upwards in directory tree for project root
 	var rootDir string
@@ -125,7 +124,7 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.True(t, found, "Couldn't detect project root directory")
 
 	cfgDir := filepath.Join(tmpDir, "conf")
-	err = os.MkdirAll(cfgDir, 0750)
+	err := os.MkdirAll(cfgDir, 0750)
 	require.NoError(t, err)
 	dataDir := filepath.Join(tmpDir, "data")
 	// nolint:gosec
@@ -183,12 +182,15 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 
 	logSect, err := cfg.NewSection("log")
 	require.NoError(t, err)
+
 	_, err = logSect.NewKey("level", "debug")
 	require.NoError(t, err)
 
 	serverSect, err := cfg.NewSection("server")
 	require.NoError(t, err)
 	_, err = serverSect.NewKey("port", "0")
+	require.NoError(t, err)
+	_, err = serverSect.NewKey("static_root_path", publicDir)
 	require.NoError(t, err)
 
 	anonSect, err := cfg.NewSection("auth.anonymous")
@@ -201,6 +203,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = alertingSect.NewKey("notification_timeout_seconds", "1")
 	require.NoError(t, err)
 	_, err = alertingSect.NewKey("max_attempts", "3")
+	require.NoError(t, err)
+
+	rbacSect, err := cfg.NewSection("rbac")
+	require.NoError(t, err)
+	_, err = rbacSect.NewKey("permission_cache", "false")
 	require.NoError(t, err)
 
 	getOrCreateSection := func(name string) (*ini.Section, error) {
@@ -268,6 +275,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = anonSect.NewKey("plugin_admin_enabled", "true")
 			require.NoError(t, err)
 		}
+		if o.PluginAdminExternalManageEnabled {
+			anonSect, err := cfg.NewSection("plugins")
+			require.NoError(t, err)
+			_, err = anonSect.NewKey("plugin_admin_external_manage_enabled", "true")
+			require.NoError(t, err)
+		}
 		if o.ViewersCanEdit {
 			usersSection, err := cfg.NewSection("users")
 			require.NoError(t, err)
@@ -293,6 +306,33 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = unifiedAlertingSection.NewKey("disabled_orgs", disableOrgStr)
 			require.NoError(t, err)
 		}
+		if !o.EnableLog {
+			logSection, err := getOrCreateSection("log")
+			require.NoError(t, err)
+			_, err = logSection.NewKey("enabled", "false")
+			require.NoError(t, err)
+		} else {
+			serverSection, err := getOrCreateSection("server")
+			require.NoError(t, err)
+			_, err = serverSection.NewKey("router_logging", "true")
+			require.NoError(t, err)
+		}
+
+		if o.GRPCServerAddress != "" {
+			logSection, err := getOrCreateSection("grpc_server")
+			require.NoError(t, err)
+			_, err = logSection.NewKey("address", o.GRPCServerAddress)
+			require.NoError(t, err)
+		}
+		// retry queries 3 times by default
+		queryRetries := 3
+		if o.QueryRetries != 0 {
+			queryRetries = int(o.QueryRetries)
+		}
+		logSection, err := getOrCreateSection("database")
+		require.NoError(t, err)
+		_, err = logSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
+		require.NoError(t, err)
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -305,20 +345,49 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	return tmpDir, cfgPath
 }
 
+func SQLiteIntegrationTest(t *testing.T) {
+	t.Helper()
+
+	if testing.Short() || !db.IsTestDbSQLite() {
+		t.Skip("skipping integration test")
+	}
+}
+
 type GrafanaOpts struct {
 	EnableCSP                             bool
 	EnableFeatureToggles                  []string
 	NGAlertAdminConfigPollInterval        time.Duration
 	NGAlertAlertmanagerConfigPollInterval time.Duration
-	AnonymousUserRole                     models.RoleType
+	AnonymousUserRole                     org.RoleType
 	EnableQuota                           bool
 	DashboardOrgQuota                     *int64
 	DisableAnonymous                      bool
 	CatalogAppEnabled                     bool
 	ViewersCanEdit                        bool
 	PluginAdminEnabled                    bool
+	PluginAdminExternalManageEnabled      bool
 	AppModeProduction                     bool
 	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool
 	UnifiedAlertingDisabledOrgs           []int64
+	EnableLog                             bool
+	GRPCServerAddress                     string
+	QueryRetries                          int64
+}
+
+func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) int64 {
+	t.Helper()
+
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = 1
+
+	quotaService := quotaimpl.ProvideService(store, store.Cfg)
+	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService)
+	require.NoError(t, err)
+
+	u, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
+	require.NoError(t, err)
+	return u.ID
 }

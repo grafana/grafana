@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { getBackendSrv } from '@grafana/runtime';
-import { Tag, useStyles, IconButton } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { Rule, Output, RuleType } from './types';
-import { RuleModal } from './RuleModal';
+import React, { useEffect, useState } from 'react';
+
+import { getBackendSrv } from '@grafana/runtime';
+import { Tag, IconButton } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+
+import { RuleModal } from './RuleModal';
+import { Rule, Output, RuleType } from './types';
 
 function renderOutputTags(key: string, output?: Output): React.ReactNode {
   if (!output?.type) {
@@ -20,12 +21,11 @@ interface Props {
   selectRule?: Rule;
 }
 
-export const PipelineTable: React.FC<Props> = (props) => {
+export const PipelineTable = (props: Props) => {
   const { rules } = props;
   const [isOpen, setOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<Rule>();
   const [clickColumn, setClickColumn] = useState<RuleType>('converter');
-  const styles = useStyles(getStyles);
 
   const onRowClick = (rule: Rule, event?: any) => {
     if (!rule) {
@@ -135,10 +135,8 @@ export const PipelineTable: React.FC<Props> = (props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
-  return {
-    row: css`
-      cursor: pointer;
-    `,
-  };
+const styles = {
+  row: css`
+    cursor: pointer;
+  `,
 };

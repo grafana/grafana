@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/jmespath/go-jmespath"
 )
 
@@ -37,7 +36,7 @@ func isEmailAllowed(email string, allowedDomains []string) bool {
 	valid := false
 	for _, domain := range allowedDomains {
 		emailSuffix := fmt.Sprintf("@%s", domain)
-		valid = valid || strings.HasSuffix(email, emailSuffix)
+		valid = valid || strings.HasSuffix(strings.ToLower(email), strings.ToLower(emailSuffix))
 	}
 
 	return valid
@@ -55,7 +54,7 @@ func (s *SocialBase) httpGet(client *http.Client, url string) (response httpGetR
 		}
 	}()
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return
 	}
@@ -83,12 +82,12 @@ func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (inter
 
 	var buf interface{}
 	if err := json.Unmarshal(data, &buf); err != nil {
-		return "", errutil.Wrap("failed to unmarshal user info JSON response", err)
+		return "", fmt.Errorf("%v: %w", "failed to unmarshal user info JSON response", err)
 	}
 
 	val, err := jmespath.Search(attributePath, buf)
 	if err != nil {
-		return "", errutil.Wrapf(err, "failed to search user info JSON response with provided path: %q", attributePath)
+		return "", fmt.Errorf("failed to search user info JSON response with provided path: %q: %w", attributePath, err)
 	}
 
 	return val, nil

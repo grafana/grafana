@@ -1,3 +1,25 @@
+import { ArrayDataFrame, MutableDataFrame, toDataFrame } from '../dataframe';
+import { createTheme } from '../themes';
+import { FieldMatcherID } from '../transformations';
+import {
+  DataFrame,
+  Field,
+  FieldColorModeId,
+  FieldConfig,
+  FieldConfigPropertyItem,
+  FieldConfigSource,
+  FieldType,
+  GrafanaConfig,
+  InterpolateFunction,
+  ScopedVars,
+  ThresholdsMode,
+} from '../types';
+import { locationUtil, Registry } from '../utils';
+import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
+import { ArrayVector } from '../vector';
+
+import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
+import { getDisplayProcessor } from './displayProcessor';
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
@@ -7,27 +29,7 @@ import {
   setDynamicConfigValue,
   setFieldConfigDefaults,
 } from './fieldOverrides';
-import { ArrayDataFrame, MutableDataFrame, toDataFrame } from '../dataframe';
-import {
-  DataFrame,
-  Field,
-  FieldColorModeId,
-  FieldConfig,
-  FieldConfigPropertyItem,
-  FieldConfigSource,
-  FieldType,
-  InterpolateFunction,
-  ScopedVars,
-  ThresholdsMode,
-} from '../types';
-import { locationUtil, Registry } from '../utils';
-import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
-import { FieldMatcherID } from '../transformations';
-import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getFieldDisplayName } from './fieldState';
-import { ArrayVector } from '../vector';
-import { getDisplayProcessor } from './displayProcessor';
-import { createTheme } from '../themes';
 
 const property1: any = {
   id: 'custom.property1', // Match field properties
@@ -185,29 +187,29 @@ describe('applyFieldOverrides', () => {
       });
 
       expect(withOverrides[0].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
-                                                                                 Object {
-                                                                                   "__field": Object {
-                                                                                     "text": "Field",
-                                                                                     "value": Object {},
-                                                                                   },
-                                                                                   "__series": Object {
-                                                                                     "text": "Series",
-                                                                                     "value": Object {
-                                                                                       "name": "A",
-                                                                                     },
-                                                                                   },
-                                                                                 }
-                                                                                 `);
+        {
+          "__field": {
+            "text": "Field",
+            "value": {},
+          },
+          "__series": {
+            "text": "Series",
+            "value": {
+              "name": "A",
+            },
+          },
+        }
+      `);
 
       expect(withOverrides[1].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
-        Object {
-          "__field": Object {
+        {
+          "__field": {
             "text": "Field",
-            "value": Object {},
+            "value": {},
           },
-          "__series": Object {
+          "__series": {
             "text": "Series",
-            "value": Object {
+            "value": {
               "name": "B",
             },
           },
@@ -257,7 +259,7 @@ describe('applyFieldOverrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
-      replaceVariables: undefined as any as InterpolateFunction,
+      replaceVariables: undefined as unknown as InterpolateFunction,
       theme: createTheme(),
       fieldConfigRegistry: customFieldRegistry,
     })[0];
@@ -284,7 +286,7 @@ describe('applyFieldOverrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
-      replaceVariables: undefined as any as InterpolateFunction,
+      replaceVariables: undefined as unknown as InterpolateFunction,
       theme: createTheme(),
     })[0];
     const valueColumn = data.fields[1];
@@ -321,7 +323,7 @@ describe('applyFieldOverrides', () => {
     const data = applyFieldOverrides({
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
-      replaceVariables: undefined as any as InterpolateFunction,
+      replaceVariables: undefined as unknown as InterpolateFunction,
       theme: createTheme(),
     })[0];
 
@@ -383,8 +385,8 @@ describe('setFieldConfigDefaults', () => {
     setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
 
     expect(dsFieldConfig).toMatchInlineSnapshot(`
-      Object {
-        "custom": Object {},
+      {
+        "custom": {},
         "decimals": 2,
         "max": 100,
         "min": 0,
@@ -418,8 +420,8 @@ describe('setFieldConfigDefaults', () => {
     setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
 
     expect(dsFieldConfig).toMatchInlineSnapshot(`
-      Object {
-        "custom": Object {
+      {
+        "custom": {
           "property1": 10,
           "property2": 10,
         },
@@ -565,9 +567,9 @@ describe('setDynamicConfigValue', () => {
 describe('getLinksSupplier', () => {
   it('will replace variables in url and title of the data link', () => {
     locationUtil.initialize({
-      config: {} as any,
-      getVariablesUrlParams: (() => {}) as any,
-      getTimeRangeForUrl: (() => {}) as any,
+      config: {} as GrafanaConfig,
+      getVariablesUrlParams: () => ({}),
+      getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
     });
 
     const f0 = new MutableDataFrame({
@@ -600,11 +602,12 @@ describe('getLinksSupplier', () => {
 
   it('handles internal links', () => {
     locationUtil.initialize({
-      config: { appSubUrl: '' } as any,
-      getVariablesUrlParams: (() => {}) as any,
-      getTimeRangeForUrl: (() => {}) as any,
+      config: { appSubUrl: '' } as GrafanaConfig,
+      getVariablesUrlParams: () => ({}),
+      getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
     });
 
+    const datasourceUid = '1234';
     const f0 = new MutableDataFrame({
       name: 'A',
       fields: [
@@ -618,7 +621,7 @@ describe('getLinksSupplier', () => {
                 url: '',
                 title: '',
                 internal: {
-                  datasourceUid: '0',
+                  datasourceUid: datasourceUid,
                   datasourceName: 'testDS',
                   query: '12345',
                 },
@@ -639,15 +642,102 @@ describe('getLinksSupplier', () => {
     );
 
     const links = supplier({ valueRowIndex: 0 });
-
+    const encodeURIParams = `{"datasource":"${datasourceUid}","queries":["12345"],"panelsState":{}}`;
     expect(links.length).toBe(1);
     expect(links[0]).toEqual(
       expect.objectContaining({
         title: 'testDS',
-        href: `/explore?left=${encodeURIComponent('{"datasource":"testDS","queries":["12345"],"panelsState":{}}')}`,
+        href: `/explore?left=${encodeURIComponent(encodeURIParams)}`,
         onClick: undefined,
       })
     );
+  });
+
+  describe('dynamic links', () => {
+    beforeEach(() => {
+      locationUtil.initialize({
+        config: {} as GrafanaConfig,
+        getVariablesUrlParams: () => ({}),
+        getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
+      });
+    });
+    it('handles link click handlers', () => {
+      const onClickSpy = jest.fn();
+      const replaceSpy = jest.fn();
+      const f0 = new MutableDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: [10, 20],
+            config: {
+              links: [
+                {
+                  url: 'should not be ignored',
+                  onClick: onClickSpy,
+                  title: 'title to be interpolated',
+                },
+                {
+                  url: 'should not be ignored',
+                  title: 'title to be interpolated',
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy);
+      const links = supplier({});
+
+      expect(links.length).toBe(2);
+      expect(links[0].href).toEqual('should not be ignored');
+      expect(links[0].onClick).toBeDefined();
+
+      links[0].onClick!({});
+
+      expect(onClickSpy).toBeCalledTimes(1);
+    });
+
+    it('handles links built dynamically', () => {
+      const replaceSpy = jest.fn().mockReturnValue('url interpolated 10');
+      const onBuildUrlSpy = jest.fn();
+
+      const f0 = new MutableDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: [10, 20],
+            config: {
+              links: [
+                {
+                  url: 'should be ignored',
+                  onBuildUrl: () => {
+                    onBuildUrlSpy();
+                    return 'url to be interpolated';
+                  },
+                  title: 'title to be interpolated',
+                },
+                {
+                  url: 'should not be ignored',
+                  title: 'title to be interpolated',
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy);
+      const links = supplier({});
+
+      expect(onBuildUrlSpy).toBeCalledTimes(1);
+      expect(links.length).toBe(2);
+      expect(links[0].href).toEqual('url interpolated 10');
+    });
   });
 });
 

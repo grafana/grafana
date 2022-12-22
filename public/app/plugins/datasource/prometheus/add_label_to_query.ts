@@ -1,129 +1,100 @@
-import { chain, isEqual } from 'lodash';
-import { OPERATORS, LOGICAL_OPERATORS, PROM_KEYWORDS } from './promql';
+import { parser, VectorSelector } from '@prometheus-io/lezer-promql';
 
-const builtInWords = [...PROM_KEYWORDS, ...OPERATORS, ...LOGICAL_OPERATORS];
+import { PromQueryModeller } from './querybuilder/PromQueryModeller';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
+import { QueryBuilderLabelFilter } from './querybuilder/shared/types';
+import { PromVisualQuery } from './querybuilder/types';
 
-// We want to extract all possible metrics and also keywords
-const metricsAndKeywordsRegexp = /([A-Za-z:][\w:]*)\b(?![\]{=!",])/g;
-// Safari currently doesn't support negative lookbehind. When it does, we should refactor this.
-// We are creating 2 matching groups. (\$) is for the Grafana's variables such as ${__rate_s}. We want to ignore
-// ${__rate_s} and not add variable to it.
-const selectorRegexp = /(\$)?{([^{]*)}/g;
-
-export function addLabelToQuery(
-  query: string,
-  key: string,
-  value: string | number,
-  operator?: string,
-  hasNoMetrics?: boolean
-): string {
+/**
+ * Adds label filter to existing query. Useful for query modification for example for ad hoc filters.
+ *
+ * It uses PromQL parser to find instances of metric and labels, alters them and then splices them back into the query.
+ * Ideally we could use the parse -> change -> render is a simple 3 steps but right now building the visual query
+ * object does not support all possible queries.
+ *
+ * So instead this just operates on substrings of the query with labels and operates just on those. This makes this
+ * more robust and can alter even invalid queries, and preserves in general the query structure and whitespace.
+ * @param query
+ * @param key
+ * @param value
+ * @param operator
+ */
+export function addLabelToQuery(query: string, key: string, value: string | number, operator = '='): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
   }
 
+  const vectorSelectorPositions = getVectorSelectorPositions(query);
+  if (!vectorSelectorPositions.length) {
+    return query;
+  }
+
+  const filter = toLabelFilter(key, value, operator);
+  return addFilter(query, vectorSelectorPositions, filter);
+}
+
+type VectorSelectorPosition = { from: number; to: number; query: PromVisualQuery };
+
+/**
+ * Parse the string and get all VectorSelector positions in the query together with parsed representation of the vector
+ * selector.
+ * @param query
+ */
+function getVectorSelectorPositions(query: string): VectorSelectorPosition[] {
+  const tree = parser.parse(query);
+  const positions: VectorSelectorPosition[] = [];
+  tree.iterate({
+    enter: ({ to, from, type }): false | void => {
+      if (type.id === VectorSelector) {
+        const visQuery = buildVisualQueryFromString(query.substring(from, to));
+        positions.push({ query: visQuery.query, from, to });
+        return false;
+      }
+    },
+  });
+  return positions;
+}
+
+function toLabelFilter(key: string, value: string | number, operator: string): QueryBuilderLabelFilter {
   // We need to make sure that we convert the value back to string because it may be a number
   const transformedValue = value === Infinity ? '+Inf' : value.toString();
+  return { label: key, op: operator, value: transformedValue };
+}
 
-  // Add empty selectors to bare metric names
-  let previousWord: string;
+function addFilter(
+  query: string,
+  vectorSelectorPositions: VectorSelectorPosition[],
+  filter: QueryBuilderLabelFilter
+): string {
+  const modeller = new PromQueryModeller();
+  let newQuery = '';
+  let prev = 0;
 
-  query = query.replace(metricsAndKeywordsRegexp, (match, word, offset) => {
-    const isMetric = isWordMetric(query, word, offset, previousWord, hasNoMetrics);
-    previousWord = word;
+  for (let i = 0; i < vectorSelectorPositions.length; i++) {
+    // This is basically just doing splice on a string for each matched vector selector.
 
-    return isMetric ? `${word}{}` : word;
-  });
+    const match = vectorSelectorPositions[i];
+    const isLast = i === vectorSelectorPositions.length - 1;
 
-  // Adding label to existing selectors
-  let match = selectorRegexp.exec(query);
-  const parts = [];
-  let lastIndex = 0;
-  let suffix = '';
+    const start = query.substring(prev, match.from);
+    const end = isLast ? query.substring(match.to) : '';
 
-  while (match) {
-    const prefix = query.slice(lastIndex, match.index);
-    lastIndex = match.index + match[2].length + 2;
-    suffix = query.slice(match.index + match[0].length);
-    // If we matched 1st group, we know it is Grafana's variable and we don't want to add labels
-    if (match[1]) {
-      parts.push(prefix);
-      parts.push(match[0]);
-    } else {
-      // If we didn't match first group, we are inside selector and we want to add labels
-      const selector = match[2];
-      const selectorWithLabel = addLabelToSelector(selector, key, transformedValue, operator);
-      parts.push(prefix, selectorWithLabel);
+    if (!labelExists(match.query.labels, filter)) {
+      // We don't want to add duplicate labels.
+      match.query.labels.push(filter);
     }
-
-    match = selectorRegexp.exec(query);
+    const newLabels = modeller.renderQuery(match.query);
+    newQuery += start + newLabels + end;
+    prev = match.to;
   }
-
-  parts.push(suffix);
-  return parts.join('');
+  return newQuery;
 }
 
-const labelRegexp = /(\w+)\s*(=|!=|=~|!~)\s*("[^"]*")/g;
-
-export function addLabelToSelector(selector: string, labelKey: string, labelValue: string, labelOperator?: string) {
-  const parsedLabels = [];
-
-  // Split selector into labels
-  if (selector) {
-    let match = labelRegexp.exec(selector);
-    while (match) {
-      parsedLabels.push({ key: match[1], operator: match[2], value: match[3] });
-      match = labelRegexp.exec(selector);
-    }
-  }
-
-  // Add new label
-  const operatorForLabelKey = labelOperator || '=';
-  parsedLabels.push({ key: labelKey, operator: operatorForLabelKey, value: `"${labelValue}"` });
-
-  // Sort labels by key and put them together
-  const formatted = chain(parsedLabels)
-    .uniqWith(isEqual)
-    .compact()
-    .sortBy('key')
-    .map(({ key, operator, value }) => `${key}${operator}${value}`)
-    .value()
-    .join(',');
-
-  return `{${formatted}}`;
+/**
+ * Check if label exists in the list of labels but ignore the operator.
+ * @param labels
+ * @param filter
+ */
+function labelExists(labels: QueryBuilderLabelFilter[], filter: QueryBuilderLabelFilter) {
+  return labels.find((label) => label.label === filter.label && label.value === filter.value);
 }
-
-function isPositionInsideChars(text: string, position: number, openChar: string, closeChar: string) {
-  const nextSelectorStart = text.slice(position).indexOf(openChar);
-  const nextSelectorEnd = text.slice(position).indexOf(closeChar);
-  return nextSelectorEnd > -1 && (nextSelectorStart === -1 || nextSelectorStart > nextSelectorEnd);
-}
-
-function isWordMetric(query: string, word: string, offset: number, previousWord: string, hasNoMetrics?: boolean) {
-  const insideSelector = isPositionInsideChars(query, offset, '{', '}');
-  // Handle "sum by (key) (metric)"
-  const previousWordIsKeyWord = previousWord && OPERATORS.indexOf(previousWord) > -1;
-  // Check for colon as as "word boundary" symbol
-  const isColonBounded = word.endsWith(':');
-  // Check for words that start with " which means that they are not metrics
-  const startsWithQuote = query[offset - 1] === '"';
-  // Check for template variables
-  const isTemplateVariable = query[offset - 1] === '$';
-  // Check for time units
-  const isTimeUnit = ['s', 'm', 'h', 'd', 'w'].includes(word) && Boolean(Number(query[offset - 1]));
-
-  if (
-    !hasNoMetrics &&
-    !insideSelector &&
-    !isColonBounded &&
-    !previousWordIsKeyWord &&
-    !startsWithQuote &&
-    !isTemplateVariable &&
-    !isTimeUnit &&
-    builtInWords.indexOf(word) === -1
-  ) {
-    return true;
-  }
-  return false;
-}
-
-export default addLabelToQuery;

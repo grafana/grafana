@@ -1,3 +1,5 @@
+import uPlot, { Series } from 'uplot';
+
 import {
   colorManipulator,
   DataFrameFieldIndex,
@@ -7,7 +9,6 @@ import {
   GrafanaTheme2,
   ThresholdsConfig,
 } from '@grafana/data';
-import uPlot, { Series } from 'uplot';
 import {
   BarAlignment,
   BarConfig,
@@ -19,13 +20,16 @@ import {
   PointsConfig,
   VisibilityMode,
 } from '@grafana/schema';
+
 import { PlotConfigBuilder } from '../types';
+
 import { getHueGradientFn, getOpacityGradientFn, getScaleGradientFn } from './gradientFills';
 
 export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsConfig {
   scaleKey: string;
   pxAlign?: boolean;
   gradientMode?: GraphGradientMode;
+  dynamicSeriesColor?: (seriesIdx: number) => string | undefined;
 
   facets?: uPlot.Series.Facet[];
 
@@ -147,7 +151,22 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   }
 
   private getLineColor(): Series.Stroke {
-    const { lineColor, gradientMode, colorMode, thresholds, theme, hardMin, hardMax, softMin, softMax } = this.props;
+    const {
+      lineColor,
+      gradientMode,
+      colorMode,
+      thresholds,
+      theme,
+      hardMin,
+      hardMax,
+      softMin,
+      softMax,
+      dynamicSeriesColor,
+    } = this.props;
+
+    if (gradientMode === GraphGradientMode.None && dynamicSeriesColor) {
+      return (plot: uPlot, seriesIdx: number) => dynamicSeriesColor(seriesIdx) ?? lineColor ?? FALLBACK_COLOR;
+    }
 
     if (gradientMode === GraphGradientMode.Scheme && colorMode?.id !== FieldColorModeId.Fixed) {
       return getScaleGradientFn(1, theme, colorMode, thresholds, hardMin, hardMax, softMin, softMax);
@@ -169,6 +188,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       hardMax,
       softMin,
       softMax,
+      dynamicSeriesColor,
     } = this.props;
 
     if (fillColor) {
@@ -177,6 +197,14 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     const mode = gradientMode ?? GraphGradientMode.None;
     const opacityPercent = (fillOpacity ?? 0) / 100;
+
+    if (mode === GraphGradientMode.None && dynamicSeriesColor && opacityPercent > 0) {
+      return (u: uPlot, seriesIdx: number) => {
+        // @ts-ignore
+        let lineColor = u.series[seriesIdx]._stroke; // cache
+        return colorManipulator.alpha(lineColor ?? '', opacityPercent);
+      };
+    }
 
     switch (mode) {
       case GraphGradientMode.Opacity:
@@ -213,7 +241,7 @@ function mapDrawStyleToPathBuilder(
   lineInterpolation?: LineInterpolation,
   barAlignment = 0,
   barWidthFactor = 0.6,
-  barMaxWidth = Infinity
+  barMaxWidth = 200
 ): Series.PathBuilder {
   const pathBuilders = uPlot.paths;
 
@@ -222,8 +250,8 @@ function mapDrawStyleToPathBuilder(
     builders = {
       linear: pathBuilders.linear!(),
       smooth: pathBuilders.spline!(),
-      stepBefore: pathBuilders.stepped!({ align: -1 }),
-      stepAfter: pathBuilders.stepped!({ align: 1 }),
+      stepBefore: pathBuilders.stepped!({ align: -1, extend: true }),
+      stepAfter: pathBuilders.stepped!({ align: 1, extend: true }),
     };
   }
 

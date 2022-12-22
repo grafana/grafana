@@ -1,11 +1,14 @@
-import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { css } from '@emotion/css';
+import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
+
 import { AlertLabels } from '../AlertLabels';
-import { AlertGroupAlertsTable } from './AlertGroupAlertsTable';
 import { CollapseToggle } from '../CollapseToggle';
+
+import { AlertGroupAlertsTable } from './AlertGroupAlertsTable';
 import { AlertGroupHeader } from './AlertGroupHeader';
 
 interface Props {
@@ -22,6 +25,7 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
       <div className={styles.header}>
         <div className={styles.group} data-testid="alert-group">
           <CollapseToggle
+            size="sm"
             isCollapsed={isCollapsed}
             onToggle={() => setIsCollapsed(!isCollapsed)}
             data-testid="alert-group-collapse-toggle"

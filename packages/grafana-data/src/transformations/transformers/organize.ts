@@ -1,7 +1,8 @@
-import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
-import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
+
 import { filterFieldsByNameTransformer } from './filterByName';
+import { DataTransformerID } from './ids';
+import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
 import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
 
 export interface OrganizeFieldsTransformerOptions

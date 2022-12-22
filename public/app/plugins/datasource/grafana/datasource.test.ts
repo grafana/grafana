@@ -1,6 +1,6 @@
 import { AnnotationQueryRequest, DataSourceInstanceSettings, dateTime } from '@grafana/data';
-
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
 import { GrafanaDatasource } from './datasource';
 import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery } from './types';
 
@@ -64,7 +64,7 @@ describe('grafana data source', () => {
           type: GrafanaAnnotationType.Dashboard,
           tags: ['tag1'],
         },
-        { id: 1 }
+        { uid: 'DSNdW0gVk' }
       );
 
       beforeEach(() => {
@@ -78,7 +78,7 @@ describe('grafana data source', () => {
   });
 });
 
-function setupAnnotationQueryOptions(annotation: Partial<GrafanaAnnotationQuery>, dashboard?: { id: number }) {
+function setupAnnotationQueryOptions(annotation: Partial<GrafanaAnnotationQuery>, dashboard?: { uid: string }) {
   return {
     annotation: {
       target: annotation,

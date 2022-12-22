@@ -14,11 +14,11 @@ Alerting rules can only query backend data sources with alerting enabled:
 
 - builtin or developed and maintained by grafana: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
   `Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`
-- any community backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json]({{< relref "../../developers/plugins/metadata.md" >}}))
+- any community backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json]({{< relref "../../developers/plugins/metadata/" >}}))
 
 ## Metrics from the alerting engine
 
-The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../administration/view-server/internal-metrics.md" >}}). See also, [View alert rules and their current state]({{< relref "../../alerting/old-alerting/view-alerts.md" >}}).
+The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../setup-grafana/set-up-grafana-monitoring/" >}}). See also, [View alert rules and their current state]({{< relref "../../alerting/fundamentals/state-and-health/" >}}).
 
 | Metric Name                                 | Type      | Description                                                                              |
 | ------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |

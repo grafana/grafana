@@ -1,9 +1,10 @@
-import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { DataTransformerConfig, DisplayProcessor, Field, FieldType } from '../../types';
-import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe';
-import { transformDataFrame } from '../transformDataFrame';
+import { DataTransformerConfig, DisplayProcessor, Field, FieldType } from '../../types';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ArrayVector } from '../../vector';
+import { transformDataFrame } from '../transformDataFrame';
+
+import { DataTransformerID } from './ids';
 import { mergeTransformer, MergeTransformerOptions } from './merge';
 
 describe('Merge multiple to single', () => {

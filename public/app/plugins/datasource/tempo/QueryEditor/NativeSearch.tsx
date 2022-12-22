@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { css } from '@emotion/css';
+import Prism from 'prismjs';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import { Node } from 'slate';
+
+import { GrafanaTheme2, isValidGoDuration, SelectableValue, toOption } from '@grafana/data';
+import { FetchError, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
 import {
   InlineFieldRow,
   InlineField,
@@ -8,21 +14,19 @@ import {
   BracesPlugin,
   TypeaheadInput,
   TypeaheadOutput,
-  Select,
   Alert,
   useStyles2,
+  fuzzyMatch,
+  Select,
 } from '@grafana/ui';
-import { tokenizer } from '../syntax';
-import Prism from 'prismjs';
-import { Node } from 'slate';
-import { css } from '@emotion/css';
-import { GrafanaTheme2, isValidGoDuration, SelectableValue } from '@grafana/data';
-import TempoLanguageProvider from '../language_provider';
-import { TempoDatasource, TempoQuery } from '../datasource';
-import { debounce } from 'lodash';
-import { dispatch } from 'app/store/store';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { dispatch } from 'app/store/store';
+
+import { DEFAULT_LIMIT, TempoDatasource } from '../datasource';
+import TempoLanguageProvider from '../language_provider';
+import { tokenizer } from '../syntax';
+import { TempoQuery } from '../types';
 
 interface Props {
   datasource: TempoDatasource;
@@ -48,79 +52,125 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [hasSyntaxLoaded, setHasSyntaxLoaded] = useState(false);
-  const [autocomplete, setAutocomplete] = useState<{
-    serviceNameOptions: Array<SelectableValue<string>>;
-    spanNameOptions: Array<SelectableValue<string>>;
-  }>({
-    serviceNameOptions: [],
-    spanNameOptions: [],
-  });
-  const [error, setError] = useState(null);
+  const [serviceOptions, setServiceOptions] = useState<Array<SelectableValue<string>>>();
+  const [spanOptions, setSpanOptions] = useState<Array<SelectableValue<string>>>();
+  const [error, setError] = useState<Error | FetchError | null>(null);
   const [inputErrors, setInputErrors] = useState<{ [key: string]: boolean }>({});
+  const [isLoading, setIsLoading] = useState<{
+    serviceName: boolean;
+    spanName: boolean;
+  }>({
+    serviceName: false,
+    spanName: false,
+  });
 
-  const fetchServiceNameOptions = useMemo(
-    () =>
-      debounce(
-        async () => {
-          const res = await languageProvider.getOptions('service.name');
-          setAutocomplete((prev) => ({ ...prev, serviceNameOptions: res }));
-        },
-        500,
-        { leading: true, trailing: true }
-      ),
-    [languageProvider]
-  );
+  const loadOptions = useCallback(
+    async (name: string, query = '') => {
+      const lpName = name === 'serviceName' ? 'service.name' : 'name';
+      setIsLoading((prevValue) => ({ ...prevValue, [name]: true }));
 
-  const fetchSpanNameOptions = useMemo(
-    () =>
-      debounce(
-        async () => {
-          const res = await languageProvider.getOptions('name');
-          setAutocomplete((prev) => ({ ...prev, spanNameOptions: res }));
-        },
-        500,
-        { leading: true, trailing: true }
-      ),
+      try {
+        const options = await languageProvider.getOptions(lpName);
+        const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
+        return filteredOptions;
+      } catch (error) {
+        if (isFetchError(error) && error?.status === 404) {
+          setError(error);
+        } else if (error instanceof Error) {
+          dispatch(notifyApp(createErrorNotification('Error', error)));
+        }
+        return [];
+      } finally {
+        setIsLoading((prevValue) => ({ ...prevValue, [name]: false }));
+      }
+    },
     [languageProvider]
   );
 
   useEffect(() => {
-    const fetchAutocomplete = async () => {
+    const fetchOptions = async () => {
       try {
-        await languageProvider.start();
-        const serviceNameOptions = await languageProvider.getOptions('service.name');
-        const spanNameOptions = await languageProvider.getOptions('name');
-        setHasSyntaxLoaded(true);
-        setAutocomplete({ serviceNameOptions, spanNameOptions });
+        const [services, spans] = await Promise.all([loadOptions('serviceName'), loadOptions('spanName')]);
+        if (query.serviceName && getTemplateSrv().containsTemplate(query.serviceName)) {
+          services.push(toOption(query.serviceName));
+        }
+        setServiceOptions(services);
+        if (query.spanName && getTemplateSrv().containsTemplate(query.spanName)) {
+          spans.push(toOption(query.spanName));
+        }
+        setSpanOptions(spans);
       } catch (error) {
         // Display message if Tempo is connected but search 404's
-        if (error?.status === 404) {
+        if (isFetchError(error) && error?.status === 404) {
           setError(error);
-        } else {
+        } else if (error instanceof Error) {
           dispatch(notifyApp(createErrorNotification('Error', error)));
         }
       }
     };
-    fetchAutocomplete();
-  }, [languageProvider, fetchServiceNameOptions, fetchSpanNameOptions]);
+    fetchOptions();
+  }, [languageProvider, loadOptions, query.serviceName, query.spanName]);
 
-  const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    return await languageProvider.provideCompletionItems(typeahead);
-  };
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        await languageProvider.start();
+        setHasSyntaxLoaded(true);
+      } catch (error) {
+        if (error instanceof Error) {
+          dispatch(notifyApp(createErrorNotification('Error', error)));
+        }
+      }
+    };
+    fetchTags();
+  }, [languageProvider]);
 
-  const cleanText = (text: string) => {
+  const onTypeahead = useCallback(
+    async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
+      return await languageProvider.provideCompletionItems(typeahead);
+    },
+    [languageProvider]
+  );
+
+  const cleanText = useCallback((text: string) => {
     const splittedText = text.split(/\s+(?=([^"]*"[^"]*")*[^"]*$)/g);
     if (splittedText.length > 1) {
       return splittedText[splittedText.length - 1];
     }
     return text;
-  };
+  }, []);
 
   const onKeyDown = (keyEvent: React.KeyboardEvent) => {
     if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
       onRunQuery();
     }
   };
+
+  const onSpanNameChange = (v: SelectableValue<string>) => {
+    // If the 'x' icon is clicked to clear the selected span name, remove spanName from the query object.
+    if (!v) {
+      delete query.spanName;
+      return;
+    }
+    if (spanOptions?.find((obj) => obj.value === v.value)) {
+      onChange({
+        ...query,
+        spanName: v.value,
+      });
+    }
+  };
+
+  const handleOnChange = useCallback(
+    (value) => {
+      onChange({
+        ...query,
+        search: value,
+      });
+    },
+    [onChange, query]
+  );
+
+  const templateSrv: TemplateSrv = getTemplateSrv();
 
   return (
     <>
@@ -129,9 +179,12 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           <InlineField label="Service Name" labelWidth={14} grow>
             <Select
               inputId="service"
-              menuShouldPortal
-              options={autocomplete.serviceNameOptions}
-              value={query.serviceName || ''}
+              options={serviceOptions}
+              onOpenMenu={() => {
+                loadOptions('serviceName');
+              }}
+              isLoading={isLoading.serviceName}
+              value={serviceOptions?.find((v) => v?.value === query.serviceName) || undefined}
               onChange={(v) => {
                 onChange({
                   ...query,
@@ -139,9 +192,10 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 });
               }}
               placeholder="Select a service"
-              onOpenMenu={fetchServiceNameOptions}
               isClearable
               onKeyDown={onKeyDown}
+              aria-label={'select-service-name'}
+              allowCustomValue={true}
             />
           </InlineField>
         </InlineFieldRow>
@@ -149,37 +203,30 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           <InlineField label="Span Name" labelWidth={14} grow>
             <Select
               inputId="spanName"
-              menuShouldPortal
-              options={autocomplete.spanNameOptions}
-              value={query.spanName || ''}
-              onChange={(v) => {
-                onChange({
-                  ...query,
-                  spanName: v?.value || undefined,
-                });
+              options={spanOptions}
+              onOpenMenu={() => {
+                loadOptions('spanName');
               }}
+              isLoading={isLoading.spanName}
+              onChange={onSpanNameChange}
               placeholder="Select a span"
-              onOpenMenu={fetchSpanNameOptions}
               isClearable
               onKeyDown={onKeyDown}
+              aria-label={'select-span-name'}
+              allowCustomValue={true}
             />
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in the logfmt format.">
+          <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in logfmt.">
             <QueryField
               additionalPlugins={plugins}
               query={query.search}
               onTypeahead={onTypeahead}
               onBlur={onBlur}
-              onChange={(value) => {
-                onChange({
-                  ...query,
-                  search: value,
-                });
-              }}
-              placeholder="http.status_code=200 error=true"
+              onChange={handleOnChange}
               cleanText={cleanText}
+              placeholder="http.status_code=200 error=true"
               onRunQuery={onRunQuery}
               syntaxLoaded={hasSyntaxLoaded}
               portalOrigin="tempo"
@@ -193,7 +240,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               value={query.minDuration || ''}
               placeholder={durationPlaceholder}
               onBlur={() => {
-                if (query.minDuration && !isValidGoDuration(query.minDuration)) {
+                const templatedMinDuration = templateSrv.replace(query.minDuration ?? '');
+                if (query.minDuration && !isValidGoDuration(templatedMinDuration)) {
                   setInputErrors({ ...inputErrors, minDuration: true });
                 } else {
                   setInputErrors({ ...inputErrors, minDuration: false });
@@ -216,7 +264,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               value={query.maxDuration || ''}
               placeholder={durationPlaceholder}
               onBlur={() => {
-                if (query.maxDuration && !isValidGoDuration(query.maxDuration)) {
+                const templatedMaxDuration = templateSrv.replace(query.maxDuration ?? '');
+                if (query.maxDuration && !isValidGoDuration(templatedMaxDuration)) {
                   setInputErrors({ ...inputErrors, maxDuration: true });
                 } else {
                   setInputErrors({ ...inputErrors, maxDuration: false });
@@ -238,11 +287,12 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
             invalid={!!inputErrors.limit}
             labelWidth={14}
             grow
-            tooltip="Maximum numbers of returned results"
+            tooltip="Maximum number of returned results"
           >
             <Input
               id="limit"
               value={query.limit || ''}
+              placeholder={`Default: ${DEFAULT_LIMIT}`}
               type="number"
               onChange={(v) => {
                 let limit = v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined;

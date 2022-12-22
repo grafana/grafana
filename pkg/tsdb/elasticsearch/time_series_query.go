@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -29,8 +28,7 @@ var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery,
 }
 
 func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
-	tsQueryParser := newTimeSeriesQueryParser()
-	queries, err := tsQueryParser.parse(e.dataQueries)
+	queries, err := parseQuery(e.dataQueries)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -58,8 +56,7 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	rp := newResponseParser(res.Responses, queries, res.DebugInfo)
-	return rp.getTimeSeries()
+	return parseResponse(res.Responses, queries)
 }
 
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64,
@@ -69,27 +66,51 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		return err
 	}
 	interval := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval, q.MaxDataPoints)
+	defaultTimeField := e.client.GetTimeField()
 
 	b := ms.Search(interval)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)
-
-	if q.RawQuery != "" {
-		filters.AddQueryStringFilter(q.RawQuery, true)
-	}
+	filters.AddQueryStringFilter(q.RawQuery, true)
 
 	if len(q.BucketAggs) == 0 {
-		if len(q.Metrics) == 0 || q.Metrics[0].Type != "raw_document" {
+		// If no aggregations, only document and logs queries are valid
+		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == "raw_data" || q.Metrics[0].Type == "raw_document" || q.Metrics[0].Type == "logs") {
 			result.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
 			}
 			return nil
 		}
+
+		// Defaults for log and document queries
 		metric := q.Metrics[0]
+		b.SortDesc(e.client.GetTimeField(), "boolean")
+		b.SortDesc("_doc", "")
+		b.AddDocValueField(e.client.GetTimeField())
 		b.Size(metric.Settings.Get("size").MustInt(500))
-		b.SortDesc("@timestamp", "boolean")
-		b.AddDocValueField("@timestamp")
+
+		if metric.Type == "logs" {
+			// Add additional defaults for log query
+			b.Size(metric.Settings.Get("limit").MustInt(500))
+			b.AddHighlight()
+
+			// For log query, we add a date histogram aggregation
+			aggBuilder := b.Agg()
+			q.BucketAggs = append(q.BucketAggs, &BucketAgg{
+				Type:  dateHistType,
+				Field: e.client.GetTimeField(),
+				ID:    "1",
+				Settings: simplejson.NewFromAny(map[string]interface{}{
+					"interval": "auto",
+				}),
+			})
+			bucketAgg := q.BucketAggs[0]
+			bucketAgg.Settings = simplejson.NewFromAny(
+				bucketAgg.generateSettingsForDSL(),
+			)
+			_ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
+		}
 		return nil
 	}
 
@@ -102,7 +123,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		)
 		switch bucketAgg.Type {
 		case dateHistType:
-			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
+			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
 		case histogramType:
 			aggBuilder = addHistogramAgg(aggBuilder, bucketAgg)
 		case filtersType:
@@ -116,6 +137,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 	for _, m := range q.Metrics {
 		m := m
+
 		if m.Type == countType {
 			continue
 		}
@@ -144,28 +166,29 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 					}
 
 					aggBuilder.Pipeline(m.ID, m.Type, bucketPaths, func(a *es.PipelineAggregation) {
-						a.Settings = m.generateSettingsForDSL(e.client.GetVersion())
+						a.Settings = m.generateSettingsForDSL()
 					})
 				} else {
 					continue
 				}
 			} else {
-				if _, err := strconv.Atoi(m.PipelineAggregate); err == nil {
+				pipelineAggField := getPipelineAggField(m)
+				if _, err := strconv.Atoi(pipelineAggField); err == nil {
 					var appliedAgg *MetricAgg
 					for _, pipelineMetric := range q.Metrics {
-						if pipelineMetric.ID == m.PipelineAggregate {
+						if pipelineMetric.ID == pipelineAggField {
 							appliedAgg = pipelineMetric
 							break
 						}
 					}
 					if appliedAgg != nil {
-						bucketPath := m.PipelineAggregate
+						bucketPath := pipelineAggField
 						if appliedAgg.Type == countType {
 							bucketPath = "_count"
 						}
 
 						aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
-							a.Settings = m.generateSettingsForDSL(e.client.GetVersion())
+							a.Settings = m.generateSettingsForDSL()
 						})
 					}
 				} else {
@@ -174,7 +197,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 			}
 		} else {
 			aggBuilder.Metric(m.ID, m.Type, m.Field, func(a *es.MetricAggregation) {
-				a.Settings = m.generateSettingsForDSL(e.client.GetVersion())
+				a.Settings = m.generateSettingsForDSL()
 			})
 		}
 	}
@@ -199,7 +222,7 @@ func setIntPath(settings *simplejson.Json, path ...string) {
 }
 
 // Casts values to float when required by Elastic's query DSL
-func (metricAggregation MetricAgg) generateSettingsForDSL(version *semver.Version) map[string]interface{} {
+func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface{} {
 	switch metricAggregation.Type {
 	case "moving_avg":
 		setFloatPath(metricAggregation.Settings, "window")
@@ -219,14 +242,8 @@ func (metricAggregation MetricAgg) generateSettingsForDSL(version *semver.Versio
 			scriptValue, err = metricAggregation.Settings.GetPath("script", "inline").String()
 		}
 
-		constraint, _ := semver.NewConstraint(">=5.6.0")
-
 		if err == nil {
-			if constraint.Check(version) {
-				metricAggregation.Settings.SetPath([]string{"script"}, scriptValue)
-			} else {
-				metricAggregation.Settings.SetPath([]string{"script"}, map[string]interface{}{"inline": scriptValue})
-			}
+			metricAggregation.Settings.SetPath([]string{"script"}, scriptValue)
 		}
 	}
 
@@ -234,24 +251,32 @@ func (metricAggregation MetricAgg) generateSettingsForDSL(version *semver.Versio
 }
 
 func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
-	// TODO: This might also need to be applied to other bucket aggregations and other fields.
-	switch bucketAgg.Type {
-	case "date_histogram":
-		setIntPath(bucketAgg.Settings, "min_doc_count")
-	}
+	setIntPath(bucketAgg.Settings, "min_doc_count")
 
 	return bucketAgg.Settings.MustMap()
 }
 
-func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64) es.AggBuilder {
-	aggBuilder.DateHistogram(bucketAgg.ID, bucketAgg.Field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
-		a.Interval = bucketAgg.Settings.Get("interval").MustString("auto")
+func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo int64, timeField string) es.AggBuilder {
+	// If no field is specified, use the time field
+	field := bucketAgg.Field
+	if field == "" {
+		field = timeField
+	}
+	aggBuilder.DateHistogram(bucketAgg.ID, field, func(a *es.DateHistogramAgg, b es.AggBuilder) {
+		a.FixedInterval = bucketAgg.Settings.Get("interval").MustString("auto")
 		a.MinDocCount = bucketAgg.Settings.Get("min_doc_count").MustInt(0)
 		a.ExtendedBounds = &es.ExtendedBounds{Min: timeFrom, Max: timeTo}
 		a.Format = bucketAgg.Settings.Get("format").MustString(es.DateFormatEpochMS)
 
-		if a.Interval == "auto" {
-			a.Interval = "$__interval"
+		if a.FixedInterval == "auto" {
+			// note this is not really a valid grafana-variable-handling,
+			// because normally this would not match `$__interval_ms`,
+			// but because how we apply these in the go-code, this will work
+			// correctly, and becomes something like `500ms`.
+			// a nicer way would be to use `${__interval_ms}ms`, but
+			// that format is not recognized where we apply these variables
+			// in the elasticsearch datasource
+			a.FixedInterval = "$__interval_msms"
 		}
 
 		if offset, err := bucketAgg.Settings.Get("offset").String(); err == nil {
@@ -374,103 +399,15 @@ func addGeoHashGridAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBui
 	return aggBuilder
 }
 
-type timeSeriesQueryParser struct{}
+func getPipelineAggField(m *MetricAgg) string {
+	// In frontend we are using Field as pipelineAggField
+	// There might be historical reason why in backend we were using PipelineAggregate as pipelineAggField
+	// So for now let's check Field first and then PipelineAggregate to ensure that we are not breaking anything
+	// TODO: Investigate, if we can remove check for PipelineAggregate
+	pipelineAggField := m.Field
 
-func newTimeSeriesQueryParser() *timeSeriesQueryParser {
-	return &timeSeriesQueryParser{}
-}
-
-func (p *timeSeriesQueryParser) parse(tsdbQuery []backend.DataQuery) ([]*Query, error) {
-	queries := make([]*Query, 0)
-	for _, q := range tsdbQuery {
-		model, err := simplejson.NewJson(q.JSON)
-		if err != nil {
-			return nil, err
-		}
-		timeField, err := model.Get("timeField").String()
-		if err != nil {
-			return nil, err
-		}
-		rawQuery := model.Get("query").MustString()
-		bucketAggs, err := p.parseBucketAggs(model)
-		if err != nil {
-			return nil, err
-		}
-		metrics, err := p.parseMetrics(model)
-		if err != nil {
-			return nil, err
-		}
-		alias := model.Get("alias").MustString("")
-		interval := model.Get("interval").MustString("")
-
-		queries = append(queries, &Query{
-			TimeField:     timeField,
-			RawQuery:      rawQuery,
-			BucketAggs:    bucketAggs,
-			Metrics:       metrics,
-			Alias:         alias,
-			Interval:      interval,
-			RefID:         q.RefID,
-			MaxDataPoints: q.MaxDataPoints,
-		})
+	if pipelineAggField == "" {
+		pipelineAggField = m.PipelineAggregate
 	}
-
-	return queries, nil
-}
-
-func (p *timeSeriesQueryParser) parseBucketAggs(model *simplejson.Json) ([]*BucketAgg, error) {
-	var err error
-	var result []*BucketAgg
-	for _, t := range model.Get("bucketAggs").MustArray() {
-		aggJSON := simplejson.NewFromAny(t)
-		agg := &BucketAgg{}
-
-		agg.Type, err = aggJSON.Get("type").String()
-		if err != nil {
-			return nil, err
-		}
-
-		agg.ID, err = aggJSON.Get("id").String()
-		if err != nil {
-			return nil, err
-		}
-
-		agg.Field = aggJSON.Get("field").MustString()
-		agg.Settings = simplejson.NewFromAny(aggJSON.Get("settings").MustMap())
-
-		result = append(result, agg)
-	}
-	return result, nil
-}
-
-func (p *timeSeriesQueryParser) parseMetrics(model *simplejson.Json) ([]*MetricAgg, error) {
-	var err error
-	var result []*MetricAgg
-	for _, t := range model.Get("metrics").MustArray() {
-		metricJSON := simplejson.NewFromAny(t)
-		metric := &MetricAgg{}
-
-		metric.Field = metricJSON.Get("field").MustString()
-		metric.Hide = metricJSON.Get("hide").MustBool(false)
-		metric.ID = metricJSON.Get("id").MustString()
-		metric.PipelineAggregate = metricJSON.Get("pipelineAgg").MustString()
-		metric.Settings = simplejson.NewFromAny(metricJSON.Get("settings").MustMap())
-		metric.Meta = simplejson.NewFromAny(metricJSON.Get("meta").MustMap())
-		metric.Type, err = metricJSON.Get("type").String()
-		if err != nil {
-			return nil, err
-		}
-
-		if isPipelineAggWithMultipleBucketPaths(metric.Type) {
-			metric.PipelineVariables = map[string]string{}
-			pvArr := metricJSON.Get("pipelineVariables").MustArray()
-			for _, v := range pvArr {
-				kv := v.(map[string]interface{})
-				metric.PipelineVariables[kv["name"].(string)] = kv["pipelineAgg"].(string)
-			}
-		}
-
-		result = append(result, metric)
-	}
-	return result, nil
+	return pipelineAggField
 }

@@ -4,14 +4,22 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/util"
 )
 
+// swagger:route GET /search search search
+//
+// Responses:
+// 200: searchResponse
+// 401: unauthorisedError
+// 422: unprocessableEntityError
+// 500: internalServerError
 func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 	query := c.Query("query")
 	tags := c.QueryStrings("tag")
@@ -38,6 +46,12 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		}
 	}
 
+	dbUIDs := c.QueryStrings("dashboardUIDs")
+	if len(dbUIDs) == 0 {
+		// To keep it for now backward compatible for grafana 9
+		dbUIDs = c.QueryStrings("dashboardUID")
+	}
+
 	folderIDs := make([]int64, 0)
 	for _, id := range c.QueryStrings("folderIds") {
 		folderID, err := strconv.ParseInt(id, 10, 64)
@@ -46,19 +60,24 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		}
 	}
 
+	if len(dbIDs) > 0 && len(dbUIDs) > 0 {
+		return response.Error(400, "search supports UIDs or IDs, not both", nil)
+	}
+
 	searchQuery := search.Query{
-		Title:        query,
-		Tags:         tags,
-		SignedInUser: c.SignedInUser,
-		Limit:        limit,
-		Page:         page,
-		IsStarred:    starred == "true",
-		OrgId:        c.OrgId,
-		DashboardIds: dbIDs,
-		Type:         dashboardType,
-		FolderIds:    folderIDs,
-		Permission:   permission,
-		Sort:         sort,
+		Title:         query,
+		Tags:          tags,
+		SignedInUser:  c.SignedInUser,
+		Limit:         limit,
+		Page:          page,
+		IsStarred:     starred == "true",
+		OrgId:         c.OrgID,
+		DashboardIds:  dbIDs,
+		DashboardUIDs: dbUIDs,
+		Type:          dashboardType,
+		FolderIds:     folderIDs,
+		Permission:    permission,
+		Sort:          sort,
 	}
 
 	err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
@@ -66,10 +85,57 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		return response.Error(500, "Search failed", err)
 	}
 
-	c.TimeRequest(metrics.MApiDashboardSearch)
-	return response.JSON(200, searchQuery.Result)
+	defer c.TimeRequest(metrics.MApiDashboardSearch)
+
+	if !c.QueryBool("accesscontrol") {
+		return response.JSON(http.StatusOK, searchQuery.Result)
+	}
+
+	return hs.searchHitsWithMetadata(c, searchQuery.Result)
 }
 
+func (hs *HTTPServer) searchHitsWithMetadata(c *models.ReqContext, hits models.HitList) response.Response {
+	folderUIDs := make(map[string]bool)
+	dashboardUIDs := make(map[string]bool)
+
+	for _, hit := range hits {
+		if hit.Type == models.DashHitFolder {
+			folderUIDs[hit.UID] = true
+		} else {
+			dashboardUIDs[hit.UID] = true
+			folderUIDs[hit.FolderUID] = true
+		}
+	}
+
+	folderMeta := hs.getMultiAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folderUIDs)
+	dashboardMeta := hs.getMultiAccessControlMetadata(c, c.OrgID, dashboards.ScopeDashboardsPrefix, dashboardUIDs)
+
+	// search hit with access control metadata attached
+	type hitWithMeta struct {
+		*models.Hit
+		AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
+	}
+	hitsWithMeta := make([]hitWithMeta, 0, len(hits))
+	for _, hit := range hits {
+		var meta accesscontrol.Metadata
+		if hit.Type == models.DashHitFolder {
+			meta = folderMeta[hit.UID]
+		} else {
+			meta = accesscontrol.MergeMeta("dashboards", dashboardMeta[hit.UID], folderMeta[hit.FolderUID])
+		}
+		hitsWithMeta = append(hitsWithMeta, hitWithMeta{hit, meta})
+	}
+
+	return response.JSON(http.StatusOK, hitsWithMeta)
+}
+
+// swagger:route GET /search/sorting search listSortOptions
+//
+// List search sorting options.
+//
+// Responses:
+// 200: listSortOptionsResponse
+// 401: unauthorisedError
 func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {
 	opts := hs.SearchService.SortOptions()
 
@@ -86,4 +152,79 @@ func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
 		"sortOptions": res,
 	})
+}
+
+// swagger:parameters search
+type SearchParams struct {
+	// Search Query
+	// in:query
+	// required: false
+	Query string `json:"query"`
+	// List of tags to search for
+	// in:query
+	// required: false
+	// type: array
+	// collectionFormat: multi
+	Tag []string `json:"tag"`
+	// Type to search for, dash-folder or dash-db
+	// in:query
+	// required: false
+	// Description:
+	// * `dash-folder` - Search for folder
+	// * `dash-db` - Seatch for dashboard
+	// Enum: dash-folder,dash-db
+	Type string `json:"type"`
+	// List of dashboard id’s to search for
+	// in:query
+	// required: false
+	DashboardIds []int64 `json:"dashboardIds"`
+	// List of dashboard uid’s to search for
+	// in:query
+	// required: false
+	DashboardUIDs []string `json:"dashboardUIDs"`
+	// List of folder id’s to search in for dashboards
+	// in:query
+	// required: false
+	FolderIds []int64 `json:"folderIds"`
+	// Flag indicating if only starred Dashboards should be returned
+	// in:query
+	// required: false
+	Starred bool `json:"starred"`
+	// Limit the number of returned results (max 5000)
+	// in:query
+	// required: false
+	Limit int64 `json:"limit"`
+	// Use this parameter to access hits beyond limit. Numbering starts at 1. limit param acts as page size. Only available in Grafana v6.2+.
+	// in:query
+	// required: false
+	Page int64 `json:"page"`
+	// Set to `Edit` to return dashboards/folders that the user can edit
+	// in:query
+	// required: false
+	// default:View
+	// Enum: Edit,View
+	Permission string `json:"permission"`
+	// Sort method; for listing all the possible sort methods use the search sorting endpoint.
+	// in:query
+	// required: false
+	// default: alpha-asc
+	// Enum: alpha-asc,alpha-desc
+	Sort string `json:"sort"`
+}
+
+// swagger:response searchResponse
+type SearchResponse struct {
+	// in: body
+	Body models.HitList `json:"body"`
+}
+
+// swagger:response listSortOptionsResponse
+type ListSortOptionsResponse struct {
+	// in: body
+	Body struct {
+		Name        string `json:"name"`
+		DisplayName string `json:"displayName"`
+		Description string `json:"description"`
+		Meta        string `json:"meta"`
+	} `json:"body"`
 }

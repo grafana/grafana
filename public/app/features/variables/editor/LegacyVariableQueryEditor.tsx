@@ -1,16 +1,17 @@
+import { useId } from '@react-aria/utils';
 import React, { FC, useCallback, useState } from 'react';
-import { selectors } from '@grafana/e2e-selectors';
-import { useStyles } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
-import { css } from '@emotion/css';
 
-import { VariableTextAreaField } from './VariableTextAreaField';
+import { selectors } from '@grafana/e2e-selectors';
+import { TextArea, useStyles2 } from '@grafana/ui';
+
 import { VariableQueryEditorProps } from '../types';
+
+import { getStyles } from './VariableTextAreaField';
 
 export const LEGACY_VARIABLE_QUERY_EDITOR_NAME = 'Grafana-LegacyVariableQueryEditor';
 
 export const LegacyVariableQueryEditor: FC<VariableQueryEditorProps> = ({ onChange, query }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const [value, setValue] = useState(query);
   const onValueChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
     setValue(event.currentTarget.value);
@@ -23,29 +24,22 @@ export const LegacyVariableQueryEditor: FC<VariableQueryEditorProps> = ({ onChan
     [onChange]
   );
 
+  const id = useId();
+
   return (
-    <div className={styles.container}>
-      <VariableTextAreaField
-        name="Query"
-        value={value}
-        placeholder="metric name or tags query"
-        width={100}
-        onChange={onValueChange}
-        onBlur={onBlur}
-        required
-        labelWidth={20}
-        ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput}
-      />
-    </div>
+    <TextArea
+      id={id}
+      rows={2}
+      value={value}
+      onChange={onValueChange}
+      onBlur={onBlur}
+      placeholder="Metric name or tags query"
+      required
+      aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput}
+      cols={52}
+      className={styles.textarea}
+    />
   );
 };
-
-function getStyles(theme: GrafanaTheme) {
-  return {
-    container: css`
-      margin-bottom: ${theme.spacing.xs};
-    `,
-  };
-}
 
 LegacyVariableQueryEditor.displayName = LEGACY_VARIABLE_QUERY_EDITOR_NAME;

@@ -1,5 +1,7 @@
 import React from 'react';
+
 import { Input, InlineFieldRow, InlineField, Select } from '@grafana/ui';
+
 import { NodesQuery, TestDataQuery } from '../types';
 
 export interface Props {
@@ -21,7 +23,7 @@ export function NodeGraphEditor({ query, onChange }: Props) {
           width={32}
         />
       </InlineField>
-      {type === 'random' && (
+      {(type === 'random' || type === 'random edges') && (
         <InlineField label="Count" labelWidth={14}>
           <Input
             type="number"
@@ -39,4 +41,4 @@ export function NodeGraphEditor({ query, onChange }: Props) {
   );
 }
 
-const options: Array<NodesQuery['type']> = ['random', 'response'];
+const options: Array<NodesQuery['type']> = ['random', 'response', 'random edges'];

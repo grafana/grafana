@@ -1,8 +1,8 @@
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
+import { DataQueryResponse } from './datasource';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
-import { DataQueryResponse } from './datasource';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -78,6 +78,7 @@ export interface LogRowModel {
   timeUtc: string;
   uid: string;
   uniqueLabels?: Labels;
+  datasourceType?: string;
 }
 
 export interface LogsModel {
@@ -85,6 +86,7 @@ export interface LogsModel {
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
   series?: DataFrame[];
+  // visibleRange is time range for histogram created from log results
   visibleRange?: AbsoluteTimeRange;
   queries?: DataQuery[];
 }
@@ -109,6 +111,7 @@ export enum LogsDedupStrategy {
   signature = 'signature',
 }
 
+/** @deprecated will be removed in the next major version */
 export interface LogsParser {
   /**
    * Value-agnostic matcher for a field label.
@@ -145,24 +148,26 @@ export enum LogsDedupDescription {
 }
 
 /**
- * @alpha
+ * Data sources that allow showing context rows around the provided LowRowModel should implement this method.
+ * This will enable "context" button in Logs Panel.
  */
-export interface DataSourceWithLogsContextSupport {
+export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = DataQuery> {
   /**
    * Retrieve context for a given log row
    */
   getLogRowContext: <TContextQueryOptions extends {}>(
     row: LogRowModel,
-    options?: TContextQueryOptions
+    options?: TContextQueryOptions,
+    query?: TQuery
   ) => Promise<DataQueryResponse>;
 
+  /**
+   * This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings, etc.)
+   */
   showContextToggle(row?: LogRowModel): boolean;
 }
 
-/**
- * @alpha
- */
-export const hasLogsContextSupport = (datasource: any): datasource is DataSourceWithLogsContextSupport => {
+export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
   if (!datasource) {
     return false;
   }

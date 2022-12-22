@@ -1,20 +1,31 @@
-import { SelectableValue } from '@grafana/data';
-import { Select } from '@grafana/ui';
 import React, { FC, useMemo } from 'react';
 
-import { SELECT_WIDTH } from '../constants';
+import { SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
+
 import { getAlignmentPickerData } from '../functions';
-import { MetricQuery } from '../types';
+import { MetricDescriptor, PreprocessorType, SLOQuery, TimeSeriesList } from '../types';
 
 export interface Props {
   inputId: string;
-  onChange: (query: MetricQuery) => void;
-  query: MetricQuery;
+  onChange: (query: TimeSeriesList | SLOQuery) => void;
+  query: TimeSeriesList | SLOQuery;
   templateVariableOptions: Array<SelectableValue<string>>;
+  metricDescriptor?: MetricDescriptor;
+  preprocessor?: PreprocessorType;
 }
 
-export const AlignmentFunction: FC<Props> = ({ inputId, query, templateVariableOptions, onChange }) => {
-  const { valueType, metricKind, perSeriesAligner: psa, preprocessor } = query;
+export const AlignmentFunction: FC<Props> = ({
+  inputId,
+  query,
+  templateVariableOptions,
+  onChange,
+  metricDescriptor,
+  preprocessor,
+}) => {
+  const { perSeriesAligner: psa } = query;
+  let { valueType, metricKind } = metricDescriptor || {};
+
   const { perSeriesAligner, alignOptions } = useMemo(
     () => getAlignmentPickerData(valueType, metricKind, psa, preprocessor),
     [valueType, metricKind, psa, preprocessor]
@@ -22,8 +33,6 @@ export const AlignmentFunction: FC<Props> = ({ inputId, query, templateVariableO
 
   return (
     <Select
-      menuShouldPortal
-      width={SELECT_WIDTH}
       onChange={({ value }) => onChange({ ...query, perSeriesAligner: value! })}
       value={[...alignOptions, ...templateVariableOptions].find((s) => s.value === perSeriesAligner)}
       options={[
@@ -39,6 +48,7 @@ export const AlignmentFunction: FC<Props> = ({ inputId, query, templateVariableO
       ]}
       placeholder="Select Alignment"
       inputId={inputId}
-    ></Select>
+      menuPlacement="top"
+    />
   );
 };

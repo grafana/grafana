@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { GlobalStyles, useTheme2 } from '../../themes';
 import { RenderFunction } from '../../types';
 

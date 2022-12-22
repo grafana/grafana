@@ -1,9 +1,13 @@
-import type { Monaco, monacoTypes } from '@grafana/ui';
 import { uniq } from 'lodash';
-import { TRIGGER_SUGGEST } from '../../monarch/commands';
+
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import type { Monaco, monacoTypes } from '@grafana/ui';
+
+import { CloudWatchAPI } from '../../api';
+import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
 import { LinkedToken } from '../../monarch/LinkedToken';
+import { TRIGGER_SUGGEST } from '../../monarch/commands';
 import { SuggestionKind, CompletionItemPriority, StatementPosition } from '../../monarch/types';
-import { SQLTokenTypes } from './types';
 import {
   BY,
   FROM,
@@ -19,21 +23,20 @@ import {
   LOGICAL_OPERATORS,
   STATISTICS,
 } from '../language';
-import { getMetricNameToken, getNamespaceToken } from './tokenUtils';
-import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
-import { CloudWatchDatasource } from '../../datasource';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+
 import { getStatementPosition } from './statementPosition';
 import { getSuggestionKinds } from './suggestionKind';
+import { getMetricNameToken, getNamespaceToken } from './tokenUtils';
+import { SQLTokenTypes } from './types';
 
 type CompletionItem = monacoTypes.languages.CompletionItem;
 
 export class SQLCompletionItemProvider extends CompletionItemProvider {
   region: string;
 
-  constructor(datasource: CloudWatchDatasource, templateSrv: TemplateSrv = getTemplateSrv()) {
-    super(datasource, templateSrv);
-    this.region = datasource.getActualRegion();
+  constructor(api: CloudWatchAPI, templateSrv: TemplateSrv = getTemplateSrv()) {
+    super(api, templateSrv);
+    this.region = api.getActualRegion() ?? '';
     this.getStatementPosition = getStatementPosition;
     this.getSuggestionKinds = getSuggestionKinds;
     this.tokenTypes = SQLTokenTypes;
@@ -109,15 +112,15 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
             const namespaceToken = getNamespaceToken(currentToken);
             if (namespaceToken?.value) {
               // if a namespace is specified, only suggest metrics for the namespace
-              const metrics = await this.datasource.getMetrics(
-                this.templateSrv.replace(namespaceToken?.value.replace(/\"/g, '')),
-                this.templateSrv.replace(this.region)
-              );
-              metrics.map((m) => addSuggestion(m.value));
+              const metrics = await this.api.getMetrics({
+                namespace: namespaceToken?.value.replace(/\"/g, ''),
+                region: this.region,
+              });
+              metrics.forEach((m) => m.value && addSuggestion(m.value));
             } else {
               // If no namespace is specified in the query, just list all metrics
-              const metrics = await this.datasource.getAllMetrics(this.templateSrv.replace(this.region));
-              uniq(metrics.map((m) => m.metricName)).map((m) => addSuggestion(m, { insertText: m }));
+              const metrics = await this.api.getAllMetrics({ region: this.region });
+              uniq(metrics.map((m) => m.metricName)).forEach((m) => m && addSuggestion(m, { insertText: m }));
             }
           }
           break;
@@ -144,12 +147,12 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
           let namespaces = [];
           if (metricNameToken?.value) {
             // if a metric is specified, only suggest namespaces that actually have that metric
-            const metrics = await this.datasource.getAllMetrics(this.region);
+            const metrics = await this.api.getMetrics({ region: this.region });
             const metricName = this.templateSrv.replace(metricNameToken.value);
             namespaces = metrics.filter((m) => m.metricName === metricName).map((m) => m.namespace);
           } else {
             // if no metric is specified, just suggest all namespaces
-            const ns = await this.datasource.getNamespaces();
+            const ns = await this.api.getNamespaces();
             namespaces = ns.map((n) => n.value);
           }
           namespaces.map((n) => addSuggestion(`"${n}"`, { insertText: `"${n}"` }));
@@ -160,7 +163,7 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
             const metricNameToken = getMetricNameToken(currentToken);
             const namespaceToken = getNamespaceToken(currentToken);
             if (namespaceToken?.value) {
-              let dimensionFilter = {};
+              let dimensionFilters = {};
               let labelKeyTokens;
               if (statementPosition === StatementPosition.SchemaFuncExtraArgument) {
                 labelKeyTokens = namespaceToken?.getNextUntil(this.tokenTypes.Parenthesis, [
@@ -173,18 +176,18 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
                   this.tokenTypes.Whitespace,
                 ]);
               }
-              dimensionFilter = (labelKeyTokens || []).reduce((acc, curr) => {
+              dimensionFilters = (labelKeyTokens || []).reduce((acc, curr) => {
                 return { ...acc, [curr.value]: null };
               }, {});
-              const keys = await this.datasource.getDimensionKeys(
-                this.templateSrv.replace(namespaceToken.value.replace(/\"/g, '')),
-                this.templateSrv.replace(this.region),
-                dimensionFilter,
-                metricNameToken?.value ?? ''
-              );
+              const keys = await this.api.getDimensionKeys({
+                namespace: this.templateSrv.replace(namespaceToken.value.replace(/\"/g, '')),
+                region: this.templateSrv.replace(this.region),
+                metricName: metricNameToken?.value,
+                dimensionFilters,
+              });
               keys.map((m) => {
-                const key = /[\s\.-]/.test(m.value) ? `"${m.value}"` : m.value;
-                addSuggestion(key);
+                const key = /[\s\.-]/.test(m.value ?? '') ? `"${m.value}"` : m.value;
+                key && addSuggestion(key);
               });
             }
           }
@@ -196,13 +199,12 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
             const metricNameToken = getMetricNameToken(currentToken);
             const labelKey = currentToken?.getPreviousNonWhiteSpaceToken()?.getPreviousNonWhiteSpaceToken();
             if (namespaceToken?.value && labelKey?.value && metricNameToken?.value) {
-              const values = await this.datasource.getDimensionValues(
-                this.templateSrv.replace(this.region),
-                this.templateSrv.replace(namespaceToken.value.replace(/\"/g, '')),
-                this.templateSrv.replace(metricNameToken.value),
-                this.templateSrv.replace(labelKey.value),
-                {}
-              );
+              const values = await this.api.getDimensionValues({
+                region: this.region,
+                namespace: namespaceToken.value.replace(/\"/g, ''),
+                metricName: metricNameToken.value,
+                dimensionKey: labelKey.value,
+              });
               values.map((o) =>
                 addSuggestion(`'${o.value}'`, { insertText: `'${o.value}' `, command: TRIGGER_SUGGEST })
               );
@@ -263,12 +265,12 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
       }
     }
 
-    // always suggest template variables
-    this.templateVariables.map((v) => {
-      addSuggestion(v, {
+    this.templateSrv.getVariables().map((v) => {
+      const variable = `$${v.name}`;
+      addSuggestion(variable, {
         range,
-        label: v,
-        insertText: v,
+        label: variable,
+        insertText: variable,
         kind: monaco.languages.CompletionItemKind.Variable,
         sortText: CompletionItemPriority.Low,
       });

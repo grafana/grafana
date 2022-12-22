@@ -1,20 +1,26 @@
-+++
-title = "What's new in Grafana v8.2"
-description = "Feature and improvement highlights for Grafana v8.2"
-keywords = ["grafana", "new", "documentation", "8.2", "release notes"]
-weight = -33
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-2/"]
-[_build]
-list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - ../guides/whats-new-in-v8-2/
+description: Feature and improvement highlights for Grafana v8.2
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '8.2'
+  - release notes
+title: What's new in Grafana v8.2
+weight: -33
+---
 
-# What’s new in Grafana v8.2
+# What's new in Grafana v8.2
 
 Grafana 8.2 continues to build on the foundation of Grafana 8.0 & 8.1. Grafana 8.2 also marks the start of our work to bring Grafana closer to all users with a focus on increasing Grafana’s accessibility, part of its continuing mission to democratize metrics _for everyone_.
 
 The plugin catalog is now on by default in Grafana 8.2. Using the plugin catalog you can now find and install official and community plugins without having to leave or restart Grafana. We’ve also updated the time picker to include configurable fiscal quarters. This update makes it easier to use Grafana to produce reports more closely aligned with common review and forecasting cycles.
 
-Grafana Enterprise includes a revamped Stats and Licensing page, new fine-grained access control permissions, and improvements that make usage insights and reporting easier to access.
+Grafana Enterprise includes a revamped Stats and Licensing page, new role-based access control permissions, and improvements that make usage insights and reporting easier to access.
 
 We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post. If you’d like all the details you can check out the [release notes](https://grafana.com/docs/grafana/next/release-notes/release-notes-8-2-0/) and complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
@@ -56,9 +62,9 @@ We’ve revamped the Stats and License sections of Grafana for administrators. T
 
 {{< figure src="/static/img/docs/enterprise/8_2_stats_licensing_screen.png" max-width="1200px" caption="Stats and licensing" >}}
 
-## New fine-grained access control permissions
+## New role-based access control permissions
 
-Fine-grained access control now covers data source and provisioning permissions. You can decide which roles (Viewers, Editors, and Admins) can manage data sources and data source permissions in Grafana, and which roles can reload provisioning configuration for dashboards, data sources, and other provisioned resources. We’ll continue adding fine-grained access control to more Grafana services, like dashboards and API Keys, in upcoming releases. Learn more about fine-grained access control in our [release post](https://grafana.com/blog/2021/06/23/new-in-grafana-enterprise-8.0-fine-grained-access-control-for-reporting-and-user-management/) and our [docs](https://grafana.com/docs/grafana/latest/enterprise/access-control/).
+Role-based access control now covers data source and provisioning permissions. You can decide which roles (Viewers, Editors, and Admins) can manage data sources and data source permissions in Grafana, and which roles can reload provisioning configuration for dashboards, data sources, and other provisioned resources. We’ll continue adding role-based access control to more Grafana services, like dashboards and API Keys, in upcoming releases. Learn more about role-based access control in our [release post](https://grafana.com/blog/2021/06/23/new-in-grafana-enterprise-8.0-fine-grained-access-control-for-reporting-and-user-management/) and our [docs](https://grafana.com/docs/grafana/latest/enterprise/access-control/).
 
 {{< figure src="/static/img/docs/enterprise/8_2_data_source_permissions.png" max-width="1200px" caption="Stats and licensing" >}}
 
@@ -70,6 +76,6 @@ Usage Insights Logs contain valuable information about user dashboard visits, qu
 
 ## Create a report from the dashboard Share dialogue
 
-Reports offer a powerful way to deliver insights directly to your email inboxes. Now you can create a report directly from any dashboard, using the Share button. This is especially useful when combined with fine-grained access control, which you can use to grant Editors or Viewers the ability to create reports in Grafana. To learn more, see the [reporting documentation](https://grafana.com/docs/grafana/latest/enterprise/reporting/).
+Reports offer a powerful way to deliver insights directly to your email inboxes. Now you can create a report directly from any dashboard, using the Share button. This is especially useful when combined with role-based access control, which you can use to grant Editors or Viewers the ability to create reports in Grafana. To learn more, see the [reporting documentation](https://grafana.com/docs/grafana/latest/enterprise/reporting/).
 
 {{< figure src="/static/img/docs/enterprise/enterprise-report-from-share-8-2.png" max-width="1200px" caption="Create a report from the dashboard share dialogue" >}}

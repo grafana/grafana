@@ -1,17 +1,20 @@
 import React, { FC, ReactElement } from 'react';
-import { Icon, SegmentAsync } from '@grafana/ui';
-import { getDatasourceSrv } from '../../../plugins/datasource_srv';
+
 import { DataSourceRef, SelectableValue } from '@grafana/data';
+import { Icon, SegmentAsync } from '@grafana/ui';
+
+import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
 interface Props {
   datasource: DataSourceRef;
   filterKey: string | null;
   onChange: (item: SelectableValue<string | null>) => void;
   getTagKeysOptions?: any;
+  disabled?: boolean;
 }
 
 const MIN_WIDTH = 90;
-export const AdHocFilterKey: FC<Props> = ({ datasource, onChange, filterKey, getTagKeysOptions }) => {
+export const AdHocFilterKey: FC<Props> = ({ datasource, onChange, disabled, filterKey, getTagKeysOptions }) => {
   const loadKeys = () => fetchFilterKeys(datasource, getTagKeysOptions);
   const loadKeysWithRemove = () => fetchFilterKeysWithRemove(datasource, getTagKeysOptions);
 
@@ -19,6 +22,7 @@ export const AdHocFilterKey: FC<Props> = ({ datasource, onChange, filterKey, get
     return (
       <div className="gf-form" data-testid="AdHocFilterKey-add-key-wrapper">
         <SegmentAsync
+          disabled={disabled}
           className="query-segment-key"
           Component={plusSegment}
           value={filterKey}
@@ -33,6 +37,7 @@ export const AdHocFilterKey: FC<Props> = ({ datasource, onChange, filterKey, get
   return (
     <div className="gf-form" data-testid="AdHocFilterKey-key-wrapper">
       <SegmentAsync
+        disabled={disabled}
         className="query-segment-key"
         value={filterKey}
         onChange={onChange}
@@ -47,9 +52,9 @@ export const REMOVE_FILTER_KEY = '-- remove filter --';
 const REMOVE_VALUE = { label: REMOVE_FILTER_KEY, value: REMOVE_FILTER_KEY };
 
 const plusSegment: ReactElement = (
-  <a className="gf-form-label query-part" aria-label="Add Filter">
+  <span className="gf-form-label query-part" aria-label="Add Filter">
     <Icon name="plus" />
-  </a>
+  </span>
 );
 
 const fetchFilterKeys = async (

@@ -1,55 +1,31 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { toVariablePayload } from '../utils';
+
 import {
   addVariableEditorError,
   changeVariableEditorExtended,
   changeVariableNameFailed,
   changeVariableNameSucceeded,
   cleanEditorState,
-  clearIdInEditor,
   initialVariableEditorState,
   removeVariableEditorError,
-  setIdInEditor,
   variableEditorMounted,
   variableEditorReducer,
   VariableEditorState,
   variableEditorUnMounted,
 } from './reducer';
-import { toVariablePayload } from '../state/types';
 
 describe('variableEditorReducer', () => {
-  describe('when setIdInEditor is dispatched', () => {
-    it('then state should be correct', () => {
-      const payload = { id: '0' };
-      reducerTester<VariableEditorState>()
-        .givenReducer(variableEditorReducer, { ...initialVariableEditorState })
-        .whenActionIsDispatched(setIdInEditor(payload))
-        .thenStateShouldEqual({
-          ...initialVariableEditorState,
-          id: '0',
-        });
-    });
-  });
-
-  describe('when clearIdInEditor is dispatched', () => {
-    it('then state should be correct', () => {
-      reducerTester<VariableEditorState>()
-        .givenReducer(variableEditorReducer, { ...initialVariableEditorState, id: '0' })
-        .whenActionIsDispatched(clearIdInEditor())
-        .thenStateShouldEqual({
-          ...initialVariableEditorState,
-        });
-    });
-  });
-
   describe('when variableEditorMounted is dispatched', () => {
     it('then state should be correct', () => {
-      const payload = { name: 'A name' };
+      const payload = { name: 'A name', id: '123' };
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, { ...initialVariableEditorState })
         .whenActionIsDispatched(variableEditorMounted(payload))
         .thenStateShouldEqual({
           ...initialVariableEditorState,
           name: 'A name',
+          id: '123',
         });
     });
   });

@@ -1,43 +1,49 @@
-import React, { FC, HTMLAttributes } from 'react';
 import { css, cx } from '@emotion/css';
-import { IconSize, useStyles, Icon } from '@grafana/ui';
+import React, { FC, HTMLAttributes } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { IconSize, useStyles2, Button } from '@grafana/ui';
 
 interface Props extends HTMLAttributes<HTMLButtonElement> {
   isCollapsed: boolean;
   onToggle: (isCollapsed: boolean) => void;
+  // Todo: this should be made compulsory for a11y purposes
+  idControlled?: string;
   size?: IconSize;
   className?: string;
   text?: string;
 }
 
-export const CollapseToggle: FC<Props> = ({ isCollapsed, onToggle, className, text, size = 'xl', ...restOfProps }) => {
-  const styles = useStyles(getStyles);
+export const CollapseToggle: FC<Props> = ({
+  isCollapsed,
+  onToggle,
+  idControlled,
+  className,
+  text,
+  size = 'xl',
+  ...restOfProps
+}) => {
+  const styles = useStyles2(getStyles);
 
   return (
-    <button
-      aria-label={`${isCollapsed ? 'Expand' : 'Collapse'} alert group`}
+    <Button
+      type="button"
+      fill="text"
+      variant="secondary"
+      aria-expanded={!isCollapsed}
+      aria-controls={idControlled}
       className={cx(styles.expandButton, className)}
+      icon={isCollapsed ? 'angle-right' : 'angle-down'}
       onClick={() => onToggle(!isCollapsed)}
       {...restOfProps}
     >
-      <Icon size={size} name={isCollapsed ? 'angle-right' : 'angle-down'} />
       {text}
-    </button>
+    </Button>
   );
 };
 
-export const getStyles = () => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   expandButton: css`
-    background: none;
-    border: none;
-
-    outline: none !important;
-
-    display: inline-flex;
-    align-items: center;
-
-    svg {
-      margin-bottom: 0;
-    }
+    margin-right: ${theme.spacing(1)};
   `,
 });

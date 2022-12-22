@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 import { config } from 'app/core/config';
 import { SuggestionName } from 'app/types/suggestions';
+
 import { getAllSuggestions, panelsToCheckFirst } from './getAllSuggestions';
 
 jest.unmock('app/core/core');

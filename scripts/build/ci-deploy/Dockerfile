@@ -1,8 +1,8 @@
 FROM debian:testing-20210111-slim
 
 # Use ARG so as not to persist environment variable in image
-ARG GOVERSION=1.17 \
-  GO_CHECKSUM=6bf89fc4f5ad763871cf7eac80a2d594492de7a818303283f1366a7f6a30372d \
+ARG GOVERSION=1.17.8 \
+  GO_CHECKSUM=980e65a863377e69fd9b67df9d8395fd8e93858e7a24c9f55803421e453f4f99 \
   DEBIAN_FRONTEND=noninteractive
 
 ENV PATH=/usr/local/go/bin:$PATH \
@@ -26,8 +26,21 @@ ARG DEBIAN_FRONTEND=noninteractive \
   GOOGLE_SDK_VERSION=325.0.0 \
   GOOGLE_SDK_CHECKSUM=374f960c9f384f88b6fc190b268ceac5dcad777301390107af63782bfb5ecbc7
 
+# Install python 3.7, as 3.10 is not working (see https://stackoverflow.com/questions/69779995/solving-an-attribute-error-found-while-installing-or-building-on-google-cloud-pl)
+RUN apt update && apt install -y build-essential libsqlite3-dev zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev curl libbz2-dev && \
+    curl -O https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tar.xz && \
+    tar -xf Python-3.7.3.tar.xz && \
+    cd Python-3.7.3 && \
+    ./configure --enable-optimizations && \
+    make -j 8 && \
+    make altinstall && \
+    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+    python3.7 get-pip.py
+
+ENV CLOUDSDK_PYTHON=/usr/local/bin/python3.7
+
 # Need procps for pkill utility, which is used by the build pipeline tool to restart the GPG agent
-RUN apt update && apt install -yq curl python3-pip procps && pip3 install -U awscli crcmod && \
+RUN apt update && apt install -yq git procps && pip3 install -U awscli crcmod && \
     curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz && \
     echo "${GOOGLE_SDK_CHECKSUM} google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz" | sha256sum --check --status && \
     tar xzf google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz -C /opt && \
@@ -39,6 +52,7 @@ RUN apt update && apt install -yq curl python3-pip procps && pip3 install -U aws
     ln -s /opt/google-cloud-sdk/bin/gsutil /usr/bin/gsutil && \
     ln -s /opt/google-cloud-sdk/bin/gcloud /usr/bin/gcloud && \
     mkdir -p /deb-repo /rpm-repo && \
-    ln -s /usr/bin/createrepo_c /usr/bin/createrepo
+    ln -s /usr/bin/createrepo_c /usr/bin/createrepo && \
+    gcloud components update
 
 COPY --from=0 /go/bin/aptly /usr/local/bin/aptly

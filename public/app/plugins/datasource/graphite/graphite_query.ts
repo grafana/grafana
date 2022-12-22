@@ -1,11 +1,13 @@
 import { compact, each, findIndex, flatten, get, join, keyBy, last, map, reduce, without } from 'lodash';
-import { arrayMove } from 'app/core/utils/arrayMove';
-import { Parser } from './parser';
-import { TemplateSrv } from '@grafana/runtime';
+
 import { ScopedVars } from '@grafana/data';
-import { FuncInstance } from './gfunc';
-import { GraphiteSegment } from './types';
+import { TemplateSrv } from '@grafana/runtime';
+import { arrayMove } from 'app/core/utils/arrayMove';
+
 import { GraphiteDatasource } from './datasource';
+import { FuncInstance } from './gfunc';
+import { Parser } from './parser';
+import { GraphiteSegment } from './types';
 
 export type GraphiteTagOperator = '=' | '=~' | '!=' | '!=~';
 
@@ -77,8 +79,10 @@ export default class GraphiteQuery {
     try {
       this.parseTargetRecursive(astNode, null);
     } catch (err) {
-      console.error('error parsing target:', err.message);
-      this.error = err.message;
+      if (err instanceof Error) {
+        console.error('error parsing target:', err.message);
+        this.error = err.message;
+      }
       this.target.textEditor = true;
     }
 
@@ -208,19 +212,10 @@ export default class GraphiteQuery {
     let targetWithNestedQueries = target.target;
 
     // Use ref count to track circular references
-    function countTargetRefs(targetsByRefId: any, refId: string) {
-      let refCount = 0;
-      each(targetsByRefId, (t, id) => {
-        if (id !== refId) {
-          const match = nestedSeriesRefRegex.exec(t.target);
-          const count = match && match.length ? match.length - 1 : 0;
-          refCount += count;
-        }
-      });
-      targetsByRefId[refId].refCount = refCount;
-    }
     each(targetsByRefId, (t, id) => {
-      countTargetRefs(targetsByRefId, id);
+      const regex = RegExp(`\#(${id})`, 'g');
+      const refMatches = targetWithNestedQueries.match(regex);
+      t.refCount = refMatches?.length ?? 0;
     });
 
     // Keep interpolating until there are no query references

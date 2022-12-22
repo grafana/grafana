@@ -1,4 +1,5 @@
 import {
+  EventBus,
   FieldType,
   getFieldColorModeForField,
   GrafanaTheme2,
@@ -12,6 +13,7 @@ import { getLocationMatchers } from 'app/features/geo/utils/location';
 import { ScaleDimensionConfig, getScaledDimension } from 'app/features/dimensions';
 import { ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
+import { Point } from 'ol/geom';
 
 // Configuration options for Heatmap overlays
 export interface HeatmapConfig {
@@ -44,11 +46,11 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<HeatmapConfig>, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<HeatmapConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
     
     const location = await getLocationMatchers(options.location);
-    const source = new FrameVectorSource(location);
+    const source = new FrameVectorSource<Point>(location);
     const WEIGHT_KEY = "_weight";
 
     // Create a new Heatmap layer

@@ -1,13 +1,23 @@
-import React, { FormEvent, ReactElement, useCallback, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FormEvent, useCallback, useState } from 'react';
+import { usePopper } from 'react-popper';
+
 import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
+
 import { useStyles2 } from '../../../themes';
+import { Trans, t } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
+import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
+import { Field } from '../../Forms/Field';
+import { Icon } from '../../Icon/Icon';
+import { getInputStyles, Input } from '../../Input/Input';
+import { Portal } from '../../Portal/Portal';
+import { Tooltip } from '../../Tooltip/Tooltip';
+import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
 import { quickOptions } from '../options';
-import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
-import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
+
 import {
   isRangeValid,
   isRelativeFormat,
@@ -15,10 +25,6 @@ import {
   mapRelativeTimeRangeToOption,
   RangeValidation,
 } from './utils';
-import { Field } from '../../Forms/Field';
-import { getInputStyles, Input } from '../../Input/Input';
-import { Icon } from '../../Icon/Icon';
-import { Tooltip } from '../../Tooltip/Tooltip';
 
 /**
  * @internal
@@ -38,13 +44,19 @@ const validOptions = quickOptions.filter((o) => isRelativeFormat(o.from));
 /**
  * @internal
  */
-export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): ReactElement | null {
+export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
   const { timeRange, onChange } = props;
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);
   const timeOption = mapRelativeTimeRangeToOption(timeRange);
   const [from, setFrom] = useState<InputState>({ value: timeOption.from, validation: isRangeValid(timeOption.from) });
   const [to, setTo] = useState<InputState>({ value: timeOption.to, validation: isRangeValid(timeOption.to) });
+
+  const [markerElement, setMarkerElement] = useState<HTMLDivElement | null>(null);
+  const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>(null);
+  const popper = usePopper(markerElement, selectorElement, {
+    placement: 'auto-start',
+  });
 
   const styles = useStyles2(getStyles(from.validation.errorMessage, to.validation.errorMessage));
 
@@ -60,7 +72,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
   };
 
   const onOpen = useCallback(
-    (event: FormEvent<HTMLDivElement>) => {
+    (event: FormEvent<HTMLButtonElement>) => {
       event.stopPropagation();
       event.preventDefault();
       setIsOpen(!isOpen);
@@ -90,8 +102,8 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
   };
 
   return (
-    <div className={styles.container}>
-      <div tabIndex={0} className={styles.pickerInput} onClick={onOpen}>
+    <div className={styles.container} ref={setMarkerElement}>
+      <button className={styles.pickerInput} type="button" onClick={onOpen}>
         <span className={styles.clockIcon}>
           <Icon name="clock-nine" />
         </span>
@@ -101,52 +113,61 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
         <span className={styles.caretIcon}>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />
         </span>
-      </div>
+      </button>
       {isOpen && (
-        <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
-          <div className={styles.content}>
-            <div className={styles.body}>
-              <CustomScrollbar className={styles.leftSide} hideHorizontalTrack>
-                <TimeRangeList
-                  title="Example time ranges"
-                  options={validOptions}
-                  onChange={onChangeTimeOption}
-                  value={timeOption}
-                />
-              </CustomScrollbar>
-              <div className={styles.rightSide}>
-                <div className={styles.title}>
-                  <TimePickerTitle>
-                    <Tooltip content={<TooltipContent />} placement="bottom" theme="info">
-                      <div>
-                        Specify time range <Icon name="info-circle" />
-                      </div>
-                    </Tooltip>
-                  </TimePickerTitle>
+        <Portal>
+          <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
+            <div
+              className={styles.content}
+              ref={setSelectorElement}
+              style={popper.styles.popper}
+              {...popper.attributes}
+            >
+              <div className={styles.body}>
+                <CustomScrollbar className={styles.leftSide} hideHorizontalTrack>
+                  <TimeRangeList
+                    title={t('time-picker.time-range.example-title', 'Example time ranges')}
+                    options={validOptions}
+                    onChange={onChangeTimeOption}
+                    value={timeOption}
+                  />
+                </CustomScrollbar>
+                <div className={styles.rightSide}>
+                  <div className={styles.title}>
+                    <TimePickerTitle>
+                      <Tooltip content={<TooltipContent />} placement="bottom" theme="info">
+                        <div>
+                          <Trans i18nKey="time-picker.time-range.specify">
+                            Specify time range <Icon name="info-circle" />
+                          </Trans>
+                        </div>
+                      </Tooltip>
+                    </TimePickerTitle>
+                  </div>
+                  <Field label="From" invalid={!from.validation.isValid} error={from.validation.errorMessage}>
+                    <Input
+                      onClick={(event) => event.stopPropagation()}
+                      onBlur={() => setFrom({ ...from, validation: isRangeValid(from.value) })}
+                      onChange={(event) => setFrom({ ...from, value: event.currentTarget.value })}
+                      value={from.value}
+                    />
+                  </Field>
+                  <Field label="To" invalid={!to.validation.isValid} error={to.validation.errorMessage}>
+                    <Input
+                      onClick={(event) => event.stopPropagation()}
+                      onBlur={() => setTo({ ...to, validation: isRangeValid(to.value) })}
+                      onChange={(event) => setTo({ ...to, value: event.currentTarget.value })}
+                      value={to.value}
+                    />
+                  </Field>
+                  <Button aria-label="TimePicker submit button" onClick={onApply}>
+                    Apply time range
+                  </Button>
                 </div>
-                <Field label="From" invalid={!from.validation.isValid} error={from.validation.errorMessage}>
-                  <Input
-                    onClick={(event) => event.stopPropagation()}
-                    onBlur={() => setFrom({ ...from, validation: isRangeValid(from.value) })}
-                    onChange={(event) => setFrom({ ...from, value: event.currentTarget.value })}
-                    value={from.value}
-                  />
-                </Field>
-                <Field label="To" invalid={!to.validation.isValid} error={to.validation.errorMessage}>
-                  <Input
-                    onClick={(event) => event.stopPropagation()}
-                    onBlur={() => setTo({ ...to, validation: isRangeValid(to.value) })}
-                    onChange={(event) => setTo({ ...to, value: event.currentTarget.value })}
-                    value={to.value}
-                  />
-                </Field>
-                <Button aria-label="TimePicker submit button" onClick={onApply}>
-                  Apply time range
-                </Button>
               </div>
             </div>
-          </div>
-        </ClickOutsideWrapper>
+          </ClickOutsideWrapper>
+        </Portal>
       )}
     </div>
   );
@@ -204,21 +225,21 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
         cursor: pointer;
         padding-right: 0;
         padding-left: 0;
-        line-height: ${theme.v1.spacing.formInputHeight - 2}px;
+        line-height: ${theme.spacing.gridSize * theme.components.height.md - 2}px;
       `
     ),
     caretIcon: cx(
       inputStyles.suffix,
       css`
         position: relative;
-        margin-left: ${theme.v1.spacing.xs};
+        margin-left: ${theme.spacing(0.5)};
       `
     ),
     clockIcon: cx(
       inputStyles.prefix,
       css`
         position: relative;
-        margin-right: ${theme.v1.spacing.xs};
+        margin-right: ${theme.spacing(0.5)};
       `
     ),
     content: css`

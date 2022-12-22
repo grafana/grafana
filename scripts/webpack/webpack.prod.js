@@ -1,12 +1,15 @@
 'use strict';
 
-const { merge } = require('webpack-merge');
-const TerserPlugin = require('terser-webpack-plugin');
-const common = require('./webpack.common.js');
-const path = require('path');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const path = require('path');
+const TerserPlugin = require('terser-webpack-plugin');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
+const { merge } = require('webpack-merge');
+
+const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
+const common = require('./webpack.common.js');
 
 module.exports = (env = {}) =>
   merge(common, {
@@ -62,7 +65,7 @@ module.exports = (env = {}) =>
 
     plugins: [
       new MiniCssExtractPlugin({
-        filename: 'grafana.[name].[fullhash].css',
+        filename: 'grafana.[name].[contenthash].css',
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/error.html'),
@@ -77,6 +80,11 @@ module.exports = (env = {}) =>
         inject: false,
         excludeChunks: ['manifest', 'dark', 'light'],
         chunksSortMode: 'none',
+      }),
+      new HTMLWebpackCSSChunks(),
+      new WebpackManifestPlugin({
+        fileName: path.join(process.cwd(), 'manifest.json'),
+        filter: (file) => !file.name.endsWith('.map'),
       }),
       function () {
         this.hooks.done.tap('Done', function (stats) {

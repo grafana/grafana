@@ -1,5 +1,6 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { DataLinksListItem, DataLinksListItemProps } from './DataLinksListItem';
 
 const baseLink = {
@@ -48,6 +49,17 @@ describe('DataLinksListItem', () => {
 
       expect(screen.getByText(/http:\/\/localhost\:3000/i)).toBeInTheDocument();
       expect(screen.getByTitle(/http:\/\/localhost\:3000/i)).toBeInTheDocument();
+    });
+
+    it('that is a explore compact url, then the title should be a warning', () => {
+      const link = {
+        ...baseLink,
+        url: 'http://localhost:3000/explore?orgId=1&left=[%22now-1h%22,%22now%22,%22gdev-loki%22,{%22expr%22:%22{place=%22luna%22}%22,%22refId%22:%22A%22}]',
+      };
+      setupTestContext({ link });
+
+      expect(screen.getByText(/http:\/\/localhost\:3000/i)).toBeInTheDocument();
+      expect(screen.getByText(/Explore data link may not work in the future. Please edit./i)).toBeInTheDocument();
     });
   });
 

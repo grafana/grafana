@@ -1,9 +1,10 @@
-import React from 'react';
-import config from 'app/core/config';
 import { css, cx } from '@emotion/css';
-import { Icon, IconName, LinkButton, useStyles, useTheme2, VerticalGroup } from '@grafana/ui';
-import { GrafanaTheme, GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
 import { pickBy } from 'lodash';
+import React from 'react';
+
+import { GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
+import { Icon, IconName, LinkButton, useStyles2, useTheme2, VerticalGroup } from '@grafana/ui';
+import config from 'app/core/config';
 
 export interface LoginService {
   bgColor: string;
@@ -29,52 +30,52 @@ const loginServices: () => LoginServices = () => {
     },
     google: {
       bgColor: '#e84d3c',
-      enabled: oauthEnabled && config.oauth.google,
+      enabled: oauthEnabled && Boolean(config.oauth.google),
       name: 'Google',
       icon: 'google',
     },
     azuread: {
       bgColor: '#2f2f2f',
-      enabled: oauthEnabled && config.oauth.azuread,
+      enabled: oauthEnabled && Boolean(config.oauth.azuread),
       name: 'Microsoft',
       icon: 'microsoft',
     },
     github: {
       bgColor: '#464646',
-      enabled: oauthEnabled && config.oauth.github,
+      enabled: oauthEnabled && Boolean(config.oauth.github),
       name: 'GitHub',
       icon: 'github',
     },
     gitlab: {
       bgColor: '#fc6d26',
-      enabled: oauthEnabled && config.oauth.gitlab,
+      enabled: oauthEnabled && Boolean(config.oauth.gitlab),
       name: 'GitLab',
       icon: 'gitlab',
     },
     grafanacom: {
       bgColor: '#262628',
-      enabled: oauthEnabled && config.oauth.grafana_com,
+      enabled: oauthEnabled && Boolean(config.oauth.grafana_com),
       name: 'Grafana.com',
-      hrefName: 'grafana_com',
       icon: 'grafana',
+      hrefName: 'grafana_com',
     },
     okta: {
       bgColor: '#2f2f2f',
-      enabled: oauthEnabled && config.oauth.okta,
-      name: 'Okta',
-      icon: 'okta',
+      enabled: oauthEnabled && Boolean(config.oauth.okta),
+      name: config.oauth?.okta?.name || 'Okta',
+      icon: config.oauth?.okta?.icon ?? ('okta' as const),
     },
     oauth: {
       bgColor: '#262628',
-      enabled: oauthEnabled && config.oauth.generic_oauth,
-      name: oauthEnabled && config.oauth.generic_oauth ? config.oauth.generic_oauth.name : 'OAuth',
-      icon: 'signin',
+      enabled: oauthEnabled && Boolean(config.oauth.generic_oauth),
+      name: config.oauth?.generic_oauth?.name || 'OAuth',
+      icon: config.oauth?.generic_oauth?.icon ?? ('signin' as const),
       hrefName: 'generic_oauth',
     },
   };
 };
 
-const getServiceStyles = (theme: GrafanaTheme) => {
+const getServiceStyles = (theme: GrafanaTheme2) => {
   return {
     button: css`
       color: #d8d9da;
@@ -82,7 +83,7 @@ const getServiceStyles = (theme: GrafanaTheme) => {
     `,
     buttonIcon: css`
       position: absolute;
-      left: ${theme.spacing.sm};
+      left: ${theme.spacing(1)};
       top: 50%;
       transform: translateY(-50%);
     `,
@@ -90,7 +91,7 @@ const getServiceStyles = (theme: GrafanaTheme) => {
       base: css`
         color: ${theme.colors.text};
         display: flex;
-        margin-bottom: ${theme.spacing.sm};
+        margin-bottom: ${theme.spacing(1)};
         justify-content: space-between;
         text-align: center;
         width: 100%;
@@ -105,7 +106,7 @@ const getServiceStyles = (theme: GrafanaTheme) => {
 };
 
 const LoginDivider = () => {
-  const styles = useStyles(getServiceStyles);
+  const styles = useStyles2(getServiceStyles);
   return (
     <>
       <div className={styles.divider.base}>
@@ -143,7 +144,7 @@ export const LoginServiceButtons = () => {
   const enabledServices = pickBy(loginServices(), (service) => service.enabled);
   const hasServices = Object.keys(enabledServices).length > 0;
   const theme = useTheme2();
-  const styles = useStyles(getServiceStyles);
+  const styles = useStyles2(getServiceStyles);
 
   if (hasServices) {
     return (

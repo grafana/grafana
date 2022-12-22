@@ -4,25 +4,33 @@ load(
     'slack_step',
 )
 
-load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
+load(
+    'scripts/drone/vault.star',
+    'from_secret',
+    'pull_secret',
+)
 
 failure_template = 'Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}'
 drone_change_template = '`.drone.yml` and `starlark` files have been changed on the OSS repo, by: {{build.author}}. \nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nCommit hash: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>'
 
+
 def pipeline(
-    name, edition, trigger, steps, services=[], platform='linux', depends_on=[], environment=None, volumes=[],
-    ):
+    name,
+    edition,
+    trigger,
+    steps,
+    services=[],
+    platform='linux',
+    depends_on=[],
+    environment=None,
+    volumes=[],
+):
     if platform != 'windows':
         platform_conf = {
-            'platform': {
-                'os': 'linux',
-                'arch': 'amd64'
-            },
+            'platform': {'os': 'linux', 'arch': 'amd64'},
             # A shared cache is used on the host
             # To avoid issues with parallel builds, we run this repo on single build agents
-            'node': {
-                'type': 'no-parallel'
-            }
+            'node': {'type': 'no-parallel'},
         }
     else:
         platform_conf = {
@@ -40,24 +48,31 @@ def pipeline(
         'trigger': trigger,
         'services': services,
         'steps': steps,
-        'volumes': [{
-            'name': 'docker',
-            'host': {
-                'path': '/var/run/docker.sock',
-            },
-        }],
+        'clone': {
+            'retries': 3,
+        },
+        'volumes': [
+            {
+                'name': 'docker',
+                'host': {
+                    'path': '/var/run/docker.sock',
+                },
+            }
+        ],
         'depends_on': depends_on,
+        'image_pull_secrets': [pull_secret],
     }
     if environment:
-        pipeline.update({
-            'environment': environment,
-        })
+        pipeline.update(
+            {
+                'environment': environment,
+            }
+        )
 
     pipeline['volumes'].extend(volumes)
     pipeline.update(platform_conf)
 
     if edition in ('enterprise', 'enterprise2'):
-        pipeline['image_pull_secrets'] = [pull_secret]
         # We have a custom clone step for enterprise
         pipeline['clone'] = {
             'disable': True,
@@ -65,7 +80,10 @@ def pipeline(
 
     return pipeline
 
-def notify_pipeline(name, slack_channel, trigger, depends_on=[], template=None, secret=None):
+
+def notify_pipeline(
+    name, slack_channel, trigger, depends_on=[], template=None, secret=None
+):
     trigger = dict(trigger)
     return {
         'kind': 'pipeline',
@@ -79,7 +97,16 @@ def notify_pipeline(name, slack_channel, trigger, depends_on=[], template=None, 
         'steps': [
             slack_step(slack_channel, template, secret),
         ],
+        'clone': {
+            'retries': 3,
+        },
         'depends_on': depends_on,
     }
 
 
+# TODO: this overrides any existing dependencies because we're following the existing logic
+# it should append to any existing dependencies
+def with_deps(steps, deps=[]):
+    for step in steps:
+        step['depends_on'] = deps
+    return steps

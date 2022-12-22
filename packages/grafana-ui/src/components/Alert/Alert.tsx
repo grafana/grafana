@@ -1,12 +1,15 @@
-import React, { HTMLAttributes, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import { useId } from '@react-aria/utils';
+import React, { HTMLAttributes, ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
 import { useTheme2 } from '../../themes';
-import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
-import { IconButton } from '../IconButton/IconButton';
 import { Button } from '../Button/Button';
+import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -19,9 +22,10 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   elevated?: boolean;
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
+  topSpacing?: number;
 }
 
-function getIconFromSeverity(severity: AlertVariant): string {
+export function getIconFromSeverity(severity: AlertVariant): IconName {
   switch (severity) {
     case 'error':
     case 'warning':
@@ -30,39 +34,56 @@ function getIconFromSeverity(severity: AlertVariant): string {
       return 'info-circle';
     case 'success':
       return 'check';
-    default:
-      return '';
   }
 }
 
 export const Alert = React.forwardRef<HTMLDivElement, Props>(
   (
-    { title, onRemove, children, buttonContent, elevated, bottomSpacing, className, severity = 'error', ...restProps },
+    {
+      title,
+      onRemove,
+      children,
+      buttonContent,
+      elevated,
+      bottomSpacing,
+      topSpacing,
+      className,
+      severity = 'error',
+      ...restProps
+    },
     ref
   ) => {
     const theme = useTheme2();
-    const styles = getStyles(theme, severity, elevated, bottomSpacing);
+    const styles = getStyles(theme, severity, elevated, bottomSpacing, topSpacing);
+    const titleId = useId();
 
     return (
       <div
         ref={ref}
         className={cx(styles.alert, className)}
         data-testid={selectors.components.Alert.alertV2(severity)}
+        role="alert"
+        aria-labelledby={titleId}
         {...restProps}
       >
         <div className={styles.icon}>
-          <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
+          <Icon size="xl" name={getIconFromSeverity(severity)} />
         </div>
-        <div className={styles.body} role="alert">
-          <div className={styles.title}>{title}</div>
+
+        <div className={styles.body}>
+          <div id={titleId} className={styles.title}>
+            {title}
+          </div>
           {children && <div className={styles.content}>{children}</div>}
         </div>
+
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
           <div className={styles.close}>
             <IconButton aria-label="Close alert" name="times" onClick={onRemove} size="lg" type="button" />
           </div>
         )}
+
         {onRemove && buttonContent && (
           <div className={styles.buttonWrapper}>
             <Button aria-label="Close alert" variant="secondary" onClick={onRemove} type="button">
@@ -77,7 +98,13 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
 Alert.displayName = 'Alert';
 
-const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: boolean, bottomSpacing?: number) => {
+const getStyles = (
+  theme: GrafanaTheme2,
+  severity: AlertVariant,
+  elevated?: boolean,
+  bottomSpacing?: number,
+  topSpacing?: number
+) => {
   const color = theme.colors[severity];
   const borderRadius = theme.shape.borderRadius();
 
@@ -92,6 +119,7 @@ const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: bool
       background: ${theme.colors.background.secondary};
       box-shadow: ${elevated ? theme.shadows.z3 : theme.shadows.z1};
       margin-bottom: ${theme.spacing(bottomSpacing ?? 2)};
+      margin-top: ${theme.spacing(topSpacing ?? 0)};
 
       &:before {
         content: '';
@@ -131,7 +159,7 @@ const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: bool
       color: ${theme.colors.text.secondary};
       padding-top: ${theme.spacing(1)};
       max-height: 50vh;
-      overflow-y: scroll;
+      overflow-y: auto;
     `,
     buttonWrapper: css`
       padding: ${theme.spacing(1)};

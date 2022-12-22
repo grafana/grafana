@@ -1,6 +1,7 @@
 import { DataFrame, Field } from '../types';
-import { getFieldDisplayName } from './fieldState';
 import { formatLabels } from '../utils/labels';
+
+import { getFieldDisplayName } from './fieldState';
 
 /**
  * This object is created often, and only used when tmplates exist.  Using a proxy lets us delay
@@ -8,9 +9,9 @@ import { formatLabels } from '../utils/labels';
  */
 export function getTemplateProxyForField(field: Field, frame?: DataFrame, frames?: DataFrame[]): any {
   return new Proxy(
-    {} as any, // This object shows up in test snapshots
+    {}, // This object shows up in test snapshots
     {
-      get: (obj: Field, key: string, reciever: any) => {
+      get: (obj, key) => {
         if (key === 'name') {
           return field.name;
         }
@@ -32,7 +33,7 @@ export function getTemplateProxyForField(field: Field, frame?: DataFrame, frames
             },
           };
         }
-        return undefined; // (field as any)[key]; // any property?
+        return undefined;
       },
     }
   );

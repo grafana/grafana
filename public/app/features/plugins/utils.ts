@@ -1,7 +1,9 @@
-import { GrafanaPlugin, PanelPluginMeta, PluginType } from '@grafana/data';
+import { GrafanaPlugin, NavModel, NavModelItem, PanelPluginMeta, PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
+
+import { importPanelPluginFromMeta } from './importPanelPlugin';
 import { getPluginSettings } from './pluginSettings';
 import { importAppPlugin, importDataSourcePlugin } from './plugin_loader';
-import { importPanelPluginFromMeta } from './importPanelPlugin';
 
 export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   const info = await getPluginSettings(pluginId);
@@ -26,4 +28,50 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   }
 
   return result;
+}
+
+export function buildPluginSectionNav(
+  pluginNavSection: NavModelItem,
+  pluginNav: NavModel | null,
+  currentUrl: string
+): NavModel | undefined {
+  // When topnav is disabled we only just show pluginNav like before
+  if (!config.featureToggles.topnav) {
+    return pluginNav ?? undefined;
+  }
+
+  // shallow clone as we set active flag
+  let copiedPluginNavSection = { ...pluginNavSection };
+  let activePage: NavModelItem | undefined;
+
+  function setPageToActive(page: NavModelItem, currentUrl: string): NavModelItem {
+    if (!currentUrl.startsWith(page.url ?? '')) {
+      return page;
+    }
+
+    if (activePage && (activePage.url?.length ?? 0) > (page.url?.length ?? 0)) {
+      return page;
+    }
+
+    if (activePage) {
+      activePage.active = false;
+    }
+
+    activePage = { ...page, active: true };
+    return activePage;
+  }
+
+  // Find and set active page
+  copiedPluginNavSection.children = (copiedPluginNavSection?.children ?? []).map((child) => {
+    if (child.children) {
+      return {
+        ...setPageToActive(child, currentUrl),
+        children: child.children.map((pluginPage) => setPageToActive(pluginPage, currentUrl)),
+      };
+    }
+
+    return setPageToActive(child, currentUrl);
+  });
+
+  return { main: copiedPluginNavSection, node: activePage ?? copiedPluginNavSection };
 }

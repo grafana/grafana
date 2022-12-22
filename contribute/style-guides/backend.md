@@ -40,6 +40,23 @@ The majority of our tests uses [GoConvey](http://goconvey.co/) but that's someth
 
 In the `sqlstore` package we do database operations in tests and while some might say that's not suited for unit tests. We think they are fast enough and provide a lot of value.
 
+### Integration Tests
+
+We run unit and integration tests separately, to help keep our CI pipeline running smoothly and provide a better developer experience.
+
+To properly mark a test as being an integration test, you must format your test function definition as follows, with the function name starting with `TestIntegration` and the check for `testing.Short()`:
+
+```
+func TestIntegrationFoo(t *testing.T) {
+    if testing.Short() {
+        t.Skip("skipping integration test")
+    }
+    // function body
+}
+```
+
+If you do not follow this convention, your integration test may be run twice or not run at all.
+
 ### Assertions
 
 Use respectively [`assert.*`](https://github.com/stretchr/testify#assert-package) functions to make assertions that
@@ -57,6 +74,100 @@ code, plus lets you run each test case in isolation when debugging. Don't use `t
 
 Use [`t.Cleanup`](https://golang.org/pkg/testing/#T.Cleanup) to clean up resources in tests. It's a less fragile choice than `defer`, since it's independent of which
 function you call it in. It will always execute after the test is over in reverse call order (last `t.Cleanup` first, same as `defer`).
+
+### Mock
+
+Optionally, we use [`mock.Mock`](https://github.com/stretchr/testify#mock-package) package to generate mocks. This is
+useful when you expect different behaviours of the same function.
+
+#### Tips
+
+- Use `Once()` or `Times(n)` to make this mock only works `n` times.
+- Use `mockedClass.AssertExpectations(t)` to guarantee that the mock is called the times asked.
+  - If any mock set is not called or its expects more calls, the test fails.
+- You can pass `mock.Anything` as argument if you don't care about the argument passed.
+- Use `mockedClass.AssertNotCalled(t, "FunctionName")` to assert that this test is not called.
+
+#### Example
+
+This is an example to easily create a mock of an interface.
+
+Given this interface:
+
+```go
+func MyInterface interface {
+    Get(ctx context.Context, id string) (Object, error)
+}
+```
+
+Mock implementation should be like this:
+
+```go
+import
+
+func MockImplementation struct {
+    mock.Mock
+}
+
+func (m *MockImplementation) Get(ctx context.Context, id string) error {
+    args := m.Called(ctx, id) // Pass all arguments in order here
+    return args.Get(0).(Object), args.Error(1)
+}
+```
+
+And use it as the following way:
+
+```go
+
+objectToReturn := Object{Message: "abc"}
+errToReturn := errors.New("my error")
+
+myMock := &MockImplementation{}
+defer myMock.AssertExpectations(t)
+
+myMock.On("Get", mock.Anything, "id1").Return(objectToReturn, errToReturn).Once()
+myMock.On("Get", mock.Anything, "id2").Return(Object{}, nil).Once()
+
+anyService := NewService(myMock)
+resp, err := anyService.Call("id1")
+
+assert.Equal(t, resp.Message, objectToReturn.Message)
+assert.Error(t, err, errToReturn)
+
+resp, err = anyService.Call("id2")
+assert.Nil(t, err)
+```
+
+#### Mockery
+
+When an interface to test is too big, it's annoying to mock each function manually. To avoid this, you can
+use [`mockery`](https://github.com/vektra/mockery) library to generate the mocks.
+
+The command is like the following (there are more options documented if you need to use another one):
+
+```
+mockery --name InterfaceName --structname MockImplementationName --inpackage --filename my_implementation_mock.go
+```
+
+- `--name`: Interface to mock
+- `--structname`: Mock implementation name
+- `--inpackage`: To use the same package name as the interface
+- `--filename`: Your mock generated file name
+
+If any interface signature changes, executing the command again updates the mock.
+
+Additionally, you can put `go:generate` command on the top of the file as a comment. It's useful because some IDEs
+like Goland and Visual Studio Code allows executing scripts from the IDE.
+
+```
+package <package>
+
+import (
+	...
+)
+
+//go:generate mockery --name InterfaceName --structname MockImplementationName --inpackage --filename my_implementation_mock.go
+```
 
 ## Globals
 

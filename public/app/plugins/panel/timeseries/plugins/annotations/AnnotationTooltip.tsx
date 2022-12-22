@@ -1,24 +1,31 @@
-import React from 'react';
-import { HorizontalGroup, IconButton, Tag, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, textUtil } from '@grafana/data';
-import alertDef from 'app/features/alerting/state/alertDef';
 import { css } from '@emotion/css';
+import React from 'react';
+
+import { GrafanaTheme2, textUtil } from '@grafana/data';
+import { HorizontalGroup, IconButton, Tag, useStyles2 } from '@grafana/ui';
+import config from 'app/core/config';
+import alertDef from 'app/features/alerting/state/alertDef';
+import { CommentManager } from 'app/features/comments/CommentManager';
+
+import { AnnotationsDataFrameViewDTO } from '../types';
 
 interface AnnotationTooltipProps {
   annotation: AnnotationsDataFrameViewDTO;
   timeFormatter: (v: number) => string;
-  editable: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
+export const AnnotationTooltip = ({
   annotation,
   timeFormatter,
-  editable,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
-}) => {
+}: AnnotationTooltipProps) => {
   const styles = useStyles2(getStyles);
   const time = timeFormatter(annotation.time);
   const timeEnd = timeFormatter(annotation.timeEnd);
@@ -32,7 +39,7 @@ export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
   const ts = <span className={styles.time}>{Boolean(annotation.isRegion) ? `${time} - ${timeEnd}` : time}</span>;
 
   if (annotation.login && annotation.avatarUrl) {
-    avatar = <img className={styles.avatar} src={annotation.avatarUrl} />;
+    avatar = <img className={styles.avatar} alt="Annotation avatar" src={annotation.avatarUrl} />;
   }
 
   if (annotation.alertId !== undefined && annotation.newState) {
@@ -48,17 +55,19 @@ export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
     text = annotation.title + '<br />' + (typeof text === 'string' ? text : '');
   }
 
-  if (editable) {
+  if (canEdit || canDelete) {
     editControls = (
       <div className={styles.editControls}>
-        <IconButton name={'pen'} size={'sm'} onClick={onEdit} />
-        <IconButton name={'trash-alt'} size={'sm'} onClick={onDelete} />
+        {canEdit && <IconButton name={'pen'} size={'sm'} onClick={onEdit} />}
+        {canDelete && <IconButton name={'trash-alt'} size={'sm'} onClick={onDelete} />}
       </div>
     );
   }
 
+  const areAnnotationCommentsEnabled = config.featureToggles.annotationComments;
+
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} style={areAnnotationCommentsEnabled ? { minWidth: '300px' } : {}}>
       <div className={styles.header}>
         <HorizontalGroup justify={'space-between'} align={'center'} spacing={'md'}>
           <div className={styles.meta}>
@@ -82,6 +91,11 @@ export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
             ))}
           </HorizontalGroup>
         </>
+        {areAnnotationCommentsEnabled && (
+          <div className={styles.commentWrapper}>
+            <CommentManager objectType={'annotation'} objectId={annotation.id.toString()} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -93,6 +107,13 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       max-width: 400px;
+    `,
+    commentWrapper: css`
+      margin-top: 10px;
+      border-top: 2px solid #2d2b34;
+      height: 30vh;
+      overflow-y: scroll;
+      padding: 0 3px;
     `,
     header: css`
       padding: ${theme.spacing(0.5, 1)};

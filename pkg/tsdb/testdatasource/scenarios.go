@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -30,7 +29,7 @@ const (
 	predictablePulseQuery             queryType = "predictable_pulse"
 	predictableCSVWaveQuery           queryType = "predictable_csv_wave"
 	streamingClientQuery              queryType = "streaming_client"
-	flightPath                        queryType = "flight_path"
+	simulation                        queryType = "simulation"
 	usaQueryKey                       queryType = "usa"
 	liveQuery                         queryType = "live"
 	grafanaAPIQuery                   queryType = "grafana_api"
@@ -40,9 +39,11 @@ const (
 	serverError500Query               queryType = "server_error_500"
 	logsQuery                         queryType = "logs"
 	nodeGraphQuery                    queryType = "node_graph"
+	flameGraphQuery                   queryType = "flame_graph"
 	rawFrameQuery                     queryType = "raw_frame"
 	csvFileQueryType                  queryType = "csv_file"
 	csvContentQueryType               queryType = "csv_content"
+	traceType                         queryType = "trace"
 )
 
 type queryType string
@@ -135,9 +136,9 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(flightPath),
-		Name:    "Flight path",
-		handler: s.handleFlightPathScenario,
+		ID:      string(simulation),
+		Name:    "Simulation",
+		handler: s.sims.QueryData,
 	})
 
 	s.registerScenario(&Scenario{
@@ -177,9 +178,12 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
-		ID:      string(serverError500Query),
-		Name:    "Server Error (500)",
-		handler: s.handleServerError500Scenario,
+		// Is no longer strictly a _server_ error scenario, but ID is kept for legacy :)
+		ID:          string(serverError500Query),
+		Name:        "Conditional Error",
+		handler:     s.handleServerError500Scenario,
+		StringInput: "1,20,90,30,5,0",
+		Description: "Returns an error when the String Input field is empty",
 	})
 
 	s.registerScenario(&Scenario{
@@ -191,6 +195,11 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	s.registerScenario(&Scenario{
 		ID:   string(nodeGraphQuery),
 		Name: "Node Graph",
+	})
+
+	s.registerScenario(&Scenario{
+		ID:   string(flameGraphQuery),
+		Name: "Flame Graph",
 	})
 
 	s.registerScenario(&Scenario{
@@ -208,6 +217,11 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 		ID:      string(csvContentQueryType),
 		Name:    "CSV Content",
 		handler: s.handleCsvContentScenario,
+	})
+
+	s.registerScenario(&Scenario{
+		ID:   string(traceType),
+		Name: "Trace",
 	})
 
 	s.queryMux.HandleFunc("", s.handleFallbackScenario)
@@ -449,7 +463,19 @@ func (s *Service) handlePredictablePulseScenario(ctx context.Context, req *backe
 }
 
 func (s *Service) handleServerError500Scenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	panic("Test Data Panic!")
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		stringInput := model.Get("stringInput").MustString()
+		if stringInput == "" {
+			panic("Test Data Panic!")
+		}
+	}
+
+	return s.handleCSVMetricValuesScenario(ctx, req)
 }
 
 func (s *Service) handleClientSideScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -772,7 +798,7 @@ func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) ([]*dat
 			default:
 				f, err := strconv.ParseFloat(rawValue, 64)
 				if err != nil {
-					return nil, errutil.Wrapf(err, "failed to parse value '%v' into nullable float", rawValue)
+					return nil, fmt.Errorf("failed to parse value '%v' into nullable float: %w", rawValue, err)
 				}
 				val = &f
 			}

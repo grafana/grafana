@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
 
@@ -154,7 +155,21 @@ func (s Series) GetMeta() interface{} {
 }
 
 func (s Series) SetMeta(v interface{}) {
-	s.Frame.SetMeta(&data.FrameMeta{Custom: v})
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Custom = v
+}
+
+func (s Series) AddNotice(notice data.Notice) {
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Notices = append(m.Notices, notice)
 }
 
 // AsDataFrame returns the underlying *data.Frame.

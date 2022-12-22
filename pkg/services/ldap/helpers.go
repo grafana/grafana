@@ -6,7 +6,7 @@ import (
 	"gopkg.in/ldap.v3"
 )
 
-func isMemberOf(memberOf []string, group string) bool {
+func IsMemberOf(memberOf []string, group string) bool {
 	if group == "*" {
 		return true
 	}
@@ -34,7 +34,7 @@ func getAttribute(name string, entry *ldap.Entry) string {
 	}
 
 	for _, attr := range entry.Attributes {
-		if attr.Name == name {
+		if strings.EqualFold(attr.Name, name) {
 			if len(attr.Values) > 0 {
 				return attr.Values[0]
 			}
@@ -49,7 +49,7 @@ func getArrayAttribute(name string, entry *ldap.Entry) []string {
 	}
 
 	for _, attr := range entry.Attributes {
-		if attr.Name == name && len(attr.Values) > 0 {
+		if strings.EqualFold(attr.Name, name) && len(attr.Values) > 0 {
 			return attr.Values
 		}
 	}

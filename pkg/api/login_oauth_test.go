@@ -12,12 +12,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -30,15 +30,15 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 	}
 	cfg.ErrTemplateName = "error-template"
 
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 
 	hs := &HTTPServer{
-		Cfg:           cfg,
-		Bus:           bus.GetBus(),
-		License:       &licensing.OSSLicensingService{Cfg: cfg},
-		SQLStore:      sqlStore,
-		SocialService: social.ProvideService(cfg),
-		HooksService:  hooks.ProvideService(),
+		Cfg:            cfg,
+		License:        &licensing.OSSLicensingService{Cfg: cfg},
+		SQLStore:       sqlStore,
+		SocialService:  social.ProvideService(cfg, featuremgmt.WithFeatures()),
+		HooksService:   hooks.ProvideService(),
+		SecretsService: fakes.NewFakeSecretsService(),
 	}
 
 	m := web.New()
@@ -48,7 +48,7 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 
 	m.UseMiddleware(web.Renderer(viewPath, "[[", "]]"))
 
-	m.Get("/login/:name", routing.Wrap(hs.OAuthLogin))
+	m.Get("/login/:name", hs.OAuthLogin)
 	return m
 }
 
@@ -58,9 +58,9 @@ func TestOAuthLogin_UnknownProvider(t *testing.T) {
 	recorder := httptest.NewRecorder()
 
 	m.ServeHTTP(recorder, req)
-
-	assert.Equal(t, http.StatusNotFound, recorder.Code)
-	assert.Contains(t, recorder.Body.String(), "OAuth not enabled")
+	// expect to be redirected to /login
+	assert.Equal(t, http.StatusFound, recorder.Code)
+	assert.Equal(t, "/login", recorder.Header().Get("Location"))
 }
 
 func TestOAuthLogin_Base(t *testing.T) {

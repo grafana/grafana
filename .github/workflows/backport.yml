@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Actions
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
@@ -22,5 +22,5 @@ jobs:
         with:
           metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
           token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
-          labelsToAdd: "backport"
+          labelsToAdd: "backport,no-changelog"
           title: "[{{base}}] {{originalTitle}}"

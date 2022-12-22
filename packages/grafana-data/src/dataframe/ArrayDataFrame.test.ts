@@ -1,6 +1,7 @@
+import { FieldType, DataFrame } from '../types';
+
 import { ArrayDataFrame } from './ArrayDataFrame';
 import { toDataFrameDTO } from './processDataFrame';
-import { FieldType, DataFrame } from '../types';
 
 describe('Array DataFrame', () => {
   const input = [
@@ -39,14 +40,14 @@ describe('Array DataFrame', () => {
 
   test('Should convert an array of objects to a dataframe', () => {
     expect(toDataFrameDTO(frame)).toMatchInlineSnapshot(`
-      Object {
-        "fields": Array [
-          Object {
-            "config": Object {},
+      {
+        "fields": [
+          {
+            "config": {},
             "labels": undefined,
             "name": "name",
             "type": "string",
-            "values": Array [
+            "values": [
               "first",
               "second",
               "third",
@@ -54,14 +55,14 @@ describe('Array DataFrame', () => {
               "5th (Null)",
             ],
           },
-          Object {
-            "config": Object {
+          {
+            "config": {
               "unit": "kwh",
             },
             "labels": undefined,
             "name": "value",
             "type": "number",
-            "values": Array [
+            "values": [
               1,
               2,
               3,
@@ -69,12 +70,12 @@ describe('Array DataFrame', () => {
               null,
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "labels": undefined,
             "name": "time",
             "type": "time",
-            "values": Array [
+            "values": [
               123,
               456,
               789,
@@ -82,12 +83,12 @@ describe('Array DataFrame', () => {
               1100,
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "labels": undefined,
             "name": "phantom",
             "type": "string",
-            "values": Array [
+            "values": [
               "🦥",
               "🦥",
               "🦥",

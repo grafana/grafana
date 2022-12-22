@@ -10,13 +10,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
 func (e *cloudWatchExecutor) parseResponse(startTime time.Time, endTime time.Time, metricDataOutputs []*cloudwatch.GetMetricDataOutput,
-	queries []*cloudWatchQuery) ([]*responseWrapper, error) {
+	queries []*models.CloudWatchQuery) ([]*responseWrapper, error) {
 	aggregatedResponse := aggregateResponse(metricDataOutputs)
-	queriesById := map[string]*cloudWatchQuery{}
+	queriesById := map[string]*models.CloudWatchQuery{}
 	for _, query := range queries {
 		queriesById[query.Id] = query
 	}
@@ -31,7 +32,7 @@ func (e *cloudWatchExecutor) parseResponse(startTime time.Time, endTime time.Tim
 		}
 
 		var err error
-		dataRes.Frames, err = buildDataFrames(startTime, endTime, response, queryRow)
+		dataRes.Frames, err = buildDataFrames(startTime, endTime, response, queryRow, e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels))
 		if err != nil {
 			return nil, err
 		}
@@ -45,37 +46,38 @@ func (e *cloudWatchExecutor) parseResponse(startTime time.Time, endTime time.Tim
 	return results, nil
 }
 
-func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) map[string]queryRowResponse {
-	responseByID := make(map[string]queryRowResponse)
+func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) map[string]models.QueryRowResponse {
+	responseByID := make(map[string]models.QueryRowResponse)
+	errors := map[string]bool{
+		models.MaxMetricsExceeded:         false,
+		models.MaxQueryTimeRangeExceeded:  false,
+		models.MaxQueryResultsExceeded:    false,
+		models.MaxMatchingResultsExceeded: false,
+	}
+	// first check if any of the getMetricDataOutputs has any errors related to the request. if so, store the errors so they can be added to each query response
 	for _, gmdo := range getMetricDataOutputs {
-		requestExceededMaxLimit := false
 		for _, message := range gmdo.Messages {
-			if *message.Code == "MaxMetricsExceeded" {
-				requestExceededMaxLimit = true
+			if _, exists := errors[*message.Code]; exists {
+				errors[*message.Code] = true
 			}
 		}
+	}
+	for _, gmdo := range getMetricDataOutputs {
 		for _, r := range gmdo.MetricDataResults {
 			id := *r.Id
-			label := *r.Label
 
-			response := newQueryRowResponse(id)
+			response := models.NewQueryRowResponse(errors)
 			if _, exists := responseByID[id]; exists {
 				response = responseByID[id]
 			}
 
 			for _, message := range r.Messages {
 				if *message.Code == "ArithmeticError" {
-					response.addArithmeticError(message.Value)
+					response.AddArithmeticError(message.Value)
 				}
 			}
 
-			if _, exists := response.Metrics[label]; !exists {
-				response.addMetricDataResult(r)
-			} else {
-				response.appendTimeSeries(r)
-			}
-
-			response.RequestExceededMaxLimit = response.RequestExceededMaxLimit || requestExceededMaxLimit
+			response.AddMetricDataResult(r)
 			responseByID[id] = response
 		}
 	}
@@ -83,7 +85,7 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 	return responseByID
 }
 
-func getLabels(cloudwatchLabel string, query *cloudWatchQuery) data.Labels {
+func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery) data.Labels {
 	dims := make([]string, 0, len(query.Dimensions))
 	for k := range query.Dimensions {
 		dims = append(dims, k)
@@ -107,20 +109,20 @@ func getLabels(cloudwatchLabel string, query *cloudWatchQuery) data.Labels {
 	return labels
 }
 
-func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse queryRowResponse,
-	query *cloudWatchQuery) (data.Frames, error) {
+func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse models.QueryRowResponse,
+	query *models.CloudWatchQuery, dynamicLabelEnabled bool) (data.Frames, error) {
 	frames := data.Frames{}
-	for _, label := range aggregatedResponse.Labels {
-		metric := aggregatedResponse.Metrics[label]
+	for _, metric := range aggregatedResponse.Metrics {
+		label := *metric.Label
 
-		deepLink, err := query.buildDeepLink(startTime, endTime)
+		deepLink, err := query.BuildDeepLink(startTime, endTime, dynamicLabelEnabled)
 		if err != nil {
 			return nil, err
 		}
 
 		// In case a multi-valued dimension is used and the cloudwatch query yields no values, create one empty time
 		// series for each dimension value. Use that dimension value to expand the alias field
-		if len(metric.Values) == 0 && query.isMultiValuedDimensionExpression() {
+		if len(metric.Values) == 0 && query.IsMultiValuedDimensionExpression() {
 			series := 0
 			multiValuedDimension := ""
 			for key, values := range query.Dimensions {
@@ -141,7 +143,10 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 				timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []*time.Time{})
 				valueField := data.NewField(data.TimeSeriesValueFieldName, labels, []*float64{})
 
-				frameName := formatAlias(query, query.Statistic, labels, label)
+				frameName := label
+				if !dynamicLabelEnabled {
+					frameName = formatAlias(query, query.Statistic, labels, label)
+				}
 				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
 
 				emptyFrame := data.Frame{
@@ -162,13 +167,6 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 		timestamps := []*time.Time{}
 		points := []*float64{}
 		for j, t := range metric.Timestamps {
-			if j > 0 {
-				expectedTimestamp := metric.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
-				if expectedTimestamp.Before(*t) {
-					timestamps = append(timestamps, &expectedTimestamp)
-					points = append(points, nil)
-				}
-			}
 			val := metric.Values[j]
 			timestamps = append(timestamps, t)
 			points = append(points, val)
@@ -177,7 +175,10 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 		timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, timestamps)
 		valueField := data.NewField(data.TimeSeriesValueFieldName, labels, points)
 
-		frameName := formatAlias(query, query.Statistic, labels, label)
+		frameName := label
+		if !dynamicLabelEnabled {
+			frameName = formatAlias(query, query.Statistic, labels, label)
+		}
 		valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: frameName, Links: createDataLinks(deepLink)})
 
 		frame := data.Frame{
@@ -190,11 +191,13 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 			Meta:  createMeta(query),
 		}
 
-		if aggregatedResponse.RequestExceededMaxLimit {
-			frame.AppendNotices(data.Notice{
-				Severity: data.NoticeSeverityWarning,
-				Text:     "cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited",
-			})
+		for code := range aggregatedResponse.ErrorCodes {
+			if aggregatedResponse.ErrorCodes[code] {
+				frame.AppendNotices(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     "cloudwatch GetMetricData error: " + models.ErrorMessages[code],
+				})
+			}
 		}
 
 		if aggregatedResponse.StatusCode != "Complete" {
@@ -210,45 +213,45 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 	return frames, nil
 }
 
-func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string) string {
+func formatAlias(query *models.CloudWatchQuery, stat string, dimensions map[string]string, label string) string {
 	region := query.Region
 	namespace := query.Namespace
 	metricName := query.MetricName
 	period := strconv.Itoa(query.Period)
 
-	if query.isUserDefinedSearchExpression() {
+	if query.IsUserDefinedSearchExpression() {
 		pIndex := strings.LastIndex(query.Expression, ",")
 		period = strings.Trim(query.Expression[pIndex+1:], " )")
 		sIndex := strings.LastIndex(query.Expression[:pIndex], ",")
 		stat = strings.Trim(query.Expression[sIndex+1:pIndex], " '")
 	}
 
-	if len(query.Alias) == 0 && query.isMathExpression() {
+	if len(query.Alias) == 0 && query.IsMathExpression() {
 		return query.Id
 	}
-	if len(query.Alias) == 0 && query.isInferredSearchExpression() && !query.isMultiValuedDimensionExpression() {
+	if len(query.Alias) == 0 && query.IsInferredSearchExpression() && !query.IsMultiValuedDimensionExpression() {
 		return label
 	}
-	if len(query.Alias) == 0 && query.MetricQueryType == MetricQueryTypeQuery {
+	if len(query.Alias) == 0 && query.MetricQueryType == models.MetricQueryTypeQuery {
 		return label
 	}
 
 	// common fields
-	data := map[string]string{
+	commonFields := map[string]string{
 		"region": region,
 		"period": period,
 	}
 	if len(label) != 0 {
-		data["label"] = label
+		commonFields["label"] = label
 	}
 
 	// since the SQL query string is not (yet) parsed, we don't know what namespace, metric, statistic and labels it's using at this point
-	if query.MetricQueryType != MetricQueryTypeQuery {
-		data["namespace"] = namespace
-		data["metric"] = metricName
-		data["stat"] = stat
+	if query.MetricQueryType != models.MetricQueryTypeQuery {
+		commonFields["namespace"] = namespace
+		commonFields["metric"] = metricName
+		commonFields["stat"] = stat
 		for k, v := range dimensions {
-			data[k] = v
+			commonFields[k] = v
 		}
 	}
 
@@ -256,7 +259,7 @@ func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]stri
 		labelName := strings.Replace(string(in), "{{", "", 1)
 		labelName = strings.Replace(labelName, "}}", "", 1)
 		labelName = strings.TrimSpace(labelName)
-		if val, exists := data[labelName]; exists {
+		if val, exists := commonFields[labelName]; exists {
 			return []byte(val)
 		}
 
@@ -282,12 +285,12 @@ func createDataLinks(link string) []data.DataLink {
 	return dataLinks
 }
 
-func createMeta(query *cloudWatchQuery) *data.FrameMeta {
+func createMeta(query *models.CloudWatchQuery) *data.FrameMeta {
 	return &data.FrameMeta{
 		ExecutedQueryString: query.UsedExpression,
-		Custom: simplejson.NewFromAny(map[string]interface{}{
-			"period": query.Period,
-			"id":     query.Id,
-		}),
+		Custom: fmt.Sprintf(`{
+			"period": %d,
+			"id":     %s,
+		}`, query.Period, query.Id),
 	}
 }

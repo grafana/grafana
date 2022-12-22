@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import React, { memo } from 'react';
 import Calendar from 'react-calendar';
-import { css } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2 } from '../../../themes';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../../Icon/Icon';
@@ -13,6 +15,8 @@ export interface DatePickerProps {
   onClose: () => void;
   onChange: (value: Date) => void;
   value?: Date;
+  minDate?: Date;
+  maxDate?: Date;
 }
 
 /** @public */
@@ -35,7 +39,7 @@ export const DatePicker = memo<DatePickerProps>((props) => {
 
 DatePicker.displayName = 'DatePicker';
 
-const Body = memo<DatePickerProps>(({ value, onChange }) => {
+const Body = memo<DatePickerProps>(({ value, minDate, maxDate, onChange }) => {
   const styles = useStyles2(getBodyStyles);
 
   return (
@@ -43,6 +47,8 @@ const Body = memo<DatePickerProps>(({ value, onChange }) => {
       className={styles.body}
       tileClassName={styles.title}
       value={value || new Date()}
+      minDate={minDate}
+      maxDate={maxDate}
       nextLabel={<Icon name="angle-right" />}
       prevLabel={<Icon name="angle-left" />}
       onChange={(ev: Date | Date[]) => {
@@ -66,6 +72,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       background-color: ${theme.colors.background.primary};
       border: 1px solid ${theme.colors.border.weak};
       border-radius: 2px 0 0 2px;
+
+      button:disabled {
+        color: ${theme.colors.text.disabled};
+      }
     `,
   };
 };

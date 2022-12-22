@@ -10,14 +10,15 @@ jobs:
     name: Report
     runs-on: ubuntu-latest
     env:
-      ARTIFACT_FOLDER: '${{ github.workspace }}/tmp'
-      ARTIFACT_NAME: 'levitate'
+      ARTIFACT_NAME: 'levitate' # The name of the artifact that we would like to download
+      ARTIFACT_FOLDER: '${{ github.workspace }}/tmp' # The name of the folder where we will download the artifact to
 
     steps:
-    - uses: actions/checkout@v2
-    
+    - uses: actions/checkout@v3
+
+    # Download artifact (as a .zip archive)
     - name: 'Download artifact'
-      uses: actions/github-script@v5
+      uses: actions/github-script@v6
       env:
         RUN_ID: ${{ github.event.workflow_run.id }}
       with:
@@ -49,11 +50,14 @@ jobs:
           fs.mkdirSync(artifactFolder, { recursive: true });
           fs.writeFileSync(`${ artifactFolder }/${ artifactName }.zip`, Buffer.from(download.data));
         
+    # Unzip artifact
     - name: Unzip artifact
       run: unzip "${ARTIFACT_FOLDER}/${ARTIFACT_NAME}.zip" -d "${ARTIFACT_FOLDER}"
     
+     # Parse the artifact and register fields as step output variables
+      # (All fields in the JSON will be available as ${{ steps.levitate-run.outputs.<field-name> }}
     - name: Parsing levitate result
-      uses: actions/github-script@v5
+      uses: actions/github-script@v6
       id: levitate-run
       with:
         script: |
@@ -61,9 +65,16 @@ jobs:
           const script = require('./.github/workflows/scripts/json-file-to-job-output.js');
           await script({ core, filePath });
 
-    - name: Check if "breaking change" label exists
+    # Skip - print a message if the "Detect" workflow was skipped
+    - name: Check if the workflow should be skipped
+      if: steps.levitate-run.outputs.shouldSkip == 'true'
+      run: echo "Skipping."
+
+    # Check if label exists
+    - name: Check if "levitate breaking change" label exists
       id: does-label-exist
-      uses: actions/github-script@v5
+      if: steps.levitate-run.outputs.shouldSkip != 'true'
+      uses: actions/github-script@v6
       env:
         PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
       with:
@@ -74,15 +85,16 @@ jobs:
             repo: context.repo.repo,
           });
           const labels = data.map(({ name }) => name);
-          const doesExist = labels.includes('breaking change');
+          const doesExist = labels.includes('levitate breaking change');
 
           return doesExist ? 1 : 0;
 
+    # Comment on the PR
     - name: Comment on PR
-      if: ${{ steps.levitate-run.outputs.exit_code == 1 }}
+      if: steps.levitate-run.outputs.exit_code == 1 && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: marocchino/sticky-pull-request-comment@v2
       with:
-        number: ${{ github.event.workflow_run.pull_requests[0].number }}
+        number: ${{ steps.levitate-run.outputs.pr_number }}
         message: |
           ⚠️ &nbsp;&nbsp;**Possible breaking changes**
 
@@ -90,25 +102,27 @@ jobs:
 
           ${{ steps.levitate-run.outputs.message }}
 
-          [Check console output](${{ steps.levitate-run.outputs.job_link }})
+          [Console output](${{ steps.levitate-run.outputs.job_link }})
+          [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide.md)
 
-    - name: Remove comment on PR
-      if: ${{ steps.levitate-run.outputs.exit_code == 0 }}
+    # Remove comment from the PR (no more breaking changes)
+    - name: Remove comment from PR
+      if: steps.levitate-run.outputs.exit_code == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: marocchino/sticky-pull-request-comment@v2
       with:
-        number: ${{ github.event.workflow_run.pull_requests[0].number }}
+        number: ${{ steps.levitate-run.outputs.pr_number }}
         delete: true
 
     # Posts a notification to Slack if a PR has a breaking change and it did not have a breaking change before
     - name: Post to Slack
       id: slack
-      if: ${{ steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 }}
-      uses: slackapi/slack-github-action@v1.18.0
+      if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
+      uses: slackapi/slack-github-action@v1.23.0
       with:
         payload: |
           {
-            "pr_link": "${{ github.event.workflow_run.pull_requests[0].html_url }}",
-            "pr_number": "${{ github.event.workflow_run.pull_requests[0].number }}",
+            "pr_link": "https://github.com/grafana/grafana/pull/${{ steps.levitate-run.outputs.pr_number }}",
+            "pr_number": "${{ steps.levitate-run.outputs.pr_number }}",
             "job_link": "${{ steps.levitate-run.outputs.job_link }}",
             "reporting_job_link": "${{ github.event.workflow_run.html_url }}",
             "message": "${{ steps.levitate-run.outputs.message }}"
@@ -116,42 +130,48 @@ jobs:
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_LEVITATE_WEBHOOK_URL }}
 
-    - name: Add "breaking change" label
-      if: ${{ steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 }}
-      uses: actions/github-script@v5
+    # Add the label
+    - name: Add "levitate breaking change" label
+      if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
+      uses: actions/github-script@v6
       env:
-        PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
+        github-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
         script: |
           await github.rest.issues.addLabels({
             issue_number: process.env.PR_NUMBER,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            labels: ['breaking change']
+            labels: ['levitate breaking change']
           })
 
-    - name: Remove "breaking change" label
-      if: ${{ steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1 }}
-      uses: actions/github-script@v5
+    # Remove label (no more breaking changes)
+    - name: Remove "levitate breaking change" label
+      if: steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1 && steps.levitate-run.outputs.shouldSkip != 'true'
+      uses: actions/github-script@v6
       env:
-        PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
+        github-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
         script: |
           await github.rest.issues.removeLabel({
             issue_number: process.env.PR_NUMBER,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            name: 'breaking change'
+            name: 'levitate breaking change'
           })
 
+    # Add reviewers
     # This is very weird, the actual request goes through (comes back with a 201), but does not assign the team.
     # Related issue: https://github.com/renovatebot/renovate/issues/1908
     - name: Add "grafana/plugins-platform-frontend" as a reviewer
-      if: ${{ steps.levitate-run.outputs.exit_code == 1 }}
-      uses: actions/github-script@v5
+      if: steps.levitate-run.outputs.exit_code && steps.levitate-run.outputs.shouldSkip != 'true'
+      uses: actions/github-script@v6
       env:
-        PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
+        github-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
         script: |
           await github.rest.pulls.requestReviewers({
             pull_number: process.env.PR_NUMBER,
@@ -161,12 +181,14 @@ jobs:
             team_reviewers: ['grafana/plugins-platform-frontend']
           });
 
+    # Remove reviewers (no more breaking changes)
     - name: Remove "grafana/plugins-platform-frontend" from the list of reviewers
-      if: ${{ steps.levitate-run.outputs.exit_code == 0 }}
-      uses: actions/github-script@v5
+      if: steps.levitate-run.outputs.exit_code == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
+      uses: actions/github-script@v6
       env:
-        PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
+        github-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
         script: |
           await github.rest.pulls.removeRequestedReviewers({
             pull_number: process.env.PR_NUMBER,

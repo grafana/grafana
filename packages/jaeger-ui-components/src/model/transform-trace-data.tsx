@@ -16,10 +16,11 @@ import { isEqual as _isEqual } from 'lodash';
 
 // @ts-ignore
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
-import { getConfigValue } from '../utils/config/get-config';
-import { TraceKeyValuePair, TraceSpan, Trace, TraceResponse } from '../types/trace';
+import { TraceKeyValuePair, TraceSpan, Trace, TraceResponse, TraceProcess } from '../types/trace';
 // @ts-ignore
 import TreeNode from '../utils/TreeNode';
+import { getConfigValue } from '../utils/config/get-config';
+
 import { getTraceName } from './trace-viewer';
 
 // exported for tests
@@ -39,7 +40,7 @@ export function deduplicateTags(spanTags: TraceKeyValuePair[]) {
 
 // exported for tests
 export function orderTags(spanTags: TraceKeyValuePair[], topPrefixes?: string[]) {
-  const orderedTags: TraceKeyValuePair[] = spanTags.slice();
+  const orderedTags: TraceKeyValuePair[] = spanTags?.slice() ?? [];
   const tp = (topPrefixes || []).map((p: string) => p.toLowerCase());
 
   orderedTags.sort((a, b) => {
@@ -86,11 +87,20 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
   // eslint-disable-next-line no-param-reassign
   data.spans = data.spans.filter((span) => Boolean(span.startTime));
 
+  // Sort process tags
+  data.processes = Object.entries(data.processes).reduce<Record<string, TraceProcess>>((processes, [id, process]) => {
+    processes[id] = {
+      ...process,
+      tags: orderTags(process.tags),
+    };
+    return processes;
+  }, {});
+
   const max = data.spans.length;
   for (let i = 0; i < max; i++) {
     const span: TraceSpan = data.spans[i] as TraceSpan;
     const { startTime, duration, processID } = span;
-    //
+
     let spanID = span.spanID;
     // check for start / end time for the trace
     if (startTime < traceStartTime) {
@@ -125,8 +135,11 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
 
   // Eslint complains about number type not needed but then TS complains it is implicitly any.
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-  tree.walk((spanID: string, node: TreeNode, depth: number = 0) => {
+  tree.walk((spanID: string | number | undefined, node: TreeNode, depth: number = 0) => {
     if (spanID === '__root__') {
+      return;
+    }
+    if (typeof spanID !== 'string') {
       return;
     }
     const span = spanMap.get(spanID) as TraceSpan;
@@ -138,6 +151,7 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     span.relativeStartTime = span.startTime - traceStartTime;
     span.depth = depth - 1;
     span.hasChildren = node.children.length > 0;
+    span.childSpanCount = node.children.length;
     span.warnings = span.warnings || [];
     span.tags = span.tags || [];
     span.references = span.references || [];

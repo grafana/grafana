@@ -1,42 +1,59 @@
-import React, { FormEvent } from 'react';
-import { Label, Tooltip, Input, Icon, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import { debounce } from 'lodash';
+import React, { FormEvent, useEffect, useMemo } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
+import { logInfo } from '@grafana/runtime';
+import { Label, Tooltip, Input, Icon, useStyles2 } from '@grafana/ui';
+
+import { LogMessages } from '../../Analytics';
 
 interface Props {
   className?: string;
-  queryString?: string;
   defaultQueryString?: string;
   onFilterChange: (filterString: string) => void;
 }
 
-export const MatcherFilter = ({ className, onFilterChange, defaultQueryString, queryString }: Props) => {
+export const MatcherFilter = ({ className, onFilterChange, defaultQueryString }: Props) => {
   const styles = useStyles2(getStyles);
-  const handleSearchChange = (e: FormEvent<HTMLInputElement>) => {
-    const target = e.target as HTMLInputElement;
-    onFilterChange(target.value);
-  };
+
+  const onSearchInputChanged = useMemo(
+    () =>
+      debounce((e: FormEvent<HTMLInputElement>) => {
+        logInfo(LogMessages.filterByLabel);
+
+        const target = e.target as HTMLInputElement;
+        onFilterChange(target.value);
+      }, 600),
+    [onFilterChange]
+  );
+
+  useEffect(() => onSearchInputChanged.cancel(), [onSearchInputChanged]);
+
   const searchIcon = <Icon name={'search'} />;
+
   return (
     <div className={className}>
       <Label>
-        <Tooltip
-          content={
-            <div>
-              Filter alerts using label querying, ex:
-              <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
-            </div>
-          }
-        >
-          <Icon className={styles.icon} name="info-circle" size="xs" />
-        </Tooltip>
-        Search by label
+        <Stack gap={0.5}>
+          <span>Search by label</span>
+          <Tooltip
+            content={
+              <div>
+                Filter alerts using label querying, ex:
+                <pre>{`{severity="critical", instance=~"cluster-us-.+"}`}</pre>
+              </div>
+            }
+          >
+            <Icon className={styles.icon} name="info-circle" size="sm" />
+          </Tooltip>
+        </Stack>
       </Label>
       <Input
         placeholder="Search"
         defaultValue={defaultQueryString}
-        value={queryString}
-        onChange={handleSearchChange}
+        onChange={onSearchInputChanged}
         data-testid="search-query-input"
         prefix={searchIcon}
         className={styles.inputWidth}

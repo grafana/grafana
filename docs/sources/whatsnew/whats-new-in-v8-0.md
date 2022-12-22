@@ -1,14 +1,20 @@
-+++
-title = "What's new in Grafana v8.0"
-description = "Feature and improvement highlights for Grafana v8.0"
-keywords = ["grafana", "new", "documentation", "8.0", "release notes"]
-weight = -33
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-0/"]
-[_build]
-list = false
-+++
+---
+_build:
+  list: false
+aliases:
+  - ../guides/whats-new-in-v8-0/
+description: Feature and improvement highlights for Grafana v8.0
+keywords:
+  - grafana
+  - new
+  - documentation
+  - '8.0'
+  - release notes
+title: What's new in Grafana v8.0
+weight: -33
+---
 
-# What’s new in Grafana v8.0
+# What's new in Grafana v8.0
 
 This topic includes the release notes for Grafana v8.0. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
@@ -18,17 +24,17 @@ These features are included in the Grafana open source edition.
 
 ### Grafana v8.0 alerts
 
-The new alerts in Grafana 8.0 are an opt-in feature that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources in one UI and API. You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts as well as see alerting information from prometheus-compatible data sources in a single, searchable view. For more information, on how to create and edit alerts and notifications, refer to [Overview of Grafana 8.0 alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}).
+The new alerts in Grafana 8.0 are an opt-in feature that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources in one UI and API. You can create and edit alerting rules for Grafana managed alerts, Mimir alerts, and Loki alerts as well as see alerting information from prometheus-compatible data sources in a single, searchable view. For more information, on how to create and edit alerts and notifications, refer to [Grafana Alerting]({{< relref "../alerting/" >}}).
 
-As part of the new alert changes, we have introduced a new data source, Alertmanager, which includes built-in support for Prometheus Alertmanager. It is presently in alpha and it not accessible unless alpha plugins are enabled in Grafana settings. For more information, refer to [Alertmanager data source]({{< relref "../datasources/alertmanager.md" >}}).
+As part of the new alert changes, we have introduced a new data source, Alertmanager, which includes built-in support for Prometheus Alertmanager. It is presently in alpha and it not accessible unless alpha plugins are enabled in Grafana settings. For more information, refer to [Alertmanager data source]({{< relref "../datasources/alertmanager/" >}}).
 
 > **Note:** Out of the box, Grafana still supports old Grafana alerts. They are legacy alerts at this time, and will be deprecated in a future release.
 
-To learn more about the differences between new alerts and the legacy alerts, refer to [What's New with Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/difference-old-new.md" >}}).
+To learn more about the differences between new alerts and the legacy alerts, refer to [What's New with Grafana 8 Alerts](https://grafana.com/docs/grafana/latest/alerting/unified-alerting/difference-old-new/).
 
 ### Library panels
 
-Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel. For instructions on how to create, add, unlink and manage library panels, refer to [Library panels]({{< relref "../panels/library-panels/" >}}).
+Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel. For instructions on how to create, add, unlink and manage library panels, refer to [Library panels]({{< relref "../dashboards/build-dashboards/manage-library-panels" >}}).
 
 ### Real-time streaming
 
@@ -38,11 +44,11 @@ In addition to data source integration, events can be sent to dashboards by post
 
 These metrics will be broadcast to all dashboards connected to that stream endpoint.
 
-For more information about real-time streaming, refer to [Grafana Live documentation]({{< relref "../live/_index.md" >}}).
+For more information about real-time streaming, refer to [Grafana Live documentation]({{< relref "../setup-grafana/set-up-grafana-live/" >}}).
 
 ### Prometheus metrics browser
 
-The Prometheus metrics browser allows you to quickly find metrics and select relevant labels to build basic queries. If supported by your Prometheus instance, each metric will show its HELP and TYPE as a tooltip. For more information, refer to [Metrics browser documentation]({{< relref "../datasources/prometheus.md#metrics-browser" >}}).
+The Prometheus metrics browser allows you to quickly find metrics and select relevant labels to build basic queries. If supported by your Prometheus instance, each metric will show its HELP and TYPE as a tooltip. For more information, refer to [Metrics browser documentation]({{< relref "../datasources/prometheus/#metrics-browser" >}}).
 
 ### Bar chart visualization (beta)
 
@@ -52,7 +58,7 @@ The Bar chart panel is a new visualization that supports categorical data. It on
 
 To use it with time series you first have to add a **Reduce** transform.
 
-For more information, refer to [Bar chart visualization]({{< relref "../visualizations/bar-chart.md" >}}).
+For more information, refer to [Bar chart visualization]({{< relref "../panels-visualizations/visualizations/bar-chart/" >}}).
 
 ### State timeline visualization (beta)
 
@@ -66,11 +72,11 @@ Example with string values:
 With time series data and thresholds:
 {{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="800px" caption="state timeline with time series" >}}
 
-For more information, refer to [State timeline visualization]({{< relref "../visualizations/state-timeline.md" >}}).
+For more information, refer to [State timeline visualization]({{< relref "../panels-visualizations/visualizations/state-timeline/" >}}).
 
 ### Status history visualization (beta)
 
-A sister panel to the state timeline is the new Status history panel visualization. It can display periodic states in a grid view. It supports both numerical, string, or boolean states. You can assign colors using value mappings, thresholds, or gradient color. For more information, refer to [Status history]({{< relref "../visualizations/status-history.md" >}}).
+A sister panel to the state timeline is the new Status history panel visualization. It can display periodic states in a grid view. It supports both numerical, string, or boolean states. You can assign colors using value mappings, thresholds, or gradient color. For more information, refer to [Status history]({{< relref "../panels-visualizations/visualizations/status-history/" >}}).
 schemes.
 
 ![Status grid visualization](/static/img/docs/status-grid/status-grid-8-0.png)
@@ -81,20 +87,20 @@ This hidden feature of the old Graph panel is now a standalone visualization. It
 
 {{< figure src="/static/img/docs/histogram/histogram-8-0.png" max-width="1025px" caption="Histogram example" >}}
 
-For more information, refer to [Histogram]({{< relref "../visualizations/histogram.md" >}})
+For more information, refer to [Histogram]({{< relref "../panels-visualizations/visualizations/histogram/" >}})
 
 ### Time series visualization updates
 
 The Time series is out of beta! We are removing the `Beta` tag and graduating the Time series visualization to a stable state.
 
 - **Time series** is now the default visualization option, replacing the **Graph (old)**.
-- The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../visualizations/time-series/graph-time-series-stacking.md" >}}).
+- The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../panels-visualizations/visualizations/time-series#stack-series" >}}).
 - You can now add alerts in the Time series panel, just like the old Graph panel.
-- Updated [connect null values]({{< relref "../visualizations/time-series/graph-time-series-as-lines.md#connect-null-values" >}}) options.
+- Updated [connect null values]({{< relref "../panels-visualizations/visualizations/time-series#connect-null-values" >}}) options.
 - We added support for a shared crosshair and a tooltip that’s now smarter when it comes to data display in the tooltip.
 - Various performance improvements.
 
-[Time series panel]({{< relref "../visualizations/time-series/_index.md" >}}) topics have been updated as a result of these changes.
+[Time series panel]({{< relref "../panels-visualizations/visualizations/time-series/" >}}) topics have been updated as a result of these changes.
 
 ### Node graph visualization updates
 
@@ -102,7 +108,7 @@ You can now expand the node graph for the displayed trace when using the Trace t
 
 We also added a grid view and the ability to explore hidden nodes.
 
-[Tracing in Explore]({{< relref "../explore/trace-integration.md" >}}) and [Node graph]({{< relref "../visualizations/node-graph.md" >}}) were updated as a result of these changes.
+[Tracing in Explore]({{< relref "../explore/trace-integration/" >}}) and [Node graph]({{< relref "../panels-visualizations/visualizations/node-graph/" >}}) were updated as a result of these changes.
 
 ### Pie chart visualization updates
 
@@ -114,10 +120,10 @@ Lots of panel editor improvements, heavily informed by user research and communi
 
 - All options are now shown in a single pane.
 - You can now search panel options.
-- The Value mappings feature has been completely redesigned. For more information, refer to [About value mappings]({{< relref "../panels/format-data/about-value-mapping.md" >}}).
+- The Value mappings feature has been completely redesigned. For more information, refer to [Configure value mappings]({{< relref "../panels-visualizations/configure-value-mappings/" >}}).
 - New **Table view** option is always available.
 
-The [Panels]({{< relref "../panels/_index.md" >}}) section has been updated to reflect these changes.
+The [Panels]({{< relref "../panels-visualizations/" >}}) section has been updated to reflect these changes.
 
 ### Look and feel update
 
@@ -129,19 +135,19 @@ Under the hood, the new theme architecture enables us to bring more sophisticate
 
 When you inspect a panel, you can now download log results as a text (.txt) file.
 
-[Download log results]({{< relref "../panels/working-with-panels/download-log-results.md" >}}) was added as a result of this feature.
+[Download log results]({{< relref "../panels-visualizations/panel-inspector/" >}}) was added as a result of this feature.
 
 ### Inspector in Explore
 
 The new Explore inspector helps you understand and troubleshoot your queries. You can inspect the raw data, export that data to a comma-separated values (CSV) file, export log results in text format, and view query requests.
 
-[Inspector in Explore]({{< relref "../explore/explore-inspector.md" >}}) was added as a result of this feature.
+[Inspector in Explore]({{< relref "../explore/explore-inspector/" >}}) was added as a result of this feature.
 
 ### Explore log improvements
 
 Log navigation in Explore has been significantly improved. We added pagination to logs, so you can click through older or newer logs as needed.
 
-[Logs in Explore]({{< relref "../explore/logs-integration.md" >}}) was updated as a result of these changes.
+[Logs in Explore]({{< relref "../explore/logs-integration/" >}}) was updated as a result of these changes.
 
 ![Navigate logs in Explore](/static/img/docs/explore/navigate-logs-8-0.png)
 
@@ -149,7 +155,7 @@ Log navigation in Explore has been significantly improved. We added pagination t
 
 You can now use the Plugin catalog app to easily manage your plugins from within Grafana. Install, update, and uninstall plugins without requiring a server restart.
 
-[Plugin catalog]({{< relref "../plugins/catalog.md" >}}) was added as a result of this feature.
+[Plugin catalog]({{< relref "../administration/plugin-management#plugin-catalog/" >}}) was added as a result of this feature.
 
 ### Performance improvements
 
@@ -180,13 +186,13 @@ The Azure Monitor data source now supports Managed Identity for users hosting Gr
 
 Also, in addition to querying Log Analytics Workspaces, you can now query the logs for any individual [supported resource](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/metrics-supported), or for all resources in a subscription or resource group.
 
-> **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read-only. For more details, refer to the [Deprecating Application Insights]({{< relref "../datasources/azuremonitor/_index.md#deprecating-application-insights" >}}).
+> **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read-only. For more details, refer to the [Deprecating Application Insights]({{< relref "../datasources/azure-monitor#application-insights-and-insights-analytics--removed-" >}}).
 
-[Azure Monitor data source]({{< relref "../datasources/azuremonitor/_index.md" >}}) was updated as a result of these changes.
+[Azure Monitor data source]({{< relref "../datasources/azure-monitor" >}}) was updated as a result of these changes.
 
 #### Elasticsearch data source
 
-[Elasticsearch data source]({{< relref "../datasources/elasticsearch.md" >}}) and [Provisioning]({{< relref "../administration/provisioning.md" >}}) were updated as a result of these changes.
+[Elasticsearch data source]({{< relref "../datasources/elasticsearch/" >}}) and [Provisioning]({{< relref "../administration/provisioning/" >}}) were updated as a result of these changes.
 
 ##### Use semver strings to identify Elasticsearch version
 
@@ -222,11 +228,11 @@ In a prior release, Cloud Monitoring added _preprocessing_ support in their quer
 
 Whenever a metric is selected in the query editor, a suitable preprocessing option is automatically selected for you. To avoid breaking changes, preprocessing is not enabled by default on existing queries. If you want to use preprocessing for existing queries, you have to manually select one in the query editor.
 
-[Google Cloud Monitoring data source]({{< relref "../datasources/google-cloud-monitoring/_index.md#pre-processing" >}}) was updated as a result of this change.
+[Google Cloud Monitoring data source]({{< relref "../datasources/google-cloud-monitoring/#pre-processing" >}}) was updated as a result of this change.
 
 #### Graphite data source
 
-[Graphite data source]({{< relref "../datasources/graphite.md" >}}) was updated as a result of these changes.
+[Graphite data source]({{< relref "../datasources/graphite/" >}}) was updated as a result of these changes.
 
 ##### Variable metric names expand
 
@@ -242,7 +248,7 @@ Graphite queries are now automatically transformed to Loki queries according to 
 
 You can now use more parameters to find traces.
 
-[Jaeger data source]({{< relref "../datasources/jaeger.md" >}}) was updated as a result of this change.
+[Jaeger data source]({{< relref "../datasources/jaeger/" >}}) was updated as a result of this change.
 
 ### Authentication updates
 
@@ -256,11 +262,11 @@ JWT is a new authentication option in Grafana.
 
 You can now configure Grafana to accept a JWT token provided in the HTTP header.
 
-[JWT authentication]({{< relref "../auth/jwt.md" >}}) was added and [Configuration]({{< relref "../administration/configuration.md#auth.jwt" >}}) was updated as a result of this feature.
+[JWT authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/jwt/" >}}) was added and [Configuration]({{< relref "../setup-grafana/configure-grafana/#auth.jwt" >}}) was updated as a result of this feature.
 
 #### OAuth
 
-[Generic OAuth authentication]({{< relref "../auth/generic-oauth.md" >}}) has been updated as a result of these changes.
+[Generic OAuth authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/generic-oauth/" >}}) has been updated as a result of these changes.
 
 ##### Added OAuth support for empty scopes
 
@@ -283,11 +289,11 @@ Grafana has updated its license from Apache 2.0 to the GNU Affero General Public
 
 These features are included in the Grafana Enterprise edition.
 
-### Fine-grained access control
+### Role-based access control
 
 You can now add or remove detailed permissions from Viewer, Editor, and Admin org roles, to grant users just the right amount of access within Grafana. Available permissions include the ability to view and manage Users, Reports, and the Access Control API itself. Grafana will support more and more permissions over the coming months.
 
-[Fine-grained access control docs]({{< relref "../enterprise/access-control/_index.md" >}}) were added as a result of this feature.
+[Role-based access control docs]({{< relref "../administration/roles-and-permissions/access-control/" >}}) were added as a result of this feature.
 
 ### Data source query caching
 
@@ -297,7 +303,7 @@ This results in faster average load times for dashboards and fewer duplicate que
 
 You can enable caching per data source, and time-to-live (TTL) can be configured globally and per data source. Query caching can be set up with Redis, Memcached, or a simple in-memory cache.
 
-For more information, refer to the [Data source query caching docs]({{< relref "../enterprise/query-caching.md" >}}).
+For more information, refer to the [Data source query caching docs]({{< relref "../administration/data-source-management/#query-caching" >}}).
 
 ### Reporting updates
 
@@ -305,13 +311,13 @@ When creating a report, you can now choose to export Table panels as .csv files 
 
 You can also link back to the dashboard directly from the email, for users who want to see the data live in Grafana. This release also includes some improvements to the Reports list view.
 
-For more information, refer to [Reporting docs]({{< relref "../enterprise/reporting.md" >}}).
+For more information, refer to [Reporting docs]({{< relref "../dashboards/share-dashboards-panels/#reporting" >}}).
 
 ### License restrictions clarification in the docs
 
 The Grafana Enterprise documentation has been updated to describe more specifically how licensed roles are counted, how they can be updated, and where you can see details about dashboard and folder permissions that affect users' licensed roles.
 
-For more information, refer to [License restrictions docs]({{< relref "../enterprise/license/license-restrictions.md" >}}).
+For more information, refer to [License restrictions docs]({{< relref "../administration/enterprise-licensing#license-restrictions" >}}).
 
 ## Breaking changes
 

@@ -1,8 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
-import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
+import React, { useCallback, useMemo, useState } from 'react';
+
+import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
+import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 export interface Props {
   onChange: (plugins: PanelPluginMeta[]) => void;
@@ -10,9 +11,7 @@ export interface Props {
 }
 
 export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Props): JSX.Element => {
-  const plugins = useMemo<PanelPluginMeta[]>(() => {
-    return getAllPanelPluginMeta();
-  }, []);
+  const plugins = useMemo<PanelPluginMeta[]>(() => getAllPanelPluginMeta(), []);
   const options = useMemo(
     () =>
       plugins
@@ -23,12 +22,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
   const [value, setValue] = useState<Array<SelectableValue<PanelPluginMeta>>>([]);
   const onChange = useCallback(
     (plugins: Array<SelectableValue<PanelPluginMeta>>) => {
-      const changedPlugins = [];
-      for (const plugin of plugins) {
-        if (plugin.value) {
-          changedPlugins.push(plugin.value);
-        }
-      }
+      const changedPlugins = plugins.filter((p) => p.value).map((p) => p.value!);
       propsOnChange(changedPlugins);
       setValue(plugins);
     },
@@ -51,11 +45,18 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
   return (
     <div className={styles.container}>
       {value.length > 0 && (
-        <span className={styles.clear} onClick={() => onChange([])}>
+        <Button
+          size="xs"
+          icon="trash-alt"
+          fill="text"
+          className={styles.clear}
+          onClick={() => onChange([])}
+          aria-label="Clear types"
+        >
           Clear types
-        </span>
+        </Button>
       )}
-      <MultiSelect menuShouldPortal {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
+      <MultiSelect {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
     </div>
   );
 };
@@ -70,17 +71,10 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     clear: css`
       label: clear;
-      text-decoration: underline;
       font-size: ${theme.spacing(1.5)};
       position: absolute;
-      top: -${theme.spacing(2.75)};
+      top: -${theme.spacing(4.5)};
       right: 0;
-      cursor: pointer;
-      color: ${theme.colors.text.link};
-
-      &:hover {
-        color: ${theme.colors.text.maxContrast};
-      }
     `,
   };
 }

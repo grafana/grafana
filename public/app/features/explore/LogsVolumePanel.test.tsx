@@ -1,9 +1,11 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { LogsVolumePanel } from './LogsVolumePanel';
-import { DataQueryResponse, LoadingState } from '@grafana/data';
+import React from 'react';
 
-jest.mock('./ExploreGraph', () => {
+import { DataQueryResponse, LoadingState, EventBusSrv } from '@grafana/data';
+
+import { LogsVolumePanel } from './LogsVolumePanel';
+
+jest.mock('./Graph/ExploreGraph', () => {
   const ExploreGraph = () => <span>ExploreGraph</span>;
   return {
     ExploreGraph,
@@ -19,7 +21,11 @@ function renderPanel(logsVolumeData?: DataQueryResponse) {
       width={100}
       onUpdateTimeRange={() => {}}
       logsVolumeData={logsVolumeData}
+      logLinesBasedData={undefined}
+      logLinesBasedDataVisibleRange={undefined}
       onLoadLogsVolume={() => {}}
+      onHiddenSeriesChanged={() => null}
+      eventBus={new EventBusSrv()}
     />
   );
 }

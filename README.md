@@ -1,14 +1,14 @@
 ![Grafana](docs/logo-horizontal.png)
 
-The open-source platform for monitoring and observability.
+The open-source platform for monitoring and observability
 
 [![License](https://img.shields.io/github/license/grafana/grafana)](LICENSE)
 [![Drone](https://drone.grafana.net/api/badges/grafana/grafana/status.svg)](https://drone.grafana.net/grafana/grafana)
 [![Go Report Card](https://goreportcard.com/badge/github.com/grafana/grafana)](https://goreportcard.com/report/github.com/grafana/grafana)
 
-Grafana allows you to query, visualize, alert on and understand your metrics no matter where they are stored. Create, explore, and share dashboards with your team and foster a data driven culture:
+Grafana allows you to query, visualize, alert on and understand your metrics no matter where they are stored. Create, explore, and share dashboards with your team and foster a data-driven culture:
 
-- **Visualize:** Fast and flexible client side graphs with a multitude of options. Panel plugins offer many different ways to visualize metrics and logs.
+- **Visualizations:** Fast and flexible client side graphs with a multitude of options. Panel plugins offer many different ways to visualize metrics and logs.
 - **Dynamic Dashboards:** Create dynamic & reusable dashboards with template variables that appear as dropdowns at the top of the dashboard.
 - **Explore Metrics:** Explore your data through ad-hoc queries and dynamic drilldown. Split view and compare different time ranges, queries and data sources side by side.
 - **Explore Logs:** Experience the magic of switching from metrics to logs with preserved label filters. Quickly search through all your logs or streaming them live.
@@ -18,7 +18,7 @@ Grafana allows you to query, visualize, alert on and understand your metrics no 
 ## Get started
 
 - [Get Grafana](https://grafana.com/get)
-- [Installation guides](http://docs.grafana.org/installation/)
+- [Installation guides](https://grafana.com/docs/grafana/latest/setup-grafana/installation/)
 
 Unsure if Grafana is for you? Watch Grafana in action on [play.grafana.org](https://play.grafana.org/)!
 

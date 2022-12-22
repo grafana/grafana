@@ -13,7 +13,7 @@ import (
 func TestCreateLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to create a library panel that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 400, resp.Status())
@@ -40,6 +40,8 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: LibraryElementDTOMeta{
+						FolderName:          "ScenarioFolder",
+						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             sc.initialResult.Result.Meta.Updated,
@@ -63,7 +65,7 @@ func TestCreateLibraryElement(t *testing.T) {
 
 	testScenario(t, "When an admin tries to create a library panel that does not exists using an nonexistent UID, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Nonexistent UID")
+			command := getCreatePanelCommand(sc.folder.ID, "Nonexistent UID")
 			command.UID = util.GenerateShortUID()
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -87,6 +89,8 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: LibraryElementDTOMeta{
+						FolderName:          "ScenarioFolder",
+						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
@@ -110,7 +114,7 @@ func TestCreateLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to create a library panel that does not exists using an existent UID, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Existing UID")
+			command := getCreatePanelCommand(sc.folder.ID, "Existing UID")
 			command.UID = sc.initialResult.Result.UID
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -119,7 +123,7 @@ func TestCreateLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to create a library panel that does not exists using an invalid UID, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Invalid UID")
+			command := getCreatePanelCommand(sc.folder.ID, "Invalid UID")
 			command.UID = "Testing an invalid UID"
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -128,7 +132,7 @@ func TestCreateLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to create a library panel that does not exists using an UID that is too long, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Invalid UID")
+			command := getCreatePanelCommand(sc.folder.ID, "Invalid UID")
 			command.UID = "j6T00KRZzj6T00KRZzj6T00KRZzj6T00KRZzj6T00K"
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -160,6 +164,8 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: LibraryElementDTOMeta{
+						FolderName:          "ScenarioFolder",
+						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,

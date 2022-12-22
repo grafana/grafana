@@ -1,21 +1,9 @@
 package models
 
 import (
-	"errors"
-	"strings"
 	"time"
-)
 
-// Typed errors
-var (
-	ErrFolderNotFound                = errors.New("folder not found")
-	ErrFolderVersionMismatch         = errors.New("the folder has been changed by someone else")
-	ErrFolderTitleEmpty              = errors.New("folder title cannot be empty")
-	ErrFolderWithSameUIDExists       = errors.New("a folder/dashboard with the same uid already exists")
-	ErrFolderSameNameExists          = errors.New("a folder or dashboard in the general folder with the same name already exists")
-	ErrFolderFailedGenerateUniqueUid = errors.New("failed to generate unique folder ID")
-	ErrFolderAccessDenied            = errors.New("access denied to folder")
-	ErrFolderContainsAlertRules      = errors.New("folder contains alert rules")
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Folder struct {
@@ -30,28 +18,32 @@ type Folder struct {
 
 	UpdatedBy int64
 	CreatedBy int64
-	HasAcl    bool
+	HasACL    bool
 }
 
-// UpdateDashboardModel updates an existing model from command into model for update
-func (cmd *UpdateFolderCommand) UpdateDashboardModel(dashFolder *Dashboard, orgId int64, userId int64) {
-	dashFolder.OrgId = orgId
-	dashFolder.Title = strings.TrimSpace(cmd.Title)
-	dashFolder.Data.Set("title", dashFolder.Title)
+// NewFolder creates a new Folder
+func NewFolder(title string) *Folder {
+	folder := &Folder{}
+	folder.Title = title
+	folder.Created = time.Now()
+	folder.Updated = time.Now()
+	return folder
+}
 
-	if cmd.Uid != "" {
-		dashFolder.SetUid(cmd.Uid)
+// DashboardToFolder converts Dashboard to Folder
+func DashboardToFolder(dash *Dashboard) *Folder {
+	return &Folder{
+		Id:        dash.Id,
+		Uid:       dash.Uid,
+		Title:     dash.Title,
+		HasACL:    dash.HasACL,
+		Url:       dash.GetUrl(),
+		Version:   dash.Version,
+		Created:   dash.Created,
+		CreatedBy: dash.CreatedBy,
+		Updated:   dash.Updated,
+		UpdatedBy: dash.UpdatedBy,
 	}
-
-	dashFolder.SetVersion(cmd.Version)
-	dashFolder.IsFolder = true
-
-	if userId == 0 {
-		userId = -1
-	}
-
-	dashFolder.UpdatedBy = userId
-	dashFolder.UpdateSlug()
 }
 
 //
@@ -65,13 +57,8 @@ type CreateFolderCommand struct {
 	Result *Folder `json:"-"`
 }
 
-type UpdateFolderCommand struct {
-	Uid       string `json:"uid"`
-	Title     string `json:"title"`
-	Version   int    `json:"version"`
-	Overwrite bool   `json:"overwrite"`
-
-	Result *Folder `json:"-"`
+type MoveFolderCommand struct {
+	ParentUID *string `json:"parentUid"`
 }
 
 //
@@ -79,11 +66,11 @@ type UpdateFolderCommand struct {
 //
 
 type HasEditPermissionInFoldersQuery struct {
-	SignedInUser *SignedInUser
+	SignedInUser *user.SignedInUser
 	Result       bool
 }
 
-type HasAdminPermissionInFoldersQuery struct {
-	SignedInUser *SignedInUser
+type HasAdminPermissionInDashboardsOrFoldersQuery struct {
+	SignedInUser *user.SignedInUser
 	Result       bool
 }

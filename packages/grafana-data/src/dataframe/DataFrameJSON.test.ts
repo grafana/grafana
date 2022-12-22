@@ -1,4 +1,5 @@
 import { FieldType } from '../types/dataFrame';
+
 import { DataFrameJSON, dataFrameFromJSON } from './DataFrameJSON';
 
 describe('DataFrame JSON', () => {
@@ -28,50 +29,50 @@ describe('DataFrame JSON', () => {
 
       const frame = dataFrameFromJSON(json);
       expect(frame).toMatchInlineSnapshot(`
-        Object {
-          "fields": Array [
-            Object {
-              "config": Object {},
-              "entities": Object {},
+        {
+          "fields": [
+            {
+              "config": {},
+              "entities": {},
               "name": "time",
               "type": "time",
-              "values": Array [
+              "values": [
                 100,
                 200,
                 300,
               ],
             },
-            Object {
-              "config": Object {},
-              "entities": Object {
-                "Inf": Array [
+            {
+              "config": {},
+              "entities": {
+                "Inf": [
                   1,
                 ],
-                "NaN": Array [
+                "NaN": [
                   0,
                 ],
-                "Undef": Array [
+                "Undef": [
                   2,
                 ],
               },
               "name": "name",
               "type": "string",
-              "values": Array [
+              "values": [
                 NaN,
                 Infinity,
                 undefined,
               ],
             },
-            Object {
-              "config": Object {},
-              "entities": Object {
-                "NegInf": Array [
+            {
+              "config": {},
+              "entities": {
+                "NegInf": [
                   2,
                 ],
               },
               "name": "value",
               "type": "number",
-              "values": Array [
+              "values": [
                 1,
                 2,
                 -Infinity,
@@ -79,6 +80,60 @@ describe('DataFrame JSON', () => {
             },
           ],
           "length": 3,
+        }
+      `);
+    });
+
+    it('should inflate values from enums and switch to string field type', () => {
+      const json: DataFrameJSON = {
+        schema: {
+          fields: [
+            { name: 'time', type: FieldType.time },
+            { name: 'value', type: FieldType.number },
+          ],
+        },
+        data: {
+          values: [
+            [100, 200, 300, 400],
+            [1, 0, 2, 1],
+          ],
+          enums: [
+            null, // nothing to replace, but keeps the index
+            ['foo', 'bar', 'baz'],
+          ],
+        },
+      };
+
+      const frame = dataFrameFromJSON(json);
+      expect(frame).toMatchInlineSnapshot(`
+        {
+          "fields": [
+            {
+              "config": {},
+              "entities": {},
+              "name": "time",
+              "type": "time",
+              "values": [
+                100,
+                200,
+                300,
+                400,
+              ],
+            },
+            {
+              "config": {},
+              "entities": {},
+              "name": "value",
+              "type": "string",
+              "values": [
+                "bar",
+                "foo",
+                "baz",
+                "bar",
+              ],
+            },
+          ],
+          "length": 4,
         }
       `);
     });

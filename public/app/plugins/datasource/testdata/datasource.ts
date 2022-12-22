@@ -1,4 +1,4 @@
-import { from, merge, Observable, of } from 'rxjs';
+import { from, merge, Observable, of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
 import {
@@ -14,14 +14,17 @@ import {
   TimeRange,
   ScopedVars,
   toDataFrame,
+  MutableDataFrame,
 } from '@grafana/data';
-import { Scenario, TestDataQuery } from './types';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { queryMetricTree } from './metricTree';
-import { runStream } from './runStreams';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
+
+import { queryMetricTree } from './metricTree';
+import { generateRandomEdges, generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
+import { runStream } from './runStreams';
+import { flameGraphData } from './testData/flameGraphResponse';
+import { Scenario, TestDataQuery } from './types';
 import { TestDataVariableSupport } from './variables';
-import { generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
 
 export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   scenariosCache?: Promise<Scenario[]>;
@@ -65,8 +68,20 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
         case 'node_graph':
           streams.push(this.nodesQuery(target, options));
           break;
+        case 'flame_graph':
+          streams.push(this.flameGraphQuery());
+          break;
+        case 'trace':
+          streams.push(this.trace(target, options));
+          break;
         case 'raw_frame':
           streams.push(this.rawFrameQuery(target, options));
+          break;
+        case 'server_error_500':
+          // this now has an option where it can return/throw an error from the frontend.
+          // if it doesn't, send it to the backend where it might panic there :)
+          const query = this.serverErrorQuery(target, options);
+          query ? streams.push(query) : backendQueries.push(target);
           break;
         // Unusable since 7, removed in 8
         case 'manual_entry': {
@@ -81,10 +96,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
         }
 
         default:
-          if (target.alias) {
-            target.alias = this.templateSrv.replace(target.alias, options.scopedVars);
-          }
-
           backendQueries.push(target);
       }
     }
@@ -105,7 +116,24 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 
   resolveTemplateVariables(query: TestDataQuery, scopedVars: ScopedVars) {
-    query.labels = this.templateSrv.replace(query.labels!, scopedVars);
+    if (query.labels) {
+      query.labels = this.templateSrv.replace(query.labels, scopedVars);
+    }
+    if (query.alias) {
+      query.alias = this.templateSrv.replace(query.alias, scopedVars);
+    }
+    if (query.scenarioId) {
+      query.scenarioId = this.templateSrv.replace(query.scenarioId, scopedVars);
+    }
+    if (query.stringInput) {
+      query.stringInput = this.templateSrv.replace(query.stringInput, scopedVars);
+    }
+    if (query.csvContent) {
+      query.csvContent = this.templateSrv.replace(query.csvContent, scopedVars);
+    }
+    if (query.rawFrameContent) {
+      query.rawFrameContent = this.templateSrv.replace(query.rawFrameContent, scopedVars);
+    }
   }
 
   annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
@@ -139,10 +167,13 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 
   getQueryDisplayText(query: TestDataQuery) {
+    const scenario = query.scenarioId ?? 'Default scenario';
+
     if (query.alias) {
-      return query.scenarioId + ' as ' + query.alias;
+      return scenario + ' as ' + query.alias;
     }
-    return query.scenarioId;
+
+    return scenario;
   }
 
   testDatasource() {
@@ -183,11 +214,56 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
       case 'response':
         frames = savedNodesResponse();
         break;
+      case 'random edges':
+        frames = [generateRandomEdges(target.nodes?.count)];
+        break;
       default:
         throw new Error(`Unknown node_graph sub type ${type}`);
     }
 
     return of({ data: frames }).pipe(delay(100));
+  }
+
+  flameGraphQuery(): Observable<DataQueryResponse> {
+    return of({ data: [flameGraphData] }).pipe(delay(100));
+  }
+
+  trace(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+    const frame = new MutableDataFrame({
+      meta: {
+        preferredVisualisationType: 'trace',
+      },
+      fields: [
+        { name: 'traceID' },
+        { name: 'spanID' },
+        { name: 'parentSpanID' },
+        { name: 'operationName' },
+        { name: 'serviceName' },
+        { name: 'serviceTags' },
+        { name: 'startTime' },
+        { name: 'duration' },
+        { name: 'logs' },
+        { name: 'references' },
+        { name: 'tags' },
+      ],
+    });
+    const numberOfSpans = options.targets[0].spanCount || 10;
+    const spanIdPrefix = '75c665dfb68';
+    const start = Date.now() - 1000 * 60 * 30;
+
+    for (let i = 0; i < numberOfSpans; i++) {
+      frame.add({
+        traceID: spanIdPrefix + '10000',
+        spanID: spanIdPrefix + (10000 + i),
+        parentSpanID: i === 0 ? '' : spanIdPrefix + 10000,
+        operationName: `Operation ${i}`,
+        serviceName: `Service ${i}`,
+        startTime: start + i * 100,
+        duration: 300,
+      });
+    }
+
+    return of({ data: [frame] }).pipe(delay(100));
   }
 
   rawFrameQuery(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
@@ -199,8 +275,33 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
       });
       return of({ data, state: LoadingState.Done }).pipe(delay(100));
     } catch (ex) {
-      return of({ data: [], error: ex }).pipe(delay(100));
+      return of({
+        data: [],
+        error: ex instanceof Error ? ex : new Error('Unkown error'),
+      }).pipe(delay(100));
     }
+  }
+
+  serverErrorQuery(
+    target: TestDataQuery,
+    options: DataQueryRequest<TestDataQuery>
+  ): Observable<DataQueryResponse> | null {
+    const { errorType } = target;
+
+    if (errorType === 'server_panic') {
+      return null;
+    }
+
+    const stringInput = target.stringInput ?? '';
+    if (stringInput === '') {
+      if (errorType === 'frontend_exception') {
+        throw new Error('Scenario threw an exception in the frontend because the input was empty.');
+      } else {
+        return throwError(() => new Error('Scenario returned an error because the input was empty.'));
+      }
+    }
+
+    return null;
   }
 }
 

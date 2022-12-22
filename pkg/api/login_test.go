@@ -7,11 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -21,15 +23,16 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	loginservice "github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func fakeSetIndexViewData(t *testing.T) {
@@ -41,7 +44,7 @@ func fakeSetIndexViewData(t *testing.T) {
 		data := &dtos.IndexViewData{
 			User:     &dtos.CurrentUser{},
 			Settings: map[string]interface{}{},
-			NavTree:  []*dtos.NavLink{},
+			NavTree:  &navtree.NavTreeRoot{},
 		}
 		return data, nil
 	}
@@ -58,27 +61,11 @@ func fakeViewIndex(t *testing.T) {
 }
 
 func getBody(resp *httptest.ResponseRecorder) (string, error) {
-	responseData, err := ioutil.ReadAll(resp.Body)
+	responseData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
 	return string(responseData), nil
-}
-
-type FakeLogger struct {
-	log.Logger
-}
-
-func (fl *FakeLogger) Debug(testMessage string, ctx ...interface{}) {
-}
-
-func (fl *FakeLogger) Info(testMessage string, ctx ...interface{}) {
-}
-
-func (fl *FakeLogger) Warn(testMessage string, ctx ...interface{}) {
-}
-
-func (fl *FakeLogger) Error(testMessage string, ctx ...interface{}) {
 }
 
 type redirectCase struct {
@@ -167,8 +154,8 @@ func TestLoginViewRedirect(t *testing.T) {
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		c.IsSignedIn = true
-		c.SignedInUser = &models.SignedInUser{
-			UserId: 10,
+		c.SignedInUser = &user.SignedInUser{
+			UserID: 10,
 		}
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
@@ -332,11 +319,11 @@ func TestLoginPostRedirect(t *testing.T) {
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
-		log:              &FakeLogger{},
+		log:              log.NewNopLogger(),
 		Cfg:              setting.NewCfg(),
 		HooksService:     &hooks.HooksService{},
 		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 	}
 	hs.Cfg.CookieSecure = true
 
@@ -346,13 +333,12 @@ func TestLoginPostRedirect(t *testing.T) {
 		return hs.LoginPost(c)
 	})
 
-	user := &models.User{
-		Id:    42,
+	user := &user.User{
+		ID:    42,
 		Email: "",
 	}
 
-	mockAuthenticateUserFunc(user, "", nil)
-	t.Cleanup(resetAuthenticateUserFunc)
+	hs.authenticator = &fakeAuthenticator{user, "", nil}
 
 	redirectCases := []redirectCase{
 		{
@@ -578,15 +564,15 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 		Cfg:              sc.cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
 		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		log:              log.New("hello"),
 		SocialService:    &mockSocialService{},
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		c.IsSignedIn = true
-		c.SignedInUser = &models.SignedInUser{
-			UserId: 10,
+		c.SignedInUser = &user.SignedInUser{
+			UserID: 10,
 		}
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
@@ -616,7 +602,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		log:              log.New("test"),
 		Cfg:              setting.NewCfg(),
 		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		HooksService:     hookService,
 	}
 
@@ -630,14 +616,14 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 	testHook := loginHookTest{}
 	hookService.AddLoginHook(testHook.LoginHook)
 
-	testUser := &models.User{
-		Id:    42,
+	testUser := &user.User{
+		ID:    42,
 		Email: "",
 	}
 
 	testCases := []struct {
 		desc       string
-		authUser   *models.User
+		authUser   *user.User
 		authModule string
 		authErr    error
 		info       models.LoginInfo
@@ -673,9 +659,9 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		{
 			desc:       "valid LDAP user",
 			authUser:   testUser,
-			authModule: "ldap",
+			authModule: loginservice.LDAPAuthModule,
 			info: models.LoginInfo{
-				AuthModule: "ldap",
+				AuthModule: loginservice.LDAPAuthModule,
 				User:       testUser,
 				HTTPStatus: 200,
 			},
@@ -684,8 +670,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 
 	for _, c := range testCases {
 		t.Run(c.desc, func(t *testing.T) {
-			mockAuthenticateUserFunc(c.authUser, c.authModule, c.authErr)
-			t.Cleanup(resetAuthenticateUserFunc)
+			hs.authenticator = &fakeAuthenticator{c.authUser, c.authModule, c.authErr}
 			sc.m.Post(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertions("POST", sc.url).exec()
 
@@ -697,7 +682,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 
 			if c.info.User != nil {
 				require.NotEmpty(t, info.User)
-				assert.Equal(t, c.info.User.Id, info.User.Id)
+				assert.Equal(t, c.info.User.ID, info.User.ID)
 			}
 		})
 	}
@@ -732,13 +717,14 @@ func (m *mockSocialService) GetConnector(string) (social.SocialConnector, error)
 	return m.socialConnector, m.err
 }
 
-func mockAuthenticateUserFunc(user *models.User, authmodule string, err error) {
-	login.AuthenticateUserFunc = func(ctx context.Context, query *models.LoginUserQuery) error {
-		query.User = user
-		query.AuthModule = authmodule
-		return err
-	}
+type fakeAuthenticator struct {
+	ExpectedUser       *user.User
+	ExpectedAuthModule string
+	ExpectedError      error
 }
-func resetAuthenticateUserFunc() {
-	login.AuthenticateUserFunc = login.AuthenticateUser
+
+func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *models.LoginUserQuery) error {
+	query.User = fa.ExpectedUser
+	query.AuthModule = fa.ExpectedAuthModule
+	return fa.ExpectedError
 }

@@ -1,6 +1,5 @@
 import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
-import { DataQuery } from './query';
 
 import {
   DataQueryRequest,
@@ -11,6 +10,7 @@ import {
   DataSourceQueryType,
   QueryEditorProps,
 } from './datasource';
+import { DataQuery } from './query';
 
 /**
  * Enum with the different variable support types

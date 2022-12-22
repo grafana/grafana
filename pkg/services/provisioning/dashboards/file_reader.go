@@ -4,19 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -33,6 +34,7 @@ type FileReader struct {
 	Path                         string
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
+	dashboardStore               utils.DashboardStore
 	FoldersFromFilesStructure    bool
 
 	mux                     sync.RWMutex
@@ -41,7 +43,7 @@ type FileReader struct {
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
-func NewDashboardFileReader(cfg *config, log log.Logger, store dboards.Store) (*FileReader, error) {
+func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.DashboardProvisioningService, dashboardStore utils.DashboardStore) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -62,7 +64,8 @@ func NewDashboardFileReader(cfg *config, log log.Logger, store dboards.Store) (*
 		Cfg:                          cfg,
 		Path:                         path,
 		log:                          log,
-		dashboardProvisioningService: dashboards.NewProvisioningService(store),
+		dashboardProvisioningService: service,
+		dashboardStore:               dashboardStore,
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
 		usageTracker:                 newUsageTracker(),
 	}, nil
@@ -92,7 +95,7 @@ func (fr *FileReader) walkDisk(ctx context.Context) error {
 		return err
 	}
 
-	provisionedDashboardRefs, err := getProvisionedDashboardsByPath(fr.dashboardProvisioningService, fr.Cfg.Name)
+	provisionedDashboardRefs, err := getProvisionedDashboardsByPath(ctx, fr.dashboardProvisioningService, fr.Cfg.Name)
 	if err != nil {
 		return err
 	}
@@ -139,7 +142,7 @@ func (fr *FileReader) isDatabaseAccessRestricted() bool {
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
 func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*models.DashboardProvisioning, usageTracker *usageTracker) error {
-	folderID, err := getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
+	folderID, err := fr.getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 		return err
 	}
@@ -148,7 +151,7 @@ func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnD
 	for path, fileInfo := range filesFoundOnDisk {
 		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, fileInfo, dashboardRefs)
 		if err != nil {
-			fr.log.Error("failed to save dashboard", "error", err)
+			fr.log.Error("failed to save dashboard", "file", path, "error", err)
 			continue
 		}
 
@@ -169,7 +172,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 			folderName = filepath.Base(dashboardsFolder)
 		}
 
-		folderID, err := getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName)
+		folderID, err := fr.getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName)
 		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 			return fmt.Errorf("can't provision folder %q from file system structure: %w", folderName, err)
 		}
@@ -177,7 +180,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, fileInfo, dashboardRefs)
 		usageTracker.track(provisioningMetadata)
 		if err != nil {
-			fr.log.Error("failed to save dashboard", "error", err)
+			fr.log.Error("failed to save dashboard", "file", path, "error", err)
 		}
 	}
 	return nil
@@ -265,7 +268,8 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 			Updated:    resolvedFileInfo.ModTime().Unix(),
 			CheckSum:   jsonFile.checkSum,
 		}
-		if _, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, dash, dp); err != nil {
+		_, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, dash, dp)
+		if err != nil {
 			return provisioningMetadata, err
 		}
 	} else {
@@ -276,9 +280,9 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 	return provisioningMetadata, nil
 }
 
-func getProvisionedDashboardsByPath(service dashboards.DashboardProvisioningService, name string) (
+func getProvisionedDashboardsByPath(ctx context.Context, service dashboards.DashboardProvisioningService, name string) (
 	map[string]*models.DashboardProvisioning, error) {
-	arr, err := service.GetProvisionedDashboardData(name)
+	arr, err := service.GetProvisionedDashboardData(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -291,26 +295,29 @@ func getProvisionedDashboardsByPath(service dashboards.DashboardProvisioningServ
 	return byPath, nil
 }
 
-func getOrCreateFolderID(ctx context.Context, cfg *config, service dashboards.DashboardProvisioningService, folderName string) (int64, error) {
+func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, service dashboards.DashboardProvisioningService, folderName string) (int64, error) {
 	if folderName == "" {
 		return 0, ErrFolderNameMissing
 	}
 
-	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(folderName), OrgId: cfg.OrgID}
-	err := bus.Dispatch(ctx, cmd)
+	cmd := &models.GetDashboardQuery{Slug: slugify.Slugify(folderName), OrgId: cfg.OrgID}
+	err := fr.dashboardStore.GetDashboard(ctx, cmd)
 
-	if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
+	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return 0, err
 	}
 
 	// dashboard folder not found. create one.
-	if errors.Is(err, models.ErrDashboardNotFound) {
+	if errors.Is(err, dashboards.ErrDashboardNotFound) {
 		dash := &dashboards.SaveDashboardDTO{}
 		dash.Dashboard = models.NewDashboardFolder(folderName)
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
 		dash.OrgId = cfg.OrgID
 		// set dashboard folderUid if given
+		if cfg.FolderUID == accesscontrol.GeneralFolderUID {
+			return 0, dashboards.ErrFolderInvalidUID
+		}
 		dash.Dashboard.SetUid(cfg.FolderUID)
 		dbDash, err := service.SaveFolderForProvisionedDashboards(ctx, dash)
 		if err != nil {
@@ -391,7 +398,7 @@ func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time,
 		}
 	}()
 
-	all, err := ioutil.ReadAll(reader)
+	all, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}

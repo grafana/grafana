@@ -1,4 +1,5 @@
 import React, { FC, CSSProperties, HTMLProps } from 'react';
+
 import { FormattedValue } from '@grafana/data';
 
 export interface Props extends Omit<HTMLProps<HTMLDivElement>, 'className' | 'value' | 'style'> {
@@ -22,8 +23,8 @@ export const FormattedValueDisplay: FC<Props> = ({ value, className, style, ...h
   const hasSuffix = (value.suffix ?? '').length > 0;
   let suffixStyle;
 
-  if (style && style.fontSize) {
-    const fontSize = style?.fontSize as number;
+  if (style && style.fontSize && typeof style.fontSize === 'number') {
+    const fontSize = style.fontSize;
     const reductionFactor = fontSizeReductionFactor(fontSize);
     suffixStyle = { fontSize: fontSize * reductionFactor };
   }

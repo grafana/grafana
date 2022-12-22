@@ -1,4 +1,5 @@
 import { reduce } from 'lodash';
+
 import kbn from 'app/core/utils/kbn';
 
 function renderTagCondition(tag: { operator: any; value: string; condition: any; key: string }, index: number) {
@@ -18,8 +19,9 @@ function renderTagCondition(tag: { operator: any; value: string; condition: any;
     }
   }
 
-  // quote value unless regex or number, or if empty-string
-  if (value === '' || (operator !== '=~' && operator !== '!~' && isNaN(+value))) {
+  // quote value unless regex or empty-string
+  // Influx versions before 0.13 had inconsistent requirements on if (numeric) tags are quoted or not.
+  if (value === '' || (operator !== '=~' && operator !== '!~')) {
     value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
   }
 

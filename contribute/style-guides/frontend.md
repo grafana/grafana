@@ -166,16 +166,21 @@ interface ModalState {
 ##### Emotion class names
 
 ```typescript
-const getStyles  = = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   // bad
   ElementWrapper: css`...`,
   // bad
-  ["element-wrapper"]: css`...`,
+  ['element-wrapper']: css`...`,
 
   // good
-  elementWrapper: css`...`,
+  elementWrapper: css({
+    padding: theme.spacing(1, 2),
+    background: theme.colors.background.secondary,
+  }),
 });
 ```
+
+Use hook useStyles2(getStyles) to memoize the styles generation and try to avoid passing props to the the getStyles function and instead compose classes using emotion cx function.
 
 #### Use `ALL_CAPS` for constants.
 
@@ -351,7 +356,7 @@ static defaultProps: Partial<Props> = { ... }
 We recommend using named regular functions when creating a new react functional component.
 
 ```typescript
-export function Component(props: Props): ReactElement { ... }
+export function Component(props: Props) { ... }
 ```
 
 ## State management

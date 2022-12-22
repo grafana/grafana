@@ -1,5 +1,6 @@
 import React from 'react';
-import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
+import uPlot from 'uplot';
+
 import {
   ArrayVector,
   DataFrame,
@@ -19,9 +20,11 @@ import {
   getActiveThreshold,
   Threshold,
   getFieldConfigWithMinMax,
-  outerJoinDataFrames,
   ThresholdsMode,
+  TimeRange,
 } from '@grafana/data';
+import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
   FIXED_UNIT,
   SeriesVisibilityChangeMode,
@@ -29,12 +32,13 @@ import {
   UPlotConfigPrepFn,
   VizLegendItem,
 } from '@grafana/ui';
-import { getConfig, TimelineCoreOptions } from './timeline';
-import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
-import { TimelineFieldConfig, TimelineOptions } from './types';
+import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
+import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
-import { preparePlotData } from '../../../../../packages/grafana-ui/src/components/uPlot/utils';
-import uPlot from 'uplot';
+import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
+
+import { getConfig, TimelineCoreOptions } from './timeline';
+import { TimelineFieldConfig, TimelineOptions } from './types';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -48,19 +52,10 @@ export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityCh
   return SeriesVisibilityChangeMode.ToggleSelection;
 }
 
-export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) {
-  return outerJoinDataFrames({
-    frames: data,
-    joinBy: dimFields.x,
-    keep: dimFields.y,
-    keepOriginIndices: true,
-  });
-}
-
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   frame,
   theme,
-  timeZone,
+  timeZones,
   getTimeRange,
   mode,
   eventBus,
@@ -70,8 +65,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   showValue,
   alignValue,
   mergeValues,
+  getValueColor,
 }) => {
-  const builder = new UPlotConfigBuilder(timeZone);
+  const builder = new UPlotConfigBuilder(timeZones[0]);
 
   const xScaleUnit = 'time';
   const xScaleKey = 'x';
@@ -81,14 +77,15 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
 
-  const getValueColor = (seriesIdx: number, value: any) => {
+  const getValueColorFn = (seriesIdx: number, value: any) => {
     const field = frame.fields[seriesIdx];
 
-    if (field.display) {
-      const disp = field.display(value); // will apply color modes
-      if (disp.color) {
-        return disp.color;
-      }
+    if (
+      field.state?.origin?.fieldIndex !== undefined &&
+      field.state?.origin?.frameIndex !== undefined &&
+      getValueColor
+    ) {
+      return getValueColor(field.state?.origin?.frameIndex, field.state?.origin?.fieldIndex, value);
     }
 
     return FALLBACK_COLOR;
@@ -107,7 +104,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     theme,
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
     getFieldConfig: (seriesIdx) => frame.fields[seriesIdx].config.custom,
-    getValueColor,
+    getValueColor: getValueColorFn,
     getTimeRange,
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
@@ -162,7 +159,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
 
   builder.setTooltipInterpolator(interpolateTooltip);
 
-  builder.setPrepData(preparePlotData);
+  builder.setPrepData((frames) => preparePlotData2(frames[0], getStackingGroups(frames[0])));
 
   builder.setCursor(coreConfig.cursor);
 
@@ -187,7 +184,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     isTime: true,
     splits: coreConfig.xSplits!,
     placement: AxisPlacement.Bottom,
-    timeZone,
+    timeZone: timeZones[0],
     theme,
     grid: { show: true },
   });
@@ -212,7 +209,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     }
 
     const field = frame.fields[i];
-    const config = field.config as FieldConfig<TimelineFieldConfig>;
+    const config: FieldConfig<TimelineFieldConfig> = field.config;
     const customConfig: TimelineFieldConfig = {
       ...defaultConfig,
       ...config.custom,
@@ -262,8 +259,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
           return true;
         },
       },
-      //TODO: remove any once https://github.com/leeoniya/uPlot/pull/611 got merged or the typing is fixed
-      scales: [xScaleKey, null as any],
+      scales: [xScaleKey, null],
     };
     builder.setSync();
     builder.setCursor(cursor);
@@ -287,9 +283,9 @@ export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
  * in:  1,        1,undefined,        1,2,        2,null,2,3
  * out: 1,undefined,undefined,undefined,2,undefined,null,2,3
  */
-export function unsetSameFutureValues(values: any[]): any[] | undefined {
+export function unsetSameFutureValues(values: unknown[]): unknown[] | undefined {
   let prevVal = values[0];
-  let clone: any[] | undefined = undefined;
+  let clone: unknown[] | undefined = undefined;
 
   for (let i = 1; i < values.length; i++) {
     let value = values[i];
@@ -385,6 +381,7 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
   mergeValues: boolean,
+  timeRange: TimeRange,
   theme: GrafanaTheme2
 ): { frames?: DataFrame[]; warn?: string } {
   if (!series?.length) {
@@ -392,11 +389,27 @@ export function prepareTimelineFields(
   }
   let hasTimeseries = false;
   const frames: DataFrame[] = [];
+
   for (let frame of series) {
     let isTimeseries = false;
     let changed = false;
+    let maybeSortedFrame = maybeSortFrame(
+      frame,
+      frame.fields.findIndex((f) => f.type === FieldType.time)
+    );
+
+    let nulledFrame = applyNullInsertThreshold({
+      frame: maybeSortedFrame,
+      refFieldPseudoMin: timeRange.from.valueOf(),
+      refFieldPseudoMax: timeRange.to.valueOf(),
+    });
+
+    if (nulledFrame !== frame) {
+      changed = true;
+    }
+
     const fields: Field[] = [];
-    for (let field of frame.fields) {
+    for (let field of nullToValue(nulledFrame).fields) {
       switch (field.type) {
         case FieldType.time:
           isTimeseries = true;
@@ -435,11 +448,11 @@ export function prepareTimelineFields(
       hasTimeseries = true;
       if (changed) {
         frames.push({
-          ...frame,
+          ...maybeSortedFrame,
           fields,
         });
       } else {
-        frames.push(frame);
+        frames.push(maybeSortedFrame);
       }
     }
   }
@@ -465,10 +478,21 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
 
   const fmt = (v: number) => formattedValueToString(disp(v));
 
-  for (let i = 1; i <= steps.length; i++) {
-    const step = steps[i - 1];
+  for (let i = 0; i < steps.length; i++) {
+    let step = steps[i];
+    let value = step.value;
+    let pre = '';
+    let suf = '';
+
+    if (value === -Infinity && i < steps.length - 1) {
+      value = steps[i + 1].value;
+      pre = '< ';
+    } else {
+      suf = '+';
+    }
+
     items.push({
-      label: i === 1 ? `< ${fmt(step.value)}` : `${fmt(step.value)}+`,
+      label: `${pre}${fmt(value)}${suf}`,
       color: theme.visualization.getColorByName(step.color),
       yAxis: 1,
     });
@@ -482,7 +506,7 @@ export function prepareTimelineLegendItems(
   options: VizLegendOptions,
   theme: GrafanaTheme2
 ): VizLegendItem[] | undefined {
-  if (!frames || options.displayMode === 'hidden') {
+  if (!frames || options.showLegend === false) {
     return undefined;
   }
 
@@ -497,10 +521,9 @@ export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLe
   const items: VizLegendItem[] = [];
   const fieldConfig = fields[0].config;
   const colorMode = fieldConfig.color?.mode ?? FieldColorModeId.Fixed;
-  const thresholds = fieldConfig.thresholds;
 
   // If thresholds are enabled show each step in the legend
-  if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
+  if (colorMode === FieldColorModeId.Thresholds) {
     return getThresholdItems(fieldConfig, theme);
   }
 
@@ -553,16 +576,18 @@ export function findNextStateIndex(field: Field, datapointIdx: number) {
     return null;
   }
 
+  const startValue = field.values.get(datapointIdx);
+
   while (end === undefined) {
     if (rightPointer >= field.values.length) {
       return null;
     }
     const rightValue = field.values.get(rightPointer);
 
-    if (rightValue !== undefined) {
-      end = rightPointer;
-    } else {
+    if (rightValue === undefined || rightValue === startValue) {
       rightPointer++;
+    } else {
+      end = rightPointer;
     }
   }
 

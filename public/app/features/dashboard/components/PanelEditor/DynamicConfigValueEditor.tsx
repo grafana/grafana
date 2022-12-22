@@ -1,15 +1,17 @@
+import { css, cx } from '@emotion/css';
+import React from 'react';
+import Highlighter from 'react-highlight-words';
+
 import {
   DynamicConfigValue,
   FieldConfigOptionsRegistry,
   FieldConfigProperty,
   FieldOverrideContext,
-  GrafanaTheme,
+  GrafanaTheme2,
 } from '@grafana/data';
-import React from 'react';
-import { Counter, Field, HorizontalGroup, IconButton, Label, stylesFactory, useTheme } from '@grafana/ui';
-import { css, cx } from '@emotion/css';
+import { Counter, Field, HorizontalGroup, IconButton, Label, useStyles2 } from '@grafana/ui';
+
 import { OptionsPaneCategory } from './OptionsPaneCategory';
-import Highlighter from 'react-highlight-words';
 
 interface DynamicConfigValueEditorProps {
   property: DynamicConfigValue;
@@ -30,8 +32,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   isSystemOverride,
   searchQuery,
 }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
   const item = registry?.getIfExists(property.id);
 
   if (!item) {
@@ -123,13 +124,13 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     collapsibleOverrideEditor: css`
       label: collapsibleOverrideEditor;
       & + .dynamicConfigValueEditor--nonCollapsible {
-        margin-top: ${theme.spacing.formSpacingBase}px;
+        margin-top: ${theme.spacing(1)};
       }
     `,
   };
-});
+};

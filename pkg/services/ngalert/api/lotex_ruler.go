@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/web"
@@ -16,9 +15,32 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+const (
+	Prometheus = "prometheus"
+	Cortex     = "cortex"
+	Mimir      = "mimir"
+)
+
+const (
+	PrometheusDatasourceType = "prometheus"
+	LokiDatasourceType       = "loki"
+
+	mimirPrefix      = "/config/v1/rules"
+	prometheusPrefix = "/rules"
+	lokiPrefix       = "/api/prom/rules"
+
+	subtypeQuery = "subtype"
+)
+
 var dsTypeToRulerPrefix = map[string]string{
-	"prometheus": "/rules",
-	"loki":       "/api/prom/rules",
+	PrometheusDatasourceType: prometheusPrefix,
+	LokiDatasourceType:       lokiPrefix,
+}
+
+var subtypeToPrefix = map[string]string{
+	Prometheus: prometheusPrefix,
+	Cortex:     prometheusPrefix,
+	Mimir:      mimirPrefix,
 }
 
 type LotexRuler struct {
@@ -33,7 +55,7 @@ func NewLotexRuler(proxy *AlertingProxy, log log.Logger) *LotexRuler {
 	}
 }
 
-func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
+func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext, namespace string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -43,7 +65,7 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) res
 		http.MethodDelete,
 		withPath(
 			*ctx.Req.URL,
-			fmt.Sprintf("%s/%s", legacyRulerPrefix, web.Params(ctx.Req)[":Namespace"]),
+			fmt.Sprintf("%s/%s", legacyRulerPrefix, namespace),
 		),
 		nil,
 		messageExtractor,
@@ -51,7 +73,7 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) res
 	)
 }
 
-func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
+func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext, namespace string, group string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -64,8 +86,8 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response
 			fmt.Sprintf(
 				"%s/%s/%s",
 				legacyRulerPrefix,
-				web.Params(ctx.Req)[":Namespace"],
-				web.Params(ctx.Req)[":Groupname"],
+				namespace,
+				group,
 			),
 		),
 		nil,
@@ -74,7 +96,7 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response
 	)
 }
 
-func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
+func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext, namespace string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -87,7 +109,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respon
 			fmt.Sprintf(
 				"%s/%s",
 				legacyRulerPrefix,
-				web.Params(ctx.Req)[":Namespace"],
+				namespace,
 			),
 		),
 		nil,
@@ -96,7 +118,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respon
 	)
 }
 
-func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
+func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext, namespace string, group string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -109,8 +131,8 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.R
 			fmt.Sprintf(
 				"%s/%s/%s",
 				legacyRulerPrefix,
-				web.Params(ctx.Req)[":Namespace"],
-				web.Params(ctx.Req)[":Groupname"],
+				namespace,
+				group,
 			),
 		),
 		nil,
@@ -138,7 +160,7 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Respon
 	)
 }
 
-func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
+func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig, ns string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -147,21 +169,21 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 	if err != nil {
 		return ErrResp(500, err, "Failed marshal rule group")
 	}
-	ns := web.Params(ctx.Req)[":Namespace"]
 	u := withPath(*ctx.Req.URL, fmt.Sprintf("%s/%s", legacyRulerPrefix, ns))
 	return r.withReq(ctx, http.MethodPost, u, bytes.NewBuffer(yml), jsonExtractor(nil), nil)
 }
 
 func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error) {
-	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
-	if err != nil {
-		return "", fmt.Errorf("recipient is invalid")
+	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+	if datasourceUID == "" {
+		return "", fmt.Errorf("datasource UID is invalid")
 	}
 
-	ds, err := r.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), recipient, ctx.SignedInUser, ctx.SkipCache)
+	ds, err := r.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		return "", err
 	}
+
 	// Validate URL
 	if ds.Url == "" {
 		return "", fmt.Errorf("URL for this data source is empty")
@@ -171,7 +193,26 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error
 	if !ok {
 		return "", fmt.Errorf("unexpected datasource type. expecting loki or prometheus")
 	}
-	return prefix, nil
+
+	// If the datasource is Loki, there's nothing else for us to do - it doesn't have subtypes.
+	if ds.Type == LokiDatasourceType {
+		return prefix, nil
+	}
+
+	// A Prometheus datasource, can have many subtypes: Cortex, Mimir and vanilla Prometheus.
+	// Based on these subtypes, we want to use a different proxying path.
+	subtype := ctx.Query(subtypeQuery)
+	subTypePrefix, ok := subtypeToPrefix[subtype]
+	if !ok {
+		r.log.Debug(
+			"Unable to determine prometheus datasource subtype, using default prefix",
+			"datasource", ds.Uid, "datasourceType", ds.Type, "subtype", subtype, "prefix", prefix)
+		return prefix, nil
+	}
+
+	r.log.Debug("Determined prometheus datasource subtype",
+		"datasource", ds.Uid, "datasourceType", ds.Type, "subtype", subtype)
+	return subTypePrefix, nil
 }
 
 func withPath(u url.URL, newPath string) *url.URL {

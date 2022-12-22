@@ -1,12 +1,13 @@
-import React, { useState, useCallback, ChangeEvent, FunctionComponent, FocusEvent } from 'react';
-import SliderComponent from 'rc-slider';
-
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
+import SliderComponent from 'rc-slider';
+import React, { useState, useCallback, ChangeEvent, FunctionComponent, FocusEvent } from 'react';
+
 import { useTheme2 } from '../../themes/ThemeContext';
+import { Input } from '../Input/Input';
+
 import { getStyles } from './styles';
 import { SliderProps } from './types';
-import { Input } from '../Input/Input';
 
 /**
  * @public
@@ -31,12 +32,11 @@ export const Slider: FunctionComponent<SliderProps> = ({
   const [sliderValue, setSliderValue] = useState<number>(value ?? min);
 
   const onSliderChange = useCallback(
-    (v: number) => {
-      setSliderValue(v);
+    (v: number | number[]) => {
+      const value = typeof v === 'number' ? v : v[0];
 
-      if (onChange) {
-        onChange(v);
-      }
+      setSliderValue(value);
+      onChange?.(value);
     },
     [setSliderValue, onChange]
   );
@@ -77,6 +77,14 @@ export const Slider: FunctionComponent<SliderProps> = ({
     [max, min]
   );
 
+  const handleAfterChange = useCallback(
+    (v: number | number[]) => {
+      const value = typeof v === 'number' ? v : v[0];
+      onAfterChange?.(value);
+    },
+    [onAfterChange]
+  );
+
   const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
   const sliderInputFieldClassNames = !isHorizontal ? [styles.sliderInputFieldVertical] : [];
 
@@ -84,7 +92,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
     <div className={cx(styles.container, styles.slider)}>
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.tooltip} />
-      <label className={cx(styles.sliderInput, ...sliderInputClassNames)}>
+      <div className={cx(styles.sliderInput, ...sliderInputClassNames)}>
         <SliderWithTooltip
           min={min}
           max={max}
@@ -92,24 +100,24 @@ export const Slider: FunctionComponent<SliderProps> = ({
           defaultValue={value}
           value={sliderValue}
           onChange={onSliderChange}
-          onAfterChange={onAfterChange}
+          onAfterChange={handleAfterChange}
           vertical={!isHorizontal}
           reverse={reverse}
           ariaLabelForHandle={ariaLabelForHandle}
           marks={marks}
           included={included}
         />
-        {/* Uses text input so that the number spinners are not shown */}
+
         <Input
           type="text"
           className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
-          value={`${sliderValue}`} // to fix the react leading zero issue
+          value={sliderValue}
           onChange={onSliderInputChange}
           onBlur={onSliderInputBlur}
           min={min}
           max={max}
         />
-      </label>
+      </div>
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+
 import { MonacoQueryFieldLazy } from './MonacoQueryFieldLazy';
 import { Props as MonacoProps } from './MonacoQueryFieldProps';
 
@@ -29,5 +30,13 @@ export const MonacoQueryFieldWrapper = (props: Props) => {
     }
   };
 
-  return <MonacoQueryFieldLazy onRunQuery={handleRunQuery} onBlur={handleBlur} {...rest} />;
+  /**
+   * Handles changes without running any queries
+   * @param value
+   */
+  const handleChange = (value: string) => {
+    onChange(value);
+  };
+
+  return <MonacoQueryFieldLazy onChange={handleChange} onRunQuery={handleRunQuery} onBlur={handleBlur} {...rest} />;
 };

@@ -1,20 +1,24 @@
+import { groupBy, mapValues } from 'lodash';
+import { Observable, of } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
+
 import {
   AbsoluteTimeRange,
   DataFrame,
   FieldType,
   getDisplayProcessor,
   PanelData,
-  sortLogsResult,
   standardTransformers,
   DataQuery,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { groupBy } from 'lodash';
-import { Observable, of } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
-import { dataFrameToLogsModel } from '../../../core/logs_model';
+
+import { dataFrameToLogsModel } from '../../../core/logsModel';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { ExplorePanelData } from '../../../types';
+import { CorrelationData } from '../../correlations/useCorrelations';
+import { attachCorrelationsToDataFrames } from '../../correlations/utils';
+import { sortLogsResult } from '../../logs/utils';
 import { preProcessPanelData } from '../../query/state/runRequest';
 
 /**
@@ -28,6 +32,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
   const logsFrames: DataFrame[] = [];
   const traceFrames: DataFrame[] = [];
   const nodeGraphFrames: DataFrame[] = [];
+  const flameGraphFrames: DataFrame[] = [];
 
   for (const frame of data.series) {
     switch (frame.meta?.preferredVisualisationType) {
@@ -45,6 +50,9 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
         break;
       case 'nodeGraph':
         nodeGraphFrames.push(frame);
+        break;
+      case 'flamegraph':
+        config.featureToggles.flameGraph ? flameGraphFrames.push(frame) : tableFrames.push(frame);
         break;
       default:
         if (isTimeSeries(frame)) {
@@ -64,9 +72,26 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     logsFrames,
     traceFrames,
     nodeGraphFrames,
+    flameGraphFrames,
     graphResult: null,
     tableResult: null,
     logsResult: null,
+  };
+};
+
+export const decorateWithCorrelations = ({
+  queries,
+  correlations,
+}: {
+  queries: DataQuery[] | undefined;
+  correlations: CorrelationData[] | undefined;
+}) => {
+  return (data: PanelData): PanelData => {
+    if (queries?.length && correlations?.length) {
+      const queryRefIdToDataSourceUid = mapValues(groupBy(queries, 'refId'), '0.datasource.uid');
+      attachCorrelationsToDataFrames(data.series, correlations, queryRefIdToDataSourceUid);
+    }
+    return data;
   };
 };
 
@@ -107,25 +132,25 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
   const transformer = hasOnlyTimeseries
-    ? of(data.tableFrames).pipe(standardTransformers.seriesToColumnsTransformer.operator({}))
+    ? of(data.tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}))
     : of(data.tableFrames).pipe(standardTransformers.mergeTransformer.operator({}));
 
   return transformer.pipe(
     map((frames) => {
-      const frame = frames[0];
-
-      // set display processor
-      for (const field of frame.fields) {
-        field.display =
-          field.display ??
-          getDisplayProcessor({
-            field,
-            theme: config.theme2,
-            timeZone: data.request?.timezone ?? 'browser',
-          });
+      for (const frame of frames) {
+        // set display processor
+        for (const field of frame.fields) {
+          field.display =
+            field.display ??
+            getDisplayProcessor({
+              field,
+              theme: config.theme2,
+              timeZone: data.request?.timezone ?? 'browser',
+            });
+        }
       }
 
-      return { ...data, tableResult: frame };
+      return { ...data, tableResult: frames };
     })
   );
 };
@@ -162,10 +187,12 @@ export function decorateData(
   absoluteRange: AbsoluteTimeRange,
   refreshInterval: string | undefined,
   queries: DataQuery[] | undefined,
+  correlations: CorrelationData[] | undefined,
   fullRangeLogsVolumeAvailable: boolean
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
+    map(decorateWithCorrelations({ queries, correlations })),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable })),

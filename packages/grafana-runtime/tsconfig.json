@@ -1,11 +1,17 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "declarationDir": "dist",
-    "outDir": "compiled",
+    "baseUrl": "./",
+    "declarationDir": "./compiled",
+    "emitDeclarationOnly": true,
+    "isolatedModules": true,
     "rootDirs": ["."]
   },
-  "exclude": ["dist", "node_modules"],
+  "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
-  "include": ["src/**/*.ts*", "../../public/app/types/jquery/*.ts", "../../public/app/types/*.d.ts"]
+  "include": [
+    "src/**/*.ts*",
+    "../../public/app/types/jquery/*.ts",
+    "../../public/app/types/*.d.ts",
+    "../grafana-ui/src/types/*.d.ts"
+  ]
 }

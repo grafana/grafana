@@ -1,7 +1,8 @@
-import React, { createRef, KeyboardEvent, RefObject } from 'react';
-import { render, screen } from '@testing-library/react';
 import { fireEvent } from '@testing-library/dom';
+import { render, screen } from '@testing-library/react';
 import { act, renderHook } from '@testing-library/react-hooks';
+import React, { createRef, KeyboardEvent, RefObject } from 'react';
+
 import { useMenuFocus } from './hooks';
 
 describe('useMenuFocus', () => {
@@ -17,7 +18,10 @@ describe('useMenuFocus', () => {
         Item 1
       </span>
       <span data-role="menuitem">Item 2</span>
-      <span data-role="menuitem">Item 3</span>
+      <span data-role="menuitem" data-disabled>
+        Item 3
+      </span>
+      <span data-role="menuitem">Item 4</span>
     </div>
   );
 
@@ -30,6 +34,7 @@ describe('useMenuFocus', () => {
     expect(screen.getByText('Item 1').tabIndex).toBe(-1);
     expect(screen.getByText('Item 2').tabIndex).toBe(-1);
     expect(screen.getByText('Item 3').tabIndex).toBe(-1);
+    expect(screen.getByText('Item 4').tabIndex).toBe(-1);
 
     act(() => {
       fireEvent.keyDown(screen.getByTestId(testid), { key: 'ArrowDown' });
@@ -41,6 +46,7 @@ describe('useMenuFocus', () => {
     expect(screen.getByText('Item 1').tabIndex).toBe(0);
     expect(screen.getByText('Item 2').tabIndex).toBe(-1);
     expect(screen.getByText('Item 3').tabIndex).toBe(-1);
+    expect(screen.getByText('Item 4').tabIndex).toBe(-1);
 
     act(() => {
       fireEvent.keyDown(screen.getByTestId(testid), { key: 'ArrowDown' });
@@ -52,6 +58,7 @@ describe('useMenuFocus', () => {
     expect(screen.getByText('Item 1').tabIndex).toBe(-1);
     expect(screen.getByText('Item 2').tabIndex).toBe(0);
     expect(screen.getByText('Item 3').tabIndex).toBe(-1);
+    expect(screen.getByText('Item 4').tabIndex).toBe(-1);
 
     act(() => {
       fireEvent.keyDown(screen.getByTestId(testid), { key: 'ArrowUp' });
@@ -63,6 +70,7 @@ describe('useMenuFocus', () => {
     expect(screen.getByText('Item 1').tabIndex).toBe(0);
     expect(screen.getByText('Item 2').tabIndex).toBe(-1);
     expect(screen.getByText('Item 3').tabIndex).toBe(-1);
+    expect(screen.getByText('Item 4').tabIndex).toBe(-1);
 
     act(() => {
       fireEvent.keyDown(screen.getByTestId(testid), { key: 'ArrowUp' });
@@ -73,7 +81,20 @@ describe('useMenuFocus', () => {
 
     expect(screen.getByText('Item 1').tabIndex).toBe(-1);
     expect(screen.getByText('Item 2').tabIndex).toBe(-1);
-    expect(screen.getByText('Item 3').tabIndex).toBe(0);
+    expect(screen.getByText('Item 3').tabIndex).toBe(-1);
+    expect(screen.getByText('Item 4').tabIndex).toBe(0);
+
+    act(() => {
+      fireEvent.keyDown(screen.getByTestId(testid), { key: 'ArrowUp' });
+    });
+
+    const [handleKeys6] = result.current;
+    rerender(getMenuElement(ref, handleKeys6));
+
+    expect(screen.getByText('Item 1').tabIndex).toBe(-1);
+    expect(screen.getByText('Item 2').tabIndex).toBe(0);
+    expect(screen.getByText('Item 3').tabIndex).toBe(-1);
+    expect(screen.getByText('Item 4').tabIndex).toBe(-1);
   });
 
   it('calls close on ArrowLeft and unfocuses all items', () => {

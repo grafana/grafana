@@ -1,7 +1,8 @@
 import { WithAccessControlMetadata } from '@grafana/data';
-import { ApiKey, OrgRole } from '.';
 
-export interface OrgServiceAccount {
+import { ApiKey, OrgRole, Role } from '.';
+
+export interface OrgServiceAccount extends WithAccessControlMetadata {
   serviceAccountId: number;
   avatarUrl: string;
   email: string;
@@ -31,7 +32,21 @@ export interface ServiceAccountDTO extends WithAccessControlMetadata {
   name: string;
   login: string;
   avatarUrl?: string;
-  role: string;
+  createdAt: string;
+  isDisabled: boolean;
+  teams: string[];
+  role: OrgRole;
+}
+
+export interface ServiceAccountCreateApiResponse {
+  avatarUrl?: string;
+  id: number;
+  isDisabled: boolean;
+  login: string;
+  name: string;
+  orgId: number;
+  role: OrgRole;
+  tokens: number;
 }
 
 export interface ServiceAccountProfileState {
@@ -40,9 +55,28 @@ export interface ServiceAccountProfileState {
   tokens: ApiKey[];
 }
 
+export enum ServiceAccountStateFilter {
+  All = 'All',
+  WithExpiredTokens = 'WithExpiredTokens',
+  Disabled = 'Disabled',
+}
+
 export interface ServiceAccountsState {
   serviceAccounts: ServiceAccountDTO[];
-  searchQuery: string;
-  searchPage: number;
   isLoading: boolean;
+  roleOptions: Role[];
+  apiKeysMigrated: boolean;
+  showApiKeysMigrationInfo: boolean;
+
+  // search / filtering
+  query: string;
+  perPage: number;
+  page: number;
+  totalPages: number;
+  showPaging: boolean;
+  serviceAccountStateFilter: ServiceAccountStateFilter;
+}
+
+export interface ServiceAccountsUpgradeStatus {
+  upgraded: boolean;
 }

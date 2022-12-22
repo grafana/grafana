@@ -1,10 +1,12 @@
-import React, { PureComponent } from 'react';
-import { Modal, stylesFactory } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { dashboardWatcher } from './dashboardWatcher';
+import React, { PureComponent } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { Modal, stylesFactory } from '@grafana/ui';
+
+import { dashboardWatcher } from './dashboardWatcher';
 import { DashboardEvent, DashboardEventAction } from './types';
-import { GrafanaTheme } from '@grafana/data';
 
 interface Props {
   event?: DashboardEvent;
@@ -35,7 +37,7 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
   continueEditing: ActionInfo = {
     label: 'Continue editing',
     description:
-      'Keep your local changes and continue editing.  Note: when you save, this will overwrite the most recent chages',
+      'Keep your local changes and continue editing.  Note: when you save, this will overwrite the most recent changes',
     action: () => {
       this.onDismiss();
     },
@@ -57,7 +59,7 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
   render() {
     const { event } = this.props;
     const { dismiss } = this.state;
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
 
     const isDelete = event?.action === DashboardEventAction.Deleted;
 
@@ -96,7 +98,7 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     modal: css`
       width: 500px;
@@ -104,13 +106,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     radioItem: css`
       margin: 0;
       font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
       padding: 10px;
       cursor: pointer;
       width: 100%;
 
       &:hover {
-        background: ${theme.colors.bgBlue1};
+        background: ${theme.colors.primary.main};
         color: ${theme.colors.text};
       }
     `,

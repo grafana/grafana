@@ -1,15 +1,18 @@
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { NotifierDTO } from 'app/types';
-import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useFormContext, FieldErrors, FieldValues } from 'react-hook-form';
+
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
-import { useFormContext, FieldErrors } from 'react-hook-form';
+import { NotifierDTO } from 'app/types';
+
+import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
+
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
-import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 
-interface Props<R> {
+interface Props<R extends FieldValues> {
   defaultValues: R;
   pathPrefix: string;
   notifiers: NotifierDTO[];
@@ -20,7 +23,8 @@ interface Props<R> {
   secureFields?: Record<string, boolean>;
   errors?: FieldErrors<R>;
   onDelete?: () => void;
-  readOnly?: boolean;
+  isEditable?: boolean;
+  isTestable?: boolean;
 }
 
 export function ChannelSubForm<R extends ChannelValues>({
@@ -33,16 +37,20 @@ export function ChannelSubForm<R extends ChannelValues>({
   errors,
   secureFields,
   commonSettingsComponent: CommonSettingsComponent,
-  readOnly = false,
+  isEditable = true,
+  isTestable,
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
-  const { control, watch, register, trigger, formState } = useFormContext();
+  const { control, watch, register, trigger, formState, setValue } = useFormContext();
   const selectedType = watch(name('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
   const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
   useEffect(() => {
     register(`${pathPrefix}.__id`);
+    /* Need to manually register secureFields or else they'll
+     be lost when testing a contact point */
+    register(`${pathPrefix}.secureFields`);
   }, [register, pathPrefix]);
 
   const [_secureFields, setSecureFields] = useState(secureFields ?? {});
@@ -52,6 +60,7 @@ export function ChannelSubForm<R extends ChannelValues>({
       const updatedSecureFields = { ...secureFields };
       delete updatedSecureFields[key];
       setSecureFields(updatedSecureFields);
+      setValue(`${pathPrefix}.secureFields`, updatedSecureFields);
     }
   };
 
@@ -82,19 +91,19 @@ export function ChannelSubForm<R extends ChannelValues>({
   const optionalOptions = notifier?.options.filter((o) => !o.required);
 
   const contactPointTypeInputId = `contact-point-type-${pathPrefix}`;
+
   return (
     <div className={styles.wrapper} data-testid="item-container">
       <div className={styles.topRow}>
         <div>
-          <Field label="Contact point type" htmlFor={contactPointTypeInputId} data-testid={`${pathPrefix}type`}>
+          <Field label="Integration" htmlFor={contactPointTypeInputId} data-testid={`${pathPrefix}type`}>
             <InputControl
               name={name('type')}
               defaultValue={defaultValues.type}
               render={({ field: { ref, onChange, ...field } }) => (
                 <Select
-                  disabled={readOnly}
+                  disabled={!isEditable}
                   inputId={contactPointTypeInputId}
-                  menuShouldPortal
                   {...field}
                   width={37}
                   options={typeOptions}
@@ -106,37 +115,39 @@ export function ChannelSubForm<R extends ChannelValues>({
             />
           </Field>
         </div>
-        {!readOnly && (
-          <div className={styles.buttons}>
-            {onTest && (
-              <Button
-                disabled={testingReceiver}
-                size="xs"
-                variant="secondary"
-                type="button"
-                onClick={() => handleTest()}
-                icon={testingReceiver ? 'fa fa-spinner' : 'message'}
-              >
-                Test
-              </Button>
-            )}
-            <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
-              Duplicate
+        <div className={styles.buttons}>
+          {isTestable && onTest && (
+            <Button
+              disabled={testingReceiver}
+              size="xs"
+              variant="secondary"
+              type="button"
+              onClick={() => handleTest()}
+              icon={testingReceiver ? 'fa fa-spinner' : 'message'}
+            >
+              Test
             </Button>
-            {onDelete && (
-              <Button
-                data-testid={`${pathPrefix}delete-button`}
-                size="xs"
-                variant="secondary"
-                type="button"
-                onClick={() => onDelete()}
-                icon="trash-alt"
-              >
-                Delete
+          )}
+          {isEditable && (
+            <>
+              <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
+                Duplicate
               </Button>
-            )}
-          </div>
-        )}
+              {onDelete && (
+                <Button
+                  data-testid={`${pathPrefix}delete-button`}
+                  size="xs"
+                  variant="secondary"
+                  type="button"
+                  onClick={() => onDelete()}
+                  icon="trash-alt"
+                >
+                  Delete
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </div>
       {notifier && (
         <div className={styles.innerContent}>
@@ -147,7 +158,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             errors={errors}
             onResetSecureField={onResetSecureField}
             pathPrefix={pathPrefix}
-            readOnly={readOnly}
+            readOnly={!isEditable}
           />
           {!!(mandatoryOptions?.length && optionalOptions?.length) && (
             <CollapsibleSection label={`Optional ${notifier.name} settings`}>
@@ -163,12 +174,12 @@ export function ChannelSubForm<R extends ChannelValues>({
                 onResetSecureField={onResetSecureField}
                 errors={errors}
                 pathPrefix={pathPrefix}
-                readOnly={readOnly}
+                readOnly={!isEditable}
               />
             </CollapsibleSection>
           )}
           <CollapsibleSection label="Notification settings">
-            <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={readOnly} />
+            <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={!isEditable} />
           </CollapsibleSection>
         </div>
       )}

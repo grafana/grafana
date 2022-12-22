@@ -1,4 +1,5 @@
 import { includes, filter } from 'lodash';
+
 import { rangeUtil } from '@grafana/data';
 
 export default class TimeGrainConverter {

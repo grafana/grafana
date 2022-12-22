@@ -1,16 +1,18 @@
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
-import { Story } from '@storybook/react';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Card, Props } from './Card';
-import mdx from './Card.mdx';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
-import { TagList } from '../Tags/TagList';
 import { VerticalGroup } from '../Layout/Layout';
+import { TagList } from '../Tags/TagList';
+
+import { Card } from './Card';
+import mdx from './Card.mdx';
 
 const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 
-export default {
+const meta: ComponentMeta<typeof Card> = {
   title: 'General/Card',
   component: Card,
   decorators: [withCenteredStory],
@@ -24,7 +26,7 @@ export default {
   },
 };
 
-export const Basic: Story<Props> = ({ disabled }) => {
+export const Basic: ComponentStory<typeof Card> = ({ disabled }) => {
   return (
     <Card disabled={disabled}>
       <Card.Heading>Filter by name</Card.Heading>
@@ -36,7 +38,7 @@ export const Basic: Story<Props> = ({ disabled }) => {
   );
 };
 
-export const AsLink: Story<Props> = ({ disabled }) => {
+export const AsLink: ComponentStory<typeof Card> = ({ disabled }) => {
   return (
     <VerticalGroup>
       <Card href="https://grafana.com" disabled={disabled}>
@@ -61,7 +63,7 @@ export const AsLink: Story<Props> = ({ disabled }) => {
   );
 };
 
-export const WithTags: Story<Props> = ({ disabled }) => {
+export const WithTags: ComponentStory<typeof Card> = ({ disabled }) => {
   return (
     <Card disabled={disabled}>
       <Card.Heading>Elasticsearch – Custom Templated Query</Card.Heading>
@@ -73,7 +75,7 @@ export const WithTags: Story<Props> = ({ disabled }) => {
   );
 };
 
-export const WithMedia: Story<Props> = ({ disabled }) => {
+export const WithMedia: ComponentStory<typeof Card> = ({ disabled }) => {
   return (
     <Card disabled={disabled}>
       <Card.Heading>1-ops-tools1-fallback</Card.Heading>
@@ -89,7 +91,7 @@ export const WithMedia: Story<Props> = ({ disabled }) => {
     </Card>
   );
 };
-export const WithActions: Story<Props> = ({ disabled }) => {
+export const WithActions: ComponentStory<typeof Card> = ({ disabled }) => {
   return (
     <Card disabled={disabled}>
       <Card.Heading>1-ops-tools1-fallback</Card.Heading>
@@ -118,7 +120,7 @@ export const WithActions: Story<Props> = ({ disabled }) => {
   );
 };
 
-export const Full: Story<Props> = ({ disabled }) => {
+export const Full: ComponentStory<typeof Card> = ({ disabled }) => {
   return (
     <Card disabled={disabled}>
       <Card.Heading>Card title</Card.Heading>
@@ -154,3 +156,29 @@ export const Full: Story<Props> = ({ disabled }) => {
     </Card>
   );
 };
+
+export const Selected: ComponentStory<typeof Card> = () => {
+  return (
+    <Card isSelected>
+      <Card.Heading>Spaces</Card.Heading>
+      <Card.Description>Spaces are the superior form of indenting code.</Card.Description>
+      <Card.Figure>
+        <img src={logo} alt="Grafana Logo" width="40" height="40" />
+      </Card.Figure>
+    </Card>
+  );
+};
+
+export const NotSelected: ComponentStory<typeof Card> = () => {
+  return (
+    <Card isSelected={false}>
+      <Card.Heading>Tabs</Card.Heading>
+      <Card.Description>Tabs are the preferred way of indentation.</Card.Description>
+      <Card.Figure>
+        <img src={logo} alt="Grafana Logo" width="40" height="40" />
+      </Card.Figure>
+    </Card>
+  );
+};
+
+export default meta;

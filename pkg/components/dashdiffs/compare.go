@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	diff "github.com/yudai/gojsondiff"
 	deltaFormatter "github.com/yudai/gojsondiff/formatter"
 )
@@ -58,30 +56,7 @@ func ParseDiffType(diff string) DiffType {
 
 // CompareDashboardVersionsCommand computes the JSON diff of two versions,
 // assigning the delta of the diff to the `Delta` field.
-func CalculateDiff(ctx context.Context, options *Options) (*Result, error) {
-	baseVersionQuery := models.GetDashboardVersionQuery{
-		DashboardId: options.Base.DashboardId,
-		Version:     options.Base.Version,
-		OrgId:       options.OrgId,
-	}
-
-	if err := bus.Dispatch(ctx, &baseVersionQuery); err != nil {
-		return nil, err
-	}
-
-	newVersionQuery := models.GetDashboardVersionQuery{
-		DashboardId: options.New.DashboardId,
-		Version:     options.New.Version,
-		OrgId:       options.OrgId,
-	}
-
-	if err := bus.Dispatch(ctx, &newVersionQuery); err != nil {
-		return nil, err
-	}
-
-	baseData := baseVersionQuery.Result.Data
-	newData := newVersionQuery.Result.Data
-
+func CalculateDiff(ctx context.Context, options *Options, baseData, newData *simplejson.Json) (*Result, error) {
 	left, jsonDiff, err := getDiff(baseData, newData)
 	if err != nil {
 		return nil, err

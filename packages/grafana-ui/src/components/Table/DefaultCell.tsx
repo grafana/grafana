@@ -1,15 +1,20 @@
+import { cx } from '@emotion/css';
 import React, { FC, ReactElement } from 'react';
+import tinycolor from 'tinycolor2';
+
 import { DisplayValue, Field, formattedValueToString } from '@grafana/data';
 
-import { TableCellDisplayMode, TableCellProps } from './types';
-import tinycolor from 'tinycolor2';
+import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
+import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
+
+import { CellActions } from './CellActions';
 import { TableStyles } from './styles';
-import { FilterActions } from './FilterActions';
-import { getTextColorForBackground, getCellLinks } from '../../utils';
+import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
 
 export const DefaultCell: FC<TableCellProps> = (props) => {
   const { field, cell, tableStyles, row, cellProps } = props;
 
+  const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
   const displayValue = field.display!(cell.value);
 
   let value: string | ReactElement;
@@ -19,33 +24,47 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
     value = formattedValueToString(displayValue);
   }
 
-  const cellStyle = getCellStyle(tableStyles, field, displayValue);
   const showFilters = field.config.filterable;
+  const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
+  const cellStyle = getCellStyle(tableStyles, field, displayValue, inspectEnabled);
 
-  const { link, onClick } = getCellLinks(field, row);
+  const hasLinks = Boolean(getCellLinks(field, row)?.length);
 
   return (
     <div {...cellProps} className={cellStyle}>
-      {!link && <div className={tableStyles.cellText}>{value}</div>}
-      {link && (
-        <a href={link.href} onClick={onClick} target={link.target} title={link.title} className={tableStyles.cellLink}>
-          {value}
-        </a>
+      {!hasLinks && <div className={tableStyles.cellText}>{value}</div>}
+
+      {hasLinks && (
+        <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
+          {(api) => {
+            return (
+              <div onClick={api.openMenu} className={cx(tableStyles.cellLink, api.targetClassName)}>
+                {value}
+              </div>
+            );
+          }}
+        </DataLinksContextMenu>
       )}
-      {showFilters && cell.value !== undefined && <FilterActions {...props} />}
+
+      {showActions && <CellActions {...props} previewMode="text" />}
     </div>
   );
 };
 
-function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: DisplayValue) {
+function getCellStyle(
+  tableStyles: TableStyles,
+  field: Field,
+  displayValue: DisplayValue,
+  disableOverflowOnHover = false
+) {
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorText) {
-    return tableStyles.buildCellContainerStyle(displayValue.color);
+    return tableStyles.buildCellContainerStyle(displayValue.color, undefined, !disableOverflowOnHover);
   }
 
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
     const bgColor = tinycolor(displayValue.color);
-    const textColor = getTextColorForBackground(displayValue.color!);
-    return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString());
+    const textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+    return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString(), !disableOverflowOnHover);
   }
 
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
@@ -55,13 +74,14 @@ function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: Disp
       .spin(5)
       .toRgbString();
 
-    const textColor = getTextColorForBackground(displayValue.color!);
+    const textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
 
     return tableStyles.buildCellContainerStyle(
       textColor,
-      `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`
+      `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`,
+      !disableOverflowOnHover
     );
   }
 
-  return tableStyles.cellContainer;
+  return disableOverflowOnHover ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer;
 }

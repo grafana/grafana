@@ -1,6 +1,8 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 func addApiKeyMigrations(mg *Migrator) {
 	apiKeyV1 := Table{
@@ -85,5 +87,17 @@ func addApiKeyMigrations(mg *Migrator) {
 
 	mg.AddMigration("Add service account foreign key", NewAddColumnMigration(apiKeyV2, &Column{
 		Name: "service_account_id", Type: DB_BigInt, Nullable: true,
+	}))
+
+	mg.AddMigration("set service account foreign key to nil if 0", NewRawSQLMigration(
+		"UPDATE api_key SET service_account_id = NULL WHERE service_account_id = 0;"))
+
+	mg.AddMigration("Add last_used_at to api_key table", NewAddColumnMigration(apiKeyV2, &Column{
+		Name: "last_used_at", Type: DB_DateTime, Nullable: true,
+	}))
+
+	// is_revoked indicates whether key is revoked or not. Revoked keys should be kept in the table, but invalid.
+	mg.AddMigration("Add is_revoked column to api_key table", NewAddColumnMigration(apiKeyV2, &Column{
+		Name: "is_revoked", Type: DB_Bool, Nullable: true, Default: "0",
 	}))
 }

@@ -1,10 +1,12 @@
-import { EchoBackend, EchoEventType } from '@grafana/runtime';
-import { SentryConfig } from '@grafana/data/src/types/config';
 import { BrowserOptions, init as initSentry, setUser as sentrySetUser } from '@sentry/browser';
 import { FetchTransport } from '@sentry/browser/dist/transports';
+
+import { BuildInfo } from '@grafana/data';
+import { SentryConfig } from '@grafana/data/src/types/config';
+import { EchoBackend, EchoEventType } from '@grafana/runtime';
+
 import { CustomEndpointTransport } from './transports/CustomEndpointTransport';
 import { EchoSrvTransport } from './transports/EchoSrvTransport';
-import { BuildInfo } from '@grafana/data';
 import { SentryEchoEvent, User, BaseTransport } from './types';
 
 export interface SentryEchoBackendOptions extends SentryConfig {
@@ -27,7 +29,7 @@ export class SentryEchoBackend implements EchoBackend<SentryEchoEvent, SentryEch
       this.transports.push(new CustomEndpointTransport({ endpoint: options.customEndpoint }));
     }
 
-    // initialize Sentry so it can set up it's hooks and start collecting errors
+    // initialize Sentry so it can set up its hooks and start collecting errors
     const sentryOptions: BrowserOptions = {
       release: options.buildInfo.version,
       environment: options.buildInfo.env,

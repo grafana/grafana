@@ -1,7 +1,9 @@
-import React from 'react';
-import { useTheme2, stylesFactory } from '../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useTheme2, stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
 export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {

@@ -1,16 +1,32 @@
 import { get as lodashGet } from 'lodash';
-import { optionBuilder } from './options';
-import { CanvasElementOptions, canvasElementRegistry, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
+
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
-import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
+import {
+  CanvasElementOptions,
+  canvasElementRegistry,
+  DEFAULT_CANVAS_ELEMENT_CONFIG,
+  defaultElementItems,
+} from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
+import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
+
+import { FrameState } from '../../../../features/canvas/runtime/frame';
+import { getElementTypes } from '../utils';
+
 import { PlacementEditor } from './PlacementEditor';
+import { optionBuilder } from './options';
 
 export interface CanvasEditorOptions {
   element: ElementState;
   scene: Scene;
   category?: string[];
+}
+
+export interface TreeViewEditorProps {
+  scene: Scene;
+  layer: FrameState;
+  selected: ElementState[];
 }
 
 export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<CanvasElementOptions> {
@@ -47,18 +63,21 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
     // Dynamically fill the selected element
     build: (builder, context) => {
       const { options } = opts.element;
-      const layerTypes = canvasElementRegistry.selectOptions(
-        options?.type // the selected value
-          ? [options.type] // as an array
-          : [DEFAULT_CANVAS_ELEMENT_CONFIG.type]
-      );
+      const current = options?.type ? options.type : DEFAULT_CANVAS_ELEMENT_CONFIG.type;
+      const layerTypes = getElementTypes(opts.scene.shouldShowAdvancedTypes, current).options;
+
+      const isUnsupported =
+        !opts.scene.shouldShowAdvancedTypes && !defaultElementItems.filter((item) => item.id === options?.type).length;
 
       builder.addSelect({
         path: 'type',
         name: undefined as any, // required, but hide space
         settings: {
-          options: layerTypes.options,
+          options: layerTypes,
         },
+        description: isUnsupported
+          ? 'Selected element type is not supported by current settings. Please enable advanced element types.'
+          : '',
       });
 
       // force clean layer configuration
@@ -77,17 +96,17 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         layer.registerOptionsUI(builder, ctx);
       }
 
-      optionBuilder.addBackground(builder, ctx);
-      optionBuilder.addBorder(builder, ctx);
-
       builder.addCustomEditor({
         category: ['Layout'],
         id: 'content',
         path: '__', // not used
-        name: 'Anchor',
+        name: 'Quick placement',
         editor: PlacementEditor,
         settings: opts,
       });
+
+      optionBuilder.addBackground(builder, ctx);
+      optionBuilder.addBorder(builder, ctx);
     },
   };
 }

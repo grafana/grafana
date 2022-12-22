@@ -1,4 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { TransactionStatus } from '../types';
+
 import { removeVariable, variableStateNotStarted } from './sharedReducer';
 import {
   initialTransactionState,
@@ -8,7 +10,6 @@ import {
   variablesCompleteTransaction,
   variablesInitTransaction,
 } from './transactionReducer';
-import { TransactionStatus } from '../types';
 
 describe('transactionReducer', () => {
   describe('when variablesInitTransaction is dispatched', () => {

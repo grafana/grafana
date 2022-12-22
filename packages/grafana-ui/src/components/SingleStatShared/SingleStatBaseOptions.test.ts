@@ -1,5 +1,6 @@
-import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from './SingleStatBaseOptions';
 import { PanelModel } from '@grafana/data';
+
+import { sharedSingleStatMigrationHandler, sharedSingleStatPanelChangedHandler } from './SingleStatBaseOptions';
 
 describe('sharedSingleStatMigrationHandler', () => {
   it('from old valueOptions model without pluginVersion', () => {
@@ -37,14 +38,14 @@ describe('sharedSingleStatMigrationHandler', () => {
 
     sharedSingleStatMigrationHandler(panel as any);
     expect((panel as any).fieldConfig).toMatchInlineSnapshot(`
-      Object {
-        "defaults": Object {
-          "color": Object {
+      {
+        "defaults": {
+          "color": {
             "mode": "thresholds",
           },
           "decimals": 5,
-          "mappings": Array [
-            Object {
+          "mappings": [
+            {
               "text": "OK",
               "type": 1,
               "value": "1",
@@ -52,20 +53,20 @@ describe('sharedSingleStatMigrationHandler', () => {
           ],
           "max": 100,
           "min": 10,
-          "thresholds": Object {
+          "thresholds": {
             "mode": "absolute",
-            "steps": Array [
-              Object {
+            "steps": [
+              {
                 "color": "green",
                 "index": 0,
                 "value": -Infinity,
               },
-              Object {
+              {
                 "color": "orange",
                 "index": 1,
                 "value": 40,
               },
-              Object {
+              {
                 "color": "red",
                 "index": 2,
                 "value": 80,
@@ -74,7 +75,7 @@ describe('sharedSingleStatMigrationHandler', () => {
           },
           "unit": "watt",
         },
-        "overrides": Array [],
+        "overrides": [],
       }
     `);
   });
@@ -109,12 +110,12 @@ describe('sharedSingleStatMigrationHandler', () => {
     sharedSingleStatMigrationHandler(panel as any);
 
     expect((panel as any).fieldConfig).toMatchInlineSnapshot(`
-      Object {
-        "defaults": Object {
+      {
+        "defaults": {
           "mappings": undefined,
           "thresholds": undefined,
         },
-        "overrides": Array [],
+        "overrides": [],
       }
     `);
   });
@@ -144,14 +145,14 @@ describe('sharedSingleStatMigrationHandler', () => {
 
     sharedSingleStatMigrationHandler(panel as any);
     expect((panel as any).fieldConfig).toMatchInlineSnapshot(`
-      Object {
-        "defaults": Object {
+      {
+        "defaults": {
           "mappings": undefined,
           "max": 100,
           "min": 0,
           "thresholds": undefined,
         },
-        "overrides": Array [],
+        "overrides": [],
       }
     `);
   });
@@ -180,7 +181,7 @@ describe('sharedSingleStatMigrationHandler', () => {
   });
 
   it('change from angular singlestat with no enabled gauge', () => {
-    const old: any = {
+    const old = {
       angular: {
         format: 'ms',
         decimals: 7,
@@ -199,7 +200,7 @@ describe('sharedSingleStatMigrationHandler', () => {
   });
 
   it('change from angular singlestat with tableColumn set', () => {
-    const old: any = {
+    const old = {
       angular: {
         tableColumn: 'info',
       },
@@ -211,7 +212,7 @@ describe('sharedSingleStatMigrationHandler', () => {
   });
 
   it('change from angular singlestat with no enabled gauge', () => {
-    const old: any = {
+    const old = {
       angular: {
         format: 'ms',
         decimals: 7,

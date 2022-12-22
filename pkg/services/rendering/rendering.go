@@ -7,7 +7,6 @@ import (
 	"math"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -27,18 +26,22 @@ func init() {
 	remotecache.Register(&RenderUser{})
 }
 
+var _ Service = (*RenderingService)(nil)
+
 const ServiceName = "RenderingService"
 
 type RenderingService struct {
-	log             log.Logger
-	pluginInfo      *plugins.Plugin
-	renderAction    renderFunc
-	renderCSVAction renderCSVFunc
-	domain          string
-	inProgressCount int32
-	version         string
-	versionMutex    sync.RWMutex
-	capabilities    []Capability
+	log               log.Logger
+	pluginInfo        *plugins.Plugin
+	renderAction      renderFunc
+	renderCSVAction   renderCSVFunc
+	sanitizeSVGAction sanitizeFunc
+	sanitizeURL       string
+	domain            string
+	inProgressCount   int32
+	version           string
+	versionMutex      sync.RWMutex
+	capabilities      []Capability
 
 	perRequestRenderKeyProvider renderKeyProvider
 	Cfg                         *setting.Cfg
@@ -59,8 +62,14 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		return nil, fmt.Errorf("failed to create CSVs directory %q: %w", cfg.CSVsDir, err)
 	}
 
+	logger := log.New("rendering")
+
+	// URL for HTTP sanitize API
+	var sanitizeURL string
+
+	//  value used for domain attribute of renderKey cookie
 	var domain string
-	// set value used for domain attribute of renderKey cookie
+
 	switch {
 	case cfg.RendererUrl != "":
 		// RendererCallbackUrl has already been passed, it won't generate an error.
@@ -69,6 +78,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 			return nil, err
 		}
 
+		sanitizeURL = getSanitizerURL(cfg.RendererUrl)
 		domain = u.Hostname()
 	case cfg.HTTPAddr != setting.DefaultHTTPAddr:
 		domain = cfg.HTTPAddr
@@ -76,12 +86,11 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		domain = "localhost"
 	}
 
-	logger := log.New("rendering")
 	s := &RenderingService{
 		perRequestRenderKeyProvider: &perRequestRenderKeyProvider{
 			cache:     remoteCache,
 			log:       logger,
-			keyExpiry: 5 * time.Minute,
+			keyExpiry: cfg.RendererRenderKeyLifeTime,
 		},
 		capabilities: []Capability{
 			{
@@ -92,14 +101,24 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 				name:             ScalingDownImages,
 				semverConstraint: ">= 3.4.0",
 			},
+			{
+				name:             SvgSanitization,
+				semverConstraint: ">= 3.5.0",
+			},
 		},
 		Cfg:                   cfg,
 		RemoteCacheService:    remoteCache,
 		RendererPluginManager: rm,
 		log:                   logger,
 		domain:                domain,
+		sanitizeURL:           sanitizeURL,
 	}
 	return s, nil
+}
+
+func getSanitizerURL(rendererURL string) string {
+	rendererBaseURL := strings.TrimSuffix(rendererURL, "/render")
+	return rendererBaseURL + "/sanitize"
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {
@@ -120,13 +139,25 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		})
 		rs.renderAction = rs.renderViaHTTP
 		rs.renderCSVAction = rs.renderCSVViaHTTP
-		<-ctx.Done()
-		return nil
+		rs.sanitizeSVGAction = rs.sanitizeViaHTTP
+
+		refreshTicker := time.NewTicker(remoteVersionRefreshInterval)
+
+		for {
+			select {
+			case <-refreshTicker.C:
+				go rs.refreshRemotePluginVersion()
+			case <-ctx.Done():
+				rs.log.Debug("Grafana is shutting down - stopping image-renderer version refresh")
+				refreshTicker.Stop()
+				return nil
+			}
+		}
 	}
 
-	if rs.pluginAvailable() {
+	if rs.pluginAvailable(ctx) {
 		rs.log = rs.log.New("renderer", "plugin")
-		rs.pluginInfo = rs.RendererPluginManager.Renderer()
+		rs.pluginInfo = rs.RendererPluginManager.Renderer(ctx)
 
 		if err := rs.startPlugin(ctx); err != nil {
 			return err
@@ -135,17 +166,8 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		rs.version = rs.pluginInfo.Info.Version
 		rs.renderAction = rs.renderViaPlugin
 		rs.renderCSVAction = rs.renderCSVViaPlugin
+		rs.sanitizeSVGAction = rs.sanitizeSVGViaPlugin
 		<-ctx.Done()
-
-		// On Windows, Chromium is generating a debug.log file that breaks signature check on next restart
-		debugFilePath := path.Join(rs.pluginInfo.PluginDir, "chrome-win/debug.log")
-		if _, err := os.Stat(debugFilePath); err == nil {
-			err = os.Remove(debugFilePath)
-			if err != nil {
-				rs.log.Warn("Couldn't remove debug.log file, the renderer plugin will not be able to pass the signature check until this file is deleted",
-					"err", err)
-			}
-		}
 
 		return nil
 	}
@@ -158,16 +180,16 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	return nil
 }
 
-func (rs *RenderingService) pluginAvailable() bool {
-	return rs.RendererPluginManager.Renderer() != nil
+func (rs *RenderingService) pluginAvailable(ctx context.Context) bool {
+	return rs.RendererPluginManager.Renderer(ctx) != nil
 }
 
 func (rs *RenderingService) remoteAvailable() bool {
 	return rs.Cfg.RendererUrl != ""
 }
 
-func (rs *RenderingService) IsAvailable() bool {
-	return rs.remoteAvailable() || rs.pluginAvailable()
+func (rs *RenderingService) IsAvailable(ctx context.Context) bool {
+	return rs.remoteAvailable() || rs.pluginAvailable(ctx)
 }
 
 func (rs *RenderingService) Version() string {
@@ -224,6 +246,9 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts, session Sessi
 func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProvider renderKeyProvider) (*RenderResult, error) {
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
 		rs.log.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
+		if opts.ErrorConcurrentLimitReached {
+			return nil, ErrConcurrentLimitReached
+		}
 
 		theme := models.ThemeDark
 		if opts.Theme != "" {
@@ -235,10 +260,13 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProv
 		}, nil
 	}
 
-	if !rs.IsAvailable() {
+	if !rs.IsAvailable(ctx) {
 		rs.log.Warn("Could not render image, no image renderer found/installed. " +
 			"For image rendering support please install the grafana-image-renderer plugin. " +
 			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
+		if opts.ErrorRenderUnavailable {
+			return nil, ErrRenderUnavailable
+		}
 		return rs.renderUnavailableImage(), nil
 	}
 
@@ -276,12 +304,30 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session
 	return result, err
 }
 
+func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
+	capability, err := rs.HasCapability(ctx, SvgSanitization)
+	if err != nil {
+		return nil, err
+	}
+
+	if !capability.IsSupported {
+		return nil, fmt.Errorf("svg sanitization unsupported, requires image renderer version: %s", capability.SemverConstraint)
+	}
+
+	start := time.Now()
+
+	action, err := rs.sanitizeSVGAction(ctx, req)
+	rs.log.Info("svg sanitization finished", "duration", time.Since(start), "filename", req.Filename, "isError", err != nil)
+
+	return action, err
+}
+
 func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderKeyProvider renderKeyProvider) (*RenderCSVResult, error) {
 	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
 		return nil, ErrConcurrentLimitReached
 	}
 
-	if !rs.IsAvailable() {
+	if !rs.IsAvailable(ctx) {
 		return nil, ErrRenderUnavailable
 	}
 

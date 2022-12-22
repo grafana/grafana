@@ -3,7 +3,7 @@ package updatechecker
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -28,7 +28,7 @@ type GrafanaService struct {
 
 func ProvideGrafanaService(cfg *setting.Cfg) *GrafanaService {
 	return &GrafanaService{
-		enabled:        cfg.CheckForUpdates,
+		enabled:        cfg.CheckForGrafanaUpdates,
 		grafanaVersion: cfg.BuildVersion,
 		httpClient:     http.Client{Timeout: 10 * time.Second},
 		log:            log.New("grafana.update.checker"),
@@ -68,7 +68,7 @@ func (s *GrafanaService) checkForUpdates() {
 			s.log.Warn("Failed to close response body", "err", err)
 		}
 	}()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		s.log.Debug("Update check failed, reading response from github.com", "error", err)
 		return

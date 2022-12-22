@@ -1,17 +1,18 @@
-import React, { FC } from 'react';
 import { css, cx } from '@emotion/css';
-import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
+import React, { FC } from 'react';
 
-import PanelHeaderCorner from './PanelHeaderCorner';
+import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Icon, useStyles2, ClickOutsideWrapper } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { PanelHeaderNotices } from './PanelHeaderNotices';
-import { PanelHeaderMenuTrigger } from './PanelHeaderMenuTrigger';
+
+import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderLoadingIndicator } from './PanelHeaderLoadingIndicator';
+import { PanelHeaderMenuTrigger } from './PanelHeaderMenuTrigger';
 import { PanelHeaderMenuWrapper } from './PanelHeaderMenuWrapper';
+import { PanelHeaderNotices } from './PanelHeaderNotices';
 
 export interface Props {
   panel: PanelModel;
@@ -47,25 +48,33 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
         <PanelHeaderMenuTrigger data-testid={selectors.components.Panels.Panel.title(title)}>
           {({ closeMenu, panelMenuOpen }) => {
             return (
-              <div className="panel-title">
-                <PanelHeaderNotices frames={data.series} panelId={panel.id} />
-                {alertState ? (
-                  <Icon
-                    name={alertState === 'alerting' ? 'heart-break' : 'heart'}
-                    className="icon-gf panel-alert-icon"
-                    style={{ marginRight: '4px' }}
-                    size="sm"
-                  />
-                ) : null}
-                <h2 className={styles.titleText}>{title}</h2>
-                <Icon name="angle-down" className="panel-menu-toggle" />
-                <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} show={panelMenuOpen} onClose={closeMenu} />
-                {data.request && data.request.timeInfo && (
-                  <span className="panel-time-info">
-                    <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
-                  </span>
-                )}
-              </div>
+              <ClickOutsideWrapper onClick={closeMenu} parent={document}>
+                <div className="panel-title">
+                  <PanelHeaderNotices frames={data.series} panelId={panel.id} />
+                  {alertState ? (
+                    <Icon
+                      name={alertState === 'alerting' ? 'heart-break' : 'heart'}
+                      className="icon-gf panel-alert-icon"
+                      style={{ marginRight: '4px' }}
+                      size="sm"
+                    />
+                  ) : null}
+                  <h2 className={styles.titleText}>{title}</h2>
+                  {!dashboard.meta.publicDashboardAccessToken && (
+                    <div data-testid="panel-dropdown">
+                      <Icon name="angle-down" className="panel-menu-toggle" />
+                      {panelMenuOpen ? (
+                        <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} onClose={closeMenu} />
+                      ) : null}
+                    </div>
+                  )}
+                  {data.request && data.request.timeInfo && (
+                    <span className="panel-time-info">
+                      <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}
+                    </span>
+                  )}
+                </div>
+              </ClickOutsideWrapper>
             );
           }}
         </PanelHeaderMenuTrigger>

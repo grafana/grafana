@@ -3,7 +3,6 @@ package notifier
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -36,7 +35,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 		// Check if the template file already exists and if it has changed
 		// We can safely ignore gosec here as we've previously checked the filename is clean
 		// nolint:gosec
-		if tmpl, err := ioutil.ReadFile(file); err == nil && string(tmpl) == content {
+		if tmpl, err := os.ReadFile(file); err == nil && string(tmpl) == content {
 			// Templates file is the same we have, no-op and continue.
 			continue
 		} else if err != nil && !os.IsNotExist(err) {
@@ -45,7 +44,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 
 		// We can safely ignore gosec here as we've previously checked the filename is clean
 		// nolint:gosec
-		if err := ioutil.WriteFile(file, []byte(content), 0644); err != nil {
+		if err := os.WriteFile(file, []byte(content), 0644); err != nil {
 			return nil, false, fmt.Errorf("unable to create Alertmanager template file %q: %s", file, err)
 		}
 
@@ -53,9 +52,9 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 	}
 
 	// Now that we have the list of _actual_ templates, let's remove the ones that we don't need.
-	existingFiles, err := ioutil.ReadDir(path)
+	existingFiles, err := os.ReadDir(path)
 	if err != nil {
-		cfglogger.Error("unable to read directory for deleting Alertmanager templates", "err", err, "path", path)
+		cfglogger.Error("unable to read directory for deleting Alertmanager templates", "error", err, "path", path)
 	}
 	for _, existingFile := range existingFiles {
 		p := filepath.Join(path, existingFile.Name())
@@ -64,7 +63,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 			templatesChanged = true
 			err := os.Remove(p)
 			if err != nil {
-				cfglogger.Error("unable to delete template", "err", err, "file", p)
+				cfglogger.Error("unable to delete template", "error", err, "file", p)
 			}
 		}
 	}

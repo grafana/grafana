@@ -22,6 +22,12 @@ type TraceLog struct {
 	Fields    []*KeyValue `json:"fields"`
 }
 
+type TraceReference struct {
+	SpanID  string      `json:"spanID"`
+	TraceID string      `json:"traceID"`
+	Tags    []*KeyValue `json:"tags"`
+}
+
 func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
 	// In open telemetry format the spans are grouped first by resource/service they originated in and inside that
 	// resource they are grouped by the instrumentation library which created them.
@@ -40,11 +46,12 @@ func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
 			data.NewField("parentSpanID", nil, []string{}),
 			data.NewField("operationName", nil, []string{}),
 			data.NewField("serviceName", nil, []string{}),
-			data.NewField("serviceTags", nil, []string{}),
+			data.NewField("serviceTags", nil, []json.RawMessage{}),
 			data.NewField("startTime", nil, []float64{}),
 			data.NewField("duration", nil, []float64{}),
-			data.NewField("logs", nil, []string{}),
-			data.NewField("tags", nil, []string{}),
+			data.NewField("logs", nil, []json.RawMessage{}),
+			data.NewField("references", nil, []json.RawMessage{}),
+			data.NewField("tags", nil, []json.RawMessage{}),
 		},
 		Meta: &data.FrameMeta{
 			// TODO: use constant once available in the SDK
@@ -104,7 +111,7 @@ func resourceSpansToRows(rs pdata.ResourceSpans) ([][]interface{}, error) {
 func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, resource pdata.Resource) ([]interface{}, error) {
 	// If the id representation changed from hexstring to something else we need to change the transformBase64IDToHexString in the frontend code
 	traceID := span.TraceID().HexString()
-	traceID = strings.TrimLeft(traceID, "0")
+	traceID = strings.TrimPrefix(traceID, strings.Repeat("0", 16))
 
 	spanID := span.SpanID().HexString()
 
@@ -127,26 +134,26 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 		return nil, fmt.Errorf("failed to marshal span logs: %w", err)
 	}
 
+	references, err := json.Marshal(spanLinksToReferences(span.Links()))
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal span links: %w", err)
+	}
+
+	// Order matters (look at dataframe order)
 	return []interface{}{
 		traceID,
 		spanID,
 		parentSpanID,
 		span.Name(),
 		serviceName,
-		toJSONString(serviceTagsJson),
+		json.RawMessage(serviceTagsJson),
 		startTime,
 		float64(span.EndTimestamp()-span.StartTimestamp()) / 1_000_000,
-		toJSONString(logs),
-		toJSONString(spanTags),
+		json.RawMessage(logs),
+		json.RawMessage(references),
+		json.RawMessage(spanTags),
 	}, nil
-}
-
-func toJSONString(json []byte) string {
-	s := string(json)
-	if s == "null" {
-		return ""
-	}
-	return s
 }
 
 func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
@@ -320,4 +327,34 @@ func spanEventsToLogs(events pdata.SpanEventSlice) []*TraceLog {
 	}
 
 	return logs
+}
+
+func spanLinksToReferences(links pdata.SpanLinkSlice) []*TraceReference {
+	if links.Len() == 0 {
+		return nil
+	}
+
+	references := make([]*TraceReference, 0, links.Len())
+	for i := 0; i < links.Len(); i++ {
+		link := links.At(i)
+
+		traceId := link.TraceID().HexString()
+		traceId = strings.TrimLeft(traceId, "0")
+
+		spanId := link.SpanID().HexString()
+
+		tags := make([]*KeyValue, 0, link.Attributes().Len())
+		link.Attributes().Range(func(key string, attr pdata.AttributeValue) bool {
+			tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
+			return true
+		})
+
+		references = append(references, &TraceReference{
+			TraceID: traceId,
+			SpanID:  spanId,
+			Tags:    tags,
+		})
+	}
+
+	return references
 }

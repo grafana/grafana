@@ -1,15 +1,19 @@
-import { getEchoSrv, EchoEventType } from '@grafana/runtime';
-import { BaseTransport } from '@sentry/browser/dist/transports';
 import { Event } from '@sentry/browser';
+import { BaseTransport } from '@sentry/browser/dist/transports';
 import { EventStatus, Request, Session, Response } from '@sentry/types';
 
+import { getEchoSrv, EchoEventType } from '@grafana/runtime';
+
 export class EchoSrvTransport extends BaseTransport {
-  sendEvent(event: Event) {
+  sendEvent(event: Event): Promise<{ status: EventStatus; event: Event }> {
     getEchoSrv().addEvent({
       type: EchoEventType.Sentry,
       payload: event,
     });
-    return Promise.resolve({ status: 'success' as EventStatus, event });
+    return Promise.resolve({
+      status: 'success',
+      event,
+    });
   }
   // not recording sessions for now
   sendSession(session: Session): PromiseLike<Response> {

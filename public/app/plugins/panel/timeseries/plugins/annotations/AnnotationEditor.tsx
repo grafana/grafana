@@ -1,9 +1,13 @@
+import { css, cx } from '@emotion/css';
 import React, { HTMLAttributes, useState } from 'react';
 import { usePopper } from 'react-popper';
-import { css, cx } from '@emotion/css';
-import { PlotSelection, useStyles2, useTheme2, Portal, DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
+
 import { colorManipulator, DataFrame, getDisplayProcessor, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { PlotSelection, useStyles2, useTheme2, Portal, DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
+
 import { getCommonAnnotationStyles } from '../styles';
+import { AnnotationsDataFrameViewDTO } from '../types';
+
 import { AnnotationEditorForm } from './AnnotationEditorForm';
 
 interface AnnotationEditorProps extends HTMLAttributes<HTMLDivElement> {

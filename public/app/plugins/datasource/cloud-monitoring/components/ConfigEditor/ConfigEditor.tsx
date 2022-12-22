@@ -1,7 +1,9 @@
 import React, { PureComponent } from 'react';
+
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../types';
 import { ConnectionConfig } from '@grafana/google-sdk';
+
+import { CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../types';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudMonitoringOptions, CloudMonitoringSecureJsonData>;
 

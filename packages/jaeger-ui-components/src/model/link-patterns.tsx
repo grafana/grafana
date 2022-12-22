@@ -14,10 +14,12 @@
 
 import { uniq as _uniq } from 'lodash';
 import memoize from 'lru-memoize';
-import { getConfigValue } from '../utils/config/get-config';
-import { getParent } from './span';
+
 import { TNil } from '../types';
 import { TraceSpan, TraceLink, TraceKeyValuePair, Trace } from '../types/trace';
+import { getConfigValue } from '../utils/config/get-config';
+
+import { getParent } from './span';
 
 const parameterRegExp = /#\{([^{}]*)\}/g;
 
@@ -26,7 +28,7 @@ type ProcessedTemplate = {
   template: (template: { [key: string]: any }) => string;
 };
 
-type ProcessedLinkPattern = {
+export type ProcessedLinkPattern = {
   object: any;
   type: (link: string) => boolean;
   key: (link: string) => boolean;
@@ -54,7 +56,7 @@ function stringSupplant(str: string, encodeFn: (unencoded: any) => string, map: 
   });
 }
 
-export function processTemplate(template: any, encodeFn: (unencoded: any) => string): ProcessedTemplate {
+export function processTemplate(template: unknown, encodeFn: (unencoded: any) => string): ProcessedTemplate {
   if (typeof template !== 'string') {
     /*
 
@@ -72,12 +74,12 @@ export function processTemplate(template: any, encodeFn: (unencoded: any) => str
   };
 }
 
-export function createTestFunction(entry: any) {
+export function createTestFunction(entry?: any) {
   if (typeof entry === 'string') {
-    return (arg: any) => arg === entry;
+    return (arg: unknown) => arg === entry;
   }
   if (Array.isArray(entry)) {
-    return (arg: any) => entry.indexOf(arg) > -1;
+    return (arg: unknown) => entry.indexOf(arg) > -1;
   }
   /*
 
@@ -98,7 +100,7 @@ export function createTestFunction(entry: any) {
 
 const identity = (a: any): typeof a => a;
 
-export function processLinkPattern(pattern: any): ProcessedLinkPattern | TNil {
+export function processLinkPattern(pattern: any): ProcessedLinkPattern | null {
   try {
     const url = processTemplate(pattern.url, encodeURIComponent);
     const text = processTemplate(pattern.text, identity);
@@ -118,7 +120,7 @@ export function processLinkPattern(pattern: any): ProcessedLinkPattern | TNil {
   }
 }
 
-export function getParameterInArray(name: string, array: TraceKeyValuePair[]) {
+export function getParameterInArray(name: string, array?: TraceKeyValuePair[] | TNil) {
   if (array) {
     return array.find((entry) => entry.key === name);
   }
@@ -148,10 +150,10 @@ export function computeTraceLink(linkPatterns: ProcessedLinkPattern[], trace: Tr
   );
 
   linkPatterns
-    .filter((pattern) => pattern.type('traces'))
+    ?.filter((pattern) => pattern?.type('traces'))
     .forEach((pattern) => {
       const parameterValues: Record<string, any> = {};
-      const allParameters = pattern.parameters.every((parameter) => {
+      const allParameters = pattern?.parameters.every((parameter) => {
         const key = parameter as keyof Trace;
         if (validKeys.includes(key)) {
           // At this point is safe to access to trace object using parameter variable because
@@ -236,9 +238,9 @@ export function createGetLinks(linkPatterns: ProcessedLinkPattern[], cache: Weak
   };
 }
 
-const processedLinks: ProcessedLinkPattern[] = (getConfigValue('linkPatterns') || [])
+const processedLinks = (getConfigValue('linkPatterns') || [])
   .map(processLinkPattern)
-  .filter(Boolean);
+  .filter((link): link is ProcessedLinkPattern => Boolean(link));
 
 export const getTraceLinks: (trace: Trace | undefined) => TLinksRV = memoize(10)((trace: Trace | undefined) => {
   const result: TLinksRV = [];

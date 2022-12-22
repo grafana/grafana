@@ -1,18 +1,18 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
 import { components, GroupBase, SingleValueProps } from 'react-select';
-import { useDelayedSwitch } from '../../utils/useDelayedSwitch';
-import { useStyles2 } from '../../themes';
-import { SlideOutTransition } from '../transitions/SlideOutTransition';
-import { FadeTransition } from '../transitions/FadeTransition';
-import { Spinner } from '../Spinner/Spinner';
+
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import tinycolor from 'tinycolor2';
+
+import { useStyles2 } from '../../themes';
+import { useDelayedSwitch } from '../../utils/useDelayedSwitch';
+import { Spinner } from '../Spinner/Spinner';
+import { FadeTransition } from '../transitions/FadeTransition';
+import { SlideOutTransition } from '../transitions/SlideOutTransition';
 
 const getStyles = (theme: GrafanaTheme2) => {
   const singleValue = css`
     label: singleValue;
-    color: ${theme.components.input.text};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -20,6 +20,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     max-width: 100%;
     grid-area: 1 / 1 / 2 / 3;
   `;
+
   const spinnerWrapper = css`
     width: 16px;
     height: 16px;
@@ -37,10 +38,14 @@ const getStyles = (theme: GrafanaTheme2) => {
   `;
 
   const disabled = css`
-    color: ${tinycolor(theme.colors.text.disabled).setAlpha(0.64).toString()};
+    color: ${theme.colors.text.disabled};
   `;
 
-  return { singleValue, spinnerWrapper, spinnerIcon, disabled };
+  const isOpen = css`
+    color: ${theme.colors.text.disabled};
+  `;
+
+  return { singleValue, spinnerWrapper, spinnerIcon, disabled, isOpen };
 };
 
 type StylesType = ReturnType<typeof getStyles>;
@@ -53,7 +58,10 @@ export const SingleValue = <T extends unknown>(props: Props<T>) => {
   const loading = useDelayedSwitch(data.loading || false, { delay: 250, duration: 750 });
 
   return (
-    <components.SingleValue {...props} className={cx(styles.singleValue, isDisabled && styles.disabled)}>
+    <components.SingleValue
+      {...props}
+      className={cx(styles.singleValue, isDisabled && styles.disabled, props.selectProps.menuIsOpen && styles.isOpen)}
+    >
       {data.imgUrl ? (
         <FadeWithImage
           loading={loading}

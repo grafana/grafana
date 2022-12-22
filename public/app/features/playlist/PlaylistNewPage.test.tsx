@@ -1,52 +1,48 @@
-import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+import { Provider } from 'react-redux';
 
-import { Playlist } from './types';
-import { PlaylistNewPage } from './PlaylistNewPage';
-import { backendSrv } from '../../core/services/backend_srv';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 
-jest.mock('./usePlaylist', () => ({
-  // so we don't need to add dashboard items in test
-  usePlaylist: jest.fn().mockReturnValue({
-    playlist: { items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }], loading: false },
-  }),
-}));
+import { backendSrv } from '../../core/services/backend_srv';
+import { configureStore } from '../../store/configureStore';
+
+import { PlaylistNewPage } from './PlaylistNewPage';
+import { Playlist } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as any),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
+jest.mock('app/core/components/TagFilter/TagFilter', () => ({
+  TagFilter: () => {
+    return <>mocked-tag-filter</>;
+  },
+}));
+
 function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
+  const store = configureStore();
   jest.clearAllMocks();
   const playlist = { name, items, interval } as unknown as Playlist;
-  const queryParams = {};
-  const route: any = {};
-  const match: any = {};
-  const location: any = {};
-  const history: any = {};
-  const navModel: any = {
-    node: {},
-    main: {},
-  };
   const backendSrvMock = jest.spyOn(backendSrv, 'post');
+
   const { rerender } = render(
-    <PlaylistNewPage
-      queryParams={queryParams}
-      route={route}
-      match={match}
-      location={location}
-      history={history}
-      navModel={navModel}
-    />
+    <Provider store={store}>
+      <PlaylistNewPage />
+    </Provider>
   );
 
   return { playlist, rerender, backendSrvMock };
 }
 
 describe('PlaylistNewPage', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   describe('when mounted', () => {
     it('then header should be correct', () => {
       getTestContext();
@@ -60,13 +56,14 @@ describe('PlaylistNewPage', () => {
       const { backendSrvMock } = getTestContext();
 
       expect(locationService.getLocation().pathname).toEqual('/');
-      userEvent.type(screen.getByRole('textbox', { name: /playlist name/i }), 'A Name');
+
+      await userEvent.type(screen.getByRole('textbox', { name: selectors.pages.PlaylistForm.name }), 'A new name');
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
       await waitFor(() => expect(backendSrvMock).toHaveBeenCalledTimes(1));
       expect(backendSrvMock).toHaveBeenCalledWith('/api/playlists', {
-        name: 'A Name',
+        name: 'A new name',
         interval: '5m',
-        items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+        items: [],
       });
       expect(locationService.getLocation().pathname).toEqual('/playlists');
     });

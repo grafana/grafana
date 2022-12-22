@@ -1,9 +1,11 @@
 import { sortedUniq } from 'lodash';
-import { lastValueFrom } from 'rxjs';
 import Prism, { Grammar } from 'prismjs';
+import { lastValueFrom } from 'rxjs';
+
 import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data';
 import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
+import { CloudWatchDatasource } from './datasource';
 import syntax, {
   AGGREGATION_FUNCTIONS_STATS,
   BOOLEAN_FUNCTIONS,
@@ -15,7 +17,6 @@ import syntax, {
   STRING_FUNCTIONS,
 } from './syntax';
 import { CloudWatchQuery, TSDBResponse } from './types';
-import { CloudWatchDatasource } from './datasource';
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
 
@@ -47,7 +48,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   }
 
   request = (url: string, params?: any): Promise<TSDBResponse> => {
-    return lastValueFrom(this.datasource.awsRequest(url, params));
+    return lastValueFrom(this.datasource.logsQueryRunner.awsRequest(url, params));
   };
 
   start = () => {
@@ -144,7 +145,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     }
 
     const results = await Promise.all(
-      logGroups.map((logGroup) => this.datasource.getLogGroupFields({ logGroupName: logGroup, region }))
+      logGroups.map((logGroup) => this.datasource.logsQueryRunner.getLogGroupFields({ logGroupName: logGroup, region }))
     );
 
     const fields = [

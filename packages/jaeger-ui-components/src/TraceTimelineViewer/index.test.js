@@ -12,14 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { shallow } from 'enzyme';
+
 import { createTheme } from '@grafana/data';
 
-import TraceTimelineViewer from './index';
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
-import TimelineHeaderRow from './TimelineHeaderRow';
+
+import TraceTimelineViewer from './index';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
 
 describe('<TraceTimelineViewer>', () => {
   const trace = transformTraceData(traceGenerator.trace({}));
@@ -32,12 +41,17 @@ describe('<TraceTimelineViewer>', () => {
       },
     },
     traceTimeline: {
+      childrenHiddenIDs: new Set(),
+      hoverIndentGuideIds: new Set(),
       spanNameColumnWidth: 0.5,
+      detailStates: new Map(),
     },
     expandAll: jest.fn(),
     collapseAll: jest.fn(),
     expandOne: jest.fn(),
+    registerAccessors: jest.fn(),
     collapseOne: jest.fn(),
+    setTrace: jest.fn(),
     theme: createTheme(),
     history: {
       replace: () => {},
@@ -46,28 +60,34 @@ describe('<TraceTimelineViewer>', () => {
       search: null,
     },
   };
-  let wrapper;
-
-  beforeEach(() => {
-    wrapper = shallow(<TraceTimelineViewer {...props} />)
-      .dive()
-      .dive()
-      .dive();
-  });
 
   it('it does not explode', () => {
-    expect(wrapper).toBeDefined();
+    expect(() => render(<TraceTimelineViewer {...props} />)).not.toThrow();
   });
 
-  it('it sets up actions', () => {
-    const headerRow = wrapper.find(TimelineHeaderRow);
-    headerRow.props().onCollapseAll();
-    headerRow.props().onExpandAll();
-    headerRow.props().onExpandOne();
-    headerRow.props().onCollapseOne();
-    expect(props.collapseAll.mock.calls.length).toBe(1);
-    expect(props.expandAll.mock.calls.length).toBe(1);
-    expect(props.expandOne.mock.calls.length).toBe(1);
-    expect(props.collapseOne.mock.calls.length).toBe(1);
+  it('it sets up actions', async () => {
+    render(<TraceTimelineViewer {...props} />);
+
+    const expandOne = screen.getByRole('button', { name: 'Expand +1' });
+    const collapseOne = screen.getByRole('button', { name: 'Collapse +1' });
+    const expandAll = screen.getByRole('button', { name: 'Expand All' });
+    const collapseAll = screen.getByRole('button', { name: 'Collapse All' });
+
+    expect(expandOne).toBeInTheDocument();
+    expect(collapseOne).toBeInTheDocument();
+    expect(expandAll).toBeInTheDocument();
+    expect(collapseAll).toBeInTheDocument();
+
+    await userEvent.click(expandOne);
+    expect(props.expandOne).toHaveBeenCalled();
+
+    await userEvent.click(collapseOne);
+    expect(props.collapseOne).toHaveBeenCalled();
+
+    await userEvent.click(expandAll);
+    expect(props.expandAll).toHaveBeenCalled();
+
+    await userEvent.click(collapseAll);
+    expect(props.collapseAll).toHaveBeenCalled();
   });
 });

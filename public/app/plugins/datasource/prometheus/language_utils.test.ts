@@ -1,4 +1,5 @@
 import { AbstractLabelOperator, AbstractQuery } from '@grafana/data';
+
 import {
   escapeLabelValueInExactSelector,
   escapeLabelValueInRegexSelector,
@@ -163,7 +164,7 @@ describe('expandRecordingRules()', () => {
       expandRecordingRules('metricA{label1="value1",label2="value,2"}', {
         metricA: 'rate(fooA[])',
       })
-    ).toBe('rate(fooA{label1="value1",label2="value,2"}[])');
+    ).toBe('rate(fooA{label1="value1", label2="value,2"}[])');
     expect(
       expandRecordingRules('metricA{label1="value1"} / metricB{label2="value2"}', {
         metricA: 'rate(fooA[])',
@@ -175,7 +176,7 @@ describe('expandRecordingRules()', () => {
         metricA: 'rate(fooA[])',
         metricB: 'rate(fooB[])',
       })
-    ).toBe('rate(fooA{label1="value1",label2="value2"}[])/ rate(fooB{label3="value3"}[])');
+    ).toBe('rate(fooA{label1="value1", label2="value2"}[])/ rate(fooB{label3="value3"}[])');
   });
 });
 

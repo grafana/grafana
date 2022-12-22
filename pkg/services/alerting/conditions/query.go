@@ -13,11 +13,12 @@ import (
 	gocontext "context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func init() {
@@ -56,7 +57,11 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler lega
 
 	emptySeriesCount := 0
 	evalMatchCount := 0
+
+	// matches represents all the series that violate the alert condition
 	var matches []*alerting.EvalMatch
+	// allMatches capture all evaluation matches irregardless on whether the condition is met or not
+	var allMatches []*alerting.EvalMatch
 
 	for _, series := range seriesList {
 		reducedValue := c.Reducer.Reduce(series)
@@ -72,14 +77,17 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler lega
 			})
 		}
 
+		em := alerting.EvalMatch{
+			Metric: series.Name,
+			Value:  reducedValue,
+			Tags:   series.Tags,
+		}
+
+		allMatches = append(allMatches, &em)
+
 		if evalMatch {
 			evalMatchCount++
-
-			matches = append(matches, &alerting.EvalMatch{
-				Metric: series.Name,
-				Value:  reducedValue,
-				Tags:   series.Tags,
-			})
+			matches = append(matches, &em)
 		}
 	}
 
@@ -105,10 +113,11 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler lega
 		NoDataFound: emptySeriesCount == len(seriesList),
 		Operator:    c.Operator,
 		EvalMatches: matches,
+		AllMatches:  allMatches,
 	}, nil
 }
 
-func calculateInterval(timeRange legacydata.DataTimeRange, model *simplejson.Json, dsInfo *models.DataSource) (time.Duration, error) {
+func calculateInterval(timeRange legacydata.DataTimeRange, model *simplejson.Json, dsInfo *datasources.DataSource) (time.Duration, error) {
 	// if there is no min-interval specified in the datasource or in the dashboard-panel,
 	// the value of 1ms is used (this is how it is done in the dashboard-interval-calculation too,
 	// see https://github.com/grafana/grafana/blob/9a0040c0aeaae8357c650cec2ee644a571dddf3d/packages/grafana-data/src/datetime/rangeutil.ts#L264)
@@ -134,12 +143,12 @@ func calculateInterval(timeRange legacydata.DataTimeRange, model *simplejson.Jso
 
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange legacydata.DataTimeRange,
 	requestHandler legacydata.RequestHandler) (legacydata.DataTimeSeriesSlice, error) {
-	getDsInfo := &models.GetDataSourceQuery{
+	getDsInfo := &datasources.GetDataSourceQuery{
 		Id:    c.Query.DatasourceID,
 		OrgId: context.Rule.OrgID,
 	}
 
-	if err := context.Store.GetDataSource(context.Ctx, getDsInfo); err != nil {
+	if err := context.GetDataSource(context.Ctx, getDsInfo); err != nil {
 		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 
@@ -207,14 +216,14 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 		if useDataframes { // convert the dataframes to plugins.DataTimeSeries
 			frames, err := v.Dataframes.Decoded()
 			if err != nil {
-				return nil, errutil.Wrap("request handler failed to unmarshal arrow dataframes from bytes", err)
+				return nil, fmt.Errorf("%v: %w", "request handler failed to unmarshal arrow dataframes from bytes", err)
 			}
 
 			for _, frame := range frames {
 				ss, err := FrameToSeriesSlice(frame)
 				if err != nil {
-					return nil, errutil.Wrapf(err,
-						`request handler failed to convert dataframe "%v" to plugins.DataTimeSeriesSlice`, frame.Name)
+					return nil, fmt.Errorf(
+						`request handler failed to convert dataframe "%v" to plugins.DataTimeSeriesSlice: %w`, frame.Name, err)
 				}
 				result = append(result, ss...)
 			}
@@ -246,7 +255,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 	return result, nil
 }
 
-func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, timeRange legacydata.DataTimeRange,
+func (c *QueryCondition) getRequestForAlertRule(datasource *datasources.DataSource, timeRange legacydata.DataTimeRange,
 	debug bool) (legacydata.DataQuery, error) {
 	queryModel := c.Query.Model
 
@@ -268,8 +277,8 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, t
 			},
 		},
 		Headers: map[string]string{
-			"FromAlert":    "true",
-			"X-Cache-Skip": "true",
+			ngalertmodels.FromAlertHeaderName: "true",
+			ngalertmodels.CacheSkipHeaderName: "true",
 		},
 		Debug: debug,
 	}
@@ -391,8 +400,8 @@ func FrameToSeriesSlice(frame *data.Frame) (legacydata.DataTimeSeriesSlice, erro
 		for rowIdx := 0; rowIdx < field.Len(); rowIdx++ { // for each value in the field, make a TimePoint
 			val, err := field.FloatAt(rowIdx)
 			if err != nil {
-				return nil, errutil.Wrapf(err,
-					"failed to convert frame to DataTimeSeriesSlice, can not convert value %v to float", field.At(rowIdx))
+				return nil, fmt.Errorf(
+					"failed to convert frame to DataTimeSeriesSlice, can not convert value %v to float: %w", field.At(rowIdx), err)
 			}
 			ts.Points[rowIdx] = legacydata.DataTimePoint{
 				null.FloatFrom(val),

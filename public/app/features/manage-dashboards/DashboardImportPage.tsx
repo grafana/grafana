@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { css } from '@emotion/css';
-import { AppEvents, GrafanaTheme2, LoadingState } from '@grafana/data';
+
+import { AppEvents, GrafanaTheme2, LoadingState, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Field,
@@ -17,15 +19,17 @@ import {
   VerticalGroup,
   withTheme2,
 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
-import { ImportDashboardOverview } from './components/ImportDashboardOverview';
-import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
-import { fetchGcomDashboard, importDashboardJson } from './state/actions';
 import appEvents from 'app/core/app_events';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from 'app/types';
+import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { StoreState } from 'app/types';
+
 import { cleanUpAction } from '../../core/actions/cleanUp';
+
+import { ImportDashboardOverview } from './components/ImportDashboardOverview';
+import { fetchGcomDashboard, importDashboardJson } from './state/actions';
+import { initialImportDashboardState } from './state/reducers';
+import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
 
 type DashboardImportPageRouteSearchParams = {
   gcomDashboardId?: string;
@@ -33,8 +37,9 @@ type DashboardImportPageRouteSearchParams = {
 
 type OwnProps = Themeable2 & GrafanaRouteComponentProps<{}, DashboardImportPageRouteSearchParams>;
 
+const IMPORT_STARTED_EVENT_NAME = 'dashboard_import_loaded';
+
 const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'import', undefined, true),
   loadingState: state.importDashboard.state,
 });
 
@@ -59,10 +64,14 @@ class UnthemedDashboardImport extends PureComponent<Props> {
   }
 
   componentWillUnmount() {
-    this.props.cleanUpAction({ stateSelector: (state: StoreState) => state.importDashboard });
+    this.props.cleanUpAction({ cleanupAction: (state) => (state.importDashboard = initialImportDashboardState) });
   }
 
   onFileUpload = (event: FormEvent<HTMLInputElement>) => {
+    reportInteraction(IMPORT_STARTED_EVENT_NAME, {
+      import_source: 'json_uploaded',
+    });
+
     const { importDashboardJson } = this.props;
     const file = event.currentTarget.files && event.currentTarget.files.length > 0 && event.currentTarget.files[0];
 
@@ -74,10 +83,12 @@ class UnthemedDashboardImport extends PureComponent<Props> {
           try {
             dashboard = JSON.parse(e.target.result);
           } catch (error) {
-            appEvents.emit(AppEvents.alertError, [
-              'Import failed',
-              'JSON -> JS Serialization failed: ' + error.message,
-            ]);
+            if (error instanceof Error) {
+              appEvents.emit(AppEvents.alertError, [
+                'Import failed',
+                'JSON -> JS Serialization failed: ' + error.message,
+              ]);
+            }
             return;
           }
           importDashboardJson(dashboard);
@@ -89,10 +100,18 @@ class UnthemedDashboardImport extends PureComponent<Props> {
   };
 
   getDashboardFromJson = (formData: { dashboardJson: string }) => {
+    reportInteraction(IMPORT_STARTED_EVENT_NAME, {
+      import_source: 'json_pasted',
+    });
+
     this.props.importDashboardJson(JSON.parse(formData.dashboardJson));
   };
 
   getGcomDashboard = (formData: { gcomDashboard: string }) => {
+    reportInteraction(IMPORT_STARTED_EVENT_NAME, {
+      import_source: 'gcom',
+    });
+
     let dashboardId;
     const match = /(^\d+$)|dashboards\/(\d+)/.exec(formData.gcomDashboard);
     if (match && match[1]) {
@@ -168,11 +187,17 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     );
   }
 
+  pageNav: NavModelItem = {
+    text: 'Import dashboard',
+    subTitle: 'Import dashboard from file or Grafana.com"',
+    breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
+  };
+
   render() {
-    const { loadingState, navModel } = this.props;
+    const { loadingState } = this.props;
 
     return (
-      <Page navModel={navModel}>
+      <Page navId="dashboards/browse" pageNav={this.pageNav}>
         <Page.Contents>
           {loadingState === LoadingState.Loading && (
             <VerticalGroup justify="center">

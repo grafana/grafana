@@ -1,7 +1,8 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
-import { css } from '@emotion/css';
 
 export interface Props {
   icon?: IconName;
@@ -28,14 +29,15 @@ export function NavBarMenuItem({
   isMobile = false,
 }: Props) {
   const theme = useTheme2();
-  const styles = getStyles(theme, isActive, styleOverrides);
+  const styles = getStyles(theme, isActive);
+  const elStyle = cx(styles.element, styleOverrides);
 
   const linkContent = (
     <div className={styles.linkContent}>
-      <div>
-        {icon && <Icon data-testid="dropdown-child-icon" name={icon} className={styles.icon} />}
-        {text}
-      </div>
+      {icon && <Icon data-testid="dropdown-child-icon" name={icon} />}
+
+      <div className={styles.linkText}>{text}</div>
+
       {target === '_blank' && (
         <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
       )}
@@ -43,7 +45,7 @@ export function NavBarMenuItem({
   );
 
   let element = (
-    <button className={styles.element} onClick={onClick} tabIndex={-1}>
+    <button className={elStyle} onClick={onClick} tabIndex={-1}>
       {linkContent}
     </button>
   );
@@ -51,91 +53,101 @@ export function NavBarMenuItem({
   if (url) {
     element =
       !target && url.startsWith('/') ? (
-        <Link className={styles.element} href={url} target={target} onClick={onClick} tabIndex={!isMobile ? -1 : 0}>
+        <Link className={elStyle} href={url} target={target} onClick={onClick} tabIndex={!isMobile ? -1 : 0}>
           {linkContent}
         </Link>
       ) : (
-        <a href={url} target={target} className={styles.element} onClick={onClick} tabIndex={!isMobile ? -1 : 0}>
+        <a href={url} target={target} className={elStyle} onClick={onClick} tabIndex={!isMobile ? -1 : 0}>
           {linkContent}
         </a>
       );
   }
+
   if (isMobile) {
     return isDivider ? (
-      <li data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
+      <div data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
     ) : (
-      <li>{element}</li>
+      <li className={styles.listItem}>{element}</li>
     );
   }
 
   return isDivider ? (
     <div data-testid="dropdown-child-divider" className={styles.divider} tabIndex={-1} aria-disabled />
   ) : (
-    <>{element}</>
+    <div style={{ position: 'relative' }}>{element}</div>
   );
 }
 
 NavBarMenuItem.displayName = 'NavBarMenuItem';
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], styleOverrides: Props['styleOverrides']) => ({
-  divider: css`
-    border-bottom: 1px solid ${theme.colors.border.weak};
-    height: 1px;
-    margin: ${theme.spacing(1)} 0;
-    overflow: hidden;
-  `,
-  element: css`
-    align-items: center;
-    background: none;
-    border: none;
-    color: ${isActive ? theme.colors.text.primary : theme.colors.text.secondary};
-    display: flex;
-    font-size: inherit;
-    height: 100%;
-    padding: 5px 12px 5px 10px;
-    position: relative;
-    text-align: left;
-    white-space: nowrap;
-    width: 100%;
+const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
+  linkContent: css({
+    alignItems: 'center',
+    display: 'flex',
+    gap: '0.5rem',
+    width: '100%',
+  }),
+  linkText: css({
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+  }),
+  externalLinkIcon: css({
+    color: theme.colors.text.secondary,
+    gridColumnStart: 3,
+  }),
+  element: css({
+    alignItems: 'center',
+    background: 'none',
+    border: 'none',
+    color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
+    display: 'flex',
+    flex: 1,
+    fontSize: 'inherit',
+    height: '100%',
+    overflowWrap: 'anywhere',
+    padding: theme.spacing(0.5, 2),
+    textAlign: 'left',
+    width: '100%',
+    '&:hover, &:focus-visible': {
+      backgroundColor: theme.colors.action.hover,
+      color: theme.colors.text.primary,
+    },
+    '&:focus-visible': {
+      boxShadow: 'none',
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: '-2px',
+      transition: 'none',
+    },
+    '&::before': {
+      display: isActive ? 'block' : 'none',
+      content: '" "',
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: theme.spacing(0.5),
+      borderRadius: theme.shape.borderRadius(1),
+      backgroundImage: theme.colors.gradients.brandVertical,
+    },
+  }),
+  listItem: css({
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
 
-    &:hover,
-    &:focus-visible {
-      background-color: ${theme.colors.action.hover};
-      color: ${theme.colors.text.primary};
-    }
+    '&:hover, &:focus-within': {
+      color: theme.colors.text.primary,
 
-    &:focus-visible {
-      box-shadow: none;
-      outline: 2px solid ${theme.colors.primary.main};
-      outline-offset: -2px;
-      transition: none;
-    }
-
-    &::before {
-      display: ${isActive ? 'block' : 'none'};
-      content: ' ';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      border-radius: 2px;
-      background-image: ${theme.colors.gradients.brandVertical};
-    }
-
-    ${styleOverrides};
-  `,
-  externalLinkIcon: css`
-    color: ${theme.colors.text.secondary};
-    margin-left: ${theme.spacing(1)};
-  `,
-  icon: css`
-    margin-right: ${theme.spacing(1)};
-  `,
-  linkContent: css`
-    display: flex;
-    flex: 1;
-    flex-direction: row;
-    justify-content: space-between;
-  `,
+      '> *:first-child::after': {
+        backgroundColor: theme.colors.action.hover,
+      },
+    },
+  }),
+  divider: css({
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    height: '1px',
+    margin: `${theme.spacing(1)} 0`,
+    overflow: 'hidden',
+  }),
 });

@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import debouncePromise from 'debounce-promise';
 import { cx, css } from '@emotion/css';
-import { SelectableValue } from '@grafana/data';
+import debouncePromise from 'debounce-promise';
+import React, { useState, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
+
+import { SelectableValue } from '@grafana/data';
 import { InlineLabel, Select, AsyncSelect, Input } from '@grafana/ui';
+
 import { useShadowedState } from '../useShadowedState';
 
 // this file is a simpler version of `grafana-ui / SegmentAsync.tsx`
@@ -76,7 +78,6 @@ const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelRelo
   return (
     <div className={selectClass}>
       <AsyncSelect
-        menuShouldPortal
         formatCreateLabel={formatCreateLabel}
         defaultOptions
         autoFocus
@@ -107,11 +108,10 @@ const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: Sel
   return (
     <div className={selectClass}>
       <Select
-        menuShouldPortal
         isLoading={loadState.loading}
         formatCreateLabel={formatCreateLabel}
         autoFocus
-        isOpen
+        isOpen={!loadState.loading}
         onCloseMenu={onClose}
         allowCustomValue={allowCustomValue}
         options={loadState.value ?? []}

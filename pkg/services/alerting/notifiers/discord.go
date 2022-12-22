@@ -34,7 +34,7 @@ func init() {
 			},
 			{
 				Label:        "Message Content",
-				Description:  "Mention a group using @ or a user using <@ID> when notifying in a channel",
+				Description:  "Mention a group using <@&ID> or a user using <@ID> when notifying in a channel",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				PropertyName: "content",
@@ -124,7 +124,7 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	footer := map[string]interface{}{
 		"text":     "Grafana v" + setting.BuildVersion,
-		"icon_url": "https://grafana.com/assets/img/fav32.png",
+		"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 	}
 
 	color, _ := strconv.ParseInt(strings.TrimLeft(evalContext.GetStateModel().Color, "#"), 16, 0)

@@ -1,8 +1,9 @@
-import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { filterFramesByRefIdTransformer } from './filterByRefId';
 import { transformDataFrame } from '../transformDataFrame';
+
+import { filterFramesByRefIdTransformer } from './filterByRefId';
+import { DataTransformerID } from './ids';
 
 export const allSeries = [
   toDataFrame({

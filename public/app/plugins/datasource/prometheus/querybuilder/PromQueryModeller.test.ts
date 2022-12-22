@@ -80,6 +80,16 @@ describe('PromQueryModeller', () => {
     ).toBe('avg(sum by(server, job) (metric))');
   });
 
+  it('Can use aggregation without label', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric',
+        labels: [],
+        operations: [{ id: '__sum_without', params: ['server', 'job'] }],
+      })
+    ).toBe('sum without(server, job) (metric)');
+  });
+
   it('Can render aggregations with parameters', () => {
     expect(
       modeller.renderQuery({
@@ -95,7 +105,7 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [{ label: 'pod', op: '=', value: 'A' }],
-        operations: [{ id: PromOperationId.Rate, params: ['auto'] }],
+        operations: [{ id: PromOperationId.Rate, params: ['$__rate_interval'] }],
       })
     ).toBe('rate(metric{pod="A"}[$__rate_interval])');
   });
@@ -105,9 +115,9 @@ describe('PromQueryModeller', () => {
       modeller.renderQuery({
         metric: 'metric',
         labels: [{ label: 'pod', op: '=', value: 'A' }],
-        operations: [{ id: PromOperationId.Increase, params: ['auto'] }],
+        operations: [{ id: PromOperationId.Increase, params: ['$__interval'] }],
       })
-    ).toBe('increase(metric{pod="A"}[$__rate_interval])');
+    ).toBe('increase(metric{pod="A"}[$__interval])');
   });
 
   it('Can render rate with custom range-vector', () => {
@@ -178,7 +188,7 @@ describe('PromQueryModeller', () => {
     ).toBe('metric_a + metric_b + metric_c');
   });
 
-  it('Can render with binary queries with vectorMatches expression', () => {
+  it('Can render query with nested query with binary op', () => {
     expect(
       modeller.renderQuery({
         metric: 'metric_a',
@@ -187,7 +197,56 @@ describe('PromQueryModeller', () => {
         binaryQueries: [
           {
             operator: '/',
-            vectorMatches: 'on(le)',
+            query: {
+              metric: 'metric_b',
+              labels: [],
+              operations: [{ id: PromOperationId.MultiplyBy, params: [1000] }],
+            },
+          },
+        ],
+      })
+    ).toBe('metric_a / (metric_b * 1000)');
+  });
+
+  it('Can render query with nested binary query with parentheses', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              metric: 'metric_b',
+              labels: [],
+              operations: [],
+              binaryQueries: [
+                {
+                  operator: '*',
+                  query: {
+                    metric: 'metric_c',
+                    labels: [],
+                    operations: [],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      })
+    ).toBe('metric_a / (metric_b * metric_c)');
+  });
+
+  it('Should add parantheis around first query if it has binary op', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [{ id: PromOperationId.MultiplyBy, params: [1000] }],
+        binaryQueries: [
+          {
+            operator: '/',
             query: {
               metric: 'metric_b',
               labels: [],
@@ -196,6 +255,81 @@ describe('PromQueryModeller', () => {
           },
         ],
       })
-    ).toBe('metric_a / on(le) metric_b');
+    ).toBe('(metric_a * 1000) / metric_b');
+  });
+
+  it('Can render functions that require a range as a parameter', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [{ id: 'holt_winters', params: ['5m', 0.5, 0.5] }],
+      })
+    ).toBe('holt_winters(metric_a[5m], 0.5, 0.5)');
+  });
+  it('Can render functions that require parameters left of a range', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [{ id: 'quantile_over_time', params: ['5m', 1] }],
+      })
+    ).toBe('quantile_over_time(1, metric_a[5m])');
+  });
+  it('Can render the label_join function', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [{ id: 'label_join', params: ['label_1', ',', 'label_2'] }],
+      })
+    ).toBe('label_join(metric_a, "label_1", ",", "label_2")');
+  });
+
+  it('Can render label_join with extra parameters', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [{ id: 'label_join', params: ['label_1', ', ', 'label_2', 'label_3', 'label_4', 'label_5'] }],
+      })
+    ).toBe('label_join(metric_a, "label_1", ", ", "label_2", "label_3", "label_4", "label_5")');
+  });
+
+  it('can render vector matchers', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'metric_a',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '/',
+            vectorMatches: 'le, foo',
+            vectorMatchesType: 'on',
+            query: {
+              metric: 'metric_b',
+              labels: [],
+              operations: [],
+            },
+          },
+        ],
+      })
+    ).toBe('metric_a / on(le, foo) metric_b');
+  });
+
+  it('can render bool in binary ops', () => {
+    expect(
+      modeller.renderQuery({
+        metric: 'cluster_namespace_slug_dialer_name',
+        labels: [],
+        operations: [
+          {
+            id: '__less_or_equal',
+            params: [2, true],
+          },
+        ],
+      })
+    ).toBe('cluster_namespace_slug_dialer_name <= bool 2');
   });
 });

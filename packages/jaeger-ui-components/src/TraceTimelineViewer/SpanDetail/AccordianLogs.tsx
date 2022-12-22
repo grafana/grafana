@@ -12,20 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
+import { css } from '@emotion/css';
 import { sortBy as _sortBy } from 'lodash';
+import * as React from 'react';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
-import { css } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import AccordianKeyValues from './AccordianKeyValues';
-import { formatDuration } from '../utils';
+import { autoColor } from '../../Theme';
 import { TNil } from '../../types';
 import { TraceLog, TraceKeyValuePair, TraceLink } from '../../types/trace';
-import { autoColor } from '../../Theme';
 import { uAlignIcon, ubMb1 } from '../../uberUtilityStyles';
+import { formatDuration } from '../utils';
+
+import AccordianKeyValues from './AccordianKeyValues';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -58,7 +60,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-type AccordianLogsProps = {
+export type AccordianLogsProps = {
   interactive?: boolean;
   isOpen: boolean;
   linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
@@ -88,7 +90,7 @@ export default function AccordianLogs(props: AccordianLogsProps) {
   return (
     <div className={styles.AccordianLogs}>
       <HeaderComponent className={styles.AccordianLogsHeader} {...headerProps}>
-        {arrow} <strong>Logs</strong> ({logs.length})
+        {arrow} <strong>Events</strong> ({logs.length})
       </HeaderComponent>
       {isOpen && (
         <div className={styles.AccordianLogsContent}>

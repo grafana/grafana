@@ -1,13 +1,15 @@
 import React from 'react';
+
 import {
   FieldConfigEditorBuilder,
-  FieldOverrideEditorProps,
   FieldType,
   identityOverrideProcessor,
   SelectableValue,
+  StandardEditorProps,
 } from '@grafana/data';
-import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup } from '../../index';
-import { AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+
+import { graphFieldOptions, Select, RadioButtonGroup, Input, Field } from '../../index';
 
 /**
  * @alpha
@@ -18,6 +20,8 @@ export function addAxisConfig(
   hideScale?: boolean
 ) {
   const category = ['Axis'];
+
+  // options for axis appearance
   builder
     .addRadio({
       path: 'axisPlacement',
@@ -49,6 +53,52 @@ export function addAxisConfig(
       },
       showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
     })
+    .addRadio({
+      path: 'axisGridShow',
+      name: 'Show grid lines',
+      category,
+      defaultValue: undefined,
+      settings: {
+        options: [
+          { value: undefined, label: 'Auto' },
+          { value: true, label: 'On' },
+          { value: false, label: 'Off' },
+        ],
+      },
+    })
+    .addRadio({
+      path: 'axisColorMode',
+      name: 'Color',
+      category,
+      defaultValue: AxisColorMode.Text,
+      settings: {
+        options: [
+          { value: AxisColorMode.Text, label: 'Text' },
+          { value: AxisColorMode.Series, label: 'Series' },
+        ],
+      },
+    });
+
+  // options for scale range
+  builder
+    .addCustomEditor<void, ScaleDistributionConfig>({
+      id: 'scaleDistribution',
+      path: 'scaleDistribution',
+      name: 'Scale',
+      category,
+      editor: ScaleDistributionEditor as any,
+      override: ScaleDistributionEditor as any,
+      defaultValue: { type: ScaleDistribution.Linear },
+      shouldApply: (f) => f.type === FieldType.number,
+      process: identityOverrideProcessor,
+    })
+    .addBooleanSwitch({
+      path: 'axisCenteredZero',
+      name: 'Centered zero',
+      category,
+      defaultValue: false,
+      showIf: (c) => c.scaleDistribution?.type !== ScaleDistribution.Log,
+    })
     .addNumberInput({
       path: 'axisSoftMin',
       name: 'Soft min',
@@ -66,34 +116,7 @@ export function addAxisConfig(
       settings: {
         placeholder: 'See: Standard options > Max',
       },
-    })
-    .addRadio({
-      path: 'axisGridShow',
-      name: 'Show grid lines',
-      category,
-      defaultValue: undefined,
-      settings: {
-        options: [
-          { value: undefined, label: 'Auto' },
-          { value: true, label: 'On' },
-          { value: false, label: 'Off' },
-        ],
-      },
     });
-
-  if (!hideScale) {
-    builder.addCustomEditor<void, ScaleDistributionConfig>({
-      id: 'scaleDistribution',
-      path: 'scaleDistribution',
-      name: 'Scale',
-      category,
-      editor: ScaleDistributionEditor,
-      override: ScaleDistributionEditor,
-      defaultValue: { type: ScaleDistribution.Linear },
-      shouldApply: (f) => f.type === FieldType.number,
-      process: identityOverrideProcessor,
-    });
-  }
 }
 
 const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [
@@ -104,6 +127,10 @@ const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [
   {
     label: 'Logarithmic',
     value: ScaleDistribution.Log,
+  },
+  {
+    label: 'Symlog',
+    value: ScaleDistribution.Symlog,
   },
 ];
 
@@ -119,43 +146,53 @@ const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
 ];
 
 /**
- * @alpha
+ * @internal
  */
-const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDistributionConfig, any>> = ({
-  value,
-  onChange,
-}) => {
+export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps<ScaleDistributionConfig>) => {
+  const type = value?.type ?? ScaleDistribution.Linear;
   return (
-    <HorizontalGroup>
-      <RadioButtonGroup
-        value={value.type || ScaleDistribution.Linear}
-        options={DISTRIBUTION_OPTIONS}
-        onChange={(v) => {
-          console.log(v, value);
-          onChange({
-            ...value,
-            type: v!,
-            log: v === ScaleDistribution.Linear ? undefined : 2,
-          });
-        }}
-      />
-      {value.type === ScaleDistribution.Log && (
-        <Select
-          menuShouldPortal
-          allowCustomValue={false}
-          autoFocus
-          options={LOG_DISTRIBUTION_OPTIONS}
-          value={value.log || 2}
-          prefix={'base'}
-          width={12}
+    <>
+      <div style={{ marginBottom: 16 }}>
+        <RadioButtonGroup
+          value={type}
+          options={DISTRIBUTION_OPTIONS}
           onChange={(v) => {
             onChange({
               ...value,
-              log: v.value!,
+              type: v!,
+              log: v === ScaleDistribution.Linear ? undefined : value.log ?? 2,
             });
           }}
         />
+      </div>
+      {(type === ScaleDistribution.Log || type === ScaleDistribution.Symlog) && (
+        <Field label="Log base">
+          <Select
+            options={LOG_DISTRIBUTION_OPTIONS}
+            value={value.log ?? 2}
+            onChange={(v) => {
+              onChange({
+                ...value,
+                log: v.value!,
+              });
+            }}
+          />
+        </Field>
       )}
-    </HorizontalGroup>
+      {type === ScaleDistribution.Symlog && (
+        <Field label="Linear threshold">
+          <Input
+            placeholder="1"
+            value={value.linearThreshold}
+            onChange={(v) => {
+              onChange({
+                ...value,
+                linearThreshold: Number(v.currentTarget.value),
+              });
+            }}
+          />
+        </Field>
+      )}
+    </>
   );
 };

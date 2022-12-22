@@ -1,6 +1,8 @@
 import React, { FC, SyntheticEvent } from 'react';
-import { Tooltip, Form, Field, VerticalGroup, Button } from '@grafana/ui';
+
 import { selectors } from '@grafana/e2e-selectors';
+import { Tooltip, Form, Field, VerticalGroup, Button } from '@grafana/ui';
+
 import { submitButton } from '../Login/LoginForm';
 import { PasswordField } from '../PasswordField/PasswordField';
 interface Props {

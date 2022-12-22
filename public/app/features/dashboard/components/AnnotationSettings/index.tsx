@@ -1,2 +1,2 @@
-export { AnnotationSettingsEdit } from './AnnotationSettingsEdit';
+export { AnnotationSettingsEdit, newAnnotationName } from './AnnotationSettingsEdit';
 export { AnnotationSettingsList } from './AnnotationSettingsList';

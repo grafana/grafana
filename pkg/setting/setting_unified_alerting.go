@@ -2,6 +2,7 @@ package setting
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -19,13 +20,14 @@ const (
 	alertmanagerDefaultPeerTimeout        = 15 * time.Second
 	alertmanagerDefaultGossipInterval     = cluster.DefaultGossipInterval
 	alertmanagerDefaultPushPullInterval   = cluster.DefaultPushPullInterval
-	alertmanagerDefaultConfigPollInterval = 60 * time.Second
+	alertmanagerDefaultConfigPollInterval = time.Minute
 	// To start, the alertmanager needs at least one route defined.
 	// TODO: we should move this to Grafana settings and define this as the default.
 	alertmanagerDefaultConfiguration = `{
 	"alertmanager_config": {
 		"route": {
-			"receiver": "grafana-default-email"
+			"receiver": "grafana-default-email",
+			"group_by": ["grafana_folder", "alertname"]
 		},
 		"receivers": [{
 			"name": "grafana-default-email",
@@ -43,11 +45,19 @@ const (
 }
 `
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
-	schedulerDefaultAdminConfigPollInterval = 60 * time.Second
+	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulereDefaultExecuteAlerts          = true
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultLegacyMinInterval       = 1
-	schedulerDefaultMinInterval             = 10 * time.Second
+	screenshotsDefaultCapture               = false
+	screenshotsDefaultMaxConcurrent         = 5
+	screenshotsDefaultUploadImageStorage    = false
+	// SchedulerBaseInterval base interval of the scheduler. Controls how often the scheduler fetches database for new changes as well as schedules evaluation of a rule
+	// changing this value is discouraged because this could cause existing alert definition
+	// with intervals that are not exactly divided by this number not to be evaluated
+	SchedulerBaseInterval = 10 * time.Second
+	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
+	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
 )
 
 type UnifiedAlertingSettings struct {
@@ -66,6 +76,23 @@ type UnifiedAlertingSettings struct {
 	DefaultConfiguration           string
 	Enabled                        *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
 	DisabledOrgs                   map[int64]struct{}
+	// BaseInterval interval of time the scheduler updates the rules and evaluates rules.
+	// Only for internal use and not user configuration.
+	BaseInterval time.Duration
+	// DefaultRuleEvaluationInterval default interval between evaluations of a rule.
+	DefaultRuleEvaluationInterval time.Duration
+	Screenshots                   UnifiedAlertingScreenshotSettings
+	ReservedLabels                UnifiedAlertingReservedLabelSettings
+}
+
+type UnifiedAlertingScreenshotSettings struct {
+	Capture                    bool
+	MaxConcurrentScreenshots   int64
+	UploadExternalImageStorage bool
+}
+
+type UnifiedAlertingReservedLabelSettings struct {
+	DisabledLabels map[string]struct{}
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -74,47 +101,64 @@ func (u *UnifiedAlertingSettings) IsEnabled() bool {
 	return u.Enabled == nil || *u.Enabled
 }
 
+// IsReservedLabelDisabled returns true if UnifiedAlertingReservedLabelSettings.DisabledLabels contains the given reserved label.
+func (u *UnifiedAlertingReservedLabelSettings) IsReservedLabelDisabled(label string) bool {
+	_, ok := u.DisabledLabels[label]
+	return ok
+}
+
+// readUnifiedAlertingEnabledSettings reads the settings for unified alerting.
+// It returns a non-nil bool and a nil error when unified alerting is enabled either
+// because it has been enabled in the settings or by default. It returns nil and
+// a non-nil error both unified alerting and legacy alerting are enabled at the same time.
 func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, error) {
-	enabled, err := section.Key("enabled").Bool()
-	// the unified alerting is not enabled by default. First, check the feature flag
-	if err != nil {
+	// At present an invalid value is considered the same as no value. This means that a
+	// spelling mistake in the string "false" could enable unified alerting rather
+	// than disable it. This issue can be found here
+	hasEnabled := section.Key("enabled").Value() != ""
+	if !hasEnabled {
 		// TODO: Remove in Grafana v9
 		if cfg.IsFeatureToggleEnabled("ngalert") {
 			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
-			enabled = true
-			// feature flag overrides the legacy alerting setting.
+			// feature flag overrides the legacy alerting setting
 			legacyAlerting := false
 			AlertingEnabled = &legacyAlerting
-			return &enabled, nil
+			unifiedAlerting := true
+			return &unifiedAlerting, nil
 		}
-		if IsEnterprise {
-			enabled = false
-			if AlertingEnabled == nil {
-				legacyEnabled := true
-				AlertingEnabled = &legacyEnabled
-			}
-			return &enabled, nil
+
+		// if legacy alerting has not been configured then enable unified alerting
+		if AlertingEnabled == nil {
+			unifiedAlerting := true
+			return &unifiedAlerting, nil
 		}
-		// next, check whether legacy flag is set
-		if AlertingEnabled != nil && !*AlertingEnabled {
-			enabled = true
-			return &enabled, nil // if legacy alerting is explicitly disabled, enable the unified alerting by default.
-		}
-		// NOTE: If the enabled flag is still not defined, the final decision is made during migration (see sqlstore.migrations.ualert.CheckUnifiedAlertingEnabledByDefault).
-		cfg.Logger.Info("The state of unified alerting is still not defined. The decision will be made during as we run the database migrations")
-		return nil, nil // the flag is not defined
+
+		// enable unified alerting and disable legacy alerting
+		legacyAlerting := false
+		AlertingEnabled = &legacyAlerting
+		unifiedAlerting := true
+		return &unifiedAlerting, nil
 	}
 
-	// If unified alerting is defined explicitly as well as legacy alerting and both are enabled, return error.
-	if enabled && AlertingEnabled != nil && *AlertingEnabled {
-		return nil, errors.New("both legacy and Grafana 8 Alerts are enabled. Disable one of them and restart")
+	unifiedAlerting, err := section.Key("enabled").Bool()
+	if err != nil {
+		// the value for unified alerting is invalid so disable all alerting
+		legacyAlerting := false
+		AlertingEnabled = &legacyAlerting
+		return nil, fmt.Errorf("invalid value %s, should be either true or false", section.Key("enabled"))
 	}
-	// if legacy alerting is not defined but unified is determined then update the legacy with inverted value
+
+	// If both legacy and unified alerting are enabled then return an error
+	if AlertingEnabled != nil && *AlertingEnabled && unifiedAlerting {
+		return nil, errors.New("legacy and unified alerting cannot both be enabled at the same time, please disable one of them and restart Grafana")
+	}
+
 	if AlertingEnabled == nil {
-		legacyEnabled := !enabled
-		AlertingEnabled = &legacyEnabled
+		legacyAlerting := !unifiedAlerting
+		AlertingEnabled = &legacyAlerting
 	}
-	return &enabled, nil
+
+	return &unifiedAlerting, nil
 }
 
 // ReadUnifiedAlertingSettings reads both the `unified_alerting` and `alerting` sections of the configuration while preferring configuration the `alerting` section.
@@ -125,7 +169,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	ua := iniFile.Section("unified_alerting")
 	uaCfg.Enabled, err = cfg.readUnifiedAlertingEnabledSetting(ua)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read unified alerting enabled setting: %w", err)
 	}
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})
@@ -205,16 +249,50 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.MaxAttempts = uaMaxAttempts
 
-	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", schedulerDefaultMinInterval.String()))
-	if err != nil || uaMinInterval == schedulerDefaultMinInterval { // unified option is invalid duration or equals the default
+	uaCfg.BaseInterval = SchedulerBaseInterval
+
+	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", uaCfg.BaseInterval.String()))
+	if err != nil || uaMinInterval == uaCfg.BaseInterval { // unified option is invalid duration or equals the default
 		// if the legacy option is invalid, fallback to 10 (unified alerting min interval default)
-		legacyMinInterval := time.Duration(alerting.Key("min_interval_seconds").MustInt64(int64(schedulerDefaultMinInterval.Seconds()))) * time.Second
-		if legacyMinInterval != schedulerDefaultLegacyMinInterval {
+		legacyMinInterval := time.Duration(alerting.Key("min_interval_seconds").MustInt64(int64(uaCfg.BaseInterval.Seconds()))) * time.Second
+		if legacyMinInterval > uaCfg.BaseInterval {
 			cfg.Logger.Warn("falling back to legacy setting of 'min_interval_seconds'; please use the configuration option in the `unified_alerting` section if Grafana 8 alerts are enabled.")
+			uaMinInterval = legacyMinInterval
+		} else {
+			// if legacy interval is smaller than the base interval, adjust it to the base interval
+			uaMinInterval = uaCfg.BaseInterval
 		}
-		uaMinInterval = legacyMinInterval
+	}
+
+	if uaMinInterval < uaCfg.BaseInterval {
+		return fmt.Errorf("value of setting 'min_interval' should be greater than the base interval (%v)", uaCfg.BaseInterval)
+	}
+	if uaMinInterval%uaCfg.BaseInterval != 0 {
+		return fmt.Errorf("value of setting 'min_interval' should be times of base interval (%v)", uaCfg.BaseInterval)
 	}
 	uaCfg.MinInterval = uaMinInterval
+
+	uaCfg.DefaultRuleEvaluationInterval = DefaultRuleEvaluationInterval
+	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
+		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
+	}
+
+	screenshots := iniFile.Section("unified_alerting.screenshots")
+	uaCfgScreenshots := uaCfg.Screenshots
+
+	uaCfgScreenshots.Capture = screenshots.Key("capture").MustBool(screenshotsDefaultCapture)
+	uaCfgScreenshots.MaxConcurrentScreenshots = screenshots.Key("max_concurrent_screenshots").MustInt64(screenshotsDefaultMaxConcurrent)
+	uaCfgScreenshots.UploadExternalImageStorage = screenshots.Key("upload_external_image_storage").MustBool(screenshotsDefaultUploadImageStorage)
+	uaCfg.Screenshots = uaCfgScreenshots
+
+	reservedLabels := iniFile.Section("unified_alerting.reserved_labels")
+	uaCfgReservedLabels := UnifiedAlertingReservedLabelSettings{
+		DisabledLabels: make(map[string]struct{}),
+	}
+	for _, label := range util.SplitString(reservedLabels.Key("disabled_labels").MustString("")) {
+		uaCfgReservedLabels.DisabledLabels[label] = struct{}{}
+	}
+	uaCfg.ReservedLabels = uaCfgReservedLabels
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

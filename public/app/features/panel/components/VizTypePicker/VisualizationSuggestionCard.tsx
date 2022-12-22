@@ -1,21 +1,23 @@
-import React, { CSSProperties } from 'react';
-import { GrafanaTheme2, PanelData, VisualizationSuggestion } from '@grafana/data';
-import { PanelRenderer } from '../PanelRenderer';
 import { css, cx } from '@emotion/css';
-import { Tooltip, useStyles2 } from '@grafana/ui';
-import { VizTypeChangeDetails } from './types';
-import { selectors } from '@grafana/e2e-selectors';
 import { cloneDeep } from 'lodash';
+import React, { CSSProperties } from 'react';
+
+import { GrafanaTheme2, PanelData, VisualizationSuggestion } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Tooltip, useStyles2 } from '@grafana/ui';
+
+import { PanelRenderer } from '../PanelRenderer';
+
+import { VizTypeChangeDetails } from './types';
 
 export interface Props {
   data: PanelData;
   width: number;
   suggestion: VisualizationSuggestion;
-  showTitle?: boolean;
   onChange: (details: VizTypeChangeDetails) => void;
 }
 
-export function VisualizationSuggestionCard({ data, suggestion, onChange, width, showTitle }: Props) {
+export function VisualizationSuggestionCard({ data, suggestion, onChange, width }: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};

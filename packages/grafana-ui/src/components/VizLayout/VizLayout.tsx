@@ -1,11 +1,13 @@
+import { css } from '@emotion/css';
 import React, { FC, CSSProperties, ComponentType } from 'react';
 import { useMeasure } from 'react-use';
-import { css } from '@emotion/css';
-import { LegendPlacement } from '@grafana/schema';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { getFocusStyles } from '../../themes/mixins';
+import { LegendPlacement } from '@grafana/schema';
+
 import { useStyles2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 /**
  * @beta
@@ -38,9 +40,13 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   if (!legend) {
     return (
-      <div tabIndex={0} style={containerStyle} className={styles.viz}>
-        {children(width, height)}
-      </div>
+      <>
+        {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+        <div tabIndex={0} style={containerStyle} className={styles.viz}>
+          {children(width, height)}
+        </div>
+      </>
     );
   }
 
@@ -66,6 +72,11 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       if (legendMeasure) {
         size = { width: width - legendMeasure.width, height };
       }
+
+      if (legend.props.width) {
+        legendStyle.width = legend.props.width;
+        size = { width: width - legend.props.width, height };
+      }
       break;
   }
 
@@ -81,6 +92,8 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   return (
     <div style={containerStyle}>
+      {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
       <div tabIndex={0} className={styles.viz}>
         {size && children(size.width, size.height)}
       </div>
@@ -113,6 +126,7 @@ export interface VizLayoutLegendProps {
   children: React.ReactNode;
   maxHeight?: string;
   maxWidth?: string;
+  width?: number;
 }
 
 /**

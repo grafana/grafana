@@ -1,10 +1,12 @@
-import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { groupBy, capitalize } from 'lodash';
 import React, { useRef, useMemo } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
-import { List } from '../index';
+
+import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
+import { List } from '../index';
 
 interface DataLinkSuggestionsProps {
   activeRef?: React.RefObject<HTMLDivElement>;
@@ -67,7 +69,7 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
   const styles = useStyles2(getStyles);
 
   return (
-    <div ref={ref} className={styles.wrapper}>
+    <div role="menu" ref={ref} className={styles.wrapper}>
       {Object.keys(groupedSuggestions).map((key, i) => {
         const indexOffset =
           i === 0
@@ -114,7 +116,11 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
           renderItem={(item, index) => {
             const isActive = index + activeIndexOffset === activeIndex;
             return (
+              // key events are handled by DataLinkInput
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events
               <div
+                role="menuitem"
+                tabIndex={0}
                 className={cx(styles.item, isActive && styles.activeItem)}
                 ref={isActive ? selectedRef : undefined}
                 onClick={() => {

@@ -1,30 +1,45 @@
-import { TextBoxVariableModel } from '../types';
-import { ThunkResult } from '../../../types';
-import { getVariable } from '../state/selectors';
-import { variableAdapters } from '../adapters';
-import { createTextBoxOptions } from './reducer';
-import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
-import { setOptionFromUrl } from '../state/actions';
 import { UrlQueryValue } from '@grafana/data';
+
+import { ThunkResult } from '../../../types';
+import { variableAdapters } from '../adapters';
+import { setOptionFromUrl } from '../state/actions';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { getVariable } from '../state/selectors';
 import { changeVariableProp } from '../state/sharedReducer';
-import { ensureStringValues } from '../utils';
+import { KeyedVariableIdentifier } from '../state/types';
+import { ensureStringValues, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
-export const updateTextBoxVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => {
+import { createTextBoxOptions } from './reducer';
+
+export const updateTextBoxVariableOptions = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    await dispatch(createTextBoxOptions(toVariablePayload(identifier)));
+    const { rootStateKey, type } = identifier;
+    dispatch(toKeyedAction(rootStateKey, createTextBoxOptions(toVariablePayload(identifier))));
 
-    const variableInState = getVariable<TextBoxVariableModel>(identifier.id, getState());
-    await variableAdapters.get(identifier.type).setValue(variableInState, variableInState.options[0], true);
+    const variableInState = getVariable(identifier, getState());
+    if (variableInState.type !== 'textbox') {
+      return;
+    }
+    await variableAdapters.get(type).setValue(variableInState, variableInState.options[0], true);
   };
 };
 
 export const setTextBoxVariableOptionsFromUrl =
-  (identifier: VariableIdentifier, urlValue: UrlQueryValue): ThunkResult<void> =>
+  (identifier: KeyedVariableIdentifier, urlValue: UrlQueryValue): ThunkResult<void> =>
   async (dispatch, getState) => {
-    const variableInState = getVariable<TextBoxVariableModel>(identifier.id, getState());
+    const { rootStateKey } = identifier;
+    const variableInState = getVariable(identifier, getState());
+    if (variableInState.type !== 'textbox') {
+      return;
+    }
 
     const stringUrlValue = ensureStringValues(urlValue);
-    dispatch(changeVariableProp(toVariablePayload(variableInState, { propName: 'query', propValue: stringUrlValue })));
+    dispatch(
+      toKeyedAction(
+        rootStateKey,
+        changeVariableProp(toVariablePayload(variableInState, { propName: 'query', propValue: stringUrlValue }))
+      )
+    );
 
-    await dispatch(setOptionFromUrl(toVariableIdentifier(variableInState), stringUrlValue));
+    await dispatch(setOptionFromUrl(toKeyedVariableIdentifier(variableInState), stringUrlValue));
   };

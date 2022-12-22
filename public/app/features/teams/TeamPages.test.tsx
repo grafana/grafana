@@ -1,23 +1,70 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { shallow } from 'enzyme';
-import { Props, TeamPages } from './TeamPages';
-import { OrgRole, Team, TeamMember } from '../../types';
-import { getMockTeam } from './__mocks__/teamMocks';
-import { User } from 'app/core/services/context_srv';
-import { NavModel } from '@grafana/data';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { Provider } from 'react-redux';
 
-jest.mock('@grafana/runtime/src/config', () => ({
-  ...(jest.requireActual('@grafana/runtime/src/config') as unknown as object),
-  config: {
-    licenseInfo: {
-      enabledFeatures: { teamsync: true },
-    },
-    featureToggles: { accesscontrol: false },
+import { createTheme } from '@grafana/data';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { User } from 'app/core/services/context_srv';
+import { configureStore } from 'app/store/configureStore';
+
+import { OrgRole, Team, TeamMember } from '../../types';
+
+import { Props, TeamPages } from './TeamPages';
+import { getMockTeam } from './__mocks__/teamMocks';
+
+jest.mock('app/core/components/Select/UserPicker', () => {
+  return { UserPicker: () => null };
+});
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    accessControlEnabled: () => false,
+    hasPermissionInMetadata: () => false,
+    hasAccessInMetadata: () => true,
+    user: {},
   },
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({
+    get: jest.fn().mockResolvedValue([{ userId: 1, login: 'Test' }]),
+  }),
+  config: {
+    licenseInfo: {
+      enabledFeatures: { teamsync: true },
+      stateInfo: '',
+      licenseUrl: '',
+    },
+    featureToggles: { accesscontrol: false },
+    bootData: { navTree: [], user: {} },
+    buildInfo: {
+      edition: 'Open Source',
+      version: '7.5.0',
+      commit: 'abc123',
+      env: 'production',
+      latestVersion: '',
+      hasUpdate: false,
+      hideVersion: false,
+    },
+    appSubUrl: '',
+  },
+  featureEnabled: () => true,
+}));
+
+// Mock connected child components instead of rendering them
+jest.mock('./TeamSettings', () => {
+  //eslint-disable-next-line
+  return () => <div>Team settings</div>;
+});
+
+jest.mock('./TeamGroupSync', () => {
+  //eslint-disable-next-line
+  return () => <div>Team group sync</div>;
+});
+
 const setup = (propOverrides?: object) => {
+  const store = configureStore();
   const props: Props = {
     ...getRouteComponentProps({
       match: {
@@ -27,7 +74,7 @@ const setup = (propOverrides?: object) => {
         },
       } as any,
     }),
-    navModel: {} as NavModel,
+    pageNav: { text: 'Cool team ' },
     teamId: 1,
     loadTeam: jest.fn(),
     loadTeamMembers: jest.fn(),
@@ -35,6 +82,7 @@ const setup = (propOverrides?: object) => {
     team: {} as Team,
     members: [] as TeamMember[],
     editorsCanAdmin: false,
+    theme: createTheme(),
     signedInUser: {
       id: 1,
       isGrafanaAdmin: false,
@@ -44,60 +92,51 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  const wrapper = shallow(<TeamPages {...props} />);
-  const instance = wrapper.instance();
-
-  return {
-    wrapper,
-    instance,
-  };
+  render(
+    <Provider store={store}>
+      <TeamPages {...props} />
+    </Provider>
+  );
 };
 
-describe('Render', () => {
-  it('should render component', () => {
-    const { wrapper } = setup();
-
-    expect(wrapper).toMatchSnapshot();
-  });
-
-  it('should render member page if team not empty', () => {
-    const { wrapper } = setup({
+describe('TeamPages', () => {
+  it('should render member page if team not empty', async () => {
+    setup({
       team: getMockTeam(),
     });
-
-    expect(wrapper).toMatchSnapshot();
+    expect(await screen.findByRole('button', { name: 'Add member' })).toBeInTheDocument();
   });
 
-  it('should render settings and preferences page', () => {
-    const { wrapper } = setup({
+  it('should render settings and preferences page', async () => {
+    setup({
       team: getMockTeam(),
       pageName: 'settings',
       preferences: {
-        homeDashboardId: 1,
+        homeDashboardUID: 'home-dashboard',
         theme: 'Default',
         timezone: 'Default',
       },
     });
 
-    expect(wrapper).toMatchSnapshot();
+    expect(await screen.findByText('Team settings')).toBeInTheDocument();
   });
 
-  it('should render group sync page', () => {
-    const { wrapper } = setup({
+  it('should render group sync page', async () => {
+    setup({
       team: getMockTeam(),
       pageName: 'groupsync',
     });
 
-    expect(wrapper).toMatchSnapshot();
+    expect(await screen.findByText('Team group sync')).toBeInTheDocument();
   });
 
   describe('when feature toggle editorsCanAdmin is turned on', () => {
-    it('should render settings page if user is team admin', () => {
-      const { wrapper } = setup({
+    it('should render settings page if user is team admin', async () => {
+      setup({
         team: getMockTeam(),
         pageName: 'settings',
         preferences: {
-          homeDashboardId: 1,
+          homeDashboardUID: 'home-dashboard',
           theme: 'Default',
           timezone: 'Default',
         },
@@ -109,27 +148,7 @@ describe('Render', () => {
         } as User,
       });
 
-      expect(wrapper).toMatchSnapshot();
-    });
-
-    it('should not render settings page if user is team member', () => {
-      const { wrapper } = setup({
-        team: getMockTeam(),
-        pageName: 'settings',
-        preferences: {
-          homeDashboardId: 1,
-          theme: 'Default',
-          timezone: 'Default',
-        },
-        editorsCanAdmin: true,
-        signedInUser: {
-          id: 1,
-          isGrafanaAdmin: false,
-          orgRole: OrgRole.Viewer,
-        } as User,
-      });
-
-      expect(wrapper).toMatchSnapshot();
+      expect(await screen.findByText('Team settings')).toBeInTheDocument();
     });
   });
 });

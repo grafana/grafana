@@ -1,19 +1,20 @@
-const fs = require('fs');
-const util = require('util');
-const path = require('path');
+import * as webpack from 'webpack';
+
+import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
+
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const fs = require('fs');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const path = require('path');
 const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const util = require('util');
 
 const readdirPromise = util.promisify(fs.readdir);
 const accessPromise = util.promisify(fs.access);
-
-import * as webpack from 'webpack';
-import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
 
 export interface WebpackConfigurationOptions {
   watch?: boolean;
@@ -93,25 +94,20 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
       // both options are optional
       filename: 'styles/[name].css',
     }),
-    new webpack.optimize.OccurrenceOrderPlugin(true),
-    new CopyWebpackPlugin(
-      [
+    new CopyWebpackPlugin({
+      patterns: [
         // If src/README.md exists use it; otherwise the root README
-        { from: hasREADME ? 'README.md' : '../README.md', to: '.', force: true, prority: 1 },
-        { from: 'plugin.json', to: '.' },
-        { from: '**/README.md', to: '[path]README.md', priority: 0 },
-        { from: '../LICENSE', to: '.' },
-        { from: '../CHANGELOG.md', to: '.', force: true },
-        { from: '**/*.json', to: '.' },
-        { from: '**/*.svg', to: '.' },
-        { from: '**/*.png', to: '.' },
-        { from: '**/*.html', to: '.' },
-        { from: 'img/**/*', to: '.' },
-        { from: 'libs/**/*', to: '.' },
-        { from: 'static/**/*', to: '.' },
+        { from: hasREADME ? 'README.md' : '../README.md', to: '.', force: true, priority: 1, noErrorOnMissing: true },
+        { from: 'plugin.json', to: '.', noErrorOnMissing: true },
+        { from: '**/README.md', to: '[path]README.md', priority: 0, noErrorOnMissing: true },
+        { from: '../LICENSE', to: '.', noErrorOnMissing: true },
+        { from: '../CHANGELOG.md', to: '.', force: true, noErrorOnMissing: true },
+        { from: '**/*.{json,svg,png,html}', to: '.', noErrorOnMissing: true },
+        { from: 'img/**/*', to: '.', noErrorOnMissing: true },
+        { from: 'libs/**/*', to: '.', noErrorOnMissing: true },
+        { from: 'static/**/*', to: '.', noErrorOnMissing: true },
       ],
-      { logLevel: options.watch ? 'silent' : 'warn' }
-    ),
+    }),
 
     new ReplaceInFileWebpackPlugin([
       {
@@ -145,9 +141,11 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
   if (options.production) {
     const compressOptions = { drop_console: !options.preserveConsole, drop_debugger: true };
     optimization.minimizer = [
-      new TerserPlugin({ sourceMap: true, terserOptions: { compress: compressOptions } }),
-      new OptimizeCssAssetsPlugin(),
+      new TerserPlugin({ terserOptions: { compress: compressOptions } }),
+      new CssMinimizerPlugin(),
     ];
+    optimization.chunkIds = 'total-size';
+    optimization.moduleIds = 'size';
   } else if (options.watch) {
     plugins.push(new HtmlWebpackPlugin());
   }
@@ -155,11 +153,6 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
   return {
     mode: options.production ? 'production' : 'development',
     target: 'web',
-    node: {
-      fs: 'empty',
-      net: 'empty',
-      tls: 'empty',
-    },
     context: path.join(process.cwd(), 'src'),
     devtool: 'source-map',
     entry: await getEntries(),
@@ -169,7 +162,6 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
       libraryTarget: 'amd',
       publicPath: '/',
     },
-
     performance: { hints: false },
     externals: [
       'lodash',
@@ -181,26 +173,25 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
       '@emotion/css',
       'prismjs',
       'slate-plain-serializer',
-      '@grafana/slate-react',
+      'slate-react',
       'react',
       'react-dom',
       'react-redux',
       'redux',
       'rxjs',
+      'react-router',
       'react-router-dom',
       'd3',
       'angular',
       '@grafana/ui',
       '@grafana/runtime',
       '@grafana/data',
-      // @ts-ignore
-      (context, request, callback) => {
+      ({ request }, callback) => {
         const prefix = 'grafana/';
-        if (request.indexOf(prefix) === 0) {
-          return callback(null, request.substr(prefix.length));
+        if (request?.indexOf(prefix) === 0) {
+          return callback(undefined, request.slice(prefix.length));
         }
 
-        // @ts-ignore
         callback();
       },
     ],
@@ -208,43 +199,56 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
     resolve: {
       extensions: ['.ts', '.tsx', '.js'],
       modules: [path.resolve(process.cwd(), 'src'), 'node_modules'],
+      fallback: {
+        buffer: false,
+        fs: false,
+        stream: false,
+        http: false,
+        https: false,
+        string_decoder: false,
+        os: false,
+        timers: false,
+      },
     },
     module: {
       rules: [
         {
-          test: /\.tsx?$/,
-          loaders: [
-            {
-              loader: require.resolve('babel-loader'),
-              options: {
-                presets: [[require.resolve('@babel/preset-env'), { modules: false }]],
-                plugins: [require.resolve('babel-plugin-angularjs-annotate')],
-                sourceMaps: true,
-              },
+          test: /\.[tj]sx?$/,
+          use: {
+            loader: require.resolve('babel-loader'),
+            options: {
+              cacheDirectory: true,
+              cacheCompression: false,
+              presets: [
+                [require.resolve('@babel/preset-env'), { modules: false }],
+                [
+                  require.resolve('@babel/preset-typescript'),
+                  {
+                    allowNamespaces: true,
+                    allowDeclareFields: true,
+                  },
+                ],
+                [require.resolve('@babel/preset-react')],
+              ],
+              plugins: [
+                [
+                  require.resolve('@babel/plugin-transform-typescript'),
+                  {
+                    allowNamespaces: true,
+                    allowDeclareFields: true,
+                  },
+                ],
+                require.resolve('@babel/plugin-proposal-class-properties'),
+                [require.resolve('@babel/plugin-proposal-object-rest-spread'), { loose: true }],
+                require.resolve('@babel/plugin-transform-react-constant-elements'),
+                require.resolve('@babel/plugin-proposal-nullish-coalescing-operator'),
+                require.resolve('@babel/plugin-proposal-optional-chaining'),
+                require.resolve('@babel/plugin-syntax-dynamic-import'),
+                require.resolve('babel-plugin-angularjs-annotate'),
+              ],
             },
-            {
-              loader: require.resolve('ts-loader'),
-              options: {
-                onlyCompileBundledFiles: true,
-                transpileOnly: true,
-              },
-            },
-          ],
-          exclude: /(node_modules)/,
-        },
-        {
-          test: /\.jsx?$/,
-          loaders: [
-            {
-              loader: require.resolve('babel-loader'),
-              options: {
-                presets: [['@babel/preset-env', { modules: false }]],
-                plugins: ['angularjs-annotate'],
-                sourceMaps: true,
-              },
-            },
-          ],
-          exclude: /(node_modules)/,
+          },
+          exclude: /node_modules/,
         },
         ...getStyleLoaders(),
         {

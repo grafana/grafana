@@ -1,35 +1,46 @@
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import { Input, Form, FieldSet, Field } from '@grafana/ui';
-import mdx from './FieldSet.mdx';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Button } from '../Button';
 
-export default {
+import { Props } from './FieldSet';
+import mdx from './FieldSet.mdx';
+
+const meta: ComponentMeta<typeof FieldSet> = {
   title: 'Forms/FieldSet',
   component: FieldSet,
   decorators: [withCenteredStory],
+  args: {
+    label: 'Default label',
+  },
   parameters: {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['children'],
+    },
+  },
+  argTypes: {
+    label: { control: 'text' },
   },
 };
 
-export const basic = () => {
+export const Basic: ComponentStory<typeof FieldSet> = (args: Props) => {
   return (
     <Form onSubmit={() => console.log('Submit')}>
       {() => (
         <>
-          <FieldSet label="Details">
+          <FieldSet {...args}>
             <Field label="Name">
               <Input name="name" />
             </Field>
             <Field label="Email">
               <Input name="email" />
             </Field>
-          </FieldSet>
-
-          <FieldSet label="Preferences">
             <Field label="Color">
               <Input name="color" />
             </Field>
@@ -43,3 +54,5 @@ export const basic = () => {
     </Form>
   );
 };
+
+export default meta;

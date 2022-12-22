@@ -207,8 +207,8 @@
 // Right aligned dropdowns
 // ---------------------------
 .pull-right > .dropdown-menu {
-  right: 0;
-  left: auto;
+  left: 100%;
+  right: unset;
 }
 
 // Allow for dropdowns to go bottom up (aka, dropup-menu)
@@ -243,7 +243,6 @@
   left: 100%;
   margin-top: 0px;
   margin-left: -1px;
-  @include border-radius(0 6px 6px 6px);
 }
 .dropdown-submenu:hover > .dropdown-menu {
   display: block;
@@ -255,7 +254,6 @@
   bottom: 0;
   margin-top: 0;
   margin-bottom: -2px;
-  @include border-radius(5px 5px 5px 0);
 }
 // .dropdown-submenu > a::after {
 //   position: absolute;
@@ -284,7 +282,6 @@
     left: -100%;
     width: 100%;
     margin-left: 2px;
-    @include border-radius(6px 0 6px 6px);
   }
 }
 

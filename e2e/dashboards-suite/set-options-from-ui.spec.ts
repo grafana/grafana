@@ -27,7 +27,7 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 4);
+        e2e().get('.variable-option').should('have.length', 9);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -42,19 +42,16 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 10);
+        e2e().get('.variable-option').should('have.length', 65);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BAA').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BAB').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BAC').should('be.visible');
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBA').should('be.visible');
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBB').should('be.visible');
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBC').should('be.visible');
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BCA').should('be.visible');
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BCB').should('be.visible');
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BCC').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BAD').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BAE').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BAF').should('be.visible');
   });
 
   it('adding a value that is not part of dependents options should add the new values dependant options', () => {
@@ -81,7 +78,7 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 7);
+        e2e().get('.variable-option').should('have.length', 17);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -97,7 +94,7 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 4);
+        e2e().get('.variable-option').should('have.length', 9);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -132,7 +129,7 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 4);
+        e2e().get('.variable-option').should('have.length', 9);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -145,7 +142,7 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 4);
+        e2e().get('.variable-option').should('have.length', 9);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBA').should('be.visible');

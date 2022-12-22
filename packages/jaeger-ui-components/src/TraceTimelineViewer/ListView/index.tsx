@@ -14,8 +14,9 @@
 
 import * as React from 'react';
 
-import Positions from './Positions';
 import { TNil } from '../../types';
+
+import Positions from './Positions';
 
 type TWrapperProps = {
   style: React.CSSProperties;
@@ -26,7 +27,7 @@ type TWrapperProps = {
 /**
  * @typedef
  */
-type TListViewProps = {
+export type TListViewProps = {
   /**
    * Number of elements in the list.
    */
@@ -214,9 +215,19 @@ export default class ListView extends React.Component<TListViewProps> {
     }
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: TListViewProps) {
     if (this._itemHolderElm) {
       this._scanItemHeights();
+    }
+    // When windowScroller is set to false, we can continue to handle scrollElement
+    if (this.props.windowScroller) {
+      return;
+    }
+    // check if the scrollElement changes and update its scroll listener
+    if (prevProps.scrollElement !== this.props.scrollElement) {
+      prevProps.scrollElement?.removeEventListener('scroll', this._onScroll);
+      this._wrapperElm = this.props.scrollElement;
+      this._wrapperElm?.addEventListener('scroll', this._onScroll);
     }
   }
 

@@ -1,16 +1,17 @@
-import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { Select, Alert, Label, stylesFactory } from '@grafana/ui';
+import React, { PureComponent } from 'react';
+
 import {
   LiveChannelScope,
   LiveChannelAddress,
   SelectableValue,
   StandardEditorProps,
-  GrafanaTheme,
+  GrafanaTheme2,
 } from '@grafana/data';
+import { Select, Alert, Label, stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 import { LivePanelOptions } from './types';
-import { config } from 'app/core/config';
 
 type Props = StandardEditorProps<LiveChannelAddress, any, LivePanelOptions>;
 
@@ -85,7 +86,7 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
   render() {
     const { namespaces, paths } = this.state;
     const { scope, namespace, path } = this.props.value;
-    const style = getStyles(config.theme);
+    const style = getStyles(config.theme2);
 
     return (
       <>
@@ -97,19 +98,13 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
         <div>
           <div className={style.dropWrap}>
             <Label>Scope</Label>
-            <Select
-              menuShouldPortal
-              options={scopes}
-              value={scopes.find((s) => s.value === scope)}
-              onChange={this.onScopeChanged}
-            />
+            <Select options={scopes} value={scopes.find((s) => s.value === scope)} onChange={this.onScopeChanged} />
           </div>
 
           {scope && (
             <div className={style.dropWrap}>
               <Label>Namespace</Label>
               <Select
-                menuShouldPortal
                 options={namespaces}
                 value={
                   namespaces.find((s) => s.value === namespace) ??
@@ -126,7 +121,6 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
             <div className={style.dropWrap}>
               <Label>Path</Label>
               <Select
-                menuShouldPortal
                 options={paths}
                 value={findPathOption(paths, path)}
                 onChange={this.onPathChanged}
@@ -152,8 +146,8 @@ function findPathOption(paths: Array<SelectableValue<string>>, path?: string): S
   return undefined;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   dropWrap: css`
-    margin-bottom: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing(1)};
   `,
 }));

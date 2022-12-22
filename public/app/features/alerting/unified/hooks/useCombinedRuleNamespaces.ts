@@ -1,3 +1,6 @@
+import { isEqual } from 'lodash';
+import { useMemo, useRef } from 'react';
+
 import {
   CombinedRule,
   CombinedRuleGroup,
@@ -8,7 +11,7 @@ import {
   RulesSource,
 } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
-import { useMemo, useRef } from 'react';
+
 import {
   getAllRulesSources,
   getRulesSourceByName,
@@ -16,6 +19,7 @@ import {
   isGrafanaRulesSource,
 } from '../utils/datasource';
 import { isAlertingRule, isAlertingRulerRule, isRecordingRulerRule } from '../utils/rules';
+
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 interface CacheValue {
@@ -81,17 +85,7 @@ export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRul
           });
 
           const result = Object.values(namespaces);
-          if (isGrafanaRulesSource(rulesSource)) {
-            // merge all groups in case of grafana managed, essentially treating namespaces (folders) as gorups
-            result.forEach((namespace) => {
-              namespace.groups = [
-                {
-                  name: 'default',
-                  rules: namespace.groups.flatMap((g) => g.rules).sort((a, b) => a.name.localeCompare(b.name)),
-                },
-              ];
-            });
-          }
+
           cache.current[rulesSourceName] = { promRules, rulerRules, result };
           return result;
         })
@@ -100,11 +94,34 @@ export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRul
   );
 }
 
-function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RulerRuleGroupDTO[]): void {
+// merge all groups in case of grafana managed, essentially treating namespaces (folders) as groups
+export function flattenGrafanaManagedRules(namespaces: CombinedRuleNamespace[]) {
+  return namespaces.map((namespace) => {
+    const newNamespace: CombinedRuleNamespace = {
+      ...namespace,
+      groups: [],
+    };
+
+    // add default group with ungrouped rules
+    newNamespace.groups.push({
+      name: 'default',
+      rules: sortRulesByName(namespace.groups.flatMap((group) => group.rules)),
+    });
+
+    return newNamespace;
+  });
+}
+
+export function sortRulesByName(rules: CombinedRule[]) {
+  return rules.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RulerRuleGroupDTO[] = []): void {
   namespace.groups = groups.map((group) => {
     const combinedGroup: CombinedRuleGroup = {
       name: group.name,
       interval: group.interval,
+      source_tenants: group.source_tenants,
       rules: [],
     };
     combinedGroup.rules = group.rules.map((rule) => rulerRuleToCombinedRule(rule, namespace, combinedGroup));
@@ -113,18 +130,29 @@ function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, gro
 }
 
 function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RuleGroup[]): void {
+  const existingGroupsByName = new Map<string, CombinedRuleGroup>();
+  namespace.groups.forEach((group) => existingGroupsByName.set(group.name, group));
+
   groups.forEach((group) => {
-    let combinedGroup = namespace.groups.find((g) => g.name === group.name);
+    let combinedGroup = existingGroupsByName.get(group.name);
     if (!combinedGroup) {
       combinedGroup = {
         name: group.name,
         rules: [],
       };
       namespace.groups.push(combinedGroup);
+      existingGroupsByName.set(group.name, combinedGroup);
     }
 
+    const combinedRulesByName = new Map<string, CombinedRule[]>();
+    combinedGroup!.rules.forEach((r) => {
+      // Prometheus rules do not have to be unique by name
+      const existingRule = combinedRulesByName.get(r.name);
+      existingRule ? existingRule.push(r) : combinedRulesByName.set(r.name, [r]);
+    });
+
     (group.rules ?? []).forEach((rule) => {
-      const existingRule = getExistingRuleInGroup(rule, combinedGroup!, namespace.rulesSource);
+      const existingRule = getExistingRuleInGroup(rule, combinedRulesByName, namespace.rulesSource);
       if (existingRule) {
         existingRule.promRule = rule;
       } else {
@@ -185,39 +213,47 @@ function rulerRuleToCombinedRule(
 // find existing rule in group that matches the given prom rule
 function getExistingRuleInGroup(
   rule: Rule,
-  group: CombinedRuleGroup,
+  existingCombinedRulesMap: Map<string, CombinedRule[]>,
   rulesSource: RulesSource
 ): CombinedRule | undefined {
+  // Using Map of name-based rules is important performance optimization for the code below
+  // Otherwise we would perform find method multiple times on (possibly) thousands of rules
+
+  const nameMatchingRules = existingCombinedRulesMap.get(rule.name);
+  if (!nameMatchingRules) {
+    return undefined;
+  }
+
   if (isGrafanaRulesSource(rulesSource)) {
     // assume grafana groups have only the one rule. check name anyway because paranoid
-    return group!.rules.find((existingRule) => existingRule.name === rule.name);
+    return nameMatchingRules[0];
   }
-  return (
-    // try finding a rule that matches name, labels, annotations and query
-    group!.rules.find(
-      (existingRule) => !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, true)
-    ) ??
-    // if that fails, try finding a rule that only matches name, labels and annotations.
-    // loki & prom can sometimes modify the query so it doesnt match, eg `2 > 1` becomes `1`
-    group!.rules.find(
-      (existingRule) => !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule, false)
-    )
+
+  // try finding a rule that matches name, labels, annotations and query
+  const strictlyMatchingRule = nameMatchingRules.find(
+    (combinedRule) => !combinedRule.promRule && isCombinedRuleEqualToPromRule(combinedRule, rule, true)
   );
+  if (strictlyMatchingRule) {
+    return strictlyMatchingRule;
+  }
+
+  // if that fails, try finding a rule that only matches name, labels and annotations.
+  // loki & prom can sometimes modify the query so it doesnt match, eg `2 > 1` becomes `1`
+  const looselyMatchingRule = nameMatchingRules.find(
+    (combinedRule) => !combinedRule.promRule && isCombinedRuleEqualToPromRule(combinedRule, rule, false)
+  );
+  if (looselyMatchingRule) {
+    return looselyMatchingRule;
+  }
+
+  return undefined;
 }
 
 function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule, checkQuery = true): boolean {
   if (combinedRule.name === rule.name) {
-    return (
-      JSON.stringify([
-        checkQuery ? hashQuery(combinedRule.query) : '',
-        combinedRule.labels,
-        combinedRule.annotations,
-      ]) ===
-      JSON.stringify([
-        checkQuery ? hashQuery(rule.query) : '',
-        rule.labels || {},
-        isAlertingRule(rule) ? rule.annotations || {} : {},
-      ])
+    return isEqual(
+      [checkQuery ? hashQuery(combinedRule.query) : '', combinedRule.labels, combinedRule.annotations],
+      [checkQuery ? hashQuery(rule.query) : '', rule.labels || {}, isAlertingRule(rule) ? rule.annotations || {} : {}]
     );
   }
   return false;
@@ -227,7 +263,7 @@ function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule, c
 function hashQuery(query: string) {
   // one of them might be wrapped in parens
   if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
-    query = query.substr(1, query.length - 2);
+    query = query.slice(1, -1);
   }
   // whitespace could be added or removed
   query = query.replace(/\s|\n/g, '');

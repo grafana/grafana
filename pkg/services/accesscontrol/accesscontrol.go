@@ -2,40 +2,86 @@ package accesscontrol
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
-	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator Evaluator) (bool, error)
-
-	// GetUserPermissions returns user permissions.
-	GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*Permission, error)
-
-	// GetUserRoles returns user roles.
-	GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*RoleDTO, error)
-
+	Evaluate(ctx context.Context, user *user.SignedInUser, evaluator Evaluator) (bool, error)
+	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
+	// specific scope prefix (ex: datasources:name:)
+	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
+}
 
+type Service interface {
+	registry.ProvidesUsageStats
+	// GetUserPermissions returns user permissions with only action and scope fields set.
+	GetUserPermissions(ctx context.Context, user *user.SignedInUser, options Options) ([]Permission, error)
+	// SearchUsersPermissions returns all users' permissions filtered by an action prefix
+	SearchUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, options SearchOptions) (map[int64][]Permission, error)
+	// ClearUserPermissionCache removes the permission cache entry for the given user
+	ClearUserPermissionCache(user *user.SignedInUser)
+	// SearchUserPermissions returns single user's permissions filtered by an action prefix or an action
+	SearchUserPermissions(ctx context.Context, orgID int64, filterOptions SearchOptions) ([]Permission, error)
+	// DeleteUserPermissions removes all permissions user has in org and all permission to that user
+	// If orgID is set to 0 remove permissions from all orgs
+	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
 	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-	DeclareFixedRoles(...RoleRegistration) error
-
-	// RegisterAttributeScopeResolver allows the caller to register a scope resolver for a
-	// specific scope prefix (ex: datasources:name:)
-	RegisterAttributeScopeResolver(scopePrefix string, resolver AttributeScopeResolveFunc)
+	DeclareFixedRoles(registrations ...RoleRegistration) error
+	//IsDisabled returns if access control is enabled or not
+	IsDisabled() bool
 }
 
-type PermissionsProvider interface {
-	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
+type RoleRegistry interface {
+	// RegisterFixedRoles registers all roles declared to AccessControl
+	RegisterFixedRoles(ctx context.Context) error
 }
 
-type ResourcePermissionsService interface {
+type Options struct {
+	ReloadCache bool
+}
+
+type SearchOptions struct {
+	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
+	Action       string
+	Scope        string
+	UserID       int64 // ID for the user for which to return information, if none is specified information is returned for all users.
+}
+
+type TeamPermissionsService interface {
+	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
+}
+
+type FolderPermissionsService interface {
+	PermissionsService
+}
+
+type DashboardPermissionsService interface {
+	PermissionsService
+}
+
+type DatasourcePermissionsService interface {
+	PermissionsService
+}
+
+type ServiceAccountPermissionsService interface {
+	PermissionsService
+}
+
+type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
-	GetPermissions(ctx context.Context, orgID int64, resourceID string) ([]ResourcePermission, error)
+	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 	// SetTeamPermission sets permission on resource for a team
@@ -44,6 +90,8 @@ type ResourcePermissionsService interface {
 	SetBuiltInRolePermission(ctx context.Context, orgID int64, builtInRole string, resourceID string, permission string) (*ResourcePermission, error)
 	// SetPermissions sets several permissions on resource for either built-in role, team or user
 	SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...SetResourcePermissionCommand) ([]ResourcePermission, error)
+	// MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.
+	MapActions(permission ResourcePermission) string
 }
 
 type User struct {
@@ -51,26 +99,33 @@ type User struct {
 	IsExternal bool
 }
 
-// Metadata contains user accesses for a given resource
-// Ex: map[string]bool{"create":true, "delete": true}
-type Metadata map[string]bool
-
 // HasGlobalAccess checks user access with globally assigned permissions only
-func HasGlobalAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
+func HasGlobalAccess(ac AccessControl, service Service, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
 	return func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
 		if ac.IsDisabled() {
 			return fallback(c)
 		}
 
 		userCopy := *c.SignedInUser
-		userCopy.OrgId = GlobalOrgID
+		userCopy.OrgID = GlobalOrgID
 		userCopy.OrgRole = ""
 		userCopy.OrgName = ""
+		if userCopy.Permissions[GlobalOrgID] == nil {
+			permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
+			if err != nil {
+				c.Logger.Error("failed fetching permissions for user", "userID", userCopy.UserID, "error", err)
+			}
+			userCopy.Permissions[GlobalOrgID] = GroupScopesByAction(permissions)
+		}
+
 		hasAccess, err := ac.Evaluate(c.Req.Context(), &userCopy, evaluator)
 		if err != nil {
 			c.Logger.Error("Error from access control system", "error", err)
 			return false
 		}
+
+		// set on user so we don't fetch global permissions every time this is called
+		c.SignedInUser.Permissions[GlobalOrgID] = userCopy.Permissions[GlobalOrgID]
 
 		return hasAccess
 	}
@@ -92,15 +147,34 @@ func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*model
 	}
 }
 
+var ReqSignedIn = func(c *models.ReqContext) bool {
+	return c.IsSignedIn
+}
+
 var ReqGrafanaAdmin = func(c *models.ReqContext) bool {
 	return c.IsGrafanaAdmin
 }
 
-var ReqOrgAdmin = func(c *models.ReqContext) bool {
-	return c.OrgRole == models.ROLE_ADMIN
+// ReqViewer returns true if the current user has org.RoleViewer. Note: this can be anonymous user as well
+var ReqViewer = func(c *models.ReqContext) bool {
+	return c.OrgRole.Includes(org.RoleViewer)
 }
 
-func BuildPermissionsMap(permissions []*Permission) map[string]bool {
+var ReqOrgAdmin = func(c *models.ReqContext) bool {
+	return c.OrgRole == org.RoleAdmin
+}
+
+var ReqOrgAdminOrEditor = func(c *models.ReqContext) bool {
+	return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor
+}
+
+// ReqHasRole generates a fallback to check whether the user has a role
+// Note that while ReqOrgAdmin returns false for a Grafana Admin / Viewer, ReqHasRole(org.RoleAdmin) will return true
+func ReqHasRole(role org.RoleType) func(c *models.ReqContext) bool {
+	return func(c *models.ReqContext) bool { return c.HasRole(role) }
+}
+
+func BuildPermissionsMap(permissions []Permission) map[string]bool {
 	permissionsMap := make(map[string]bool)
 	for _, p := range permissions {
 		permissionsMap[p.Action] = true
@@ -110,10 +184,10 @@ func BuildPermissionsMap(permissions []*Permission) map[string]bool {
 }
 
 // GroupScopesByAction will group scopes on action
-func GroupScopesByAction(permissions []*Permission) map[string][]string {
+func GroupScopesByAction(permissions []Permission) map[string][]string {
 	m := make(map[string][]string)
-	for _, p := range permissions {
-		m[p.Action] = append(m[p.Action], p.Scope)
+	for i := range permissions {
+		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
 	}
 	return m
 }
@@ -130,42 +204,40 @@ func ValidateScope(scope string) bool {
 	return !strings.ContainsAny(prefix, "*?")
 }
 
-func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map[string]Metadata {
-	metadata, initialized := allMetadata[id]
-	if !initialized {
-		metadata = Metadata{action: true}
-	} else {
-		metadata[action] = true
-	}
-	allMetadata[id] = metadata
-	return allMetadata
+func ManagedUserRoleName(userID int64) string {
+	return fmt.Sprintf("managed:users:%d:permissions", userID)
 }
 
-// GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions []*Permission, resource string, resourceIDs map[string]bool) map[string]Metadata {
-	allScope := GetResourceAllScope(resource)
-	allIDScope := GetResourceAllIDScope(resource)
+func ManagedTeamRoleName(teamID int64) string {
+	return fmt.Sprintf("managed:teams:%d:permissions", teamID)
+}
 
-	// prefix of ID based scopes (resource:id)
-	idPrefix := Scope(resource, "id")
-	// index of the ID in the scope
-	idIndex := len(idPrefix) + 1
+func ManagedBuiltInRoleName(builtInRole string) string {
+	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtInRole))
+}
 
-	// Loop through permissions once
-	result := map[string]Metadata{}
-	for _, p := range permissions {
-		if p.Scope == "*" || p.Scope == allScope || p.Scope == allIDScope {
-			// Add global action to all resources
-			for id := range resourceIDs {
-				result = addActionToMetadata(result, p.Action, id)
-			}
-		} else {
-			if len(p.Scope) > idIndex && strings.HasPrefix(p.Scope, idPrefix) && resourceIDs[p.Scope[idIndex:]] {
-				// Add action to a specific resource
-				result = addActionToMetadata(result, p.Action, p.Scope[idIndex:])
-			}
-		}
+func IsDisabled(cfg *setting.Cfg) bool {
+	return !cfg.RBACEnabled
+}
+
+// GetOrgRoles returns legacy org roles for a user
+func GetOrgRoles(user *user.SignedInUser) []string {
+	roles := []string{string(user.OrgRole)}
+
+	if user.IsGrafanaAdmin {
+		roles = append(roles, RoleGrafanaAdmin)
 	}
 
-	return result
+	return roles
+}
+
+func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) *user.SignedInUser {
+	return &user.SignedInUser{
+		OrgID:   orgID,
+		OrgRole: role,
+		Login:   "grafana_" + name,
+		Permissions: map[int64]map[string][]string{
+			orgID: GroupScopesByAction(permissions),
+		},
+	}
 }

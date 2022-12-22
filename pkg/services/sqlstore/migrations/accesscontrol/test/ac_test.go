@@ -2,18 +2,23 @@ package test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,53 +27,63 @@ type rawPermission struct {
 	Action, Scope string
 }
 
+func (rp *rawPermission) toPermission(roleID int64, ts time.Time) accesscontrol.Permission {
+	return accesscontrol.Permission{
+		RoleID:  roleID,
+		Action:  rp.Action,
+		Scope:   rp.Scope,
+		Updated: ts,
+		Created: ts,
+	}
+}
+
 // Setup users
 var (
 	now = time.Now()
 
-	users = []models.User{
+	users = []user.User{
 		{
-			Id:      1,
+			ID:      1,
 			Email:   "viewer1@example.org",
 			Name:    "viewer1",
 			Login:   "viewer1",
-			OrgId:   1,
+			OrgID:   1,
 			Created: now,
 			Updated: now,
 		},
 		{
-			Id:      2,
+			ID:      2,
 			Email:   "viewer2@example.org",
 			Name:    "viewer2",
 			Login:   "viewer2",
-			OrgId:   1,
+			OrgID:   1,
 			Created: now,
 			Updated: now,
 		},
 		{
-			Id:      3,
+			ID:      3,
 			Email:   "editor1@example.org",
 			Name:    "editor1",
 			Login:   "editor1",
-			OrgId:   1,
+			OrgID:   1,
 			Created: now,
 			Updated: now,
 		},
 		{
-			Id:      4,
+			ID:      4,
 			Email:   "admin1@example.org",
 			Name:    "admin1",
 			Login:   "admin1",
-			OrgId:   1,
+			OrgID:   1,
 			Created: now,
 			Updated: now,
 		},
 		{
-			Id:      5,
+			ID:      5,
 			Email:   "editor2@example.org",
 			Name:    "editor2",
 			Login:   "editor2",
-			OrgId:   2,
+			OrgID:   2,
 			Created: now,
 			Updated: now,
 		},
@@ -83,6 +98,37 @@ func convertToRawPermissions(permissions []accesscontrol.Permission) []rawPermis
 	return raw
 }
 
+func getDBType() string {
+	dbType := migrator.SQLite
+
+	// environment variable present for test db?
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		dbType = db
+	}
+	return dbType
+}
+
+func getTestDB(t *testing.T, dbType string) sqlutil.TestDB {
+	switch dbType {
+	case "mysql":
+		return sqlutil.MySQLTestDB()
+	case "postgres":
+		return sqlutil.PostgresTestDB()
+	default:
+		f, err := os.CreateTemp(".", "grafana-test-db-")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := os.Remove(f.Name())
+			require.NoError(t, err)
+		})
+
+		return sqlutil.TestDB{
+			DriverName: "sqlite3",
+			ConnStr:    f.Name(),
+		}
+	}
+}
+
 func TestMigrations(t *testing.T) {
 	// Run initial migration to have a working DB
 	x := setupTestDB(t)
@@ -91,7 +137,7 @@ func TestMigrations(t *testing.T) {
 	setupTeams(t, x)
 
 	// Create managed user roles with teams permissions (ex: teams:read and teams.permissions:read)
-	setupUnecessaryFGACPermissions(t, x)
+	setupUnecessaryRBACPermissions(t, x)
 
 	team1Scope := accesscontrol.Scope("teams", "id", "1")
 	team2Scope := accesscontrol.Scope("teams", "id", "2")
@@ -165,14 +211,14 @@ func TestMigrations(t *testing.T) {
 			acmigrator := migrator.NewMigrator(x, tc.config)
 			acmig.AddTeamMembershipMigrations(acmigrator)
 
-			errRunningMig := acmigrator.Start()
+			errRunningMig := acmigrator.Start(false, 0)
 			require.NoError(t, errRunningMig)
 
 			for _, user := range users {
 				// Check managed roles exist
-				roleName := fmt.Sprintf("managed:users:%d:permissions", user.Id)
+				roleName := fmt.Sprintf("managed:users:%d:permissions", user.ID)
 				role := accesscontrol.Role{}
-				hasRole, errManagedRoleSearch := x.Table("role").Where("org_id = ? AND name = ?", user.OrgId, roleName).Get(&role)
+				hasRole, errManagedRoleSearch := x.Table("role").Where("org_id = ? AND name = ?", user.OrgID, roleName).Get(&role)
 
 				require.NoError(t, errManagedRoleSearch)
 				assert.True(t, hasRole, "expected role to be granted to user", user, roleName)
@@ -191,7 +237,7 @@ func TestMigrations(t *testing.T) {
 
 				// Check assignment of the roles
 				assign := accesscontrol.UserRole{}
-				has, errAssignmentSearch := x.Table("user_role").Where("role_id = ? AND user_id = ?", role.ID, user.Id).Get(&assign)
+				has, errAssignmentSearch := x.Table("user_role").Where("role_id = ? AND user_id = ?", role.ID, user.ID).Get(&assign)
 				require.NoError(t, errAssignmentSearch)
 				assert.True(t, has, "expected assignment of role to user", role, user)
 			}
@@ -201,10 +247,8 @@ func TestMigrations(t *testing.T) {
 
 func setupTestDB(t *testing.T) *xorm.Engine {
 	t.Helper()
-	testDB := sqlutil.SQLite3TestDB()
-
-	const query = `select count(*) as count from migration_log`
-	result := struct{ Count int }{}
+	dbType := getDBType()
+	testDB := getTestDB(t, dbType)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
@@ -212,16 +256,11 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	err = migrator.NewDialect(x).CleanDB()
 	require.NoError(t, err)
 
-	_, err = x.SQL(query).Get(&result)
-	require.Error(t, err)
-
-	mg := migrator.NewMigrator(x, &setting.Cfg{
-		IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
-	})
+	mg := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
 
-	err = mg.Start()
+	err = mg.Start(false, 0)
 	require.NoError(t, err)
 
 	return x
@@ -238,35 +277,35 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 		{
 			OrgId:   1,
 			UserId:  1,
-			Role:    models.ROLE_VIEWER,
+			Role:    org.RoleViewer,
 			Created: now,
 			Updated: now,
 		},
 		{
 			OrgId:   1,
 			UserId:  2,
-			Role:    models.ROLE_VIEWER,
+			Role:    org.RoleViewer,
 			Created: now,
 			Updated: now,
 		},
 		{
 			OrgId:   1,
 			UserId:  3,
-			Role:    models.ROLE_EDITOR,
+			Role:    org.RoleEditor,
 			Created: now,
 			Updated: now,
 		},
 		{
 			OrgId:   1,
 			UserId:  4,
-			Role:    models.ROLE_ADMIN,
+			Role:    org.RoleAdmin,
 			Created: now,
 			Updated: now,
 		},
 		{
 			OrgId:   2,
 			UserId:  5,
-			Role:    models.ROLE_EDITOR,
+			Role:    org.RoleEditor,
 			Created: now,
 			Updated: now,
 		},
@@ -353,7 +392,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 	require.Equal(t, int64(5), membersCount, "needed 5 members for this test to run")
 }
 
-func setupUnecessaryFGACPermissions(t *testing.T, x *xorm.Engine) {
+func setupUnecessaryRBACPermissions(t *testing.T, x *xorm.Engine) {
 	t.Helper()
 
 	now := time.Now()

@@ -1,10 +1,10 @@
-import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
-import { Stack } from '@grafana/experimental';
 import React from 'react';
+
+import { Stack } from '@grafana/experimental';
+
 import { PrometheusDatasource } from '../../datasource';
 import { PromVisualQuery, PromVisualQueryBinary } from '../types';
+
 import { NestedQuery } from './NestedQuery';
 
 export interface Props {
@@ -12,10 +12,11 @@ export interface Props {
   datasource: PrometheusDatasource;
   onChange: (query: PromVisualQuery) => void;
   onRunQuery: () => void;
+  showExplain: boolean;
 }
 
-export function NestedQueryList({ query, datasource, onChange, onRunQuery }: Props) {
-  const styles = useStyles2(getStyles);
+export function NestedQueryList(props: Props) {
+  const { query, datasource, onChange, onRunQuery, showExplain } = props;
   const nestedQueries = query.binaryQueries ?? [];
 
   const onNestedQueryUpdate = (index: number, update: PromVisualQueryBinary) => {
@@ -30,44 +31,19 @@ export function NestedQueryList({ query, datasource, onChange, onRunQuery }: Pro
   };
 
   return (
-    <div className={styles.body}>
-      <Stack gap={1} direction="column">
-        <h5 className={styles.heading}>Binary operations</h5>
-        <Stack gap={1} direction="column">
-          {nestedQueries.map((nestedQuery, index) => (
-            <NestedQuery
-              key={index.toString()}
-              nestedQuery={nestedQuery}
-              index={index}
-              onChange={onNestedQueryUpdate}
-              datasource={datasource}
-              onRemove={onRemove}
-              onRunQuery={onRunQuery}
-            />
-          ))}
-        </Stack>
-      </Stack>
-    </div>
+    <Stack direction="column" gap={1}>
+      {nestedQueries.map((nestedQuery, index) => (
+        <NestedQuery
+          key={index.toString()}
+          nestedQuery={nestedQuery}
+          index={index}
+          onChange={onNestedQueryUpdate}
+          datasource={datasource}
+          onRemove={onRemove}
+          onRunQuery={onRunQuery}
+          showExplain={showExplain}
+        />
+      ))}
+    </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    heading: css({
-      fontSize: 12,
-      fontWeight: theme.typography.fontWeightMedium,
-    }),
-    body: css({
-      width: '100%',
-    }),
-    connectingLine: css({
-      height: '2px',
-      width: '16px',
-      backgroundColor: theme.colors.border.strong,
-      alignSelf: 'center',
-    }),
-    addOperation: css({
-      paddingLeft: theme.spacing(2),
-    }),
-  };
-};

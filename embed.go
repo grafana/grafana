@@ -4,13 +4,7 @@ import (
 	"embed"
 )
 
-// CoreSchema embeds all core CUE files, which live in packages/grafana-schema/src
+// CueSchemaFS embeds all schema-related CUE files in the Grafana project.
 //
-//go:embed cue.mod cue packages/grafana-schema/src/schema/*.cue packages/grafana-schema/src/scuemata/*/*.cue packages/grafana-schema/src/scuemata/*/*/*.cue
-var CoreSchema embed.FS
-
-// PluginSchema embeds all expected plugin CUE files and plugin metadata from
-// within the public/app/plugins subdirectory.
-//
-//go:embed public/app/plugins/*/*/*.cue public/app/plugins/*/*/plugin.json
-var PluginSchema embed.FS
+//go:embed cue.mod/module.cue kinds/*/*.cue kinds/*/*/*.cue packages/grafana-schema/src/schema/*.cue public/app/plugins/*/*/*.cue public/app/plugins/*/*/plugin.json pkg/kindsys/*.cue pkg/plugins/plugindef/*.cue
+var CueSchemaFS embed.FS

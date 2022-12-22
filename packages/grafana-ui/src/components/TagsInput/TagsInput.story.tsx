@@ -1,12 +1,14 @@
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState } from 'react';
-import { Meta, Story } from '@storybook/react';
-import { TagsInput, Props } from './TagsInput';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import { StoryExample } from '../../utils/storybook/StoryExample';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { VerticalGroup } from '../Layout/Layout';
+
+import { TagsInput } from './TagsInput';
 import mdx from './TagsInput.mdx';
 
-export default {
+const meta: ComponentMeta<typeof TagsInput> = {
   title: 'Forms/TagsInput',
   component: TagsInput,
   decorators: [withCenteredStory],
@@ -18,11 +20,9 @@ export default {
       exclude: ['onChange', 'className', 'tags'],
     },
   },
-} as Meta;
+};
 
-type StoryProps = Omit<Props, 'onChange' | 'className' | 'tags'>;
-
-export const Basic: Story<StoryProps> = (props) => {
+export const Basic: ComponentStory<typeof TagsInput> = (props) => {
   const [tags, setTags] = useState<string[]>([]);
   return <TagsInput {...props} tags={tags} onChange={setTags} />;
 };
@@ -37,3 +37,5 @@ export const WithManyTags = () => {
     </VerticalGroup>
   );
 };
+
+export default meta;

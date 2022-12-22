@@ -1,15 +1,17 @@
 import { Subject, throwError } from 'rxjs';
+import { delay } from 'rxjs/operators';
+
+import { AnnotationQuery } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
 
-import { AnnotationsWorker } from './AnnotationsWorker';
-import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';
-import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
+import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';
+
+import { AnnotationsWorker } from './AnnotationsWorker';
 import { createDashboardQueryRunner, setDashboardQueryRunnerFactory } from './DashboardQueryRunner';
-import { emptyResult } from './utils';
+import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorkerResult } from './types';
-import { AnnotationQuery } from '@grafana/data';
-import { delay } from 'rxjs/operators';
+import { emptyResult } from './utils';
 
 function getTestContext(dataSourceSrvRejects = false) {
   jest.clearAllMocks();
@@ -67,7 +69,7 @@ function expectOnResults(args: {
         done();
       } catch (err) {
         subscription.unsubscribe();
-        done.fail(err);
+        done(err);
       }
     },
   });
@@ -79,6 +81,15 @@ describe('AnnotationsWorker', () => {
   describe('when canWork is called with correct props', () => {
     it('then it should return true', () => {
       const options = getDefaultOptions();
+
+      expect(worker.canWork(options)).toBe(true);
+    });
+  });
+
+  describe('when canWork is called with correct props for a public dashboard with public view', () => {
+    it('then it should return true', () => {
+      const options = getDefaultOptions();
+      options.dashboard.meta.publicDashboardAccessToken = 'accessTokenString';
 
       expect(worker.canWork(options)).toBe(true);
     });

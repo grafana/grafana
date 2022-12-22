@@ -1,11 +1,23 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { applyFieldOverrides, FieldConfigSource, getTimeZone, PanelData, PanelPlugin } from '@grafana/data';
-import { PanelRendererProps } from '@grafana/runtime';
-import { appEvents } from 'app/core/core';
-import { useAsync } from 'react-use';
-import { getPanelOptionsWithDefaults, OptionDefaults } from '../../dashboard/state/getPanelOptionsWithDefaults';
-import { importPanelPlugin } from '../../plugins/importPanelPlugin';
+import { usePrevious } from 'react-use';
+
+import {
+  applyFieldOverrides,
+  FieldConfigSource,
+  getTimeZone,
+  PanelData,
+  PanelPlugin,
+  compareArrayValues,
+  compareDataFrameStructures,
+  PluginContextProvider,
+  ScopedVars,
+} from '@grafana/data';
+import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
+import { appEvents } from 'app/core/core';
+
+import { getPanelOptionsWithDefaults, OptionDefaults } from '../../dashboard/state/getPanelOptionsWithDefaults';
+import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
 
 const defaultFieldConfig = { defaults: {}, overrides: [] };
 
@@ -20,27 +32,38 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
     title,
     onOptionsChange = () => {},
     onChangeTimeRange = () => {},
-    fieldConfig: externalFieldConfig = defaultFieldConfig,
+    onFieldConfigChange = () => {},
+    fieldConfig = defaultFieldConfig,
   } = props;
 
-  const [localFieldConfig, setFieldConfig] = useState(externalFieldConfig);
-  const { value: plugin, error, loading } = useAsync(() => importPanelPlugin(pluginId), [pluginId]);
-  const optionsWithDefaults = useOptionDefaults(plugin, options, localFieldConfig);
-  const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults, data, timeZone);
+  const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
+  const [error, setError] = useState<string | undefined>();
+  const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
+  const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults?.fieldConfig, data, timeZone);
 
   useEffect(() => {
-    setFieldConfig((lfc) => ({ ...lfc, ...externalFieldConfig }));
-  }, [externalFieldConfig]);
+    // If we already have a plugin and it's correct one do nothing
+    if (plugin && plugin.hasPluginId(pluginId)) {
+      return;
+    }
+
+    // Async load the plugin
+    importPanelPlugin(pluginId)
+      .then((result) => setPlugin(result))
+      .catch((err: Error) => {
+        setError(err.message);
+      });
+  }, [pluginId, plugin]);
 
   if (error) {
-    return <div>Failed to load plugin: {error.message}</div>;
+    return <div>Failed to load plugin: {error}</div>;
   }
 
-  if (pluginIsLoading(loading, plugin, pluginId)) {
+  if (!plugin || !plugin.hasPluginId(pluginId)) {
     return <div>Loading plugin panel...</div>;
   }
 
-  if (!plugin || !plugin.panel) {
+  if (!plugin.panel) {
     return <div>Seems like the plugin you are trying to load does not have a panel component.</div>;
   }
 
@@ -52,24 +75,26 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
 
   return (
     <ErrorBoundaryAlert dependencies={[plugin, data]}>
-      <PanelComponent
-        id={1}
-        data={dataWithOverrides}
-        title={title}
-        timeRange={dataWithOverrides.timeRange}
-        timeZone={timeZone}
-        options={optionsWithDefaults!.options}
-        fieldConfig={localFieldConfig}
-        transparent={false}
-        width={width}
-        height={height}
-        renderCounter={0}
-        replaceVariables={(str: string) => str}
-        onOptionsChange={onOptionsChange}
-        onFieldConfigChange={setFieldConfig}
-        onChangeTimeRange={onChangeTimeRange}
-        eventBus={appEvents}
-      />
+      <PluginContextProvider meta={plugin.meta}>
+        <PanelComponent
+          id={1}
+          data={dataWithOverrides}
+          title={title}
+          timeRange={dataWithOverrides.timeRange}
+          timeZone={timeZone}
+          options={optionsWithDefaults!.options}
+          fieldConfig={fieldConfig}
+          transparent={false}
+          width={width}
+          height={height}
+          renderCounter={0}
+          replaceVariables={(str: string) => str}
+          onOptionsChange={onOptionsChange}
+          onFieldConfigChange={onFieldConfigChange}
+          onChangeTimeRange={onChangeTimeRange}
+          eventBus={appEvents}
+        />
+      </PluginContextProvider>
     </ErrorBoundaryAlert>
   );
 }
@@ -93,39 +118,46 @@ function useOptionDefaults<P extends object = any, F extends object = any>(
   }, [plugin, fieldConfig, options]);
 }
 
-function useFieldOverrides(
+export function useFieldOverrides(
   plugin: PanelPlugin | undefined,
-  defaultOptions: OptionDefaults | undefined,
+  fieldConfig: FieldConfigSource | undefined,
   data: PanelData | undefined,
   timeZone: string
 ): PanelData | undefined {
-  const fieldConfig = defaultOptions?.fieldConfig;
-  const series = data?.series;
   const fieldConfigRegistry = plugin?.fieldConfigRegistry;
   const theme = useTheme2();
   const structureRev = useRef(0);
+  const prevSeries = usePrevious(data?.series);
 
   return useMemo(() => {
     if (!fieldConfigRegistry || !fieldConfig || !data) {
       return;
     }
-    structureRev.current = structureRev.current + 1;
+
+    const series = data?.series;
+
+    if (
+      data.structureRev == null &&
+      series &&
+      prevSeries &&
+      !compareArrayValues(series, prevSeries, compareDataFrameStructures)
+    ) {
+      structureRev.current++;
+    }
 
     return {
+      structureRev: structureRev.current,
       ...data,
       series: applyFieldOverrides({
         data: series,
         fieldConfig,
         fieldConfigRegistry,
-        replaceVariables: (str: string) => str,
+        replaceVariables: (str: string, scopedVars?: ScopedVars) => {
+          return getTemplateSrv().replace(str, scopedVars);
+        },
         theme,
         timeZone,
       }),
-      structureRev: structureRev.current,
     };
-  }, [fieldConfigRegistry, fieldConfig, data, series, timeZone, theme]);
-}
-
-function pluginIsLoading(loading: boolean, plugin: PanelPlugin<any, any> | undefined, pluginId: string) {
-  return loading || plugin?.meta.id !== pluginId;
+  }, [fieldConfigRegistry, fieldConfig, data, prevSeries, timeZone, theme]);
 }
