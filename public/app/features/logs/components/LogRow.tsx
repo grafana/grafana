@@ -44,19 +44,19 @@ interface Props extends Themeable2 {
   enableLogDetails: boolean;
   logsSortOrder?: LogsSortOrder | null;
   forceEscape?: boolean;
-  showDetectedFields?: string[];
+  displayedFields: string[];
   scrollElement?: HTMLDivElement;
   showRowMenu?: boolean;
   app?: CoreApp;
   getRows: () => LogRowModel[];
-  onClickFilterLabel?: (key: string, value: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickFilterLabel: (key: string, value: string) => void;
+  onClickFilterOutLabel: (key: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  onClickShowField?: (key: string) => void;
-  onClickHideField?: (key: string) => void;
+  onClickShowField: (key: string) => void;
+  onClickHideField: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   toggleContextIsOpen?: () => void;
 }
@@ -158,7 +158,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       showRowMenu,
       showLabels,
       showTime,
-      showDetectedFields,
+      displayedFields,
       wrapLogMessage,
       prettifyLogMessage,
       theme,
@@ -217,10 +217,10 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               <LogLabels labels={processedRow.uniqueLabels} />
             </td>
           )}
-          {showDetectedFields && showDetectedFields.length > 0 ? (
+          {displayedFields && displayedFields.length > 0 ? (
             <LogRowMessageDetectedFields
               row={processedRow}
-              showDetectedFields={showDetectedFields!}
+              showDetectedFields={displayedFields!}
               getFieldLinks={getFieldLinks}
               wrapLogMessage={wrapLogMessage}
             />
@@ -257,7 +257,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             row={processedRow}
             wrapLogMessage={wrapLogMessage}
             hasError={hasError}
-            showFields={showDetectedFields}
+            displayedFields={displayedFields}
             app={app}
           />
         )}

@@ -33,8 +33,8 @@ interface LogsContainerProps extends PropsFromRedux {
   syncedTimes: boolean;
   loadingState: LoadingState;
   scrollElement?: HTMLDivElement;
-  onClickFilterLabel?: (key: string, value: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickFilterLabel: (key: string, value: string) => void;
+  onClickFilterOutLabel: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
   eventBus: EventBus;

@@ -25,7 +25,7 @@ export interface Props extends Themeable2 {
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
-  showFields: string[];
+  displayedFields: string[];
   onClickShowField: (key: string) => void;
   onClickHideField: (key: string) => void;
 }
@@ -70,7 +70,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
       className,
       onClickShowField,
       onClickHideField,
-      showFields,
+      displayedFields: showFields,
       getFieldLinks,
       wrapLogMessage,
     } = this.props;

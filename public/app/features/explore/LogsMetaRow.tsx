@@ -22,7 +22,7 @@ export type Props = {
   meta: LogsMetaItem[];
   dedupStrategy: LogsDedupStrategy;
   dedupCount: number;
-  showDetectedFields: string[];
+  displayedFields: string[];
   hasUnescapedContent: boolean;
   forceEscape: boolean;
   logRows: LogRowModel[];
@@ -35,7 +35,7 @@ export const LogsMetaRow = React.memo(
     meta,
     dedupStrategy,
     dedupCount,
-    showDetectedFields,
+    displayedFields,
     clearDetectedFields,
     hasUnescapedContent,
     forceEscape,
@@ -68,11 +68,11 @@ export const LogsMetaRow = React.memo(
     }
 
     // Add detected fields info
-    if (showDetectedFields?.length > 0) {
+    if (displayedFields?.length > 0) {
       logsMetaItem.push(
         {
           label: 'Showing only detected fields',
-          value: renderMetaItem(showDetectedFields, LogsMetaKind.LabelsMap),
+          value: renderMetaItem(displayedFields, LogsMetaKind.LabelsMap),
         },
         {
           label: '',
