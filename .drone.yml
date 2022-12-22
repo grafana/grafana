@@ -530,6 +530,7 @@ steps:
       include:
       - pkg/tsdb/azuremonitor/**
       - public/app/plugins/datasource/grafana-azure-monitor-datasource/**
+      - e2e/cloud-plugins-suite/azure-monitor.spec.ts
     repo:
     - grafana/grafana
 - commands:
@@ -1369,6 +1370,7 @@ steps:
       include:
       - pkg/tsdb/azuremonitor/**
       - public/app/plugins/datasource/grafana-azure-monitor-datasource/**
+      - e2e/cloud-plugins-suite/azure-monitor.spec.ts
     repo:
     - grafana/grafana
 - commands:
@@ -5634,6 +5636,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: c2c81ccb90eff41fcf2929631f42c7d81d1d6b9965a39320be9f6da55128d2dd
+hmac: 084dec78e28944e2273112134abb20eca32c94fa3bcc97687a7a6646b44cb602
 
 ...
