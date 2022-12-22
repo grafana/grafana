@@ -7,6 +7,11 @@ import { useStyles2, useTheme2 } from '../../themes';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { IconButton } from '../IconButton/IconButton';
 
+interface Dimensions {
+  itemWidth?: number;
+  itemHeight?: number;
+}
+
 /**
  * @internal
  */
@@ -16,7 +21,7 @@ export interface PanelChromeProps {
   children: (innerWidth: number, innerHeight: number) => ReactNode;
   padding?: PanelPadding;
   title?: string;
-  titleItems?: (innerWidth: number, innerHeight: number) => ReactNode;
+  titleItems?: ({ itemWidth, itemHeight }: Dimensions) => ReactNode;
   menu?: React.ReactElement;
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
   // dragClass?: string;
@@ -82,7 +87,9 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
             </div>
           )}
 
-          <div data-testid="title-items">{titleItems(innerWidth, innerHeight)}</div>
+          <div data-testid="title-items">
+            {titleItems({ itemHeight: theme.spacing.gridSize * theme.components.panel.headerHeight })}
+          </div>
 
           {menu && (
             <Dropdown overlay={menu} placement="bottom">

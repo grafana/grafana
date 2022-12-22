@@ -7,26 +7,24 @@ import { Button, Dropdown, IconButton, Menu } from '@grafana/ui';
 import { PanelHeaderNotices } from './PanelHeaderNotices';
 
 export interface Props {
-  innerHeight: number;
-  innerWidth: number;
-  panelDescription?: string;
-  alertState?: string;
-  scopedVars?: ScopedVars;
-  replaceVariables: (value: string, extraVars: ScopedVars | undefined, format?: string | Function) => string;
-  links?: LinkModelSupplier<PanelModel>;
-  data: PanelData;
   panelId: number;
+  data: PanelData;
+  panelDescription?: string;
+  links?: LinkModelSupplier<PanelModel>;
+  replaceVariables: (value: string, extraVars: ScopedVars | undefined, format?: string | Function) => string;
+  scopedVars?: ScopedVars;
+  alertState?: string;
+  itemHeight?: number;
+  itemWidth?: number;
 }
 
 export function PanelHeaderTitleItems(props: Props) {
-  // description
   const { panelDescription, alertState, scopedVars, links, replaceVariables, data, panelId } = props;
+
+  // description
   const rawDescription = panelDescription || '';
   const descriptionMarkdown = getTemplateSrv().replace(rawDescription, scopedVars);
   const description = renderMarkdown(descriptionMarkdown);
-
-  // panel links
-  const panelLinks = links && links.getLinks(replaceVariables);
 
   const getDescriptionContent = (): JSX.Element => {
     return (
@@ -35,6 +33,11 @@ export function PanelHeaderTitleItems(props: Props) {
       </div>
     );
   };
+
+  const descriptionItem = <IconButton name="info-circle" tooltip={getDescriptionContent} />;
+
+  // panel links
+  const panelLinks = links && links.getLinks(replaceVariables);
 
   const getLinksContent = (): JSX.Element => {
     return (
@@ -46,8 +49,13 @@ export function PanelHeaderTitleItems(props: Props) {
     );
   };
 
-  const descriptionItem = <IconButton name="info-circle" tooltip={getDescriptionContent} />;
+  const linksItem = (
+    <Dropdown overlay={getLinksContent}>
+      <Button icon="external-link-alt" aria-label="panel links" variant="secondary" />
+    </Dropdown>
+  );
 
+  // panel health
   const alertStateItem = (
     <IconButton
       name={alertState === 'alerting' ? 'heart-break' : 'heart'}
@@ -58,12 +66,7 @@ export function PanelHeaderTitleItems(props: Props) {
     />
   );
 
-  const linksItem = (
-    <Dropdown overlay={getLinksContent}>
-      <Button icon="external-link-alt" aria-label="panel links" variant="secondary" />
-    </Dropdown>
-  );
-
+  // panel time range
   const timeshift = (
     <>
       <IconButton name="clock-nine" size="sm" />

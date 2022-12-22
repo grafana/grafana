@@ -591,19 +591,19 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
     ];
 
-    const titleItems = (innerWidth: number, innerHeight: number) => {
+    const titleItems = ({ itemWidth, itemHeight }: { itemWidth?: number; itemHeight?: number }) => {
       return (
         <PanelHeaderTitleItems
           key="title-items"
-          innerHeight={innerHeight}
-          innerWidth={innerWidth}
+          panelId={panel.id}
           panelDescription={panel.description}
           links={getPanelLinksSupplier(panel)}
-          scopedVars={panel.scopedVars}
           replaceVariables={panel.replaceVariables}
+          scopedVars={panel.scopedVars}
           alertState={alertState}
           data={data}
-          panelId={panel.id}
+          itemHeight={itemHeight}
+          itemWidth={itemWidth}
         />
       );
     };
