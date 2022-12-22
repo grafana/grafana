@@ -32,9 +32,9 @@ func TestURLConstructor_StringURLFor(t *testing.T) {
 
 func TestCDNBaseURL(t *testing.T) {
 	type tc struct {
-		name     string
-		input    string
-		exp      string
+		name  string
+		input string
+		exp   string
 	}
 	for _, c := range []tc{
 		{
