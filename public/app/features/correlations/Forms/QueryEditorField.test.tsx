@@ -88,6 +88,15 @@ describe('QueryEditorField', () => {
 
     await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
 
+    // Empty query value should result in  failed validation
+    fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
+
+    await waitFor(() => {
+      const alertEl = screen.getByRole('alert');
+      expect(alertEl).toBeInTheDocument();
+      expect(alertEl).toHaveTextContent(/this query is not valid/i);
+    });
+
     // Request errors should result in failed validation
     dsApi.error = 'Some error';
     fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
@@ -98,7 +107,7 @@ describe('QueryEditorField', () => {
     });
     dsApi.error = null;
 
-    // results with LoadingState.Done and data should be valid
+    // Results with LoadingState.Done and data should be valid
     dsApi.result = {
       data: [
         {
@@ -115,7 +124,7 @@ describe('QueryEditorField', () => {
       expect(screen.getByText('This query is valid.')).toBeInTheDocument();
     });
 
-    // results with error should be invalid with no data available
+    // Results with error should be invalid with no data available
     dsApi.result = {
       data: [],
       state: LoadingState.Error,
@@ -127,7 +136,7 @@ describe('QueryEditorField', () => {
       expect(alertEl).toHaveTextContent(/this query is not valid/i);
     });
 
-    // results with error should be invalid with data available
+    // Results with error should be invalid with data available
     dsApi.result = {
       data: [
         {
