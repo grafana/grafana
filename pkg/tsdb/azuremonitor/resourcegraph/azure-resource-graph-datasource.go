@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/util"
 )
 
 // AzureResourceGraphResponse is the json response object from the Azure Resource Graph Analytics API.
@@ -178,10 +179,13 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 	tracer.Inject(ctx, req.Header, span)
 
 	logger.Debug("AzureResourceGraph", "Request ApiURL", req.URL.String())
+	start := time.Now()
 	res, err := client.Do(req)
+	elapsed := time.Since(start)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
+	util.LogDataQuery(logger, "azure resource graph query", elapsed, dsInfo, ctx, req, res)
 
 	argResponse, err := e.unmarshalResponse(logger, res)
 	if err != nil {

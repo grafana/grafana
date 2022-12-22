@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/util"
 )
 
 // AzureLogAnalyticsDatasource calls the Azure Log Analytics API's
@@ -171,10 +172,16 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 	tracer.Inject(ctx, req.Header, span)
 
 	logger.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
+
+	start := time.Now()
 	res, err := client.Do(req)
+	elapsed := time.Since(start)
+
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
+
+	util.LogDataQuery(logger, "azure log analytics query", elapsed, dsInfo, ctx, req, res)
 
 	logResponse, err := e.unmarshalResponse(logger, res)
 	if err != nil {

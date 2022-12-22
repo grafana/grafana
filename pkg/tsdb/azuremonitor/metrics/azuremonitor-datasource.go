@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/resourcegraph"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/util"
 )
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
@@ -227,11 +228,16 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 
 	logger.Debug("AzureMonitor", "Request ApiURL", req.URL.String())
 	logger.Debug("AzureMonitor", "Target", query.Target)
+
+	start := time.Now()
 	res, err := cli.Do(req)
+	elapsed := time.Since(start)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
 	}
+	util.LogDataQuery(logger, "azuremonitor metrics query", elapsed, dsInfo, ctx, req, res)
+
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			logger.Warn("Failed to close response body", "err", err)

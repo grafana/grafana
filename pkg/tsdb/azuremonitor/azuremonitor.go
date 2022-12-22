@@ -199,6 +199,8 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 			if !ok {
 				return nil, fmt.Errorf("missing service for %s", dst)
 			}
+
+			ctx = context.WithValue(ctx, backend.User{}, req.PluginContext.User)
 			return executor.ExecuteTimeSeriesQuery(ctx, logger, req.Queries, dsInfo, service.HTTPClient, service.URL, s.tracer)
 		})
 	}
