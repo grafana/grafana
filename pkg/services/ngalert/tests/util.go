@@ -79,7 +79,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := db.InitTestDB(tb)
-	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(sqlStore))
+	secretsService := secretsManager.SetupTestService(tb, database.ProvideSecretsStore(sqlStore, sqlStore.Bus()))
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := databasestore.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 	require.NoError(tb, err)
