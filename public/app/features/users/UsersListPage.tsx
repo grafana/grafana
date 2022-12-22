@@ -12,7 +12,7 @@ import { fetchInvitees } from '../invites/state/actions';
 import { selectInvitesMatchingQuery } from '../invites/state/selectors';
 
 import { UsersActionBar } from './UsersActionBar';
-import UsersTable from './UsersTable';
+import { UsersTable } from './UsersTable';
 import { loadUsers, removeUser, updateUser, changePage } from './state/actions';
 import { getUsers, getUsersSearchQuery } from './state/selectors';
 

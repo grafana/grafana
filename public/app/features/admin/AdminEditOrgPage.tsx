@@ -11,7 +11,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { OrgUser, AccessControlAction } from 'app/types';
 
-import UsersTable from '../users/UsersTable';
+import { UsersTable } from '../users/UsersTable';
 
 interface OrgNameDTO {
   orgName: string;
