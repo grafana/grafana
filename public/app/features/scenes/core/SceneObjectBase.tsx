@@ -142,6 +142,13 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
   public activate() {
     this._isActive = true;
 
+    if (this.state.cacheKey) {
+      const cached = getSceneObjectsCache().get(this.state.cacheKey);
+      if (cached) {
+        this._state = { ...this.state, ...cached };
+      }
+    }
+
     const { $data, $variables } = this.state;
 
     if ($data && !$data.isActive) {
@@ -176,9 +183,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
 
     this._subject.complete();
     this._subject = new Subject<TState>();
-
-    // Save state in cache
-    getSceneObjectsCache().set({ ...this.state });
   }
 
   /**

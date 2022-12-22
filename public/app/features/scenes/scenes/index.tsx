@@ -11,11 +11,12 @@ import { getQueryVariableDemo } from './queryVariableDemo';
 import { getSceneWithRows } from './sceneWithRows';
 import { getTransformationsDemo } from './transformations';
 import { getVariablesDemo, getVariablesDemoWithAll } from './variablesDemo';
-import { getCacheTest } from './cache';
+import { getCacheTest, getCacheDestinationTest } from './cacheSource';
 
 interface SceneDef {
   title: string;
   getScene: (standalone: boolean) => Scene;
+  hide?: boolean;
 }
 export function getScenes(): SceneDef[] {
   return [
@@ -32,7 +33,8 @@ export function getScenes(): SceneDef[] {
     { title: 'Variables with All values', getScene: getVariablesDemoWithAll },
     { title: 'Query variable', getScene: getQueryVariableDemo },
     { title: 'Transformations demo', getScene: getTransformationsDemo },
-    { title: 'Object state cache test', getScene: getCacheTest },
+    { title: 'Cache test', getScene: getCacheTest },
+    { title: 'Cache test destination', getScene: getCacheDestinationTest, hide: true },
   ];
 }
 

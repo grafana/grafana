@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createContext } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -42,20 +42,22 @@ function EmbeddedSceneRenderer({ model }: SceneComponentProps<Scene>) {
   const { layout, isEditing, subMenu } = model.useState();
 
   return (
-    <div
-      style={{
-        flexGrow: 1,
-        display: 'flex',
-        gap: '8px',
-        minHeight: '100%',
-        flexDirection: 'column',
-      }}
-    >
-      {subMenu && <subMenu.Component model={subMenu} />}
-      <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
-        <layout.Component model={layout} isEditing={isEditing} />
+    <SceneContext.Provider value={{ scene: model }}>
+      <div
+        style={{
+          flexGrow: 1,
+          display: 'flex',
+          gap: '8px',
+          minHeight: '100%',
+          flexDirection: 'column',
+        }}
+      >
+        {subMenu && <subMenu.Component model={subMenu} />}
+        <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
+          <layout.Component model={layout} isEditing={isEditing} />
+        </div>
       </div>
-    </div>
+    </SceneContext.Provider>
   );
 }
 
@@ -82,14 +84,22 @@ function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   );
 
   return (
-    <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Canvas} toolbar={pageToolbar}>
-      <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {subMenu && <subMenu.Component model={subMenu} />}
-        <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
-          <layout.Component model={layout} isEditing={isEditing} />
-          {$editor && <$editor.Component model={$editor} isEditing={isEditing} />}
+    <SceneContext.Provider value={{ scene: model }}>
+      <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Canvas} toolbar={pageToolbar}>
+        <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {subMenu && <subMenu.Component model={subMenu} />}
+          <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
+            <layout.Component model={layout} isEditing={isEditing} />
+            {$editor && <$editor.Component model={$editor} isEditing={isEditing} />}
+          </div>
         </div>
-      </div>
-    </Page>
+      </Page>
+    </SceneContext.Provider>
   );
 }
+
+export interface SceneContextType {
+  scene: Scene;
+}
+
+export const SceneContext = createContext<SceneContextType | undefined>(undefined);

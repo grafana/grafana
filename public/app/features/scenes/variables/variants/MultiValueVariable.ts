@@ -64,6 +64,11 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
     );
   }
 
+  public deactivate(): void {
+    super.deactivate();
+    // Reseting updates counter so we can utilize cache next time this object gets activated
+    this._updatesCounter = 0;
+  }
   /**
    * Check if current value is valid given new options. If not update the value.
    */

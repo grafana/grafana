@@ -25,19 +25,22 @@ export function SceneListPage({}: Props) {
         <Stack direction="column" gap={1}>
           <h5>Test scenes</h5>
           <Stack direction="column" gap={0}>
-            {scenes.map((scene) => (
-              <Card key={scene.title}>
-                <Card.Heading>{scene.title}</Card.Heading>
-                <Card.Actions>
-                  <LinkButton size="sm" href={`/scenes/${scene.title}`}>
-                    Open as standalone scene
-                  </LinkButton>
-                  <LinkButton size="sm" variant="secondary" href={`/scenes/embedded/${scene.title}`}>
-                    Open as embedded scene
-                  </LinkButton>
-                </Card.Actions>
-              </Card>
-            ))}
+            {scenes.map(
+              (scene) =>
+                !Boolean(scene.hide) && (
+                  <Card key={scene.title}>
+                    <Card.Heading>{scene.title}</Card.Heading>
+                    <Card.Actions>
+                      <LinkButton size="sm" href={`/scenes/${scene.title}`}>
+                        Open as standalone scene
+                      </LinkButton>
+                      <LinkButton size="sm" variant="secondary" href={`/scenes/embedded/${scene.title}`}>
+                        Open as embedded scene
+                      </LinkButton>
+                    </Card.Actions>
+                  </Card>
+                )
+            )}
           </Stack>
           {results.value && (
             <>
