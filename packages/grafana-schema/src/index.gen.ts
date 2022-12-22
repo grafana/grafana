@@ -37,6 +37,7 @@ export type {
 export {
   defaultAnnotationTarget,
   defaultAnnotationQuery,
+  VariableHide,
   LoadingState,
   defaultDashboardLink,
   FieldColorModeId,
@@ -80,7 +81,6 @@ export type {
 export {
   defaultDashboard,
   defaultVariableModel,
-  VariableHide,
   defaultPanel,
   defaultFieldConfigSource,
   defaultFieldConfig

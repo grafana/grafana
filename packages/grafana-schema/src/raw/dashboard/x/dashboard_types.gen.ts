@@ -101,9 +101,6 @@ export const defaultVariableModel: Partial<VariableModel> = {
   skipUrlSync: false,
 };
 
-/**
- * TODO: There is a bug generating the names, they are always title case
- */
 export enum VariableHide {
   dontHide = 0,
   hideLabel = 1,

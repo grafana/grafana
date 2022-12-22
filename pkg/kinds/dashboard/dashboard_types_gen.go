@@ -635,7 +635,7 @@ type ValueMappingResult struct {
 	Text  *string `json:"text,omitempty"`
 }
 
-// TODO: There is a bug generating the names, they are always title case
+// VariableHide defines model for VariableHide.
 type VariableHide int
 
 // FROM: packages/grafana-data/src/types/templateVars.ts
@@ -648,13 +648,11 @@ type VariableModel struct {
 	Description *string                 `json:"description,omitempty"`
 	Error       *map[string]interface{} `json:"error,omitempty"`
 	Global      bool                    `json:"global"`
-
-	// TODO: There is a bug generating the names, they are always title case
-	Hide  VariableHide `json:"hide"`
-	Id    string       `json:"id"`
-	Index int          `json:"index"`
-	Label *string      `json:"label,omitempty"`
-	Name  string       `json:"name"`
+	Hide        VariableHide            `json:"hide"`
+	Id          string                  `json:"id"`
+	Index       int                     `json:"index"`
+	Label       *string                 `json:"label,omitempty"`
+	Name        string                  `json:"name"`
 
 	// TODO: Move this into a separated QueryVariableModel type
 	Query        *interface{} `json:"query,omitempty"`

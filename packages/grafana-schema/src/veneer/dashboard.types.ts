@@ -11,7 +11,7 @@ export interface VariableModel
   rootStateKey: string | null;
   error: any | null;
   description: string | null;
-  hide: VariableHide;
+  hide: raw.VariableHide;
   datasource: raw.DataSourceRef | null;
 }
 
@@ -36,7 +36,7 @@ export const defaultVariableModel = {
   rootStateKey: null,
   error: null,
   description: null,
-  hide: VariableHide.dontHide,
+  hide: raw.VariableHide.dontHide,
   state: raw.LoadingState.NotStarted,
   datasource: null,
 } as VariableModel;
