@@ -6,7 +6,8 @@ import { openMenu } from 'react-select-event';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
-import { createMockMetricQuery } from '../__mocks__/cloudMonitoringQuery';
+import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
+import { createMockTimeSeriesList } from '../__mocks__/cloudMonitoringQuery';
 import { MetricKind, ValueTypes } from '../types';
 
 import { Alignment } from './Alignment';
@@ -19,7 +20,7 @@ jest.mock('@grafana/runtime', () => ({
 describe('Alignment', () => {
   it('renders alignment fields', () => {
     const datasource = createMockDatasource();
-    const query = createMockMetricQuery();
+    const query = createMockTimeSeriesList();
     const onChange = jest.fn();
 
     render(
@@ -39,7 +40,7 @@ describe('Alignment', () => {
 
   it('can set the alignment function', async () => {
     const datasource = createMockDatasource();
-    const query = createMockMetricQuery({ metricKind: MetricKind.GAUGE, valueType: ValueTypes.INT64 });
+    const query = createMockTimeSeriesList();
     const onChange = jest.fn();
 
     render(
@@ -50,6 +51,7 @@ describe('Alignment', () => {
         query={query}
         onChange={onChange}
         templateVariableOptions={[]}
+        metricDescriptor={createMockMetricDescriptor({ metricKind: MetricKind.GAUGE, valueType: ValueTypes.INT64 })}
       />
     );
 
@@ -61,7 +63,7 @@ describe('Alignment', () => {
 
   it('can set the alignment period', async () => {
     const datasource = createMockDatasource();
-    const query = createMockMetricQuery();
+    const query = createMockTimeSeriesList();
     const onChange = jest.fn();
 
     render(
