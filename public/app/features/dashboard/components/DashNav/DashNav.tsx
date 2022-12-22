@@ -322,10 +322,6 @@ export const DashNav = React.memo<Props>((props) => {
       return [renderPlaylistControls(), renderTimeControls()];
     }
 
-    if (props.isPublic && !!props.dashboard.meta.publicDashboardTimeSelectionEnabled) {
-      return [renderTimeControls()];
-    }
-
     if (kioskMode === KioskMode.TV) {
       return [renderTimeControls(), tvButton];
     }
@@ -385,7 +381,9 @@ export const DashNav = React.memo<Props>((props) => {
     addCustomContent(customRightActions, buttons);
 
     buttons.push(renderTimeControls());
-    buttons.push(tvButton);
+    if (!props.isPublic) {
+      buttons.push(tvButton);
+    }
 
     if (config.featureToggles.scenes) {
       buttons.push(

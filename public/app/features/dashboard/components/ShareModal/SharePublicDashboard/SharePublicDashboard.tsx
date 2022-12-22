@@ -65,17 +65,13 @@ export const SharePublicDashboard = (props: Props) => {
 
   const dashboardVariables = props.dashboard.getVariables();
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
-  const { hasPublicDashboard } = props.dashboard.meta;
 
   const {
     isLoading: isGetLoading,
     data: publicDashboard,
     isError: isGetError,
     isFetching,
-  } = useGetPublicDashboardQuery(props.dashboard.uid, {
-    // if we don't have a public dashboard, don't try to load public dashboard
-    skip: !hasPublicDashboard,
-  });
+  } = useGetPublicDashboardQuery(props.dashboard.uid);
 
   const {
     reset,
@@ -159,7 +155,7 @@ export const SharePublicDashboard = (props: Props) => {
     };
 
     // create or update based on whether we have existing uid
-    hasPublicDashboard ? updatePublicDashboard(req) : createPublicDashboard(req);
+    !!publicDashboard ? updatePublicDashboard(req) : createPublicDashboard(req);
   };
 
   const onDismissDelete = () => {
@@ -264,7 +260,7 @@ export const SharePublicDashboard = (props: Props) => {
             <HorizontalGroup>
               <Layout orientation={isDesktop ? 0 : 1}>
                 <Button type="submit" disabled={isSaveDisabled} data-testid={selectors.SaveConfigButton}>
-                  {hasPublicDashboard ? 'Save public dashboard' : 'Create public dashboard'}
+                  {!!publicDashboard ? 'Save public dashboard' : 'Create public dashboard'}
                 </Button>
                 {publicDashboard && hasWritePermissions && (
                   <DeletePublicDashboardButton

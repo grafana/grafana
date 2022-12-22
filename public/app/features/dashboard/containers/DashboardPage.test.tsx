@@ -326,7 +326,7 @@ describe('DashboardPage', () => {
       locationService.partial({ kiosk: false });
       ctx.mount({
         queryParams: {},
-        dashboard: getTestDashboard(),
+        dashboard: getTestDashboard({ timepicker: { hidden: true } }),
       });
       ctx.rerender({ dashboard: ctx.dashboard, isPublic: true });
     });
@@ -341,7 +341,7 @@ describe('DashboardPage', () => {
       locationService.partial({ kiosk: false });
       ctx.mount({
         queryParams: {},
-        dashboard: getTestDashboard(null, { publicDashboardTimeSelectionEnabled: true }),
+        dashboard: getTestDashboard({ timepicker: { hidden: false } }),
       });
       ctx.rerender({ dashboard: ctx.dashboard, isPublic: true });
     });
