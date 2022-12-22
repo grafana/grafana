@@ -155,7 +155,7 @@ export function PanelChrome({
         {isUsingDeprecatedLeftItems ? (
           <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>
         ) : (
-          dataStateNode
+          <div className={styles.errorContainer}>{dataStateNode}</div>
         )}
       </div>
 
@@ -264,6 +264,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     menuItem: css({
       visibility: 'hidden',
+    }),
+    errorContainer: css({
+      label: 'error-container',
+      position: 'absolute',
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     }),
     rightAligned: css({
       marginLeft: 'auto',
