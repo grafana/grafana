@@ -367,6 +367,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/admin/storage/export',
+      roles: () => ['Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ExportPage" */ 'app/features/storage/ExportPage')
+      ),
+    },
+    {
       path: '/admin/storage/:path*',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
@@ -507,6 +514,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getBrowseStorageRoutes(),
     ...getDynamicDashboardRoutes(),
     ...getPluginCatalogRoutes(),
+    ...getSupportBundleRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
     ...getProfileRoutes(),
@@ -540,6 +548,28 @@ export function getBrowseStorageRoutes(cfg = config): RouteDescriptor[] {
       path: '/g/:slug*',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "StorageFolderPage" */ '../features/storage/StorageFolderPage')
+      ),
+    },
+  ];
+}
+
+export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
+  if (!cfg.featureToggles.supportBundles) {
+    return [];
+  }
+
+  return [
+    {
+      path: '/admin/support-bundles',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SupportBundles" */ 'app/features/support-bundles/SupportBundles')
+      ),
+    },
+    {
+      path: '/admin/support-bundles/create',
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "ServiceAccountCreatePage" */ 'app/features/support-bundles/SupportBundlesCreate')
       ),
     },
   ];

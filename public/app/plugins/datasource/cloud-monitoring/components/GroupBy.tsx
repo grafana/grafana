@@ -6,7 +6,7 @@ import { MultiSelect } from '@grafana/ui';
 
 import { SYSTEM_LABELS } from '../constants';
 import { labelsToGroupedOptions } from '../functions';
-import { MetricDescriptor, MetricQuery } from '../types';
+import { MetricDescriptor, TimeSeriesList } from '../types';
 
 import { Aggregation } from './Aggregation';
 
@@ -15,8 +15,8 @@ export interface Props {
   variableOptionGroup: SelectableValue<string>;
   labels: string[];
   metricDescriptor?: MetricDescriptor;
-  onChange: (query: MetricQuery) => void;
-  query: MetricQuery;
+  onChange: (query: TimeSeriesList) => void;
+  query: TimeSeriesList;
 }
 
 export const GroupBy: FunctionComponent<Props> = ({

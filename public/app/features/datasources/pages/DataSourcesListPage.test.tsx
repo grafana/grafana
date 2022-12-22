@@ -49,10 +49,10 @@ describe('Render', () => {
     expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Add new data source' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Add data source' })).toBeInTheDocument();
   });
 
-  it('should not render "Add new data source" button if user has no permissions', async () => {
+  it('should disable the "Add data source" button if user has no permissions', async () => {
     (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(false);
     setup({ isSortAscending: true });
 
@@ -60,7 +60,7 @@ describe('Render', () => {
     expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Add new data source' })).toBeNull();
+    expect(await screen.findByRole('link', { name: 'Add data source' })).toHaveStyle('pointer-events: none');
   });
 
   it('should render action bar and datasources', async () => {

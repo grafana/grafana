@@ -19,10 +19,13 @@ const (
 	PermissionN4 Permission = 4
 )
 
+// Permission defines model for Permission.
+type Permission int
+
 // Team defines model for team.
 type Team struct {
 	// AccessControl metadata associated with a given resource.
-	AccessControl map[string]interface{} `json:"accessControl"`
+	AccessControl map[string]bool `json:"accessControl"`
 
 	// AvatarUrl is the team's avatar URL.
 	AvatarUrl *string `json:"avatarUrl,omitempty"`
@@ -40,14 +43,9 @@ type Team struct {
 	Name string `json:"name"`
 
 	// OrgId is the ID of an organisation the team belongs to.
-	OrgId int64 `json:"orgId"`
-
-	// TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
+	OrgId      int64      `json:"orgId"`
 	Permission Permission `json:"permission"`
 
 	// Updated indicates when the team was updated.
 	Updated int64 `json:"updated"`
 }
-
-// TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
-type Permission int

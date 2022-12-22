@@ -7,37 +7,42 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
 const defaultDingdingMsgType = "link"
 
 type dingDingSettings struct {
-	URL         string
-	MessageType string
-	Title       string
-	Message     string
+	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
+	MessageType string `json:"msgType,omitempty" yaml:"msgType,omitempty"`
+	Title       string `json:"title,omitempty" yaml:"title,omitempty"`
+	Message     string `json:"message,omitempty" yaml:"message,omitempty"`
 }
 
-func buildDingDingSettings(fc FactoryConfig) (*dingDingSettings, error) {
-	URL := fc.Config.Settings.Get("url").MustString()
-	if URL == "" {
+func buildDingDingSettings(fc channels.FactoryConfig) (*dingDingSettings, error) {
+	var settings dingDingSettings
+	err := json.Unmarshal(fc.Config.Settings, &settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal settings: %w", err)
+	}
+	if settings.URL == "" {
 		return nil, errors.New("could not find url property in settings")
 	}
-	return &dingDingSettings{
-		URL:         URL,
-		MessageType: fc.Config.Settings.Get("msgType").MustString(defaultDingdingMsgType),
-		Title:       fc.Config.Settings.Get("title").MustString(DefaultMessageTitleEmbed),
-		Message:     fc.Config.Settings.Get("message").MustString(DefaultMessageEmbed),
-	}, nil
+	if settings.MessageType == "" {
+		settings.MessageType = defaultDingdingMsgType
+	}
+	if settings.Title == "" {
+		settings.Title = channels.DefaultMessageTitleEmbed
+	}
+	if settings.Message == "" {
+		settings.Message = channels.DefaultMessageEmbed
+	}
+	return &settings, nil
 }
 
-func DingDingFactory(fc FactoryConfig) (NotificationChannel, error) {
+func DingDingFactory(fc channels.FactoryConfig) (channels.NotificationChannel, error) {
 	n, err := newDingDingNotifier(fc)
 	if err != nil {
 		return nil, receiverInitError{
@@ -49,20 +54,14 @@ func DingDingFactory(fc FactoryConfig) (NotificationChannel, error) {
 }
 
 // newDingDingNotifier is the constructor for the Dingding notifier
-func newDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
+func newDingDingNotifier(fc channels.FactoryConfig) (*DingDingNotifier, error) {
 	settings, err := buildDingDingSettings(fc)
 	if err != nil {
 		return nil, err
 	}
 	return &DingDingNotifier{
-		Base: NewBase(&models.AlertNotification{
-			Uid:                   fc.Config.UID,
-			Name:                  fc.Config.Name,
-			Type:                  fc.Config.Type,
-			DisableResolveMessage: fc.Config.DisableResolveMessage,
-			Settings:              fc.Config.Settings,
-		}),
-		log:      log.New("alerting.notifier.dingding"),
+		Base:     channels.NewBase(fc.Config),
+		log:      fc.Logger,
 		ns:       fc.NotificationService,
 		tmpl:     fc.Template,
 		settings: *settings,
@@ -71,9 +70,9 @@ func newDingDingNotifier(fc FactoryConfig) (*DingDingNotifier, error) {
 
 // DingDingNotifier is responsible for sending alert notifications to ding ding.
 type DingDingNotifier struct {
-	*Base
-	log      log.Logger
-	ns       notifications.WebhookSender
+	*channels.Base
+	log      channels.Logger
+	ns       channels.WebhookSender
 	tmpl     *template.Template
 	settings dingDingSettings
 }
@@ -85,7 +84,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	msgUrl := buildDingDingURL(dd)
 
 	var tmplErr error
-	tmpl, _ := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
+	tmpl, _ := channels.TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
 
 	message := tmpl(dd.settings.Message)
 	title := tmpl(dd.settings.Title)
@@ -107,9 +106,9 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		u = dd.settings.URL
 	}
 
-	cmd := &models.SendWebhookSync{Url: u, Body: b}
+	cmd := &channels.SendWebhookSettings{URL: u, Body: b}
 
-	if err := dd.ns.SendWebhookSync(ctx, cmd); err != nil {
+	if err := dd.ns.SendWebhook(ctx, cmd); err != nil {
 		return false, fmt.Errorf("send notification to dingding: %w", err)
 	}
 

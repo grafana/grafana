@@ -23,6 +23,7 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
         type: 'ADD_JSON_PARSER',
         label: 'Selected log stream selector has JSON formatted logs.',
         fix: {
+          title: 'add json parser',
           label: 'Consider using JSON parser.',
           action: {
             type: 'ADD_JSON_PARSER',
@@ -37,6 +38,7 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
         type: 'ADD_LOGFMT_PARSER',
         label: 'Selected log stream selector has logfmt formatted logs.',
         fix: {
+          title: 'add logfmt parser',
           label: 'Consider using logfmt parser to turn key-value pairs in your log lines to labels.',
           action: {
             type: 'ADD_LOGFMT_PARSER',
@@ -57,6 +59,7 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
           type: 'ADD_NO_PIPELINE_ERROR',
           label: 'Some logs in your selected log streams have parsing error.',
           fix: {
+            title: 'remove pipeline errors',
             label: 'Consider filtering out logs with parsing errors.',
             action: {
               type: 'ADD_NO_PIPELINE_ERROR',
@@ -79,6 +82,7 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
         type: 'ADD_LEVEL_LABEL_FORMAT',
         label: `Some logs in your selected log stream have "${levelLikeLabel}" label.`,
         fix: {
+          title: 'add label level format',
           label: `If ${levelLikeLabel} label has level values, consider using label_format to rename it to "level". Level label can be then visualized in log volumes.`,
           action: {
             type: 'ADD_LEVEL_LABEL_FORMAT',

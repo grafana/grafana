@@ -3,7 +3,8 @@ import config from 'app/core/config';
 import * as actions from 'app/features/explore/state/main';
 import { setStore } from 'app/store/store';
 
-import { DashboardModel, PanelModel } from '../state';
+import { PanelModel } from '../state';
+import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { getPanelMenu } from './getPanelMenu';
 
@@ -16,7 +17,7 @@ jest.mock('app/core/services/context_srv', () => ({
 describe('getPanelMenu', () => {
   it('should return the correct panel menu items', () => {
     const panel = new PanelModel({});
-    const dashboard = new DashboardModel({});
+    const dashboard = createDashboardModelFixture({});
 
     const menuItems = getPanelMenu(dashboard, panel);
     expect(menuItems).toMatchInlineSnapshot(`
@@ -100,7 +101,7 @@ describe('getPanelMenu', () => {
       const scope: any = { $$childHead: { ctrl } };
       const angularComponent: any = { getScope: () => scope };
       const panel = new PanelModel({ isViewing: true });
-      const dashboard = new DashboardModel({});
+      const dashboard = createDashboardModelFixture({});
 
       const menuItems = getPanelMenu(dashboard, panel, angularComponent);
       expect(menuItems).toMatchInlineSnapshot(`
@@ -171,7 +172,7 @@ describe('getPanelMenu', () => {
 
     beforeAll(() => {
       const panel = new PanelModel({});
-      const dashboard = new DashboardModel({});
+      const dashboard = createDashboardModelFixture({});
       const menuItems = getPanelMenu(dashboard, panel);
       explore = menuItems.find((item) => item.text === 'Explore') as PanelMenuItem;
       navigateSpy = jest.spyOn(actions, 'navigateToExplore');

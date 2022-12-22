@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/gobwas/glob"
@@ -53,6 +54,8 @@ N1c5v9v/4h6qeA==
 =DNbR
 -----END PGP PUBLIC KEY BLOCK-----
 `
+
+var runningWindows = runtime.GOOS == "windows"
 
 // pluginManifest holds details for the file manifest
 type pluginManifest struct {
@@ -262,6 +265,11 @@ func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) 
 
 		// skip directories and MANIFEST.txt
 		if info.IsDir() || info.Name() == "MANIFEST.txt" {
+			return nil
+		}
+
+		// Ignoring unsigned Chromium debug.log so it doesn't invalidate the signature for Renderer plugin running on Windows
+		if runningWindows && plugin.IsRenderer() && strings.HasSuffix(path, filepath.Join("chrome-win", "debug.log")) {
 			return nil
 		}
 

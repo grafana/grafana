@@ -21,6 +21,9 @@ lineage: seqs: [
 				// Description of dashboard.
 				description?: string
 
+				// Version of the current dashboard data
+				revision: int64 | *-1 @grafanamaturity(NeedsExpertReview)
+
 				gnetId?: string @grafanamaturity(NeedsExpertReview)
 				// Tags associated with dashboard.
 				tags?: [...string] @grafanamaturity(NeedsExpertReview)
@@ -69,14 +72,16 @@ lineage: seqs: [
 				panels?: [...(#Panel | #RowPanel | #GraphPanel | #HeatmapPanel)] @grafanamaturity(NeedsExpertReview)
 				// TODO docs
 				templating?: {
-					list: [...#VariableModel] @grafanamaturity(NeedsExpertReview)
+					list?: [...#VariableModel] @grafanamaturity(NeedsExpertReview)
 				}
 				// TODO docs
 				annotations?: {
-					list: [...#AnnotationQuery] @grafanamaturity(NeedsExpertReview)
+					list?: [...#AnnotationQuery] @grafanamaturity(NeedsExpertReview)
 				}
 				// TODO docs
 				links?: [...#DashboardLink] @grafanamaturity(NeedsExpertReview)
+
+				snapshot?: #Snapshot @grafanamaturity(NeedsExpertReview)
 
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below
@@ -119,20 +124,43 @@ lineage: seqs: [
 				// TODO what about what's in public/app/features/types.ts?
 				// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
 				#VariableModel: {
-					type:   #VariableType
-					name:   string
-					label?: string
+					id:            string | *"00000000-0000-0000-0000-000000000000"
+					type:          #VariableType
+					name:          string
+					label?:        string
+					rootStateKey?: string
+					global:        bool | *false
+					hide:          #VariableHide
+					skipUrlSync:   bool | *false
+					index:         int32 | *-1
+					state:         #LoadingState
+					error?: {...}
+					description?: string
+					// TODO: Move this into a separated QueryVariableModel type
+					query?:      string | {...}
+					datasource?: #DataSourceRef
 					...
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+				#VariableHide: 0 | 1 | 2                                                 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+				#LoadingState: "NotStarted" | "Loading" | "Streaming" | "Done" | "Error" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
+
+				// Ref to a DataSource instance
+				#DataSourceRef: {
+					// The plugin type-id
+					type?: string @grafanamaturity(NeedsExpertReview)
+
+					// Specific datasource instance
+					uid?: string @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 				// FROM public/app/features/dashboard/state/DashboardModels.ts - ish
 				// TODO docs
 				#DashboardLink: {
-					title:    string             @grafanamaturity(NeedsExpertReview)
-					type:     #DashboardLinkType @grafanamaturity(NeedsExpertReview)
-					icon?:    string             @grafanamaturity(NeedsExpertReview)
-					tooltip?: string             @grafanamaturity(NeedsExpertReview)
-					url?:     string             @grafanamaturity(NeedsExpertReview)
+					title:   string             @grafanamaturity(NeedsExpertReview)
+					type:    #DashboardLinkType @grafanamaturity(NeedsExpertReview)
+					icon:    string             @grafanamaturity(NeedsExpertReview)
+					tooltip: string             @grafanamaturity(NeedsExpertReview)
+					url:     string             @grafanamaturity(NeedsExpertReview)
 					tags: [...string] @grafanamaturity(NeedsExpertReview)
 					asDropdown:  bool | *false @grafanamaturity(NeedsExpertReview)
 					targetBlank: bool | *false @grafanamaturity(NeedsExpertReview)
@@ -273,6 +301,32 @@ lineage: seqs: [
 				// type directly to achieve the same effect.
 				#Target: {...} @grafanamaturity(NeedsExpertReview)
 
+				// TODO docs
+				#Snapshot: {
+					// TODO docs
+					created: string @grafanamaturity(NeedsExpertReview)
+					// TODO docs
+					expires: string @grafanamaturity(NeedsExpertReview)
+					// TODO docs
+					external: bool @grafanamaturity(NeedsExpertReview)
+					// TODO docs
+					externalUrl: string @grafanamaturity(NeedsExpertReview)
+					// TODO docs
+					id: uint32 @grafanamaturity(NeedsExpertReview)
+					// TODO docs
+					key: string @grafanamaturity(NeedsExpertReview)
+					// TODO docs
+					name: string @grafanamaturity(NeedsExpertReview)
+					// TODO docs
+					orgId: uint32 @grafanamaturity(NeedsExpertReview)
+					// TODO docs
+					updated: string @grafanamaturity(NeedsExpertReview)
+					// TODO docs
+					url?: string @grafanamaturity(NeedsExpertReview)
+					// TODO docs
+					userId: uint32 @grafanamaturity(NeedsExpertReview)
+				} @grafanamaturity(NeedsExpertReview)
+
 				// Dashboard panels. Panels are canonically defined inline
 				// because they share a version timeline with the dashboard
 				// schema; they do not evolve independently.
@@ -313,7 +367,10 @@ lineage: seqs: [
 					repeat?: string @grafanamaturity(NeedsExpertReview)
 					// Direction to repeat in if 'repeat' is set.
 					// "h" for horizontal, "v" for vertical.
+					// TODO this is probably optional
 					repeatDirection: *"h" | "v" @grafanamaturity(NeedsExpertReview)
+					// Id of the repeating panel.
+					repeatPanelId?: int64 @grafanamaturity(NeedsExpertReview)
 
 					// TODO docs
 					maxDataPoints?: number @grafanamaturity(NeedsExpertReview)
@@ -441,12 +498,18 @@ lineage: seqs: [
 				// Support for legacy graph and heatmap panels.
 				#GraphPanel: {
 					type: "graph" @grafanamaturity(NeedsExpertReview)
+					// @deprecated this is part of deprecated graph panel
+					legend?: {
+						show:      bool | *true
+						sort?:     string
+						sortDesc?: bool
+					}
 					...
-				} @grafanamaturity(NeedsExpertReview)
+				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 				#HeatmapPanel: {
 					type: "heatmap" @grafanamaturity(NeedsExpertReview)
 					...
-				} @grafanamaturity(NeedsExpertReview)
+				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 			},
 		]
 	},

@@ -1,6 +1,6 @@
 package setting
 
-import "github.com/go-kit/kit/log/level"
+import "github.com/go-kit/log/level"
 
 type Sentry struct {
 	Enabled        bool    `json:"enabled"`
