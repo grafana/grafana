@@ -1,4 +1,5 @@
-import { cdnHost } from './constants';
+import { config } from '@grafana/runtime';
+
 import type { SystemJSLoad } from './types';
 
 export function extractPluginNameVersionFromUrl(address: string) {
@@ -10,12 +11,12 @@ export function extractPluginNameVersionFromUrl(address: string) {
 export function locateFromCDN(load: SystemJSLoad) {
   const { address } = load;
   const pluginPath = address.split('/public/plugin-cdn/');
-  return `${cdnHost}/${pluginPath[1]}`;
+  return `${config.pluginsCDNBaseURL}/${pluginPath[1]}`;
 }
 
 export function translateForCDN(load: SystemJSLoad) {
   const { name, version } = extractPluginNameVersionFromUrl(load.name);
-  const baseAddress = `${cdnHost}/${name}/${version}`;
+  const baseAddress = `${config.pluginsCDNBaseURL}/${name}/${version}`;
 
   load.source = load.source.replace(/(\/?)(public\/plugins)/g, `${baseAddress}/$2`);
   load.source = load.source.replace(/(["|'])(plugins\/.+.css)(["|'])/g, `$1${baseAddress}/public/$2$3`);

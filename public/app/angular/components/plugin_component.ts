@@ -7,21 +7,19 @@ import config from 'app/core/config';
 
 import { importPanelPlugin } from '../../features/plugins/importPanelPlugin';
 import { importDataSourcePlugin, importAppPlugin } from '../../features/plugins/plugin_loader';
-import { cdnHost } from '../../features/plugins/systemjsPlugins/constants';
 
-// ⚠️ Plugin cdn poc! ⚠️
 export function relativeTemplateUrlToCDN(templateUrl: string, baseUrl: string) {
   if (!templateUrl) {
     return undefined;
   }
 
   // the templateUrl may have already been updated with the hostname
-  if (templateUrl.startsWith(cdnHost)) {
+  if (templateUrl.startsWith(config.pluginsCDNBaseURL)) {
     return templateUrl;
   }
 
-  // use the 'plugin-cdn' key to load via cdnHost.
-  return `${baseUrl.replace('plugin-cdn/', `${cdnHost}/`)}/${templateUrl}`;
+  // use the 'plugin-cdn' key to load via cdn
+  return `${baseUrl.replace('plugin-cdn/', `${config.pluginsCDNBaseURL}/`)}/${templateUrl}`;
 }
 
 /** @ngInject */

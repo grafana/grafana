@@ -1,6 +1,7 @@
 import { noop } from 'lodash';
 
-import { cdnHost } from './constants';
+import { config } from '@grafana/runtime';
+
 import type { SystemJSLoad } from './types';
 
 /*
@@ -10,10 +11,8 @@ import type { SystemJSLoad } from './types';
   then we can replace the "baseUrl" with the "cdnHost".
  */
 export function locateCSS(load: SystemJSLoad) {
-  if (load.metadata.loader === 'cdn-loader') {
-    if (load.address.startsWith(`${location.origin}/public/plugin-cdn`)) {
-      load.address = load.address.replace(`${location.origin}/public/plugin-cdn`, cdnHost);
-    }
+  if (load.metadata.loader === 'cdn-loader' && load.address.startsWith(`${location.origin}/public/plugin-cdn`)) {
+    load.address = load.address.replace(`${location.origin}/public/plugin-cdn`, config.pluginsCDNBaseURL);
   }
   return load.address;
 }
@@ -59,7 +58,7 @@ function loadCSS(url: string) {
     link.href = url;
 
     // Don't cache bust plugins loaded from cdn.
-    if (!link.href.startsWith(cdnHost)) {
+    if (!link.href.startsWith(config.pluginsCDNBaseURL)) {
       link.href = link.href + bust;
     }
 

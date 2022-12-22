@@ -1,12 +1,7 @@
-import * as constants from './constants';
+import { config } from '@grafana/runtime';
+
 import { translateForCDN, extractPluginNameVersionFromUrl } from './pluginCDN';
 describe('Plugin CDN', () => {
-  beforeAll(() => {
-    // ⚠️ Plugin cdn poc! ⚠️
-    // TODO: this should be mocked from config.
-    // @ts-ignore
-    constants.cdnHost = 'http://my-host.com';
-  });
   describe('translateForCDN', () => {
     const load = {
       name: 'http://localhost:3000/public/plugin-cdn/grafana-worldmap-panel/0.3.3/grafana-worldmap-panel/module.js',
@@ -24,6 +19,7 @@ describe('Plugin CDN', () => {
         authorization: false,
       },
     };
+    config.pluginsCDNBaseURL = 'http://my-host.com';
 
     it('should update the default local path to use the CDN path', () => {
       const translatedLoad = translateForCDN({
