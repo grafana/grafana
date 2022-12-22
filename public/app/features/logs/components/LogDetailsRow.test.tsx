@@ -1,5 +1,4 @@
 import { screen, render, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
 import { LogRowModel } from '@grafana/data';
