@@ -44,6 +44,8 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
         .type(datasource.secureJsonData.clientSecret, { log: false });
       e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
       e2eSelectors.configEditor.defaultSubscription.input().find('input').type('datasources{enter}');
+      // Wait for 15s so that credentials are ready
+      e2e().wait(15000);
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
     timeout: 10000,
@@ -129,7 +131,6 @@ e2e.scenario({
     }
     e2e.setScenarioContext({ addedDataSources: [] });
   },
-  config: { retries: 3 },
 });
 
 e2e.scenario({
