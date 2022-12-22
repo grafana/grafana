@@ -40,15 +40,13 @@ export function PanelHeaderState({ dataState, errorMessage, panelId }: Props) {
   );
 
   return mode ? (
-    <div className={styles.container}>
-      <ToolbarButton
-        onClick={(e: React.SyntheticEvent) => openInspect(e, InspectTab.Error)}
-        variant={getVariantType(mode)}
-        className={styles.buttonStyles}
-        icon="exclamation-triangle"
-        tooltip={InfoMode.Error && errorMessage}
-      />
-    </div>
+    <ToolbarButton
+      onClick={(e: React.SyntheticEvent) => openInspect(e, InspectTab.Error)}
+      variant={getVariantType(mode)}
+      className={styles.buttonStyles}
+      icon="exclamation-triangle"
+      tooltip={InfoMode.Error && errorMessage}
+    />
   ) : null;
 }
 
@@ -67,15 +65,8 @@ const getStyles = (theme: GrafanaTheme2) => {
   const { headerHeight, padding } = theme.components.panel;
 
   return {
-    container: css({
-      label: 'panel-header-state',
-      position: 'absolute',
-      width: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }),
     buttonStyles: css({
+      label: 'panel-header-state-button',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
