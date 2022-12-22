@@ -35,7 +35,7 @@ type CommonProps = {
 
 export type ToolbarButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
-export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active' | 'canvas' | 'warning';
+export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active' | 'canvas';
 
 export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   (
@@ -123,7 +123,6 @@ function renderIcon(icon: IconName | React.ReactNode) {
 const getStyles = (theme: GrafanaTheme2) => {
   const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
-  const warningVariant = getPropertiesForVariant(theme, 'warning', 'solid');
 
   const defaultOld = css`
     color: ${theme.colors.text.secondary};
@@ -205,7 +204,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     primary: css(primaryVariant),
     destructive: css(destructiveVariant),
-    warning: css(warningVariant),
     narrow: css`
       padding: 0 ${theme.spacing(0.5)};
     `,

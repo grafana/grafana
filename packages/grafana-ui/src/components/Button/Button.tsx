@@ -11,7 +11,7 @@ import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
 import { PopoverContent, Tooltip, TooltipPlacement } from '../Tooltip';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'warning' | 'success';
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'success';
 export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];
 export type ButtonFill = 'solid' | 'outline' | 'text';
 export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
@@ -293,9 +293,6 @@ export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVar
 
     case 'destructive':
       return getButtonVariantStyles(theme, theme.colors.error, fill);
-
-    case 'warning':
-      return getButtonVariantStyles(theme, theme.colors.warning, fill);
 
     case 'success':
       return getButtonVariantStyles(theme, theme.colors.success, fill);

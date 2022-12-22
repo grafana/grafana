@@ -8,7 +8,6 @@ import { InspectTab } from 'app/features/inspector/types';
 
 enum InfoMode {
   Error = 'Error',
-  Warning = 'Warning',
 }
 
 interface Props {
@@ -24,8 +23,6 @@ export function PanelHeaderState({ dataState, errorMessage, panelId }: Props) {
   useEffect(() => {
     if (errorMessage) {
       setMode(InfoMode.Error);
-    } else if (dataState === LoadingState.Warning) {
-      setMode(InfoMode.Warning);
     } else {
       setMode(undefined);
     }
@@ -54,8 +51,6 @@ function getVariantType(mode: InfoMode) {
   switch (mode) {
     case InfoMode.Error:
       return 'destructive';
-    case InfoMode.Warning:
-      return 'warning';
     default:
       return 'default';
   }
