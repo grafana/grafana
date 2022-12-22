@@ -173,6 +173,14 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     });
   }
 
+  const valueCfg = {
+    ...yFields[0].config,
+  };
+
+  if (valueCfg.displayNameFromDS) {
+    delete valueCfg.displayNameFromDS;
+  }
+
   return {
     length: xs.length,
     refId: opts.frame.refId,
@@ -199,7 +207,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
         name: opts.value?.length ? opts.value : 'Value',
         type: FieldType.number,
         values: new ArrayVector(counts2),
-        config: {}, // displayNameFromDS: undefined
+        config: valueCfg,
         display: yFields[0].display,
       },
     ],

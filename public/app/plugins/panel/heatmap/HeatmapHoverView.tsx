@@ -219,7 +219,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
 
   const renderYBucket = () => {
     if (nonNumericOrdinalDisplay) {
-      return <div>Label: {nonNumericOrdinalDisplay}</div>;
+      return <div>Name: {nonNumericOrdinalDisplay}</div>;
     }
 
     switch (data.yLayout) {
