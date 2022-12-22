@@ -138,11 +138,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     // TODO #33976: make those requests parallel
-    await this.fetchLabels();
+    // await this.fetchLabels();
     this.metrics = (await this.fetchLabelValues('__name__')) || [];
-    await this.loadMetricsMetadata();
+    // await this.loadMetricsMetadata();
     this.histogramMetrics = processHistogramMetrics(this.metrics).sort();
-    return [];
+    return Promise.all([this.loadMetricsMetadata(), this.fetchLabels()]);
   };
 
   async loadMetricsMetadata() {
