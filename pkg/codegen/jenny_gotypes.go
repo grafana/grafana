@@ -12,7 +12,7 @@ import (
 
 // GoTypesJenny creates a [OneToOne] that produces Go types for the provided
 // [thema.Schema].
-type GoTypesJenny struct{
+type GoTypesJenny struct {
 	ApplyFuncs []astutil.ApplyFunc
 }
 
@@ -32,14 +32,17 @@ func (j GoTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
 		return nil, err
 	}
 
-	// TODO switch to dst completely so this isn't a hanger-on
+	// TODO switch to dst completely in thema so this can be made an ApplyFuncs element
 	fb, err := decorator.Parse(b)
 	if err != nil {
 		return nil, err
 	}
 	dstutil.Apply(fb, DecoderCompactor(), nil)
 	buf := new(bytes.Buffer)
-	decorator.Fprint(buf, fb)
+	err = decorator.Fprint(buf, fb)
+	if err != nil {
+		return nil, err
+	}
 	b, err = postprocessGoFile(genGoFile{
 		path:   "",
 		walker: nil,
