@@ -150,7 +150,7 @@ func (hcs *HealthChecksServiceImpl) RegisterHealthCheck(ctx context.Context, con
 func (hcs *HealthChecksServiceImpl) RunOnDemandHealthCheck(ctx context.Context, name string) error {
 	hcs.mu.Lock()
 	defer hcs.mu.Unlock()
-
+	// TODO throttle requests to this?
 	check, has := hcs.registeredChecks[name]
 	if !has {
 		return fmt.Errorf("received on-demand health check request for unregistered name %s", name)
@@ -210,6 +210,7 @@ func (hcs *HealthChecksServiceImpl) ListHealthChecks(ctx context.Context) []mode
 }
 
 func (hcs *HealthChecksServiceImpl) runIndividualHealthCheck(ctx context.Context, hc models.HealthCheck) {
+	// TODO see how long it took to run a health check and provide as a metric
 	// avoid deadlocking and service disruptions
 	go func() {
 		hcs.mu.Lock()
