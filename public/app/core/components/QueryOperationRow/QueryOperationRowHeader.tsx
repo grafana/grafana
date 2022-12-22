@@ -119,7 +119,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   title: css`
     font-weight: ${theme.typography.fontWeightBold};
-    color: ${theme.colors.text.link};
     margin-left: ${theme.spacing(0.5)};
     overflow: hidden;
     text-overflow: ellipsis;
