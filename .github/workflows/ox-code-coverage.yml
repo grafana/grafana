@@ -4,9 +4,11 @@ on:
     paths:
       - 'pkg/services/queryhistory/**'
       - 'pkg/tsdb/loki/**'
+      - 'pkg/tsdb/elasticsearch/**'
       - 'public/app/features/explore/**'
       - 'public/app/features/correlations/**'
       - 'public/app/plugins/datasource/loki/**'
+      - 'public/app/plugins/datasource/elasticsearch/**'
     branches-ignore:
       - dependabot/**
       - backport-*
@@ -15,5 +17,5 @@ jobs:
   workflow-call:
     uses: grafana/code-coverage/.github/workflows/code-coverage.yml@v0.1.14
     with:
-      frontend-path-regexp: public\/app\/features\/(explore|correlations)|public\/app\/plugins\/datasource\/loki
-      backend-path-regexp: pkg\/services\/(queryhistory)|pkg\/tsdb\/loki
+      frontend-path-regexp: public\/app\/features\/(explore|correlations)|public\/app\/plugins\/datasource\/(loki|elasticsearch)
+      backend-path-regexp: pkg\/services\/(queryhistory)|pkg\/tsdb\/(loki|elasticsearch)

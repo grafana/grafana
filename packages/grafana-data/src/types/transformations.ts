@@ -84,3 +84,13 @@ export interface MatcherConfig<TOptions = any> {
   id: string;
   options?: TOptions;
 }
+
+/**
+ * @public
+ */
+export enum SpecialValue {
+  True = 'true',
+  False = 'false',
+  Null = 'null',
+  Empty = 'empty',
+}

@@ -60,7 +60,6 @@ import {
   PromOptions,
   PromQuery,
   PromQueryRequest,
-  PromQueryType,
   PromScalarData,
   PromVectorData,
 } from './types';
@@ -410,7 +409,6 @@ export class PrometheusDatasource
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
     const processedTarget = {
       ...target,
-      queryType: PromQueryType.timeSeriesQuery,
       exemplar: this.shouldRunExemplarQuery(target, request),
       requestId: request.panelId + target.refId,
       // We need to pass utcOffsetSec to backend to calculate aligned range
@@ -763,7 +761,6 @@ export class PrometheusDatasource
       instant: false,
       exemplar: false,
       interval: step,
-      queryType: PromQueryType.timeSeriesQuery,
       refId: 'X',
       datasource: this.getRef(),
     };
