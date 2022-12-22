@@ -21,8 +21,6 @@ export default function NewDashboardWithDS(props: GrafanaRouteComponentProps<{ d
     const { dashboard } = newDashboard;
     dashboard.panels[0] = {
       ...dashboard.panels[0],
-      id: 1,
-      type: 'timeseries',
       datasource: {
         uid: ds.uid,
         type: ds.type,
@@ -30,7 +28,7 @@ export default function NewDashboardWithDS(props: GrafanaRouteComponentProps<{ d
     };
 
     setDashboardToFetchFromLocalStorage(newDashboard);
-    locationService.push('/dashboard/new?editPanel=1');
+    locationService.push('/dashboard/new');
   }, [datasourceUid]);
 
   if (error) {
