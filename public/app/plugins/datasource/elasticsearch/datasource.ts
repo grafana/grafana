@@ -964,7 +964,7 @@ export class ElasticDatasource
         if (expression.length > 0) {
           expression += ' AND ';
         }
-        expression += `NOT ${action.options.key}:"${action.options.value}"`;
+        expression += `-${action.options.key}:"${action.options.value}"`;
         break;
       }
     }
@@ -985,11 +985,11 @@ export class ElasticDatasource
         case '=':
           return `${key}:"${value}"`;
         case '!=':
-          return `NOT ${key}:"${value}"`;
+          return `-${key}:"${value}"`;
         case '=~':
           return `${key}:/${value}/`;
         case '!~':
-          return `NOT ${key}:/${value}/`;
+          return `-${key}:/${value}/`;
         case '>':
           return `${key}:>${value}`;
         case '<':

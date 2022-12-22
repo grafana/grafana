@@ -1051,7 +1051,7 @@ describe('modifyQuery', () => {
 
     it('should add the negative filter', () => {
       expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
-        'NOT foo:"bar"'
+        '-foo:"bar"'
       );
     });
 
@@ -1074,7 +1074,7 @@ describe('modifyQuery', () => {
 
     it('should add the negative filter', () => {
       expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
-        'test:"value" AND NOT foo:"bar"'
+        'test:"value" AND -foo:"bar"'
       );
     });
 
@@ -1148,13 +1148,13 @@ describe('addAdhocFilters', () => {
     it('should correctly add ad hoc filters when query is not empty', () => {
       const query = ds.addAdHocFilters('foo:"bar" AND test:"test1"');
       expect(query).toBe(
-        'foo:"bar" AND test:"test1" AND bar:"baz" AND NOT job:"grafana" AND service:/service/ AND count:>1'
+        'foo:"bar" AND test:"test1" AND bar:"baz" AND -job:"grafana" AND service:/service/ AND count:>1'
       );
     });
 
     it('should correctly add ad hoc filters when query is  empty', () => {
       const query = ds.addAdHocFilters('');
-      expect(query).toBe('bar:"baz" AND NOT job:"grafana" AND service:/service/ AND count:>1');
+      expect(query).toBe('bar:"baz" AND -job:"grafana" AND service:/service/ AND count:>1');
     });
   });
 });
