@@ -46,7 +46,7 @@ import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import PrometheusLanguageProvider from './language_provider';
-import {expandRecordingRules, roundSecToLastMin, roundSecToNextMin} from './language_utils';
+import { expandRecordingRules, roundSecToLastMin, roundSecToNextMin } from './language_utils';
 import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
@@ -72,6 +72,7 @@ export enum PrometheusCacheLevel {
   low = 'low',
   medium = 'medium',
   high = 'high',
+  none = 'none',
 }
 
 export class PrometheusDatasource
@@ -1154,16 +1155,33 @@ export class PrometheusDatasource
 
   getQuantizedTimeRangeParams(): { start: string; end: string } {
     const range = this.timeSrv.timeRange();
+
+    // Don't round the range if we're not caching
+    if (this.cacheLevel === PrometheusCacheLevel.none) {
+      return {
+        start: this.getPrometheusTime(range.from, false).toString(),
+        end: this.getPrometheusTime(range.to, true).toString(),
+      };
+    }
+    // Otherwise round down to the nearest nth minute for the start time
     const startTime = this.getPrometheusTime(range.from, false);
-    const startTimeQuantized = roundSecToLastMin(startTime, this.getCacheDurationInMinutes());
+    const startTimeQuantized = roundSecToLastMin(startTime, this.getCacheDurationInMinutes()) * 60;
+
+    // And round up to the nearest nth minute for the end time
     const endTime = this.getPrometheusTime(range.to, true);
-    const endTimeQuantized = roundSecToNextMin(endTime, this.getCacheDurationInMinutes())
+    const endTimeQuantized = roundSecToNextMin(endTime, this.getCacheDurationInMinutes()) * 60;
+
     const start = startTimeQuantized.toString();
-    const end = endTimeQuantized.toString()
+    const end = endTimeQuantized.toString();
+
+    const regs = this.getTimeRangeParams();
+    console.log('Quantized:', { start, end });
+    console.log('Regs:', regs);
+    console.log('startDiff', parseInt(start, 10) - parseInt(regs.start, 10));
+    console.log('endDiff', parseInt(end, 10) - parseInt(regs.end, 10));
 
     return { start, end };
   }
-
 
   getTimeRangeParams(): { start: string; end: string } {
     const range = this.timeSrv.timeRange();

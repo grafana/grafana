@@ -1,7 +1,7 @@
 import { invert } from 'lodash';
 import { Token } from 'prismjs';
 
-import { DataQuery, AbstractQuery, AbstractLabelOperator, AbstractLabelMatcher } from '@grafana/data';
+import { AbstractLabelMatcher, AbstractLabelOperator, AbstractQuery, DataQuery } from '@grafana/data';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
@@ -225,15 +225,21 @@ export function fixSummariesMetadata(metadata: { [metric: string]: PromMetricsMe
 }
 
 export function roundMsToMin(milliseconds: number): number {
-  return roundSecToLastMin(milliseconds / 1000);
+  return roundSecToMin(milliseconds / 1000);
 }
 
-export function roundSecToLastMin(seconds: number, minutes: number = 1): number {
-  return Math.floor(seconds / 60) - (Math.floor(seconds / 60) % (minutes * 60));
+export function roundSecToMin(seconds: number): number {
+  return Math.floor(seconds / 60);
 }
 
-export function roundSecToNextMin(seconds: number, minutes: number = 1): number {
-  return Math.ceil(seconds / 60) - (Math.floor(seconds / 60) % (minutes * 60));
+// Returns number of minutes rounded down to the nearest nth minute
+export function roundSecToLastMin(seconds: number, minutes = 1): number {
+  return roundSecToMin(seconds) - (roundSecToMin(seconds) % minutes);
+}
+
+// Returns number of minutes rounded up to the nearest nth minute
+export function roundSecToNextMin(seconds: number, minutes = 1): number {
+  return Math.ceil(seconds / 60) - (Math.ceil(seconds / 60) % minutes);
 }
 
 export function limitSuggestions(items: string[]) {

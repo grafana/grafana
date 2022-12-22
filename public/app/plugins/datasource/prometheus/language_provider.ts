@@ -23,7 +23,6 @@ import {
   parseSelector,
   processHistogramMetrics,
   processLabels,
-  roundSecToLastMin,
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
@@ -534,8 +533,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const cacheParams = new URLSearchParams({
       'match[]': interpolatedName ?? '',
-      start: roundSecToMin(parseInt(range.start, 10)).toString(),
-      end: roundSecToMin(parseInt(range.end, 10)).toString(),
+      start: range.start,
+      end: range.end,
       name: name,
     });
 
@@ -576,15 +575,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return possibleLabelNames.filter((l) => !usedLabelNames.has(l));
   };
 
-  quantizeRange = (range: { start: string; end: string }): { start: number; end: number } => {
-    const cacheDurationInMinutes = this.datasource.getCacheDurationInMinutes();
-    console.log('cache duration in minutes', cacheDurationInMinutes)
-    return {
-      start: roundSecToLastMin(parseInt(range.start, 10) * 60, cacheDurationInMinutes),
-      end: roundSecToLastMin(parseInt(range.end, 10) * 60, cacheDurationInMinutes),
-    };
-  };
-
   /**
    * Fetch labels for a series using /series endpoint. This is cached by its args but also by the global timeRange currently selected as
    * they can change over requested time.
@@ -593,7 +583,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
-    const range = this.datasource.getTimeRangeParams();
+    const range = this.datasource.getQuantizedTimeRangeParams();
     const urlParams = {
       ...range,
       'match[]': interpolatedName,
@@ -605,8 +595,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // when user does not the newest values for a minute if already cached.
     const cacheParams = new URLSearchParams({
       'match[]': interpolatedName,
-      start: roundSecToMin(parseInt(range.start, 10)).toString(),
-      end: roundSecToMin(parseInt(range.end, 10)).toString(),
+      start: range.start,
+      end: range.end,
       withName: withName ? 'true' : 'false',
     });
 
@@ -629,7 +619,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabelsMatch = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
-    const range = this.datasource.getTimeRangeParams();
+    const range = this.datasource.getQuantizedTimeRangeParams();
     const urlParams = {
       ...range,
       'match[]': interpolatedName,
@@ -641,8 +631,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // when user does not the newest values for a minute if already cached.
     const cacheParams = new URLSearchParams({
       'match[]': interpolatedName,
-      start: roundSecToMin(parseInt(range.start, 10)).toString(),
-      end: roundSecToMin(parseInt(range.end, 10)).toString(),
+      start: range.start,
+      end: range.end,
       withName: withName ? 'true' : 'false',
     });
 

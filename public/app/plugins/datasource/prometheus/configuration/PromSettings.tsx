@@ -21,11 +21,11 @@ import {
 
 import { useUpdateDatasource } from '../../../../features/datasources/state';
 import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
+import { PrometheusCacheLevel } from '../datasource';
 import { PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
-import { PrometheusCacheLevel } from '../datasource';
 
 const { Input, FormField } = LegacyForms;
 
@@ -35,10 +35,11 @@ const httpOptions = [
 ];
 
 const cacheValueOptions = [
-  {value: PrometheusCacheLevel.low, label: PrometheusCacheLevel.low},
-  {value: PrometheusCacheLevel.medium, label: PrometheusCacheLevel.medium},
-  {value: PrometheusCacheLevel.high, label: PrometheusCacheLevel.high},
-]
+  { value: PrometheusCacheLevel.low, label: PrometheusCacheLevel.low },
+  { value: PrometheusCacheLevel.medium, label: PrometheusCacheLevel.medium },
+  { value: PrometheusCacheLevel.high, label: PrometheusCacheLevel.high },
+  { value: PrometheusCacheLevel.none, label: PrometheusCacheLevel.none },
+];
 
 type PrometheusSelectItemsType = Array<{ value: PromApplication; label: PromApplication }>;
 
@@ -322,7 +323,7 @@ export const PromSettings = (props: Props) => {
                   className="width-25"
                   onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
                   options={cacheValueOptions}
-                  value={(cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel))}
+                  value={cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel)}
                   // value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
                 />
               }
