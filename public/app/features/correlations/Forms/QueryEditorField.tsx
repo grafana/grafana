@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
+import { isEmpty } from 'lodash';
 import React, { useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
-import { DataQuery, getDefaultTimeRange, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, DataQuery, getDefaultTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
   Field,
@@ -16,8 +17,8 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { buildQueryTransaction } from '../../../core/utils/explore';
-import { ExploreId } from '../../../types';
+import { generateKey } from '../../../core/utils/explore';
+import { QueryTransaction } from '../../../types';
 import { runRequest } from '../../query/state/runRequest';
 
 interface Props {
@@ -54,14 +55,34 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
   const QueryEditor = datasource?.components?.QueryEditor;
 
   const handleValidation = (value: DataQuery) => {
-    const transaction = buildQueryTransaction(
-      ExploreId.left,
-      [{ ...value, refId: 'something' }],
-      {},
-      getDefaultTimeRange(),
-      false,
-      'utc'
-    );
+    if (isEmpty(value)) {
+      setIsValidQuery(false);
+    }
+
+    const interval = '1s';
+    const intervalMs = 1000;
+    const id = generateKey();
+    const queries = [{ ...value, refId: 'something' }];
+
+    const transaction: QueryTransaction = {
+      queries,
+      request: {
+        app: CoreApp.Unknown,
+        timezone: 'utc',
+        startTime: Date.now(),
+        interval,
+        intervalMs,
+        targets: queries,
+        range: getDefaultTimeRange(),
+        requestId: 'correlations_' + id,
+        scopedVars: {
+          __interval: { text: interval, value: interval },
+          __interval_ms: { text: intervalMs, value: intervalMs },
+        },
+      },
+      id,
+      done: false,
+    };
 
     if (datasource) {
       runRequest(datasource, transaction.request).subscribe((panelData) => {
