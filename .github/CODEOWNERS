@@ -241,6 +241,7 @@ lerna.json @grafana/frontend-ops
 embed.go @grafana/grafana-as-code
 /kinds/ @grafana/grafana-as-code
 /pkg/codegen @grafana/grafana-as-code
+/pkg/kindsys/kindcat_custom.cue @grafana/apps-platform-core
 /pkg/kindsys @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
 /pkg/registry/corekind @grafana/grafana-as-code

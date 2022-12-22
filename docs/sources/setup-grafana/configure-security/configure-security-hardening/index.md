@@ -9,7 +9,7 @@ title: Configure security hardening
 
 Security hardening enables you to apply additional security, which can help stop certain vulnerabilities from being exploited by a malicious attacker.
 
-> **Note:** These settings are available in the [grafana.ini configuration file]({{< relref "../configure-grafana/#configuration-file-location" >}}). To apply changes to the configuration file, restart the Grafana server.
+> **Note:** These settings are available in the [grafana.ini configuration file]({{< relref "../../configure-grafana/#configuration-file-location" >}}). To apply changes to the configuration file, restart the Grafana server.
 
 ## Additional security for cookies
 

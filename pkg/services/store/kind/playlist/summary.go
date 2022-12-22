@@ -30,7 +30,7 @@ func summaryBuilder(ctx context.Context, uid string, body []byte) (*models.Entit
 
 	// TODO: fix model so this is not possible
 	if obj.Items == nil {
-		temp := make([]playlist.PlaylistItem, 0)
+		temp := make([]playlist.Item, 0)
 		obj.Items = &temp
 	}
 
@@ -43,19 +43,19 @@ func summaryBuilder(ctx context.Context, uid string, body []byte) (*models.Entit
 
 	for _, item := range *obj.Items {
 		switch item.Type {
-		case playlist.PlaylistItemTypeDashboardByUid:
+		case playlist.ItemTypeDashboardByUid:
 			summary.References = append(summary.References, &models.EntityExternalReference{
 				Kind: "dashboard",
 				UID:  item.Value,
 			})
 
-		case playlist.PlaylistItemTypeDashboardByTag:
+		case playlist.ItemTypeDashboardByTag:
 			if summary.Labels == nil {
 				summary.Labels = make(map[string]string, 0)
 			}
 			summary.Labels[item.Value] = ""
 
-		case playlist.PlaylistItemTypeDashboardById:
+		case playlist.ItemTypeDashboardById:
 			// obviously insufficient long term... but good to have an example :)
 			summary.Error = &models.EntityErrorInfo{
 				Message: "Playlist uses deprecated internal id system",

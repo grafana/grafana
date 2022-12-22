@@ -255,6 +255,7 @@ var hopHeaders = []string{
 	"Trailer", // not Trailers per URL above; https://www.rfc-editor.org/errata_search.php?eid=4522
 	"Transfer-Encoding",
 	"Upgrade",
+	"User-Agent",
 }
 
 // removeHopByHopHeaders removes hop-by-hop headers. Especially

@@ -260,7 +260,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.templateSrv
     );
     return this.getResource(url).then((result: AzureMonitorMetricsMetadataResponse) => {
-      return ResponseParser.parseMetadata(result, metricName);
+      return ResponseParser.parseMetadata(result, this.templateSrv.replace(metricName));
     });
   }
 

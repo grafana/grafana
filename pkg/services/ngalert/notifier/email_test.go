@@ -1,9 +1,10 @@
-package channels
+package notifier
 
 import (
 	"context"
 	"encoding/json"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/grafana/alerting/alerting/notifier/channels"
@@ -12,95 +13,14 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestEmailNotifier(t *testing.T) {
-	tmpl := templateForTests(t)
-
-	externalURL, err := url.Parse("http://localhost/base")
-	require.NoError(t, err)
-	tmpl.ExternalURL = externalURL
-
-	t.Run("empty settings should return error", func(t *testing.T) {
-		jsonData := `{ }`
-		settingsJSON := json.RawMessage(jsonData)
-		model := &channels.NotificationChannelConfig{
-			Name:     "ops",
-			Type:     "email",
-			Settings: settingsJSON,
-		}
-
-		_, err := NewEmailConfig(model)
-		require.Error(t, err)
-	})
-
-	t.Run("with the correct settings it should not fail and produce the expected command", func(t *testing.T) {
-		jsonData := `{
-			"addresses": "someops@example.com;somedev@example.com",
-			"message": "{{ template \"default.title\" . }}"
-		}`
-
-		emailSender := mockNotificationService()
-		cfg, err := NewEmailConfig(&channels.NotificationChannelConfig{
-			Name:     "ops",
-			Type:     "email",
-			Settings: json.RawMessage(jsonData),
-		})
-		require.NoError(t, err)
-		emailNotifier := NewEmailNotifier(cfg, &channels.FakeLogger{}, emailSender, &channels.UnavailableImageStore{}, tmpl)
-
-		alerts := []*types.Alert{
-			{
-				Alert: model.Alert{
-					Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
-					Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-				},
-			},
-		}
-
-		ok, err := emailNotifier.Notify(context.Background(), alerts...)
-		require.NoError(t, err)
-		require.True(t, ok)
-
-		expected := map[string]interface{}{
-			"subject":      emailSender.EmailSync.Subject,
-			"to":           emailSender.EmailSync.To,
-			"single_email": emailSender.EmailSync.SingleEmail,
-			"template":     emailSender.EmailSync.Template,
-			"data":         emailSender.EmailSync.Data,
-		}
-		require.Equal(t, map[string]interface{}{
-			"subject":      "[FIRING:1]  (AlwaysFiring warning)",
-			"to":           []string{"someops@example.com", "somedev@example.com"},
-			"single_email": false,
-			"template":     "ng_alert_notification",
-			"data": map[string]interface{}{
-				"Title":   "[FIRING:1]  (AlwaysFiring warning)",
-				"Message": "[FIRING:1]  (AlwaysFiring warning)",
-				"Status":  "firing",
-				"Alerts": channels.ExtendedAlerts{
-					channels.ExtendedAlert{
-						Status:       "firing",
-						Labels:       template.KV{"alertname": "AlwaysFiring", "severity": "warning"},
-						Annotations:  template.KV{"runbook_url": "http://fix.me"},
-						Fingerprint:  "15a37193dce72bab",
-						SilenceURL:   "http://localhost/base/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DAlwaysFiring&matcher=severity%3Dwarning",
-						DashboardURL: "http://localhost/base/d/abc",
-						PanelURL:     "http://localhost/base/d/abc?viewPanel=5",
-					},
-				},
-				"GroupLabels":       template.KV{},
-				"CommonLabels":      template.KV{"alertname": "AlwaysFiring", "severity": "warning"},
-				"CommonAnnotations": template.KV{"runbook_url": "http://fix.me"},
-				"ExternalURL":       "http://localhost/base",
-				"RuleUrl":           "http://localhost/base/alerting/list",
-				"AlertPageUrl":      "http://localhost/base/alerting/list?alertState=firing&view=state",
-			},
-		}, expected)
-	})
-}
-
+// TestEmailNotifierIntegration tests channels.EmailNotifier in conjunction with Grafana notifications.EmailSender and two staged expansion of the email body
 func TestEmailNotifierIntegration(t *testing.T) {
 	ns := createEmailSender(t)
 
@@ -265,7 +185,7 @@ func TestEmailNotifierIntegration(t *testing.T) {
 	}
 }
 
-func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns *emailSender) *EmailNotifier {
+func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns channels.NotificationSender) channels.NotificationChannel {
 	t.Helper()
 
 	jsonData := map[string]interface{}{
@@ -281,14 +201,23 @@ func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *
 	}
 	bytes, err := json.Marshal(jsonData)
 	require.NoError(t, err)
-	cfg, err := NewEmailConfig(&channels.NotificationChannelConfig{
-		Name:     "ops",
-		Type:     "email",
-		Settings: bytes,
-	})
-	require.NoError(t, err)
-	emailNotifier := NewEmailNotifier(cfg, &channels.FakeLogger{}, ns, &channels.UnavailableImageStore{}, emailTmpl)
 
+	fc := channels.FactoryConfig{
+		Config: &channels.NotificationChannelConfig{
+			Name:     "ops",
+			Type:     "email",
+			Settings: json.RawMessage(bytes),
+		},
+		NotificationService: ns,
+		DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+			return fallback
+		},
+		ImageStore: &channels.UnavailableImageStore{},
+		Template:   emailTmpl,
+		Logger:     &channels.FakeLogger{},
+	}
+	emailNotifier, err := channels.EmailFactory(fc)
+	require.NoError(t, err)
 	return emailNotifier
 }
 
@@ -300,4 +229,78 @@ func getSingleSentMessage(t *testing.T, ns *emailSender) *notifications.Message 
 	sent := mailer.Sent[0]
 	mailer.Sent = []*notifications.Message{}
 	return sent
+}
+
+type emailSender struct {
+	ns *notifications.NotificationService
+}
+
+func (e emailSender) SendWebhook(ctx context.Context, cmd *channels.SendWebhookSettings) error {
+	panic("not implemented")
+}
+
+func (e emailSender) SendEmail(ctx context.Context, cmd *channels.SendEmailSettings) error {
+	attached := make([]*models.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
+	for _, file := range cmd.AttachedFiles {
+		attached = append(attached, &models.SendEmailAttachFile{
+			Name:    file.Name,
+			Content: file.Content,
+		})
+	}
+	return e.ns.SendEmailCommandHandlerSync(ctx, &models.SendEmailCommandSync{
+		SendEmailCommand: models.SendEmailCommand{
+			To:            cmd.To,
+			SingleEmail:   cmd.SingleEmail,
+			Template:      cmd.Template,
+			Subject:       cmd.Subject,
+			Data:          cmd.Data,
+			Info:          cmd.Info,
+			ReplyTo:       cmd.ReplyTo,
+			EmbeddedFiles: cmd.EmbeddedFiles,
+			AttachedFiles: attached,
+		},
+	})
+}
+
+func createEmailSender(t *testing.T) *emailSender {
+	t.Helper()
+
+	tracer := tracing.InitializeTracerForTest()
+	bus := bus.ProvideBus(tracer)
+
+	cfg := setting.NewCfg()
+	cfg.StaticRootPath = "../../../../public/"
+	cfg.BuildVersion = "4.0.0"
+	cfg.Smtp.Enabled = true
+	cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
+	cfg.Smtp.FromAddress = "from@address.com"
+	cfg.Smtp.FromName = "Grafana Admin"
+	cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
+	cfg.Smtp.Host = "localhost:1234"
+	mailer := notifications.NewFakeMailer()
+
+	ns, err := notifications.ProvideService(bus, cfg, mailer, nil)
+	require.NoError(t, err)
+
+	return &emailSender{ns: ns}
+}
+
+func templateForTests(t *testing.T) *template.Template {
+	f, err := os.CreateTemp("/tmp", "template")
+	require.NoError(t, err)
+	defer func(f *os.File) {
+		_ = f.Close()
+	}(f)
+
+	t.Cleanup(func() {
+		require.NoError(t, os.RemoveAll(f.Name()))
+	})
+
+	_, err = f.WriteString(channels.TemplateForTestsString)
+	require.NoError(t, err)
+
+	tmpl, err := template.FromGlobs(f.Name())
+	require.NoError(t, err)
+
+	return tmpl
 }

@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceInstanceSettings, DataSourceRef, dateTime, TimeRange } from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings, DataSourceRef, TimeRange } from '@grafana/data';
 import { BackendSrvRequest, BackendSrv, DataSourceWithBackend } from '@grafana/runtime';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -115,14 +115,6 @@ describe('PublicDashboardDatasource', () => {
       intervalMs: 5000,
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
       panelId,
-      range: {
-        from: dateTime('2022-01-01T15:55:00Z'),
-        to: dateTime('2022-07-12T15:55:00Z'),
-        raw: {
-          from: 'now-15m',
-          to: 'now',
-        },
-      },
       publicDashboardAccessToken,
     } as DataQueryRequest);
 
