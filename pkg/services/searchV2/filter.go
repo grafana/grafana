@@ -74,7 +74,7 @@ func (q *PermissionFilter) canAccess(kind entityKind, id, location string) bool 
 	//
 	switch kind {
 	case entityKindFolder:
-		if id == "" {
+		if id == "general" {
 			q.logAccessDecision(true, kind, id, "generalFolder")
 			return true
 		}
@@ -87,17 +87,22 @@ func (q *PermissionFilter) canAccess(kind entityKind, id, location string) bool 
 		return decision
 	case entityKindPanel:
 		matches := panelIdFieldRegex.FindStringSubmatch(id)
-
 		submatchCount := len(matches)
 		if submatchCount != panelIdFieldRegexExpectedSubmatchCount {
 			q.logAccessDecision(false, kind, id, "invalidPanelIdFieldRegexSubmatchCount", "submatchCount", submatchCount, "expectedSubmatchCount", panelIdFieldRegexExpectedSubmatchCount)
 			return false
 		}
-
 		dashboardUid := matches[panelIdFieldDashboardUidSubmatchIndex]
-		decision := q.filter(entityKindDashboard, dashboardUid, location)
 
-		q.logAccessDecision(decision, kind, id, "resourceFilter", "dashboardUid", dashboardUid, "panelId", matches[panelIdFieldPanelIdSubmatchIndex])
+		// Location is <folder_uid>/<dashboard_uid>
+		if len(location) <= len(dashboardUid)+1 {
+			q.logAccessDecision(false, kind, id, "invalidLocation", "location", location, "dashboardUid", dashboardUid)
+			return false
+		}
+		folderUid := location[:len(location)-len(dashboardUid)-1]
+
+		decision := q.filter(entityKindDashboard, dashboardUid, folderUid)
+		q.logAccessDecision(decision, kind, id, "resourceFilter", "folderUid", folderUid, "dashboardUid", dashboardUid, "panelId", matches[panelIdFieldPanelIdSubmatchIndex])
 		return decision
 	default:
 		q.logAccessDecision(false, kind, id, "reason", "unknownKind")
