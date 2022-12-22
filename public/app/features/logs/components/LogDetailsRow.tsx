@@ -19,9 +19,9 @@ export interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
-  displayedFields?: string[];
-  onClickShowField?: (key: string) => void;
-  onClickHideField?: (key: string) => void;
+  displayedFields: string[];
+  onClickShowField: (key: string) => void;
+  onClickHideField: (key: string) => void;
   row: LogRowModel;
   app?: CoreApp;
 }
@@ -52,14 +52,25 @@ const getStyles = (theme: GrafanaTheme2) => {
     showingField: css`
       color: ${theme.colors.primary.text};
     `,
-    hoverValueCopy: css`
-      margin: ${theme.spacing(0, 0, 0, 1.2)};
-      position: absolute;
-      top: 0px;
-      justify-content: center;
-      border-radius: ${theme.shape.borderRadius(10)};
-      width: ${theme.spacing(3.25)};
-      height: ${theme.spacing(3.25)};
+    copyButton: css`
+      & > button {
+        color: ${theme.colors.text.secondary};
+        padding: 0;
+        justify-content: center;
+        border-radius: 50%;
+        height: ${theme.spacing(theme.components.height.sm)};
+        width: ${theme.spacing(theme.components.height.sm)};
+        svg {
+          margin: 0;
+        }
+
+        span > div {
+          top: -5px;
+          & button {
+            color: ${theme.colors.success.main};
+          }
+        }
+      }
     `,
     wrapLine: css`
       label: wrapLine;
@@ -82,6 +93,25 @@ const getStyles = (theme: GrafanaTheme2) => {
             box-shadow: none;
             border-radius: 50%;
           }
+        }
+      }
+    `,
+    logDetailsStats: css`
+      label: logDetailsStats;
+      margin: ${theme.spacing(1, 0, 0, 0)};
+    `,
+    logDetailsValue: css`
+      display: table-cell;
+      vertical-align: middle;
+      line-height: 22px;
+
+      .show-on-hover {
+        display: inline;
+        visibility: hidden;
+      }
+      &:hover {
+        .show-on-hover {
+          visibility: visible;
         }
       }
     `,
@@ -218,7 +248,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       );
 
     return (
-      <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
+      <tr className={cx(style.logDetailsValue)}>
         <td className={style.logsDetailsIcon}>
           <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
             {hasFilteringFunctionality && (
@@ -242,6 +272,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
             {toggleFieldButton}
             <ToolbarButton
               iconOnly
+              className={showFieldsStats ? styles.showingField : ''}
               narrow
               icon="signal"
               tooltip="Ad-hoc statistics"
@@ -257,19 +288,19 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           onMouseEnter={this.hoverValueCopy.bind(this)}
           onMouseLeave={this.hoverValueCopy.bind(this)}
         >
-          <div>
+          <div className={styles.logDetailsValue}>
             {parsedValue}
-            {mouseOver && (
+
+            <div className={cx('show-on-hover', styles.copyButton)}>
               <ClipboardButton
                 getText={() => parsedValue}
                 title="Copy value to clipboard"
                 fill="text"
                 variant="secondary"
                 icon="copy"
-                size="sm"
-                className={styles.hoverValueCopy}
+                size="md"
               />
-            )}
+            </div>
 
             {links?.map((link) => (
               <span key={link.title}>
@@ -277,7 +308,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                 <DataLinkButton link={link} />
               </span>
             ))}
-            {showFieldsStats && (
+          </div>
+          {showFieldsStats && (
+            <div className={styles.logDetailsStats}>
               <LogLabelStats
                 stats={fieldStats!}
                 label={parsedKey}
@@ -285,8 +318,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                 rowCount={fieldCount}
                 isLabel={isLabel}
               />
-            )}
-          </div>
+            </div>
+          )}
         </td>
       </tr>
     );

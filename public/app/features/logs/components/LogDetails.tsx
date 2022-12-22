@@ -25,9 +25,9 @@ export interface Props extends Themeable2 {
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
-  showFields?: string[];
-  onClickShowField?: (key: string) => void;
-  onClickHideField?: (key: string) => void;
+  showFields: string[];
+  onClickShowField: (key: string) => void;
+  onClickHideField: (key: string) => void;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -70,7 +70,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
       className,
       onClickShowField,
       onClickHideField,
-      showFields: showFields,
+      showFields,
       getFieldLinks,
       wrapLogMessage,
     } = this.props;
@@ -97,7 +97,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
               <tbody>
                 {(labelsAvailable || fieldsAvailable) && (
                   <tr>
-                    <td colSpan={6} className={style.logDetailsHeading} aria-label="Fields">
+                    <td colSpan={100} className={style.logDetailsHeading} aria-label="Fields">
                       Fields
                     </td>
                   </tr>
@@ -150,7 +150,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
 
                 {linksAvailable && (
                   <tr>
-                    <td colSpan={6} className={style.logDetailsHeading} aria-label="Fields">
+                    <td colSpan={100} className={style.logDetailsHeading} aria-label="Data Links">
                       Data Links
                     </td>
                   </tr>
@@ -179,7 +179,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 })}
                 {!fieldsAvailable && !labelsAvailable && !linksAvailable && (
                   <tr>
-                    <td colSpan={6} aria-label="No details">
+                    <td colSpan={100} aria-label="No details">
                       No details available
                     </td>
                   </tr>
