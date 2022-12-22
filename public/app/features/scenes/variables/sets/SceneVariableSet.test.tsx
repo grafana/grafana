@@ -9,6 +9,7 @@ import { SceneObjectStatePlain } from '../../core/types';
 import { TestVariable } from '../variants/TestVariable';
 
 import { SceneVariableSet } from './SceneVariableSet';
+import { getSceneObjectsCache } from '../../core/SceneObjectsCache';
 
 interface TestSceneState extends SceneObjectStatePlain {
   nested?: TestScene;
@@ -156,6 +157,81 @@ describe('SceneVariableList', () => {
 
       // When B complete should not start another instance of A
       expect(A.getValueOptionsCount).toBe(1);
+    });
+  });
+
+  describe('Caching', () => {
+    const options = [
+      { label: 'AA', value: 'AA' },
+      { label: 'BB', value: 'BB' },
+    ];
+
+    beforeEach(() => {
+      getSceneObjectsCache().set({
+        key: 'previouslyCachedKey',
+        cacheKey: 'A-cacheKey',
+        name: 'A',
+        query: 'A.*',
+        value: 'AA',
+        text: 'AA',
+        options,
+      });
+    });
+
+    it('restores variable state from cache', () => {
+      const A = new TestVariable({ cacheKey: 'A-cacheKey', name: 'A', query: 'A.*', value: '', text: '', options: [] });
+
+      expect(A.state.value).toEqual('AA');
+      expect(A.state.text).toEqual('AA');
+      expect(A.state.options).toEqual(options);
+      expect(A.state.key).not.toEqual('previouslyCachedKey');
+    });
+
+    it('sets correct value if cached value is incorrect', () => {
+      const options = [
+        { label: 'AA', value: 'AA' },
+        { label: 'BB', value: 'BB' },
+      ];
+
+      getSceneObjectsCache().set({
+        key: 'previouslyCachedKey',
+        cacheKey: 'A-cacheKey',
+        name: 'A',
+        query: 'A.*',
+        value: 'CC',
+        text: 'CC',
+        options,
+      });
+
+      const A = new TestVariable({ cacheKey: 'A-cacheKey', name: 'A', query: 'A.*', value: '', text: '', options: [] });
+      const scene = new TestScene({
+        $variables: new SceneVariableSet({ variables: [A] }),
+      });
+
+      scene.activate();
+
+      expect(A.state.value).toEqual('AA');
+      expect(A.state.text).toEqual('AA');
+      expect(A.state.options).toEqual(options);
+      expect(A.state.key).not.toEqual('previouslyCachedKey');
+    });
+
+    it('cached variable should trigger other variables update', () => {
+      const A = new TestVariable({ cacheKey: 'A-cacheKey', name: 'A', query: 'A.*', value: '', text: '', options: [] });
+      const B = new TestVariable({ name: 'B', query: 'A.$A', value: '', text: '', options: [] });
+
+      const scene = new TestScene({
+        $variables: new SceneVariableSet({ variables: [A, B] }),
+      });
+
+      scene.activate();
+
+      expect(A.state.loading).toBe(false);
+      expect(B.state.loading).toBe(true);
+
+      B.signalUpdateCompleted();
+      expect(A.state.loading).toBe(false);
+      expect(B.state.loading).toBe(false);
     });
   });
 });

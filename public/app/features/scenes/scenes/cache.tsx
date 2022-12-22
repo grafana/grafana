@@ -103,7 +103,7 @@ export function getCacheTest(standalone: boolean): Scene {
     $variables: getVariables(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
     subMenu: getSubMenu(),
-    layout,
+    layout: new SceneFlexLayout({ children: [] }),
   };
   const scene = standalone ? new Scene(state) : new EmbeddedScene(state);
 

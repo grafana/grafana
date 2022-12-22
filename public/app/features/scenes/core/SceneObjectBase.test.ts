@@ -4,6 +4,7 @@ import { SceneDataNode } from './SceneDataNode';
 import { SceneObjectBase } from './SceneObjectBase';
 import { SceneObjectStateChangedEvent } from './events';
 import { SceneLayoutChild, SceneObject, SceneObjectStatePlain } from './types';
+import { getSceneObjectsCache } from './SceneObjectsCache';
 
 interface TestSceneState extends SceneObjectStatePlain {
   name?: string;
@@ -13,6 +14,26 @@ interface TestSceneState extends SceneObjectStatePlain {
 }
 
 class TestScene extends SceneObjectBase<TestSceneState> {}
+
+interface TestObjectState extends SceneObjectStatePlain {
+  stateProp1: number;
+  stateProp2: {
+    a: string;
+  };
+}
+class TestObject extends SceneObjectBase<TestObjectState> {
+  public constructor(state: Partial<TestObjectState>) {
+    super({
+      // default state
+      stateProp1: 2,
+      // default state
+      stateProp2: {
+        a: 'b',
+      },
+      ...state,
+    });
+  }
+}
 
 describe('SceneObject', () => {
   it('Can clone', () => {
@@ -140,6 +161,86 @@ describe('SceneObject', () => {
 
     it('Should deactivate $variables', () => {
       expect(scene.state.$variables!.isActive).toBe(false);
+    });
+  });
+
+  describe('Caching', () => {
+    beforeEach(() => {
+      getSceneObjectsCache().set({
+        key: 'previouslyCachedKey',
+        cacheKey: 'cacheKey',
+        stateProp1: 1,
+        stateProp2: { a: 'a' },
+      });
+    });
+
+    it('when no cache key specified should initialise with provided state ', () => {
+      const obj = new TestObject({
+        stateProp1: 4,
+        stateProp2: { a: 'c' },
+      });
+      obj.activate();
+
+      expect(obj.state.stateProp1).toBe(4);
+      expect(obj.state.stateProp2).toEqual({ a: 'c' });
+    });
+    it('when no cache key specified and not cached previously should initialise with provided state and cache state ', () => {
+      const obj = new TestObject({
+        cacheKey: 'cacheKeyNotCachedYet',
+        stateProp1: 4,
+        stateProp2: { a: 'c' },
+      });
+      obj.activate();
+
+      expect(obj.state.stateProp1).toBe(4);
+      expect(obj.state.stateProp2).toEqual({ a: 'c' });
+
+      const cached = getSceneObjectsCache().get('cacheKeyNotCachedYet');
+      expect(cached).toBeDefined();
+      expect((cached as TestObjectState).stateProp1).toBe(4);
+      expect((cached as TestObjectState).stateProp2).toEqual({ a: 'c' });
+    });
+    it('should resolve initial state from cache', () => {
+      const obj = new TestObject({
+        cacheKey: 'cacheKey',
+      });
+      obj.activate();
+
+      expect(obj.state.stateProp1).toBe(1);
+      expect(obj.state.stateProp2).toEqual({ a: 'a' });
+      expect(obj.state.key).not.toBe('previouslyCachedKey');
+    });
+
+    it('should update cache when state changes', () => {
+      const obj = new TestObject({
+        cacheKey: 'cacheKey',
+      });
+      obj.activate();
+      obj.setState({
+        stateProp1: 2,
+        stateProp2: { a: 'b' },
+      });
+
+      expect(obj.state.stateProp1).toBe(2);
+      expect(obj.state.stateProp2).toEqual({ a: 'b' });
+      expect(obj.state.key).not.toBe('previouslyCachedKey');
+    });
+
+    it('should preserve state in cache when deactivated', () => {
+      const obj = new TestObject({
+        cacheKey: 'cacheKey',
+      });
+      obj.activate();
+      obj.setState({
+        stateProp1: 2,
+        stateProp2: { a: 'b' },
+      });
+
+      obj.deactivate();
+
+      expect(obj.state.stateProp1).toBe(2);
+      expect(obj.state.stateProp2).toEqual({ a: 'b' });
+      expect(obj.state.key).not.toBe('previouslyCachedKey');
     });
   });
 });

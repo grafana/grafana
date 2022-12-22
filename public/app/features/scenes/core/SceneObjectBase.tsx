@@ -105,7 +105,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
     };
 
     this._state = Object.freeze(newState);
-
     getSceneObjectsCache().set(newState);
 
     this.setParent();
@@ -177,6 +176,9 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = SceneObj
 
     this._subject.complete();
     this._subject = new Subject<TState>();
+
+    // Save state in cache
+    getSceneObjectsCache().set({ ...this.state });
   }
 
   /**

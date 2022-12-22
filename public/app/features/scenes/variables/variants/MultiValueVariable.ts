@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import { map, Observable } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
@@ -35,6 +35,7 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
   extends SceneObjectBase<TState>
   implements SceneVariable<TState>
 {
+  private _updatesCounter = 0;
   protected _urlSync: SceneObjectUrlSyncHandler<TState> = new MultiValueUrlSyncHandler(this);
 
   /**
@@ -46,9 +47,18 @@ export abstract class MultiValueVariable<TState extends MultiValueVariableState 
    * This function is called on when SceneVariableSet is activated or when a dependency changes.
    */
   public validateAndUpdate(): Observable<ValidateAndUpdateResult> {
+    // If cache key is set and variable has options restored from cache and this is the first update
+    // then we validate the current value is correct
+    if (this._updatesCounter === 0 && this.state.cacheKey && this.state.options.length > 0) {
+      this.updateValueGivenNewOptions(this.state.options);
+      this._updatesCounter++;
+      return of({});
+    }
+
     return this.getValueOptions({}).pipe(
       map((options) => {
         this.updateValueGivenNewOptions(options);
+        this._updatesCounter++;
         return {};
       })
     );
