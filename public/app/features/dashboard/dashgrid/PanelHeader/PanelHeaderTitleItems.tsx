@@ -12,7 +12,7 @@ export interface Props {
   panelDescription?: string;
   alertState?: string;
   scopedVars?: ScopedVars;
-  replaceVariables: (value: string, extraVars: ScopedVars | undefined, format?: string | Function) => string;
+  replaceVariables: InterpolateFunction;
   links?: LinkModelSupplier<PanelModel>;
   data: PanelData;
   panelId: number;
