@@ -173,15 +173,11 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 
 	logger.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
 
-	start := time.Now()
-	res, err := client.Do(req)
-	elapsed := time.Since(start)
+	res, err := util.InstrumentQueryDataRequest(ctx, req, dsInfo, client, logger, "azure log analytics query")
 
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
-
-	util.LogDataQuery(logger, "azure log analytics query", elapsed, dsInfo, ctx, req, res)
 
 	logResponse, err := e.unmarshalResponse(logger, res)
 	if err != nil {

@@ -230,14 +230,11 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 	logger.Debug("AzureMonitor", "Request ApiURL", req.URL.String())
 	logger.Debug("AzureMonitor", "Target", query.Target)
 
-	start := time.Now()
-	res, err := cli.Do(req)
-	elapsed := time.Since(start)
+	res, err := util.InstrumentQueryDataRequest(ctx, req, dsInfo, cli, logger, "azure monitor metrics query")
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
 	}
-	util.LogDataQuery(logger, "azuremonitor metrics query", elapsed, dsInfo, ctx, req, res)
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
