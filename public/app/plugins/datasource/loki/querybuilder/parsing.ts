@@ -277,7 +277,7 @@ function getJsonExpressionParser(expr: string, node: SyntaxNode): QueryBuilderOp
   const parserNode = node.getChild(Json);
   const parser = getString(expr, parserNode);
 
-  let params = [...getAllByType(expr, node, JsonExpression)];
+  const params = [...getAllByType(expr, node, JsonExpression)];
   return {
     id: parser,
     params,
