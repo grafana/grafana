@@ -30,19 +30,20 @@ export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
 };
 
+export const LOGS_VOLUME_QUERY = 'logsVolume';
 const LOGS_VOLUME_ENABLED_KEY = SETTINGS_KEYS.enableVolumeHistogram;
 export const storeSuppQueryEnabled = (enabled: boolean): void => {
   store.set(LOGS_VOLUME_ENABLED_KEY, enabled ? 'true' : 'false');
 };
 
-const loadSuppQueryEnabled = (): boolean => {
+const loadSuppQueriesEnabled = (): string[] => {
   const data = store.get(LOGS_VOLUME_ENABLED_KEY);
   // we default to `enabled=true`
   if (data === 'false') {
-    return false;
+    return [];
   }
 
-  return true;
+  return [LOGS_VOLUME_QUERY];
 };
 
 /**
@@ -76,7 +77,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
-  suppQueryEnabled: loadSuppQueryEnabled(),
+  suppQueriesEnabled: loadSuppQueriesEnabled(),
   suppQueryDataProvider: undefined,
   suppQueryData: undefined,
   panelsState: {},

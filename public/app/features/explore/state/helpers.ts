@@ -2,6 +2,8 @@ import { DefaultTimeZone, toUtc } from '@grafana/data';
 
 import { ExploreId } from '../../../types';
 
+import { LOGS_VOLUME_QUERY } from './utils';
+
 export const createDefaultInitialState = () => {
   const t = toUtc();
   const testRange = {
@@ -23,7 +25,7 @@ export const createDefaultInitialState = () => {
         datasourceInstance: {
           query: jest.fn(),
           getRef: jest.fn(),
-          getSuppQueryDataProvider: jest.fn(),
+          getLogsVolumeDataProvider: jest.fn(),
           meta: {
             id: 'something',
           },
@@ -40,7 +42,7 @@ export const createDefaultInitialState = () => {
         },
         cache: [],
         richHistory: [],
-        suppQueryEnabled: true,
+        suppQueriesEnabled: [LOGS_VOLUME_QUERY],
       },
     },
   };

@@ -22,6 +22,7 @@ import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { addResultsToCache, clearCache, loadSuppQueryData, setSuppQueryEnabled } from './state/query';
 import { updateTimeRange } from './state/time';
+import { LOGS_VOLUME_QUERY } from './state/utils';
 import { LiveTailControls } from './useLiveTailControls';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { getFieldLinksForExplore } from './utils/links';
@@ -103,6 +104,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       addResultsToCache,
       clearCache,
       scrollElement,
+      suppQueriesEnabled,
     } = this.props;
 
     if (!logRows) {
@@ -134,7 +136,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             logRows={logRows}
             logsMeta={logsMeta}
             logsSeries={logsSeries}
-            logsVolumeEnabled={this.props.suppQueryEnabled}
+            logsVolumeEnabled={suppQueriesEnabled.includes(LOGS_VOLUME_QUERY)}
             onSetLogsVolumeEnabled={(enabled) => this.props.setSuppQueryEnabled(exploreId, enabled)}
             logsVolumeData={suppQueryData}
             logsQueries={logsQueries}
@@ -180,7 +182,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    suppQueryEnabled,
+    suppQueriesEnabled,
     suppQueryDataProvider,
     suppQueryData,
   } = item;
@@ -200,7 +202,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    suppQueryEnabled,
+    suppQueriesEnabled,
     suppQueryDataProvider,
     suppQueryData,
   };

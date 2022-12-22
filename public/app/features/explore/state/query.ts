@@ -1,6 +1,6 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
-import { flatten, groupBy } from 'lodash';
+import { flatten, groupBy, remove, uniq } from 'lodash';
 import { identity, Observable, of, SubscriptionLike, Unsubscribable, combineLatest } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
@@ -46,7 +46,7 @@ import { decorateData } from '../utils/decorators';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
 import { updateTime } from './time';
-import { createCacheKey, getResultsFromCache, storeSuppQueryEnabled } from './utils';
+import { createCacheKey, getResultsFromCache, LOGS_VOLUME_QUERY, storeSuppQueryEnabled } from './utils';
 
 //
 // Actions and Payloads
@@ -425,7 +425,7 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
-      suppQueryEnabled,
+      suppQueriesEnabled,
     } = exploreItemState;
     let newQuerySub;
 
@@ -586,7 +586,7 @@ export const runQueries = (
         const { suppQueryData, absoluteRange } = getState().explore[exploreId]!;
         if (!canReuseSuppQueryData(suppQueryData, queries, absoluteRange)) {
           dispatch(cleanSuppQueryVolumeAction({ exploreId }));
-          if (suppQueryEnabled) {
+          if (suppQueriesEnabled.includes(LOGS_VOLUME_QUERY)) {
             dispatch(loadSuppQueryData(exploreId));
           }
         }
@@ -768,9 +768,16 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     if (!enabled && state.suppQueryDataSubscription) {
       state.suppQueryDataSubscription.unsubscribe();
     }
+
+    const currSuppQueries = state.suppQueriesEnabled;
+    if (enabled) {
+      currSuppQueries.push(LOGS_VOLUME_QUERY);
+    } else {
+      remove(currSuppQueries, (suppQuery) => suppQuery === LOGS_VOLUME_QUERY);
+    }
     return {
       ...state,
-      suppQueryEnabled: enabled,
+      suppQueriesEnabled: uniq(currSuppQueries),
       // NOTE: the dataProvider is not cleared, we may need it later,
       // if the user re-enables the histogram-visualization
       suppQueryData: undefined,

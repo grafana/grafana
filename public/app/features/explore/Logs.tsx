@@ -48,6 +48,7 @@ import { LogRows } from '../logs/components/LogRows';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { LogsVolumePanel } from './LogsVolumePanel';
+import { LOGS_VOLUME_QUERY } from './state/utils';
 import { SETTINGS_KEYS } from './utils/logs';
 
 interface Props extends Themeable2 {
@@ -129,7 +130,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.logsVolumeEventBus = props.eventBus.newScopedBus('logsvolume', { onlyLocal: false });
+    this.logsVolumeEventBus = props.eventBus.newScopedBus(LOGS_VOLUME_QUERY, { onlyLocal: false });
   }
 
   componentWillUnmount() {

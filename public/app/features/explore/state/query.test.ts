@@ -38,7 +38,7 @@ import {
   StoreSuppQueryDataProviderAction,
   setSuppQueryEnabled,
 } from './query';
-import { makeExplorePaneState } from './utils';
+import { LOGS_VOLUME_QUERY, makeExplorePaneState } from './utils';
 
 const { testRange, defaultInitialState } = createDefaultInitialState();
 
@@ -369,11 +369,11 @@ describe('reducer', () => {
     let dispatch: ThunkDispatch,
       getState: () => StoreState,
       unsubscribes: Function[],
-      mocksuppQueryDataProvider: () => Observable<DataQueryResponse>;
+      mockLogsVolumeDataProvider: () => Observable<DataQueryResponse>;
 
     beforeEach(() => {
       unsubscribes = [];
-      mocksuppQueryDataProvider = () => {
+      mockLogsVolumeDataProvider = () => {
         return {
           subscribe: () => {
             const unsubscribe = jest.fn();
@@ -396,8 +396,8 @@ describe('reducer', () => {
               meta: {
                 id: 'something',
               },
-              getSuppQueryDataProvider: () => {
-                return mocksuppQueryDataProvider();
+              getLogsVolumeDataProvider: () => {
+                return mockLogsVolumeDataProvider();
               },
             },
           },
@@ -445,7 +445,7 @@ describe('reducer', () => {
     });
 
     it('should clean any incomplete log volume data when main query is canceled', async () => {
-      mocksuppQueryDataProvider = () => {
+      mockLogsVolumeDataProvider = () => {
         return of({ state: LoadingState.Loading, error: undefined, data: [] });
       };
       await dispatch(runQueries(ExploreId.left));
@@ -460,7 +460,7 @@ describe('reducer', () => {
     });
 
     it('keeps complete log volume data when main query is canceled', async () => {
-      mocksuppQueryDataProvider = () => {
+      mockLogsVolumeDataProvider = () => {
         return of(
           { state: LoadingState.Loading, error: undefined, data: [] },
           { state: LoadingState.Done, error: undefined, data: [{}] }
@@ -481,7 +481,7 @@ describe('reducer', () => {
     it('do not load logsVolume data when disabled', async () => {
       // turn logsvolume off
       dispatch(setSuppQueryEnabled(ExploreId.left, false));
-      expect(getState().explore[ExploreId.left].suppQueryEnabled).toBe(false);
+      expect(getState().explore[ExploreId.left].suppQueriesEnabled.includes(LOGS_VOLUME_QUERY)).toBe(false);
 
       // verify that if we run a query, it will not do logsvolume, but the Provider will still be set
       await dispatch(runQueries(ExploreId.left));
@@ -502,7 +502,7 @@ describe('reducer', () => {
       await dispatch(setSuppQueryEnabled(ExploreId.left, true));
 
       // verify it was turned on
-      expect(getState().explore[ExploreId.left].suppQueryEnabled).toBe(true);
+      expect(getState().explore[ExploreId.left].suppQueriesEnabled.includes(LOGS_VOLUME_QUERY)).toBe(true);
 
       expect(getState().explore[ExploreId.left].suppQueryDataSubscription).toBeDefined();
     });

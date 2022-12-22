@@ -197,7 +197,7 @@ export interface ExploreItemState {
 
   // properties below should be more generic if we add more providers
   // see also: DataSourceWithLogsVolumeSupport
-  suppQueryEnabled: boolean;
+  suppQueriesEnabled: string[];
   suppQueryDataProvider?: Observable<DataQueryResponse>;
   suppQueryDataSubscription?: SubscriptionLike;
   suppQueryData?: DataQueryResponse;
