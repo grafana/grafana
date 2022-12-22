@@ -307,6 +307,30 @@ describe('AzureMonitorDatasource', () => {
           expect(results.supportedTimeGrains.length).toEqual(5); // 4 time grains from the API + auto
         });
     });
+
+    it('should replace a template variable for the metric name', () => {
+      templateSrv.init([
+        {
+          id: 'metric',
+          name: 'metric',
+          current: {
+            value: 'UsedCapacity',
+          },
+        },
+      ]);
+      return ctx.ds.azureMonitorDatasource
+        .getMetricMetadata({
+          resourceUri:
+            '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+          metricNamespace: 'microsoft.insights/components',
+          metricName: '$metric',
+        })
+        .then((results) => {
+          expect(results.primaryAggType).toEqual('Total');
+          expect(results.supportedAggTypes.length).toEqual(6);
+          expect(results.supportedTimeGrains.length).toEqual(5); // 4 time grains from the API + auto
+        });
+    });
   });
 
   describe('When performing interpolateVariablesInQueries for azure_monitor_metrics', () => {
