@@ -337,3 +337,47 @@ func CreateClassicConditionExpression(refID string, inputRefID string, reducer s
 		}`, refID, inputRefID, operation, threshold, reducer, expr.OldDatasourceUID, expr.DatasourceType)),
 	}
 }
+
+type AlertInstanceMutator func(*AlertInstance)
+
+// AlertInstanceGen provides a factory function that generates a random AlertInstance.
+// The mutators arguments allows changing fields of the resulting structure.
+func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
+	var labels map[string]string = nil
+	if rand.Int63()%2 == 0 {
+		labels = GenerateAlertLabels(rand.Intn(5), "lbl-")
+	}
+
+	randState := func() InstanceStateType {
+		s := [...]InstanceStateType{
+			InstanceStateFiring,
+			InstanceStateNormal,
+			InstanceStatePending,
+			InstanceStateNoData,
+			InstanceStateError,
+			InstanceStatePaused,
+		}
+		return s[rand.Intn(len(s)-1)]
+	}
+
+	currentStateSince := time.Now().Add(-time.Duration(rand.Intn(100) + 1))
+
+	instance := &AlertInstance{
+		AlertInstanceKey: AlertInstanceKey{
+			RuleOrgID:  rand.Int63n(1500),
+			RuleUID:    util.GenerateShortUID(),
+			LabelsHash: util.GenerateShortUID(),
+		},
+		Labels:            labels,
+		CurrentState:      randState(),
+		CurrentReason:     "TEST-REASON-" + util.GenerateShortUID(),
+		CurrentStateSince: currentStateSince,
+		CurrentStateEnd:   currentStateSince.Add(time.Duration(rand.Intn(100) + 200)),
+		LastEvalTime:      time.Now().Add(-time.Duration(rand.Intn(100) + 50)),
+	}
+
+	for _, mutator := range mutators {
+		mutator(instance)
+	}
+	return instance
+}

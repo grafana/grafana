@@ -209,6 +209,10 @@ const (
 	// Error is the eval state for an alert rule condition
 	// that evaluated to Error.
 	Error
+
+	// Paused is the eval state for an alert rule that has been stopped by the user.
+	// It must not be evaluated.
+	Paused
 )
 
 func (s State) IsValid() bool {

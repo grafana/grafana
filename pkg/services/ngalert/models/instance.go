@@ -34,8 +34,10 @@ const (
 	InstanceStatePending InstanceStateType = "Pending"
 	// InstanceStateNoData is for an alert with no data.
 	InstanceStateNoData InstanceStateType = "NoData"
-	// InstanceStateError is for a erroring alert.
+	// InstanceStateError is for an erroring alert.
 	InstanceStateError InstanceStateType = "Error"
+	// InstanceStatePaused id for a paused alert.
+	InstanceStatePaused InstanceStateType = "Paused"
 )
 
 // IsValid checks that the value of InstanceStateType is a valid
@@ -45,7 +47,8 @@ func (i InstanceStateType) IsValid() bool {
 		i == InstanceStateNormal ||
 		i == InstanceStateNoData ||
 		i == InstanceStatePending ||
-		i == InstanceStateError
+		i == InstanceStateError ||
+		i == InstanceStatePaused
 }
 
 // ListAlertInstancesQuery is the query list alert Instances.
