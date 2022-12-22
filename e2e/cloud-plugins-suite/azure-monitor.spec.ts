@@ -20,11 +20,10 @@ type AzureMonitorConfig = {
 
 type AzureMonitorProvision = { datasources: AzureMonitorConfig[] };
 
-let dataSourceName = '';
+const dataSourceName = `Azure Monitor E2E Tests - ${uuidv4()}`;
 
 function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) {
   const datasource = datasources[0].datasources[0];
-  dataSourceName = `Azure Monitor E2E Tests - ${uuidv4()}`;
 
   e2e()
     .intercept(/subscriptions/)
