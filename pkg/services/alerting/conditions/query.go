@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func init() {
@@ -276,8 +277,8 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *datasources.DataSour
 			},
 		},
 		Headers: map[string]string{
-			"FromAlert":    "true",
-			"X-Cache-Skip": "true",
+			ngalertmodels.FromAlertHeaderName: "true",
+			ngalertmodels.CacheSkipHeaderName: "true",
 		},
 		Debug: debug,
 	}

@@ -37,7 +37,6 @@ func TestClient(t *testing.T) {
 				Path:          "/api/v1/series",
 				Method:        http.MethodPost,
 				URL:           "/api/v1/series",
-				Headers:       nil,
 				Body:          []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"),
 			}
 			res, err := client.QueryResource(context.Background(), req)
@@ -63,7 +62,6 @@ func TestClient(t *testing.T) {
 				Path:          "/api/v1/series",
 				Method:        http.MethodGet,
 				URL:           "api/v1/series?match%5B%5D=ALERTS&start=1655272558&end=1655294158",
-				Headers:       nil,
 			}
 			res, err := client.QueryResource(context.Background(), req)
 			defer func() {
@@ -95,7 +93,7 @@ func TestClient(t *testing.T) {
 				RangeQuery: true,
 				Step:       1 * time.Second,
 			}
-			res, err := client.QueryRange(context.Background(), req, nil)
+			res, err := client.QueryRange(context.Background(), req)
 			defer func() {
 				if res != nil && res.Body != nil {
 					if err := res.Body.Close(); err != nil {
@@ -122,7 +120,7 @@ func TestClient(t *testing.T) {
 				RangeQuery: true,
 				Step:       1 * time.Second,
 			}
-			res, err := client.QueryRange(context.Background(), req, nil)
+			res, err := client.QueryRange(context.Background(), req)
 			defer func() {
 				if res != nil && res.Body != nil {
 					if err := res.Body.Close(); err != nil {
