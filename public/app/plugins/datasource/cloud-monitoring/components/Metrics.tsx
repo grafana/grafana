@@ -7,7 +7,7 @@ import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental'
 import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';
-import { MetricDescriptor, MetricQuery } from '../types';
+import { MetricDescriptor, TimeSeriesList } from '../types';
 
 import { Project } from './Project';
 
@@ -18,9 +18,9 @@ export interface Props {
   datasource: CloudMonitoringDatasource;
   projectName: string;
   metricType: string;
-  query: MetricQuery;
+  query: TimeSeriesList;
   children: (metricDescriptor?: MetricDescriptor) => JSX.Element;
-  onProjectChange: (query: MetricQuery) => void;
+  onProjectChange: (query: TimeSeriesList) => void;
 }
 
 export function Metrics(props: Props) {

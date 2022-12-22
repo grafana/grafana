@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	p "github.com/prometheus/common/model"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -341,27 +340,6 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
 		require.Equal(t, int64(123), testValue.(time.Time).UnixMilli())
 	})
-}
-
-func TestPrometheusCanonicalHeaders(t *testing.T) {
-	// Ensure headers are always canonicalized for all outgoing requests
-	b, err := json.Marshal(models.QueryModel{})
-	require.NoError(t, err)
-	query := backend.DataQuery{JSON: b}
-	tctx, err := setup(true)
-	require.NoError(t, err)
-	const idToken = "abc"
-	_, err = executeWithHeaders(tctx, query, queryResult{}, map[string]string{
-		"X-Id-Token": idToken,
-		"X-ID-Token": idToken,
-		"X-Other":    "thing",
-	})
-	require.NoError(t, err)
-	assert.NotEmpty(t, tctx.httpProvider.req.Header)
-	// Check the request that hit the fake prometheus server to ensure headers are valid
-	assert.Equal(t, []string{idToken}, tctx.httpProvider.req.Header["X-Id-Token"])
-	assert.Empty(t, tctx.httpProvider.req.Header["X-ID-Token"]) //nolint:staticcheck
-	assert.Equal(t, []string{"thing"}, tctx.httpProvider.req.Header["X-Other"])
 }
 
 type queryResult struct {
