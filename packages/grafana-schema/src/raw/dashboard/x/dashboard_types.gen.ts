@@ -77,7 +77,7 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
 export interface VariableModel {
   datasource?: DataSourceRef;
   description?: string;
-  error?: Record<string, any>;
+  error?: Record<string, unknown>;
   global: boolean;
   hide: VariableHide;
   id: string;
@@ -87,7 +87,7 @@ export interface VariableModel {
   /**
    * TODO: Move this into a separated QueryVariableModel type
    */
-  query?: (string | Record<string, any>);
+  query?: (string | Record<string, unknown>);
   rootStateKey?: string;
   skipUrlSync: boolean;
   state: LoadingState;
@@ -289,7 +289,10 @@ export enum MappingType {
 /**
  * TODO docs
  */
-export interface ValueMap %!s(PANIC=String method: runtime error: invalid memory address or nil pointer dereference)
+export interface ValueMap {
+  options: Record<string, ValueMappingResult>;
+  type: MappingType.ValueToText;
+}
 
 /**
  * TODO docs
@@ -357,7 +360,7 @@ export interface ValueMappingResult {
  */
 export interface Transformation {
   id: string;
-  options: Record<string, any>;
+  options: Record<string, unknown>;
 }
 
 /**
@@ -417,7 +420,7 @@ export interface Panel {
    * options is specified by the PanelOptions field in panel
    * plugin schemas.
    */
-  options: Record<string, any>;
+  options: Record<string, unknown>;
   /**
    * FIXME this almost certainly has to be changed in favor of scuemata versions
    */
@@ -443,11 +446,11 @@ export interface Panel {
   /**
    * TODO docs
    */
-  targets?: Array<Record<string, any>>;
+  targets?: Array<Record<string, unknown>>;
   /**
    * TODO docs - seems to be an old field from old dashboard alerts?
    */
-  thresholds?: Array<any>;
+  thresholds?: Array<unknown>;
   /**
    * TODO docs
    * TODO tighter constraint
@@ -456,7 +459,7 @@ export interface Panel {
   /**
    * TODO docs
    */
-  timeRegions?: Array<any>;
+  timeRegions?: Array<unknown>;
   /**
    * TODO docs
    * TODO tighter constraint
@@ -494,7 +497,7 @@ export interface FieldConfigSource {
     matcher: MatcherConfig;
     properties: Array<{
       id: string;
-      value?: any;
+      value?: unknown;
     }>;
   }>;
 }
@@ -505,7 +508,7 @@ export const defaultFieldConfigSource: Partial<FieldConfigSource> = {
 
 export interface MatcherConfig {
   id: string;
-  options?: any;
+  options?: unknown;
 }
 
 export const defaultMatcherConfig: Partial<MatcherConfig> = {
@@ -521,7 +524,7 @@ export interface FieldConfig {
    * custom is specified by the PanelFieldConfig field
    * in panel plugin schemas.
    */
-  custom?: Record<string, any>;
+  custom?: Record<string, unknown>;
   /**
    * Significant digits (for display)
    */
@@ -546,7 +549,7 @@ export interface FieldConfig {
   /**
    * The behavior when clicking on a result
    */
-  links?: Array<any>;
+  links?: Array<unknown>;
   /**
    * Convert input values into a display string
    */

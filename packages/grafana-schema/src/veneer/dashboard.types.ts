@@ -5,12 +5,6 @@ export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = 
   fieldConfig: FieldConfigSource<TCustomFieldConfig>;
 }
 
-export enum VariableHide {
-  dontHide,
-  hideLabel,
-  hideVariable,
-}
-
 export interface VariableModel
   extends Omit<raw.VariableModel, 'rootStateKey' | 'error' | 'description' | 'hide' | 'datasource'> {
   // Overrides nullable properties because CUE doesn't support null values

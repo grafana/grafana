@@ -1365,6 +1365,8 @@ github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cuetsy v0.1.2 h1:v4re6ZMrQMsfS9iyJhdkgRxSLmqgtmGUZ2OY0VuKN7c=
 github.com/grafana/cuetsy v0.1.2/go.mod h1:4KWkUOslwvRTpEv7wdQG0jDFTuJmU+0L9x0h4kWxa2A=
+github.com/grafana/cuetsy v0.1.3-0.20221221204204-a320b05f3196 h1:TrOCnZZkA6YDCfyiSFHwOP0eUoMfg2IVRem3js3s5es=
+github.com/grafana/cuetsy v0.1.3-0.20221221204204-a320b05f3196/go.mod h1:4KWkUOslwvRTpEv7wdQG0jDFTuJmU+0L9x0h4kWxa2A=
 github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f h1:FvvSVEbnGeM2bUivGmsiXTi8URJyBU7TcFEEoRe5wWI=
 github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f/go.mod h1:uPG2nyK4CtgNDmWv7qyzYcdI+S90kHHRWvHnBtEMBXM=
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5JIhUUrggPcPBhOn+eT8+WsHiebvq7GgA=
