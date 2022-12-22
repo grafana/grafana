@@ -416,7 +416,7 @@ export class ElasticDatasource
       (query): ElasticsearchQuery => ({
         ...query,
         datasource: this.getRef(),
-        query: this.interpolateLuceneQuery(query.query || '', scopedVars),
+        query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars)),
         bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
       })
     );
@@ -959,6 +959,37 @@ export class ElasticDatasource
       }
     }
     return { ...query, query: expression };
+  }
+
+  addAdHocFilters(query: string) {
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    if (adhocFilters.length === 0) {
+      return query;
+    }
+    const esFilters = adhocFilters.map((filter) => {
+      const { key, operator, value } = filter;
+      if (!key || !value) {
+        return;
+      }
+      switch (operator) {
+        case '=':
+          return `${key}:"${value}"`;
+        case '!=':
+          return `-${key}:"${value}"`;
+        case '=~':
+          return `${key}:/${value}/`;
+        case '!~':
+          return `-${key}:/${value}/`;
+        case '>':
+          return `${key}:>${value}`;
+        case '<':
+          return `${key}:<${value}`;
+      }
+      return;
+    });
+
+    const finalQuery = [query, ...esFilters].filter((f) => f).join(' AND ');
+    return finalQuery;
   }
 }
 
