@@ -9,16 +9,16 @@
 // Run 'make gen-cue' from repository root to regenerate.
 
 export enum Permission {
-  admin = 4,
-  editor = 2,
-  viewer = 1,
+  Admin = 4,
+  Editor = 2,
+  Viewer = 1,
 }
 
 export interface Team {
   /**
    * AccessControl metadata associated with a given resource.
    */
-  accessControl: Record<string, boolean>;
+  accessControl: Record<string, unknown>;
   /**
    * AvatarUrl is the team's avatar URL.
    */

@@ -102,9 +102,9 @@ export const defaultVariableModel: Partial<VariableModel> = {
 };
 
 export enum VariableHide {
-  dontHide = 0,
-  hideLabel = 1,
-  hideVariable = 2,
+  DontHide = 0,
+  HideLabel = 1,
+  HideVariable = 2,
 }
 
 export enum LoadingState {
@@ -287,7 +287,7 @@ export enum MappingType {
  * TODO docs
  */
 export interface ValueMap {
-  options: Record<string, ValueMappingResult>;
+  options: Record<string, unknown>;
   type: MappingType.ValueToText;
 }
 
@@ -447,7 +447,7 @@ export interface Panel {
   /**
    * TODO docs - seems to be an old field from old dashboard alerts?
    */
-  thresholds?: Array<unknown>;
+  thresholds?: Array<any>;
   /**
    * TODO docs
    * TODO tighter constraint
@@ -456,7 +456,7 @@ export interface Panel {
   /**
    * TODO docs
    */
-  timeRegions?: Array<unknown>;
+  timeRegions?: Array<any>;
   /**
    * TODO docs
    * TODO tighter constraint
@@ -494,7 +494,7 @@ export interface FieldConfigSource {
     matcher: MatcherConfig;
     properties: Array<{
       id: string;
-      value?: unknown;
+      value?: any;
     }>;
   }>;
 }
@@ -505,7 +505,7 @@ export const defaultFieldConfigSource: Partial<FieldConfigSource> = {
 
 export interface MatcherConfig {
   id: string;
-  options?: unknown;
+  options?: any;
 }
 
 export const defaultMatcherConfig: Partial<MatcherConfig> = {
@@ -546,7 +546,7 @@ export interface FieldConfig {
   /**
    * The behavior when clicking on a result
    */
-  links?: Array<unknown>;
+  links?: Array<any>;
   /**
    * Convert input values into a display string
    */
