@@ -8,7 +8,12 @@
       "name": "Ismael",
       "url": ""
     },
-    "keywords": ["sankey", "d3", "grafana", "panel"],
+    "keywords": [
+      "sankey",
+      "d3",
+      "grafana",
+      "panel"
+    ],
     "logos": {
       "small": "img/logo.svg",
       "large": "img/logo.svg"
@@ -25,7 +30,7 @@
     ],
     "screenshots": [],
     "version": "1.0.0",
-    "updated": "2022-12-16"
+    "updated": "2022-12-22"
   },
   "dependencies": {
     "grafanaVersion": "7.0.x",
