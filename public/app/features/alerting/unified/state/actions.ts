@@ -540,19 +540,27 @@ interface UpdateAlertManagerConfigActionOptions {
   successMessage?: string; // show toast on success
   redirectPath?: string; // where to redirect on success
   refetch?: boolean; // refetch config on success
-  fetchLatestConfig?: boolean; //obtain latest config prior to saving it
+  checkConflictsWithExistingConfig?: boolean; //obtain latest config prior to saving it
 }
 
 export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
   'unifiedalerting/updateAMConfig',
   (
-    { alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, refetch, fetchLatestConfig = true },
+    {
+      alertManagerSourceName,
+      oldConfig,
+      newConfig,
+      successMessage,
+      redirectPath,
+      refetch,
+      checkConflictsWithExistingConfig = true,
+    },
     thunkAPI
   ): Promise<void> =>
     withAppEvents(
       withSerializedError(
         (async () => {
-          if (fetchLatestConfig) {
+          if (checkConflictsWithExistingConfig) {
             // TODO there must be a better way here than to dispatch another fetch as this causes re-rendering :(
             const latestConfig = await thunkAPI
               .dispatch(fetchAlertManagerConfigAction(alertManagerSourceName))
