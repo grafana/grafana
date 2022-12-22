@@ -46,16 +46,6 @@ func createEngine(dbType, connStr string) error {
 
 		if !*cluster {
 			switch strings.ToLower(dbType) {
-			case core.MSSQL:
-				db, err := sql.Open(dbType, strings.Replace(connStr, "xorm_test", "master", -1))
-				if err != nil {
-					return err
-				}
-				if _, err = db.Exec("If(db_id(N'xorm_test') IS NULL) BEGIN CREATE DATABASE xorm_test; END;"); err != nil {
-					return fmt.Errorf("db.Exec: %v", err)
-				}
-				db.Close()
-				*ignoreSelectUpdate = true
 			case core.POSTGRES:
 				db, err := sql.Open(dbType, connStr)
 				if err != nil {

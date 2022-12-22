@@ -141,9 +141,6 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 			} else {
 				deleteSQL += " WHERE " + inSQL
 			}
-			// TODO: how to handle delete limit on mssql?
-		case core.MSSQL:
-			return 0, ErrNotImplemented
 		default:
 			deleteSQL += orderSQL
 		}
@@ -182,9 +179,6 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 				} else {
 					realSQL += " WHERE " + inSQL
 				}
-				// TODO: how to handle delete limit on mssql?
-			case core.MSSQL:
-				return 0, ErrNotImplemented
 			default:
 				realSQL += orderSQL
 			}

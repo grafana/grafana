@@ -311,21 +311,9 @@ func TestCustomType2(t *testing.T) {
 	session := testEngine.NewSession()
 	defer session.Close()
 
-	if testEngine.Dialect().DBType() == core.MSSQL {
-		err = session.Begin()
-		assert.NoError(t, err)
-		_, err = session.Exec("set IDENTITY_INSERT " + tableName + " on")
-		assert.NoError(t, err)
-	}
-
 	cnt, err := session.Insert(&UserCus{1, "xlw", Registered})
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, cnt)
-
-	if testEngine.Dialect().DBType() == core.MSSQL {
-		err = session.Commit()
-		assert.NoError(t, err)
-	}
 
 	user := UserCus{}
 	exist, err := testEngine.ID(1).Get(&user)

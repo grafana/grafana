@@ -251,20 +251,12 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 	cleanupProcessorsClosures(&session.beforeClosures)
 
 	var sql string
-	if session.engine.dialect.DBType() == core.ORACLE {
-		temp := fmt.Sprintf(") INTO %s (%v) VALUES (",
-			session.engine.Quote(tableName),
-			quoteColumns(colNames, session.engine.Quote, ","))
-		sql = fmt.Sprintf("INSERT ALL INTO %s (%v) VALUES (%v) SELECT 1 FROM DUAL",
-			session.engine.Quote(tableName),
-			quoteColumns(colNames, session.engine.Quote, ","),
-			strings.Join(colMultiPlaces, temp))
-	} else {
-		sql = fmt.Sprintf("INSERT INTO %s (%v) VALUES (%v)",
-			session.engine.Quote(tableName),
-			quoteColumns(colNames, session.engine.Quote, ","),
-			strings.Join(colMultiPlaces, "),("))
-	}
+
+	sql = fmt.Sprintf("INSERT INTO %s (%v) VALUES (%v)",
+		session.engine.Quote(tableName),
+		quoteColumns(colNames, session.engine.Quote, ","),
+		strings.Join(colMultiPlaces, "),("))
+
 	res, err := session.exec(sql, args...)
 	if err != nil {
 		return 0, err
@@ -358,9 +350,6 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 	var tableName = session.statement.TableName()
 	var output string
-	if session.engine.dialect.DBType() == core.MSSQL && len(table.AutoIncrement) > 0 {
-		output = fmt.Sprintf(" OUTPUT Inserted.%s", table.AutoIncrement)
-	}
 
 	var buf = builder.NewWriter()
 	if _, err := buf.WriteString(fmt.Sprintf("INSERT INTO %s", session.engine.Quote(tableName))); err != nil {
@@ -469,48 +458,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 	// for postgres, many of them didn't implement lastInsertId, so we should
 	// implemented it ourself.
-	if session.engine.dialect.DBType() == core.ORACLE && len(table.AutoIncrement) > 0 {
-		res, err := session.queryBytes("select seq_atable.currval from dual", args...)
-		if err != nil {
-			return 0, err
-		}
-
-		defer handleAfterInsertProcessorFunc(bean)
-
-		session.cacheInsert(tableName)
-
-		if table.Version != "" && session.statement.checkVersion {
-			verValue, err := table.VersionColumn().ValueOf(bean)
-			if err != nil {
-				session.engine.logger.Error(err)
-			} else if verValue.IsValid() && verValue.CanSet() {
-				session.incrVersionFieldValue(verValue)
-			}
-		}
-
-		if len(res) < 1 {
-			return 0, errors.New("insert no error but not returned id")
-		}
-
-		idByte := res[0][table.AutoIncrement]
-		id, err := strconv.ParseInt(string(idByte), 10, 64)
-		if err != nil || id <= 0 {
-			return 1, err
-		}
-
-		aiValue, err := table.AutoIncrColumn().ValueOf(bean)
-		if err != nil {
-			session.engine.logger.Error(err)
-		}
-
-		if aiValue == nil || !aiValue.IsValid() || !aiValue.CanSet() {
-			return 1, nil
-		}
-
-		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
-
-		return 1, nil
-	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == core.POSTGRES || session.engine.dialect.DBType() == core.MSSQL) {
+	if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == core.POSTGRES) {
 		res, err := session.queryBytes(sqlStr, args...)
 
 		if err != nil {

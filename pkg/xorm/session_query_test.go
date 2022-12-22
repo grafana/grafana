@@ -207,7 +207,7 @@ func TestQueryStringNoParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, len(records))
 	assert.EqualValues(t, "1", records[0]["id"])
-	if testEngine.Dialect().DBType() == core.POSTGRES || testEngine.Dialect().DBType() == core.MSSQL {
+	if testEngine.Dialect().DBType() == core.POSTGRES {
 		assert.EqualValues(t, "false", records[0]["msg"])
 	} else {
 		assert.EqualValues(t, "0", records[0]["msg"])
@@ -217,7 +217,7 @@ func TestQueryStringNoParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, len(records))
 	assert.EqualValues(t, "1", records[0]["id"])
-	if testEngine.Dialect().DBType() == core.POSTGRES || testEngine.Dialect().DBType() == core.MSSQL {
+	if testEngine.Dialect().DBType() == core.POSTGRES {
 		assert.EqualValues(t, "false", records[0]["msg"])
 	} else {
 		assert.EqualValues(t, "0", records[0]["msg"])
@@ -244,7 +244,7 @@ func TestQuerySliceStringNoParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, len(records))
 	assert.EqualValues(t, "1", records[0][0])
-	if testEngine.Dialect().DBType() == core.POSTGRES || testEngine.Dialect().DBType() == core.MSSQL {
+	if testEngine.Dialect().DBType() == core.POSTGRES {
 		assert.EqualValues(t, "false", records[0][1])
 	} else {
 		assert.EqualValues(t, "0", records[0][1])
@@ -254,7 +254,7 @@ func TestQuerySliceStringNoParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, len(records))
 	assert.EqualValues(t, "1", records[0][0])
-	if testEngine.Dialect().DBType() == core.POSTGRES || testEngine.Dialect().DBType() == core.MSSQL {
+	if testEngine.Dialect().DBType() == core.POSTGRES {
 		assert.EqualValues(t, "false", records[0][1])
 	} else {
 		assert.EqualValues(t, "0", records[0][1])

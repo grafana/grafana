@@ -97,9 +97,7 @@ func (engine *Engine) CondDeleted(col *core.Column) builder.Cond {
 		cond = builder.Eq{col.Name: 0}
 	} else {
 		// FIXME: mssql: The conversion of a nvarchar data type to a datetime data type resulted in an out-of-range value.
-		if engine.dialect.DBType() != core.MSSQL {
-			cond = builder.Eq{col.Name: zeroTime1}
-		}
+		cond = builder.Eq{col.Name: zeroTime1}
 	}
 
 	if col.Nullable {
@@ -384,7 +382,7 @@ func (engine *Engine) Sql(querystring string, args ...interface{}) *Session {
 // SQL method let's you manually write raw SQL and operate
 // For example:
 //
-//         engine.SQL("select * from user").Find(&users)
+//	engine.SQL("select * from user").Find(&users)
 //
 // This    code will execute "select * from user" and set the records to users
 func (engine *Engine) SQL(query interface{}, args ...interface{}) *Session {
@@ -805,9 +803,8 @@ func (engine *Engine) Desc(colNames ...string) *Session {
 // Asc will generate "ORDER BY column1,column2 Asc"
 // This method can chainable use.
 //
-//        engine.Desc("name").Asc("age").Find(&users)
-//        // SELECT * FROM user ORDER BY name DESC, age ASC
-//
+//	engine.Desc("name").Asc("age").Find(&users)
+//	// SELECT * FROM user ORDER BY name DESC, age ASC
 func (engine *Engine) Asc(colNames ...string) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
@@ -1455,9 +1452,10 @@ func (engine *Engine) InsertOne(bean interface{}) (int64, error) {
 // Update records, bean's non-empty fields are updated contents,
 // condiBean' non-empty filds are conditions
 // CAUTION:
-//        1.bool will defaultly be updated content nor conditions
-//         You should call UseBool if you have bool to use.
-//        2.float32 & float64 may be not inexact as conditions
+//
+//	1.bool will defaultly be updated content nor conditions
+//	 You should call UseBool if you have bool to use.
+//	2.float32 & float64 may be not inexact as conditions
 func (engine *Engine) Update(bean interface{}, condiBeans ...interface{}) (int64, error) {
 	session := engine.NewSession()
 	defer session.Close()
@@ -1635,11 +1633,7 @@ func (engine *Engine) formatTime(sqlTypeName string, t time.Time) (v interface{}
 	case core.DateTime, core.TimeStamp, core.Varchar: // !DarthPestilane! format time when sqlTypeName is core.Varchar.
 		v = t.Format("2006-01-02 15:04:05")
 	case core.TimeStampz:
-		if engine.dialect.DBType() == core.MSSQL {
-			v = t.Format("2006-01-02T15:04:05.9999999Z07:00")
-		} else {
-			v = t.Format(time.RFC3339Nano)
-		}
+		v = t.Format(time.RFC3339Nano)
 	case core.BigInt, core.Int:
 		v = t.Unix()
 	default:

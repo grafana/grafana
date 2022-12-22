@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"xorm.io/core"
 )
 
 func TestGetVar(t *testing.T) {
@@ -153,11 +152,8 @@ func TestGetVar(t *testing.T) {
 	assert.Equal(t, "1.5", fmt.Sprintf("%.1f", money))
 
 	var money2 float64
-	if testEngine.Dialect().DBType() == core.MSSQL {
-		has, err = testEngine.SQL("SELECT TOP 1 money FROM " + testEngine.TableName("get_var", true)).Get(&money2)
-	} else {
-		has, err = testEngine.SQL("SELECT money FROM " + testEngine.TableName("get_var", true) + " LIMIT 1").Get(&money2)
-	}
+	has, err = testEngine.SQL("SELECT money FROM " + testEngine.TableName("get_var", true) + " LIMIT 1").Get(&money2)
+
 	assert.NoError(t, err)
 	assert.Equal(t, true, has)
 	assert.Equal(t, "1.5", fmt.Sprintf("%.1f", money2))
@@ -233,19 +229,9 @@ func TestGetStruct(t *testing.T) {
 	defer session.Close()
 
 	var err error
-	if testEngine.Dialect().DBType() == core.MSSQL {
-		err = session.Begin()
-		assert.NoError(t, err)
-		_, err = session.Exec("SET IDENTITY_INSERT userinfo_get ON")
-		assert.NoError(t, err)
-	}
 	cnt, err := session.Insert(&UserinfoGet{Uid: 2})
 	assert.NoError(t, err)
 	assert.EqualValues(t, 1, cnt)
-	if testEngine.Dialect().DBType() == core.MSSQL {
-		err = session.Commit()
-		assert.NoError(t, err)
-	}
 
 	user := UserinfoGet{Uid: 2}
 	has, err := testEngine.Get(&user)

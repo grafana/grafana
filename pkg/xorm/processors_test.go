@@ -281,13 +281,13 @@ func TestProcessors(t *testing.T) {
 		t.Error(errors.New("B4UpdateFlag not set"))
 	}
 	if p2.AfterUpdatedFlag != 0 {
-		t.Error(errors.New("AfterUpdatedFlag is set: " + string(p.AfterUpdatedFlag)))
+		t.Error(fmt.Errorf("AfterUpdatedFlag is set: %d", p.AfterUpdatedFlag))
 	}
 	if p2.B4UpdateViaExt == 0 {
 		t.Error(errors.New("B4UpdateViaExt not set"))
 	}
 	if p2.AfterUpdatedViaExt != 0 {
-		t.Error(errors.New("AfterUpdatedViaExt is set: " + string(p.AfterUpdatedViaExt)))
+		t.Error(fmt.Errorf("AfterUpdatedViaExt is set: %d", p.AfterUpdatedViaExt))
 	}
 	if p2.BeforeSetFlag != 9 {
 		t.Error(fmt.Errorf("BeforeSetFlag is %d not 9", p2.BeforeSetFlag))
