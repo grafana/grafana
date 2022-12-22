@@ -5,13 +5,19 @@ export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = 
   fieldConfig: FieldConfigSource<TCustomFieldConfig>;
 }
 
+export enum VariableHide {
+  dontHide,
+  hideLabel,
+  hideVariable,
+}
+
 export interface VariableModel
   extends Omit<raw.VariableModel, 'rootStateKey' | 'error' | 'description' | 'hide' | 'datasource'> {
   // Overrides nullable properties because CUE doesn't support null values
   rootStateKey: string | null;
   error: any | null;
   description: string | null;
-  hide: raw.VariableHide;
+  hide: VariableHide;
   datasource: raw.DataSourceRef | null;
 }
 
@@ -36,7 +42,7 @@ export const defaultVariableModel = {
   rootStateKey: null,
   error: null,
   description: null,
-  hide: raw.VariableHide.dontHide,
+  hide: VariableHide.dontHide,
   state: raw.LoadingState.NotStarted,
   datasource: null,
 } as VariableModel;
