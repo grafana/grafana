@@ -20,7 +20,7 @@ import { getTimeZone } from '../profile/state/selectors';
 
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
-import { addResultsToCache, clearCache, loadLogsVolumeData, setLogsVolumeEnabled } from './state/query';
+import { addResultsToCache, clearCache, loadSuppQueryData, setSuppQueryEnabled } from './state/query';
 import { updateTimeRange } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
@@ -85,8 +85,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       logsMeta,
       logsSeries,
       logsQueries,
-      logsVolumeData,
-      loadLogsVolumeData,
+      suppQueryData,
+      loadSuppQueryData,
       onClickFilterLabel,
       onClickFilterOutLabel,
       onStartScanning,
@@ -134,15 +134,15 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             logRows={logRows}
             logsMeta={logsMeta}
             logsSeries={logsSeries}
-            logsVolumeEnabled={this.props.logsVolumeEnabled}
-            onSetLogsVolumeEnabled={(enabled) => this.props.setLogsVolumeEnabled(exploreId, enabled)}
-            logsVolumeData={logsVolumeData}
+            logsVolumeEnabled={this.props.suppQueryEnabled}
+            onSetLogsVolumeEnabled={(enabled) => this.props.setSuppQueryEnabled(exploreId, enabled)}
+            logsVolumeData={suppQueryData}
             logsQueries={logsQueries}
             width={width}
             splitOpen={splitOpenFn}
             loading={loading}
             loadingState={loadingState}
-            loadLogsVolumeData={loadLogsVolumeData}
+            loadLogsVolumeData={loadSuppQueryData}
             onChangeTime={this.onChangeTime}
             onClickFilterLabel={onClickFilterLabel}
             onClickFilterOutLabel={onClickFilterOutLabel}
@@ -180,9 +180,9 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    logsVolumeEnabled,
-    logsVolumeDataProvider,
-    logsVolumeData,
+    suppQueryEnabled,
+    suppQueryDataProvider,
+    suppQueryData,
   } = item;
   const timeZone = getTimeZone(state.user);
 
@@ -200,9 +200,9 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    logsVolumeEnabled,
-    logsVolumeDataProvider,
-    logsVolumeData,
+    suppQueryEnabled,
+    suppQueryDataProvider,
+    suppQueryData,
   };
 }
 
@@ -210,8 +210,8 @@ const mapDispatchToProps = {
   updateTimeRange,
   addResultsToCache,
   clearCache,
-  loadLogsVolumeData,
-  setLogsVolumeEnabled,
+  loadSuppQueryData,
+  setSuppQueryEnabled,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

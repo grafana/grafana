@@ -23,7 +23,7 @@ export const createDefaultInitialState = () => {
         datasourceInstance: {
           query: jest.fn(),
           getRef: jest.fn(),
-          getLogsVolumeDataProvider: jest.fn(),
+          getSuppQueryDataProvider: jest.fn(),
           meta: {
             id: 'something',
           },
@@ -40,7 +40,7 @@ export const createDefaultInitialState = () => {
         },
         cache: [],
         richHistory: [],
-        logsVolumeEnabled: true,
+        suppQueryEnabled: true,
       },
     },
   };
