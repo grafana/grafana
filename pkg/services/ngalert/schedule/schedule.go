@@ -232,6 +232,10 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	readyToRun := make([]readyToRunItem, 0)
 	missingFolder := make(map[string][]string)
 	for _, item := range alertRules {
+		if item.IsPaused {
+			continue
+		}
+
 		key := item.GetKey()
 		ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key)
 
