@@ -36,7 +36,6 @@ export interface PanelChromeProps {
   /** dragClass, hoverHeader not yet implemented */
   // dragClass?: string;
   hoverHeader?: boolean;
-  onStreamingStop?: () => void;
   loadingState?: LoadingState;
   dataStateNode?: ReactNode;
   /** @deprecated in favor of props
@@ -65,19 +64,12 @@ export function PanelChrome({
   menu,
   // dragClass,
   hoverHeader = false,
-  onStreamingStop,
   loadingState,
   dataStateNode = null,
   leftItems = [],
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-
-  const onClickStreaming = () => {
-    if (onStreamingStop) {
-      onStreamingStop();
-    }
-  };
 
   const headerHeight = getHeaderHeight(theme, title, leftItems);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
@@ -110,14 +102,9 @@ export function PanelChrome({
 
         {showStreaming && (
           <div className={styles.item} style={itemStyles}>
-            <IconButton
-              tooltip="Streaming (click to stop)"
-              name="circle"
-              iconType="mono"
-              size="sm"
-              onClick={onClickStreaming}
-              className={styles.streaming}
-            />
+            <Tooltip content="Streaming">
+              <Icon name="circle" type="mono" size="sm" className={styles.streaming} />
+            </Tooltip>
           </div>
         )}
 

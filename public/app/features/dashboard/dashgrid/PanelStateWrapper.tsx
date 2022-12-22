@@ -594,7 +594,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           height={height}
           padding={padding}
           title={title}
-          onStreamingStop={() => panel.getQueryRunner().cancelQuery()}
           loadingState={data.state}
           dataStateNode={dataState}
         >
