@@ -315,14 +315,16 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         {showFieldsStats && (
           <tr>
             <td>
-              <ToolbarButton
-                iconOnly
-                className={showFieldsStats ? styles.showingField : ''}
-                narrow
-                icon="signal"
-                tooltip="Hide ad-hoc statistics"
-                onClick={this.showStats}
-              ></ToolbarButton>
+              <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
+                <ToolbarButton
+                  iconOnly
+                  className={showFieldsStats ? styles.showingField : ''}
+                  narrow
+                  icon="signal"
+                  tooltip="Hide ad-hoc statistics"
+                  onClick={this.showStats}
+                ></ToolbarButton>
+              </ToolbarButtonRow>
             </td>
             <td colSpan={2}>
               <div className={styles.logDetailsStats}>
