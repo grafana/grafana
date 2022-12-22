@@ -58,7 +58,7 @@ import {
 } from '../../prometheus/querybuilder/shared/types';
 
 import { binaryScalarDefs } from './binaryScalarOperations';
-import { checkParamsAreValid, getOperationById } from './operations';
+import { checkParamsAreValid, getDefinitionById } from './operations';
 import { LokiOperationId, LokiVisualQuery, LokiVisualQueryBinary } from './types';
 
 interface Context {
@@ -262,9 +262,9 @@ function getLabelParser(expr: string, node: SyntaxNode): QueryBuilderOperation {
 
   const string = handleQuotes(getString(expr, node.getChild(String)));
   let params: QueryBuilderOperationParamValue[] = !!string ? [string] : [];
-  const defaultOperation = getOperationById(parser);
-  if (defaultOperation && !checkParamsAreValid(defaultOperation, params)) {
-    params = defaultOperation?.defaultParams || [];
+  const opDef = getDefinitionById(parser);
+  if (opDef && !checkParamsAreValid(opDef, params)) {
+    params = opDef?.defaultParams || [];
   }
 
   return {

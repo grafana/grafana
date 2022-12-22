@@ -481,13 +481,13 @@ export function explainOperator(id: LokiOperationId | string): string {
   return explain.replace(/\[(.*)\]\(.*\)/g, '$1');
 }
 
-export function getOperationById(id: string): QueryBuilderOperationDef | undefined {
+export function getDefinitionById(id: string): QueryBuilderOperationDef | undefined {
   return definitions.find((x) => x.id === id);
 }
 
-export function checkParamsAreValid(op: QueryBuilderOperationDef, params: QueryBuilderOperationParamValue[]): boolean {
+export function checkParamsAreValid(def: QueryBuilderOperationDef, params: QueryBuilderOperationParamValue[]): boolean {
   // For now we only check if the operation has all the required params.
-  if (params.length < op.params.filter((param) => !param.optional).length) {
+  if (params.length < def.params.filter((param) => !param.optional).length) {
     return false;
   }
 
