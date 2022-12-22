@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useSelector } from 'app/types';
@@ -37,19 +38,31 @@ export function NavToolbar({
 
   return (
     <div className={styles.pageToolbar}>
-      <div className={styles.menuButton}>
-        <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={onToggleMegaMenu} />
-      </div>
-      <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbs} />
+      {!config.isPublicDashboardView && (
+        <>
+          <div className={styles.menuButton}>
+            <IconButton
+              name="bars"
+              tooltip="Toggle menu"
+              tooltipPlacement="bottom"
+              size="xl"
+              onClick={onToggleMegaMenu}
+            />
+          </div>
+          <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbs} />
+        </>
+      )}
       <div className={styles.actions}>
         {actions}
         {actions && <NavToolbarSeparator />}
-        {searchBarHidden && (
+        {searchBarHidden && !config.isPublicDashboardView && (
           <ToolbarButton onClick={onToggleKioskMode} narrow title="Enable kiosk mode" icon="monitor" />
         )}
-        <ToolbarButton onClick={onToggleSearchBar} narrow title="Toggle top search bar">
-          <Icon name={searchBarHidden ? 'angle-down' : 'angle-up'} size="xl" />
-        </ToolbarButton>
+        {!config.isPublicDashboardView && (
+          <ToolbarButton onClick={onToggleSearchBar} narrow title="Toggle top search bar">
+            <Icon name={searchBarHidden ? 'angle-down' : 'angle-up'} size="xl" />
+          </ToolbarButton>
+        )}
       </div>
     </div>
   );

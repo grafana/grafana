@@ -20,11 +20,11 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
-  if (!config.featureToggles.topnav || config.isPublicDashboardView) {
+  if (!config.featureToggles.topnav) {
     return <main className="main-view">{children}</main>;
   }
 
-  const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
+  const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV || config.isPublicDashboardView;
 
   const contentClass = cx({
     [styles.content]: true,
