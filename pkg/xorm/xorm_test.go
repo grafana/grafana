@@ -51,7 +51,7 @@ func createEngine(dbType, connStr string) error {
 				if err != nil {
 					return err
 				}
-				rows, err := db.Query(fmt.Sprintf("SELECT 1 FROM pg_database WHERE datname = 'xorm_test'"))
+				rows, err := db.Query(fmt.Sprint("SELECT 1 FROM pg_database WHERE datname = 'xorm_test'"))
 				if err != nil {
 					return fmt.Errorf("db.Query: %v", err)
 				}
