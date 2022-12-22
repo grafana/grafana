@@ -57,6 +57,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
   const handleValidation = (value: DataQuery) => {
     if (isEmpty(value)) {
       setIsValidQuery(false);
+      return;
     }
 
     const interval = '1s';
