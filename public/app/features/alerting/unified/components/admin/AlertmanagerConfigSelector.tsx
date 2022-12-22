@@ -20,7 +20,11 @@ interface AlertmanagerConfigSelectorProps {
   onChange: (selectedOption: ValidAmConfigOption) => void;
   selectedAmConfig?: ValidAmConfigOption;
   defaultValues: FormValues;
-  onSubmit: (values: FormValues, fetchLatestConfig: boolean, oldConfig?: AlertManagerCortexConfig) => void;
+  onSubmit: (
+    values: FormValues,
+    checkConflictsWithExistingConfig: boolean,
+    oldConfig?: AlertManagerCortexConfig
+  ) => void;
   readOnly: boolean;
   loading: boolean;
 }
