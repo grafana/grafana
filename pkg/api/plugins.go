@@ -351,7 +351,13 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugin
 		c.JsonApiErr(500, "Failed to get CDN plugin asset remote URL", err)
 		return
 	}
-	hs.log.Debug("redirected asset", "url", remoteURL)
+	hs.log.Info(
+		"plugin cdn redirect hit",
+		"pluginID", plugin.ID,
+		"pluginVersion", plugin.Info.Version,
+		"assetPath", assetPath,
+		"remoteURL", remoteURL,
+	)
 	http.Redirect(c.Resp, c.Req, remoteURL, http.StatusFound)
 }
 
