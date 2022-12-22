@@ -364,7 +364,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           kioskMode={kioskMode}
           hideTimePicker={dashboard.timepicker.hidden}
           shareModalActiveTab={this.props.queryParams.shareView}
-          isPublic={!!isPublic}
         />
       </header>
     );

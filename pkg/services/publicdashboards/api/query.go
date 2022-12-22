@@ -45,6 +45,7 @@ func (api *Api) ViewPublicDashboard(c *models.ReqContext) response.Response {
 		PublicDashboardUID:         pubdash.Uid,
 	}
 	dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
+	dash.Data.Set("title", "")
 
 	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}
 

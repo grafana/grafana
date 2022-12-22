@@ -58,7 +58,6 @@ export interface OwnProps {
   title: string;
   shareModalActiveTab?: string;
   onAddPanel: () => void;
-  isPublic: boolean;
 }
 
 interface DashNavButtonModel {
@@ -199,7 +198,7 @@ export const DashNav = React.memo<Props>((props) => {
     const { canStar, canShare, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
-    if (kioskMode || isPlaylistRunning() || props.isPublic) {
+    if (kioskMode || isPlaylistRunning()) {
       return [];
     }
 
@@ -381,7 +380,7 @@ export const DashNav = React.memo<Props>((props) => {
     addCustomContent(customRightActions, buttons);
 
     buttons.push(renderTimeControls());
-    if (!props.isPublic) {
+    if (!config.isPublicDashboardView) {
       buttons.push(tvButton);
     }
 
@@ -421,8 +420,8 @@ export const DashNav = React.memo<Props>((props) => {
 
   return (
     <PageToolbar
-      pageIcon={isFullscreen || props.isPublic ? undefined : 'apps'}
-      title={props.isPublic ? undefined : title}
+      pageIcon={isFullscreen || !title ? undefined : 'apps'}
+      title={title}
       parent={folderTitle}
       titleHref={titleHref}
       parentHref={parentHref}
