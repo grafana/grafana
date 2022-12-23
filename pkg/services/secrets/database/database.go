@@ -89,12 +89,6 @@ func (ss *SecretsStoreImpl) GetAllDataKeys(ctx context.Context) ([]*secrets.Data
 }
 
 func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey *secrets.DataKey, fns ...secrets.OnSuccessfulDataKeyCreation) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		return ss.createDataKeyWithDBSession(ctx, dataKey, sess, fns...)
-	})
-}
-
-func (ss *SecretsStoreImpl) createDataKeyWithDBSession(_ context.Context, dataKey *secrets.DataKey, sess *db.Session, fns ...secrets.OnSuccessfulDataKeyCreation) error {
 	if !dataKey.Active {
 		return fmt.Errorf("cannot insert deactivated data keys")
 	}
@@ -102,17 +96,19 @@ func (ss *SecretsStoreImpl) createDataKeyWithDBSession(_ context.Context, dataKe
 	dataKey.Created = time.Now()
 	dataKey.Updated = dataKey.Created
 
-	_, err := sess.Table(dataKeysTable).Insert(dataKey)
-	if err != nil {
-		return err
-	}
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Table(dataKeysTable).Insert(dataKey)
+		if err != nil {
+			return err
+		}
 
-	// In case of success we save the callbacks
-	// and set the event to be published after commit.
-	ss.successCallbacks.Store(dataKey.Id, fns)
-	sess.PublishAfterCommit(&DataKeyStored{DataKeyID: dataKey.Id})
+		// In case of success we save the callbacks
+		// and set the event to be published after commit.
+		ss.successCallbacks.Store(dataKey.Id, fns)
+		sess.PublishAfterCommit(&DataKeyStored{DataKeyID: dataKey.Id})
 
-	return nil
+		return nil
+	})
 }
 
 func (ss *SecretsStoreImpl) DisableDataKeys(ctx context.Context) error {
