@@ -71,7 +71,6 @@ datasources:
 
   - name: gdev-testdata
     isDefault: true
-    uid: gdev-testdata
     type: testdata
 
   - name: gdev-influxdb1-influxql
