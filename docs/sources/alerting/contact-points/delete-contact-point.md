@@ -1,9 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/contact-points/delete-contact-point/
-  - /docs/grafana/latest/alerting/contact-points/message-templating/
-  - /docs/grafana/latest/alerting/message-templating/
-  - /docs/grafana/latest/alerting/unified-alerting/message-templating/
+  - ../message-templating/
+  - ../unified-alerting/message-templating/
+  - message-templating/
 keywords:
   - grafana
   - alerting

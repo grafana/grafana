@@ -1,18 +1,17 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/transform-data/
-  - /docs/grafana/latest/panels/transformations/
-  - /docs/grafana/latest/panels/transformations/apply-transformations/
-  - /docs/grafana/latest/panels/transformations/config-from-query/
-  - /docs/grafana/latest/panels/transformations/rows-to-fields/
-  - /docs/grafana/latest/panels/transform-data/about-transformation/
-  - /docs/grafana/latest/panels/transform-data/add-transformation-to-data/
-  - /docs/grafana/latest/panels/transform-data/apply-transformation-to-data/
-  - /docs/grafana/latest/panels/transform-data/debug-transformation/
-  - /docs/grafana/latest/panels/transform-data/delete-transformation/
-  - /docs/grafana/latest/panels/reference-transformation-functions/
-  - /docs/grafana/latest/panels/transform-data/transformation-functions/
-  - /docs/grafana/latest/panels/transformations/types-options/
+  - about-transformation/
+  - add-transformation-to-data/
+  - apply-transformation-to-data/
+  - debug-transformation/
+  - delete-transformation/
+  - reference-transformation-functions/
+  - transformation-functions/
+  - transformations/
+  - transformations/apply-transformations/
+  - transformations/config-from-query/
+  - transformations/rows-to-fields/
+  - transformations/types-options/
 title: Transform data
 weight: 500
 ---

@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/geomap/geojson/
-  - /docs/grafana/latest/panels/visualizations/geomap/geojson/
+  - ../../features/panels/geomap/geojson/
+  - ../../panels/visualizations/geomap/geojson/
 description: GeoJSON layer
 keywords:
   - grafana

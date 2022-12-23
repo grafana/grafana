@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/
-  - /docs/grafana/latest/datasources/cloudwatch/
+  - ../cloudwatch/
 description: AWS authentication
 keywords:
   - grafana

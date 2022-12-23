@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/geomap/daynight/
-  - /docs/grafana/latest/panels/visualizations/geomap/daynight/
+  - ../../features/panels/geomap/daynight/
+  - ../../panels/visualizations/geomap/daynight/
 description: Night / Day layer
 keywords:
   - grafana

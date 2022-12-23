@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/geomap/markers/
-  - /docs/grafana/latest/panels/visualizations/geomap/markers/
+  - ../../features/panels/geomap/markers/
+  - ../../panels/visualizations/geomap/markers/
 description: Markers layer
 keywords:
   - grafana
