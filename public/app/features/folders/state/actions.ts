@@ -29,7 +29,7 @@ export function saveFolder(folder: FolderState): ThunkResult<void> {
 
     dispatch(notifyApp(createSuccessNotification('Folder saved')));
     dispatch(loadFolder(res));
-    locationService.push(locationUtil.stripBaseFromUrl(`${res.url}/settings`))
+    locationService.push(locationUtil.stripBaseFromUrl(`${res.url}/settings`));
   };
 }
 
