@@ -14,8 +14,8 @@ type sqlxStore struct {
 	sess *session.SessionDB
 }
 
-func (ss *sqlxStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
-	var version dashver.DashboardVersion
+func (ss *sqlxStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashboardVersion, error) {
+	var version dashboardVersion
 	qr := `SELECT dashboard_version.* 
 	FROM dashboard_version
 	LEFT JOIN dashboard ON dashboard.id=dashboard_version.dashboard_id
@@ -59,8 +59,8 @@ func (ss *sqlxStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpired
 	return deleted, err
 }
 
-func (ss *sqlxStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersion, error) {
-	var dashboardVersion []*dashver.DashboardVersion
+func (ss *sqlxStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashboardVersion, error) {
+	var dashboardVersion []*dashboardVersion
 	qr := `SELECT dashboard_version.id,
 				dashboard_version.dashboard_id,
 				dashboard_version.parent_version,

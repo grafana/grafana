@@ -159,7 +159,7 @@ func insertTestDashboard(t *testing.T, sqlStore db.DB, title string, orgId int64
 	dash.Data.Set("uid", dash.Uid)
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		dashVersion := &dashver.DashboardVersion{
+		dashVersion := &dashboardVersion{
 			DashboardID:   dash.Id,
 			ParentVersion: dash.Version,
 			RestoredFrom:  cmd.RestoredFrom,
@@ -221,7 +221,7 @@ func updateTestDashboard(t *testing.T, sqlStore db.DB, dashboard *models.Dashboa
 	require.Nil(t, err)
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		dashVersion := &dashver.DashboardVersion{
+		dashVersion := &dashboardVersion{
 			DashboardID:   dash.Id,
 			ParentVersion: parentVersion,
 			RestoredFrom:  cmd.RestoredFrom,

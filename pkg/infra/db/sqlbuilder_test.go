@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -362,7 +361,17 @@ func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	dash.Data.Set("uid", dash.Uid)
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *Session) error {
-		dashVersion := &dashver.DashboardVersion{
+		dashVersion := struct {
+			ID            int64            `xorm:"pk autoincr 'id'" db:"id"`
+			DashboardID   int64            `xorm:"dashboard_id" db:"dashboard_id"`
+			ParentVersion int              `db:"parent_version"`
+			RestoredFrom  int              `db:"restored_from"`
+			Version       int              `db:"version"`
+			Created       time.Time        `db:"created"`
+			CreatedBy     int64            `db:"created_by"`
+			Message       string           `db:"message"`
+			Data          *simplejson.Json `db:"data"`
+		}{
 			DashboardID:   dash.Id,
 			ParentVersion: dash.Version,
 			RestoredFrom:  cmd.RestoredFrom,

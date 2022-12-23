@@ -14,8 +14,8 @@ type sqlStore struct {
 	dialect migrator.Dialect
 }
 
-func (ss *sqlStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
-	var version dashver.DashboardVersion
+func (ss *sqlStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashboardVersion, error) {
+	var version dashboardVersion
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Where("dashboard_version.dashboard_id=? AND dashboard_version.version=? AND dashboard.org_id=?", query.DashboardID, query.Version, query.OrgID).
 			Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
@@ -71,8 +71,8 @@ func (ss *sqlStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredV
 	return deleted, err
 }
 
-func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersion, error) {
-	var dashboardVersion []*dashver.DashboardVersion
+func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashboardVersion, error) {
+	var dashboardVersion []*dashboardVersion
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		err := sess.Table("dashboard_version").
 			Select(`dashboard_version.id,

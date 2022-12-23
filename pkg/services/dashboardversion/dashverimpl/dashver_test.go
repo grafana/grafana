@@ -17,7 +17,7 @@ func TestDashboardVersionService(t *testing.T) {
 	dashboardVersionService := Service{store: dashboardVersionStore}
 
 	t.Run("Get dashboard version", func(t *testing.T) {
-		dashboard := &dashver.DashboardVersion{
+		dashboard := &dashboardVersion{
 			ID:   11,
 			Data: &simplejson.Json{},
 		}
@@ -60,7 +60,7 @@ func TestListDashboardVersions(t *testing.T) {
 
 	t.Run("Get all versions for a given Dashboard ID", func(t *testing.T) {
 		query := dashver.ListDashboardVersionsQuery{}
-		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{{}}
+		dashboardVersionStore.ExpectedListVersions = []*dashboardVersion{{}}
 		res, err := dashboardVersionService.List(context.Background(), &query)
 		require.Nil(t, err)
 		require.Equal(t, 1, len(res))
@@ -68,10 +68,10 @@ func TestListDashboardVersions(t *testing.T) {
 }
 
 type FakeDashboardVersionStore struct {
-	ExpectedDashboardVersion *dashver.DashboardVersion
+	ExpectedDashboardVersion *dashboardVersion
 	ExptectedDeletedVersions int64
 	ExpectedVersions         []interface{}
-	ExpectedListVersions     []*dashver.DashboardVersion
+	ExpectedListVersions     []*dashboardVersion
 	ExpectedError            error
 }
 
@@ -79,7 +79,7 @@ func newDashboardVersionStoreFake() *FakeDashboardVersionStore {
 	return &FakeDashboardVersionStore{}
 }
 
-func (f *FakeDashboardVersionStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
+func (f *FakeDashboardVersionStore) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashboardVersion, error) {
 	return f.ExpectedDashboardVersion, f.ExpectedError
 }
 
@@ -91,6 +91,6 @@ func (f *FakeDashboardVersionStore) DeleteBatch(ctx context.Context, cmd *dashve
 	return f.ExptectedDeletedVersions, f.ExpectedError
 }
 
-func (f *FakeDashboardVersionStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersion, error) {
+func (f *FakeDashboardVersionStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashboardVersion, error) {
 	return f.ExpectedListVersions, f.ExpectedError
 }

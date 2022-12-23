@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -410,7 +409,17 @@ func insertTestDashboard(t *testing.T, store db.DB, title string, orgId int64,
 	dash.Data.Set("uid", dash.Uid)
 
 	err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
-		dashVersion := &dashver.DashboardVersion{
+		dashVersion := struct {
+			ID            int64            `xorm:"pk autoincr 'id'" db:"id"`
+			DashboardID   int64            `xorm:"dashboard_id" db:"dashboard_id"`
+			ParentVersion int              `db:"parent_version"`
+			RestoredFrom  int              `db:"restored_from"`
+			Version       int              `db:"version"`
+			Created       time.Time        `db:"created"`
+			CreatedBy     int64            `db:"created_by"`
+			Message       string           `db:"message"`
+			Data          *simplejson.Json `db:"data"`
+		}{
 			DashboardID:   dash.Id,
 			ParentVersion: dash.Version,
 			RestoredFrom:  cmd.RestoredFrom,
