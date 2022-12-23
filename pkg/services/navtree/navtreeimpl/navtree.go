@@ -12,6 +12,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -155,7 +156,9 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagDataConnectionsConsole) {
-		treeRoot.AddSection(s.buildDataConnectionsNavLink(c))
+		if connectionsSection := s.buildDataConnectionsNavLink(c); connectionsSection != nil {
+			treeRoot.AddSection(connectionsSection)
+		}
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagLivePipeline) {
@@ -558,45 +561,54 @@ func (s *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool)
 }
 
 func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree.NavLink {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+
 	var children []*navtree.NavLink
 	var navLink *navtree.NavLink
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
-	// Your connections
-	children = append(children, &navtree.NavLink{
-		Id:       "connections-your-connections",
-		Text:     "Your connections",
-		SubTitle: "Manage your existing connections",
-		Url:      baseUrl + "/your-connections",
-		// Datasources
-		Children: []*navtree.NavLink{{
-			Id:       "connections-your-connections-datasources",
-			Text:     "Data sources",
-			SubTitle: "View and manage your connected data source connections",
-			Url:      baseUrl + "/your-connections/datasources",
-		}},
-	})
-
-	// Connect data
-	children = append(children, &navtree.NavLink{
-		Id:       "connections-connect-data",
-		Text:     "Connect data",
-		SubTitle: "Browse and create new connections",
-		Url:      s.cfg.AppSubURL + "/connections/connect-data",
-		Children: []*navtree.NavLink{},
-	})
-
-	// Connections (main)
-	navLink = &navtree.NavLink{
-		Text:       "Connections",
-		Icon:       "adjust-circle",
-		Id:         "connections",
-		Url:        baseUrl,
-		Children:   children,
-		Section:    navtree.NavSectionCore,
-		SortWeight: navtree.WeightDataConnections,
+	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
+		// Your connections
+		children = append(children, &navtree.NavLink{
+			Id:       "connections-your-connections",
+			Text:     "Your connections",
+			SubTitle: "Manage your existing connections",
+			Url:      baseUrl + "/your-connections",
+			// Datasources
+			Children: []*navtree.NavLink{{
+				Id:       "connections-your-connections-datasources",
+				Text:     "Data sources",
+				SubTitle: "View and manage your connected data source connections",
+				Url:      baseUrl + "/your-connections/datasources",
+			}},
+		})
 	}
 
-	return navLink
+	// Connect data
+	if hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
+		children = append(children, &navtree.NavLink{
+			Id:       "connections-connect-data",
+			Text:     "Connect data",
+			SubTitle: "Browse and create new connections",
+			Url:      s.cfg.AppSubURL + "/connections/connect-data",
+			Children: []*navtree.NavLink{},
+		})
+	}
+
+	if len(children) > 0 {
+		// Connections (main)
+		navLink = &navtree.NavLink{
+			Text:       "Connections",
+			Icon:       "adjust-circle",
+			Id:         "connections",
+			Url:        baseUrl,
+			Children:   children,
+			Section:    navtree.NavSectionCore,
+			SortWeight: navtree.WeightDataConnections,
+		}
+
+		return navLink
+	}
+	return nil
 }
