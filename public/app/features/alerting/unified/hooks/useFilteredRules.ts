@@ -1,6 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
+import produce from 'immer';
 import { compact, trim } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -15,7 +16,7 @@ import {
 
 import { parser } from '../search/search';
 import * as terms from '../search/search.terms';
-import { labelsMatchMatchers, parseMatcher } from '../utils/alertmanager';
+import { labelsMatchMatchers, matcherToMatcherField, parseMatcher, parseMatchers } from '../utils/alertmanager';
 import { isCloudRulesSource } from '../utils/datasource';
 import { getFiltersFromUrlParams } from '../utils/misc';
 import { isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
@@ -166,31 +167,64 @@ function getSafeFilterValue(filterValue: string) {
 
 export function useRulesFilter() {
   const [queryParams, updateQueryParams] = useURLSearchParams();
-  const queryString = queryParams.get('queryString') ?? '';
+  const searchQuery = queryParams.get('search') ?? '';
 
-  const filters = getSearchFilterFromQuery(queryString);
+  const filterState = getSearchFilterFromQuery(searchQuery);
 
   const updateFilters = useCallback(
     (newFilter: SearchFilterState) => {
-      const newQueryString = updateSearchFilterQuery(queryString, newFilter);
-      updateQueryParams({ queryString: newQueryString });
+      const newSearchQuery = updateSearchFilterQuery(searchQuery, newFilter);
+      updateQueryParams({ search: newSearchQuery });
     },
-    [queryString, updateQueryParams]
+    [searchQuery, updateQueryParams]
   );
 
-  return { filters, queryString, updateFilters };
+  const setSearchQuery = useCallback(
+    (newSearchQuery: string | undefined) => {
+      updateQueryParams({ search: newSearchQuery });
+    },
+    [updateQueryParams]
+  );
+
+  // Handle legacy filters
+  useEffect(() => {
+    const legacyFilters = {
+      dataSource: queryParams.get('dataSource') ?? undefined,
+      alertState: queryParams.get('alertState') ?? undefined,
+      ruleType: queryParams.get('ruleType') ?? undefined,
+      labels: parseMatchers(queryParams.get('queryString') ?? '').map(matcherToMatcherField),
+    };
+
+    const hasLegacyFilters = Object.values(legacyFilters).some((lf) => (Array.isArray(lf) ? lf.length > 0 : !!lf));
+    if (hasLegacyFilters) {
+      updateQueryParams({ dataSource: undefined, alertState: undefined, ruleType: undefined, queryString: undefined });
+      // Existing query filters takes precedence over legacy ones
+      updateFilters(
+        produce(filterState, (draft) => {
+          draft.dataSourceName ??= legacyFilters.dataSource;
+          if (legacyFilters.alertState && isPromAlertingRuleState(legacyFilters.alertState)) {
+            draft.ruleState ??= legacyFilters.alertState;
+          }
+          if (legacyFilters.ruleType && isPromRuleType(legacyFilters.ruleType)) {
+            draft.ruleType ??= legacyFilters.ruleType;
+          }
+          if (draft.labels.length === 0 && legacyFilters.labels.length > 0) {
+            const legacyLabelsAsStrings = legacyFilters.labels.map(
+              ({ name, operator, value }) => `${name}${operator}${value}`
+            );
+            draft.labels.push(...legacyLabelsAsStrings);
+          }
+        })
+      );
+    }
+  }, [queryParams, updateFilters, filterState, updateQueryParams]);
+
+  return { filterState, searchQuery, setSearchQuery, updateFilters };
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
-  const [queryParams] = useQueryParams();
-  const filters = getFiltersFromUrlParams(queryParams);
-
-  const freeFormQuery = filters.queryString ?? '';
-  const ngFilters = getSearchFilterFromQuery(freeFormQuery);
-
-  console.log(ngFilters);
-
-  return useMemo(() => filterRules(namespaces, ngFilters), [namespaces, ngFilters]);
+  const { filterState } = useRulesFilter();
+  return useMemo(() => filterRules(namespaces, filterState), [namespaces, filterState]);
 };
 
 export const filterRules = (

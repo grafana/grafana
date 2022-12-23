@@ -10,8 +10,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { LogMessages } from '../../Analytics';
-import { SearchFilterState, useRulesFilter } from '../../hooks/useFilteredRules';
-import { getFiltersFromUrlParams } from '../../utils/misc';
+import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { alertStateToReadable } from '../../utils/rules';
 
 const ViewOptions: SelectableValue[] = [
@@ -48,13 +47,13 @@ interface RulesFilerProps {
 }
 
 const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
-  const [queryParams, setQueryParams] = useQueryParams();
+  const [queryParams, setQueryParams] = useQueryParams(); // TODO Limit scope of query params
   // This key is used to force a rerender on the inputs when the filters are cleared
   const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
   const dataSourceKey = `dataSource-${filterKey}`;
   const queryStringKey = `queryString-${filterKey}`;
 
-  const { filters, queryString, updateFilters } = useRulesFilter();
+  const { filterState, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
 
   const styles = useStyles2(getStyles);
   const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
@@ -63,23 +62,23 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
   }));
 
   const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings) => {
-    updateFilters({ ...filters, dataSourceName: dataSourceValue.name });
+    updateFilters({ ...filterState, dataSourceName: dataSourceValue.name });
     setFilterKey((key) => key + 1);
   };
 
   const clearDataSource = () => {
-    updateFilters({ ...filters, dataSourceName: undefined });
+    updateFilters({ ...filterState, dataSourceName: undefined });
     setFilterKey((key) => key + 1);
   };
 
   const handleQueryStringChange = debounce((e: FormEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;
-    setQueryParams({ queryString: target.value || null });
+    setSearchQuery(target.value);
   }, 600);
 
   const handleAlertStateChange = (value: PromAlertingRuleState) => {
     logInfo(LogMessages.clickingAlertStateFilters);
-    updateFilters({ ...filters, ruleState: value });
+    updateFilters({ ...filterState, ruleState: value });
     setFilterKey((key) => key + 1);
   };
 
@@ -88,17 +87,12 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
   };
 
   const handleRuleTypeChange = (ruleType: PromRuleType) => {
-    updateFilters({ ...filters, ruleType });
+    updateFilters({ ...filterState, ruleType });
     setFilterKey((key) => key + 1);
   };
 
   const handleClearFiltersClick = () => {
-    setQueryParams({
-      alertState: null,
-      queryString: null,
-      dataSource: null,
-      ruleType: null,
-    });
+    setSearchQuery(undefined);
 
     if (onFilterCleared) {
       onFilterCleared();
@@ -117,18 +111,18 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
             alerting
             noDefault
             placeholder="All data sources"
-            current={filters.dataSourceName}
+            current={filterState.dataSourceName}
             onChange={handleDataSourceChange}
             onClear={clearDataSource}
           />
         </Field>
         <div>
           <Label>State</Label>
-          <RadioButtonGroup options={stateOptions} value={filters.ruleState} onChange={handleAlertStateChange} />
+          <RadioButtonGroup options={stateOptions} value={filterState.ruleState} onChange={handleAlertStateChange} />
         </div>
         <div>
           <Label>Rule type</Label>
-          <RadioButtonGroup options={RuleTypeOptions} value={filters.ruleType} onChange={handleRuleTypeChange} />
+          <RadioButtonGroup options={RuleTypeOptions} value={filterState.ruleType} onChange={handleRuleTypeChange} />
         </div>
       </Stack>
       <Stack direction="column" gap={1}>
@@ -157,7 +151,7 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
               key={queryStringKey}
               prefix={searchIcon}
               onChange={handleQueryStringChange}
-              defaultValue={queryString}
+              defaultValue={searchQuery}
               placeholder="Search"
               data-testid="search-query-input"
             />
@@ -171,14 +165,14 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
             />
           </div>
         </Stack>
-        {(filters.query ||
-          filters.dataSourceName ||
-          filters.namespace ||
-          filters.ruleType ||
-          filters.ruleState ||
-          filters.labels ||
-          filters.groupName ||
-          filters.ruleName) && (
+        {(filterState.query ||
+          filterState.dataSourceName ||
+          filterState.namespace ||
+          filterState.ruleType ||
+          filterState.ruleState ||
+          filterState.labels ||
+          filterState.groupName ||
+          filterState.ruleName) && (
           <div className={styles.flexRow}>
             <Button
               className={styles.clearButton}
