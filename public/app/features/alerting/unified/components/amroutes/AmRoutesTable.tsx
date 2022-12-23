@@ -1,5 +1,6 @@
 import { intersectionWith, isEqual } from 'lodash';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { FC, Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { Badge, Button, ConfirmModal, HorizontalGroup, IconButton, Tooltip } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -127,9 +128,11 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
 
         if (!missingReceiver(item.data)) {
           return (
-            <>
+            <Link
+              to={`/alerting/notifications/receivers/${item.data.receiver}/edit?alertmanager=${alertManagerSourceName}`}
+            >
               {item.data.receiver} {type && <GrafanaAppBadge grafanaAppType={type} />}
-            </>
+            </Link>
           );
         }
 
@@ -149,7 +152,21 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
     {
       id: 'muteTimings',
       label: 'Mute timings',
-      renderCell: (item) => item.data.muteTimeIntervals.join(', ') || '-',
+      renderCell: (item) =>
+        item.data.muteTimeIntervals.length === 0
+          ? '-'
+          : item.data.muteTimeIntervals.map((interval, index) => (
+              <Fragment key={interval}>
+                {index > 0 && ', '}
+                <Link
+                  to={`/alerting/routes/mute-timing/edit?muteName=${encodeURIComponent(
+                    interval
+                  )}&alertmanager=${encodeURIComponent(alertManagerSourceName)}`}
+                >
+                  {interval}
+                </Link>
+              </Fragment>
+            )),
       size: 5,
     },
     ...(!showActions
