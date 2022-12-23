@@ -1,0 +1,143 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getThresholdsForQueries should work for classic_condition 1`] = `
+Object {
+  "A": Object {
+    "config": Object {
+      "mode": "absolute",
+      "steps": Array [
+        Object {
+          "color": "transparent",
+          "value": -Infinity,
+        },
+        Object {
+          "color": "#D10E5C",
+          "value": 0,
+        },
+      ],
+    },
+    "mode": "line",
+  },
+}
+`;
+
+exports[`getThresholdsForQueries should work for lt and gt 1`] = `
+Object {
+  "A": Object {
+    "config": Object {
+      "mode": "absolute",
+      "steps": Array [
+        Object {
+          "color": "transparent",
+          "value": -Infinity,
+        },
+        Object {
+          "color": "#D10E5C",
+          "value": 0,
+        },
+      ],
+    },
+    "mode": "line",
+  },
+}
+`;
+
+exports[`getThresholdsForQueries should work for lt and gt 2`] = `
+Object {
+  "A": Object {
+    "config": Object {
+      "mode": "absolute",
+      "steps": Array [
+        Object {
+          "color": "transparent",
+          "value": -Infinity,
+        },
+        Object {
+          "color": "#D10E5C",
+          "value": 0,
+        },
+      ],
+    },
+    "mode": "line",
+  },
+}
+`;
+
+exports[`getThresholdsForQueries should work for outside_range 1`] = `
+Object {
+  "A": Object {
+    "config": Object {
+      "mode": "absolute",
+      "steps": Array [
+        Object {
+          "color": "#D10E5C",
+          "value": -Infinity,
+        },
+        Object {
+          "color": "#D10E5C",
+          "value": 0,
+        },
+        Object {
+          "color": "transparent",
+          "value": 0,
+        },
+        Object {
+          "color": "#D10E5C",
+          "value": 10,
+        },
+      ],
+    },
+    "mode": "line+area",
+  },
+}
+`;
+
+exports[`getThresholdsForQueries should work for threshold condition 1`] = `
+Object {
+  "A": Object {
+    "config": Object {
+      "mode": "absolute",
+      "steps": Array [
+        Object {
+          "color": "transparent",
+          "value": -Infinity,
+        },
+        Object {
+          "color": "#D10E5C",
+          "value": 0,
+        },
+      ],
+    },
+    "mode": "line",
+  },
+}
+`;
+
+exports[`getThresholdsForQueries should work for within_range 1`] = `
+Object {
+  "A": Object {
+    "config": Object {
+      "mode": "absolute",
+      "steps": Array [
+        Object {
+          "color": "transparent",
+          "value": -Infinity,
+        },
+        Object {
+          "color": "#D10E5C",
+          "value": 0,
+        },
+        Object {
+          "color": "#D10E5C",
+          "value": 10,
+        },
+        Object {
+          "color": "transparent",
+          "value": 10,
+        },
+      ],
+    },
+    "mode": "line+area",
+  },
+}
+`;
