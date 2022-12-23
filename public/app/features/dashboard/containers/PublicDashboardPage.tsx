@@ -32,7 +32,7 @@ const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
   return (
     <PageToolbar title={dashboard.title}>
       <ToolbarButtonRow alignment="right">
-        {!!dashboard.timepicker.hidden && (
+        {!dashboard.timepicker.hidden && (
           <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={onChangeTimeZone} />
         )}
       </ToolbarButtonRow>
