@@ -205,7 +205,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
   if (isSparse) {
     return (
       <div>
-        <DataHoverView data={data.heatmap} rowIndex={index} header={'Exemplar'} />
+        <DataHoverView data={data.heatmap} rowIndex={index} />
       </div>
     );
   }
