@@ -216,14 +216,14 @@ func (s *Server) writePIDFile() error {
 	err := os.MkdirAll(filepath.Dir(s.pidFile), 0700)
 	if err != nil {
 		s.log.Error("Failed to verify pid directory", "error", err)
-		return fmt.Errorf("Failed to verify pid directory: %s", err)
+		return fmt.Errorf("failed to verify pid directory: %s", err)
 	}
 
 	// Retrieve the PID and write it to file.
 	pid := strconv.Itoa(os.Getpid())
 	if err := os.WriteFile(s.pidFile, []byte(pid), 0644); err != nil {
 		s.log.Error("Failed to write pidfile", "error", err)
-		return fmt.Errorf("Failed to write pidfile: %s", err)
+		return fmt.Errorf("failed to write pidfile: %s", err)
 	}
 
 	s.log.Info("Writing PID file", "path", s.pidFile, "pid", pid)

@@ -63,8 +63,8 @@ func ServerCommand(version, commit, buildBranch, buildstamp string) *cli.Command
 			},
 			cli.VersionFlag,
 			&cli.BoolFlag{
-				Name:    "vv",
-				Usage:   "prints current version, all dependencies and exits",
+				Name:  "vv",
+				Usage: "prints current version, all dependencies and exits",
 			},
 			&cli.BoolFlag{
 				Name:  "profile",
