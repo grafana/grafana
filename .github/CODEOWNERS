@@ -29,9 +29,6 @@
 /docs/sources/setup-grafana/ @chri2547
 /docs/sources/whatsnew/ @Eve832 @GrafanaWriter
 
-# Backend code (wildcard)
-#/pkg/services/ @grafana/backend-platform
-
 # Backend code
 go.mod @grafana/backend-platform
 go.sum @grafana/backend-platform
