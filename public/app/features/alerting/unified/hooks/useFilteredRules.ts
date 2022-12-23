@@ -1,9 +1,10 @@
 import { SyntaxNode } from '@lezer/common';
-import { trim } from 'lodash';
+import { compact, trim } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import {
   isPromAlertingRuleState,
@@ -247,7 +248,7 @@ const reduceGroups = (ngFilters: SearchFilterState) => {
       // Query strings can match alert name, label keys, and label values
       if (ngFilters.labels.length > 0) {
         // const matchers = parseMatchers(filters.queryString);
-        const matchers = ngFilters.labels.map(parseMatcher);
+        const matchers = compact(ngFilters.labels.map(looseParseMatcher));
 
         const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(rule.labels, matchers);
         const doAlertsContainMatchingLabels =
@@ -279,6 +280,15 @@ const reduceGroups = (ngFilters: SearchFilterState) => {
     return groupAcc;
   };
 };
+
+function looseParseMatcher(matcherQuery: string): Matcher | undefined {
+  try {
+    return parseMatcher(matcherQuery);
+  } catch {
+    // Try to createa a matcher than matches all values for a given key
+    return { name: matcherQuery, value: '', isRegex: true, isEqual: true };
+  }
+}
 
 const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, ngFilter: SearchFilterState): boolean => {
   if (!ngFilter.dataSourceName) {
