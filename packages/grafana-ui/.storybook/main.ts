@@ -41,7 +41,6 @@ const mainConfig: StorybookConfig = {
       },
     },
     '@storybook/addon-a11y',
-    '@storybook/addon-knobs',
     {
       name: '@storybook/preset-scss',
       options: {

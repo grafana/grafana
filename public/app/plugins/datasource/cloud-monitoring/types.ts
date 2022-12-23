@@ -55,14 +55,10 @@ export interface Aggregation {
 }
 
 export enum QueryType {
-  METRICS = 'metrics',
+  TIME_SERIES_LIST = 'timeSeriesList',
+  TIME_SERIES_QUERY = 'timeSeriesQuery',
   SLO = 'slo',
   ANNOTATION = 'annotation',
-}
-
-export enum EditorMode {
-  Visual = 'visual',
-  MQL = 'mql',
 }
 
 export enum PreprocessorType {
@@ -110,15 +106,14 @@ export enum AlignmentTypes {
   ALIGN_NONE = 'ALIGN_NONE',
 }
 
-export interface BaseQuery {
+// deprecated: use TimeSeriesList instead
+// left here for migration purposes
+export interface MetricQuery {
   projectName: string;
   perSeriesAligner?: string;
   alignmentPeriod?: string;
   aliasBy?: string;
-}
-
-export interface MetricQuery extends BaseQuery {
-  editorMode: EditorMode;
+  editorMode: string;
   metricType: string;
   crossSeriesReducer: string;
   groupBys?: string[];
@@ -132,12 +127,39 @@ export interface MetricQuery extends BaseQuery {
   graphPeriod?: 'disabled' | string;
 }
 
-export interface AnnotationMetricQuery extends MetricQuery {
+export interface TimeSeriesList {
+  projectName: string;
+  crossSeriesReducer: string;
+  alignmentPeriod?: string;
+  perSeriesAligner?: string;
+  groupBys?: string[];
+  filters?: string[];
+  view?: string;
+  secondaryCrossSeriesReducer?: string;
+  secondaryAlignmentPeriod?: string;
+  secondaryPerSeriesAligner?: string;
+  secondaryGroupBys?: string[];
+  // preprocessor is not part of the API, but is used to store the preprocessor
+  // and not affect the UI for the rest of parameters
+  preprocessor?: PreprocessorType;
+}
+
+export interface TimeSeriesQuery {
+  projectName: string;
+  query: string;
+  // To disable the graphPeriod, it should explictly be set to 'disabled'
+  graphPeriod?: 'disabled' | string;
+}
+
+export interface AnnotationQuery extends TimeSeriesList {
   title?: string;
   text?: string;
 }
 
-export interface SLOQuery extends BaseQuery {
+export interface SLOQuery {
+  projectName: string;
+  perSeriesAligner?: string;
+  alignmentPeriod?: string;
   selectorName: string;
   serviceId: string;
   serviceName: string;
@@ -148,9 +170,11 @@ export interface SLOQuery extends BaseQuery {
 }
 
 export interface CloudMonitoringQuery extends DataQuery {
+  aliasBy?: string;
   datasourceId?: number; // Should not be necessary anymore
   queryType: QueryType;
-  metricQuery: MetricQuery | AnnotationMetricQuery;
+  timeSeriesList?: TimeSeriesList | AnnotationQuery;
+  timeSeriesQuery?: TimeSeriesQuery;
   sloQuery?: SLOQuery;
   intervalMs: number;
 }

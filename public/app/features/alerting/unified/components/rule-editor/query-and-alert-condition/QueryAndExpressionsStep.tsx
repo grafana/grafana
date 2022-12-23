@@ -97,6 +97,11 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
     return queries.filter((query) => !isExpressionQuery(query.model));
   }, [queries]);
 
+  // expression queries only
+  const expressionQueries = useMemo(() => {
+    return queries.filter((query) => isExpressionQuery(query.model));
+  }, [queries]);
+
   const emptyQueries = queries.length === 0;
 
   const onUpdateRefId = useCallback(
@@ -172,6 +177,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
           {/* Data Queries */}
           <QueryEditor
             queries={dataQueries}
+            expressions={expressionQueries}
             onRunQueries={runQueries}
             onChangeQueries={onChangeQueries}
             onDuplicateQuery={onDuplicateQuery}

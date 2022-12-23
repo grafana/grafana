@@ -3,7 +3,7 @@ package channels_config
 import (
 	"os"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/alerting/alerting/notifier/channels"
 )
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.

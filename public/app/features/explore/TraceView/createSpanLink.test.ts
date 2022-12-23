@@ -445,7 +445,7 @@ describe('createSpanLinkFactory', () => {
             { name: 'defaultQuery', query: '' },
             { query: 'no_name_here' },
           ],
-        } as TraceToMetricsOptions,
+        },
       });
       expect(createLink).toBeDefined();
 
@@ -517,7 +517,7 @@ describe('createSpanLinkFactory', () => {
           { key: 'job', value: '' },
           { key: 'k8s.pod', value: 'pod' },
         ],
-      } as TraceToMetricsOptions,
+      },
     });
     expect(createLink).toBeDefined();
 
