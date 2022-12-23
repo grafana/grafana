@@ -147,6 +147,8 @@
   "custom/gf-interpolation-step-after",
   "custom/gf-interpolation-step-before",
   "custom/gf-logs",
+  "custom/gf-movepane-left",
+  "custom/gf-movepane-right",
   "mono/favorite",
   "mono/grafana",
   "mono/heart",

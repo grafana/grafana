@@ -62,15 +62,17 @@ func (j *jennytypego) JennyName() string {
 }
 
 func (j *jennytypego) Generate(lin thema.Lineage) (*codejen.File, error) {
-	b, err := gocode.GenerateTypesOpenAPI(lin.Latest(), &gocode.TypeConfigOpenAPI{
-		ApplyFuncs: []astutil.ApplyFunc{
-			codegen.PrefixReplacer("Plugindef", "PluginDef"),
-		},
+	f, err := codegen.GoTypesJenny{ApplyFuncs: []astutil.ApplyFunc{
+		codegen.PrefixReplacer("Plugindef", "PluginDef"),
+	}}.Generate(codegen.SchemaForGen{
+		Name:    "PluginDef",
+		Schema:  lin.Latest(),
+		IsGroup: false,
 	})
-	if err != nil {
-		return nil, err
+	if f != nil {
+		f.RelativePath = filepath.Join(dirPlugindef, f.RelativePath)
 	}
-	return codejen.NewFile(filepath.Join(dirPlugindef, "plugindef_types_gen.go"), b, j), nil
+	return f, err
 }
 
 // one-off jenny for plugindef go bindings

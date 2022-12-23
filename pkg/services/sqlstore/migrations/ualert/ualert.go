@@ -14,8 +14,10 @@ import (
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -470,6 +472,10 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				secureSettings[k] = d
 			}
 
+			data, err := gr.Settings.MarshalJSON()
+			if err != nil {
+				return err
+			}
 			var (
 				cfg = &channels.NotificationChannelConfig{
 					UID:                   gr.UID,
@@ -477,10 +483,9 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 					Name:                  gr.Name,
 					Type:                  gr.Type,
 					DisableResolveMessage: gr.DisableResolveMessage,
-					Settings:              gr.Settings,
+					Settings:              data,
 					SecureSettings:        secureSettings,
 				}
-				err error
 			)
 
 			// decryptFunc represents the legacy way of decrypting data. Before the migration, we don't need any new way,
@@ -496,13 +501,13 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				}
 				return fallback
 			}
-			receiverFactory, exists := channels.Factory(gr.Type)
+			receiverFactory, exists := channels_config.Factory(gr.Type)
 			if !exists {
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}
 			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) channels.Logger {
 				return &channels.FakeLogger{}
-			})
+			}, setting.BuildVersion)
 			if err != nil {
 				return err
 			}

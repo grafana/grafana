@@ -155,13 +155,15 @@ import u1144 from '../../../../../public/img/icons/custom/gf-interpolation-smoot
 import u1145 from '../../../../../public/img/icons/custom/gf-interpolation-step-after.svg';
 import u1146 from '../../../../../public/img/icons/custom/gf-interpolation-step-before.svg';
 import u1147 from '../../../../../public/img/icons/custom/gf-logs.svg';
-import u1148 from '../../../../../public/img/icons/mono/favorite.svg';
-import u1149 from '../../../../../public/img/icons/mono/grafana.svg';
-import u1150 from '../../../../../public/img/icons/mono/heart.svg';
-import u1151 from '../../../../../public/img/icons/mono/heart-break.svg';
-import u1152 from '../../../../../public/img/icons/mono/panel-add.svg';
-import u1153 from '../../../../../public/img/icons/mono/library-panel.svg';
-import u1154 from '../../../../../public/img/icons/unicons/record-audio.svg';
+import u1148 from '../../../../../public/img/icons/custom/gf-movepane-left.svg';
+import u1149 from '../../../../../public/img/icons/custom/gf-movepane-right.svg';
+import u1150 from '../../../../../public/img/icons/mono/favorite.svg';
+import u1151 from '../../../../../public/img/icons/mono/grafana.svg';
+import u1152 from '../../../../../public/img/icons/mono/heart.svg';
+import u1153 from '../../../../../public/img/icons/mono/heart-break.svg';
+import u1154 from '../../../../../public/img/icons/mono/panel-add.svg';
+import u1155 from '../../../../../public/img/icons/mono/library-panel.svg';
+import u1156 from '../../../../../public/img/icons/unicons/record-audio.svg';
 // do not edit this list directly
 // the list of icons live here: @grafana/ui/components/Icon/cached.json
 
@@ -332,13 +334,15 @@ export function initIconCache() {
   cacheItem(u1145, 'custom/gf-interpolation-step-after.svg');
   cacheItem(u1146, 'custom/gf-interpolation-step-before.svg');
   cacheItem(u1147, 'custom/gf-logs.svg');
-  cacheItem(u1148, 'mono/favorite.svg');
-  cacheItem(u1149, 'mono/grafana.svg');
-  cacheItem(u1150, 'mono/heart.svg');
-  cacheItem(u1151, 'mono/heart-break.svg');
-  cacheItem(u1152, 'mono/panel-add.svg');
-  cacheItem(u1153, 'mono/library-panel.svg');
-  cacheItem(u1154, 'unicons/record-audio.svg');
+  cacheItem(u1148, 'custom/gf-movepane-left.svg');
+  cacheItem(u1149, 'custom/gf-movepane-right.svg');
+  cacheItem(u1150, 'mono/favorite.svg');
+  cacheItem(u1151, 'mono/grafana.svg');
+  cacheItem(u1152, 'mono/heart.svg');
+  cacheItem(u1153, 'mono/heart-break.svg');
+  cacheItem(u1154, 'mono/panel-add.svg');
+  cacheItem(u1155, 'mono/library-panel.svg');
+  cacheItem(u1156, 'unicons/record-audio.svg');
   // do not edit this list directly
   // the list of icons live here: @grafana/ui/components/Icon/cached.json
 }

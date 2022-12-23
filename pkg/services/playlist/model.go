@@ -23,8 +23,8 @@ type Playlist struct {
 }
 
 type PlaylistDTO = playlist.Playlist
-type PlaylistItemDTO = playlist.PlaylistItem
-type PlaylistItemType = playlist.PlaylistItemType
+type PlaylistItemDTO = playlist.Item
+type PlaylistItemType = playlist.ItemType
 
 type PlaylistItem struct {
 	Id         int64  `db:"id"`
