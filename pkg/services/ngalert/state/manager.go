@@ -325,10 +325,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 		}
 
 		// Do not save normal state to database and remove transition to Normal state
-		if s.State.State == eval.Normal && st.doNotKeepNormalState {
-			if s.PreviousState != eval.Normal {
-				toDelete = append(toDelete, key)
-			}
+		if s.State.State == eval.Normal && s.PreviousState == eval.Normal && st.doNotKeepNormalState {
 			continue
 		}
 
