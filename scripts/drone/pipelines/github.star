@@ -1,10 +1,12 @@
+"""
+This module contains steps and pipelines relating to GitHub.
+"""
+
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
-    "download_grabpl_step",
     "fetch_images_step",
     "publish_image",
-    "publish_images_step",
 )
 load("scripts/drone/vault.star", "from_secret")
 load(

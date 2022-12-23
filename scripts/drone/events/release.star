@@ -126,13 +126,6 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     Returns:
       List of Drone pipelines.
     """
-    if ver_mode == "release":
-        committish = "${DRONE_TAG}"
-    elif ver_mode == "release-branch":
-        committish = "${DRONE_BRANCH}"
-    else:
-        committish = "${DRONE_COMMIT}"
-
     environment = {"EDITION": "oss"}
 
     services = integration_test_services(edition = "oss")

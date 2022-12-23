@@ -37,6 +37,7 @@ load(
     "pipeline",
 )
 
+# @unused
 def build_e2e(trigger, ver_mode):
     """Perform e2e building, testing, and publishing."
 
