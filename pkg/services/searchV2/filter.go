@@ -117,6 +117,9 @@ func (q *PermissionFilter) Searcher(i search.Reader, options search.SearcherOpti
 	}
 
 	s, err := searcher.NewMatchAllSearcher(i, 1, similarity.ConstantScorer(1), options)
+	if err != nil {
+		return nil, err
+	}
 	return searcher.NewFilteringSearcher(s, func(d *search.DocumentMatch) bool {
 		var kind, id, location string
 		err := dvReader.VisitDocumentValues(d.Number, func(field string, term []byte) {
