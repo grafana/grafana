@@ -39,7 +39,7 @@ export interface PanelChromeProps {
   loadingState?: LoadingState;
   dataStateNode?: ReactNode;
   /** @deprecated in favor of props
-   * dataStateNode, onStreamingStop, loadingState
+   * dataStateNode for errors and loadingState for loading, streaming
    * which will serve the same purpose
    * of showing/interacting with the panel's data state
    * */
