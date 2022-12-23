@@ -76,6 +76,8 @@ func buildifierLintCommand(path string) (string, []string) {
 // must be in the PATH.
 // A slice of verification errors are returned, one for each file that failed verification.
 // If any execution of the `buildifier` command fails, this is returned separately.
+// commandFn is executed on every Starlark file to determine the command and arguments to be executed.
+// The caller is trusted and it is the callers responsibility to ensure that the resulting command is safe to execute.
 func verifyStarlark(ctx context.Context, workspace string, commandFn commandFunc) ([]error, error) {
 	var verificationErrs []error
 	var executionErr error
@@ -103,6 +105,8 @@ func verifyStarlark(ctx context.Context, workspace string, commandFn commandFunc
 
 		if filepath.Ext(path) == ".star" {
 			command, args := commandFn(path)
+			// The caller is trusted.
+			//nolint:gosec
 			cmd := exec.CommandContext(ctx, command, args...)
 			cmd.Dir = workspace
 
@@ -111,6 +115,8 @@ func verifyStarlark(ctx context.Context, workspace string, commandFn commandFunc
 				return nil
 			}
 
+			// The error returned from cmd.Output() is never wrapped.
+			//nolint:errorlint
 			if err, ok := err.(*exec.ExitError); ok {
 				switch err.ExitCode() {
 				// Case comments are informed by the output of `buildifier --help`
