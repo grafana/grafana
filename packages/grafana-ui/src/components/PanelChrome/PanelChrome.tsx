@@ -90,7 +90,7 @@ export function PanelChrome({
   return (
     <div className={styles.container} style={containerStyles}>
       <div className={styles.loadingBarContainer}>
-        {showLoading ? <LoadingBar width={'128px'} height={'2px'} /> : null}
+        {showLoading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
       </div>
 
       <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
@@ -182,9 +182,6 @@ const getContentStyle = (
 
   const contentStyle: CSSProperties = {
     padding: chromePadding,
-    // we need to set the width and height because content: 'strict' renders size in isolation
-    width: `${innerWidth + panelPadding}px`,
-    height: `${innerHeight + panelPadding}px`,
   };
 
   return { contentStyle, innerWidth, innerHeight };
@@ -203,7 +200,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      flex: '0 0 0',
+      flex: '1 1 0',
 
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
