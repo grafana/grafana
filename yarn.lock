@@ -12742,13 +12742,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/event@npm:2.6.0":
-  version: 2.6.0
-  resolution: "@visx/event@npm:2.6.0"
+"@visx/event@npm:2.17.0":
+  version: 2.17.0
+  resolution: "@visx/event@npm:2.17.0"
   dependencies:
     "@types/react": "*"
-    "@visx/point": 2.6.0
-  checksum: a3155bab7d964f592702981a2a6cae3742d9f23732ec64c2c3717c8b17350e22006fb13a96201cbe78bdd35170c8363ab645bf0c4c8f8dee41be64618fd38c47
+    "@visx/point": 2.17.0
+  checksum: 360a9ee2a163c0e0200f98cadcd9f0c98f53725d4be62e49d326aeb8ca7cd837305f28f326f03d9ae49910ca67e1185a97827f0ef76efb0b901fb54c56c97bd3
   languageName: node
   linkType: hard
 
@@ -12777,10 +12777,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/point@npm:2.6.0":
-  version: 2.6.0
-  resolution: "@visx/point@npm:2.6.0"
-  checksum: 56be8e31abaf10a182d328141a0929ea28d2956d4c06469fc51cde3f30f64ae035aaa0771f44010c3484ae63c7cd1bc9b782cde6cfcf9713190c20b301ab181e
+"@visx/point@npm:2.17.0":
+  version: 2.17.0
+  resolution: "@visx/point@npm:2.17.0"
+  checksum: 9cb18e41f1f47e46b85bdbbdd1c930a654ed8b731b3a5da0920e2b3a261d887c066ec97079293d4f5195a1e04d842faa2f2bf0519876cb27ea6ee82fc5ff8855
   languageName: node
   linkType: hard
 
@@ -22044,7 +22044,7 @@ __metadata:
     "@types/webpack-env": 1.18.0
     "@typescript-eslint/eslint-plugin": 5.42.0
     "@typescript-eslint/parser": 5.42.0
-    "@visx/event": 2.6.0
+    "@visx/event": 2.17.0
     "@visx/gradient": 2.10.0
     "@visx/group": 2.10.0
     "@visx/scale": 2.2.2
