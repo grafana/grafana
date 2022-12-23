@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-func GetBackendUserFromContext(ctx context.Context) (*backend.User, bool) {
+func getBackendUserFromContext(ctx context.Context) (*backend.User, bool) {
 	if val := ctx.Value(backend.User{}); val != nil {
 		user, ok := val.(*backend.User)
 		return user, ok
@@ -27,6 +27,7 @@ func InstrumentQueryDataRequest(ctx context.Context, req *http.Request, dsInfo t
 		"cloud", dsInfo.Cloud,
 		"datasourceID", dsInfo.DatasourceID,
 		"subId", dsInfo.Settings.SubscriptionId,
+		"orgId", dsInfo.OrgID,
 	}
 
 	start := time.Now()
@@ -47,7 +48,7 @@ func InstrumentQueryDataRequest(ctx context.Context, req *http.Request, dsInfo t
 		logParams = append(logParams, "authType", dsInfo.Credentials.AzureAuthType())
 	}
 
-	user, ok := GetBackendUserFromContext(ctx)
+	user, ok := getBackendUserFromContext(ctx)
 	if ok {
 		logParams = append(logParams, "uname", user.Email)
 	}

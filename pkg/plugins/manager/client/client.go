@@ -40,6 +40,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, plugins.ErrPluginNotRegistered.Errorf("%w", backendplugin.ErrPluginNotRegistered)
 	}
 
+	ctx = context.WithValue(ctx, instrumentation.PluginInfo{}, plugin.JSONData.Info)
+
 	var resp *backend.QueryDataResponse
 	err := instrumentation.InstrumentQueryDataRequest(ctx, &req.PluginContext, s.cfg, func() (innerErr error) {
 		resp, innerErr = plugin.QueryData(ctx, req)
@@ -83,6 +85,9 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
+
+	ctx = context.WithValue(ctx, instrumentation.PluginInfo{}, p.JSONData.Info)
+
 	err := instrumentation.InstrumentCallResourceRequest(ctx, &req.PluginContext, s.cfg, func() error {
 		removeConnectionHeaders(req.Headers)
 		removeHopByHopHeaders(req.Headers)
@@ -119,6 +124,8 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
+	ctx = context.WithValue(ctx, instrumentation.PluginInfo{}, p.JSONData.Info)
+
 	var resp *backend.CollectMetricsResult
 	err := instrumentation.InstrumentCollectMetrics(ctx, &req.PluginContext, s.cfg, func() (innerErr error) {
 		resp, innerErr = p.CollectMetrics(ctx, req)
@@ -140,6 +147,8 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
+
+	ctx = context.WithValue(ctx, instrumentation.PluginInfo{}, p.JSONData.Info)
 
 	var resp *backend.CheckHealthResult
 	err := instrumentation.InstrumentCheckHealthRequest(ctx, &req.PluginContext, s.cfg, func() (innerErr error) {

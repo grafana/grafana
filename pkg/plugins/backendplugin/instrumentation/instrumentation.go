@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -29,6 +30,8 @@ var (
 )
 
 var logger log.Logger = log.New("plugin.instrumentation")
+
+type PluginInfo struct{}
 
 // instrumentPluginRequest instruments success rate and latency of `fn`
 func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
@@ -60,6 +63,11 @@ func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *ba
 			logParams = append(logParams, "uname", pluginCtx.User.Login)
 		}
 
+		pluginInfo, ok := getPluginInfoFromContext(ctx)
+		if ok {
+			logParams = append(logParams, "pluginVersion", pluginInfo.Version)
+		}
+
 		traceID := tracing.TraceIDFromContext(ctx, false)
 		if traceID != "" {
 			logParams = append(logParams, "traceID", traceID)
@@ -74,6 +82,14 @@ func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *ba
 	}
 
 	return err
+}
+
+func getPluginInfoFromContext(ctx context.Context) (plugins.Info, bool) {
+	if val := ctx.Value(PluginInfo{}); val != nil {
+		pluginInfo, ok := val.(plugins.Info)
+		return pluginInfo, ok
+	}
+	return plugins.Info{}, false
 }
 
 // InstrumentCollectMetrics instruments collectMetrics.
