@@ -28,7 +28,7 @@ type Props = {
 
 export const HeatmapHoverView = (props: Props) => {
   if (props.hover.seriesIdx === 2) {
-    return <DataHoverView data={props.data.exemplars} rowIndex={props.hover.dataIdx} />;
+    return <DataHoverView data={props.data.exemplars} rowIndex={props.hover.dataIdx} header={'Exemplar'} />;
   }
   return <HeatmapHoverCell {...props} />;
 };
@@ -205,7 +205,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
   if (isSparse) {
     return (
       <div>
-        <DataHoverView data={data.heatmap} rowIndex={index} />
+        <DataHoverView data={data.heatmap} rowIndex={index} header={'Exemplar'} />
       </div>
     );
   }

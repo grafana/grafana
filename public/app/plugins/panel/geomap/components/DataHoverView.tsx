@@ -19,17 +19,10 @@ export interface Props {
   columnIndex?: number | null; // the hover column
   sortOrder?: SortOrder;
   mode?: TooltipDisplayMode | null;
-  displayExemplarHeader?: boolean;
+  header?: string;
 }
 
-export const DataHoverView = ({
-  data,
-  rowIndex,
-  columnIndex,
-  sortOrder,
-  mode,
-  displayExemplarHeader = true,
-}: Props) => {
+export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header = undefined }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (!data || rowIndex == null) {
@@ -70,9 +63,9 @@ export const DataHoverView = ({
 
   return (
     <div className={styles.wrapper}>
-      {displayExemplarHeader && (
+      {header && (
         <div className={styles.header}>
-          <span className={styles.title}>Exemplar</span>
+          <span className={styles.title}>{header}</span>
         </div>
       )}
       <table className={styles.infoWrap}>
