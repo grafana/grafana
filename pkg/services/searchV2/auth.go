@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -20,9 +19,9 @@ type FutureAuthService interface {
 	GetDashboardReadFilter(user *user.SignedInUser) (ResourceFilter, error)
 }
 
-var _ FutureAuthService = (*simpleSQLAuthService)(nil)
+var _ FutureAuthService = (*simpleAuthService)(nil)
 
-type simpleSQLAuthService struct {
+type simpleAuthService struct {
 	sql db.DB
 	ac  accesscontrol.Service
 }
@@ -31,17 +30,7 @@ type dashIdQueryResult struct {
 	UID string `xorm:"uid"`
 }
 
-func (a *simpleSQLAuthService) getDashboardTableAuthFilter(user *user.SignedInUser) searchstore.FilterWhere {
-	return permissions.DashboardPermissionFilter{
-		OrgRole:         user.OrgRole,
-		OrgId:           user.OrgID,
-		Dialect:         a.sql.GetDialect(),
-		UserId:          user.UserID,
-		PermissionLevel: models.PERMISSION_VIEW,
-	}
-}
-
-func (a *simpleSQLAuthService) GetDashboardReadFilter(user *user.SignedInUser) (ResourceFilter, error) {
+func (a *simpleAuthService) GetDashboardReadFilter(user *user.SignedInUser) (ResourceFilter, error) {
 	if !a.ac.IsDisabled() {
 		canReadDashboard, canReadFolder := accesscontrol.Checker(user, dashboards.ActionDashboardsRead), accesscontrol.Checker(user, dashboards.ActionFoldersRead)
 		return func(kind entityKind, uid, parent string) bool {
@@ -54,7 +43,13 @@ func (a *simpleSQLAuthService) GetDashboardReadFilter(user *user.SignedInUser) (
 		}, nil
 	}
 
-	filter := a.getDashboardTableAuthFilter(user)
+	filter := permissions.DashboardPermissionFilter{
+		OrgRole:         user.OrgRole,
+		OrgId:           user.OrgID,
+		Dialect:         a.sql.GetDialect(),
+		UserId:          user.UserID,
+		PermissionLevel: models.PERMISSION_VIEW,
+	}
 	rows := make([]*dashIdQueryResult, 0)
 
 	err := a.sql.WithDbSession(context.Background(), func(sess *db.Session) error {

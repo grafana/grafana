@@ -91,7 +91,7 @@ func ProvideService(cfg *setting.Cfg, sql db.DB, entityEventStore store.EntityEv
 		cfg: cfg,
 		sql: sql,
 		ac:  ac,
-		auth: &simpleSQLAuthService{
+		auth: &simpleAuthService{
 			sql: sql,
 			ac:  ac,
 		},
