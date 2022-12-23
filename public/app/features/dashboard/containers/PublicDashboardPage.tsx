@@ -3,12 +3,12 @@ import { usePrevious } from 'react-use';
 
 import { PageLayoutType, TimeZone } from '@grafana/data';
 import { PageToolbar, ToolbarButtonRow } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { useSelector, useDispatch } from 'app/types';
 
-import { Page } from '../../../core/components/Page/Page';
-import { GrafanaRouteComponentProps } from '../../../core/navigation/types';
-import { updateTimeZoneForSession } from '../../profile/state/reducers';
 import { DashNavTimeControls } from '../components/DashNav/DashNavTimeControls';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
