@@ -38,14 +38,14 @@ export let getPublicDashboardFooterConfig = (): PublicDashboardFooterCfg => ({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   footer: css`
-    position: absolute;
+    // position: absolute;
     height: 30px;
-    bottom: 0;
-    width: 100%;
-    background-color: ${colorManipulator.alpha(theme.colors.background.canvas, 0.7)};
-    text-align: right;
-    font-size: ${theme.typography.body.fontSize};
-    z-index: ${theme.zIndex.navbarFixed};
+    // bottom: 0;
+    // width: 100%;
+    // background-color: ${colorManipulator.alpha(theme.colors.background.canvas, 0.7)};
+    // text-align: right;
+    //font-size: ${theme.typography.body.fontSize};
+    //z-index: ${theme.zIndex.navbarFixed};
   `,
   logoText: css`
     margin-right: ${theme.spacing(1)};
