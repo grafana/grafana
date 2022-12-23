@@ -32,22 +32,17 @@ type dashIdQueryResult struct {
 }
 
 func (a *simpleSQLAuthService) getDashboardTableAuthFilter(user *user.SignedInUser) searchstore.FilterWhere {
-	if a.ac.IsDisabled() {
-		return permissions.DashboardPermissionFilter{
-			OrgRole:         user.OrgRole,
-			OrgId:           user.OrgID,
-			Dialect:         a.sql.GetDialect(),
-			UserId:          user.UserID,
-			PermissionLevel: models.PERMISSION_VIEW,
-		}
+	return permissions.DashboardPermissionFilter{
+		OrgRole:         user.OrgRole,
+		OrgId:           user.OrgID,
+		Dialect:         a.sql.GetDialect(),
+		UserId:          user.UserID,
+		PermissionLevel: models.PERMISSION_VIEW,
 	}
-
-	return permissions.NewAccessControlDashboardPermissionFilter(user, models.PERMISSION_VIEW, searchstore.TypeDashboard)
 }
 
 func (a *simpleSQLAuthService) GetDashboardReadFilter(user *user.SignedInUser) (ResourceFilter, error) {
 	if !a.ac.IsDisabled() {
-
 		canReadDashboard, canReadFolder := accesscontrol.Checker(user, dashboards.ActionDashboardsRead), accesscontrol.Checker(user, dashboards.ActionFoldersRead)
 		return func(kind entityKind, uid, parent string) bool {
 			if kind == entityKindFolder {
