@@ -134,7 +134,10 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
         }
 
         return (
-          <Tooltip content={'No notifications will be delivered until a contact point is configured.'} placement="top">
+          <Tooltip
+            content={'No notifications will be delivered for this policy until a contact point is configured.'}
+            placement="top"
+          >
             <span>
               <Badge color="orange" icon="exclamation-triangle" text="None" />
             </span>
