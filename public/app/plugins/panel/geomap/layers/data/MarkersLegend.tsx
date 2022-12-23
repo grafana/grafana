@@ -6,8 +6,8 @@ import { config } from 'app/core/config';
 import { DimensionSupplier } from 'app/features/dimensions';
 import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
 import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
-import SVG from 'react-inlinesvg';
 import { StyleConfigState } from '../../style/types';
+import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
 export interface MarkersLegendProps {
   size?: DimensionSupplier<number>;
@@ -32,7 +32,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
     return (
       <div className={style.infoWrap}>
         <div className={style.fixedColorContainer}>
-          <SVG
+          <SanitizedSVG
             src={`public/${symbol}`}
             className={style.legendSymbol}
             title={'Symbol'}
