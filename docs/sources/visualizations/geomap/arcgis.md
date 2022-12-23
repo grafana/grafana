@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/geomap/arcgis/
-  - /docs/grafana/latest/panels/visualizations/geomap/arcgis/
+  - ../../features/panels/geomap/arcgis/
+  - ../../panels/visualizations/geomap/arcgis/
 description: ArcGIS layer
 keywords:
   - grafana

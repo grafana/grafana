@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/geomap/carto/
-  - /docs/grafana/latest/panels/visualizations/geomap/carto/
+  - ../../features/panels/geomap/carto/
+  - ../../panels/visualizations/geomap/carto/
 description: CARTO layer
 keywords:
   - grafana

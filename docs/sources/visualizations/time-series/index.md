@@ -1,22 +1,21 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/time-series/
-  - /docs/grafana/latest/visualizations/time-series/
-  - /docs/grafana/latest/panels/visualizations/time-series/annotate-time-series/
-  - /docs/grafana/latest/visualizations/time-series/annotate-time-series/
-  - /docs/grafana/latest/panels/visualizations/time-series/change-axis-display/
-  - /docs/grafana/latest/visualizations/time-series/change-axis-display/
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-color-scheme/
-  - /docs/grafana/latest/visualizations/time-series/graph-color-scheme/
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-bars/
-  - /docs/grafana/latest/visualizations/time-series/graph-time-series-as-bars/
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-lines/
-  - /docs/grafana/latest/visualizations/time-series/graph-time-series-as-lines/
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-points/
-  - /docs/grafana/latest/visualizations/time-series/graph-time-series-as-points/
-  - /docs/grafana/latest/features/panels/histogram/
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-stacking/
-  - /docs/grafana/latest/visualizations/time-series/graph-time-series-stacking/
+  - ../features/panels/histogram/
+  - ../panels/visualizations/time-series/
+  - ../panels/visualizations/time-series/annotate-time-series/
+  - ../panels/visualizations/time-series/change-axis-display/
+  - ../panels/visualizations/time-series/graph-color-scheme/
+  - ../panels/visualizations/time-series/graph-time-series-as-bars/
+  - ../panels/visualizations/time-series/graph-time-series-as-lines/
+  - ../panels/visualizations/time-series/graph-time-series-as-points/
+  - ../panels/visualizations/time-series/graph-time-series-stacking/
+  - annotate-time-series/
+  - change-axis-display/
+  - graph-color-scheme/
+  - graph-time-series-as-bars/
+  - graph-time-series-as-lines/
+  - graph-time-series-as-points/
+  - graph-time-series-stacking/
 keywords:
   - grafana
   - graph panel

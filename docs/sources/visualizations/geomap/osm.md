@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/geomap/osm/
-  - /docs/grafana/latest/panels/visualizations/geomap/osm/
+  - ../../features/panels/geomap/osm/
+  - ../../panels/visualizations/geomap/osm/
 description: Open street map layer
 keywords:
   - grafana
