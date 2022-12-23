@@ -49,8 +49,6 @@ type Engine struct {
 
 	tagHandlers map[string]tagHandler
 
-	engineGroup *EngineGroup
-
 	cachers    map[string]core.Cacher
 	cacherLock sync.RWMutex
 
@@ -307,27 +305,6 @@ func (engine *Engine) GetDefaultCacher() core.Cacher {
 	return engine.Cacher
 }
 
-// NoCache If you has set default cacher, and you want temporilly stop use cache,
-// you can use NoCache()
-func (engine *Engine) NoCache() *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.NoCache()
-}
-
-// NoCascade If you do not want to auto cascade load object
-func (engine *Engine) NoCascade() *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.NoCascade()
-}
-
-// MapCacher Set a table use a special cacher
-func (engine *Engine) MapCacher(bean interface{}, cacher core.Cacher) error {
-	engine.setCacher(engine.TableName(bean, true), cacher)
-	return nil
-}
-
 // NewDB provides an interface to operate database directly
 func (engine *Engine) NewDB() (*core.DB, error) {
 	return core.OpenDialect(engine.dialect)
@@ -384,7 +361,7 @@ func (engine *Engine) Sql(querystring string, args ...interface{}) *Session {
 // SQL method let's you manually write raw SQL and operate
 // For example:
 //
-//         engine.SQL("select * from user").Find(&users)
+//	engine.SQL("select * from user").Find(&users)
 //
 // This    code will execute "select * from user" and set the records to users
 func (engine *Engine) SQL(query interface{}, args ...interface{}) *Session {
@@ -805,9 +782,8 @@ func (engine *Engine) Desc(colNames ...string) *Session {
 // Asc will generate "ORDER BY column1,column2 Asc"
 // This method can chainable use.
 //
-//        engine.Desc("name").Asc("age").Find(&users)
-//        // SELECT * FROM user ORDER BY name DESC, age ASC
-//
+//	engine.Desc("name").Asc("age").Find(&users)
+//	// SELECT * FROM user ORDER BY name DESC, age ASC
 func (engine *Engine) Asc(colNames ...string) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
@@ -1455,9 +1431,10 @@ func (engine *Engine) InsertOne(bean interface{}) (int64, error) {
 // Update records, bean's non-empty fields are updated contents,
 // condiBean' non-empty filds are conditions
 // CAUTION:
-//        1.bool will defaultly be updated content nor conditions
-//         You should call UseBool if you have bool to use.
-//        2.float32 & float64 may be not inexact as conditions
+//
+//	1.bool will defaultly be updated content nor conditions
+//	 You should call UseBool if you have bool to use.
+//	2.float32 & float64 may be not inexact as conditions
 func (engine *Engine) Update(bean interface{}, condiBeans ...interface{}) (int64, error) {
 	session := engine.NewSession()
 	defer session.Close()

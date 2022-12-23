@@ -13,7 +13,7 @@ import (
 	"xorm.io/core"
 )
 
-// Interface defines the interface which Engine, EngineGroup and Session will implementate.
+// Interface defines the interface which Engine and Session will implementate.
 type Interface interface {
 	AllCols() *Session
 	Alias(alias string) *Session
@@ -67,7 +67,7 @@ type Interface interface {
 	Where(interface{}, ...interface{}) *Session
 }
 
-// EngineInterface defines the interface which Engine, EngineGroup will implementate.
+// EngineInterface defines the interface which Engine will implementate.
 type EngineInterface interface {
 	Interface
 
@@ -86,7 +86,6 @@ type EngineInterface interface {
 	GetTableMapper() core.IMapper
 	GetTZDatabase() *time.Location
 	GetTZLocation() *time.Location
-	MapCacher(interface{}, core.Cacher) error
 	NewSession() *Session
 	NoAutoTime() *Session
 	Quote(string) string
@@ -116,5 +115,4 @@ type EngineInterface interface {
 var (
 	_ Interface       = &Session{}
 	_ EngineInterface = &Engine{}
-	_ EngineInterface = &EngineGroup{}
 )
