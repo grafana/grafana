@@ -1,5 +1,5 @@
-//go:build ignore
-// +build ignore
+// //go:build ignore
+// // +build ignore
 
 //go:generate go run gen.go
 
@@ -27,6 +27,24 @@ func main() {
 		os.Exit(1)
 	}
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
+		os.Exit(1)
+	}
+	groot := filepath.Dir(cwd)
+
+	// If input hashing isn't skipped and digests match, we can skip all codegen
+	hjfs := codejen.NewFS()
+	if digest, err := codegen.HashCUEInputs("kinds/**/*.cue", "pkg/kindsys/**/*.cue"); err != nil {
+		die(err)
+	} else if !codegen.ShouldSkipInputHashing() {
+		hjfs.Add(*codejen.NewFile(filepath.Join("kinds", "gen_digest"), digest, nil))
+		if err = hjfs.Verify(context.Background(), groot); err == nil {
+			os.Exit(0)
+		}
+	}
+
 	// Core kinds composite code generator. Produces all generated code in
 	// grafana/grafana that derives from raw and structured core kinds.
 	coreKindsGen := codejen.JennyListWithNamer(func(decl *codegen.DeclForGen) string {
@@ -44,13 +62,6 @@ func main() {
 	)
 
 	coreKindsGen.AddPostprocessors(codegen.SlashHeaderMapper("kinds/gen.go"))
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
-		os.Exit(1)
-	}
-	groot := filepath.Dir(cwd)
 
 	rt := cuectx.GrafanaThemaRuntime()
 	var all []*codegen.DeclForGen
@@ -97,10 +108,8 @@ func main() {
 		return nameFor(all[i].Properties) < nameFor(all[j].Properties)
 	})
 
-	jfs, err := coreKindsGen.GenerateFS(all...)
-	if err != nil {
-		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
-	}
+	jfs := elsedie(coreKindsGen.GenerateFS(all...))("core kinddirs codegen failed")
+	die(jfs.Merge(hjfs))
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		if err = jfs.Verify(context.Background(), groot); err != nil {
@@ -141,6 +150,8 @@ func elsedie[T any](t T, err error) func(msg string) T {
 }
 
 func die(err error) {
-	fmt.Fprint(os.Stderr, err, "\n")
-	os.Exit(1)
+	if err != nil {
+		fmt.Fprint(os.Stderr, err, "\n")
+		os.Exit(1)
+	}
 }
