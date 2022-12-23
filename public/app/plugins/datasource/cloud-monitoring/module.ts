@@ -1,3 +1,5 @@
+import { get } from 'lodash';
+
 import { DataSourcePlugin, DashboardLoadedEvent } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 
@@ -23,19 +25,15 @@ getAppEvents().subscribe<DashboardLoadedEvent<CloudMonitoringQuery>>(
     const cloudmonitorQueries = queries[pluginJson.id];
     let stats = {
       [QueryType.TIME_SERIES_QUERY]: {
-        hidden: 0,
         visible: 0,
       },
       [QueryType.TIME_SERIES_LIST]: {
-        hidden: 0,
         visible: 0,
       },
       [QueryType.SLO]: {
-        hidden: 0,
         visible: 0,
       },
       [QueryType.ANNOTATION]: {
-        hidden: 0,
         visible: 0,
       },
     };
@@ -46,7 +44,16 @@ getAppEvents().subscribe<DashboardLoadedEvent<CloudMonitoringQuery>>(
         query.queryType === QueryType.SLO ||
         query.queryType === QueryType.ANNOTATION
       ) {
-        stats[query.queryType][query.hide ? 'hidden' : 'visible']++;
+        stats[query.queryType].visible++;
+      } else if (query.queryType === 'metrics') {
+        if (query.hasOwnProperty('type') && get(query, 'type') === 'annotationQuery') {
+          stats.annotation.visible++;
+        }
+        if (get(query, 'metricQuery.editorMode') === 'mql') {
+          stats.timeSeriesQuery.visible++;
+        } else {
+          stats.timeSeriesList.visible++;
+        }
       }
     });
 
