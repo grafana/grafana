@@ -173,12 +173,18 @@ const getContentStyle = (
   height: number
 ) => {
   const chromePadding = (padding === 'md' ? theme.components.panel.padding : 0) * theme.spacing.gridSize;
+
+  const panelPadding = chromePadding * 2;
   const panelBorder = 1 * 2;
-  const innerWidth = width - chromePadding * 2 - panelBorder;
-  const innerHeight = height - headerHeight - chromePadding * 2 - panelBorder;
+
+  const innerWidth = width - panelPadding - panelBorder;
+  const innerHeight = height - headerHeight - panelPadding - panelBorder;
 
   const contentStyle: CSSProperties = {
     padding: chromePadding,
+    // we need to set the width and height because content: 'strict' renders size in isolation
+    width: `${innerWidth + panelPadding}px`,
+    height: `${innerHeight + panelPadding}px`,
   };
 
   return { contentStyle, innerWidth, innerHeight };
@@ -218,7 +224,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     content: css({
       label: 'panel-content',
-      width: '100%',
+      // width: '100%',
       flexGrow: 1,
       contain: 'strict',
     }),
