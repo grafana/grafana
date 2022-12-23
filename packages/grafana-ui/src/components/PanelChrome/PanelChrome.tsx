@@ -87,6 +87,8 @@ export function PanelChrome({
   const showLoading = loadingState === LoadingState.Loading && !isUsingDeprecatedLeftItems;
   const showStreaming = loadingState === LoadingState.Streaming && !isUsingDeprecatedLeftItems;
 
+  console.log(contentStyle);
+
   return (
     <div className={styles.container} style={containerStyles}>
       <div className={styles.loadingBarContainer}>
@@ -224,7 +226,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     content: css({
       label: 'panel-content',
-      // width: '100%',
       flexGrow: 1,
       contain: 'strict',
     }),
