@@ -158,12 +158,14 @@ export interface AzureMonitorOption<T = string> {
   options?: AzureMonitorOption[];
 }
 
+export type VariableOptionGroup = { label: string; options: AzureMonitorOption[] };
+
 export interface AzureQueryEditorFieldProps {
   data?: PanelData;
   query: AzureMonitorQuery;
   datasource: Datasource;
   subscriptionId?: string;
-  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
+  variableOptionGroup: VariableOptionGroup;
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
