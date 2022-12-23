@@ -15,12 +15,10 @@
 package grafanaplugin
 
 import (
-	"github.com/grafana/thema"
 	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-Panel: thema.#Lineage & {
-	name: "histogram"
+composableKinds: PanelCfg: lineage: {
 	seqs: [
 		{
 			schemas: [
@@ -30,7 +28,7 @@ Panel: thema.#Lineage & {
 						ui.OptionsWithTooltip
 						//Size of each bucket
 						bucketSize?:  int32
-						//Offset buckets by this amount 
+						//Offset buckets by this amount
 						bucketOffset?: int32 | *0
 						//Combines multiple series into a single histogram
 						combine?:     bool

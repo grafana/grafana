@@ -1,9 +1,6 @@
 package grafanaplugin
 
-import "github.com/grafana/thema"
-
-Query: thema.#Lineage & {
-	name: "missing_slot_impl"
+composableKinds: Queries: lineage: {
 	seqs: [
 		{
 			schemas: [

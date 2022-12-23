@@ -1,8 +1,6 @@
 package grafanaplugin
 
-import "github.com/grafana/thema"
-
-Panel: thema.#Lineage & {
+composableKinds: PanelCfg: lineage: {
 	name: "doesnamatch"
 	seqs: [
 		{

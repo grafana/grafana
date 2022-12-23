@@ -24,9 +24,8 @@ import (
 //
 // There are four categories of kinds: Raw, Composable, CoreStructured,
 // and CustomStructured.
-#Kind: #Raw | #Composable | #CoreStructured | #CustomStructured
+Kind: Raw | Composable | CoreStructured | CustomStructured
 
-// properties shared between all kind categories.
 _sharedKind: {
 	// name is the canonical name of a Kind, as expressed in PascalCase.
 	//
@@ -47,7 +46,7 @@ _sharedKind: {
 	// In addition to lowercase normalization, dashes are transformed to underscores.
 	machineName: strings.ToLower(strings.Replace(name, "-", "_", -1))
 
-	// pluralName is the pluralized form of name.	Defaults to name + "s".
+	// pluralName is the pluralized form of name. Defaults to name + "s".
 	pluralName: =~"^([A-Z][a-zA-Z0-9-]{0,61}[a-zA-Z])$" | *(name + "s")
 
 	// pluralMachineName is the pluralized form of [machineName]. The same case
@@ -59,14 +58,14 @@ _sharedKind: {
 	// grouped lineage, each top-level field in the schema specifies a discrete
 	// object that is expected to exist in the wild
 	//
-	// This field is set at the framework level, and cannot be in the declaration of
-	// any individual kind.
+	// This value of this field is set by the kindsys framework. It cannot be changed
+	// in the declaration of any individual kind.
 	//
 	// This is likely to eventually become a first-class property in Thema:
 	// https://github.com/grafana/thema/issues/62
 	lineageIsGroup: bool
 
-	maturity: #Maturity
+	maturity: Maturity
 
 	// The kind system itself is not mature enough yet for any single
 	// kind to advance beyond "experimental"
@@ -79,7 +78,7 @@ _sharedKind: {
 
 // Maturity indicates the how far a given kind declaration is in its initial
 // journey. Mature kinds still evolve, but with guarantees about compatibility.
-#Maturity: "merged" | "experimental" | "stable" | "mature"
+Maturity: "merged" | "experimental" | "stable" | "mature"
 
 // Structured encompasses all three of the structured kind categories, in which
 // a schema specifies validity rules for the byte sequence. These represent all
@@ -91,13 +90,13 @@ _sharedKind: {
 // reduced set of capabilities, due to the constraints imposed by them being run
 // in separate processes, and the risks arising from executing code from
 // potentially untrusted third parties.
-#Structured: S={
+Structured: S={
 	_sharedKind
 	form: "structured"
 
 	// lineage is the Thema lineage containing all the schemas that have existed for this kind.
 	// It is required that lineage.name is the same as the [machineName].
-	lineage: thema.#Lineage & { name: S.machineName }
+	lineage: thema.#Lineage & {name: S.machineName}
 
 	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & {lin: lineage}).out
 }
@@ -106,7 +105,7 @@ _sharedKind: {
 // like an image, or an svg or parquet file. Grafana mostly acts as asset storage for raw
 // kinds: the byte sequence is a black box to Grafana, and type is determined
 // through metadata such as file extension.
-#Raw: {
+Raw: {
 	_sharedKind
 	form: "raw"
 
@@ -121,37 +120,8 @@ _sharedKind: {
 }
 
 // TODO
-#CoreStructured: {
-	#Structured
+CoreStructured: {
+	Structured
 
 	lineageIsGroup: false
-}
-
-// Composable is a category of structured kind that provides schema elements for
-// composition into CoreStructured and CustomStructured kinds. Grafana plugins
-// provide composable kinds; for example, a datasource plugin provides one to
-// describe the structure of its queries, which is then composed into dashboards
-// and alerting rules.
-//
-// Each Composable is an implementation of exactly one Slot, a shared meta-schema
-// defined by Grafana itself that constrains the shape of schemas declared in
-// that ComposableKind.
-#Composable: S={
-	_sharedKind
-	form: "structured"
-
-	// TODO docs
-	// TODO unify this with the existing slots decls in pkg/framework/coremodel
-	slot: "Panel" | "Query" | "DSConfig"
-
-	// TODO unify this with the existing slots decls in pkg/framework/coremodel
-	lineageIsGroup: bool & [
-		if slot == "Panel" { true },
-		if slot == "DSConfig" { true },
-		if slot == "Query" { false },
-	][0]
-
-	// lineage is the Thema lineage containing all the schemas that have existed for this kind.
-	// It is required that lineage.name is the same as the [machineName].
-	lineage: thema.#Lineage & { name: S.machineName }
 }

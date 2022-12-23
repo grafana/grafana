@@ -8,7 +8,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const PanelModelVersion = Object.freeze([0, 0]);
+export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
 export enum TextMode {
   Code = 'code',

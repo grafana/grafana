@@ -29,7 +29,7 @@ func NewKind() (*Kind, error) {
 	}
 
 	return &Kind{
-		decl: *decl,
+		decl: decl,
 	}, nil
 }
 
@@ -50,9 +50,8 @@ func (k *Kind) Maturity() kindsys.Maturity {
 
 // Decl returns the [kindsys.Decl] containing both CUE and Go representations of the
 // svg declaration in .cue files.
-func (k *Kind) Decl() *kindsys.Decl[kindsys.RawProperties] {
-	d := k.decl
-	return &d
+func (k *Kind) Decl() kindsys.Decl[kindsys.RawProperties] {
+	return k.decl
 }
 
 // Props returns a [kindsys.SomeKindProps], with underlying type [kindsys.RawProperties],

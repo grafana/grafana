@@ -7,9 +7,8 @@ package kindsys
 //
 // Grafana provides Kubernetes apiserver-shaped APIs for interacting with custom kinds -
 // The same API patterns (and clients) used to interact with CustomResources.
-#CustomStructured: {
-	#Structured
+CustomStructured: {
+	Structured
 
 	lineageIsGroup: false
-	...
 }

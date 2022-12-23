@@ -14,10 +14,7 @@
 
 package grafanaplugin
 
-import "github.com/grafana/thema"
-
-Panel: thema.#Lineage & {
-	name: "text"
+composableKinds: PanelCfg: lineage: {
 	seqs: [
 		{
 			schemas: [

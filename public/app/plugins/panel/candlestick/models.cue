@@ -14,8 +14,7 @@
 
 package grafanaplugin
 
-Panel: thema.#Lineage & {
-	name: "candlestick"
+composableKinds: PanelCfg: lineage: {
 	seqs: [
 		{
 			schemas: [

@@ -1,9 +1,6 @@
 package grafanaplugin
 
-import "github.com/grafana/thema"
-
-Panel: thema.#Lineage & {
-	name: "valid_model_panel"
+composableKinds: PanelCfg: lineage: {
 	seqs: [
 		{
 			schemas: [

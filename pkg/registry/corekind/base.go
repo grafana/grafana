@@ -61,14 +61,14 @@ func (b *Base) AllRaw() []kindsys.Raw {
 	return ret
 }
 
-// AllStructured returns a slice of the [kindsys.Structured] instances for
+// AllStructured returns a slice of the [kindsys.Core] instances for
 // all core structured kinds.
 //
 // The returned slice is sorted lexicographically by kind machine name.
-func (b *Base) AllStructured() []kindsys.Structured {
-	ret := make([]kindsys.Structured, 0, b.numStructured)
+func (b *Base) AllStructured() []kindsys.Core {
+	ret := make([]kindsys.Core, 0, b.numStructured)
 	for _, k := range b.all {
-		if rk, is := k.(kindsys.Structured); is {
+		if rk, is := k.(kindsys.Core); is {
 			ret = append(ret, rk)
 		}
 	}

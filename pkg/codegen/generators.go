@@ -40,12 +40,12 @@ func RawForGen(k kindsys.Raw) *DeclForGen {
 	}
 }
 
-// StructuredForGen produces a [DeclForGen] from a [kindsys.Structured] kind.
+// StructuredForGen produces a [DeclForGen] from a [kindsys.Core] kind.
 //
 // Useful for grafana-external code generators, which depend on the Kind
 // representation in registries produced by grafana core (such as
 // ["github.com/grafana/grafana/pkg/registry/corekind".NewBase]).
-func StructuredForGen(k kindsys.Structured) *DeclForGen {
+func StructuredForGen(k kindsys.Core) *DeclForGen {
 	return &DeclForGen{
 		SomeDecl: k.Decl().Some(),
 		lin:      k.Lineage(),

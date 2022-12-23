@@ -15,12 +15,10 @@
 package grafanaplugin
 
 import (
-	"github.com/grafana/thema"
 	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-Panel: thema.#Lineage & {
-	name: "state-timeline"
+composableKinds: PanelCfg: lineage: {
 	seqs: [
 		{
 			schemas: [
