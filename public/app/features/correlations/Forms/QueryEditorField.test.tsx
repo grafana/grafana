@@ -36,6 +36,19 @@ const renderWithContext = (
   return dsServer.get;
 };
 
+const initiateDsApi = () => {
+  const dsApi = new MockDataSourceApi('something');
+  dsApi.components = {
+    QueryEditor: () => <>query editor</>,
+  };
+
+  renderWithContext(<QueryEditorField name="query" dsUid="something" />, async () => {
+    return dsApi;
+  });
+
+  return dsApi;
+};
+
 describe('QueryEditorField', () => {
   afterAll(() => {
     jest.restoreAllMocks();
@@ -71,87 +84,96 @@ describe('QueryEditorField', () => {
     ).toBeInTheDocument();
   });
 
-  it('query validation should fail or succeed according to corresponding use cases', async () => {
-    // Request errors cause the query runner to print to console,
-    // this means the test would fail because of the fail on log rules.
-    // We mock console.error to avoid this.
-    jest.spyOn(console, 'error').mockImplementation();
-
-    const dsApi = new MockDataSourceApi('something');
-    dsApi.components = {
-      QueryEditor: () => <>query editor</>,
-    };
-
-    renderWithContext(<QueryEditorField name="query" dsUid="something" />, async () => {
-      return dsApi;
+  describe('Query validation', () => {
+    beforeEach(() => {
+      // Request errors cause the query runner to print to console,
+      // this means the test would fail because of the fail on log rules.
+      // We mock console.error to avoid this.
+      jest.spyOn(console, 'error').mockImplementation();
     });
 
-    await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+    it('should result in succeeded validation if request errors if result with LoadingState.Done', async () => {
+      const dsApi = initiateDsApi();
 
-    // Empty query value should result in  failed validation
-    fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
+      dsApi.result = {
+        data: [
+          {
+            name: 'test',
+            fields: [],
+            length: 0,
+          },
+        ],
+        state: LoadingState.Done,
+      };
+      fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
 
-    await waitFor(() => {
-      const alertEl = screen.getByRole('alert');
-      expect(alertEl).toBeInTheDocument();
-      expect(alertEl).toHaveTextContent(/this query is not valid/i);
+      await waitFor(() => {
+        expect(screen.getByText('This query is valid.')).toBeInTheDocument();
+      });
     });
 
-    // Request errors should result in failed validation
-    dsApi.error = 'Some error';
-    fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
-    await waitFor(() => {
-      const alertEl = screen.getByRole('alert');
-      expect(alertEl).toBeInTheDocument();
-      expect(alertEl).toHaveTextContent(/this query is not valid/i);
-    });
-    dsApi.error = null;
+    it('should result in failed validation if query value is empty', async () => {
+      initiateDsApi();
 
-    // Results with LoadingState.Done and data should be valid
-    dsApi.result = {
-      data: [
-        {
-          name: 'test',
-          fields: [],
-          length: 0,
-        },
-      ],
-      state: LoadingState.Done,
-    };
-    fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
 
-    await waitFor(() => {
-      expect(screen.getByText('This query is valid.')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
+
+      await waitFor(() => {
+        const alertEl = screen.getByRole('alert');
+        expect(alertEl).toBeInTheDocument();
+        expect(alertEl).toHaveTextContent(/this query is not valid/i);
+      });
     });
 
-    // Results with error should be invalid with no data available
-    dsApi.result = {
-      data: [],
-      state: LoadingState.Error,
-    };
-    fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
-    await waitFor(() => {
-      const alertEl = screen.getByRole('alert');
-      expect(alertEl).toBeInTheDocument();
-      expect(alertEl).toHaveTextContent(/this query is not valid/i);
+    it('should result in failed validation if the request errors', async () => {
+      const dsApi = initiateDsApi();
+
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+
+      dsApi.error = 'Some error';
+      fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
+      await waitFor(() => {
+        const alertEl = screen.getByRole('alert');
+        expect(alertEl).toBeInTheDocument();
+        expect(alertEl).toHaveTextContent(/this query is not valid/i);
+      });
     });
 
-    // Results with error should be invalid with data available
-    dsApi.result = {
-      data: [
-        {
-          name: 'test',
-          fields: [],
-          length: 0,
-        },
-      ],
-      state: LoadingState.Error,
-    };
-    fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
-    await waitFor(() => {
-      const alertEl = screen.getByRole('alert');
-      expect(alertEl).toBeInTheDocument();
-      expect(alertEl).toHaveTextContent(/this query is not valid/i);
+    it('should result in failed validation if there is no data available', async () => {
+      const dsApi = initiateDsApi();
+
+      dsApi.result = {
+        data: [],
+        state: LoadingState.Error,
+      };
+      fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
+      await waitFor(() => {
+        const alertEl = screen.getByRole('alert');
+        expect(alertEl).toBeInTheDocument();
+        expect(alertEl).toHaveTextContent(/this query is not valid/i);
+      });
+    });
+
+    it('should result in failed validation if there is data available but api returns error', async () => {
+      const dsApi = initiateDsApi();
+
+      dsApi.result = {
+        data: [
+          {
+            name: 'test',
+            fields: [],
+            length: 0,
+          },
+        ],
+        state: LoadingState.Error,
+      };
+      fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
+      await waitFor(() => {
+        const alertEl = screen.getByRole('alert');
+        expect(alertEl).toBeInTheDocument();
+        expect(alertEl).toHaveTextContent(/this query is not valid/i);
+      });
     });
   });
 });
