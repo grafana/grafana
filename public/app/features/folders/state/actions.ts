@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { locationUtil } from '@grafana/data';
-import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { getBackendSrv, isFetchError, locationService, config } from '@grafana/runtime';
 import { notifyApp, updateNavIndex } from 'app/core/actions';
 import { createSuccessNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -28,7 +28,9 @@ export function saveFolder(folder: FolderState): ThunkResult<void> {
     });
 
     dispatch(notifyApp(createSuccessNotification('Folder saved')));
-    locationService.push(`${res.url}/settings`);
+    dispatch(loadFolder(res));
+    const resUrl = config.appSubUrl ? `${res.url}`.replace(new RegExp(`^${config.appSubUrl}`), '') : res.url;
+    locationService.push(`${resUrl}/settings`);
   };
 }
 
