@@ -221,7 +221,7 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 		Path:   fmt.Sprintf("path-%d", rand.Int()),
 	}
 
-	evalStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.Error, eval.NoData}
+	evalStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.Error, eval.NoData, eval.Paused}
 	states := make([]*state.State, 0, len(evalStates))
 	for _, s := range evalStates {
 		states = append(states, randomState(s))
