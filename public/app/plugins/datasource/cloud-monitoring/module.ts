@@ -24,18 +24,10 @@ getAppEvents().subscribe<DashboardLoadedEvent<CloudMonitoringQuery>>(
   ({ payload: { dashboardId, orgId, grafanaVersion, queries } }) => {
     const cloudmonitorQueries = queries[pluginJson.id];
     let stats = {
-      [QueryType.TIME_SERIES_QUERY]: {
-        visible: 0,
-      },
-      [QueryType.TIME_SERIES_LIST]: {
-        visible: 0,
-      },
-      [QueryType.SLO]: {
-        visible: 0,
-      },
-      [QueryType.ANNOTATION]: {
-        visible: 0,
-      },
+      [QueryType.TIME_SERIES_QUERY]: 0,
+      [QueryType.TIME_SERIES_LIST]: 0,
+      [QueryType.SLO]: 0,
+      [QueryType.ANNOTATION]: 0,
     };
     cloudmonitorQueries.forEach((query) => {
       if (
@@ -44,15 +36,15 @@ getAppEvents().subscribe<DashboardLoadedEvent<CloudMonitoringQuery>>(
         query.queryType === QueryType.SLO ||
         query.queryType === QueryType.ANNOTATION
       ) {
-        stats[query.queryType].visible++;
+        stats[query.queryType]++;
       } else if (query.queryType === 'metrics') {
         if (query.hasOwnProperty('type') && get(query, 'type') === 'annotationQuery') {
-          stats.annotation.visible++;
+          stats.annotation++;
         }
         if (get(query, 'metricQuery.editorMode') === 'mql') {
-          stats.timeSeriesQuery.visible++;
+          stats.timeSeriesQuery++;
         } else {
-          stats.timeSeriesList.visible++;
+          stats.timeSeriesList++;
         }
       }
     });
@@ -62,10 +54,10 @@ getAppEvents().subscribe<DashboardLoadedEvent<CloudMonitoringQuery>>(
         grafana_version: grafanaVersion,
         dashboard_id: dashboardId,
         org_id: orgId,
-        mql_queries: stats[QueryType.TIME_SERIES_QUERY].visible,
-        time_series_filter_queries: stats[QueryType.TIME_SERIES_LIST].visible,
-        slo_queries: stats[QueryType.SLO].visible,
-        annotation_queries: stats[QueryType.ANNOTATION].visible,
+        mql_queries: stats[QueryType.TIME_SERIES_QUERY],
+        time_series_filter_queries: stats[QueryType.TIME_SERIES_LIST],
+        slo_queries: stats[QueryType.SLO],
+        annotation_queries: stats[QueryType.ANNOTATION],
       });
     }
   }
