@@ -158,8 +158,17 @@ func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int6
 	ruleInfo.update(ruleVersion(lastVersion))
 }
 
+// PauseAlertRule stops evaluation of the rule, deletes it from active rules, and DOES NOT clean up state cache.
+func (sch *schedule) PauseAlertRule(keys ...ngmodels.AlertRuleKey) {
+	sch.removeAlertRules(nil, keys)
+}
+
 // DeleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
 func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
+	sch.removeAlertRules(errRuleDeleted, keys)
+}
+
+func (sch *schedule) removeAlertRules(err error, keys []ngmodels.AlertRuleKey) {
 	for _, key := range keys {
 		// It can happen that the scheduler has deleted the alert rule before the
 		// Ruler API has called DeleteAlertRule. This can happen as requests to
@@ -170,11 +179,13 @@ func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 		// Delete the rule routine
 		ruleInfo, ok := sch.registry.del(key)
 		if !ok {
-			sch.log.Info("Alert rule cannot be stopped as it is not running", key.LogContext()...)
-			continue
+			if err != nil {
+				sch.log.Info("Alert rule cannot be stopped as it is not running", key.LogContext()...)
+			}
+			return
 		}
 		// stop rule evaluation
-		ruleInfo.stop(errRuleDeleted)
+		ruleInfo.stop(err)
 	}
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
 	alertRules, _ := sch.schedulableAlertRules.all()
@@ -232,12 +243,17 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	readyToRun := make([]readyToRunItem, 0)
 	missingFolder := make(map[string][]string)
 	for _, item := range alertRules {
+		key := item.GetKey()
 		if item.IsPaused {
+			sch.PauseAlertRule(key)
+
+			folderTitle := sch.getFolderTitle(folderTitles, item, missingFolder)
+			result := getSimulatedResultForPauseState(tick)
+			sch.stateManager.ProcessEvalResults(ctx, tick, item, eval.Results{result}, sch.getRuleExtraLabels(item, folderTitle))
 			continue
 		}
 
-		key := item.GetKey()
-		ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key)
+		ruleInfo, isRoutineNew := sch.registry.getOrCreateInfo(ctx, key)
 
 		// enforce minimum evaluation interval
 		if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
@@ -245,15 +261,15 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 			item.IntervalSeconds = int64(sch.minRuleInterval.Seconds())
 		}
 
-		invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
+		isIntervalValid := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) == 0
 
-		if newRoutine && !invalidInterval {
+		if isRoutineNew && isIntervalValid {
 			dispatcherGroup.Go(func() error {
 				return sch.ruleRoutine(ruleInfo.ctx, key, ruleInfo.evalCh, ruleInfo.updateCh)
 			})
 		}
 
-		if invalidInterval {
+		if !isIntervalValid {
 			// this is expected to be always false
 			// given that we validate interval during alert rule updates
 			sch.log.Warn("Rule has an invalid interval and will be ignored. Interval should be divided exactly by scheduler interval", append(key.LogContext(), "ruleInterval", time.Duration(item.IntervalSeconds)*time.Second, "schedulerInterval", sch.baseInterval)...)
@@ -262,19 +278,10 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 		if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-			var folderTitle string
-			if !sch.disableGrafanaFolder {
-				title, ok := folderTitles[item.NamespaceUID]
-				if ok {
-					folderTitle = title
-				} else {
-					missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
-				}
-			}
 			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
 				scheduledAt: tick,
 				rule:        item,
-				folderTitle: folderTitle,
+				folderTitle: sch.getFolderTitle(folderTitles, item, missingFolder),
 			}})
 		}
 
@@ -403,7 +410,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			logger.Debug("Skip updating the state because the context has been cancelled")
 			return
 		}
-		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, sch.getRuleExtraLabels(e))
+		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, sch.getRuleExtraLabels(e.rule, e.folderTitle))
 		alerts := FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		span.AddEvents(
 			[]string{"message", "state_transitions", "alerts_to_send"},
@@ -519,15 +526,32 @@ func (sch *schedule) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
 	sch.stopAppliedFunc(alertDefKey)
 }
 
-func (sch *schedule) getRuleExtraLabels(evalCtx *evaluation) map[string]string {
+func (sch *schedule) getRuleExtraLabels(rule *ngmodels.AlertRule, folderTitle string) map[string]string {
 	extraLabels := make(map[string]string, 4)
 
-	extraLabels[alertingModels.NamespaceUIDLabel] = evalCtx.rule.NamespaceUID
-	extraLabels[prometheusModel.AlertNameLabel] = evalCtx.rule.Title
-	extraLabels[alertingModels.RuleUIDLabel] = evalCtx.rule.UID
+	extraLabels[alertingModels.NamespaceUIDLabel] = rule.NamespaceUID
+	extraLabels[prometheusModel.AlertNameLabel] = rule.Title
+	extraLabels[alertingModels.RuleUIDLabel] = rule.UID
 
 	if !sch.disableGrafanaFolder {
-		extraLabels[ngmodels.FolderTitleLabel] = evalCtx.folderTitle
+		extraLabels[ngmodels.FolderTitleLabel] = folderTitle
 	}
 	return extraLabels
+}
+
+func getSimulatedResultForPauseState(ts time.Time) eval.Result {
+	return eval.Result{State: eval.Paused, EvaluatedAt: ts}
+}
+
+func (sch *schedule) getFolderTitle(folderTitles map[string]string, rule *ngmodels.AlertRule, missingFolders map[string][]string) string {
+	if sch.disableGrafanaFolder {
+		return ""
+	}
+
+	title, ok := folderTitles[rule.NamespaceUID]
+	if !ok {
+		missingFolders[rule.NamespaceUID] = append(missingFolders[rule.NamespaceUID], rule.UID)
+		return ""
+	}
+	return title
 }
