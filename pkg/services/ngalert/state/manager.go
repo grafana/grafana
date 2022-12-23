@@ -235,11 +235,14 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	case eval.NoData:
 		logger.Debug("Setting next state", "handler", "resultNoData")
 		resultNoData(currentState, alertRule, result, logger)
+	case eval.Paused:
+		logger.Debug("Setting next state", "handler", "resultPaused")
+		resultPaused(currentState, alertRule, result, logger)
 	case eval.Pending: // we do not emit results with this state
 		logger.Debug("Ignoring set next state as result is pending")
 	}
 
-	// Set reason iff: result is different than state, reason is not Alerting or Normal
+	// Set reason iff: result is different from state, reason is not Alerting or Normal
 	currentState.StateReason = ""
 
 	if currentState.State != result.State &&
@@ -248,9 +251,9 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		currentState.StateReason = result.State.String()
 	}
 
-	// Set Resolved property so the scheduler knows to send a postable alert
-	// to Alertmanager.
-	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
+	// Set Resolved property so the scheduler knows to send a postable alert to Alertmanager.
+	currentState.Resolved = oldState == eval.Alerting &&
+		(currentState.State == eval.Normal || currentState.State == eval.Paused)
 
 	if shouldTakeImage(currentState.State, oldState, currentState.Image, currentState.Resolved) {
 		image, err := takeImage(ctx, st.images, alertRule)
