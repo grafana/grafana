@@ -22224,7 +22224,7 @@ __metadata:
     ts-loader: 9.3.1
     ts-node: 10.9.1
     tslib: 2.4.1
-    typescript: 4.9.3
+    typescript: 4.8.x
     uplot: 1.6.23
     uuid: 9.0.0
     vendor: "link:./public/vendor"
@@ -37670,7 +37670,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.8.4, typescript@npm:^3 || ^4":
+"typescript@npm:4.8.4, typescript@npm:4.8.x, typescript@npm:^3 || ^4":
   version: 4.8.4
   resolution: "typescript@npm:4.8.4"
   bin:
@@ -37720,7 +37720,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@4.8.4#~builtin<compat/typescript>, typescript@patch:typescript@^3 || ^4#~builtin<compat/typescript>":
+"typescript@patch:typescript@4.8.4#~builtin<compat/typescript>, typescript@patch:typescript@4.8.x#~builtin<compat/typescript>, typescript@patch:typescript@^3 || ^4#~builtin<compat/typescript>":
   version: 4.8.4
   resolution: "typescript@patch:typescript@npm%3A4.8.4#~builtin<compat/typescript>::version=4.8.4&hash=0102e9"
   bin:
