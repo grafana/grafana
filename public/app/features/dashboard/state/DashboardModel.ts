@@ -1090,13 +1090,15 @@ export class DashboardModel implements TimeModel {
     const panelsWithLegends = this.panels.filter(isPanelWithLegend);
 
     // determine if more panels are displaying legends or not
-    const onCount = panelsWithLegends.filter((panel) => panel.legend.show).length;
+    const onCount = panelsWithLegends.filter((panel) => panel.options.legend.showLegend).length;
     const offCount = panelsWithLegends.length - onCount;
     const panelLegendsOn = onCount >= offCount;
 
     for (const panel of panelsWithLegends) {
-      panel.legend.show = !panelLegendsOn;
-      panel.render();
+      const newOptions = { ...panel.options };
+      newOptions.legend.showLegend = !panelLegendsOn;
+
+      panel.updateOptions(newOptions);
     }
   }
 
@@ -1226,5 +1228,5 @@ export class DashboardModel implements TimeModel {
 }
 
 function isPanelWithLegend(panel: PanelModel): panel is PanelModel & Pick<Required<PanelModel>, 'legend'> {
-  return Boolean(panel.legend);
+  return Boolean(panel.options.legend);
 }
