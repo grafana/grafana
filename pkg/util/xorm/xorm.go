@@ -61,7 +61,7 @@ func init() {
 func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	driver := core.QueryDriver(driverName)
 	if driver == nil {
-		return nil, fmt.Errorf("Unsupported driver name: %v", driverName)
+		return nil, fmt.Errorf("unsupported driver name: %v", driverName)
 	}
 
 	uri, err := driver.Parse(driverName, dataSourceName)
@@ -71,7 +71,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 
 	dialect := core.QueryDialect(uri.DbType)
 	if dialect == nil {
-		return nil, fmt.Errorf("Unsupported dialect type: %v", uri.DbType)
+		return nil, fmt.Errorf("unsupported dialect type: %v", uri.DbType)
 	}
 
 	db, err := core.Open(driverName, dataSourceName)

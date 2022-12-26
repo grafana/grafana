@@ -11,23 +11,23 @@ import (
 
 var (
 	// ErrParamsType params error
-	ErrParamsType = errors.New("Params type error")
+	ErrParamsType = errors.New("params type error")
 	// ErrTableNotFound table not found error
-	ErrTableNotFound = errors.New("Table not found")
+	ErrTableNotFound = errors.New("table not found")
 	// ErrUnSupportedType unsupported error
-	ErrUnSupportedType = errors.New("Unsupported type error")
+	ErrUnSupportedType = errors.New("unsupported type error")
 	// ErrNotExist record does not exist error
-	ErrNotExist = errors.New("Record does not exist")
+	ErrNotExist = errors.New("record does not exist")
 	// ErrCacheFailed cache failed error
-	ErrCacheFailed = errors.New("Cache failed")
+	ErrCacheFailed = errors.New("cache failed")
 	// ErrNeedDeletedCond delete needs less one condition error
-	ErrNeedDeletedCond = errors.New("Delete action needs at least one condition")
+	ErrNeedDeletedCond = errors.New("delete action needs at least one condition")
 	// ErrNotImplemented not implemented
-	ErrNotImplemented = errors.New("Not implemented")
+	ErrNotImplemented = errors.New("not implemented")
 	// ErrConditionType condition type unsupported
-	ErrConditionType = errors.New("Unsupported condition type")
+	ErrConditionType = errors.New("unsupported condition type")
 	// ErrUnSupportedSQLType parameter of SQL is not supported
-	ErrUnSupportedSQLType = errors.New("Unsupported sql type")
+	ErrUnSupportedSQLType = errors.New("unsupported sql type")
 )
 
 // ErrFieldIsNotExist columns does not exist
