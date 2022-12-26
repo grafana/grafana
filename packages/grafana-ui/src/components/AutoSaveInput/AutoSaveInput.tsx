@@ -90,6 +90,10 @@ export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props, r
     }
   };
 
+  /**
+   * use Field around input to pass the error message
+   * use InlineToast.tsx to show the save message
+   */
   return (
     <Input
       {...restProps}
