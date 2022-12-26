@@ -50,13 +50,7 @@ func (session *Session) queryRows(sqlStr string, args ...interface{}) (*core.Row
 	}
 
 	if session.isAutoCommit {
-		var db *core.DB
-		if session.sessionType == groupSession {
-			db = session.engine.engineGroup.Slave().DB()
-		} else {
-			db = session.DB()
-		}
-
+		db := session.DB()
 		if session.prepareStmt {
 			// don't clear stmt since session will cache them
 			stmt, err := session.doPrepare(db, sqlStr)
