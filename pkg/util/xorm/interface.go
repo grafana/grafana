@@ -73,29 +73,22 @@ type EngineInterface interface {
 
 	Before(func(interface{})) *Session
 	Charset(charset string) *Session
-	ClearCache(...interface{}) error
 	Context(context.Context) *Session
 	CreateTables(...interface{}) error
 	DBMetas() ([]*core.Table, error)
 	Dialect() core.Dialect
 	DropTables(...interface{}) error
-	DumpAllToFile(fp string, tp ...core.DbType) error
-	GetCacher(string) core.Cacher
 	GetColumnMapper() core.IMapper
-	GetDefaultCacher() core.Cacher
 	GetTableMapper() core.IMapper
 	GetTZDatabase() *time.Location
 	GetTZLocation() *time.Location
-	MapCacher(interface{}, core.Cacher) error
 	NewSession() *Session
 	NoAutoTime() *Session
 	Quote(string) string
-	SetCacher(string, core.Cacher)
 	SetConnMaxLifetime(time.Duration)
 	SetColumnMapper(core.IMapper)
 	SetDefaultCacher(core.Cacher)
 	SetLogger(logger core.ILogger)
-	SetLogLevel(core.LogLevel)
 	SetMapper(core.IMapper)
 	SetMaxOpenConns(int)
 	SetMaxIdleConns(int)
@@ -108,7 +101,6 @@ type EngineInterface interface {
 	Sync(...interface{}) error
 	Sync2(...interface{}) error
 	StoreEngine(storeEngine string) *Session
-	TableInfo(bean interface{}) *Table
 	TableName(interface{}, ...bool) string
 	UnMapType(reflect.Type)
 }
