@@ -284,7 +284,7 @@
     "@types/webpack-env": "1.18.0",
     "@visx/event": "2.6.0",
     "@visx/gradient": "2.10.0",
-    "@visx/group": "2.10.0",
+    "@visx/group": "2.17.0",
     "@visx/scale": "2.2.2",
     "@visx/shape": "2.12.2",
     "@visx/tooltip": "2.16.0",
