@@ -21,7 +21,6 @@ type sessionType int
 
 const (
 	engineSession sessionType = iota
-	groupSession
 )
 
 // Session keep a pointer to sql.DB and provides all execution of all
