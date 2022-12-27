@@ -80,7 +80,6 @@ public/css/*.min.css
 /devenv/.env
 /devenv/docker/blocks/tempo/tempo-data/
 
-conf/custom.ini
 /conf/provisioning/**/custom.yaml
 /conf/provisioning/**/dev.yaml
 /conf/ldap_dev.toml
