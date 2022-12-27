@@ -708,7 +708,7 @@ export class Scene {
 
   // TODO: Figure out why this is still glitchy
   handleMouseEnter = (event: React.MouseEvent) => {
-    if (!(event.target instanceof HTMLElement)) {
+    if (!(event.target instanceof HTMLElement) || !this.isEditingEnabled) {
       return;
     }
 
