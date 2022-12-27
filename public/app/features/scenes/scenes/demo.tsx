@@ -8,6 +8,7 @@ import {
   VizPanel,
 } from '../components';
 import { EmbeddedScene } from '../components/Scene';
+import { panelBuilders } from '../components/VizPanel/panelBuilders';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
@@ -19,21 +20,27 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
     body: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new VizPanel({
+        panelBuilders.newGraph({
           placement: { minWidth: '70%' },
-          pluginId: 'timeseries',
           title: 'Dynamic height and width',
           $data: getQueryRunnerWithRandomWalkQuery({}, { maxDataPointsFromWidth: true }),
         }),
         new SceneFlexLayout({
           direction: 'column',
           children: [
-            new VizPanel({
-              pluginId: 'timeseries',
+            panelBuilders.newGraph({
               title: 'Fill height',
+              options: {},
+              fieldConfig: {
+                defaults: {
+                  custom: {
+                    fillOpacity: 20,
+                  },
+                },
+                overrides: [],
+              },
             }),
-            new VizPanel({
-              pluginId: 'timeseries',
+            panelBuilders.newGraph({
               title: 'Fill height',
             }),
             new SceneCanvasText({
@@ -42,10 +49,9 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
               fontSize: 20,
               align: 'center',
             }),
-            new VizPanel({
-              placement: { height: 300 },
-              pluginId: 'timeseries',
+            panelBuilders.newGraph({
               title: 'Fixed height',
+              placement: { height: 300 },
             }),
           ],
         }),

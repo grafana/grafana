@@ -101,10 +101,9 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	}
 
 	var (
-		hasPublicDashboard                  = false
-		publicDashboardEnabled              = false
-		publicDashboardTimeSelectionEnabled = false
-		err                                 error
+		hasPublicDashboard     = false
+		publicDashboardEnabled = false
+		err                    error
 	)
 
 	// If public dashboards is enabled and we have a public dashboard, update meta
@@ -117,7 +116,6 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 
 		if publicDashboard != nil {
 			hasPublicDashboard = true
-			publicDashboardTimeSelectionEnabled = publicDashboard.TimeSelectionEnabled
 			publicDashboardEnabled = publicDashboard.IsEnabled
 		}
 	}
@@ -169,28 +167,27 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	}
 
 	meta := dtos.DashboardMeta{
-		IsStarred:                           isStarred,
-		Slug:                                dash.Slug,
-		Type:                                models.DashTypeDB,
-		CanStar:                             c.IsSignedIn,
-		CanSave:                             canSave,
-		CanEdit:                             canEdit,
-		CanAdmin:                            canAdmin,
-		CanDelete:                           canDelete,
-		Created:                             dash.Created,
-		Updated:                             dash.Updated,
-		UpdatedBy:                           updater,
-		CreatedBy:                           creator,
-		Version:                             dash.Version,
-		HasACL:                              dash.HasACL,
-		IsFolder:                            dash.IsFolder,
-		FolderId:                            dash.FolderId,
-		Url:                                 dash.GetUrl(),
-		FolderTitle:                         "General",
-		AnnotationsPermissions:              annotationPermissions,
-		PublicDashboardEnabled:              publicDashboardEnabled,
-		HasPublicDashboard:                  hasPublicDashboard,
-		PublicDashboardTimeSelectionEnabled: publicDashboardTimeSelectionEnabled,
+		IsStarred:              isStarred,
+		Slug:                   dash.Slug,
+		Type:                   models.DashTypeDB,
+		CanStar:                c.IsSignedIn,
+		CanSave:                canSave,
+		CanEdit:                canEdit,
+		CanAdmin:               canAdmin,
+		CanDelete:              canDelete,
+		Created:                dash.Created,
+		Updated:                dash.Updated,
+		UpdatedBy:              updater,
+		CreatedBy:              creator,
+		Version:                dash.Version,
+		HasACL:                 dash.HasACL,
+		IsFolder:               dash.IsFolder,
+		FolderId:               dash.FolderId,
+		Url:                    dash.GetUrl(),
+		FolderTitle:            "General",
+		AnnotationsPermissions: annotationPermissions,
+		PublicDashboardEnabled: publicDashboardEnabled,
+		HasPublicDashboard:     hasPublicDashboard,
 	}
 
 	// lookup folder title

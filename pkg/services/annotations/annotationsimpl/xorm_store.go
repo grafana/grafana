@@ -162,6 +162,10 @@ func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item)
 			existing.EpochEnd = item.EpochEnd
 		}
 
+		if item.Data != nil {
+			existing.Data = item.Data
+		}
+
 		if item.Tags != nil {
 			tags, err := r.tagService.EnsureTagsExist(ctx, tag.ParseTagPairs(item.Tags))
 			if err != nil {
@@ -183,7 +187,7 @@ func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item)
 			return err
 		}
 
-		_, err = sess.Table("annotation").ID(existing.Id).Cols("epoch", "text", "epoch_end", "updated", "tags").Update(existing)
+		_, err = sess.Table("annotation").ID(existing.Id).Cols("epoch", "text", "epoch_end", "updated", "tags", "data").Update(existing)
 		return err
 	})
 }
