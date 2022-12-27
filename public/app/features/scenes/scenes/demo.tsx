@@ -17,11 +17,11 @@ import { getQueryRunnerWithRandomWalkQuery } from './queries';
 export function getFlexLayoutTest(standalone: boolean): Scene {
   const state = {
     title: 'Flex layout test',
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'row',
       children: [
         panelBuilders.newGraph({
-          size: { minWidth: '70%' },
+          placement: { minWidth: '70%' },
           title: 'Dynamic height and width',
           $data: getQueryRunnerWithRandomWalkQuery({}, { maxDataPointsFromWidth: true }),
         }),
@@ -44,14 +44,14 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
               title: 'Fill height',
             }),
             new SceneCanvasText({
-              size: { ySizing: 'content' },
+              placement: { ySizing: 'content' },
               text: 'Size to content',
               fontSize: 20,
               align: 'center',
             }),
             panelBuilders.newGraph({
               title: 'Fixed height',
-              size: { height: 300 },
+              placement: { height: 300 },
             }),
           ],
         }),
@@ -75,13 +75,13 @@ export function getScenePanelRepeaterTest(standalone: boolean): Scene {
 
   const state = {
     title: 'Panel repeater test',
-    layout: new ScenePanelRepeater({
+    body: new ScenePanelRepeater({
       layout: new SceneFlexLayout({
         direction: 'column',
         children: [
           new SceneFlexLayout({
             direction: 'row',
-            size: { minHeight: 200 },
+            placement: { minHeight: 200 },
             children: [
               new VizPanel({
                 pluginId: 'timeseries',
@@ -91,7 +91,7 @@ export function getScenePanelRepeaterTest(standalone: boolean): Scene {
                 },
               }),
               new VizPanel({
-                size: { width: 300 },
+                placement: { width: 300 },
                 pluginId: 'stat',
                 fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
                 options: {

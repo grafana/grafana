@@ -11,14 +11,14 @@ import { getQueryRunnerWithRandomWalkQuery } from './queries';
 export function getSceneWithRows(standalone: boolean): Scene {
   const state = {
     title: 'Scene with rows',
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'column',
       children: [
         new NestedScene({
           title: 'Overview',
           canCollapse: true,
           // size: { ySizing: 'content', xSizing: 'fill' },
-          layout: new SceneFlexLayout({
+          body: new SceneFlexLayout({
             direction: 'row',
             children: [
               new VizPanel({
@@ -36,7 +36,7 @@ export function getSceneWithRows(standalone: boolean): Scene {
           title: 'More server details',
           // size: { ySizing: 'content', xSizing: 'fill' },
           canCollapse: true,
-          layout: new SceneFlexLayout({
+          body: new SceneFlexLayout({
             direction: 'row',
             children: [
               new VizPanel({
