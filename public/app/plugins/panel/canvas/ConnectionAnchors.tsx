@@ -7,11 +7,12 @@ import { ConnectionCoordinates } from 'app/features/canvas';
 
 type Props = {
   setRef: (anchorElement: HTMLDivElement) => void;
+  handleMouseLeave: (event: React.MouseEvent<Element, MouseEvent> | React.FocusEvent<HTMLDivElement, Element>) => void;
 };
 
 export const CONNECTION_ANCHOR_DIV_ID = 'connectionControl';
 
-export const ConnectionAnchors = ({ setRef }: Props) => {
+export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
   const highlightEllipseRef = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
   const halfSize = 2.5;
@@ -89,13 +90,8 @@ export const ConnectionAnchors = ({ setRef }: Props) => {
   };
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        display: 'none',
-      }}
-      ref={setRef}
-    >
+    <div className={styles.root} ref={setRef}>
+      <div className={styles.mouseoutDiv} onMouseOut={handleMouseLeave} onBlur={handleMouseLeave} />
       <div
         id={CONNECTION_ANCHOR_DIV_ID}
         ref={highlightEllipseRef}
@@ -109,6 +105,16 @@ export const ConnectionAnchors = ({ setRef }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  root: css`
+    position: absolute;
+    display: none;
+  `,
+  mouseoutDiv: css`
+    position: absolute;
+    margin: -30px;
+    width: calc(100% + 60px);
+    height: calc(100% + 60px);
+  `,
   anchor: css`
     position: absolute;
     cursor: cursor;

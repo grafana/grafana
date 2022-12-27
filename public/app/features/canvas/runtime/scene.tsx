@@ -706,7 +706,6 @@ export class Scene {
     dest.reinitializeMoveable();
   };
 
-  // TODO: Figure out why this is still glitchy
   handleMouseEnter = (event: React.MouseEvent) => {
     if (!(event.target instanceof HTMLElement) || !this.isEditingEnabled) {
       return;
@@ -742,9 +741,8 @@ export class Scene {
     this.connectionAnchorDiv!.style.width = `${elementBoundingRect.width}px`;
   };
 
-  handleMouseLeave = (event: React.MouseEvent) => {
-    // TODO: Figure out how to hide connections when mouse leaves element but not when hovering on anchor
-    // this.connectionAnchorDiv!.style.display = 'none';
+  handleMouseLeave = (event: React.MouseEvent | React.FocusEvent) => {
+    this.connectionAnchorDiv!.style.display = 'none';
   };
 
   render() {
@@ -752,7 +750,7 @@ export class Scene {
 
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
-        <ConnectionAnchors setRef={this.setConnectionAnchorRef} />
+        <ConnectionAnchors setRef={this.setConnectionAnchorRef} handleMouseLeave={this.handleMouseLeave} />
         <ConnectionSVG setSVGRef={this.setConnectionSVGRef} setLineRef={this.setConnectionLineRef} scene={this} />
         {this.root.render()}
         {canShowContextMenu && (
