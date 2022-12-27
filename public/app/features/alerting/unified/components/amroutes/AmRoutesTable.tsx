@@ -9,7 +9,6 @@ import { FormAmRoute } from '../../types/amroutes';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
 import { prepareItems } from '../../utils/dynamicTable';
-import { findMatchingAlertGroups } from '../../utils/notification-policies';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EmptyArea } from '../EmptyArea';
 import { GrafanaAppBadge } from '../receivers/grafanaAppReceivers/GrafanaAppBadge';
@@ -25,7 +24,6 @@ export interface AmRoutesTableProps {
   onCancelAdd: () => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute[];
-  routeTree: Route;
   rawRoutes: Route[];
   alertGroups: AlertmanagerGroup[];
   filters?: { queryString?: string; contactPoint?: string };
@@ -85,7 +83,6 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   receivers,
   routes,
   rawRoutes = [],
-  routeTree,
   alertGroups,
   filters,
   readOnly = false,
@@ -255,8 +252,8 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
               }}
               receivers={receivers}
               routes={item.data}
-              routeTree={routeTree}
-              alertGroups={findMatchingAlertGroups(routeTree, rawRoutes[index], alertGroups)}
+              routeTree={rawRoutes[index]}
+              alertGroups={alertGroups}
               readOnly={readOnly}
               alertManagerSourceName={alertManagerSourceName}
             />

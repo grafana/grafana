@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { FC, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -8,6 +8,7 @@ import { AlertmanagerGroup, Route } from 'app/plugins/datasource/alertmanager/ty
 import { FormAmRoute } from '../../types/amroutes';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { emptyRoute } from '../../utils/amroutes';
+import { findMatchingAlertGroups } from '../../utils/notification-policies';
 import { Authorize } from '../Authorize';
 import { AlertGroup } from '../alert-groups/AlertGroup';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
@@ -50,6 +51,10 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
   const [subroutes, setSubroutes] = useState(routes.routes);
   const [isAddMode, setIsAddMode] = useState(false);
 
+  const matchingAlertGroups = useMemo(() => {
+    return findMatchingAlertGroups(routeTree, alertGroups);
+  }, [alertGroups, routeTree]);
+
   return (
     <div className={gridStyles.container}>
       <div className={gridStyles.titleCell}>Group wait</div>
@@ -85,7 +90,6 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
             receivers={receivers}
             routes={subroutes}
             alertManagerSourceName={alertManagerSourceName}
-            routeTree={routeTree}
             alertGroups={alertGroups}
             rawRoutes={routeTree.routes ?? []}
           />
@@ -119,7 +123,7 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
       </div>
       <div className={gridStyles.titleCell}>Alert Instances</div>
       <div className={gridStyles.valueCell}>
-        {alertGroups.map((group, index) => (
+        {matchingAlertGroups.map((group, index) => (
           <AlertGroup key={index} alertManagerSourceName={alertManagerSourceName || ''} group={group} />
         ))}
       </div>
