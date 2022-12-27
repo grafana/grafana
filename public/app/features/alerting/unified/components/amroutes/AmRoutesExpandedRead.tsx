@@ -3,11 +3,13 @@ import React, { FC, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
+import { AlertmanagerGroup, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { emptyRoute } from '../../utils/amroutes';
 import { Authorize } from '../Authorize';
+import { AlertGroup } from '../alert-groups/AlertGroup';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { AmRoutesTable } from './AmRoutesTable';
@@ -18,6 +20,8 @@ export interface AmRoutesExpandedReadProps {
   onChange: (routes: FormAmRoute) => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute;
+  routeTree: Route;
+  alertGroups?: AlertmanagerGroup[];
   readOnly?: boolean;
   alertManagerSourceName: string;
 }
@@ -26,6 +30,8 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
   onChange,
   receivers,
   routes,
+  routeTree,
+  alertGroups = [],
   readOnly = false,
   alertManagerSourceName,
 }) => {
@@ -79,6 +85,9 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
             receivers={receivers}
             routes={subroutes}
             alertManagerSourceName={alertManagerSourceName}
+            routeTree={routeTree}
+            alertGroups={alertGroups}
+            rawRoutes={routeTree.routes ?? []}
           />
         ) : (
           <p>No nested policies configured.</p>
@@ -107,6 +116,12 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
           muteTimingNames={routes.muteTimeIntervals}
           hideActions
         />
+      </div>
+      <div className={gridStyles.titleCell}>Alert Instances</div>
+      <div className={gridStyles.valueCell}>
+        {alertGroups.map((group, index) => (
+          <AlertGroup key={index} alertManagerSourceName={alertManagerSourceName || ''} group={group} />
+        ))}
       </div>
     </div>
   );

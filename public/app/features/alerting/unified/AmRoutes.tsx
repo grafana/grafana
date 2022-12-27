@@ -21,7 +21,7 @@ import { AmRouteReceiver } from './components/receivers/grafanaAppReceivers/type
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
+import { fetchAlertGroupsAction, fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { amRouteToFormAmRoute, formAmRouteToAmRoute } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
@@ -61,6 +61,9 @@ const AmRoutes = () => {
 
   const isProvisioned = useMemo(() => Boolean(config?.route?.provenance), [config?.route]);
 
+  const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
+  const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
+
   const enterRootRouteEditMode = () => {
     setIsRootRouteEditMode(true);
   };
@@ -70,6 +73,13 @@ const AmRoutes = () => {
   };
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
+
+  // fetch AM instances grouping
+  useEffect(() => {
+    if (alertManagerSourceName) {
+      dispatch(fetchAlertGroupsAction(alertManagerSourceName));
+    }
+  }, [alertManagerSourceName, dispatch]);
 
   const handleSave = (data: Partial<FormAmRoute>) => {
     if (!result) {
@@ -103,7 +113,16 @@ const AmRoutes = () => {
         successMessage: 'Saved',
         refetch: true,
       })
-    );
+    )
+      .unwrap()
+      .then(() => {
+        if (alertManagerSourceName) {
+          dispatch(fetchAlertGroupsAction(alertManagerSourceName));
+        }
+      })
+      .catch(() => {
+        // error is handling by a popup notification
+      });
   };
 
   if (!alertManagerSourceName) {
@@ -147,6 +166,8 @@ const AmRoutes = () => {
             onExitEditMode={exitRootRouteEditMode}
             receivers={receivers}
             routes={rootRoute}
+            routeTree={config?.route}
+            alertGroups={fetchAlertGroups.result ?? []}
           />
           <div className={styles.break} />
           <AmSpecificRouting
@@ -156,6 +177,8 @@ const AmRoutes = () => {
             onRootRouteEdit={enterRootRouteEditMode}
             receivers={receivers}
             routes={rootRoute}
+            routeTree={config?.route}
+            alertGroups={fetchAlertGroups.result ?? []}
           />
           <div className={styles.break} />
           <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} />

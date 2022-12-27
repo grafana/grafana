@@ -5,6 +5,7 @@ import { useDebounce } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Input, Label, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AlertmanagerGroup, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { Authorize } from '../../components/Authorize';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
@@ -25,7 +26,9 @@ export interface AmSpecificRoutingProps {
   onRootRouteEdit: () => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute;
+  routeTree?: Route;
   readOnly?: boolean;
+  alertGroups?: AlertmanagerGroup[];
 }
 
 interface Filters {
@@ -39,6 +42,8 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
   onRootRouteEdit,
   receivers,
   routes,
+  routeTree,
+  alertGroups = [],
   readOnly = false,
 }) => {
   const [actualRoutes, setActualRoutes] = useState([...routes.routes]);
@@ -160,6 +165,9 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
             onChange={onTableRouteChange}
             receivers={receivers}
             routes={actualRoutes}
+            routeTree={routeTree ?? {}}
+            rawRoutes={routeTree?.routes ?? []}
+            alertGroups={alertGroups}
             filters={{ queryString, contactPoint }}
             alertManagerSourceName={alertManagerSourceName}
           />

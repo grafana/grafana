@@ -3,11 +3,13 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button, ConfirmModal, HorizontalGroup, IconButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AlertmanagerGroup, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
 import { prepareItems } from '../../utils/dynamicTable';
+import { findMatchingAlertGroups } from '../../utils/notification-policies';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EmptyArea } from '../EmptyArea';
 import { GrafanaAppBadge } from '../receivers/grafanaAppReceivers/GrafanaAppBadge';
@@ -23,6 +25,9 @@ export interface AmRoutesTableProps {
   onCancelAdd: () => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute[];
+  routeTree: Route;
+  rawRoutes: Route[];
+  alertGroups: AlertmanagerGroup[];
   filters?: { queryString?: string; contactPoint?: string };
   readOnly?: boolean;
   alertManagerSourceName: string;
@@ -79,6 +84,9 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   onChange,
   receivers,
   routes,
+  rawRoutes = [],
+  routeTree,
+  alertGroups,
   filters,
   readOnly = false,
   alertManagerSourceName,
@@ -221,7 +229,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
         onCollapse={collapseItem}
         onExpand={expandItem}
         isExpanded={(item) => expandedId === item.id}
-        renderExpandedContent={(item: RouteTableItemProps) =>
+        renderExpandedContent={(item: RouteTableItemProps, index) =>
           isAddMode || editMode ? (
             <AmRoutesExpandedForm
               onCancel={() => {
@@ -247,6 +255,8 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
               }}
               receivers={receivers}
               routes={item.data}
+              routeTree={routeTree}
+              alertGroups={findMatchingAlertGroups(routeTree, rawRoutes[index], alertGroups)}
               readOnly={readOnly}
               alertManagerSourceName={alertManagerSourceName}
             />

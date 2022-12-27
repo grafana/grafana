@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, CollapsableSection, useStyles2 } from '@grafana/ui';
+import { AlertmanagerGroup, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { Authorize } from '../../components/Authorize';
 import { FormAmRoute } from '../../types/amroutes';
 import { getNotificationsPermissions } from '../../utils/access-control';
+import { findMatchingAlertGroups } from '../../utils/notification-policies';
+import { AlertGroup } from '../alert-groups/AlertGroup';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { AmRootRouteForm } from './AmRootRouteForm';
@@ -19,8 +22,10 @@ export interface AmRootRouteProps {
   onSave: (data: Partial<FormAmRoute>) => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute;
+  routeTree?: Route;
   alertManagerSourceName: string;
   readOnly?: boolean;
+  alertGroups?: AlertmanagerGroup[];
 }
 
 export const AmRootRoute: FC<AmRootRouteProps> = ({
@@ -30,12 +35,18 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({
   onExitEditMode,
   receivers,
   routes,
+  routeTree = {},
+  alertGroups = [],
   alertManagerSourceName,
   readOnly = false,
 }) => {
   const styles = useStyles2(getStyles);
 
   const permissions = getNotificationsPermissions(alertManagerSourceName);
+
+  const matchingAlertGroups = useMemo(() => {
+    return findMatchingAlertGroups(routeTree, routeTree, alertGroups);
+  }, [alertGroups, routeTree]);
 
   return (
     <div className={styles.container} data-testid="am-root-route-container">
@@ -66,6 +77,11 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({
       ) : (
         <AmRootRouteRead routes={routes} />
       )}
+      <CollapsableSection label="Show alert instances" isOpen={false}>
+        {matchingAlertGroups.map((group, index) => (
+          <AlertGroup key={index} alertManagerSourceName={alertManagerSourceName || ''} group={group} />
+        ))}
+      </CollapsableSection>
     </div>
   );
 };

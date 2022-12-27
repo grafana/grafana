@@ -1,6 +1,6 @@
-import { MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
-type Label = [string, string];
+export type Label = [string, string];
 type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
 
 const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
@@ -67,4 +67,30 @@ function findMatchingRoutes(root: Route, labels: Label[]): Route[] {
   return matches;
 }
 
-export { findMatchingRoutes, matchLabels };
+/**
+ * find all of the groups that have instances that match the route, thay way we can find all instances
+ * (and their grouping) for the given route
+ */
+function findMatchingAlertGroups(root: Route, route: Route, alertGroups: AlertmanagerGroup[]): AlertmanagerGroup[] {
+  const matchingGroups: AlertmanagerGroup[] = [];
+
+  return alertGroups.reduce((acc, group) => {
+    // find matching alerts in the current group
+    const matchingAlerts = group.alerts.filter((alert) => {
+      const labels = Object.entries(alert.labels);
+      return findMatchingRoutes(root, labels).some((matchingRoute) => matchingRoute === route);
+    });
+
+    // if the groups has any, add it to the results
+    if (matchingAlerts.length) {
+      acc.push({
+        ...group,
+        alerts: matchingAlerts,
+      });
+    }
+
+    return acc;
+  }, matchingGroups);
+}
+
+export { findMatchingAlertGroups, findMatchingRoutes, matchLabels };
