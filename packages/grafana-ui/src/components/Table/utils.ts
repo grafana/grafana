@@ -15,6 +15,8 @@ import {
   reduceField,
   GrafanaTheme2,
   ArrayVector,
+  isDataFrame,
+  isTimeSeriesFrame,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -23,6 +25,7 @@ import {
   TableCellOptions,
 } from '@grafana/schema';
 
+import { AreaChartCell } from './AreaChartCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { DefaultCell } from './DefaultCell';
 import { getFooterValue } from './FooterRow';
@@ -190,6 +193,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return ImageCell;
     case TableCellDisplayMode.Gauge:
       return BarGaugeCell;
+    case TableCellDisplayMode.AreaChart:
+      return AreaChartCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
   }
@@ -198,10 +203,20 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
     return GeoCell;
   }
 
+  if (field.type === FieldType.frame) {
+    const firstValue = field.values.get(0);
+    if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
+      return AreaChartCell;
+    }
+
+    return JSONViewCell;
+  }
+
   // Default or Auto
   if (field.type === FieldType.other) {
     return JSONViewCell;
   }
+
   return DefaultCell;
 }
 

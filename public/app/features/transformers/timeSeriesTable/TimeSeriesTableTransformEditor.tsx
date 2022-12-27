@@ -14,7 +14,7 @@ export function TimeSeriesTableTransformEditor({ input, options, onChange }: Pro
   return <div></div>;
 }
 
-export const rowsToFieldsTransformRegistryItem: TransformerRegistryItem<TimeSeriesTableTransformerOptions> = {
+export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeSeriesTableTransformerOptions> = {
   id: timeSeriesTableTransformer.id,
   editor: TimeSeriesTableTransformEditor,
   transformation: timeSeriesTableTransformer,
