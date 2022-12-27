@@ -17,12 +17,6 @@ import (
 	"xorm.io/core"
 )
 
-type sessionType int
-
-const (
-	engineSession sessionType = iota
-)
-
 // Session keep a pointer to sql.DB and provides all execution of all
 // kind of database operations.
 type Session struct {
@@ -53,19 +47,11 @@ type Session struct {
 	stmtCache   map[uint32]*core.Stmt //key: hash.Hash32 of (queryStr, len(queryStr))
 
 	// !evalphobia! stored the last executed query on this session
-	//beforeSQLExec func(string, ...interface{})
 	lastSQL     string
 	lastSQLArgs []interface{}
 	showSQL     bool
 
-	ctx         context.Context
-	sessionType sessionType
-}
-
-// Clone copy all the session's content and return a new session
-func (session *Session) Clone() *Session {
-	var sess = *session
-	return &sess
+	ctx context.Context
 }
 
 // Init reset the session as the init status.
@@ -111,12 +97,6 @@ func (session *Session) Close() {
 		session.stmtCache = nil
 		session.db = nil
 	}
-}
-
-// ContextCache enable context cache or not
-func (session *Session) ContextCache(context ContextCache) *Session {
-	session.statement.context = context
-	return session
 }
 
 // IsClosed returns if session is closed
@@ -275,19 +255,6 @@ func cleanupProcessorsClosures(slices *[]func(interface{})) {
 	if len(*slices) > 0 {
 		*slices = make([]func(interface{}), 0)
 	}
-}
-
-func (session *Session) canCache() bool {
-	if session.statement.RefTable == nil ||
-		session.statement.JoinStr != "" ||
-		session.statement.RawSQL != "" ||
-		!session.statement.UseCache ||
-		session.statement.IsForUpdate ||
-		session.tx != nil ||
-		len(session.statement.selectStr) > 0 {
-		return false
-	}
-	return true
 }
 
 func (session *Session) doPrepare(db *core.DB, sqlStr string) (stmt *core.Stmt, err error) {

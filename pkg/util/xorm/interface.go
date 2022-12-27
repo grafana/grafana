@@ -87,7 +87,6 @@ type EngineInterface interface {
 	Quote(string) string
 	SetConnMaxLifetime(time.Duration)
 	SetColumnMapper(core.IMapper)
-	SetDefaultCacher(core.Cacher)
 	SetLogger(logger core.ILogger)
 	SetMapper(core.IMapper)
 	SetMaxOpenConns(int)

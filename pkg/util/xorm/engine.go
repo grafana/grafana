@@ -45,32 +45,9 @@ type Engine struct {
 	TZLocation *time.Location // The timezone of the application
 	DatabaseTZ *time.Location // The timezone of the database
 
-	disableGlobalCache bool
-
 	tagHandlers map[string]tagHandler
 
-	cachers    map[string]core.Cacher
-	cacherLock sync.RWMutex
-
 	defaultContext context.Context
-}
-
-func (engine *Engine) setCacher(tableName string, cacher core.Cacher) {
-	engine.cacherLock.Lock()
-	engine.cachers[tableName] = cacher
-	engine.cacherLock.Unlock()
-}
-
-func (engine *Engine) getCacher(tableName string) core.Cacher {
-	var cacher core.Cacher
-	var ok bool
-	engine.cacherLock.RLock()
-	cacher, ok = engine.cachers[tableName]
-	engine.cacherLock.RUnlock()
-	if !ok && !engine.disableGlobalCache {
-		cacher = engine.Cacher
-	}
-	return cacher
 }
 
 // BufferSize sets buffer size for iterate
@@ -268,11 +245,6 @@ func (engine *Engine) SetMaxOpenConns(conns int) {
 // SetMaxIdleConns set the max idle connections on pool, default is 2
 func (engine *Engine) SetMaxIdleConns(conns int) {
 	engine.db.SetMaxIdleConns(conns)
-}
-
-// SetDefaultCacher set the default cacher. Xorm's default not enable cacher.
-func (engine *Engine) SetDefaultCacher(cacher core.Cacher) {
-	engine.Cacher = cacher
 }
 
 // NoCache If you has set default cacher, and you want temporilly stop use cache,
@@ -715,7 +687,6 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 	table.Name = getTableName(engine.TableMapper, v)
 
 	var idFieldColName string
-	var hasCacheTag, hasNoCacheTag bool
 
 	for i := 0; i < t.NumField(); i++ {
 		tag := t.Field(i).Tag
@@ -809,13 +780,6 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 							col.Name = key
 						}
 					}
-
-					if ctx.hasCacheTag {
-						hasCacheTag = true
-					}
-					if ctx.hasNoCacheTag {
-						hasNoCacheTag = true
-					}
 				}
 
 				if col.SQLType.Name == "" {
@@ -877,20 +841,6 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 		col.Nullable = false
 		table.PrimaryKeys = append(table.PrimaryKeys, col.Name)
 		table.AutoIncrement = col.Name
-	}
-
-	if hasCacheTag {
-		if engine.Cacher != nil { // !nash! use engine's cacher if provided
-			engine.logger.Info("enable cache on table:", table.Name)
-			engine.setCacher(table.Name, engine.Cacher)
-		} else {
-			engine.logger.Info("enable LRU cache on table:", table.Name)
-			engine.setCacher(table.Name, NewLRUCacher2(NewMemoryStore(), time.Hour, 10000))
-		}
-	}
-	if hasNoCacheTag {
-		engine.logger.Info("disable cache on table:", table.Name)
-		engine.setCacher(table.Name, nil)
 	}
 
 	return table, nil

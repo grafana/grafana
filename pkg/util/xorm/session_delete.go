@@ -5,73 +5,10 @@
 package xorm
 
 import (
-	"errors"
 	"fmt"
-	"strconv"
 
 	"xorm.io/core"
 )
-
-func (session *Session) cacheDelete(table *core.Table, tableName, sqlStr string, args ...interface{}) error {
-	if table == nil ||
-		session.tx != nil {
-		return ErrCacheFailed
-	}
-
-	for _, filter := range session.engine.dialect.Filters() {
-		sqlStr = filter.Do(sqlStr, session.engine.dialect, table)
-	}
-
-	newsql := session.statement.convertIDSQL(sqlStr)
-	if newsql == "" {
-		return ErrCacheFailed
-	}
-
-	cacher := session.engine.getCacher(tableName)
-	pkColumns := table.PKColumns()
-	ids, err := core.GetCacheSql(cacher, tableName, newsql, args)
-	if err != nil {
-		resultsSlice, err := session.queryBytes(newsql, args...)
-		if err != nil {
-			return err
-		}
-		ids = make([]core.PK, 0)
-		if len(resultsSlice) > 0 {
-			for _, data := range resultsSlice {
-				var id int64
-				var pk core.PK = make([]interface{}, 0)
-				for _, col := range pkColumns {
-					if v, ok := data[col.Name]; !ok {
-						return errors.New("no id")
-					} else if col.SQLType.IsText() {
-						pk = append(pk, string(v))
-					} else if col.SQLType.IsNumeric() {
-						id, err = strconv.ParseInt(string(v), 10, 64)
-						if err != nil {
-							return err
-						}
-						pk = append(pk, id)
-					} else {
-						return errors.New("not supported primary key type")
-					}
-				}
-				ids = append(ids, pk)
-			}
-		}
-	}
-
-	for _, id := range ids {
-		session.engine.logger.Debug("[cacheDelete] delete cache obj:", tableName, id)
-		sid, err := id.ToString()
-		if err != nil {
-			return err
-		}
-		cacher.DelBean(tableName, sid)
-	}
-	session.engine.logger.Debug("[cacheDelete] clear cache table:", tableName)
-	cacher.ClearIds(tableName)
-	return nil
-}
 
 // Delete records, bean's non-empty fields are conditions
 func (session *Session) Delete(bean interface{}) (int64, error) {
@@ -150,16 +87,10 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 	}
 
 	var realSQL string
-	argsForCache := make([]interface{}, 0, len(condArgs)*2)
+
 	if session.statement.unscoped || table.DeletedColumn() == nil { // tag "deleted" is disabled
 		realSQL = deleteSQL
-		copy(argsForCache, condArgs)
-		argsForCache = append(condArgs, argsForCache...)
 	} else {
-		// !oinume! sqlStrForCache and argsForCache is needed to behave as executing "DELETE FROM ..." for cache.
-		copy(argsForCache, condArgs)
-		argsForCache = append(condArgs, argsForCache...)
-
 		deletedColumn := table.DeletedColumn()
 		realSQL = fmt.Sprintf("UPDATE %v SET %v = ? WHERE %v",
 			session.engine.Quote(session.statement.TableName()),
@@ -204,11 +135,6 @@ func (session *Session) Delete(bean interface{}) (int64, error) {
 			setColumnTime(bean, col, t)
 		})
 	}
-
-	if cacher := session.engine.getCacher(tableNameNoQuote); cacher != nil && session.statement.UseCache {
-		session.cacheDelete(table, tableNameNoQuote, deleteSQL, argsForCache...)
-	}
-
 	session.statement.RefTable = table
 	res, err := session.exec(realSQL, condArgs...)
 	if err != nil {

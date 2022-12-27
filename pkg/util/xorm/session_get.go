@@ -7,9 +7,7 @@ package xorm
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"reflect"
-	"strconv"
 
 	"xorm.io/core"
 )
@@ -63,37 +61,9 @@ func (session *Session) get(bean interface{}) (bool, error) {
 
 	table := session.statement.RefTable
 
-	if session.canCache() && beanValue.Elem().Kind() == reflect.Struct {
-		if cacher := session.engine.getCacher(session.statement.TableName()); cacher != nil &&
-			!session.statement.unscoped {
-			has, err := session.cacheGet(bean, sqlStr, args...)
-			if err != ErrCacheFailed {
-				return has, err
-			}
-		}
-	}
-
-	context := session.statement.context
-	if context != nil {
-		res := context.Get(fmt.Sprintf("%v-%v", sqlStr, args))
-		if res != nil {
-			session.engine.logger.Debug("hit context cache", sqlStr)
-
-			structValue := reflect.Indirect(reflect.ValueOf(bean))
-			structValue.Set(reflect.Indirect(reflect.ValueOf(res)))
-			session.lastSQL = ""
-			session.lastSQLArgs = nil
-			return true, nil
-		}
-	}
-
 	has, err := session.nocacheGet(beanValue.Elem().Kind(), table, bean, sqlStr, args...)
 	if err != nil || !has {
 		return has, err
-	}
-
-	if context != nil {
-		context.Put(fmt.Sprintf("%v-%v", sqlStr, args), bean)
 	}
 
 	return true, nil
@@ -113,7 +83,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 		return false, nil
 	}
 
-	switch bean.(type) {
+	switch bean := bean.(type) {
 	case sql.NullInt64, sql.NullBool, sql.NullFloat64, sql.NullString:
 		return true, rows.Scan(&bean)
 	case *sql.NullInt64, *sql.NullBool, *sql.NullFloat64, *sql.NullString:
@@ -124,7 +94,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 			return true, err
 		}
 		if res.Valid {
-			*(bean.(*string)) = res.String
+			*bean = res.String
 		}
 		return true, nil
 	case *int:
@@ -133,7 +103,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 			return true, err
 		}
 		if res.Valid {
-			*(bean.(*int)) = int(res.Int64)
+			*bean = int(res.Int64)
 		}
 		return true, nil
 	case *int8:
@@ -142,7 +112,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 			return true, err
 		}
 		if res.Valid {
-			*(bean.(*int8)) = int8(res.Int64)
+			*bean = int8(res.Int64)
 		}
 		return true, nil
 	case *int16:
@@ -151,7 +121,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 			return true, err
 		}
 		if res.Valid {
-			*(bean.(*int16)) = int16(res.Int64)
+			*bean = int16(res.Int64)
 		}
 		return true, nil
 	case *int32:
@@ -160,7 +130,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 			return true, err
 		}
 		if res.Valid {
-			*(bean.(*int32)) = int32(res.Int64)
+			*bean = int32(res.Int64)
 		}
 		return true, nil
 	case *int64:
@@ -169,7 +139,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 			return true, err
 		}
 		if res.Valid {
-			*(bean.(*int64)) = int64(res.Int64)
+			*bean = int64(res.Int64)
 		}
 		return true, nil
 	case *uint:
@@ -178,7 +148,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 			return true, err
 		}
 		if res.Valid {
-			*(bean.(*uint)) = uint(res.Int64)
+			*bean = uint(res.Int64)
 		}
 		return true, nil
 	case *uint8:
@@ -187,7 +157,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 			return true, err
 		}
 		if res.Valid {
-			*(bean.(*uint8)) = uint8(res.Int64)
+			*bean = uint8(res.Int64)
 		}
 		return true, nil
 	case *uint16:
@@ -196,7 +166,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 			return true, err
 		}
 		if res.Valid {
-			*(bean.(*uint16)) = uint16(res.Int64)
+			*bean = uint16(res.Int64)
 		}
 		return true, nil
 	case *uint32:
@@ -205,7 +175,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 			return true, err
 		}
 		if res.Valid {
-			*(bean.(*uint32)) = uint32(res.Int64)
+			*(bean) = uint32(res.Int64)
 		}
 		return true, nil
 	case *uint64:
@@ -214,7 +184,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 			return true, err
 		}
 		if res.Valid {
-			*(bean.(*uint64)) = uint64(res.Int64)
+			*bean = uint64(res.Int64)
 		}
 		return true, nil
 	case *bool:
@@ -223,7 +193,7 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 			return true, err
 		}
 		if res.Valid {
-			*(bean.(*bool)) = res.Bool
+			*bean = res.Bool
 		}
 		return true, nil
 	}
@@ -262,95 +232,4 @@ func (session *Session) nocacheGet(beanKind reflect.Kind, table *core.Table, bea
 	}
 
 	return true, err
-}
-
-func (session *Session) cacheGet(bean interface{}, sqlStr string, args ...interface{}) (has bool, err error) {
-	// if has no reftable, then don't use cache currently
-	if !session.canCache() {
-		return false, ErrCacheFailed
-	}
-
-	for _, filter := range session.engine.dialect.Filters() {
-		sqlStr = filter.Do(sqlStr, session.engine.dialect, session.statement.RefTable)
-	}
-	newsql := session.statement.convertIDSQL(sqlStr)
-	if newsql == "" {
-		return false, ErrCacheFailed
-	}
-
-	tableName := session.statement.TableName()
-	cacher := session.engine.getCacher(tableName)
-
-	session.engine.logger.Debug("[cacheGet] find sql:", newsql, args)
-	table := session.statement.RefTable
-	ids, err := core.GetCacheSql(cacher, tableName, newsql, args)
-	if err != nil {
-		var res = make([]string, len(table.PrimaryKeys))
-		rows, err := session.NoCache().queryRows(newsql, args...)
-		if err != nil {
-			return false, err
-		}
-		defer rows.Close()
-
-		if rows.Next() {
-			err = rows.ScanSlice(&res)
-			if err != nil {
-				return false, err
-			}
-		} else {
-			return false, ErrCacheFailed
-		}
-
-		var pk core.PK = make([]interface{}, len(table.PrimaryKeys))
-		for i, col := range table.PKColumns() {
-			if col.SQLType.IsText() {
-				pk[i] = res[i]
-			} else if col.SQLType.IsNumeric() {
-				n, err := strconv.ParseInt(res[i], 10, 64)
-				if err != nil {
-					return false, err
-				}
-				pk[i] = n
-			} else {
-				return false, errors.New("unsupported")
-			}
-		}
-
-		ids = []core.PK{pk}
-		session.engine.logger.Debug("[cacheGet] cache ids:", newsql, ids)
-		err = core.PutCacheSql(cacher, ids, tableName, newsql, args)
-		if err != nil {
-			return false, err
-		}
-	} else {
-		session.engine.logger.Debug("[cacheGet] cache hit sql:", newsql, ids)
-	}
-
-	if len(ids) > 0 {
-		structValue := reflect.Indirect(reflect.ValueOf(bean))
-		id := ids[0]
-		session.engine.logger.Debug("[cacheGet] get bean:", tableName, id)
-		sid, err := id.ToString()
-		if err != nil {
-			return false, err
-		}
-		cacheBean := cacher.GetBean(tableName, sid)
-		if cacheBean == nil {
-			cacheBean = bean
-			has, err = session.nocacheGet(reflect.Struct, table, cacheBean, sqlStr, args...)
-			if err != nil || !has {
-				return has, err
-			}
-
-			session.engine.logger.Debug("[cacheGet] cache bean:", tableName, id, cacheBean)
-			cacher.PutBean(tableName, sid, cacheBean)
-		} else {
-			session.engine.logger.Debug("[cacheGet] cache hit bean:", tableName, id, cacheBean)
-			has = true
-		}
-		structValue.Set(reflect.Indirect(reflect.ValueOf(cacheBean)))
-
-		return has, nil
-	}
-	return false, nil
 }

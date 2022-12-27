@@ -8,144 +8,19 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"xorm.io/builder"
 	"xorm.io/core"
 )
 
-func (session *Session) cacheUpdate(table *core.Table, tableName, sqlStr string, args ...interface{}) error {
-	if table == nil ||
-		session.tx != nil {
-		return ErrCacheFailed
-	}
-
-	oldhead, newsql := session.statement.convertUpdateSQL(sqlStr)
-	if newsql == "" {
-		return ErrCacheFailed
-	}
-	for _, filter := range session.engine.dialect.Filters() {
-		newsql = filter.Do(newsql, session.engine.dialect, table)
-	}
-	session.engine.logger.Debug("[cacheUpdate] new sql", oldhead, newsql)
-
-	var nStart int
-	if len(args) > 0 {
-		if strings.Index(sqlStr, "?") > -1 {
-			nStart = strings.Count(oldhead, "?")
-		} else {
-			// only for pq, TODO: if any other databse?
-			nStart = strings.Count(oldhead, "$")
-		}
-	}
-
-	cacher := session.engine.getCacher(tableName)
-	session.engine.logger.Debug("[cacheUpdate] get cache sql", newsql, args[nStart:])
-	ids, err := core.GetCacheSql(cacher, tableName, newsql, args[nStart:])
-	if err != nil {
-		rows, err := session.NoCache().queryRows(newsql, args[nStart:]...)
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-
-		ids = make([]core.PK, 0)
-		for rows.Next() {
-			var res = make([]string, len(table.PrimaryKeys))
-			err = rows.ScanSlice(&res)
-			if err != nil {
-				return err
-			}
-			var pk core.PK = make([]interface{}, len(table.PrimaryKeys))
-			for i, col := range table.PKColumns() {
-				if col.SQLType.IsNumeric() {
-					n, err := strconv.ParseInt(res[i], 10, 64)
-					if err != nil {
-						return err
-					}
-					pk[i] = n
-				} else if col.SQLType.IsText() {
-					pk[i] = res[i]
-				} else {
-					return errors.New("not supported")
-				}
-			}
-
-			ids = append(ids, pk)
-		}
-		if rows.Err() != nil {
-			return rows.Err()
-		}
-		session.engine.logger.Debug("[cacheUpdate] find updated id", ids)
-	} /*else {
-	    session.engine.LogDebug("[xorm:cacheUpdate] del cached sql:", tableName, newsql, args)
-	    cacher.DelIds(tableName, genSqlKey(newsql, args))
-	}*/
-
-	for _, id := range ids {
-		sid, err := id.ToString()
-		if err != nil {
-			return err
-		}
-		if bean := cacher.GetBean(tableName, sid); bean != nil {
-			sqls := splitNNoCase(sqlStr, "where", 2)
-			if len(sqls) == 0 || len(sqls) > 2 {
-				return ErrCacheFailed
-			}
-
-			sqls = splitNNoCase(sqls[0], "set", 2)
-			if len(sqls) != 2 {
-				return ErrCacheFailed
-			}
-			kvs := strings.Split(strings.TrimSpace(sqls[1]), ",")
-
-			for idx, kv := range kvs {
-				sps := strings.SplitN(kv, "=", 2)
-				sps2 := strings.Split(sps[0], ".")
-				colName := sps2[len(sps2)-1]
-				// treat quote prefix, suffix and '`' as quotes
-				quotes := append(strings.Split(session.engine.Quote(""), ""), "`")
-				if strings.ContainsAny(colName, strings.Join(quotes, "")) {
-					colName = strings.TrimSpace(eraseAny(colName, quotes...))
-				} else {
-					session.engine.logger.Debug("[cacheUpdate] cannot find column", tableName, colName)
-					return ErrCacheFailed
-				}
-
-				if col := table.GetColumn(colName); col != nil {
-					fieldValue, err := col.ValueOf(bean)
-					if err != nil {
-						session.engine.logger.Error(err)
-					} else {
-						session.engine.logger.Debug("[cacheUpdate] set bean field", bean, colName, fieldValue.Interface())
-						if col.IsVersion && session.statement.checkVersion {
-							session.incrVersionFieldValue(fieldValue)
-						} else {
-							fieldValue.Set(reflect.ValueOf(args[idx]))
-						}
-					}
-				} else {
-					session.engine.logger.Errorf("[cacheUpdate] ERROR: column %v is not table %v's",
-						colName, table.Name)
-				}
-			}
-
-			session.engine.logger.Debug("[cacheUpdate] update cache", tableName, id, bean)
-			cacher.PutBean(tableName, sid, bean)
-		}
-	}
-	session.engine.logger.Debug("[cacheUpdate] clear cached table sql:", tableName)
-	cacher.ClearIds(tableName)
-	return nil
-}
-
 // Update records, bean's non-empty fields are updated contents,
 // condiBean' non-empty filds are conditions
 // CAUTION:
-//        1.bool will defaultly be updated content nor conditions
-//         You should call UseBool if you have bool to use.
-//        2.float32 & float64 may be not inexact as conditions
+//
+//	1.bool will defaultly be updated content nor conditions
+//	 You should call UseBool if you have bool to use.
+//	2.float32 & float64 may be not inexact as conditions
 func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int64, error) {
 	if session.isAutoClose {
 		defer session.Close()
@@ -388,7 +263,7 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 	}
 
 	if len(colNames) <= 0 {
-		return 0, errors.New("No content found to be updated")
+		return 0, errors.New("no content found to be updated")
 	}
 
 	var tableAlias = session.engine.Quote(tableName)
@@ -417,13 +292,6 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 		if verValue != nil && verValue.IsValid() && verValue.CanSet() {
 			session.incrVersionFieldValue(verValue)
 		}
-	}
-
-	if cacher := session.engine.getCacher(tableName); cacher != nil && session.statement.UseCache {
-		// session.cacheUpdate(table, tableName, sqlStr, args...)
-		session.engine.logger.Debug("[cacheUpdate] clear table ", tableName)
-		cacher.ClearIds(tableName)
-		cacher.ClearBeans(tableName)
 	}
 
 	// handle after update processors
