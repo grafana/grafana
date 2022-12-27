@@ -77,7 +77,7 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({
       ) : (
         <AmRootRouteRead routes={routes} />
       )}
-      <CollapsableSection label="Show alert instances" isOpen={false}>
+      <CollapsableSection label="Show alert instance groups" isOpen={false}>
         {matchingAlertGroups.map((group, index) => (
           <AlertGroup key={index} alertManagerSourceName={alertManagerSourceName || ''} group={group} />
         ))}

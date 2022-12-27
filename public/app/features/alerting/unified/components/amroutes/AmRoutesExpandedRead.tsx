@@ -66,7 +66,7 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
       <div className={gridStyles.valueCell}>{groupInterval}</div>
       <div className={gridStyles.titleCell}>Repeat interval</div>
       <div className={gridStyles.valueCell}>{repeatInterval}</div>
-      <div className={gridStyles.titleCell}>Alert Instances</div>
+      <div className={gridStyles.titleCell}>Alert Instance Groups</div>
       <div className={gridStyles.valueCell}>
         {matchingAlertGroups.map((group, index) => (
           <AlertGroup key={index} alertManagerSourceName={alertManagerSourceName || ''} group={group} />
