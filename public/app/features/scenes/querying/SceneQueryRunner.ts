@@ -89,6 +89,37 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
     }
   }
 
+  private getTimeOverrideInfo(): string {
+    const { timeFrom = '', timeShift = '' } = this.state;
+
+    let timeInfo = '';
+
+    if (timeFrom) {
+      const timeFromInterpolated = sceneGraph.interpolate(this, timeFrom);
+      const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
+
+      if (timeFromInfo.invalid) {
+        return 'invalid time override';
+      }
+
+      timeInfo = timeFromInfo.display;
+    }
+
+    if (timeShift) {
+      const timeShiftInterpolated = sceneGraph.interpolate(this, timeShift);
+      const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
+
+      if (timeShiftInfo.invalid) {
+        return 'invalid timeshift';
+      }
+
+      const timeShiftText = '-' + timeShiftInterpolated;
+      timeInfo += ' timeshift ' + timeShiftText;
+    }
+
+    return timeInfo;
+  }
+
   public setContainerWidth(width: number) {
     // If we don't have a width we should run queries
     if (!this._containerWidth && width > 0) {
@@ -133,6 +164,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       targets: cloneDeep(queries),
       maxDataPoints: this.getMaxDataPoints(),
       scopedVars: {},
+      timeInfo: this.getTimeOverrideInfo(),
       startTime: Date.now(),
     };
 

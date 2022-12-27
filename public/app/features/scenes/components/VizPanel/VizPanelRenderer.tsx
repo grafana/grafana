@@ -51,10 +51,10 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
     $data.setContainerWidth(width);
   }
 
-  if (timeOverrideInfo) {
+  if (data?.request?.timeInfo) {
     titleItems.push({
       icon: toIconName('clock-nine'),
-      tooltip: timeOverrideInfo,
+      tooltip: data?.request?.timeInfo,
     });
   }
 

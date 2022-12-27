@@ -82,14 +82,6 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
 
     this._plugin = plugin;
 
-    sceneGraph.getData(this).subscribeToState({
-      next: (data) => {
-        this.setState({
-          timeOverrideInfo: this.getTimeOverrideInfo(data.timeFrom, data.timeShift),
-        });
-      },
-    });
-
     this.setState({
       options: withDefaults.options,
       fieldConfig: withDefaults.fieldConfig,
@@ -103,35 +95,6 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
 
   public getPlugin(): PanelPlugin | undefined {
     return this._plugin;
-  }
-
-  private getTimeOverrideInfo(timeFrom = '', timeShift = ''): string {
-    let timeInfo = '';
-
-    if (timeFrom) {
-      const timeFromInterpolated = sceneGraph.interpolate(this, timeFrom);
-      const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
-
-      if (timeFromInfo.invalid) {
-        return 'invalid time override';
-      }
-
-      timeInfo = timeFromInfo.display;
-    }
-
-    if (timeShift) {
-      const timeShiftInterpolated = sceneGraph.interpolate(this, timeShift);
-      const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
-
-      if (timeShiftInfo.invalid) {
-        return 'invalid timeshift';
-      }
-
-      const timeShiftText = '-' + timeShiftInterpolated;
-      timeInfo += ' timeshift ' + timeShiftText;
-    }
-
-    return timeInfo;
   }
 
   public onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {
