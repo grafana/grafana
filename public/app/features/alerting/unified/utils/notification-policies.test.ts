@@ -90,4 +90,30 @@ describe('findMatchingRoutes', () => {
     expect(matches[0]).toHaveProperty('receiver', 'ALL');
     expect(matches[1]).toHaveProperty('receiver', 'C');
   });
+
+  it('should not match grandchild routes with same labels as parent', () => {
+    const policies: Route = {
+      receiver: 'PARENT',
+      group_by: ['grafana_folder'],
+      object_matchers: [['foo', MatcherOperator.equal, 'bar']],
+      routes: [
+        {
+          receiver: 'CHILD',
+          object_matchers: [['baz', MatcherOperator.equal, 'qux']],
+          routes: [
+            {
+              receiver: 'GRANDCHILD',
+              object_matchers: [['foo', MatcherOperator.equal, 'bar']],
+            },
+          ],
+        },
+      ],
+      group_wait: '10s',
+      group_interval: '1m',
+    };
+
+    const matches = findMatchingRoutes(policies, [['foo', 'bar']]);
+    expect(matches).toHaveLength(1);
+    expect(matches[0]).toHaveProperty('receiver', 'PARENT');
+  });
 });

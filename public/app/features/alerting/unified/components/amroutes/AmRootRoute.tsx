@@ -45,7 +45,7 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({
   const permissions = getNotificationsPermissions(alertManagerSourceName);
 
   const matchingAlertGroups = useMemo(() => {
-    return findMatchingAlertGroups(routeTree, alertGroups);
+    return findMatchingAlertGroups(routeTree, routeTree, alertGroups);
   }, [alertGroups, routeTree]);
 
   return (

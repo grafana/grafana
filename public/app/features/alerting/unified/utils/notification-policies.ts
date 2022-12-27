@@ -71,14 +71,14 @@ function findMatchingRoutes(root: Route, labels: Label[]): Route[] {
  * find all of the groups that have instances that match the route, thay way we can find all instances
  * (and their grouping) for the given route
  */
-function findMatchingAlertGroups(route: Route, alertGroups: AlertmanagerGroup[]): AlertmanagerGroup[] {
+function findMatchingAlertGroups(root: Route, route: Route, alertGroups: AlertmanagerGroup[]): AlertmanagerGroup[] {
   const matchingGroups: AlertmanagerGroup[] = [];
 
   return alertGroups.reduce((acc, group) => {
     // find matching alerts in the current group
     const matchingAlerts = group.alerts.filter((alert) => {
       const labels = Object.entries(alert.labels);
-      return findMatchingRoutes(route, labels).some((matchingRoute) => matchingRoute === route);
+      return findMatchingRoutes(root, labels).some((matchingRoute) => matchingRoute === route);
     });
 
     // if the groups has any alerts left after matching, add it to the results

@@ -22,6 +22,7 @@ export interface AmRoutesExpandedReadProps {
   receivers: AmRouteReceiver[];
   routes: FormAmRoute;
   routeTree: Route;
+  currentRoute: Route;
   alertGroups?: AlertmanagerGroup[];
   readOnly?: boolean;
   alertManagerSourceName: string;
@@ -31,6 +32,7 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
   onChange,
   receivers,
   routes,
+  currentRoute,
   routeTree,
   alertGroups = [],
   readOnly = false,
@@ -52,8 +54,9 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
   const [isAddMode, setIsAddMode] = useState(false);
 
   const matchingAlertGroups = useMemo(() => {
-    return findMatchingAlertGroups(routeTree, alertGroups);
-  }, [alertGroups, routeTree]);
+    console.log(routeTree, currentRoute, alertGroups);
+    return findMatchingAlertGroups(routeTree, currentRoute, alertGroups);
+  }, [alertGroups, currentRoute, routeTree]);
 
   return (
     <div className={gridStyles.container}>
@@ -63,6 +66,12 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
       <div className={gridStyles.valueCell}>{groupInterval}</div>
       <div className={gridStyles.titleCell}>Repeat interval</div>
       <div className={gridStyles.valueCell}>{repeatInterval}</div>
+      <div className={gridStyles.titleCell}>Alert Instances</div>
+      <div className={gridStyles.valueCell}>
+        {matchingAlertGroups.map((group, index) => (
+          <AlertGroup key={index} alertManagerSourceName={alertManagerSourceName || ''} group={group} />
+        ))}
+      </div>
       <div className={gridStyles.titleCell}>Nested policies</div>
       <div className={gridStyles.valueCell}>
         {!!subroutes.length ? (
@@ -88,10 +97,11 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
               }
             }}
             receivers={receivers}
+            routeTree={routeTree}
             routes={subroutes}
             alertManagerSourceName={alertManagerSourceName}
             alertGroups={alertGroups}
-            rawRoutes={routeTree.routes ?? []}
+            rawRoutes={currentRoute.routes ?? []}
           />
         ) : (
           <p>No nested policies configured.</p>
@@ -120,12 +130,6 @@ export const AmRoutesExpandedRead: FC<AmRoutesExpandedReadProps> = ({
           muteTimingNames={routes.muteTimeIntervals}
           hideActions
         />
-      </div>
-      <div className={gridStyles.titleCell}>Alert Instances</div>
-      <div className={gridStyles.valueCell}>
-        {matchingAlertGroups.map((group, index) => (
-          <AlertGroup key={index} alertManagerSourceName={alertManagerSourceName || ''} group={group} />
-        ))}
       </div>
     </div>
   );

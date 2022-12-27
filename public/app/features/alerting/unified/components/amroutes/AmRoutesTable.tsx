@@ -25,6 +25,7 @@ export interface AmRoutesTableProps {
   receivers: AmRouteReceiver[];
   routes: FormAmRoute[];
   rawRoutes: Route[];
+  routeTree: Route;
   alertGroups: AlertmanagerGroup[];
   filters?: { queryString?: string; contactPoint?: string };
   readOnly?: boolean;
@@ -82,7 +83,8 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   onChange,
   receivers,
   routes,
-  rawRoutes = [],
+  rawRoutes,
+  routeTree,
   alertGroups,
   filters,
   readOnly = false,
@@ -252,7 +254,8 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
               }}
               receivers={receivers}
               routes={item.data}
-              routeTree={rawRoutes[index]}
+              routeTree={routeTree}
+              currentRoute={rawRoutes[index]}
               alertGroups={alertGroups}
               readOnly={readOnly}
               alertManagerSourceName={alertManagerSourceName}

@@ -164,6 +164,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
             onCancelAdd={onCancelAdd}
             onChange={onTableRouteChange}
             receivers={receivers}
+            routeTree={routeTree ?? {}}
             routes={actualRoutes}
             rawRoutes={routeTree?.routes ?? []}
             alertGroups={alertGroups}
