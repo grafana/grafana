@@ -21,6 +21,7 @@ title: TablePanelCfg kind
 
 | Property        | Type                                              | Required | Description                                                                          |
 |-----------------|---------------------------------------------------|----------|--------------------------------------------------------------------------------------|
+| `cellHeight`    | string                                            | **Yes**  | Controls the height of the rows Default: `md`.                                       |
 | `frameIndex`    | number                                            | **Yes**  | Represents the index of the selected frame Default: `0`.                             |
 | `showHeader`    | boolean                                           | **Yes**  | Controls whether the panel should show the header Default: `true`.                   |
 | `footer`        | [object](#footer)                                 | No       | Controls footer options Default: `map[countRows:false reducer:[] show:false]`.       |

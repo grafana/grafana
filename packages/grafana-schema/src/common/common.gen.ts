@@ -601,6 +601,8 @@ export interface VizTooltipOptions {
   sort: SortOrder;
 }
 
+export interface Labels {}
+
 /**
  * Internally, this is the "type" of cell that's being displayed
  * in the table such as colored text, JSON, gauge, etc.
@@ -769,7 +771,14 @@ export enum LogsDedupStrategy {
   signature = 'signature',
 }
 
-export interface Labels {}
+/**
+ * TODO docs
+ */
+export enum TableCellHeight {
+  Lg = 'lg',
+  Md = 'md',
+  Sm = 'sm',
+}
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

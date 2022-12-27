@@ -44,7 +44,9 @@ composableKinds: PanelCfg: {
 								countRows: false
 								// Represents the selected calculations
 								reducer: []
-							}
+							},
+							// Controls the height of the rows
+							cellHeight:    string | *"md"
 						} @cuetsy(kind="interface")
 					},
 				]
