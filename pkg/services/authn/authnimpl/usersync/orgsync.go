@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -65,8 +66,10 @@ func (s *OrgSync) SyncOrgUser(ctx context.Context, clientParams *authn.ClientPar
 		}
 	}
 
+	orgIDs := make([]int64, 0, len(id.OrgRoles))
 	// add any new org roles
 	for orgId, orgRole := range id.OrgRoles {
+		orgIDs = append(orgIDs, orgId)
 		if _, exists := handledOrgIds[orgId]; exists {
 			continue
 		}
@@ -99,17 +102,17 @@ func (s *OrgSync) SyncOrgUser(ctx context.Context, clientParams *authn.ClientPar
 		}
 	}
 
+	// Note: sort all org ids to not make it flaky, for now we default to the lowest id
+	sort.Slice(orgIDs, func(i, j int) bool { return orgIDs[i] < orgIDs[j] })
 	// update user's default org if needed
 	if _, ok := id.OrgRoles[id.OrgID]; !ok {
-		for orgId := range id.OrgRoles {
-			id.OrgID = orgId
-			break
+		if len(orgIDs) > 0 {
+			id.OrgID = orgIDs[0]
+			return s.userService.SetUsingOrg(ctx, &user.SetUsingOrgCommand{
+				UserID: userID,
+				OrgID:  id.OrgID,
+			})
 		}
-
-		return s.userService.SetUsingOrg(ctx, &user.SetUsingOrgCommand{
-			UserID: userID,
-			OrgID:  id.OrgID,
-		})
 	}
 
 	return nil

@@ -42,6 +42,8 @@ type Client interface {
 }
 
 type Request struct {
+	// OrgID will be populated by authn.Service
+	OrgID       int64
 	HTTPRequest *http.Request
 }
 

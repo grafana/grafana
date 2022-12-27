@@ -27,6 +27,7 @@ import { fetchAlertManagerConfig, fetchStatus, testReceivers, updateAlertManager
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
 import { fetchNotifiers } from './api/grafana';
 import * as receiversApi from './api/receiversApi';
+import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
 import {
   mockDataSource,
   MockDataSourceSrv,
@@ -143,6 +144,8 @@ const clickSelectOption = async (selectElement: HTMLElement, optionText: string)
 document.addEventListener('click', interceptLinkClicks);
 const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
 
+const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
+
 describe('Receivers', () => {
   const server = setupServer();
 
@@ -158,6 +161,7 @@ describe('Receivers', () => {
   beforeEach(() => {
     server.resetHandlers();
     jest.resetAllMocks();
+    useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
