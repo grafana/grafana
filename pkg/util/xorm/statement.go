@@ -57,7 +57,6 @@ type Statement struct {
 	exprColumns     exprParams
 	cond            builder.Cond
 	bufferSize      int
-	context         ContextCache
 	lastError       error
 }
 
@@ -99,7 +98,6 @@ func (statement *Statement) Init() {
 	statement.exprColumns = exprParams{}
 	statement.cond = builder.NewCond()
 	statement.bufferSize = 0
-	statement.context = nil
 	statement.lastError = nil
 }
 
