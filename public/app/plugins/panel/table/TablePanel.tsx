@@ -102,6 +102,7 @@ export class TablePanel extends Component<Props> {
         height={height}
         width={width}
         data={frame}
+        cellHeight={options.cellHeight}
         noHeader={!options.showHeader}
         showTypeIcons={options.showTypeIcons}
         resizable={true}

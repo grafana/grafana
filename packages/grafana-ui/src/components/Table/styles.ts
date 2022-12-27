@@ -1,14 +1,15 @@
 import { css, CSSObject } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { TableCellHeight } from '@grafana/schema';
 
-export const getTableStyles = (theme: GrafanaTheme2) => {
+export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCellHeight) {
   const borderColor = theme.colors.border.weak;
   const resizerColor = theme.colors.primary.border;
   const cellPadding = 6;
   const lineHeight = theme.typography.body.lineHeight;
   const bodyFontSize = 14;
-  const cellHeight = cellPadding * 2 + bodyFontSize * lineHeight;
+  const cellHeight = getCellHeight(theme, cellHeightOption, cellPadding);
   const rowHeight = cellHeight + 2;
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
 
@@ -94,7 +95,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     cellHeight,
     buildCellContainerStyle,
     cellPadding,
-    cellHeightInner: bodyFontSize * lineHeight,
+    cellHeightInner: cellHeight - cellPadding * 2,
     rowHeight,
     table: css`
       height: 100%;
@@ -271,6 +272,21 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       cursor: pointer;
     `,
   };
-};
+}
 
-export type TableStyles = ReturnType<typeof getTableStyles>;
+export type TableStyles = ReturnType<typeof useTableStyles>;
+
+function getCellHeight(theme: GrafanaTheme2, cellHeightOption: TableCellHeight, cellPadding: number) {
+  const bodyFontSize = theme.typography.fontSize;
+  const lineHeight = theme.typography.body.lineHeight;
+
+  switch (cellHeightOption) {
+    case 'md':
+      return 42;
+    case 'lg':
+      return 48;
+    case 'sm':
+    default:
+      return cellPadding * 2 + bodyFontSize * lineHeight;
+  }
+}

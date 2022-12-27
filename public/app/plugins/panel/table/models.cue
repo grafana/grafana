@@ -28,6 +28,7 @@ Panel: thema.#Lineage & {
 					PanelOptions: {
 						frameIndex:    number | *0
 						showHeader:    bool | *true
+						cellHeight:    string | *"md"
 						showTypeIcons: bool | *false
 						sortBy?: [...ui.TableSortByFieldState]
 					} @cuetsy(kind="interface")

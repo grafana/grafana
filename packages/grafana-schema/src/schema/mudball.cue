@@ -265,3 +265,6 @@ VizTooltipOptions: {
 	mode: TooltipDisplayMode
 	sort: SortOrder
 } @cuetsy(kind="interface")
+
+// TODO docs
+TableCellHeight: "sm" | "md" | "lg" @cuetsy(kind="enum")

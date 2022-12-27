@@ -500,3 +500,13 @@ export interface VizTooltipOptions {
   mode: TooltipDisplayMode;
   sort: SortOrder;
 }
+
+
+/**
+ * TODO docs
+ */
+ export enum TableCellHeight {
+  sm = 'sm',
+  md = 'md',
+  lg = 'lg',
+}

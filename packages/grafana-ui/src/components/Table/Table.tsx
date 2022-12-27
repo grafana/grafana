@@ -13,15 +13,16 @@ import usePrevious from 'react-use/lib/usePrevious';
 import { VariableSizeList } from 'react-window';
 
 import { DataFrame, getFieldDisplayName, Field, ReducerID } from '@grafana/data';
+import { TableCellHeight } from '@grafana/schema';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
 import { FooterRow } from './FooterRow';
 import { HeaderRow } from './HeaderRow';
 import { TableCell } from './TableCell';
-import { getTableStyles } from './styles';
+import { useTableStyles } from './styles';
 import {
   TableColumnResizeActionCallback,
   TableFilterActionCallback,
@@ -52,6 +53,7 @@ export interface Props {
   noHeader?: boolean;
   showTypeIcons?: boolean;
   resizable?: boolean;
+  cellHeight?: TableCellHeight;
   initialSortBy?: TableSortByFieldState[];
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
@@ -143,13 +145,14 @@ export const Table = memo((props: Props) => {
     showTypeIcons,
     footerValues,
     enablePagination,
+    cellHeight = TableCellHeight.md,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
   const variableSizeListScrollbarRef = useRef<HTMLDivElement>(null);
-  const tableStyles = useStyles2(getTableStyles);
   const theme = useTheme2();
+  const tableStyles = useTableStyles(theme, cellHeight);
   const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
   const [expandedIndexes, setExpandedIndexes] = useState<Set<number>>(new Set());

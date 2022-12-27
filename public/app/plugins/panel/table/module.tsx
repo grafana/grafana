@@ -6,7 +6,7 @@ import {
   ReducerID,
   standardEditorsRegistry,
 } from '@grafana/data';
-import { TableFieldOptions } from '@grafana/schema';
+import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 import { TableCellDisplayMode } from '@grafana/ui';
 
 import { PaginationEditor } from './PaginationEditor';
@@ -113,6 +113,18 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         path: 'showHeader',
         name: 'Show table header',
         defaultValue: defaultPanelOptions.showHeader,
+      })
+      .addRadio({
+        path: 'cellHeight',
+        name: 'Cell height',
+        defaultValue: defaultPanelOptions.cellHeight,
+        settings: {
+          options: [
+            { value: TableCellHeight.sm, label: 'Small' },
+            { value: TableCellHeight.md, label: 'Medium' },
+            { value: TableCellHeight.lg, label: 'Large' },
+          ],
+        },
       })
       .addBooleanSwitch({
         path: 'footer.show',

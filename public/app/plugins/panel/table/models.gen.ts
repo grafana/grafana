@@ -4,7 +4,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 import { TableCellDisplayMode, TableSortByFieldState, TableFooterCalc } from '@grafana/ui';
-import { TableFieldOptions } from '@grafana/schema';
+import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
 // Only the latest schema version is translated to TypeScript, on the premise
 // that either the dashboard loading process, or (eventually) CUE-defined
@@ -16,6 +16,7 @@ export interface PanelOptions {
   frameIndex: number;
   showHeader: boolean;
   showTypeIcons?: boolean;
+  cellHeight?: TableCellHeight;
   sortBy?: TableSortByFieldState[];
   footer?: TableFooterCalc; // TODO: should be array (options builder is limited)
 }
@@ -24,6 +25,7 @@ export const defaultPanelOptions: PanelOptions = {
   frameIndex: 0,
   showHeader: true,
   showTypeIcons: false,
+  cellHeight: TableCellHeight.md,
   footer: {
     show: false,
     reducer: [],
