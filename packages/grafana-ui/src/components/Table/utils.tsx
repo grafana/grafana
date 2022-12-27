@@ -16,8 +16,11 @@ import {
   reduceField,
   GrafanaTheme2,
   ArrayVector,
+  isDataFrame,
+  isTimeSeriesFrame,
 } from '@grafana/data';
 
+import { AreaChartCell } from './AreaChartCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { DefaultCell } from './DefaultCell';
 import { getFooterValue } from './FooterRow';
@@ -71,29 +74,35 @@ export function getColumns(
   footerValues?: FooterItem[],
   isCountRowsSet?: boolean
 ): GrafanaTableColumn[] {
-  const columns: GrafanaTableColumn[] = expander
-    ? [
-        {
-          // Make an expander cell
-          Header: () => null, // No header
-          id: 'expander', // It needs an ID
-          Cell: ({ row }) => {
-            return <RowExpander row={row} expandedIndexes={expandedIndexes} setExpandedIndexes={setExpandedIndexes} />;
-          },
-          width: EXPANDER_WIDTH,
-          minWidth: EXPANDER_WIDTH,
-          filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
-            return [];
-          },
-          justifyContent: 'left',
-          field: data.fields[0],
-          sortType: 'basic',
-        },
-      ]
-    : [];
+  const columns: GrafanaTableColumn[] = [];
+
   let fieldCountWithoutWidth = 0;
 
   if (expander) {
+    columns.push({
+      // Make an expander cell
+      Header: () => null, // No header
+      id: 'expander', // It needs an ID
+      Cell: ({ row, tableStyles }) => {
+        return (
+          <RowExpander
+            row={row}
+            expandedIndexes={expandedIndexes}
+            setExpandedIndexes={setExpandedIndexes}
+            tableStyles={tableStyles}
+          />
+        );
+      },
+      width: EXPANDER_WIDTH,
+      minWidth: EXPANDER_WIDTH,
+      filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
+        return [];
+      },
+      justifyContent: 'left',
+      field: data.fields[0],
+      sortType: 'basic',
+    });
+
     availableWidth -= EXPANDER_WIDTH;
   }
 
@@ -174,6 +183,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
     case TableCellDisplayMode.BasicGauge:
     case TableCellDisplayMode.GradientGauge:
       return BarGaugeCell;
+    case TableCellDisplayMode.AreaChart:
+      return AreaChartCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
   }
@@ -182,10 +193,20 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
     return GeoCell;
   }
 
+  if (field.type === FieldType.frame) {
+    const firstValue = field.values.get(0);
+    if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
+      return AreaChartCell;
+    }
+
+    return JSONViewCell;
+  }
+
   // Default or Auto
   if (field.type === FieldType.other) {
     return JSONViewCell;
   }
+
   return DefaultCell;
 }
 

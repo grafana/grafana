@@ -2,15 +2,15 @@ import { DataFrame, FieldType } from '../types/dataFrame';
 
 import { getTimeField } from './processDataFrame';
 
-export function isTimeSerie(frame: DataFrame) {
+export function isTimeSeriesFrame(frame: DataFrame) {
   if (frame.fields.length > 2) {
     return false;
   }
   return Boolean(frame.fields.find((field) => field.type === FieldType.time));
 }
 
-export function isTimeSeries(data: DataFrame[]) {
-  return !data.find((frame) => !isTimeSerie(frame));
+export function isTimeSeriesFrames(data: DataFrame[]) {
+  return !data.find((frame) => !isTimeSeriesFrame(frame));
 }
 
 /**

@@ -1,19 +1,18 @@
 import React, { FC } from 'react';
 import { Row } from 'react-table';
 
-import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
-import { getTableStyles } from './styles';
+import { TableStyles } from './styles';
 
 export interface Props {
   row: Row;
   expandedIndexes: Set<number>;
+  tableStyles: TableStyles;
   setExpandedIndexes: (indexes: Set<number>) => void;
 }
 
-export const RowExpander: FC<Props> = ({ row, expandedIndexes, setExpandedIndexes }) => {
-  const tableStyles = useStyles2(getTableStyles);
+export const RowExpander: FC<Props> = ({ row, expandedIndexes, setExpandedIndexes, tableStyles }) => {
   const isExpanded = expandedIndexes.has(row.index);
   // Use Cell to render an expander for each row.
   // We can use the getToggleRowExpandedProps prop-getter

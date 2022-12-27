@@ -1,7 +1,6 @@
 import { ValidateResult } from 'react-hook-form';
 
-import { DataFrame, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
-import { isTimeSeries } from '@grafana/data/src/dataframe/utils';
+import { DataFrame, ThresholdsConfig, ThresholdsMode, isTimeSeriesFrames } from '@grafana/data';
 import { GraphTresholdsStyleMode } from '@grafana/schema';
 import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
@@ -98,7 +97,7 @@ export function errorFromSeries(series: DataFrame[]): Error | undefined {
     return;
   }
 
-  const isTimeSeriesResults = isTimeSeries(series);
+  const isTimeSeriesResults = isTimeSeriesFrames(series);
 
   let error;
   if (isTimeSeriesResults) {

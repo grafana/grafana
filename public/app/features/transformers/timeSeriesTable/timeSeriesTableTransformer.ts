@@ -7,7 +7,6 @@ import {
   DataTransformerInfo,
   Field,
   FieldType,
-  getFieldDisplayName,
   Labels,
   MutableDataFrame,
 } from '@grafana/data';
@@ -15,7 +14,7 @@ import {
 export interface TimeSeriesTableTransformerOptions {}
 
 export const timeSeriesTableTransformer: DataTransformerInfo<TimeSeriesTableTransformerOptions> = {
-  id: DataTransformerID.rowsToFields,
+  id: DataTransformerID.timeSeriesTable,
   name: 'Time series to table transform',
   description: 'Time series to table rows',
   defaultOptions: {},
@@ -32,8 +31,8 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   const table = new MutableDataFrame();
   const labelFields = getLabelFields(data);
   const frameField: Field<DataFrame, ArrayVector> = {
-    name: 'Name',
-    type: FieldType.other,
+    name: 'Trend',
+    type: FieldType.frame,
     config: {},
     values: new ArrayVector(),
   };

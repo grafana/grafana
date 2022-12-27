@@ -2,8 +2,7 @@ import { css, cx } from '@emotion/css';
 import { capitalize, uniqueId } from 'lodash';
 import React, { FC, useCallback, useState } from 'react';
 
-import { DataFrame, dateTimeFormat, GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
-import { isTimeSeries } from '@grafana/data/src/dataframe/utils';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, LoadingState, PanelData, isTimeSeriesFrames } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { AutoSizeInput, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
@@ -138,7 +137,7 @@ export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCon
 
   // sometimes we receive results where every value is just "null" when noData occurs
   const emptyResults = isEmptySeries(series);
-  const isTimeSeriesResults = !emptyResults && isTimeSeries(series);
+  const isTimeSeriesResults = !emptyResults && isTimeSeriesFrames(series);
 
   return (
     <div className={styles.expression.results}>

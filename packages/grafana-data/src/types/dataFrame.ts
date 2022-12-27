@@ -17,6 +17,7 @@ export enum FieldType {
   trace = 'trace',
   geo = 'geo',
   other = 'other', // Object, Array, etc
+  frame = 'frame', // DataFrame
 }
 
 /**
