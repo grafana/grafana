@@ -3,7 +3,7 @@ import React, { CSSProperties } from 'react';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { SceneObjectBase } from '../../core/SceneObjectBase';
-import { SceneComponentProps, SceneLayoutChild, SceneLayoutState, SceneObjectSize } from '../../core/types';
+import { SceneComponentProps, SceneLayoutChild, SceneLayoutState, SceneLayoutChildOptions } from '../../core/types';
 
 export type FlexLayoutDirection = 'column' | 'row';
 
@@ -43,47 +43,47 @@ function FlexLayoutChildComponent({
   direction: FlexLayoutDirection;
   isEditing?: boolean;
 }) {
-  const { size } = item.useState();
+  const { placement } = item.useState();
 
   return (
-    <div style={getItemStyles(direction, size)}>
+    <div style={getItemStyles(direction, placement)}>
       <item.Component model={item} isEditing={isEditing} />
     </div>
   );
 }
 
-function getItemStyles(direction: FlexLayoutDirection, sizing: SceneObjectSize = {}) {
-  const { xSizing = 'fill', ySizing = 'fill' } = sizing;
+function getItemStyles(direction: FlexLayoutDirection, layout: SceneLayoutChildOptions = {}) {
+  const { xSizing = 'fill', ySizing = 'fill' } = layout;
 
   const style: CSSProperties = {
     display: 'flex',
     flexDirection: direction,
-    minWidth: sizing.minWidth,
-    minHeight: sizing.minHeight,
+    minWidth: layout.minWidth,
+    minHeight: layout.minHeight,
     position: 'relative',
   };
 
   if (direction === 'column') {
-    if (sizing.height) {
-      style.height = sizing.height;
+    if (layout.height) {
+      style.height = layout.height;
     } else {
       style.flexGrow = ySizing === 'fill' ? 1 : 0;
     }
 
-    if (sizing.width) {
-      style.width = sizing.width;
+    if (layout.width) {
+      style.width = layout.width;
     } else {
       style.alignSelf = xSizing === 'fill' ? 'stretch' : 'flex-start';
     }
   } else {
-    if (sizing.height) {
-      style.height = sizing.height;
+    if (layout.height) {
+      style.height = layout.height;
     } else {
       style.alignSelf = ySizing === 'fill' ? 'stretch' : 'flex-start';
     }
 
-    if (sizing.width) {
-      style.width = sizing.width;
+    if (layout.width) {
+      style.width = layout.width;
     } else {
       style.flexGrow = xSizing === 'fill' ? 1 : 0;
     }
