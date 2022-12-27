@@ -11,42 +11,38 @@ import { getQueryRunnerWithRandomWalkQuery } from './queries';
 export function getGridLayoutTest(standalone: boolean): Scene {
   const state = {
     title: 'Grid layout test',
-    layout: new SceneGridLayout({
+    body: new SceneGridLayout({
       children: [
         new VizPanel({
-          isResizable: true,
-          isDraggable: true,
           pluginId: 'timeseries',
           title: 'Draggable and resizable',
-          size: {
+          placement: {
             x: 0,
             y: 0,
             width: 12,
             height: 10,
+            isResizable: true,
+            isDraggable: true,
           },
         }),
 
         new VizPanel({
           pluginId: 'timeseries',
           title: 'No drag and no resize',
-          isResizable: false,
-          isDraggable: false,
-          size: { x: 12, y: 0, width: 12, height: 10 },
+          placement: { x: 12, y: 0, width: 12, height: 10, isResizable: false, isDraggable: false },
         }),
 
         new SceneFlexLayout({
           direction: 'column',
-          isDraggable: true,
-          isResizable: true,
-          size: { x: 6, y: 11, width: 12, height: 10 },
+          placement: { x: 6, y: 11, width: 12, height: 10, isDraggable: true, isResizable: true },
           children: [
             new VizPanel({
-              size: { ySizing: 'fill' },
+              placement: { ySizing: 'fill' },
               pluginId: 'timeseries',
               title: 'Child of flex layout',
             }),
             new VizPanel({
-              size: { ySizing: 'fill' },
+              placement: { ySizing: 'fill' },
               pluginId: 'timeseries',
               title: 'Child of flex layout',
             }),

@@ -45,13 +45,13 @@ export function getQueryVariableDemo(standalone: boolean): Scene {
         }),
       ],
     }),
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'row',
       children: [
         new SceneFlexLayout({
           children: [
             new SceneCanvasText({
-              size: { width: '40%' },
+              placement: { width: '40%' },
               text: 'metric: ${metric}',
               fontSize: 20,
               align: 'center',
