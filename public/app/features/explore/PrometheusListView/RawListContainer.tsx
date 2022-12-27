@@ -70,7 +70,23 @@ const RawListContainer = (props: RawListContainerProps) => {
     listRef.current?.resetAfterIndex(0, true);
   }, [isExpandedView]);
 
-  const getListItemHeight = (itemIndex: number) => {
+  const calculateInitialHeight = (length: number): number => {
+    const maxListHeight = 600;
+    const shortListLength = 10;
+
+    if (length < shortListLength) {
+      let sum = 0;
+      for (let i = 0; i < length; i++) {
+        sum += getListItemHeight(i, true);
+      }
+
+      return Math.min(maxListHeight, sum);
+    }
+
+    return maxListHeight;
+  };
+
+  const getListItemHeight = (itemIndex: number, isExpandedView: boolean) => {
     const singleLineHeight = 32;
     const additionalLineHeight = 22;
     if (!isExpandedView) {
@@ -110,8 +126,8 @@ const RawListContainer = (props: RawListContainerProps) => {
               }}
               itemCount={items.length}
               className={isExpandedView ? styles.mobileWrapper : styles.wrapper}
-              itemSize={getListItemHeight}
-              height={600}
+              itemSize={(index) => getListItemHeight(index, isExpandedView)}
+              height={calculateInitialHeight(items.length)}
               width="100%"
             >
               {({ index, style }) => {
