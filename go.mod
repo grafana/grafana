@@ -66,7 +66,7 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.147.0
 	github.com/grafana/thema v0.0.0-20221222001256-d3a8fa941a6b
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/hashicorp/go-hclog v1.2.0
+	github.com/hashicorp/go-hclog v1.0.0
 	github.com/hashicorp/go-plugin v1.4.3
 	github.com/hashicorp/go-version v1.3.0
 	github.com/influxdata/influxdb-client-go/v2 v2.6.0
@@ -319,7 +319,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/asm v1.1.4 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
-	github.com/spf13/cast v1.5.0 // indirect
+	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	github.com/unknwon/com v1.0.1 // indirect
@@ -410,7 +410,7 @@ replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda756
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.24.1-0.20221223152405-14ee77b330f2
+replace github.com/prometheus/alertmanager v0.25.0 => github.com/grafana/prometheus-alertmanager v0.24.1-0.20221223152405-14ee77b330f2
 
 // grpc v1.46.0 removed "WithBalancerName()" API, still in use by weaveworks/commons.
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
