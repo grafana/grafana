@@ -39,7 +39,7 @@ func main() {
 
 // static list of planned core kinds so that we can inject ones that
 // haven't been started on yet as "planned"
-var plannedCoreKinds = []string {
+var plannedCoreKinds = []string{
 	"Dashboard",
 	"Playlist",
 	"Team",
@@ -88,11 +88,11 @@ func buildKindStateReport() KindStateReport {
 		}
 		r.Core = append(r.Core, kindsys.CoreStructuredProperties{
 			CommonProperties: kindsys.CommonProperties{
-				Name: kn,
-				PluralName: kn + "s",
-				MachineName: machinize(kn),
+				Name:              kn,
+				PluralName:        kn + "s",
+				MachineName:       machinize(kn),
 				PluralMachineName: machinize(kn) + "s",
-				Maturity: "planned",
+				Maturity:          "planned",
 			},
 		})
 	}

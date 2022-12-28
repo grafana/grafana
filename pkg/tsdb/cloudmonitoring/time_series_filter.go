@@ -147,6 +147,32 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) getFilter() string {
 	return strings.Trim(filterString, " ")
 }
 
+func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setPreprocessor() {
+	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
+	// and the aggregation that is specified in the UI becomes the secondary aggregation
+	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
+	t := toPreprocessorType(timeSeriesFilter.parameters.Preprocessor)
+	if t != PreprocessorTypeNone {
+		// Move aggregation to secondaryAggregation
+		timeSeriesFilter.parameters.SecondaryAlignmentPeriod = timeSeriesFilter.parameters.AlignmentPeriod
+		timeSeriesFilter.parameters.SecondaryCrossSeriesReducer = timeSeriesFilter.parameters.CrossSeriesReducer
+		timeSeriesFilter.parameters.SecondaryPerSeriesAligner = timeSeriesFilter.parameters.PerSeriesAligner
+		timeSeriesFilter.parameters.SecondaryGroupBys = timeSeriesFilter.parameters.GroupBys
+
+		// Set a default cross series reducer if grouped
+		if len(timeSeriesFilter.parameters.GroupBys) == 0 {
+			timeSeriesFilter.parameters.CrossSeriesReducer = crossSeriesReducerDefault
+		}
+
+		// Set aligner based on preprocessor type
+		aligner := "ALIGN_RATE"
+		if t == PreprocessorTypeDelta {
+			aligner = "ALIGN_DELTA"
+		}
+		timeSeriesFilter.parameters.PerSeriesAligner = aligner
+	}
+}
+
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setParams(startTime time.Time, endTime time.Time, durationSeconds int, intervalMs int64) {
 	params := url.Values{}
 	query := timeSeriesFilter.parameters
@@ -164,6 +190,8 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setParams(startTime time.
 	if query.PerSeriesAligner == "" {
 		query.PerSeriesAligner = perSeriesAlignerDefault
 	}
+
+	timeSeriesFilter.setPreprocessor()
 
 	alignmentPeriod := calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds)
 	params.Add("aggregation.alignmentPeriod", alignmentPeriod)

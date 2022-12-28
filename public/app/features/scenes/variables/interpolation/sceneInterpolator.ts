@@ -11,7 +11,7 @@ import { formatRegistry, FormatRegistryID, FormatVariable } from './formatRegist
 
 export type CustomFormatterFn = (
   value: unknown,
-  legacyVariableModel: VariableModel,
+  legacyVariableModel: Partial<VariableModel>,
   legacyDefaultFormatter?: CustomFormatterFn
 ) => string;
 

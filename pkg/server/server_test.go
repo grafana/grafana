@@ -61,7 +61,6 @@ func TestServer_Run_Error(t *testing.T) {
 	s := testServer(t, newTestService(nil, false), newTestService(testErr, false))
 	err := s.Run()
 	require.ErrorIs(t, err, testErr)
-	require.NotZero(t, s.ExitCode(err))
 }
 
 func TestServer_Shutdown(t *testing.T) {
@@ -87,7 +86,6 @@ func TestServer_Shutdown(t *testing.T) {
 	}()
 	err := s.Run()
 	require.NoError(t, err)
-	require.Zero(t, s.ExitCode(err))
 
 	err = <-ch
 	require.NoError(t, err)

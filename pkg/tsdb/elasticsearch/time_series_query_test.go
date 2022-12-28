@@ -70,7 +70,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, firstLevel.Key, "2")
 			termsAgg := firstLevel.Aggregation.Aggregation.(*es.TermsAggregation)
 			require.Equal(t, termsAgg.Field, "@host")
-			require.Equal(t, termsAgg.Size, 500)
+			require.Equal(t, termsAgg.Size, defaultSize)
 			secondLevel := firstLevel.Aggregation.Aggs[0]
 			require.Equal(t, secondLevel.Key, "3")
 			require.Equal(t, secondLevel.Aggregation.Aggregation.(*es.DateHistogramAgg).Field, "@timestamp")
@@ -421,7 +421,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 
-			require.Equal(t, sr.Size, 500)
+			require.Equal(t, sr.Size, defaultSize)
 		})
 
 		t.Run("With raw document metric query (from frontend tests)", func(t *testing.T) {
@@ -440,7 +440,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, rangeFilter.Gte, fromMs)
 			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
 
-			require.Equal(t, sr.Size, 500)
+			require.Equal(t, sr.Size, defaultSize)
 			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "desc", "unmapped_type": "boolean"})
 			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "desc"})
 			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}{})
@@ -462,7 +462,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, rangeFilter.Gte, fromMs)
 			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
 
-			require.Equal(t, sr.Size, 500)
+			require.Equal(t, sr.Size, defaultSize)
 			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "desc", "unmapped_type": "boolean"})
 			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "desc"})
 			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}{})
@@ -1347,7 +1347,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			}`, from, to, 15*time.Second)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
-			require.Equal(t, sr.Size, 500)
+			require.Equal(t, sr.Size, defaultSize)
 
 			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
 			require.Equal(t, rangeFilter.Key, c.timeField)

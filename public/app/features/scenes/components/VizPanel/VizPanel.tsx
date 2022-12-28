@@ -1,3 +1,4 @@
+import { DeepPartial } from '@reduxjs/toolkit';
 import React from 'react';
 
 import { AbsoluteTimeRange, FieldConfigSource, PanelModel, PanelPlugin, toUtc } from '@grafana/data';
@@ -16,24 +17,22 @@ export interface VizPanelState<TOptions = {}, TFieldConfig = {}> extends SceneLa
   title: string;
   titleLink?: UrlLinkDef;
   pluginId: string;
-  options: TOptions;
-  fieldConfig: FieldConfigSource<TFieldConfig>;
+  options: DeepPartial<TOptions>;
+  fieldConfig: FieldConfigSource<DeepPartial<TFieldConfig>>;
   pluginVersion?: string;
   // internal state
   pluginLoadError?: string;
   displayMode?: 'default' | 'transparent';
 }
 
-export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
-  VizPanelState<Partial<TOptions>, TFieldConfig>
-> {
+export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<VizPanelState<TOptions, TFieldConfig>> {
   public static Component = VizPanelRenderer;
   public static Editor = VizPanelEditor;
 
   // Not part of state as this is not serializable
   private _plugin?: PanelPlugin;
 
-  public constructor(state: Partial<VizPanelState<Partial<TOptions>, TFieldConfig>>) {
+  public constructor(state: Partial<VizPanelState<TOptions, TFieldConfig>>) {
     super({
       options: {},
       fieldConfig: { defaults: {}, overrides: [] },
@@ -111,7 +110,7 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
     this.setState({ options });
   };
 
-  public onFieldConfigChange = (fieldConfig: FieldConfigSource) => {
+  public onFieldConfigChange = (fieldConfig: FieldConfigSource<TFieldConfig>) => {
     this.setState({ fieldConfig });
   };
 }

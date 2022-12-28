@@ -18,10 +18,9 @@ import (
 )
 
 type LokiAPI struct {
-	client  *http.Client
-	url     string
-	log     log.Logger
-	headers map[string]string
+	client *http.Client
+	url    string
+	log    log.Logger
 }
 
 type RawLokiResponse struct {
@@ -29,17 +28,11 @@ type RawLokiResponse struct {
 	Encoding string
 }
 
-func newLokiAPI(client *http.Client, url string, log log.Logger, headers map[string]string) *LokiAPI {
-	return &LokiAPI{client: client, url: url, log: log, headers: headers}
+func newLokiAPI(client *http.Client, url string, log log.Logger) *LokiAPI {
+	return &LokiAPI{client: client, url: url, log: log}
 }
 
-func addHeaders(req *http.Request, headers map[string]string) {
-	for name, value := range headers {
-		req.Header.Set(name, value)
-	}
-}
-
-func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, headers map[string]string) (*http.Request, error) {
+func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
 
@@ -92,8 +85,6 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, hea
 		return nil, err
 	}
 
-	addHeaders(req, headers)
-
 	if query.VolumeQuery {
 		req.Header.Set("X-Query-Tags", "Source=logvolhist")
 	}
@@ -145,7 +136,7 @@ func makeLokiError(body io.ReadCloser) error {
 }
 
 func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames, error) {
-	req, err := makeDataRequest(ctx, api.url, query, api.headers)
+	req, err := makeDataRequest(ctx, api.url, query)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +174,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames
 	return res.Frames, nil
 }
 
-func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string, headers map[string]string) (*http.Request, error) {
+func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string) (*http.Request, error) {
 	lokiUrl, err := url.Parse(lokiDsUrl)
 	if err != nil {
 		return nil, err
@@ -204,13 +195,11 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string, 
 		return nil, err
 	}
 
-	addHeaders(req, headers)
-
 	return req, nil
 }
 
 func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiResponse, error) {
-	req, err := makeRawRequest(ctx, api.url, resourcePath, api.headers)
+	req, err := makeRawRequest(ctx, api.url, resourcePath)
 	if err != nil {
 		return RawLokiResponse{}, err
 	}

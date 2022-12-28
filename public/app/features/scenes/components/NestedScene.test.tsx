@@ -2,16 +2,24 @@ import { screen, render } from '@testing-library/react';
 import React from 'react';
 
 import { NestedScene } from './NestedScene';
+import { EmbeddedScene } from './Scene';
 import { SceneCanvasText } from './SceneCanvasText';
 import { SceneFlexLayout } from './layout/SceneFlexLayout';
 
 function setup() {
-  const scene = new NestedScene({
-    title: 'Nested title',
-    canRemove: true,
-    canCollapse: true,
-    layout: new SceneFlexLayout({
-      children: [new SceneCanvasText({ text: 'SceneCanvasText' })],
+  const scene = new EmbeddedScene({
+    title: 'Hello',
+    body: new SceneFlexLayout({
+      children: [
+        new NestedScene({
+          title: 'Nested title',
+          canRemove: true,
+          canCollapse: true,
+          body: new SceneFlexLayout({
+            children: [new SceneCanvasText({ text: 'SceneCanvasText' })],
+          }),
+        }),
+      ],
     }),
   });
 

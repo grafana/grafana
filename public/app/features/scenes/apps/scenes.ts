@@ -126,7 +126,7 @@ export function getHttpHandlerListScene(): EmbeddedScene {
       return new SceneFlexLayout({
         key: `panel-${frameIndex}`,
         direction: 'row',
-        size: { minHeight: 200 },
+        placement: { minHeight: 200 },
         $data: new SceneDataNode({
           data: {
             ...data,
@@ -146,7 +146,7 @@ export function getHttpHandlerListScene(): EmbeddedScene {
             },
           }),
           new VizPanel({
-            size: { width: 200 },
+            placement: { width: 200 },
             title: 'Last',
             pluginId: 'stat',
             fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
@@ -193,7 +193,7 @@ export function getHttpHandlerListScene(): EmbeddedScene {
         new SceneTimePicker({ isOnCanvas: true }),
       ],
     }),
-    layout,
+    body: layout,
   });
 
   sceneCache.set(sceneKey, scene);
@@ -224,14 +224,14 @@ export function getHandlerDetailsScene(handler: string): EmbeddedScene {
     subMenu: new SceneSubMenu({
       children: [new VariableValueSelectors({}), new SceneSubMenuSpacer(), new SceneTimePicker({ isOnCanvas: true })],
     }),
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'column',
       children: [
         new VizPanel({
           $data: reqDurationTimeSeries,
           pluginId: 'timeseries',
           title: 'Request duration avg (ms)',
-          size: {},
+          placement: {},
           //displayMode: 'transparent',
           options: {},
         }),
@@ -294,11 +294,11 @@ export function getOverviewScene(): EmbeddedScene {
     subMenu: new SceneSubMenu({
       children: [new VariableValueSelectors({}), new SceneSubMenuSpacer(), new SceneTimePicker({ isOnCanvas: true })],
     }),
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'column',
       children: [
         new SceneFlexLayout({
-          size: { height: 150 },
+          placement: { height: 150 },
           children: [
             getInstantStatPanel('grafana_stat_totals_dashboard', 'Dashboards'),
             getInstantStatPanel('grafana_stat_total_users', 'Users'),
@@ -321,7 +321,6 @@ export function getOverviewScene(): EmbeddedScene {
           }),
           pluginId: 'timeseries',
           title: 'Memory usage',
-          size: {},
           options: {
             legend: {
               showLegend: false,
@@ -355,7 +354,6 @@ export function getOverviewScene(): EmbeddedScene {
           }),
           pluginId: 'timeseries',
           title: 'Go routines',
-          size: {},
           options: {
             legend: {
               showLegend: false,
@@ -434,14 +432,13 @@ export function getHandlerLogsScene(handler: string): EmbeddedScene {
     subMenu: new SceneSubMenu({
       children: [new VariableValueSelectors({}), new SceneSubMenuSpacer(), new SceneTimePicker({ isOnCanvas: true })],
     }),
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'column',
       children: [
         new VizPanel({
           $data: logsQuery,
           pluginId: 'logs',
           title: '',
-          size: {},
           options: {
             showTime: true,
             showLabels: false,
@@ -487,14 +484,13 @@ export function getOverviewLogsScene(): EmbeddedScene {
     subMenu: new SceneSubMenu({
       children: [new VariableValueSelectors({}), new SceneSubMenuSpacer(), new SceneTimePicker({ isOnCanvas: true })],
     }),
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'column',
       children: [
         new VizPanel({
           $data: logsQuery,
           pluginId: 'logs',
           title: '',
-          size: {},
           options: {
             showTime: true,
             showLabels: false,

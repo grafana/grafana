@@ -34,10 +34,10 @@ describe('SceneGridLayout', () => {
     it('should render all grid children', async () => {
       const scene = new Scene({
         title: 'Grid test',
-        layout: new SceneGridLayout({
+        body: new SceneGridLayout({
           children: [
-            new TestObject({ size: { x: 0, y: 0, width: 12, height: 5 } }),
-            new TestObject({ size: { x: 0, y: 5, width: 12, height: 5 } }),
+            new TestObject({ placement: { x: 0, y: 0, width: 12, height: 5 } }),
+            new TestObject({ placement: { x: 0, y: 5, width: 12, height: 5 } }),
           ],
         }),
       });
@@ -50,16 +50,16 @@ describe('SceneGridLayout', () => {
     it('should not render children of a collapsed row', async () => {
       const scene = new Scene({
         title: 'Grid test',
-        layout: new SceneGridLayout({
+        body: new SceneGridLayout({
           children: [
-            new TestObject({ key: 'a', size: { x: 0, y: 0, width: 12, height: 5 } }),
-            new TestObject({ key: 'b', size: { x: 0, y: 5, width: 12, height: 5 } }),
+            new TestObject({ key: 'a', placement: { x: 0, y: 0, width: 12, height: 5 } }),
+            new TestObject({ key: 'b', placement: { x: 0, y: 5, width: 12, height: 5 } }),
             new SceneGridRow({
               title: 'Row A',
               key: 'Row A',
               isCollapsed: true,
-              size: { y: 10 },
-              children: [new TestObject({ key: 'c', size: { x: 0, y: 11, width: 12, height: 5 } })],
+              placement: { y: 10 },
+              children: [new TestObject({ key: 'c', placement: { x: 0, y: 11, width: 12, height: 5 } })],
             }),
           ],
         }),
@@ -73,16 +73,16 @@ describe('SceneGridLayout', () => {
     it('should  render children of an expanded row', async () => {
       const scene = new Scene({
         title: 'Grid test',
-        layout: new SceneGridLayout({
+        body: new SceneGridLayout({
           children: [
-            new TestObject({ key: 'a', size: { x: 0, y: 0, width: 12, height: 5 } }),
-            new TestObject({ key: 'b', size: { x: 0, y: 5, width: 12, height: 5 } }),
+            new TestObject({ key: 'a', placement: { x: 0, y: 0, width: 12, height: 5 } }),
+            new TestObject({ key: 'b', placement: { x: 0, y: 5, width: 12, height: 5 } }),
             new SceneGridRow({
               title: 'Row A',
               key: 'Row A',
               isCollapsed: false,
-              size: { y: 10 },
-              children: [new TestObject({ key: 'c', size: { x: 0, y: 11, width: 12, height: 5 } })],
+              placement: { y: 10 },
+              children: [new TestObject({ key: 'c', placement: { x: 0, y: 11, width: 12, height: 5 } })],
             }),
           ],
         }),
@@ -98,9 +98,9 @@ describe('SceneGridLayout', () => {
     it('shoud update layout children placement and order ', () => {
       const layout = new SceneGridLayout({
         children: [
-          new TestObject({ key: 'a', size: { x: 0, y: 0, width: 1, height: 1 } }),
-          new TestObject({ key: 'b', size: { x: 1, y: 0, width: 1, height: 1 } }),
-          new TestObject({ key: 'c', size: { x: 0, y: 1, width: 1, height: 1 } }),
+          new TestObject({ key: 'a', placement: { x: 0, y: 0, width: 1, height: 1 } }),
+          new TestObject({ key: 'b', placement: { x: 1, y: 0, width: 1, height: 1 } }),
+          new TestObject({ key: 'c', placement: { x: 0, y: 1, width: 1, height: 1 } }),
         ],
       });
       layout.onDragStop(
@@ -130,24 +130,24 @@ describe('SceneGridLayout', () => {
       );
 
       expect(layout.state.children[0].state.key).toEqual('b');
-      expect(layout.state.children[0].state.size).toEqual({ x: 0, y: 0, width: 1, height: 1 });
+      expect(layout.state.children[0].state.placement).toEqual({ x: 0, y: 0, width: 1, height: 1 });
       expect(layout.state.children[1].state.key).toEqual('a');
-      expect(layout.state.children[1].state.size).toEqual({ x: 0, y: 1, width: 1, height: 1 });
+      expect(layout.state.children[1].state.placement).toEqual({ x: 0, y: 1, width: 1, height: 1 });
       expect(layout.state.children[2].state.key).toEqual('c');
-      expect(layout.state.children[2].state.size).toEqual({ x: 0, y: 2, width: 1, height: 1 });
+      expect(layout.state.children[2].state.placement).toEqual({ x: 0, y: 2, width: 1, height: 1 });
     });
   });
 
   describe('when using rows', () => {
     it('should update objects relations when moving object out of a row', () => {
-      const rowAChild1 = new TestObject({ key: 'row-a-child1', size: { x: 0, y: 1, width: 1, height: 1 } });
-      const rowAChild2 = new TestObject({ key: 'row-a-child2', size: { x: 1, y: 1, width: 1, height: 1 } });
+      const rowAChild1 = new TestObject({ key: 'row-a-child1', placement: { x: 0, y: 1, width: 1, height: 1 } });
+      const rowAChild2 = new TestObject({ key: 'row-a-child2', placement: { x: 1, y: 1, width: 1, height: 1 } });
 
       const sourceRow = new SceneGridRow({
         title: 'Row A',
         key: 'row-a',
         children: [rowAChild1, rowAChild2],
-        size: { y: 0 },
+        placement: { y: 0 },
       });
 
       const layout = new SceneGridLayout({
@@ -169,8 +169,8 @@ describe('SceneGridLayout', () => {
       expect(updatedLayout[1]).not.toEqual(rowAChild1);
     });
     it('should update objects relations when moving objects between rows', () => {
-      const rowAChild1 = new TestObject({ key: 'row-a-child1', size: { x: 0, y: 0, width: 1, height: 1 } });
-      const rowAChild2 = new TestObject({ key: 'row-a-child2', size: { x: 1, y: 0, width: 1, height: 1 } });
+      const rowAChild1 = new TestObject({ key: 'row-a-child1', placement: { x: 0, y: 0, width: 1, height: 1 } });
+      const rowAChild2 = new TestObject({ key: 'row-a-child2', placement: { x: 1, y: 0, width: 1, height: 1 } });
 
       const sourceRow = new SceneGridRow({
         title: 'Row A',
@@ -184,7 +184,7 @@ describe('SceneGridLayout', () => {
         children: [],
       });
 
-      const panelOutsideARow = new TestObject({ key: 'a', size: { x: 0, y: 0, width: 1, height: 1 } });
+      const panelOutsideARow = new TestObject({ key: 'a', placement: { x: 0, y: 0, width: 1, height: 1 } });
       const layout = new SceneGridLayout({
         children: [panelOutsideARow, sourceRow, targetRow],
       });
@@ -210,25 +210,25 @@ describe('SceneGridLayout', () => {
     });
 
     it('should update position of objects when row is expanded', () => {
-      const rowAChild1 = new TestObject({ key: 'row-a-child1', size: { x: 0, y: 1, width: 1, height: 1 } });
-      const rowAChild2 = new TestObject({ key: 'row-a-child2', size: { x: 1, y: 1, width: 1, height: 1 } });
+      const rowAChild1 = new TestObject({ key: 'row-a-child1', placement: { x: 0, y: 1, width: 1, height: 1 } });
+      const rowAChild2 = new TestObject({ key: 'row-a-child2', placement: { x: 1, y: 1, width: 1, height: 1 } });
 
       const rowA = new SceneGridRow({
         title: 'Row A',
         key: 'row-a',
         children: [rowAChild1, rowAChild2],
-        size: { y: 0 },
+        placement: { y: 0 },
         isCollapsed: true,
       });
 
-      const panelOutsideARow = new TestObject({ key: 'outsider', size: { x: 0, y: 1, width: 1, height: 1 } });
+      const panelOutsideARow = new TestObject({ key: 'outsider', placement: { x: 0, y: 1, width: 1, height: 1 } });
 
-      const rowBChild1 = new TestObject({ key: 'row-b-child1', size: { x: 0, y: 3, width: 1, height: 1 } });
+      const rowBChild1 = new TestObject({ key: 'row-b-child1', placement: { x: 0, y: 3, width: 1, height: 1 } });
       const rowB = new SceneGridRow({
         title: 'Row B',
         key: 'row-b',
         children: [rowBChild1],
-        size: { y: 2 },
+        placement: { y: 2 },
         isCollapsed: false,
       });
 
@@ -238,9 +238,9 @@ describe('SceneGridLayout', () => {
 
       layout.toggleRow(rowA);
 
-      expect(panelOutsideARow.state!.size!.y).toEqual(2);
-      expect(rowB.state!.size!.y).toEqual(3);
-      expect(rowBChild1.state!.size!.y).toEqual(4);
+      expect(panelOutsideARow.state!.placement!.y).toEqual(2);
+      expect(rowB.state!.placement!.y).toEqual(3);
+      expect(rowBChild1.state!.placement!.y).toEqual(4);
     });
   });
 });

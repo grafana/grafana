@@ -1,6 +1,6 @@
 import { DataQuery } from '@grafana/data';
+import { Dashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { VariableModel } from 'app/features/variables/types';
 
 import { DashboardAcl } from './acl';
 
@@ -59,12 +59,10 @@ export interface AnnotationsPermissions {
   organization: AnnotationActions;
 }
 
-export interface DashboardDataDTO {
+// FIXME: This should not override Dashboard types
+export interface DashboardDataDTO extends Dashboard {
   title: string;
   uid: string;
-  templating: {
-    list: VariableModel[];
-  };
   panels?: any[];
 }
 
