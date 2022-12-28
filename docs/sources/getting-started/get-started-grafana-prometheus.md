@@ -35,10 +35,10 @@ When running node_exporter locally, you can check that it is exporting metrics b
 
 1. After downloading Prometheus [here](https://prometheus.io/download/#prometheus), extract it and navigate to the directory.
 
-```
-tar xvfz prometheus-*.tar.gz
-cd prometheus-*
-```
+   ```
+   tar xvfz prometheus-*.tar.gz
+   cd prometheus-*
+   ```
 
 1. Locate the `prometheus.yml` file in the directory.
 
