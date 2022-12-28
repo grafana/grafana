@@ -4,7 +4,8 @@ import React from 'react';
 
 import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
-import { Props, Table } from './Table';
+import { Table } from './Table';
+import { Props } from './types';
 
 function getDefaultDataFrame(): DataFrame {
   const dataFrame = toDataFrame({

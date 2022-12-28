@@ -1,8 +1,8 @@
 import { Property } from 'csstype';
 import { FC } from 'react';
-import { CellProps, Column, Row } from 'react-table';
+import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
 
-import { Field, KeyValue, SelectableValue } from '@grafana/data';
+import { DataFrame, Field, KeyValue, SelectableValue } from '@grafana/data';
 
 import { TableStyles } from './styles';
 
@@ -51,4 +51,32 @@ export interface TableFooterCalc {
   fields?: string[];
   enablePagination?: boolean;
   countRows?: boolean;
+}
+
+export interface GrafanaTableState extends TableState {
+  lastExpandedIndex?: number;
+  rowExpandedCounter: number;
+}
+
+export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}
+
+export interface Props {
+  ariaLabel?: string;
+  data: DataFrame;
+  width: number;
+  height: number;
+  /** Minimal column width specified in pixels */
+  columnMinWidth?: number;
+  noHeader?: boolean;
+  showTypeIcons?: boolean;
+  resizable?: boolean;
+  initialSortBy?: TableSortByFieldState[];
+  onColumnResize?: TableColumnResizeActionCallback;
+  onSortByChange?: TableSortByActionCallback;
+  onCellFilterAdded?: TableFilterActionCallback;
+  footerOptions?: TableFooterCalc;
+  footerValues?: FooterItem[];
+  enablePagination?: boolean;
+  /** @alpha */
+  subData?: DataFrame[];
 }
