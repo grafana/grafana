@@ -278,6 +278,11 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 		EpochEnd: cmd.TimeEnd,
 		Text:     cmd.Text,
 		Tags:     cmd.Tags,
+		Data:     annotation.Data,
+	}
+
+	if cmd.Data != nil {
+		item.Data = cmd.Data
 	}
 
 	if err := hs.annotationsRepo.Update(c.Req.Context(), &item); err != nil {
@@ -328,6 +333,7 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 		EpochEnd: annotation.TimeEnd,
 		Text:     annotation.Text,
 		Tags:     annotation.Tags,
+		Data:     annotation.Data,
 	}
 
 	if cmd.Tags != nil {
@@ -344,6 +350,10 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 
 	if cmd.TimeEnd > 0 && cmd.TimeEnd != existing.EpochEnd {
 		existing.EpochEnd = cmd.TimeEnd
+	}
+
+	if cmd.Data != nil {
+		existing.Data = cmd.Data
 	}
 
 	if err := hs.annotationsRepo.Update(c.Req.Context(), &existing); err != nil {
@@ -504,7 +514,11 @@ func (hs *HTTPServer) canSaveAnnotation(c *models.ReqContext, annotation *annota
 }
 
 func canEditDashboard(c *models.ReqContext, dashboardID int64) (bool, error) {
-	guard := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+	guard, err := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return false, err
+	}
+
 	if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
 		return false, err
 	}
@@ -606,6 +620,7 @@ func (hs *HTTPServer) canCreateAnnotation(c *models.ReqContext, dashboardId int6
 				return canSave, err
 			}
 		}
+
 		return canEditDashboard(c, dashboardId)
 	} else { // organization annotations
 		if !hs.AccessControl.IsDisabled() {

@@ -1,15 +1,17 @@
 import { intersectionWith, isEqual } from 'lodash';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Button, ConfirmModal, HorizontalGroup, IconButton } from '@grafana/ui';
+import { Badge, Button, ConfirmModal, HorizontalGroup, IconButton, Tooltip } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import { FormAmRoute } from '../../types/amroutes';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { matcherFieldToMatcher, parseMatchers } from '../../utils/alertmanager';
 import { prepareItems } from '../../utils/dynamicTable';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { EmptyArea } from '../EmptyArea';
+import { GrafanaAppBadge } from '../receivers/grafanaAppReceivers/GrafanaAppBadge';
+import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 import { Matchers } from '../silences/Matchers';
 
 import { AmRoutesExpandedForm } from './AmRoutesExpandedForm';
@@ -67,6 +69,10 @@ export const deleteRoute = (routes: FormAmRoute[], routeId: string): FormAmRoute
   return routes.filter((route) => route.id !== routeId);
 };
 
+export const getGrafanaAppReceiverType = (receivers: AmRouteReceiver[], receiverName: string) => {
+  return receivers.find((receiver) => receiver.label === receiverName)?.grafanaAppReceiverType;
+};
+
 export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   isAddMode,
   onCancelAdd,
@@ -88,6 +94,10 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
 
   const expandItem = useCallback((item: RouteTableItemProps) => setExpandedId(item.id), []);
   const collapseItem = useCallback(() => setExpandedId(undefined), []);
+
+  const missingReceiver = (route: FormAmRoute) => {
+    return Boolean(route.receiver) === false;
+  };
 
   const cols: RouteTableColumnProps[] = [
     {
@@ -112,7 +122,28 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
     {
       id: 'receiverChannel',
       label: 'Contact point',
-      renderCell: (item) => item.data.receiver || '-',
+      renderCell: (item) => {
+        const type = getGrafanaAppReceiverType(receivers, item.data.receiver);
+
+        if (!missingReceiver(item.data)) {
+          return (
+            <>
+              {item.data.receiver} {type && <GrafanaAppBadge grafanaAppType={type} />}
+            </>
+          );
+        }
+
+        return (
+          <Tooltip
+            content={'No notifications will be delivered for this policy until a contact point is configured.'}
+            placement="top"
+          >
+            <span>
+              <Badge color="orange" icon="exclamation-triangle" text="None" />
+            </span>
+          </Tooltip>
+        );
+      },
       size: 5,
     },
     {

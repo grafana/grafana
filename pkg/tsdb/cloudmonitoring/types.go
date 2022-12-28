@@ -50,6 +50,10 @@ type (
 		SecondaryCrossSeriesReducer string   `json:"secondaryCrossSeriesReducer"`
 		SecondaryPerSeriesAligner   string   `json:"secondaryPerSeriesAligner"`
 		SecondaryGroupBys           []string `json:"secondaryGroupBys"`
+		// Preprocessor is not part of the GCM API but added for simplicity
+		// It will overwrite AligmentPeriod, CrossSeriesReducer, PerSeriesAligner, GroupBys
+		// and its secondary counterparts
+		Preprocessor string `json:"preprocessor"`
 	}
 
 	// sloQuery is an internal convention but the API is the same as timeSeriesList
