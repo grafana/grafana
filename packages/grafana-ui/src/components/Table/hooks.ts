@@ -39,7 +39,7 @@ export function useFixScrollbarContainer(
    We need to take the minimum of the current expanded indexes and the previous expandedIndexes array to account
   for collapsed rows, since they disappear from expandedIndexes but still keep their expanded height
  */
-export function useResetVariableListSizeCacheWhenExpendedRowsChange(
+export function useResetVariableListSizeCache(
   extendedState: GrafanaTableState,
   listRef: React.RefObject<VariableSizeList>,
   data: DataFrame

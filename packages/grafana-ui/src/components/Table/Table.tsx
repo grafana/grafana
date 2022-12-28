@@ -20,10 +20,7 @@ import { Pagination } from '../Pagination/Pagination';
 import { FooterRow } from './FooterRow';
 import { HeaderRow } from './HeaderRow';
 import { TableCell } from './TableCell';
-import {
-  useFixScrollbarContainer,
-  useResetVariableListSizeCacheWhenExpendedRowsChange as useResetVariableListSizeCacheWhenExpandedRowsChange,
-} from './hooks';
+import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks';
 import { getInitialState, useTableStateReducer } from './reducer';
 import { getTableStyles } from './styles';
 import { FooterItem, GrafanaTableState, Props } from './types';
@@ -200,7 +197,7 @@ export const Table = memo((props: Props) => {
     setPageSize(pageSize);
   }, [pageSize, setPageSize]);
 
-  useResetVariableListSizeCacheWhenExpandedRowsChange(extendedState, listRef, data);
+  useResetVariableListSizeCache(extendedState, listRef, data);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
   const renderSubTable = React.useCallback(
