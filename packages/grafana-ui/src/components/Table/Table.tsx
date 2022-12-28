@@ -462,6 +462,8 @@ export const Table = memo((props: Props) => {
             <div ref={variableSizeListScrollbarRef}>
               <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
                 <VariableSizeList
+                  // This component needs an unmount/remount when row height changes
+                  key={tableStyles.rowHeight}
                   height={listHeight}
                   itemCount={itemCount}
                   itemSize={getItemSize}
