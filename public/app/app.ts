@@ -31,6 +31,7 @@ import {
   setEchoSrv,
   setLocationSrv,
   setQueryRunnerFactory,
+  setRunRequest,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -69,6 +70,7 @@ import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
+import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
 import { variableAdapters } from './features/variables/adapters';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
@@ -139,6 +141,9 @@ export class GrafanaApp {
 
       setQueryRunnerFactory(() => new QueryRunner());
       setVariableQueryRunner(new VariableQueryRunner());
+
+      // Provide runRequest implementation to packages, @grafana/scenes in particular
+      setRunRequest(runRequest);
 
       locationUtil.initialize({
         config,
