@@ -556,7 +556,7 @@ describe('Table', () => {
         { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
       ]);
 
-      within(rows[1]).getByLabelText('Open trace').click();
+      within(rows[1]).getByLabelText('Expand row').click();
       const rowsAfterClick = within(getTable()).getAllByRole('row');
       expect(within(rowsAfterClick[1]).getByRole('table')).toBeInTheDocument();
       expect(within(rowsAfterClick[1]).getByText(/number0/)).toBeInTheDocument();
