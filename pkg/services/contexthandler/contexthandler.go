@@ -162,13 +162,13 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
 		switch {
+		case h.initContextWithAnonymousUser(reqContext):
 		case h.initContextWithRenderAuth(reqContext):
 		case h.initContextWithJWT(reqContext, orgID):
 		case h.initContextWithAPIKey(reqContext):
 		case h.initContextWithBasicAuth(reqContext, orgID):
 		case h.initContextWithAuthProxy(reqContext, orgID):
 		case h.initContextWithToken(reqContext, orgID):
-		case h.initContextWithAnonymousUser(reqContext):
 		}
 
 		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
