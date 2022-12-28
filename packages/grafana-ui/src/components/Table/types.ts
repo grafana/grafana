@@ -55,7 +55,7 @@ export interface TableFooterCalc {
 
 export interface GrafanaTableState extends TableState {
   lastExpandedIndex?: number;
-  rowExpandedCounter: number;
+  toggleRowExpandedCounter: number;
 }
 
 export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}

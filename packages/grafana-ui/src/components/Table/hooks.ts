@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { VariableSizeList } from 'react-window';
 
+import { DataFrame } from '@grafana/data';
+
 import { GrafanaTableState } from './types';
 
 /** 
@@ -39,12 +41,13 @@ export function useFixScrollbarContainer(
  */
 export function useResetVariableListSizeCacheWhenExpendedRowsChange(
   extendedState: GrafanaTableState,
-  listRef: React.RefObject<VariableSizeList>
+  listRef: React.RefObject<VariableSizeList>,
+  data: DataFrame
 ) {
   useEffect(() => {
     if (extendedState.lastExpandedIndex !== undefined) {
       listRef.current?.resetAfterIndex(Math.max(extendedState.lastExpandedIndex - 1, 0));
       return;
     }
-  }, [extendedState.lastExpandedIndex, extendedState.rowExpandedCounter, listRef]);
+  }, [extendedState.lastExpandedIndex, extendedState.toggleRowExpandedCounter, listRef, data]);
 }

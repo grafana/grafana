@@ -14,7 +14,7 @@ export function RowExpander({ row, tableStyles }: Props) {
   return (
     <div className={tableStyles.expanderCell} {...row.getToggleRowExpandedProps()}>
       <Icon
-        aria-label={row.isExpanded ? 'Close trace' : 'Open trace'}
+        aria-label={row.isExpanded ? 'Collapse row' : 'Expand row'}
         name={row.isExpanded ? 'angle-down' : 'angle-right'}
         size="xl"
       />
