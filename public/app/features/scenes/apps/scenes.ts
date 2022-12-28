@@ -1,4 +1,5 @@
 import { FieldColorModeId, getFrameDisplayName } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { SceneFlexLayout, ScenePanelRepeater, SceneSubMenu, SceneTimePicker, VizPanel } from '../components';
@@ -13,6 +14,7 @@ import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
 import { SceneRadioToggle } from './SceneRadioToggle';
 import { SceneSearchBox, SceneSearchFilterDataNode } from './SceneSearchBox';
+import { getLinkUrlWithAppUrlState } from './utils';
 
 let sceneCache: Map<string, EmbeddedScene> = new Map();
 
@@ -78,7 +80,13 @@ export function getHttpHandlerListScene(): EmbeddedScene {
               value: [
                 {
                   title: 'Go to handler drilldown view',
-                  url: '/scenes/grafana-monitoring/handlers/${__value.text:percentencode}',
+                  onBuildUrl: () => {
+                    const params = locationService.getSearchObject();
+                    return getLinkUrlWithAppUrlState(
+                      '/scenes/grafana-monitoring/handlers/${__value.text:percentencode}',
+                      params
+                    );
+                  },
                 },
               ],
             },
