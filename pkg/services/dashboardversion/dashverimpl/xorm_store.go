@@ -71,8 +71,8 @@ func (ss *sqlStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredV
 	return deleted, err
 }
 
-func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error) {
-	var dashboardVersion []*dashver.DashboardVersionDTO
+func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersion, error) {
+	var dashboardVersion []*dashver.DashboardVersion
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		err := sess.Table("dashboard_version").
 			Select(`dashboard_version.id,

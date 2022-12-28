@@ -5,7 +5,7 @@ load(
     'pull_secret',
 )
 
-grabpl_version = 'v3.0.17'
+grabpl_version = 'v3.0.20'
 build_image = 'grafana/build-container:1.6.4'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -739,6 +739,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, port=3001, video="false", trigger
                 'include': [
                     'pkg/tsdb/azuremonitor/**',
                     'public/app/plugins/datasource/grafana-azure-monitor-datasource/**',
+                    'e2e/cloud-plugins-suite/azure-monitor.spec.ts',
                 ]
             },
         )
