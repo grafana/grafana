@@ -11,13 +11,11 @@ export interface Props {
 }
 
 export function RowExpander({ row, tableStyles }: Props) {
-  const isExpanded = row.isExpanded;
-
   return (
     <div className={tableStyles.expanderCell} {...row.getToggleRowExpandedProps()}>
       <Icon
-        aria-label={isExpanded ? 'Close trace' : 'Open trace'}
-        name={isExpanded ? 'angle-down' : 'angle-right'}
+        aria-label={row.isExpanded ? 'Close trace' : 'Open trace'}
+        name={row.isExpanded ? 'angle-down' : 'angle-right'}
         size="xl"
       />
     </div>
