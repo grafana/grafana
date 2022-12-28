@@ -1,7 +1,6 @@
-import { isString as _isString } from 'lodash';
 import React from 'react';
 
-import { AbsoluteTimeRange, FieldConfigSource, PanelModel, PanelPlugin, rangeUtil, toUtc } from '@grafana/data';
+import { AbsoluteTimeRange, FieldConfigSource, PanelModel, PanelPlugin, toUtc } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Field, Input } from '@grafana/ui';
 import { importPanelPlugin, syncGetPanelPlugin } from 'app/features/plugins/importPanelPlugin';

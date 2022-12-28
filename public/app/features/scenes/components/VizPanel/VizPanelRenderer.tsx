@@ -53,7 +53,7 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
 
   if (data?.request?.timeInfo) {
     titleItems.push({
-      icon: toIconName('clock-nine'),
+      icon: toIconName('clock-nine')!,
       tooltip: data?.request?.timeInfo,
     });
   }

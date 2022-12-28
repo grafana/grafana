@@ -1,4 +1,4 @@
-import { cloneDeep, isString as _isString } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -215,7 +215,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
         return newTimeRange;
       }
 
-      if (_isString(timeRange.raw.from)) {
+      if (typeof timeRange.raw.from === 'string') {
         const timeFromDate = dateMath.parse(timeFromInfo.from)!;
         newTimeRange = {
           from: timeFromDate,
