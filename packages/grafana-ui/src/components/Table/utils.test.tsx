@@ -46,21 +46,21 @@ function getData() {
 describe('Table utils', () => {
   describe('getColumns', () => {
     it('Should build columns from DataFrame', () => {
-      const columns = getColumns(getData(), 1000, 120, new Set(), () => null, false);
+      const columns = getColumns(getData(), 1000, 120, false);
 
       expect(columns[0].Header).toBe('Time');
       expect(columns[1].Header).toBe('Value');
     });
 
     it('Should distribute width and use field config width', () => {
-      const columns = getColumns(getData(), 1000, 120, new Set(), () => null, false);
+      const columns = getColumns(getData(), 1000, 120, false);
 
       expect(columns[0].width).toBe(450);
       expect(columns[1].width).toBe(100);
     });
 
     it('Should distribute width and use field config width with expander enabled', () => {
-      const columns = getColumns(getData(), 1000, 120, new Set(), () => null, true);
+      const columns = getColumns(getData(), 1000, 120, true);
 
       expect(columns[0].width).toBe(50); // expander column
       expect(columns[1].width).toBe(425);
@@ -68,7 +68,7 @@ describe('Table utils', () => {
     });
 
     it('Should set field on columns', () => {
-      const columns = getColumns(getData(), 1000, 120, new Set(), () => null, false);
+      const columns = getColumns(getData(), 1000, 120, false);
 
       expect(columns[0].field.name).toBe('Time');
       expect(columns[1].field.name).toBe('Value');

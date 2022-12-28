@@ -133,7 +133,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		fakeDash.FolderId = 1
 		fakeDash.HasACL = false
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
-		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersion{}
+		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersionDTO{}
 		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
@@ -241,7 +241,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		fakeDash.FolderId = 1
 		fakeDash.HasACL = true
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
-		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersion{}
+		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersionDTO{}
 		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
@@ -787,7 +787,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 	t.Run("Given two dashboards being compared", func(t *testing.T) {
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
-		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersion{
+		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersionDTO{
 			{
 				DashboardID: 1,
 				Version:     1,
@@ -874,7 +874,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Version: 1,
 		}
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
-		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersion{
+		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersionDTO{
 			{
 				DashboardID: 2,
 				Version:     1,
@@ -908,7 +908,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		}).Return(nil, nil)
 
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
-		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersion{
+		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersionDTO{
 			{
 				DashboardID: 2,
 				Version:     1,

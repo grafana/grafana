@@ -26,6 +26,9 @@ type AuthInfoServiceFake struct {
 	ExpectedExternalUser *models.ExternalUserInfo
 	ExpectedError        error
 	ExpectedLabels       map[int64]string
+
+	SetAuthInfoFn    func(ctx context.Context, cmd *models.SetAuthInfoCommand) error
+	UpdateAuthInfoFn func(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error
 }
 
 func (a *AuthInfoServiceFake) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*user.User, error) {
@@ -48,10 +51,18 @@ func (a *AuthInfoServiceFake) GetUserLabels(ctx context.Context, query models.Ge
 }
 
 func (a *AuthInfoServiceFake) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
+	if a.SetAuthInfoFn != nil {
+		return a.SetAuthInfoFn(ctx, cmd)
+	}
+
 	return a.ExpectedError
 }
 
 func (a *AuthInfoServiceFake) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
+	if a.UpdateAuthInfoFn != nil {
+		return a.UpdateAuthInfoFn(ctx, cmd)
+	}
+
 	return a.ExpectedError
 }
 

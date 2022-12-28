@@ -71,8 +71,8 @@ func (ss *sqlStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredV
 	return deleted, err
 }
 
-func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error) {
-	var dashboardVersion []*dashver.DashboardVersionDTO
+func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersion, error) {
+	var dashboardVersion []*dashver.DashboardVersion
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		err := sess.Table("dashboard_version").
 			Select(`dashboard_version.id,
@@ -81,11 +81,9 @@ func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersio
 				dashboard_version.restored_from,
 				dashboard_version.version,
 				dashboard_version.created,
-				dashboard_version.created_by as created_by_id,
+				dashboard_version.created_by,
 				dashboard_version.message,
-				dashboard_version.data,`+
-				ss.dialect.Quote("user")+`.login as created_by`).
-			Join("LEFT", ss.dialect.Quote("user"), `dashboard_version.created_by = `+ss.dialect.Quote("user")+`.id`).
+				dashboard_version.data`).
 			Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
 			Where("dashboard_version.dashboard_id=? AND dashboard.org_id=?", query.DashboardID, query.OrgID).
 			OrderBy("dashboard_version.version DESC").

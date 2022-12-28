@@ -19,6 +19,7 @@ import {
   DataFrameDTO,
   TIME_SERIES_VALUE_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
+  DataQueryResponseData,
 } from '../types/index';
 import { ArrayVector } from '../vector/ArrayVector';
 import { SortedVector } from '../vector/SortedVector';
@@ -510,3 +511,29 @@ export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?
   }
   return {};
 };
+
+function getProcessedDataFrame(data: DataQueryResponseData): DataFrame {
+  const dataFrame = guessFieldTypes(toDataFrame(data));
+
+  if (dataFrame.fields && dataFrame.fields.length) {
+    // clear out the cached info
+    for (const field of dataFrame.fields) {
+      field.state = null;
+    }
+  }
+
+  return dataFrame;
+}
+
+/**
+ * Given data request results, will return data frames with field types set
+ *
+ * This is also used by PanelChrome for snapshot support
+ */
+export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataFrame[] {
+  if (!results || !isArray(results)) {
+    return [];
+  }
+
+  return results.map((data) => getProcessedDataFrame(data));
+}
