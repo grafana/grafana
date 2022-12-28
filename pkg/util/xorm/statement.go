@@ -1052,11 +1052,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 		whereStr = " WHERE " + condSQL
 	}
 
-	if dialect.DBType() == core.MSSQL && strings.Contains(statement.TableName(), "..") {
-		fromStr += statement.TableName()
-	} else {
-		fromStr += quote(statement.TableName())
-	}
+	fromStr += quote(statement.TableName())
 
 	if statement.TableAlias != "" {
 		if dialect.DBType() == core.ORACLE {
@@ -1070,47 +1066,6 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 	}
 
 	pLimitN := statement.LimitN
-	if dialect.DBType() == core.MSSQL {
-		if pLimitN != nil {
-			LimitNValue := *pLimitN
-			top = fmt.Sprintf("TOP %d ", LimitNValue)
-		}
-		if statement.Start > 0 {
-			var column string
-			if len(statement.RefTable.PKColumns()) == 0 {
-				for _, index := range statement.RefTable.Indexes {
-					if len(index.Cols) == 1 {
-						column = index.Cols[0]
-						break
-					}
-				}
-				if len(column) == 0 {
-					column = statement.RefTable.ColumnsSeq()[0]
-				}
-			} else {
-				column = statement.RefTable.PKColumns()[0].Name
-			}
-			if statement.needTableName() {
-				if len(statement.TableAlias) > 0 {
-					column = statement.TableAlias + "." + column
-				} else {
-					column = statement.TableName() + "." + column
-				}
-			}
-
-			var orderStr string
-			if needOrderBy && len(statement.OrderStr) > 0 {
-				orderStr = " ORDER BY " + statement.OrderStr
-			}
-
-			var groupStr string
-			if len(statement.GroupByStr) > 0 {
-				groupStr = " GROUP BY " + statement.GroupByStr
-			}
-			mssqlCondi = fmt.Sprintf("(%s NOT IN (SELECT TOP %d %s%s%s%s%s))",
-				column, statement.Start, column, fromStr, whereStr, orderStr, groupStr)
-		}
-	}
 
 	var buf strings.Builder
 	fmt.Fprintf(&buf, "SELECT %v%v%v%v%v", distinct, top, columnStr, fromStr, whereStr)
@@ -1132,7 +1087,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 		fmt.Fprint(&buf, " ORDER BY ", statement.OrderStr)
 	}
 	if needLimit {
-		if dialect.DBType() != core.MSSQL && dialect.DBType() != core.ORACLE {
+		if dialect.DBType() != core.ORACLE {
 			if statement.Start > 0 {
 				if pLimitN != nil {
 					fmt.Fprintf(&buf, " LIMIT %v OFFSET %v", *pLimitN, statement.Start)
@@ -1142,7 +1097,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 			} else if pLimitN != nil {
 				fmt.Fprint(&buf, " LIMIT ", *pLimitN)
 			}
-		} else if dialect.DBType() == core.ORACLE {
+		} else {
 			if statement.Start != 0 || pLimitN != nil {
 				oldString := buf.String()
 				buf.Reset()
@@ -1208,10 +1163,6 @@ func (statement *Statement) convertIDSQL(sqlStr string) string {
 		}
 
 		var top string
-		pLimitN := statement.LimitN
-		if pLimitN != nil && statement.Engine.dialect.DBType() == core.MSSQL {
-			top = fmt.Sprintf("TOP %d ", *pLimitN)
-		}
 
 		newsql := fmt.Sprintf("SELECT %s%s FROM %v", top, colstrs, sqls[1])
 		return newsql

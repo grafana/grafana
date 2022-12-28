@@ -248,12 +248,6 @@ func (db *sqlite3) ForUpdateSql(query string) string {
 	return query
 }
 
-/*func (db *sqlite3) ColumnCheckSql(tableName, colName string) (string, []interface{}) {
-	args := []interface{}{tableName}
-	sql := "SELECT name FROM sqlite_master WHERE type='table' and name = ? and ((sql like '%`" + colName + "`%') or (sql like '%[" + colName + "]%'))"
-	return sql, args
-}*/
-
 func (db *sqlite3) IsColumnExist(tableName, colName string) (bool, error) {
 	args := []interface{}{tableName}
 	query := "SELECT name FROM sqlite_master WHERE type='table' and name = ? and ((sql like '%`" + colName + "`%') or (sql like '%[" + colName + "]%'))"
