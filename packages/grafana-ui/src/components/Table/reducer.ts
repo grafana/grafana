@@ -12,7 +12,6 @@ export interface ActionType {
 export function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
   return useCallback(
     (newState: GrafanaTableState, action: ActionType) => {
-      console.log('action', action);
       switch (action.type) {
         case 'columnDoneResizing':
           if (onColumnResize) {
