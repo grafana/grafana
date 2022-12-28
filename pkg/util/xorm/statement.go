@@ -578,7 +578,7 @@ func (statement *Statement) col2NewColsWithQuote(columns ...string) []string {
 }
 
 func (statement *Statement) colmap2NewColsWithQuote() []string {
-	newColumns := make([]string, len(statement.columnMap), len(statement.columnMap))
+	newColumns := make([]string, len(statement.columnMap))
 	copy(newColumns, statement.columnMap)
 	for i := 0; i < len(statement.columnMap); i++ {
 		newColumns[i] = statement.Engine.Quote(newColumns[i])
@@ -840,10 +840,6 @@ func (statement *Statement) genIndexSQL() []string {
 	for _, index := range statement.RefTable.Indexes {
 		if index.Type == core.IndexType {
 			sql := statement.Engine.dialect.CreateIndexSql(tbName, index)
-			/*idxTBName := strings.Replace(tbName, ".", "_", -1)
-			idxTBName = strings.Replace(idxTBName, `"`, "", -1)
-			sql := fmt.Sprintf("CREATE INDEX %v ON %v (%v);", quote(indexName(idxTBName, idxName)),
-				quote(tbName), quote(strings.Join(index.Cols, quote(","))))*/
 			sqls = append(sqls, sql)
 		}
 	}
@@ -1134,79 +1130,4 @@ func (statement *Statement) processIDParam() error {
 		statement.cond = statement.cond.And(builder.Eq{colName: (*(statement.idParam))[i]})
 	}
 	return nil
-}
-
-func (statement *Statement) joinColumns(cols []*core.Column, includeTableName bool) string {
-	var colnames = make([]string, len(cols))
-	for i, col := range cols {
-		if includeTableName {
-			colnames[i] = statement.Engine.Quote(statement.TableName()) +
-				"." + statement.Engine.Quote(col.Name)
-		} else {
-			colnames[i] = statement.Engine.Quote(col.Name)
-		}
-	}
-	return strings.Join(colnames, ", ")
-}
-
-func (statement *Statement) convertIDSQL(sqlStr string) string {
-	if statement.RefTable != nil {
-		cols := statement.RefTable.PKColumns()
-		if len(cols) == 0 {
-			return ""
-		}
-
-		colstrs := statement.joinColumns(cols, false)
-		sqls := splitNNoCase(sqlStr, " from ", 2)
-		if len(sqls) != 2 {
-			return ""
-		}
-
-		var top string
-
-		newsql := fmt.Sprintf("SELECT %s%s FROM %v", top, colstrs, sqls[1])
-		return newsql
-	}
-	return ""
-}
-
-func (statement *Statement) convertUpdateSQL(sqlStr string) (string, string) {
-	if statement.RefTable == nil || len(statement.RefTable.PrimaryKeys) != 1 {
-		return "", ""
-	}
-
-	colstrs := statement.joinColumns(statement.RefTable.PKColumns(), true)
-	sqls := splitNNoCase(sqlStr, "where", 2)
-	if len(sqls) != 2 {
-		if len(sqls) == 1 {
-			return sqls[0], fmt.Sprintf("SELECT %v FROM %v",
-				colstrs, statement.Engine.Quote(statement.TableName()))
-		}
-		return "", ""
-	}
-
-	var whereStr = sqls[1]
-
-	// TODO: for postgres only, if any other database?
-	var paraStr string
-	if statement.Engine.dialect.DBType() == core.POSTGRES {
-		paraStr = "$"
-	} else if statement.Engine.dialect.DBType() == core.MSSQL {
-		paraStr = ":"
-	}
-
-	if paraStr != "" {
-		if strings.Contains(sqls[1], paraStr) {
-			dollers := strings.Split(sqls[1], paraStr)
-			whereStr = dollers[0]
-			for i, c := range dollers[1:] {
-				ccs := strings.SplitN(c, " ", 2)
-				whereStr += fmt.Sprintf(paraStr+"%v %v", i+1, ccs[1])
-			}
-		}
-	}
-
-	return sqls[0], fmt.Sprintf("SELECT %v FROM %v WHERE %v",
-		colstrs, statement.Engine.Quote(statement.TableName()),
-		whereStr)
 }
