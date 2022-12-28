@@ -31,7 +31,11 @@ export const QueryPattern = (props: Props) => {
       <Card.Heading>{pattern.name}</Card.Heading>
       <div className={styles.rawQueryContainer}>
         <RawQuery
-          query={promQueryModeller.renderQuery({ labels: [], operations: pattern.operations })}
+          query={promQueryModeller.renderQuery({
+            labels: [],
+            operations: pattern.operations,
+            binaryQueries: pattern.binaryQueries,
+          })}
           lang={lang}
           className={styles.rawQuery}
         />

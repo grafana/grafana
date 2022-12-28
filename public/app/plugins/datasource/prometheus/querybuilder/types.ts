@@ -122,10 +122,12 @@ export enum PromOperationId {
 export enum PromQueryPatternType {
   Rate = 'rate',
   Histogram = 'histogram',
+  Binary = 'binary',
 }
 
 export interface PromQueryPattern {
   name: string;
   operations: QueryBuilderOperation[];
   type: PromQueryPatternType;
+  binaryQueries?: PromVisualQueryBinary[];
 }

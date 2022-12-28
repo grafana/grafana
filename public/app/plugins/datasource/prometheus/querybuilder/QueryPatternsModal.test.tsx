@@ -36,6 +36,9 @@ const queryPatterns = {
   histogramQueryPatterns: promQueryModeller
     .getQueryPatterns()
     .filter((pattern) => pattern.type === PromQueryPatternType.Histogram),
+  binaryQueryPatterns: promQueryModeller
+    .getQueryPatterns()
+    .filter((pattern) => pattern.type === PromQueryPatternType.Binary),
 };
 
 describe('QueryPatternsModal', () => {
@@ -122,5 +125,19 @@ describe('QueryPatternsModal', () => {
     await userEvent.click(useQueryButton);
     expect(screen.queryByRole('button', { name: 'Create new query' })).not.toBeInTheDocument();
     expect(screen.getByText(/your current query will be replaced/)).toBeInTheDocument();
+  });
+
+  it('applies binary query patterns to query', async () => {
+    render(<QueryPatternsModal {...defaultProps} query={{ expr: '{job="grafana"}', refId: 'A' }} />);
+    await userEvent.click(screen.getByText('Binary query starters'));
+    expect(screen.getByText(queryPatterns.binaryQueryPatterns[0].name)).toBeInTheDocument();
+    const firstUseQueryButton = screen.getAllByRole('button', { name: 'Use this query' })[0];
+    await userEvent.click(firstUseQueryButton);
+    await waitFor(() => {
+      expect(defaultProps.onChange).toHaveBeenCalledWith({
+        expr: 'sum(rate({job="grafana"}[$__rate_interval])) / sum(rate([$__rate_interval]))',
+        refId: 'A',
+      });
+    });
   });
 });

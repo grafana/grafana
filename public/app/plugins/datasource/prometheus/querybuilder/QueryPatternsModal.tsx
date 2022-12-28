@@ -48,6 +48,7 @@ export const QueryPatternsModal = (props: Props) => {
     });
 
     visualQuery.query.operations = pattern.operations;
+    visualQuery.query.binaryQueries = pattern.binaryQueries;
     if (hasNewQueryOption && selectAsNewQuery) {
       onAddQuery({
         ...query,

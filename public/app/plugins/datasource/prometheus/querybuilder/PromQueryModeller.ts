@@ -57,12 +57,33 @@ export class PromQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Histogram quantile on increase ',
+        name: 'Histogram quantile on increase',
         type: PromQueryPatternType.Histogram,
         operations: [
           { id: 'increase', params: ['$__rate_interval'] },
           { id: '__max_by', params: ['le'] },
           { id: 'histogram_quantile', params: [0.95] },
+        ],
+      },
+      {
+        name: 'Binary Query',
+        type: PromQueryPatternType.Binary,
+        operations: [
+          { id: 'rate', params: ['$__rate_interval'] },
+          { id: 'sum', params: [] },
+        ],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              metric: '',
+              labels: [],
+              operations: [
+                { id: 'rate', params: ['$__rate_interval'] },
+                { id: 'sum', params: [] },
+              ],
+            },
+          },
         ],
       },
     ];
