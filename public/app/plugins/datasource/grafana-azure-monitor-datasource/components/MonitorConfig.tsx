@@ -11,7 +11,6 @@ import { AzureCredentialsForm } from './AzureCredentialsForm';
 const azureClouds = [
   { value: 'azuremonitor', label: 'Azure' },
   { value: 'govazuremonitor', label: 'Azure US Government' },
-  { value: 'germanyazuremonitor', label: 'Azure Germany' },
   { value: 'chinaazuremonitor', label: 'Azure China' },
 ] as SelectableValue[];
 

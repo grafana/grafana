@@ -18,7 +18,8 @@ import {
 import { getTimeSrv, TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { PanelQueryRunner } from '../../../query/state/PanelQueryRunner';
-import { DashboardModel, PanelModel } from '../../state';
+import { PanelModel } from '../../state';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { PanelEditorTableView, Props } from './PanelEditorTableView';
 
@@ -53,14 +54,11 @@ function setupTestContext(options: Partial<Props> = {}) {
       getDisplayTitle: jest.fn(),
       runAllPanelQueries: jest.fn(),
     }),
-    dashboard: new DashboardModel({
+    dashboard: createDashboardModelFixture({
       id: 1,
       uid: 'super-unique-id',
-      panelInitialized: jest.fn(),
-      events: new EventBusSrv(),
-      meta: {
-        isPublic: false,
-      },
+      // panelInitialized: jest.fn(),
+      // events: new EventBusSrv(),
       panels: [],
     }),
     plugin: {

@@ -41,6 +41,8 @@ const (
 	GMDApiModeSQLExpression
 )
 
+const defaultRegion = "default"
+
 type CloudWatchQuery struct {
 	RefId             string
 	Region            string
@@ -227,7 +229,7 @@ type metricsDataQuery struct {
 
 // ParseMetricDataQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
 // The CloudWatchQuery has a 1 to 1 mapping to a query editor row
-func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled,
+func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, defaultRegion string, dynamicLabelsEnabled,
 	crossAccountQueryingEnabled bool) ([]*CloudWatchQuery, error) {
 	var metricDataQueries = make(map[string]metricsDataQuery)
 	for _, query := range dataQueries {
@@ -260,7 +262,7 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			Expression:        mdq.Expression,
 		}
 
-		if err := cwQuery.validateAndSetDefaults(refId, mdq, startTime, endTime, crossAccountQueryingEnabled); err != nil {
+		if err := cwQuery.validateAndSetDefaults(refId, mdq, startTime, endTime, defaultRegion, crossAccountQueryingEnabled); err != nil {
 			return nil, &QueryError{Err: err, RefID: refId}
 		}
 
@@ -278,7 +280,7 @@ func (q *CloudWatchQuery) migrateLegacyQuery(query metricsDataQuery, dynamicLabe
 }
 
 func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery metricsDataQuery, startTime, endTime time.Time,
-	crossAccountQueryingEnabled bool) error {
+	defaultRegionValue string, crossAccountQueryingEnabled bool) error {
 	if metricsDataQuery.Statistic == nil && metricsDataQuery.Statistics == nil {
 		return fmt.Errorf("query must have either statistic or statistics field")
 	}
@@ -335,6 +337,10 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		} else {
 			q.MetricEditorMode = MetricEditorModeBuilder
 		}
+	}
+
+	if q.Region == defaultRegion {
+		q.Region = defaultRegionValue
 	}
 
 	return nil

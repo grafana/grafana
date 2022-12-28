@@ -120,10 +120,12 @@ export function ExploreGraph({
     });
   }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig]);
 
+  const seriesToShow = showAllTimeSeries ? dataWithConfig : dataWithConfig.slice(0, MAX_NUMBER_OF_TIME_SERIES);
+
   // We need to increment structureRev when the number of series changes.
   // the function passed to useMemo runs during rendering, so when we get a different
   // amount of data, structureRev is incremented before we render it
-  useMemo(inc, [dataWithConfig.length, styledFieldConfig, inc]);
+  useMemo(inc, [dataWithConfig.length, styledFieldConfig, seriesToShow.length, inc]);
 
   useEffect(() => {
     if (onHiddenSeriesChanged) {
@@ -137,8 +139,6 @@ export function ExploreGraph({
       onHiddenSeriesChanged(hiddenFrames);
     }
   }, [dataWithConfig, onHiddenSeriesChanged]);
-
-  const seriesToShow = showAllTimeSeries ? dataWithConfig : dataWithConfig.slice(0, MAX_NUMBER_OF_TIME_SERIES);
 
   const panelContext: PanelContext = {
     eventBus,

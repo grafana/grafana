@@ -62,10 +62,12 @@ export function setupMockedDataSource({
   variables,
   mockGetVariableName = true,
   getMock = jest.fn(),
+  customInstanceSettings = CloudWatchSettings,
 }: {
   getMock?: jest.Func;
   variables?: CustomVariableModel[];
   mockGetVariableName?: boolean;
+  customInstanceSettings?: DataSourceInstanceSettings<CloudWatchJsonData>;
 } = {}) {
   let templateService = new TemplateSrv();
   if (variables) {
@@ -76,7 +78,7 @@ export function setupMockedDataSource({
   }
 
   const timeSrv = getTimeSrv();
-  const datasource = new CloudWatchDatasource(CloudWatchSettings, templateService, timeSrv);
+  const datasource = new CloudWatchDatasource(customInstanceSettings, templateService, timeSrv);
   datasource.getVariables = () => ['test'];
   datasource.api.describeLogGroups = jest.fn().mockResolvedValue([]);
   datasource.api.getNamespaces = jest.fn().mockResolvedValue([]);

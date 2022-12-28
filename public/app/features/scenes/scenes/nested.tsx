@@ -10,7 +10,7 @@ import { getQueryRunnerWithRandomWalkQuery } from './queries';
 export function getNestedScene(standalone: boolean): Scene {
   const state = {
     title: 'Nested Scene demo',
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'column',
       children: [
         new VizPanel({
@@ -34,7 +34,7 @@ export function getInnerScene(title: string) {
     title: title,
     canRemove: true,
     canCollapse: true,
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'row',
       children: [
         new VizPanel({

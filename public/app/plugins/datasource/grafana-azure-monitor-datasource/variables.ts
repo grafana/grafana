@@ -17,13 +17,20 @@ import { GrafanaTemplateVariableQuery } from './types/templateVariables';
 import messageFromError from './utils/messageFromError';
 
 export class VariableSupport extends CustomVariableSupport<DataSource, AzureMonitorQuery> {
+  templateSrv = getTemplateSrv();
+
   constructor(private readonly datasource: DataSource) {
     super();
     this.datasource = datasource;
     this.query = this.query.bind(this);
+    this.templateSrv = getTemplateSrv();
   }
 
   editor = VariableEditor;
+
+  hasValue(...values: string[]) {
+    return values.every((v) => !!this.templateSrv.replace(v));
+  }
 
   query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
     const promisedResults = async () => {
@@ -37,21 +44,23 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
               data: res?.length ? [toDataFrame(res)] : [],
             };
           case AzureQueryType.ResourceGroupsQuery:
-            if (queryObj.subscription) {
+            if (queryObj.subscription && this.hasValue(queryObj.subscription)) {
               const rgs = await this.datasource.getResourceGroups(queryObj.subscription);
               return {
                 data: rgs?.length ? [toDataFrame(rgs)] : [],
               };
             }
+            return { data: [] };
           case AzureQueryType.NamespacesQuery:
-            if (queryObj.subscription) {
+            if (queryObj.subscription && this.hasValue(queryObj.subscription)) {
               const rgs = await this.datasource.getMetricNamespaces(queryObj.subscription, queryObj.resourceGroup);
               return {
                 data: rgs?.length ? [toDataFrame(rgs)] : [],
               };
             }
+            return { data: [] };
           case AzureQueryType.ResourceNamesQuery:
-            if (queryObj.subscription) {
+            if (queryObj.subscription && this.hasValue(queryObj.subscription)) {
               const rgs = await this.datasource.getResourceNames(
                 queryObj.subscription,
                 queryObj.resourceGroup,
@@ -61,8 +70,15 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
                 data: rgs?.length ? [toDataFrame(rgs)] : [],
               };
             }
+            return { data: [] };
           case AzureQueryType.MetricNamesQuery:
-            if (queryObj.subscription && queryObj.resourceGroup && queryObj.namespace && queryObj.resource) {
+            if (
+              queryObj.subscription &&
+              queryObj.resourceGroup &&
+              queryObj.namespace &&
+              queryObj.resource &&
+              this.hasValue(queryObj.subscription, queryObj.resourceGroup, queryObj.namespace, queryObj.resource)
+            ) {
               const rgs = await this.datasource.getMetricNames(
                 queryObj.subscription,
                 queryObj.resourceGroup,
@@ -73,13 +89,15 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
                 data: rgs?.length ? [toDataFrame(rgs)] : [],
               };
             }
+            return { data: [] };
           case AzureQueryType.WorkspacesQuery:
-            if (queryObj.subscription) {
+            if (queryObj.subscription && this.hasValue(queryObj.subscription)) {
               const rgs = await this.datasource.getAzureLogAnalyticsWorkspaces(queryObj.subscription);
               return {
                 data: rgs?.length ? [toDataFrame(rgs)] : [],
               };
             }
+            return { data: [] };
           case AzureQueryType.GrafanaTemplateVariableFn:
             if (queryObj.grafanaTemplateVariableFn) {
               const templateVariablesResults = await this.callGrafanaTemplateVariableFn(
@@ -89,6 +107,7 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
                 data: templateVariablesResults?.length ? [toDataFrame(templateVariablesResults)] : [],
               };
             }
+            return { data: [] };
           default:
             request.targets[0] = queryObj;
             const queryResp = await lastValueFrom(this.datasource.query(request));
