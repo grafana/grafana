@@ -28,8 +28,8 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle }: Pr
       <div className={styles.topRow}>
         <div className={styles.titleInfoContainer}>
           <div className={styles.title}>
-            {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
             {titleElement}
+            {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
           </div>
           {info && <PageInfo info={info} />}
         </div>
@@ -52,6 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     title: css({
       display: 'flex',
       flexDirection: 'row',
+      alignItems: 'center',
     }),
     actions: css({
       display: 'flex',
@@ -85,7 +86,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     img: css({
       width: '32px',
       height: '32px',
-      marginRight: theme.spacing(2),
+      marginLeft: theme.spacing(2),
     }),
   };
 };
