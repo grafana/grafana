@@ -2,7 +2,7 @@ import { isArray } from 'lodash';
 import React, { FC } from 'react';
 
 import { ArrayVector, FieldType, FieldConfig, getMinMaxAndDelta, FieldSparkline, isDataFrame } from '@grafana/data';
-import { GraphDrawStyle, GraphFieldConfig, LineInterpolation } from '@grafana/schema';
+import { GraphDrawStyle, GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@grafana/schema';
 
 import { Sparkline } from '../Sparkline/Sparkline';
 
@@ -30,9 +30,10 @@ export const AreaChartCell: FC<TableCellProps> = (props) => {
     color: field.config.color,
     custom: {
       drawStyle: GraphDrawStyle.Line,
-      lineInterpolation: LineInterpolation.Linear,
+      lineInterpolation: LineInterpolation.Smooth,
       lineWidth: 1,
-      fillOpacity: 20,
+      fillOpacity: 17,
+      gradientMode: GraphGradientMode.Hue,
     },
   };
 

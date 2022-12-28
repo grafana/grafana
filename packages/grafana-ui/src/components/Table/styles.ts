@@ -7,8 +7,6 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
   const borderColor = theme.colors.border.weak;
   const resizerColor = theme.colors.primary.border;
   const cellPadding = 6;
-  const lineHeight = theme.typography.body.lineHeight;
-  const bodyFontSize = 14;
   const cellHeight = getCellHeight(theme, cellHeightOption, cellPadding);
   const rowHeight = cellHeight + 2;
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
