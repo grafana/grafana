@@ -51,11 +51,13 @@ func (c *Client) QueryRange(ctx context.Context, q *models.Query, headers http.H
 }
 
 func (c *Client) QueryInstant(ctx context.Context, q *models.Query, headers http.Header) (*http.Response, error) {
-	qs := map[string]string{"query": q.Expr}
-	tr := q.TimeRange()
-	if !tr.End.IsZero() {
-		qs["time"] = formatTime(tr.End)
-	}
+	// We do not need a time range here.
+	// Instant query evaluates at a single point in time.
+	// Using q.TimeRange is aligning the query range to step.
+	// Which causes a misleading time point.
+	// Instead of aligning we use time point directly.
+	// https://prometheus.io/docs/prometheus/latest/querying/api/#instant-queries
+	qs := map[string]string{"query": q.Expr, "time": formatTime(q.End)}
 
 	u, err := c.createUrl("api/v1/query", qs)
 	if err != nil {
