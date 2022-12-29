@@ -75,9 +75,58 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
  * TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
  */
 export interface VariableModel {
+  datasource?: DataSourceRef;
+  description?: string;
+  error?: Record<string, unknown>;
+  global: boolean;
+  hide: VariableHide;
+  id: string;
+  index: number;
   label?: string;
   name: string;
+  /**
+   * TODO: Move this into a separated QueryVariableModel type
+   */
+  query?: (string | Record<string, unknown>);
+  rootStateKey?: string;
+  skipUrlSync: boolean;
+  state: LoadingState;
   type: VariableType;
+}
+
+export const defaultVariableModel: Partial<VariableModel> = {
+  global: false,
+  id: '00000000-0000-0000-0000-000000000000',
+  index: -1,
+  skipUrlSync: false,
+};
+
+export enum VariableHide {
+  DontHide = 0,
+  HideLabel = 1,
+  HideVariable = 2,
+}
+
+export enum LoadingState {
+  Done = 'Done',
+  Error = 'Error',
+  Loading = 'Loading',
+  NotStarted = 'NotStarted',
+  Streaming = 'Streaming',
+}
+
+/**
+ * Ref to a DataSource instance
+ */
+export interface DataSourceRef {
+  /**
+   * The plugin type-id
+   */
+  type?: string;
+  /**
+   * Specific datasource instance
+   */
+  uid?: string;
 }
 
 /**
@@ -86,15 +135,15 @@ export interface VariableModel {
  */
 export interface DashboardLink {
   asDropdown: boolean;
-  icon?: string;
+  icon: string;
   includeVars: boolean;
   keepTime: boolean;
   tags: Array<string>;
   targetBlank: boolean;
   title: string;
-  tooltip?: string;
+  tooltip: string;
   type: DashboardLinkType;
-  url?: string;
+  url: string;
 }
 
 export const defaultDashboardLink: Partial<DashboardLink> = {
@@ -380,8 +429,13 @@ export interface Panel {
   /**
    * Direction to repeat in if 'repeat' is set.
    * "h" for horizontal, "v" for vertical.
+   * TODO this is probably optional
    */
   repeatDirection: ('h' | 'v');
+  /**
+   * Id of the repeating panel.
+   */
+  repeatPanelId?: number;
   /**
    * TODO docs
    */
@@ -544,11 +598,7 @@ export interface RowPanel {
   };
   gridPos?: GridPos;
   id: number;
-  panels: Array<(Panel | {
-      type: 'graph';
-    } | {
-      type: 'heatmap';
-    })>;
+  panels: Array<(Panel | GraphPanel | HeatmapPanel)>;
   /**
    * Name of template variable to repeat for.
    */
@@ -562,12 +612,31 @@ export const defaultRowPanel: Partial<RowPanel> = {
   panels: [],
 };
 
+/**
+ * Support for legacy graph and heatmap panels.
+ */
+export interface GraphPanel {
+  /**
+   * @deprecated this is part of deprecated graph panel
+   */
+  legend?: {
+    show: boolean;
+    sort?: string;
+    sortDesc?: boolean;
+  };
+  type: 'graph';
+}
+
+export interface HeatmapPanel {
+  type: 'heatmap';
+}
+
 export interface Dashboard {
   /**
    * TODO docs
    */
   annotations?: {
-    list: Array<AnnotationQuery>;
+    list?: Array<AnnotationQuery>;
   };
   /**
    * Description of dashboard.
@@ -596,21 +665,67 @@ export interface Dashboard {
    * TODO docs
    */
   liveNow?: boolean;
-  panels?: Array<(Panel | RowPanel | {
-      type: 'graph';
-    } | {
-      type: 'heatmap';
-    })>;
+  panels?: Array<(Panel | RowPanel | GraphPanel | HeatmapPanel)>;
   /**
    * TODO docs
    */
   refresh?: (string | false);
+  /**
+   * Version of the current dashboard data
+   */
+  revision: number;
   /**
    * Version of the JSON schema, incremented each time a Grafana update brings
    * changes to said schema.
    * TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
    */
   schemaVersion: number;
+  snapshot?: {
+    /**
+     * TODO docs
+     */
+    created: string;
+    /**
+     * TODO docs
+     */
+    expires: string;
+    /**
+     * TODO docs
+     */
+    external: boolean;
+    /**
+     * TODO docs
+     */
+    externalUrl: string;
+    /**
+     * TODO docs
+     */
+    id: number;
+    /**
+     * TODO docs
+     */
+    key: string;
+    /**
+     * TODO docs
+     */
+    name: string;
+    /**
+     * TODO docs
+     */
+    orgId: number;
+    /**
+     * TODO docs
+     */
+    updated: string;
+    /**
+     * TODO docs
+     */
+    url?: string;
+    /**
+     * TODO docs
+     */
+    userId: number;
+  };
   /**
    * Theme of dashboard.
    */
@@ -623,7 +738,7 @@ export interface Dashboard {
    * TODO docs
    */
   templating?: {
-    list: Array<VariableModel>;
+    list?: Array<VariableModel>;
   };
   /**
    * Time range for dashboard, e.g. last 6 hours, last 7 days, etc
@@ -685,6 +800,7 @@ export const defaultDashboard: Partial<Dashboard> = {
   graphTooltip: DashboardCursorSync.Off,
   links: [],
   panels: [],
+  revision: -1,
   schemaVersion: 36,
   style: 'dark',
   tags: [],

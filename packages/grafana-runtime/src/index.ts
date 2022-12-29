@@ -23,11 +23,18 @@ export {
   frameToMetricFindValue,
   type BackendDataSourceResponse,
   type DataResponse,
+  type TestingStatus,
 } from './utils/queryResponse';
 export { PanelRenderer, type PanelRendererProps } from './components/PanelRenderer';
 export { PanelDataErrorView, type PanelDataErrorViewProps } from './components/PanelDataErrorView';
 export { toDataQueryError } from './utils/toDataQueryError';
-export { setQueryRunnerFactory, createQueryRunner, type QueryRunnerFactory } from './services/QueryRunner';
+export {
+  setQueryRunnerFactory,
+  createQueryRunner,
+  type QueryRunnerFactory,
+  setRunRequest,
+  getRunRequest,
+} from './services/QueryRunner';
 export { PluginPage } from './components/PluginPage';
 export type { PluginPageType, PluginPageProps } from './components/PluginPage';
 export {

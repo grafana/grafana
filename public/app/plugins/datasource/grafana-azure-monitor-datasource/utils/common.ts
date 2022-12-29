@@ -4,7 +4,7 @@ import { rangeUtil } from '@grafana/data';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 
 import TimegrainConverter from '../time_grain_converter';
-import { AzureMonitorOption } from '../types';
+import { AzureMonitorOption, VariableOptionGroup } from '../types';
 
 export const hasOption = (options: AzureMonitorOption[], value: string): boolean =>
   options.some((v) => (v.options ? hasOption(v.options, value) : v.value === value));
@@ -21,6 +21,21 @@ export const findOptions = (options: AzureMonitorOption[], values: string[] = []
 };
 
 export const toOption = (v: { text: string; value: string }) => ({ value: v.value, label: v.text });
+
+export const addValueToOptions = (
+  values: AzureMonitorOption[],
+  variableOptionGroup: VariableOptionGroup,
+  value?: string
+) => {
+  const options = [...values, variableOptionGroup];
+
+  const optionValues = values.map((m) => m.value.toLowerCase()).concat(variableOptionGroup.options.map((p) => p.value));
+  if (value && !optionValues.includes(value.toLowerCase())) {
+    options.push({ label: value, value });
+  }
+
+  return options;
+};
 
 export function convertTimeGrainsToMs<T extends { value: string }>(timeGrains: T[]) {
   const allowedTimeGrainsMs: number[] = [];

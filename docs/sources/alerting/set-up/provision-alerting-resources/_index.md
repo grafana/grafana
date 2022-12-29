@@ -42,8 +42,8 @@ Currently, provisioning for Grafana Alerting supports alert rules, contact point
 
 **Useful Links:**
 
-[Grafana provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/)
+[Grafana provisioning](/docs/grafana/latest/administration/provisioning/)
 
-[Grafana Cloud provisioning](https://grafana.com/docs/grafana-cloud/infrastructure-as-code/terraform/)
+[Grafana Cloud provisioning](/docs/grafana-cloud/infrastructure-as-code/terraform/)
 
-[Grafana Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/alerting_provisioning)
+[Grafana Alerting provisioning API](/docs/grafana/latest/developers/http_api/alerting_provisioning)

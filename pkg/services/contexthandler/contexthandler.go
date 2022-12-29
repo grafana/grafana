@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -68,6 +69,7 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 		orgService:        orgService,
 		oauthTokenService: oauthTokenService,
 		features:          features,
+		authnService:      authnService,
 	}
 }
 
@@ -200,8 +202,8 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 	defer span.End()
 
 	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
-		identity, err := h.authnService.Authenticate(ctx, authn.ClientAnonymous, &authn.Request{HTTPRequest: reqContext.Req})
-		if err != nil {
+		identity, ok, err := h.authnService.Authenticate(ctx, authn.ClientAnonymous, &authn.Request{HTTPRequest: reqContext.Req})
+		if !ok || err != nil {
 			return false
 		}
 		reqContext.SignedInUser = identity.SignedInUser()
@@ -271,6 +273,26 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apik
 }
 
 func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bool {
+	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientAPIKey, &authn.Request{HTTPRequest: reqContext.Req})
+		if !ok {
+			return false
+		}
+
+		// include auth header in context
+		ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
+		*reqContext.Req = *reqContext.Req.WithContext(ctx)
+
+		if err != nil {
+			writeErr(reqContext, err)
+			return true
+		}
+
+		reqContext.IsSignedIn = true
+		reqContext.SignedInUser = identity.SignedInUser()
+		return true
+	}
+
 	header := reqContext.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
 	var keyString string
@@ -500,7 +522,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 
 	// Rotate the token just before we write response headers to ensure there is no delay between
 	// the new token being generated and the client receiving it.
-	reqContext.Resp.Before(h.rotateEndOfRequestFunc(reqContext, h.AuthTokenService, token))
+	reqContext.Resp.Before(h.rotateEndOfRequestFunc(reqContext))
 
 	return true
 }
@@ -517,8 +539,7 @@ func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.
 	}
 }
 
-func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService auth.UserTokenService,
-	token *auth.UserToken) web.BeforeFunc {
+func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
 		if w.Written() {
@@ -531,6 +552,11 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, a
 			return
 		}
 
+		// if there is no user token attached to reqContext, skip.
+		if reqContext.UserToken == nil {
+			return
+		}
+
 		ctx, span := h.tracer.Start(reqContext.Req.Context(), "rotateEndOfRequestFunc")
 		defer span.End()
 
@@ -540,14 +566,14 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, a
 			reqContext.Logger.Debug("Failed to get client IP address", "addr", addr, "err", err)
 			ip = nil
 		}
-		rotated, err := authTokenService.TryRotateToken(ctx, token, ip, reqContext.Req.UserAgent())
+		rotated, err := h.AuthTokenService.TryRotateToken(ctx, reqContext.UserToken, ip, reqContext.Req.UserAgent())
 		if err != nil {
 			reqContext.Logger.Error("Failed to rotate token", "error", err)
 			return
 		}
 
 		if rotated {
-			cookies.WriteSessionCookie(reqContext, h.Cfg, token.UnhashedToken, h.Cfg.LoginMaxLifetime)
+			cookies.WriteSessionCookie(reqContext, h.Cfg, reqContext.UserToken.UnhashedToken, h.Cfg.LoginMaxLifetime)
 		}
 	}
 }
@@ -707,6 +733,16 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 	}
 
 	return true
+}
+
+// writeErr will write error response based on errutil.Error.
+func writeErr(c *models.ReqContext, err error) {
+	grfErr := &errutil.Error{}
+	if !errors.As(err, grfErr) {
+		c.JsonApiErr(http.StatusInternalServerError, "", err)
+		return
+	}
+	c.JsonApiErr(grfErr.Reason.Status().HTTPStatus(), grfErr.Public().Message, err)
 }
 
 type authHTTPHeaderListContextKey struct{}
