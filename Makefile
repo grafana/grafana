@@ -68,7 +68,7 @@ gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
 	go generate ./pkg/plugins/plugindef
 	go generate ./kinds/gen.go
-	go generate ./pkg/framework/coremodel
+	go generate ./pkg/framework/coremodel/gen.go
 	go generate ./public/app/plugins/gen.go
 	go generate ./pkg/kindsys/report.go
 
@@ -168,7 +168,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	DOCKER_BUILDKIT=1 \
 	docker build \
 	--build-arg BASE_IMAGE=ubuntu:20.04 \
-	--build-arg GO_IMAGE=golang:1.19.3 \
+	--build-arg GO_IMAGE=golang:1.19.4 \
 	--tag grafana/grafana:dev-ubuntu .
 
 ##@ Services

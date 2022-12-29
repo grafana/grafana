@@ -13,7 +13,7 @@ import { UrlSyncManager } from '../services/UrlSyncManager';
 interface DashboardSceneState extends SceneObjectStatePlain {
   title: string;
   uid: string;
-  layout: SceneLayout;
+  body: SceneLayout;
   actions?: SceneObject[];
   subMenu?: SceneObject;
 }
@@ -44,7 +44,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 }
 
 function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { title, layout, actions = [], uid, subMenu } = model.useState();
+  const { title, body, actions = [], uid, subMenu } = model.useState();
 
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
@@ -61,7 +61,7 @@ function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) 
     <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Canvas} toolbar={pageToolbar}>
       {subMenu && <subMenu.Component model={subMenu} />}
       <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
-        <layout.Component model={layout} />
+        <body.Component model={body} />
       </div>
     </Page>
   );
