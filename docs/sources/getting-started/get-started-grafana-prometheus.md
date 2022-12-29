@@ -21,7 +21,7 @@ Download the following components:
 - [Prometheus](https://prometheus.io/download/#prometheus)
 - [node_exporter](https://prometheus.io/download/#node_exporter)
 
-Prometheus, like Grafana, can be installed on many different operating systems. Refer to the [Prometheus download page](https://prometheus.io/download/), which lists all stable versions of Prometheus components.
+Like Grafana, you can install Prometheus on many different operating systems. Refer to the [Prometheus download page](https://prometheus.io/download/) to see a list of stable versions of Prometheus components.
 
 #### 2. Install Prometheus node_exporter
 
