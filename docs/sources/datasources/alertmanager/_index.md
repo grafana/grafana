@@ -24,7 +24,8 @@ Grafana includes built-in support for Prometheus Alertmanager. Once you add it a
 
 ## Provision the data source
 
-Configure the Alertmanager data sources by updating Grafana's configuration files. For more information on how it works and the settings available, refer to the [provisioning docs page]({{< relref "../../administration/provisioning#data-sources" >}}).
+You can provision Alertmanager data sources by updating Grafana's configuration files.
+For more information on provisioning, and common settings available, refer to the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}}).
 
 For example, this YAML provisions an Alertmanager data source running on port 9093, with proxy access and basic authentication:
 
