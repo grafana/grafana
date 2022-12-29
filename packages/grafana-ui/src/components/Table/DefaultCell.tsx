@@ -62,7 +62,8 @@ function getCellStyle(
   const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
 
   // See if we're using deprecated settings
-  const usingDeprecatedSettings = field.config.custom.cellOptions.subOptions['color-background'] === undefined;
+  const usingDeprecatedSettings =
+    field.config.custom.cellOptions.subOptions[TableCellDisplayMode.ColorBackground] === undefined;
 
   // Setup color variables
   let textColor: string | undefined = undefined;
@@ -88,7 +89,7 @@ function getCellStyle(
   }
   // Set colors using updated sub-options format
   else {
-    const displayMode = field.config.custom.cellOptions.subOptions['color-background'].displayMode;
+    const displayMode = field.config.custom.cellOptions.subOptions[TableCellDisplayMode.ColorBackground].displayMode;
 
     if (field.config.custom.cellOptions.displayMode === TableCellDisplayMode.ColorText) {
       textColor = displayValue.color;
