@@ -27,13 +27,11 @@ export const ItemLabels = ({ valueLabels, expanded }: { valueLabels: Field[]; ex
   return (
     <div className={styles.itemLabelsWrap}>
       <div className={styles.valueNavigationWrapper}>
-        {valueLabels.map((value, index) => {
-          return (
-            <span className={styles.valueNavigation} key={index}>
-              {value.name}
-            </span>
-          );
-        })}
+        {valueLabels.map((value, index) => (
+          <span className={styles.valueNavigation} key={value.name}>
+            {value.name}
+          </span>
+        ))}
       </div>
     </div>
   );
