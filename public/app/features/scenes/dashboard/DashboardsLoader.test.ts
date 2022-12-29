@@ -234,7 +234,7 @@ describe('DashboardLoader', () => {
         label: 'constant',
         name: 'constant',
         skipUrlSync: false,
-        type: 'constant',
+        type: 'constant' as VariableType,
         rootStateKey: 'N4XLmH5Vz',
         current: {
           selected: true,
