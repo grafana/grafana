@@ -37,8 +37,7 @@ export function loadPluginCss(options: PluginCssOptions): Promise<any> {
 
 interface PluginImportUtils {
   importPanelPlugin: (id: string) => Promise<PanelPlugin>;
-  importPanelPluginFromMeta: (meta: PanelPluginMeta) => Promise<PanelPlugin>;
-  syncGetPanelPlugin: (id: string) => PanelPlugin | undefined;
+  getPanelPluginFromCache: (id: string) => PanelPlugin | undefined;
 }
 
 let pluginImportUtils: PluginImportUtils | undefined;

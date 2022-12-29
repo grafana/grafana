@@ -69,7 +69,7 @@ import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import { importPanelPlugin, importPanelPluginFromMeta, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
+import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
@@ -150,8 +150,7 @@ export class GrafanaApp {
       // Privide plugin import utils to packages, @grafana/scenes in particular
       setPluginImportUtils({
         importPanelPlugin,
-        importPanelPluginFromMeta,
-        syncGetPanelPlugin,
+        getPanelPluginFromCache: syncGetPanelPlugin,
       });
 
       locationUtil.initialize({
