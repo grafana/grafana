@@ -22,6 +22,6 @@ jobs:
           branch="${GITHUB_REF##*/}"
         fi
         git checkout -b "$branch" || true
-    - name: Push Images
+    - name: test frontend
       run: |
         earthly +frontend-test
