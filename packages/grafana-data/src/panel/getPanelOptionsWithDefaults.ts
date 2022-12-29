@@ -26,6 +26,11 @@ export interface OptionDefaults {
   fieldConfig: FieldConfigSource;
 }
 
+/**
+ * This will return the panel options with defaults applied.
+ * Used internally, not intended for external use.
+ * @internal
+ */
 export function getPanelOptionsWithDefaults({
   plugin,
   currentOptions,
@@ -89,6 +94,10 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
   return result;
 }
 
+/**
+ * Used internally, not intended for external use.
+ * @internal
+ */
 export function filterFieldConfigOverrides(
   overrides: ConfigOverrideRule[],
   condition: (value: DynamicConfigValue) => boolean
@@ -194,6 +203,10 @@ function fixThresholds(thresholds: ThresholdsConfig) {
   }
 }
 
+/**
+ * Used internally, not intended for external use.
+ * @internal
+ */
 export function restoreCustomOverrideRules(current: FieldConfigSource, old: FieldConfigSource): FieldConfigSource {
   const result = {
     defaults: {
@@ -221,10 +234,18 @@ export function restoreCustomOverrideRules(current: FieldConfigSource, old: Fiel
   return result;
 }
 
+/**
+ * Used internally, not intended for external use.
+ * @internal
+ */
 export function isCustomFieldProp(prop: DynamicConfigValue): boolean {
   return prop.id.startsWith('custom.');
 }
 
+/**
+ * Used internally, not intended for external use.
+ * @internal
+ */
 export function isStandardFieldProp(prop: DynamicConfigValue): boolean {
   return !isCustomFieldProp(prop);
 }
