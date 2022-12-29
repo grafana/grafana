@@ -1,18 +1,18 @@
 import { mergeWith, isArray, isObject, unset, isEqual } from 'lodash';
 
+import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
+import { fieldColorModeRegistry } from '../field/fieldColor';
+import { FieldColorConfigSettings } from '../field/overrides/processors';
+import { FieldColorModeId } from '../types/fieldColor';
 import {
   ConfigOverrideRule,
   DynamicConfigValue,
-  FieldColorConfigSettings,
-  FieldColorModeId,
-  fieldColorModeRegistry,
-  FieldConfigOptionsRegistry,
   FieldConfigProperty,
   FieldConfigSource,
-  PanelPlugin,
-  ThresholdsConfig,
-  ThresholdsMode,
-} from '@grafana/data';
+} from '../types/fieldOverrides';
+import { ThresholdsConfig, ThresholdsMode } from '../types/thresholds';
+
+import { PanelPlugin } from './PanelPlugin';
 
 export interface Props {
   plugin: PanelPlugin;

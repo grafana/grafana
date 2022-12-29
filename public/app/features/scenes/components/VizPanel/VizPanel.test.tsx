@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
-import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 
 import { VizPanel } from './VizPanel';
 

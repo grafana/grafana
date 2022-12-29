@@ -1,12 +1,18 @@
 import { DeepPartial } from '@reduxjs/toolkit';
 import React from 'react';
 
-import { AbsoluteTimeRange, FieldConfigSource, PanelModel, PanelPlugin, toUtc } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  FieldConfigSource,
+  PanelModel,
+  PanelPlugin,
+  toUtc,
+  getPanelOptionsWithDefaults,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Field, Input } from '@grafana/ui';
 import { importPanelPlugin, syncGetPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
-import { getPanelOptionsWithDefaults } from '../../../dashboard/state/getPanelOptionsWithDefaults';
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps, SceneLayoutChildState } from '../../core/types';

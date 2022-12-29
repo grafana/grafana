@@ -11,12 +11,13 @@ import {
   compareDataFrameStructures,
   PluginContextProvider,
   ScopedVars,
+  getPanelOptionsWithDefaults,
+  OptionDefaults,
 } from '@grafana/data';
 import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 
-import { getPanelOptionsWithDefaults, OptionDefaults } from '../../dashboard/state/getPanelOptionsWithDefaults';
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
 
 const defaultFieldConfig = { defaults: {}, overrides: [] };
