@@ -102,6 +102,7 @@ const RawListContainer = (props: RawListContainerProps) => {
     <section>
       <header className={styles.header}>
         <Button
+          aria-hidden="true"
           variant="secondary"
           role={'button'}
           title={`${isExpandedView ? 'Contract results' : 'Expand results'}`}
