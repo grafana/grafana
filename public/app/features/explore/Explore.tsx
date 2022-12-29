@@ -40,6 +40,7 @@ import { NoData } from './NoData';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { NodeGraphContainer } from './NodeGraphContainer';
 import { QueryRows } from './QueryRows';
+import RawPrometheusContainer from './RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { SecondaryActions } from './SecondaryActions';
@@ -319,7 +320,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   renderRawPrometheus(width: number) {
     const { exploreId, datasourceInstance, timeZone } = this.props;
     return (
-      <TableContainer
+      <RawPrometheusContainer
         showRawPrometheus={true}
         ariaLabel={selectors.pages.Explore.General.table}
         width={width}
