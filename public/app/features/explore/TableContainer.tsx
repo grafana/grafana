@@ -52,7 +52,6 @@ export class TableContainer extends PureComponent<Props> {
   }
 
   render() {
-    console.log('TableContainerProps', this.props);
     const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
     const height = this.getTableHeight();
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
