@@ -103,7 +103,8 @@ const RawListContainer = (props: RawListContainerProps) => {
       <header className={styles.header}>
         <Button
           variant="secondary"
-          title="Add query"
+          role={'button'}
+          title={`${isExpandedView ? 'Contract results' : 'Expand results'}`}
           icon={isExpandedView ? 'minus' : 'plus'}
           type="button"
           onClick={onContentClick}
