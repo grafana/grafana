@@ -10,6 +10,7 @@ import { getPanelOptionsWithDefaults } from '../../../dashboard/state/getPanelOp
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps, SceneLayoutChildState } from '../../core/types';
+import { VariableDependencyConfig } from '../../variables/VariableDependencyConfig';
 
 import { VizPanelRenderer } from './VizPanelRenderer';
 
@@ -26,6 +27,8 @@ export interface VizPanelState<TOptions = {}, TFieldConfig = {}> extends SceneLa
 export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<VizPanelState<TOptions, TFieldConfig>> {
   public static Component = VizPanelRenderer;
   public static Editor = VizPanelEditor;
+
+  protected _variableDependency = new VariableDependencyConfig(this, { statePaths: ['options', 'title'] });
 
   // Not part of state as this is not serializable
   private _plugin?: PanelPlugin;
