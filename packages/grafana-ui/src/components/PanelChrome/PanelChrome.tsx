@@ -82,7 +82,9 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
             </div>
           )}
 
-          <div data-testid="title-items">{titleItems(innerWidth, innerHeight)}</div>
+          <div className={styles.titleItems} data-testid="title-items">
+            {titleItems(innerWidth, innerHeight)}
+          </div>
 
           {menu && (
             <Dropdown overlay={menu} placement="bottom">
@@ -199,6 +201,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     rightAligned: css({
       marginLeft: 'auto',
+    }),
+    titleItems: css({
+      display: 'flex',
+      alignItems: 'center',
+      overflow: 'hidden',
+      padding: theme.spacing(1),
     }),
   };
 };

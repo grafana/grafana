@@ -1,8 +1,17 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { PanelModel, renderMarkdown, ScopedVars, LinkModelSupplier, PanelData } from '@grafana/data';
+import {
+  PanelModel,
+  renderMarkdown,
+  ScopedVars,
+  LinkModelSupplier,
+  PanelData,
+  InterpolateFunction,
+  GrafanaTheme2,
+} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Button, Dropdown, IconButton, Menu } from '@grafana/ui';
+import { Dropdown, Icon, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PanelHeaderNotices } from './PanelHeaderNotices';
 
@@ -19,8 +28,9 @@ export interface Props {
 }
 
 export function PanelHeaderTitleItems(props: Props) {
-  // description
   const { panelDescription, alertState, scopedVars, links, replaceVariables, data, panelId } = props;
+  const styles = useStyles2(getStyles);
+  // description
   const rawDescription = panelDescription || '';
   const descriptionMarkdown = getTemplateSrv().replace(rawDescription, scopedVars);
   const description = renderMarkdown(descriptionMarkdown);
@@ -46,28 +56,31 @@ export function PanelHeaderTitleItems(props: Props) {
     );
   };
 
-  const descriptionItem = <IconButton name="info-circle" tooltip={getDescriptionContent} />;
+  const descriptionItem = (
+    <Tooltip interactive content={getDescriptionContent}>
+      <ToolbarButton icon="info-circle" className={styles.description} />
+    </Tooltip>
+  );
 
   const alertStateItem = (
-    <IconButton
-      name={alertState === 'alerting' ? 'heart-break' : 'heart'}
+    <ToolbarButton
+      icon={<Icon name={alertState === 'alerting' ? 'heart-break' : 'heart'} className="panel-alert-icon" />}
       tooltip={`alerting is ${alertState}`}
-      className="icon-gf panel-alert-icon"
-      style={{ marginRight: '4px' }}
-      size="sm"
+      className={styles.item}
     />
   );
 
   const linksItem = (
     <Dropdown overlay={getLinksContent}>
-      <Button icon="external-link-alt" aria-label="panel links" variant="secondary" />
+      <ToolbarButton icon="external-link-alt" aria-label="panel links" className={styles.item} />
     </Dropdown>
   );
 
   const timeshift = (
     <>
-      <IconButton name="clock-nine" size="sm" />
-      {data.request && data.request.timeInfo}
+      <ToolbarButton aria-label="timeshift" className={styles.timeshift} icon="clock-nine">
+        {data.request?.timeInfo}
+      </ToolbarButton>
     </>
   );
 
@@ -76,8 +89,36 @@ export function PanelHeaderTitleItems(props: Props) {
       {data.series && <PanelHeaderNotices frames={data.series} panelId={panelId} />}
       {description && descriptionItem}
       {panelLinks && panelLinks.length > 0 && linksItem}
-      {data.request && timeshift}
+      {data.request && data.request.timeInfo && timeshift}
       {alertState && alertStateItem}
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  description: css({
+    border: 'none',
+
+    code: {
+      whiteSpace: 'normal',
+      wordWrap: 'break-word',
+    },
+
+    'pre > code': {
+      display: 'block',
+    },
+  }),
+
+  item: css({
+    border: 'none',
+  }),
+
+  timeshift: css({
+    border: 'none',
+    color: theme.colors.text.link,
+
+    '&:hover': {
+      color: theme.colors.emphasize(theme.colors.text.link, 0.03),
+    },
+  }),
+});

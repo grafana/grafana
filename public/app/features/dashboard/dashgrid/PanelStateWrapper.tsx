@@ -584,6 +584,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     });
 
     // for new panel header design
+    const containerClassNamesNewPanelChrome = classNames({
+      'panel-container--absolute': isSoloRoute(locationService.getLocation().pathname),
+      'panel-container--transparent': transparent,
+      'panel-container--no-title': this.hasOverlayHeader(),
+      [`panel-alert-state--${alertState}`]: alertState !== undefined,
+    });
+
     const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
     const title = panel.getDisplayTitle();
     const noPadding: PanelPadding = plugin.noPadding ? 'none' : 'md';
@@ -609,31 +616,36 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     };
     if (config.featureToggles.newPanelChromeUI) {
       return (
-        <PanelChrome
-          width={width}
-          height={height}
-          title={title}
-          titleItems={titleItems}
-          leftItems={leftItems}
-          padding={noPadding}
+        <section
+          className={containerClassNamesNewPanelChrome}
+          aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
         >
-          {(innerWidth, innerHeight) => (
-            <>
-              <ErrorBoundary
-                dependencies={[data, plugin, panel.getOptions()]}
-                onError={this.onPanelError}
-                onRecover={this.onPanelErrorRecover}
-              >
-                {({ error }) => {
-                  if (error) {
-                    return null;
-                  }
-                  return this.renderPanelContent(innerWidth, innerHeight);
-                }}
-              </ErrorBoundary>
-            </>
-          )}
-        </PanelChrome>
+          <PanelChrome
+            width={width}
+            height={height}
+            title={title}
+            titleItems={titleItems}
+            leftItems={leftItems}
+            padding={noPadding}
+          >
+            {(innerWidth, innerHeight) => (
+              <>
+                <ErrorBoundary
+                  dependencies={[data, plugin, panel.getOptions()]}
+                  onError={this.onPanelError}
+                  onRecover={this.onPanelErrorRecover}
+                >
+                  {({ error }) => {
+                    if (error) {
+                      return null;
+                    }
+                    return this.renderPanelContent(innerWidth, innerHeight);
+                  }}
+                </ErrorBoundary>
+              </>
+            )}
+          </PanelChrome>
+        </section>
       );
     } else {
       return (
