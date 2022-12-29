@@ -175,7 +175,6 @@ func Test_getAlertFolderNameFromDashboard(t *testing.T) {
 }
 
 func Test_shortUIDCaseInsensitiveConflicts(t *testing.T) {
-	// Note: Because of the nature of this test, if it's flaky it could be because of an issue in uid generation not necessarily a faulty test.
 	s := uidSet{
 		set:             make(map[string]struct{}),
 		caseInsensitive: true,
