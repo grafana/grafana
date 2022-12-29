@@ -123,9 +123,7 @@ const RawListContainer = (props: RawListContainerProps) => {
               <ItemLabels valueLabels={valueLabels} expanded={isExpandedView} />
             )}
             <List
-              ref={(list) => {
-                listRef.current = list;
-              }}
+              ref={listRef}
               itemCount={items.length}
               className={isExpandedView ? styles.mobileWrapper : styles.wrapper}
               itemSize={(index) => getListItemHeight(index, isExpandedView)}
