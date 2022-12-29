@@ -25,7 +25,9 @@ Like Grafana, you can install Prometheus on many different operating systems. Re
 
 #### 2. Install Prometheus node_exporter
 
-Install node_exporter on all hosts you want to monitor. In this guide we will assume you are installing it locally. Prometheus node_exporter is a widely used tool that exposes system metrics. For instructions on how to install node_exporter, refer to the [Installing and running the node_exporter](https://prometheus.io/docs/guides/node-exporter/#installing-and-running-the-node-exporter) section in Prometheus documentation.
+Install node_exporter on all hosts you want to monitor. This guide shows you how to install it locally. 
+
+Prometheus node_exporter is a widely used tool that exposes system metrics. For instructions on installing node_exporter, refer to the [Installing and running the node_exporter](https://prometheus.io/docs/guides/node-exporter/#installing-and-running-the-node-exporter) section in the Prometheus documentation.
 
 When running node_exporter locally, you can check that it is exporting metrics by navigating to `http://localhost:9100/metrics`.
 
