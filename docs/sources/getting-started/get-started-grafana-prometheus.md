@@ -29,7 +29,7 @@ Install node_exporter on all hosts you want to monitor. This guide shows you how
 
 Prometheus node_exporter is a widely used tool that exposes system metrics. For instructions on installing node_exporter, refer to the [Installing and running the node_exporter](https://prometheus.io/docs/guides/node-exporter/#installing-and-running-the-node-exporter) section in the Prometheus documentation.
 
-When running node_exporter locally, you can check that it is exporting metrics by navigating to `http://localhost:9100/metrics`.
+When you run node_exporter locally, navigate to `http://localhost:9100/metrics` to check that it is exporting metrics.
 
 > **Note**: The instructions in the referenced topic are intended for Linux users. You may have to alter the instructions slightly depending on your operating system. For example, if you are on Windows, use the [windows_exporter](https://github.com/prometheus-community/windows_exporter) instead.
 
