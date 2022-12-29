@@ -1,10 +1,10 @@
-import { ComponentType } from 'enzyme';
 import { defaultsDeep } from 'lodash';
+import { ComponentType } from 'react';
 
-import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin, PanelProps } from '@grafana/data';
+import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin, PanelProps } from '../../src';
 
 export const getMockPlugins = (amount: number): PluginMeta[] => {
-  const plugins = [];
+  const plugins: PluginMeta[] = [];
 
   for (let i = 0; i <= amount; i++) {
     plugins.push({
@@ -18,18 +18,19 @@ export const getMockPlugins = (amount: number): PluginMeta[] => {
           url: 'url/to/GrafanaLabs',
         },
         description: 'pretty decent plugin',
-        links: ['one link'],
+        links: [{ name: 'one link', url: 'one link' }],
         logos: { small: 'small/logo', large: 'large/logo' },
-        screenshots: [{ path: `screenshot/${i}` }],
+        screenshots: [{ path: `screenshot/${i}`, name: 'test' }],
         updated: '2018-09-26',
         version: '1',
       },
       latestVersion: `1.${i}`,
       name: `pretty cool plugin-${i}`,
       pinned: false,
-      state: '',
-      type: '',
-      module: {},
+      state: undefined,
+      type: PluginType.panel,
+      module: '',
+      baseUrl: '',
     });
   }
 
