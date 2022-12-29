@@ -6,14 +6,14 @@ load(
 )
 
 grabpl_version = 'v3.0.20'
-build_image = 'grafana/build-container:1.6.4'
+build_image = 'grafana/build-container:1.6.6'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
-go_image = 'golang:1.19.3'
+go_image = 'golang:1.19.4'
 
 trigger_oss = {
     'repo': [
