@@ -7,6 +7,7 @@ import (
 )
 
 const LogzioHeadersCtxKey string = "logzioHeaders"
+const LogzioRequestIdHeaderName string = "x-request-id"
 
 type LogzIoHeaders struct {
 	RequestHeaders http.Header
@@ -16,7 +17,7 @@ var logzioHeadersWhitelist = []string{
 	"x-auth-token",
 	"x-api-token",
 	"user-context",
-	"x-request-id",
+	LogzioRequestIdHeaderName,
 	"cookie",
 	"x-logz-csrf-token",
 	"x-logz-csrf-token-v2",

@@ -53,6 +53,7 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 	return ots, ots.initOpentelemetryTracer()
 }
 
+type RequestIdKey struct{} // LOGZ.IO GRAFANA CHANGE :: DEV-36317 - Add request ID to logs
 type traceKey struct{}
 type traceValue struct {
 	ID        string
@@ -60,11 +61,16 @@ type traceValue struct {
 }
 
 func TraceIDFromContext(c context.Context, requireSampled bool) string {
-	v := c.Value(traceKey{})
-	// Return traceID if a) it is present and b) it is sampled when requireSampled param is true
+	// LOGZ.IO GRAFANA CHANGE :: DEV-36317 - Add request ID to logs, enable commented code when using opentelementy tracing
+	/*v := c.Value(traceKey{})
+	//Return traceID if a) it is present and b) it is sampled when requireSampled param is true
 	if trace, ok := v.(traceValue); ok && (!requireSampled || trace.IsSampled) {
 		return trace.ID
+	}*/
+	if requestId, ok := c.Value(RequestIdKey{}).(string); ok {
+		return requestId
 	}
+	// LOGZ.IO GRAFANA CHANGE :: end
 	return ""
 }
 

@@ -96,6 +96,7 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 
 	// Inject ReqContext into a request context and replace the request instance in the macaron context
 	mContext.Req = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), reqContextKey{}, reqContext))
+	mContext.Req = mContext.Req.WithContext(context.WithValue(mContext.Req.Context(), tracing.RequestIdKey{}, mContext.Req.Header.Get(models.LogzioRequestIdHeaderName))) // LOGZ.IO GRAFANA CHANGE :: DEV-36317 - Add request ID to logs
 	mContext.Map(mContext.Req)
 
 	traceID := tracing.TraceIDFromContext(mContext.Req.Context(), false)
