@@ -548,9 +548,7 @@ export function useFieldOverrides(
         data: series,
         fieldConfig,
         fieldConfigRegistry,
-        replaceVariables: (str: string, scopedVars?: ScopedVars) => {
-          return replace(str, scopedVars);
-        },
+        replaceVariables: replace,
         theme,
         timeZone,
       }),
