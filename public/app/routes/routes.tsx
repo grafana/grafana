@@ -600,7 +600,7 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
       path: '/scenes/grafana-monitoring',
       exact: false,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/apps/GrafanaMonitoringApp')
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/apps/GrafanaMonitoringApp2')
       ),
     },
     {
