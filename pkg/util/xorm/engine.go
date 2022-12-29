@@ -5,15 +5,11 @@
 package xorm
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"database/sql"
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -62,11 +58,6 @@ func (engine *Engine) CondDeleted(col *core.Column) builder.Cond {
 	var cond = builder.NewCond()
 	if col.SQLType.IsNumeric() {
 		cond = builder.Eq{col.Name: 0}
-	} else {
-		// FIXME: mssql: The conversion of a nvarchar data type to a datetime data type resulted in an out-of-range value.
-		if engine.dialect.DBType() != core.MSSQL {
-			cond = builder.Eq{col.Name: zeroTime1}
-		}
 	}
 
 	if col.Nullable {
@@ -1256,54 +1247,6 @@ func (engine *Engine) SumsInt(bean interface{}, colNames ...string) ([]int64, er
 	return session.SumsInt(bean, colNames...)
 }
 
-// ImportFile SQL DDL file
-func (engine *Engine) ImportFile(ddlPath string) ([]sql.Result, error) {
-	file, err := os.Open(ddlPath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	return engine.Import(file)
-}
-
-// Import SQL DDL from io.Reader
-func (engine *Engine) Import(r io.Reader) ([]sql.Result, error) {
-	var results []sql.Result
-	var lastError error
-	scanner := bufio.NewScanner(r)
-
-	semiColSpliter := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		if atEOF && len(data) == 0 {
-			return 0, nil, nil
-		}
-		if i := bytes.IndexByte(data, ';'); i >= 0 {
-			return i + 1, data[0:i], nil
-		}
-		// If we're at EOF, we have a final, non-terminated line. Return it.
-		if atEOF {
-			return len(data), data, nil
-		}
-		// Request more data.
-		return 0, nil, nil
-	}
-
-	scanner.Split(semiColSpliter)
-
-	for scanner.Scan() {
-		query := strings.Trim(scanner.Text(), " \t\n\r")
-		if len(query) > 0 {
-			engine.logSQL(query)
-			result, err := engine.DB().Exec(query)
-			results = append(results, result)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return results, lastError
-}
-
 // nowTime return current time
 func (engine *Engine) nowTime(col *core.Column) (interface{}, time.Time) {
 	t := time.Now()
@@ -1339,11 +1282,7 @@ func (engine *Engine) formatTime(sqlTypeName string, t time.Time) (v interface{}
 	case core.DateTime, core.TimeStamp, core.Varchar: // !DarthPestilane! format time when sqlTypeName is core.Varchar.
 		v = t.Format("2006-01-02 15:04:05")
 	case core.TimeStampz:
-		if engine.dialect.DBType() == core.MSSQL {
-			v = t.Format("2006-01-02T15:04:05.9999999Z07:00")
-		} else {
-			v = t.Format(time.RFC3339Nano)
-		}
+		v = t.Format(time.RFC3339Nano)
 	case core.BigInt, core.Int:
 		v = t.Unix()
 	default:

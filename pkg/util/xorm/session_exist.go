@@ -45,18 +45,14 @@ func (session *Session) Exist(bean ...interface{}) (bool, error) {
 					return false, err
 				}
 
-				if session.engine.dialect.DBType() == core.MSSQL {
-					sqlStr = fmt.Sprintf("SELECT TOP 1 * FROM %s %s WHERE %s", tableName, joinStr, condSQL)
-				} else if session.engine.dialect.DBType() == core.ORACLE {
+				if session.engine.dialect.DBType() == core.ORACLE {
 					sqlStr = fmt.Sprintf("SELECT * FROM %s WHERE (%s) %s AND ROWNUM=1", tableName, joinStr, condSQL)
 				} else {
 					sqlStr = fmt.Sprintf("SELECT * FROM %s %s WHERE %s LIMIT 1", tableName, joinStr, condSQL)
 				}
 				args = condArgs
 			} else {
-				if session.engine.dialect.DBType() == core.MSSQL {
-					sqlStr = fmt.Sprintf("SELECT TOP 1 * FROM %s %s", tableName, joinStr)
-				} else if session.engine.dialect.DBType() == core.ORACLE {
+				if session.engine.dialect.DBType() == core.ORACLE {
 					sqlStr = fmt.Sprintf("SELECT * FROM  %s %s WHERE ROWNUM=1", tableName, joinStr)
 				} else {
 					sqlStr = fmt.Sprintf("SELECT * FROM %s %s LIMIT 1", tableName, joinStr)

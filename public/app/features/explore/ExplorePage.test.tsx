@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import React, { ComponentProps } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { serializeStateToUrlParam } from '@grafana/data';
 import { locationService, config } from '@grafana/runtime';
@@ -27,13 +28,13 @@ jest.mock('app/core/core', () => {
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
-    default(props: any) {
-      return <div>{props.children({ width: 1000 })}</div>;
+    default(props: ComponentProps<typeof AutoSizer>) {
+      return <div>{props.children({ width: 1000, height: 1000 })}</div>;
     },
   };
 });
 
-describe('Wrapper', () => {
+describe('ExplorePage', () => {
   afterEach(() => {
     tearDown();
   });
