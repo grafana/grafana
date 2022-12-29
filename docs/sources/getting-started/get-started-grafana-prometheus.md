@@ -35,7 +35,7 @@ When you run node_exporter locally, navigate to `http://localhost:9100/metrics` 
 
 #### 3. Install and configure Prometheus
 
-1. After downloading Prometheus [here](https://prometheus.io/download/#prometheus), extract it and navigate to the directory.
+1. After [downloading Prometheus](https://prometheus.io/download/#prometheus), extract it and navigate to the directory.
 
    ```
    tar xvfz prometheus-*.tar.gz
