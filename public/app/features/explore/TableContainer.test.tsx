@@ -1,17 +1,13 @@
-import { screen, render, within, fireEvent } from '@testing-library/react';
+import { screen, render, within } from '@testing-library/react';
 import React from 'react';
 
-import { DataFrame, toDataFrame, FieldType, InternalTimeZones } from '@grafana/data';
-import { ExploreId, TABLE_RESULTS_STYLE } from 'app/types/explore';
+import { DataFrame, toDataFrame, FieldType, InternalTimeZones, TimeRange } from '@grafana/data';
+import { ExploreId } from 'app/types/explore';
 
 import { TableContainer } from './TableContainer';
 
 function getTable(): HTMLElement {
   return screen.getAllByRole('table')[0];
-}
-
-function getTableToggle(): HTMLElement {
-  return screen.getAllByRole('radio')[0];
 }
 
 function getRowsData(rows: HTMLElement[]): Object[] {
@@ -58,33 +54,13 @@ const defaultProps = {
   onCellFilterAdded: jest.fn(),
   tableResult: [dataFrame],
   splitOpenFn: () => {},
-  range: {} as any,
+  range: {} as TimeRange,
   timeZone: InternalTimeZones.utc,
-  resultsStyle: TABLE_RESULTS_STYLE.raw,
-  showRawPrometheus: false,
 };
 
 describe('TableContainer', () => {
   it('should render component', () => {
     render(<TableContainer {...defaultProps} />);
-
-    expect(getTable()).toBeInTheDocument();
-    const rows = within(getTable()).getAllByRole('row');
-    expect(rows).toHaveLength(5);
-    expect(getRowsData(rows)).toEqual([
-      { time: '2021-01-01 00:00:00', text: 'test_string_1' },
-      { time: '2021-01-01 03:00:00', text: 'test_string_2' },
-      { time: '2021-01-01 01:00:00', text: 'test_string_3' },
-      { time: '2021-01-01 02:00:00', text: 'test_string_4' },
-    ]);
-  });
-
-  it('should render component for prometheus', () => {
-    render(<TableContainer {...defaultProps} showRawPrometheus={true} />);
-
-    expect(screen.queryAllByRole('table').length).toBe(1);
-    fireEvent.click(getTableToggle());
-
     expect(getTable()).toBeInTheDocument();
     const rows = within(getTable()).getAllByRole('row');
     expect(rows).toHaveLength(5);
