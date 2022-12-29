@@ -11,7 +11,7 @@ export {
   TableCellDisplayMode,
   type FieldTextAlignment,
   BarGaugeDisplayMode,
-  BackgroundDisplayMode,
+  TableCellBackgroundDisplayMode,
 } from '@grafana/schema';
 
 export interface TableRow {

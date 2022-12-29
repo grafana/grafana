@@ -3,7 +3,7 @@ import React, { FC, ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { DisplayValue, Field, formattedValueToString } from '@grafana/data';
-import { BackgroundDisplayMode } from '@grafana/schema';
+import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
 import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
@@ -78,7 +78,7 @@ function getCellStyle(
       bgColor = tinycolor(displayValue.color).toRgbString();
     } else if (
       field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground &&
-      field.config.custom?.backgroundDisplayMode === BackgroundDisplayMode.Gradient
+      field.config.custom?.backgroundDisplayMode === TableCellBackgroundDisplayMode.Gradient
     ) {
       const bgColor2 = tinycolor(displayValue.color)
         .darken(10 * darkeningFactor)
@@ -93,10 +93,10 @@ function getCellStyle(
 
     if (field.config.custom.cellOptions.displayMode === TableCellDisplayMode.ColorText) {
       textColor = displayValue.color;
-    } else if (displayMode === BackgroundDisplayMode.Basic) {
+    } else if (displayMode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
-    } else if (displayMode === BackgroundDisplayMode.Gradient) {
+    } else if (displayMode === TableCellBackgroundDisplayMode.Gradient) {
       const bgColor2 = tinycolor(displayValue.color)
         .darken(10 * darkeningFactor)
         .spin(5);

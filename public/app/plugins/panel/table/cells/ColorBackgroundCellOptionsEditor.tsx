@@ -1,14 +1,14 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { BackgroundDisplayMode } from '@grafana/schema';
+import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 import { HorizontalGroup, Select, Field } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../models.gen';
 
 const colorBackgroundOpts: SelectableValue[] = [
-  { value: BackgroundDisplayMode.Basic, label: 'Basic' },
-  { value: BackgroundDisplayMode.Gradient, label: 'Gradient' },
+  { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },
+  { value: TableCellBackgroundDisplayMode.Gradient, label: 'Gradient' },
 ];
 
 export const ColorBackgroundCellOptionsEditor: React.FC<TableCellEditorProps> = ({
