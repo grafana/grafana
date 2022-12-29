@@ -80,4 +80,4 @@ function formatValue(value) {
   return hasWhiteSpaces ? `"${escapeQuotes(value)}"` : value;
 }
 
-module.exports = CustomReporter;
+module.exports = LogReporter;
