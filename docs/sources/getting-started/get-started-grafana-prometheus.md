@@ -75,7 +75,9 @@ You can see that the node_exporter metrics have been delivered to Prometheus. Ne
 
 #### 4. Configure Prometheus for Grafana
 
-When running Prometheus locally, there are two ways to configure Prometheus for Grafana. You may use a hosted Grafana instance at [Grafana Cloud](https://grafana.com/) or run Grafana locally. This guide will describe configuring Prometheus in a hosted Grafana instance on Grafana Cloud.
+When running Prometheus locally, there are two ways to configure Prometheus for Grafana. You can use a hosted Grafana instance at [Grafana Cloud](https://grafana.com/) or run Grafana locally. 
+
+This guide describes configuring Prometheus in a hosted Grafana instance on Grafana Cloud.
 
 1. Sign up for [https://grafana.com/](https://grafana.com/auth/sign-up/create-user). Grafana gives you a Prometheus instance out of the box.
 
