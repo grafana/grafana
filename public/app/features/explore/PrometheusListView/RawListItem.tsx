@@ -12,7 +12,7 @@ import RawListItemAttributes from './RawListItemAttributes';
 
 export interface RawListProps {
   listItemData: instantQueryRawVirtualizedListData;
-  listKey: number;
+  listKey: string;
   totalNumberOfValues: number;
   valueLabels?: Field[];
   isExpandedView: boolean;
@@ -21,7 +21,7 @@ export interface RawListProps {
 export type RawListValue = { key: string; value: string };
 export const rawListExtraSpaceAtEndOfLine = '20px';
 export const rawListItemColumnWidth = '80px';
-export const rawListpaddingToHoldSpaceForCopyIcon = '25px';
+export const rawListPaddingToHoldSpaceForCopyIcon = '25px';
 
 const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number, isExpandedView: boolean) => ({
   rowWrapper: css`
@@ -44,7 +44,7 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number, isExpandedV
   `,
   rowLabelWrapWrap: css`
     position: relative;
-    width: calc(100% - (${totalNumberOfValues} * ${rawListItemColumnWidth}) - ${rawListpaddingToHoldSpaceForCopyIcon});
+    width: calc(100% - (${totalNumberOfValues} * ${rawListItemColumnWidth}) - ${rawListPaddingToHoldSpaceForCopyIcon});
   `,
   rowLabelWrap: css`
     white-space: nowrap;
@@ -128,9 +128,14 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
       )}
       <div key={listKey} className={styles.rowWrapper}>
         <span className={styles.copyToClipboardWrapper}>
-          <IconButton tooltip="Copy to clipboard" onClick={() => copyToClipboard(stringRep)} name="copy" />
+          <IconButton
+            role={'button'}
+            tooltip="Copy to clipboard"
+            onClick={() => copyToClipboard(stringRep)}
+            name="copy"
+          />
         </span>
-        <span className={styles.rowLabelWrapWrap}>
+        <span role={'cell'} className={styles.rowLabelWrapWrap}>
           <div className={styles.rowLabelWrap}>
             <span>{__name__}</span>
             <span>{`{`}</span>

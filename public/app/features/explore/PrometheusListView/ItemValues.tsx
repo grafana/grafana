@@ -6,7 +6,7 @@ import { useStyles } from '@grafana/ui/src';
 
 import { RawPrometheusListItemEmptyValue } from '../utils/getRawPrometheusListItemsFromDataFrame';
 
-import { rawListItemColumnWidth, rawListpaddingToHoldSpaceForCopyIcon, RawListValue } from './RawListItem';
+import { rawListItemColumnWidth, rawListPaddingToHoldSpaceForCopyIcon, RawListValue } from './RawListItem';
 
 const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
   rowWrapper: css`
@@ -38,7 +38,7 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
     }
   `,
   rowValuesWrap: css`
-    padding-left: ${rawListpaddingToHoldSpaceForCopyIcon};
+    padding-left: ${rawListPaddingToHoldSpaceForCopyIcon};
     width: calc(${totalNumberOfValues} * ${rawListItemColumnWidth});
     display: flex;
   `,
@@ -55,7 +55,7 @@ export const ItemValues = ({
 }) => {
   const styles = useStyles((theme) => getStyles(theme, totalNumberOfValues));
   return (
-    <div className={styles.rowValuesWrap}>
+    <div role={'cell'} className={styles.rowValuesWrap}>
       {values?.map((value) => {
         if (hideFieldsWithoutValues) {
           if (value.value !== undefined && value.value !== RawPrometheusListItemEmptyValue) {

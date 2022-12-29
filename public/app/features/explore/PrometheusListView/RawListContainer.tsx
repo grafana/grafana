@@ -146,7 +146,7 @@ const RawListContainer = (props: RawListContainerProps) => {
                       isExpandedView={isExpandedView}
                       valueLabels={filteredValueLabels}
                       totalNumberOfValues={valueLabels.length}
-                      listKey={index}
+                      listKey={items[index].__name__}
                       listItemData={items[index]}
                     />
                   </div>
