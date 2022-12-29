@@ -69,7 +69,9 @@ The following example shows you the code you should add. Notice that static conf
     ./prometheus --config.file=./prometheus.yml
    ```
 
-1. Confirm that Prometheus is running by navigating to `http://localhost:9090`. You can see that the node_exporter metrics have been delivered to Prometheus. Next we will send them to Grafana.
+1. Confirm that Prometheus is running by navigating to `http://localhost:9090`. 
+
+You can see that the node_exporter metrics have been delivered to Prometheus. Next, the metrics will be sent to Grafana.
 
 #### 4. Configure Prometheus for Grafana
 
