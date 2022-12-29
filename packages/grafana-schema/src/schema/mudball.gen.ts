@@ -481,29 +481,41 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
- * Table cell options. Each cell has a display mode
- * along with sub options for that display mode. Sub options
- * are grouped within the subOptions property by display mode.
+ * Interface for table cell types that have no additional options.
  */
-export interface TableCellOptions {
-  displayMode: TableCellDisplayMode;
-  subOptions: TableCellSubOptionGroup;
+export interface TableCellNoOptions {
+  displayMode: TableCellDisplayMode.Auto |
+  TableCellDisplayMode.ColorText |
+  TableCellDisplayMode.Image |
+  TableCellDisplayMode.JSONView;
 }
 
 /**
- * Each sub option group can have an arbitrary set of options.
+ * Allows for the table cell gauge display type to set the gauge mode.
  */
-export type TableCellSubOptionGroup = Partial<Record<TableCellDisplayMode, TableCellSubOptions>>;
+export interface TableGaugeCellOptions {
+  displayMode: TableCellDisplayMode.Gauge;
+  gaugeDisplayMode: BarGaugeDisplayMode;
+}
 
 /**
- * Each cell will have it's own properties so
- * the sub-options can contain keys to any value.
+ * Allows for the background display mode to be set for the color background cell.
  */
-export interface TableCellSubOptions {
-  [key: string]: any;
-};
+export interface TableColorBackgroundCellOptions {
+  displayMode: TableCellDisplayMode.ColorBackground;
+  backgroundDisplayMode: TableCellBackgroundDisplayMode;
+}
 
 
+/**
+ * Table cell options. Each cell has a display mode
+ * and other potential options for that display.
+ */
+export type TableCellOptions = TableCellNoOptions | TableGaugeCellOptions | TableColorBackgroundCellOptions;
+
+/**
+ * Default options for table cell display.
+ */
 export const defaultTableCellOptions: Partial<TableCellOptions> = {
   displayMode: TableCellDisplayMode.Auto,
 };
