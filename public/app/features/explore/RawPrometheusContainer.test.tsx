@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
-import { FieldType, InternalTimeZones, toDataFrame } from '@grafana/data';
+import { FieldType, InternalTimeZones, TimeRange, toDataFrame } from '@grafana/data';
 import { ExploreId, TABLE_RESULTS_STYLE } from 'app/types/explore';
 
 import { RawPrometheusContainer } from './RawPrometheusContainer';
@@ -58,7 +58,7 @@ const defaultProps = {
   onCellFilterAdded: jest.fn(),
   tableResult: [dataFrame],
   splitOpenFn: () => {},
-  range: {} as any,
+  range: {} as TimeRange,
   timeZone: InternalTimeZones.utc,
   resultsStyle: TABLE_RESULTS_STYLE.raw,
   showRawPrometheus: false,
