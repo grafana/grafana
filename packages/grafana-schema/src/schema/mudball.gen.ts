@@ -405,7 +405,7 @@ export enum TableCellDisplayMode {
 /**
  * TODO Docs
  */
-export enum BackgroundDisplayMode {
+export enum TableCellBackgroundDisplayMode {
   Basic = 'basic',
   Gradient = 'gradient',
 }
