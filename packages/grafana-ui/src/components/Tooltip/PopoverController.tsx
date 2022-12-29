@@ -19,6 +19,7 @@ interface Props {
   className?: string;
   children: PopperControllerRenderProp;
   hideAfter?: number;
+  showAfter?: number;
 }
 
 interface State {
@@ -27,16 +28,23 @@ interface State {
 
 class PopoverController extends Component<Props, State> {
   private hideTimeout: ReturnType<typeof setTimeout> | null = null;
+  private showTimeout: ReturnType<typeof setTimeout> | null = null;
+
   state = { show: false };
 
   showPopper = () => {
     if (this.hideTimeout) {
       clearTimeout(this.hideTimeout);
     }
-    this.setState({ show: true });
+    this.showTimeout = setTimeout(() => {
+      this.setState({ show: true });
+    }, this.props.showAfter ?? 250);
   };
 
   hidePopper = () => {
+    if (this.showTimeout) {
+      clearTimeout(this.showTimeout);
+    }
     this.hideTimeout = setTimeout(() => {
       this.setState({ show: false });
     }, this.props.hideAfter);
