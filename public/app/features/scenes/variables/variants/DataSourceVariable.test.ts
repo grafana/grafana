@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { getMockPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 
 import { SceneObject } from '../../core/types';
 import { CustomFormatterFn } from '../interpolation/sceneInterpolator';

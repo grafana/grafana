@@ -43,15 +43,6 @@ func (engine *Engine) TableName(bean interface{}, includeSchema ...bool) string 
 	return tbName
 }
 
-// tbName get some table's table name
-func (session *Session) tbNameNoSchema(table *core.Table) string {
-	if len(session.statement.AltTableName) > 0 {
-		return session.statement.AltTableName
-	}
-
-	return table.Name
-}
-
 func (engine *Engine) tbNameNoSchema(tablename interface{}) string {
 	switch tablename.(type) {
 	case []string:
