@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -39,10 +37,6 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
 				require.Empty(t, cdt.QueryDataReq.Headers)
-
-				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
-				require.Len(t, middlewares, 1)
-				require.Equal(t, httpclientprovider.DeleteHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 			})
 
 			t.Run("Should not forward user header when calling CallResource", func(t *testing.T) {
@@ -53,10 +47,6 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Empty(t, cdt.CallResourceReq.Headers)
-
-				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
-				require.Len(t, middlewares, 1)
-				require.Equal(t, httpclientprovider.DeleteHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 			})
 
 			t.Run("Should not forward user header when calling CheckHealth", func(t *testing.T) {
@@ -67,10 +57,6 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Empty(t, cdt.CheckHealthReq.Headers)
-
-				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
-				require.Len(t, middlewares, 1)
-				require.Equal(t, httpclientprovider.DeleteHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 			})
 		})
 
@@ -95,10 +81,6 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.QueryDataReq)
 				require.Empty(t, cdt.QueryDataReq.Headers)
-
-				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
-				require.Len(t, middlewares, 1)
-				require.Equal(t, httpclientprovider.DeleteHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 			})
 
 			t.Run("Should not forward user header when calling CallResource", func(t *testing.T) {
@@ -109,10 +91,6 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Empty(t, cdt.CallResourceReq.Headers)
-
-				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
-				require.Len(t, middlewares, 1)
-				require.Equal(t, httpclientprovider.DeleteHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 			})
 
 			t.Run("Should not forward user header when calling CheckHealth", func(t *testing.T) {
@@ -123,10 +101,6 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Empty(t, cdt.CheckHealthReq.Headers)
-
-				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
-				require.Len(t, middlewares, 1)
-				require.Equal(t, httpclientprovider.DeleteHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 			})
 		})
 	})
@@ -156,10 +130,6 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.QueryDataReq)
 				require.Len(t, cdt.QueryDataReq.Headers, 1)
 				require.Equal(t, "admin", cdt.QueryDataReq.GetHTTPHeader(proxyutil.UserHeaderName))
-
-				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
-				require.Len(t, middlewares, 1)
-				require.Equal(t, httpclientprovider.SetHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 			})
 
 			t.Run("Should forward user header when calling CallResource", func(t *testing.T) {
@@ -171,10 +141,6 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)
 				require.Equal(t, "admin", cdt.CallResourceReq.GetHTTPHeader(proxyutil.UserHeaderName))
-
-				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
-				require.Len(t, middlewares, 1)
-				require.Equal(t, httpclientprovider.SetHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 			})
 
 			t.Run("Should forward user header when calling CheckHealth", func(t *testing.T) {
@@ -186,10 +152,6 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Len(t, cdt.CheckHealthReq.Headers, 1)
 				require.Equal(t, "admin", cdt.CheckHealthReq.GetHTTPHeader(proxyutil.UserHeaderName))
-
-				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
-				require.Len(t, middlewares, 1)
-				require.Equal(t, httpclientprovider.SetHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 			})
 		})
 
@@ -214,10 +176,6 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.QueryDataReq)
 				require.Len(t, cdt.QueryDataReq.Headers, 1)
 				require.Equal(t, "admin", cdt.QueryDataReq.GetHTTPHeader(proxyutil.UserHeaderName))
-
-				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
-				require.Len(t, middlewares, 1)
-				require.Equal(t, httpclientprovider.SetHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 			})
 
 			t.Run("Should forward user header when calling CallResource", func(t *testing.T) {
@@ -229,10 +187,6 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.CallResourceReq)
 				require.Len(t, cdt.CallResourceReq.Headers, 1)
 				require.Equal(t, "admin", cdt.CallResourceReq.GetHTTPHeader(proxyutil.UserHeaderName))
-
-				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CallResourceCtx)
-				require.Len(t, middlewares, 1)
-				require.Equal(t, httpclientprovider.SetHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 			})
 
 			t.Run("Should forward user header when calling CheckHealth", func(t *testing.T) {
@@ -244,10 +198,6 @@ func TestUserHeaderMiddleware(t *testing.T) {
 				require.NotNil(t, cdt.CheckHealthReq)
 				require.Len(t, cdt.CheckHealthReq.Headers, 1)
 				require.Equal(t, "admin", cdt.CheckHealthReq.GetHTTPHeader(proxyutil.UserHeaderName))
-
-				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.CheckHealthCtx)
-				require.Len(t, middlewares, 1)
-				require.Equal(t, httpclientprovider.SetHeadersMiddlewareName, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 			})
 		})
 	})
