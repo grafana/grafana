@@ -1,18 +1,13 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { usePrevious } from 'react-use';
 
 import {
-  applyFieldOverrides,
   FieldConfigSource,
   getTimeZone,
-  PanelData,
   PanelPlugin,
-  compareArrayValues,
-  compareDataFrameStructures,
   PluginContextProvider,
-  ScopedVars,
   getPanelOptionsWithDefaults,
   OptionDefaults,
+  useFieldOverrides,
 } from '@grafana/data';
 import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
@@ -37,10 +32,12 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
     fieldConfig = defaultFieldConfig,
   } = props;
 
+  const theme = useTheme2();
+  const replace = useMemo(() => getTemplateSrv().replace, []);
   const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
   const [error, setError] = useState<string | undefined>();
   const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
-  const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults?.fieldConfig, data, timeZone);
+  const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults?.fieldConfig, data, timeZone, theme, replace);
 
   useEffect(() => {
     // If we already have a plugin and it's correct one do nothing
@@ -117,48 +114,4 @@ function useOptionDefaults<P extends object = any, F extends object = any>(
       isAfterPluginChange: false,
     });
   }, [plugin, fieldConfig, options]);
-}
-
-export function useFieldOverrides(
-  plugin: PanelPlugin | undefined,
-  fieldConfig: FieldConfigSource | undefined,
-  data: PanelData | undefined,
-  timeZone: string
-): PanelData | undefined {
-  const fieldConfigRegistry = plugin?.fieldConfigRegistry;
-  const theme = useTheme2();
-  const structureRev = useRef(0);
-  const prevSeries = usePrevious(data?.series);
-
-  return useMemo(() => {
-    if (!fieldConfigRegistry || !fieldConfig || !data) {
-      return;
-    }
-
-    const series = data?.series;
-
-    if (
-      data.structureRev == null &&
-      series &&
-      prevSeries &&
-      !compareArrayValues(series, prevSeries, compareDataFrameStructures)
-    ) {
-      structureRev.current++;
-    }
-
-    return {
-      structureRev: structureRev.current,
-      ...data,
-      series: applyFieldOverrides({
-        data: series,
-        fieldConfig,
-        fieldConfigRegistry,
-        replaceVariables: (str: string, scopedVars?: ScopedVars) => {
-          return getTemplateSrv().replace(str, scopedVars);
-        },
-        theme,
-        timeZone,
-      }),
-    };
-  }, [fieldConfigRegistry, fieldConfig, data, prevSeries, timeZone, theme]);
 }
