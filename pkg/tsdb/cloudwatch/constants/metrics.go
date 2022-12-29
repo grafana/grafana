@@ -518,7 +518,7 @@ var NamespaceDimensionKeysMap = map[string][]string{
 	"AWS/Rekognition":             {},
 	"AWS/Cassandra":               {"Keyspace", "Operation", "TableName"},
 	"AWS/AmplifyHosting":          {"App"},
-	"CloudWatchSynthetics":        {"CanaryName"},
+	"CloudWatchSynthetics":        {"CanaryName", "StepName"},
 }
 
 var Regions = []string{
