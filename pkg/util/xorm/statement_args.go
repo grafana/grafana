@@ -80,25 +80,13 @@ const insertSelectPlaceHolder = true
 func (statement *Statement) writeArg(w *builder.BytesWriter, arg interface{}) error {
 	switch argv := arg.(type) {
 	case bool:
-		if statement.Engine.dialect.DBType() == core.MSSQL {
-			if argv {
-				if _, err := w.WriteString("1"); err != nil {
-					return err
-				}
-			} else {
-				if _, err := w.WriteString("0"); err != nil {
-					return err
-				}
+		if argv {
+			if _, err := w.WriteString("true"); err != nil {
+				return err
 			}
 		} else {
-			if argv {
-				if _, err := w.WriteString("true"); err != nil {
-					return err
-				}
-			} else {
-				if _, err := w.WriteString("false"); err != nil {
-					return err
-				}
+			if _, err := w.WriteString("false"); err != nil {
+				return err
 			}
 		}
 	case *builder.Builder:

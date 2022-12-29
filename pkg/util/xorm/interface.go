@@ -5,7 +5,6 @@
 package xorm
 
 import (
-	"context"
 	"database/sql"
 	"reflect"
 	"time"
@@ -73,7 +72,6 @@ type EngineInterface interface {
 
 	Before(func(interface{})) *Session
 	Charset(charset string) *Session
-	Context(context.Context) *Session
 	CreateTables(...interface{}) error
 	DBMetas() ([]*core.Table, error)
 	Dialect() core.Dialect

@@ -242,23 +242,6 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 			if len(condSQL) > 0 {
 				condSQL = "WHERE " + condSQL
 			}
-		} else if st.Engine.dialect.DBType() == core.MSSQL {
-			if st.OrderStr != "" && st.Engine.dialect.DBType() == core.MSSQL &&
-				table != nil && len(table.PrimaryKeys) == 1 {
-				cond = builder.Expr(fmt.Sprintf("%s IN (SELECT TOP (%d) %s FROM %v%v)",
-					table.PrimaryKeys[0], limitValue, table.PrimaryKeys[0],
-					session.engine.Quote(tableName), condSQL), condArgs...)
-
-				condSQL, condArgs, err = builder.ToSQL(cond)
-				if err != nil {
-					return 0, err
-				}
-				if len(condSQL) > 0 {
-					condSQL = "WHERE " + condSQL
-				}
-			} else {
-				top = fmt.Sprintf("TOP (%d) ", limitValue)
-			}
 		}
 	}
 
@@ -269,13 +252,7 @@ func (session *Session) Update(bean interface{}, condiBean ...interface{}) (int6
 	var tableAlias = session.engine.Quote(tableName)
 	var fromSQL string
 	if session.statement.TableAlias != "" {
-		switch session.engine.dialect.DBType() {
-		case core.MSSQL:
-			fromSQL = fmt.Sprintf("FROM %s %s ", tableAlias, session.statement.TableAlias)
-			tableAlias = session.statement.TableAlias
-		default:
-			tableAlias = fmt.Sprintf("%s AS %s", tableAlias, session.statement.TableAlias)
-		}
+		tableAlias = fmt.Sprintf("%s AS %s", tableAlias, session.statement.TableAlias)
 	}
 
 	sqlStr = fmt.Sprintf("UPDATE %v%v SET %v %v%v",
