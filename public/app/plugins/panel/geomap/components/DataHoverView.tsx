@@ -11,7 +11,7 @@ import {
   LinkModel,
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
+import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
 
 export interface Props {
   data?: DataFrame; // source data
@@ -19,17 +19,10 @@ export interface Props {
   columnIndex?: number | null; // the hover column
   sortOrder?: SortOrder;
   mode?: TooltipDisplayMode | null;
-  displayExemplarHeader?: boolean;
+  header?: string;
 }
 
-export const DataHoverView = ({
-  data,
-  rowIndex,
-  columnIndex,
-  sortOrder,
-  mode,
-  displayExemplarHeader = true,
-}: Props) => {
+export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header = undefined }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (!data || rowIndex == null) {
@@ -46,18 +39,19 @@ export const DataHoverView = ({
   }
 
   const displayValues: Array<[string, unknown, string]> = [];
-  const links: Record<string, Array<LinkModel<Field>>> = {};
+  const links: Array<LinkModel<Field>> = [];
+  const linkLookup = new Set<string>();
 
   for (const f of orderedVisibleFields) {
     const v = f.values.get(rowIndex);
     const disp = f.display ? f.display(v) : { text: `${v}`, numeric: +v };
     if (f.getLinks) {
       f.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).forEach((link) => {
-        const key = getFieldDisplayName(f, data);
-        if (!links[key]) {
-          links[key] = [];
+        const key = `${link.title}/${link.href}`;
+        if (!linkLookup.has(key)) {
+          links.push(link);
+          linkLookup.add(key);
         }
-        links[key].push(link);
       });
     }
 
@@ -68,11 +62,34 @@ export const DataHoverView = ({
     displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a[1], b[1]));
   }
 
+  const renderLinks = () =>
+    links.length > 0 && (
+      <tr>
+        <td colSpan={2}>
+          <VerticalGroup>
+            {links.map((link, i) => (
+              <LinkButton
+                key={i}
+                icon={'external-link-alt'}
+                target={link.target}
+                href={link.href}
+                onClick={link.onClick}
+                fill="text"
+                style={{ width: '100%' }}
+              >
+                {link.title}
+              </LinkButton>
+            ))}
+          </VerticalGroup>
+        </td>
+      </tr>
+    );
+
   return (
     <div className={styles.wrapper}>
-      {displayExemplarHeader && (
+      {header && (
         <div className={styles.header}>
-          <span className={styles.title}>Exemplar</span>
+          <span className={styles.title}>{header}</span>
         </div>
       )}
       <table className={styles.infoWrap}>
@@ -81,44 +98,21 @@ export const DataHoverView = ({
             displayValues.map((v, i) => (
               <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
                 <th>{v[0]}:</th>
-                <td>{renderWithLinks(v[0], v[2], links)}</td>
+                <td>{v[2]}</td>
               </tr>
             ))}
           {mode === TooltipDisplayMode.Single && columnIndex && (
             <tr key={`${columnIndex}/${rowIndex}`}>
               <th>{displayValues[columnIndex][0]}:</th>
-              <td>{renderWithLinks(displayValues[columnIndex][0], displayValues[columnIndex][2], links)}</td>
+              <td>{displayValues[columnIndex][2]}</td>
             </tr>
           )}
+          {renderLinks()}
         </tbody>
       </table>
     </div>
   );
 };
-
-const renderWithLinks = (key: string, val: string, links: Record<string, Array<LinkModel<Field>>>) =>
-  links[key] ? (
-    <HorizontalGroup>
-      <>
-        {val}
-        {links[key].map((link, i) => (
-          <LinkButton
-            key={i}
-            icon={'external-link-alt'}
-            target={link.target}
-            href={link.href}
-            onClick={link.onClick}
-            fill="text"
-            style={{ width: '100%' }}
-          >
-            {link.title}
-          </LinkButton>
-        ))}
-      </>
-    </HorizontalGroup>
-  ) : (
-    <>{val}</>
-  );
 
 const getStyles = (theme: GrafanaTheme2) => {
   const bg = theme.isDark ? theme.v1.palette.dark2 : theme.v1.palette.white;

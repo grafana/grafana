@@ -2,19 +2,15 @@ package clientmiddleware
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 // NewUserHeaderMiddleware creates a new plugins.ClientMiddleware that will
-// populate the X-Grafana-User header on outgoing plugins.Client and HTTP
-// requests.
+// populate the X-Grafana-User header on outgoing plugins.Client requests.
 func NewUserHeaderMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &UserHeaderMiddleware{
@@ -27,33 +23,17 @@ type UserHeaderMiddleware struct {
 	next plugins.Client
 }
 
-func (m *UserHeaderMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, h backend.ForwardHTTPHeaders) context.Context {
+func (m *UserHeaderMiddleware) applyUserHeader(ctx context.Context, h backend.ForwardHTTPHeaders) {
 	reqCtx := contexthandler.FromContext(ctx)
 	// if no HTTP request context skip middleware
 	if h == nil || reqCtx == nil || reqCtx.Req == nil || reqCtx.SignedInUser == nil {
-		return ctx
+		return
 	}
 
 	h.DeleteHTTPHeader(proxyutil.UserHeaderName)
 	if !reqCtx.IsAnonymous {
 		h.SetHTTPHeader(proxyutil.UserHeaderName, reqCtx.Login)
 	}
-
-	middlewares := []sdkhttpclient.Middleware{}
-
-	if !reqCtx.IsAnonymous {
-		httpHeaders := http.Header{
-			proxyutil.UserHeaderName: []string{reqCtx.Login},
-		}
-
-		middlewares = append(middlewares, httpclientprovider.SetHeadersMiddleware(httpHeaders))
-	} else {
-		middlewares = append(middlewares, httpclientprovider.DeleteHeadersMiddleware(proxyutil.UserHeaderName))
-	}
-
-	ctx = sdkhttpclient.WithContextualMiddleware(ctx, middlewares...)
-
-	return ctx
 }
 
 func (m *UserHeaderMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -61,7 +41,7 @@ func (m *UserHeaderMiddleware) QueryData(ctx context.Context, req *backend.Query
 		return m.next.QueryData(ctx, req)
 	}
 
-	ctx = m.applyToken(ctx, req.PluginContext, req)
+	m.applyUserHeader(ctx, req)
 
 	return m.next.QueryData(ctx, req)
 }
@@ -71,7 +51,7 @@ func (m *UserHeaderMiddleware) CallResource(ctx context.Context, req *backend.Ca
 		return m.next.CallResource(ctx, req, sender)
 	}
 
-	ctx = m.applyToken(ctx, req.PluginContext, req)
+	m.applyUserHeader(ctx, req)
 
 	return m.next.CallResource(ctx, req, sender)
 }
@@ -81,7 +61,7 @@ func (m *UserHeaderMiddleware) CheckHealth(ctx context.Context, req *backend.Che
 		return m.next.CheckHealth(ctx, req)
 	}
 
-	ctx = m.applyToken(ctx, req.PluginContext, req)
+	m.applyUserHeader(ctx, req)
 
 	return m.next.CheckHealth(ctx, req)
 }

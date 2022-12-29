@@ -1,6 +1,7 @@
-// go:build ignore
 //go:build ignore
 // +build ignore
+
+//go:generate go run gen.go
 
 package main
 
@@ -40,6 +41,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "coremodel code generator does not currently accept any arguments\n, got %q", os.Args)
 		os.Exit(1)
 	}
+
 	wd := gcgen.NewWriteDiffer()
 
 	// TODO generating these is here temporarily until we make a more permanent home
