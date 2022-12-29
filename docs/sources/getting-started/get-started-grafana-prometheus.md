@@ -44,7 +44,11 @@ When you run node_exporter locally, navigate to `http://localhost:9100/metrics` 
 
 1. Locate the `prometheus.yml` file in the directory.
 
-1. Configure Prometheus to monitor the hosts where you installed node_exporter. In order to do this, modify Prometheus's configuration file. By default, Prometheus looks for the file `prometheus.yml` in the current working directory. This behavior can be changed via the `--config.file` command line flag. For example, some Prometheus installers use it to set the configuration file to `/etc/prometheus/prometheus.yml`. Here is an example of the code you will need to add. Notice that static configs targets are set to `['localhost:9100']` to target node-explorer when running it locally.
+1. Modify Prometheus's configuration file to monitor the hosts where you installed node_exporter. 
+
+By default, Prometheus looks for the file `prometheus.yml` in the current working directory. This behavior can be changed via the `--config.file` command line flag. For example, some Prometheus installers use it to set the configuration file to `/etc/prometheus/prometheus.yml`. 
+
+The following example shows you the code you should add. Notice that static configs targets are set to `['localhost:9100']` to target node-explorer when running it locally.
 
    ```
     # A scrape configuration containing exactly one endpoint to scrape from node_exporter running on a host:
