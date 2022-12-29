@@ -353,9 +353,6 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 	var tableName = session.statement.TableName()
 	var output string
-	if session.engine.dialect.DBType() == core.MSSQL && len(table.AutoIncrement) > 0 {
-		output = fmt.Sprintf(" OUTPUT Inserted.%s", table.AutoIncrement)
-	}
 
 	var buf = builder.NewWriter()
 	if _, err := buf.WriteString(fmt.Sprintf("INSERT INTO %s", session.engine.Quote(tableName))); err != nil {
@@ -503,7 +500,7 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
 
 		return 1, nil
-	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == core.POSTGRES || session.engine.dialect.DBType() == core.MSSQL) {
+	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == core.POSTGRES) {
 		res, err := session.queryBytes(sqlStr, args...)
 
 		if err != nil {
