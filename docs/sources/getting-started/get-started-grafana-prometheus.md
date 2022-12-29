@@ -25,7 +25,7 @@ Like Grafana, you can install Prometheus on many different operating systems. Re
 
 #### 2. Install Prometheus node_exporter
 
-Install node_exporter on all hosts you want to monitor. This guide shows you how to install it locally. 
+Install node_exporter on all hosts you want to monitor. This guide shows you how to install it locally.
 
 Prometheus node_exporter is a widely used tool that exposes system metrics. For instructions on installing node_exporter, refer to the [Installing and running the node_exporter](https://prometheus.io/docs/guides/node-exporter/#installing-and-running-the-node-exporter) section in the Prometheus documentation.
 
@@ -44,24 +44,24 @@ When you run node_exporter locally, navigate to `http://localhost:9100/metrics` 
 
 1. Locate the `prometheus.yml` file in the directory.
 
-1. Modify Prometheus's configuration file to monitor the hosts where you installed node_exporter. 
+1. Modify Prometheus's configuration file to monitor the hosts where you installed node_exporter.
 
-By default, Prometheus looks for the file `prometheus.yml` in the current working directory. This behavior can be changed via the `--config.file` command line flag. For example, some Prometheus installers use it to set the configuration file to `/etc/prometheus/prometheus.yml`. 
+By default, Prometheus looks for the file `prometheus.yml` in the current working directory. This behavior can be changed via the `--config.file` command line flag. For example, some Prometheus installers use it to set the configuration file to `/etc/prometheus/prometheus.yml`.
 
 The following example shows you the code you should add. Notice that static configs targets are set to `['localhost:9100']` to target node-explorer when running it locally.
 
-   ```
-    # A scrape configuration containing exactly one endpoint to scrape from node_exporter running on a host:
-    scrape_configs:
-        # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-        - job_name: 'node'
+```
+ # A scrape configuration containing exactly one endpoint to scrape from node_exporter running on a host:
+ scrape_configs:
+     # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+     - job_name: 'node'
 
-        # metrics_path defaults to '/metrics'
-        # scheme defaults to 'http'.
+     # metrics_path defaults to '/metrics'
+     # scheme defaults to 'http'.
 
-          static_configs:
-          - targets: ['localhost:9100']
-   ```
+       static_configs:
+       - targets: ['localhost:9100']
+```
 
 1. Start the Prometheus service:
 
@@ -69,23 +69,21 @@ The following example shows you the code you should add. Notice that static conf
     ./prometheus --config.file=./prometheus.yml
    ```
 
-1. Confirm that Prometheus is running by navigating to `http://localhost:9090`. 
+1. Confirm that Prometheus is running by navigating to `http://localhost:9090`.
 
 You can see that the node_exporter metrics have been delivered to Prometheus. Next, the metrics will be sent to Grafana.
 
 #### 4. Configure Prometheus for Grafana
 
-When running Prometheus locally, there are two ways to configure Prometheus for Grafana. You can use a hosted Grafana instance at [Grafana Cloud](https://grafana.com/) or run Grafana locally. 
+When running Prometheus locally, there are two ways to configure Prometheus for Grafana. You can use a hosted Grafana instance at [Grafana Cloud](https://grafana.com/) or run Grafana locally.
 
 This guide describes configuring Prometheus in a hosted Grafana instance on Grafana Cloud.
 
 1. Sign up for [https://grafana.com/](https://grafana.com/auth/sign-up/create-user). Grafana gives you a Prometheus instance out of the box.
 
-SHOW PICTURE HERE
+![Prometheus dashboards](/static/img/docs/getting-started/screenshot-grafana-prometheus-details.png)
 
 1. Because you are running your own Prometheus instance locally, you must `remote_write` your metrics to the Grafana.com Prometheus instance. Grafana provides code to add to your `prometheus.yml` config file. This includes a remote write endpoint, your user name and password.
-
-SHOW PICTURE HERE
 
 Add the following code to your prometheus.yml file to begin sending metrics to your hosted Grafana instance.
 
@@ -102,8 +100,6 @@ remote_write:
 #### 5. Check Prometheus metrics in Grafana Explore view
 
 In your Grafana instance, go to the [Explore]({{< relref "../explore/" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics from Prometheus. Pay special attention to the [Prometheus-specific features]({{< relref "../explore/#prometheus-specific-features" >}}) to avail custom querying experience for Prometheus.
-
-SHOW PICTURE HERE, give example of query
 
 #### Start building dashboards
 
