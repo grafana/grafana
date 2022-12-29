@@ -1103,16 +1103,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
 	}
 
-	// check old key  name
-	// TODO: move these into the read grafanacom section
-	GrafanaComUrl = valueAsString(iniFile.Section("grafana_net"), "url", "")
-	if GrafanaComUrl == "" {
-		GrafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
-	}
-	cfg.GrafanaComURL = GrafanaComUrl
-
-	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", GrafanaComUrl+"/api")
-
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 	ImageUploadProvider = cfg.ImageUploadProvider
@@ -1354,10 +1344,18 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func readAuthGrafanaComSettings(iniFile *ini.File, cfg *Cfg) (err error) {
+func readAuthGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
+	// check old key  name
+	GrafanaComUrl = valueAsString(iniFile.Section("grafana_net"), "url", "")
+	if GrafanaComUrl == "" {
+		GrafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
+	}
+	cfg.GrafanaComURL = GrafanaComUrl
+
+	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", GrafanaComUrl+"/api")
+
 	sec := iniFile.Section("auth.grafana_com")
 	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
-	return nil
 }
 
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
@@ -1462,10 +1460,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
-	err = readAuthGrafanaComSettings(iniFile, cfg)
-	if err != nil {
-		return err
-	}
+	// auth.grafanacom
+	readAuthGrafanaComSettings(iniFile, cfg)
 
 	return nil
 }
