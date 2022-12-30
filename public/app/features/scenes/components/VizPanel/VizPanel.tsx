@@ -86,7 +86,6 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
     });
 
     this._plugin = plugin;
-
     this.setState({
       options: withDefaults.options,
       fieldConfig: withDefaults.fieldConfig,

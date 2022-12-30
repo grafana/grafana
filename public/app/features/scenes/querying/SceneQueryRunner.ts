@@ -129,7 +129,6 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
 
   private async runWithTimeRange(timeRange: TimeRange) {
     const { datasource, minInterval, queries } = this.state;
-    const scopedVars = {};
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,
@@ -142,7 +141,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       intervalMs: 1000,
       targets: cloneDeep(queries),
       maxDataPoints: this.getMaxDataPoints(),
-      scopedVars,
+      scopedVars: {},
       timeInfo: '',
       startTime: Date.now(),
     };
@@ -172,7 +171,6 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      // Apply time overrides
       const { timeRange: range, timeInfo } = this.applyPanelTimeOverrides(timeRange, request.scopedVars);
       request.range = range;
       request.timeInfo = timeInfo;
