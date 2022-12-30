@@ -8,7 +8,7 @@ weight: 500
 
 # Configure Grafana Com authentication
 
-To enable GrafanaCom as your authentication provider. You configure GrafanaCom to generate a client ID and a secret key for you to use.
+To enable GrafanaCom as your authentication provider, you configure it to generate a client ID and a secret key.
 
 ## Create Grafana Com OAuth keys
 
