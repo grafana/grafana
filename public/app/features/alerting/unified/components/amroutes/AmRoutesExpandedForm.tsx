@@ -18,9 +18,9 @@ import {
   Badge,
   VerticalGroup,
 } from '@grafana/ui';
+import { Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
-import { FormAmRoute } from '../../types/amroutes';
 import { matcherFieldOptions } from '../../utils/alertmanager';
 import {
   emptyArrayFieldMatcher,
@@ -30,6 +30,7 @@ import {
   stringToSelectableValue,
   stringsToSelectableValues,
   commonGroupByOptions,
+  amRouteToFormAmRoute,
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
 import { AmRouteReceiver, GrafanaAppReceiverEnum } from '../receivers/grafanaAppReceivers/types';
@@ -38,13 +39,13 @@ import { getFormStyles } from './formStyles';
 
 export interface AmRoutesExpandedFormProps {
   receivers: AmRouteReceiver[];
-  routes: FormAmRoute;
+  route?: Route;
 }
 
-export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ receivers, routes }) => {
+export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ receivers, route }) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
-  const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
+  const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
   const muteTimingOptions = useMuteTimingOptions();
 
   const receiversWithOnCallOnTop = receivers.sort((receiver1, receiver2) => {
@@ -55,8 +56,10 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ receivers,
     }
   });
 
+  const [defaultValues] = amRouteToFormAmRoute(route);
+
   return (
-    <Form defaultValues={routes} onSubmit={() => {}} maxWidth="none">
+    <Form defaultValues={defaultValues} onSubmit={() => {}} maxWidth="none">
       {({ control, register, errors, setValue, watch }) => (
         <>
           {/* @ts-ignore-check: react-hook-form made me do this */}

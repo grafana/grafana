@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { isEmpty, pick, take, uniqueId } from 'lodash';
+import { pick, take, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -42,7 +42,7 @@ import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertGroupsAction, fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
-import { amRouteToFormAmRoute, formAmRouteToAmRoute, normalizeMatchers } from './utils/amroutes';
+import { normalizeMatchers } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
@@ -82,8 +82,7 @@ const AmRoutes = () => {
   } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
-  // const [rootRoute, id2ExistingRoute] = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
-  const rawRootRoute = config?.route;
+  const rootRoute = config?.route;
 
   const isProvisioned = useMemo(() => Boolean(config?.route?.provenance), [config?.route]);
 
@@ -92,7 +91,7 @@ const AmRoutes = () => {
 
   const receivers = config?.receivers ?? [];
   const [addModal, openAddModal] = useAddPolicyModal(receivers);
-  const [editModal, openEditModal] = useEditModal(receivers);
+  const [editModal, openEditModal] = useEditPolicyModal(receivers);
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
@@ -197,20 +196,22 @@ const AmRoutes = () => {
             />
             {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
             {resultLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
-            {result && rawRootRoute && !resultLoading && !resultError && (
+            {result && rootRoute && !resultLoading && !resultError && (
               <Policy
                 isDefault
-                contactPoint={rawRootRoute.receiver}
-                groupBy={rawRootRoute.group_by}
-                timingOptions={pick(rawRootRoute, ['group_wait', 'group_interval', 'repeat_interval'])}
+                receivers={receivers}
+                currentRoute={rootRoute}
+                contactPoint={rootRoute.receiver}
+                groupBy={rootRoute.group_by}
+                timingOptions={pick(rootRoute, ['group_wait', 'group_interval', 'repeat_interval'])}
                 readOnly={readOnly}
-                matchers={normalizeMatchers(rawRootRoute)}
-                muteTimings={rawRootRoute.mute_time_intervals}
-                childPolicies={rawRootRoute.routes ?? []}
-                continueMatching={rawRootRoute.continue}
+                matchers={normalizeMatchers(rootRoute)}
+                muteTimings={rootRoute.mute_time_intervals}
+                childPolicies={rootRoute.routes ?? []}
+                continueMatching={rootRoute.continue}
                 alertManagerSourceName={alertManagerSourceName}
-                onAddPolicy={() => openAddModal()}
-                onEditPolicy={() => openEditModal()}
+                onAddPolicy={openAddModal}
+                onEditPolicy={openEditModal}
               />
             )}
             {addModal}
@@ -248,6 +249,7 @@ const AmRoutes = () => {
 
 interface PolicyComponentProps {
   childPolicies: Route[];
+  receivers: Receiver[];
   isDefault?: boolean;
   matchers?: ObjectMatcher[];
   numberOfInstances?: number;
@@ -263,13 +265,14 @@ interface PolicyComponentProps {
   continueMatching?: boolean;
   alertManagerSourceName?: string;
 
-  // TODO make route non-optional
-  onEditPolicy: (route?: Route) => void;
-  onAddPolicy: (route?: Route) => void;
+  currentRoute: Route;
+  onEditPolicy: (route: Route) => void;
+  onAddPolicy: (route: Route) => void;
 }
 
 const Policy: FC<PolicyComponentProps> = ({
   childPolicies,
+  receivers,
   isDefault,
   matchers,
   numberOfInstances = 0,
@@ -280,6 +283,7 @@ const Policy: FC<PolicyComponentProps> = ({
   readOnly = true,
   continueMatching = false,
   alertManagerSourceName,
+  currentRoute,
   onEditPolicy,
   onAddPolicy,
 }) => {
@@ -299,7 +303,7 @@ const Policy: FC<PolicyComponentProps> = ({
   }
 
   const hasChildPolicies = Boolean(childPolicies.length);
-  const isGrouping = !isEmpty(groupBy);
+  const isGrouping = Array.isArray(groupBy) && groupBy.length > 0;
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -343,7 +347,13 @@ const Policy: FC<PolicyComponentProps> = ({
               )}
               {!readOnly && (
                 <div>
-                  <Button variant="secondary" icon="pen" size="sm" onClick={() => onEditPolicy()} type="button">
+                  <Button
+                    variant="secondary"
+                    icon="pen"
+                    size="sm"
+                    onClick={() => onEditPolicy(currentRoute)}
+                    type="button"
+                  >
                     Edit
                   </Button>
                 </div>
@@ -450,6 +460,8 @@ const Policy: FC<PolicyComponentProps> = ({
         {childPolicies.map((route) => (
           <Policy
             key={uniqueId()}
+            currentRoute={route}
+            receivers={receivers}
             contactPoint={route.receiver}
             groupBy={route.group_by}
             timingOptions={{
@@ -469,7 +481,7 @@ const Policy: FC<PolicyComponentProps> = ({
       </div>
       <div className={styles.addPolicyWrapper(hasChildPolicies)}>
         <CreateOrAddPolicy
-          onClick={() => onAddPolicy()}
+          onClick={() => onAddPolicy(currentRoute)}
           hasChildPolicies={hasChildPolicies}
           isDefaultPolicy={isDefaultPolicy}
         />
@@ -501,7 +513,7 @@ const MetaText: FC<MataTextProps> = ({ children, icon }) => {
 };
 
 interface AddPolicyProps {
-  onClick?: () => void;
+  onClick: () => void;
   hasChildPolicies?: boolean;
   isDefaultPolicy?: boolean;
 }
@@ -524,6 +536,7 @@ const noContactPointWarning = <Badge icon="exclamation-triangle" text="No contac
 
 type MatchersProps = { matchers: ObjectMatcher[] };
 
+// renders the first N number of matchers
 const Matchers: FC<MatchersProps> = ({ matchers }) => {
   const styles = useStyles2(getStyles);
 
@@ -710,60 +723,82 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 export default withErrorBoundary(AmRoutes, { style: 'page' });
 
-type ModalHook = [JSX.Element, () => void, () => void];
+type ModalHook<T> = [JSX.Element, (item: T) => void, () => void];
 
-const useAddPolicyModal = (receivers: Receiver[] = []): ModalHook => {
+const useAddPolicyModal = (receivers: Receiver[] = []): ModalHook<Route> => {
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [route, setRoute] = useState<Route>();
   const AmRouteReceivers = useGetAmRouteReceiverWithGrafanaAppTypes(receivers);
+
+  const handleDismiss = useCallback(() => {
+    setRoute(undefined);
+    setShowModal(false);
+  }, []);
+
+  const handleShow = useCallback((route: Route) => {
+    setRoute(route);
+    setShowModal(true);
+  }, []);
 
   const modalElement = useMemo(
     () => (
       <Modal
         isOpen={showModal}
-        onDismiss={() => setShowModal(false)}
-        closeOnBackdropClick={false}
-        closeOnEscape={false}
+        onDismiss={handleDismiss}
+        closeOnBackdropClick={true}
+        closeOnEscape={true}
         title="Add a notification Policy"
       >
-        <AmRoutesExpandedForm receivers={AmRouteReceivers} routes={{}} />
+        <AmRoutesExpandedForm receivers={AmRouteReceivers} />
         <Modal.ButtonRow>
           <Button type="submit">Add policy</Button>
-          <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
+          <Button type="button" variant="secondary" onClick={handleDismiss}>
             Cancel
           </Button>
         </Modal.ButtonRow>
       </Modal>
     ),
-    [AmRouteReceivers, showModal]
+    [AmRouteReceivers, handleDismiss, showModal]
   );
 
-  return [modalElement, () => setShowModal(true), () => setShowModal(false)];
+  return [modalElement, handleShow, handleDismiss];
 };
 
-const useEditModal = (receivers: Receiver[]): ModalHook => {
+const useEditPolicyModal = (receivers: Receiver[]): ModalHook<Route> => {
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [route, setRoute] = useState<Route>();
   const AmRouteReceivers = useGetAmRouteReceiverWithGrafanaAppTypes(receivers);
+
+  const handleDismiss = useCallback(() => {
+    setRoute(undefined);
+    setShowModal(false);
+  }, []);
+
+  const handleShow = useCallback((route: Route) => {
+    setRoute(route);
+    setShowModal(true);
+  }, []);
 
   const modalElement = useMemo(
     () => (
       <Modal
         isOpen={showModal}
-        onDismiss={() => setShowModal(false)}
-        closeOnBackdropClick={false}
-        closeOnEscape={false}
+        onDismiss={handleDismiss}
+        closeOnBackdropClick={true}
+        closeOnEscape={true}
         title="Edit notification Policy"
       >
-        <AmRoutesExpandedForm receivers={AmRouteReceivers} routes={{}} />
+        <AmRoutesExpandedForm receivers={AmRouteReceivers} route={route} />
         <Modal.ButtonRow>
           <Button type="submit">Update policy</Button>
-          <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
+          <Button type="button" variant="secondary" onClick={handleDismiss}>
             Cancel
           </Button>
         </Modal.ButtonRow>
       </Modal>
     ),
-    [AmRouteReceivers, showModal]
+    [AmRouteReceivers, handleDismiss, route, showModal]
   );
 
-  return [modalElement, () => setShowModal(true), () => setShowModal(false)];
+  return [modalElement, handleShow, handleDismiss];
 };
