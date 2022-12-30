@@ -336,7 +336,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
 	dbtest.NewFakeDB,
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
-	wire.Bind(new(db.DB), new(*dbtest.FakeDB)),
+	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
 	opentsdb.ProvideService,
 	acimpl.ProvideAccessControl,
