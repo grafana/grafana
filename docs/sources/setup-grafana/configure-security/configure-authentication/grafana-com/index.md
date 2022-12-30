@@ -20,7 +20,7 @@ To use Grafana Com authentication:
 1. Add the URL of your running Grafana instance.
 5. The next step will give you the client ID and secret.
 
-Below is an example of the configuration:
+The following code shows an example configuration:
 
 ```ini
 [auth.grafana_com]
