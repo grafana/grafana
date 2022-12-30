@@ -3,10 +3,16 @@ package rendering
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	"strconv"
+	"strings"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -18,15 +24,52 @@ type RenderUser struct {
 	OrgRole string
 }
 
+type renderJWT struct {
+	RenderUser *RenderUser
+	jwt.RegisteredClaims
+}
+
 func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*RenderUser, bool) {
-	val, err := rs.RemoteCacheService.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
+	var (
+		from   string
+		exists bool
+		err    error
+		start  = time.Now()
+	)
+
+	defer func() {
+		success := strconv.FormatBool(err == nil && exists)
+		metrics.MRenderingUserLookupSummary.WithLabelValues(success, from).Observe(float64(time.Since(start)))
+	}()
+
+	if looksLikeJWT(key) && rs.features.IsEnabled(featuremgmt.FlagRenderingOverJWT) {
+		from = "jwt"
+		claims := new(renderJWT)
+		var tkn *jwt.Token
+		tkn, err = jwt.ParseWithClaims(key, claims, func(_ *jwt.Token) (interface{}, error) {
+			return []byte(rs.Cfg.RendererAuthToken), nil
+		})
+
+		if err != nil || !tkn.Valid {
+			rs.log.Error("Could not get render user from JWT", "err", err)
+			return nil, exists
+		}
+
+		exists = true
+		return claims.RenderUser, exists
+	}
+
+	from = "cache"
+	var val interface{}
+	val, err = rs.RemoteCacheService.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
 	if err != nil {
 		rs.log.Error("Failed to get render key from cache", "error", err)
 	}
 
 	if val != nil {
 		if user, ok := val.(*RenderUser); ok {
-			return user, true
+			exists = true
+			return user, exists
 		}
 	}
 
@@ -117,4 +160,43 @@ func (r *longLivedRenderKeyProvider) afterRequest(ctx context.Context, opts Auth
 
 func (r *longLivedRenderKeyProvider) Dispose(ctx context.Context) {
 	deleteRenderKey(r.cache, r.log, ctx, r.renderKey)
+}
+
+type jwtRenderKeyProvider struct {
+	log       log.Logger
+	authToken []byte
+	keyExpiry time.Duration
+}
+
+func (j *jwtRenderKeyProvider) get(_ context.Context, opts AuthOpts) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, j.buildJWTClaims(opts))
+
+	signed, err := token.SignedString(j.authToken)
+	if err != nil {
+		return "", err
+	}
+
+	return signed, nil
+}
+
+func (j *jwtRenderKeyProvider) buildJWTClaims(opts AuthOpts) renderJWT {
+	claims := renderJWT{
+		RenderUser: &RenderUser{
+			OrgID:   opts.OrgID,
+			UserID:  opts.UserID,
+			OrgRole: string(opts.OrgRole),
+		},
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(j.keyExpiry)),
+		},
+	}
+	return claims
+}
+
+func (j *jwtRenderKeyProvider) afterRequest(_ context.Context, _ AuthOpts, _ string) {
+	// do nothing - the JWT will just expire
+}
+
+func looksLikeJWT(key string) bool {
+	return strings.HasPrefix(key, "eyJ")
 }

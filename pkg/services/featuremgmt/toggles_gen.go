@@ -290,4 +290,8 @@ const (
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
+
+	// FlagRenderingOverJWT
+	// Uses JWT-based auth for rendering instead of relying on remote cache
+	FlagRenderingOverJWT = "renderingOverJWT"
 )

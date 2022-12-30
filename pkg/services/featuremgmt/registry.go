@@ -397,5 +397,10 @@ var (
 			Description: "Rule backtesting API for alerting",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "renderingOverJWT",
+			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
