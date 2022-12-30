@@ -7,7 +7,7 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { config, locationSearchToObject, locationService, reportInteraction } from '@grafana/runtime';
-import { Icon, useTheme2, CustomScrollbar, IconButton } from '@grafana/ui';
+import { useTheme2, CustomScrollbar, IconButton } from '@grafana/ui';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { useSelector } from 'app/types';
 
