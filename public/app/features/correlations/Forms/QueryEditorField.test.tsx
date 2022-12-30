@@ -92,8 +92,10 @@ describe('QueryEditorField', () => {
       jest.spyOn(console, 'error').mockImplementation();
     });
 
-    it('should result in succeeded validation if request errors if result with LoadingState.Done', async () => {
+    it('should result in succeeded validation if result with LoadingState.Done', async () => {
       const dsApi = initiateDsApi();
+
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
 
       dsApi.result = {
         data: [
@@ -105,6 +107,7 @@ describe('QueryEditorField', () => {
         ],
         state: LoadingState.Done,
       };
+
       fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
 
       await waitFor(() => {
@@ -143,6 +146,8 @@ describe('QueryEditorField', () => {
     it('should result in failed validation if there is no data available', async () => {
       const dsApi = initiateDsApi();
 
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+
       dsApi.result = {
         data: [],
         state: LoadingState.Error,
@@ -157,6 +162,8 @@ describe('QueryEditorField', () => {
 
     it('should result in failed validation if there is data available but api returns error', async () => {
       const dsApi = initiateDsApi();
+
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
 
       dsApi.result = {
         data: [
