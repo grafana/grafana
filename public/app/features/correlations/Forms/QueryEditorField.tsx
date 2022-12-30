@@ -55,11 +55,6 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
   const QueryEditor = datasource?.components?.QueryEditor;
 
   const handleValidation = (value: DataQuery) => {
-    if (isEmpty(value)) {
-      setIsValidQuery(false);
-      return;
-    }
-
     const interval = '1s';
     const intervalMs = 1000;
     const id = generateKey();
@@ -89,7 +84,11 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
       runRequest(datasource, transaction.request).subscribe((panelData) => {
         if (!panelData || panelData.state === 'Error') {
           setIsValidQuery(false);
-        } else if (panelData.state === 'Done') {
+        } else if (
+          panelData.state === 'Done' &&
+          panelData.series.length > 0 &&
+          Boolean(panelData.series.find((element) => element.length > 0))
+        ) {
           setIsValidQuery(true);
         } else {
           setIsValidQuery(undefined);
