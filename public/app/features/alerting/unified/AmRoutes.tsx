@@ -1,17 +1,7 @@
 import { css } from '@emotion/css';
 import { take, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import React, {
-  Children,
-  FC,
-  PropsWithChildren,
-  ReactElement,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { FC, ReactElement, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
@@ -31,7 +21,7 @@ import {
   useTheme2,
   withErrorBoundary,
 } from '@grafana/ui';
-import { MatcherOperator, ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
@@ -71,9 +61,10 @@ const AmRoutes = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.NotificationPolicies);
 
   const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
+  const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
+
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
-  const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
@@ -95,6 +86,7 @@ const AmRoutes = () => {
 
   const config = result?.alertmanager_config;
   const [rootRoute, id2ExistingRoute] = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
+  const rawRootRoute = config?.route;
 
   const receivers: AmRouteReceiver[] = useGetAmRouteReceiverWithGrafanaAppTypes(config?.receivers ?? []);
 
@@ -137,7 +129,7 @@ const AmRoutes = () => {
         },
         oldConfig: result,
         alertManagerSourceName: alertManagerSourceName!,
-        successMessage: 'Saved',
+        successMessage: 'Updated notification policies',
         refetch: true,
       })
     )
@@ -148,7 +140,7 @@ const AmRoutes = () => {
         }
       })
       .catch(() => {
-        // error is handling by a popup notification
+        // error is handled by a popup notification
       });
   };
 
@@ -206,38 +198,54 @@ const AmRoutes = () => {
             />
             {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
             {resultLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
-            {result && !resultLoading && !resultError && (
+            {result && rawRootRoute && !resultLoading && !resultError && (
               <Policy
-                numberOfInstances={25}
                 isDefault
-                contactPoint="grafana-default-email"
-                groupBy={['alertname', 'grafana_folder']}
+                contactPoint={rawRootRoute.receiver}
+                groupBy={rawRootRoute.group_by}
                 timingOptions={{
-                  group_wait: '30s',
-                  group_interval: '5m',
-                  repeat_interval: '4h',
+                  group_wait: rawRootRoute.group_wait,
+                  group_interval: rawRootRoute.group_interval,
+                  repeat_interval: rawRootRoute.repeat_interval,
                 }}
-                editable={readOnly}
-              >
-                <Policy
-                  numberOfInstances={4}
-                  continueMatching
-                  matchers={[
-                    ['team', MatcherOperator.equal, 'operations'],
-                    ['severity', MatcherOperator.notEqual, 'critical'],
-                  ]}
-                  muteTimings={['weekends']}
-                  contactPoint="grafana-default-email"
-                >
-                  <Policy
-                    numberOfInstances={1}
-                    matchers={[['region', MatcherOperator.equal, 'europe']]}
-                    contactPoint="Slack"
-                  />
-                </Policy>
-                <Policy numberOfInstances={0} matchers={[['foo', MatcherOperator.equal, 'bar']]} continueMatching />
-                <Policy matchers={[]} />
-              </Policy>
+                editable={!readOnly}
+                matchers={rawRootRoute.object_matchers}
+                muteTimings={rawRootRoute.mute_time_intervals}
+                childPolicies={rawRootRoute.routes ?? []}
+                continueMatching={rawRootRoute.continue}
+                alertManagerSourceName={alertManagerSourceName}
+              />
+              // <Policy
+              //   isDefault
+              //   numberOfInstances={25}
+              //   contactPoint="grafana-default-email"
+              //   groupBy={['alertname', 'grafana_folder']}
+              //   timingOptions={{
+              //     group_wait: '30s',
+              //     group_interval: '5m',
+              //     repeat_interval: '4h',
+              //   }}
+              //   editable={readOnly}
+              // >
+              //   <Policy
+              //     numberOfInstances={4}
+              //     continueMatching
+              //     matchers={[
+              //       ['team', MatcherOperator.equal, 'operations'],
+              //       ['severity', MatcherOperator.notEqual, 'critical'],
+              //     ]}
+              //     muteTimings={['weekends']}
+              //     contactPoint="grafana-default-email"
+              //   >
+              //     <Policy
+              //       numberOfInstances={1}
+              //       matchers={[['region', MatcherOperator.equal, 'europe']]}
+              //       contactPoint="Slack"
+              //     />
+              //   </Policy>
+              //   <Policy numberOfInstances={0} matchers={[['foo', MatcherOperator.equal, 'bar']]} continueMatching />
+              //   <Policy matchers={[]} />
+              // </Policy>
             )}
           </>
         )}
@@ -249,10 +257,7 @@ const AmRoutes = () => {
           <AmRootRoute
             readOnly={readOnly}
             alertManagerSourceName={alertManagerSourceName}
-            isEditMode={isRootRouteEditMode}
             onSave={handleSave}
-            onEnterEditMode={enterRootRouteEditMode}
-            onExitEditMode={exitRootRouteEditMode}
             receivers={receivers}
             routes={rootRoute}
             routeTree={config?.route}
@@ -263,14 +268,11 @@ const AmRoutes = () => {
             alertManagerSourceName={alertManagerSourceName}
             onChange={handleSave}
             readOnly={readOnly}
-            onRootRouteEdit={enterRootRouteEditMode}
             receivers={receivers}
             routes={rootRoute}
             routeTree={config?.route}
             alertGroups={fetchAlertGroups.result ?? []}
           />
-          <div className={styles.break} />
-          <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} />
         </>
       )} */}
     </AlertingPageWrapper>
@@ -278,7 +280,7 @@ const AmRoutes = () => {
 };
 
 interface PolicyComponentProps {
-  children?: ReactElement<PolicyComponentProps> | Array<ReactElement<PolicyComponentProps>>;
+  childPolicies: Route[];
   isDefault?: boolean;
   matchers?: ObjectMatcher[];
   numberOfInstances?: number;
@@ -287,15 +289,16 @@ interface PolicyComponentProps {
   muteTimings?: string[];
   editable?: boolean;
   timingOptions?: {
-    group_wait: string;
-    group_interval: string;
-    repeat_interval: string;
+    group_wait?: string;
+    group_interval?: string;
+    repeat_interval?: string;
   };
   continueMatching?: boolean;
+  alertManagerSourceName?: string;
 }
 
 const Policy: FC<PolicyComponentProps> = ({
-  children,
+  childPolicies,
   isDefault,
   matchers,
   numberOfInstances = 0,
@@ -305,6 +308,7 @@ const Policy: FC<PolicyComponentProps> = ({
   timingOptions,
   editable = true,
   continueMatching,
+  alertManagerSourceName,
 }) => {
   const styles = useStyles2(getStyles);
   const isDefaultPolicy = isDefault !== undefined;
@@ -330,7 +334,7 @@ const Policy: FC<PolicyComponentProps> = ({
   }
 
   // a leaf policy is a policy that has no additional child policies
-  const hasChildPolicies = Children.count(children) > 0;
+  const hasChildPolicies = childPolicies.length > 0;
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -398,16 +402,24 @@ const Policy: FC<PolicyComponentProps> = ({
                       </Stack>
                     }
                   >
-                    <Link to={`/alerting/notifications/receivers/${contactPoint}/edit?alertmanager=`}>
+                    <Link
+                      to={`/alerting/notifications/receivers/${contactPoint}/edit?alertmanager=${alertManagerSourceName}`}
+                    >
                       <Strong>{contactPoint}</Strong>
                     </Link>
                   </HoverCard>
                 </MetaText>
               )}
-              {groupBy && (
+              {groupBy && groupBy.length > 0 && (
                 <MetaText icon="layer-group">
                   <span>Grouped by</span>
                   <Strong>{groupBy.join(', ')}</Strong>
+                </MetaText>
+              )}
+              {/* we only want to show "no grouping" on the root policy, children with empty groupBy will inherit from the parent policy */}
+              {groupBy && groupBy.length === 0 && isDefaultPolicy && (
+                <MetaText icon="layer-group">
+                  <span>Not grouping</span>
                 </MetaText>
               )}
               {hasMuteTimings && (
@@ -430,24 +442,29 @@ const Policy: FC<PolicyComponentProps> = ({
                   </HoverCard>
                 </MetaText>
               )}
-              {timingOptions && (
+              {timingOptions && Object.values(timingOptions).some(Boolean) && (
                 <MetaText icon="hourglass">
-                  <Tooltip
-                    placement="top"
-                    content="How long to initially wait to send a notification for a group of alert instances."
-                  >
-                    <span>
-                      <span>Wait</span> <Strong>{timingOptions.group_wait}</Strong> <span>to group instances</span>
-                    </span>
-                  </Tooltip>
-                  <Tooltip
-                    placement="top"
-                    content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
-                  >
-                    <span>
-                      <span>,</span> <Strong>{timingOptions.group_interval}</Strong> <span>before sending updates</span>
-                    </span>
-                  </Tooltip>
+                  <span>Wait</span>
+                  {timingOptions.group_wait && (
+                    <Tooltip
+                      placement="top"
+                      content="How long to initially wait to send a notification for a group of alert instances."
+                    >
+                      <span>
+                        <Strong>{timingOptions.group_wait}</Strong> <span>to group instances</span>
+                      </span>
+                    </Tooltip>
+                  )}
+                  {timingOptions.group_interval && (
+                    <Tooltip
+                      placement="top"
+                      content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
+                    >
+                      <span>
+                        <Strong>{timingOptions.group_interval}</Strong> <span>before sending updates</span>
+                      </span>
+                    </Tooltip>
+                  )}
                 </MetaText>
               )}
             </Stack>
@@ -456,10 +473,24 @@ const Policy: FC<PolicyComponentProps> = ({
       </div>
       <div className={styles.childPolicies}>
         {/* pass the "editable" prop from the parent, because if you can't edit the parent you can't edit children */}
-        {children &&
-          Children.map(children, (child: ReactElement<PolicyComponentProps>) =>
-            React.cloneElement(child, { editable })
-          )}
+        {childPolicies &&
+          childPolicies.map((route) => (
+            <Policy
+              key={uniqueId()}
+              contactPoint={route.receiver}
+              groupBy={route.group_by}
+              timingOptions={{
+                group_wait: route.group_wait,
+                group_interval: route.group_interval,
+                repeat_interval: route.repeat_interval,
+              }}
+              editable={editable}
+              matchers={route.object_matchers}
+              muteTimings={route.mute_time_intervals}
+              childPolicies={route.routes ?? []}
+              continueMatching={route.continue}
+            />
+          ))}
       </div>
       <div className={styles.addPolicyWrapper}>
         <CreateOrAddPolicy hasChildPolicies={hasChildPolicies} />
@@ -677,7 +708,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   addPolicyWrapper: css`
     margin-top: -${theme.spacing(2)};
-    margin-bottom: ${theme.spacing(2)};
+    margin-bottom: ${theme.spacing(1)};
   `,
   metaText: css`
     font-size: ${theme.typography.bodySmall.fontSize};
