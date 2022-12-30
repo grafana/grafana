@@ -92,7 +92,30 @@ describe('QueryEditorField', () => {
       jest.spyOn(console, 'error').mockImplementation();
     });
 
-    it('should result in succeeded validation if result with LoadingState.Done', async () => {
+    it('should result in succeeded validation if LoadingState.Done and data is not empty', async () => {
+      const dsApi = initiateDsApi();
+
+      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
+
+      dsApi.result = {
+        data: [
+          {
+            name: 'test',
+            fields: [],
+            length: 1,
+          },
+        ],
+        state: LoadingState.Done,
+      };
+
+      fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText('This query is valid.')).toBeInTheDocument();
+      });
+    });
+
+    it("should result in failed validation if result with LoadingState.Done but doesn't return data", async () => {
       const dsApi = initiateDsApi();
 
       await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
@@ -111,7 +134,7 @@ describe('QueryEditorField', () => {
       fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
 
       await waitFor(() => {
-        expect(screen.getByText('This query is valid.')).toBeInTheDocument();
+        expect(screen.getByText('This query is not valid.')).toBeInTheDocument();
       });
     });
 
