@@ -484,10 +484,7 @@ export enum BarGaugeDisplayMode {
  * Interface for table cell types that have no additional options.
  */
 export interface TableCellNoOptions {
-  displayMode: TableCellDisplayMode.Auto |
-  TableCellDisplayMode.ColorText |
-  TableCellDisplayMode.Image |
-  TableCellDisplayMode.JSONView;
+  displayMode: TableCellDisplayMode;
 }
 
 /**
@@ -509,7 +506,7 @@ export interface TableColorBackgroundCellOptions {
 
 /**
  * Table cell options. Each cell has a display mode
- * and other potential options for that display.
+ * and other potential options for that display.  
  */
 export type TableCellOptions = TableCellNoOptions | TableGaugeCellOptions | TableColorBackgroundCellOptions;
 

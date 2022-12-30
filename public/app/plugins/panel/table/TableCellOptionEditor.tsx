@@ -2,12 +2,11 @@ import { merge } from 'lodash';
 import React, { ReactNode } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { TableCellOptions, TableCellSubOptions } from '@grafana/schema';
+import { TableCellOptions } from '@grafana/schema';
 import { Field, HorizontalGroup, Select, TableCellDisplayMode } from '@grafana/ui';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
-import { TableCellEditorProps } from './models.gen';
 
 const cellDisplayModeOptions = [
   { value: TableCellDisplayMode.Auto, label: 'Auto' },
@@ -20,7 +19,7 @@ const cellDisplayModeOptions = [
 
 // Maps display modes to editor components
 interface ComponentMap {
-  [key: string]: React.FC<TableCellEditorProps>;
+  [key: string]: Function;
 }
 
 /*
@@ -57,17 +56,16 @@ export const TableCellOptionEditor: React.FC<Props> = ({ value, onChange }) => {
   // When options for a cell change we update the corresponding
   // key in the subOptions object merging changes with any
   // previous updates that have been made
-  const onSubOptionsChange = (options: TableCellSubOptions) => {
-    value.subOptions[value.displayMode] = merge({}, options);
-    onChange(value);
-  };
+  const onCellOptionsChange = (options: TableCellOptions) => {
+    console.log(options);
 
-  // console.log(value);
+    onChange(merge(value, options));
+  };
 
   // Setup specific cell editor
   if (displayMode !== undefined && displayModeComponentMap[displayMode] !== undefined) {
-    let Comp: React.FC<TableCellEditorProps> = displayModeComponentMap[displayMode];
-    editor = <Comp subOptions={value.subOptions[displayMode]} onSubOptionsChange={onSubOptionsChange} />;
+    let Comp: Function = displayModeComponentMap[displayMode];
+    editor = <Comp cellOptions={value} onCellOptionsChange={onCellOptionsChange} />;
   }
 
   // Setup and inject editor

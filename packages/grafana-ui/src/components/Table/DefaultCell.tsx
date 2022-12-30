@@ -62,8 +62,7 @@ function getCellStyle(
   const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
 
   // See if we're using deprecated settings
-  const usingDeprecatedSettings =
-    field.config.custom.cellOptions.subOptions[TableCellDisplayMode.ColorBackground] === undefined;
+  const usingDeprecatedSettings = field.config.custom.cellOptions.backgroundDisplayMode === undefined;
 
   // Setup color variables
   let textColor: string | undefined = undefined;
@@ -89,14 +88,14 @@ function getCellStyle(
   }
   // Set colors using updated sub-options format
   else {
-    const displayMode = field.config.custom.cellOptions.subOptions[TableCellDisplayMode.ColorBackground].displayMode;
+    const backgroundDisplayMode = field.config.custom.cellOptions.backgroundDisplayMode;
 
     if (field.config.custom.cellOptions.displayMode === TableCellDisplayMode.ColorText) {
       textColor = displayValue.color;
-    } else if (displayMode === TableCellBackgroundDisplayMode.Basic) {
+    } else if (backgroundDisplayMode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
-    } else if (displayMode === TableCellBackgroundDisplayMode.Gradient) {
+    } else if (backgroundDisplayMode === TableCellBackgroundDisplayMode.Gradient) {
       const bgColor2 = tinycolor(displayValue.color)
         .darken(10 * darkeningFactor)
         .spin(5);

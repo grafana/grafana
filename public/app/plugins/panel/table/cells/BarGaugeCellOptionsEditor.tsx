@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { BarGaugeDisplayMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, TableGaugeCellOptions, TableCellDisplayMode } from '@grafana/schema';
 import { Field, HorizontalGroup, Select } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../models.gen';
@@ -12,20 +12,29 @@ const barGaugeOpts: SelectableValue[] = [
   { value: BarGaugeDisplayMode.Lcd, label: 'Retro LCD' },
 ];
 
-export const BarGaugeCellOptionsEditor: React.FC<TableCellEditorProps> = ({ subOptions, onSubOptionsChange }) => {
+// Explicity set the options we expect
+interface BarGaugeEditorProps extends TableCellEditorProps {
+  cellOptions?: TableGaugeCellOptions;
+}
+
+export const BarGaugeCellOptionsEditor: React.FC<BarGaugeEditorProps> = ({ cellOptions, onCellOptionsChange }) => {
   const onChange = (v: SelectableValue) => {
-    if (subOptions === undefined) {
-      subOptions = {};
+    if (cellOptions === undefined) {
+      cellOptions = {
+        displayMode: TableCellDisplayMode.Gauge,
+        gaugeDisplayMode: v.value,
+      };
+    } else {
+      cellOptions.gaugeDisplayMode = v.value;
     }
 
-    subOptions.displayMode = v.value;
-    onSubOptionsChange(subOptions);
+    onCellOptionsChange(cellOptions);
   };
 
   return (
     <HorizontalGroup>
       <Field label="Gauge Display Mode">
-        <Select value={subOptions?.displayMode} onChange={onChange} options={barGaugeOpts} />
+        <Select value={cellOptions?.gaugeDisplayMode} onChange={onChange} options={barGaugeOpts} />
       </Field>
     </HorizontalGroup>
   );

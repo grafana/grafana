@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { TableCellBackgroundDisplayMode } from '@grafana/schema';
+import { TableCellDisplayMode, TableCellBackgroundDisplayMode, TableColorBackgroundCellOptions } from '@grafana/schema';
 import { HorizontalGroup, Select, Field } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../models.gen';
@@ -11,25 +11,33 @@ const colorBackgroundOpts: SelectableValue[] = [
   { value: TableCellBackgroundDisplayMode.Gradient, label: 'Gradient' },
 ];
 
-export const ColorBackgroundCellOptionsEditor: React.FC<TableCellEditorProps> = ({
-  subOptions,
-  onSubOptionsChange,
+interface ColorBackgroundEditorProps extends TableCellEditorProps {
+  cellOptions?: TableColorBackgroundCellOptions;
+}
+
+export const ColorBackgroundCellOptionsEditor: React.FC<ColorBackgroundEditorProps> = ({
+  cellOptions,
+  onCellOptionsChange,
 }) => {
   // When the select changes we build an options
   // object as needed and set the display mode
   const onChange = (v: SelectableValue) => {
-    if (subOptions === undefined) {
-      subOptions = {};
+    if (cellOptions === undefined) {
+      cellOptions = {
+        displayMode: TableCellDisplayMode.ColorBackground,
+        backgroundDisplayMode: v.value,
+      };
+    } else {
+      cellOptions.backgroundDisplayMode = v.value;
     }
 
-    subOptions.displayMode = v.value;
-    onSubOptionsChange(subOptions);
+    onCellOptionsChange(cellOptions);
   };
 
   return (
     <HorizontalGroup>
       <Field label="Background display mode">
-        <Select value={subOptions?.displayMode} onChange={onChange} options={colorBackgroundOpts} />
+        <Select value={cellOptions?.backgroundDisplayMode} onChange={onChange} options={colorBackgroundOpts} />
       </Field>
     </HorizontalGroup>
   );

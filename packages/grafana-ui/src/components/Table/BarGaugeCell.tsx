@@ -37,10 +37,10 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   const displayValue = field.display!(cell.value);
 
   // Set default display mode
-  let barGaugeMode = BarGaugeDisplayMode.Gradient;
+  let barGaugeMode: BarGaugeDisplayMode = BarGaugeDisplayMode.Gradient;
 
   // Support deprecated settings
-  const usingDeprecatedSettings = field.config.custom.cellOptions.subOptions.gauge === undefined;
+  const usingDeprecatedSettings = field.config.custom.cellOptions.gaugeDisplayMode === undefined;
 
   // If we're using the old settings format we read the displayMode directly from
   // the cell options
@@ -60,8 +60,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   // Otherwise in the case of sub-options we read specifically from the sub-options
   // object in order to get the display mode
   else {
-    const gaugeOptions = field.config.custom.cellOptions.subOptions.gauge;
-    barGaugeMode = gaugeOptions.displayMode;
+    barGaugeMode = field.config.custom.cellOptions.gaugeDisplayMode;
   }
 
   const getLinks = () => {

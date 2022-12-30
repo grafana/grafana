@@ -4,7 +4,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 import { TableCellDisplayMode, TableSortByFieldState, TableFooterCalc } from '@grafana/ui';
-import { TableCellSubOptions, TableFieldOptions } from '@grafana/schema';
+import { TableCellOptions, TableFieldOptions } from '@grafana/schema';
 
 // Only the latest schema version is translated to TypeScript, on the premise
 // that either the dashboard loading process, or (eventually) CUE-defined
@@ -34,13 +34,12 @@ export const defaultPanelOptions: PanelOptions = {
 export const defaultPanelFieldConfig: TableFieldOptions = {
   cellOptions: {
     displayMode: TableCellDisplayMode.Auto,
-    subOptions: {}
   },
   align: 'auto',
   inspect: false,
 };
 
 export interface TableCellEditorProps {
-  subOptions?: TableCellSubOptions;
-  onSubOptionsChange: Function;
+  cellOptions?: TableCellOptions;
+  onCellOptionsChange: Function;
 }
