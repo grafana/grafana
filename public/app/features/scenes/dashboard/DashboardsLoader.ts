@@ -59,30 +59,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
     // Just to have migrations run
     const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
-    let subMenu: SceneSubMenu | undefined = undefined;
-    let variables: SceneVariableSet | undefined = undefined;
-
-    if (oldModel.templating.list.length) {
-      const variableObjects = this.migrateVariables(oldModel);
-      subMenu = new SceneSubMenu({
-        children: [new VariableValueSelectors({})],
-      });
-      variables = new SceneVariableSet({
-        variables: variableObjects,
-      });
-    }
-
-    const dashboard = new DashboardScene({
-      title: oldModel.title,
-      uid: oldModel.uid,
-      body: new SceneGridLayout({
-        children: this.buildSceneObjectsFromDashboard(oldModel),
-      }),
-      $timeRange: new SceneTimeRange(),
-      actions: [new SceneTimePicker({})],
-      $variables: variables,
-      subMenu,
-    });
+    const dashboard = createDashboardSceneFromDashboardModel(oldModel);
 
     // We initialize URL sync here as it better to do that before mounting and doing any rendering.
     // But would be nice to have a conditional around this so you can pre-load dashboards without url sync.
@@ -91,100 +68,121 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
     this.cache[rsp.dashboard.uid] = dashboard;
     this.setState({ dashboard, isLoading: false });
   }
-
-  private buildSceneObjectsFromDashboard(dashboard: DashboardModel) {
-    // collects all panels and rows
-    const panels: SceneObject[] = [];
-
-    // indicates expanded row that's currently processed
-    let currentRow: PanelModel | null = null;
-    // collects panels in the currently processed, expanded row
-    let currentRowPanels: SceneObject[] = [];
-
-    for (const panel of dashboard.panels) {
-      if (panel.type === 'row') {
-        if (!currentRow) {
-          if (Boolean(panel.collapsed)) {
-            // collapsed rows contain their panels within the row model
-            panels.push(
-              new SceneGridRow({
-                title: panel.title,
-                isCollapsed: true,
-                placement: {
-                  y: panel.gridPos.y,
-                },
-                children: panel.panels ? panel.panels.map(createVizPanelFromPanelModel) : [],
-              })
-            );
-          } else {
-            // indicate new row to be processed
-            currentRow = panel;
-          }
-        } else {
-          // when a row has been processed, and we hit a next one for processing
-          if (currentRow.id !== panel.id) {
-            // commit previous row panels
-            panels.push(
-              new SceneGridRow({
-                title: currentRow!.title,
-                placement: {
-                  y: currentRow.gridPos.y,
-                },
-                children: currentRowPanels,
-              })
-            );
-
-            currentRow = panel;
-            currentRowPanels = [];
-          }
-        }
-      } else {
-        const panelObject = createVizPanelFromPanelModel(panel);
-
-        // when processing an expanded row, collect its panels
-        if (currentRow) {
-          currentRowPanels.push(panelObject);
-        } else {
-          panels.push(panelObject);
-        }
-      }
-    }
-
-    // commit a row if it's the last one
-    if (currentRow) {
-      panels.push(
-        new SceneGridRow({
-          title: currentRow!.title,
-          placement: {
-            y: currentRow.gridPos.y,
-          },
-          children: currentRowPanels,
-        })
-      );
-    }
-
-    return panels;
-  }
-
-  private migrateVariables(dashboard: DashboardModel) {
-    return (
-      dashboard.templating.list
-        .map((v) => {
-          try {
-            return createVariableFromLegacyModel(v);
-          } catch (err) {
-            console.error(err);
-            return null;
-          }
-        })
-        // TODO: Remove filter
-        // Added temporarily to allow skipping non-compatible variables
-        .filter((v): v is SceneVariable => Boolean(v))
-    );
-  }
 }
 
-export function createVariableFromLegacyModel(variable: VariableModel): SceneVariable {
+export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObject[] {
+  // collects all panels and rows
+  const panels: SceneObject[] = [];
+
+  // indicates expanded row that's currently processed
+  let currentRow: PanelModel | null = null;
+  // collects panels in the currently processed, expanded row
+  let currentRowPanels: SceneObject[] = [];
+
+  for (const panel of oldPanels) {
+    if (panel.type === 'row') {
+      if (!currentRow) {
+        if (Boolean(panel.collapsed)) {
+          // collapsed rows contain their panels within the row model
+          panels.push(
+            new SceneGridRow({
+              title: panel.title,
+              isCollapsed: true,
+              placement: {
+                y: panel.gridPos.y,
+              },
+              children: panel.panels ? panel.panels.map(createVizPanelFromPanelModel) : [],
+            })
+          );
+        } else {
+          // indicate new row to be processed
+          currentRow = panel;
+        }
+      } else {
+        // when a row has been processed, and we hit a next one for processing
+        if (currentRow.id !== panel.id) {
+          // commit previous row panels
+          panels.push(
+            new SceneGridRow({
+              title: currentRow!.title,
+              placement: {
+                y: currentRow.gridPos.y,
+              },
+              children: currentRowPanels,
+            })
+          );
+
+          currentRow = panel;
+          currentRowPanels = [];
+        }
+      }
+    } else {
+      const panelObject = createVizPanelFromPanelModel(panel);
+
+      // when processing an expanded row, collect its panels
+      if (currentRow) {
+        currentRowPanels.push(panelObject);
+      } else {
+        panels.push(panelObject);
+      }
+    }
+  }
+
+  // commit a row if it's the last one
+  if (currentRow) {
+    panels.push(
+      new SceneGridRow({
+        title: currentRow!.title,
+        placement: {
+          y: currentRow.gridPos.y,
+        },
+        children: currentRowPanels,
+      })
+    );
+  }
+
+  return panels;
+}
+
+export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
+  let subMenu: SceneSubMenu | undefined = undefined;
+  let variables: SceneVariableSet | undefined = undefined;
+
+  if (oldModel.templating.list.length) {
+    const variableObjects = oldModel.templating.list
+      .map((v) => {
+        try {
+          return createSceneVariableFromVariableModel(v);
+        } catch (err) {
+          console.error(err);
+          return null;
+        }
+      })
+      // TODO: Remove filter
+      // Added temporarily to allow skipping non-compatible variables
+      .filter((v): v is SceneVariable => Boolean(v));
+    subMenu = new SceneSubMenu({
+      children: [new VariableValueSelectors({})],
+    });
+    variables = new SceneVariableSet({
+      variables: variableObjects,
+    });
+  }
+
+  return new DashboardScene({
+    title: oldModel.title,
+    uid: oldModel.uid,
+    body: new SceneGridLayout({
+      children: createSceneObjectsForPanels(oldModel.panels),
+    }),
+    $timeRange: new SceneTimeRange(),
+    actions: [new SceneTimePicker({})],
+    $variables: variables,
+    subMenu,
+  });
+}
+
+export function createSceneVariableFromVariableModel(variable: VariableModel): SceneVariable {
   const commonProperties = {
     name: variable.name,
     label: variable.label,
@@ -249,7 +247,7 @@ export function createVariableFromLegacyModel(variable: VariableModel): SceneVar
   }
 }
 
-function createVizPanelFromPanelModel(panel: PanelModel) {
+export function createVizPanelFromPanelModel(panel: PanelModel) {
   return new VizPanel({
     title: panel.title,
     pluginId: panel.type,

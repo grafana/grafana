@@ -4,7 +4,7 @@ import { CustomVariable } from '../variables/variants/CustomVariable';
 import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
 import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
-import { createVariableFromLegacyModel } from './DashboardsLoader';
+import { createSceneVariableFromVariableModel } from './DashboardsLoader';
 
 describe('DashboardLoader', () => {
   describe('variables migration', () => {
@@ -54,7 +54,7 @@ describe('DashboardLoader', () => {
         allValue: null,
       };
 
-      const migrated = createVariableFromLegacyModel(variable);
+      const migrated = createSceneVariableFromVariableModel(variable);
       const { key, ...rest } = migrated.state;
 
       expect(migrated).toBeInstanceOf(CustomVariable);
@@ -133,7 +133,7 @@ describe('DashboardLoader', () => {
         description: null,
       };
 
-      const migrated = createVariableFromLegacyModel(variable);
+      const migrated = createSceneVariableFromVariableModel(variable);
       const { key, ...rest } = migrated.state;
 
       expect(migrated).toBeInstanceOf(QueryVariable);
@@ -205,7 +205,7 @@ describe('DashboardLoader', () => {
         allValue: 'Custom all',
       };
 
-      const migrated = createVariableFromLegacyModel(variable);
+      const migrated = createSceneVariableFromVariableModel(variable);
       const { key, ...rest } = migrated.state;
 
       expect(migrated).toBeInstanceOf(DataSourceVariable);
@@ -257,7 +257,7 @@ describe('DashboardLoader', () => {
         description: null,
       };
 
-      const migrated = createVariableFromLegacyModel(variable);
+      const migrated = createSceneVariableFromVariableModel(variable);
       const { key, ...rest } = migrated.state;
 
       expect(rest).toEqual({
@@ -277,7 +277,7 @@ describe('DashboardLoader', () => {
         type: type as VariableType,
       };
 
-      expect(() => createVariableFromLegacyModel(variable)).toThrow();
+      expect(() => createSceneVariableFromVariableModel(variable)).toThrow();
     });
   });
 });
