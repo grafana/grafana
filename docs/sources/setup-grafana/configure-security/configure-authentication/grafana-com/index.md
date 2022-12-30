@@ -15,7 +15,7 @@ To enable GrafanaCom as your authentication provider, you configure it to genera
 To use Grafana Com authentication:
 
 1. Login on to Grafana com
-2. Create an OAuth client by visiting your organization and clicking “OAuth Clients”.
+1. To create an OAuth client, locate your organization and click **OAuth Clients**. 
 3. Then click “Add OAuth Client Application”.
 1. Add the URL of your running Grafana instance.
 5. The next step will give you the client ID and secret.
