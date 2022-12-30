@@ -64,13 +64,6 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
 
   return (
     <div className={styles.container}>
-      {!hideActions && <h5>Mute timings</h5>}
-      {!hideActions && (
-        <p>
-          Mute timings are a named interval of time that may be referenced in the notification policy tree to mute
-          particular notification policies for specific times of the day.
-        </p>
-      )}
       {!hideActions && items.length > 0 && (
         <Authorize actions={[permissions.create]}>
           <LinkButton

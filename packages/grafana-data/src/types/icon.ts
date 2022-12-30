@@ -60,6 +60,7 @@ export const availableIconsIndex = {
   'comments-alt': true,
   compass: true,
   copy: true,
+  'corner-down-right-alt': true,
   'create-dashboard': true,
   'credit-card': true,
   crosshair: true,

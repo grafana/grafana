@@ -1,7 +1,17 @@
 import { css } from '@emotion/css';
 import { take, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import React, { FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  Children,
+  FC,
+  PropsWithChildren,
+  ReactElement,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
@@ -13,6 +23,9 @@ import {
   getTagColorsFromName,
   Icon,
   LoadingPlaceholder,
+  Tab,
+  TabContent,
+  TabsBar,
   Tooltip,
   useStyles2,
   useTheme2,
@@ -30,6 +43,7 @@ import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertman
 import { HoverCard } from './components/HoverCard';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
+import { Spacer } from './components/Spacer';
 import { AmRootRoute } from './components/amroutes/AmRootRoute';
 import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
 import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
@@ -45,10 +59,18 @@ import { amRouteToFormAmRoute, formAmRouteToAmRoute } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
+enum ActiveTab {
+  NotificationPolicies,
+  MuteTimings,
+}
+
 const AmRoutes = () => {
   const dispatch = useDispatch();
+  const styles = useStyles2(getStyles);
+  // TODO add querystring param for the current tab so we can route to it immediately
+  const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.NotificationPolicies);
+
   const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
-  const [isRootRouteEditMode, setIsRootRouteEditMode] = useState(false);
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
@@ -81,14 +103,6 @@ const AmRoutes = () => {
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
   const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
 
-  const enterRootRouteEditMode = () => {
-    setIsRootRouteEditMode(true);
-  };
-
-  const exitRootRouteEditMode = () => {
-    setIsRootRouteEditMode(false);
-  };
-
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
   // fetch AM instances grouping
@@ -111,10 +125,6 @@ const AmRoutes = () => {
       },
       id2ExistingRoute
     );
-
-    if (isRootRouteEditMode) {
-      exitRootRouteEditMode();
-    }
 
     dispatch(
       updateAlertManagerConfigAction({
@@ -154,6 +164,8 @@ const AmRoutes = () => {
     ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) || isProvisioned
     : true;
 
+  const numberOfMuteTimings = result?.alertmanager_config.mute_time_intervals?.length ?? 0;
+
   return (
     <AlertingPageWrapper pageId="am-routes">
       <AlertManagerPicker
@@ -166,44 +178,72 @@ const AmRoutes = () => {
           {resultError.message || 'Unknown error.'}
         </Alert>
       )}
-      <GrafanaAlertmanagerDeliveryWarning
-        currentAlertmanager={alertManagerSourceName}
-        alertmanagerChoice={alertmanagerChoice}
-      />
-      {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
-      {resultLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
-      {result && !resultLoading && !resultError && (
-        <Policy
-          numberOfInstances={25}
-          isDefault
-          contactPoint="grafana-default-email"
-          groupBy={['alertname', 'grafana_folder']}
-          timingOptions={{
-            group_wait: '30s',
-            group_interval: '5m',
-            repeat_interval: '4h',
+      <TabsBar>
+        <Tab
+          label={'Notification Policies'}
+          active={activeTab === ActiveTab.NotificationPolicies}
+          onChangeTab={() => {
+            setActiveTab(ActiveTab.NotificationPolicies);
           }}
-        >
-          <Policy
-            numberOfInstances={4}
-            continueMatching
-            matchers={[
-              ['team', MatcherOperator.equal, 'operations'],
-              ['severity', MatcherOperator.notEqual, 'critical'],
-            ]}
-            muteTimings={['weekends']}
-            contactPoint="grafana-default-email"
-          >
-            <Policy
-              numberOfInstances={1}
-              matchers={[['region', MatcherOperator.equal, 'europe']]}
-              contactPoint="Slack"
+        />
+        <Tab
+          label={'Mute Timings'}
+          active={activeTab === ActiveTab.MuteTimings}
+          counter={numberOfMuteTimings}
+          onChangeTab={() => {
+            setActiveTab(ActiveTab.MuteTimings);
+          }}
+        />
+        <Spacer />
+        {activeTab === ActiveTab.MuteTimings && <Button>Add mute timing</Button>}
+      </TabsBar>
+      <TabContent className={styles.tabContent}>
+        {activeTab === ActiveTab.NotificationPolicies && (
+          <>
+            <GrafanaAlertmanagerDeliveryWarning
+              currentAlertmanager={alertManagerSourceName}
+              alertmanagerChoice={alertmanagerChoice}
             />
-          </Policy>
-          <Policy numberOfInstances={0} matchers={[['foo', MatcherOperator.equal, 'bar']]} continueMatching />
-          <Policy matchers={[]} />
-        </Policy>
-      )}
+            {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
+            {resultLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
+            {result && !resultLoading && !resultError && (
+              <Policy
+                numberOfInstances={25}
+                isDefault
+                contactPoint="grafana-default-email"
+                groupBy={['alertname', 'grafana_folder']}
+                timingOptions={{
+                  group_wait: '30s',
+                  group_interval: '5m',
+                  repeat_interval: '4h',
+                }}
+                editable={readOnly}
+              >
+                <Policy
+                  numberOfInstances={4}
+                  continueMatching
+                  matchers={[
+                    ['team', MatcherOperator.equal, 'operations'],
+                    ['severity', MatcherOperator.notEqual, 'critical'],
+                  ]}
+                  muteTimings={['weekends']}
+                  contactPoint="grafana-default-email"
+                >
+                  <Policy
+                    numberOfInstances={1}
+                    matchers={[['region', MatcherOperator.equal, 'europe']]}
+                    contactPoint="Slack"
+                  />
+                </Policy>
+                <Policy numberOfInstances={0} matchers={[['foo', MatcherOperator.equal, 'bar']]} continueMatching />
+                <Policy matchers={[]} />
+              </Policy>
+            )}
+          </>
+        )}
+        {activeTab === ActiveTab.MuteTimings && <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} />}
+      </TabContent>
+
       {/* {result && !resultLoading && !resultError && (
         <>
           <AmRootRoute
@@ -238,13 +278,14 @@ const AmRoutes = () => {
 };
 
 interface PolicyComponentProps {
+  children?: ReactElement<PolicyComponentProps> | Array<ReactElement<PolicyComponentProps>>;
   isDefault?: boolean;
   matchers?: ObjectMatcher[];
   numberOfInstances?: number;
   contactPoint?: string;
   groupBy?: string[];
   muteTimings?: string[];
-  readOnly?: boolean;
+  editable?: boolean;
   timingOptions?: {
     group_wait: string;
     group_interval: string;
@@ -252,8 +293,6 @@ interface PolicyComponentProps {
   };
   continueMatching?: boolean;
 }
-
-const allRoutes = <Badge icon="exclamation-triangle" text="Matches all labels" color="orange" />;
 
 const Policy: FC<PolicyComponentProps> = ({
   children,
@@ -264,7 +303,7 @@ const Policy: FC<PolicyComponentProps> = ({
   groupBy,
   muteTimings = [],
   timingOptions,
-  readOnly = false,
+  editable = true,
   continueMatching,
 }) => {
   const styles = useStyles2(getStyles);
@@ -284,14 +323,16 @@ const Policy: FC<PolicyComponentProps> = ({
   // gather warnings here
   const warnings: ReactNode[] = [];
   if (!hasMatchers && !isDefaultPolicy) {
-    warnings.push(allRoutes);
+    warnings.push(wildcardRouteWarning);
   }
   if (!contactPoint) {
-    warnings.push(<NoContactPoint />);
+    warnings.push(noContactPointWarning);
   }
 
-  // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
+  // a leaf policy is a policy that has no additional child policies
+  const hasChildPolicies = Children.count(children) > 0;
 
+  // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
     <Stack direction="column" gap={1.5}>
       <div className={styles.policyWrapper}>
@@ -320,7 +361,7 @@ const Policy: FC<PolicyComponentProps> = ({
               {warnings.length > 1 && (
                 <Badge icon="exclamation-triangle" color="orange" text={pluralize('warning', warnings.length, true)} />
               )}
-              {!readOnly && (
+              {editable && (
                 <div>
                   <Button variant="secondary" icon="pen" size="sm">
                     Edit
@@ -399,7 +440,6 @@ const Policy: FC<PolicyComponentProps> = ({
                       <span>Wait</span> <Strong>{timingOptions.group_wait}</Strong> <span>to group instances</span>
                     </span>
                   </Tooltip>
-
                   <Tooltip
                     placement="top"
                     content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
@@ -414,7 +454,16 @@ const Policy: FC<PolicyComponentProps> = ({
           </div>
         </Stack>
       </div>
-      <div className={styles.childPolicies}>{children}</div>
+      <div className={styles.childPolicies}>
+        {/* pass the "editable" prop from the parent, because if you can't edit the parent you can't edit children */}
+        {children &&
+          Children.map(children, (child: ReactElement<PolicyComponentProps>) =>
+            React.cloneElement(child, { editable })
+          )}
+      </div>
+      <div className={styles.addPolicyWrapper}>
+        <CreateOrAddPolicy hasChildPolicies={hasChildPolicies} />
+      </div>
     </Stack>
   );
 };
@@ -454,21 +503,24 @@ const DefaultPolicy = () => {
   );
 };
 
-const AddPolicy = () => {
-  const styles = useStyles2(getStyles);
+interface AddPolicyProps {
+  hasChildPolicies: boolean;
+}
 
-  return (
-    <div className={styles.addPolicy}>
-      <Button variant="secondary" size="sm" icon="plus">
-        Add policy
-      </Button>
-    </div>
-  );
-};
+const CreateOrAddPolicy: FC<AddPolicyProps> = ({ hasChildPolicies }) => (
+  <Button
+    variant="secondary"
+    size="sm"
+    fill="outline"
+    type="button"
+    icon={hasChildPolicies ? 'plus' : 'corner-down-right-alt'}
+  >
+    {hasChildPolicies ? 'Add policy' : 'Create child policy'}
+  </Button>
+);
 
-const NoContactPoint = () => {
-  return <Badge icon="exclamation-triangle" text="No contact point" color="orange" />;
-};
+const wildcardRouteWarning = <Badge icon="exclamation-triangle" text="Matches all labels" color="orange" />;
+const noContactPointWarning = <Badge icon="exclamation-triangle" text="No contact point" color="orange" />;
 
 type MatchersProps = { matchers: ObjectMatcher[] };
 
@@ -535,6 +587,9 @@ const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher: [label, operator, value]
 export default withErrorBoundary(AmRoutes, { style: 'page' });
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  tabContent: css`
+    margin-top: ${theme.spacing(2)};
+  `,
   matcher: (label: string) => {
     const { color, borderColor } = getTagColorsFromName(label);
 
@@ -620,9 +675,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: 0;
     margin-bottom: ${theme.spacing(2)};
   `,
-  addPolicy: css`
+  addPolicyWrapper: css`
+    margin-top: -${theme.spacing(2)};
     margin-bottom: ${theme.spacing(2)};
-    margin-left: ${theme.spacing(2)};
   `,
   metaText: css`
     font-size: ${theme.typography.bodySmall.fontSize};
@@ -648,5 +703,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 0;
   `,
 });
-
-const Spacer = () => <div style={{ flex: 1 }} />;
