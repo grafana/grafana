@@ -86,7 +86,7 @@ Grafana integrates with the following key management services:
 - [AWS KMS]({{< relref "encrypt-secrets-using-aws-kms/" >}})
 - [Azure Key Vault]({{< relref "encrypt-secrets-using-azure-key-vault/" >}})
 - [Google Cloud KMS]({{< relref "encrypt-secrets-using-google-cloud-kms/" >}})
-- [Hashicorp Key Vault]({{< relref "encrypt-secrets-using-hashicorp-key-vault/" >}})
+- [HashiCorp Key Vault]({{< relref "encrypt-secrets-using-hashicorp-key-vault/" >}})
 
 ## Changing your encryption mode to AES-GCM
 

@@ -136,7 +136,7 @@ func runPublishGithubDryRun(f *publishGithubFlags, token string, ctx *cli.Contex
 	fmt.Println("Dry-Run: Retrieving release on repository by tag")
 	release, res, err := client.GetReleaseByTag(ctx.Context, f.repo.owner, f.repo.name, f.tag)
 	if err != nil && res.StatusCode != 404 {
-		fmt.Println("Dry-Run: Github communication error:\n", err)
+		fmt.Println("Dry-Run: GitHub communication error:\n", err)
 		return nil
 	}
 

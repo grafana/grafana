@@ -160,7 +160,7 @@ make test-go-integration-postgres
 
 ### Run end-to-end tests
 
-The end to end tests in Grafana use [Cypress](https://www.cypress.io/) to run automated scripts in a headless Chromium browser. Read more about our [e2e framework](/contribute/style-guides/e2e.md).
+The end-to-end tests in Grafana use [Cypress](https://www.cypress.io/) to run automated scripts in a headless Chromium browser. Read more about our [e2e framework](/contribute/style-guides/e2e.md).
 
 To run the tests:
 

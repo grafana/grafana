@@ -15,13 +15,13 @@ Grafana has default and custom configuration files. You can customize your Grafa
 
 ## Configuration file location
 
-The default settings for a Grafana instance are stored in the `$WORKING_DIR/conf/defaults.ini` file. _Do not_ change this file.
+The default settings for a Grafana instance are stored in the `$WORKING_DIR/conf/defaults.ini` file. _Do not_ modify this file.
 
 Depending on your OS, your custom configuration file is either the `$WORKING_DIR/conf/defaults.ini` file or the `/usr/local/etc/grafana/grafana.ini` file. The custom configuration file path can be overridden using the `--config` parameter.
 
 ### Linux
 
-If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
+If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This file path is specified in the Grafana init.d script using the `--config` file parameter.
 
 ### Docker
 
@@ -37,7 +37,7 @@ By default, the configuration file is located at `/usr/local/etc/grafana/grafana
 
 ## Remove comments in the .ini files
 
-Grafana uses semicolons (the `;` char) to comment out lines in a `.ini` file. You must uncomment each line in the `custom.ini` or the `grafana.ini` file that you are modify by removing `;` from the beginning of that line. Otherwise your changes will be ignored.
+Grafana uses semicolons (the `;` char) to comment out lines in a `.ini` file. You must uncomment each line in the `custom.ini` or the `grafana.ini` file that you're modifying by removing the prefixed `;` on that line, otherwise your changes will be ignored.
 
 For example:
 
@@ -113,7 +113,7 @@ logs = $__env{LOGDIR}/grafana
 
 ### File provider
 
-`file` reads a file from the filesystem. It trims whitespace from the
+The `file` provider reads a file from the filesystem. It trims whitespace from the
 beginning and the end of files.
 The database password in the following example would be replaced by
 the content of the `/etc/secrets/gf_sql_password` file:
@@ -125,7 +125,7 @@ password = $__file{/etc/secrets/gf_sql_password}
 
 ### Vault provider
 
-The `vault` provider allows you to manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault).
+The `vault` provider allows you to manage your secrets with [HashiCorp Vault](https://www.hashicorp.com/products/vault).
 
 > Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../configure-security/configure-database-encryption/integrate-with-hashicorp-vault/" >}}) in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 

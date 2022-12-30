@@ -297,7 +297,7 @@ func buildAwsMarketplaceVersionDetails(repo string, version string) string {
                 ],
                 "CompatibleServices": ["EKS", "ECS", "ECS-Anywhere", "EKS-Anywhere"],
                 "ContainerImages": ["%s/%s:%s"],
-                "Description": "Grafana Enterprise can be installed using the official Grafana Helm chart repository. The repository is available on Github: %s",
+                "Description": "Grafana Enterprise can be installed using the official Grafana Helm chart repository. The repository is available on GitHub: %s",
                 "UsageInstructions": "You can apply your Grafana Enterprise license to a new or existing Grafana Enterprise deployment by updating a configuration setting or environment variable. Your Grafana instance must be deployed on AWS, or have network access to AWS. For more information, see %s"
               }
             },

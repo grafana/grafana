@@ -25,7 +25,7 @@ const SlashesWarning = () => {
   return (
     <Stack gap={0.5}>
       <div className={styles.slashNotAllowed}>Folders with &apos;/&apos; character are not allowed.</div>
-      <Tooltip placement="top" content={'Link to the Github issue'} theme="info">
+      <Tooltip placement="top" content={'Link to the GitHub issue'} theme="info">
         <Icon name="info-circle" size="xs" className={styles.infoIcon} onClick={onClick} />
       </Tooltip>
     </Stack>

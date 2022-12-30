@@ -140,7 +140,7 @@ kubectl create secret generic ge-license --from-file=/path/to/your/license.jwt
 
 Create a Grafana configuration file with the name `grafana.ini`. Then paste the content below.
 
-> **Note:** You will have to update the `root_url` field to the url associated with the license you were given.
+> **Note:** You will have to update the `root_url` field to the URL associated with the license you were given.
 
 ```yaml
 [enterprise]
@@ -254,7 +254,7 @@ spec:
 
 > **Caution:** If you use `LoadBalancer` in the Service and depending on your cloud platform and network configuration, doing so might expose your Grafana instance to the Internet. To eliminate this risk, use `ClusterIP` to restrict access from within the cluster Grafana is deployed to.
 
-1. Send manifest to Kubernetes API Server
+1. Send the manifest to Kubernetes API Server
    `kubectl apply -f grafana.yaml`
 
 1. Check that it worked by running the following:

@@ -56,12 +56,12 @@ if echo "$_grafana_tag" | grep -q "^v" && echo "$_grafana_tag" | grep -vq "beta"
   docker_push_all "${_docker_repo}" "latest"
   docker_push_all "${_docker_repo}" "${_grafana_version}"
   # Push to the grafana-dev repository with the expected tag
-  # for running the end to end tests successfully
+  # for running the end-to-end tests successfully
   docker push "grafana/grafana-dev:${_grafana_tag}${TAG_SUFFIX}"
 elif echo "$_grafana_tag" | grep -q "^v" && echo "$_grafana_tag" | grep -q "beta"; then
   docker_push_all "${_docker_repo}" "${_grafana_version}"
   # Push to the grafana-dev repository with the expected tag
-  # for running the end to end tests successfully
+  # for running the end-to-end tests successfully
   docker push "grafana/grafana-dev:${_grafana_tag}${TAG_SUFFIX}"
 elif echo "$_grafana_tag" | grep -q "main"; then
   docker_push_all "${_docker_repo}" "main"

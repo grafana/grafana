@@ -77,7 +77,7 @@ func TestPublishGithub(t *testing.T) {
 			token:          "invalid",
 			args:           []string{"--dry-run", "--path", testPath, "--repo", "test/test", "--tag", "v1.0.0"},
 			mockedService:  &mockGithubRepositoryServiceImpl{tagErr: mockErrUnauthorized},
-			expectedOutput: "Github communication error",
+			expectedOutput: "GitHub communication error",
 		},
 		{
 			name:           "dry run with valid token and nonexisting tag with create disabled",
@@ -167,7 +167,7 @@ func setupPublishGithubTests(t *testing.T) (*cli.App, string) {
 		&cli.StringFlag{
 			Name:     "repo",
 			Required: true,
-			Usage:    "Github repository",
+			Usage:    "GitHub repository",
 		},
 		&cli.StringFlag{
 			Name:  "tag",

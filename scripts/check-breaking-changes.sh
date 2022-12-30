@@ -38,16 +38,16 @@ while IFS=" " read -r -a package; do
     STATUS=$?
 
     # Final exit code
-    # (non-zero if any of the packages failed the checks) 
+    # (non-zero if any of the packages failed the checks)
     if [ $STATUS -gt 0 ]
     then
         EXIT_CODE=1
-        GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"    
+        GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"
     fi
 
 done <<< "$PACKAGES"
 
-# "Export" the message to an environment variable that can be used across Github Actions steps
+# "Export" the message to an environment variable that can be used across GitHub Actions steps
 echo "is_breaking=$EXIT_CODE" >> "$GITHUB_OUTPUT"
 echo "message=$GITHUB_MESSAGE" >> "$GITHUB_OUTPUT"
 

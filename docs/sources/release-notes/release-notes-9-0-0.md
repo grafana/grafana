@@ -169,7 +169,7 @@ The `Button` component provided by @grafana/ui now specifies a default `type="bu
 
 You can preserve the old behavior by explicitly setting the type attribute: `<Button type="submit" />`
 
-[Github Issue #41863](https://github.com/grafana/grafana/issues/41863).
+[GitHub Issue #41863](https://github.com/grafana/grafana/issues/41863).
 Issue [#48183](https://github.com/grafana/grafana/issues/48183)
 
 The `Rename by regex` transformation has been improved to allow global patterns of the form `/<stringToReplace>/g`. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behaviour as before by wrapping the `match` string in forward slashes (`/`), e.g. `(.*)` would become `/(.*)/` Issue [#48179](https://github.com/grafana/grafana/issues/48179)

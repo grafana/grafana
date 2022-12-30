@@ -25,8 +25,8 @@ See [Configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}) for
 
 > **Note:** If you have installed Grafana using the `deb` or `rpm`
 > packages, then your configuration file is located at
-> `/etc/grafana/grafana.ini`. This path is specified in the Grafana
-> init.d script using `--config` file parameter.
+> `/etc/grafana/grafana.ini`. This file path is specified in the Grafana
+> init.d script using the `--config` file parameter.
 
 ### Using Environment Variables
 

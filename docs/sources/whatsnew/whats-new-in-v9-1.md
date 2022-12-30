@@ -216,7 +216,7 @@ For more details, see the [RBAC documentation]({{< relref "../administration/rol
 
 #### Rotate your database encryption keys using Grafana's API
 
-In Grafana version 9.0, we [revamped]({{< relref "./whats-new-in-v9-0/#envelope-encryption-is-generally-available-and-enabled-by-default"  >}}) the method Grafana uses to encrypt secrets, like data source credentials, so that you can rotate encryption keys and integrate with a key management system like Hashicorp Vault, AWS Key Management Service, or Azure Key Vault.
+In Grafana version 9.0, we [revamped]({{< relref "./whats-new-in-v9-0/#envelope-encryption-is-generally-available-and-enabled-by-default"  >}}) the method Grafana uses to encrypt secrets, like data source credentials, so that you can rotate encryption keys and integrate with a key management system like HashiCorp Vault, AWS Key Management Service, or Azure Key Vault.
 
 Now, you can rotate keys and re-encrypt secrets via API.
 This makes it easier to configure Grafana to be secure while deploying it.

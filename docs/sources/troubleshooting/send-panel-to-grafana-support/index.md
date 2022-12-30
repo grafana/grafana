@@ -26,9 +26,9 @@ The panel that you send includes all query response data and all visualizations 
 
    ![Support panel](/static/img/docs/troubleshooting/grafana-support-panel.png)
 
-1. To send the panel data to Grafana Labs via Github:
+1. To send the panel data to Grafana Labs via GitHub:
 
-   a. Click **Copy for Github**.
+   a. Click **Copy for GitHub**.
 
    b. In the [Grafana/Grafana](https://github.com/grafana/grafana) repository, create an issue and paste the contents of the support dashboard.
 

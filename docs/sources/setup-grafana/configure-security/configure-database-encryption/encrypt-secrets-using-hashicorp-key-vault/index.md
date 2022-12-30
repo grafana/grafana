@@ -1,21 +1,21 @@
 ---
 aliases:
   - ../../../enterprise/enterprise-encryption/using-hashicorp-key-vault-to-encrypt-database-secrets/
-description: Learn how to use Hashicorp Vault to encrypt secrets in the Grafana database.
-title: Encrypt database secrets using Hashicorp Vault
+description: Learn how to use HashiCorp Vault to encrypt secrets in the Grafana database.
+title: Encrypt database secrets using HashiCorp Vault
 weight: 200
 ---
 
-# Encrypt database secrets using Hashicorp Vault
+# Encrypt database secrets using HashiCorp Vault
 
-You can use an encryption key from Hashicorp Vault to encrypt secrets in the Grafana database.
+You can use an encryption key from HashiCorp Vault to encrypt secrets in the Grafana database.
 
 **Prerequisites:**
 
-- Permissions to manage Hashicorp Vault to enable secrets engines and issue tokens.
+- Permissions to manage HashiCorp Vault to enable secrets engines and issue tokens.
 - Access to the Grafana [configuration]({{< relref "../../../configure-grafana/#config-file-locations" >}}) file
 
-1. [Enable the transit secrets engine](https://www.vaultproject.io/docs/secrets/transit#setup) in Hashicorp Vault.
+1. [Enable the transit secrets engine](https://www.vaultproject.io/docs/secrets/transit#setup) in HashiCorp Vault.
 
 2. [Create a named encryption key](https://www.vaultproject.io/docs/secrets/transit#setup).
 
@@ -23,25 +23,25 @@ You can use an encryption key from Hashicorp Vault to encrypt secrets in the Gra
 
 4. From within Grafana, turn on [envelope encryption]({{< relref "/#envelop-encryption" >}}).
 
-5. Add your Hashicorp Vault details to the Grafana configuration file; depending on your operating system, is usually named `grafana.ini`:
+5. Add your HashiCorp Vault details to the Grafana configuration file; depending on your operating system, is usually named `grafana.ini`:
    <br><br>a. Add a new section to the configuration file, with a name in the format of `[security.encryption.hashicorpvault.<KEY-NAME>]`, where `<KEY-NAME>` is any name that uniquely identifies this key among other provider keys.
    <br><br>b. Fill in the section with the following values:
    <br>
 
-   - `token`: a periodic service token used to authenticate within Hashicorp Vault.
-   - `url`: URL of the Hashicorp Vault server.
+   - `token`: a periodic service token used to authenticate within HashiCorp Vault.
+   - `url`: URL of the HashiCorp Vault server.
    - `transit_engine_path`: mount point of the transit engine.
    - `key_ring`: name of the encryption key.
    - `token_renewal_interval`: specifies how often to renew token; should be less than the `period` value of a periodic service token.
 
-   An example of a Hashicorp Vault provider section in the `grafana.ini` file is as follows:
+   An example of a HashiCorp Vault provider section in the `grafana.ini` file is as follows:
 
    ```
-   # Example of Hashicorp Vault provider setup
+   # Example of HashiCorp Vault provider setup
    ;[security.encryption.hashicorpvault.example-encryption-key]
    # Token used to authenticate within Vault. We suggest to use periodic tokens: more on token types https://www.vaultproject.io/docs/concepts/tokens#service-tokens
    ;token =
-   # Location of the Hashicorp Vault server
+   # Location of the HashiCorp Vault server
    ;url = http://localhost:8200
    # Mount point of the transit secret engine
    ;transit_engine_path = transit

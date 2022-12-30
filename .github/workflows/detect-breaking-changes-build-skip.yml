@@ -1,5 +1,5 @@
 # Workflow for skipping the Levitate detection
-# (This is needed because workflows that are skipped due to path filtering will show up as pending in Github.
+# (This is needed because workflows that are skipped due to path filtering will show up as pending in GitHub.
 # As this has the same name as the one in detect-breaking-changes-build.yml it will take over in these cases and succeed quickly.)
 
 name: Levitate / Detect breaking changes

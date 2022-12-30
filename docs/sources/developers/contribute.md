@@ -36,7 +36,7 @@ Our [style guides](https://github.com/grafana/grafana/tree/main/contribute/style
 
 - [Documentation style guide](https://github.com/grafana/grafana/blob/main/contribute/style-guides/documentation-style-guide.md) applies to all documentation created for Grafana products.
 
-- [End to end test framework](https://github.com/grafana/grafana/blob/main/contribute/style-guides/e2e.md) provides guidance for Grafana e2e tests.
+- [End-to-end test framework](https://github.com/grafana/grafana/blob/main/contribute/style-guides/e2e.md) provides guidance for Grafana e2e tests.
 
 - [Frontend style guide](https://github.com/grafana/grafana/blob/main/contribute/style-guides/frontend.md) provides rules and guidance on developing in React for Grafana.
 

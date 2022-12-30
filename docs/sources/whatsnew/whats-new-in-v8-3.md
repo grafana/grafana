@@ -90,7 +90,7 @@ We’ve added new permissions to role-based access control to help you specify a
 
 ## Get your encryption key from a Key Management Service
 
-Grafana’s database contains secrets, like the credentials used to query data sources, send alert notifications and perform other functions within Grafana. These secrets are encrypted using keys, which are usually stored in Grafana’s configuration file. Now you can get your encryption key from Amazon KMS, Azure Key Vault, or Hashicorp Vault. This allows you to centrally manage your Grafana encryption key and reduce the chances it will leak.
+Grafana’s database contains secrets, like the credentials used to query data sources, send alert notifications and perform other functions within Grafana. These secrets are encrypted using keys, which are usually stored in Grafana’s configuration file. Now you can get your encryption key from Amazon KMS, Azure Key Vault, or HashiCorp Vault. This allows you to centrally manage your Grafana encryption key and reduce the chances it will leak.
 
 In order to support this, we’ve upgraded Grafana Enterprise to use envelope encryption, which complements the KMS integration by adding a layer of indirection to the encryption process. Instead of encrypting all secrets with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK). With envelope encryption, you can store a KEK in your KMS, and still quickly encrypt and decrypt data using DEKs stored within the Grafana database.
 
