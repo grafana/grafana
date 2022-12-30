@@ -1,10 +1,14 @@
-import { VariableType } from '@grafana/schema';
+import { DeepPartial } from 'redux';
+
+import { VariableType, defaultDashboard } from '@grafana/schema';
+import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 
 import { CustomVariable } from '../variables/variants/CustomVariable';
 import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
 import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
-import { createVariableFromLegacyModel } from './DashboardsLoader';
+import { createVariableFromLegacyModel, DashboardLoader } from './DashboardsLoader';
 
 describe('DashboardLoader', () => {
   describe('variables migration', () => {
@@ -280,4 +284,33 @@ describe('DashboardLoader', () => {
       expect(() => createVariableFromLegacyModel(variable)).toThrow();
     });
   });
+
+  describe('initialize dashboard', () => {
+    it('should initialize dashboard time range', async () => {
+      setDashboardLoaderSrvResponse({ time: { from: 'now-10h', to: 'now' } });
+      const loader = new DashboardLoader({});
+
+      await loader.load('test');
+
+      expect(loader.state.dashboard?.state.$timeRange?.state.value.raw).toEqual({
+        from: 'now-10h',
+        to: 'now',
+      });
+    });
+  });
 });
+
+function setDashboardLoaderSrvResponse(dashboard: Partial<DashboardDataDTO>, meta?: Partial<DashboardMeta>) {
+  setDashboardLoaderSrv({
+    loadDashboard: () =>
+      Promise.resolve<DashboardDTO>({
+        dashboard: {
+          ...defaultDashboard,
+          ...dashboard,
+        } as DashboardDataDTO,
+        meta: {
+          ...meta,
+        },
+      }),
+  } as unknown as DashboardLoaderSrv);
+}
