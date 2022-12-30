@@ -236,7 +236,7 @@ tsconfig.json @grafana/frontend-ops
 /public/app/features/storage/ @grafana/grafana-edge-squad
 /public/app/features/live/ @grafana/grafana-edge-squad
 /public/app/features/query-library/ @grafana/grafana-edge-squad
-/public/app/features/explore/ @grafana/observability-experience-squad
+/public/app/features/explore/ @grafana/explore-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
 /public/app/features/transformers/spatial/ @grafana/grafana-edge-squad
 /public/app/plugins/panel/alertlist/ @grafana/alerting-squad-frontend
