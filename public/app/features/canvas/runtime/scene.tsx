@@ -581,12 +581,16 @@ export class Scene {
 
           // TODO: Make this not as magic numbery -> related to the height / width of highlight ellipse
           const connectionAnchorHighlightOffset = 8;
+          const x = connectionStartTargetBox.x - parentBoundingRect.x + connectionAnchorHighlightOffset;
+          const y = connectionStartTargetBox.y - parentBoundingRect.y + connectionAnchorHighlightOffset;
 
-          const x = connectionStartTargetBox.x - parentBoundingRect!.x + connectionAnchorHighlightOffset;
-          const y = connectionStartTargetBox.y - parentBoundingRect!.y + connectionAnchorHighlightOffset;
+          const mouseX = event.inputEvent.clientX - parentBoundingRect.x;
+          const mouseY = event.inputEvent.clientY - parentBoundingRect.y;
 
           this.connectionLine.setAttribute('x1', `${x}`);
           this.connectionLine.setAttribute('y1', `${y}`);
+          this.connectionLine.setAttribute('x2', `${mouseX}`);
+          this.connectionLine.setAttribute('y2', `${mouseY}`);
           this.connectionSVG.style.display = 'block';
 
           this.isDrawingConnection = true;
