@@ -263,6 +263,7 @@ function createVizPanelFromPanelModel(panel: PanelModel) {
     fieldConfig: panel.fieldConfig,
     pluginVersion: panel.pluginVersion,
     $data: new SceneQueryRunner({
+      transformations: panel.transformations,
       queries: panel.targets,
     }),
   });
