@@ -60,7 +60,6 @@ const AmRoutes = () => {
   const styles = useStyles2(getStyles);
   // TODO add querystring param for the current tab so we can route to it immediately
   const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.NotificationPolicies);
-  const [creatingOrEditingPolicy, setCreatingOrEditingPolicy] = useState<boolean>(false);
 
   const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
   const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
@@ -96,6 +95,8 @@ const AmRoutes = () => {
 
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
   const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
+  const [addModal, openAddModal] = useAddPolicyModal();
+  const [editModal, openEditModal] = useEditModal();
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
@@ -212,13 +213,16 @@ const AmRoutes = () => {
                 childPolicies={rawRootRoute.routes ?? []}
                 continueMatching={rawRootRoute.continue}
                 alertManagerSourceName={alertManagerSourceName}
+                onAddPolicy={() => openAddModal()}
+                onEditPolicy={() => openEditModal()}
               />
             )}
+            {addModal}
+            {editModal}
           </>
         )}
         {activeTab === ActiveTab.MuteTimings && <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} />}
       </TabContent>
-
       {/* {result && !resultLoading && !resultError && (
         <>
           <AmRootRoute
@@ -242,9 +246,6 @@ const AmRoutes = () => {
           />
         </>
       )} */}
-      <Modal isOpen={creatingOrEditingPolicy} title={'New notification policy'}>
-        Hello policy
-      </Modal>
     </AlertingPageWrapper>
   );
 };
@@ -265,6 +266,10 @@ interface PolicyComponentProps {
   };
   continueMatching?: boolean;
   alertManagerSourceName?: string;
+
+  // TODO make route non-optional
+  onEditPolicy: (route?: Route) => void;
+  onAddPolicy: (route?: Route) => void;
 }
 
 const Policy: FC<PolicyComponentProps> = ({
@@ -279,20 +284,14 @@ const Policy: FC<PolicyComponentProps> = ({
   readOnly = true,
   continueMatching,
   alertManagerSourceName,
+  onEditPolicy,
+  onAddPolicy,
 }) => {
   const styles = useStyles2(getStyles);
   const isDefaultPolicy = isDefault !== undefined;
 
   const hasMatchers = Boolean(matchers && matchers.length);
   const hasMuteTimings = Boolean(muteTimings.length);
-
-  const matchingLabels = isDefaultPolicy ? (
-    <DefaultPolicy />
-  ) : hasMatchers ? (
-    <Matchers matchers={matchers ?? []} />
-  ) : (
-    <span className={styles.metadata}>No matchers</span>
-  );
 
   // gather warnings here
   const warnings: ReactNode[] = [];
@@ -303,7 +302,6 @@ const Policy: FC<PolicyComponentProps> = ({
     warnings.push(noContactPointWarning);
   }
 
-  // a leaf policy is a policy that has no additional child policies
   const hasChildPolicies = childPolicies.length > 0;
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
@@ -328,7 +326,18 @@ const Policy: FC<PolicyComponentProps> = ({
                   </Stack>
                 </strong>
               )}
-              {matchingLabels}
+              {isDefaultPolicy ? (
+                <>
+                  <strong>Default policy</strong>
+                  <span className={styles.metadata}>
+                    All alert instances will be handled by the default policy if no other matching policies are found.
+                  </span>
+                </>
+              ) : hasMatchers ? (
+                <Matchers matchers={matchers ?? []} />
+              ) : (
+                <span className={styles.metadata}>No matchers</span>
+              )}
               <Spacer />
               {/* TODO show details for multiple warning, also show errors from contact points if possible */}
               {warnings.length === 1 && warnings[0]}
@@ -337,7 +346,7 @@ const Policy: FC<PolicyComponentProps> = ({
               )}
               {!readOnly && (
                 <div>
-                  <Button variant="secondary" icon="pen" size="sm">
+                  <Button variant="secondary" icon="pen" size="sm" onClick={() => onEditPolicy()}>
                     Edit
                   </Button>
                 </div>
@@ -456,11 +465,17 @@ const Policy: FC<PolicyComponentProps> = ({
             muteTimings={route.mute_time_intervals}
             childPolicies={route.routes ?? []}
             continueMatching={route.continue}
+            onAddPolicy={onAddPolicy}
+            onEditPolicy={onEditPolicy}
           />
         ))}
       </div>
       <div className={styles.addPolicyWrapper(hasChildPolicies)}>
-        <CreateOrAddPolicy hasChildPolicies={hasChildPolicies} isDefaultPolicy={isDefaultPolicy} />
+        <CreateOrAddPolicy
+          onClick={() => onAddPolicy()}
+          hasChildPolicies={hasChildPolicies}
+          isDefaultPolicy={isDefaultPolicy}
+        />
       </div>
     </Stack>
   );
@@ -488,31 +503,20 @@ const MetaText: FC<MataTextProps> = ({ children, icon }) => {
   );
 };
 
-const DefaultPolicy = () => {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <>
-      <strong>Default policy</strong>
-      <span className={styles.metadata}>
-        All alert instances will be handled by the default policy if no other matching policies are found.
-      </span>
-    </>
-  );
-};
-
 interface AddPolicyProps {
+  onClick?: () => void;
   hasChildPolicies?: boolean;
   isDefaultPolicy?: boolean;
 }
 
-const CreateOrAddPolicy: FC<AddPolicyProps> = ({ hasChildPolicies = true, isDefaultPolicy = false }) => (
+const CreateOrAddPolicy: FC<AddPolicyProps> = ({ hasChildPolicies = true, isDefaultPolicy = false, onClick }) => (
   <Button
     type="button"
     variant={isDefaultPolicy ? 'primary' : 'secondary'}
     size={'sm'}
     fill={isDefaultPolicy ? 'solid' : 'outline'}
     icon={hasChildPolicies ? 'plus' : 'corner-down-right-alt'}
+    onClick={onClick}
   >
     {hasChildPolicies ? 'Add policy' : 'Create child policy'}
   </Button>
@@ -708,3 +712,53 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export default withErrorBoundary(AmRoutes, { style: 'page' });
+
+const useAddPolicyModal = (): [JSX.Element, () => void, () => void] => {
+  const [showModal, setShowModal] = useState<boolean>(false);
+
+  const modalElement = useMemo(
+    () => (
+      <Modal
+        isOpen={showModal}
+        onDismiss={() => setShowModal(false)}
+        closeOnBackdropClick={true}
+        closeOnEscape={true}
+        title="Add a notification Policy"
+      >
+        Adding notification policy
+        <Modal.ButtonRow>
+          <Button>Add policy</Button>
+          <Button variant="secondary">Cancel</Button>
+        </Modal.ButtonRow>
+      </Modal>
+    ),
+    [showModal]
+  );
+
+  return [modalElement, () => setShowModal(true), () => setShowModal(false)];
+};
+
+const useEditModal = (): [JSX.Element, () => void, () => void] => {
+  const [showModal, setShowModal] = useState<boolean>(false);
+
+  const modalElement = useMemo(
+    () => (
+      <Modal
+        isOpen={showModal}
+        onDismiss={() => setShowModal(false)}
+        closeOnBackdropClick={true}
+        closeOnEscape={true}
+        title="Edit notification Policy"
+      >
+        Editing notification policy
+        <Modal.ButtonRow>
+          <Button>Update policy</Button>
+          <Button variant="secondary">Cancel</Button>
+        </Modal.ButtonRow>
+      </Modal>
+    ),
+    [showModal]
+  );
+
+  return [modalElement, () => setShowModal(true), () => setShowModal(false)];
+};
