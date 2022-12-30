@@ -88,7 +88,7 @@ To speed up the time it takes to review your plugin:
 
 - Check that your plugin is ready for review using the [plugin validator](https://github.com/grafana/plugin-validator).
 - Read our [6 tips for improving your Grafana plugin before you publish](https://grafana.com/blog/2021/01/21/6-tips-for-improving-your-grafana-plugin-before-you-publish/).
-- Check out [plugin-examples](https://github.com/grafana/grafana-plugin-examples) we provide for best practices on building your plugin.
+- Refer to [plugin-examples](https://github.com/grafana/grafana-plugin-examples) to review best practices for building your plugin.
 
 ## Frequently Asked Questions
 
