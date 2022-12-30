@@ -1,5 +1,3 @@
-import { DeepPartial } from 'redux';
-
 import { VariableType, defaultDashboard } from '@grafana/schema';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';

@@ -1,4 +1,3 @@
-import moment from 'moment';
 import { map, of } from 'rxjs';
 
 import {
@@ -219,8 +218,8 @@ describe('SceneQueryRunner', () => {
 
       const sentRequest = runRequest.mock.calls[0][1];
       expect(sentRequest.timeInfo).toEqual(' timeshift -1h');
-      expect(sentRequest.range.from).toEqual(moment(timeRange.from).subtract(1, 'h'));
-      expect(sentRequest.range.to).toEqual(moment(timeRange.to).subtract(1, 'h'));
+      expect(sentRequest.range.from).toEqual(dateTime(timeRange.from).subtract(1, 'h'));
+      expect(sentRequest.range.to).toEqual(dateTime(timeRange.to).subtract(1, 'h'));
     });
 
     it('should hide time override info if required', async () => {
@@ -253,9 +252,9 @@ describe('SceneQueryRunner', () => {
       await new Promise((r) => setTimeout(r, 1));
       const sentRequest = runRequest.mock.calls[0][1];
       // Overrides timeRange.from to be the value of timeFrom
-      expect(moment().hour() - sentRequest.range.from.hour()).toEqual(2);
+      expect(dateTime().hour!() - sentRequest.range.from.hour()).toEqual(2);
       // Overrides timeRange.to doesn't change
-      expect(moment().hour() - sentRequest.range.to.hour()).toEqual(0);
+      expect(dateTime().hour!() - sentRequest.range.to.hour()).toEqual(0);
       expect(sentRequest.timeInfo).toEqual('Last 2 hours');
     });
   });
