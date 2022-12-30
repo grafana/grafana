@@ -190,7 +190,7 @@ const AmRoutes = () => {
           }}
         />
         <Spacer />
-        {activeTab === ActiveTab.MuteTimings && <Button>Add mute timing</Button>}
+        {activeTab === ActiveTab.MuteTimings && <Button type="button">Add mute timing</Button>}
       </TabsBar>
       <TabContent className={styles.tabContent}>
         {activeTab === ActiveTab.NotificationPolicies && (
@@ -282,7 +282,7 @@ const Policy: FC<PolicyComponentProps> = ({
   muteTimings = [],
   timingOptions,
   readOnly = true,
-  continueMatching,
+  continueMatching = false,
   alertManagerSourceName,
   onEditPolicy,
   onAddPolicy,
@@ -308,7 +308,7 @@ const Policy: FC<PolicyComponentProps> = ({
   return (
     <Stack direction="column" gap={1.5}>
       <div className={styles.policyWrapper}>
-        {continueMatching !== undefined && (
+        {continueMatching === true && (
           <Tooltip placement="top" content="This route will continue matching other policies">
             <div className={styles.continueMatching}>
               <Icon name="arrow-down" />
@@ -346,7 +346,7 @@ const Policy: FC<PolicyComponentProps> = ({
               )}
               {!readOnly && (
                 <div>
-                  <Button variant="secondary" icon="pen" size="sm" onClick={() => onEditPolicy()}>
+                  <Button variant="secondary" icon="pen" size="sm" onClick={() => onEditPolicy()} type="button">
                     Edit
                   </Button>
                 </div>
@@ -721,14 +721,16 @@ const useAddPolicyModal = (): [JSX.Element, () => void, () => void] => {
       <Modal
         isOpen={showModal}
         onDismiss={() => setShowModal(false)}
-        closeOnBackdropClick={true}
-        closeOnEscape={true}
+        closeOnBackdropClick={false}
+        closeOnEscape={false}
         title="Add a notification Policy"
       >
         Adding notification policy
         <Modal.ButtonRow>
-          <Button>Add policy</Button>
-          <Button variant="secondary">Cancel</Button>
+          <Button type="submit">Add policy</Button>
+          <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
+            Cancel
+          </Button>
         </Modal.ButtonRow>
       </Modal>
     ),
@@ -746,14 +748,16 @@ const useEditModal = (): [JSX.Element, () => void, () => void] => {
       <Modal
         isOpen={showModal}
         onDismiss={() => setShowModal(false)}
-        closeOnBackdropClick={true}
-        closeOnEscape={true}
+        closeOnBackdropClick={false}
+        closeOnEscape={false}
         title="Edit notification Policy"
       >
         Editing notification policy
         <Modal.ButtonRow>
-          <Button>Update policy</Button>
-          <Button variant="secondary">Cancel</Button>
+          <Button type="submit">Update policy</Button>
+          <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
+            Cancel
+          </Button>
         </Modal.ButtonRow>
       </Modal>
     ),
