@@ -44,7 +44,7 @@ You can use any build system that supports systemjs. All the built content shoul
 
 ## Keep your plugin up to date
 
-New versions of Grafana can sometimes cause plugins to break. Check out our [doc](https://grafana.com/docs/grafana/latest/developers/plugins/migration-guide/) for changes in
+New versions of Grafana can sometimes cause plugins to break. See our [documentation](https://grafana.com/docs/grafana/latest/developers/plugins/migration-guide/) for changes in
 Grafana that can impact your plugin.
 
 ## Metadata
