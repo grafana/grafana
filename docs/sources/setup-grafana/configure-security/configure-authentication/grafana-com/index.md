@@ -2,7 +2,7 @@
 aliases:
   - ../../../auth/grafana-com/
 description: Grafana Com Authentication
-title: Configure Grafana Com Authentication
+title: Configure Grafana Com authentication
 weight: 500
 ---
 
