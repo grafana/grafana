@@ -102,7 +102,7 @@ To speed up the time it takes to review your plugin:
 
 **Can I decide a date when my plugin will be published?**
 
-- No. We can not guarantee specific publishing dates as plugins are being immediately published after a successfull review based on our internal prioritization.
+- No. We cannot guarantee specific publishing dates, as plugins are immediately published after a review based on our internal prioritization.
 
 ## Publishing your plugin for the first time
 
