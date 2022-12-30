@@ -203,6 +203,11 @@ export class FrameState extends ElementState {
           opts.placement = placement;
         }
 
+        // TODO: Figure out how to re-render elements connections on duplication (they currently disappear until page refresh)
+        // this may be related to re-rendering connections on element move
+        // clear connections
+        opts.connections = undefined;
+
         const copy = new ElementState(element.item, opts, this);
         copy.updateData(this.scene.context);
         if (updateName) {
