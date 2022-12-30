@@ -37,13 +37,11 @@ import { AmRouteReceiver, GrafanaAppReceiverEnum } from '../receivers/grafanaApp
 import { getFormStyles } from './formStyles';
 
 export interface AmRoutesExpandedFormProps {
-  onCancel: () => void;
-  onSave: (data: FormAmRoute) => void;
   receivers: AmRouteReceiver[];
   routes: FormAmRoute;
 }
 
-export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, onSave, receivers, routes }) => {
+export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ receivers, routes }) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
@@ -58,7 +56,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
   });
 
   return (
-    <Form defaultValues={routes} onSubmit={onSave}>
+    <Form defaultValues={routes} onSubmit={() => {}} maxWidth="none">
       {({ control, register, errors, setValue, watch }) => (
         <>
           {/* @ts-ignore-check: react-hook-form made me do this */}
@@ -342,12 +340,6 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               name="muteTimeIntervals"
             />
           </Field>
-          <div className={styles.buttonGroup}>
-            <Button type="submit">Save policy</Button>
-            <Button onClick={onCancel} fill="outline" type="button" variant="secondary">
-              Cancel
-            </Button>
-          </div>
         </>
       )}
     </Form>

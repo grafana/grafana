@@ -230,22 +230,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
         isExpanded={(item) => expandedId === item.id}
         renderExpandedContent={(item: RouteTableItemProps, index) =>
           isAddMode || editMode ? (
-            <AmRoutesExpandedForm
-              onCancel={() => {
-                if (isAddMode) {
-                  onCancelAdd();
-                }
-                setEditMode(false);
-              }}
-              onSave={(data) => {
-                const newRoutes = updatedRoute(routes, data);
-
-                setEditMode(false);
-                onChange(newRoutes);
-              }}
-              receivers={receivers}
-              routes={item.data}
-            />
+            <AmRoutesExpandedForm receivers={receivers} routes={item.data} />
           ) : (
             <AmRoutesExpandedRead
               onChange={(data) => {

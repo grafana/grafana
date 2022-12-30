@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { pick, take, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import React, { FC, ReactElement, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
@@ -22,7 +22,7 @@ import {
   useTheme2,
   withErrorBoundary,
 } from '@grafana/ui';
-import { MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
+import { ObjectMatcher, Receiver, Route } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
@@ -35,17 +35,13 @@ import { HoverCard } from './components/HoverCard';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { Spacer } from './components/Spacer';
-import { AmRootRoute } from './components/amroutes/AmRootRoute';
-import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
+import { AmRoutesExpandedForm } from './components/amroutes/AmRoutesExpandedForm';
 import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
 import { useGetAmRouteReceiverWithGrafanaAppTypes } from './components/receivers/grafanaAppReceivers/grafanaApp';
-import { AmRouteReceiver } from './components/receivers/grafanaAppReceivers/types';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertGroupsAction, fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
-import { FormAmRoute } from './types/amroutes';
-import { matcherToOperator } from './utils/alertmanager';
 import { amRouteToFormAmRoute, formAmRouteToAmRoute, normalizeMatchers } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
@@ -86,17 +82,17 @@ const AmRoutes = () => {
   } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
-  const [rootRoute, id2ExistingRoute] = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
+  // const [rootRoute, id2ExistingRoute] = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
   const rawRootRoute = config?.route;
-
-  const receivers: AmRouteReceiver[] = useGetAmRouteReceiverWithGrafanaAppTypes(config?.receivers ?? []);
 
   const isProvisioned = useMemo(() => Boolean(config?.route?.provenance), [config?.route]);
 
-  const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
-  const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
-  const [addModal, openAddModal] = useAddPolicyModal();
-  const [editModal, openEditModal] = useEditModal();
+  // const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
+  // const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
+
+  const receivers = config?.receivers ?? [];
+  const [addModal, openAddModal] = useAddPolicyModal(receivers);
+  const [editModal, openEditModal] = useEditModal(receivers);
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
@@ -107,45 +103,45 @@ const AmRoutes = () => {
     }
   }, [alertManagerSourceName, dispatch]);
 
-  const handleSave = (data: Partial<FormAmRoute>) => {
-    if (!result) {
-      return;
-    }
+  // const handleSave = (data: Partial<FormAmRoute>) => {
+  //   if (!result) {
+  //     return;
+  //   }
 
-    const newData = formAmRouteToAmRoute(
-      alertManagerSourceName,
-      {
-        ...rootRoute,
-        ...data,
-      },
-      id2ExistingRoute
-    );
+  //   const newData = formAmRouteToAmRoute(
+  //     alertManagerSourceName,
+  //     {
+  //       ...rootRoute,
+  //       ...data,
+  //     },
+  //     id2ExistingRoute
+  //   );
 
-    dispatch(
-      updateAlertManagerConfigAction({
-        newConfig: {
-          ...result,
-          alertmanager_config: {
-            ...result.alertmanager_config,
-            route: newData,
-          },
-        },
-        oldConfig: result,
-        alertManagerSourceName: alertManagerSourceName!,
-        successMessage: 'Updated notification policies',
-        refetch: true,
-      })
-    )
-      .unwrap()
-      .then(() => {
-        if (alertManagerSourceName) {
-          dispatch(fetchAlertGroupsAction(alertManagerSourceName));
-        }
-      })
-      .catch(() => {
-        // error is handled by a popup notification
-      });
-  };
+  //   dispatch(
+  //     updateAlertManagerConfigAction({
+  //       newConfig: {
+  //         ...result,
+  //         alertmanager_config: {
+  //           ...result.alertmanager_config,
+  //           route: newData,
+  //         },
+  //       },
+  //       oldConfig: result,
+  //       alertManagerSourceName: alertManagerSourceName!,
+  //       successMessage: 'Updated notification policies',
+  //       refetch: true,
+  //     })
+  //   )
+  //     .unwrap()
+  //     .then(() => {
+  //       if (alertManagerSourceName) {
+  //         dispatch(fetchAlertGroupsAction(alertManagerSourceName));
+  //       }
+  //     })
+  //     .catch(() => {
+  //       // error is handled by a popup notification
+  //     });
+  // };
 
   if (!alertManagerSourceName) {
     return (
@@ -713,8 +709,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 export default withErrorBoundary(AmRoutes, { style: 'page' });
 
-const useAddPolicyModal = (): [JSX.Element, () => void, () => void] => {
+type ModalHook = [JSX.Element, () => void, () => void];
+
+const useAddPolicyModal = (receivers: Receiver[] = []): ModalHook => {
   const [showModal, setShowModal] = useState<boolean>(false);
+  const AmRouteReceivers = useGetAmRouteReceiverWithGrafanaAppTypes(receivers);
 
   const modalElement = useMemo(
     () => (
@@ -725,7 +724,7 @@ const useAddPolicyModal = (): [JSX.Element, () => void, () => void] => {
         closeOnEscape={false}
         title="Add a notification Policy"
       >
-        Adding notification policy
+        <AmRoutesExpandedForm receivers={AmRouteReceivers} routes={{}} />
         <Modal.ButtonRow>
           <Button type="submit">Add policy</Button>
           <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
@@ -734,14 +733,15 @@ const useAddPolicyModal = (): [JSX.Element, () => void, () => void] => {
         </Modal.ButtonRow>
       </Modal>
     ),
-    [showModal]
+    [AmRouteReceivers, showModal]
   );
 
   return [modalElement, () => setShowModal(true), () => setShowModal(false)];
 };
 
-const useEditModal = (): [JSX.Element, () => void, () => void] => {
+const useEditModal = (receivers: Receiver[]): ModalHook => {
   const [showModal, setShowModal] = useState<boolean>(false);
+  const AmRouteReceivers = useGetAmRouteReceiverWithGrafanaAppTypes(receivers);
 
   const modalElement = useMemo(
     () => (
@@ -752,7 +752,7 @@ const useEditModal = (): [JSX.Element, () => void, () => void] => {
         closeOnEscape={false}
         title="Edit notification Policy"
       >
-        Editing notification policy
+        <AmRoutesExpandedForm receivers={AmRouteReceivers} routes={{}} />
         <Modal.ButtonRow>
           <Button type="submit">Update policy</Button>
           <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
@@ -761,7 +761,7 @@ const useEditModal = (): [JSX.Element, () => void, () => void] => {
         </Modal.ButtonRow>
       </Modal>
     ),
-    [showModal]
+    [AmRouteReceivers, showModal]
   );
 
   return [modalElement, () => setShowModal(true), () => setShowModal(false)];
