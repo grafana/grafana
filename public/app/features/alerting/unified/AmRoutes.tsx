@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { pick, take, uniqueId } from 'lodash';
+import { isEmpty, pick, take, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -298,7 +298,8 @@ const Policy: FC<PolicyComponentProps> = ({
     warnings.push(noContactPointWarning);
   }
 
-  const hasChildPolicies = childPolicies.length > 0;
+  const hasChildPolicies = Boolean(childPolicies.length);
+  const isGrouping = !isEmpty(groupBy);
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -383,14 +384,14 @@ const Policy: FC<PolicyComponentProps> = ({
                   </HoverCard>
                 </MetaText>
               )}
-              {groupBy && groupBy.length > 0 && (
+              {isGrouping && (
                 <MetaText icon="layer-group">
                   <span>Grouped by</span>
                   <Strong>{groupBy.join(', ')}</Strong>
                 </MetaText>
               )}
               {/* we only want to show "no grouping" on the root policy, children with empty groupBy will inherit from the parent policy */}
-              {groupBy && groupBy.length === 0 && isDefaultPolicy && (
+              {!isGrouping && isDefaultPolicy && (
                 <MetaText icon="layer-group">
                   <span>Not grouping</span>
                 </MetaText>
@@ -514,7 +515,7 @@ const CreateOrAddPolicy: FC<AddPolicyProps> = ({ hasChildPolicies = true, isDefa
     icon={hasChildPolicies ? 'plus' : 'corner-down-right-alt'}
     onClick={onClick}
   >
-    {hasChildPolicies ? 'Add policy' : 'Create child policy'}
+    {hasChildPolicies ? 'Add policy' : 'Create nested policy'}
   </Button>
 );
 
