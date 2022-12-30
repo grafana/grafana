@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { map, of } from 'rxjs';
 
 import {
@@ -9,6 +10,7 @@ import {
   PanelData,
   standardTransformersRegistry,
   toDataFrame,
+  dateTime,
 } from '@grafana/data';
 
 import { SceneTimeRange } from '../core/SceneTimeRange';
@@ -195,6 +197,66 @@ describe('SceneQueryRunner', () => {
       expect(queryRunner.state.data?.series[0].fields).toHaveLength(2);
       expect(queryRunner.state.data?.series[0].fields[0].values.toArray()).toEqual([600, 1200, 1800]);
       expect(queryRunner.state.data?.series[0].fields[1].values.toArray()).toEqual([6, 12, 18]);
+    });
+  });
+
+  describe('when running queries with time range', () => {
+    beforeEach(() => {
+      runRequest.mockClear();
+    });
+
+    it('should run queries with timeshift applied', async () => {
+      const timeRange = { from: '2022-12-30T07:40:56.983Z', to: '2022-12-30T08:40:56.983Z' };
+      const queryRunner = new SceneQueryRunner({
+        queries: [{ refId: 'A' }],
+        $timeRange: new SceneTimeRange(timeRange),
+        timeShift: '1h',
+      });
+
+      queryRunner.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      const sentRequest = runRequest.mock.calls[0][1];
+      expect(sentRequest.timeInfo).toEqual(' timeshift -1h');
+      expect(sentRequest.range.from).toEqual(moment(timeRange.from).subtract(1, 'h'));
+      expect(sentRequest.range.to).toEqual(moment(timeRange.to).subtract(1, 'h'));
+    });
+
+    it('should hide time override info if required', async () => {
+      const timeRange = { from: '2022-12-29T07:40:56.983Z', to: '2022-12-29T08:40:56.983Z' };
+      const queryRunner = new SceneQueryRunner({
+        queries: [{ refId: 'A' }],
+        $timeRange: new SceneTimeRange(timeRange),
+        timeShift: '1h',
+        timeFrom: '1h',
+        hideTimeOverride: true,
+      });
+
+      queryRunner.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      const sentRequest = runRequest.mock.calls[0][1];
+      expect(sentRequest.timeInfo).toEqual('');
+    });
+
+    it('should run queries with relative time (timeFrom) applied', async () => {
+      const queryRunner = new SceneQueryRunner({
+        queries: [{ refId: 'A' }],
+        $timeRange: new SceneTimeRange({ from: 'now-3h', to: 'now' }),
+        timeFrom: '2h',
+      });
+
+      queryRunner.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+      const sentRequest = runRequest.mock.calls[0][1];
+      // Overrides timeRange.from to be the value of timeFrom
+      expect(moment().hour() - sentRequest.range.from.hour()).toEqual(2);
+      // Overrides timeRange.to doesn't change
+      expect(moment().hour() - sentRequest.range.to.hour()).toEqual(0);
+      expect(sentRequest.timeInfo).toEqual('Last 2 hours');
     });
   });
 });

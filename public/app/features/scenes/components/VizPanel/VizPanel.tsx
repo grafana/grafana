@@ -28,7 +28,6 @@ export interface VizPanelState<TOptions = {}, TFieldConfig = {}> extends SceneLa
   pluginVersion?: string;
   // internal state
   pluginLoadError?: string;
-  timeOverrideInfo: string;
 }
 
 export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<VizPanelState<TOptions, TFieldConfig>> {
@@ -46,7 +45,6 @@ export class VizPanel<TOptions = {}, TFieldConfig = {}> extends SceneObjectBase<
       fieldConfig: { defaults: {}, overrides: [] },
       title: 'Title',
       pluginId: 'timeseries',
-      timeOverrideInfo: '',
       ...state,
     });
   }

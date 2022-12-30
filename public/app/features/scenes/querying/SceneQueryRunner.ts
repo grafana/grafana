@@ -33,12 +33,18 @@ export interface QueryRunnerState extends SceneObjectStatePlain {
   maxDataPoints?: number | null;
   timeShift?: string;
   timeFrom?: string;
+  hideTimeOverride?: boolean;
   // Non persisted state
   maxDataPointsFromWidth?: boolean;
 }
 
 export interface DataQueryExtended extends DataQuery {
   [key: string]: any;
+}
+
+export interface TimeOverrideResult {
+  timeRange: TimeRange;
+  timeInfo: string;
 }
 
 export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
@@ -92,37 +98,6 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
     }
   }
 
-  private getTimeOverrideInfo(): string {
-    const { timeFrom = '', timeShift = '' } = this.state;
-
-    let timeInfo = '';
-
-    if (timeFrom) {
-      const timeFromInterpolated = sceneGraph.interpolate(this, timeFrom);
-      const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
-
-      if (timeFromInfo.invalid) {
-        return 'invalid time override';
-      }
-
-      timeInfo = timeFromInfo.display;
-    }
-
-    if (timeShift) {
-      const timeShiftInterpolated = sceneGraph.interpolate(this, timeShift);
-      const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
-
-      if (timeShiftInfo.invalid) {
-        return 'invalid timeshift';
-      }
-
-      const timeShiftText = '-' + timeShiftInterpolated;
-      timeInfo += ' timeshift ' + timeShiftText;
-    }
-
-    return timeInfo;
-  }
-
   public setContainerWidth(width: number) {
     // If we don't have a width we should run queries
     if (!this._containerWidth && width > 0) {
@@ -153,7 +128,8 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
   }
 
   private async runWithTimeRange(timeRange: TimeRange) {
-    const { datasource, minInterval, queries, timeShift, timeFrom } = this.state;
+    const { datasource, minInterval, queries } = this.state;
+    const scopedVars = {};
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,
@@ -161,13 +137,13 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       timezone: 'browser',
       panelId: 1,
       dashboardId: 1,
-      range: this.applyPanelTimeOverrides({ timeShift, timeFrom }, timeRange),
+      range: timeRange,
       interval: '1s',
       intervalMs: 1000,
       targets: cloneDeep(queries),
       maxDataPoints: this.getMaxDataPoints(),
-      scopedVars: {},
-      timeInfo: this.getTimeOverrideInfo(),
+      scopedVars,
+      timeInfo: '',
       startTime: Date.now(),
     };
 
@@ -196,6 +172,11 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
+      // Apply time overrides
+      const { timeRange: range, timeInfo } = this.applyPanelTimeOverrides(timeRange, request.scopedVars);
+      request.range = range;
+      request.timeInfo = timeInfo;
+
       this._querySub = runRequest(ds, request)
         .pipe(getTransformationsStream(this, this.state.transformations))
         .subscribe({
@@ -210,19 +191,25 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
     this.setState({ data });
   };
 
-  private applyPanelTimeOverrides(panel: { timeFrom?: string; timeShift?: string }, timeRange: TimeRange): TimeRange {
-    let newTimeRange = timeRange;
+  private applyPanelTimeOverrides(timeRange: TimeRange, scopedVars: ScopedVars): TimeOverrideResult {
+    const { timeFrom, timeShift, hideTimeOverride } = this.state;
+    const newTimeData = {
+      timeInfo: '',
+      timeRange,
+    };
 
-    if (panel.timeFrom) {
-      const timeFromInterpolated = sceneGraph.interpolate(this, panel.timeFrom);
+    if (timeFrom) {
+      const timeFromInterpolated = sceneGraph.interpolate(this, timeFrom, scopedVars);
       const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
       if (timeFromInfo.invalid) {
-        return newTimeRange;
+        newTimeData.timeInfo = 'invalid time override';
+        return newTimeData;
       }
 
       if (typeof timeRange.raw.from === 'string') {
         const timeFromDate = dateMath.parse(timeFromInfo.from)!;
-        newTimeRange = {
+        newTimeData.timeInfo = timeFromInfo.display;
+        newTimeData.timeRange = {
           from: timeFromDate,
           to: dateMath.parse(timeFromInfo.to)!,
           raw: {
@@ -233,18 +220,20 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       }
     }
 
-    if (panel.timeShift) {
-      const timeShiftInterpolated = sceneGraph.interpolate(this, panel.timeShift);
+    if (timeShift) {
+      const timeShiftInterpolated = sceneGraph.interpolate(this, timeShift, scopedVars);
       const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
       if (timeShiftInfo.invalid) {
-        return newTimeRange;
+        newTimeData.timeInfo = 'invalid timeshift';
+        return newTimeData;
       }
 
-      const timeShift = '-' + timeShiftInterpolated;
-      const from = dateMath.parseDateMath(timeShift, newTimeRange.from, false)!;
-      const to = dateMath.parseDateMath(timeShift, newTimeRange.to, true)!;
+      const timeShiftDiff = '-' + timeShiftInterpolated;
+      newTimeData.timeInfo += ' timeshift ' + timeShiftDiff;
+      const from = dateMath.parseDateMath(timeShiftDiff, newTimeData.timeRange.from, false)!;
+      const to = dateMath.parseDateMath(timeShiftDiff, newTimeData.timeRange.to, true)!;
 
-      newTimeRange = {
+      newTimeData.timeRange = {
         from,
         to,
         raw: {
@@ -254,7 +243,11 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       };
     }
 
-    return newTimeRange;
+    if (hideTimeOverride) {
+      newTimeData.timeInfo = '';
+    }
+
+    return newTimeData;
   }
 }
 

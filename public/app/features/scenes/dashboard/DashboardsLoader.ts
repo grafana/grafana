@@ -266,6 +266,7 @@ function createVizPanelFromPanelModel(panel: PanelModel) {
       queries: panel.targets,
       timeFrom: panel.timeFrom,
       timeShift: panel.timeShift,
+      hideTimeOverride: panel.hideTimeOverride,
       maxDataPoints: panel.maxDataPoints,
     }),
   });
