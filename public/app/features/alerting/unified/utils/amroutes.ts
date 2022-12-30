@@ -2,7 +2,7 @@ import { isUndefined, omitBy } from 'lodash';
 import { Validate } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
-import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../types/amroutes';
 import { MatcherFieldValue } from '../types/silence-form';
@@ -85,6 +85,50 @@ export const emptyRoute: FormAmRoute = {
   repeatIntervalValue: '',
   repeatIntervalValueType: timeOptions[0].value,
   muteTimeIntervals: [],
+};
+
+export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
+  const matchers: ObjectMatcher[] = [];
+
+  if (route.matchers) {
+    route.matchers.forEach((matcher) => {
+      const { name, value, isEqual, isRegex } = parseMatcher(matcher);
+      let operator = MatcherOperator.equal;
+
+      if (isEqual && isRegex) {
+        operator = MatcherOperator.regex;
+      }
+      if (!isEqual && isRegex) {
+        operator = MatcherOperator.notRegex;
+      }
+      if (isEqual && !isRegex) {
+        operator = MatcherOperator.equal;
+      }
+      if (!isEqual && !isRegex) {
+        operator = MatcherOperator.notEqual;
+      }
+
+      matchers.push([name, operator, value]);
+    });
+  }
+
+  if (route.object_matchers) {
+    matchers.push(...route.object_matchers);
+  }
+
+  if (route.match_re) {
+    Object.entries(route.match_re).forEach(([label, value]) => {
+      matchers.push([label, MatcherOperator.regex, value]);
+    });
+  }
+
+  if (route.match) {
+    Object.entries(route.match).forEach(([label, value]) => {
+      matchers.push([label, MatcherOperator.equal, value]);
+    });
+  }
+
+  return matchers;
 };
 
 //returns route, and a record mapping id to existing route

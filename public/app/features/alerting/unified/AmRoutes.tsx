@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { take, uniqueId } from 'lodash';
+import { pick, take, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, ReactElement, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -13,6 +13,7 @@ import {
   getTagColorsFromName,
   Icon,
   LoadingPlaceholder,
+  Modal,
   Tab,
   TabContent,
   TabsBar,
@@ -45,7 +46,7 @@ import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertGroupsAction, fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { matcherToOperator } from './utils/alertmanager';
-import { amRouteToFormAmRoute, formAmRouteToAmRoute } from './utils/amroutes';
+import { amRouteToFormAmRoute, formAmRouteToAmRoute, normalizeMatchers } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
@@ -59,6 +60,7 @@ const AmRoutes = () => {
   const styles = useStyles2(getStyles);
   // TODO add querystring param for the current tab so we can route to it immediately
   const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.NotificationPolicies);
+  const [creatingOrEditingPolicy, setCreatingOrEditingPolicy] = useState<boolean>(false);
 
   const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
   const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
@@ -203,49 +205,14 @@ const AmRoutes = () => {
                 isDefault
                 contactPoint={rawRootRoute.receiver}
                 groupBy={rawRootRoute.group_by}
-                timingOptions={{
-                  group_wait: rawRootRoute.group_wait,
-                  group_interval: rawRootRoute.group_interval,
-                  repeat_interval: rawRootRoute.repeat_interval,
-                }}
-                editable={!readOnly}
-                matchers={rawRootRoute.object_matchers}
+                timingOptions={pick(rawRootRoute, ['group_wait', 'group_interval', 'repeat_interval'])}
+                readOnly={readOnly}
+                matchers={normalizeMatchers(rawRootRoute)}
                 muteTimings={rawRootRoute.mute_time_intervals}
                 childPolicies={rawRootRoute.routes ?? []}
                 continueMatching={rawRootRoute.continue}
                 alertManagerSourceName={alertManagerSourceName}
               />
-              // <Policy
-              //   isDefault
-              //   numberOfInstances={25}
-              //   contactPoint="grafana-default-email"
-              //   groupBy={['alertname', 'grafana_folder']}
-              //   timingOptions={{
-              //     group_wait: '30s',
-              //     group_interval: '5m',
-              //     repeat_interval: '4h',
-              //   }}
-              //   editable={readOnly}
-              // >
-              //   <Policy
-              //     numberOfInstances={4}
-              //     continueMatching
-              //     matchers={[
-              //       ['team', MatcherOperator.equal, 'operations'],
-              //       ['severity', MatcherOperator.notEqual, 'critical'],
-              //     ]}
-              //     muteTimings={['weekends']}
-              //     contactPoint="grafana-default-email"
-              //   >
-              //     <Policy
-              //       numberOfInstances={1}
-              //       matchers={[['region', MatcherOperator.equal, 'europe']]}
-              //       contactPoint="Slack"
-              //     />
-              //   </Policy>
-              //   <Policy numberOfInstances={0} matchers={[['foo', MatcherOperator.equal, 'bar']]} continueMatching />
-              //   <Policy matchers={[]} />
-              // </Policy>
             )}
           </>
         )}
@@ -275,6 +242,9 @@ const AmRoutes = () => {
           />
         </>
       )} */}
+      <Modal isOpen={creatingOrEditingPolicy} title={'New notification policy'}>
+        Hello policy
+      </Modal>
     </AlertingPageWrapper>
   );
 };
@@ -287,7 +257,7 @@ interface PolicyComponentProps {
   contactPoint?: string;
   groupBy?: string[];
   muteTimings?: string[];
-  editable?: boolean;
+  readOnly?: boolean;
   timingOptions?: {
     group_wait?: string;
     group_interval?: string;
@@ -306,7 +276,7 @@ const Policy: FC<PolicyComponentProps> = ({
   groupBy,
   muteTimings = [],
   timingOptions,
-  editable = true,
+  readOnly = true,
   continueMatching,
   alertManagerSourceName,
 }) => {
@@ -365,7 +335,7 @@ const Policy: FC<PolicyComponentProps> = ({
               {warnings.length > 1 && (
                 <Badge icon="exclamation-triangle" color="orange" text={pluralize('warning', warnings.length, true)} />
               )}
-              {editable && (
+              {!readOnly && (
                 <div>
                   <Button variant="secondary" icon="pen" size="sm">
                     Edit
@@ -402,9 +372,7 @@ const Policy: FC<PolicyComponentProps> = ({
                       </Stack>
                     }
                   >
-                    <Link
-                      to={`/alerting/notifications/receivers/${contactPoint}/edit?alertmanager=${alertManagerSourceName}`}
-                    >
+                    <Link to={createContactPointLink(contactPoint, alertManagerSourceName)}>
                       <Strong>{contactPoint}</Strong>
                     </Link>
                   </HoverCard>
@@ -472,28 +440,27 @@ const Policy: FC<PolicyComponentProps> = ({
         </Stack>
       </div>
       <div className={styles.childPolicies}>
-        {/* pass the "editable" prop from the parent, because if you can't edit the parent you can't edit children */}
-        {childPolicies &&
-          childPolicies.map((route) => (
-            <Policy
-              key={uniqueId()}
-              contactPoint={route.receiver}
-              groupBy={route.group_by}
-              timingOptions={{
-                group_wait: route.group_wait,
-                group_interval: route.group_interval,
-                repeat_interval: route.repeat_interval,
-              }}
-              editable={editable}
-              matchers={route.object_matchers}
-              muteTimings={route.mute_time_intervals}
-              childPolicies={route.routes ?? []}
-              continueMatching={route.continue}
-            />
-          ))}
+        {/* pass the "readOnly" prop from the parent, because if you can't edit the parent you can't edit children */}
+        {childPolicies.map((route) => (
+          <Policy
+            key={uniqueId()}
+            contactPoint={route.receiver}
+            groupBy={route.group_by}
+            timingOptions={{
+              group_wait: route.group_wait,
+              group_interval: route.group_interval,
+              repeat_interval: route.repeat_interval,
+            }}
+            readOnly={readOnly}
+            matchers={normalizeMatchers(route)}
+            muteTimings={route.mute_time_intervals}
+            childPolicies={route.routes ?? []}
+            continueMatching={route.continue}
+          />
+        ))}
       </div>
-      <div className={styles.addPolicyWrapper}>
-        <CreateOrAddPolicy hasChildPolicies={hasChildPolicies} />
+      <div className={styles.addPolicyWrapper(hasChildPolicies)}>
+        <CreateOrAddPolicy hasChildPolicies={hasChildPolicies} isDefaultPolicy={isDefaultPolicy} />
       </div>
     </Stack>
   );
@@ -535,15 +502,16 @@ const DefaultPolicy = () => {
 };
 
 interface AddPolicyProps {
-  hasChildPolicies: boolean;
+  hasChildPolicies?: boolean;
+  isDefaultPolicy?: boolean;
 }
 
-const CreateOrAddPolicy: FC<AddPolicyProps> = ({ hasChildPolicies }) => (
+const CreateOrAddPolicy: FC<AddPolicyProps> = ({ hasChildPolicies = true, isDefaultPolicy = false }) => (
   <Button
-    variant="secondary"
-    size="sm"
-    fill="outline"
     type="button"
+    variant={isDefaultPolicy ? 'primary' : 'secondary'}
+    size={'sm'}
+    fill={isDefaultPolicy ? 'solid' : 'outline'}
     icon={hasChildPolicies ? 'plus' : 'corner-down-right-alt'}
   >
     {hasChildPolicies ? 'Add policy' : 'Create child policy'}
@@ -569,6 +537,7 @@ const Matchers: FC<MatchersProps> = ({ matchers }) => {
       {firstFew.map((matcher) => (
         <MatcherBadge key={uniqueId()} matcher={matcher} />
       ))}
+      {/* TODO hover state to show all matchers we're not showing */}
       {hasMoreMatchers && <div className={styles.metadata}>{`and ${rest} more`}</div>}
     </Stack>
   );
@@ -615,7 +584,9 @@ const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher: [label, operator, value]
   );
 };
 
-export default withErrorBoundary(AmRoutes, { style: 'page' });
+function createContactPointLink(contactPoint: string, alertManagerSourceName: string | undefined): string {
+  return `/alerting/notifications/receivers/${contactPoint}/edit?alertmanager=${alertManagerSourceName}`;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css`
@@ -706,8 +677,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: 0;
     margin-bottom: ${theme.spacing(2)};
   `,
-  addPolicyWrapper: css`
-    margin-top: -${theme.spacing(2)};
+  // TODO I'm not quite sure why the margins are different for non-child policies, should investigate a bit more
+  addPolicyWrapper: (hasChildPolicies: boolean) => css`
+    margin-top: -${theme.spacing(hasChildPolicies ? 1.5 : 2)};
     margin-bottom: ${theme.spacing(1)};
   `,
   metaText: css`
@@ -734,3 +706,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 0;
   `,
 });
+
+export default withErrorBoundary(AmRoutes, { style: 'page' });
