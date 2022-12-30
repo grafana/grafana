@@ -36,7 +36,7 @@ enabled = true
 skip_org_role_sync = false
 ```
 
-## Skip Org Role Sync
+## Skip organization role sync
 
 To prevent the sync of org roles from Grafana.com, set `skip_org_role_sync` to `true`. This is useful if you want to use Grafana.com as an identity provider but want to manage the org roles in Grafana.
 
