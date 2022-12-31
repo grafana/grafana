@@ -3,7 +3,7 @@ import { HeaderGroup, Column } from 'react-table';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { getFieldTypeIcon } from '../../types';
+import { getIconForFieldType } from '../../types';
 import { Icon } from '../Icon/Icon';
 
 import { Filter } from './Filter';
@@ -58,7 +58,12 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
         <>
           <button {...column.getSortByToggleProps()} className={tableStyles.headerCellLabel}>
             {showTypeIcons && (
-              <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" className={tableStyles.typeIcon} />
+              <Icon
+                name={getIconForFieldType(field?.type)}
+                title={field?.type}
+                size="sm"
+                className={tableStyles.typeIcon}
+              />
             )}
             <div>{column.render('Header')}</div>
             {column.isSorted &&
