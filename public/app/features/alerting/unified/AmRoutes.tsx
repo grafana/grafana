@@ -155,6 +155,9 @@ const AmRoutes = () => {
     : true;
 
   const numberOfMuteTimings = result?.alertmanager_config.mute_time_intervals?.length ?? 0;
+  const haveData = result && !resultError && !resultLoading;
+  const isLoading = !result && resultLoading;
+  const haveError = resultError && !resultLoading;
 
   return (
     <AlertingPageWrapper pageId="am-routes">
@@ -163,11 +166,6 @@ const AmRoutes = () => {
         onChange={setAlertManagerSourceName}
         dataSources={alertManagers}
       />
-      {resultError && !resultLoading && (
-        <Alert severity="error" title="Error loading Alertmanager config">
-          {resultError.message || 'Unknown error.'}
-        </Alert>
-      )}
       <TabsBar>
         <Tab
           label={'Notification Policies'}
@@ -185,40 +183,51 @@ const AmRoutes = () => {
           }}
         />
         <Spacer />
-        {activeTab === ActiveTab.MuteTimings && <Button type="button">Add mute timing</Button>}
+        {haveData && activeTab === ActiveTab.MuteTimings && <Button type="button">Add mute timing</Button>}
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {activeTab === ActiveTab.NotificationPolicies && (
+        {isLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
+        {haveError && (
+          <Alert severity="error" title="Error loading Alertmanager config">
+            {resultError.message || 'Unknown error.'}
+          </Alert>
+        )}
+        {haveData && (
           <>
-            <GrafanaAlertmanagerDeliveryWarning
-              currentAlertmanager={alertManagerSourceName}
-              alertmanagerChoice={alertmanagerChoice}
-            />
-            {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
-            {resultLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
-            {result && rootRoute && !resultLoading && !resultError && (
-              <Policy
-                isDefault
-                receivers={receivers}
-                currentRoute={rootRoute}
-                contactPoint={rootRoute.receiver}
-                groupBy={rootRoute.group_by}
-                timingOptions={pick(rootRoute, ['group_wait', 'group_interval', 'repeat_interval'])}
-                readOnly={readOnly}
-                matchers={normalizeMatchers(rootRoute)}
-                muteTimings={rootRoute.mute_time_intervals}
-                childPolicies={rootRoute.routes ?? []}
-                continueMatching={rootRoute.continue}
-                alertManagerSourceName={alertManagerSourceName}
-                onAddPolicy={openAddModal}
-                onEditPolicy={openEditModal}
-              />
+            {activeTab === ActiveTab.NotificationPolicies && (
+              <>
+                <GrafanaAlertmanagerDeliveryWarning
+                  currentAlertmanager={alertManagerSourceName}
+                  alertmanagerChoice={alertmanagerChoice}
+                />
+                {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
+                {rootRoute && haveData && (
+                  <Policy
+                    isDefault
+                    receivers={receivers}
+                    currentRoute={rootRoute}
+                    contactPoint={rootRoute.receiver}
+                    groupBy={rootRoute.group_by}
+                    timingOptions={pick(rootRoute, ['group_wait', 'group_interval', 'repeat_interval'])}
+                    readOnly={readOnly}
+                    matchers={normalizeMatchers(rootRoute)}
+                    muteTimings={rootRoute.mute_time_intervals}
+                    childPolicies={rootRoute.routes ?? []}
+                    continueMatching={rootRoute.continue}
+                    alertManagerSourceName={alertManagerSourceName}
+                    onAddPolicy={openAddModal}
+                    onEditPolicy={openEditModal}
+                  />
+                )}
+                {addModal}
+                {editModal}
+              </>
             )}
-            {addModal}
-            {editModal}
+            {activeTab === ActiveTab.MuteTimings && (
+              <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} />
+            )}
           </>
         )}
-        {activeTab === ActiveTab.MuteTimings && <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} />}
       </TabContent>
       {/* {result && !resultLoading && !resultError && (
         <>
