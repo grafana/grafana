@@ -273,6 +273,7 @@ require (
 )
 
 require (
+	github.com/bmatcuk/doublestar/v4 v4.4.0
 	github.com/dave/dst v0.27.2
 	k8s.io/apimachinery v0.25.0
 )
