@@ -20,13 +20,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "promQueryBuilder",
-			Description:  "Show Prometheus query builder",
-			State:        FeatureStateStable,
-			Expression:   "true", // on by default
-			FrontendOnly: true,
-		},
-		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -159,6 +152,11 @@ var (
 			Description:     "Explore native k8s integrations",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+		},
+		{
+			Name:        "supportBundles",
+			Description: "Support bundles for troubleshooting",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:            "dashboardsFromStorage",
@@ -388,6 +386,11 @@ var (
 			Name:        "sessionRemoteCache",
 			Description: "Enable using remote cache for user sessions",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "disablePrometheusExemplarSampling",
+			Description: "Disable Prometheus examplar sampling",
+			State:       FeatureStateStable,
 		},
 		{
 			Name:        "alertingBacktesting",
