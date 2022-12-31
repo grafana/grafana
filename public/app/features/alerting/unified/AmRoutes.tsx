@@ -476,6 +476,7 @@ const Policy: FC<PolicyComponentProps> = ({
             continueMatching={route.continue}
             onAddPolicy={onAddPolicy}
             onEditPolicy={onEditPolicy}
+            alertManagerSourceName={alertManagerSourceName}
           />
         ))}
       </div>
@@ -598,8 +599,10 @@ const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher: [label, operator, value]
   );
 };
 
-function createContactPointLink(contactPoint: string, alertManagerSourceName: string | undefined): string {
-  return `/alerting/notifications/receivers/${contactPoint}/edit?alertmanager=${alertManagerSourceName}`;
+function createContactPointLink(contactPoint: string, alertManagerSourceName? = ''): string {
+  return `/alerting/notifications/receivers/${encodeURIComponent(contactPoint)}/edit?alertmanager=${encodeURIComponent(
+    alertManagerSourceName
+  )}`;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
