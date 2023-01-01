@@ -1,0 +1,12 @@
+.vscode
+data
+bin
+pkg
+scripts
+devenv
+docs
+.git
+.yarn/cache
+.yarn/.cache
+.github
+node_modules
