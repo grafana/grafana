@@ -1,4 +1,4 @@
-import { countBy, chain, escapeRegExp } from 'lodash';
+import { countBy, chain, escapeRegExp, isObject } from 'lodash';
 
 import {
   ArrayVector,
@@ -110,7 +110,7 @@ export const LogsParsers: { [name: string]: LogsParser } = {
       try {
         const parsed = JSON.parse(line);
         return Object.keys(parsed).map((key) => {
-          return `"${key}":${JSON.stringify(parsed[key])}`;
+          return `"${key}":${isObject(parsed[key]) ? JSON.stringify(parsed[key]) : parsed[key]}`;
         });
       } catch {}
       return [];

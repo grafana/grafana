@@ -170,11 +170,17 @@ describe('LogsParsers', () => {
     });
 
     test('should return detected fields', () => {
-      expect(parser.getFields('{ "foo" : "bar", "baz" : 42 }')).toEqual(['"foo":"bar"', '"baz":42']);
+      expect(parser.getFields('{ "foo" : "bar", "baz" : 42 }')).toEqual(['"foo":bar', '"baz":42']);
     });
 
     test('should return detected fields for nested quotes', () => {
-      expect(parser.getFields(`{"foo":"bar: '[value=\\"42\\"]'"}`)).toEqual([`"foo":"bar: '[value=\\"42\\"]'"`]);
+      expect(parser.getFields(`{"foo":"bar: '[value=\\"42\\"]'"}`)).toEqual([`"foo":bar: '[value=\"42\"]'`]);
+    });
+
+    test('should avoid useless quote and backslash', () => {
+      expect(
+        parser.getFields(JSON.stringify({ method: 'POST', body: '{"Key": 123}', result: '\\/!@#$%^&*()' }))
+      ).toEqual([`"method":POST`, `"body":{"Key": 123}`, `"result":\\/!@#$%^&*()`]);
     });
 
     test('should return label for field', () => {
