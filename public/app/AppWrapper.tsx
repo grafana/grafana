@@ -126,7 +126,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                     {this.commandPaletteEnabled() && <CommandPalette />}
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
-                        {this.renderNavBar()}
                         <AppChrome>
                           {pageBanners.map((Banner, index) => (
                             <Banner key={index.toString()} />
