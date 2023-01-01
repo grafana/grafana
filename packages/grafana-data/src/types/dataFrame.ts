@@ -10,6 +10,7 @@ import { Vector } from './vector';
 /** @public */
 export enum FieldType {
   time = 'time', // or date
+  timeOffset = 'timeOffset', // the distance from a start time
   number = 'number',
   string = 'string',
   boolean = 'boolean',
