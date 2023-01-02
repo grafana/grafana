@@ -40,12 +40,6 @@ active_sync_enabled = true
 
 ## SAML Setup
 
-**Warning:** IDP initiated SSO relay state
-
-Grafana expects this relay state to be present. 
-idp initiated SSO does not provide a default relay state.
-The current configuration will work for IDP initiated SSO but a 404 will always be returned.
-
 **Warning:** SLO
 
 Grafana expects SLO support to be communicated in the metadata
