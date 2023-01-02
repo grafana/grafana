@@ -11,7 +11,7 @@ import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
 import { TempoDatasource } from '../datasource';
 
-import { CompletionProvider } from './autocomplete';
+import { CompletionProvider, CompletionType } from './autocomplete';
 import { languageDefinition } from './traceql';
 
 interface Props {
@@ -103,8 +103,13 @@ function setupActions(editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: 
 }
 
 function setupRegisterInteractionCommand(editor: monacoTypes.editor.IStandaloneCodeEditor): string | null {
-  return editor.addCommand(0, function (_, label, type) {
-    reportInteraction('grafana_traces_traceql_completion', { datasourceType: 'tempo', label, type });
+  return editor.addCommand(0, function (_, label, type: CompletionType) {
+    const properties: Record<string, unknown> = { datasourceType: 'tempo', type };
+    // Filter out the label for TAG_VALUE completions to avoid potentially exposing sensitive data
+    if (type !== 'TAG_VALUE') {
+      properties.label = label;
+    }
+    reportInteraction('grafana_traces_traceql_completion', properties);
   });
 }
 
