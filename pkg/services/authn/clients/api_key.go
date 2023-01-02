@@ -46,14 +46,6 @@ type APIKey struct {
 	apiKeyService apikey.Service
 }
 
-func (s *APIKey) ClientParams() *authn.ClientParams {
-	return &authn.ClientParams{
-		SyncUser:            false,
-		AllowSignUp:         false,
-		EnableDisabledUsers: false,
-	}
-}
-
 func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
 	if err != nil {
@@ -157,6 +149,10 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 	}
 
 	return keyQuery.Result, nil
+}
+
+func (s *APIKey) ClientParams() *authn.ClientParams {
+	return &authn.ClientParams{}
 }
 
 func (s *APIKey) Test(ctx context.Context, r *authn.Request) bool {
