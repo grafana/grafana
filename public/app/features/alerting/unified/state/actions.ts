@@ -546,6 +546,7 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
     withAppEvents(
       withSerializedError(
         (async () => {
+          // TODO there must be a better way here than to dispatch another fetch as this causes re-rendering :(
           const latestConfig = await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName)).unwrap();
 
           if (

@@ -847,6 +847,7 @@ const useDeletePolicyModal = (): ModalHook<RouteWithID> => {
 
   const handleDismiss = useCallback(() => {
     setRoute(undefined);
+    setShowModal(false);
   }, [setRoute]);
 
   const handleShow = useCallback((route: RouteWithID) => {
@@ -863,6 +864,7 @@ const useDeletePolicyModal = (): ModalHook<RouteWithID> => {
         confirmText="Yes, delete"
         icon="exclamation-triangle"
         onConfirm={() => {
+          // TODO implement delete of route
           handleDismiss();
         }}
         onDismiss={handleDismiss}
