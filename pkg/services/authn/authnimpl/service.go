@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	sync "github.com/grafana/grafana/pkg/services/authn/authnimpl/usersync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -20,7 +21,10 @@ import (
 // make sure service implements authn.Service interface
 var _ authn.Service = new(Service)
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service, apikeyService apikey.Service, userService user.Service) *Service {
+func ProvideService(
+	cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service,
+	apikeyService apikey.Service, userService user.Service, loginAttempts loginattempt.Service,
+) *Service {
 	s := &Service{
 		log:           log.New("authn.service"),
 		cfg:           cfg,
@@ -36,8 +40,8 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Serv
 	}
 
 	// FIXME (kalleep): handle cfg.DisableLogin as well?
-	if !s.cfg.BasicAuthEnabled {
-		s.clients[authn.ClientBasic] = clients.ProvideBasic()
+	if !s.cfg.BasicAuthEnabled || s.cfg.DisableLogin {
+		s.clients[authn.ClientBasic] = clients.ProvideBasic(userService, loginAttempts)
 	}
 
 	// FIXME (jguer): move to User package

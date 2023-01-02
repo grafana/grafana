@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/loginattempt/loginattempttest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -48,7 +49,7 @@ func TestBasic_Test(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvideBasic()
+			c := ProvideBasic(loginattempttest.FakeLoginAttemptService{})
 			assert.Equal(t, tt.expected, c.Test(context.Background(), tt.req))
 		})
 	}
