@@ -177,37 +177,5 @@ describe('QueryEditorField', () => {
         expect(screen.getByText('This query is not valid.')).toBeInTheDocument();
       });
     });
-
-    //TODO: check the test below
-
-    // it('should result in failed validation if query value is empty', async () => {
-    //   initiateDsApi();
-    //
-    //   await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
-    //
-    //   fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
-    //
-    //   await waitFor(() => {
-    //     const alertEl = screen.getByRole('alert');
-    //     expect(alertEl).toBeInTheDocument();
-    //     expect(alertEl).toHaveTextContent(/this query is not valid/i);
-    //   });
-    // });
-
-    //TODO: check the test below
-
-    // it('should result in failed validation if the request errors', async () => {
-    //   const dsApi = initiateDsApi();
-    //
-    //   await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
-    //
-    //   dsApi.error = 'Some error';
-    //   fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
-    //   await waitFor(() => {
-    //     const alertEl = screen.getByRole('alert');
-    //     expect(alertEl).toBeInTheDocument();
-    //     expect(alertEl).toHaveTextContent(/this query is not valid/i);
-    //   });
-    // });
   });
 });
