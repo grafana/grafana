@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	ErrBasicAuthCredentials    = errutil.NewBase(errutil.StatusUnauthorized, "basic.invalid-credentials", errutil.WithPublicMessage("Invalid username or password"))
-	ErrDecodingBasicAuthHeader = errutil.NewBase(errutil.StatusBadRequest, "basic.invalid-header", errutil.WithPublicMessage("Invalid Basic Auth Header"))
+	ErrBasicAuthCredentials    = errutil.NewBase(errutil.StatusUnauthorized, "basic-auth.invalid-credentials", errutil.WithPublicMessage("Invalid username or password"))
+	ErrDecodingBasicAuthHeader = errutil.NewBase(errutil.StatusBadRequest, "basic-auth.invalid-header", errutil.WithPublicMessage("Invalid Basic Auth Header"))
 )
 
 var _ authn.Client = new(Basic)
@@ -101,8 +101,5 @@ func getBasicAuthHeaderFromRequest(r *authn.Request) string {
 func comparePassword(password, salt, hash string) bool {
 	// It is ok to ignore the error here because util.EncodePassword can never return a error
 	hashedPassword, _ := util.EncodePassword(password, salt)
-	if subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(hash)) != 1 {
-		return false
-	}
-	return true
+	return subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(hash)) != 1
 }

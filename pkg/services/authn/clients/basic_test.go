@@ -71,7 +71,6 @@ func TestBasic_Authenticate(t *testing.T) {
 				assert.NoError(t, err)
 				assert.EqualValues(t, *tt.expectedIdentity, *identity)
 			}
-
 		})
 	}
 }
