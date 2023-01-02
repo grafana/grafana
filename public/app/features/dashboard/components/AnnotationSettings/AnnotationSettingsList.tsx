@@ -46,11 +46,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
       );
     }
 
-    return (
-      <>
-        {anno.name}
-      </>
-    );
+    return <>{anno.name}</>;
   };
 
   const dataSourceSrv = getDataSourceSrv();
