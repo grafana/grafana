@@ -4850,6 +4850,7 @@ __metadata:
     react: 17.0.2
     react-dom: 17.0.2
     react-test-renderer: 17.0.2
+    react-use: 17.4.0
     regenerator-runtime: 0.13.10
     rimraf: 3.0.2
     rollup: 2.79.1
