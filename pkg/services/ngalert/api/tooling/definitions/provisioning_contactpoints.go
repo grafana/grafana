@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/alerting/alerting/notifier/channels"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/setting"

@@ -14,8 +14,6 @@ import (
 	_ "github.com/crewjam/saml"
 	_ "github.com/gobwas/glob"
 	_ "github.com/googleapis/gax-go/v2"
-	_ "github.com/grafana/dskit/backoff"
-	_ "github.com/grafana/dskit/flagext"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware"
 	_ "github.com/jung-kurt/gofpdf"
 	_ "github.com/linkedin/goavro/v2"
@@ -28,6 +26,9 @@ import (
 	_ "golang.org/x/time/rate"
 	_ "google.golang.org/genproto/googleapis/cloud/kms/v1"
 	_ "gopkg.in/square/go-jose.v2"
+
+	_ "github.com/grafana/dskit/backoff"
+	_ "github.com/grafana/dskit/flagext"
 )
 
 var IsEnterprise bool = false

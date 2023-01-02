@@ -13,10 +13,9 @@ import (
 	"fmt"
 	"io/fs"
 
-	"github.com/grafana/thema"
-
 	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/thema"
 )
 
 func makeTreeOrPanic(path string, pkgname string, rt *thema.Runtime) *pfs.Tree {

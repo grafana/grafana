@@ -10,10 +10,9 @@
 package team
 
 import (
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/vmux"
-
-	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 // rootrel is the relative path from the grafana repository root to the

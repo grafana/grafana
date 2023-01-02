@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/alerting/alerting/notifier/channels"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )

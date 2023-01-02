@@ -3,10 +3,9 @@ package corelist
 import (
 	"sync"
 
-	"github.com/grafana/thema"
-
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/thema"
 )
 
 var coreTrees pfs.TreeList

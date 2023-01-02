@@ -11,6 +11,7 @@ package plugindef
 
 import (
 	"cuelang.org/go/cue/build"
+
 	"github.com/grafana/thema"
 )
 

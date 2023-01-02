@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/thema"
-
 	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/thema"
 )
 
 type OneToOne codejen.OneToOne[*DeclForGen]

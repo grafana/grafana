@@ -8,9 +8,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/grafana/thema"
-
 	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/thema"
 )
 
 type declParser struct {

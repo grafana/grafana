@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
-
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
