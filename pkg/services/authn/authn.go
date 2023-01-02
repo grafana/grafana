@@ -108,6 +108,11 @@ func (i *Identity) NamespacedID() (string, int64) {
 }
 
 func (i *Identity) SignedInUser() *user.SignedInUser {
+	var isGrafanaAdmin bool
+	if i.IsGrafanaAdmin != nil {
+		isGrafanaAdmin = *i.IsGrafanaAdmin
+	}
+
 	u := &user.SignedInUser{
 		UserID:             0,
 		OrgID:              i.OrgID,
@@ -119,7 +124,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Name:               i.Name,
 		Email:              i.Email,
 		OrgCount:           i.OrgCount,
-		IsGrafanaAdmin:     *i.IsGrafanaAdmin,
+		IsGrafanaAdmin:     isGrafanaAdmin,
 		IsAnonymous:        i.IsAnonymous(),
 		IsDisabled:         i.IsDisabled,
 		HelpFlags1:         i.HelpFlags1,
