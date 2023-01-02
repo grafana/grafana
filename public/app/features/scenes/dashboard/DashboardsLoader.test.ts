@@ -1,13 +1,197 @@
-import { VariableType } from '@grafana/schema';
+import { defaultDashboard, LoadingState, VariableType } from '@grafana/schema';
+import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
+import { SceneGridLayout } from '../components';
+import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 import { CustomVariable } from '../variables/variants/CustomVariable';
 import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
 import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
-import { createSceneVariableFromVariableModel } from './DashboardsLoader';
+import { DashboardScene } from './DashboardScene';
+import {
+  createDashboardSceneFromDashboardModel,
+  createSceneVariableFromVariableModel,
+  DashboardLoader,
+  createVizPanelFromPanelModel,
+} from './DashboardsLoader';
 
 describe('DashboardLoader', () => {
-  describe('variables migration', () => {
+  describe('when fetching/loading a dashboard', () => {
+    beforeEach(() => {
+      new DashboardLoader({});
+    });
+
+    it('should load the dashboard from the cache if it exists', () => {
+      const loader = new DashboardLoader({});
+      const dashboard = new DashboardScene({
+        title: 'cached',
+        uid: 'fake-uid',
+        body: new SceneGridLayout({ children: [] }),
+      });
+      // @ts-expect-error
+      loader.cache['fake-uid'] = dashboard;
+      loader.load('fake-uid');
+      expect(loader.state.dashboard).toBe(dashboard);
+    });
+
+    it('should call dashboard loader server if the dashboard is not cached', async () => {
+      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
+      setDashboardLoaderSrv({
+        loadDashboard: loadDashboardMock,
+      } as unknown as DashboardLoaderSrv);
+
+      const loader = new DashboardLoader({});
+      await loader.load('fake-dash');
+
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+    });
+
+    it("should error when the dashboard doesn't exist", async () => {
+      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: undefined, meta: undefined });
+      setDashboardLoaderSrv({
+        loadDashboard: loadDashboardMock,
+      } as unknown as DashboardLoaderSrv);
+
+      const loader = new DashboardLoader({});
+      await loader.load('fake-dash');
+
+      expect(loader.state.dashboard).toBeUndefined();
+      // @ts-expect-error
+      expect(loader.cache['fake-dash']).toBeUndefined();
+      expect(loader.state.loadError).toBe('Error: Dashboard not found');
+    });
+
+    it('should initialize the dashboard scene with the loaded dashboard', async () => {
+      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
+      setDashboardLoaderSrv({
+        loadDashboard: loadDashboardMock,
+      } as unknown as DashboardLoaderSrv);
+
+      const loader = new DashboardLoader({});
+      await loader.load('fake-dash');
+
+      expect(loader.state.dashboard?.state.uid).toBe('fake-dash');
+      // @ts-expect-error
+      expect(loader.cache['fake-dash']).toBeDefined();
+      expect(loader.state.loadError).toBe(undefined);
+    });
+
+    it('should use DashboardScene creator to create the scene', async () => {
+      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
+      setDashboardLoaderSrv({
+        loadDashboard: loadDashboardMock,
+      } as unknown as DashboardLoaderSrv);
+
+      const loader = new DashboardLoader({});
+      await loader.load('fake-dash');
+      // TODO: Mock the createDashboardSceneFromDashboardModel
+      //expect(createDashboardSceneFromDashboardModel).toBeCalledWith('fake-dash');
+    });
+  });
+
+  describe('when creating dashboard scene', () => {
+    it('should initialize the DashboardScene with the model state', () => {
+      const dash = {
+        ...defaultDashboard,
+        title: 'test',
+        uid: 'test-uid',
+        time: { from: 'now-10h', to: 'now' },
+        templating: {
+          list: [
+            {
+              hide: 2,
+              name: 'constant',
+              skipUrlSync: false,
+              type: 'constant' as VariableType,
+              rootStateKey: 'N4XLmH5Vz',
+              query: 'test',
+              id: 'constant',
+              global: false,
+              index: 3,
+              state: LoadingState.Done,
+              error: null,
+              description: '',
+              datasource: null,
+            },
+          ],
+        },
+      };
+      const oldModel = new DashboardModel(dash);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel);
+
+      expect(scene.state.title).toBe('test');
+      expect(scene.state.uid).toBe('test-uid');
+      expect(scene.state?.$timeRange?.state.value.raw).toEqual(dash.time);
+      expect(scene.state?.$variables?.state.variables).toHaveLength(1);
+      expect(scene.state.subMenu).toBeDefined();
+    });
+
+    it.todo('should call variable migrator for each variable');
+  });
+
+  describe('when organizing panels as scene children', () => {
+    it.todo('should not create panels within collapsed rows');
+    it.todo('should nest panels within their row');
+  });
+
+  describe('when creating viz panel objects', () => {
+    it('should initalize properly the VizPanel scene object', () => {
+      const panel = {
+        title: 'test',
+        type: 'test-plugin',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        options: {
+          fieldOptions: {
+            defaults: {
+              unit: 'none',
+              decimals: 2,
+            },
+            overrides: [],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            unit: 'none',
+          },
+        },
+        pluginVersion: '1.0.0',
+        transformations: [
+          {
+            id: 'reduce',
+            options: {
+              reducers: [
+                {
+                  id: 'mean',
+                },
+              ],
+            },
+          },
+        ],
+        targets: [
+          {
+            refId: 'A',
+            queryType: 'randomWalk',
+          },
+        ],
+      };
+      const vizPanelSceneObject = createVizPanelFromPanelModel(new PanelModel(panel));
+
+      expect(vizPanelSceneObject.state.title).toBe('test');
+      expect(vizPanelSceneObject.state.pluginId).toBe('test-plugin');
+      expect(vizPanelSceneObject.state.placement).toEqual({ x: 0, y: 0, width: 12, height: 8 });
+      expect(vizPanelSceneObject.state.options).toEqual(panel.options);
+      expect(vizPanelSceneObject.state.fieldConfig).toEqual(panel.fieldConfig);
+      expect(vizPanelSceneObject.state.pluginVersion).toBe('1.0.0');
+      expect((vizPanelSceneObject.state.$data as SceneQueryRunner)?.state.queries).toEqual(panel.targets);
+      expect((vizPanelSceneObject.state.$data as SceneQueryRunner)?.state.transformations).toEqual(
+        panel.transformations
+      );
+    });
+  });
+
+  describe('when creating variables objects', () => {
     it('should migrate custom variable', () => {
       const variable = {
         current: {

@@ -48,7 +48,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
       if (rsp.dashboard) {
         this.initDashboard(rsp);
       } else {
-        throw new Error('No dashboard returned');
+        throw new Error('Dashboard not found');
       }
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
@@ -175,7 +175,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     body: new SceneGridLayout({
       children: createSceneObjectsForPanels(oldModel.panels),
     }),
-    $timeRange: new SceneTimeRange(),
+    $timeRange: new SceneTimeRange(oldModel.time),
     actions: [new SceneTimePicker({})],
     $variables: variables,
     subMenu,
