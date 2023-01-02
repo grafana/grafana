@@ -40,7 +40,7 @@ func ProvideService(
 	}
 
 	// FIXME (kalleep): handle cfg.DisableLogin as well?
-	if !s.cfg.BasicAuthEnabled || s.cfg.DisableLogin {
+	if s.cfg.BasicAuthEnabled && !s.cfg.DisableLogin {
 		s.clients[authn.ClientBasic] = clients.ProvideBasic(userService, loginAttempts)
 	}
 
