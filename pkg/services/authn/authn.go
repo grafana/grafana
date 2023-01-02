@@ -16,6 +16,7 @@ import (
 const (
 	ClientAPIKey    = "auth.client.api-key" // #nosec G101
 	ClientAnonymous = "auth.client.anonymous"
+	ClientBasic     = "auth.client.basic"
 )
 
 type ClientParams struct {

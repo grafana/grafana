@@ -35,6 +35,11 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Serv
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
 	}
 
+	// FIXME (kalleep): handle cfg.DisableLogin as well?
+	if !s.cfg.BasicAuthEnabled {
+		s.clients[authn.ClientBasic] = clients.ProvideBasic()
+	}
+
 	// FIXME (jguer): move to User package
 	userSyncService := &sync.UserSync{}
 	orgUserSyncService := &sync.OrgSync{}
