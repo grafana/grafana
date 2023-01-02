@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
+
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/pfs/corelist"
 	"github.com/grafana/grafana/pkg/registry/corekind"

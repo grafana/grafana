@@ -8,13 +8,13 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
-
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy/ts"
 	"github.com/grafana/cuetsy/ts/ast"
-	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/typescript"
+
+	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 // TSVeneerIndexJenny generates an index.gen.ts file with references to all

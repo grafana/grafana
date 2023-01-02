@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana-google-sdk-go/pkg/tokenprovider"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	infrahttp "github.com/grafana/grafana/pkg/infra/httpclient"
 )
 

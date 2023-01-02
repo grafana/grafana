@@ -1,9 +1,8 @@
 package legacydata
 
 import (
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	jsoniter "github.com/json-iterator/go"
 )
 
 // DataFrames is an interface for retrieving encoded and decoded data frames.

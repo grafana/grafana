@@ -6,9 +6,9 @@ import (
 	context "context"
 	testing "testing"
 
+	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	mock "github.com/stretchr/testify/mock"
 
-	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	dtos "github.com/grafana/grafana/pkg/api/dtos"
 	pkgmodels "github.com/grafana/grafana/pkg/models"
 	models "github.com/grafana/grafana/pkg/services/publicdashboards/models"

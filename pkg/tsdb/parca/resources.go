@@ -7,9 +7,8 @@ import (
 	"net/url"
 
 	"github.com/bufbuild/connect-go"
-	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1"
 )
 
 type ProfileType struct {

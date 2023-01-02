@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/codejen"
+
 	"github.com/grafana/grafana/pkg/kindsys"
 )
 

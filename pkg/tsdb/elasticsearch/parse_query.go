@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 

@@ -5,10 +5,9 @@ import (
 
 	"github.com/dave/dst/decorator"
 	"github.com/dave/dst/dstutil"
-	"golang.org/x/tools/go/ast/astutil"
-
 	"github.com/grafana/codejen"
 	"github.com/grafana/thema/encoding/gocode"
+	"golang.org/x/tools/go/ast/astutil"
 )
 
 // GoTypesJenny creates a [OneToOne] that produces Go types for the provided

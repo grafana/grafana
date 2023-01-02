@@ -8,9 +8,9 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
+	"github.com/grafana/thema"
 
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/thema"
 )
 
 // DeclParentPath is the path, relative to the repository root, where

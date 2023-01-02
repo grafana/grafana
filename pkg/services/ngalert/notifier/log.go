@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 

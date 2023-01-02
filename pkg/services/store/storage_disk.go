@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"gocloud.dev/blob"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 )
 

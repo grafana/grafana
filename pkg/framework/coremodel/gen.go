@@ -12,8 +12,8 @@ import (
 
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
-
 	"github.com/grafana/cuetsy"
+
 	gcgen "github.com/grafana/grafana/pkg/codegen"
 )
 

@@ -8,11 +8,10 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
-	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type queryModel struct {

@@ -2,6 +2,7 @@ package azuremonitor
 
 import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 

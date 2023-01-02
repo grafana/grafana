@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/centrifugal/centrifuge"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 	"github.com/grafana/grafana/pkg/services/live/runstream"

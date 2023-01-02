@@ -3,10 +3,9 @@ package lokihttp
 import (
 	"time"
 
-	"github.com/prometheus/common/config"
-
 	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/flagext"
+	"github.com/prometheus/common/config"
 )
 
 // Config describes configuration for a HTTP pusher client.

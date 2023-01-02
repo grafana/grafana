@@ -6,9 +6,9 @@ import (
 	context "context"
 	time "time"
 
+	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	mock "github.com/stretchr/testify/mock"
 
-	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	eval "github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
