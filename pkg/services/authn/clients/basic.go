@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ErrBasicAuthCredentials    = errutil.NewBase(errutil.StatusBadRequest, "basic.invalid-credentials", errutil.WithPublicMessage("Invalid username or password"))
+	ErrBasicAuthCredentials    = errutil.NewBase(errutil.StatusUnauthorized, "basic.invalid-credentials", errutil.WithPublicMessage("Invalid username or password"))
 	ErrDecodingBasicAuthHeader = errutil.NewBase(errutil.StatusBadRequest, "basic.invalid-header", errutil.WithPublicMessage("Invalid Basic Auth Header"))
 )
 
