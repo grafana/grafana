@@ -1,4 +1,3 @@
-import { stubTrue } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
