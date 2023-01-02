@@ -7,7 +7,7 @@ Useful for testing a second implementation
 ## Currently configured in DB and instructions
 
 - [x] LDAP
-- [ ] SAML
+- [x] SAML
 - [ ] OAuth
 
 ## Deployment
