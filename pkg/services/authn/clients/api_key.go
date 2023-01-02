@@ -18,11 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-const (
-	basicPrefix  = "Basic "
-	bearerPrefix = "Bearer "
-)
-
 var (
 	ErrAPIKeyInvalid          = errutil.NewBase(errutil.StatusUnauthorized, "api-key.invalid", errutil.WithPublicMessage("Invalid API key"))
 	ErrAPIKeyExpired          = errutil.NewBase(errutil.StatusUnauthorized, "api-key.expired", errutil.WithPublicMessage("Expired API key"))

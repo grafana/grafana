@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/authn"
 )
@@ -25,6 +26,14 @@ func (b *Basic) ClientParams() *authn.ClientParams {
 }
 
 func (b *Basic) Test(ctx context.Context, r *authn.Request) bool {
-	//TODO implement me
-	panic("implement me")
+	if r.HTTPRequest == nil {
+		return false
+	}
+
+	header := r.HTTPRequest.Header.Get(authorizationHeaderName)
+	if header == "" {
+		return false
+	}
+
+	return strings.HasPrefix(header, basicPrefix)
 }
