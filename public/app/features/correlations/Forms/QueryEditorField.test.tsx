@@ -159,8 +159,6 @@ describe('QueryEditorField', () => {
       });
     });
 
-    //TODO: check the test below => 'This query is not valid.' missing
-
     it('should result in failed validation if result with LoadingState.Done and data is not available', async () => {
       const dsApi = initiateDsApi();
 
