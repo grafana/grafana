@@ -5,7 +5,15 @@ import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { AGGREGATIONS, ALIGNMENTS, SYSTEM_LABELS } from './constants';
 import CloudMonitoringDatasource from './datasource';
-import { AlignmentTypes, CustomMetaData, MetricDescriptor, MetricKind, PreprocessorType, ValueTypes } from './types';
+import {
+  AlignmentTypes,
+  CustomMetaData,
+  MetricDescriptor,
+  MetricKind,
+  PreprocessorType,
+  TimeSeriesList,
+  ValueTypes,
+} from './types';
 
 export const extractServicesFromMetricDescriptors = (metricDescriptors: MetricDescriptor[]) =>
   uniqBy(metricDescriptors, 'service');
@@ -35,8 +43,8 @@ export const getMetricTypes = (
 };
 
 export const getAlignmentOptionsByMetric = (
-  metricValueType: string,
-  metricKind: string,
+  metricValueType?: string,
+  metricKind?: string,
   preprocessor?: PreprocessorType
 ) => {
   if (preprocessor && preprocessor === PreprocessorType.Rate) {
@@ -78,7 +86,7 @@ export const getAlignmentPickerData = (
   preprocessor?: PreprocessorType
 ) => {
   const templateSrv: TemplateSrv = getTemplateSrv();
-  const alignOptions = getAlignmentOptionsByMetric(valueType!, metricKind!, preprocessor!).map((option) => ({
+  const alignOptions = getAlignmentOptionsByMetric(valueType, metricKind, preprocessor).map((option) => ({
     ...option,
     label: option.text,
   }));
@@ -124,4 +132,26 @@ export const alignmentPeriodLabel = (customMetaData: CustomMetaData, datasource:
   const seconds = parseInt(alignmentPeriod, 10);
   const hms = rangeUtil.secondsToHms(seconds);
   return `${hms} interval (${alignment?.text ?? ''})`;
+};
+
+export const getMetricType = (query?: TimeSeriesList) => {
+  const metricTypeKey = query?.filters?.findIndex((f) => f === 'metric.type')!;
+  // filters are in the format [key, operator, value] so we need to add 2 to get the value
+  const metricType = query?.filters?.[metricTypeKey + 2];
+  return metricType || '';
+};
+
+export const setMetricType = (query: TimeSeriesList, metricType: string) => {
+  if (!query.filters) {
+    query.filters = ['metric.type', '=', metricType];
+    return query;
+  }
+  const metricTypeKey = query?.filters?.findIndex((f) => f === 'metric.type')!;
+  if (metricTypeKey === -1) {
+    query.filters.push('metric.type', '=', metricType);
+  } else {
+    // filters are in the format [key, operator, value] so we need to add 2 to get the value
+    query.filters![metricTypeKey + 2] = metricType;
+  }
+  return query;
 };

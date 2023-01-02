@@ -11,38 +11,41 @@
 export type {
   AnnotationTarget,
   AnnotationQuery,
-  VariableModel,
+  DataSourceRef,
   DashboardLink,
   DashboardLinkType,
   VariableType,
-  FieldColorModeId,
   FieldColorSeriesByMode,
   FieldColor,
   GridPos,
   Threshold,
-  ThresholdsMode,
   ThresholdsConfig,
   ValueMapping,
-  MappingType,
   ValueMap,
   RangeMap,
   RegexMap,
   SpecialValueMap,
-  SpecialValueMatch,
   ValueMappingResult,
   Transformation,
-  DashboardCursorSync,
   MatcherConfig,
-  RowPanel
+  RowPanel,
+  GraphPanel,
+  HeatmapPanel
 } from './raw/dashboard/x/dashboard_types.gen';
 
-// Raw generated default consts from dashboard kind.
+// Raw generated enums and default consts from dashboard kind.
 export {
   defaultAnnotationTarget,
   defaultAnnotationQuery,
+  LoadingState,
   defaultDashboardLink,
+  FieldColorModeId,
   defaultGridPos,
+  ThresholdsMode,
   defaultThresholdsConfig,
+  MappingType,
+  SpecialValueMatch,
+  DashboardCursorSync,
   defaultDashboardCursorSync,
   defaultMatcherConfig,
   defaultRowPanel
@@ -59,6 +62,7 @@ export {
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export type {
   Dashboard,
+  VariableModel,
   Panel,
   FieldConfigSource,
   FieldConfig
@@ -75,6 +79,8 @@ export type {
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export {
   defaultDashboard,
+  defaultVariableModel,
+  VariableHide,
   defaultPanel,
   defaultFieldConfigSource,
   defaultFieldConfig
@@ -86,11 +92,11 @@ export type {
   PlaylistItem
 } from './raw/playlist/x/playlist_types.gen';
 
-// Raw generated default consts from playlist kind.
+// Raw generated enums and default consts from playlist kind.
 export { defaultPlaylist } from './raw/playlist/x/playlist_types.gen';
 
 // Raw generated types from Team kind.
-export type {
-  Team,
-  Permission
-} from './raw/team/x/team_types.gen';
+export type { Team } from './raw/team/x/team_types.gen';
+
+// Raw generated enums and default consts from team kind.
+export { Permission } from './raw/team/x/team_types.gen';

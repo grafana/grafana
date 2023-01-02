@@ -30,8 +30,8 @@ export const createDefaultInitialState = () => {
         },
         initialized: true,
         containerWidth: 1920,
-        eventBridge: { emit: () => {} } as any,
-        queries: [{ expr: 'test' }] as any[],
+        eventBridge: { emit: () => {} },
+        queries: [{ expr: 'test' }],
         range: testRange,
         history: [],
         refreshInterval: {

@@ -522,7 +522,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 
 	// Rotate the token just before we write response headers to ensure there is no delay between
 	// the new token being generated and the client receiving it.
-	reqContext.Resp.Before(h.rotateEndOfRequestFunc(reqContext, h.AuthTokenService, token))
+	reqContext.Resp.Before(h.rotateEndOfRequestFunc(reqContext))
 
 	return true
 }
@@ -539,8 +539,7 @@ func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.
 	}
 }
 
-func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService auth.UserTokenService,
-	token *auth.UserToken) web.BeforeFunc {
+func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
 		if w.Written() {
@@ -553,6 +552,11 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, a
 			return
 		}
 
+		// if there is no user token attached to reqContext, skip.
+		if reqContext.UserToken == nil {
+			return
+		}
+
 		ctx, span := h.tracer.Start(reqContext.Req.Context(), "rotateEndOfRequestFunc")
 		defer span.End()
 
@@ -562,14 +566,14 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, a
 			reqContext.Logger.Debug("Failed to get client IP address", "addr", addr, "err", err)
 			ip = nil
 		}
-		rotated, err := authTokenService.TryRotateToken(ctx, token, ip, reqContext.Req.UserAgent())
+		rotated, err := h.AuthTokenService.TryRotateToken(ctx, reqContext.UserToken, ip, reqContext.Req.UserAgent())
 		if err != nil {
 			reqContext.Logger.Error("Failed to rotate token", "error", err)
 			return
 		}
 
 		if rotated {
-			cookies.WriteSessionCookie(reqContext, h.Cfg, token.UnhashedToken, h.Cfg.LoginMaxLifetime)
+			cookies.WriteSessionCookie(reqContext, h.Cfg, reqContext.UserToken.UnhashedToken, h.Cfg.LoginMaxLifetime)
 		}
 	}
 }

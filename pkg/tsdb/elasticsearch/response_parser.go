@@ -26,6 +26,11 @@ const (
 	filtersType     = "filters"
 	termsType       = "terms"
 	geohashGridType = "geohash_grid"
+	//  Document types
+	rawDocumentType = "raw_document"
+	rawDataType     = "raw_data"
+	// Logs type
+	logsType = "logs"
 )
 
 func parseResponse(responses []*es.SearchResponse, targets []*Query) (*backend.QueryDataResponse, error) {

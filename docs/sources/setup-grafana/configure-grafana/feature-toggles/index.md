@@ -67,6 +67,7 @@ Alpha features might be changed or removed without prior notice.
 | `dashboardComments`                | Enable dashboard-wide comments                                                                                                                                               |
 | `annotationComments`               | Enable annotation comments                                                                                                                                                   |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                                                                              |
+| `supportBundles`                   | Support bundles for troubleshooting                                                                                                                                          |
 | `exploreMixedDatasource`           | Enable mixed datasource in Explore                                                                                                                                           |
 | `tracing`                          | Adds trace ID to error notifications                                                                                                                                         |
 | `correlations`                     | Correlations page                                                                                                                                                            |
