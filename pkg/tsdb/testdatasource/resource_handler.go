@@ -9,9 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func (s *Service) registerRoutes() *http.ServeMux {

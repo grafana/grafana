@@ -5,10 +5,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestEmailIntegrationTest(t *testing.T) {

@@ -7,7 +7,9 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	prometheusModel "github.com/prometheus/common/model"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -19,9 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/ticker"
-
-	"github.com/benbjohnson/clock"
-	"golang.org/x/sync/errgroup"
 )
 
 // ScheduleService is an interface for a service that schedules the evaluation

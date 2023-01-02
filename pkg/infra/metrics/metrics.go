@@ -3,10 +3,11 @@ package metrics
 import (
 	"runtime"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	pubdash "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // ExporterName is used as namespace for exposing prometheus metrics

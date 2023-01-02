@@ -4,8 +4,9 @@ import (
 	"sync"
 
 	"cuelang.org/go/cue/build"
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
+
+	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 //go:generate go run gen.go

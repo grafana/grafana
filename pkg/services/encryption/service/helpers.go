@@ -3,10 +3,11 @@ package service
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 func SetupTestService(tb testing.TB) *Service {

@@ -5,8 +5,9 @@ import (
 	"io"
 	"log"
 
-	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/hashicorp/go-hclog"
+
+	glog "github.com/grafana/grafana/pkg/infra/log"
 )
 
 type logWrapper struct {

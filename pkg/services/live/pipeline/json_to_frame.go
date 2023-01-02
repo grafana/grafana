@@ -5,8 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type doc struct {

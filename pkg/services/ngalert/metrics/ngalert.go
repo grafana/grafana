@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/util/ticker"
-
 	"github.com/grafana/grafana/pkg/web"
 )
 

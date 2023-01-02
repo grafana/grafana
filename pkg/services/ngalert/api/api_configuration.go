@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -15,8 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
-
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 type ConfigSrv struct {

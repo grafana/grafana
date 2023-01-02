@@ -5,11 +5,12 @@ import (
 	"sort"
 	"time"
 
+	influx "github.com/influxdata/line-protocol"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/converters"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/live/telemetry"
-	influx "github.com/influxdata/line-protocol"
 )
 
 var (

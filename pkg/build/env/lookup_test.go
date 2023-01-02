@@ -3,9 +3,9 @@ package env_test
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/build/env"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/build/env"
 )
 
 func TestLookup(t *testing.T) {

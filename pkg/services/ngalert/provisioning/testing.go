@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	mock "github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const defaultAlertmanagerConfigJSON = `

@@ -1,8 +1,9 @@
 package definitions
 
 import (
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/alertmanager/config"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // swagger:route GET /api/v1/provisioning/mute-timings provisioning stable RouteGetMuteTimings

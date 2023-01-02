@@ -7,6 +7,7 @@ import (
 	"github.com/blugelabs/bluge/search"
 	"github.com/blugelabs/bluge/search/searcher"
 	"github.com/blugelabs/bluge/search/similarity"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 )

@@ -4,9 +4,10 @@ import (
 	"log"
 	"path/filepath"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/gcloud/storage"
-	"github.com/urfave/cli/v2"
 )
 
 // StoreStorybook implements the sub-command "store-storybook".

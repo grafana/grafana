@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/jmespath/go-jmespath"
+
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/jmespath/go-jmespath"
 )
 
 const (

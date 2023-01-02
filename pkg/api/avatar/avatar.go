@@ -20,11 +20,12 @@ import (
 	"sync"
 	"time"
 
+	gocache "github.com/patrickmn/go-cache"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	gocache "github.com/patrickmn/go-cache"
 )
 
 const (

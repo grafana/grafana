@@ -5,11 +5,12 @@ import (
 	"net"
 	"time"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/user"
-	"golang.org/x/oauth2"
 )
 
 type FakeUserAuthTokenService struct {

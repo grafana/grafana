@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	diff "github.com/yudai/gojsondiff"
 	deltaFormatter "github.com/yudai/gojsondiff/formatter"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 var (

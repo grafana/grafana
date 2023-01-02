@@ -3,9 +3,10 @@ package middleware
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_sanitizeURL(t *testing.T) {

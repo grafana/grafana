@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -16,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 type PluginProxy struct {

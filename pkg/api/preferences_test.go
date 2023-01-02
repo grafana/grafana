@@ -8,8 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -20,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (

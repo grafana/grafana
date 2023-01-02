@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	gdata "github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	gdata "github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 func TestTimeSeriesQuery(t *testing.T) {

@@ -10,13 +10,14 @@ import (
 	"cuelang.org/go/cue/ast"
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/parser"
-	"github.com/grafana/grafana"
-	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/load"
 	"github.com/grafana/thema/vmux"
 	"github.com/yalue/merged_fs"
+
+	"github.com/grafana/grafana"
+	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 )
 
 // PermittedCUEImports returns the list of packages that may be imported in a

@@ -8,15 +8,17 @@ import (
 	context "context"
 	binary "encoding/binary"
 	fmt "fmt"
-	v1 "github.com/grafana/grafana/pkg/tsdb/phlare/gen/common/v1"
+	io "io"
+	math "math"
+	bits "math/bits"
+
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	io "io"
-	math "math"
-	bits "math/bits"
+
+	v1 "github.com/grafana/grafana/pkg/tsdb/phlare/gen/common/v1"
 )
 
 const (

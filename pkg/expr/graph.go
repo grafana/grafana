@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr/mathexp"
-
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
+
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
 // NodeType is the type of a DPNode. Currently either a expression command or datasource query.

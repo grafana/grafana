@@ -12,12 +12,13 @@ package corekind
 import (
 	"fmt"
 
+	"github.com/grafana/thema"
+
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/grafana/grafana/pkg/kinds/svg"
 	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/thema"
 )
 
 // Base is a registry of kindsys.Interface. It provides two modes for accessing

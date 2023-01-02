@@ -4,12 +4,12 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestThreemaNotifier(t *testing.T) {

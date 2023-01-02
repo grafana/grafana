@@ -3,6 +3,9 @@ package manager
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
@@ -10,8 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/ini.v1"
 )
 
 func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {

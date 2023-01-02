@@ -3,11 +3,12 @@ package oauthtokentest
 import (
 	"context"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/user"
-	"golang.org/x/oauth2"
 )
 
 // Service an OAuth token service suitable for tests.

@@ -3,8 +3,9 @@ package fakes
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 type FakeSecretsStore struct {

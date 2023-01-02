@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 // GetJsonData just gets the json in easier to work with type. It's used on multiple places which isn't super effective

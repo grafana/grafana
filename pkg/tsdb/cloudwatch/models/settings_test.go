@@ -3,10 +3,11 @@ package models
 import (
 	"testing"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 func Test_Settings_LoadCloudWatchSettings(t *testing.T) {

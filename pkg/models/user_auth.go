@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"golang.org/x/oauth2"
 )
 
 type UserAuth struct {

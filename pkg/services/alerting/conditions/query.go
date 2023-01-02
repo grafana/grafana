@@ -1,24 +1,21 @@
 package conditions
 
 import (
+	gocontext "context"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-
-	gocontext "context"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 )
 
 func init() {

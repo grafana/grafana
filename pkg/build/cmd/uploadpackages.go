@@ -9,10 +9,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/gcloud"
 	"github.com/grafana/grafana/pkg/build/packaging"
-	"github.com/urfave/cli/v2"
 )
 
 const releaseFolder = "release"

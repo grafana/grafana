@@ -1,8 +1,9 @@
 package mocks
 
 import (
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
 type ListMetricsServiceMock struct {

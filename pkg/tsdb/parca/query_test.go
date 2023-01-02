@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	v1alpha11 "github.com/parca-dev/parca/gen/proto/go/parca/metastore/v1alpha1"
 	profilestore "github.com/parca-dev/parca/gen/proto/go/parca/profilestore/v1alpha1"
 	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 // This is where the tests for the datasource backend live.

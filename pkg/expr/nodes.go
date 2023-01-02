@@ -6,16 +6,15 @@ import (
 	"fmt"
 	"time"
 
+	"gonum.org/v1/gonum/graph/simple"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
-
-	"gonum.org/v1/gonum/graph/simple"
 )
 
 var (

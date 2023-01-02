@@ -3,8 +3,9 @@ package database
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 type TeamGuardianStoreMock struct {

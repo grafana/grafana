@@ -3,12 +3,12 @@ package libraryelements
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestPatchLibraryElement(t *testing.T) {

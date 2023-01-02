@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
-
 	"github.com/grafana/grafana/pkg/web"
 )
 

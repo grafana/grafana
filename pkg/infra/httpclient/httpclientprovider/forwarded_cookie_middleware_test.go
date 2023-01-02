@@ -4,9 +4,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
-	"github.com/stretchr/testify/require"
 )
 
 func TestForwardedCookiesMiddleware(t *testing.T) {

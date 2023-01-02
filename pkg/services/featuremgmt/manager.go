@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 )
 

@@ -9,8 +9,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 func TestParseTreeTestdata(t *testing.T) {

@@ -10,9 +10,10 @@ import (
 	"html/template"
 	"net/mail"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 var (

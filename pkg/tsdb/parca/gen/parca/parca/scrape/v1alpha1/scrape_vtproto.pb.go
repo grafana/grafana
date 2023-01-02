@@ -7,6 +7,9 @@ package scrapev1alpha1
 import (
 	context "context"
 	fmt "fmt"
+	io "io"
+	bits "math/bits"
+
 	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/profilestore/v1alpha1"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -15,8 +18,6 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	io "io"
-	bits "math/bits"
 )
 
 const (

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/sprig/v3"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"

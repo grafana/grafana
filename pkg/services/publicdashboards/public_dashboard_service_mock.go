@@ -4,19 +4,14 @@ package publicdashboards
 
 import (
 	context "context"
-
-	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-
-	dtos "github.com/grafana/grafana/pkg/api/dtos"
+	testing "testing"
 
 	mock "github.com/stretchr/testify/mock"
 
-	models "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-
+	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
+	dtos "github.com/grafana/grafana/pkg/api/dtos"
 	pkgmodels "github.com/grafana/grafana/pkg/models"
-
-	testing "testing"
-
+	models "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	user "github.com/grafana/grafana/pkg/services/user"
 )
 

@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/kinds/playlist"
 )
 
 func TestPlaylistSummary(t *testing.T) {

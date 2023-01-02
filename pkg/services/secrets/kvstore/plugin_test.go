@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 )
 
 // Set fatal flag to true, then simulate a plugin start failure

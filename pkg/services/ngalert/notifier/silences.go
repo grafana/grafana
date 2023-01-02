@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	v2 "github.com/prometheus/alertmanager/api/v2"
 	"github.com/prometheus/alertmanager/silence"
+
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 var (

@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -19,8 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 type PrometheusSrv struct {

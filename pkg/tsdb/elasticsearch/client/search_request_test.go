@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestSearchRequest(t *testing.T) {

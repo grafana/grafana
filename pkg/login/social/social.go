@@ -1,6 +1,7 @@
 package social
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -8,8 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	"context"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"

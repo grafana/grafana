@@ -5,8 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/build/docker"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/docker"
 )
 
 func main() {

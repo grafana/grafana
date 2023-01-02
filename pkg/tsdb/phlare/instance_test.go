@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 // This is where the tests for the datasource backend live.

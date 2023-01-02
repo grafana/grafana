@@ -11,12 +11,13 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"github.com/grafana/grafana/pkg/ifaces/gcsifaces"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/option"
+
+	"github.com/grafana/grafana/pkg/ifaces/gcsifaces"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // NewUploader returns a new Uploader.

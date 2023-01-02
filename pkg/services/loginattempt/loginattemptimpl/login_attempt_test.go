@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestService_Validate(t *testing.T) {

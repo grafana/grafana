@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 func TestFrameSort(t *testing.T) {

@@ -16,9 +16,10 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/grafana/cuetsy"
 	tsast "github.com/grafana/cuetsy/ts/ast"
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/openapi"
+
+	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 // CoremodelDeclaration contains the results of statically analyzing a Grafana

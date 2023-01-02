@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestIntegrationDeleteStaleQueryFromQueryHistory(t *testing.T) {

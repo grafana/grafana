@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/getsentry/sentry-go"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 

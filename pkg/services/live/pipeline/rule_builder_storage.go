@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/centrifugal/centrifuge"
+
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )

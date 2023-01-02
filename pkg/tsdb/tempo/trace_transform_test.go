@@ -5,10 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 	otlp "go.opentelemetry.io/collector/model/otlp"
 	"go.opentelemetry.io/collector/model/pdata"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 func TestTraceToFrame(t *testing.T) {

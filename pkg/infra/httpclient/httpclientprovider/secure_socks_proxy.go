@@ -8,10 +8,11 @@ import (
 	"os"
 	"strings"
 
+	"golang.org/x/net/proxy"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/net/proxy"
 )
 
 // newSecureSocksProxy takes a http.DefaultTransport and wraps it in a socks5 proxy with TLS

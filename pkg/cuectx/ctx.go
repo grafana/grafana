@@ -13,11 +13,12 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/build"
 	"cuelang.org/go/cue/cuecontext"
-	"github.com/grafana/grafana"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/load"
 	"github.com/grafana/thema/vmux"
 	"github.com/yalue/merged_fs"
+
+	"github.com/grafana/grafana"
 )
 
 var ctx = cuecontext.New()

@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	commonv1 "github.com/grafana/grafana/pkg/tsdb/phlare/gen/common/v1"
 	querierv1 "github.com/grafana/grafana/pkg/tsdb/phlare/gen/querier/v1"
 )

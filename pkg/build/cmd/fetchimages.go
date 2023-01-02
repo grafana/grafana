@@ -6,10 +6,11 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/docker"
 	"github.com/grafana/grafana/pkg/build/gcloud"
-	"github.com/urfave/cli/v2"
 )
 
 const (

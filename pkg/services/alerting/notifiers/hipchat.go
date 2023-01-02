@@ -2,10 +2,9 @@ package notifiers
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
-
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"

@@ -6,8 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 const (

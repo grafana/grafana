@@ -7,14 +7,15 @@
 package queryv1alpha1
 
 import (
+	reflect "reflect"
+	sync "sync"
+
 	v1alpha11 "github.com/parca-dev/parca/gen/proto/go/parca/metastore/v1alpha1"
 	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/profilestore/v1alpha1"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	reflect "reflect"
-	sync "sync"
 )
 
 const (

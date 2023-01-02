@@ -15,12 +15,13 @@ import (
 
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/codegen"
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/gocode"
 	"github.com/grafana/thema/encoding/jsonschema"
 	"golang.org/x/tools/go/ast/astutil"
+
+	"github.com/grafana/grafana/pkg/codegen"
+	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 var dirPlugindef = filepath.Join("pkg", "plugins", "plugindef")

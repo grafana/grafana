@@ -3,8 +3,9 @@ package manager
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type TeamGuardianMock struct {

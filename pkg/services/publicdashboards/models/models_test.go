@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestPublicDashboardTableName(t *testing.T) {

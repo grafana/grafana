@@ -10,9 +10,10 @@ import (
 	"testing"
 
 	"cuelang.org/go/cue/errors"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDevenvDashboardValidity(t *testing.T) {

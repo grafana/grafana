@@ -11,13 +11,14 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/golang/mock/gomock"
-	"github.com/grafana/grafana/pkg/ifaces/gcsifaces"
-	"github.com/grafana/grafana/pkg/mocks/mock_gcsifaces"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/option"
+
+	"github.com/grafana/grafana/pkg/ifaces/gcsifaces"
+	"github.com/grafana/grafana/pkg/mocks/mock_gcsifaces"
 )
 
 const dfltExpiration = 7 * 24 * time.Hour

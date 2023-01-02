@@ -3,9 +3,10 @@ package imguploader
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/imguploader/gcs"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 func TestImageUploaderFactory(t *testing.T) {

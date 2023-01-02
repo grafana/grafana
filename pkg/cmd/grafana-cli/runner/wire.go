@@ -7,8 +7,6 @@ import (
 	"context"
 
 	"github.com/google/wire"
-	"github.com/grafana/grafana/pkg/tsdb/parca"
-	"github.com/grafana/grafana/pkg/tsdb/phlare"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api"
@@ -131,6 +129,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
+	"github.com/grafana/grafana/pkg/tsdb/parca"
+	"github.com/grafana/grafana/pkg/tsdb/phlare"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"

@@ -3,11 +3,11 @@ package notifiers
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestEmailNotifier(t *testing.T) {

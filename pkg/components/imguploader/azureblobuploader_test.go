@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestUploadToAzureBlob(t *testing.T) {

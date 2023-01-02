@@ -4,10 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/provisioning/values"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
 func TestRuleGroup(t *testing.T) {

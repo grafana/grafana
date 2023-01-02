@@ -3,8 +3,9 @@ package definitions
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // swagger:route GET /api/v1/provisioning/alert-rules provisioning stable RouteGetAlertRules

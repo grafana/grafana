@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/andybalholm/brotli"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 

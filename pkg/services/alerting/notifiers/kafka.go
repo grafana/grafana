@@ -1,9 +1,8 @@
 package notifiers
 
 import (
-	"strconv"
-
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
