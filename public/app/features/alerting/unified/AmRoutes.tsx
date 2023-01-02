@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { pick, take, uniqueId } from 'lodash';
+import { take, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -10,6 +10,7 @@ import {
   Alert,
   Badge,
   Button,
+  ConfirmModal,
   getTagColorsFromName,
   Icon,
   LoadingPlaceholder,
@@ -22,7 +23,8 @@ import {
   useTheme2,
   withErrorBoundary,
 } from '@grafana/ui';
-import { ObjectMatcher, Receiver, Route } from 'app/plugins/datasource/alertmanager/types';
+import { contextSrv } from 'app/core/core';
+import { ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
@@ -42,7 +44,9 @@ import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertGroupsAction, fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
-import { normalizeMatchers } from './utils/amroutes';
+import { FormAmRoute } from './types/amroutes';
+import { getNotificationsPermissions } from './utils/access-control';
+import { addUniqueIdentifierToRoute, mergePartialAmRouteWithRouteTree, normalizeMatchers } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
@@ -65,15 +69,11 @@ const AmRoutes = () => {
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
-  const fetchConfig = useCallback(() => {
+  useEffect(() => {
     if (alertManagerSourceName) {
       dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
     }
   }, [alertManagerSourceName, dispatch]);
-
-  useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
 
   const {
     result,
@@ -82,16 +82,54 @@ const AmRoutes = () => {
   } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
-  const rootRoute = config?.route;
+  const receivers = config?.receivers ?? [];
 
-  const isProvisioned = useMemo(() => Boolean(config?.route?.provenance), [config?.route]);
+  const rootRoute = useMemo(() => {
+    if (config?.route) {
+      return addUniqueIdentifierToRoute(config.route);
+    }
+
+    return;
+  }, [config?.route]);
+
+  const isProvisioned = Boolean(config?.route?.provenance);
 
   // const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
   // const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
 
-  const receivers = config?.receivers ?? [];
-  const [addModal, openAddModal] = useAddPolicyModal(receivers);
-  const [editModal, openEditModal] = useEditPolicyModal(receivers);
+  function handleSave(partialRoute: Partial<FormAmRoute>) {
+    if (!result || !rootRoute) {
+      return;
+    }
+    const newRouteTree = mergePartialAmRouteWithRouteTree(alertManagerSourceName ?? '', partialRoute, rootRoute);
+
+    dispatch(
+      updateAlertManagerConfigAction({
+        newConfig: {
+          ...result,
+          alertmanager_config: {
+            ...result.alertmanager_config,
+            route: newRouteTree,
+          },
+        },
+        oldConfig: result,
+        alertManagerSourceName: alertManagerSourceName!,
+        successMessage: 'Updated notification policies',
+        refetch: true,
+      })
+    )
+      .unwrap()
+      .then(() => {
+        if (alertManagerSourceName) {
+          dispatch(fetchAlertGroupsAction(alertManagerSourceName));
+        }
+        closeEditModal();
+        closeAddModal();
+      });
+  }
+
+  const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(receivers, handleSave);
+  const [editModal, openEditModal, closeEditModal] = useEditPolicyModal(receivers, handleSave);
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
@@ -101,46 +139,6 @@ const AmRoutes = () => {
       dispatch(fetchAlertGroupsAction(alertManagerSourceName));
     }
   }, [alertManagerSourceName, dispatch]);
-
-  // const handleSave = (data: Partial<FormAmRoute>) => {
-  //   if (!result) {
-  //     return;
-  //   }
-
-  //   const newData = formAmRouteToAmRoute(
-  //     alertManagerSourceName,
-  //     {
-  //       ...rootRoute,
-  //       ...data,
-  //     },
-  //     id2ExistingRoute
-  //   );
-
-  //   dispatch(
-  //     updateAlertManagerConfigAction({
-  //       newConfig: {
-  //         ...result,
-  //         alertmanager_config: {
-  //           ...result.alertmanager_config,
-  //           route: newData,
-  //         },
-  //       },
-  //       oldConfig: result,
-  //       alertManagerSourceName: alertManagerSourceName!,
-  //       successMessage: 'Updated notification policies',
-  //       refetch: true,
-  //     })
-  //   )
-  //     .unwrap()
-  //     .then(() => {
-  //       if (alertManagerSourceName) {
-  //         dispatch(fetchAlertGroupsAction(alertManagerSourceName));
-  //       }
-  //     })
-  //     .catch(() => {
-  //       // error is handled by a popup notification
-  //     });
-  // };
 
   if (!alertManagerSourceName) {
     return (
@@ -158,6 +156,14 @@ const AmRoutes = () => {
   const haveData = result && !resultError && !resultLoading;
   const isLoading = !result && resultLoading;
   const haveError = resultError && !resultLoading;
+
+  const childPolicies = rootRoute?.routes ?? [];
+  const matchers = normalizeMatchers(rootRoute ?? {});
+  const timingOptions = {
+    group_wait: rootRoute?.group_wait,
+    group_interval: rootRoute?.group_interval,
+    repeat_interval: rootRoute?.repeat_interval,
+  };
 
   return (
     <AlertingPageWrapper pageId="am-routes">
@@ -208,11 +214,11 @@ const AmRoutes = () => {
                     currentRoute={rootRoute}
                     contactPoint={rootRoute.receiver}
                     groupBy={rootRoute.group_by}
-                    timingOptions={pick(rootRoute, ['group_wait', 'group_interval', 'repeat_interval'])}
+                    timingOptions={timingOptions}
                     readOnly={readOnly}
-                    matchers={normalizeMatchers(rootRoute)}
+                    matchers={matchers}
                     muteTimings={rootRoute.mute_time_intervals}
-                    childPolicies={rootRoute.routes ?? []}
+                    childPolicies={childPolicies}
                     continueMatching={rootRoute.continue}
                     alertManagerSourceName={alertManagerSourceName}
                     onAddPolicy={openAddModal}
@@ -229,35 +235,18 @@ const AmRoutes = () => {
           </>
         )}
       </TabContent>
-      {/* {result && !resultLoading && !resultError && (
-        <>
-          <AmRootRoute
-            readOnly={readOnly}
-            alertManagerSourceName={alertManagerSourceName}
-            onSave={handleSave}
-            receivers={receivers}
-            routes={rootRoute}
-            routeTree={config?.route}
-            alertGroups={fetchAlertGroups.result ?? []}
-          />
-          <div className={styles.break} />
-          <AmSpecificRouting
-            alertManagerSourceName={alertManagerSourceName}
-            onChange={handleSave}
-            readOnly={readOnly}
-            receivers={receivers}
-            routes={rootRoute}
-            routeTree={config?.route}
-            alertGroups={fetchAlertGroups.result ?? []}
-          />
-        </>
-      )} */}
     </AlertingPageWrapper>
   );
 };
 
+type TimingOptions = {
+  group_wait?: string;
+  group_interval?: string;
+  repeat_interval?: string;
+};
+
 interface PolicyComponentProps {
-  childPolicies: Route[];
+  childPolicies: RouteWithID[];
   receivers: Receiver[];
   isDefault?: boolean;
   matchers?: ObjectMatcher[];
@@ -266,17 +255,13 @@ interface PolicyComponentProps {
   groupBy?: string[];
   muteTimings?: string[];
   readOnly?: boolean;
-  timingOptions?: {
-    group_wait?: string;
-    group_interval?: string;
-    repeat_interval?: string;
-  };
+  timingOptions?: TimingOptions;
   continueMatching?: boolean;
-  alertManagerSourceName?: string;
+  alertManagerSourceName: string;
 
-  currentRoute: Route;
-  onEditPolicy: (route: Route) => void;
-  onAddPolicy: (route: Route) => void;
+  currentRoute: RouteWithID;
+  onEditPolicy: (route: RouteWithID) => void;
+  onAddPolicy: (route: RouteWithID) => void;
 }
 
 const Policy: FC<PolicyComponentProps> = ({
@@ -298,6 +283,11 @@ const Policy: FC<PolicyComponentProps> = ({
 }) => {
   const styles = useStyles2(getStyles);
   const isDefaultPolicy = isDefault !== undefined;
+  const [deleteModal, showDeleteModal] = useDeletePolicyModal();
+
+  const permissions = getNotificationsPermissions(alertManagerSourceName);
+  const canEditRoutes = contextSrv.hasPermission(permissions.update);
+  const canDeleteRoutes = contextSrv.hasPermission(permissions.delete);
 
   const hasMatchers = Boolean(matchers && matchers.length);
   const hasMuteTimings = Boolean(muteTimings.length);
@@ -355,17 +345,30 @@ const Policy: FC<PolicyComponentProps> = ({
                 <Badge icon="exclamation-triangle" color="orange" text={pluralize('warning', warnings.length, true)} />
               )}
               {!readOnly && (
-                <div>
-                  <Button
-                    variant="secondary"
-                    icon="pen"
-                    size="sm"
-                    onClick={() => onEditPolicy(currentRoute)}
-                    type="button"
-                  >
-                    Edit
-                  </Button>
-                </div>
+                <Stack direction="row" gap={0.5}>
+                  {canEditRoutes && (
+                    <Button
+                      variant="secondary"
+                      icon="pen"
+                      size="sm"
+                      onClick={() => onEditPolicy(currentRoute)}
+                      type="button"
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  {canDeleteRoutes && (
+                    <Button
+                      variant="secondary"
+                      icon="trash-alt"
+                      size="sm"
+                      onClick={() => showDeleteModal(currentRoute)}
+                      type="button"
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </Stack>
               )}
             </Stack>
           </div>
@@ -436,29 +439,7 @@ const Policy: FC<PolicyComponentProps> = ({
                 </MetaText>
               )}
               {timingOptions && Object.values(timingOptions).some(Boolean) && (
-                <MetaText icon="hourglass">
-                  <span>Wait</span>
-                  {timingOptions.group_wait && (
-                    <Tooltip
-                      placement="top"
-                      content="How long to initially wait to send a notification for a group of alert instances."
-                    >
-                      <span>
-                        <Strong>{timingOptions.group_wait}</Strong> <span>to group instances</span>
-                      </span>
-                    </Tooltip>
-                  )}
-                  {timingOptions.group_interval && (
-                    <Tooltip
-                      placement="top"
-                      content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
-                    >
-                      <span>
-                        <Strong>{timingOptions.group_interval}</Strong> <span>before sending updates</span>
-                      </span>
-                    </Tooltip>
-                  )}
-                </MetaText>
+                <TimingOptionsMeta timingOptions={timingOptions} />
               )}
             </Stack>
           </div>
@@ -496,9 +477,37 @@ const Policy: FC<PolicyComponentProps> = ({
           isDefaultPolicy={isDefaultPolicy}
         />
       </div>
+      {deleteModal}
     </Stack>
   );
 };
+
+const TimingOptionsMeta = ({ timingOptions }: { timingOptions: TimingOptions }) => (
+  <MetaText icon="hourglass">
+    <span>Wait</span>
+    {timingOptions.group_wait && (
+      <Tooltip
+        placement="top"
+        content="How long to initially wait to send a notification for a group of alert instances."
+      >
+        <span>
+          <Strong>{timingOptions.group_wait}</Strong> <span>to group instances</span>
+          {timingOptions.group_interval && ', '}
+        </span>
+      </Tooltip>
+    )}
+    {timingOptions.group_interval && (
+      <Tooltip
+        placement="top"
+        content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
+      >
+        <span>
+          <Strong>{timingOptions.group_interval}</Strong> <span>before sending updates</span>
+        </span>
+      </Tooltip>
+    )}
+  </MetaText>
+);
 
 interface MataTextProps {
   icon?: IconName;
@@ -608,7 +617,7 @@ const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher: [label, operator, value]
   );
 };
 
-function createContactPointLink(contactPoint: string, alertManagerSourceName? = ''): string {
+function createContactPointLink(contactPoint: string, alertManagerSourceName = ''): string {
   return `/alerting/notifications/receivers/${encodeURIComponent(contactPoint)}/edit?alertmanager=${encodeURIComponent(
     alertManagerSourceName
   )}`;
@@ -737,9 +746,12 @@ export default withErrorBoundary(AmRoutes, { style: 'page' });
 
 type ModalHook<T> = [JSX.Element, (item: T) => void, () => void];
 
-const useAddPolicyModal = (receivers: Receiver[] = []): ModalHook<Route> => {
+const useAddPolicyModal = (
+  receivers: Receiver[] = [],
+  handleSave: (route: Partial<FormAmRoute>) => void
+): ModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [route, setRoute] = useState<Route>();
+  const [_, setRoute] = useState<RouteWithID>();
   const AmRouteReceivers = useGetAmRouteReceiverWithGrafanaAppTypes(receivers);
 
   const handleDismiss = useCallback(() => {
@@ -747,7 +759,7 @@ const useAddPolicyModal = (receivers: Receiver[] = []): ModalHook<Route> => {
     setShowModal(false);
   }, []);
 
-  const handleShow = useCallback((route: Route) => {
+  const handleShow = useCallback((route: RouteWithID) => {
     setRoute(route);
     setShowModal(true);
   }, []);
@@ -761,24 +773,32 @@ const useAddPolicyModal = (receivers: Receiver[] = []): ModalHook<Route> => {
         closeOnEscape={true}
         title="Add a notification Policy"
       >
-        <AmRoutesExpandedForm receivers={AmRouteReceivers} />
-        <Modal.ButtonRow>
-          <Button type="submit">Add policy</Button>
-          <Button type="button" variant="secondary" onClick={handleDismiss}>
-            Cancel
-          </Button>
-        </Modal.ButtonRow>
+        <AmRoutesExpandedForm
+          receivers={AmRouteReceivers}
+          onSubmit={handleSave}
+          actionButtons={
+            <Modal.ButtonRow>
+              <Button type="submit">Add policy</Button>
+              <Button type="button" variant="secondary" onClick={handleDismiss}>
+                Cancel
+              </Button>
+            </Modal.ButtonRow>
+          }
+        />
       </Modal>
     ),
-    [AmRouteReceivers, handleDismiss, showModal]
+    [AmRouteReceivers, handleDismiss, handleSave, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
 };
 
-const useEditPolicyModal = (receivers: Receiver[]): ModalHook<Route> => {
+const useEditPolicyModal = (
+  receivers: Receiver[],
+  handleSave: (route: Partial<FormAmRoute>) => void
+): ModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [route, setRoute] = useState<Route>();
+  const [route, setRoute] = useState<RouteWithID>();
   const AmRouteReceivers = useGetAmRouteReceiverWithGrafanaAppTypes(receivers);
 
   const handleDismiss = useCallback(() => {
@@ -786,7 +806,7 @@ const useEditPolicyModal = (receivers: Receiver[]): ModalHook<Route> => {
     setShowModal(false);
   }, []);
 
-  const handleShow = useCallback((route: Route) => {
+  const handleShow = useCallback((route: RouteWithID) => {
     setRoute(route);
     setShowModal(true);
   }, []);
@@ -800,16 +820,55 @@ const useEditPolicyModal = (receivers: Receiver[]): ModalHook<Route> => {
         closeOnEscape={true}
         title="Edit notification Policy"
       >
-        <AmRoutesExpandedForm receivers={AmRouteReceivers} route={route} />
-        <Modal.ButtonRow>
-          <Button type="submit">Update policy</Button>
-          <Button type="button" variant="secondary" onClick={handleDismiss}>
-            Cancel
-          </Button>
-        </Modal.ButtonRow>
+        <AmRoutesExpandedForm
+          receivers={AmRouteReceivers}
+          route={route}
+          onSubmit={handleSave}
+          actionButtons={
+            <Modal.ButtonRow>
+              <Button type="submit">Update policy</Button>
+              <Button type="button" variant="secondary" onClick={handleDismiss}>
+                Cancel
+              </Button>
+            </Modal.ButtonRow>
+          }
+        />
       </Modal>
     ),
-    [AmRouteReceivers, handleDismiss, route, showModal]
+    [AmRouteReceivers, handleDismiss, handleSave, route, showModal]
+  );
+
+  return [modalElement, handleShow, handleDismiss];
+};
+
+const useDeletePolicyModal = (): ModalHook<RouteWithID> => {
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [_, setRoute] = useState<RouteWithID>();
+
+  const handleDismiss = useCallback(() => {
+    setRoute(undefined);
+  }, [setRoute]);
+
+  const handleShow = useCallback((route: RouteWithID) => {
+    setRoute(undefined);
+    setShowModal(true);
+  }, []);
+
+  const modalElement = useMemo(
+    () => (
+      <ConfirmModal
+        isOpen={showModal}
+        title="Delete notification policy"
+        body="Deleting this notification policy will permanently remove it. Are you sure you want to delete this policy?"
+        confirmText="Yes, delete"
+        icon="exclamation-triangle"
+        onConfirm={() => {
+          handleDismiss();
+        }}
+        onDismiss={handleDismiss}
+      />
+    ),
+    [handleDismiss, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];

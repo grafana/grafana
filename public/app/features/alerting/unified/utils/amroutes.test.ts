@@ -34,7 +34,7 @@ describe('formAmRouteToAmRoute', () => {
       const route: FormAmRoute = buildFormAmRoute({ id: '1', overrideGrouping: false, groupBy: ['SHOULD NOT BE SET'] });
 
       // Act
-      const amRoute = formAmRouteToAmRoute('test', route, {});
+      const amRoute = formAmRouteToAmRoute('test', route, { id: 'root' });
 
       // Assert
       expect(amRoute.group_by).toStrictEqual([]);
@@ -47,7 +47,7 @@ describe('formAmRouteToAmRoute', () => {
       const route: FormAmRoute = buildFormAmRoute({ id: '1', overrideGrouping: true, groupBy: ['SHOULD BE SET'] });
 
       // Act
-      const amRoute = formAmRouteToAmRoute('test', route, {});
+      const amRoute = formAmRouteToAmRoute('test', route, { id: 'root' });
 
       // Assert
       expect(amRoute.group_by).toStrictEqual(['SHOULD BE SET']);
@@ -64,10 +64,10 @@ describe('amRouteToFormAmRoute', () => {
       ${undefined}
     `("when group_by is '$group_by', should set overrideGrouping false", ({ group_by }) => {
       // Arrange
-      const amRoute: Route = buildAmRoute({ group_by: group_by });
+      const amRoute = buildAmRoute({ group_by: group_by });
 
       // Act
-      const [formRoute] = amRouteToFormAmRoute(amRoute);
+      const formRoute = amRouteToFormAmRoute(amRoute);
 
       // Assert
       expect(formRoute.groupBy).toStrictEqual([]);
@@ -78,10 +78,10 @@ describe('amRouteToFormAmRoute', () => {
   describe('when called with non-empty group_by', () => {
     it('Should set overrideGrouping true and groupBy', () => {
       // Arrange
-      const amRoute: Route = buildAmRoute({ group_by: ['SHOULD BE SET'] });
+      const amRoute = buildAmRoute({ group_by: ['SHOULD BE SET'] });
 
       // Act
-      const [formRoute] = amRouteToFormAmRoute(amRoute);
+      const formRoute = amRouteToFormAmRoute(amRoute);
 
       // Assert
       expect(formRoute.groupBy).toStrictEqual(['SHOULD BE SET']);

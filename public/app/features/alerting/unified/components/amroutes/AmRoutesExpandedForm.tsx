@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { FC, ReactNode, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -18,9 +18,10 @@ import {
   Badge,
   VerticalGroup,
 } from '@grafana/ui';
-import { Route } from 'app/plugins/datasource/alertmanager/types';
+import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
+import { FormAmRoute } from '../../types/amroutes';
 import { matcherFieldOptions } from '../../utils/alertmanager';
 import {
   emptyArrayFieldMatcher,
@@ -39,10 +40,12 @@ import { getFormStyles } from './formStyles';
 
 export interface AmRoutesExpandedFormProps {
   receivers: AmRouteReceiver[];
-  route?: Route;
+  route?: RouteWithID;
+  onSubmit: (route: Partial<FormAmRoute>) => void;
+  actionButtons: ReactNode;
 }
 
-export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ receivers, route }) => {
+export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButtons, receivers, route, onSubmit }) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
@@ -56,10 +59,10 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ receivers,
     }
   });
 
-  const [defaultValues] = amRouteToFormAmRoute(route);
+  const defaultValues = amRouteToFormAmRoute(route);
 
   return (
-    <Form defaultValues={defaultValues} onSubmit={() => {}} maxWidth="none">
+    <Form defaultValues={defaultValues} onSubmit={onSubmit} maxWidth="none">
       {({ control, register, errors, setValue, watch }) => (
         <>
           {/* @ts-ignore-check: react-hook-form made me do this */}
@@ -124,6 +127,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ receivers,
                               />
                             </Field>
                             <IconButton
+                              type="button"
                               className={styles.removeButton}
                               tooltip="Remove matcher"
                               name={'trash-alt'}
@@ -343,6 +347,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ receivers,
               name="muteTimeIntervals"
             />
           </Field>
+          {actionButtons}
         </>
       )}
     </Form>

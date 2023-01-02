@@ -15,9 +15,6 @@ import { GrafanaAppBadge } from '../receivers/grafanaAppReceivers/GrafanaAppBadg
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 import { Matchers } from '../silences/Matchers';
 
-import { AmRoutesExpandedForm } from './AmRoutesExpandedForm';
-import { AmRoutesExpandedRead } from './AmRoutesExpandedRead';
-
 export interface AmRoutesTableProps {
   isAddMode: boolean;
   onChange: (routes: FormAmRoute[]) => void;
@@ -90,7 +87,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
   readOnly = false,
   alertManagerSourceName,
 }) => {
-  const [editMode, setEditMode] = useState(false);
+  const [_, setEditMode] = useState(false);
   const [deletingRouteId, setDeletingRouteId] = useState<string | undefined>(undefined);
   const [expandedId, setExpandedId] = useState<string | number>();
   const permissions = getNotificationsPermissions(alertManagerSourceName);
@@ -228,25 +225,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({
         onCollapse={collapseItem}
         onExpand={expandItem}
         isExpanded={(item) => expandedId === item.id}
-        renderExpandedContent={(item: RouteTableItemProps, index) =>
-          isAddMode || editMode ? (
-            <AmRoutesExpandedForm receivers={receivers} routes={item.data} />
-          ) : (
-            <AmRoutesExpandedRead
-              onChange={(data) => {
-                const newRoutes = updatedRoute(routes, data);
-                onChange(newRoutes);
-              }}
-              receivers={receivers}
-              routes={item.data}
-              routeTree={routeTree}
-              currentRoute={rawRoutes[index]}
-              alertGroups={alertGroups}
-              readOnly={readOnly}
-              alertManagerSourceName={alertManagerSourceName}
-            />
-          )
-        }
+        renderExpandedContent={(item: RouteTableItemProps, index) => null}
       />
       <ConfirmModal
         isOpen={!!deletingRouteId}

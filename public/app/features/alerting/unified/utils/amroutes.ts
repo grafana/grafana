@@ -1,8 +1,8 @@
-import { isUndefined, omitBy } from 'lodash';
+import { omit, isUndefined, omitBy, uniqueId } from 'lodash';
 import { Validate } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
-import { MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../types/amroutes';
 import { MatcherFieldValue } from '../types/silence-form';
@@ -131,27 +131,32 @@ export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
   return matchers;
 };
 
+// add unique identifiers to each route in the route tree, that way we can figure out what route we've edited / deleted
+export function addUniqueIdentifierToRoute(route: Route): RouteWithID {
+  return {
+    id: uniqueId('route-'),
+    ...route,
+    routes: (route.routes ?? []).map(addUniqueIdentifierToRoute),
+  };
+}
+
 //returns route, and a record mapping id to existing route
-export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Record<string, Route>] => {
+export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): FormAmRoute => {
   if (!route) {
-    return [emptyRoute, {}];
+    return emptyRoute;
   }
 
-  const id = String(Math.random());
-  const id2route = {
-    [id]: route,
-  };
+  const id = 'id' in route ? route.id : uniqueId('route-');
 
   if (Object.keys(route).length === 0) {
     const formAmRoute = { ...emptyRoute, id };
-    return [formAmRoute, id2route];
+    return formAmRoute;
   }
 
   const formRoutes: FormAmRoute[] = [];
   route.routes?.forEach((subRoute) => {
-    const [subFormRoute, subId2Route] = amRouteToFormAmRoute(subRoute);
+    const subFormRoute = amRouteToFormAmRoute(subRoute);
     formRoutes.push(subFormRoute);
-    Object.assign(id2route, subId2Route);
   });
 
   // Frontend migration to use object_matchers instead of matchers
@@ -165,38 +170,36 @@ export const amRouteToFormAmRoute = (route: Route | undefined): [FormAmRoute, Re
   const [groupIntervalValue, groupIntervalValueType] = intervalToValueAndType(route.group_interval, ['', 'm']);
   const [repeatIntervalValue, repeatIntervalValueType] = intervalToValueAndType(route.repeat_interval, ['', 'h']);
 
-  return [
-    {
-      id,
-      object_matchers: [
-        ...matchers,
-        ...matchersToArrayFieldMatchers(route.match, false),
-        ...matchersToArrayFieldMatchers(route.match_re, true),
-      ],
-      continue: route.continue ?? false,
-      receiver: route.receiver ?? '',
-      overrideGrouping: Array.isArray(route.group_by) && route.group_by.length !== 0,
-      groupBy: route.group_by ?? [],
-      overrideTimings: [groupWaitValue, groupIntervalValue, repeatIntervalValue].some(Boolean),
-      groupWaitValue,
-      groupWaitValueType,
-      groupIntervalValue,
-      groupIntervalValueType,
-      repeatIntervalValue,
-      repeatIntervalValueType,
-      routes: formRoutes,
-      muteTimeIntervals: route.mute_time_intervals ?? [],
-    },
-    id2route,
-  ];
+  return {
+    id,
+    object_matchers: [
+      ...matchers,
+      ...matchersToArrayFieldMatchers(route.match, false),
+      ...matchersToArrayFieldMatchers(route.match_re, true),
+    ],
+    continue: route.continue ?? false,
+    receiver: route.receiver ?? '',
+    overrideGrouping: Array.isArray(route.group_by) && route.group_by.length !== 0,
+    groupBy: route.group_by ?? [],
+    overrideTimings: [groupWaitValue, groupIntervalValue, repeatIntervalValue].some(Boolean),
+    groupWaitValue,
+    groupWaitValueType,
+    groupIntervalValue,
+    groupIntervalValueType,
+    repeatIntervalValue,
+    repeatIntervalValueType,
+    routes: formRoutes,
+    muteTimeIntervals: route.mute_time_intervals ?? [],
+  };
 };
 
+// convert a FormAmRoute to a Route
 export const formAmRouteToAmRoute = (
-  alertManagerSourceName: string | undefined,
-  formAmRoute: FormAmRoute,
-  id2ExistingRoute: Record<string, Route>
+  alertManagerSourceName: string,
+  formAmRoute: Partial<FormAmRoute>,
+  routeTree: RouteWithID
 ): Route => {
-  const existing: Route | undefined = id2ExistingRoute[formAmRoute.id];
+  const existing = findExistingRoute(formAmRoute.id ?? '', routeTree);
 
   const {
     overrideGrouping,
@@ -225,7 +228,7 @@ export const formAmRouteToAmRoute = (
     ...(existing ?? {}),
     continue: formAmRoute.continue,
     group_by: group_by,
-    object_matchers: formAmRoute.object_matchers.length
+    object_matchers: formAmRoute.object_matchers?.length
       ? formAmRoute.object_matchers.map((matcher) => [matcher.name, matcher.operator, matcher.value])
       : undefined,
     match: undefined, // DEPRECATED: Use matchers
@@ -233,14 +236,12 @@ export const formAmRouteToAmRoute = (
     group_wait,
     group_interval,
     repeat_interval,
-    routes: formAmRoute.routes.map((subRoute) =>
-      formAmRouteToAmRoute(alertManagerSourceName, subRoute, id2ExistingRoute)
-    ),
+    routes: formAmRoute.routes?.map((subRoute) => formAmRouteToAmRoute(alertManagerSourceName, subRoute, routeTree)),
     mute_time_intervals: formAmRoute.muteTimeIntervals,
   };
 
   if (alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-    amRoute.matchers = formAmRoute.object_matchers.map(({ name, operator, value }) => `${name}${operator}${value}`);
+    amRoute.matchers = formAmRoute.object_matchers?.map(({ name, operator, value }) => `${name}${operator}${value}`);
     amRoute.object_matchers = undefined;
   } else {
     amRoute.matchers = undefined;
@@ -251,6 +252,42 @@ export const formAmRouteToAmRoute = (
   }
 
   return omitBy(amRoute, isUndefined);
+};
+
+// make sure to omit the "id" because Prometheus / Loki / Mimir will reject the payload
+export const mergePartialAmRouteWithRouteTree = (
+  alertManagerSourceName: string,
+  partialFormRoute: Partial<FormAmRoute>,
+  routeTree: RouteWithID
+): Route => {
+  const existing = findExistingRoute(partialFormRoute.id ?? '', routeTree);
+  if (!existing) {
+    throw new Error(`No such route with ID '${partialFormRoute.id}'`);
+  }
+
+  function findAndReplace(currentRoute: RouteWithID): Route {
+    let updatedRoute: Route = currentRoute;
+
+    if (currentRoute.id === partialFormRoute.id) {
+      updatedRoute = omit(
+        {
+          ...currentRoute,
+          ...formAmRouteToAmRoute(alertManagerSourceName, partialFormRoute, routeTree),
+        },
+        'id'
+      );
+    }
+
+    return omit(
+      {
+        ...updatedRoute,
+        routes: currentRoute.routes?.map(findAndReplace),
+      },
+      ['id']
+    );
+  }
+
+  return findAndReplace(routeTree);
 };
 
 export const stringToSelectableValue = (str: string): SelectableValue<string> => ({
@@ -286,3 +323,6 @@ export const optionalPositiveInteger: Validate<string> = (value) => {
 
   return !/^\d+$/.test(value) ? 'Must be a positive integer.' : undefined;
 };
+function findExistingRoute(id: string, routeTree: RouteWithID): RouteWithID | undefined {
+  return routeTree.id === id ? routeTree : routeTree.routes?.find((route) => findExistingRoute(id, route));
+}

@@ -113,6 +113,11 @@ export type Route = {
   provenance?: string;
 };
 
+export interface RouteWithID extends Route {
+  id: string;
+  routes?: RouteWithID[];
+}
+
 export type InhibitRule = {
   target_match: Record<string, string>;
   target_match_re: Record<string, string>;
