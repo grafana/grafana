@@ -2,7 +2,7 @@
 
 ARG BASE_IMAGE=alpine:3.15
 ARG JS_IMAGE=node:16-alpine3.15
-ARG GO_IMAGE=golang:1.19.3-alpine3.15
+ARG GO_IMAGE=golang:1.19.4-alpine3.15
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder

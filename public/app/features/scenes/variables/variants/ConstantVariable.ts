@@ -2,7 +2,7 @@ import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { SceneVariable, SceneVariableState, VariableValue } from '../types';
 
 export interface ConstantVariableState extends SceneVariableState {
-  value: string;
+  value: VariableValue;
 }
 
 export class ConstantVariable
