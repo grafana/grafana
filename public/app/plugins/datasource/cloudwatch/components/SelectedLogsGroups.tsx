@@ -11,7 +11,7 @@ type CrossAccountLogsQueryProps = {
   onChange: (selectedLogGroups: SelectableResourceValue[]) => void;
 };
 
-const MAX_VISIBLE_LOG_GROUPS = 10;
+const MAX_VISIBLE_LOG_GROUPS = 6;
 
 export const SelectedLogsGroups = ({ selectedLogGroups, onChange }: CrossAccountLogsQueryProps) => {
   const styles = useStyles2(getStyles);
