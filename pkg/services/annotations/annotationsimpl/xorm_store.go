@@ -78,7 +78,7 @@ func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.It
 	hasTags := make([]annotations.Item, 0)
 	hasNoTags := make([]annotations.Item, 0)
 
-	for i, item := range items {
+	for _, item := range items {
 		tags := tag.ParseTagPairs(item.Tags)
 		item.Tags = tag.JoinTagPairs(tags)
 		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
@@ -86,7 +86,7 @@ func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.It
 		if item.Epoch == 0 {
 			item.Epoch = item.Created
 		}
-		if err := r.validateItem(&items[i]); err != nil {
+		if err := r.validateItem(&item); err != nil {
 			return err
 		}
 
