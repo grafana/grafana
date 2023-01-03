@@ -76,7 +76,41 @@ export const omitRouteFromRouteTree = (findRoute: RouteWithID, routeTree: RouteW
 };
 
 // add a new route to a parent route
-export const addNodeToRoute = (partialFormRoute: Partial<FormAmRoute>, parent: RouteWithID, routeTree: Route) => {};
+export const addRouteToParentRoute = (
+  partialFormRoute: Partial<FormAmRoute>,
+  parentRoute: RouteWithID,
+  routeTree: RouteWithID
+): Route => {
+  // TODO "alertmanagessourcename" here again ugh
+  const newRoute = formAmRouteToAmRoute('', partialFormRoute, routeTree);
+
+  function findAndAdd(currentRoute: RouteWithID): RouteWithID {
+    if (currentRoute.id === parentRoute.id) {
+      return {
+        ...currentRoute,
+        // TODO fix this typescript thingy
+        routes: currentRoute.routes?.concat(newRoute),
+      };
+    }
+
+    return {
+      ...currentRoute,
+      routes: currentRoute.routes?.map(findAndAdd),
+    };
+  }
+
+  function findAndOmitId(currentRoute: RouteWithID): Route {
+    return omit(
+      {
+        ...currentRoute,
+        routes: currentRoute.routes?.map(findAndOmitId),
+      },
+      'id'
+    );
+  }
+
+  return findAndOmitId(findAndAdd(routeTree));
+};
 
 export function findExistingRoute(id: string, routeTree: RouteWithID): RouteWithID | undefined {
   return routeTree.id === id ? routeTree : routeTree.routes?.find((route) => findExistingRoute(id, route));

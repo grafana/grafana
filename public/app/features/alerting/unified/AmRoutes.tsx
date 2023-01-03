@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { groupBy, take, uniqueId, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
-import React, { FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { FC, Fragment, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
@@ -50,7 +50,7 @@ import { getNotificationsPermissions } from './utils/access-control';
 import { addUniqueIdentifierToRoute, normalizeMatchers } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
-import { mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
+import { addRouteToParentRoute, mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
 
 enum ActiveTab {
   NotificationPolicies,
@@ -104,7 +104,23 @@ const AmRoutes = () => {
       return;
     }
     const newRouteTree = mergePartialAmRouteWithRouteTree(alertManagerSourceName ?? '', partialRoute, rootRoute);
+    updateRouteTree(newRouteTree);
+  }
 
+  function handleDelete(route: RouteWithID) {
+    if (!rootRoute) {
+      return;
+    }
+    const newRouteTree = omitRouteFromRouteTree(route, rootRoute);
+    updateRouteTree(newRouteTree);
+  }
+
+  function handleAdd(partialRoute: Partial<FormAmRoute>, parentRoute: RouteWithID) {
+    if (!rootRoute) {
+      return;
+    }
+
+    const newRouteTree = addRouteToParentRoute(partialRoute, parentRoute, rootRoute);
     updateRouteTree(newRouteTree);
   }
 
@@ -139,16 +155,8 @@ const AmRoutes = () => {
       });
   }
 
-  function handleDelete(route: RouteWithID) {
-    if (!rootRoute) {
-      return;
-    }
-    const newRouteTree = omitRouteFromRouteTree(route, rootRoute);
-    updateRouteTree(newRouteTree);
-  }
-
   // edit, add, delete modals
-  const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(receivers, handleSave);
+  const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(receivers, handleAdd);
   const [editModal, openEditModal, closeEditModal] = useEditPolicyModal(receivers, handleSave);
   const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete);
 
@@ -381,7 +389,9 @@ const Policy: FC<PolicyComponentProps> = ({
                   placement="top"
                   content={
                     <Stack direction="column" gap={0.5}>
-                      {warnings}
+                      {warnings.map((warning) => (
+                        <Fragment key={uniqueId()}>{warning}</Fragment>
+                      ))}
                     </Stack>
                   }
                 >
@@ -774,19 +784,19 @@ type ModalHook<T> = [JSX.Element, (item: T) => void, () => void];
 
 const useAddPolicyModal = (
   receivers: Receiver[] = [],
-  handleSave: (route: Partial<FormAmRoute>) => void
+  handleAdd: (route: Partial<FormAmRoute>, parentRoute: RouteWithID) => void
 ): ModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [_, setRoute] = useState<RouteWithID>();
+  const [parentRoute, setParentRoute] = useState<RouteWithID>();
   const AmRouteReceivers = useGetAmRouteReceiverWithGrafanaAppTypes(receivers);
 
   const handleDismiss = useCallback(() => {
-    setRoute(undefined);
+    setParentRoute(undefined);
     setShowModal(false);
   }, []);
 
-  const handleShow = useCallback((route: RouteWithID) => {
-    setRoute(route);
+  const handleShow = useCallback((parentRoute: RouteWithID) => {
+    setParentRoute(parentRoute);
     setShowModal(true);
   }, []);
 
@@ -801,7 +811,7 @@ const useAddPolicyModal = (
       >
         <AmRoutesExpandedForm
           receivers={AmRouteReceivers}
-          onSubmit={handleSave}
+          onSubmit={(newRoute) => parentRoute && handleAdd(newRoute, parentRoute)}
           actionButtons={
             <Modal.ButtonRow>
               <Button type="submit">Add policy</Button>
@@ -813,7 +823,7 @@ const useAddPolicyModal = (
         />
       </Modal>
     ),
-    [AmRouteReceivers, handleDismiss, handleSave, showModal]
+    [AmRouteReceivers, handleAdd, handleDismiss, parentRoute, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -851,13 +861,14 @@ const useEditPolicyModal = (
         {isDefaultPolicy && route && (
           <AmRootRouteForm
             // TODO *sigh* this alertmanagersourcename should come from context or something
+            // passing it down all the way here is a code smell
             alertManagerSourceName={''}
             onSubmit={handleSave}
             receivers={AmRouteReceivers}
             route={route}
             actionButtons={
               <Modal.ButtonRow>
-                <Button type="submit">Update policy</Button>
+                <Button type="submit">Update default policy</Button>
                 <Button type="button" variant="secondary" onClick={handleDismiss}>
                   Cancel
                 </Button>
