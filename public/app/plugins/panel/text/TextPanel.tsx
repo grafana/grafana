@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { debounce } from 'lodash';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PanelProps, renderTextPanelMarkdown, textUtil, InterpolateFunction } from '@grafana/data';
 import { CustomScrollbar, CodeEditor, useStyles2 } from '@grafana/ui';
@@ -13,20 +13,13 @@ export interface Props extends PanelProps<PanelOptions> {}
 
 export function TextPanel({ options, replaceVariables, width, height }: Props) {
   const styles = useStyles2(getStyles);
-  const [clean, setClean] = useState<PanelOptions>(
-    processContent(options, replaceVariables, config.disableSanitizeHtml)
-  );
+  const location = useLocation();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const processText = useCallback(
-    debounce((opts: PanelOptions) => {
-      setClean(processContent(opts, replaceVariables, config.disableSanitizeHtml));
-    }, 150),
-    [replaceVariables]
-  );
-
-  // When options change update the text (debounced)
-  useEffect(() => processText(options), [options, processText]);
+  const clean = useMemo(() => {
+    return processContent(options, replaceVariables, config.disableSanitizeHtml);
+    // include "location" since it will updat whenever variables change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options, replaceVariables, location]);
 
   if (clean.mode === TextMode.Code) {
     const code = options.code ?? defaultCodeOptions;
@@ -46,7 +39,7 @@ export function TextPanel({ options, replaceVariables, width, height }: Props) {
   }
 
   return (
-    <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
+    <CustomScrollbar autoHeightMin="100%">
       <DangerouslySetHtmlContent
         html={clean.content}
         className={styles.markdown}
@@ -88,10 +81,7 @@ export function processContent(
       }
   }
 
-  return {
-    content, // direct value, not sanitized
-    mode,
-  };
+  return { content, mode };
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
