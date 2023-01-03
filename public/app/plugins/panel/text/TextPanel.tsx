@@ -72,13 +72,9 @@ export function processContent(
     case TextMode.Markdown:
     default:
       // default to markdown
-      if (disableSanitizeHtml) {
-        content = renderTextPanelMarkdown(content, {
-          noSanitize: true,
-        });
-      } else {
-        content = textUtil.sanitizeTextPanelContent(renderTextPanelMarkdown(content));
-      }
+      content = renderTextPanelMarkdown(content, {
+        noSanitize: disableSanitizeHtml,
+      });
   }
 
   return { content, mode };
