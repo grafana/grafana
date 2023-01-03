@@ -9,7 +9,7 @@ import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 export interface Props {
   state?: LoadingState;
   message?: string;
-  onClick?: () => void;
+  onClick?: (e: React.SyntheticEvent) => void;
 }
 
 export function PanelStatus({ state, message, onClick }: Props) {

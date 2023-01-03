@@ -16,7 +16,7 @@ import { PanelStatus } from './PanelStatus';
 
 interface Status {
   message?: string;
-  onClick?: () => void;
+  onClick?: (e: React.SyntheticEvent) => void;
 }
 
 /**
