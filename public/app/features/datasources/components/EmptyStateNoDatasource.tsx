@@ -3,7 +3,7 @@ import React, { ComponentProps } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourcePluginMeta, GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, reportInteraction } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -68,8 +68,14 @@ export function EmptyStateNoDatasource({ onCTAClick, loading = false, title, CTA
               <ul className={styles.datasources}>
                 {datasources.map((d) => (
                   <li key={d.id}>
-                    <button onClick={() => onAddDatasource(d)}>
+                    <button
+                      onClick={() => {
+                        reportInteraction('dashboards_connectds_ds_clicked');
+                        onAddDatasource(d);
+                      }}
+                    >
                       <img
+                        role="presentation"
                         src={d.info.logos.small}
                         alt={t('datasource-onboarding.logo', 'Logo for {{datasourceName}} data source', {
                           datasourceName: d.name,
@@ -84,7 +90,11 @@ export function EmptyStateNoDatasource({ onCTAClick, loading = false, title, CTA
                   </li>
                 ))}
                 <li>
-                  <a href="/datasources/new" className={styles.viewAll}>
+                  <a
+                    href="/datasources/new"
+                    className={styles.viewAll}
+                    onClick={() => reportInteraction('dashboards_connectds_viewall_clicked')}
+                  >
                     <span>{t('datasource-onboarding.viewAll', 'View all')}</span>
                     <Icon name="arrow-right" size="lg" />
                   </a>
@@ -97,7 +107,13 @@ export function EmptyStateNoDatasource({ onCTAClick, loading = false, title, CTA
             {t('datasource-onboarding.contact-admin', 'Please contact your administrator to configure data sources.')}
           </h4>
         )}
-        <button onClick={onCTAClick} className={styles.ctaButton}>
+        <button
+          onClick={() => {
+            reportInteraction('dashboards_connectds_sampledata_clicked');
+            onCTAClick?.();
+          }}
+          className={styles.ctaButton}
+        >
           <span>{CTAText}</span>
           <Icon name="arrow-right" size="lg" />
         </button>
