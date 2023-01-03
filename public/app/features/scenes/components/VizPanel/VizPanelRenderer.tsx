@@ -9,19 +9,22 @@ import { useFieldOverrides } from 'app/features/panel/components/PanelRenderer';
 import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps } from '../../core/types';
 import { SceneQueryRunner } from '../../querying/SceneQueryRunner';
+import { CustomFormatterFn } from '../../variables/interpolation/sceneInterpolator';
 import { SceneDragHandle } from '../SceneDragHandle';
 
 import { VizPanel } from './VizPanel';
 
 export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
-  const { title, options, fieldConfig, pluginId, pluginLoadError, $data, ...state } = model.useState();
+  const { title, options, fieldConfig, pluginId, pluginLoadError, $data, placement } = model.useState();
   const [ref, { width, height }] = useMeasure();
   const plugin = model.getPlugin();
   const { data } = sceneGraph.getData(model).useState();
-  const layout = sceneGraph.getLayout(model);
+  const parentLayout = sceneGraph.getLayout(model);
 
-  const isDraggable = layout.state.isDraggable ? state.isDraggable : false;
-  const dragHandle = <SceneDragHandle layoutKey={layout.state.key!} />;
+  // TODO: this should probably be parentLayout.isDraggingEnabled() ? placement?.isDraggable : false
+  // The current logic is not correct, just because parent layout itself is not draggable does not mean children are not
+  const isDraggable = parentLayout.state.placement?.isDraggable ? placement?.isDraggable : false;
+  const dragHandle = <SceneDragHandle layoutKey={parentLayout.state.key!} />;
 
   const titleInterpolated = sceneGraph.interpolate(model, title);
 
@@ -75,7 +78,9 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
                     width={innerWidth}
                     height={innerHeight}
                     renderCounter={0}
-                    replaceVariables={(str: string) => str}
+                    replaceVariables={(str, scopedVars, format) =>
+                      sceneGraph.interpolate(model, str, scopedVars, format as string | CustomFormatterFn | undefined)
+                    }
                     onOptionsChange={model.onOptionsChange}
                     onFieldConfigChange={model.onFieldConfigChange}
                     onChangeTimeRange={model.onChangeTimeRange}

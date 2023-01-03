@@ -1,9 +1,13 @@
+import { render, screen } from '@testing-library/react';
+import { noop } from 'lodash';
+import React from 'react';
+
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
 import { MatcherFieldValue } from '../../types/silence-form';
 
-import { deleteRoute, getFilteredRoutes, updatedRoute } from './AmRoutesTable';
+import { AmRoutesTable, deleteRoute, getFilteredRoutes, updatedRoute } from './AmRoutesTable';
 
 const defaultAmRoute: FormAmRoute = {
   id: '',
@@ -188,5 +192,25 @@ describe('deleteRoute', () => {
     expect(updatedRoutes[0].id).toBe('1');
     expect(updatedRoutes[1].id).toBe('2');
     expect(updatedRoutes[2].id).toBe('3');
+  });
+
+  it('Should warn about policies with no contact point', () => {
+    const routes: FormAmRoute[] = [
+      buildAmRoute({ id: 'no-contact-point' }),
+      buildAmRoute({ id: 'with-contact-point', receiver: 'TestContactPoint' }),
+    ];
+
+    render(
+      <AmRoutesTable
+        onChange={noop}
+        onCancelAdd={noop}
+        routes={routes}
+        isAddMode={false}
+        alertManagerSourceName={'grafana'}
+        receivers={[]}
+      />
+    );
+    expect(screen.getByText('None')).toBeInTheDocument();
+    expect(screen.getByText('TestContactPoint')).toBeInTheDocument();
   });
 });

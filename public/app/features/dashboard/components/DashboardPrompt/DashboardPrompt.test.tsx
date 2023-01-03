@@ -1,4 +1,4 @@
-import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 
 import { setContextSrv } from '../../../../core/services/context_srv';
 import { PanelModel } from '../../state/PanelModel';
