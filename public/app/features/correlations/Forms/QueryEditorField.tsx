@@ -57,7 +57,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
     const interval = '1s';
     const intervalMs = 1000;
     const id = generateKey();
-    const queries = [{ ...value, refId: 'something' }];
+    const queries = [{ ...value, refId: 'A' }];
 
     const transaction: QueryTransaction = {
       queries,
@@ -81,7 +81,6 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
 
     if (datasource) {
       runRequest(datasource, transaction.request).subscribe((panelData) => {
-        // console.log(panelData)
         if (!panelData || panelData.state === 'Error' || panelData.series.length === 0) {
           setIsValidQuery(false);
         } else if (
@@ -143,7 +142,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
                 ) : isValidQuery === false ? (
                   <FieldValidationMessage>This query is not valid.</FieldValidationMessage>
                 ) : null}
-                <Button variant="primary" icon={'check'} type="button" onClick={() => handleValidation(value)}>
+                <Button variant="secondary" icon={'check'} type="button" onClick={() => handleValidation(value)}>
                   Validate query
                 </Button>
               </HorizontalGroup>
