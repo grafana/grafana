@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { take, uniqueId } from 'lodash';
+import { groupBy, take, uniqueId, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -383,27 +383,11 @@ const Policy: FC<PolicyComponentProps> = ({
               {contactPoint && (
                 <MetaText icon="at">
                   <span>Delivered to</span>
-                  <HoverCard
-                    arrow
-                    placement="top"
-                    header={
-                      <MetaText icon="at">
-                        <div>Contact Point</div>
-                        <Strong>{contactPoint}</Strong>
-                      </MetaText>
-                    }
-                    content={
-                      <Stack direction="row" gap={0.5}>
-                        {/* use "label" to indicate how many of that type we have in the contact point */}
-                        <Label label={2} icon="envelope" value="Email" />
-                        <Label icon="slack" value="Slack" />
-                      </Stack>
-                    }
-                  >
-                    <Link to={createContactPointLink(contactPoint, alertManagerSourceName)}>
-                      <Strong>{contactPoint}</Strong>
-                    </Link>
-                  </HoverCard>
+                  <ContactPointsHoverDetails
+                    alertManagerSourceName={alertManagerSourceName}
+                    receivers={receivers}
+                    contactPoint={contactPoint}
+                  />
                 </MetaText>
               )}
               {isGrouping && (
@@ -616,12 +600,6 @@ const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher: [label, operator, value]
     </div>
   );
 };
-
-function createContactPointLink(contactPoint: string, alertManagerSourceName = ''): string {
-  return `/alerting/notifications/receivers/${encodeURIComponent(contactPoint)}/edit?alertmanager=${encodeURIComponent(
-    alertManagerSourceName
-  )}`;
-}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css`
@@ -875,3 +853,80 @@ const useDeletePolicyModal = (): ModalHook<RouteWithID> => {
 
   return [modalElement, handleShow, handleDismiss];
 };
+
+interface ContactPointDetailsProps {
+  alertManagerSourceName: string;
+  contactPoint: string;
+  receivers: Receiver[];
+}
+
+const INTEGRATION_ICONS: Record<string, IconName> = {
+  discord: 'discord',
+  email: 'envelope',
+  googlechat: 'google-hangouts-alt',
+  hipchat: 'hipchat',
+  line: 'line',
+  pagerduty: 'pagerduty',
+  slack: 'slack',
+  teams: 'microsoft',
+  telegram: 'telegram-alt',
+};
+
+const ContactPointsHoverDetails = ({ alertManagerSourceName, contactPoint, receivers }: ContactPointDetailsProps) => {
+  const details = receivers.find((receiver) => receiver.name === contactPoint);
+  if (!details) {
+    return (
+      <Link to={createContactPointLink(contactPoint, alertManagerSourceName)}>
+        <Strong>{contactPoint}</Strong>
+      </Link>
+    );
+  }
+
+  const integrations = details.grafana_managed_receiver_configs;
+  if (!integrations) {
+    return (
+      <Link to={createContactPointLink(contactPoint, alertManagerSourceName)}>
+        <Strong>{contactPoint}</Strong>
+      </Link>
+    );
+  }
+
+  const groupedIntegrations = groupBy(details.grafana_managed_receiver_configs, (config) => config.type);
+
+  return (
+    <HoverCard
+      arrow
+      placement="top"
+      header={
+        <MetaText icon="at">
+          <div>Contact Point</div>
+          <Strong>{contactPoint}</Strong>
+        </MetaText>
+      }
+      key={uniqueId()}
+      content={
+        <Stack direction="row" gap={0.5}>
+          {/* use "label" to indicate how many of that type we have in the contact point */}
+          {Object.entries(groupedIntegrations).map(([type, integrations]) => (
+            <Label
+              key={uniqueId()}
+              label={integrations.length > 1 ? integrations.length : undefined}
+              icon={INTEGRATION_ICONS[type]}
+              value={upperFirst(type)}
+            />
+          ))}
+        </Stack>
+      }
+    >
+      <Link to={createContactPointLink(contactPoint, alertManagerSourceName)}>
+        <Strong>{contactPoint}</Strong>
+      </Link>
+    </HoverCard>
+  );
+};
+
+function createContactPointLink(contactPoint: string, alertManagerSourceName = ''): string {
+  return `/alerting/notifications/receivers/${encodeURIComponent(contactPoint)}/edit?alertmanager=${encodeURIComponent(
+    alertManagerSourceName
+  )}`;
+}
