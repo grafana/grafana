@@ -1,7 +1,10 @@
 package models
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -10,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -84,6 +88,23 @@ func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
 	}
 
 	ctx.JSON(status, resp)
+}
+
+func (ctx *ReqContext) Err(err error) {
+	grafanaErr := &errutil.Error{}
+	if !errors.As(err, grafanaErr) {
+		ctx.JsonApiErr(http.StatusInternalServerError, "", fmt.Errorf("unexpected error type [%s]: %w", reflect.TypeOf(err), err))
+	}
+	ctx.JsonApiErr(grafanaErr.Reason.Status().HTTPStatus(), grafanaErr.Public().Message, err)
+}
+
+func (ctx *ReqContext) ErrOrFallback(status int, message string, err error) {
+	grafanaErr := &errutil.Error{}
+	if errors.As(err, grafanaErr) {
+		ctx.Err(err)
+		return
+	}
+	ctx.JsonApiErr(status, message, err)
 }
 
 func (ctx *ReqContext) HasUserRole(role org.RoleType) bool {
