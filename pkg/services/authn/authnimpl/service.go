@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
@@ -27,7 +28,7 @@ var _ authn.Service = new(Service)
 func ProvideService(
 	cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service, accessControlService accesscontrol.Service,
 	apikeyService apikey.Service, userService user.Service, loginAttempts loginattempt.Service, quotaService quota.Service,
-	authInfoService login.AuthInfoService,
+	authInfoService login.AuthInfoService, renderService rendering.Service,
 ) *Service {
 	s := &Service{
 		log:           log.New("authn.service"),
@@ -37,7 +38,7 @@ func ProvideService(
 		postAuthHooks: []authn.PostAuthHookFn{},
 	}
 
-	s.clients[authn.ClientRender] = clients.ProvideRender()
+	s.clients[authn.ClientRender] = clients.ProvideRender(userService, renderService)
 	s.clients[authn.ClientAPIKey] = clients.ProvideAPIKey(apikeyService, userService)
 
 	if s.cfg.AnonymousEnabled {
