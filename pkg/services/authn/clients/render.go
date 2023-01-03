@@ -6,6 +6,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
+const (
+	renderCookieName = "renderKey"
+)
+
 var _ authn.Client = new(Render)
 
 func ProvideRender() *Render {
@@ -26,6 +30,16 @@ func (c *Render) ClientParams() *authn.ClientParams {
 }
 
 func (c *Render) Test(ctx context.Context, r *authn.Request) bool {
-	//TODO implement me
-	panic("implement me")
+	if r.HTTPRequest == nil {
+		return false
+	}
+	return getRenderKey(r) != ""
+}
+
+func getRenderKey(r *authn.Request) string {
+	cookie, err := r.HTTPRequest.Cookie(renderCookieName)
+	if err != nil {
+		return ""
+	}
+	return cookie.Value
 }
