@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useMemo, useState } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
@@ -180,6 +180,8 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
       });
     }
   };
+  const evaluateEveryInForm = watch('evaluateEvery');
+  useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
 
   return (
     <FormProvider {...formAPI}>

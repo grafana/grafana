@@ -126,7 +126,7 @@ You can make a panel retrieve fresh data more frequently by increasing the **Max
 
 ### Data sources that work with query caching
 
-Query caching works for all [Enterprise data sources](https://grafana.com/grafana/plugins/?type=datasource&enterprise=1) as well as the following [built-in data sources]({{< relref "../../datasources/" >}}):
+Query caching works for all [Enterprise data sources](/grafana/plugins/?type=datasource&enterprise=1) as well as the following [built-in data sources]({{< relref "../../datasources/" >}}):
 
 - CloudWatch Metrics
 - Google Cloud Monitoring

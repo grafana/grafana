@@ -12,6 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
+const (
+	defaultSize = 500
+)
+
 type timeSeriesQuery struct {
 	client             es.Client
 	dataQueries        []backend.DataQuery
@@ -28,8 +32,7 @@ var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery,
 }
 
 func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
-	tsQueryParser := newTimeSeriesQueryParser()
-	queries, err := tsQueryParser.parse(e.dataQueries)
+	queries, err := parseQuery(e.dataQueries)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -77,7 +80,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 	if len(q.BucketAggs) == 0 {
 		// If no aggregations, only document and logs queries are valid
-		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == "raw_data" || q.Metrics[0].Type == "raw_document" || q.Metrics[0].Type == "logs") {
+		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType || q.Metrics[0].Type == logsType) {
 			result.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
 			}
@@ -89,11 +92,11 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		b.SortDesc(e.client.GetTimeField(), "boolean")
 		b.SortDesc("_doc", "")
 		b.AddDocValueField(e.client.GetTimeField())
-		b.Size(metric.Settings.Get("size").MustInt(500))
+		b.Size(metric.Settings.Get("size").MustInt(defaultSize))
 
 		if metric.Type == "logs" {
 			// Add additional defaults for log query
-			b.Size(metric.Settings.Get("limit").MustInt(500))
+			b.Size(metric.Settings.Get("limit").MustInt(defaultSize))
 			b.AddHighlight()
 
 			// For log query, we add a date histogram aggregation
@@ -173,16 +176,17 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 					continue
 				}
 			} else {
-				if _, err := strconv.Atoi(m.PipelineAggregate); err == nil {
+				pipelineAggField := getPipelineAggField(m)
+				if _, err := strconv.Atoi(pipelineAggField); err == nil {
 					var appliedAgg *MetricAgg
 					for _, pipelineMetric := range q.Metrics {
-						if pipelineMetric.ID == m.PipelineAggregate {
+						if pipelineMetric.ID == pipelineAggField {
 							appliedAgg = pipelineMetric
 							break
 						}
 					}
 					if appliedAgg != nil {
-						bucketPath := m.PipelineAggregate
+						bucketPath := pipelineAggField
 						if appliedAgg.Type == countType {
 							bucketPath = "_count"
 						}
@@ -321,13 +325,13 @@ func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, metrics []*Metr
 		} else if size, err := bucketAgg.Settings.Get("size").String(); err == nil {
 			a.Size, err = strconv.Atoi(size)
 			if err != nil {
-				a.Size = 500
+				a.Size = defaultSize
 			}
 		} else {
-			a.Size = 500
+			a.Size = defaultSize
 		}
 		if a.Size == 0 {
-			a.Size = 500
+			a.Size = defaultSize
 		}
 
 		if minDocCount, err := bucketAgg.Settings.Get("min_doc_count").Int(); err == nil {
@@ -399,112 +403,15 @@ func addGeoHashGridAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBui
 	return aggBuilder
 }
 
-type timeSeriesQueryParser struct{}
+func getPipelineAggField(m *MetricAgg) string {
+	// In frontend we are using Field as pipelineAggField
+	// There might be historical reason why in backend we were using PipelineAggregate as pipelineAggField
+	// So for now let's check Field first and then PipelineAggregate to ensure that we are not breaking anything
+	// TODO: Investigate, if we can remove check for PipelineAggregate
+	pipelineAggField := m.Field
 
-func newTimeSeriesQueryParser() *timeSeriesQueryParser {
-	return &timeSeriesQueryParser{}
-}
-
-func (p *timeSeriesQueryParser) parse(tsdbQuery []backend.DataQuery) ([]*Query, error) {
-	queries := make([]*Query, 0)
-	for _, q := range tsdbQuery {
-		model, err := simplejson.NewJson(q.JSON)
-		if err != nil {
-			return nil, err
-		}
-		timeField, err := model.Get("timeField").String()
-		if err != nil {
-			return nil, err
-		}
-		rawQuery := model.Get("query").MustString()
-		bucketAggs, err := p.parseBucketAggs(model)
-		if err != nil {
-			return nil, err
-		}
-		metrics, err := p.parseMetrics(model)
-		if err != nil {
-			return nil, err
-		}
-		alias := model.Get("alias").MustString("")
-		interval := model.Get("interval").MustString("")
-
-		queries = append(queries, &Query{
-			TimeField:     timeField,
-			RawQuery:      rawQuery,
-			BucketAggs:    bucketAggs,
-			Metrics:       metrics,
-			Alias:         alias,
-			Interval:      interval,
-			RefID:         q.RefID,
-			MaxDataPoints: q.MaxDataPoints,
-		})
+	if pipelineAggField == "" {
+		pipelineAggField = m.PipelineAggregate
 	}
-
-	return queries, nil
-}
-
-func (p *timeSeriesQueryParser) parseBucketAggs(model *simplejson.Json) ([]*BucketAgg, error) {
-	var err error
-	var result []*BucketAgg
-	for _, t := range model.Get("bucketAggs").MustArray() {
-		aggJSON := simplejson.NewFromAny(t)
-		agg := &BucketAgg{}
-
-		agg.Type, err = aggJSON.Get("type").String()
-		if err != nil {
-			return nil, err
-		}
-
-		agg.ID, err = aggJSON.Get("id").String()
-		if err != nil {
-			return nil, err
-		}
-
-		agg.Field = aggJSON.Get("field").MustString()
-		agg.Settings = simplejson.NewFromAny(aggJSON.Get("settings").MustMap())
-
-		result = append(result, agg)
-	}
-	return result, nil
-}
-
-func (p *timeSeriesQueryParser) parseMetrics(model *simplejson.Json) ([]*MetricAgg, error) {
-	var err error
-	var result []*MetricAgg
-	for _, t := range model.Get("metrics").MustArray() {
-		metricJSON := simplejson.NewFromAny(t)
-		metric := &MetricAgg{}
-
-		metric.Field = metricJSON.Get("field").MustString()
-		metric.Hide = metricJSON.Get("hide").MustBool(false)
-		metric.ID = metricJSON.Get("id").MustString()
-		metric.PipelineAggregate = metricJSON.Get("pipelineAgg").MustString()
-		// In legacy editors, we were storing empty settings values as "null"
-		// The new editor doesn't store empty strings at all
-		// We need to ensures backward compatibility with old queries and remove empty fields
-		settings := metricJSON.Get("settings").MustMap()
-		for k, v := range settings {
-			if v == "null" {
-				delete(settings, k)
-			}
-		}
-		metric.Settings = simplejson.NewFromAny(settings)
-		metric.Meta = simplejson.NewFromAny(metricJSON.Get("meta").MustMap())
-		metric.Type, err = metricJSON.Get("type").String()
-		if err != nil {
-			return nil, err
-		}
-
-		if isPipelineAggWithMultipleBucketPaths(metric.Type) {
-			metric.PipelineVariables = map[string]string{}
-			pvArr := metricJSON.Get("pipelineVariables").MustArray()
-			for _, v := range pvArr {
-				kv := v.(map[string]interface{})
-				metric.PipelineVariables[kv["name"].(string)] = kv["pipelineAgg"].(string)
-			}
-		}
-
-		result = append(result, metric)
-	}
-	return result, nil
+	return pipelineAggField
 }

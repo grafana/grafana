@@ -292,13 +292,9 @@ def enterprise_pipelines(ver_mode=ver_mode, trigger=release_trigger):
         build_frontend_step(edition='enterprise', ver_mode=ver_mode),
         build_frontend_package_step(edition='enterprise', ver_mode=ver_mode),
         build_plugins_step(edition='enterprise', ver_mode=ver_mode),
-        build_backend_step(
-            edition='enterprise2', ver_mode=ver_mode, variants=['linux-amd64']
-        ),
         package_step(
             edition='enterprise',
             ver_mode=ver_mode,
-            include_enterprise2=True,
         ),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition='enterprise', ver_mode=ver_mode, publish=True),
@@ -324,25 +320,12 @@ def enterprise_pipelines(ver_mode=ver_mode, trigger=release_trigger):
         )
         upload_packages_enterprise['depends_on'] = ['package']
 
-        upload_packages_enterprise2 = upload_packages_step(
-            edition='enterprise2', ver_mode=ver_mode
-        )
-        upload_packages_enterprise2['depends_on'] = ['package-enterprise2']
-
         publish_steps.extend(
             [
                 upload_cdn_step(
                     edition='enterprise', ver_mode=ver_mode, trigger=trigger_oss
                 ),
                 upload_packages_enterprise,
-                package_step(
-                    edition='enterprise2',
-                    ver_mode=ver_mode,
-                    include_enterprise2=True,
-                    variants=['linux-amd64'],
-                ),
-                upload_cdn_step(edition='enterprise2', ver_mode=ver_mode),
-                upload_packages_enterprise2,
             ]
         )
 
@@ -472,7 +455,6 @@ def enterprise2_pipelines(prefix='', ver_mode=ver_mode, trigger=release_trigger)
             package_step(
                 edition='enterprise2',
                 ver_mode=ver_mode,
-                include_enterprise2=True,
                 variants=['linux-amd64'],
             ),
             upload_cdn,

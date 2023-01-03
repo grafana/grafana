@@ -8,7 +8,7 @@ import { LokiQuery } from '../../../types';
 import { CompletionDataProvider } from './CompletionDataProvider';
 import { Label } from './situation';
 
-const history = [
+const history: Array<HistoryItem<LokiQuery>> = [
   {
     ts: 12345678,
     query: {
@@ -34,6 +34,7 @@ const history = [
     ts: 0,
     query: {
       refId: 'test-0',
+      expr: '',
     },
   },
 ];
@@ -55,10 +56,12 @@ const parserAndLabelKeys = {
 
 describe('CompletionDataProvider', () => {
   let completionProvider: CompletionDataProvider, languageProvider: LokiLanguageProvider, datasource: LokiDatasource;
+  let historyRef: { current: Array<HistoryItem<LokiQuery>> } = { current: [] };
   beforeEach(() => {
     datasource = createLokiDatasource();
     languageProvider = new LokiLanguageProvider(datasource);
-    completionProvider = new CompletionDataProvider(languageProvider, history as Array<HistoryItem<LokiQuery>>);
+    historyRef.current = history;
+    completionProvider = new CompletionDataProvider(languageProvider, historyRef);
 
     jest.spyOn(languageProvider, 'getLabelKeys').mockReturnValue(labelKeys);
     jest.spyOn(languageProvider, 'getLabelValues').mockResolvedValue(labelValues);
@@ -68,6 +71,22 @@ describe('CompletionDataProvider', () => {
 
   test('Returns the expected history entries', () => {
     expect(completionProvider.getHistory()).toEqual(['{test: unit}', '{unit: test}']);
+  });
+
+  test('Processes updates to the current historyRef value', () => {
+    expect(completionProvider.getHistory()).toEqual(['{test: unit}', '{unit: test}']);
+
+    historyRef.current = [
+      {
+        ts: 87654321,
+        query: {
+          refId: 'test-2',
+          expr: '{value="other"}',
+        },
+      },
+    ];
+
+    expect(completionProvider.getHistory()).toEqual(['{value="other"}']);
   });
 
   test('Returns the expected label names with no other labels', async () => {

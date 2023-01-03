@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/experimental';
-import { Button, Checkbox, IconButton, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
+import { EditorField, Space } from '@grafana/experimental';
+import { Button, Checkbox, Icon, Label, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
 
 import Search from '../Search';
 import { SelectableResourceValue } from '../api';
 import { DescribeLogGroupsRequest } from '../types';
 
 import { Account, ALL_ACCOUNTS_OPTION } from './Account';
+import { SelectedLogsGroups } from './SelectedLogsGroups';
 import getStyles from './styles';
 
 type CrossAccountLogsQueryProps = {
@@ -16,7 +17,6 @@ type CrossAccountLogsQueryProps = {
   accountOptions: Array<SelectableValue<string>>;
   fetchLogGroups: (params: Partial<DescribeLogGroupsRequest>) => Promise<SelectableResourceValue[]>;
   onChange: (selectedLogGroups: SelectableResourceValue[]) => void;
-  onRunQuery: () => void;
 };
 
 export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) => {
@@ -30,7 +30,6 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
     if (isModalOpen) {
-      props.onRunQuery();
     } else {
       setSelectedLogGroups(props.selectedLogGroups);
       searchFn(searchPhrase, searchAccountId);
@@ -83,15 +82,18 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
     <>
       <Modal className={styles.modal} title="Select Log Groups" isOpen={isModalOpen} onDismiss={toggleModal}>
         <div className={styles.logGroupSelectionArea}>
-          <EditorField label="Log Group Name">
-            <Search
-              searchFn={(phrase) => {
-                searchFn(phrase, searchAccountId);
-                setSearchPhrase(phrase);
-              }}
-              searchPhrase={searchPhrase}
-            />
-          </EditorField>
+          <div className={styles.searchField}>
+            <EditorField label="Log Group Name">
+              <Search
+                searchFn={(phrase) => {
+                  searchFn(phrase, searchAccountId);
+                  setSearchPhrase(phrase);
+                }}
+                searchPhrase={searchPhrase}
+              />
+            </EditorField>
+          </div>
+
           <Account
             onChange={(accountId?: string) => {
               searchFn(searchPhrase, accountId);
@@ -101,7 +103,18 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
             accountId={searchAccountId}
           />
         </div>
+        <Space layout="block" v={2} />
         <div>
+          {!isLoading && selectableLogGroups.length >= 25 && (
+            <>
+              <Label className={styles.limitLabel}>
+                <Icon name="info-circle"></Icon>
+                Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your
+                search.
+              </Label>
+              <Space layout="block" v={1} />
+            </>
+          )}
           <div className={styles.tableScroller}>
             <table className={styles.table}>
               <thead>
@@ -128,14 +141,17 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
                   selectableLogGroups.map((row) => (
                     <tr className={styles.row} key={`${row.value}`}>
                       <td className={styles.cell}>
-                        <Checkbox
-                          id={row.value}
-                          onChange={(ev) => handleSelectCheckbox(row, ev.currentTarget.checked)}
-                          value={!!(row.value && selectedLogGroups.some((lg) => lg.value === row.value))}
-                        />
-                        <label className={styles.logGroupSearchResults} htmlFor={row.value}>
-                          {row.label}
-                        </label>
+                        <div className={styles.nestedEntry}>
+                          <Checkbox
+                            id={row.value}
+                            onChange={(ev) => handleSelectCheckbox(row, ev.currentTarget.checked)}
+                            value={!!(row.value && selectedLogGroups.some((lg) => lg.value === row.value))}
+                          />
+                          <Space layout="inline" h={2} />
+                          <label className={styles.logGroupSearchResults} htmlFor={row.value}>
+                            {row.label}
+                          </label>
+                        </div>
                       </td>
                       <td className={styles.cell}>{accountNameById[row.text]}</td>
                       <td className={styles.cell}>{row.text}</td>
@@ -145,11 +161,16 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
             </table>
           </div>
         </div>
+        <Space layout="block" v={2} />
+        <Label className={styles.logGroupCountLabel}>
+          {selectedLogGroups.length} log group{selectedLogGroups.length !== 1 && 's'} selected
+        </Label>
+        <Space layout="block" v={1.5} />
         <div>
           <Button onClick={handleApply} type="button" className={styles.addBtn}>
             Add log groups
           </Button>
-          <Button onClick={handleCancel} type="button">
+          <Button onClick={handleCancel} variant="secondary" type="button">
             Cancel
           </Button>
         </div>
@@ -161,19 +182,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
         </Button>
       </div>
 
-      <div>
-        {props.selectedLogGroups.map((lg) => (
-          <div key={lg.value} className={styles.selectedLogGroup}>
-            {lg.label}
-            <IconButton
-              size="sm"
-              name="times"
-              className={styles.removeButton}
-              onClick={() => props.onChange(props.selectedLogGroups.filter((slg) => slg.value !== lg.value))}
-            />
-          </div>
-        ))}
-      </div>
+      <SelectedLogsGroups selectedLogGroups={props.selectedLogGroups} onChange={props.onChange}></SelectedLogsGroups>
     </>
   );
 };

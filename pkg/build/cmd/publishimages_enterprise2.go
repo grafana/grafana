@@ -6,11 +6,10 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/urfave/cli/v2"
-
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/docker"
 	"github.com/grafana/grafana/pkg/build/gcloud"
+	"github.com/urfave/cli/v2"
 )
 
 func Enterprise2(c *cli.Context) error {
@@ -25,7 +24,7 @@ func Enterprise2(c *cli.Context) error {
 		return fmt.Errorf("couldn't activate service account, err: %w", err)
 	}
 
-	metadata, err := GenerateMetadata(c)
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}

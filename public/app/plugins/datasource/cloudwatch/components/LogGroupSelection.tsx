@@ -16,14 +16,13 @@ type Props = {
   datasource: CloudWatchDatasource;
   query: CloudWatchLogsQuery;
   onChange: (value: CloudWatchQuery) => void;
-  onRunQuery: () => void;
 };
 
 const rowGap = css`
   gap: 3px;
 `;
 
-export const LogGroupSelection = ({ datasource, query, onChange, onRunQuery }: Props) => {
+export const LogGroupSelection = ({ datasource, query, onChange }: Props) => {
   const accountState = useAccountOptions(datasource.api, query.region);
 
   return (
@@ -37,7 +36,6 @@ export const LogGroupSelection = ({ datasource, query, onChange, onRunQuery }: P
             onChange({ ...query, logGroups: selectedLogGroups, logGroupNames: [] });
           }}
           accountOptions={accountState.value}
-          onRunQuery={onRunQuery}
           selectedLogGroups={query.logGroups ?? []} /* todo handle defaults */
         />
       ) : (
@@ -53,7 +51,6 @@ export const LogGroupSelection = ({ datasource, query, onChange, onRunQuery }: P
               onChange={function (logGroupNames: string[]): void {
                 onChange({ ...query, logGroupNames, logGroups: [] });
               }}
-              onRunQuery={onRunQuery}
               refId={query.refId}
             />
           }
