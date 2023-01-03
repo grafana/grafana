@@ -79,6 +79,8 @@ func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.It
 	hasNoTags := make([]annotations.Item, 0)
 
 	for i := range items {
+		// The validation logic needs to work in terms of pointers.
+		// So, force everything else to work in terms of pointers too, to avoid any implicit extra copying.
 		item := &items[i]
 		tags := tag.ParseTagPairs(item.Tags)
 		item.Tags = tag.JoinTagPairs(tags)
