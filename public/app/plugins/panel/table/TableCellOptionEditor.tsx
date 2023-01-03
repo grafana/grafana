@@ -40,7 +40,7 @@ interface Props {
   onChange: (v: TableCellOptions) => void;
 }
 
-export const TableCellOptionEditor: React.FC<Props> = ({ value, onChange }) => {
+export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   const cellType = value.type;
   let editor: ReactNode | null = null;
 
