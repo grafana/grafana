@@ -255,7 +255,7 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgU
 // - basic:
 //
 // Responses:
-// 200: getOrgUsersResponse
+// 200: searchOrgUsersResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
