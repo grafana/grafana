@@ -16,8 +16,8 @@ export function getMockString(length: number) {
   return result;
 }
 
-const value1 = getMockString(8);
-const value2 = getMockString(8);
+const value1 = 'value 1';
+const value2 = 'value 2';
 
 const defaultProps: {
   totalNumberOfValues: number;
