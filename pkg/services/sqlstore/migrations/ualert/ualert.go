@@ -988,8 +988,8 @@ func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrat
 		}
 
 		// Set the IDs back to the default, so XORM will ignore the field and auto-assign them.
-		for _, h := range history {
-			h.ID = 0
+		for i := range history {
+			history[i].ID = 0
 		}
 
 		_, err = sess.Table("alert_configuration_history").InsertMulti(history)
