@@ -61,6 +61,18 @@
       ]
     },
     {
+      "name": "Preferences",
+      "pluralName": "Preferencess",
+      "machineName": "preferences",
+      "pluralMachineName": "preferencess",
+      "lineageIsGroup": false,
+      "maturity": "merged",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    {
       "name": "Query",
       "pluralName": "Querys",
       "machineName": "query",

@@ -10,6 +10,12 @@
 
 package preferences
 
+// QueryHistoryPreference defines model for QueryHistoryPreference.
+type QueryHistoryPreference struct {
+	// one of: '' | 'query' | 'starred';
+	HomeTab *string `json:"homeTab,omitempty"`
+}
+
 // Preferences defines model for preferences.
 type Preferences struct {
 	// UID for the home dashboard
@@ -29,10 +35,4 @@ type Preferences struct {
 
 	// day of the week (sunday, monday, etc)
 	WeekStart *string `json:"weekStart,omitempty"`
-}
-
-// QueryHistoryPreference defines model for preferences.QueryHistoryPreference.
-type QueryHistoryPreference struct {
-	// one of: '' | 'query' | 'starred';
-	HomeTab *string `json:"homeTab,omitempty"`
 }
