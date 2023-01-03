@@ -12,9 +12,6 @@ import { findMatchingAlertGroups } from '../../utils/notification-policies';
 import { AlertGroup } from '../alert-groups/AlertGroup';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
-import { AmRootRouteForm } from './AmRootRouteForm';
-import { AmRootRouteRead } from './AmRootRouteRead';
-
 export interface AmRootRouteProps {
   isEditMode: boolean;
   onEnterEditMode: () => void;
@@ -66,17 +63,11 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({
         All alerts will go to the default contact point, unless you set additional matchers in the specific routing
         area.
       </p>
-      {isEditMode ? (
-        <AmRootRouteForm
-          alertManagerSourceName={alertManagerSourceName}
-          onCancel={onExitEditMode}
-          onSave={onSave}
-          receivers={receivers}
-          routes={routes}
-        />
+      {/* {isEditMode ? (
+        <AmRootRouteForm alertManagerSourceName={alertManagerSourceName} receivers={receivers} routes={routes} />
       ) : (
         <AmRootRouteRead routes={routes} />
-      )}
+      )} */}
       <CollapsableSection label="Show alert instance groups" isOpen={false}>
         {matchingAlertGroups.map((group, index) => (
           <AlertGroup key={index} alertManagerSourceName={alertManagerSourceName || ''} group={group} />

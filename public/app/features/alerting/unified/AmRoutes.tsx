@@ -37,6 +37,7 @@ import { HoverCard } from './components/HoverCard';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { Spacer } from './components/Spacer';
+import { AmRootRouteForm } from './components/amroutes/AmRootRouteForm';
 import { AmRoutesExpandedForm } from './components/amroutes/AmRoutesExpandedForm';
 import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
 import { useGetAmRouteReceiverWithGrafanaAppTypes } from './components/receivers/grafanaAppReceivers/grafanaApp';
@@ -260,7 +261,7 @@ interface PolicyComponentProps {
   alertManagerSourceName: string;
 
   currentRoute: RouteWithID;
-  onEditPolicy: (route: RouteWithID) => void;
+  onEditPolicy: (route: RouteWithID, isDefault?: boolean) => void;
   onAddPolicy: (route: RouteWithID) => void;
 }
 
@@ -351,7 +352,7 @@ const Policy: FC<PolicyComponentProps> = ({
                       variant="secondary"
                       icon="pen"
                       size="sm"
-                      onClick={() => onEditPolicy(currentRoute)}
+                      onClick={() => onEditPolicy(currentRoute, isDefault)}
                       type="button"
                     >
                       Edit
@@ -776,6 +777,7 @@ const useEditPolicyModal = (
   handleSave: (route: Partial<FormAmRoute>) => void
 ): ModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [isDefaultPolicy, setIsDefaultPolicy] = useState<boolean>(false);
   const [route, setRoute] = useState<RouteWithID>();
   const AmRouteReceivers = useGetAmRouteReceiverWithGrafanaAppTypes(receivers);
 
@@ -784,7 +786,8 @@ const useEditPolicyModal = (
     setShowModal(false);
   }, []);
 
-  const handleShow = useCallback((route: RouteWithID) => {
+  const handleShow = useCallback((route: RouteWithID, isDefaultPolicy?: boolean) => {
+    setIsDefaultPolicy(isDefaultPolicy ?? false);
     setRoute(route);
     setShowModal(true);
   }, []);
@@ -798,22 +801,41 @@ const useEditPolicyModal = (
         closeOnEscape={true}
         title="Edit notification Policy"
       >
-        <AmRoutesExpandedForm
-          receivers={AmRouteReceivers}
-          route={route}
-          onSubmit={handleSave}
-          actionButtons={
-            <Modal.ButtonRow>
-              <Button type="submit">Update policy</Button>
-              <Button type="button" variant="secondary" onClick={handleDismiss}>
-                Cancel
-              </Button>
-            </Modal.ButtonRow>
-          }
-        />
+        {isDefaultPolicy && route && (
+          <AmRootRouteForm
+            // TODO *sigh* this alertmanagersourcename should come from context or something
+            alertManagerSourceName={''}
+            onSubmit={handleSave}
+            receivers={AmRouteReceivers}
+            route={route}
+            actionButtons={
+              <Modal.ButtonRow>
+                <Button type="submit">Update policy</Button>
+                <Button type="button" variant="secondary" onClick={handleDismiss}>
+                  Cancel
+                </Button>
+              </Modal.ButtonRow>
+            }
+          />
+        )}
+        {!isDefaultPolicy && (
+          <AmRoutesExpandedForm
+            receivers={AmRouteReceivers}
+            route={route}
+            onSubmit={handleSave}
+            actionButtons={
+              <Modal.ButtonRow>
+                <Button type="submit">Update policy</Button>
+                <Button type="button" variant="secondary" onClick={handleDismiss}>
+                  Cancel
+                </Button>
+              </Modal.ButtonRow>
+            }
+          />
+        )}
       </Modal>
     ),
-    [AmRouteReceivers, handleDismiss, handleSave, route, showModal]
+    [AmRouteReceivers, handleDismiss, handleSave, isDefaultPolicy, route, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
