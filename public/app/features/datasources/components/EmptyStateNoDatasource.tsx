@@ -74,16 +74,7 @@ export function EmptyStateNoDatasource({ onCTAClick, loading = false, title, CTA
                         onAddDatasource(d);
                       }}
                     >
-                      <img
-                        role="presentation"
-                        src={d.info.logos.small}
-                        alt={t('datasource-onboarding.logo', 'Logo for {{datasourceName}} data source', {
-                          datasourceName: d.name,
-                        })}
-                        height="16"
-                        width="16"
-                        className={styles.logo}
-                      />
+                      <img src={d.info.logos.small} alt="" height="16" width="16" className={styles.logo} />
                       <span className={styles.datasourceName}>{d.name}</span>
                       <Icon name="arrow-right" size="lg" className={styles.arrowIcon} />
                     </button>
