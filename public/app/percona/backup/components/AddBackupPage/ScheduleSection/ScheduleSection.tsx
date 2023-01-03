@@ -31,8 +31,8 @@ export const ScheduleSection = ({ values }: ScheduleSectionProps) => {
       <div className={styles.scheduleSectionWrapper}>
         <Field name="period" validate={validators.required}>
           {({ input }) => (
-            <div>
-              <SelectField {...input} options={PERIOD_OPTIONS} label={Messages.every} />
+            <div className={styles.firstSelectRow}>
+              <SelectField {...input} options={PERIOD_OPTIONS} label={Messages.scheduledTime} />
             </div>
           )}
         </Field>
@@ -41,18 +41,21 @@ export const ScheduleSection = ({ values }: ScheduleSectionProps) => {
         >
           <Field name="month">
             {({ input }) => (
-              <div data-testid="multi-select-field-div-wrapper">
-                <MultiSelectField
-                  {...input}
-                  closeMenuOnSelect={false}
-                  options={MONTH_OPTIONS}
-                  label={Messages.month}
-                  isClearable
-                  placeholder={Messages.every}
-                  className={styles.selectField}
-                  maxVisibleValues={MAX_VISIBLE_OPTIONS}
-                  disabled={isCronFieldDisabled(values.period!.value!, 'month')}
-                />
+              <div className={styles.multiselectRow} data-testid="multi-select-field-div-wrapper">
+                <span className={styles.selectLabel}>{Messages.in}</span>
+                <div>
+                  <MultiSelectField
+                    {...input}
+                    closeMenuOnSelect={false}
+                    options={MONTH_OPTIONS}
+                    isClearable
+                    label={Messages.month}
+                    placeholder={Messages.everyMonth}
+                    className={styles.selectField}
+                    maxVisibleValues={MAX_VISIBLE_OPTIONS}
+                    disabled={isCronFieldDisabled(values.period!.value!, 'month')}
+                  />
+                </div>
               </div>
             )}
           </Field>
@@ -62,18 +65,21 @@ export const ScheduleSection = ({ values }: ScheduleSectionProps) => {
         >
           <Field name="day">
             {({ input }) => (
-              <div>
-                <MultiSelectField
-                  {...input}
-                  closeMenuOnSelect={false}
-                  options={DAY_OPTIONS}
-                  label={Messages.day}
-                  isClearable
-                  placeholder={Messages.every}
-                  maxVisibleValues={MAX_VISIBLE_OPTIONS}
-                  disabled={isCronFieldDisabled(values.period!.value!, 'day')}
-                  className={styles.selectField}
-                />
+              <div className={styles.multiselectRow}>
+                <span className={styles.selectLabel}>{Messages.on}</span>
+                <div>
+                  <MultiSelectField
+                    {...input}
+                    closeMenuOnSelect={false}
+                    options={DAY_OPTIONS}
+                    isClearable
+                    label={Messages.day}
+                    placeholder={Messages.everyDay}
+                    maxVisibleValues={MAX_VISIBLE_OPTIONS}
+                    disabled={isCronFieldDisabled(values.period!.value!, 'day')}
+                    className={styles.selectField}
+                  />
+                </div>
               </div>
             )}
           </Field>
@@ -85,18 +91,21 @@ export const ScheduleSection = ({ values }: ScheduleSectionProps) => {
         >
           <Field name="weekDay">
             {({ input }) => (
-              <div>
-                <MultiSelectField
-                  {...input}
-                  closeMenuOnSelect={false}
-                  options={WEEKDAY_OPTIONS}
-                  label={Messages.weekDay}
-                  isClearable
-                  placeholder={Messages.every}
-                  maxVisibleValues={MAX_VISIBLE_OPTIONS}
-                  disabled={isCronFieldDisabled(values.period!.value!, 'weekDay')}
-                  className={styles.selectField}
-                />
+              <div className={styles.multiselectRow}>
+                <span className={styles.selectLabel}>{Messages.on}</span>
+                <div>
+                  <MultiSelectField
+                    {...input}
+                    closeMenuOnSelect={false}
+                    options={WEEKDAY_OPTIONS}
+                    isClearable
+                    label={Messages.weekDay}
+                    placeholder={Messages.everyWeekDay}
+                    maxVisibleValues={MAX_VISIBLE_OPTIONS}
+                    disabled={isCronFieldDisabled(values.period!.value!, 'weekDay')}
+                    className={styles.selectField}
+                  />
+                </div>
               </div>
             )}
           </Field>
@@ -108,18 +117,21 @@ export const ScheduleSection = ({ values }: ScheduleSectionProps) => {
         >
           <Field name="startHour">
             {({ input }) => (
-              <div>
-                <MultiSelectField
-                  {...input}
-                  closeMenuOnSelect={false}
-                  options={HOUR_OPTIONS}
-                  label={Messages.startTimeHour}
-                  isClearable
-                  placeholder={Messages.every}
-                  maxVisibleValues={MAX_VISIBLE_OPTIONS}
-                  disabled={isCronFieldDisabled(values.period!.value!, 'startHour')}
-                  className={styles.selectField}
-                />
+              <div className={styles.multiselectRow}>
+                <span className={styles.selectLabel}>{Messages.at}</span>
+                <div>
+                  <MultiSelectField
+                    {...input}
+                    closeMenuOnSelect={false}
+                    options={HOUR_OPTIONS}
+                    isClearable
+                    placeholder={Messages.everyHour}
+                    label={Messages.hour}
+                    maxVisibleValues={MAX_VISIBLE_OPTIONS}
+                    disabled={isCronFieldDisabled(values.period!.value!, 'startHour')}
+                    className={styles.selectField}
+                  />
+                </div>
               </div>
             )}
           </Field>
@@ -131,18 +143,21 @@ export const ScheduleSection = ({ values }: ScheduleSectionProps) => {
         >
           <Field name="startMinute">
             {({ input }) => (
-              <div>
-                <MultiSelectField
-                  {...input}
-                  closeMenuOnSelect={false}
-                  options={MINUTE_OPTIONS}
-                  label={Messages.startTimeMinute}
-                  isClearable
-                  placeholder={Messages.every}
-                  maxVisibleValues={MAX_VISIBLE_OPTIONS}
-                  disabled={isCronFieldDisabled(values.period!.value!, 'startMinute')}
-                  className={styles.selectField}
-                />
+              <div className={styles.multiselectRow}>
+                <span className={styles.selectLabel}>{Messages.at}</span>
+                <div>
+                  <MultiSelectField
+                    {...input}
+                    closeMenuOnSelect={false}
+                    options={MINUTE_OPTIONS}
+                    isClearable
+                    label={Messages.minute}
+                    placeholder={Messages.everyMinute}
+                    maxVisibleValues={MAX_VISIBLE_OPTIONS}
+                    disabled={isCronFieldDisabled(values.period!.value!, 'startMinute')}
+                    className={styles.selectField}
+                  />
+                </div>
               </div>
             )}
           </Field>

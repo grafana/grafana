@@ -15,27 +15,27 @@ import { AddBackupFormProps } from './AddBackupPage.types';
 export const PERIOD_OPTIONS: Array<SelectableValue<PeriodType>> = [
   {
     value: 'year',
-    label: 'Year',
+    label: 'Every year',
   },
   {
     value: 'month',
-    label: 'Month',
+    label: 'Every month',
   },
   {
     value: 'week',
-    label: 'Week',
+    label: 'Every week',
   },
   {
     value: 'day',
-    label: 'Day',
+    label: 'Every day',
   },
   {
     value: 'hour',
-    label: 'Hour',
+    label: 'Every hour',
   },
   {
     value: 'minute',
-    label: 'Minute',
+    label: 'Every minute',
   },
 ];
 
@@ -63,7 +63,7 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null, scheduleMo
       description: '',
       location: null,
       retention: 7,
-      period: { value: 'year', label: 'Year' },
+      period: { value: 'year', label: 'Every year' },
       month: [],
       day: [],
       weekDay: [],
