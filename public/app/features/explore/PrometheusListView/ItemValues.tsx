@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data/src';
-import { useStyles } from '@grafana/ui/src';
+import { GrafanaTheme2 } from '@grafana/data/src';
+import { useStyles2 } from '@grafana/ui/src';
 
 import { RawPrometheusListItemEmptyValue } from '../utils/getRawPrometheusListItemsFromDataFrame';
 
 import { rawListItemColumnWidth, rawListPaddingToHoldSpaceForCopyIcon, RawListValue } from './RawListItem';
 
-const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number) => ({
+const getStyles = (theme: GrafanaTheme2, totalNumberOfValues: number) => ({
   rowWrapper: css`
     position: relative;
     min-width: ${rawListItemColumnWidth};
@@ -53,7 +53,7 @@ export const ItemValues = ({
   values: RawListValue[];
   hideFieldsWithoutValues: boolean;
 }) => {
-  const styles = useStyles((theme) => getStyles(theme, totalNumberOfValues));
+  const styles = useStyles2((theme) => getStyles(theme, totalNumberOfValues));
   return (
     <div role={'cell'} className={styles.rowValuesWrap}>
       {values?.map((value) => {

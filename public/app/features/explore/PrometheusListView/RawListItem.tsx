@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { useCopyToClipboard } from 'react-use';
 
-import { Field, GrafanaTheme } from '@grafana/data/src';
-import { IconButton, useStyles } from '@grafana/ui/src';
+import { Field, GrafanaTheme2 } from '@grafana/data/src';
+import { IconButton, useStyles2 } from '@grafana/ui/src';
 
 import { ItemLabels } from './ItemLabels';
 import { ItemValues } from './ItemValues';
@@ -23,9 +23,9 @@ export const rawListExtraSpaceAtEndOfLine = '20px';
 export const rawListItemColumnWidth = '80px';
 export const rawListPaddingToHoldSpaceForCopyIcon = '25px';
 
-const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number, isExpandedView: boolean) => ({
+const getStyles = (theme: GrafanaTheme2, totalNumberOfValues: number, isExpandedView: boolean) => ({
   rowWrapper: css`
-    border-bottom: 1px solid ${theme.colors.border3};
+    border-bottom: 1px solid ${theme.colors.border.medium};
     display: flex;
     position: relative;
     padding-left: 22px;
@@ -68,7 +68,7 @@ const getStyles = (theme: GrafanaTheme, totalNumberOfValues: number, isExpandedV
       background: linear-gradient(
         to right,
         transparent calc(100% - ${rawListExtraSpaceAtEndOfLine}),
-        ${theme.colors.bg1}
+        ${theme.colors.background.primary}
       );
     }
   `,
@@ -100,7 +100,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
   const { __name__, ...allLabels } = listItemData;
   const [_, copyToClipboard] = useCopyToClipboard();
   const displayLength = valueLabels?.length ?? totalNumberOfValues;
-  const styles = useStyles((theme) => getStyles(theme, displayLength, isExpandedView));
+  const styles = useStyles2((theme) => getStyles(theme, displayLength, isExpandedView));
   const { values, attributeValues } = getQueryValues(allLabels);
 
   /**

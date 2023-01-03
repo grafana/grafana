@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data/src';
-import { useStyles } from '@grafana/ui/src';
+import { GrafanaTheme2 } from '@grafana/data/src';
+import { useStyles2 } from '@grafana/ui/src';
 
 import { RawListValue } from './RawListItem';
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   // Borrowed from the monaco styles
   const reddish = theme.isDark ? '#ce9178' : '#a31515';
   const greenish = theme.isDark ? '#73bf69' : '#56a64b';
@@ -37,7 +37,7 @@ const RawListItemAttributes = ({
   length: number;
   isExpandedView: boolean;
 }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   // From the beginning of the string to the start of the `=`
   const attributeName = value.key;

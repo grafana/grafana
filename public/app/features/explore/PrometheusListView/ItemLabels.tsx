@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { Field } from '@grafana/data/src';
-import { stylesFactory, useStyles } from '@grafana/ui/src';
+import { Field, GrafanaTheme2 } from '@grafana/data/src';
+import { useStyles2 } from '@grafana/ui/src';
 
 import { rawListItemColumnWidth } from './RawListItem';
 
-const getItemLabelsStyles = stylesFactory((theme, expanded: boolean) => {
+const getItemLabelsStyles = (theme: GrafanaTheme2, expanded: boolean) => {
   return {
     valueNavigation: css`
       width: ${rawListItemColumnWidth};
@@ -17,13 +17,13 @@ const getItemLabelsStyles = stylesFactory((theme, expanded: boolean) => {
       justify-content: flex-end;
     `,
     itemLabelsWrap: css`
-      ${!expanded ? `border-bottom: 1px solid ${theme.colors.border3}` : ''};
+      ${!expanded ? `border-bottom: 1px solid ${theme.colors.border.medium}` : ''};
     `,
   };
-});
+};
 
 export const ItemLabels = ({ valueLabels, expanded }: { valueLabels: Field[]; expanded: boolean }) => {
-  const styles = useStyles((theme) => getItemLabelsStyles(theme, expanded));
+  const styles = useStyles2((theme) => getItemLabelsStyles(theme, expanded));
   return (
     <div className={styles.itemLabelsWrap}>
       <div className={styles.valueNavigationWrapper}>
