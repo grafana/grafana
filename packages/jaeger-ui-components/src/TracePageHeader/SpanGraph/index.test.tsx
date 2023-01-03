@@ -61,11 +61,11 @@ describe('<SpanGraph>', () => {
     expect(getAllByTestId(tickLabelsDiv, 'tick').length).toBe(TIMELINE_TICK_INTERVAL + 1);
   });
 
-  it('renders <TickLabels /> with the correct value next to each tick', async () => {
+  it('renders <TickLabels /> with the correct value next to each tick', () => {
     render(<TickLabels numTicks={5} duration={1} />);
-    expect(await screen.findAllByText(/0.2/)).toBeTruthy();
-    expect(await screen.findAllByText(/0.4/)).toBeTruthy();
-    expect(await screen.findAllByText(/0.6/)).toBeTruthy();
-    expect(await screen.findAllByText(/0.8/)).toBeTruthy();
+    expect(screen.getByText(/0.2/)).toBeTruthy();
+    expect(screen.getByText(/0.4/)).toBeTruthy();
+    expect(screen.getByText(/0.6/)).toBeTruthy();
+    expect(screen.getByText(/0.8/)).toBeTruthy();
   });
 });
