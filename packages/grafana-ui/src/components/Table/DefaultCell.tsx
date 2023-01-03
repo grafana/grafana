@@ -106,7 +106,7 @@ function getCellStyle(
 
   // If we have definied colors return those styles
   // Otherwise we return default styles
-  if (textColor !== undefined && bgColor !== undefined) {
+  if (textColor !== undefined || bgColor !== undefined) {
     return tableStyles.buildCellContainerStyle(textColor, bgColor, !disableOverflowOnHover);
   }
 
