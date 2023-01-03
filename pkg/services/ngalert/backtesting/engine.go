@@ -137,9 +137,7 @@ func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFact
 		}
 	}
 
-	evaluator, err := evalFactory.Create(eval.EvaluationContext{Ctx: ctx,
-		User: user,
-	}, condition)
+	evaluator, err := evalFactory.Create(eval.NewSignedInUserContext(ctx, user), condition)
 
 	if err != nil {
 		return nil, err

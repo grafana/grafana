@@ -28,9 +28,9 @@ var logger = log.New("ngalert.eval")
 
 type EvaluatorFactory interface {
 	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
-	Validate(ctx EvaluationContext, condition models.Condition) error
+	Validate(ctx context.Context, condition models.Condition) error
 	// BuildRuleEvaluator build an evaluator pipeline ready to evaluate a rule's query
-	Create(ctx EvaluationContext, condition models.Condition) (ConditionEvaluator, error)
+	Create(ctx context.Context, condition models.Condition) (ConditionEvaluator, error)
 }
 
 //go:generate mockery --name ConditionEvaluator --structname ConditionEvaluatorMock --with-expecter --output eval_mocks --outpkg eval_mocks
@@ -215,7 +215,7 @@ func (s State) String() string {
 	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error"}[s]
 }
 
-func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
+func buildDatasourceHeaders(ctx context.Context) map[string]string {
 	headers := map[string]string{
 		// Many data sources check this in query method as sometimes alerting needs special considerations.
 		// Several existing systems also compare against the value of this header. Altering this constitutes a breaking change.
@@ -228,7 +228,7 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 		models.CacheSkipHeaderName: "true",
 	}
 
-	key, ok := models.RuleKeyFromContext(ctx.Ctx)
+	key, ok := models.RuleKeyFromContext(ctx)
 	if ok {
 		headers["X-Rule-Uid"] = key.UID
 		headers["X-Grafana-Org-Id"] = strconv.FormatInt(key.OrgID, 10)
@@ -238,9 +238,11 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 }
 
 // getExprRequest validates the condition, gets the datasource information and creates an expr.Request from it.
-func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheService datasources.CacheService) (*expr.Request, error) {
+func getExprRequest(ctx context.Context, data []models.AlertQuery, dsCacheService datasources.CacheService) (*expr.Request, error) {
+	user := GetSignedInUser(ctx)
+
 	req := &expr.Request{
-		OrgId:   ctx.User.OrgID,
+		OrgId:   user.OrgID,
 		Headers: buildDatasourceHeaders(ctx),
 	}
 
@@ -266,7 +268,7 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 			if expr.IsDataSource(q.DatasourceUID) {
 				ds = expr.DataSourceModel()
 			} else {
-				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, true)
+				ds, err = dsCacheService.GetDatasourceByUID(ctx, q.DatasourceUID, user, true)
 				if err != nil {
 					return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 				}
@@ -595,7 +597,7 @@ func (evalResults Results) AsDataFrame() data.Frame {
 	return *frame
 }
 
-func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Condition) error {
+func (e *evaluatorImpl) Validate(ctx context.Context, condition models.Condition) error {
 	req, err := getExprRequest(ctx, condition.Data, e.dataSourceCache)
 	if err != nil {
 		return err
@@ -604,7 +606,7 @@ func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Conditi
 		if query.DataSource == nil || expr.IsDataSource(query.DataSource.Uid) {
 			continue
 		}
-		p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
+		p, found := e.pluginsStore.Plugin(ctx, query.DataSource.Type)
 		if !found { // technically this should fail earlier during datasource resolution phase.
 			return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
 		}
@@ -616,7 +618,7 @@ func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Conditi
 	return err
 }
 
-func (e *evaluatorImpl) Create(ctx EvaluationContext, condition models.Condition) (ConditionEvaluator, error) {
+func (e *evaluatorImpl) Create(ctx context.Context, condition models.Condition) (ConditionEvaluator, error) {
 	if len(condition.Data) == 0 {
 		return nil, errors.New("expression list is empty. must be at least 1 expression")
 	}

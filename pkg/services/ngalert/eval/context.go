@@ -6,15 +6,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// EvaluationContext represents the context in which a condition is evaluated.
-type EvaluationContext struct {
-	Ctx  context.Context
-	User *user.SignedInUser
+var (
+	// signedInUserKey uniquely identifies the signed-in user in a context.Context
+	signedInUserKey = struct{}{}
+)
+
+// NewSignedInUserContext returns a new context.Context with the signed-in user
+func NewSignedInUserContext(ctx context.Context, user *user.SignedInUser) context.Context {
+	return context.WithValue(ctx, signedInUserKey, user)
 }
 
-func Context(ctx context.Context, user *user.SignedInUser) EvaluationContext {
-	return EvaluationContext{
-		Ctx:  ctx,
-		User: user,
+// GetSignedInUser returns the signed-in user or nil
+func GetSignedInUser(ctx context.Context) *user.SignedInUser {
+	if v := ctx.Value(signedInUserKey); v != nil {
+		return v.(*user.SignedInUser)
 	}
+	return nil
 }

@@ -50,7 +50,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 		Condition: body.GrafanaManagedCondition.Condition,
 		Data:      body.GrafanaManagedCondition.Data,
 	}
-	ctx := eval.Context(c.Req.Context(), c.SignedInUser)
+	ctx := eval.NewSignedInUserContext(c.Req.Context(), c.SignedInUser)
 
 	conditionEval, err := srv.evaluator.Create(ctx, evalCond)
 	if err != nil {
@@ -125,7 +125,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 	if len(cmd.Data) > 0 {
 		cond.Condition = cmd.Data[0].RefID
 	}
-	evaluator, err := srv.evaluator.Create(eval.Context(c.Req.Context(), c.SignedInUser), cond)
+	evaluator, err := srv.evaluator.Create(eval.NewSignedInUserContext(c.Req.Context(), c.SignedInUser), cond)
 
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to build evaluator for queries and expressions")
