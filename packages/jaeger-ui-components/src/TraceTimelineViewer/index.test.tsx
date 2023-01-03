@@ -21,7 +21,7 @@ import { createTheme } from '@grafana/data';
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
 
-import TraceTimelineViewer from './index';
+import TraceTimelineViewer, { TProps } from './index';
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -62,11 +62,11 @@ describe('<TraceTimelineViewer>', () => {
   };
 
   it('it does not explode', () => {
-    expect(() => render(<TraceTimelineViewer {...props} />)).not.toThrow();
+    expect(() => render(<TraceTimelineViewer {...(props as unknown as TProps)} />)).not.toThrow();
   });
 
   it('it sets up actions', async () => {
-    render(<TraceTimelineViewer {...props} />);
+    render(<TraceTimelineViewer {...(props as unknown as TProps)} />);
 
     const expandOne = screen.getByRole('button', { name: 'Expand +1' });
     const collapseOne = screen.getByRole('button', { name: 'Collapse +1' });

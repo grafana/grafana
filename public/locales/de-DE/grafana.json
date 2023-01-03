@@ -182,8 +182,8 @@
       "title": "Organisationen"
     },
     "global-users": {
-      "subtitle": "Erstelle und verwalte Benutzer auf dem gesamten Grafana-Server",
-      "title": "",
+      "subtitle": "",
+      "title": "Benutzer",
       "titleBeforeTopnav": "Benutzer"
     },
     "help": {

@@ -27,7 +27,7 @@ lineage: seqs: [
 				// Updated indicates when the team was updated.
 				updated: int64 @grafanamaturity(ToMetadata="sys")
 
-				#Permission: 1 | 2 | 4 @cuetsy(kind="enum",memberNames="viewer|editor|admin")
+				#Permission: 1 | 2 | 4 @cuetsy(kind="enum",memberNames="Viewer|Editor|Admin")
 			},
 		]
 	},
