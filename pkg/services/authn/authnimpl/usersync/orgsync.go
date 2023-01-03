@@ -15,6 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+func ProvideOrgSync(userService user.Service, orgService org.Service, accessControl accesscontrol.Service) *OrgSync {
+	return &OrgSync{userService, orgService, accessControl, log.New("org.sync")}
+}
+
 type OrgSync struct {
 	userService   user.Service
 	orgService    org.Service
