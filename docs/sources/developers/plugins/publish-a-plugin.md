@@ -1,11 +1,12 @@
 ---
 aliases:
   - share-a-plugin/
-title: Package a plugin
+  - package-a-plugin/
+title: Publish a plugin
 type: docs
 ---
 
-# Package a plugin
+# Publish a plugin
 
 You've just built your first plugin, and now you want to share it with the world. In this guide, you'll learn how to package and share your plugin with others.
 
@@ -17,7 +18,7 @@ There are three steps needed to package a plugin:
 
 - Building the plugin
 - Signing the plugin
-- Archiving the plugin
+- Packaging the plugin
 
 1. Build the plugin
 
@@ -87,6 +88,7 @@ To speed up the time it takes to review your plugin:
 
 - Check that your plugin is ready for review using the [plugin validator](https://github.com/grafana/plugin-validator).
 - Read our [6 tips for improving your Grafana plugin before you publish](https://grafana.com/blog/2021/01/21/6-tips-for-improving-your-grafana-plugin-before-you-publish/).
+- Refer to [plugin-examples](https://github.com/grafana/grafana-plugin-examples) to review best practices for building your plugin.
 
 ## Frequently Asked Questions
 
@@ -98,9 +100,13 @@ To speed up the time it takes to review your plugin:
 
 - We're not able to give an estimate at this time, though we're constantly working on improving the time it takes to review a plugin.
 
+**Can I decide a date when my plugin will be published?**
+
+- No. We cannot guarantee specific publishing dates, as plugins are immediately published after a review based on our internal prioritization.
+
 ## Publishing your plugin for the first time
 
-{{< figure src="/static/img/docs/plugins/plugins-submission-create.png" class="docs-image--no-shadow" max-width="850px" >}}
+{{< figure src="/static/img/docs/plugins/plugins-submission-create.png" class="docs-image--no-shadow" max-width="650px" >}}
 
 1. [Sign in](https://grafana.com/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
@@ -120,7 +126,7 @@ All submissions are manually inspected by a plugin reviewer. For every new plugi
 - **Code review:** For quality and security purposes, we review the source code for the plugin. If you're unable to make the source code publicly available, let us know in a comment on your plugin submission.
 - **Tests:** We install your plugin on one of our Grafana instances to test it for basic use. For more advanced plugins, we may ask you to assist us in configuring a test environment for the plugin. This test environment will be used whenever you submit an plugin update.
 
-## Maintain your plugin
+## Submit a plugin update
 
 To submit an **update** for an already published plugin:
 
