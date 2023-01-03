@@ -144,7 +144,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 // 500: internalServerError
 
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
-	orgUsersResult, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+	orgUsers, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
 		OrgID:                    c.OrgID,
 		Query:                    c.Query("query"),
 		Limit:                    c.QueryInt("limit"),
@@ -158,7 +158,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 
 	result := make([]*dtos.UserLookupDTO, 0)
 
-	for _, u := range orgUsersResult.OrgUsers {
+	for _, u := range orgUsers {
 		result = append(result, &dtos.UserLookupDTO{
 			UserID:    u.UserID,
 			Login:     u.Login,
@@ -201,7 +201,47 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to get users for organization", err)
 	}
 
-	return response.JSON(http.StatusOK, result.OrgUsers)
+	return response.JSON(http.StatusOK, result)
+}
+
+func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgUsersQuery, signedInUser *user.SignedInUser) ([]*org.OrgUserDTO, error) {
+	result, err := hs.orgService.GetOrgUsers(c.Req.Context(), query)
+	if err != nil {
+		return nil, err
+	}
+
+	filteredUsers := make([]*org.OrgUserDTO, 0, len(result))
+	userIDs := map[string]bool{}
+	authLabelsUserIDs := make([]int64, 0, len(result))
+	for _, user := range result {
+		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
+			continue
+		}
+		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
+
+		userIDs[fmt.Sprint(user.UserID)] = true
+		authLabelsUserIDs = append(authLabelsUserIDs, user.UserID)
+		filteredUsers = append(filteredUsers, user)
+	}
+
+	modules, err := hs.authInfoService.GetUserLabels(c.Req.Context(), models.GetUserLabelsQuery{
+		UserIDs: authLabelsUserIDs,
+	})
+
+	if err != nil {
+		hs.log.Warn("failed to retrieve users IDP label", err)
+	}
+
+	// Get accesscontrol metadata and IPD labels for users in the target org
+	accessControlMetadata := hs.getMultiAccessControlMetadata(c, query.OrgID, "users:id:", userIDs)
+	for i := range filteredUsers {
+		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
+		if module, ok := modules[filteredUsers[i].UserID]; ok {
+			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
+		}
+	}
+
+	return filteredUsers, nil
 }
 
 // swagger:route GET /orgs/{org_id}/users/search orgs searchOrgUsers
@@ -235,13 +275,13 @@ func (hs *HTTPServer) SearchOrgUsers(c *models.ReqContext) response.Response {
 		page = 1
 	}
 
-	result, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID: orgId,
 		Query: "",
 		Page:  page,
 		Limit: perPage,
 		User:  c.SignedInUser,
-	}, c.SignedInUser)
+	})
 
 	if err != nil {
 		return response.Error(500, "Failed to get users for organization", err)
@@ -250,55 +290,9 @@ func (hs *HTTPServer) SearchOrgUsers(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgUsersQuery, signedInUser *user.SignedInUser) (*org.GetOrgUsersQueryResult, error) {
-	result, err := hs.orgService.GetOrgUsersWithPagination(c.Req.Context(), query)
-	if err != nil {
-		return nil, err
-	}
-
-	filteredUsers := make([]*org.OrgUserDTO, 0, len(result.OrgUsers))
-	userIDs := map[string]bool{}
-	authLabelsUserIDs := make([]int64, 0, len(result.OrgUsers))
-	for _, user := range result.OrgUsers {
-		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
-			continue
-		}
-		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
-
-		userIDs[fmt.Sprint(user.UserID)] = true
-		authLabelsUserIDs = append(authLabelsUserIDs, user.UserID)
-		filteredUsers = append(filteredUsers, user)
-	}
-
-	modules, err := hs.authInfoService.GetUserLabels(c.Req.Context(), models.GetUserLabelsQuery{
-		UserIDs: authLabelsUserIDs,
-	})
-
-	if err != nil {
-		hs.log.Warn("failed to retrieve users IDP label", err)
-	}
-
-	// Get accesscontrol metadata and IPD labels for users in the target org
-	accessControlMetadata := hs.getMultiAccessControlMetadata(c, query.OrgID, "users:id:", userIDs)
-	for i := range filteredUsers {
-		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
-		if module, ok := modules[filteredUsers[i].UserID]; ok {
-			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
-		}
-	}
-
-	return &org.GetOrgUsersQueryResult{
-		OrgUsers:   filteredUsers,
-		TotalCount: result.TotalCount,
-		Page:       query.Page,
-		PerPage:    query.Limit,
-	}, nil
-}
-
 // SearchOrgUsersWithPaging is an HTTP handler to search for org users with paging.
 // GET /api/org/users/search
 func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Response {
-	ctx := c.Req.Context()
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -317,9 +311,18 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 		User:  c.SignedInUser,
 	}
 
-	result, err := hs.orgService.SearchOrgUsers(ctx, query)
+	result, err := hs.searchOrgUsersHelper(c, query)
 	if err != nil {
 		return response.Error(500, "Failed to get users for current organization", err)
+	}
+
+	return response.JSON(http.StatusOK, result)
+}
+
+func (hs *HTTPServer) searchOrgUsersHelper(c *models.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	result, err := hs.orgService.SearchOrgUsers(c.Req.Context(), query)
+	if err != nil {
+		return nil, err
 	}
 
 	filteredUsers := make([]*org.OrgUserDTO, 0, len(result.OrgUsers))
@@ -353,10 +356,9 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 	}
 
 	result.OrgUsers = filteredUsers
-	result.Page = page
-	result.PerPage = perPage
-
-	return response.JSON(http.StatusOK, result)
+	result.Page = query.Page
+	result.PerPage = query.Limit
+	return result, nil
 }
 
 // swagger:route PATCH /org/users/{user_id} org updateOrgUserForCurrentOrg
