@@ -127,7 +127,6 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		plugin.Signature = sig.Status
 		plugin.SignatureType = sig.Type
 		plugin.SignatureOrg = sig.SigningOrg
-		plugin.SignedFiles = sig.Files
 
 		loadedPlugins[plugin.PluginDir] = plugin
 	}

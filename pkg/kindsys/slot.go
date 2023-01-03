@@ -1,6 +1,8 @@
 package kindsys
 
 import (
+	"fmt"
+
 	"cuelang.org/go/cue"
 )
 
@@ -60,6 +62,14 @@ func (s Slot) IsGroup() bool {
 	default:
 		panic("unreachable - unknown slot name " + s.name)
 	}
+}
+
+func FindSlot(name string) (*Slot, error) {
+	sl, has := AllSlots(nil)[name]
+	if !has {
+		return nil, fmt.Errorf("unsupported slot: %s", name)
+	}
+	return sl, nil
 }
 
 // AllSlots returns a map of all [Slot]s defined in the Grafana kindsys

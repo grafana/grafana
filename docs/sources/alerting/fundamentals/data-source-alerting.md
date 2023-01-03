@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/alerting/fundamentals/data-source-alerting/
 description: Data sources in Grafana Alerting
 title: Data sources
 weight: 100

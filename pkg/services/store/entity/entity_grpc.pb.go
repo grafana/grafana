@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EntityStoreClient interface {
-	Read(ctx context.Context, in *ReadEntityRequest, opts ...grpc.CallOption) (*ReadEntityResponse, error)
+	Read(ctx context.Context, in *ReadEntityRequest, opts ...grpc.CallOption) (*Entity, error)
 	BatchRead(ctx context.Context, in *BatchReadEntityRequest, opts ...grpc.CallOption) (*BatchReadEntityResponse, error)
 	Write(ctx context.Context, in *WriteEntityRequest, opts ...grpc.CallOption) (*WriteEntityResponse, error)
 	Delete(ctx context.Context, in *DeleteEntityRequest, opts ...grpc.CallOption) (*DeleteEntityResponse, error)
@@ -40,8 +40,8 @@ func NewEntityStoreClient(cc grpc.ClientConnInterface) EntityStoreClient {
 	return &entityStoreClient{cc}
 }
 
-func (c *entityStoreClient) Read(ctx context.Context, in *ReadEntityRequest, opts ...grpc.CallOption) (*ReadEntityResponse, error) {
-	out := new(ReadEntityResponse)
+func (c *entityStoreClient) Read(ctx context.Context, in *ReadEntityRequest, opts ...grpc.CallOption) (*Entity, error) {
+	out := new(Entity)
 	err := c.cc.Invoke(ctx, "/entity.EntityStore/Read", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (c *entityStoreClient) AdminWrite(ctx context.Context, in *AdminWriteEntity
 // All implementations should embed UnimplementedEntityStoreServer
 // for forward compatibility
 type EntityStoreServer interface {
-	Read(context.Context, *ReadEntityRequest) (*ReadEntityResponse, error)
+	Read(context.Context, *ReadEntityRequest) (*Entity, error)
 	BatchRead(context.Context, *BatchReadEntityRequest) (*BatchReadEntityResponse, error)
 	Write(context.Context, *WriteEntityRequest) (*WriteEntityResponse, error)
 	Delete(context.Context, *DeleteEntityRequest) (*DeleteEntityResponse, error)
@@ -121,7 +121,7 @@ type EntityStoreServer interface {
 type UnimplementedEntityStoreServer struct {
 }
 
-func (UnimplementedEntityStoreServer) Read(context.Context, *ReadEntityRequest) (*ReadEntityResponse, error) {
+func (UnimplementedEntityStoreServer) Read(context.Context, *ReadEntityRequest) (*Entity, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
 }
 func (UnimplementedEntityStoreServer) BatchRead(context.Context, *BatchReadEntityRequest) (*BatchReadEntityResponse, error) {

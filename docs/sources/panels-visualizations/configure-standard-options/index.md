@@ -1,21 +1,20 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/field-options/
-  - /docs/grafana/latest/panels/field-options/standard-field-options/
-  - /docs/grafana/latest/panels/working-with-panels/format-standard-fields/
-  - /docs/grafana/latest/panels/reference-standard-field-definitions/
-  - /docs/grafana/latest/panels/standard-field-definitions/
-  - /docs/grafana/latest/panels/configure-standard-options/
-  - /docs/grafana/latest/panels/apply-color-to-series/
-  - /docs/grafana/latest/panels-visualizations/configure-standard-options/
-title: Configure standard options
-menuTitle: Configure standard options
-weight: 2
+  - ../panels/apply-color-to-series/
+  - ../panels/configure-standard-options/
+  - ../panels/field-options/
+  - ../panels/field-options/standard-field-options/
+  - ../panels/reference-standard-field-definitions/
+  - ../panels/standard-field-definitions/
+  - ../panels/working-with-panels/format-standard-fields/
 keywords:
   - panel
   - dasboard
   - standard
   - option
+menuTitle: Configure standard options
+title: Configure standard options
+weight: 2
 ---
 
 # Configure standard options

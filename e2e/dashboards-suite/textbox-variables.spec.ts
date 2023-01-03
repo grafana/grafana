@@ -33,8 +33,8 @@ describe.skip('TextBox - change query scenarios', function () {
     saveDashboard(false);
 
     e2e()
-      .get('@dashuid')
-      .then((dashuid: any) => {
+      .get<string>('@dashuid')
+      .then((dashuid) => {
         expect(dashuid).not.to.eq(PAGE_UNDER_TEST);
 
         e2e.flows.openDashboard({ uid: dashuid });
@@ -59,8 +59,8 @@ describe.skip('TextBox - change query scenarios', function () {
     saveDashboard(true);
 
     e2e()
-      .get('@dashuid')
-      .then((dashuid: any) => {
+      .get<string>('@dashuid')
+      .then((dashuid) => {
         expect(dashuid).not.to.eq(PAGE_UNDER_TEST);
 
         e2e.flows.openDashboard({ uid: dashuid });
@@ -85,8 +85,8 @@ describe.skip('TextBox - change picker value scenarios', function () {
     saveDashboard(false);
 
     e2e()
-      .get('@dashuid')
-      .then((dashuid: any) => {
+      .get<string>('@dashuid')
+      .then((dashuid) => {
         expect(dashuid).not.to.eq(PAGE_UNDER_TEST);
 
         e2e.flows.openDashboard({ uid: dashuid });
@@ -108,8 +108,8 @@ describe.skip('TextBox - change picker value scenarios', function () {
     saveDashboard(true);
 
     e2e()
-      .get('@dashuid')
-      .then((dashuid: any) => {
+      .get<string>('@dashuid')
+      .then((dashuid) => {
         expect(dashuid).not.to.eq(PAGE_UNDER_TEST);
 
         e2e.flows.openDashboard({ uid: dashuid });

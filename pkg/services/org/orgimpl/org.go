@@ -2,6 +2,7 @@ package orgimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -65,10 +66,12 @@ func (s *Service) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUse
 		return cmd.OrgID, nil
 	}
 
-	orgName := cmd.OrgName
+	var orgName string
+	orgName = cmd.OrgName
 	if len(orgName) == 0 {
 		orgName = util.StringsFallback2(cmd.Email, cmd.Login)
 	}
+	orga.Name = orgName
 
 	if setting.AutoAssignOrg {
 		orga, err := s.store.Get(ctx, int64(s.cfg.AutoAssignOrgId))
@@ -142,12 +145,14 @@ func (s *Service) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
 }
 
 func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error) {
-	var orga *org.Org
+	var orga = &org.Org{}
 	var err error
 	if s.cfg.AutoAssignOrg {
-		orga, err = s.store.Get(ctx, int64(s.cfg.AutoAssignOrgId))
-		if err != nil {
+		got, err := s.store.Get(ctx, int64(s.cfg.AutoAssignOrgId))
+		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
 			return 0, err
+		} else if err == nil {
+			return got.ID, nil
 		}
 
 		if s.cfg.AutoAssignOrgId != 1 {
@@ -156,11 +161,9 @@ func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error
 			return 0, fmt.Errorf("could not create user: organization ID %d does not exist",
 				s.cfg.AutoAssignOrgId)
 		}
-
 		orga.Name = MainOrgName
 		orga.ID = int64(s.cfg.AutoAssignOrgId)
 	} else {
-		orga = &org.Org{}
 		orga.Name = orgName
 	}
 

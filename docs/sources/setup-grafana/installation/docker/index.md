@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/docker/
-  - /docs/grafana/latest/setup-grafana/installation/docker/
+  - ../../installation/docker/
 description: Guide for running Grafana using Docker
 title: Run Grafana Docker image
 weight: 200
@@ -20,8 +19,6 @@ Each edition is available in two variants: Alpine and Ubuntu. See below.
 For documentation regarding the configuration of a docker image, refer to [configure a Grafana Docker image](https://grafana.com/docs/grafana/latest/administration/configure-docker/).
 
 This topic also contains important information about [migrating from earlier Docker image versions](#migrate-from-previous-docker-containers-versions).
-
-> **Note:** You can use [Grafana Cloud](https://grafana.com/products/cloud/features/#cloud-logs) to avoid the overhead of installing, maintaining, and scaling your observability stack. The free forever plan includes Grafana, 10K Prometheus series, 50 GB logs, and more.[Create a free account to get started](https://grafana.com/auth/sign-up/create-user?pg=docs-grafana-install&plcmt=in-text).
 
 ## Alpine image (recommended)
 

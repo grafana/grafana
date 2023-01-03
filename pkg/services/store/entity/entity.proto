@@ -21,47 +21,43 @@ message Entity {
   // Entity identifier
   GRN GRN = 1;
 
+  // The version will change when the entity is saved. It is not necessarily sortable
+  string version = 2;
+
   // Time in epoch milliseconds that the entity was created
-  int64 created_at = 2;
+  int64 created_at = 3;
 
   // Time in epoch milliseconds that the entity was updated
-  int64 updated_at = 3;
+  int64 updated_at = 4;
 
   // Who created the entity
-  string created_by = 4;
+  string created_by = 5;
 
   // Who updated the entity
-  string updated_by = 5;
+  string updated_by = 6;
 
   // Content Length
-  int64 size = 6;
+  int64 size = 7;
 
   // MD5 digest of the body
-  string ETag = 7;
+  string ETag = 8;
 
   // Raw bytes of the storage entity.  The kind will determine what is a valid payload
-  bytes body = 8;
+  bytes body = 9;
 
-  // Folder UID
-  string folder = 9;
-
-  // Unique slug within folder (may be UID)
-  string slug = 10;
-
-  // The version will change when the entity is saved. It is not necessarily sortable
-  //
-  // NOTE: currently managed by the dashboard+dashboard_version tables
-  string version = 11;
+  // Entity summary as JSON
+  bytes summary_json = 10;
 
   // External location info
-  EntityOriginInfo origin = 12;
+  EntityOriginInfo origin = 11;
 }
 
+// This stores additional metadata for items entities that were synced from external systmes
 message EntityOriginInfo {
-  // NOTE: currently managed by the dashboard_provisioning table
+  // identify the external source (plugin, git instance, etc)
   string source = 1;
 
-  // Key in the upstream system
+  // Key in the upstream system (git hash, file path, etc)
   string key = 2;
 
   // Time in epoch milliseconds that the entity was last synced with an external system (provisioning/git)
@@ -122,14 +118,6 @@ message ReadEntityRequest {
   bool with_summary = 4;
 }
 
-message ReadEntityResponse {
-  // Entity details with the body removed
-  Entity entity = 1; 
-
-  // Entity summary as JSON
-  bytes summary_json = 2;
-}
-
 //------------------------------------------------------
 // Make many read requests at once (by Kind+ID+version)
 //------------------------------------------------------
@@ -139,7 +127,7 @@ message BatchReadEntityRequest {
 }
 
 message BatchReadEntityResponse {
-  repeated ReadEntityResponse results = 1;
+  repeated Entity results = 1;
 }
 
 //-----------------------------------------------
@@ -375,7 +363,7 @@ message EntitySearchResponse {
 
 // The entity store provides a basic CRUD (+watch eventually) interface for generic entitys
 service EntityStore {
-  rpc Read(ReadEntityRequest) returns (ReadEntityResponse);
+  rpc Read(ReadEntityRequest) returns (Entity);
   rpc BatchRead(BatchReadEntityRequest) returns (BatchReadEntityResponse);
   rpc Write(WriteEntityRequest) returns (WriteEntityResponse);
   rpc Delete(DeleteEntityRequest) returns (DeleteEntityResponse);

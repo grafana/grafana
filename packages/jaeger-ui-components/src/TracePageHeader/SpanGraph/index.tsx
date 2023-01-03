@@ -27,7 +27,7 @@ import ViewingLayer from './ViewingLayer';
 const DEFAULT_HEIGHT = 60;
 const TIMELINE_TICK_INTERVAL = 4;
 
-type SpanGraphProps = {
+export type SpanGraphProps = {
   height?: number;
   trace: Trace;
   viewRange: ViewRange;

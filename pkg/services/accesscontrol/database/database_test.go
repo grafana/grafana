@@ -30,7 +30,6 @@ type getUserPermissionsTestCase struct {
 	userPermissions    []string
 	teamPermissions    []string
 	builtinPermissions []string
-	actions            []string
 	expected           int
 }
 
@@ -62,16 +61,6 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			teamPermissions:    []string{"100", "2"},
 			builtinPermissions: []string{"5", "6"},
 			expected:           5,
-		},
-		{
-			desc:               "Should filter on actions",
-			orgID:              1,
-			role:               "",
-			userPermissions:    []string{"1", "2", "10"},
-			teamPermissions:    []string{"100", "2"},
-			builtinPermissions: []string{"5", "6"},
-			expected:           3,
-			actions:            []string{"dashboards:write"},
 		},
 		{
 			desc:               "should only get br permissions for anonymous user",
@@ -137,7 +126,6 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 				OrgID:   tt.orgID,
 				UserID:  userID,
 				Roles:   roles,
-				Actions: tt.actions,
 				TeamIDs: teamIDs,
 			})
 
@@ -425,6 +413,34 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			},
 		},
 		{
+			name: "all assignments for one user by actionPrefix",
+			users: []testUser{
+				{orgRole: org.RoleAdmin, isAdmin: true},
+				{orgRole: org.RoleEditor, isAdmin: false},
+			},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				// User assignments
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("1")},
+				{User: accesscontrol.User{ID: 2, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("2")},
+				// Team assignments
+				{TeamID: 1, SetResourcePermissionCommand: readTeamPerm("10")},
+				{TeamID: 2, SetResourcePermissionCommand: readTeamPerm("20")},
+				// Basic Assignments
+				{BuiltinRole: string(org.RoleAdmin), SetResourcePermissionCommand: readTeamPerm("100")},
+				{BuiltinRole: string(org.RoleEditor), SetResourcePermissionCommand: readTeamPerm("200")},
+				// Server Admin Assignment
+				{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1000")},
+			},
+			options: accesscontrol.SearchOptions{
+				ActionPrefix: "teams:",
+				UserID:       1,
+			},
+			wantPerm: map[int64][]accesscontrol.Permission{
+				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},
+					{Action: "teams:read", Scope: "teams:id:100"}, {Action: "teams:read", Scope: "teams:id:1000"}},
+			},
+		},
+		{
 			name:  "filter permissions by action prefix",
 			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: true}},
 			permCmds: []rs.SetResourcePermissionsCommand{
@@ -531,10 +547,11 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 func TestAccessControlStore_GetUsersBasicRoles(t *testing.T) {
 	ctx := context.Background()
 	tests := []struct {
-		name      string
-		users     []testUser
-		wantRoles map[int64][]string
-		wantErr   bool
+		name       string
+		users      []testUser
+		userFilter []int64
+		wantRoles  map[int64][]string
+		wantErr    bool
 	}{
 		{
 			name:      "user with basic role",
@@ -560,6 +577,17 @@ func TestAccessControlStore_GetUsersBasicRoles(t *testing.T) {
 				2: {accesscontrol.RoleGrafanaAdmin},
 			},
 		},
+		{
+			name:       "when filtered to one user, returns results only for that user",
+			userFilter: []int64{2},
+			users: []testUser{
+				{orgRole: org.RoleAdmin, isAdmin: false},
+				{orgRole: org.RoleEditor, isAdmin: true},
+			},
+			wantRoles: map[int64][]string{
+				2: {string(org.RoleEditor), accesscontrol.RoleGrafanaAdmin},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -567,7 +595,7 @@ func TestAccessControlStore_GetUsersBasicRoles(t *testing.T) {
 			dbUsers := createUsersAndTeams(t, helperServices{userSvc, teamSvc, orgSvc}, 1, tt.users)
 
 			// Test
-			dbRoles, err := acStore.GetUsersBasicRoles(ctx, 1)
+			dbRoles, err := acStore.GetUsersBasicRoles(ctx, tt.userFilter, 1)
 			if tt.wantErr {
 				require.NotNil(t, err)
 				return

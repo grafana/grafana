@@ -1,20 +1,19 @@
 import { set } from 'lodash';
 import {
-  Observable,
-  of,
-  mergeMap,
-  map,
-  from,
+  catchError,
   concatMap,
   finalize,
+  from,
+  lastValueFrom,
+  map,
+  mergeMap,
+  Observable,
   repeat,
   scan,
   share,
   takeWhile,
   tap,
   zip,
-  catchError,
-  lastValueFrom,
 } from 'rxjs';
 
 import {
@@ -85,7 +84,9 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
+    const validLogQueries = logQueries.filter(this.filterQuery);
+
+    const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => ({
       queryString: target.expression || '',
       refId: target.refId,
       logGroupNames: target.logGroupNames || this.defaultLogGroups,
@@ -97,16 +98,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         'region'
       ),
     }));
-
-    const hasQueryWithMissingLogGroupSelection = queryParams.some((qp) => {
-      const missingLogGroupNames = qp.logGroupNames.length === 0;
-      const missingLogGroups = qp.logGroups.length === 0;
-      return missingLogGroupNames && missingLogGroups;
-    });
-
-    if (hasQueryWithMissingLogGroupSelection) {
-      return of({ data: [], error: { message: 'Log group is required' } });
-    }
 
     const startTime = new Date();
     const timeoutFunc = () => {
@@ -121,7 +112,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
           skipCache: true,
         });
       },
-      queryParams,
+      startQueryRequests,
       timeoutFunc
     ).pipe(
       mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
@@ -436,6 +427,18 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     };
 
     return getLogGroupFieldsResponse;
+  }
+
+  private filterQuery(query: CloudWatchLogsQuery) {
+    const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length;
+    const hasMissingLogGroups = !query.logGroups?.length;
+    const hasMissingQueryString = !query.expression?.length;
+
+    if ((hasMissingLogGroups && hasMissingLegacyLogGroupNames) || hasMissingQueryString) {
+      return false;
+    }
+
+    return true;
   }
 }
 

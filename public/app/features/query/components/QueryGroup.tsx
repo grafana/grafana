@@ -17,7 +17,7 @@ import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, style
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { addQuery } from 'app/core/utils/query';
+import { addQuery, queryIsEmpty } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
@@ -96,7 +96,11 @@ export class QueryGroup extends PureComponent<Props, State> {
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
       const defaultDataSource = await this.dataSourceSrv.get();
       const datasource = ds.getRef();
-      const queries = options.queries.map((q) => (q.datasource ? q : { ...q, datasource }));
+      const queries = options.queries.map((q) => ({
+        ...(queryIsEmpty(q) && ds?.getDefaultQuery?.(CoreApp.PanelEditor)),
+        datasource,
+        ...q,
+      }));
       this.setState({
         queries,
         dataSource: ds,

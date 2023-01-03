@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -889,7 +890,7 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 			description: "Invalid ODBC URL",
 			url:         `localhost\instance::1433`,
 			err: datasource.URLValidationError{
-				Err: fmt.Errorf(`unrecognized MSSQL URL format: "localhost\\instance::1433"`),
+				Err: errors.New(`unrecognized MSSQL URL format: "localhost\\instance::1433"`),
 				URL: `localhost\instance::1433`,
 			},
 		},

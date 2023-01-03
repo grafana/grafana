@@ -168,9 +168,11 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 		},
 	}
 
-	_, err = pd.store.Create(ctx, cmd)
+	affectedRows, err := pd.store.Create(ctx, cmd)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Create: failed to create the public dashboard: %w", err)
+		return nil, ErrInternalServerError.Errorf("Create: failed to create the public dashboard with Uid %s: %w", uid, err)
+	} else if affectedRows == 0 {
+		return nil, ErrInternalServerError.Errorf("Create: failed to create a database entry for public dashboard with Uid %s. 0 rows changed, no error reported.", uid)
 	}
 
 	//Get latest public dashboard to return

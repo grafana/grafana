@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -46,8 +47,7 @@ type sqlEntityServer struct {
 func getReadSelect(r *entity.ReadEntityRequest) string {
 	fields := []string{
 		"tenant_id", "kind", "uid", // The PK
-		"version", "slug", "folder",
-		"size", "etag", "errors", // errors are always returned
+		"version", "size", "etag", "errors", // errors are always returned
 		"created_at", "created_by",
 		"updated_at", "updated_by",
 		"origin", "origin_key", "origin_ts"}
@@ -56,23 +56,21 @@ func getReadSelect(r *entity.ReadEntityRequest) string {
 		fields = append(fields, `body`)
 	}
 	if r.WithSummary {
-		fields = append(fields, `name`, `description`, `labels`, `fields`)
+		fields = append(fields, "name", "slug", "folder", "description", "labels", "fields")
 	}
 	return "SELECT " + strings.Join(fields, ",") + " FROM entity WHERE "
 }
 
-func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.ReadEntityResponse, error) {
+func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql.Rows, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	raw := &entity.Entity{
 		GRN:    &entity.GRN{},
 		Origin: &entity.EntityOriginInfo{},
 	}
-	slug := ""
 
 	summaryjson := &summarySupport{}
 	args := []interface{}{
 		&raw.GRN.TenantId, &raw.GRN.Kind, &raw.GRN.UID,
-		&raw.Version, &slug, &raw.Folder,
-		&raw.Size, &raw.ETag, &summaryjson.errors,
+		&raw.Version, &raw.Size, &raw.ETag, &summaryjson.errors,
 		&raw.CreatedAt, &raw.CreatedBy,
 		&raw.UpdatedAt, &raw.UpdatedBy,
 		&raw.Origin.Source, &raw.Origin.Key, &raw.Origin.Time,
@@ -81,7 +79,7 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 		args = append(args, &raw.Body)
 	}
 	if r.WithSummary {
-		args = append(args, &summaryjson.name, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
+		args = append(args, &summaryjson.name, &summaryjson.slug, &summaryjson.folder, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
 	}
 
 	err := rows.Scan(args...)
@@ -91,10 +89,6 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 
 	if raw.Origin.Source == "" {
 		raw.Origin = nil
-	}
-
-	rsp := &entity.ReadEntityResponse{
-		Entity: raw,
 	}
 
 	if r.WithSummary || summaryjson.errors != nil {
@@ -107,16 +101,19 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 		if err != nil {
 			return nil, err
 		}
-		rsp.SummaryJson = js
+		raw.SummaryJson = js
 	}
-	return rsp, nil
+	return raw, nil
 }
 
 func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *entity.GRN) (*entity.GRN, error) {
 	if grn == nil {
 		return nil, fmt.Errorf("missing GRN")
 	}
-	user := store.UserFromContext(ctx)
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
 	if grn.TenantId == 0 {
 		grn.TenantId = user.OrgID
 	} else if grn.TenantId != user.OrgID {
@@ -138,7 +135,7 @@ func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *entity.GRN) (*en
 	return grn, nil
 }
 
-func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.ReadEntityResponse, error) {
+func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	if r.Version != "" {
 		return s.readFromHistory(ctx, r)
 	}
@@ -157,13 +154,13 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 	defer func() { _ = rows.Close() }()
 
 	if !rows.Next() {
-		return &entity.ReadEntityResponse{}, nil
+		return &entity.Entity{}, nil
 	}
 
 	return s.rowToReadEntityResponse(ctx, rows, r)
 }
 
-func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEntityRequest) (*entity.ReadEntityResponse, error) {
+func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	grn, err := s.validateGRN(ctx, r.GRN)
 	if err != nil {
 		return nil, err
@@ -185,14 +182,11 @@ func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEnt
 
 	// Version or key not found
 	if !rows.Next() {
-		return &entity.ReadEntityResponse{}, nil
+		return &entity.Entity{}, nil
 	}
 
 	raw := &entity.Entity{
 		GRN: r.GRN,
-	}
-	rsp := &entity.ReadEntityResponse{
-		Entity: raw,
 	}
 	err = rows.Scan(&raw.Body, &raw.Size, &raw.ETag, &raw.UpdatedAt, &raw.UpdatedBy)
 	if err != nil {
@@ -210,7 +204,7 @@ func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEnt
 			val, out, err := builder(ctx, r.GRN.UID, raw.Body)
 			if err == nil {
 				raw.Body = out // cleaned up
-				rsp.SummaryJson, err = json.Marshal(val)
+				raw.SummaryJson, err = json.Marshal(val)
 				if err != nil {
 					return nil, err
 				}
@@ -220,10 +214,10 @@ func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEnt
 
 	// Clear the body if not requested
 	if !r.WithBody {
-		rsp.Entity.Body = nil
+		raw.Body = nil
 	}
 
-	return rsp, err
+	return raw, err
 }
 
 func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEntityRequest) (*entity.BatchReadEntityResponse, error) {
@@ -291,7 +285,10 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 	updatedAt := r.UpdatedAt
 	updatedBy := r.UpdatedBy
 	if updatedBy == "" {
-		modifier := store.UserFromContext(ctx)
+		modifier, err := appcontext.User(ctx)
+		if err != nil {
+			return nil, err
+		}
 		if modifier == nil {
 			return nil, fmt.Errorf("can not find user in context")
 		}
@@ -306,12 +303,6 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		return nil, err
 	}
 
-	t := summary.name
-	if t == "" {
-		t = r.GRN.UID
-	}
-
-	slug := slugify.Slugify(t)
 	etag := createContentsHash(body)
 	rsp := &entity.WriteEntityResponse{
 		GRN:    grn,
@@ -479,8 +470,8 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			" ?, ?, ?)",
 			oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
 			versionInfo.Size, body, etag, versionInfo.Version,
-			updatedAt, createdBy, createdAt, createdBy, // created + updated are the same
-			summary.model.Name, summary.model.Description, slug,
+			updatedAt, createdBy, createdAt, createdBy,
+			summary.model.Name, summary.model.Description, summary.model.Slug,
 			summary.labels, summary.fields, summary.errors,
 			origin.Source, origin.Key, origin.Time,
 		)
@@ -550,6 +541,16 @@ func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntit
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// Update a summary based on the name (unless the root suggested one)
+	if summary.Slug == "" {
+		t := summary.Name
+		if t == "" {
+			t = r.GRN.UID
+		}
+		summary.Slug = slugify.Slugify(t)
+	}
+
 	return summaryjson, body, nil
 }
 
@@ -624,12 +625,15 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 }
 
 func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequest) (*entity.EntitySearchResponse, error) {
-	user := store.UserFromContext(ctx)
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
 	if user == nil {
 		return nil, fmt.Errorf("missing user in context")
 	}
 
-	if r.NextPageToken != "" || len(r.Sort) > 0 || len(r.Labels) > 0 {
+	if r.NextPageToken != "" || len(r.Sort) > 0 {
 		return nil, fmt.Errorf("not yet supported")
 	}
 
@@ -643,6 +647,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	if r.WithBody {
 		fields = append(fields, "body")
 	}
+
 	if r.WithLabels {
 		fields = append(fields, "labels")
 	}
@@ -650,25 +655,40 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		fields = append(fields, "fields")
 	}
 
-	selectQuery := selectQuery{
+	entityQuery := selectQuery{
 		fields:   fields,
 		from:     "entity", // the table
 		args:     []interface{}{},
 		limit:    int(r.Limit),
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
-	selectQuery.addWhere("tenant_id", user.OrgID)
+	entityQuery.addWhere("tenant_id", user.OrgID)
 
 	if len(r.Kind) > 0 {
-		selectQuery.addWhereIn("kind", r.Kind)
+		entityQuery.addWhereIn("kind", r.Kind)
 	}
 
 	// Folder UID or OID?
 	if r.Folder != "" {
-		selectQuery.addWhere("folder", r.Folder)
+		entityQuery.addWhere("folder", r.Folder)
 	}
 
-	query, args := selectQuery.toQuery()
+	if len(r.Labels) > 0 {
+		var args []interface{}
+		var conditions []string
+		for labelKey, labelValue := range r.Labels {
+			args = append(args, labelKey)
+			args = append(args, labelValue)
+			conditions = append(conditions, "(label = ? AND value = ?)")
+		}
+		joinedConditions := strings.Join(conditions, " OR ")
+		query := "SELECT grn FROM entity_labels WHERE " + joinedConditions + " GROUP BY grn HAVING COUNT(label) = ?"
+		args = append(args, len(r.Labels))
+
+		entityQuery.addWhereInSubquery("grn", query, args)
+	}
+
+	query, args := entityQuery.toQuery()
 
 	fmt.Printf("\n\n-------------\n")
 	fmt.Printf("%s\n", query)
@@ -710,7 +730,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		}
 
 		// found one more than requested
-		if len(rsp.Results) >= selectQuery.limit {
+		if len(rsp.Results) >= entityQuery.limit {
 			// TODO? should this encode start+offset?
 			rsp.NextPageToken = oid
 			break
@@ -738,5 +758,6 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 
 		rsp.Results = append(rsp.Results, result)
 	}
+
 	return rsp, err
 }

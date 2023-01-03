@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfostore "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
@@ -63,6 +64,11 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			&usagestats.UsageStatsMock{},
 		)
 		hs.authInfoService = srv
+		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
+		require.NoError(t, err)
+		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil))
+		require.NoError(t, err)
+		hs.userService = userSvc
 
 		createUserCmd := user.CreateUserCommand{
 			Email:   fmt.Sprint("user", "@test.com"),
@@ -70,9 +76,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "loginuser",
 			IsAdmin: true,
 		}
-		user, err := sqlStore.CreateUser(context.Background(), createUserCmd)
-		require.Nil(t, err)
-		hs.userService, err = userimpl.ProvideService(sqlStore, nil, sc.cfg, nil, nil, quotatest.New(false, nil))
+		user, err := userSvc.CreateUserForTests(context.Background(), &createUserCmd)
 		require.NoError(t, err)
 
 		sc.handlerFunc = hs.GetUserByID
@@ -128,7 +132,11 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "admin",
 			IsAdmin: true,
 		}
-		_, err := sqlStore.CreateUser(context.Background(), createUserCmd)
+		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
+		require.NoError(t, err)
+		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil))
+		require.NoError(t, err)
+		_, err = userSvc.Create(context.Background(), &createUserCmd)
 		require.Nil(t, err)
 
 		sc.handlerFunc = hs.GetUserByLoginOrEmail
