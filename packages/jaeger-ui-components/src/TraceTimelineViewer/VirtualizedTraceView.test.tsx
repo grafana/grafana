@@ -14,7 +14,7 @@
 import { shallow, mount, ShallowWrapper } from 'enzyme';
 import React from 'react';
 import { TNil } from 'src/types';
-import { Trace, TraceKeyValuePair, TraceSpan } from 'src/types/trace';
+import { Trace, TraceSpan } from 'src/types/trace';
 
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
@@ -85,11 +85,7 @@ describe('<VirtualizedTraceViewImpl>', () => {
     return spans;
   }
 
-  function updateSpan(
-    srcTrace: Trace,
-    spanIndex: number,
-    update: { tags: TraceKeyValuePair[] } | { logs: Array<{ timestamp: number; fields: any }> }
-  ) {
+  function updateSpan(srcTrace: Trace, spanIndex: number, update: Partial<TraceSpan>) {
     const span = { ...srcTrace.spans[spanIndex], ...update };
     const spans = [...srcTrace.spans.slice(0, spanIndex), span, ...srcTrace.spans.slice(spanIndex + 1)];
     return { ...srcTrace, spans };
