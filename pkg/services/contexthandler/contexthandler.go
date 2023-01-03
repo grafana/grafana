@@ -483,12 +483,19 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 		}
 
 		if err != nil {
+			if errors.Is(err, auth.ErrUserTokenNotFound) || errors.Is(err, auth.ErrInvalidSessionToken) {
+				// Burn the cookie in case of invalid, expired or missing token
+				reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
+			}
+
 			writeErr(reqContext, err)
 			return true
 		}
 
 		reqContext.IsSignedIn = true
 		reqContext.SignedInUser = identity.SignedInUser()
+		reqContext.UserToken = identity.SessionToken
+		return true
 	}
 
 	if h.Cfg.LoginCookieName == "" {
