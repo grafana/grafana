@@ -50,7 +50,7 @@ const numberOfColumnsBeforeExpandedViewIsDefault = 2;
  */
 const RawListContainer = (props: RawListContainerProps) => {
   const { tableResult } = props;
-  let dataFrame = cloneDeep(tableResult);
+  const dataFrame = cloneDeep(tableResult);
   const styles = getRawListContainerStyles();
   const listRef = useRef<List | null>(null);
 
