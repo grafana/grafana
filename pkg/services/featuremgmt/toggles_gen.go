@@ -136,7 +136,7 @@ const (
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
 
 	// FlagLegacyExploreCompactURL
-	// Enable legacy compact URL in Explore
+	// Enable legacy compact URL in Explore 
 	FlagLegacyExploreCompactURL = "legacyExploreCompactURL"
 
 	// FlagTracing
