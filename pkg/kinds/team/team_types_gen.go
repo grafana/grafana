@@ -25,7 +25,7 @@ type Permission int
 // Team defines model for team.
 type Team struct {
 	// AccessControl metadata associated with a given resource.
-	AccessControl map[string]bool `json:"accessControl"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
 
 	// AvatarUrl is the team's avatar URL.
 	AvatarUrl *string `json:"avatarUrl,omitempty"`
