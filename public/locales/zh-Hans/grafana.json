@@ -197,8 +197,8 @@
       "title": "组织"
     },
     "global-users": {
-      "subtitle": "在整个 Grafana 服务器上管理和创建用户",
-      "title": "",
+      "subtitle": "",
+      "title": "用户",
       "titleBeforeTopnav": "用户"
     },
     "help": {

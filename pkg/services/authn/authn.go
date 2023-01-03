@@ -2,6 +2,7 @@ package authn
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -16,6 +17,7 @@ import (
 const (
 	ClientAPIKey    = "auth.client.api-key" // #nosec G101
 	ClientAnonymous = "auth.client.anonymous"
+	ClientBasic     = "auth.client.basic"
 )
 
 type ClientParams struct {
@@ -48,8 +50,9 @@ type Request struct {
 }
 
 const (
-	APIKeyIDPrefix         = "api-key:"
-	ServiceAccountIDPrefix = "service-account:"
+	NamespaceUser           = "user"
+	NamespaceAPIKey         = "api-key"
+	NamespaceServiceAccount = "service-account"
 )
 
 type Identity struct {
@@ -105,6 +108,11 @@ func (i *Identity) NamespacedID() (string, int64) {
 }
 
 func (i *Identity) SignedInUser() *user.SignedInUser {
+	var isGrafanaAdmin bool
+	if i.IsGrafanaAdmin != nil {
+		isGrafanaAdmin = *i.IsGrafanaAdmin
+	}
+
 	u := &user.SignedInUser{
 		UserID:             0,
 		OrgID:              i.OrgID,
@@ -116,7 +124,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Name:               i.Name,
 		Email:              i.Email,
 		OrgCount:           i.OrgCount,
-		IsGrafanaAdmin:     *i.IsGrafanaAdmin,
+		IsGrafanaAdmin:     isGrafanaAdmin,
 		IsAnonymous:        i.IsAnonymous(),
 		IsDisabled:         i.IsDisabled,
 		HelpFlags1:         i.HelpFlags1,
@@ -124,17 +132,19 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Teams:              i.Teams,
 	}
 
-	// For now, we need to set different fields of the signed-in user based on the identity "type"
-	if strings.HasPrefix(i.ID, APIKeyIDPrefix) {
-		id, _ := strconv.ParseInt(strings.TrimPrefix(i.ID, APIKeyIDPrefix), 10, 64)
+	namespace, id := i.NamespacedID()
+	if namespace == NamespaceAPIKey {
 		u.ApiKeyID = id
-	} else if strings.HasPrefix(i.ID, ServiceAccountIDPrefix) {
-		id, _ := strconv.ParseInt(strings.TrimPrefix(i.ID, ServiceAccountIDPrefix), 10, 64)
+	} else {
 		u.UserID = id
-		u.IsServiceAccount = true
+		u.IsServiceAccount = namespace == NamespaceServiceAccount
 	}
 
 	return u
+}
+
+func NamespacedID(namespace string, id int64) string {
+	return fmt.Sprintf("%s:%d", namespace, id)
 }
 
 func IdentityFromSignedInUser(id string, usr *user.SignedInUser) *Identity {
