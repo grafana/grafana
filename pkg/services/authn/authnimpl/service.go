@@ -37,6 +37,7 @@ func ProvideService(
 		postAuthHooks: []authn.PostAuthHookFn{},
 	}
 
+	s.clients[authn.ClientRender] = clients.ProvideRender()
 	s.clients[authn.ClientAPIKey] = clients.ProvideAPIKey(apikeyService, userService)
 
 	if s.cfg.AnonymousEnabled {

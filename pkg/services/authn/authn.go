@@ -18,6 +18,7 @@ const (
 	ClientAPIKey    = "auth.client.api-key" // #nosec G101
 	ClientAnonymous = "auth.client.anonymous"
 	ClientBasic     = "auth.client.basic"
+	ClientRender    = "auth.client.render"
 )
 
 type ClientParams struct {
