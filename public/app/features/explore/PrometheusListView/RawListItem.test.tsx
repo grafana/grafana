@@ -15,7 +15,7 @@ const defaultProps: RawListProps = {
     job: 'jobValue',
     instance: 'instanceValue',
   },
-  listKey: 0,
+  listKey: '0',
   totalNumberOfValues: 1,
 };
 
