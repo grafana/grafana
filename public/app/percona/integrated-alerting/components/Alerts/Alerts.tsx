@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import React, { FC, useCallback, useEffect } from 'react';
 import { Cell, Column, Row } from 'react-table';
 
-import { useStyles2, Icon, LinkButton } from '@grafana/ui';
+import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { AmAlertStateTag } from 'app/features/alerting/unified/components/silences/AmAlertStateTag';
@@ -23,6 +23,8 @@ import { Severity } from '../Severity';
 import { Table } from '../Table/Table';
 
 import { AlertDetails } from './AlertDetails/AlertDetails';
+import { ACTIONS_COLUMN, SILENCES_URL } from './Alerts.constants';
+import { Messages as AlertMessages } from './Alerts.messages';
 import { getStyles } from './Alerts.styles';
 
 const {
@@ -98,18 +100,22 @@ export const Alerts: FC = () => {
       {
         Header: actionsColumn,
         accessor: 'receivers',
-        id: 'actions',
+        id: ACTIONS_COLUMN,
         width: '15%',
         Cell: ({ row }) => (
           <ExpandableCell
             row={row}
             value={
               <LinkButton
-                href={makeLabelBasedSilenceLink('grafana', row.original.labels)}
+                href={
+                  row.original.status.state === AlertState.Suppressed
+                    ? SILENCES_URL
+                    : makeLabelBasedSilenceLink('grafana', row.original.labels)
+                }
                 icon={'bell-slash'}
                 size={'sm'}
               >
-                Silence
+                {row.original.status.state === AlertState.Suppressed ? AlertMessages.unsilence : AlertMessages.silence}
               </LinkButton>
             }
           ></ExpandableCell>
@@ -120,11 +126,21 @@ export const Alerts: FC = () => {
   );
 
   const getCellProps = useCallback(
-    (cell: Cell<AlertmanagerAlert>) => ({
-      className: cell.row.original.status.state === AlertState.Suppressed ? style.disabledRow : '',
-      key: cell.row.original.labels.__alert_rule_uid__,
-    }),
-    [style.disabledRow]
+    (cell: Cell<AlertmanagerAlert>) => {
+      let className = '';
+      if (cell.row.original.status.state === AlertState.Suppressed) {
+        if (cell.column.id === ACTIONS_COLUMN) {
+          className = style.disableActionCell;
+        } else {
+          className = style.disabledRow;
+        }
+      }
+      return {
+        className,
+        key: cell.row.original.labels.__alert_rule_uid__,
+      };
+    },
+    [style.disableActionCell, style.disabledRow]
   );
 
   const renderSelectedSubRow = React.useCallback(
