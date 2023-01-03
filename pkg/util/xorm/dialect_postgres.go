@@ -1040,7 +1040,7 @@ WHERE c.relkind = 'r'::char AND c.relname = $1%s AND f.attnum > 0 ORDER BY f.att
 			col.SQLType = core.SQLType{Name: strings.ToUpper(dataType), DefaultLength: 0, DefaultLength2: 0}
 		}
 		if _, ok := core.SqlTypes[col.SQLType.Name]; !ok {
-			return nil, nil, fmt.Errorf("Unknown colType: %v", dataType)
+			return nil, nil, fmt.Errorf("unknown colType: %v", dataType)
 		}
 
 		col.Length = maxLen
@@ -1108,7 +1108,7 @@ func getIndexColName(indexdef string) []string {
 
 func (db *postgres) GetIndexes(tableName string) (map[string]*core.Index, error) {
 	args := []interface{}{tableName}
-	s := fmt.Sprintf("SELECT indexname, indexdef FROM pg_indexes WHERE tablename=$1")
+	s := "SELECT indexname, indexdef FROM pg_indexes WHERE tablename=$1"
 	if len(db.Schema) != 0 {
 		args = append(args, db.Schema)
 		s = s + " AND schemaname=$2"

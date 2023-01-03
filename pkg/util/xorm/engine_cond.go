@@ -31,9 +31,6 @@ func (engine *Engine) buildConds(table *core.Table, bean interface{},
 			continue
 		}
 
-		if engine.dialect.DBType() == core.MSSQL && (col.SQLType.Name == core.Text || col.SQLType.IsBlob() || col.SQLType.Name == core.TimeStampz) {
-			continue
-		}
 		if col.SQLType.IsJson() {
 			continue
 		}
