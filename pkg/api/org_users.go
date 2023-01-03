@@ -190,6 +190,41 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
 
+	result, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+		OrgID: orgId,
+		Query: "",
+		Limit: 0,
+		User:  c.SignedInUser,
+	}, c.SignedInUser)
+
+	if err != nil {
+		return response.Error(500, "Failed to get users for organization", err)
+	}
+
+	return response.JSON(http.StatusOK, result.OrgUsers)
+}
+
+// swagger:route GET /orgs/{org_id}/users/search orgs searchOrgUsers
+//
+// Search Users in Organization.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `org.users:read` with scope `users:*`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: getOrgUsersResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) SearchOrgUsers(c *models.ReqContext) response.Response {
+	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
+
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000

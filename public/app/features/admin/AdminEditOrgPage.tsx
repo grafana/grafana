@@ -25,7 +25,7 @@ const getOrg = async (orgId: UrlQueryValue) => {
 
 const getOrgUsers = async (orgId: UrlQueryValue, page: number) => {
   if (contextSrv.hasPermission(AccessControlAction.OrgUsersRead)) {
-    return getBackendSrv().get(`/api/orgs/${orgId}/users`, accessControlQueryParam({ perpage: perPage, page }));
+    return getBackendSrv().get(`/api/orgs/${orgId}/users/search`, accessControlQueryParam({ perpage: perPage, page }));
   }
   return [];
 };
