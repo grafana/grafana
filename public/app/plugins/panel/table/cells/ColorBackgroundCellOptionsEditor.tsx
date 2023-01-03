@@ -15,17 +15,13 @@ const colorBackgroundOpts: SelectableValue[] = [
   { value: TableCellBackgroundDisplayMode.Gradient, label: 'Gradient' },
 ];
 
-interface ColorBackgroundEditorProps extends TableCellEditorProps {
-  cellOptions?: TableColoredBackgroundCellOptions;
-}
-
-export const ColorBackgroundCellOptionsEditor: React.FC<ColorBackgroundEditorProps> = ({
+export const ColorBackgroundCellOptionsEditor = ({
   cellOptions,
-  onCellOptionsChange,
-}) => {
+  onChange,
+}: TableCellEditorProps<TableColoredBackgroundCellOptions>) => {
   // When the select changes we build an options
   // object as needed and set the display mode
-  const onChange = (v: SelectableValue) => {
+  const onCellOptionsChange = (v: SelectableValue) => {
     if (cellOptions === undefined) {
       cellOptions = {
         type: TableCellDisplayMode.ColorBackground,
@@ -35,13 +31,13 @@ export const ColorBackgroundCellOptionsEditor: React.FC<ColorBackgroundEditorPro
       cellOptions.mode = v.value;
     }
 
-    onCellOptionsChange(cellOptions);
+    onChange(cellOptions);
   };
 
   return (
     <HorizontalGroup>
       <Field label="Background display mode">
-        <Select value={cellOptions?.mode} onChange={onChange} options={colorBackgroundOpts} />
+        <Select value={cellOptions?.mode} onChange={onCellOptionsChange} options={colorBackgroundOpts} />
       </Field>
     </HorizontalGroup>
   );

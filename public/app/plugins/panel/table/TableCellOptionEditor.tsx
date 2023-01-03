@@ -63,7 +63,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   // Setup specific cell editor
   if (cellType !== undefined && displayModeComponentMap[cellType] !== undefined) {
     let Comp: Function = displayModeComponentMap[cellType];
-    editor = <Comp cellOptions={value} onCellOptionsChange={onCellOptionsChange} />;
+    editor = <Comp cellOptions={value} onChange={onCellOptionsChange} />;
   }
 
   // Setup and inject editor
