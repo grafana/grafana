@@ -202,10 +202,10 @@ BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(
 FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 
 // TODO docs
-TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gauge" | "json-view" | "image" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|Gauge|JSONView|Image")
+TableCellType: "auto" | "color-text" | "color-background" | "color-background-solid" | "gauge" | "json-view" | "image" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|Gauge|JSONView|Image")
 
 // TODO Docs
-BackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
+TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
 
 
 // TODO docs
@@ -253,10 +253,26 @@ VizLegendOptions: {
 // TODO docs
 BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")
 
-// TODO docs
-TableCellOptions: {
-	displayMode: TableCellDisplayMode | *"auto"
+// Interface for table cell types that have no additional options.
+TableAutoCellOptions: {
+	type: TableCellType
 } @cuetsy(kind="interface")
+
+// Allows for the table cell gauge display type to set the gauge mode.
+TableBarGaugeCellOptions: {
+	type: TableCellType & "gauge"
+	mode: BarGaugeDisplayMode
+} @cuetsy(kind="interface")
+
+// Allows for the background display mode to be set for the color background cell.
+TableColoredBackgroundCellOptions: {
+	type: TableCellType & "color-background"
+	mode: TableCellBackgroundDisplayMode
+} @cuetsy(kind="interface")
+
+// Table cell options. Each cell has a display mode
+// and other potential options for that display. 
+TableCellOptions: TableAutoCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions @cuetsy(kind="type")
 
 // TODO docs
 TableFieldOptions: {
@@ -264,7 +280,7 @@ TableFieldOptions: {
 	minWidth?:   number
 	align: FieldTextAlignment | *"auto"
 	// This field is deprecated in favor of using cellOptions
-	displayMode: TableCellDisplayMode | *"auto"
+	displayMode?: TableCellType
 	cellOptions: TableCellOptions
 	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false

@@ -391,10 +391,9 @@ export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 /**
  * TODO docs
  */
-export enum TableCellDisplayMode {
+export enum TableCellType {
   Auto = 'auto',
   ColorBackground = 'color-background',
-  // Deprecated
   ColorBackgroundSolid = 'color-background-solid',
   ColorText = 'color-text',
   Gauge = 'gauge',
@@ -483,39 +482,31 @@ export enum BarGaugeDisplayMode {
 /**
  * Interface for table cell types that have no additional options.
  */
-export interface TableCellNoOptions {
-  displayMode: TableCellDisplayMode;
+export interface TableAutoCellOptions {
+  type: TableCellType;
 }
 
 /**
  * Allows for the table cell gauge display type to set the gauge mode.
  */
-export interface TableGaugeCellOptions {
-  displayMode: TableCellDisplayMode.Gauge;
-  gaugeDisplayMode: BarGaugeDisplayMode;
+export interface TableBarGaugeCellOptions {
+  mode: BarGaugeDisplayMode;
+  type: TableCellType.Gauge;
 }
 
 /**
  * Allows for the background display mode to be set for the color background cell.
  */
-export interface TableColorBackgroundCellOptions {
-  displayMode: TableCellDisplayMode.ColorBackground;
-  backgroundDisplayMode: TableCellBackgroundDisplayMode;
+export interface TableColoredBackgroundCellOptions {
+  mode: TableCellBackgroundDisplayMode;
+  type: TableCellType.ColorBackground;
 }
-
 
 /**
  * Table cell options. Each cell has a display mode
- * and other potential options for that display.  
+ * and other potential options for that display.
  */
-export type TableCellOptions = TableCellNoOptions | TableGaugeCellOptions | TableColorBackgroundCellOptions;
-
-/**
- * Default options for table cell display.
- */
-export const defaultTableCellOptions: Partial<TableCellOptions> = {
-  displayMode: TableCellDisplayMode.Auto,
-};
+export type TableCellOptions = (TableAutoCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions);
 
 /**
  * TODO docs
@@ -523,6 +514,10 @@ export const defaultTableCellOptions: Partial<TableCellOptions> = {
 export interface TableFieldOptions {
   align: FieldTextAlignment;
   cellOptions: TableCellOptions;
+  /**
+   * This field is deprecated in favor of using cellOptions
+   */
+  displayMode?: TableCellType;
   filterable?: boolean;
   hidden?: boolean;
   inspect: boolean;
