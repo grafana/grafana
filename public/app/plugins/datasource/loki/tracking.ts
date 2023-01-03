@@ -1,5 +1,5 @@
-import { CoreApp, DashboardLoadedEvent, DataQueryResponse } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { CoreApp, DashboardLoadedEvent, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { reportInteraction, config } from '@grafana/runtime';
 import { variableRegex } from 'app/features/variables/utils';
 
 import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
@@ -132,18 +132,35 @@ const shouldNotReportBasedOnRefId = (refId: string): boolean => {
   return false;
 };
 
-export function trackQuery(response: DataQueryResponse, queries: LokiQuery[], app: string): void {
+export function trackQuery(
+  response: DataQueryResponse,
+  request: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] },
+  startTime: Date
+): void {
   // We only want to track usage for these specific apps
+  const { app, targets: queries } = request;
+
   if (app === CoreApp.Dashboard || app === CoreApp.PanelViewer) {
     return;
+  }
+
+  let totalBytes = 0;
+  for (const frame of response.data) {
+    const byteKey = frame.meta?.custom?.lokiQueryStatKey;
+    if (byteKey) {
+      totalBytes +=
+        frame.meta?.stats?.find((stat: { displayName: string }) => stat.displayName === byteKey)?.value ?? 0;
+    }
   }
 
   for (const query of queries) {
     if (shouldNotReportBasedOnRefId(query.refId)) {
       return;
     }
+
     reportInteraction('grafana_loki_query_executed', {
       app,
+      grafana_version: config.buildInfo.version,
       editor_mode: query.editorMode,
       has_data: response.data.some((frame) => frame.length > 0),
       has_error: response.error !== undefined,
@@ -154,6 +171,10 @@ export function trackQuery(response: DataQueryResponse, queries: LokiQuery[], ap
       query_vector_type: query.queryType,
       resolution: query.resolution,
       simultaneously_sent_query_count: queries.length,
+      time_range_from: request?.range?.from?.toISOString(),
+      time_range_to: request?.range?.to?.toISOString(),
+      time_taken: Date.now() - startTime.getTime(),
+      bytes_processed: totalBytes,
     });
   }
 }

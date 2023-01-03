@@ -12,6 +12,7 @@ import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { CompletionDataProvider } from './monaco-completion-provider/CompletionDataProvider';
+import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -78,12 +79,13 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initialValue }: Props) => {
+const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasource }: Props) => {
   const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
-  const langProviderRef = useLatest(languageProvider);
+
+  const langProviderRef = useLatest(datasource.languageProvider);
   const historyRef = useLatest(history);
   const onRunQueryRef = useLatest(onRunQuery);
   const onBlurRef = useLatest(onBlur);
@@ -123,7 +125,29 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
             isEditorFocused.set(false);
             onBlurRef.current(editor.getValue());
           });
-          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef.current);
+          editor.onDidChangeModelContent((e) => {
+            const model = editor.getModel();
+            if (!model) {
+              return;
+            }
+            const query = model.getValue();
+            const errors =
+              validateQuery(
+                query,
+                datasource.interpolateString(query, placeHolderScopedVars),
+                model.getLinesContent()
+              ) || [];
+
+            const markers = errors.map(({ error, ...boundary }) => ({
+              message: `${
+                error ? `Error parsing "${error}"` : 'Parse error'
+              }. The query appears to be incorrect and could fail to be executed.`,
+              severity: monaco.MarkerSeverity.Error,
+              ...boundary,
+            }));
+            monaco.editor.setModelMarkers(model, 'owner', markers);
+          });
+          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef);
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,

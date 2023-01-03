@@ -41,7 +41,7 @@ export interface SQLExpression {
 }
 
 export interface CloudWatchMetricsQuery extends MetricStat, DataQuery {
-  queryMode?: 'Metrics';
+  queryMode?: CloudWatchQueryMode;
   metricQueryType?: MetricQueryType;
   metricEditorMode?: MetricEditorMode;
 
@@ -96,7 +96,7 @@ export enum CloudWatchLogsQueryStatus {
 }
 
 export interface CloudWatchLogsQuery extends DataQuery {
-  queryMode: 'Logs';
+  queryMode: CloudWatchQueryMode;
   id: string;
   region: string;
   expression?: string;
@@ -105,11 +105,17 @@ export interface CloudWatchLogsQuery extends DataQuery {
   /* not quite deprecated yet, but will be soon */
   logGroupNames?: string[];
 }
+// We want to allow setting defaults for both Logs and Metrics queries
+export type CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery;
 
-export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery | CloudWatchAnnotationQuery;
+export type CloudWatchQuery =
+  | CloudWatchMetricsQuery
+  | CloudWatchLogsQuery
+  | CloudWatchAnnotationQuery
+  | CloudWatchDefaultQuery;
 
 export interface CloudWatchAnnotationQuery extends MetricStat, DataQuery {
-  queryMode: 'Annotations';
+  queryMode: CloudWatchQueryMode;
   prefixMatching?: boolean;
   actionPrefix?: string;
   alarmNamePrefix?: string;

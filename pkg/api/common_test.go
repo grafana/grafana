@@ -305,9 +305,11 @@ type accessControlScenarioContext struct {
 	// cfg is the setting provider
 	cfg *setting.Cfg
 
-	dashboardsStore dashboards.Store
-	teamService     team.Service
-	userService     user.Service
+	dashboardsStore             dashboards.Store
+	teamService                 team.Service
+	userService                 user.Service
+	folderPermissionsService    *accesscontrolmock.MockPermissionsService
+	dashboardPermissionsService *accesscontrolmock.MockPermissionsService
 }
 
 func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []accesscontrol.Permission, org int64) {
@@ -417,6 +419,9 @@ func setupHTTPServerWithCfgDb(
 	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license, acService, teamService, userSvc)
 	require.NoError(t, err)
 
+	folderPermissionsService := accesscontrolmock.NewMockedPermissionsService()
+	dashboardPermissionsService := accesscontrolmock.NewMockedPermissionsService()
+
 	// Create minimal HTTP Server
 	hs := &HTTPServer{
 		Cfg:                    cfg,
@@ -432,7 +437,7 @@ func setupHTTPServerWithCfgDb(
 		searchUsersService:     searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		DashboardService: dashboardservice.ProvideDashboardService(
 			cfg, dashboardsStore, nil, features,
-			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(), ac,
+			folderPermissionsService, dashboardPermissionsService, ac,
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
 		userService:       userSvc,
@@ -469,15 +474,17 @@ func setupHTTPServerWithCfgDb(
 	hs.RouteRegister.Register(m.Router)
 
 	return accessControlScenarioContext{
-		server:          m,
-		initCtx:         initCtx,
-		hs:              hs,
-		acmock:          acmock,
-		db:              db,
-		cfg:             cfg,
-		dashboardsStore: dashboardsStore,
-		teamService:     teamService,
-		userService:     userSvc,
+		server:                      m,
+		initCtx:                     initCtx,
+		hs:                          hs,
+		acmock:                      acmock,
+		db:                          db,
+		cfg:                         cfg,
+		dashboardsStore:             dashboardsStore,
+		teamService:                 teamService,
+		userService:                 userSvc,
+		dashboardPermissionsService: dashboardPermissionsService,
+		folderPermissionsService:    folderPermissionsService,
 	}
 }
 

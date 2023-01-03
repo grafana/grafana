@@ -46,7 +46,7 @@ export function isExpressionReference(ref?: DataSourceRef | string | null): bool
   if (!ref) {
     return false;
   }
-  const v = (ref as any).type ?? ref;
+  const v = typeof ref === 'string' ? ref : ref.type;
   return v === ExpressionDatasourceRef.type || v === '-100'; // -100 was a legacy accident that should be removed
 }
 
@@ -88,7 +88,7 @@ enum PluginRequestHeaders {
  *
  * @public
  */
-export type HealthCheckResultDetails = Record<string, any> | undefined;
+export type HealthCheckResultDetails = Record<string, unknown> | undefined;
 
 /**
  * Describes the payload returned when checking the health of a data source
@@ -320,8 +320,8 @@ class DataSourceWithBackend<
         headers: this.getRequestHeaders(),
       })
     )
-      .then((v: FetchResponse) => v.data as HealthCheckResult)
-      .catch((err) => err.data as HealthCheckResult);
+      .then((v: FetchResponse) => v.data)
+      .catch((err) => err.data);
   }
 
   /**
@@ -360,7 +360,7 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
   for (const f of rsp.data) {
     const addr = parseLiveChannelAddress(f.meta?.channel);
     if (addr) {
-      const frame = f as DataFrame;
+      const frame: DataFrame = f;
       streams.push(
         live.getDataStream({
           addr,

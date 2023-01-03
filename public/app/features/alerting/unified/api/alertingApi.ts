@@ -5,7 +5,7 @@ import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 
 import { logInfo } from '../Analytics';
 
-const backendSrvBaseQuery = (): BaseQueryFn<BackendSrvRequest> => async (requestOptions) => {
+export const backendSrvBaseQuery = (): BaseQueryFn<BackendSrvRequest> => async (requestOptions) => {
   try {
     const requestStartTs = performance.now();
 
