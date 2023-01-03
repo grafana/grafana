@@ -340,10 +340,25 @@ const Policy: FC<PolicyComponentProps> = ({
                 <span className={styles.metadata}>No matchers</span>
               )}
               <Spacer />
-              {/* TODO show details for multiple warning, also show errors from contact points if possible */}
               {warnings.length === 1 && warnings[0]}
               {warnings.length > 1 && (
-                <Badge icon="exclamation-triangle" color="orange" text={pluralize('warning', warnings.length, true)} />
+                <HoverCard
+                  arrow
+                  placement="top"
+                  content={
+                    <Stack direction="column" gap={0.5}>
+                      {warnings}
+                    </Stack>
+                  }
+                >
+                  <span>
+                    <Badge
+                      icon="exclamation-triangle"
+                      color="orange"
+                      text={pluralize('warning', warnings.length, true)}
+                    />
+                  </span>
+                </HoverCard>
               )}
               {!readOnly && (
                 <Stack direction="row" gap={0.5}>
@@ -365,9 +380,7 @@ const Policy: FC<PolicyComponentProps> = ({
                       size="sm"
                       onClick={() => showDeleteModal(currentRoute)}
                       type="button"
-                    >
-                      Delete
-                    </Button>
+                    />
                   )}
                 </Stack>
               )}
