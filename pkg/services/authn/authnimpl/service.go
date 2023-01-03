@@ -69,24 +69,21 @@ type Service struct {
 }
 
 func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Request) (*authn.Identity, bool, error) {
-	ctx, span := s.tracer.Start(ctx, "authn.Authenticate")
-	defer span.End()
-
-	span.SetAttributes("authn.client", client, attribute.Key("authn.client").String(client))
-	logger := s.log.FromContext(ctx)
-
 	c, ok := s.clients[client]
 	if !ok {
-		logger.Debug("auth client not found", "client", client)
-		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client is not configured"}})
 		return nil, false, nil
 	}
 
 	if !c.Test(ctx, r) {
-		logger.Debug("auth client cannot handle request", "client", client)
-		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client cannot handle request"}})
 		return nil, false, nil
 	}
+
+	ctx, span := s.tracer.Start(ctx, "authn.Authenticate")
+	defer span.End()
+	span.SetAttributes("authn.client", client, attribute.Key("authn.client").String(client))
+
+	logger := s.log.FromContext(ctx)
+	logger.Debug("authenticate request", "client", client)
 
 	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
@@ -97,13 +94,13 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 	}
 
 	params := c.ClientParams()
-
 	for _, hook := range s.postAuthHooks {
 		if err := hook(ctx, params, identity); err != nil {
 			return nil, false, err
 		}
 	}
 
+	logger.Debug("successfully authenticated the request", "id", identity.ID, "orgId", identity.OrgID)
 	return identity, true, nil
 }
 
