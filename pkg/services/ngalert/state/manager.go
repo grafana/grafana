@@ -239,7 +239,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		logger.Debug("Ignoring set next state as result is pending")
 	}
 
-	// Set reason iff: result is different from state, reason is not Alerting or Normal
+	// Set reason iff: result and state are different, reason is not Alerting or Normal
 	currentState.StateReason = ""
 
 	if currentState.State != result.State &&
