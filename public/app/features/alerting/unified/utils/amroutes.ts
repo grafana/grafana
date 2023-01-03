@@ -1,4 +1,4 @@
-import { omit, isUndefined, omitBy, uniqueId } from 'lodash';
+import { isUndefined, omitBy, uniqueId } from 'lodash';
 import { Validate } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
@@ -9,6 +9,7 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { matcherToMatcherField, parseMatcher } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { findExistingRoute } from './routeTree';
 import { parseInterval, timeOptions } from './time';
 
 const defaultValueAndType: [string, string] = ['', ''];
@@ -254,42 +255,6 @@ export const formAmRouteToAmRoute = (
   return omitBy(amRoute, isUndefined);
 };
 
-// make sure to omit the "id" because Prometheus / Loki / Mimir will reject the payload
-export const mergePartialAmRouteWithRouteTree = (
-  alertManagerSourceName: string,
-  partialFormRoute: Partial<FormAmRoute>,
-  routeTree: RouteWithID
-): Route => {
-  const existing = findExistingRoute(partialFormRoute.id ?? '', routeTree);
-  if (!existing) {
-    throw new Error(`No such route with ID '${partialFormRoute.id}'`);
-  }
-
-  function findAndReplace(currentRoute: RouteWithID): Route {
-    let updatedRoute: Route = currentRoute;
-
-    if (currentRoute.id === partialFormRoute.id) {
-      updatedRoute = omit(
-        {
-          ...currentRoute,
-          ...formAmRouteToAmRoute(alertManagerSourceName, partialFormRoute, routeTree),
-        },
-        'id'
-      );
-    }
-
-    return omit(
-      {
-        ...updatedRoute,
-        routes: currentRoute.routes?.map(findAndReplace),
-      },
-      ['id']
-    );
-  }
-
-  return findAndReplace(routeTree);
-};
-
 export const stringToSelectableValue = (str: string): SelectableValue<string> => ({
   label: str,
   value: str,
@@ -323,6 +288,3 @@ export const optionalPositiveInteger: Validate<string> = (value) => {
 
   return !/^\d+$/.test(value) ? 'Must be a positive integer.' : undefined;
 };
-function findExistingRoute(id: string, routeTree: RouteWithID): RouteWithID | undefined {
-  return routeTree.id === id ? routeTree : routeTree.routes?.find((route) => findExistingRoute(id, route));
-}

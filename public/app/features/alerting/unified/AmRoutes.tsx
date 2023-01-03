@@ -24,7 +24,7 @@ import {
   withErrorBoundary,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { ObjectMatcher, Receiver, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
@@ -47,9 +47,10 @@ import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertGroupsAction, fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { getNotificationsPermissions } from './utils/access-control';
-import { addUniqueIdentifierToRoute, mergePartialAmRouteWithRouteTree, normalizeMatchers } from './utils/amroutes';
+import { addUniqueIdentifierToRoute, normalizeMatchers } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
+import { mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
 
 enum ActiveTab {
   NotificationPolicies,
@@ -99,10 +100,18 @@ const AmRoutes = () => {
   // const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
 
   function handleSave(partialRoute: Partial<FormAmRoute>) {
-    if (!result || !rootRoute) {
+    if (!rootRoute) {
       return;
     }
     const newRouteTree = mergePartialAmRouteWithRouteTree(alertManagerSourceName ?? '', partialRoute, rootRoute);
+
+    updateRouteTree(newRouteTree);
+  }
+
+  function updateRouteTree(routeTree: Route) {
+    if (!result) {
+      return;
+    }
 
     dispatch(
       updateAlertManagerConfigAction({
@@ -110,7 +119,7 @@ const AmRoutes = () => {
           ...result,
           alertmanager_config: {
             ...result.alertmanager_config,
-            route: newRouteTree,
+            route: routeTree,
           },
         },
         oldConfig: result,
@@ -126,11 +135,22 @@ const AmRoutes = () => {
         }
         closeEditModal();
         closeAddModal();
+        closeDeleteModal();
       });
   }
 
+  function handleDelete(route: RouteWithID) {
+    if (!rootRoute) {
+      return;
+    }
+    const newRouteTree = omitRouteFromRouteTree(route, rootRoute);
+    updateRouteTree(newRouteTree);
+  }
+
+  // edit, add, delete modals
   const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(receivers, handleSave);
   const [editModal, openEditModal, closeEditModal] = useEditPolicyModal(receivers, handleSave);
+  const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete);
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
@@ -224,10 +244,12 @@ const AmRoutes = () => {
                     alertManagerSourceName={alertManagerSourceName}
                     onAddPolicy={openAddModal}
                     onEditPolicy={openEditModal}
+                    onDeletePolicy={openDeleteModal}
                   />
                 )}
                 {addModal}
                 {editModal}
+                {deleteModal}
               </>
             )}
             {activeTab === ActiveTab.MuteTimings && (
@@ -263,6 +285,7 @@ interface PolicyComponentProps {
   currentRoute: RouteWithID;
   onEditPolicy: (route: RouteWithID, isDefault?: boolean) => void;
   onAddPolicy: (route: RouteWithID) => void;
+  onDeletePolicy: (route: RouteWithID) => void;
 }
 
 const Policy: FC<PolicyComponentProps> = ({
@@ -281,10 +304,10 @@ const Policy: FC<PolicyComponentProps> = ({
   currentRoute,
   onEditPolicy,
   onAddPolicy,
+  onDeletePolicy,
 }) => {
   const styles = useStyles2(getStyles);
   const isDefaultPolicy = isDefault !== undefined;
-  const [deleteModal, showDeleteModal] = useDeletePolicyModal();
 
   const permissions = getNotificationsPermissions(alertManagerSourceName);
   const canEditRoutes = contextSrv.hasPermission(permissions.update);
@@ -373,12 +396,12 @@ const Policy: FC<PolicyComponentProps> = ({
                       Edit
                     </Button>
                   )}
-                  {canDeleteRoutes && (
+                  {canDeleteRoutes && !isDefault && (
                     <Button
                       variant="secondary"
                       icon="trash-alt"
                       size="sm"
-                      onClick={() => showDeleteModal(currentRoute)}
+                      onClick={() => onDeletePolicy(currentRoute)}
                       type="button"
                     />
                   )}
@@ -464,6 +487,7 @@ const Policy: FC<PolicyComponentProps> = ({
             continueMatching={route.continue}
             onAddPolicy={onAddPolicy}
             onEditPolicy={onEditPolicy}
+            onDeletePolicy={onDeletePolicy}
             alertManagerSourceName={alertManagerSourceName}
           />
         ))}
@@ -475,7 +499,6 @@ const Policy: FC<PolicyComponentProps> = ({
           isDefaultPolicy={isDefaultPolicy}
         />
       </div>
-      {deleteModal}
     </Stack>
   );
 };
@@ -854,9 +877,9 @@ const useEditPolicyModal = (
   return [modalElement, handleShow, handleDismiss];
 };
 
-const useDeletePolicyModal = (): ModalHook<RouteWithID> => {
+const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void): ModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [_, setRoute] = useState<RouteWithID>();
+  const [route, setRoute] = useState<RouteWithID>();
 
   const handleDismiss = useCallback(() => {
     setRoute(undefined);
@@ -864,7 +887,7 @@ const useDeletePolicyModal = (): ModalHook<RouteWithID> => {
   }, [setRoute]);
 
   const handleShow = useCallback((route: RouteWithID) => {
-    setRoute(undefined);
+    setRoute(route);
     setShowModal(true);
   }, []);
 
@@ -877,13 +900,12 @@ const useDeletePolicyModal = (): ModalHook<RouteWithID> => {
         confirmText="Yes, delete"
         icon="exclamation-triangle"
         onConfirm={() => {
-          // TODO implement delete of route
-          handleDismiss();
+          route && handleDelete(route);
         }}
         onDismiss={handleDismiss}
       />
     ),
-    [handleDismiss, showModal]
+    [handleDelete, handleDismiss, route, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
