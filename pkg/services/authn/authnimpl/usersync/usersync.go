@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 func ProvideUserSync(userService user.Service, authInfoService login.AuthInfoService, quotaService quota.Service) *UserSync {
@@ -27,7 +26,7 @@ type UserSync struct {
 
 // SyncUser syncs a user with the database
 func (s *UserSync) SyncUser(ctx context.Context,
-	clientParams *authn.ClientParams, id *authn.Identity, _ web.ResponseWriter) error {
+	clientParams *authn.ClientParams, id *authn.Identity, _ *authn.Request) error {
 	if !clientParams.SyncUser {
 		s.log.Debug("Not syncing user", "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return nil

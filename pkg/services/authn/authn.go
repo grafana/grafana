@@ -30,7 +30,7 @@ type ClientParams struct {
 }
 
 type PostAuthHookFn func(ctx context.Context,
-	clientParams *ClientParams, identity *Identity, resp web.ResponseWriter) error
+	clientParams *ClientParams, identity *Identity, r *Request) error
 
 type Service interface {
 	// RegisterPostAuthHook registers a hook that is called after a successful authentication.

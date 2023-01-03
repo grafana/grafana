@@ -16,12 +16,16 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideSession(sessionService auth.UserTokenService, userService user.Service, cookieName string) *Session {
+var _ authn.Client = new(Session)
+
+func ProvideSession(sessionService auth.UserTokenService, userService user.Service,
+	cookieName string, maxLifetime time.Duration) *Session {
 	return &Session{
-		loginCookieName: cookieName,
-		sessionService:  sessionService,
-		userService:     userService,
-		log:             log.New(authn.ClientSession),
+		loginCookieName:  cookieName,
+		loginMaxLifetime: maxLifetime,
+		sessionService:   sessionService,
+		userService:      userService,
+		log:              log.New(authn.ClientSession),
 	}
 }
 
@@ -85,19 +89,19 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 }
 
 func (s *Session) RefreshTokenHook(ctx context.Context,
-	clientParams *authn.ClientParams, identity *authn.Identity, resp web.ResponseWriter) error {
+	clientParams *authn.ClientParams, identity *authn.Identity, r *authn.Request) error {
 	if identity.SessionToken == nil {
 		return nil
 	}
 
-	resp.Before(func(w web.ResponseWriter) {
+	r.Resp.Before(func(w web.ResponseWriter) {
 		if w.Written() || errors.Is(ctx.Err(), context.Canceled) {
 			return
 		}
 
 		// FIXME (jguer): get real values
-		addr := "1.1.1.1"
-		userAgent := "unknown"
+		addr := web.RemoteAddr(r.HTTPRequest)
+		userAgent := r.HTTPRequest.UserAgent()
 
 		// addr := reqContext.RemoteAddr()
 		ip, err := network.GetIPFromAddress(addr)
@@ -118,7 +122,7 @@ func (s *Session) RefreshTokenHook(ctx context.Context,
 			if s.loginMaxLifetime <= 0 {
 				maxAge = -1
 			}
-			cookies.WriteCookie(resp, s.loginCookieName, url.QueryEscape(identity.SessionToken.UnhashedToken), maxAge, nil)
+			cookies.WriteCookie(r.Resp, s.loginCookieName, url.QueryEscape(identity.SessionToken.UnhashedToken), maxAge, nil)
 		}
 	})
 

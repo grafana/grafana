@@ -43,7 +43,7 @@ func ProvideService(
 
 	s.clients[authn.ClientAPIKey] = clients.ProvideAPIKey(apikeyService, userService)
 
-	sessionClient := clients.ProvideSession(sessionService, userService, cfg.LoginCookieName)
+	sessionClient := clients.ProvideSession(sessionService, userService, cfg.LoginCookieName, cfg.LoginMaxLifetime)
 	s.clients[authn.ClientSession] = sessionClient
 	s.RegisterPostAuthHook(sessionClient.RefreshTokenHook)
 
@@ -113,7 +113,7 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 	params := c.ClientParams()
 
 	for _, hook := range s.postAuthHooks {
-		if err := hook(ctx, params, identity, r.Resp); err != nil {
+		if err := hook(ctx, params, identity, r); err != nil {
 			return nil, false, err
 		}
 	}
