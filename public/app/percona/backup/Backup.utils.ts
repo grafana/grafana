@@ -1,5 +1,6 @@
 import { Messages } from './Backup.messages';
-import { DataModel, RestoreStatus, BackupStatus, BackupMode } from './Backup.types';
+import { BackupMode, BackupStatus, DataModel, RestoreStatus } from './Backup.types';
+import { StorageLocation } from './components/StorageLocations/StorageLocations.types';
 
 const { status: statusMsg, dataModel: dataModelMsg, backupMode: backupModeMsg } = Messages;
 
@@ -43,3 +44,6 @@ export const formatBackupMode = (mode: BackupMode): string => {
 
   return map[mode] || map[BackupMode.INVALID];
 };
+
+export const formatLocationsToMap = (locations: StorageLocation[]) =>
+  locations.reduce((map: Record<string, StorageLocation>, obj) => ((map[obj.locationID] = obj), map), {});

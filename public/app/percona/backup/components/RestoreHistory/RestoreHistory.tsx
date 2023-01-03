@@ -1,6 +1,7 @@
 /* eslint-disable react/display-name */
 import { logger } from '@percona/platform-core';
-import React, { FC, useState, useMemo, useEffect, useCallback } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Column, Row } from 'react-table';
 
 import { OldPage } from 'app/core/components/Page/Page';
@@ -9,10 +10,13 @@ import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoa
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
-import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
+import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backupLocations';
+import { getBackupLocations, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
+import { useAppDispatch } from 'app/store/store';
 
 import { Messages } from '../../Backup.messages';
+import { formatLocationsToMap } from '../../Backup.utils';
 import { useRecurringCall } from '../../hooks/recurringCall.hook';
 import { DetailedDate } from '../DetailedDate';
 import { Status } from '../Status';
@@ -29,6 +33,11 @@ export const RestoreHistory: FC = () => {
   const navModel = usePerconaNavModel('restore-history');
   const [generateToken] = useCancelToken();
   const [triggerTimeout] = useRecurringCall();
+  const dispatch = useAppDispatch();
+  const { result: locations = [] } = useSelector(getBackupLocations);
+
+  const locationsByLocationId = useMemo(() => formatLocationsToMap(locations), [locations]);
+
   const columns = useMemo(
     (): Array<Column<Restore>> => [
       {
@@ -62,6 +71,11 @@ export const RestoreHistory: FC = () => {
       {
         Header: Messages.backupInventory.table.columns.location,
         accessor: 'locationName',
+        Cell: ({ row, value }) => (
+          <span>
+            {value} ({locationsByLocationId[row.original.locationId]?.type})
+          </span>
+        ),
       },
       {
         Header: Messages.restoreHistory.table.columns.actions,
@@ -71,7 +85,7 @@ export const RestoreHistory: FC = () => {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [locationsByLocationId]
   );
 
   const renderSelectedSubRow = React.useCallback(
@@ -91,6 +105,7 @@ export const RestoreHistory: FC = () => {
   useEffect(() => {
     const getData = async (showLoading = false) => {
       showLoading && setPending(true);
+      await dispatch(fetchStorageLocations());
 
       try {
         const restores = await RestoreHistoryService.list(generateToken(LIST_RESTORES_CANCEL_TOKEN));

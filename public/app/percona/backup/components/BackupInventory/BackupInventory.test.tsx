@@ -27,7 +27,9 @@ describe('BackupInventory', () => {
     );
 
     await screen.findByText('Backup 1');
-    expect(screen.getByText('Location 1')).toBeTruthy();
+    expect(screen.getByText('Location 1 (S3)')).toBeTruthy();
     expect(screen.getByText('Service 1')).toBeTruthy();
+    expect(screen.getByText('Location 2 (Local Client)')).toBeTruthy();
+    expect(screen.getByText('Service 2')).toBeTruthy();
   });
 });

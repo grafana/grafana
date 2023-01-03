@@ -1,7 +1,8 @@
 /* eslint-disable react/display-name */
 import { logger } from '@percona/platform-core';
 import cronstrue from 'cronstrue';
-import React, { FC, useState, useMemo, useEffect, useCallback } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Cell, Column, Row } from 'react-table';
 
 import { AppEvents, urlUtil } from '@grafana/data';
@@ -16,13 +17,13 @@ import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { DATABASE_LABELS } from 'app/percona/shared/core';
 import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backupLocations';
-import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
+import { getBackupLocations, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { useAppDispatch } from 'app/store/store';
 
 import { Messages } from '../../Backup.messages';
 import { BackupService } from '../../Backup.service';
-import { formatBackupMode } from '../../Backup.utils';
+import { formatBackupMode, formatLocationsToMap } from '../../Backup.utils';
 import { DetailedDate } from '../DetailedDate';
 
 import { LIST_SCHEDULED_BACKUPS_CANCEL_TOKEN } from './ScheduledBackups.constants';
@@ -34,7 +35,7 @@ import { ScheduledBackupDetails } from './ScheduledBackupsDetails';
 
 export const ScheduledBackups: FC = () => {
   const [data, setData] = useState<ScheduledBackup[]>([]);
-  const [pending, setPending] = useState(false);
+  const [pending, setPending] = useState(true);
   const [actionPending, setActionPending] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<ScheduledBackup | null>(null);
@@ -43,6 +44,8 @@ export const ScheduledBackups: FC = () => {
   const [generateToken] = useCancelToken();
   const dispatch = useAppDispatch();
   const styles = useStyles(getStyles);
+  const { result: locations = [] } = useSelector(getBackupLocations);
+  const locationsByLocationId = useMemo(() => formatLocationsToMap(locations), [locations]);
 
   const retentionValue = useCallback((n: number) => {
     if (n < 0) {
@@ -58,6 +61,7 @@ export const ScheduledBackups: FC = () => {
 
   const getData = useCallback(async () => {
     setPending(true);
+    await dispatch(fetchStorageLocations());
     try {
       const backups = await ScheduledBackupsService.list(generateToken(LIST_SCHEDULED_BACKUPS_CANCEL_TOKEN));
       setData(backups);
@@ -156,6 +160,11 @@ export const ScheduledBackups: FC = () => {
       {
         Header: Messages.scheduledBackups.table.columns.location,
         accessor: 'locationName',
+        Cell: ({ row, value }) => (
+          <span>
+            {value} ({locationsByLocationId[row.original.locationId]?.type})
+          </span>
+        ),
       },
       {
         Header: Messages.scheduledBackups.table.columns.lastBackup,
@@ -180,7 +189,7 @@ export const ScheduledBackups: FC = () => {
         ),
       },
     ],
-    [actionPending, handleCopy, handleToggle, retentionValue]
+    [actionPending, handleCopy, handleToggle, locationsByLocationId, retentionValue]
   );
 
   const renderSelectedSubRow = React.useCallback(
@@ -232,7 +241,6 @@ export const ScheduledBackups: FC = () => {
 
   useEffect(() => {
     getData();
-    dispatch(fetchStorageLocations());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
