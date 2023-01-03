@@ -102,7 +102,7 @@ var (
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
-			Description:     "Public dashboard email sharing",
+			Description:     "Allows public dashboard sharing to be restricted to only allowed emails",
 			State:           FeatureStateAlpha,
 			RequiresLicense: true,
 			RequiresDevMode: true,
