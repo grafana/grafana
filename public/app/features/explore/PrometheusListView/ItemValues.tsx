@@ -57,23 +57,15 @@ export const ItemValues = ({
   return (
     <div role={'cell'} className={styles.rowValuesWrap}>
       {values?.map((value) => {
-        if (hideFieldsWithoutValues) {
-          if (value.value !== undefined && value.value !== RawPrometheusListItemEmptyValue) {
-            return (
-              <span key={value.key} className={styles.rowWrapper}>
-                <span className={styles.rowValue}>{value.value}</span>
-              </span>
-            );
-          } else {
-            return null;
-          }
-        } else {
-          return (
-            <span key={value.key} className={styles.rowWrapper}>
-              <span className={styles.rowValue}>{value.value}</span>
-            </span>
-          );
+        if (hideFieldsWithoutValues && (value.value === undefined || value.value === RawPrometheusListItemEmptyValue)) {
+          return null;
         }
+
+        return (
+          <span key={value.key} className={styles.rowWrapper}>
+            <span className={styles.rowValue}>{value.value}</span>
+          </span>
+        );
       })}
     </div>
   );
