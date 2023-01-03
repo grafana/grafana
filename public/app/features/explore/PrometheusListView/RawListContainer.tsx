@@ -52,7 +52,7 @@ const RawListContainer = (props: RawListContainerProps) => {
   const { tableResult } = props;
   let dataFrame = cloneDeep(tableResult);
   const styles = getRawListContainerStyles();
-  let listRef = useRef<List | null>(null);
+  const listRef = useRef<List | null>(null);
 
   const valueLabels = dataFrame.fields.filter((field) => field.name.includes('Value'));
   const items = getRawPrometheusListItemsFromDataFrame(dataFrame);
