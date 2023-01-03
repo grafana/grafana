@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func ProvideOrgSync(userService user.Service, orgService org.Service, accessControl accesscontrol.Service) *OrgSync {
@@ -27,7 +28,8 @@ type OrgSync struct {
 	log log.Logger
 }
 
-func (s *OrgSync) SyncOrgUser(ctx context.Context, clientParams *authn.ClientParams, id *authn.Identity) error {
+func (s *OrgSync) SyncOrgUser(ctx context.Context,
+	clientParams *authn.ClientParams, id *authn.Identity, _ web.ResponseWriter) error {
 	if !clientParams.SyncUser {
 		s.log.Debug("Not syncing org user", "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return nil

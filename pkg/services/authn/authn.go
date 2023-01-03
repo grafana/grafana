@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
 	"golang.org/x/oauth2"
 )
 
@@ -28,7 +29,8 @@ type ClientParams struct {
 	EnableDisabledUsers bool
 }
 
-type PostAuthHookFn func(ctx context.Context, clientParams *ClientParams, identity *Identity) error
+type PostAuthHookFn func(ctx context.Context,
+	clientParams *ClientParams, identity *Identity, resp web.ResponseWriter) error
 
 type Service interface {
 	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
@@ -49,6 +51,9 @@ type Request struct {
 	// OrgID will be populated by authn.Service
 	OrgID       int64
 	HTTPRequest *http.Request
+
+	// for use in post auth hooks
+	Resp web.ResponseWriter
 }
 
 const (

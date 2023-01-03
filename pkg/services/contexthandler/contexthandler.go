@@ -477,7 +477,8 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 
 func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, orgID int64) bool {
 	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
-		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientSession, &authn.Request{HTTPRequest: reqContext.Req})
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(),
+			authn.ClientSession, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 		if !ok {
 			return false
 		}
@@ -608,6 +609,8 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext) w
 			reqContext.Logger.Debug("Failed to get client IP address", "addr", addr, "err", err)
 			ip = nil
 		}
+
+		// FIXME (jguer): rotation should return a new token instead of modifying the existing one.
 		rotated, err := h.AuthTokenService.TryRotateToken(ctx, reqContext.UserToken, ip, reqContext.Req.UserAgent())
 		if err != nil {
 			reqContext.Logger.Error("Failed to rotate token", "error", err)

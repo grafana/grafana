@@ -2,13 +2,18 @@ package clients
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/network"
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func ProvideSession(sessionService auth.UserTokenService, userService user.Service, cookieName string) *Session {
@@ -21,10 +26,11 @@ func ProvideSession(sessionService auth.UserTokenService, userService user.Servi
 }
 
 type Session struct {
-	loginCookieName string
-	sessionService  auth.UserTokenService
-	userService     user.Service
-	log             log.Logger
+	loginCookieName  string
+	loginMaxLifetime time.Duration // jguer: should be returned by session Service on rotate
+	sessionService   auth.UserTokenService
+	userService      user.Service
+	log              log.Logger
 }
 
 func (s *Session) ClientParams() *authn.ClientParams {
@@ -43,15 +49,11 @@ func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
 	if _, err := r.HTTPRequest.Cookie(s.loginCookieName); err != nil {
 		return false
 	}
+
 	return true
 }
 
 func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	if s.loginCookieName == "" { // FIXME: this should be handled by Test
-		return nil, nil
-	}
-
-	// get cookie from request
 	unescapedCookie, err := r.HTTPRequest.Cookie(s.loginCookieName)
 	if err != nil {
 		return nil, err
@@ -72,7 +74,7 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx,
 		&user.GetSignedInUserQuery{UserID: token.UserId, OrgID: r.OrgID})
 	if err != nil {
-		s.log.Error("Failed to get user with id", "userId", token.UserId, "error", err)
+		s.log.Error("failed to get user with id", "userId", token.UserId, "error", err)
 		return nil, err
 	}
 
@@ -81,4 +83,45 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	identity.SessionToken = token
 
 	return identity, nil
+}
+
+func (s *Session) RefreshTokenHook(ctx context.Context,
+	clientParams *authn.ClientParams, identity *authn.Identity, resp web.ResponseWriter) error {
+	if identity.SessionToken == nil {
+		return nil
+	}
+
+	resp.Before(func(w web.ResponseWriter) {
+		if w.Written() || errors.Is(ctx.Err(), context.Canceled) {
+			return
+		}
+
+		// FIXME (jguer): get real values
+		addr := "1.1.1.1"
+		userAgent := "unknown"
+
+		// addr := reqContext.RemoteAddr()
+		ip, err := network.GetIPFromAddress(addr)
+		if err != nil {
+			s.log.Debug("failed to get client IP address", "addr", addr, "err", err)
+			ip = nil
+		}
+		rotated, err := s.sessionService.TryRotateToken(ctx, identity.SessionToken, ip, userAgent)
+		if err != nil {
+			s.log.Error("failed to rotate token", "error", err)
+			return
+		}
+
+		if rotated {
+			s.log.Debug("rotated session token", "user", identity.ID)
+
+			maxAge := int(s.loginMaxLifetime.Seconds())
+			if s.loginMaxLifetime <= 0 {
+				maxAge = -1
+			}
+			cookies.WriteCookie(resp, s.loginCookieName, url.QueryEscape(identity.SessionToken.UnhashedToken), maxAge, nil)
+		}
+	})
+
+	return nil
 }
