@@ -76,7 +76,7 @@ export function useAutoDetectFeatures({ props, setVersionOptions }: Options) {
 function isValidConfig(options: DataSourceSettings<PostgresOptions, SecureJsonData>) {
   return (
     options.url &&
-    options.database &&
+    options.jsonData.database &&
     options.user &&
     (options.secureJsonData?.password || options.secureJsonFields?.password) &&
     (options.jsonData.sslmode === PostgresTLSModes.disable ||

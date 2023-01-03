@@ -14,6 +14,7 @@ var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-reques
 var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
 var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.too-deep")
+var ErrCircularReference = errutil.NewBase(errutil.StatusBadRequest, "folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 
 const (
 	GeneralFolderUID     = "general"
@@ -75,10 +76,20 @@ type CreateFolderCommand struct {
 // UpdateFolderCommand captures the information required by the folder service
 // to update a folder. Use Move to update a folder's parent folder.
 type UpdateFolderCommand struct {
-	Folder         *Folder `json:"folder"` // The extant folder
-	NewUID         *string `json:"uid" xorm:"uid"`
-	NewTitle       *string `json:"title"`
-	NewDescription *string `json:"description"`
+	UID   string `json:"-"`
+	OrgID int64  `json:"-"`
+	// NewUID it's an optional parameter used for overriding the existing folder UID
+	NewUID *string `json:"uid"` // keep same json tag with the legacy command for not breaking the existing APIs
+	// NewTitle it's an optional parameter used for overriding the existing folder title
+	NewTitle *string `json:"title"` // keep same json tag with the legacy command for not breaking the existing APIs
+	// NewDescription it's an optional parameter used for overriding the existing folder description
+	NewDescription *string `json:"description"` // keep same json tag with the legacy command for not breaking the existing APIs
+	NewParentUID   *string `json:"-"`
+
+	// Version only used by the legacy folder implementation
+	Version int `json:"version"`
+	// Overwrite only used by the legacy folder implementation
+	Overwrite bool `json:"overwrite"`
 
 	SignedInUser *user.SignedInUser `json:"-"`
 }
@@ -123,10 +134,10 @@ type GetParentsQuery struct {
 	OrgID int64  `xorm:"org_id"`
 }
 
-// GetTreeCommand captures the information required by the folder service to
+// GetChildrenQuery captures the information required by the folder service to
 // return a list of child folders of the given folder.
 
-type GetTreeQuery struct {
+type GetChildrenQuery struct {
 	UID   string `xorm:"uid"`
 	OrgID int64  `xorm:"org_id"`
 	Depth int64
@@ -134,6 +145,8 @@ type GetTreeQuery struct {
 	// Pagination options
 	Limit int64
 	Page  int64
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // ToLegacyModel is temporary until the two folder services are merged

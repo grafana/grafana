@@ -57,6 +57,7 @@ describe('DashboardGrid', () => {
     const props: Props = {
       editPanel: null,
       viewPanel: null,
+      isEditable: true,
       dashboard: getTestDashboard(),
     };
     expect(() => render(<DashboardGrid {...props} />)).not.toThrow();

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -47,7 +48,11 @@ func TestService_SetUserPermission(t *testing.T) {
 			})
 
 			// seed user
-			user, err := sql.CreateUser(context.Background(), user.CreateUserCommand{Login: "test", OrgID: 1})
+			orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
+			require.NoError(t, err)
+			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+			require.NoError(t, err)
+			user, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 			require.NoError(t, err)
 
 			var hookCalled bool
@@ -204,7 +209,11 @@ func TestService_SetPermissions(t *testing.T) {
 			service, sql, teamSvc := setupTestEnvironment(t, []accesscontrol.Permission{}, tt.options)
 
 			// seed user
-			_, err := sql.CreateUser(context.Background(), user.CreateUserCommand{Login: "user", OrgID: 1})
+			orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
+			require.NoError(t, err)
+			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+			require.NoError(t, err)
+			_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "user", OrgID: 1})
 			require.NoError(t, err)
 			_, err = teamSvc.CreateTeam("team", "", 1)
 			require.NoError(t, err)

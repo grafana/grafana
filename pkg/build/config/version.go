@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/build/git"
 )
 
 type Metadata struct {
@@ -100,8 +102,8 @@ func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 }
 
 func CheckDroneTargetBranch() (VersionMode, error) {
+	rePRCheckBranch := git.PRCheckRegexp()
 	reRlsBranch := regexp.MustCompile(`^v\d+\.\d+\.x$`)
-	rePRCheckBranch := regexp.MustCompile(`^pr-check-\d+`)
 	target := os.Getenv("DRONE_TARGET_BRANCH")
 	if target == "" {
 		return "", fmt.Errorf("failed to get DRONE_TARGET_BRANCH environmental variable")

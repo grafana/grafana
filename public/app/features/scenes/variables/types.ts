@@ -1,11 +1,13 @@
 import { Observable } from 'rxjs';
 
 import { BusEventWithPayload } from '@grafana/data';
+import { VariableType } from '@grafana/schema';
 import { VariableHide } from 'app/features/variables/types';
 
 import { SceneObject, SceneObjectStatePlain } from '../core/types';
 
 export interface SceneVariableState extends SceneObjectStatePlain {
+  type: VariableType;
   name: string;
   label?: string;
   hide?: VariableHide;
@@ -36,12 +38,21 @@ export interface SceneVariable<TState extends SceneVariableState = SceneVariable
 
 export type VariableValue = VariableValueSingle | VariableValueSingle[];
 
-export type VariableValueSingle = string | boolean | number;
+export type VariableValueSingle = string | boolean | number | VariableValueCustom;
+
+/**
+ * This is for edge case values like the custom "allValue" that should not be escaped/formatted like other values.
+ * The custom all value usually contain wildcards that should not be escaped.
+ */
+export interface VariableValueCustom {
+  isCustomValue: true;
+  toString(): string;
+}
 
 export interface ValidateAndUpdateResult {}
 export interface VariableValueOption {
   label: string;
-  value: string;
+  value: VariableValueSingle;
 }
 
 export interface SceneVariableSetState extends SceneObjectStatePlain {

@@ -114,6 +114,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       formatValue,
       splits,
       values,
+      incrs,
       isTime,
       timeZone,
       theme,
@@ -175,6 +176,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
           return this.calculateSpace(self, axisIdx, scaleMin, scaleMax, plotDim);
         }),
       filter,
+      incrs,
     };
 
     if (border != null) {

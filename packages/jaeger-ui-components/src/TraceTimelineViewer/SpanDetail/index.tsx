@@ -103,7 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-type SpanDetailProps = {
+export type SpanDetailProps = {
   detailState: DetailState;
   linksGetter: ((links: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   logItemToggle: (spanID: string, log: TraceLog) => void;

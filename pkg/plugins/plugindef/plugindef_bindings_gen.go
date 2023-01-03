@@ -77,7 +77,7 @@ func baseLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, er
 	//     but is invalid due to the violation of some general Thema invariant -
 	//     for example, declared schemas don't follow backwards compatibility rules,
 	//     lenses are incomplete.
-	return thema.BindLineage(raw, rt)
+	return thema.BindLineage(raw, rt, opts...)
 }
 
 // type guards

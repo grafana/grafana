@@ -99,7 +99,7 @@ LinkValue.defaultProps = {
   title: '',
 };
 
-type KeyValuesTableProps = {
+export type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
   linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
 };

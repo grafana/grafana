@@ -82,32 +82,27 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		SkipOrgSetup: cmd.SkipOrgSetup,
 	}
 	orgID, err := s.orgService.GetIDForNewUser(ctx, cmdOrg)
-	cmd.OrgID = orgID
 	if err != nil {
 		return nil, err
 	}
-
 	if cmd.Email == "" {
 		cmd.Email = cmd.Login
 	}
-	usr := &user.User{
-		Login: cmd.Login,
-		Email: cmd.Email,
-	}
-	usr, err = s.store.Get(ctx, usr)
-	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		return usr, err
+
+	err = s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
+	if err != nil {
+		return nil, user.ErrUserAlreadyExists
 	}
 
 	// create user
-	usr = &user.User{
+	usr := &user.User{
 		Email:            cmd.Email,
 		Name:             cmd.Name,
 		Login:            cmd.Login,
 		Company:          cmd.Company,
 		IsAdmin:          cmd.IsAdmin,
 		IsDisabled:       cmd.IsDisabled,
-		OrgID:            cmd.OrgID,
+		OrgID:            orgID,
 		EmailVerified:    cmd.EmailVerified,
 		Created:          time.Now(),
 		Updated:          time.Now(),
@@ -134,7 +129,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		usr.Password = encodedPassword
 	}
 
-	userID, err := s.store.Insert(ctx, usr)
+	_, err = s.store.Insert(ctx, usr)
 	if err != nil {
 		return nil, err
 	}
@@ -158,11 +153,10 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		}
 		_, err = s.orgService.InsertOrgUser(ctx, &orgUser)
 		if err != nil {
-			err := s.store.Delete(ctx, userID)
+			err := s.store.Delete(ctx, usr.ID)
 			return usr, err
 		}
 	}
-
 	return usr, nil
 }
 
@@ -353,4 +347,199 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 
 	limits.Set(globalQuotaTag, cfg.Quota.Global.User)
 	return limits, nil
+}
+
+// CreateUserForTests creates a test user and optionally an organization. Unlike
+// Create, `cmd.SkipOrgSetup` toggles whether or not to create an org for the
+// test user if there isn't already an existing org. This must only be used in tests.
+func (s *Service) CreateUserForTests(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	var orgID int64 = -1
+	var err error
+	if !cmd.SkipOrgSetup {
+		orgID, err = s.getOrgIDForNewUser(ctx, cmd)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if cmd.Email == "" {
+		cmd.Email = cmd.Login
+	}
+
+	usr, err := s.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: cmd.Login})
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
+		return usr, err
+	} else if err == nil { // user exists
+		return usr, err
+	}
+
+	// create user
+	usr = &user.User{
+		Email:            cmd.Email,
+		Name:             cmd.Name,
+		Login:            cmd.Login,
+		Company:          cmd.Company,
+		IsAdmin:          cmd.IsAdmin,
+		IsDisabled:       cmd.IsDisabled,
+		OrgID:            orgID,
+		EmailVerified:    cmd.EmailVerified,
+		Created:          timeNow(),
+		Updated:          timeNow(),
+		LastSeenAt:       timeNow().AddDate(-10, 0, 0),
+		IsServiceAccount: cmd.IsServiceAccount,
+	}
+
+	salt, err := util.GetRandomString(10)
+	if err != nil {
+		return usr, err
+	}
+	usr.Salt = salt
+	rands, err := util.GetRandomString(10)
+	if err != nil {
+		return usr, err
+	}
+	usr.Rands = rands
+
+	if len(cmd.Password) > 0 {
+		encodedPassword, err := util.EncodePassword(cmd.Password, usr.Salt)
+		if err != nil {
+			return usr, err
+		}
+		usr.Password = encodedPassword
+	}
+
+	_, err = s.store.Insert(ctx, usr)
+	if err != nil {
+		return usr, err
+	}
+
+	// create org user link
+	if !cmd.SkipOrgSetup {
+		orgCmd := &org.AddOrgUserCommand{
+			OrgID:                     orgID,
+			UserID:                    usr.ID,
+			Role:                      org.RoleAdmin,
+			AllowAddingServiceAccount: true,
+		}
+
+		if s.cfg.AutoAssignOrg && !usr.IsAdmin {
+			if len(cmd.DefaultOrgRole) > 0 {
+				orgCmd.Role = org.RoleType(cmd.DefaultOrgRole)
+			} else {
+				orgCmd.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
+			}
+		}
+
+		if err = s.orgService.AddOrgUser(ctx, orgCmd); err != nil {
+			return nil, err
+		}
+	}
+
+	return usr, nil
+}
+
+func (s *Service) getOrgIDForNewUser(ctx context.Context, cmd *user.CreateUserCommand) (int64, error) {
+	if s.cfg.AutoAssignOrg && cmd.OrgID != 0 {
+		if _, err := s.orgService.GetByID(ctx, &org.GetOrgByIdQuery{ID: cmd.OrgID}); err != nil {
+			return -1, err
+		}
+		return cmd.OrgID, nil
+	}
+
+	orgName := cmd.OrgName
+	if orgName == "" {
+		orgName = util.StringsFallback2(cmd.Email, cmd.Login)
+	}
+
+	orgID, err := s.orgService.GetOrCreate(ctx, orgName)
+	if err != nil {
+		return 0, err
+	}
+	return orgID, err
+}
+
+// CreateServiceAccount is a copy of Create with a single difference; it will create the OrgUser service account.
+func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	cmdOrg := org.GetOrgIDForNewUserCommand{
+		Email:        cmd.Email,
+		Login:        cmd.Login,
+		OrgID:        cmd.OrgID,
+		OrgName:      cmd.OrgName,
+		SkipOrgSetup: cmd.SkipOrgSetup,
+	}
+	orgID, err := s.orgService.GetIDForNewUser(ctx, cmdOrg)
+	if err != nil {
+		return nil, err
+	}
+	if cmd.Email == "" {
+		cmd.Email = cmd.Login
+	}
+
+	err = s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
+	if err != nil {
+		return nil, user.ErrUserAlreadyExists
+	}
+
+	// create user
+	usr := &user.User{
+		Email:            cmd.Email,
+		Name:             cmd.Name,
+		Login:            cmd.Login,
+		Company:          cmd.Company,
+		IsAdmin:          cmd.IsAdmin,
+		IsDisabled:       cmd.IsDisabled,
+		OrgID:            cmd.OrgID,
+		EmailVerified:    cmd.EmailVerified,
+		Created:          time.Now(),
+		Updated:          time.Now(),
+		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
+		IsServiceAccount: cmd.IsServiceAccount,
+	}
+
+	salt, err := util.GetRandomString(10)
+	if err != nil {
+		return nil, err
+	}
+	usr.Salt = salt
+	rands, err := util.GetRandomString(10)
+	if err != nil {
+		return nil, err
+	}
+	usr.Rands = rands
+
+	if len(cmd.Password) > 0 {
+		encodedPassword, err := util.EncodePassword(cmd.Password, usr.Salt)
+		if err != nil {
+			return nil, err
+		}
+		usr.Password = encodedPassword
+	}
+
+	_, err = s.store.Insert(ctx, usr)
+	if err != nil {
+		return nil, err
+	}
+
+	// create org user link
+	if !cmd.SkipOrgSetup {
+		orgCmd := &org.AddOrgUserCommand{
+			OrgID:                     orgID,
+			UserID:                    usr.ID,
+			Role:                      org.RoleAdmin,
+			AllowAddingServiceAccount: true,
+		}
+
+		if s.cfg.AutoAssignOrg && !usr.IsAdmin {
+			if len(cmd.DefaultOrgRole) > 0 {
+				orgCmd.Role = org.RoleType(cmd.DefaultOrgRole)
+			} else {
+				orgCmd.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
+			}
+		}
+
+		if err = s.orgService.AddOrgUser(ctx, orgCmd); err != nil {
+			return nil, err
+		}
+	}
+	return usr, nil
 }

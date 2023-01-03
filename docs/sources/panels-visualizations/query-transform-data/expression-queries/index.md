@@ -1,11 +1,11 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/
-  - /docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
-  - /docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/write-an-expression/
-  - docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries/
-title: Write expression queries
+  - ../../panels/query-a-data-source/use-expressions-to-manipulate-data/
+  - ../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
+  - ../../panels/query-a-data-source/use-expressions-to-manipulate-data/write-an-expression/
+  - ./
 menuTitle: Write expression queries
+title: Write expression queries
 weight: 40
 ---
 
@@ -14,8 +14,6 @@ weight: 40
 Server-side expressions enable you to manipulate data returned from queries with math and other operations. Expressions create new data and do not manipulate the data returned by data sources.
 
 ## About expressions
-
-> **Note:** This documentation is for a beta feature.
 
 Server-side expressions allow you to manipulate data returned from queries with math and other operations. Expressions create new data and do not manipulate the data returned by data sources, aside from some minor data restructuring to make the data acceptable input for expressions.
 

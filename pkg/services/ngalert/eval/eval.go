@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -83,16 +84,20 @@ type evaluatorImpl struct {
 	evaluationTimeout time.Duration
 	dataSourceCache   datasources.CacheService
 	expressionService *expr.Service
+	pluginsStore      plugins.Store
 }
 
 func NewEvaluatorFactory(
 	cfg setting.UnifiedAlertingSettings,
 	datasourceCache datasources.CacheService,
-	expressionService *expr.Service) EvaluatorFactory {
+	expressionService *expr.Service,
+	pluginsStore plugins.Store,
+) EvaluatorFactory {
 	return &evaluatorImpl{
 		evaluationTimeout: cfg.EvaluationTimeout,
 		dataSourceCache:   datasourceCache,
 		expressionService: expressionService,
+		pluginsStore:      pluginsStore,
 	}
 }
 
@@ -218,9 +223,9 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 		// Note: The spelling of this headers is intentionally degenerate from the others for compatibility reasons.
 		// When sent over a network, the key of this header is canonicalized to "Fromalert".
 		// However, some datasources still compare against the string "FromAlert".
-		"FromAlert": "true",
+		models.FromAlertHeaderName: "true",
 
-		"X-Cache-Skip": "true",
+		models.CacheSkipHeaderName: "true",
 	}
 
 	key, ok := models.RuleKeyFromContext(ctx.Ctx)
@@ -591,7 +596,23 @@ func (evalResults Results) AsDataFrame() data.Frame {
 }
 
 func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Condition) error {
-	_, err := e.Create(ctx, condition)
+	req, err := getExprRequest(ctx, condition.Data, e.dataSourceCache)
+	if err != nil {
+		return err
+	}
+	for _, query := range req.Queries {
+		if query.DataSource == nil || expr.IsDataSource(query.DataSource.Uid) {
+			continue
+		}
+		p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
+		if !found { // technically this should fail earlier during datasource resolution phase.
+			return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
+		}
+		if !p.Backend {
+			return fmt.Errorf("datasource refID %s is not a backend datasource", query.RefID)
+		}
+	}
+	_, err = e.create(condition, req)
 	return err
 }
 
@@ -606,6 +627,10 @@ func (e *evaluatorImpl) Create(ctx EvaluationContext, condition models.Condition
 	if err != nil {
 		return nil, err
 	}
+	return e.create(condition, req)
+}
+
+func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (ConditionEvaluator, error) {
 	pipeline, err := e.expressionService.BuildPipeline(req)
 	if err != nil {
 		return nil, err

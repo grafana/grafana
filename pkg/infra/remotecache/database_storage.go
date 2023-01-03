@@ -14,12 +14,14 @@ const databaseCacheType = "database"
 
 type databaseCache struct {
 	SQLStore db.DB
+	codec    codec
 	log      log.Logger
 }
 
-func newDatabaseCache(sqlstore db.DB) *databaseCache {
+func newDatabaseCache(sqlstore db.DB, codec codec) *databaseCache {
 	dc := &databaseCache{
 		SQLStore: sqlstore,
+		codec:    codec,
 		log:      log.New("remotecache.database"),
 	}
 
@@ -78,7 +80,7 @@ func (dc *databaseCache) Get(ctx context.Context, key string) (interface{}, erro
 			}
 		}
 
-		if err = decodeGob(cacheHit.Data, item); err != nil {
+		if err = dc.codec.Decode(ctx, cacheHit.Data, item); err != nil {
 			return err
 		}
 
@@ -90,7 +92,7 @@ func (dc *databaseCache) Get(ctx context.Context, key string) (interface{}, erro
 
 func (dc *databaseCache) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {
 	item := &cachedItem{Val: value}
-	data, err := encodeGob(item)
+	data, err := dc.codec.Encode(ctx, item)
 	if err != nil {
 		return err
 	}

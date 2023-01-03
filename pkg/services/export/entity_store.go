@@ -6,13 +6,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -101,7 +101,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		OrgID:  0, // gets filled in from each row
 		UserID: 0,
 	}
-	ctx = store.ContextWithUser(ctx, rowUser)
+	ctx = appcontext.WithUser(ctx, rowUser)
 
 	what := models.StandardKindDashboard
 	e.status.Count[what] = 0

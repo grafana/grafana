@@ -1,5 +1,4 @@
 ---
-aliases:
 description:
 keywords:
   - grafana

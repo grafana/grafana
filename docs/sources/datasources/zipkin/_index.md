@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/zipkin/
-  - /docs/grafana/latest/data-sources/zipkin/
-  - /docs/grafana/latest/data-sources/zipkin/query-editor/
+  - ../data-sources/zipkin/
+  - ../data-sources/zipkin/query-editor/
 description: Guide for using Zipkin in Grafana
 keywords:
   - grafana

@@ -17,6 +17,11 @@ func (q *selectQuery) addWhere(f string, val interface{}) {
 	q.where = append(q.where, f+"=?")
 }
 
+func (q *selectQuery) addWhereInSubquery(f string, subquery string, subqueryArgs []interface{}) {
+	q.args = append(q.args, subqueryArgs...)
+	q.where = append(q.where, f+" IN ("+subquery+")")
+}
+
 func (q *selectQuery) addWhereIn(f string, vals []string) {
 	count := len(vals)
 	if count > 1 {

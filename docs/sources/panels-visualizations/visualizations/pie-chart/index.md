@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/pie-chart-pane/
-  - /docs/grafana/latest/visualizations/pie-chart-panel/
-  - /docs/grafana/latest/panels-visualizations/visualizations/pie-chart/
+  - ../../panels/visualizations/pie-chart-pane/
+  - ../../visualizations/pie-chart-panel/
 keywords:
   - grafana
   - pie chart

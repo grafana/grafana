@@ -72,7 +72,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
-	saTokens, err := api.store.ListTokens(ctx.Req.Context(), &serviceaccounts.GetSATokensQuery{
+	saTokens, err := api.service.ListTokens(ctx.Req.Context(), &serviceaccounts.GetSATokensQuery{
 		OrgID:            &ctx.OrgID,
 		ServiceAccountID: &saID,
 	})
@@ -134,7 +134,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 	}
 
 	// confirm service account exists
-	if _, err := api.store.RetrieveServiceAccount(c.Req.Context(), c.OrgID, saID); err != nil {
+	if _, err := api.service.RetrieveServiceAccount(c.Req.Context(), c.OrgID, saID); err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
 			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
@@ -175,7 +175,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 
 	cmd.Key = newKeyInfo.HashedKey
 
-	if err := api.store.AddServiceAccountToken(c.Req.Context(), saID, &cmd); err != nil {
+	if err := api.service.AddServiceAccountToken(c.Req.Context(), saID, &cmd); err != nil {
 		if errors.Is(err, database.ErrInvalidTokenExpiration) {
 			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
@@ -217,7 +217,7 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 	}
 
 	// confirm service account exists
-	if _, err := api.store.RetrieveServiceAccount(c.Req.Context(), c.OrgID, saID); err != nil {
+	if _, err := api.service.RetrieveServiceAccount(c.Req.Context(), c.OrgID, saID); err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
 			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
@@ -231,7 +231,7 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "Token ID is invalid", err)
 	}
 
-	if err = api.store.DeleteServiceAccountToken(c.Req.Context(), c.OrgID, saID, tokenID); err != nil {
+	if err = api.service.DeleteServiceAccountToken(c.Req.Context(), c.OrgID, saID, tokenID); err != nil {
 		status := http.StatusNotFound
 		if err != nil && !errors.Is(err, apikey.ErrNotFound) {
 			status = http.StatusInternalServerError

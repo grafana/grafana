@@ -13,22 +13,13 @@ export interface SceneObjectStatePlain {
   $variables?: SceneVariables;
 }
 
-export interface SceneLayoutChildSize {
-  size?: SceneObjectSize;
+export interface SceneLayoutChildState extends SceneObjectStatePlain {
+  placement?: SceneLayoutChildOptions;
 }
-export interface SceneLayoutChildInteractions {
-  isDraggable?: boolean;
-  isResizable?: boolean;
-}
-
-export interface SceneLayoutChildState
-  extends SceneObjectStatePlain,
-    SceneLayoutChildSize,
-    SceneLayoutChildInteractions {}
 
 export type SceneObjectState = SceneObjectStatePlain | SceneLayoutState | SceneLayoutChildState;
 
-export interface SceneObjectSize {
+export interface SceneLayoutChildOptions {
   width?: number | string;
   height?: number | string;
   xSizing?: 'fill' | 'content';
@@ -37,6 +28,8 @@ export interface SceneObjectSize {
   y?: number;
   minWidth?: number | string;
   minHeight?: number | string;
+  isDraggable?: boolean;
+  isResizable?: boolean;
 }
 
 export interface SceneComponentProps<T> {

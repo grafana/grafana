@@ -69,7 +69,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-type TracePageSearchBarProps = {
+export type TracePageSearchBarProps = {
   navigable: boolean;
   searchValue: string;
   setSearch: (value: string) => void;

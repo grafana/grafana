@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation/
 description: Learn about templating of labels and annotations
 keywords:
   - grafana

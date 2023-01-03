@@ -158,6 +158,12 @@ func WithTitle(title string) AlertRuleMutator {
 	}
 }
 
+func WithFor(duration time.Duration) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.For = duration
+	}
+}
+
 func GenerateAlertLabels(count int, prefix string) data.Labels {
 	labels := make(data.Labels, count)
 	for i := 0; i < count; i++ {
