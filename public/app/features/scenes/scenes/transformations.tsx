@@ -9,7 +9,7 @@ import { getQueryRunnerWithRandomWalkQuery } from './queries';
 export function getTransformationsDemo(standalone: boolean): Scene {
   const state = {
     title: 'Transformations demo',
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'row',
       children: [
         new SceneFlexLayout({

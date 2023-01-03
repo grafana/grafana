@@ -3,10 +3,7 @@ aliases:
   - ../contact-points/create-contact-point/
   - ../contact-points/delete-contact-point/
   - ../contact-points/edit-contact-point/
-  - ../contact-points/message-templating/
   - ../contact-points/test-contact-point/
-  - ../message-templating/
-  - ../unified-alerting/message-templating/
 keywords:
   - grafana
   - alerting

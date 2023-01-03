@@ -41,6 +41,8 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 
 jest.spyOn(config, 'getAllDataSources');
 
+jest.setTimeout(60 * 1000);
+
 const mocks = {
   getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
