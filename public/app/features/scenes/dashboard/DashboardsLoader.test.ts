@@ -33,6 +33,7 @@ describe('DashboardLoader', () => {
       loader.cache['fake-uid'] = dashboard;
       loader.load('fake-uid');
       expect(loader.state.dashboard).toBe(dashboard);
+      expect(loader.state.isLoading).toBe(undefined);
     });
 
     it('should call dashboard loader server if the dashboard is not cached', async () => {
@@ -57,7 +58,8 @@ describe('DashboardLoader', () => {
       await loader.load('fake-dash');
 
       expect(loader.state.dashboard).toBeUndefined();
-      // @ts-expect-error
+      expect(loader.state.isLoading).toBe(false);
+      // @ts-expect-error - private
       expect(loader.cache['fake-dash']).toBeUndefined();
       expect(loader.state.loadError).toBe('Error: Dashboard not found');
     });
@@ -72,12 +74,14 @@ describe('DashboardLoader', () => {
       await loader.load('fake-dash');
 
       expect(loader.state.dashboard?.state.uid).toBe('fake-dash');
-      // @ts-expect-error
-      expect(loader.cache['fake-dash']).toBeDefined();
       expect(loader.state.loadError).toBe(undefined);
+      expect(loader.state.isLoading).toBe(false);
+      // It updates the cache
+      // @ts-expect-error - private
+      expect(loader.cache['fake-dash']).toBeDefined();
     });
 
-    it('should use DashboardScene creator to create the scene', async () => {
+    it('should use DashboardScene creator to initialize the scene', async () => {
       const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
       setDashboardLoaderSrv({
         loadDashboard: loadDashboardMock,
@@ -85,8 +89,10 @@ describe('DashboardLoader', () => {
 
       const loader = new DashboardLoader({});
       await loader.load('fake-dash');
-      // TODO: Mock the createDashboardSceneFromDashboardModel
-      //expect(createDashboardSceneFromDashboardModel).toBeCalledWith('fake-dash');
+      expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
+      // @ts-expect-error - private
+      expect(loader.state.dashboard?.urlSyncManager).toBeDefined();
+      expect(loader.state.isLoading).toBe(false);
     });
   });
 
