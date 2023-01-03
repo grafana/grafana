@@ -34,7 +34,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   tableScroller: css({
-    maxHeight: '50vh',
+    maxHeight: '40vh',
     overflow: 'auto',
   }),
 
