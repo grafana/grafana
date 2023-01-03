@@ -18,7 +18,7 @@ import {
   Badge,
   VerticalGroup,
 } from '@grafana/ui';
-import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
 import { FormAmRoute } from '../../types/amroutes';
@@ -61,8 +61,20 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
 
   const defaultValues = amRouteToFormAmRoute(route);
 
+  // if we're adding a new route, show at least one empty matcher
+  const defaultMatchers = !route
+    ? [{ name: '', value: '', operator: MatcherOperator.equal }]
+    : defaultValues.object_matchers;
+
   return (
-    <Form defaultValues={defaultValues} onSubmit={onSubmit} maxWidth="none">
+    <Form
+      defaultValues={{
+        ...defaultValues,
+        object_matchers: defaultMatchers,
+      }}
+      onSubmit={onSubmit}
+      maxWidth="none"
+    >
       {({ control, register, errors, setValue, watch }) => (
         <>
           {/* @ts-ignore-check: react-hook-form made me do this */}
@@ -96,6 +108,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                                 {...register(`${localPath}.name`, { required: 'Field is required' })}
                                 defaultValue={field.name}
                                 placeholder="label"
+                                autoFocus
                               />
                             </Field>
                             <Field label={'Operator'}>
