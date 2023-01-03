@@ -15,12 +15,10 @@ import 'whatwg-fetch';
 import { EmptyStateNoDatasource } from './EmptyStateNoDatasource';
 
 let reportInteractionSpy: jest.SpyInstance;
-let hasRole: jest.SpyInstance;
-
 const server = setupServer();
 
 beforeEach(() => {
-  hasRole = jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
+  jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
   reportInteractionSpy = jest.spyOn(runtime, 'reportInteraction');
   server.resetHandlers();
 });
