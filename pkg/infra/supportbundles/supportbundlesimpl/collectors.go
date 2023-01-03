@@ -3,6 +3,8 @@ package supportbundlesimpl
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/supportbundles"
@@ -21,13 +23,52 @@ func basicCollector(cfg *setting.Cfg) supportbundles.Collector {
 		Default:           true,
 		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
 			type basicInfo struct {
-				Version string `json:"version"`
-				Commit  string `json:"commit"`
+				Version         string    `json:"version"`          // Version is the version of Grafana instance.
+				Commit          string    `json:"commit"`           // Commit is the commit hash of the Grafana instance.
+				CollectionDate  time.Time `json:"collection_date"`  // CollectionDate is the date when the support bundle was created.
+				DefaultTimezone string    `json:"default_timezone"` // DefaultTimezone is the default timezone of the Grafana instance.
+				Alloc           uint64    `json:"alloc"`            // Alloc is bytes of allocated heap objects.
+				TotalAlloc      uint64    `json:"total_alloc"`      // TotalAlloc is cumulative bytes allocated for heap objects.
+				Sys             uint64    `json:"sys"`              // Sys is the total bytes of memory obtained from the OS.
+				Mallocs         uint64    `json:"mallocs"`          // Mallocs is the cumulative count of heap objects allocated.
+				Frees           uint64    `json:"frees"`            // Frees is the cumulative count of heap objects freed.
+				NumGC           uint32    `json:"num_gc"`           // NumGC is the number of completed GC cycles.
+				PauseTotalNs    uint64    `json:"pause_total_ns"`   // PauseTotalNs is the cumulative nanoseconds in GC
+				NumCPU          int       `json:"num_cpu"`          // NumCPU is the number of logical CPUs usable by the current process.
+				NumGoRoutines   int       `json:"num_go_routines"`  // NumGoRoutines is the number of goroutines that currently exist.
+				GoVersion       string    `json:"go_version"`       // GoVersion is the version of Go used to build the binary.
+				GoOS            string    `json:"go_os"`            // GoOS is the operating system target used to build the binary.
+				GoArch          string    `json:"go_arch"`          // GoArch is the architecture target used to build the binary.
+				GoCompiler      string    `json:"go_compiler"`      // GoCompiler is the compiler used to build the binary.
 			}
 
+			memstats := runtime.MemStats{}
+			runtime.ReadMemStats(&memstats)
+
+			collectionDate := time.Now()
+			tz, offset := collectionDate.Zone()
+
+			loc, _ := time.LoadLocation("UTC")
+			now := collectionDate.In(loc)
+
 			data, err := json.Marshal(basicInfo{
-				Version: cfg.BuildVersion,
-				Commit:  cfg.BuildCommit,
+				Version:         cfg.BuildVersion,
+				Commit:          cfg.BuildCommit,
+				CollectionDate:  now,
+				DefaultTimezone: fmt.Sprintf("%s (UTC%+d)", tz, offset/60/60),
+				Alloc:           memstats.Alloc,
+				TotalAlloc:      memstats.TotalAlloc,
+				Sys:             memstats.Sys,
+				Mallocs:         memstats.Mallocs,
+				Frees:           memstats.Frees,
+				NumGC:           memstats.NumGC,
+				PauseTotalNs:    memstats.PauseTotalNs,
+				NumCPU:          runtime.NumCPU(),
+				NumGoRoutines:   runtime.NumGoroutine(),
+				GoVersion:       runtime.Version(),
+				GoOS:            runtime.GOOS,
+				GoArch:          runtime.GOARCH,
+				GoCompiler:      runtime.Compiler,
 			})
 			if err != nil {
 				return nil, err

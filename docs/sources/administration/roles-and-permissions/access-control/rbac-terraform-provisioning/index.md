@@ -148,4 +148,4 @@ Similarly, you can look up and use `id`s of users, teams and service accounts th
 
 [RBAC setup with Grafana provisioning]({{< relref "./rbac-grafana-provisioning">}})
 
-[Grafana Cloud Terraform provisioning](https://grafana.com/docs/grafana-cloud/infrastructure-as-code/terraform/)
+[Grafana Cloud Terraform provisioning](/docs/grafana-cloud/infrastructure-as-code/terraform/)
