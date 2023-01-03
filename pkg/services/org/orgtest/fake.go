@@ -90,6 +90,13 @@ func (f *FakeOrgService) GetOrgUsers(ctx context.Context, query *org.GetOrgUsers
 	return f.ExpectedOrgUsers, f.ExpectedError
 }
 
+func (f *FakeOrgService) GetOrgUsersWithPagination(ctx context.Context, query *org.GetOrgUsersQuery) (*org.GetOrgUsersQueryResult, error) {
+	res := &org.GetOrgUsersQueryResult{
+		OrgUsers: f.ExpectedOrgUsers,
+	}
+	return res, f.ExpectedError
+}
+
 func (f *FakeOrgService) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
 	testData := f.ExpectedOrgListResponse[0]
 	f.ExpectedOrgListResponse = f.ExpectedOrgListResponse[1:]

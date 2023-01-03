@@ -121,6 +121,13 @@ func (f *FakeOrgStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQu
 	return f.ExpectedOrgUsers, f.ExpectedError
 }
 
+func (f *FakeOrgStore) GetOrgUsersWithPagination(ctx context.Context, query *org.GetOrgUsersQuery) (*org.GetOrgUsersQueryResult, error) {
+	res := &org.GetOrgUsersQueryResult{
+		OrgUsers: f.ExpectedOrgUsers,
+	}
+	return res, f.ExpectedError
+}
+
 func (f *FakeOrgStore) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }

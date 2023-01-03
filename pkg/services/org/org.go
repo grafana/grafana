@@ -21,5 +21,6 @@ type Service interface {
 	UpdateOrgUser(context.Context, *UpdateOrgUserCommand) error
 	RemoveOrgUser(context.Context, *RemoveOrgUserCommand) error
 	GetOrgUsers(context.Context, *GetOrgUsersQuery) ([]*OrgUserDTO, error)
+	GetOrgUsersWithPagination(context.Context, *GetOrgUsersQuery) (*GetOrgUsersQueryResult, error)
 	SearchOrgUsers(context.Context, *SearchOrgUsersQuery) (*SearchOrgUsersQueryResult, error)
 }

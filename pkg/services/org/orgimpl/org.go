@@ -197,6 +197,10 @@ func (s *Service) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) 
 	return s.store.GetOrgUsers(ctx, query)
 }
 
+func (s *Service) GetOrgUsersWithPagination(ctx context.Context, query *org.GetOrgUsersQuery) (*org.GetOrgUsersQueryResult, error) {
+	return s.store.GetOrgUsersWithPagination(ctx, query)
+}
+
 // TODO: refactor service to call store CRUD method
 func (s *Service) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
 	return s.store.SearchOrgUsers(ctx, query)

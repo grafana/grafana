@@ -144,7 +144,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 // 500: internalServerError
 
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
-	orgUsers, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+	orgUsersResult, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
 		OrgID:                    c.OrgID,
 		Query:                    c.Query("query"),
 		Limit:                    c.QueryInt("limit"),
@@ -158,7 +158,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 
 	result := make([]*dtos.UserLookupDTO, 0)
 
-	for _, u := range orgUsers {
+	for _, u := range orgUsersResult.OrgUsers {
 		result = append(result, &dtos.UserLookupDTO{
 			UserID:    u.UserID,
 			Login:     u.Login,
@@ -190,10 +190,21 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
 
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+
+	if page < 1 {
+		page = 1
+	}
+
 	result, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
 		OrgID: orgId,
 		Query: "",
-		Limit: 0,
+		Page:  page,
+		Limit: perPage,
 		User:  c.SignedInUser,
 	}, c.SignedInUser)
 
@@ -204,16 +215,16 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgUsersQuery, signedInUser *user.SignedInUser) ([]*org.OrgUserDTO, error) {
-	result, err := hs.orgService.GetOrgUsers(c.Req.Context(), query)
+func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgUsersQuery, signedInUser *user.SignedInUser) (*org.GetOrgUsersQueryResult, error) {
+	result, err := hs.orgService.GetOrgUsersWithPagination(c.Req.Context(), query)
 	if err != nil {
 		return nil, err
 	}
 
-	filteredUsers := make([]*org.OrgUserDTO, 0, len(result))
+	filteredUsers := make([]*org.OrgUserDTO, 0, len(result.OrgUsers))
 	userIDs := map[string]bool{}
-	authLabelsUserIDs := make([]int64, 0, len(result))
-	for _, user := range result {
+	authLabelsUserIDs := make([]int64, 0, len(result.OrgUsers))
+	for _, user := range result.OrgUsers {
 		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
 			continue
 		}
@@ -241,7 +252,12 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgU
 		}
 	}
 
-	return filteredUsers, nil
+	return &org.GetOrgUsersQueryResult{
+		OrgUsers:   filteredUsers,
+		TotalCount: result.TotalCount,
+		Page:       query.Page,
+		PerPage:    query.Limit,
+	}, nil
 }
 
 // SearchOrgUsersWithPaging is an HTTP handler to search for org users with paging.

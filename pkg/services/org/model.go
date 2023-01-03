@@ -162,11 +162,19 @@ type GetOrgUsersQuery struct {
 	UserID int64 `xorm:"user_id"`
 	OrgID  int64 `xorm:"org_id"`
 	Query  string
+	Page   int
 	Limit  int
 	// Flag used to allow oss edition to query users without access control
 	DontEnforceAccessControl bool
 
 	User *user.SignedInUser
+}
+
+type GetOrgUsersQueryResult struct {
+	TotalCount int64         `json:"totalCount"`
+	Page       int           `json:"page"`
+	PerPage    int           `json:"perPage"`
+	OrgUsers   []*OrgUserDTO `json:"orgUsers"`
 }
 
 type SearchOrgUsersQuery struct {
