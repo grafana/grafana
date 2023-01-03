@@ -34,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -827,16 +826,6 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 	}
 
 	return true
-}
-
-// writeErr will write error response based on errutil.Error.
-func writeErr(c *models.ReqContext, err error) {
-	grfErr := &errutil.Error{}
-	if !errors.As(err, grfErr) {
-		c.JsonApiErr(http.StatusInternalServerError, "", err)
-		return
-	}
-	c.JsonApiErr(grfErr.Reason.Status().HTTPStatus(), grfErr.Public().Message, err)
 }
 
 type authHTTPHeaderListContextKey struct{}
