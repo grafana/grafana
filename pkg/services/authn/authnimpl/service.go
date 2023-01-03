@@ -96,14 +96,6 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 		return nil, true, err
 	}
 
-	// FIXME: We want to perform common authentication operations here.
-	// We will add them as we start to implement clients that requires them.
-	// Those operations can be Syncing user, syncing teams, create a session etc.
-	// We would need to check what operations a client support and also if they are requested
-	// because for e.g. basic auth we want to create a session if the call is coming from the
-	// login handler, but if we want to perform basic auth during a request (called from contexthandler) we don't
-	// want a session to be created.
-
 	params := c.ClientParams()
 
 	for _, hook := range s.postAuthHooks {
