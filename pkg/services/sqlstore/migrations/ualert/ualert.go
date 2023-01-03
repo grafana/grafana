@@ -932,7 +932,13 @@ func ExtractAlertmanagerConfigurationHistoryMigration(mg *migrator.Migrator) {
 	if !mg.Cfg.UnifiedAlerting.IsEnabled() {
 		return
 	}
+	// TODO: Re-fix-up indexes.
+	// Since it's not always consistent as to what state the org ID indexes are in, just drop them all and rebuild from scratch.
+	// This is not expensive since this table is guaranteed to have a small number of rows.
+	mg.AddMigration("drop non-unique orgID index on alert_configuration", migrator.NewDropIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Cols: []string{"org_id"}}))
+	mg.AddMigration("drop unique orgID index on alert_configuration if exists", migrator.NewDropIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Type: migrator.UniqueIndex, Cols: []string{"org_id"}}))
 	mg.AddMigration("extract alertmanager configuration history to separate table", &extractAlertmanagerConfigurationHistory{})
+	mg.AddMigration("add unique index on orgID to alert_configuration", migrator.NewAddIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Type: migrator.UniqueIndex, Cols: []string{"org_id"}}))
 }
 
 type extractAlertmanagerConfigurationHistory struct {
@@ -977,9 +983,14 @@ func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrat
 		}
 
 		history := make([]extractAMConfigHistoryConfigModel, 0)
-		_, err = sess.Table("alert_configuration").Where("org_id = ? AND id < ?", orgID, activeConfigID).Get(&history)
+		err = sess.Table("alert_configuration").Where("org_id = ? AND id < ?", orgID, activeConfigID).Find(&history)
 		if err != nil {
 			return fmt.Errorf("failed to query for non-active configs for org %d: %w", orgID, err)
+		}
+
+		// Set the IDs back to the default, so XORM will ignore the field and auto-assign them.
+		for _, h := range history {
+			h.ID = 0
 		}
 
 		_, err = sess.Table("alert_configuration_history").InsertMulti(history)
