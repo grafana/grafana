@@ -13,6 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+func ProvideUserSync(userService user.Service, authInfoService login.AuthInfoService, quotaService quota.Service) *UserSync {
+	return &UserSync{userService, authInfoService, quotaService, log.New("user.sync")}
+}
+
 type UserSync struct {
 	userService     user.Service
 	authInfoService login.AuthInfoService

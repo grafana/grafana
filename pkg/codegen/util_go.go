@@ -220,7 +220,7 @@ func DecoderCompactor() dstutil.ApplyFunc {
 					c.Delete()
 				}
 			case *dst.Field:
-				if id, is := x.Type.(*dst.Ident); is {
+				if id, is := ddepoint(x.Type).(*dst.Ident); is {
 					if expr, has := replace[id.Name]; has {
 						x.Type = expr
 					}
