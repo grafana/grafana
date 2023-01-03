@@ -156,7 +156,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
             <Icon name="bell" size="lg" /> {rule.name}
           </h4>
           <RuleState rule={rule} isCreating={false} isDeleting={false} />
-          <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
+          <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} isViewMode={true} />
         </div>
         <div className={styles.details}>
           <div className={styles.leftSide}>
