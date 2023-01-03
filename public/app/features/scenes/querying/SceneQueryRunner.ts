@@ -8,7 +8,6 @@ import {
   DataSourceApi,
   DataSourceRef,
   DataTransformerConfig,
-  dateMath,
   PanelData,
   rangeUtil,
   ScopedVars,
@@ -31,9 +30,6 @@ export interface QueryRunnerState extends SceneObjectStatePlain {
   datasource?: DataSourceRef;
   minInterval?: string;
   maxDataPoints?: number | null;
-  timeShift?: string;
-  timeFrom?: string;
-  hideTimeOverride?: boolean;
   // Non persisted state
   maxDataPointsFromWidth?: boolean;
 }
@@ -171,9 +167,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      const { timeRange: range, timeInfo } = this.applyPanelTimeOverrides(timeRange, request.scopedVars);
-      request.range = range;
-      request.timeInfo = timeInfo;
+      request.range = timeRange;
 
       this._querySub = runRequest(ds, request)
         .pipe(getTransformationsStream(this, this.state.transformations))
@@ -188,65 +182,6 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
   private onDataReceived = (data: PanelData) => {
     this.setState({ data });
   };
-
-  private applyPanelTimeOverrides(timeRange: TimeRange, scopedVars: ScopedVars): TimeOverrideResult {
-    const { timeFrom, timeShift, hideTimeOverride } = this.state;
-    const newTimeData = {
-      timeInfo: '',
-      timeRange,
-    };
-
-    if (timeFrom) {
-      const timeFromInterpolated = sceneGraph.interpolate(this, timeFrom, scopedVars);
-      const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
-      if (timeFromInfo.invalid) {
-        newTimeData.timeInfo = 'invalid time override';
-        return newTimeData;
-      }
-
-      if (typeof timeRange.raw.from === 'string') {
-        const timeFromDate = dateMath.parse(timeFromInfo.from)!;
-        newTimeData.timeInfo = timeFromInfo.display;
-        newTimeData.timeRange = {
-          from: timeFromDate,
-          to: dateMath.parse(timeFromInfo.to)!,
-          raw: {
-            from: timeFromInfo.from,
-            to: timeFromInfo.to,
-          },
-        };
-      }
-    }
-
-    if (timeShift) {
-      const timeShiftInterpolated = sceneGraph.interpolate(this, timeShift, scopedVars);
-      const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
-      if (timeShiftInfo.invalid) {
-        newTimeData.timeInfo = 'invalid timeshift';
-        return newTimeData;
-      }
-
-      const timeShiftDiff = '-' + timeShiftInterpolated;
-      newTimeData.timeInfo += ' timeshift ' + timeShiftDiff;
-      const from = dateMath.parseDateMath(timeShiftDiff, newTimeData.timeRange.from, false)!;
-      const to = dateMath.parseDateMath(timeShiftDiff, newTimeData.timeRange.to, true)!;
-
-      newTimeData.timeRange = {
-        from,
-        to,
-        raw: {
-          from,
-          to,
-        },
-      };
-    }
-
-    if (hideTimeOverride) {
-      newTimeData.timeInfo = '';
-    }
-
-    return newTimeData;
-  }
 }
 
 async function getDataSource(datasource: DataSourceRef | undefined, scopedVars: ScopedVars): Promise<DataSourceApi> {

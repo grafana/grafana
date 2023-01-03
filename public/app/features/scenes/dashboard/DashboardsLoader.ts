@@ -11,6 +11,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
 import { VizPanel, SceneTimePicker, SceneGridLayout, SceneGridRow, SceneSubMenu } from '../components';
+import { VizPanelState } from '../components/VizPanel/VizPanel';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneObject } from '../core/types';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
@@ -23,6 +24,7 @@ import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
 import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
 import { DashboardScene } from './DashboardScene';
+import { PanelTimeRange } from './PanelTimeRange';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -250,7 +252,7 @@ export function createVariableFromLegacyModel(variable: VariableModel): SceneVar
 }
 
 function createVizPanelFromPanelModel(panel: PanelModel) {
-  return new VizPanel({
+  const state: VizPanelState = {
     title: panel.title,
     pluginId: panel.type,
     placement: {
@@ -262,14 +264,18 @@ function createVizPanelFromPanelModel(panel: PanelModel) {
     options: panel.options,
     fieldConfig: panel.fieldConfig,
     pluginVersion: panel.pluginVersion,
+    hideTimeOverride: panel.hideTimeOverride,
     $data: new SceneQueryRunner({
       queries: panel.targets,
-      timeFrom: panel.timeFrom,
-      timeShift: panel.timeShift,
-      hideTimeOverride: panel.hideTimeOverride,
       maxDataPoints: panel.maxDataPoints,
     }),
-  });
+  };
+
+  if (panel.timeFrom || panel.timeShift) {
+    state.$timeRange = new PanelTimeRange({ from: panel.timeFrom, timeShift: panel.timeShift });
+  }
+
+  return new VizPanel(state);
 }
 
 let loader: DashboardLoader | null = null;
