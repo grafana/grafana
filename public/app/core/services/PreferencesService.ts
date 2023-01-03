@@ -1,4 +1,4 @@
-import { UserPreferencesDTO } from 'app/types';
+import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
 
 import { backendSrv } from './backend_srv';
 
