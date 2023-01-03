@@ -1,8 +1,8 @@
-import { defaultDashboard, LoadingState, VariableType } from '@grafana/schema';
+import { defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@grafana/schema';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
-import { SceneGridLayout } from '../components';
+import { SceneGridLayout, SceneGridRow, VizPanel } from '../components';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 import { CustomVariable } from '../variables/variants/CustomVariable';
 import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
@@ -127,17 +127,166 @@ describe('DashboardLoader', () => {
       expect(scene.state?.$variables?.state.variables).toHaveLength(1);
       expect(scene.state.subMenu).toBeDefined();
     });
-
-    it.todo('should call variable migrator for each variable');
   });
 
   describe('when organizing panels as scene children', () => {
-    it.todo('should not create panels within collapsed rows');
-    it.todo('should nest panels within their row');
+    it('should create panels within collapsed rows', () => {
+      const panel: Panel = {
+        title: 'test',
+        type: 'timeseries',
+        gridPos: { x: 1, y: 0, w: 12, h: 8 },
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        options: {
+          defaults: {},
+          overrides: [],
+        },
+        transformations: [],
+        transparent: false,
+        repeatDirection: 'h',
+      };
+
+      const row: RowPanel = {
+        title: 'test',
+        type: 'row',
+        gridPos: { x: 0, y: 0, w: 12, h: 1 },
+        collapsed: true,
+        id: 1,
+        panels: [panel],
+      };
+
+      const dashboard = {
+        ...defaultDashboard,
+        panels: [row],
+      };
+
+      const oldModel = new DashboardModel(dashboard);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel);
+
+      expect(scene.state.body.state.children).toHaveLength(1);
+      const rowScene = scene.state.body.state.children[0] as SceneGridRow;
+      expect(rowScene).toBeInstanceOf(SceneGridRow);
+      expect(rowScene.state.title).toEqual(row.title);
+      expect(rowScene.state.placement?.y).toEqual(row.gridPos!.y);
+      expect(rowScene.state.isCollapsed).toEqual(row.collapsed);
+      expect(rowScene.state.children).toHaveLength(1);
+      expect(rowScene.state.children[0]).toBeInstanceOf(VizPanel);
+    });
+
+    it('should create panels within expanded row', () => {
+      const panelOutOfRow: Panel = {
+        title: 'Out of a row',
+        gridPos: {
+          h: 8,
+          w: 12,
+          x: 0,
+          y: 0,
+        },
+        id: 2,
+        pluginVersion: '9.4.0-pre',
+        type: 'text',
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        options: {
+          defaults: {},
+          overrides: [],
+        },
+        transformations: [],
+        transparent: false,
+        repeatDirection: 'h',
+      };
+      const rowWithPanel: RowPanel = {
+        title: 'Row with panel',
+        type: 'row',
+        collapsed: false,
+        gridPos: {
+          h: 1,
+          w: 24,
+          x: 0,
+          y: 8,
+        },
+        id: 7,
+        // This panels array is not used if the row is not collapsed
+        panels: [],
+      };
+      const panelInRow: Panel = {
+        datasource: {},
+        description: '',
+        repeatDirection: 'h',
+        gridPos: {
+          h: 8,
+          w: 12,
+          x: 0,
+          y: 9,
+        },
+        id: 3,
+        pluginVersion: '9.4.0-pre',
+        title: 'In row 1',
+        type: 'text',
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        options: {
+          defaults: {},
+          overrides: [],
+        },
+        transformations: [],
+        transparent: false,
+      };
+      const emptyRow: RowPanel = {
+        collapsed: false,
+        gridPos: {
+          h: 1,
+          w: 24,
+          x: 0,
+          y: 17,
+        },
+        id: 5,
+        // This panels array is not used if the row is not collapsed
+        panels: [],
+        title: 'Empty row',
+        type: 'row',
+      };
+      const dashboard = {
+        ...defaultDashboard,
+        panels: [panelOutOfRow, rowWithPanel, panelInRow, emptyRow],
+      };
+
+      const oldModel = new DashboardModel(dashboard);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel);
+
+      expect(scene.state.body.state.children).toHaveLength(3);
+      expect(scene.state.body).toBeInstanceOf(SceneGridLayout);
+      // Panel out of row
+      expect(scene.state.body.state.children[0]).toBeInstanceOf(VizPanel);
+      const panelOutOfRowVizPanel = scene.state.body.state.children[0] as VizPanel;
+      expect(panelOutOfRowVizPanel.state.title).toBe(panelOutOfRow.title);
+      // Row with panel
+      expect(scene.state.body.state.children[1]).toBeInstanceOf(SceneGridRow);
+      const rowWithPanelsScene = scene.state.body.state.children[1] as SceneGridRow;
+      expect(rowWithPanelsScene.state.title).toBe(rowWithPanel.title);
+      expect(rowWithPanelsScene.state.children).toHaveLength(1);
+      // Panel within row
+      expect(rowWithPanelsScene.state.children[0]).toBeInstanceOf(VizPanel);
+      const panelInRowVizPanel = rowWithPanelsScene.state.children[0] as VizPanel;
+      expect(panelInRowVizPanel.state.title).toBe(panelInRow.title);
+      // Empty row
+      expect(scene.state.body.state.children[2]).toBeInstanceOf(SceneGridRow);
+      const emptyRowScene = scene.state.body.state.children[2] as SceneGridRow;
+      expect(emptyRowScene.state.title).toBe(emptyRow.title);
+      expect(emptyRowScene.state.children).toHaveLength(0);
+    });
   });
 
   describe('when creating viz panel objects', () => {
-    it('should initalize properly the VizPanel scene object', () => {
+    it('should initalize the VizPanel scene object state', () => {
       const panel = {
         title: 'test',
         type: 'test-plugin',
