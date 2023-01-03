@@ -88,14 +88,14 @@ function getCellStyle(
   }
   // Set colors using updated sub-options format
   else {
-    const backgroundDisplayMode = field.config.custom.cellOptions.mode;
+    const cellDisplayMode = field.config.custom.cellOptions.mode;
 
     if (field.config.custom.cellOptions.type === TableCellDisplayMode.ColorText) {
       textColor = displayValue.color;
-    } else if (backgroundDisplayMode === TableCellBackgroundDisplayMode.Basic) {
+    } else if (cellDisplayMode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
-    } else if (backgroundDisplayMode === TableCellBackgroundDisplayMode.Gradient) {
+    } else if (cellDisplayMode === TableCellBackgroundDisplayMode.Gradient) {
       const bgColor2 = tinycolor(displayValue.color)
         .darken(10 * darkeningFactor)
         .spin(5);
