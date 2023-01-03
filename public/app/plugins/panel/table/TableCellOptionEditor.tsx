@@ -69,7 +69,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   // Setup and inject editor
   return (
     <>
-      <Field label="Cell display mode" description="Color text, background, show as gauge, etc.">
+      <Field>
         <Select options={cellDisplayModeOptions} value={cellType} onChange={onCellTypeChange} />
       </Field>
       <HorizontalGroup>{editor}</HorizontalGroup>

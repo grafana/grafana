@@ -64,7 +64,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         .addCustomEditor<void, TableCellOptions>({
           id: 'cellOptions',
           path: 'cellOptions',
-          name: 'Cell Options',
+          name: 'Cell Type',
           editor: TableCellOptionEditor,
           override: TableCellOptionEditor,
           defaultValue: {
