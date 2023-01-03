@@ -10,6 +10,9 @@
  * @alpha
  */
 export const Components = {
+  Breadcrumbs: {
+    breadcrumb: (title: string) => `data-testid ${title} breadcrumb`,
+  },
   TimePicker: {
     openButton: 'data-testid TimePicker Open Button',
     fromField: 'Time Range from field',
