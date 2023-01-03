@@ -15,18 +15,18 @@ export function TextPanel({ options, replaceVariables, width, height }: Props) {
   const styles = useStyles2(getStyles);
   const location = useLocation();
 
-  const clean = useMemo(() => {
+  const processed = useMemo(() => {
     return processContent(options, replaceVariables, config.disableSanitizeHtml);
     // include "location" since it will updat whenever variables change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, replaceVariables, location]);
 
-  if (clean.mode === TextMode.Code) {
+  if (options.mode === TextMode.Code) {
     const code = options.code ?? defaultCodeOptions;
     return (
       <CodeEditor
         key={`${code.showLineNumbers}/${code.showMiniMap}`} // will reinit-on change
-        value={clean.content}
+        value={processed}
         language={code.language ?? defaultCodeOptions.language!}
         width={width}
         height={height}
@@ -41,7 +41,7 @@ export function TextPanel({ options, replaceVariables, width, height }: Props) {
   return (
     <CustomScrollbar autoHeightMin="100%">
       <DangerouslySetHtmlContent
-        html={clean.content}
+        html={processed}
         className={styles.markdown}
         data-testid="TextPanel-converted-content"
       />
@@ -53,13 +53,13 @@ export function processContent(
   options: PanelOptions,
   interpolate: InterpolateFunction,
   disableSanitizeHtml: boolean
-): PanelOptions {
+): string {
   let { mode, content } = options;
-  if (content) {
-    content = interpolate(content, {}, options.code?.language === 'json' ? 'json' : 'html');
-  } else {
-    content = '';
+  if (!content) {
+    return '';
   }
+
+  content = interpolate(content, {}, options.code?.language === 'json' ? 'json' : 'html');
 
   switch (mode) {
     case TextMode.Code:
@@ -77,7 +77,7 @@ export function processContent(
       });
   }
 
-  return { content, mode };
+  return content;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
