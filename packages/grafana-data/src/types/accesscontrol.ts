@@ -8,6 +8,5 @@
  * }
  */
 export interface WithAccessControlMetadata {
-  // TODO Update to Record<string, boolean> when map generator bug is fixed
-  accessControl?: Record<string, unknown>;
+  accessControl?: Record<string, boolean>;
 }
