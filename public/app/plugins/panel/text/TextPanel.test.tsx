@@ -6,6 +6,10 @@ import { dateTime, LoadingState, EventBusSrv } from '@grafana/data';
 import { Props, TextPanel } from './TextPanel';
 import { TextMode } from './models.gen';
 
+jest.mock('react-router-dom', () => ({
+  useLocation: jest.fn(),
+}));
+
 const replaceVariablesMock = jest.fn();
 const defaultProps: Props = {
   id: 1,
