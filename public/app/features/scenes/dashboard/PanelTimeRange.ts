@@ -48,6 +48,10 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
   };
 
   public onIntervalChanged = (_: string) => {};
+
+  public getTimeOverrideInfo() {
+    return 'now-1h';
+  }
 }
 
 function evaluateTimeRange(from: string, to: string, timeZone: TimeZone, fiscalYearStartMonth?: number): TimeRange {

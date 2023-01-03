@@ -8,6 +8,7 @@ import { useFieldOverrides } from 'app/features/panel/components/PanelRenderer';
 
 import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps } from '../../core/types';
+import { PanelTimeRange } from '../../dashboard/PanelTimeRange';
 import { SceneQueryRunner } from '../../querying/SceneQueryRunner';
 import { CustomFormatterFn } from '../../variables/interpolation/sceneInterpolator';
 import { SceneDragHandle } from '../SceneDragHandle';
@@ -30,7 +31,8 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   const titleInterpolated = sceneGraph.interpolate(model, title);
 
   // Not sure we need to subscribe to this state
-  const timeZone = sceneGraph.getTimeRange(model).state.timeZone;
+  const timeRange = sceneGraph.getTimeRange(model);
+  const timeZone = timeRange.state.timeZone;
 
   const dataWithOverrides = useFieldOverrides(plugin, fieldConfig, data, timeZone);
 
@@ -53,10 +55,10 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
     $data.setContainerWidth(width);
   }
 
-  if (data?.request?.timeInfo) {
+  if (timeRange instanceof PanelTimeRange) {
     titleItems.push({
       icon: toIconName('clock-nine')!,
-      tooltip: data?.request?.timeInfo,
+      tooltip: timeRange.getTimeOverrideInfo(),
     });
   }
 
