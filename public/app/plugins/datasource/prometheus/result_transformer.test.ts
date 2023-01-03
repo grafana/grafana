@@ -138,7 +138,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[1].name).toEqual('label1');
       expect(series.data[0].fields[2].name).toEqual('label2');
       expect(series.data[0].fields[3].name).toEqual('Value');
-      expect(series.data[0].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
+      expect(series.data[0].meta?.preferredVisualisationType).toEqual('rawPrometheus');
     });
 
     it('results with table format and multiple data frames should be transformed to 1 table dataFrame', () => {
