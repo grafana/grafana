@@ -20,7 +20,7 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
     super.activate();
 
     if (this.state.timeShift) {
-      // subscribe to parent time etc
+      // subscribe to parent time etc and perform time shift
     }
   }
 
