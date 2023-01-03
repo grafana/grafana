@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
-import { useStyles2 } from '@grafana/ui/src';
+import { GrafanaTheme2 } from '@grafana/data/';
+import { useStyles2 } from '@grafana/ui/';
 
 import { RawPrometheusListItemEmptyValue } from '../utils/getRawPrometheusListItemsFromDataFrame';
 
@@ -34,7 +34,7 @@ const getStyles = (theme: GrafanaTheme2, totalNumberOfValues: number) => ({
       position: absolute;
       left: 0;
       top: 0;
-      background: linear-gradient(to right, transparent calc(100% - 25px), ${theme.colors.bg1});
+      background: linear-gradient(to right, transparent calc(100% - 25px), ${theme.colors.background.primary});
     }
   `,
   rowValuesWrap: css`

@@ -4,8 +4,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
-import { DataFrame, Field } from '@grafana/data/src';
-import { Button } from '@grafana/ui/src';
+import { DataFrame, Field } from '@grafana/data/';
+import { Button } from '@grafana/ui/';
 
 import {
   getRawPrometheusListItemsFromDataFrame,

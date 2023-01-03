@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { useCopyToClipboard } from 'react-use';
 
-import { Field, GrafanaTheme2 } from '@grafana/data/src';
-import { IconButton, useStyles2 } from '@grafana/ui/src';
+import { Field, GrafanaTheme2 } from '@grafana/data/';
+import { IconButton, useStyles2 } from '@grafana/ui/';
 
 import { ItemLabels } from './ItemLabels';
 import { ItemValues } from './ItemValues';
