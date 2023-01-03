@@ -170,13 +170,6 @@ type GetOrgUsersQuery struct {
 	User *user.SignedInUser
 }
 
-type GetOrgUsersQueryResult struct {
-	TotalCount int64         `json:"totalCount"`
-	Page       int           `json:"page"`
-	PerPage    int           `json:"perPage"`
-	OrgUsers   []*OrgUserDTO `json:"orgUsers"`
-}
-
 type SearchOrgUsersQuery struct {
 	OrgID int64 `xorm:"org_id"`
 	Query string
