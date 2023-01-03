@@ -282,7 +282,7 @@
     "@sentry/utils": "6.19.7",
     "@types/react-resizable": "3.0.3",
     "@types/webpack-env": "1.18.0",
-    "@visx/event": "2.6.0",
+    "@visx/event": "2.17.0",
     "@visx/gradient": "2.10.0",
     "@visx/group": "2.10.0",
     "@visx/scale": "2.2.2",
