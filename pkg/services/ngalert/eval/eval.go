@@ -209,18 +209,14 @@ const (
 	// Error is the eval state for an alert rule condition
 	// that evaluated to Error.
 	Error
-
-	// Paused is the eval state for an alert rule that has been stopped by the user.
-	// It must not be evaluated.
-	Paused
 )
 
 func (s State) IsValid() bool {
-	return s <= Paused
+	return s <= Error
 }
 
 func (s State) String() string {
-	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error", "Paused"}[s]
+	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error"}[s]
 }
 
 func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
