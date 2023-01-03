@@ -20,6 +20,7 @@ func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 	weekStartOne := "1"
 	ss := db.InitTestDB(t)
 	prefStore := fn(ss)
+	//nolint:staticcheck
 	orgNavbarPreferences := pref.NavbarPreference{
 		SavedItems: []pref.NavLink{{
 			ID:   "alerting",

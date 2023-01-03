@@ -15,9 +15,12 @@ type UpdatePrefsCmd struct {
 	// Enum: utc,browser
 	Timezone     string                       `json:"timezone"`
 	WeekStart    string                       `json:"weekStart"`
-	Navbar       *pref.NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	Language     string                       `json:"language"`
+
+	// Deprecated: this is not used by anything anymore
+	//nolint:staticcheck
+	Navbar *pref.NavbarPreference `json:"navbar,omitempty"`
 }
 
 // swagger:model
@@ -31,7 +34,10 @@ type PatchPrefsCmd struct {
 	Timezone         *string                      `json:"timezone,omitempty"`
 	WeekStart        *string                      `json:"weekStart,omitempty"`
 	Language         *string                      `json:"language,omitempty"`
-	Navbar           *pref.NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
+
+	// Deprecated: this is not used by anything anymore
+	//nolint:staticcheck
+	Navbar *pref.NavbarPreference `json:"navbar,omitempty"`
 }

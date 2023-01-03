@@ -79,6 +79,7 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 				res.JSONData.Language = p.JSONData.Language
 			}
 
+			//nolint:staticcheck
 			if len(p.JSONData.Navbar.SavedItems) > 0 {
 				res.JSONData.Navbar = p.JSONData.Navbar
 			}
@@ -151,6 +152,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 		Language: cmd.Language,
 	}
 
+	//nolint:staticcheck
 	if cmd.Navbar != nil {
 		preference.JSONData.Navbar = *cmd.Navbar
 	}
@@ -194,6 +196,7 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		preference.JSONData.Language = *cmd.Language
 	}
 
+	//nolint:staticcheck
 	if cmd.Navbar != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
@@ -232,6 +235,7 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 	preference.Version += 1
 
 	// Wrap this in an if statement to maintain backwards compatibility
+	//nolint:staticcheck
 	if cmd.Navbar != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}

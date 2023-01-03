@@ -163,7 +163,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 		WeekStart:       dtoCmd.WeekStart,
 		HomeDashboardID: dtoCmd.HomeDashboardID,
 		QueryHistory:    dtoCmd.QueryHistory,
-		Navbar:          dtoCmd.Navbar,
+		Navbar:          dtoCmd.Navbar, //nolint:staticcheck
 	}
 
 	if err := hs.preferenceService.Save(ctx, &saveCmd); err != nil {
@@ -222,7 +222,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		WeekStart:       dtoCmd.WeekStart,
 		HomeDashboardID: dtoCmd.HomeDashboardID,
 		Language:        dtoCmd.Language,
-		Navbar:          dtoCmd.Navbar,
+		Navbar:          dtoCmd.Navbar, //nolint:staticcheck
 		QueryHistory:    dtoCmd.QueryHistory,
 	}
 
