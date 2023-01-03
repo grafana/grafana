@@ -12,17 +12,6 @@
     "save": "Speichern"
   },
   "dashboard": {
-    "inspect": {
-      "actions-tab": "Aktionen",
-      "data-tab": "Daten",
-      "error-tab": "Fehler",
-      "json-tab": "JSON",
-      "meta-tab": "Metadaten",
-      "query-tab": "Abfrage",
-      "stats-tab": "Statistiken",
-      "subtitle": "{{queryCount}} Abfragen mit einer Gesamtabfragezeit von {{formatted}}",
-      "title": "Überprüfen: {{panelTitle}}"
-    },
     "inspect-data": {
       "data-options": "Datenoptionen",
       "dataframe-aria-label": "Datenrahmen auswählen",
@@ -63,22 +52,15 @@
       "request-time": "Gesamte Anfragezeit",
       "rows": "Gesamtanzahl an Zeilen",
       "table-title": "Statistiken"
-    },
-    "toolbar": {
-      "add-panel": "Panel hinzufügen",
-      "comments-show": "Dashboard-Kommentare anzeigen",
-      "mark-favorite": "Als Favorit markieren",
-      "open-original": "Original-Dashboard öffnen",
-      "playlist-next": "Zum nächsten Dashboard",
-      "playlist-previous": "Zum vorherigen Dashboard",
-      "playlist-stop": "Wiedergabeliste stoppen",
-      "refresh": "Dashboard aktualisieren",
-      "save": "Dashboard speichern",
-      "settings": "Dashboard-Einstellungen",
-      "share": "Dashboard oder Panel teilen",
-      "tv-button": "Zyklus-Ansichtsmodus",
-      "unmark-favorite": "Markierung als Favorit entfernen"
     }
+  },
+  "datasource-onboarding": {
+    "contact-admin": "",
+    "explanation": "",
+    "preferred": "",
+    "sampleData": "",
+    "viewAll": "",
+    "welcome": ""
   },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
@@ -130,6 +112,9 @@
     "alerting-groups": {
       "subtitle": "Zeige gruppierte Warnungen vom Alertmanager an",
       "title": "Gruppen"
+    },
+    "alerting-home": {
+      "title": ""
     },
     "alerting-legacy": {
       "title": "Warnungen (Legacy)"
@@ -208,6 +193,7 @@
     "help/documentation": "Dokumentation",
     "help/keyboard-shortcuts": "Tastaturbefehle",
     "help/support": "Support",
+    "help/support-bundle": "",
     "home": {
       "title": "Home"
     },
@@ -297,6 +283,10 @@
     "storage": {
       "subtitle": "Dateispeicher verwalten",
       "title": "Speicher"
+    },
+    "support-bundles": {
+      "subtitle": "",
+      "title": ""
     },
     "teams": {
       "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",

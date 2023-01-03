@@ -12,17 +12,6 @@
     "save": "保存"
   },
   "dashboard": {
-    "inspect": {
-      "actions-tab": "操作",
-      "data-tab": "数据",
-      "error-tab": "错误",
-      "json-tab": "JSON",
-      "meta-tab": "元数据",
-      "query-tab": "查询",
-      "stats-tab": "统计信息",
-      "subtitle": " {{queryCount}} 次查询，总查询时间为 {{formatted}}",
-      "title": "检查：{{panelTitle}}"
-    },
     "inspect-data": {
       "data-options": "数据选项",
       "dataframe-aria-label": "选择 dataframe",
@@ -63,22 +52,15 @@
       "request-time": "总请求时间",
       "rows": "总行数",
       "table-title": "统计信息"
-    },
-    "toolbar": {
-      "add-panel": "添加面板",
-      "comments-show": "显示仪表板备注",
-      "mark-favorite": "标记为收藏",
-      "open-original": "打开原始仪表板",
-      "playlist-next": "前往下一个仪表板",
-      "playlist-previous": "前往上一个仪表板",
-      "playlist-stop": "停止播放列表",
-      "refresh": "刷新仪表板",
-      "save": "保存仪表板",
-      "settings": "仪表板设置",
-      "share": "分享仪表板或面板",
-      "tv-button": "循环视图模式",
-      "unmark-favorite": "取消标记为收藏"
     }
+  },
+  "datasource-onboarding": {
+    "contact-admin": "",
+    "explanation": "",
+    "preferred": "",
+    "sampleData": "",
+    "viewAll": "",
+    "welcome": ""
   },
   "folder-picker": {
     "loading": "正在加载文件夹..."
@@ -130,6 +112,9 @@
     "alerting-groups": {
       "subtitle": "查看来自 Alertmanager（警报管理器）实例的分组警报",
       "title": "组"
+    },
+    "alerting-home": {
+      "title": ""
     },
     "alerting-legacy": {
       "title": "警报（遗留）"
@@ -208,6 +193,7 @@
     "help/documentation": "文档",
     "help/keyboard-shortcuts": "快捷键",
     "help/support": "支持",
+    "help/support-bundle": "",
     "home": {
       "title": "首页"
     },
@@ -297,6 +283,10 @@
     "storage": {
       "subtitle": "管理文件存储",
       "title": "存储"
+    },
+    "support-bundles": {
+      "subtitle": "",
+      "title": ""
     },
     "teams": {
       "subtitle": "具有共同仪表板和权限需求的用户组",
