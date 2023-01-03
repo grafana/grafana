@@ -318,15 +318,26 @@ const Policy: FC<PolicyComponentProps> = ({
 
   // gather warnings here
   const warnings: ReactNode[] = [];
-  if (!hasMatchers && !isDefaultPolicy) {
+
+  // if the route has no matchers, is not the default policy (that one has none) and it does not continue
+  // then we should warn the user that it's a suspicious setup
+  //
+  // TODO add some hovers to each warning to add more info
+  if (!hasMatchers && !isDefaultPolicy && !continueMatching) {
     warnings.push(wildcardRouteWarning);
   }
+
+  // a route without a contact point is suspicious
+  // TODO investigate if this means it goes to /dev/null or to the default route's contact point
   if (!contactPoint) {
     warnings.push(noContactPointWarning);
   }
 
   const hasChildPolicies = Boolean(childPolicies.length);
   const isGrouping = Array.isArray(groupBy) && groupBy.length > 0;
+
+  const isEditable = canEditRoutes;
+  const isDeletable = canDeleteRoutes && !isDefault;
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -385,7 +396,7 @@ const Policy: FC<PolicyComponentProps> = ({
               )}
               {!readOnly && (
                 <Stack direction="row" gap={0.5}>
-                  {canEditRoutes && (
+                  {isEditable && (
                     <Button
                       variant="secondary"
                       icon="pen"
@@ -396,7 +407,7 @@ const Policy: FC<PolicyComponentProps> = ({
                       Edit
                     </Button>
                   )}
-                  {canDeleteRoutes && !isDefault && (
+                  {isDeletable && (
                     <Button
                       variant="secondary"
                       icon="trash-alt"
