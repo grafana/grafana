@@ -14,6 +14,7 @@ import {
   incrRoundDn,
   incrRoundUp,
   TimeRange,
+  FieldType,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
@@ -98,7 +99,13 @@ export function prepConfig(opts: PrepConfigOpts) {
   } = opts;
 
   const xScaleKey = 'x';
-  const xScaleUnit = 'time';
+  let xScaleUnit = 'time';
+  let isTime = true;
+  if (dataRef.current?.heatmap?.fields[0].type !== FieldType.time) {
+    xScaleUnit = dataRef.current?.heatmap?.fields[0].config?.unit ?? 'xaxis';
+    console.log('TIME Axis');
+    isTime = false;
+  }
 
   const pxRatio = devicePixelRatio;
 
@@ -234,21 +241,33 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   builder.setMode(2);
 
-  builder.addScale({
-    scaleKey: xScaleKey,
-    isTime: true,
-    orientation: ScaleOrientation.Horizontal,
-    direction: ScaleDirection.Right,
-    // TODO: expand by x bucket size and layout
-    range: () => {
-      return [getTimeRange().from.valueOf(), getTimeRange().to.valueOf()];
-    },
-  });
-
+  if (isTime) {
+    builder.addScale({
+      scaleKey: xScaleKey,
+      isTime,
+      orientation: ScaleOrientation.Horizontal,
+      direction: ScaleDirection.Right,
+      // TODO: expand by x bucket size and layout
+      range: () => {
+        return [getTimeRange().from.valueOf(), getTimeRange().to.valueOf()];
+      },
+    });
+  } else {
+    builder.addScale({
+      scaleKey: xScaleKey,
+      isTime,
+      orientation: ScaleOrientation.Horizontal,
+      direction: ScaleDirection.Right,
+      // TODO: expand by x bucket size and layout
+      range: () => {
+        return [0, 10];
+      },
+    });
+  }
   builder.addAxis({
     scaleKey: xScaleKey,
     placement: AxisPlacement.Bottom,
-    isTime: true,
+    isTime,
     theme: theme,
     timeZone,
   });
