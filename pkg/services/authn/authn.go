@@ -15,6 +15,7 @@ import (
 
 const (
 	ClientAPIKey    = "auth.client.api-key" // #nosec G101
+	ClientSession   = "auth.client.session"
 	ClientAnonymous = "auth.client.anonymous"
 )
 
@@ -50,6 +51,7 @@ type Request struct {
 const (
 	APIKeyIDPrefix         = "api-key:"
 	ServiceAccountIDPrefix = "service-account:"
+	UserIDPrefix           = "user:"
 )
 
 type Identity struct {

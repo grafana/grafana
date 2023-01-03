@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	sync "github.com/grafana/grafana/pkg/services/authn/authnimpl/usersync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
@@ -20,7 +21,9 @@ import (
 // make sure service implements authn.Service interface
 var _ authn.Service = new(Service)
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service, apikeyService apikey.Service, userService user.Service) *Service {
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer,
+	orgService org.Service, sessionService auth.UserTokenService,
+	apikeyService apikey.Service, userService user.Service) *Service {
 	s := &Service{
 		log:           log.New("authn.service"),
 		cfg:           cfg,
@@ -30,6 +33,7 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Serv
 	}
 
 	s.clients[authn.ClientAPIKey] = clients.ProvideAPIKey(apikeyService, userService)
+	s.clients[authn.ClientSession] = clients.ProvideSession(sessionService, userService, cfg.LoginCookieName)
 
 	if s.cfg.AnonymousEnabled {
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)

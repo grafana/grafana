@@ -456,6 +456,21 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 }
 
 func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, orgID int64) bool {
+	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientSession, &authn.Request{HTTPRequest: reqContext.Req})
+		if !ok {
+			return false
+		}
+
+		if err != nil {
+			writeErr(reqContext, err)
+			return true
+		}
+
+		reqContext.IsSignedIn = true
+		reqContext.SignedInUser = identity.SignedInUser()
+	}
+
 	if h.Cfg.LoginCookieName == "" {
 		return false
 	}
