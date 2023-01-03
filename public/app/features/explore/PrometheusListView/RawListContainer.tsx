@@ -5,7 +5,7 @@ import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
 import { DataFrame, Field } from '@grafana/data/src';
-import { Button, stylesFactory } from '@grafana/ui/src';
+import { Button } from '@grafana/ui/src';
 
 import {
   getRawPrometheusListItemsFromDataFrame,
@@ -21,24 +21,22 @@ export interface RawListContainerProps {
   tableResult: DataFrame;
 }
 
-const getRawListContainerStyles = stylesFactory(() => {
-  return {
-    wrapper: css`
-      height: 100%;
-      overflow: scroll;
-    `,
-    mobileWrapper: css`
-      height: 100%;
-      overflow: scroll;
-    `,
-    header: css`
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-    `,
-  };
-});
+const styles = {
+  wrapper: css`
+    height: 100%;
+    overflow: scroll;
+  `,
+  mobileWrapper: css`
+    height: 100%;
+    overflow: scroll;
+  `,
+  header: css`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+  `,
+};
 
 const mobileWidthThreshold = 480;
 const numberOfColumnsBeforeExpandedViewIsDefault = 2;
@@ -51,7 +49,6 @@ const numberOfColumnsBeforeExpandedViewIsDefault = 2;
 const RawListContainer = (props: RawListContainerProps) => {
   const { tableResult } = props;
   const dataFrame = cloneDeep(tableResult);
-  const styles = getRawListContainerStyles();
   const listRef = useRef<List | null>(null);
 
   const valueLabels = dataFrame.fields.filter((field) => field.name.includes('Value'));
