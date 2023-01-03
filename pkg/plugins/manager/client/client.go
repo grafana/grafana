@@ -45,10 +45,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	var resp *backend.QueryDataResponse
 	err := instrumentation.InstrumentQueryDataRequest(ctx, &req.PluginContext, s.cfg, s.tracer, func() (innerErr error) {
-		// TODO: middleware
-		tid := tracing.TraceIDFromContext(ctx, false)
-		req.Headers["X-Trace-Id"] = tid
-
 		resp, innerErr = plugin.QueryData(ctx, req)
 		return
 	})
