@@ -55,8 +55,6 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   // When options for a cell change we merge
   //  any option changes with our options object
   const onCellOptionsChange = (options: TableCellOptions) => {
-    console.log(options);
-
     onChange(merge(value, options));
   };
 
