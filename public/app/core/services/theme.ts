@@ -13,6 +13,8 @@ export async function changeTheme(mode: 'dark' | 'light', runtimeOnly?: boolean)
       mode: mode,
     },
   });
+  // Special feature toggle that impact theme/component looks
+  newTheme.flags.topnav = config.featureToggles.topnav;
 
   appEvents.publish(new ThemeChangedEvent(newTheme));
   config.theme2.isDark = newTheme.isDark;

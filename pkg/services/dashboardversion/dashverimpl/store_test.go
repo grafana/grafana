@@ -5,15 +5,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type getStore func(db.DB) store
@@ -37,6 +37,7 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 		require.Nil(t, err)
 		assert.Equal(t, query.DashboardID, savedDash.Id)
 		assert.Equal(t, query.Version, savedDash.Version)
+		assert.Equal(t, createdById, res.CreatedBy)
 
 		dashCmd := &models.Dashboard{
 			Id:    res.ID,
@@ -48,6 +49,7 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 
 		assert.EqualValues(t, dashCmd.Data.Get("uid"), res.Data.Get("uid"))
 		assert.EqualValues(t, dashCmd.Data.Get("orgId"), res.Data.Get("orgId"))
+		assert.Equal(t, createdById, res.CreatedBy)
 	})
 
 	t.Run("Attempt to get a version that doesn't exist", func(t *testing.T) {
@@ -128,6 +130,10 @@ func getDashboard(t *testing.T, sqlStore db.DB, dashboard *models.Dashboard) err
 	})
 }
 
+var (
+	createdById = int64(3)
+)
+
 func insertTestDashboard(t *testing.T, sqlStore db.DB, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	t.Helper()
@@ -140,6 +146,7 @@ func insertTestDashboard(t *testing.T, sqlStore db.DB, title string, orgId int64
 			"title": title,
 			"tags":  tags,
 		}),
+		UserId: createdById,
 	}
 
 	var dash *models.Dashboard

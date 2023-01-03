@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/experimental';
+import { EditorField, Space } from '@grafana/experimental';
 import { Button, Checkbox, IconButton, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
 
 import Search from '../Search';
@@ -90,6 +90,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
               searchPhrase={searchPhrase}
             />
           </EditorField>
+
           <Account
             onChange={(accountId?: string) => {
               searchFn(searchPhrase, accountId);
@@ -99,6 +100,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
             accountId={searchAccountId}
           />
         </div>
+        <Space layout="block" v={2} />
         <div>
           <div className={styles.tableScroller}>
             <table className={styles.table}>
@@ -126,14 +128,17 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
                   selectableLogGroups.map((row) => (
                     <tr className={styles.row} key={`${row.value}`}>
                       <td className={styles.cell}>
-                        <Checkbox
-                          id={row.value}
-                          onChange={(ev) => handleSelectCheckbox(row, ev.currentTarget.checked)}
-                          value={!!(row.value && selectedLogGroups.some((lg) => lg.value === row.value))}
-                        />
-                        <label className={styles.logGroupSearchResults} htmlFor={row.value}>
-                          {row.label}
-                        </label>
+                        <div className={styles.nestedEntry}>
+                          <Checkbox
+                            id={row.value}
+                            onChange={(ev) => handleSelectCheckbox(row, ev.currentTarget.checked)}
+                            value={!!(row.value && selectedLogGroups.some((lg) => lg.value === row.value))}
+                          />
+                          <Space layout="inline" h={2} />
+                          <label className={styles.logGroupSearchResults} htmlFor={row.value}>
+                            {row.label}
+                          </label>
+                        </div>
                       </td>
                       <td className={styles.cell}>{accountNameById[row.text]}</td>
                       <td className={styles.cell}>{row.text}</td>
@@ -143,11 +148,12 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
             </table>
           </div>
         </div>
+        <Space layout="block" v={2} />
         <div>
           <Button onClick={handleApply} type="button" className={styles.addBtn}>
             Add log groups
           </Button>
-          <Button onClick={handleCancel} type="button">
+          <Button onClick={handleCancel} variant="secondary" type="button">
             Cancel
           </Button>
         </div>
@@ -159,7 +165,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
         </Button>
       </div>
 
-      <div>
+      <div className={styles.selectedLogGroupsContainer}>
         {props.selectedLogGroups.map((lg) => (
           <div key={lg.value} className={styles.selectedLogGroup}>
             {lg.label}

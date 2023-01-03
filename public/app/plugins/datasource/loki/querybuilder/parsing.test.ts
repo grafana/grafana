@@ -586,6 +586,81 @@ describe('buildVisualQueryFromString', () => {
       })
     );
   });
+
+  it('parses a regexp with empty string param', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | regexp "" ')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Regexp, params: [''] }],
+      })
+    );
+  });
+
+  it('parses a regexp with no param', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | regexp ')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Regexp, params: [''] }],
+      })
+    );
+  });
+
+  it('parses a pattern with empty string param', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | pattern "" ')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Pattern, params: [''] }],
+      })
+    );
+  });
+
+  it('parses a pattern with no param', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | pattern ')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Pattern, params: [''] }],
+      })
+    );
+  });
+
+  it('parses a json with no param', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | json ')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Json, params: [] }],
+      })
+    );
+  });
 });
 
 function noErrors(query: LokiVisualQuery) {

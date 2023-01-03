@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,8 +15,10 @@ import (
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -72,8 +75,9 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
 		mg.AddMigration(migTitle, &migration{
-			seenChannelUIDs: make(map[string]struct{}),
-			silences:        make(map[int64][]*pb.MeshSilence),
+			// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
+			seenUIDs: uidSet{set: make(map[string]struct{}), caseInsensitive: mg.Dialect.SupportEngine()},
+			silences: make(map[int64][]*pb.MeshSilence),
 		})
 	// If unified alerting is disabled and upgrade migration has been run
 	case !mg.Cfg.UnifiedAlerting.IsEnabled() && migrationRun:
@@ -224,8 +228,8 @@ type migration struct {
 	sess *xorm.Session
 	mg   *migrator.Migrator
 
-	seenChannelUIDs map[string]struct{}
-	silences        map[int64][]*pb.MeshSilence
+	seenUIDs uidSet
+	silences map[int64][]*pb.MeshSilence
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
@@ -499,13 +503,13 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				}
 				return fallback
 			}
-			receiverFactory, exists := channels.Factory(gr.Type)
+			receiverFactory, exists := channels_config.Factory(gr.Type)
 			if !exists {
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}
 			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) channels.Logger {
 				return &channels.FakeLogger{}
-			})
+			}, setting.BuildVersion)
 			if err != nil {
 				return err
 			}
@@ -880,4 +884,46 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 		return fmt.Errorf("unable to update alert rules with group index: %w", err)
 	}
 	return nil
+}
+
+// uidSet is a wrapper around map[string]struct{} and util.GenerateShortUID() which aims help generate uids in quick
+// succession while taking into consideration case sensitivity requirements. if caseInsensitive is true, all generated
+// uids must also be unique when compared in a case-insensitive manner.
+type uidSet struct {
+	set             map[string]struct{}
+	caseInsensitive bool
+}
+
+// contains checks whether the given uid has already been generated in this uidSet.
+func (s *uidSet) contains(uid string) bool {
+	dedup := uid
+	if s.caseInsensitive {
+		dedup = strings.ToLower(dedup)
+	}
+	_, seen := s.set[dedup]
+	return seen
+}
+
+// add adds the given uid to the uidSet.
+func (s *uidSet) add(uid string) {
+	dedup := uid
+	if s.caseInsensitive {
+		dedup = strings.ToLower(dedup)
+	}
+	s.set[dedup] = struct{}{}
+}
+
+// generateUid will generate a new unique uid that is not already contained in the uidSet.
+// If it fails to create one that has not already been generated it will make multiple, but not unlimited, attempts.
+// If all attempts are exhausted an error will be returned.
+func (s *uidSet) generateUid() (string, error) {
+	for i := 0; i < 5; i++ {
+		gen := util.GenerateShortUID()
+		if !s.contains(gen) {
+			s.add(gen)
+			return gen, nil
+		}
+	}
+
+	return "", errors.New("failed to generate UID")
 }

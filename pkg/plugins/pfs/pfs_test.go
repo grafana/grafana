@@ -69,6 +69,10 @@ func TestParseTreeTestdata(t *testing.T) {
 			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
+		"renderer-added-file": {
+			rootid:  "test-renderer",
+			subpath: "plugin",
+		},
 		"symbolic-plugin-dirs": {
 			skip: "io/fs-based scanner will not traverse symlinks; caller of ParsePluginFS() must do it",
 		},

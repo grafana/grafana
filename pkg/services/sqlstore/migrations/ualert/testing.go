@@ -16,6 +16,8 @@ func newTestMigration(t *testing.T) *migration {
 
 			Logger: log.New("test"),
 		},
-		seenChannelUIDs: make(map[string]struct{}),
+		seenUIDs: uidSet{
+			set: make(map[string]struct{}),
+		},
 	}
 }

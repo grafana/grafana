@@ -103,7 +103,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
 
   return (
     <div className={styles.container} ref={setMarkerElement}>
-      <button className={styles.pickerInput} onClick={onOpen}>
+      <button className={styles.pickerInput} type="button" onClick={onOpen}>
         <span className={styles.clockIcon}>
           <Icon name="clock-nine" />
         </span>
