@@ -90,9 +90,9 @@ func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
 	ctx.JSON(status, resp)
 }
 
-// Err writes an error response based on errutil.Error.
+// WriteErr writes an error response based on errutil.Error.
 // If provided error is not a errutil.Error a 500 response is written.
-func (ctx *ReqContext) Err(err error) {
+func (ctx *ReqContext) WriteErr(err error) {
 	grafanaErr := &errutil.Error{}
 	if !errors.As(err, grafanaErr) {
 		ctx.JsonApiErr(http.StatusInternalServerError, "", fmt.Errorf("unexpected error type [%s]: %w", reflect.TypeOf(err), err))
@@ -100,12 +100,12 @@ func (ctx *ReqContext) Err(err error) {
 	ctx.JsonApiErr(grafanaErr.Reason.Status().HTTPStatus(), grafanaErr.Public().Message, err)
 }
 
-// ErrOrFallback uses the information in an errutil.Error if available
+// WriteErrOrFallback uses the information in an errutil.Error if available
 // and otherwise falls back to the status and message provided as arguments.
-func (ctx *ReqContext) ErrOrFallback(status int, message string, err error) {
+func (ctx *ReqContext) WriteErrOrFallback(status int, message string, err error) {
 	grafanaErr := &errutil.Error{}
 	if errors.As(err, grafanaErr) {
-		ctx.Err(err)
+		ctx.WriteErr(err)
 		return
 	}
 	ctx.JsonApiErr(status, message, err)

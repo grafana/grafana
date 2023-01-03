@@ -287,7 +287,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
 		if err != nil {
-			writeErr(reqContext, err)
+			reqContext.WriteErr(err)
 			return true
 		}
 
