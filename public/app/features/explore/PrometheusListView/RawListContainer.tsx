@@ -4,8 +4,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
-import { DataFrame, Field } from '@grafana/data/';
-import { Button } from '@grafana/ui/';
+import { DataFrame, Field as DataFrameField } from '@grafana/data/';
+import { Field, Switch } from '@grafana/ui/';
 
 import {
   getRawPrometheusListItemsFromDataFrame,
@@ -30,11 +30,28 @@ const styles = {
     height: 100%;
     overflow: scroll;
   `,
+  switchWrapper: css`
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 0;
+  `,
+  switchLabel: css`
+    margin-left: 15px;
+    margin-bottom: 0;
+  `,
+  switch: css`
+    margin-left: 10px;
+  `,
+  resultCount: css`
+    margin-bottom: 4px;
+  `,
   header: css`
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
+    font-size: 12px;
+    line-height: 1.25;
   `,
 };
 
@@ -98,18 +115,13 @@ const RawListContainer = (props: RawListContainerProps) => {
   return (
     <section>
       <header className={styles.header}>
-        <Button
-          aria-hidden="true"
-          variant="secondary"
-          role={'button'}
-          title={`${isExpandedView ? 'Contract results' : 'Expand results'}`}
-          icon={isExpandedView ? 'minus' : 'plus'}
-          type="button"
-          onClick={onContentClick}
-        >
-          {isExpandedView ? 'Contract' : 'Expand'}
-        </Button>
-        <div>Result series: {items.length}</div>
+        <Field className={styles.switchWrapper} label={`Expand results`} htmlFor={'isExpandedView'}>
+          <div className={styles.switch}>
+            <Switch onChange={onContentClick} id="isExpandedView" value={isExpandedView} label={`Expand results`} />
+          </div>
+        </Field>
+
+        <div className={styles.resultCount}>Result series: {items.length}</div>
       </header>
 
       <div role={'table'}>
@@ -128,7 +140,7 @@ const RawListContainer = (props: RawListContainerProps) => {
               width="100%"
             >
               {({ index, style }) => {
-                let filteredValueLabels: Field[] | undefined;
+                let filteredValueLabels: DataFrameField[] | undefined;
                 if (isExpandedView) {
                   filteredValueLabels = valueLabels.filter((valueLabel) => {
                     const itemWithValue = items[index][valueLabel.name];
