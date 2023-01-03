@@ -1,7 +1,6 @@
 import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
 import { DataFrame, DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 
-import { SelectableResourceValue } from './api';
 import {
   QueryEditorArrayExpression,
   QueryEditorFunctionExpression,
@@ -101,7 +100,7 @@ export interface CloudWatchLogsQuery extends DataQuery {
   region: string;
   expression?: string;
   statsGroups?: string[];
-  logGroups?: SelectableResourceValue[];
+  logGroups?: LogGroup[];
   /* not quite deprecated yet, but will be soon */
   logGroupNames?: string[];
 }
@@ -263,42 +262,6 @@ export interface TSDBTimeSeries {
 }
 export type TSDBTimePoint = [number, number];
 
-export interface LogGroup {
-  /**
-   * The name of the log group.
-   */
-  logGroupName?: string;
-  /**
-   * The creation time of the log group, expressed as the number of milliseconds after Jan 1, 1970 00:00:00 UTC.
-   */
-  creationTime?: number;
-  retentionInDays?: number;
-  /**
-   * The number of metric filters.
-   */
-  metricFilterCount?: number;
-  /**
-   * The Amazon Resource Name (ARN) of the log group.
-   */
-  arn?: string;
-  /**
-   * The number of bytes stored.
-   */
-  storedBytes?: number;
-  /**
-   * The Amazon Resource Name (ARN) of the CMK to use when encrypting log data.
-   */
-  kmsKeyId?: string;
-}
-
-export interface DescribeLogGroupsResponse {
-  /**
-   * The log groups.
-   */
-  logGroups?: LogGroup[];
-  nextToken?: string;
-}
-
 export interface GetLogGroupFieldsRequest {
   /**
    * The name of the log group to search.
@@ -338,7 +301,7 @@ export interface StartQueryRequest {
    * The list of log groups to be queried. You can include up to 20 log groups. A StartQuery operation must include a logGroupNames or a logGroupName parameter, but not both.
    */
   logGroupNames?: string[] /* not quite deprecated yet, but will be soon */;
-  logGroups?: SelectableResourceValue[];
+  logGroups?: LogGroup[];
   /**
    * The query string to use. For more information, see CloudWatch Logs Insights Query Syntax.
    */
@@ -500,4 +463,11 @@ export interface MetricResponse {
 export interface ResourceResponse<T> {
   accountId?: string;
   value: T;
+}
+
+export interface LogGroup {
+  arn: string;
+  name: string;
+  accountId?: string;
+  accountLabel?: string;
 }
