@@ -19,7 +19,6 @@ export function loadUsers(): ThunkResult<void> {
       dispatch(usersLoaded(users));
     } catch (error) {
       usersFetchEnd();
-      console.error(error);
     }
   };
 }
