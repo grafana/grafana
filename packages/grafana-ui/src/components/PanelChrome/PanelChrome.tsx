@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { isEmpty } from 'lodash';
 import React, { CSSProperties, ReactElement, ReactNode } from 'react';
 
 import { GrafanaTheme2, isIconName, LoadingState } from '@grafana/data';
@@ -10,6 +11,13 @@ import { Icon } from '../Icon/Icon';
 import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { PopoverContent, Tooltip } from '../Tooltip';
+
+import { PanelStatus } from './PanelStatus';
+
+interface Status {
+  message?: string;
+  onClick?: () => void;
+}
 
 /**
  * @internal
@@ -37,9 +45,9 @@ export interface PanelChromeProps {
   // dragClass?: string;
   hoverHeader?: boolean;
   loadingState?: LoadingState;
-  dataStateNode?: ReactNode;
+  status?: Status;
   /** @deprecated in favor of props
-   * dataStateNode for errors and loadingState for loading, streaming
+   * status for errors and loadingState for loading and streaming
    * which will serve the same purpose
    * of showing/interacting with the panel's data state
    * */
@@ -65,7 +73,7 @@ export function PanelChrome({
   // dragClass,
   hoverHeader = false,
   loadingState,
-  dataStateNode = null,
+  status,
   leftItems = [],
 }: PanelChromeProps) {
   const theme = useTheme2();
@@ -83,10 +91,11 @@ export function PanelChrome({
   };
   const containerStyles: CSSProperties = { width, height };
 
-  const isUsingDeprecatedLeftItems = !dataStateNode && leftItems.length > 0;
+  const isUsingDeprecatedLeftItems = isEmpty(status) && !loadingState;
   const showLoading = loadingState === LoadingState.Loading && !isUsingDeprecatedLeftItems;
   const showStreaming = loadingState === LoadingState.Streaming && !isUsingDeprecatedLeftItems;
-
+  console.log(status);
+  console.log(loadingState);
   return (
     <div className={styles.container} style={containerStyles}>
       <div className={styles.loadingBarContainer}>
@@ -142,7 +151,9 @@ export function PanelChrome({
         {isUsingDeprecatedLeftItems ? (
           <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>
         ) : (
-          <div className={styles.errorContainer}>{dataStateNode}</div>
+          <div className={styles.errorContainer}>
+            <PanelStatus state={loadingState} message={status?.message} onClick={status?.onClick} />
+          </div>
         )}
       </div>
 

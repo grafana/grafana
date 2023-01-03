@@ -34,6 +34,7 @@ import {
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
+import { InspectTab } from 'app/features/inspector/types';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { RenderEvent } from 'app/types/events';
 
@@ -566,6 +567,11 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return !panel.hasTitle();
   }
 
+  onOpenErrorInspect(e: React.SyntheticEvent, tab: string) {
+    e.stopPropagation();
+    locationService.partial({ inspect: this.props.panel.id, inspectTab: tab });
+  }
+
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
@@ -583,9 +589,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     const title = panel.getDisplayTitle();
     const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
-    const dataState = (
-      <PanelHeaderState panelId={panel.id} errorMessage={errorMessage} dataState={data.state} key="state" />
-    );
 
     if (config.featureToggles.newPanelChromeUI) {
       return (
@@ -595,7 +598,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           padding={padding}
           title={title}
           loadingState={data.state}
-          dataStateNode={dataState}
+          status={{
+            message: errorMessage,
+            onClick: (e: React.SyntheticEvent) => this.onOpenErrorInspect(e, InspectTab.Error),
+          }}
         >
           {(innerWidth, innerHeight) => (
             <>
