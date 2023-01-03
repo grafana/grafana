@@ -246,10 +246,6 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		key := item.GetKey()
 		if item.IsPaused {
 			sch.PauseAlertRule(key)
-
-			folderTitle := sch.getFolderTitle(folderTitles, item, missingFolder)
-			result := getSimulatedResultForPauseState(tick)
-			sch.stateManager.ProcessEvalResults(ctx, tick, item, eval.Results{result}, sch.getRuleExtraLabels(item, folderTitle))
 			continue
 		}
 
@@ -537,10 +533,6 @@ func (sch *schedule) getRuleExtraLabels(rule *ngmodels.AlertRule, folderTitle st
 		extraLabels[ngmodels.FolderTitleLabel] = folderTitle
 	}
 	return extraLabels
-}
-
-func getSimulatedResultForPauseState(ts time.Time) eval.Result {
-	return eval.Result{State: eval.Paused, EvaluatedAt: ts}
 }
 
 func (sch *schedule) getFolderTitle(folderTitles map[string]string, rule *ngmodels.AlertRule, missingFolders map[string][]string) string {

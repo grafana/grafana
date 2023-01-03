@@ -158,7 +158,7 @@ func FromAlertsStateToStoppedAlert(firingStates []*state.State, appURL *url.URL,
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	ts := clock.Now()
 	for _, alertState := range firingStates {
-		if alertState.State == eval.Normal || alertState.State == eval.Pending || alertState.State == eval.Paused {
+		if alertState.State == eval.Normal || alertState.State == eval.Pending {
 			continue
 		}
 		postableAlert := stateToPostableAlert(alertState, appURL)

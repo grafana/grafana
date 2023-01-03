@@ -34,10 +34,6 @@ func TestInstanceStateType_IsValid(t *testing.T) {
 			expectedValidity: true,
 		},
 		{
-			instanceType:     InstanceStatePaused,
-			expectedValidity: true,
-		},
-		{
 			instanceType:     InstanceStateType("notAValidInstanceStateType"),
 			expectedValidity: false,
 		},

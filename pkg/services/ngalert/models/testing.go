@@ -355,7 +355,6 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 			InstanceStatePending,
 			InstanceStateNoData,
 			InstanceStateError,
-			InstanceStatePaused,
 		}
 		return s[rand.Intn(len(s)-1)]
 	}

@@ -26,7 +26,6 @@ type State struct {
 	CacheID string
 
 	// State represents the current state.
-
 	State eval.State
 
 	// StateReason is a textual description to explain why the state has its current state.
@@ -122,15 +121,6 @@ func (a *State) SetError(err error, startsAt, endsAt time.Time) {
 // SetNormal sets the state to Normal. It changes both the start and end time.
 func (a *State) SetNormal(reason string, startsAt, endsAt time.Time) {
 	a.State = eval.Normal
-	a.StateReason = reason
-	a.StartsAt = startsAt
-	a.EndsAt = endsAt
-	a.Error = nil
-}
-
-// SetPaused sets the state to Paused. It changes both the start and end time.
-func (a *State) SetPaused(reason string, startsAt, endsAt time.Time) {
-	a.State = eval.Paused
 	a.StateReason = reason
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
@@ -284,16 +274,6 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, _ lo
 		state.State = eval.NoData
 	case models.OK:
 		state.State = eval.Normal
-	}
-}
-
-func resultPaused(state *State, _ *models.AlertRule, result eval.Result, logger log.Logger) {
-	if state.State == eval.Paused {
-		logger.Debug("Keeping state", "state", state.State)
-	} else {
-		logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Paused)
-		// Normal states have the same start and end timestamps
-		state.SetPaused("Paused", result.EvaluatedAt, result.EvaluatedAt)
 	}
 }
 
