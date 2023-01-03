@@ -18,7 +18,7 @@ export interface Team {
   /**
    * AccessControl metadata associated with a given resource.
    */
-  accessControl?: Record<string, unknown>;
+  accessControl?: Record<string, boolean>;
   /**
    * AvatarUrl is the team's avatar URL.
    */
