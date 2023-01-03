@@ -114,7 +114,7 @@ export function getColumns(
       }
     };
 
-    const Cell = getCellComponent(fieldTableOptions.cellOptions.displayMode, field);
+    const Cell = getCellComponent(fieldTableOptions.cellOptions.type, field);
     columns.push({
       Cell,
       id: fieldIndex.toString(),

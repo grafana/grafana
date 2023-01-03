@@ -391,7 +391,7 @@ export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 /**
  * TODO docs
  */
-export enum TableCellType {
+export enum TableCellDisplayMode {
   Auto = 'auto',
   ColorBackground = 'color-background',
   ColorBackgroundSolid = 'color-background-solid',
@@ -483,7 +483,7 @@ export enum BarGaugeDisplayMode {
  * Interface for table cell types that have no additional options.
  */
 export interface TableAutoCellOptions {
-  type: TableCellType;
+  type: TableCellDisplayMode;
 }
 
 /**
@@ -491,7 +491,7 @@ export interface TableAutoCellOptions {
  */
 export interface TableBarGaugeCellOptions {
   mode: BarGaugeDisplayMode;
-  type: TableCellType.Gauge;
+  type: TableCellDisplayMode.Gauge;
 }
 
 /**
@@ -499,7 +499,7 @@ export interface TableBarGaugeCellOptions {
  */
 export interface TableColoredBackgroundCellOptions {
   mode: TableCellBackgroundDisplayMode;
-  type: TableCellType.ColorBackground;
+  type: TableCellDisplayMode.ColorBackground;
 }
 
 /**
@@ -517,7 +517,7 @@ export interface TableFieldOptions {
   /**
    * This field is deprecated in favor of using cellOptions
    */
-  displayMode?: TableCellType;
+  displayMode?: TableCellDisplayMode;
   filterable?: boolean;
   hidden?: boolean;
   inspect: boolean;

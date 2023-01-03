@@ -32,10 +32,10 @@ export const defaultPanelOptions: PanelOptions = {
 };
 
 export const defaultPanelFieldConfig: TableFieldOptions = {
-  cellOptions: {
-    displayMode: TableCellDisplayMode.Auto,
-  },
   align: 'auto',
+  cellOptions: {
+    type: TableCellDisplayMode.Auto,
+  },
   inspect: false,
 };
 

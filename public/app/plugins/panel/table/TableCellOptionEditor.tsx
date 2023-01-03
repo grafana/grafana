@@ -27,9 +27,8 @@ interface ComponentMap {
   Additional cell types can be placed here
   ---
   A cell editor is expected to be a functional
-  component (per the above type) that accepts a
-  sub-options object and an onSubOptions change 
-  callback
+  component that accepts options and displays
+  them in a form.
 */
 const displayModeComponentMap: ComponentMap = {
   [TableCellDisplayMode.Gauge]: BarGaugeCellOptionsEditor,
@@ -42,20 +41,19 @@ interface Props {
 }
 
 export const TableCellOptionEditor: React.FC<Props> = ({ value, onChange }) => {
-  const displayMode = value.displayMode;
+  const cellType = value.type;
   let editor: ReactNode | null = null;
 
   // Update display mode on change
-  const onDisplayModeChange = (v: SelectableValue<TableCellDisplayMode>) => {
+  const onCellTypeChange = (v: SelectableValue<TableCellDisplayMode>) => {
     if (v.value !== undefined) {
-      value.displayMode = v.value;
+      value.type = v.value;
       onChange(value);
     }
   };
 
-  // When options for a cell change we update the corresponding
-  // key in the subOptions object merging changes with any
-  // previous updates that have been made
+  // When options for a cell change we merge
+  //  any option changes with our options object
   const onCellOptionsChange = (options: TableCellOptions) => {
     console.log(options);
 
@@ -63,8 +61,8 @@ export const TableCellOptionEditor: React.FC<Props> = ({ value, onChange }) => {
   };
 
   // Setup specific cell editor
-  if (displayMode !== undefined && displayModeComponentMap[displayMode] !== undefined) {
-    let Comp: Function = displayModeComponentMap[displayMode];
+  if (cellType !== undefined && displayModeComponentMap[cellType] !== undefined) {
+    let Comp: Function = displayModeComponentMap[cellType];
     editor = <Comp cellOptions={value} onCellOptionsChange={onCellOptionsChange} />;
   }
 
@@ -72,7 +70,7 @@ export const TableCellOptionEditor: React.FC<Props> = ({ value, onChange }) => {
   return (
     <>
       <Field label="Cell display mode" description="Color text, background, show as gauge, etc.">
-        <Select options={cellDisplayModeOptions} value={displayMode} onChange={onDisplayModeChange} />
+        <Select options={cellDisplayModeOptions} value={cellType} onChange={onCellTypeChange} />
       </Field>
       <HorizontalGroup>{editor}</HorizontalGroup>
     </>

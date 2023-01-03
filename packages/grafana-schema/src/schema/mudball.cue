@@ -202,7 +202,8 @@ BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(
 FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 
 // TODO docs
-TableCellType: "auto" | "color-text" | "color-background" | "color-background-solid" | "gauge" | "json-view" | "image" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|Gauge|JSONView|Image")
+TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gauge" | "json-view" | "image" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|Gauge|JSONView|Image")
+// : TableCellDisplayMode @cuetsy(kind="enum")
 
 // TODO Docs
 TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
@@ -255,18 +256,18 @@ BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")
 
 // Interface for table cell types that have no additional options.
 TableAutoCellOptions: {
-	type: TableCellType
+	type: TableCellDisplayMode
 } @cuetsy(kind="interface")
 
 // Allows for the table cell gauge display type to set the gauge mode.
 TableBarGaugeCellOptions: {
-	type: TableCellType & "gauge"
+	type: TableCellDisplayMode & "gauge"
 	mode: BarGaugeDisplayMode
 } @cuetsy(kind="interface")
 
 // Allows for the background display mode to be set for the color background cell.
 TableColoredBackgroundCellOptions: {
-	type: TableCellType & "color-background"
+	type: TableCellDisplayMode & "color-background"
 	mode: TableCellBackgroundDisplayMode
 } @cuetsy(kind="interface")
 
@@ -280,7 +281,7 @@ TableFieldOptions: {
 	minWidth?:   number
 	align: FieldTextAlignment | *"auto"
 	// This field is deprecated in favor of using cellOptions
-	displayMode?: TableCellType
+	displayMode?: TableCellDisplayMode
 	cellOptions: TableCellOptions
 	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false

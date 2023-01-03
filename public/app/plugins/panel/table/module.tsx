@@ -7,8 +7,7 @@ import {
   standardEditorsRegistry,
   identityOverrideProcessor,
 } from '@grafana/data';
-import { TableFieldOptions, TableCellOptions } from '@grafana/schema';
-import { TableCellDisplayMode } from '@grafana/ui';
+import { TableFieldOptions, TableCellOptions, TableCellDisplayMode } from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
@@ -69,8 +68,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           editor: TableCellOptionEditor,
           override: TableCellOptionEditor,
           defaultValue: {
-            displayMode: defaultPanelFieldConfig.cellOptions.displayMode,
-            subOptions: {},
+            type: TableCellDisplayMode.Auto,
           },
           process: identityOverrideProcessor,
           category: cellCategory,
@@ -86,10 +84,10 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           defaultValue: false,
           showIf: (cfg) => {
             return (
-              cfg.cellOptions.displayMode === TableCellDisplayMode.Auto ||
-              cfg.cellOptions.displayMode === TableCellDisplayMode.JSONView ||
-              cfg.cellOptions.displayMode === TableCellDisplayMode.ColorText ||
-              cfg.cellOptions.displayMode === TableCellDisplayMode.ColorBackground
+              cfg.cellOptions.type === TableCellDisplayMode.Auto ||
+              cfg.cellOptions.type === TableCellDisplayMode.JSONView ||
+              cfg.cellOptions.type === TableCellDisplayMode.ColorText ||
+              cfg.cellOptions.type === TableCellDisplayMode.ColorBackground
             );
           },
         })
