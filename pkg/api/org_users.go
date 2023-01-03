@@ -277,7 +277,7 @@ func (hs *HTTPServer) SearchOrgUsers(c *models.ReqContext) response.Response {
 
 	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID: orgId,
-		Query: "",
+		Query: c.Query("query"),
 		Page:  page,
 		Limit: perPage,
 		User:  c.SignedInUser,
