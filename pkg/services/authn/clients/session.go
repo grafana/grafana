@@ -66,7 +66,6 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 
 	token, err := s.sessionService.LookupToken(ctx, rawSessionToken)
 	if err != nil {
-		// TODO (jguer): delete cookie if token is not found
 		s.log.Warn("failed to look up session from cookie", "error", err)
 		return nil, err
 	}
