@@ -40,7 +40,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   let barGaugeMode: BarGaugeDisplayMode = BarGaugeDisplayMode.Gradient;
 
   // Support deprecated settings
-  const usingDeprecatedSettings = field.config.custom.cellOptions.gaugeDisplayMode === undefined;
+  const usingDeprecatedSettings = field.config.custom.displayMode !== undefined;
 
   // If we're using the old settings format we read the displayMode directly from
   // the cell options
@@ -60,7 +60,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   // Otherwise in the case of sub-options we read specifically from the sub-options
   // object in order to get the display mode
   else {
-    barGaugeMode = field.config.custom.cellOptions.gaugeDisplayMode;
+    barGaugeMode = field.config.custom.cellOptions.mode;
   }
 
   const getLinks = () => {
