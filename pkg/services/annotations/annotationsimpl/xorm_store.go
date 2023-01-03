@@ -86,7 +86,7 @@ func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.It
 		if item.Epoch == 0 {
 			item.Epoch = item.Created
 		}
-		if err := r.validateItem(&item); err != nil {
+		if err := r.validateItem(&item); err != nil { // nolint:gosec
 			return err
 		}
 
