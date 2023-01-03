@@ -25,6 +25,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `database_metrics`                  | Add Prometheus metrics for database tables                                           |                    |
 | `lokiMonacoEditor`                  | Access to Monaco query editor for Loki                                               | Yes                |
 | `featureHighlights`                 | Highlight Grafana Enterprise features                                                |                    |
+| `legacyExploreCompactURL`           | Enable legacy compact URL in Explore                                                 |                    |
 | `commandPalette`                    | Enable command palette                                                               | Yes                |
 | `cloudWatchDynamicLabels`           | Use dynamic labels instead of alias patterns in CloudWatch datasource                | Yes                |
 | `internationalization`              | Enables internationalization                                                         | Yes                |

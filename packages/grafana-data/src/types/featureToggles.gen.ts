@@ -48,6 +48,7 @@ export interface FeatureToggles {
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   exploreMixedDatasource?: boolean;
+  legacyExploreCompactURL?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
   correlations?: boolean;

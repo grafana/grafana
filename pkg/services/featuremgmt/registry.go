@@ -184,6 +184,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "legacyExploreCompactURL",
+			Description:  "Enable legacy compact URL in Explore ",
+			State:        FeatureStateStable,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "tracing",
 			Description:  "Adds trace ID to error notifications",
 			State:        FeatureStateAlpha,

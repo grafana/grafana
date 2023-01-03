@@ -218,6 +218,10 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     return errorResult;
   }
 
+  if (!config.featureToggles.legacyExploreCompactURL) {
+    return parsed;
+  }
+
   if (!Array.isArray(parsed)) {
     const urlState = { ...parsed, isFromCompactUrl: false };
     return urlState;

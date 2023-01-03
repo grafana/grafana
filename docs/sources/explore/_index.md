@@ -68,3 +68,10 @@ The Share shortened link capability allows you to create smaller and simpler URL
 ### exploreMixedDatasource
 
 Disabled by default, allows users in Explore to have different datasources for different queries. If compatible, results will be combined.
+
+### legacyExploreCompactURL
+
+Temporarily enables legacy Explore URL format. This is a temporary feature toggle that will be removed in a future release.
+
+Support for compact Explore URLs is deprecated and will be completely removed in a future release.
+If you have link to Explore that stopped working after upgrading to Grafana 10, you can enable this feature toggle to temporarily restore the old format. Grafana will automatically redirect to the Explore page using the new format, so you can replace existing links with the URL in the address bar.
