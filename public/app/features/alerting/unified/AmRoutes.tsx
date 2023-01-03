@@ -120,7 +120,7 @@ const AmRoutes = () => {
       return;
     }
 
-    const newRouteTree = addRouteToParentRoute(partialRoute, parentRoute, rootRoute);
+    const newRouteTree = addRouteToParentRoute(alertManagerSourceName ?? '', partialRoute, parentRoute, rootRoute);
     updateRouteTree(newRouteTree);
   }
 
@@ -157,7 +157,11 @@ const AmRoutes = () => {
 
   // edit, add, delete modals
   const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(receivers, handleAdd);
-  const [editModal, openEditModal, closeEditModal] = useEditPolicyModal(receivers, handleSave);
+  const [editModal, openEditModal, closeEditModal] = useEditPolicyModal(
+    alertManagerSourceName ?? '',
+    receivers,
+    handleSave
+  );
   const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete);
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
@@ -830,6 +834,7 @@ const useAddPolicyModal = (
 };
 
 const useEditPolicyModal = (
+  alertManagerSourceName: string,
   receivers: Receiver[],
   handleSave: (route: Partial<FormAmRoute>) => void
 ): ModalHook<RouteWithID> => {
@@ -862,7 +867,7 @@ const useEditPolicyModal = (
           <AmRootRouteForm
             // TODO *sigh* this alertmanagersourcename should come from context or something
             // passing it down all the way here is a code smell
-            alertManagerSourceName={''}
+            alertManagerSourceName={alertManagerSourceName}
             onSubmit={handleSave}
             receivers={AmRouteReceivers}
             route={route}
@@ -893,7 +898,7 @@ const useEditPolicyModal = (
         )}
       </Modal>
     ),
-    [AmRouteReceivers, handleDismiss, handleSave, isDefaultPolicy, route, showModal]
+    [AmRouteReceivers, alertManagerSourceName, handleDismiss, handleSave, isDefaultPolicy, route, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];

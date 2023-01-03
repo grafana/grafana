@@ -77,12 +77,12 @@ export const omitRouteFromRouteTree = (findRoute: RouteWithID, routeTree: RouteW
 
 // add a new route to a parent route
 export const addRouteToParentRoute = (
+  alertManagerSourceName: string,
   partialFormRoute: Partial<FormAmRoute>,
   parentRoute: RouteWithID,
   routeTree: RouteWithID
 ): Route => {
-  // TODO "alertmanagessourcename" here again ugh
-  const newRoute = formAmRouteToAmRoute('', partialFormRoute, routeTree);
+  const newRoute = formAmRouteToAmRoute(alertManagerSourceName, partialFormRoute, routeTree);
 
   function findAndAdd(currentRoute: RouteWithID): RouteWithID {
     if (currentRoute.id === parentRoute.id) {
