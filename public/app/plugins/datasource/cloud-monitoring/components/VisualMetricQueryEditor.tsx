@@ -11,6 +11,7 @@ import { AliasBy } from './AliasBy';
 import { Alignment } from './Alignment';
 import { GroupBy } from './GroupBy';
 import { LabelFilter } from './LabelFilter';
+import { defaultTimeSeriesList } from './MetricQueryEditor';
 import { Metrics } from './Metrics';
 import { Preprocessor } from './Preprocessor';
 
@@ -52,6 +53,11 @@ function Editor({
           ? PreprocessorType.None
           : PreprocessorType.Rate;
       const { perSeriesAligner } = getAlignmentPickerData(valueType, metricKind, query.perSeriesAligner, preprocessor);
+      Object.assign(query, {
+        ...defaultTimeSeriesList(datasource),
+        projectName: query.projectName,
+        filters: query.filters,
+      });
       onChange({
         ...setMetricType(
           {
@@ -63,7 +69,7 @@ function Editor({
         preprocessor,
       });
     },
-    [onChange, query]
+    [onChange, query, datasource]
   );
 
   return (
