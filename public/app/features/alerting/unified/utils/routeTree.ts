@@ -88,7 +88,8 @@ export const addRouteToParentRoute = (
     if (currentRoute.id === parentRoute.id) {
       return {
         ...currentRoute,
-        // TODO fix this typescript thingy
+        // TODO fix this typescript exception, it's... complicated
+        // @ts-ignore
         routes: currentRoute.routes?.concat(newRoute),
       };
     }

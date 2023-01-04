@@ -2,12 +2,12 @@ import { css, cx } from '@emotion/css';
 import React, { FC, ReactNode, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import {
   Button,
   Field,
   FieldArray,
   Form,
-  HorizontalGroup,
   IconButton,
   Input,
   InputControl,
@@ -16,7 +16,6 @@ import {
   Switch,
   useStyles2,
   Badge,
-  VerticalGroup,
 } from '@grafana/ui';
 import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -51,30 +50,20 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
   const muteTimingOptions = useMuteTimingOptions();
 
-  const receiversWithOnCallOnTop = receivers.sort((receiver1, receiver2) => {
-    if (receiver1.grafanaAppReceiverType === GrafanaAppReceiverEnum.GRAFANA_ONCALL) {
-      return -1;
-    } else {
-      return 0;
-    }
-  });
+  const receiversWithOnCallOnTop = receivers.sort(onCallFirst);
 
-  const defaultValues = amRouteToFormAmRoute(route);
+  const formAmRoute = amRouteToFormAmRoute(route);
 
-  // if we're adding a new route, show at least one empty matcher
-  const defaultMatchers = !route
-    ? [{ name: '', value: '', operator: MatcherOperator.equal }]
-    : defaultValues.object_matchers;
+  const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
+
+  const defaultValues: FormAmRoute = {
+    ...formAmRoute,
+    // if we're adding a new route, show at least one empty matcher
+    object_matchers: route ? formAmRoute.object_matchers : emptyMatcher,
+  };
 
   return (
-    <Form
-      defaultValues={{
-        ...defaultValues,
-        object_matchers: defaultMatchers,
-      }}
-      onSubmit={onSubmit}
-      maxWidth="none"
-    >
+    <Form defaultValues={defaultValues} onSubmit={onSubmit} maxWidth="none">
       {({ control, register, errors, setValue, watch }) => (
         <>
           {/* @ts-ignore-check: react-hook-form made me do this */}
@@ -83,7 +72,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
           <FieldArray name="object_matchers" control={control}>
             {({ fields, append, remove }) => (
               <>
-                <VerticalGroup justify="flex-start" spacing="md">
+                <Stack direction="column" alignItems="flex-start">
                   <div>Matching labels</div>
                   {fields.length === 0 && (
                     <Badge
@@ -98,7 +87,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                       {fields.map((field, index) => {
                         const localPath = `object_matchers[${index}]`;
                         return (
-                          <HorizontalGroup key={field.id} align="flex-start" height="auto">
+                          <Stack direction="row" key={field.id} alignItems="center">
                             <Field
                               label="Label"
                               invalid={!!errors.object_matchers?.[index]?.name}
@@ -141,14 +130,13 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                             </Field>
                             <IconButton
                               type="button"
-                              className={styles.removeButton}
                               tooltip="Remove matcher"
                               name={'trash-alt'}
                               onClick={() => remove(index)}
                             >
                               Remove
                             </IconButton>
-                          </HorizontalGroup>
+                          </Stack>
                         );
                       })}
                     </div>
@@ -162,12 +150,11 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                   >
                     Add matcher
                   </Button>
-                </VerticalGroup>
+                </Stack>
               </>
             )}
           </FieldArray>
           <Field label="Contact point">
-            {/* @ts-ignore-check: react-hook-form made me do this */}
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
                 <Select
@@ -367,6 +354,14 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
   );
 };
 
+function onCallFirst(receiver: AmRouteReceiver) {
+  if (receiver.grafanaAppReceiverType === GrafanaAppReceiverEnum.GRAFANA_ONCALL) {
+    return -1;
+  } else {
+    return 0;
+  }
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   const commonSpacing = theme.spacing(3.5);
 
@@ -376,26 +371,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     matchersContainer: css`
       background-color: ${theme.colors.background.secondary};
-      margin: ${theme.spacing(1, 0)};
-      padding: ${theme.spacing(1, 4.6, 1, 1.5)};
+      padding: ${theme.spacing(1.5)} ${theme.spacing(2)};
+      padding-bottom: 0;
       width: fit-content;
     `,
     matchersOperator: css`
-      min-width: 140px;
-    `,
-    nestedPolicies: css`
-      margin-top: ${commonSpacing};
-    `,
-    removeButton: css`
-      margin-left: ${theme.spacing(1)};
-      margin-top: ${theme.spacing(2.5)};
-    `,
-    buttonGroup: css`
-      margin: ${theme.spacing(6)} 0 ${commonSpacing};
-
-      & > * + * {
-        margin-left: ${theme.spacing(1.5)};
-      }
+      min-width: 120px;
     `,
     noMatchersWarning: css`
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
