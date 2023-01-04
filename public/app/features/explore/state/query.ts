@@ -207,15 +207,20 @@ export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCa
 export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
   return async (dispatch, getState) => {
     const queries = getState().explore[exploreId]!.queries;
+    const rootDatasource = getState().explore[exploreId]!.datasourceInstance;
     let datasourceOverride = undefined;
+
+    console.log('--------- queries ----------', queries);
+    console.log('--------- rootDatasource ----------', getState().explore[exploreId]!.datasourceInstance);
 
     // if this is the first query being added, check for a root datasource
     // if it's not mixed, send it as an override. generateEmptyQuery doesn't have access to state
-    if (queries.length === 0) {
-      const rootDatasource = getState().explore[exploreId]!.datasourceInstance;
-      if (!config.featureToggles.exploreMixedDatasource || !rootDatasource?.meta.mixed) {
-        datasourceOverride = rootDatasource;
-      }
+    if (queries.length === 0 && (!config.featureToggles.exploreMixedDatasource || !rootDatasource?.meta.mixed)) {
+      datasourceOverride = rootDatasource;
+    }
+
+    if (queries.length > 0 && rootDatasource?.name !== MIXED_DATASOURCE_NAME) {
+      datasourceOverride = rootDatasource;
     }
 
     const query = await generateEmptyQuery(queries, index, datasourceOverride?.getRef());
