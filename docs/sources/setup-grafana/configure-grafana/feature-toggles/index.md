@@ -94,6 +94,7 @@ Alpha features might be changed or removed without prior notice.
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
+| `accessControlOnCall`              | Access control primitives for OnCall                                                                                                                                         |
 
 ## Development feature toggles
 
@@ -111,5 +112,4 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `grpcServer`                           | Run GRPC server                                                         |
 | `entityStore`                          | SQL-based entity store (requires storage flag also)                     |
 | `queryLibrary`                         | Reusable query library                                                  |
-| `accessControlOnCall`                  | Access control primitives for OnCall                                    |
 | `nestedFolders`                        | Enable folder nesting                                                   |
