@@ -458,8 +458,8 @@
       "select-time": "Sélectionner une plage de temps"
     },
     "content": {
-      "empty-recent-list": "",
-      "filter-placeholder": ""
+      "empty-recent-list": "<0><0>Il semble que vous n'ayez jamais utilisé ce sélecteur de temps dans le passé. Lorsque vous commencerez à utiliser des plages de temps, celles récemment utilisées apparaîtront ici. /0></0><1><0>Lisez la documentation</0><1> pour savoir comment entrer des plages de temps personnalisées.</1></1>",
+      "filter-placeholder": "Rechercher dans les plages rapides"
     },
     "footer": {
       "change-settings-button": "Modifier les paramètres de l'heure",
@@ -485,10 +485,10 @@
       "zoom-out-tooltip": "Dézoomer la plage de temps <1></1> CTRL+Z"
     },
     "time-range": {
-      "aria-role": "Sélection de l'intervalle de temps",
-      "default-title": "Intervalles de temps",
-      "example-title": "Exemple d'intervalles de temps",
-      "specify": "Spécifiez l'intervalle de temps <1></1>"
+      "aria-role": "Sélection de la plage de temps",
+      "default-title": "Plages de temps",
+      "example-title": "Exemple de plages de temps",
+      "specify": "Spécifiez la plage de temps <1></1>"
     },
     "zone": {
       "select-aria-label": "Outil de sélection du fuseau horaire",
