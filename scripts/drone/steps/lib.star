@@ -489,7 +489,7 @@ def test_backend_step():
             'wire-install',
         ],
         'commands': [
-            'go test -short -covermode=atomic -timeout=5m ./pkg/... | go tool test2json',
+            'go test -v -short -covermode=atomic -timeout=5m ./pkg/... | go tool test2json',
         ],
     }
 
@@ -502,7 +502,7 @@ def test_backend_integration_step():
             'wire-install',
         ],
         'commands': [
-            'go test -run Integration -covermode=atomic -timeout=5m ./pkg/... | go tool test2json',
+            'go test -v -run Integration -covermode=atomic -timeout=5m ./pkg/... | go tool test2json',
         ],
     }
 
@@ -896,7 +896,7 @@ def postgres_integration_tests_step():
         + 'devenv/docker/blocks/postgres_tests/setup.sql',
         # Make sure that we don't use cached results for another database
         'go clean -testcache',
-        "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {} | go tool test2json'",
+        "go list './pkg/...' | xargs -I {} sh -c 'go test -v -run Integration -covermode=atomic -timeout=5m {} | go tool test2json'",
     ]
     return {
         'name': 'postgres-integration-tests',
@@ -919,7 +919,7 @@ def mysql_integration_tests_step():
         'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
         # Make sure that we don't use cached results for another database
         'go clean -testcache',
-        "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {} | go tool test2json'",
+        "go list './pkg/...' | xargs -I {} sh -c 'go test -v -run Integration -covermode=atomic -timeout=5m {} | go tool test2json'",
     ]
     return {
         'name': 'mysql-integration-tests',
