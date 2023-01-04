@@ -1,22 +1,20 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 
 export interface Props {
-  state?: LoadingState;
   message?: string;
   onClick?: (e: React.SyntheticEvent) => void;
 }
 
-export function PanelStatus({ state, message, onClick }: Props) {
+export function PanelStatus({ message, onClick }: Props) {
   const styles = useStyles2(getStyles);
-  const hasError = state === LoadingState.Error || message;
 
-  return hasError ? (
+  return (
     <ToolbarButton
       onClick={onClick}
       variant={'destructive'}
@@ -24,7 +22,7 @@ export function PanelStatus({ state, message, onClick }: Props) {
       icon="exclamation-triangle"
       tooltip={message || ''}
     />
-  ) : null;
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

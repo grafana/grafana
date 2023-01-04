@@ -94,6 +94,19 @@ export function PanelChrome({
   const isUsingDeprecatedLeftItems = isEmpty(status) && !loadingState;
   const showLoading = loadingState === LoadingState.Loading && !isUsingDeprecatedLeftItems;
   const showStreaming = loadingState === LoadingState.Streaming && !isUsingDeprecatedLeftItems;
+
+  const renderStatus = () => {
+    if (isUsingDeprecatedLeftItems) {
+      return <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>;
+    } else {
+      const showError = loadingState === LoadingState.Error || status?.message;
+      return showError ? (
+        <div className={styles.errorContainer}>
+          <PanelStatus message={status?.message} onClick={status?.onClick} />
+        </div>
+      ) : null;
+    }
+  };
   return (
     <div className={styles.container} style={containerStyles}>
       <div className={styles.loadingBarContainer}>
@@ -102,9 +115,9 @@ export function PanelChrome({
 
       <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
         {title && (
-          <div title={title} className={styles.title}>
+          <h6 title={title} className={styles.title}>
             {title}
-          </div>
+          </h6>
         )}
 
         {showStreaming && (
@@ -146,13 +159,7 @@ export function PanelChrome({
           </Dropdown>
         )}
 
-        {isUsingDeprecatedLeftItems ? (
-          <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>
-        ) : (
-          <div className={styles.errorContainer}>
-            <PanelStatus state={loadingState} message={status?.message} onClick={status?.onClick} />
-          </div>
-        )}
+        {renderStatus()}
       </div>
 
       <div className={styles.content} style={contentStyle}>
@@ -251,7 +258,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
-      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.h6.fontSize,
+      fontWeight: theme.typography.h6.fontWeight,
     }),
     items: css({
       display: 'flex',
