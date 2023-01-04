@@ -101,7 +101,7 @@ export interface CloudWatchLogsQuery extends DataQuery {
   expression?: string;
   statsGroups?: string[];
   logGroups?: LogGroup[];
-  /* not quite deprecated yet, but will be soon */
+  /* deprecated, use logGroups instead */
   logGroupNames?: string[];
 }
 // We want to allow setting defaults for both Logs and Metrics queries
