@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
@@ -20,22 +19,22 @@ interface OrgNameDTO {
 }
 
 const getOrg = async (orgId: UrlQueryValue) => {
-  return await getBackendSrv().get('/api/orgs/' + orgId);
+  return await getBackendSrv().get(`/api/orgs/${orgId}`);
 };
 
 const getOrgUsers = async (orgId: UrlQueryValue, page: number) => {
   if (contextSrv.hasPermission(AccessControlAction.OrgUsersRead)) {
     return getBackendSrv().get(`/api/orgs/${orgId}/users/search`, accessControlQueryParam({ perpage: perPage, page }));
   }
-  return [];
+  return { orgUsers: [] };
 };
 
 const updateOrgUserRole = (orgUser: OrgUser, orgId: UrlQueryValue) => {
-  return getBackendSrv().patch('/api/orgs/' + orgId + '/users/' + orgUser.userId, orgUser);
+  return getBackendSrv().patch(`/api/orgs/${orgId}/users/${orgUser.userId}`, orgUser);
 };
 
 const removeOrgUser = (orgUser: OrgUser, orgId: UrlQueryValue) => {
-  return getBackendSrv().delete('/api/orgs/' + orgId + '/users/' + orgUser.userId);
+  return getBackendSrv().delete(`/api/orgs/${orgId}/users/${orgUser.userId}`);
 };
 
 interface Props extends GrafanaRouteComponentProps<{ id: string }> {}
@@ -64,17 +63,15 @@ const AdminEditOrgPage = ({ match }: Props) => {
   }, [fetchOrg, fetchOrgUsers, page]);
 
   const updateOrgName = async (name: string) => {
-    return await getBackendSrv().put('/api/orgs/' + orgId, { ...orgState.value, name });
+    return await getBackendSrv().put(`/api/orgs/${orgId}`, { ...orgState.value, name });
   };
 
-  const renderMissingUserListRightsMessage = () => {
-    return (
-      <Alert severity="info" title="Access denied">
-        You do not have permission to see users in this organization. To update this organization, contact your server
-        administrator.
-      </Alert>
-    );
-  };
+  const renderMissingPermissionMessage = () => (
+    <Alert severity="info" title="Access denied">
+      You do not have permission to see users in this organization. To update this organization, contact your server
+      administrator.
+    </Alert>
+  );
 
   const onPageChange = (toPage: number) => {
     setPage(toPage);
@@ -120,13 +117,9 @@ const AdminEditOrgPage = ({ match }: Props) => {
             </Form>
           )}
 
-          <div
-            className={css`
-              margin-top: 20px;
-            `}
-          >
+          <div style={{ marginTop: '20px' }}>
             <Legend>Organization users</Legend>
-            {!canReadUsers && renderMissingUserListRightsMessage()}
+            {!canReadUsers && renderMissingPermissionMessage()}
             {canReadUsers && !!users.length && (
               <VerticalGroup spacing="md">
                 <UsersTable users={users} orgId={orgId} onRoleChange={onRoleChange} onRemoveUser={onRemoveUser} />
