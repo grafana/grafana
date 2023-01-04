@@ -82,13 +82,10 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 	defer span.End()
 	span.SetAttributes("authn.client", client, attribute.Key("authn.client").String(client))
 
-	logger := s.log.FromContext(ctx)
-	logger.Debug("authenticate request", "client", client)
-
 	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
-		logger.Warn("auth client could not authenticate request", "client", client, "error", err)
+		s.log.FromContext(ctx).Warn("auth client could not authenticate request", "client", client, "error", err)
 		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client could not authenticate request"}})
 		return nil, true, err
 	}
@@ -100,7 +97,6 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 		}
 	}
 
-	logger.Debug("successfully authenticated the request", "id", identity.ID, "orgId", identity.OrgID)
 	return identity, true, nil
 }
 
