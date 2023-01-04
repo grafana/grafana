@@ -586,7 +586,8 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 	}
 
 	// Connect data
-	if hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
+	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
+	if plugins.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-connect-data",
 			Text:     "Connect data",
