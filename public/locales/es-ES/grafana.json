@@ -111,7 +111,7 @@
       "title": "General"
     },
     "admin-plugins": {
-      "title": "Plugins y datos"
+      "title": "Complementos y datos"
     },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
@@ -270,7 +270,7 @@
       "placeholder": "Buscar Grafana"
     },
     "search-dashboards": {
-      "title": "Buscar dashboards"
+      "title": "Buscar paneles de control"
     },
     "server-settings": {
       "subtitle": "Vea la configuración definida en los ajustes de Grafana",
@@ -319,8 +319,8 @@
     "title": "Últimas entradas del blog"
   },
   "notifications": {
-    "starred-dashboard": "Dashboard destacado",
-    "unstarred-dashboard": "Dashboard no destacado"
+    "starred-dashboard": "Panel de control destacado",
+    "unstarred-dashboard": "Panel de control no destacado"
   },
   "panel": {
     "header-menu": {
@@ -407,14 +407,14 @@
       "name": "Nombre de la instantánea",
       "timeout": "Tiempo de espera (segundos)",
       "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel.",
-      "url-label": "Capturar URL"
+      "url-label": "URL de la instantánea"
     },
     "tab-title": {
       "embed": "Incrustar",
       "export": "Exportar",
       "library-panel": "Panel de librería",
       "link": "Enlace",
-      "snapshot": "Vista rápida"
+      "snapshot": "Instantánea"
     },
     "theme-picker": {
       "current": "Actual",
@@ -453,13 +453,13 @@
       "title": "Intervalo de tiempo absoluto"
     },
     "calendar": {
-      "apply-button": "Aplicar rango de tiempo",
+      "apply-button": "Aplicar intervalo de tiempo",
       "cancel-button": "Cancelar",
-      "select-time": "Seleccionar un rango de tiempo"
+      "select-time": "Seleccionar un intervalo de tiempo"
     },
     "content": {
-      "empty-recent-list": "<0><0>Parece que no has utilizado antes este selector de tiempo. En cuanto introduzcas algún intervalo de tiempo, los intervalos que hayas usado recientemente aparecerán aquí./0></0><1><0>Lee la documentación</0><1> para saber más sobre cómo introducir rangos de tiempo personalizados.</1></1>",
-      "filter-placeholder": "Buscar rangos rápidos"
+      "empty-recent-list": "<0><0>Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí./0></0><1><0>Lea la documentación</0><1> para saber más sobre cómo introducir intervalos de tiempo personalizados.</1></1>",
+      "filter-placeholder": "Buscar intervalos rápidos"
     },
     "footer": {
       "change-settings-button": "Cambiar ajustes de tiempo",
@@ -469,7 +469,7 @@
       "time-zone-selection": "Selección del huso horario"
     },
     "range-content": {
-      "apply-button": "Aplicar rango de tiempo",
+      "apply-button": "Aplicar intervalo de tiempo",
       "default-error": "Introducir una fecha anterior o «ahora»",
       "fiscal-year": "Ejercicio fiscal",
       "from-input": "Desde",
@@ -477,18 +477,18 @@
       "to-input": "Hasta"
     },
     "range-picker": {
-      "backwards-time-aria-label": "Retrasar el rango de tiempo",
-      "current-time-selected": "Rango de tiempo seleccionado: {{currentTimeRange}}",
-      "forwards-time-aria-label": "Adelantar el rango de tiempo",
+      "backwards-time-aria-label": "Retrasar el intervalo de tiempo",
+      "current-time-selected": "Intervalo de tiempo seleccionado: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Adelantar el intervalo de tiempo",
       "to": "hasta",
-      "zoom-out-button": "Reducir el rango de tiempo",
-      "zoom-out-tooltip": "Reducir el rango de tiempo <1></1> CTRL+Z"
+      "zoom-out-button": "Reducir el intervalo de tiempo",
+      "zoom-out-tooltip": "Reducir el intervalo de tiempo <1></1> CTRL+Z"
     },
     "time-range": {
-      "aria-role": "Selección del rango de tiempo",
-      "default-title": "Rangos de tiempo",
-      "example-title": "Ejemplos de rangos de tiempo",
-      "specify": "Especificar el rango de tiempo <1></1>"
+      "aria-role": "Selección de intervalo de tiempo",
+      "default-title": "Intervalos de tiempo",
+      "example-title": "Ejemplos de intervalos de tiempo",
+      "specify": "Especificar el intervalo de tiempo <1></1>"
     },
     "zone": {
       "select-aria-label": "Selector de huso horario",
