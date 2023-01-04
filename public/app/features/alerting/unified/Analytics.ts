@@ -1,5 +1,9 @@
+import { dateTime } from '@grafana/data';
 import { faro, LogLevel as GrafanaLogLevel } from '@grafana/faro-web-sdk';
+import { getBackendSrv } from '@grafana/runtime';
 import { config, reportInteraction } from '@grafana/runtime/src';
+
+const USER_CREATION_MIN_DAYS = 15;
 
 export const LogMessages = {
   filterByLabel: 'filtering alert instances by label',
@@ -40,20 +44,47 @@ export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise
   };
 }
 
-export const trackNewAlerRuleFormSaved = (props: AlertRuleTrackingProps) => {
+export async function isNewUser(userId: number) {
+  try {
+    const { createdAt } = await getBackendSrv().get(`/api/users/${userId}`);
+
+    const limitDateForNewUser = dateTime().subtract(USER_CREATION_MIN_DAYS, 'days');
+    const userCreationDate = dateTime(createdAt);
+
+    const isNew = limitDateForNewUser.isBefore(userCreationDate);
+
+    return isNew;
+  } catch {
+    return true; //if no date is returned, we assume the user is new to prevent tracking actions
+  }
+}
+
+export const trackNewAlerRuleFormSaved = async (props: AlertRuleTrackingProps) => {
+  const isNew = await isNewUser(props.user_id);
+  if (isNew) {
+    return;
+  }
   reportInteraction('grafana_alerting_rule_creation', props);
 };
 
-export const trackNewAlerRuleFormCancelled = (props: AlertRuleTrackingProps) => {
+export const trackNewAlerRuleFormCancelled = async (props: AlertRuleTrackingProps) => {
+  const isNew = await isNewUser(props.user_id);
+  if (isNew) {
+    return;
+  }
   reportInteraction('grafana_alerting_rule_aborted', props);
 };
 
-export const trackNewAlerRuleFormError = (props: AlertRuleTrackingProps & { error: string }) => {
+export const trackNewAlerRuleFormError = async (props: AlertRuleTrackingProps & { error: string }) => {
+  const isNew = await isNewUser(props.user_id);
+  if (isNew) {
+    return;
+  }
   reportInteraction('grafana_alerting_rule_form_error', props);
 };
 
 export type AlertRuleTrackingProps = {
+  user_id: number;
   grafana_version?: string;
   org_id?: number;
-  user_id?: number;
 };
