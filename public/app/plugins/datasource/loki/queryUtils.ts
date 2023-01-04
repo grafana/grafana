@@ -261,6 +261,7 @@ export function isQueryWithLineFilter(query: string): boolean {
     enter: ({ type }): false | void => {
       if (type.id === LineFilter) {
         queryWithLineFilter = true;
+        return;
       }
     },
   });
