@@ -171,7 +171,7 @@ func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 		ruleInfo, ok := sch.registry.del(key)
 		if !ok {
 			sch.log.Info("Alert rule cannot be stopped as it is not running", key.LogContext()...)
-			return
+			continue
 		}
 		// stop rule evaluation
 		ruleInfo.stop(errRuleDeleted)
