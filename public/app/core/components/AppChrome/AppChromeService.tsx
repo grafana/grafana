@@ -21,7 +21,7 @@ export interface AppChromeState {
   kioskMode: KioskMode | null;
 }
 
-const defaultSection: NavModelItem = { text: 'Grafana' };
+const defaultSection: NavModelItem = { text: 'Home' };
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
