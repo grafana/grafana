@@ -7,6 +7,7 @@ import { useStyles2, useTheme2 } from '../../themes';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { IconButton } from '../IconButton/IconButton';
 
+import { PanelDescription } from './PanelDescription';
 /**
  * @internal
  */
@@ -16,6 +17,7 @@ export interface PanelChromeProps {
   children: (innerWidth: number, innerHeight: number) => ReactNode;
   padding?: PanelPadding;
   title?: string;
+  description?: string | (() => string);
   titleItems?: (innerWidth: number, innerHeight: number) => ReactNode;
   menu?: React.ReactElement;
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
@@ -45,6 +47,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   children,
   padding = 'md',
   title = '',
+  description = '',
   titleItems = () => null,
   menu,
   // dragClass,
@@ -82,6 +85,8 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
             </div>
           )}
 
+          <PanelDescription description={description} />
+
           <div className={styles.titleItems} data-testid="title-items">
             {titleItems(innerWidth, innerHeight)}
           </div>
@@ -99,7 +104,6 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
               </div>
             </Dropdown>
           )}
-
           {leftItems.length > 0 && (
             <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>
           )}

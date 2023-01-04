@@ -1,26 +1,15 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 
-import {
-  PanelModel,
-  renderMarkdown,
-  ScopedVars,
-  LinkModelSupplier,
-  PanelData,
-  InterpolateFunction,
-  GrafanaTheme2,
-} from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
-import { Dropdown, Icon, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { PanelModel, LinkModelSupplier, PanelData, InterpolateFunction, GrafanaTheme2 } from '@grafana/data';
+import { Dropdown, Icon, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { PanelHeaderNotices } from './PanelHeaderNotices';
 
 export interface Props {
   innerHeight: number;
   innerWidth: number;
-  panelDescription?: string;
   alertState?: string;
-  scopedVars?: ScopedVars;
   replaceVariables: InterpolateFunction;
   links?: LinkModelSupplier<PanelModel>;
   data: PanelData;
@@ -28,23 +17,11 @@ export interface Props {
 }
 
 export function PanelHeaderTitleItems(props: Props) {
-  const { panelDescription, alertState, scopedVars, links, replaceVariables, data, panelId } = props;
+  const { alertState, links, replaceVariables, data, panelId } = props;
   const styles = useStyles2(getStyles);
-  // description
-  const rawDescription = panelDescription || '';
-  const descriptionMarkdown = getTemplateSrv().replace(rawDescription, scopedVars);
-  const description = renderMarkdown(descriptionMarkdown);
 
   // panel links
   const panelLinks = links && links.getLinks(replaceVariables);
-
-  const getDescriptionContent = (): JSX.Element => {
-    return (
-      <div className="panel-info-content markdown-html">
-        <div dangerouslySetInnerHTML={{ __html: description }} />
-      </div>
-    );
-  };
 
   const getLinksContent = (): JSX.Element => {
     return (
@@ -55,12 +32,6 @@ export function PanelHeaderTitleItems(props: Props) {
       </Menu>
     );
   };
-
-  const descriptionItem = (
-    <Tooltip interactive content={getDescriptionContent}>
-      <ToolbarButton icon="info-circle" className={styles.description} />
-    </Tooltip>
-  );
 
   const alertStateItem = (
     <ToolbarButton
@@ -87,7 +58,6 @@ export function PanelHeaderTitleItems(props: Props) {
   return (
     <>
       {data.series && <PanelHeaderNotices frames={data.series} panelId={panelId} />}
-      {description && descriptionItem}
       {panelLinks && panelLinks.length > 0 && linksItem}
       {data.request && data.request.timeInfo && timeshift}
       {alertState && alertStateItem}
@@ -96,19 +66,6 @@ export function PanelHeaderTitleItems(props: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  description: css({
-    border: 'none',
-
-    code: {
-      whiteSpace: 'normal',
-      wordWrap: 'break-word',
-    },
-
-    'pre > code': {
-      display: 'block',
-    },
-  }),
-
   item: css({
     border: 'none',
   }),

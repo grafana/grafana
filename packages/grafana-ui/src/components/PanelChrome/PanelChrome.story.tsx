@@ -147,27 +147,8 @@ const ErrorIcon = [
 
 const leftItems = { LoadingIcon, ErrorIcon, Default };
 
-const titleItems: PanelChromeInfoState[] = [
-  {
-    icon: 'info',
-    tooltip:
-      'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.',
-  },
-  {
-    icon: 'external-link-alt',
-    tooltip: 'wearegoingonanadventure.openanewtab.maybe',
-    onClick: () => {},
-  },
-  {
-    icon: 'clock-nine',
-    tooltip: 'Time range: 2021-09-01 00:00:00 to 2021-09-01 00:00:00',
-    onClick: () => {},
-  },
-  {
-    icon: 'heart',
-    tooltip: 'Health of the panel',
-  },
-];
+const description =
+  'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.';
 
 const menu = (
   <Menu>
@@ -201,6 +182,7 @@ const menu = (
 );
 
 Basic.argTypes = {
+  description: { control: { type: 'text' } },
   leftItems: {
     options: Object.keys(leftItems),
     mapping: leftItems,
@@ -219,7 +201,7 @@ Basic.args = {
   width: 400,
   height: 200,
   title: 'Very long title that should get ellipsis when there is no more space',
-  titleItems,
+  description,
   menu,
 };
 

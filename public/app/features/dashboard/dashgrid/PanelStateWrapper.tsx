@@ -16,12 +16,13 @@ import {
   PanelPlugin,
   PanelPluginMeta,
   PluginContextProvider,
+  renderMarkdown,
   TimeRange,
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { getTemplateSrv, config, locationService, RefreshEvent } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
 import {
   ErrorBoundary,
@@ -568,6 +569,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return !panel.hasTitle();
   }
 
+  onShowPanelDescription = () => {
+    const { panel } = this.props;
+    const descriptionMarkdown = getTemplateSrv().replace(panel.description, panel.scopedVars);
+    const interpolatedDescription = renderMarkdown(descriptionMarkdown);
+    return interpolatedDescription;
+  };
+
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
@@ -604,9 +612,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           key="title-items"
           innerHeight={innerHeight}
           innerWidth={innerWidth}
-          panelDescription={panel.description}
           links={getPanelLinksSupplier(panel)}
-          scopedVars={panel.scopedVars}
           replaceVariables={panel.replaceVariables}
           alertState={alertState}
           data={data}
@@ -624,6 +630,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             width={width}
             height={height}
             title={title}
+            description={!!panel.description ? this.onShowPanelDescription : undefined}
             titleItems={titleItems}
             leftItems={leftItems}
             padding={noPadding}
