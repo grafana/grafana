@@ -44,6 +44,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                             |
 | `autoMigrateGraphPanels`          | Replace the angular graph panel with timeseries                                 |
 | `datasourceLogger`                | Logs all datasource requests                                                    |
+| `accessControlOnCall`             | Access control primitives for OnCall                                            |
 
 ## Alpha feature toggles
 
@@ -94,7 +95,6 @@ Alpha features might be changed or removed without prior notice.
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
-| `accessControlOnCall`              | Access control primitives for OnCall                                                                                                                                         |
 
 ## Development feature toggles
 
