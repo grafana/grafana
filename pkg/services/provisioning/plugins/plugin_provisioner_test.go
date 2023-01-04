@@ -84,13 +84,6 @@ type mockStore struct {
 	updateRequests []*pluginsettings.UpdateArgs
 }
 
-func (m *mockStore) GetOrgByNameHandler(_ context.Context, query *models.GetOrgByNameQuery) error {
-	if query.Name == "Org 4" {
-		query.Result = &models.Org{Id: 4}
-	}
-	return nil
-}
-
 func (m *mockStore) GetPluginSettingByPluginID(_ context.Context, args *pluginsettings.GetByPluginIDArgs) (*pluginsettings.DTO, error) {
 	if args.PluginID == "test-plugin" && args.OrgID == 2 {
 		return &pluginsettings.DTO{

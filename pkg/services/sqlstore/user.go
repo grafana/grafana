@@ -134,26 +134,26 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 }
 
 func verifyExistingOrg(sess *DBSession, orgId int64) error {
-	var org models.Org
-	has, err := sess.Where("id=?", orgId).Get(&org)
+	var orga org.Org
+	has, err := sess.Where("id=?", orgId).Get(&orga)
 	if err != nil {
 		return err
 	}
 	if !has {
-		return models.ErrOrgNotFound
+		return org.ErrOrgNotFound
 	}
 	return nil
 }
 
 func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
-	var org models.Org
+	var org org.Org
 	if ss.Cfg.AutoAssignOrg {
 		has, err := sess.Where("id=?", ss.Cfg.AutoAssignOrgId).Get(&org)
 		if err != nil {
 			return 0, err
 		}
 		if has {
-			return org.Id, nil
+			return org.ID, nil
 		}
 
 		if ss.Cfg.AutoAssignOrgId != 1 {
@@ -164,7 +164,7 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 		}
 
 		org.Name = mainOrgName
-		org.Id = int64(ss.Cfg.AutoAssignOrgId)
+		org.ID = int64(ss.Cfg.AutoAssignOrgId)
 	} else {
 		org.Name = orgName
 	}
@@ -172,7 +172,7 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 	org.Created = time.Now()
 	org.Updated = time.Now()
 
-	if org.Id != 0 {
+	if org.ID != 0 {
 		if _, err := sess.InsertId(&org, ss.Dialect); err != nil {
 			return 0, err
 		}
@@ -184,9 +184,9 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 
 	sess.publishAfterCommit(&events.OrgCreated{
 		Timestamp: org.Created,
-		Id:        org.Id,
+		Id:        org.ID,
 		Name:      org.Name,
 	})
 
-	return org.Id, nil
+	return org.ID, nil
 }
