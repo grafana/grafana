@@ -184,6 +184,11 @@ func TestIntegrationAnnotations(t *testing.T) {
 			inserted, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 			assert.Len(t, inserted, count)
+			for _, ins := range inserted {
+				require.Equal(t, int64(12), ins.Time)
+				require.Equal(t, int64(12), ins.TimeEnd)
+				require.Equal(t, ins.Created, ins.Updated)
+			}
 		})
 
 		t.Run("Can batch-insert annotations with tags", func(t *testing.T) {
