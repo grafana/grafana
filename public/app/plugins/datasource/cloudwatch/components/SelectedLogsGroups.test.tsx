@@ -2,21 +2,22 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { LogGroup } from '../types';
+
 import { SelectedLogsGroups } from './SelectedLogsGroups';
 
+const selectedLogGroups: LogGroup[] = [
+  {
+    arn: 'aws/lambda/lambda-name1',
+    name: 'aws/lambda/lambda-name1',
+  },
+  {
+    arn: 'aws/lambda/lambda-name2',
+    name: 'aws/lambda/lambda-name2',
+  },
+];
 const defaultProps = {
-  selectedLogGroups: [
-    {
-      value: 'aws/lambda/lambda-name1',
-      label: 'aws/lambda/lambda-name1',
-      text: 'aws/lambda/lambda-name1',
-    },
-    {
-      value: 'aws/lambda/lambda-name2',
-      label: 'aws/lambda/lambda-name2',
-      text: 'aws/lambda/lambda-name2',
-    },
-  ],
+  selectedLogGroups,
   onChange: jest.fn(),
 };
 
@@ -35,9 +36,8 @@ describe('SelectedLogsGroups', () => {
     });
     it('should be displayed in case more than 10 log groups have been selected', async () => {
       const selectedLogGroups = Array(12).map((i) => ({
-        value: `logGroup${i}`,
-        text: `logGroup${i}`,
-        label: `logGroup${i}`,
+        arn: `logGroup${i}`,
+        name: `logGroup${i}`,
       }));
       render(<SelectedLogsGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
       await waitFor(() => expect(screen.getByText('Show all')).toBeInTheDocument());
@@ -51,9 +51,8 @@ describe('SelectedLogsGroups', () => {
     });
     it('should be displayed in case at least one log group have been selected', async () => {
       const selectedLogGroups = Array(11).map((i) => ({
-        value: `logGroup${i}`,
-        text: `logGroup${i}`,
-        label: `logGroup${i}`,
+        arn: `logGroup${i}`,
+        name: `logGroup${i}`,
       }));
       render(<SelectedLogsGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
       await waitFor(() => expect(screen.getByText('Clear selection')).toBeInTheDocument());
@@ -61,9 +60,8 @@ describe('SelectedLogsGroups', () => {
 
     it('should display confirm dialog before clearing all selections', async () => {
       const selectedLogGroups = Array(11).map((i) => ({
-        value: `logGroup${i}`,
-        text: `logGroup${i}`,
-        label: `logGroup${i}`,
+        arn: `logGroup${i}`,
+        name: `logGroup${i}`,
       }));
       render(<SelectedLogsGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
       await waitFor(() => userEvent.click(screen.getByText('Clear selection')));
@@ -82,9 +80,8 @@ describe('SelectedLogsGroups', () => {
     });
     it('should be displayed in case at least one log group have been selected', async () => {
       const selectedLogGroups = Array(11).map((i) => ({
-        value: `logGroup${i}`,
-        text: `logGroup${i}`,
-        label: `logGroup${i}`,
+        arn: `logGroup${i}`,
+        name: `logGroup${i}`,
       }));
       render(<SelectedLogsGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
       await waitFor(() => expect(screen.getByText('Clear selection')).toBeInTheDocument());
