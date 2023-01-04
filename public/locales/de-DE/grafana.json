@@ -2,7 +2,7 @@
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
   "clipboard-button": {
     "inline-toast": {
-      "success": ""
+      "success": "Kopiert"
     }
   },
   "common": {
@@ -105,13 +105,13 @@
       "title": "Server-Administrator"
     },
     "admin-access": {
-      "title": ""
+      "title": "Benutzer und Zugriff"
     },
     "admin-general": {
-      "title": ""
+      "title": "Allgemein"
     },
     "admin-plugins": {
-      "title": ""
+      "title": "Plugins und Daten"
     },
     "alerting": {
       "subtitle": "Informiere dich über Probleme in deinen Systemen kurz nach deren Auftreten",
@@ -197,7 +197,7 @@
       "title": "Organisationen"
     },
     "global-users": {
-      "subtitle": "",
+      "subtitle": "Benutzer in Grafana verwalten",
       "title": "Benutzer",
       "titleBeforeTopnav": "Benutzer"
     },
@@ -242,7 +242,7 @@
     },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
-      "title": "",
+      "title": "Standardeinstellungen",
       "titleBeforeTopnav": "Einstellungen"
     },
     "playlists": {
@@ -270,7 +270,7 @@
       "placeholder": "Grafana durchsuchen"
     },
     "search-dashboards": {
-      "title": ""
+      "title": "Dashboards durchsuchen"
     },
     "server-settings": {
       "subtitle": "Zeige die in deiner Grafana-Konfiguration festgelegten Einstellungen an",
@@ -319,36 +319,36 @@
     "title": "Das Neueste aus dem Blog"
   },
   "notifications": {
-    "starred-dashboard": "",
-    "unstarred-dashboard": ""
+    "starred-dashboard": "Dashboard markiert",
+    "unstarred-dashboard": "Dashboard nicht markiert"
   },
   "panel": {
     "header-menu": {
-      "hide-legend": "",
+      "hide-legend": "Legende ausblenden",
       "inspect": "Überprüfen",
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
       "share": "Teilen",
-      "show-legend": "",
+      "show-legend": "Legende anzeigen",
       "view": "Anzeigen"
     }
   },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Automatische Aktualisierung deaktiviert. Zeitintervall für Aktualisierungen auswählen",
-      "duration-selected": ""
+      "duration-selected": "Das Aktualisierungsintervall mit aktuellem Intervall {{durationAriaLabel}} auswählen"
     },
     "live-option": {
-      "aria-label": "",
-      "label": ""
+      "aria-label": "Live-Streaming aktivieren",
+      "label": "Live"
     },
     "off-option": {
       "aria-label": "Automatische Aktualisierung deaktivieren",
       "label": "Aus"
     },
     "select-button": {
-      "auto-refresh": ""
+      "auto-refresh": "Automatisches Aktualisierungsintervall festlegen"
     }
   },
   "share-modal": {
@@ -407,7 +407,7 @@
       "name": "Name des Schnappschusses",
       "timeout": "Timeout (Sekunden)",
       "timeout-description": "Wenn die Erfassung deiner Dashboard-Metriken lange dauert, musst du ggf. den Timeout-Wert anpassen.",
-      "url-label": ""
+      "url-label": "Schnappschuss-URL"
     },
     "tab-title": {
       "embed": "Einbetten",
@@ -423,7 +423,7 @@
       "light": "Hell"
     },
     "view-json": {
-      "copy-button": ""
+      "copy-button": "In die Zwischenablage kopieren"
     }
   },
   "shared-dashboard": {
@@ -453,46 +453,46 @@
       "title": "Absoluter Zeitbereich"
     },
     "calendar": {
-      "apply-button": "",
+      "apply-button": "Zeitspanne anwenden",
       "cancel-button": "Abbrechen",
-      "select-time": ""
+      "select-time": "Zeitspanne auswählen"
     },
     "content": {
-      "empty-recent-list": "",
-      "filter-placeholder": ""
+      "empty-recent-list": "<0><0>Es sieht so aus, als hätten Sie diese Zeitauswahl noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.</0></0><1><0>Lesen Sie die Dokumentation</0><1>, um mehr darüber zu erfahren, wie Sie benutzerdefinierte Zeitspannen eingeben können.</1></1>",
+      "filter-placeholder": "Schnelle Spannen durchsuchen"
     },
     "footer": {
-      "change-settings-button": "",
-      "fiscal-year-option": "",
-      "fiscal-year-start": "",
-      "time-zone-option": "",
-      "time-zone-selection": ""
+      "change-settings-button": "Zeiteinstellungen ändern",
+      "fiscal-year-option": "Geschäftsjahr",
+      "fiscal-year-start": "Geschäftsjahr Startmonat",
+      "time-zone-option": "Zeitzone",
+      "time-zone-selection": "Zeitzonenauswahl"
     },
     "range-content": {
-      "apply-button": "",
-      "default-error": "",
-      "fiscal-year": "",
-      "from-input": "",
-      "range-error": "",
-      "to-input": ""
+      "apply-button": "Zeitspanne anwenden",
+      "default-error": "Bitte geben Sie ein vergangenes Datum oder „jetzt“ ein",
+      "fiscal-year": "Geschäftsjahr",
+      "from-input": "Von",
+      "range-error": "„Von“ kann nicht nach „Bis“ sein",
+      "to-input": "Bis"
     },
     "range-picker": {
-      "backwards-time-aria-label": "",
-      "current-time-selected": "",
-      "forwards-time-aria-label": "",
-      "to": "",
-      "zoom-out-button": "",
-      "zoom-out-tooltip": ""
+      "backwards-time-aria-label": "Zeitspanne rückwärts bewegen",
+      "current-time-selected": "Ausgewählte Zeitspanne: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Zeitspanne rückwärts bewegen",
+      "to": "bis",
+      "zoom-out-button": "Zeitspanne verkleinern",
+      "zoom-out-tooltip": "Zeitspanne verkleinern <1></1> STRG +Z"
     },
     "time-range": {
-      "aria-role": "",
-      "default-title": "",
-      "example-title": "",
-      "specify": ""
+      "aria-role": "Zeitspannenauswahl",
+      "default-title": "Zeitspannen",
+      "example-title": "Beispiel-Zeitspannen",
+      "specify": "Zeitspanne <1></1> festlegen"
     },
     "zone": {
-      "select-aria-label": "",
-      "select-search-input": ""
+      "select-aria-label": "Zeitzonenauswahl",
+      "select-search-input": "Suchbegriff eingeben (Land, Stadt, Abkürzung)"
     }
   },
   "user-orgs": {
@@ -524,11 +524,11 @@
   },
   "variable": {
     "picker": {
-      "input": "",
-      "link-all": "",
-      "option-all": "",
-      "option-selected-values": "",
-      "option-tooltip": ""
+      "input": "Variablenwert eingeben",
+      "link-all": "Alle",
+      "option-all": "Alle",
+      "option-selected-values": "Ausgewählt",
+      "option-tooltip": "Auswahl löschen"
     }
   }
 }
