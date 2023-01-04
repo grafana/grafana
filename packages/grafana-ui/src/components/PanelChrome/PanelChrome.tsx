@@ -94,8 +94,6 @@ export function PanelChrome({
   const isUsingDeprecatedLeftItems = isEmpty(status) && !loadingState;
   const showLoading = loadingState === LoadingState.Loading && !isUsingDeprecatedLeftItems;
   const showStreaming = loadingState === LoadingState.Streaming && !isUsingDeprecatedLeftItems;
-  console.log(status);
-  console.log(loadingState);
   return (
     <div className={styles.container} style={containerStyles}>
       <div className={styles.loadingBarContainer}>
