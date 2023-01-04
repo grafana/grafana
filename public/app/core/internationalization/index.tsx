@@ -56,7 +56,9 @@ export const Trans: typeof I18NextTrans = (props) => {
 };
 
 export const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
-  return i18n.t(id, defaultMessage, values);
+  // Reassign t() so i18next-parser doesn't warn on dynamic key, and we can have 'failOnWarnings' enabled
+  const tFunc = i18n.t;
+  return tFunc(id, defaultMessage, values);
 };
 
 export const i18nDate = (value: number | Date | string, format: Intl.DateTimeFormatOptions = {}): string => {
