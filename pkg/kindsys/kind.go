@@ -67,14 +67,6 @@ type Interface interface {
 	Maturity() Maturity // TODO unclear if we want maturity for raw kinds
 }
 
-// TODO docs
-type Raw interface {
-	Interface
-
-	// TODO docs
-	Decl() *Decl[RawProperties]
-}
-
 type Structured interface {
 	Interface
 

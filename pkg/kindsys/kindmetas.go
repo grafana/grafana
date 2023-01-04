@@ -12,22 +12,6 @@ type CommonProperties struct {
 	Maturity          Maturity `json:"maturity"`
 }
 
-// RawProperties represents the static properties in a #Raw kind declaration that are
-// trivially representable with basic Go types.
-//
-// When a .cue #Raw declaration is loaded through the standard [LoadCoreKind],
-// func, it is fully validated and populated according to all rules specified
-// in CUE for #Raw kinds.
-type RawProperties struct {
-	CommonProperties
-	Extensions []string `json:"extensions"`
-}
-
-func (m RawProperties) _private() {}
-func (m RawProperties) Common() CommonProperties {
-	return m.CommonProperties
-}
-
 // CoreStructuredProperties represents the static properties in the declaration of a
 // #CoreStructured kind that are representable with basic Go types. This
 // excludes Thema schemas.
@@ -72,7 +56,7 @@ func (m ComposableProperties) Common() CommonProperties {
 }
 
 // SomeKindProperties is an interface type to abstract over the different kind
-// property struct types: [RawProperties], [CoreStructuredProperties],
+// property struct types: [CoreStructuredProperties],
 // [CustomStructuredProperties], [ComposableProperties].
 //
 // It is the traditional interface counterpart to the generic type constraint
@@ -85,5 +69,5 @@ type SomeKindProperties interface {
 // KindProperties is a type parameter that comprises the base possible set of
 // kind metadata configurations.
 type KindProperties interface {
-	RawProperties | CoreStructuredProperties | CustomStructuredProperties | ComposableProperties
+	CoreStructuredProperties | CustomStructuredProperties | ComposableProperties
 }

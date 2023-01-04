@@ -14,7 +14,6 @@ This document is the guide to extending kindsys. But first, we have to identify 
 * **Registries** - generated lists of all or a well-defined subset of kinds that can be used in code. `pkg/registries/corekind` is a registry of all core `pkg/kindsys.Interface` implementations; `packages/grafana-schema/src/index.gen.ts` is a registry of all the TypeScript types generated from the current versions of each kind's schema.
 * **Kind declarations** - the declarations of individual kinds. By kind category:
   * **Core Structured** - each child directory of `kinds/structured`.
-  * **Raw** - each child directory of `kinds/raw`.
   * **Composable** - In Grafana core, `public/app/plugins/*/*/models.cue` files.
   * **Custom** - No examples in Grafana core. See [operator-app-sdk](https://github.com/grafana/operator-app-sdk) (TODO that repo is private; make it public, or point to public examples).
 

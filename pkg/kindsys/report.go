@@ -55,14 +55,12 @@ var plannedCoreKinds = []string{
 
 type KindStateReport struct {
 	Core       []kindsys.CoreStructuredProperties `json:"core"`
-	Raw        []kindsys.RawProperties            `json:"raw"`
 	Composable []kindsys.ComposableProperties     `json:"composable"`
 }
 
 func emptyKindStateReport() KindStateReport {
 	return KindStateReport{
 		Core:       make([]kindsys.CoreStructuredProperties, 0),
-		Raw:        make([]kindsys.RawProperties, 0),
 		Composable: make([]kindsys.ComposableProperties, 0),
 	}
 }
@@ -77,8 +75,6 @@ func buildKindStateReport() KindStateReport {
 		switch props := k.Props().(type) {
 		case kindsys.CoreStructuredProperties:
 			r.Core = append(r.Core, props)
-		case kindsys.RawProperties:
-			r.Raw = append(r.Raw, props)
 		}
 	}
 

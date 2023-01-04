@@ -22,9 +22,9 @@ import (
 //   - Byte sequences are like arguments to the class constructor
 //   - Entities are like objects - what's returned from the constructor
 //
-// There are four categories of kinds: Raw, Composable, CoreStructured,
+// There are four categories of kinds: Composable, CoreStructured,
 // and CustomStructured.
-#Kind: #Raw | #Composable | #CoreStructured | #CustomStructured
+#Kind: #Composable | #CoreStructured | #CustomStructured
 
 // properties shared between all kind categories.
 _sharedKind: {
@@ -72,9 +72,6 @@ _sharedKind: {
 	// kind to advance beyond "experimental"
 	// TODO allow more maturity stages once system is ready https://github.com/orgs/grafana/projects/133/views/8
 	maturity: *"merged" | "experimental"
-
-	// form indicates whether the kind has a schema ("structured") or not ("raw")
-	form: "structured" | "raw"
 }
 
 // Maturity indicates the how far a given kind declaration is in its initial
@@ -100,24 +97,6 @@ _sharedKind: {
 	lineage: thema.#Lineage & { name: S.machineName }
 
 	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & {lin: lineage}).out
-}
-
-// Raw is a category of Kind that specifies handling for a raw file,
-// like an image, or an svg or parquet file. Grafana mostly acts as asset storage for raw
-// kinds: the byte sequence is a black box to Grafana, and type is determined
-// through metadata such as file extension.
-#Raw: {
-	_sharedKind
-	form: "raw"
-
-	// TODO docs
-	extensions?: [...string]
-
-	lineageIsGroup: false
-
-	// known TODOs
-	// - sanitize function
-	// - get summary
 }
 
 // TODO

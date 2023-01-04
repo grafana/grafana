@@ -22,17 +22,13 @@ var DeclParentPath = "kinds"
 // CoreStructured kind.
 var CoreStructuredDeclParentPath = filepath.Join(DeclParentPath, "structured")
 
-// RawDeclParentPath is the path, relative to the repository root, where each child
-// directory is expected to contain .cue files declaring one Raw kind.
-var RawDeclParentPath = filepath.Join(DeclParentPath, "raw")
-
 // GoCoreKindParentPath is the path, relative to the repository root, to the directory
 // containing one directory per kind, full of generated Go kind output: types and bindings.
 var GoCoreKindParentPath = filepath.Join("pkg", "kinds")
 
 // TSCoreKindParentPath is the path, relative to the repository root, to the directory that
 // contains one directory per kind, full of generated TS kind output: types and default consts.
-var TSCoreKindParentPath = filepath.Join("packages", "grafana-schema", "src", "raw")
+var TSCoreKindParentPath = filepath.Join("packages", "grafana-schema", "src")
 
 var defaultFramework cue.Value
 var fwOnce sync.Once
@@ -99,8 +95,6 @@ func ToKindMeta[T KindProperties](v cue.Value) (T, error) {
 
 	anyprops := any(*props).(SomeKindProperties)
 	switch anyprops.(type) {
-	case RawProperties:
-		kdef = fw.LookupPath(cue.MakePath(cue.Def("Raw")))
 	case CoreStructuredProperties:
 		kdef = fw.LookupPath(cue.MakePath(cue.Def("CoreStructured")))
 	case CustomStructuredProperties:
@@ -136,8 +130,7 @@ type SomeDecl struct {
 	Properties SomeKindProperties
 }
 
-// BindKindLineage binds the lineage for the kind declaration. nil, nil is returned
-// for raw kinds.
+// BindKindLineage binds the lineage for the kind declaration.
 //
 // For kinds with a corresponding Go type, it is left to the caller to associate
 // that Go type with the lineage returned from this function by a call to [thema.BindType].
@@ -146,19 +139,11 @@ func (decl *SomeDecl) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOptio
 		rt = cuectx.GrafanaThemaRuntime()
 	}
 	switch decl.Properties.(type) {
-	case RawProperties:
-		return nil, nil
 	case CoreStructuredProperties, CustomStructuredProperties, ComposableProperties:
 		return thema.BindLineage(decl.V.LookupPath(cue.MakePath(cue.Str("lineage"))), rt, opts...)
 	default:
 		panic("unreachable")
 	}
-}
-
-// IsRaw indicates whether the represented kind is a raw kind.
-func (decl *SomeDecl) IsRaw() bool {
-	_, is := decl.Properties.(RawProperties)
-	return is
 }
 
 // IsCoreStructured indicates whether the represented kind is a core structured kind.
@@ -215,15 +200,15 @@ func (decl *Decl[T]) Some() *SomeDecl {
 // This is a low-level function, primarily intended for use in code generation.
 // For representations of core kinds that are useful in Go programs at runtime,
 // see ["github.com/grafana/grafana/pkg/registry/corekind"].
-func LoadCoreKind[T RawProperties | CoreStructuredProperties](declpath string, ctx *cue.Context, overlay fs.FS) (*Decl[T], error) {
+func LoadCoreKind(declpath string, ctx *cue.Context, overlay fs.FS) (*Decl[CoreStructuredProperties], error) {
 	vk, err := cuectx.BuildGrafanaInstance(ctx, declpath, "kind", overlay)
 	if err != nil {
 		return nil, err
 	}
-	decl := &Decl[T]{
+	decl := &Decl[CoreStructuredProperties]{
 		V: vk,
 	}
-	decl.Properties, err = ToKindMeta[T](vk)
+	decl.Properties, err = ToKindMeta[CoreStructuredProperties](vk)
 	if err != nil {
 		return nil, err
 	}
