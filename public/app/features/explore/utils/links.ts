@@ -74,17 +74,49 @@ export const getFieldLinksForExplore = (options: {
 
   // If we have a dataFrame we can allow referencing other columns and their values in the interpolation.
   if (dataFrame) {
+    const fieldDisplayValuesProxy = getFieldDisplayValuesProxy({
+      frame: dataFrame,
+      rowIndex,
+    });
+
     scopedVars['__data'] = {
       value: {
         name: dataFrame.name,
         refId: dataFrame.refId,
-        fields: getFieldDisplayValuesProxy({
-          frame: dataFrame,
-          rowIndex,
-        }),
+        fields: fieldDisplayValuesProxy,
       },
       text: 'Data',
     };
+
+    // only correlations add the fieldName to the internal object, get those fieldNames and add special variables for correlations
+    const correlationLinks = dataFrame.fields
+      .map((field) => {
+        const linksWithFieldName = field.config.links
+          ?.map((link) => {
+            return link.internal?.fieldName;
+          })
+          .filter((link) => link !== undefined);
+
+        return linksWithFieldName?.flat();
+      })
+      .filter((field) => field !== undefined)
+      .flat();
+
+    if (correlationLinks.length === 1 && correlationLinks[0]) {
+      scopedVars['__targetField'] = {
+        value: fieldDisplayValuesProxy[correlationLinks[0]],
+        text: fieldDisplayValuesProxy[correlationLinks[0]],
+      };
+    }
+
+    correlationLinks.forEach((correlationFieldName) => {
+      if (correlationFieldName) {
+        scopedVars[correlationFieldName] = {
+          value: fieldDisplayValuesProxy[correlationFieldName],
+          text: fieldDisplayValuesProxy[correlationFieldName],
+        };
+      }
+    });
   }
 
   if (field.config.links) {
