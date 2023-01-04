@@ -165,6 +165,7 @@ const MonacoQueryField = (props: Props) => {
           const getSeriesValues = lpRef.current.getSeriesValues;
 
           const getSeriesLabels = lpRef.current.getSeriesLabels;
+
           const dataProvider = {
             getHistory,
             getAllMetricNames,
@@ -230,7 +231,7 @@ const MonacoQueryField = (props: Props) => {
           const updateCurrentEditorValue = debounce(() => {
             const editorValue = editor.getValue();
             onChangeRef.current(editorValue);
-          }, 300);
+          }, lpRef.current.datasource.getDebounceTimeInMilliseconds());
 
           editor.getModel()?.onDidChangeContent(() => {
             updateCurrentEditorValue();

@@ -1258,7 +1258,7 @@ export class PrometheusDatasource
       case PrometheusCacheLevel.high:
         return 1200;
       default:
-        return 300;
+        return 350;
     }
   }
 
