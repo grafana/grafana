@@ -202,7 +202,7 @@ BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(
 FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 
 // TODO docs
-TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gauge" | "json-view" | "image" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|Gauge|JSONView|Image")
+TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge")
 // : TableCellDisplayMode @cuetsy(kind="enum")
 
 // TODO Docs

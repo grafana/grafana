@@ -393,12 +393,15 @@ export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
  */
 export enum TableCellDisplayMode {
   Auto = 'auto',
+  BasicGauge = 'basic',
   ColorBackground = 'color-background',
   ColorBackgroundSolid = 'color-background-solid',
   ColorText = 'color-text',
   Gauge = 'gauge',
+  GradientGauge = 'gradient-gauge',
   Image = 'image',
   JSONView = 'json-view',
+  LcdGauge = 'lcd-gauge',
 }
 
 /**
