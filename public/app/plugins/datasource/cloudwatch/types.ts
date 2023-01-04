@@ -131,6 +131,11 @@ export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
   logsTimeout?: string;
   // Used to create links if logs contain traceId.
   tracingDatasourceUid?: string;
+
+  logGroups?: LogGroup[];
+  /**
+   * @deprecated use logGroups
+   */
   defaultLogGroups?: string[];
 }
 

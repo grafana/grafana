@@ -48,7 +48,7 @@ export const meta: DataSourcePluginMeta<CloudWatchJsonData> = {
 };
 
 export const CloudWatchSettings: DataSourceInstanceSettings<CloudWatchJsonData> = {
-  jsonData: { defaultRegion: 'us-west-1', tracingDatasourceUid: 'xray' },
+  jsonData: { defaultRegion: 'us-west-1', tracingDatasourceUid: 'xray', logGroups: [] },
   id: 0,
   uid: '',
   type: '',
@@ -86,7 +86,7 @@ export function setupMockedDataSource({
   datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
   datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
   datasource.api.getAccounts = jest.fn().mockResolvedValue([]);
-  datasource.logsQueryRunner.defaultLogGroups = [];
+  datasource.api.describeCrossAccountLogGroups = jest.fn().mockResolvedValue([]);
   const fetchMock = jest.fn().mockReturnValue(of({}));
   setBackendSrv({
     ...getBackendSrv(),
