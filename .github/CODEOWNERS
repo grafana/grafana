@@ -316,7 +316,7 @@ lerna.json @grafana/frontend-ops
 
 # Support bundles
 /public/app/features/support-bundles/ @grafana/grafana-authnz-team
-/pkg/infra/supportbundles/ @grafana/grafana-authnz-team
+/pkg/services/supportbundles/ @grafana/grafana-authnz-team
 
 # Grafana Partnerships Team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team

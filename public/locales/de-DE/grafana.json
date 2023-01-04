@@ -80,6 +80,16 @@
       "unmark-favorite": "Markierung als Favorit entfernen"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "",
+    "explanation": "",
+    "logo": "",
+    "new-dashboard": "",
+    "preferred": "",
+    "sampleData": "",
+    "viewAll": "",
+    "welcome": ""
+  },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
   },
@@ -130,6 +140,9 @@
     "alerting-groups": {
       "subtitle": "Zeige gruppierte Warnungen vom Alertmanager an",
       "title": "Gruppen"
+    },
+    "alerting-home": {
+      "title": ""
     },
     "alerting-legacy": {
       "title": "Warnungen (Legacy)"
@@ -208,6 +221,7 @@
     "help/documentation": "Dokumentation",
     "help/keyboard-shortcuts": "Tastaturbefehle",
     "help/support": "Support",
+    "help/support-bundle": "",
     "home": {
       "title": "Home"
     },
@@ -297,6 +311,10 @@
     "storage": {
       "subtitle": "Dateispeicher verwalten",
       "title": "Speicher"
+    },
+    "support-bundles": {
+      "subtitle": "",
+      "title": ""
     },
     "teams": {
       "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",
