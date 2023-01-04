@@ -86,6 +86,7 @@ const dummyProps: Props = {
   splitted: false,
   isFromCompactUrl: false,
   eventBus: new EventBusSrv(),
+  showRawPrometheus: false,
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {

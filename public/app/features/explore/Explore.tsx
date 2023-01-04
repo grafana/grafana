@@ -40,6 +40,7 @@ import { NoData } from './NoData';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { NodeGraphContainer } from './NodeGraphContainer';
 import { QueryRows } from './QueryRows';
+import RawPrometheusContainer from './RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { SecondaryActions } from './SecondaryActions';
@@ -316,6 +317,21 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
+  renderRawPrometheus(width: number) {
+    const { exploreId, datasourceInstance, timeZone } = this.props;
+    return (
+      <RawPrometheusContainer
+        showRawPrometheus={true}
+        ariaLabel={selectors.pages.Explore.General.table}
+        width={width}
+        exploreId={exploreId}
+        onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
+        timeZone={timeZone}
+        splitOpenFn={this.onSplitOpen('table')}
+      />
+    );
+  }
+
   renderLogsPanel(width: number) {
     const { exploreId, syncedTimes, theme, queryResponse } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -388,6 +404,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       theme,
       showMetrics,
       showTable,
+      showRawPrometheus,
       showLogs,
       showTrace,
       showNodeGraph,
@@ -410,6 +427,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         queryResponse.nodeGraphFrames,
         queryResponse.flameGraphFrames,
         queryResponse.tableFrames,
+        queryResponse.rawPrometheusFrames,
         queryResponse.traceFrames,
       ].every((e) => e.length === 0);
 
@@ -457,6 +475,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                         <>
                           {showMetrics && graphResult && (
                             <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
+                          )}
+                          {showRawPrometheus && (
+                            <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
                           )}
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
@@ -518,6 +539,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showFlameGraph,
     loading,
     isFromCompactUrl,
+    showRawPrometheus,
   } = item;
 
   return {
@@ -537,6 +559,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showTable,
     showTrace,
     showNodeGraph,
+    showRawPrometheus,
     showFlameGraph,
     splitted: isSplit(state),
     loading,

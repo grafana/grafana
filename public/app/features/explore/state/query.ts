@@ -986,9 +986,11 @@ export const processQueryResponse = (
     graphResult,
     logsResult,
     tableResult,
+    rawPrometheusResult,
     traceFrames,
     nodeGraphFrames,
     flameGraphFrames,
+    rawPrometheusFrames,
   } = response;
 
   if (error) {
@@ -1025,6 +1027,7 @@ export const processQueryResponse = (
     queryResponse: response,
     graphResult,
     tableResult,
+    rawPrometheusResult,
     logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     showLogs: !!logsResult,
@@ -1032,6 +1035,7 @@ export const processQueryResponse = (
     showTable: !!tableResult?.length,
     showTrace: !!traceFrames.length,
     showNodeGraph: !!nodeGraphFrames.length,
+    showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
   };
 };
