@@ -17,7 +17,7 @@ import {
   ExplorePanelsState,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
-import { SupportingQueryType } from 'app/features/explore/state/utils';
+import { SuppQueryType } from 'app/features/explore/state/utils';
 
 import { CorrelationData } from '../features/correlations/useCorrelations';
 
@@ -208,7 +208,7 @@ export interface ExploreItemState {
   /**
    * Supplementary queries are additional queries used in Explore, e.g. for logs volume
    */
-  supportingQueries: SupportingQueries;
+  suppQueries: SuppQueries;
 
   panelsState: ExplorePanelsState;
 
@@ -270,13 +270,13 @@ export enum TABLE_RESULTS_STYLE {
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
 export type TableResultsStyle = typeof TABLE_RESULTS_STYLES[number];
 
-export interface SupportingQuery {
+export interface SuppQuery {
   enabled: boolean;
   dataProvider?: Observable<DataQueryResponse>;
   dataSubscription?: SubscriptionLike;
   data?: DataQueryResponse;
 }
 
-export type SupportingQueries = {
-  [key in SupportingQueryType]: SupportingQuery;
+export type SuppQueries = {
+  [key in SuppQueryType]: SuppQuery;
 };

@@ -12,7 +12,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
-import { ExploreItemState, SupportingQueries } from 'app/types/explore';
+import { ExploreItemState, SuppQueries } from 'app/types/explore';
 
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
@@ -20,16 +20,16 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { SETTINGS_KEYS } from '../utils/logs';
 import { toRawTimeRange } from '../utils/time';
 
-export enum SupportingQueryType {
+export enum SuppQueryType {
   LogsVolume = 'LogsVolume',
 }
-// Used to match SupportingQueryType to corresponding local storage key
-const supportingQuerySettings: { [key in SupportingQueryType]: string } = {
-  [SupportingQueryType.LogsVolume]: SETTINGS_KEYS.enableVolumeHistogram,
+// Used to match suppQueryType to corresponding local storage key
+const suppQuerySettings: { [key in SuppQueryType]: string } = {
+  [SuppQueryType.LogsVolume]: SETTINGS_KEYS.enableVolumeHistogram,
 };
 // Used to validate query type
-export const isSuppQueryType = (type: string): type is SupportingQueryType => {
-  return Object.values(SupportingQueryType).includes(type as SupportingQueryType);
+export const isSuppQueryType = (type: string): type is SuppQueryType => {
+  return Object.values(SuppQueryType).includes(type as SuppQueryType);
 };
 
 export const DEFAULT_RANGE = {
@@ -42,22 +42,22 @@ export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
 };
 
-export const storeSuppQueryEnabled = (enabled: boolean, type: SupportingQueryType): void => {
-  if (supportingQuerySettings[type]) {
-    store.set(supportingQuerySettings[type], enabled ? 'true' : 'false');
+export const storeSuppQueryEnabled = (enabled: boolean, type: SuppQueryType): void => {
+  if (suppQuerySettings[type]) {
+    store.set(suppQuerySettings[type], enabled ? 'true' : 'false');
   }
 };
 
-export const loadSupportingQueries = (): SupportingQueries => {
+export const loadSuppQueries = (): SuppQueries => {
   // We default to true for all supp queries
-  const suppQueries: SupportingQueries = {
-    [SupportingQueryType.LogsVolume]: { enabled: true },
+  const suppQueries: SuppQueries = {
+    [SuppQueryType.LogsVolume]: { enabled: true },
   };
 
-  for (const type of Object.keys(SupportingQueryType)) {
-    if (isSuppQueryType(type) && supportingQuerySettings[type]) {
+  for (const type of Object.keys(SuppQueryType)) {
+    if (isSuppQueryType(type) && suppQuerySettings[type]) {
       // Only if "false" value in local storage, we disable it
-      if (store.get(supportingQuerySettings[type]) === 'false') {
+      if (store.get(suppQuerySettings[type]) === 'false') {
         suppQueries[type] = { enabled: false };
       }
     }
@@ -97,7 +97,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
-  supportingQueries: loadSupportingQueries(),
+  suppQueries: loadSuppQueries(),
   panelsState: {},
 });
 

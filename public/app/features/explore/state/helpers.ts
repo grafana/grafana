@@ -2,7 +2,7 @@ import { DefaultTimeZone, toUtc } from '@grafana/data';
 
 import { ExploreId } from '../../../types';
 
-import { SupportingQueryType } from './utils';
+import { SuppQueryType } from './utils';
 
 export const createDefaultInitialState = () => {
   const t = toUtc();
@@ -42,8 +42,8 @@ export const createDefaultInitialState = () => {
         },
         cache: [],
         richHistory: [],
-        supportingQueries: {
-          [SupportingQueryType.LogsVolume]: {
+        suppQueries: {
+          [SuppQueryType.LogsVolume]: {
             enabled: true,
           },
         },
