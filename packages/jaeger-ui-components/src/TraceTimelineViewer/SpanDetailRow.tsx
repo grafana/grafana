@@ -71,7 +71,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-type SpanDetailRowProps = {
+export type SpanDetailRowProps = {
   color: string;
   columnDivision: number;
   detailState: DetailState;

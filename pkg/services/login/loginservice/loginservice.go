@@ -295,7 +295,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 		// add role
 		cmd := &org.AddOrgUserCommand{UserID: usr.ID, Role: orgRole, OrgID: orgId}
 		err := ls.orgService.AddOrgUser(ctx, cmd)
-		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
+		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
 			return err
 		}
 	}

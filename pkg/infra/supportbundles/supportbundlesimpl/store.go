@@ -113,7 +113,7 @@ func (s *store) List() ([]supportbundles.Bundle, error) {
 	}
 
 	sort.Slice(res, func(i, j int) bool {
-		return res[i].CreatedAt < res[j].CreatedAt
+		return res[i].CreatedAt > res[j].CreatedAt
 	})
 
 	return res, nil

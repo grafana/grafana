@@ -158,7 +158,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		})
 
 		t.Run("Get org by ID", func(t *testing.T) {
-			query := &org.GetOrgByIdQuery{ID: 1}
+			query := &org.GetOrgByIDQuery{ID: 1}
 			result, err := orgStore.GetByID(context.Background(), query)
 
 			require.NoError(t, err)

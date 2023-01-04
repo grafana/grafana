@@ -12,6 +12,10 @@ module.exports = {
 
   createOldCatalogs: false,
 
+  failOnWarnings: true,
+
+  verbose: false,
+
   // Don't include default values for English, they'll remain in the source code
   skipDefaultValues: (locale) => locale !== 'en-US',
 };
