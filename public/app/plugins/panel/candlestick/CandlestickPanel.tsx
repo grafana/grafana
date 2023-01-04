@@ -212,8 +212,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
       tweakScale,
       tweakAxis,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, data.structureRev, data.series.length]);
+  }, [options, info]);
 
   if (!info) {
     return (
