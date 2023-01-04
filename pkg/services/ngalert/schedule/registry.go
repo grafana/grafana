@@ -12,6 +12,7 @@ import (
 )
 
 var errRuleDeleted = errors.New("rule deleted")
+var errRulePaused = errors.New("rule paused")
 
 type alertRuleInfoRegistry struct {
 	mu            sync.Mutex

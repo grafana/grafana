@@ -7,7 +7,6 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -15,6 +14,7 @@ import (
 )
 
 var (
+	pausedStateReason     = "Paused"
 	ResendDelay           = 30 * time.Second
 	MetricsScrapeInterval = 15 * time.Second // TODO: parameterize? // Setting to a reasonable default scrape interval for Prometheus.
 )
@@ -252,15 +252,9 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
 
 	if shouldTakeImage(currentState.State, oldState, currentState.Image, currentState.Resolved) {
-		image, err := takeImage(ctx, st.images, alertRule)
-		if err != nil {
-			logger.Warn("Failed to take an image",
-				"dashboard", alertRule.GetDashboardUID(),
-				"panel", alertRule.GetPanelID(),
-				"error", err)
-		} else if image != nil {
-			currentState.Image = image
-		}
+		tryToTakeAnImage(ctx, logger, &st.images, alertRule, func(img *ngModels.Image) {
+			currentState.Image = img
+		})
 	}
 
 	st.cache.set(currentState)
@@ -272,6 +266,59 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	}
 
 	return nextState
+}
+
+// PauseStates sets all states from an alert rule to pause. If states need to be resolved it tries to take an image.
+func (st *Manager) PauseStates(ctx context.Context, r *ngModels.AlertRule) []StateTransition {
+	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
+	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
+	hasResolvedImage := false
+
+	var stateTransitions []StateTransition
+
+	states := st.GetStatesForRuleUID(r.OrgID, r.UID)
+	for _, s := range states {
+		if s.StateReason == ngModels.StateReasonPaused {
+			continue
+		}
+
+		oldState := s.State
+		oldReason := s.StateReason
+
+		s.State = eval.Normal
+		s.StateReason = ngModels.StateReasonPaused
+		now := time.Now()
+		s.EndsAt = now
+		s.LastEvaluationTime = now
+		s.Error = nil
+
+		if oldState == eval.Alerting {
+			s.Resolved = true
+			// If there is no resolved image for this rule then take one
+			if !hasResolvedImage {
+				tryToTakeAnImage(ctx, st.log, &st.images, r, func(img *ngModels.Image) {
+					hasResolvedImage = true
+					s.Image = img
+				})
+			}
+		}
+
+		st.cache.set(s)
+
+		stateTransition := StateTransition{
+			State:               s,
+			PreviousState:       oldState,
+			PreviousStateReason: oldReason,
+		}
+		stateTransitions = append(stateTransitions, stateTransition)
+	}
+
+	st.saveAlertStates(ctx, st.log, stateTransitions...)
+
+	if st.historian != nil {
+		st.historian.RecordStatesAsync(ctx, r, stateTransitions)
+	}
+	return stateTransitions
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {
@@ -401,15 +448,9 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 			s.Resolved = true
 			// If there is no resolved image for this rule then take one
 			if resolvedImage == nil {
-				image, err := takeImage(ctx, st.images, alertRule)
-				if err != nil {
-					logger.Warn("Failed to take an image",
-						"dashboard", alertRule.GetDashboardUID(),
-						"panel", alertRule.GetPanelID(),
-						"error", err)
-				} else if image != nil {
-					resolvedImage = image
-				}
+				tryToTakeAnImage(ctx, logger, &st.images, alertRule, func(img *ngModels.Image) {
+					resolvedImage = img
+				})
 			}
 			s.Image = resolvedImage
 		}
@@ -426,4 +467,13 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 
 func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
 	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
+}
+
+func tryToTakeAnImage(ctx context.Context, l log.Logger, c *ImageCapturer, r *ngModels.AlertRule, resolve func(img *ngModels.Image)) {
+	image, err := takeImage(ctx, *c, r)
+	if err != nil {
+		l.Warn("Failed to take an image", "dashboard", r.GetDashboardUID(), "panel", r.GetPanelID(), "error", err)
+	} else if image != nil {
+		resolve(image)
+	}
 }

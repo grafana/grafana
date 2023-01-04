@@ -158,17 +158,8 @@ func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int6
 	ruleInfo.update(ruleVersion(lastVersion))
 }
 
-// PauseAlertRule stops evaluation of the rule, deletes it from active rules, and DOES NOT clean up state cache.
-func (sch *schedule) PauseAlertRule(keys ...ngmodels.AlertRuleKey) {
-	sch.removeAlertRules(nil, keys)
-}
-
 // DeleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
 func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
-	sch.removeAlertRules(errRuleDeleted, keys)
-}
-
-func (sch *schedule) removeAlertRules(err error, keys []ngmodels.AlertRuleKey) {
 	for _, key := range keys {
 		// It can happen that the scheduler has deleted the alert rule before the
 		// Ruler API has called DeleteAlertRule. This can happen as requests to
@@ -183,7 +174,7 @@ func (sch *schedule) removeAlertRules(err error, keys []ngmodels.AlertRuleKey) {
 			return
 		}
 		// stop rule evaluation
-		ruleInfo.stop(err)
+		ruleInfo.stop(errRuleDeleted)
 	}
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
 	alertRules, _ := sch.schedulableAlertRules.all()
@@ -243,9 +234,20 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	for _, item := range alertRules {
 		key := item.GetKey()
 		if item.IsPaused {
-			sch.PauseAlertRule(key)
-			sch.stateManager.ResetStateByRuleUID(ctx, key)
-			continue
+			ruleInfo, ok := sch.registry.del(key)
+			if !ok {
+				continue
+			}
+			ruleInfo.stop(errRulePaused)
+			delete(registeredDefinitions, key)
+
+			pausedStates := sch.stateManager.PauseStates(ctx, item)
+			alerts := FromStateTransitionToPostableAlerts(pausedStates, sch.stateManager, sch.appURL)
+			if len(alerts.PostableAlerts) > 0 {
+				sch.alertsSender.Send(key, alerts)
+			}
+
+			sch.log.Info("alert rule paused", "alertRule", item.UID)
 		}
 
 		ruleInfo, isRoutineNew := sch.registry.getOrCreateInfo(ctx, key)
