@@ -86,6 +86,7 @@ const ColorPreview = ({ color, onClick, disabled, ariaLabel }: ColorPreviewProps
 
   return (
     <button
+      type="button"
       onClick={onClick}
       aria-label={ariaLabel}
       disabled={disabled || !onClick}
