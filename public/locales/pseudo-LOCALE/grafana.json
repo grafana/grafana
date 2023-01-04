@@ -80,6 +80,16 @@
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "Pľęäşę čőŉŧäčŧ yőūř äđmįŉįşŧřäŧőř ŧő čőŉƒįģūřę đäŧä şőūřčęş.",
+    "explanation": "Ŧő vįşūäľįžę yőūř đäŧä, yőū'ľľ ŉęęđ ŧő čőŉŉęčŧ įŧ ƒįřşŧ.",
+    "logo": "Ŀőģő ƒőř {{datasourceName}} đäŧä şőūřčę",
+    "new-dashboard": "Ńęŵ đäşĥþőäřđ",
+    "preferred": "Cőŉŉęčŧ yőūř přęƒęřřęđ đäŧä şőūřčę:",
+    "sampleData": "Øř şęŧ ūp ä ŉęŵ đäşĥþőäřđ ŵįŧĥ şämpľę đäŧä",
+    "viewAll": "Vįęŵ äľľ",
+    "welcome": "Ŵęľčőmę ŧő Ğřäƒäŉä đäşĥþőäřđş!"
+  },
   "folder-picker": {
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },
@@ -130,6 +140,9 @@
     "alerting-groups": {
       "subtitle": "Ŝęę ģřőūpęđ äľęřŧş ƒřőm äŉ Åľęřŧmäŉäģęř įŉşŧäŉčę",
       "title": "Ğřőūpş"
+    },
+    "alerting-home": {
+      "title": "Ħőmę"
     },
     "alerting-legacy": {
       "title": "Åľęřŧįŉģ (ľęģäčy)"
@@ -208,6 +221,7 @@
     "help/documentation": "Đőčūmęŉŧäŧįőŉ",
     "help/keyboard-shortcuts": "Ķęyþőäřđ şĥőřŧčūŧş",
     "help/support": "Ŝūppőřŧ",
+    "help/support-bundle": "Ŝūppőřŧ ßūŉđľęş",
     "home": {
       "title": "Ħőmę"
     },
@@ -297,6 +311,10 @@
     "storage": {
       "subtitle": "Mäŉäģę ƒįľę şŧőřäģę",
       "title": "Ŝŧőřäģę"
+    },
+    "support-bundles": {
+      "subtitle": "Đőŵŉľőäđ şūppőřŧ þūŉđľęş",
+      "title": "Ŝūppőřŧ ßūŉđľęş"
     },
     "teams": {
       "subtitle": "Ğřőūpş őƒ ūşęřş ŧĥäŧ ĥävę čőmmőŉ đäşĥþőäřđ äŉđ pęřmįşşįőŉ ŉęęđş",
