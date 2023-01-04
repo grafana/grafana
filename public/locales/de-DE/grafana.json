@@ -336,15 +336,15 @@
   },
   "refresh-picker": {
     "aria-label": {
-      "choose-interval": "Automatische Aktualisierung deaktiviert. Zeitintervall für Aktualisierungen auswählen",
-      "duration-selected": "Das Aktualisierungsintervall mit aktuellem Intervall {{durationAriaLabel}} auswählen"
+      "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
+      "duration-selected": "Aktualisierungszeitintervall mit aktuellem Intervall {{durationAriaLabel}} ausgewählt"
     },
     "live-option": {
-      "aria-label": "Live-Streaming aktivieren",
+      "aria-label": "Live-Streaming einschalten",
       "label": "Live"
     },
     "off-option": {
-      "aria-label": "Automatische Aktualisierung deaktivieren",
+      "aria-label": "Automatische Aktualisierung ausschalten",
       "label": "Aus"
     },
     "select-button": {
@@ -423,7 +423,7 @@
       "light": "Hell"
     },
     "view-json": {
-      "copy-button": "In die Zwischenablage kopieren"
+      "copy-button": "In Zwischenablage kopieren"
     }
   },
   "shared-dashboard": {
@@ -453,18 +453,18 @@
       "title": "Absoluter Zeitbereich"
     },
     "calendar": {
-      "apply-button": "Zeitspanne anwenden",
+      "apply-button": "Zeitbereich anwenden",
       "cancel-button": "Abbrechen",
-      "select-time": "Zeitspanne auswählen"
+      "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
       "empty-recent-list": "<0><0>Es sieht so aus, als hätten Sie diese Zeitauswahl noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.</0></0><1><0>Lesen Sie die Dokumentation</0><1>, um mehr darüber zu erfahren, wie Sie benutzerdefinierte Zeitspannen eingeben können.</1></1>",
-      "filter-placeholder": "Schnelle Spannen durchsuchen"
+      "filter-placeholder": "Schnellbereiche suchen"
     },
     "footer": {
       "change-settings-button": "Zeiteinstellungen ändern",
       "fiscal-year-option": "Geschäftsjahr",
-      "fiscal-year-start": "Geschäftsjahr Startmonat",
+      "fiscal-year-start": "Startmonat des Geschäftsjahrs",
       "time-zone-option": "Zeitzone",
       "time-zone-selection": "Zeitzonenauswahl"
     },
