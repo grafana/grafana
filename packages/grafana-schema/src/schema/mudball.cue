@@ -267,11 +267,11 @@ VizTooltipOptions: {
 } @cuetsy(kind="interface")
 
 
-// TODO docs
+// Use UTC/GMT timezone
 TimeZoneUtc: "utc"  // TODO @cuetsy(kind="const")
 
-// TODO docs
+// Use the timezone defined by end user web browser
 TimeZoneBrowser: "browser"  // TODO @cuetsy(kind="const")
 
-// TODO docs
+// Specific a specific timezone from https://en.wikipedia.org/wiki/Tz_database 
 TimeZone: *TimeZoneBrowser | TimeZoneUtc | string  @cuetsy(kind="type")

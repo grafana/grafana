@@ -501,7 +501,7 @@ export interface VizTooltipOptions {
 }
 
 /**
- * TODO docs
+ * Specific a specific timezone from https://en.wikipedia.org/wiki/Tz_database
  */
 export type TimeZone = ('utc' | string);
 
