@@ -259,6 +259,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     title: css({
+      marginBottom: 0, // override default h6 margin-bottom
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
