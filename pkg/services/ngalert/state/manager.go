@@ -359,13 +359,18 @@ func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, sta
 	}
 }
 
-// TODO: why wouldn't you allow other types like NoData or Error?
 func translateInstanceState(state ngModels.InstanceStateType) eval.State {
-	switch {
-	case state == ngModels.InstanceStateFiring:
+	switch state {
+	case ngModels.InstanceStateFiring:
 		return eval.Alerting
-	case state == ngModels.InstanceStateNormal:
+	case ngModels.InstanceStateNormal:
 		return eval.Normal
+	case ngModels.InstanceStateError:
+		return eval.Error
+	case ngModels.InstanceStateNoData:
+		return eval.NoData
+	case ngModels.InstanceStatePending:
+		return eval.Pending
 	default:
 		return eval.Error
 	}
