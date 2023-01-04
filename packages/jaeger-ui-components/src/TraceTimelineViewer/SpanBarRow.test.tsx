@@ -15,10 +15,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { SpanLinks } from 'src/types/links';
+import { TraceSpan } from 'src/types/trace';
 
 import { NONE, DURATION, TAG } from '../settings/SpanBarSettings';
 
-import SpanBarRow from './SpanBarRow';
+import SpanBarRow, { SpanBarRowProps } from './SpanBarRow';
 
 describe('<SpanBarRow>', () => {
   const spanID = 'some-id';
@@ -62,11 +64,11 @@ describe('<SpanBarRow>', () => {
   });
 
   it('renders without exploding', () => {
-    expect(() => render(<SpanBarRow {...props} />)).not.toThrow();
+    expect(() => render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />)).not.toThrow();
   });
 
   it('escalates detail toggling', async () => {
-    render(<SpanBarRow {...props} />);
+    render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
     const { onDetailToggled } = props;
     expect(onDetailToggled.mock.calls.length).toBe(0);
     await userEvent.click(screen.getByTestId('span-view'));
@@ -74,7 +76,7 @@ describe('<SpanBarRow>', () => {
   });
 
   it('escalates children toggling', async () => {
-    render(<SpanBarRow {...props} />);
+    render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
     const { onChildrenToggled } = props;
     expect(onChildrenToggled.mock.calls.length).toBe(0);
     await userEvent.click(screen.getByTestId('icon-wrapper'));
@@ -82,7 +84,7 @@ describe('<SpanBarRow>', () => {
   });
 
   it('render references button', () => {
-    render(<SpanBarRow {...props} />);
+    render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
     const newSpan = Object.assign({}, props.span);
     const span = Object.assign(newSpan, {
       references: [
@@ -103,22 +105,24 @@ describe('<SpanBarRow>', () => {
           },
         },
       ],
-    });
+    }) as unknown as TraceSpan;
 
     render(
       <SpanBarRow
-        {...props}
+        {...(props as unknown as SpanBarRowProps)}
         span={span}
-        createSpanLink={() => ({
-          traceLinks: [{ href: 'href' }, { href: 'href' }],
-        })}
+        createSpanLink={() =>
+          ({
+            traceLinks: [{ href: 'href' }, { href: 'href' }],
+          } as SpanLinks)
+        }
       />
     );
     expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);
   });
 
   it('render referenced to by single span', () => {
-    render(<SpanBarRow {...props} />);
+    render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
     const span = Object.assign(
       {
         subsidiarilyReferencedBy: [
@@ -133,21 +137,23 @@ describe('<SpanBarRow>', () => {
         ],
       },
       props.span
-    );
+    ) as unknown as TraceSpan;
     render(
       <SpanBarRow
-        {...props}
+        {...(props as unknown as SpanBarRowProps)}
         span={span}
-        createSpanLink={() => ({
-          traceLinks: [{ content: 'This span is referenced by another span', href: 'href' }],
-        })}
+        createSpanLink={() =>
+          ({
+            traceLinks: [{ content: 'This span is referenced by another span', href: 'href' }],
+          } as SpanLinks)
+        }
       />
     );
     expect(screen.getByRole('link', { name: 'This span is referenced by another span' })).toBeInTheDocument();
   });
 
   it('render referenced to by multiple span', () => {
-    render(<SpanBarRow {...props} />);
+    render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
     const span = Object.assign(
       {
         subsidiarilyReferencedBy: [
@@ -170,14 +176,16 @@ describe('<SpanBarRow>', () => {
         ],
       },
       props.span
-    );
+    ) as unknown as TraceSpan;
     render(
       <SpanBarRow
-        {...props}
+        {...(props as unknown as SpanBarRowProps)}
         span={span}
-        createSpanLink={() => ({
-          traceLinks: [{ href: 'href' }, { href: 'href' }],
-        })}
+        createSpanLink={() =>
+          ({
+            traceLinks: [{ href: 'href' }, { href: 'href' }],
+          } as SpanLinks)
+        }
       />
     );
     expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);
@@ -185,7 +193,7 @@ describe('<SpanBarRow>', () => {
 
   describe('render span bar label', () => {
     it('with default value', () => {
-      render(<SpanBarRow {...props} />);
+      render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
       expect(screen.getByText('(9ms)')).toBeInTheDocument();
     });
 
@@ -198,7 +206,7 @@ describe('<SpanBarRow>', () => {
         },
         props
       );
-      render(<SpanBarRow {...testProps} />);
+      render(<SpanBarRow {...(testProps as unknown as SpanBarRowProps)} />);
       expect(screen.queryByText('(9ms)')).not.toBeInTheDocument();
     });
 
@@ -211,7 +219,7 @@ describe('<SpanBarRow>', () => {
         },
         props
       );
-      render(<SpanBarRow {...testProps} />);
+      render(<SpanBarRow {...(testProps as unknown as SpanBarRowProps)} />);
       expect(screen.getByText('(9ms)')).toBeInTheDocument();
     });
 
@@ -236,7 +244,7 @@ describe('<SpanBarRow>', () => {
           },
         }
       );
-      render(<SpanBarRow {...testProps} />);
+      render(<SpanBarRow {...(testProps as unknown as SpanBarRowProps)} />);
       expect(screen.getByText('(tag-value)')).toBeInTheDocument();
     });
 
@@ -263,7 +271,7 @@ describe('<SpanBarRow>', () => {
           },
         }
       );
-      render(<SpanBarRow {...testProps} />);
+      render(<SpanBarRow {...(testProps as unknown as SpanBarRowProps)} />);
       expect(screen.getByText('(process-value)')).toBeInTheDocument();
     });
   });

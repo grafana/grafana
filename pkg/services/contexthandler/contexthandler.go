@@ -396,6 +396,26 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 }
 
 func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext, orgID int64) bool {
+	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientBasic, &authn.Request{HTTPRequest: reqContext.Req})
+		if !ok {
+			return false
+		}
+
+		// include auth header in context
+		ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
+		*reqContext.Req = *reqContext.Req.WithContext(ctx)
+
+		if err != nil {
+			writeErr(reqContext, err)
+			return true
+		}
+
+		reqContext.IsSignedIn = true
+		reqContext.SignedInUser = identity.SignedInUser()
+		return true
+	}
+
 	if !h.Cfg.BasicAuthEnabled {
 		return false
 	}
@@ -579,6 +599,24 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext) w
 }
 
 func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext) bool {
+	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientRender, &authn.Request{HTTPRequest: reqContext.Req})
+		if !ok {
+			return false
+		}
+
+		if err != nil {
+			writeErr(reqContext, err)
+			return true
+		}
+
+		reqContext.IsSignedIn = true
+		reqContext.IsRenderCall = true
+		reqContext.LastSeenAt = time.Now()
+		reqContext.SignedInUser = identity.SignedInUser()
+		return true
+	}
+
 	key := reqContext.GetCookie("renderKey")
 	if key == "" {
 		return false
