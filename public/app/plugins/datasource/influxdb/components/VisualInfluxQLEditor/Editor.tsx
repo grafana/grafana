@@ -54,7 +54,7 @@ function getTemplateVariableOptions() {
 // helper function to make it easy to call this from the widget-render-code
 function withTemplateVariableOptions(optionsPromise: Promise<string[]>, filter?: string): Promise<string[]> {
   let templateVariableOptions = getTemplateVariableOptions();
-  if (filter && filter !== '') {
+  if (filter) {
     templateVariableOptions = templateVariableOptions.filter((tvo) => tvo.indexOf(filter) > -1);
   }
   return optionsPromise.then((options) => [...templateVariableOptions, ...options]);
