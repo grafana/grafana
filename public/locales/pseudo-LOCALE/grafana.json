@@ -12,6 +12,17 @@
     "save": "Ŝävę"
   },
   "dashboard": {
+    "inspect": {
+      "actions-tab": "Åčŧįőŉş",
+      "data-tab": "Đäŧä",
+      "error-tab": "Ēřřőř",
+      "json-tab": "ĴŜØŃ",
+      "meta-tab": "Męŧä Đäŧä",
+      "query-tab": "Qūęřy",
+      "stats-tab": "Ŝŧäŧş",
+      "subtitle": "{{queryCount}} qūęřįęş ŵįŧĥ ŧőŧäľ qūęřy ŧįmę őƒ {{formatted}}",
+      "title": "Ĩŉşpęčŧ: {{panelTitle}}"
+    },
     "inspect-data": {
       "data-options": "Đäŧä őpŧįőŉş",
       "dataframe-aria-label": "Ŝęľęčŧ đäŧäƒřämę",
@@ -52,15 +63,22 @@
       "request-time": "Ŧőŧäľ řęqūęşŧ ŧįmę",
       "rows": "Ŧőŧäľ ŉūmþęř řőŵş",
       "table-title": "Ŝŧäŧş"
+    },
+    "toolbar": {
+      "add-panel": "Åđđ päŉęľ",
+      "comments-show": "Ŝĥőŵ đäşĥþőäřđ čőmmęŉŧş",
+      "mark-favorite": "Mäřĸ äş ƒävőřįŧę",
+      "open-original": "Øpęŉ őřįģįŉäľ đäşĥþőäřđ",
+      "playlist-next": "Ğő ŧő ŉęχŧ đäşĥþőäřđ",
+      "playlist-previous": "Ğő ŧő přęvįőūş đäşĥþőäřđ",
+      "playlist-stop": "Ŝŧőp pľäyľįşŧ",
+      "refresh": "Ŗęƒřęşĥ đäşĥþőäřđ",
+      "save": "Ŝävę đäşĥþőäřđ",
+      "settings": "Đäşĥþőäřđ şęŧŧįŉģş",
+      "share": "Ŝĥäřę đäşĥþőäřđ őř päŉęľ",
+      "tv-button": "Cyčľę vįęŵ mőđę",
+      "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
-  },
-  "datasource-onboarding": {
-    "contact-admin": "Pľęäşę čőŉŧäčŧ yőūř äđmįŉįşŧřäŧőř ŧő čőŉƒįģūřę đäŧä şőūřčęş.",
-    "explanation": "Ŧő vįşūäľįžę yőūř đäŧä, yőū'ľľ ŉęęđ ŧő čőŉŉęčŧ įŧ ƒįřşŧ.",
-    "preferred": "Cőŉŉęčŧ yőūř přęƒęřřęđ đäŧä şőūřčę:",
-    "sampleData": "Øř şęŧ ūp ä ŉęŵ đäşĥþőäřđ ŵįŧĥ şämpľę đäŧä",
-    "viewAll": "Vįęŵ äľľ",
-    "welcome": "Ŵęľčőmę ŧő Ğřäƒäŉä đäşĥþőäřđş!"
   },
   "folder-picker": {
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
@@ -112,9 +130,6 @@
     "alerting-groups": {
       "subtitle": "Ŝęę ģřőūpęđ äľęřŧş ƒřőm äŉ Åľęřŧmäŉäģęř įŉşŧäŉčę",
       "title": "Ğřőūpş"
-    },
-    "alerting-home": {
-      "title": "Ħőmę"
     },
     "alerting-legacy": {
       "title": "Åľęřŧįŉģ (ľęģäčy)"
@@ -193,7 +208,6 @@
     "help/documentation": "Đőčūmęŉŧäŧįőŉ",
     "help/keyboard-shortcuts": "Ķęyþőäřđ şĥőřŧčūŧş",
     "help/support": "Ŝūppőřŧ",
-    "help/support-bundle": "Ŝūppőřŧ ßūŉđľęş",
     "home": {
       "title": "Ħőmę"
     },
@@ -283,10 +297,6 @@
     "storage": {
       "subtitle": "Mäŉäģę ƒįľę şŧőřäģę",
       "title": "Ŝŧőřäģę"
-    },
-    "support-bundles": {
-      "subtitle": "Đőŵŉľőäđ şūppőřŧ þūŉđľęş",
-      "title": "Ŝūppőřŧ ßūŉđľęş"
     },
     "teams": {
       "subtitle": "Ğřőūpş őƒ ūşęřş ŧĥäŧ ĥävę čőmmőŉ đäşĥþőäřđ äŉđ pęřmįşşįőŉ ŉęęđş",

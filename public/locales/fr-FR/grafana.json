@@ -12,6 +12,17 @@
     "save": "Enregistrer"
   },
   "dashboard": {
+    "inspect": {
+      "actions-tab": "Actions",
+      "data-tab": "Données",
+      "error-tab": "Erreur",
+      "json-tab": "JSON",
+      "meta-tab": "Métadonnées",
+      "query-tab": "Requête",
+      "stats-tab": "Statistiques",
+      "subtitle": "{{queryCount}} requêtes avec un délai total de requête de {{formatted}}",
+      "title": "Inspecter\u00a0: {{panelTitle}}"
+    },
     "inspect-data": {
       "data-options": "Options de données",
       "dataframe-aria-label": "Sélectionner la dataframe",
@@ -52,15 +63,22 @@
       "request-time": "Durée totale de la requête",
       "rows": "Nombre total de lignes",
       "table-title": "Statistiques"
+    },
+    "toolbar": {
+      "add-panel": "Ajouter un panneau",
+      "comments-show": "Afficher les commentaires du tableau de bord",
+      "mark-favorite": "Marquer comme favori",
+      "open-original": "Ouvrir le tableau de bord d'origine",
+      "playlist-next": "Accéder au tableau de bord suivant",
+      "playlist-previous": "Accéder au tableau de bord précédent",
+      "playlist-stop": "Arrêter la liste de lecture",
+      "refresh": "Actualiser le tableau de bord",
+      "save": "Enregistrer le tableau de bord",
+      "settings": "Paramètres du tableau de bord",
+      "share": "Partager le tableau de bord ou le panneau",
+      "tv-button": "Mode de vue par cycle",
+      "unmark-favorite": "Supprimer des favoris"
     }
-  },
-  "datasource-onboarding": {
-    "contact-admin": "",
-    "explanation": "",
-    "preferred": "",
-    "sampleData": "",
-    "viewAll": "",
-    "welcome": ""
   },
   "folder-picker": {
     "loading": "Chargement des dossiers..."
@@ -112,9 +130,6 @@
     "alerting-groups": {
       "subtitle": "Consulter les alertes groupées d'une instance Alertmanager",
       "title": "Groupes"
-    },
-    "alerting-home": {
-      "title": ""
     },
     "alerting-legacy": {
       "title": "Alerte (existante)"
@@ -193,7 +208,6 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Raccourcis clavier",
     "help/support": "Assistance",
-    "help/support-bundle": "",
     "home": {
       "title": "Accueil"
     },
@@ -283,10 +297,6 @@
     "storage": {
       "subtitle": "Gérer le stockage de fichiers",
       "title": "Stockage"
-    },
-    "support-bundles": {
-      "subtitle": "",
-      "title": ""
     },
     "teams": {
       "subtitle": "Groupes d'utilisateurs ayant des besoins communs en matière de tableau de bord et d'autorisations",

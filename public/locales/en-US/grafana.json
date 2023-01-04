@@ -12,6 +12,17 @@
     "save": "Save"
   },
   "dashboard": {
+    "inspect": {
+      "actions-tab": "Actions",
+      "data-tab": "Data",
+      "error-tab": "Error",
+      "json-tab": "JSON",
+      "meta-tab": "Meta Data",
+      "query-tab": "Query",
+      "stats-tab": "Stats",
+      "subtitle": "{{queryCount}} queries with total query time of {{formatted}}",
+      "title": "Inspect: {{panelTitle}}"
+    },
     "inspect-data": {
       "data-options": "Data options",
       "dataframe-aria-label": "Select dataframe",
@@ -52,15 +63,22 @@
       "request-time": "Total request time",
       "rows": "Total number rows",
       "table-title": "Stats"
+    },
+    "toolbar": {
+      "add-panel": "Add panel",
+      "comments-show": "Show dashboard comments",
+      "mark-favorite": "Mark as favorite",
+      "open-original": "Open original dashboard",
+      "playlist-next": "Go to next dashboard",
+      "playlist-previous": "Go to previous dashboard",
+      "playlist-stop": "Stop playlist",
+      "refresh": "Refresh dashboard",
+      "save": "Save dashboard",
+      "settings": "Dashboard settings",
+      "share": "Share dashboard or panel",
+      "tv-button": "Cycle view mode",
+      "unmark-favorite": "Unmark as favorite"
     }
-  },
-  "datasource-onboarding": {
-    "contact-admin": "Please contact your administrator to configure data sources.",
-    "explanation": "To visualize your data, you'll need to connect it first.",
-    "preferred": "Connect your preferred data source:",
-    "sampleData": "Or set up a new dashboard with sample data",
-    "viewAll": "View all",
-    "welcome": "Welcome to Grafana dashboards!"
   },
   "folder-picker": {
     "loading": "Loading folders..."
@@ -112,9 +130,6 @@
     "alerting-groups": {
       "subtitle": "See grouped alerts from an Alertmanager instance",
       "title": "Groups"
-    },
-    "alerting-home": {
-      "title": "Home"
     },
     "alerting-legacy": {
       "title": "Alerting (legacy)"
@@ -193,7 +208,6 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Keyboard shortcuts",
     "help/support": "Support",
-    "help/support-bundle": "Support Bundles",
     "home": {
       "title": "Home"
     },
@@ -283,10 +297,6 @@
     "storage": {
       "subtitle": "Manage file storage",
       "title": "Storage"
-    },
-    "support-bundles": {
-      "subtitle": "Download support bundles",
-      "title": "Support Bundles"
     },
     "teams": {
       "subtitle": "Groups of users that have common dashboard and permission needs",
