@@ -18,7 +18,7 @@ describe('AddBackupPageService', () => {
         proxysql: [{ id: 'proxysql1', name: 'proxysql one' }],
       })
     );
-    const services = await AddBackupPageService.loadServiceOptions();
+    const services = await AddBackupPageService.loadServiceOptions('');
     const orderFn = (s1: SelectableValue<SelectableService>, s2: SelectableValue<SelectableService>) =>
       s1.label?.localeCompare(s2.label ?? '') ?? 0;
 
@@ -28,6 +28,27 @@ describe('AddBackupPageService', () => {
         { label: 'mongo one', value: { id: 'mongo1', vendor: Databases.mongodb } },
         { label: 'mongo two', value: { id: 'mongo2', vendor: Databases.mongodb } },
       ].sort(orderFn)
+    );
+  });
+
+  it('should filter by service name', async () => {
+    jest.spyOn(InventoryService, 'getDbServices').mockReturnValueOnce(
+      Promise.resolve({
+        postgresql: [{ id: 'psql1', name: 'postgres one' }],
+        mongodb: [
+          { id: 'mongo1', name: 'mongo one' },
+          { id: 'mongo2', name: 'mongo two' },
+        ],
+        mysql: [{ id: 'mysql1', name: 'mysql one' }],
+        proxysql: [{ id: 'proxysql1', name: 'proxysql one' }],
+      })
+    );
+    const services = await AddBackupPageService.loadServiceOptions('two');
+    const orderFn = (s1: SelectableValue<SelectableService>, s2: SelectableValue<SelectableService>) =>
+      s1.label?.localeCompare(s2.label ?? '') ?? 0;
+
+    expect(services.sort(orderFn)).toEqual<Array<SelectableValue<SelectableService>>>(
+      [{ label: 'mongo two', value: { id: 'mongo2', vendor: Databases.mongodb } }].sort(orderFn)
     );
   });
 });

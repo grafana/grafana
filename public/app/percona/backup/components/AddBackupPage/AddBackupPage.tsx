@@ -11,7 +11,6 @@ import {
 } from '@percona/platform-core';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
-import { useSelector } from 'react-redux';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -27,6 +26,7 @@ import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backupLo
 import { getBackupLocations } from 'app/percona/shared/core/selectors';
 import { apiErrorParser, isApiCancelError } from 'app/percona/shared/helpers/api';
 import { useAppDispatch } from 'app/store/store';
+import { useSelector } from 'app/types';
 
 import { PageSwitcher } from '../../../shared/components/PageSwitcher/PageSwitcher';
 import { PageSwitcherValue } from '../../../shared/components/PageSwitcher/PageSwitcher.types';
@@ -241,9 +241,9 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
                           {({ input }) => (
                             <AsyncSelectField
                               label={Messages.serviceName}
-                              isSearchable={false}
                               disabled={editing}
                               loadOptions={AddBackupPageService.loadServiceOptions}
+                              cacheOptions
                               defaultOptions
                               {...input}
                               onChange={(service: SelectableValue<SelectableService>) => {

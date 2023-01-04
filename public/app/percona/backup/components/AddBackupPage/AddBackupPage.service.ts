@@ -6,7 +6,7 @@ import { Databases } from 'app/percona/shared/core';
 import { SelectableService } from './AddBackupPage.types';
 
 export const AddBackupPageService = {
-  async loadServiceOptions(): Promise<Array<SelectableValue<SelectableService>>> {
+  async loadServiceOptions(query: string): Promise<Array<SelectableValue<SelectableService>>> {
     const supportedServices: Databases[] = [Databases.mysql, Databases.mongodb];
     const services = await InventoryService.getDbServices();
     const result: Array<SelectableValue<SelectableService>> = [];
@@ -16,12 +16,14 @@ export const AddBackupPageService = {
 
       if (supportedServices.includes(serviceName as Databases)) {
         result.push(
-          ...newServices.map(
-            ({ id, name }): SelectableValue<SelectableService> => ({
-              label: name,
-              value: { id, vendor: serviceName as Databases },
-            })
-          )
+          ...newServices
+            .filter((service) => service.name.toLowerCase().includes(query))
+            .map(
+              ({ id, name }): SelectableValue<SelectableService> => ({
+                label: name,
+                value: { id, vendor: serviceName as Databases },
+              })
+            )
         );
       }
     });
