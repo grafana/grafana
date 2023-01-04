@@ -68,6 +68,48 @@ func TestWarmStateCache(t *testing.T) {
 			LastEvaluationTime: evaluationTime,
 			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
 		},
+		{
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheID:      `[["test3","testValue3"]]`,
+			Labels:       data.Labels{"test3": "testValue3"},
+			State:        eval.NoData,
+			Results: []state.Evaluation{
+				{EvaluationTime: evaluationTime, EvaluationState: eval.NoData},
+			},
+			StartsAt:           evaluationTime.Add(-1 * time.Minute),
+			EndsAt:             evaluationTime.Add(1 * time.Minute),
+			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+		},
+		{
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheID:      `[["test4","testValue4"]]`,
+			Labels:       data.Labels{"test4": "testValue4"},
+			State:        eval.Error,
+			Results: []state.Evaluation{
+				{EvaluationTime: evaluationTime, EvaluationState: eval.Error},
+			},
+			StartsAt:           evaluationTime.Add(-1 * time.Minute),
+			EndsAt:             evaluationTime.Add(1 * time.Minute),
+			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+		},
+		{
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheID:      `[["test5","testValue5"]]`,
+			Labels:       data.Labels{"test5": "testValue5"},
+			State:        eval.Pending,
+			Results: []state.Evaluation{
+				{EvaluationTime: evaluationTime, EvaluationState: eval.Pending},
+			},
+			StartsAt:           evaluationTime.Add(-1 * time.Minute),
+			EndsAt:             evaluationTime.Add(1 * time.Minute),
+			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+		},
 	}
 
 	labels := models.InstanceLabels{"test1": "testValue1"}
@@ -85,8 +127,6 @@ func TestWarmStateCache(t *testing.T) {
 		Labels:            labels,
 	}
 
-	_ = dbstore.SaveAlertInstances(ctx, instance1)
-
 	labels = models.InstanceLabels{"test2": "testValue2"}
 	_, hash, _ = labels.StringAndHash()
 	instance2 := models.AlertInstance{
@@ -101,7 +141,52 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 		Labels:            labels,
 	}
-	_ = dbstore.SaveAlertInstances(ctx, instance2)
+
+	labels = models.InstanceLabels{"test3": "testValue3"}
+	_, hash, _ = labels.StringAndHash()
+	instance3 := models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStateNoData,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		Labels:            labels,
+	}
+
+	labels = models.InstanceLabels{"test4": "testValue4"}
+	_, hash, _ = labels.StringAndHash()
+	instance4 := models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStateError,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		Labels:            labels,
+	}
+
+	labels = models.InstanceLabels{"test5": "testValue5"}
+	_, hash, _ = labels.StringAndHash()
+	instance5 := models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStatePending,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		Labels:            labels,
+	}
+	_ = dbstore.SaveAlertInstances(ctx, instance1, instance2, instance3, instance4, instance5)
 	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &state.NoopImageService{}, clock.NewMock(), &state.FakeHistorian{})
 	st.Warm(ctx, dbstore)
 
