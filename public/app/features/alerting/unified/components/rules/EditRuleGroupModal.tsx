@@ -24,6 +24,7 @@ import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
 
 const MINUTE = '1m';
+const ITEMS_PER_PAGE = 10;
 interface AlertInfo {
   alertName: string;
   forDuration: string;
@@ -192,7 +193,7 @@ export const RulesForGroupTable = ({
 
   return (
     <div className={styles.tableWrapper}>
-      <DynamicTable items={rows} cols={columns} />
+      <DynamicTable items={rows} cols={columns} pagination={{ itemsPerPage: ITEMS_PER_PAGE }} />
     </div>
   );
 };
