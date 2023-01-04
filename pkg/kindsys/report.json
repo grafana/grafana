@@ -133,19 +133,6 @@
       ]
     }
   ],
-  "raw": [
-    {
-      "name": "SVG",
-      "pluralName": "SVGs",
-      "machineName": "svg",
-      "pluralMachineName": "svgs",
-      "lineageIsGroup": false,
-      "maturity": "merged",
-      "extensions": [
-        "svg"
-      ]
-    }
-  ],
   "composable": [
     {
       "name": "AlertGroups-Panel",

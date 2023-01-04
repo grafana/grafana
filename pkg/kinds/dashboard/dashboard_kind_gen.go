@@ -34,7 +34,7 @@ var _ kindsys.Structured = &Kind{}
 
 // TODO standard generated docs
 func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
-	decl, err := kindsys.LoadCoreKind[kindsys.CoreStructuredProperties](rootrel, rt.Context(), nil)
+	decl, err := kindsys.LoadCoreKind(rootrel, rt.Context(), nil)
 	if err != nil {
 		return nil, err
 	}
