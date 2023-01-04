@@ -108,6 +108,17 @@ export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
   return { ...rest, queryType: LokiQueryType.Range };
 }
 
+export function parseToNodeNamesArray(query: string): string[] {
+  const queryParts: string[] = [];
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: ({ name }): false | void => {
+      queryParts.push(name);
+    },
+  });
+  return queryParts;
+}
+
 export function isValidQuery(query: string): boolean {
   let isValid = true;
   const tree = parser.parse(query);
@@ -145,6 +156,21 @@ export function isQueryWithParser(query: string): { queryWithParser: boolean; pa
     },
   });
   return { queryWithParser: parserCount > 0, parserCount };
+}
+
+export function getParserFromQuery(query: string) {
+  const tree = parser.parse(query);
+  let logParser;
+  tree.iterate({
+    enter: (node: SyntaxNode): false | void => {
+      if (node.type.id === LabelParser || node.type.id === JsonExpressionParser) {
+        logParser = query.substring(node.from, node.to).trim();
+        return false;
+      }
+    },
+  });
+
+  return logParser;
 }
 
 export function isQueryPipelineErrorFiltering(query: string): boolean {

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/dashboards/build-dashboards/modify-dashboard-settings/
 title: Modify dashboard settings
 menuTitle: Dashboard settings
 weight: 8

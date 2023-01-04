@@ -35,8 +35,11 @@ const pageNav: NavModelItem = {
 function NewDashboardsFolder({ createNewFolder }: Props) {
   const [queryParams] = useQueryParams();
   const onSubmit = (formData: FormModel) => {
-    createNewFolder(formData.folderName, String(queryParams['folderUid']));
+    const folderUid = typeof queryParams['folderUid'] === 'string' ? queryParams['folderUid'] : undefined;
+
+    createNewFolder(formData.folderName, folderUid);
   };
+
   const validateFolderName = (folderName: string) => {
     return validationSrv
       .validateNewFolderName(folderName)

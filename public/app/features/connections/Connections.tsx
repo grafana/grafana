@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Route, Switch } from 'react-router-dom';
 
+import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
 import { DataSourcesRoutesContext } from 'app/features/datasources/state';
 import { StoreState, useSelector } from 'app/types';
 
@@ -27,8 +28,12 @@ export default function Connections() {
       }}
     >
       <Switch>
-        <Route exact path={ROUTES.Base} component={DataSourcesListPage} />
-        <Route exact path={ROUTES.YourConnections} component={DataSourcesListPage} />
+        <Route exact path={ROUTES.Base} component={() => <NavLandingPage navId="connections" />} />
+        <Route
+          exact
+          path={ROUTES.YourConnections}
+          component={() => <NavLandingPage navId="connections-your-connections" />}
+        />
         <Route exact path={ROUTES.DataSources} component={DataSourcesListPage} />
         <Route exact path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
         <Route exact path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />

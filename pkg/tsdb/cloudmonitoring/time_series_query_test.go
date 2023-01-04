@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	gdata "github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,7 +34,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 			}
 			err = query.parseResponse(res, data, "")
 			frames := res.Frames
-			assert.Equal(t, "value.usage.mean", frames[0].Fields[1].Name)
+			assert.Equal(t, "grafana-prod asia-northeast1-c 6724404429462225363 200", frames[0].Fields[1].Name)
 			assert.Equal(t, 843302441.9, frames[0].Fields[1].At(0))
 		})
 
@@ -105,7 +107,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 		frames := res.Frames
 		custom, ok := frames[0].Meta.Custom.(map[string]interface{})
 		require.True(t, ok)
-		labels, ok := custom["labels"].(map[string]string)
+		labels, ok := custom["labels"].(gdata.Labels)
 		require.True(t, ok)
 		assert.Equal(t, "6724404429462225363", labels["resource.label.instance_id"])
 	})

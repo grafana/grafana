@@ -21,7 +21,7 @@ func CoreStructuredKindJenny(gokindsdir string, cfg *CoreStructuredKindGenerator
 	}
 	if cfg.GenDirName == nil {
 		cfg.GenDirName = func(decl *DeclForGen) string {
-			return decl.Meta.Common().MachineName
+			return decl.Properties.Common().MachineName
 		}
 	}
 
@@ -54,7 +54,7 @@ func (gen *genCoreStructuredKind) Generate(decl *DeclForGen) (*codejen.File, err
 		return nil, nil
 	}
 
-	path := filepath.Join(gen.gokindsdir, gen.cfg.GenDirName(decl), decl.Meta.Common().MachineName+"_kind_gen.go")
+	path := filepath.Join(gen.gokindsdir, gen.cfg.GenDirName(decl), decl.Properties.Common().MachineName+"_kind_gen.go")
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("kind_corestructured.tmpl").Execute(buf, decl); err != nil {
 		return nil, fmt.Errorf("failed executing kind_corestructured template for %s: %w", path, err)

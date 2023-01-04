@@ -104,7 +104,14 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 			return nil, err
 		}
 
-		g := guardian.New(ctx, f.ID, f.OrgID, cmd.SignedInUser)
+		// do not get guardian by the folder ID because it differs from the nested folder ID
+		// and the legacy folder ID has been associated with the permissions:
+		// use the folde UID instead that is the same for both
+		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
+		if err != nil {
+			return nil, err
+		}
+
 		if canView, err := g.CanView(); err != nil || !canView {
 			if err != nil {
 				return nil, toFolderError(err)
@@ -127,28 +134,53 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 	}
 }
 
-func (s *Service) GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
+func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		children, err := s.store.GetChildren(ctx, *cmd)
+		if err != nil {
+			return nil, err
+		}
+
+		filtered := make([]*folder.Folder, 0, len(children))
+		for _, f := range children {
+			g, err := guardian.New(ctx, f.ID, f.OrgID, cmd.SignedInUser)
+			if err != nil {
+				return nil, err
+			}
+			canView, err := g.CanView()
+			if err != nil || canView {
+				filtered = append(filtered, f)
+			}
+		}
+
+		return filtered, nil
+	}
+
 	searchQuery := search.Query{
-		SignedInUser: user,
+		SignedInUser: cmd.SignedInUser,
 		DashboardIds: make([]int64, 0),
 		FolderIds:    make([]int64, 0),
-		Limit:        limit,
-		OrgId:        orgID,
+		Limit:        cmd.Limit,
+		OrgId:        cmd.OrgID,
 		Type:         "dash-folder",
 		Permission:   models.PERMISSION_VIEW,
-		Page:         page,
+		Page:         cmd.Page,
 	}
 
 	if err := s.searchService.SearchHandler(ctx, &searchQuery); err != nil {
 		return nil, err
 	}
 
-	folders := make([]*models.Folder, 0)
+	folders := make([]*folder.Folder, 0)
 
 	for _, hit := range searchQuery.Result {
-		folders = append(folders, &models.Folder{
-			Id:    hit.ID,
-			Uid:   hit.UID,
+		folders = append(folders, &folder.Folder{
+			ID:    hit.ID,
+			UID:   hit.UID,
 			Title: hit.Title,
 		})
 	}
@@ -166,7 +198,14 @@ func (s *Service) getFolderByID(ctx context.Context, user *user.SignedInUser, id
 		return nil, err
 	}
 
-	g := guardian.New(ctx, dashFolder.ID, orgID, user)
+	// do not get guardian by the folder ID because it differs from the nested folder ID
+	// and the legacy folder ID has been associated with the permissions:
+	// use the folde UID instead that is the same for both
+	g, err := guardian.NewByUID(ctx, dashFolder.UID, orgID, user)
+	if err != nil {
+		return nil, err
+	}
+
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -183,7 +222,14 @@ func (s *Service) getFolderByUID(ctx context.Context, user *user.SignedInUser, o
 		return nil, err
 	}
 
-	g := guardian.New(ctx, dashFolder.ID, orgID, user)
+	// do not get guardian by the folder ID because it differs from the nested folder ID
+	// and the legacy folder ID has been associated with the permissions:
+	// use the folde UID instead that is the same for both
+	g, err := guardian.NewByUID(ctx, dashFolder.UID, orgID, user)
+	if err != nil {
+		return nil, err
+	}
+
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -200,7 +246,11 @@ func (s *Service) getFolderByTitle(ctx context.Context, user *user.SignedInUser,
 		return nil, err
 	}
 
-	g := guardian.New(ctx, dashFolder.ID, orgID, user)
+	g, err := guardian.NewByUID(ctx, dashFolder.UID, orgID, user)
+	if err != nil {
+		return nil, err
+	}
+
 	if canView, err := g.CanView(); err != nil || !canView {
 		if err != nil {
 			return nil, toFolderError(err)
@@ -299,8 +349,10 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			// (legacy) folder.
 			logger.Error("error saving folder to nested folder store", "error", err)
 			// do not shallow create error if the legacy folder delete fails
-			deleteErr := s.DeleteFolder(ctx, &folder.DeleteFolderCommand{UID: createdFolder.UID, OrgID: cmd.OrgID, ForceDeleteRules: true, SignedInUser: user})
-			if deleteErr != nil {
+			if deleteErr := s.dashboardStore.DeleteDashboard(ctx, &models.DeleteDashboardCommand{
+				Id:    createdFolder.ID,
+				OrgId: createdFolder.OrgID,
+			}); deleteErr != nil {
 				logger.Error("error deleting folder after failed save to nested folder store", "error", err)
 			}
 			return folder.FromDashboard(dash), err
@@ -314,33 +366,33 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	return f, nil
 }
 
-func (s *Service) Update(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) (*folder.Folder, error) {
-	foldr, err := s.legacyUpdate(ctx, user, orgID, existingUid, cmd)
+func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+	user := cmd.SignedInUser
+
+	foldr, err := s.legacyUpdate(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		if cmd.Uid != "" {
-			if !util.IsValidShortUID(cmd.Uid) {
+		if cmd.NewUID != nil && *cmd.NewUID != "" {
+			if !util.IsValidShortUID(*cmd.NewUID) {
 				return nil, dashboards.ErrDashboardInvalidUid
-			} else if util.IsShortUIDTooLong(cmd.Uid) {
+			} else if util.IsShortUIDTooLong(*cmd.NewUID) {
 				return nil, dashboards.ErrDashboardUidTooLong
 			}
 		}
 
-		getFolder, err := s.store.Get(ctx, folder.GetFolderQuery{
-			UID:   &existingUid,
-			OrgID: orgID,
-		})
-		if err != nil {
-			return nil, err
-		}
 		foldr, err := s.store.Update(ctx, folder.UpdateFolderCommand{
-			Folder:         getFolder,
-			NewUID:         &cmd.Uid,
-			NewTitle:       &cmd.Title,
-			NewDescription: &cmd.Description,
+			UID:            cmd.UID,
+			OrgID:          cmd.OrgID,
+			NewUID:         cmd.NewUID,
+			NewTitle:       cmd.NewTitle,
+			NewDescription: cmd.NewDescription,
+			SignedInUser:   user,
 		})
 		if err != nil {
 			return nil, err
@@ -350,10 +402,10 @@ func (s *Service) Update(ctx context.Context, user *user.SignedInUser, orgID int
 	return foldr, nil
 }
 
-func (s *Service) legacyUpdate(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) (*folder.Folder, error) {
+func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
 	logger := s.log.FromContext(ctx)
 
-	query := models.GetDashboardQuery{OrgId: orgID, Uid: existingUid}
+	query := models.GetDashboardQuery{OrgId: cmd.OrgID, Uid: cmd.UID}
 	_, err := s.dashboardStore.GetDashboard(ctx, &query)
 	if err != nil {
 		return nil, toFolderError(err)
@@ -366,12 +418,17 @@ func (s *Service) legacyUpdate(ctx context.Context, user *user.SignedInUser, org
 		return nil, dashboards.ErrFolderNotFound
 	}
 
-	cmd.UpdateDashboardModel(dashFolder, orgID, user.UserID)
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+	user := cmd.SignedInUser
+
+	prepareForUpdate(dashFolder, cmd.OrgID, cmd.SignedInUser.UserID, cmd)
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
-		OrgId:     orgID,
-		User:      user,
+		OrgId:     cmd.OrgID,
+		User:      cmd.SignedInUser,
 		Overwrite: cmd.Overwrite,
 	}
 
@@ -386,7 +443,7 @@ func (s *Service) legacyUpdate(ctx context.Context, user *user.SignedInUser, org
 	}
 
 	var foldr *folder.Folder
-	foldr, err = s.dashboardStore.GetFolderByID(ctx, orgID, dash.Id)
+	foldr, err = s.dashboardStore.GetFolderByID(ctx, cmd.OrgID, dash.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -397,7 +454,7 @@ func (s *Service) legacyUpdate(ctx context.Context, user *user.SignedInUser, org
 			Title:     foldr.Title,
 			ID:        dash.Id,
 			UID:       dash.Uid,
-			OrgID:     orgID,
+			OrgID:     cmd.OrgID,
 		}); err != nil {
 			logger.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", user.UserID, "error", err)
 		}
@@ -405,16 +462,43 @@ func (s *Service) legacyUpdate(ctx context.Context, user *user.SignedInUser, org
 	return foldr, nil
 }
 
-func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+// prepareForUpdate updates an existing dashboard model from command into model for folder update
+func prepareForUpdate(dashFolder *models.Dashboard, orgId int64, userId int64, cmd *folder.UpdateFolderCommand) {
+	dashFolder.OrgId = orgId
+
+	title := dashFolder.Title
+	if cmd.NewTitle != nil && *cmd.NewTitle != "" {
+		title = *cmd.NewTitle
+	}
+	dashFolder.Title = strings.TrimSpace(title)
+	dashFolder.Data.Set("title", dashFolder.Title)
+
+	if cmd.NewUID != nil && *cmd.NewUID != "" {
+		dashFolder.SetUid(*cmd.NewUID)
+	}
+
+	dashFolder.SetVersion(cmd.Version)
+	dashFolder.IsFolder = true
+
+	if userId == 0 {
+		userId = -1
+	}
+
+	dashFolder.UpdatedBy = userId
+	dashFolder.UpdateSlug()
+}
+
+func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	logger := s.log.FromContext(ctx)
 	if cmd.SignedInUser == nil {
 		return folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		err := s.Delete(ctx, cmd)
+		err := s.nestedFolderDelete(ctx, cmd)
 		if err != nil {
 			logger.Error("the delete folder on folder table failed with err: ", "error", err)
+			return err
 		}
 	}
 
@@ -423,7 +507,11 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		return err
 	}
 
-	guard := guardian.New(ctx, dashFolder.ID, cmd.OrgID, cmd.SignedInUser)
+	guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
+	if err != nil {
+		return err
+	}
+
 	if canSave, err := guard.CanDelete(); err != nil || !canSave {
 		if err != nil {
 			return toFolderError(err)
@@ -431,6 +519,10 @@ func (s *Service) DeleteFolder(ctx context.Context, cmd *folder.DeleteFolderComm
 		return dashboards.ErrFolderAccessDenied
 	}
 
+	return s.legacyDelete(ctx, cmd, dashFolder)
+}
+
+func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
 	deleteCmd := models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
@@ -444,22 +536,50 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	foldr, err := s.Get(ctx, &folder.GetFolderQuery{
-		UID:          &cmd.UID,
-		OrgID:        cmd.OrgID,
-		SignedInUser: cmd.SignedInUser,
-	})
+	g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
+	if err != nil {
+		return nil, err
+	}
+	if canSave, err := g.CanSave(); err != nil || !canSave {
+		if err != nil {
+			return nil, toFolderError(err)
+		}
+		return nil, dashboards.ErrFolderAccessDenied
+	}
+
+	// here we get the folder, we need to get the height of current folder
+	// and the depth of the new parent folder, the sum can't bypass 8
+	folderHeight, err := s.store.GetHeight(ctx, cmd.UID, cmd.OrgID, &cmd.NewParentUID)
+	if err != nil {
+		return nil, err
+	}
+	parents, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: cmd.NewParentUID, OrgID: cmd.OrgID})
 	if err != nil {
 		return nil, err
 	}
 
+	// current folder height + current folder + parent folder + parent folder depth should be less than or equal 8
+	if folderHeight+len(parents)+2 > folder.MaxNestedFolderDepth {
+		return nil, folder.ErrMaximumDepthReached
+	}
+
+	// if the current folder is already a parent of newparent, we should return error
+	for _, parent := range parents {
+		if parent.UID == cmd.UID {
+			return nil, folder.ErrCircularReference
+		}
+	}
+
 	return s.store.Update(ctx, folder.UpdateFolderCommand{
-		Folder: foldr,
-		// NewParentUID: &cmd.NewParentUID,
+		UID:          cmd.UID,
+		OrgID:        cmd.OrgID,
+		NewParentUID: &cmd.NewParentUID,
+		SignedInUser: cmd.SignedInUser,
 	})
 }
 
-func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
+	logger := s.log.FromContext(ctx)
 	if cmd.SignedInUser == nil {
 		return folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -473,33 +593,25 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		return err
 	}
 
-	folders, err := s.store.GetChildren(ctx, folder.GetTreeQuery{UID: cmd.UID, OrgID: cmd.OrgID})
+	folders, err := s.store.GetChildren(ctx, folder.GetChildrenQuery{UID: cmd.UID, OrgID: cmd.OrgID})
 	if err != nil {
 		return err
 	}
 	for _, f := range folders {
-		err := s.Delete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules})
+		logger.Info("deleting subfolder", "org_id", f.OrgID, "uid", f.UID)
+		err := s.nestedFolderDelete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules, SignedInUser: cmd.SignedInUser})
 		if err != nil {
+			logger.Error("failed deleting subfolder", "org_id", f.OrgID, "uid", f.UID, "error", err)
 			return err
 		}
 	}
+	logger.Info("deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID)
 	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
 	if err != nil {
+		logger.Info("failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
 		return err
 	}
 	return nil
-}
-
-func (s *Service) GetParents(ctx context.Context, cmd *folder.GetParentsQuery) ([]*folder.Folder, error) {
-	// check the flag, if old - do whatever did before
-	//  for new only the store
-	return s.store.GetParents(ctx, *cmd)
-}
-
-func (s *Service) GetTree(ctx context.Context, cmd *folder.GetTreeQuery) ([]*folder.Folder, error) {
-	// check the flag, if old - do whatever did before
-	//  for new only the store
-	return s.store.GetChildren(ctx, *cmd)
 }
 
 func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
@@ -508,14 +620,14 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 
 func (s *Service) nestedFolderCreate(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	if cmd.ParentUID != "" {
-		if err := s.validateParent(ctx, cmd.OrgID, cmd.ParentUID); err != nil {
+		if err := s.validateParent(ctx, cmd.OrgID, cmd.ParentUID, cmd.UID); err != nil {
 			return nil, err
 		}
 	}
 	return s.store.Create(ctx, *cmd)
 }
 
-func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID string) error {
+func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID string, UID string) error {
 	ancestors, err := s.store.GetParents(ctx, folder.GetParentsQuery{UID: parentUID, OrgID: orgID})
 	if err != nil {
 		return fmt.Errorf("failed to get parents: %w", err)
@@ -523,6 +635,18 @@ func (s *Service) validateParent(ctx context.Context, orgID int64, parentUID str
 
 	if len(ancestors) == folder.MaxNestedFolderDepth {
 		return folder.ErrMaximumDepthReached
+	}
+
+	// Create folder under itself is not allowed
+	if parentUID == UID {
+		return folder.ErrCircularReference
+	}
+
+	// check there is no circular reference
+	for _, ancestor := range ancestors {
+		if ancestor.UID == UID {
+			return folder.ErrCircularReference
+		}
 	}
 
 	return nil

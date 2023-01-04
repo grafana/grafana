@@ -10,13 +10,13 @@ import { getGrafanaContextMock } from '../../../../../test/mocks/getGrafanaConte
 import { setStarred } from '../../../../core/reducers/navBarTree';
 import { configureStore } from '../../../../store/configureStore';
 import { updateTimeZoneForSession } from '../../../profile/state/reducers';
-import { DashboardModel } from '../../state';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { DashNav } from './DashNav';
 
 describe('Public dashboard title tag', () => {
   it('will be rendered when publicDashboardEnabled set to true in dashboard meta', async () => {
-    let dashboard = new DashboardModel({}, { publicDashboardEnabled: false });
+    let dashboard = createDashboardModelFixture({}, { publicDashboardEnabled: false });
 
     const store = configureStore();
     const context = getGrafanaContextMock();

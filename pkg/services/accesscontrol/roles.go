@@ -71,6 +71,10 @@ var (
 				Action: ActionOrgUsersRead,
 				Scope:  ScopeUsersAll,
 			},
+			{
+				Action: ActionUsersPermissionsRead,
+				Scope:  ScopeUsersAll,
+			},
 		},
 	}
 

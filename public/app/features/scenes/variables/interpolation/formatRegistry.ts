@@ -1,7 +1,7 @@
 import { isArray, map, replace } from 'lodash';
 
-import { dateTime, Registry, RegistryItem, textUtil } from '@grafana/data';
-import kbn from 'app/core/utils/kbn';
+import { dateTime, Registry, RegistryItem, textUtil, escapeRegex } from '@grafana/data';
+import { VariableType } from '@grafana/schema';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { VariableValue, VariableValueSingle } from '../types';
@@ -18,6 +18,7 @@ export interface FormatRegistryItem extends RegistryItem {
 export interface FormatVariable {
   state: {
     name: string;
+    type: VariableType | string;
   };
 
   getValue(fieldPath?: string): VariableValue | undefined | null;
@@ -79,15 +80,15 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       description: 'Values are regex escaped and multi-valued variables generate a (<value>|<value>) expression',
       formatter: (value) => {
         if (typeof value === 'string') {
-          return kbn.regexEscape(value);
+          return escapeRegex(value);
         }
 
         if (Array.isArray(value)) {
           const escapedValues = value.map((item) => {
             if (typeof item === 'string') {
-              return kbn.regexEscape(item);
+              return escapeRegex(item);
             } else {
-              return kbn.regexEscape(String(item));
+              return escapeRegex(String(item));
             }
           });
 
@@ -98,7 +99,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
           return '(' + escapedValues.join('|') + ')';
         }
 
-        return kbn.regexEscape(`${value}`);
+        return escapeRegex(`${value}`);
       },
     },
     {
@@ -324,6 +325,10 @@ function luceneEscape(value: string) {
  * unicode handling uses UTF-8 as in ECMA-262.
  */
 function encodeURIComponentStrict(str: VariableValueSingle) {
+  if (typeof str === 'object') {
+    str = String(str);
+  }
+
   return encodeURIComponent(str).replace(/[!'()*]/g, (c) => {
     return '%' + c.charCodeAt(0).toString(16).toUpperCase();
   });

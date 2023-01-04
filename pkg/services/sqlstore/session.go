@@ -9,11 +9,12 @@ import (
 
 	"xorm.io/xorm"
 
+	"github.com/mattn/go-sqlite3"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/retryer"
-	"github.com/mattn/go-sqlite3"
 )
 
 var sessionLogger = log.New("sqlstore.session")
@@ -116,7 +117,7 @@ func (ss *SQLStore) withDbSession(ctx context.Context, engine *xorm.Engine, call
 	return retryer.Retry(ss.retryOnLocks(ctx, callback, sess, retry), ss.dbCfg.QueryRetries, time.Millisecond*time.Duration(10), time.Second)
 }
 
-func (sess *DBSession) InsertId(bean interface{}) (int64, error) {
+func (sess *DBSession) InsertId(bean interface{}, dialect migrator.Dialect) (int64, error) {
 	table := sess.DB().Mapper.Obj2Table(getTypeName(bean))
 
 	if err := dialect.PreInsertId(table, sess.Session); err != nil {
