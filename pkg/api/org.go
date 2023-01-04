@@ -70,10 +70,10 @@ func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
 
 		return response.Error(http.StatusInternalServerError, "Failed to get organization", err)
 	}
-	result := models.OrgDetailsDTO{
-		Id:   orga.ID,
+	result := org.OrgDetailsDTO{
+		ID:   orga.ID,
 		Name: orga.Name,
-		Address: models.Address{
+		Address: org.Address{
 			Address1: orga.Address1,
 			Address2: orga.Address2,
 			City:     orga.City,
@@ -98,10 +98,10 @@ func (hs *HTTPServer) getOrgHelper(ctx context.Context, orgID int64) response.Re
 	}
 
 	orga := res
-	result := models.OrgDetailsDTO{
-		Id:   orga.ID,
+	result := org.OrgDetailsDTO{
+		ID:   orga.ID,
 		Name: orga.Name,
-		Address: models.Address{
+		Address: org.Address{
 			Address1: orga.Address1,
 			Address2: orga.Address2,
 			City:     orga.City,
@@ -455,19 +455,19 @@ type SearchOrgsResponse struct {
 type GetCurrentOrgResponse struct {
 	// The response message
 	// in: body
-	Body models.OrgDetailsDTO `json:"body"`
+	Body org.OrgDetailsDTO `json:"body"`
 }
 
 // swagger:response getOrgByIDResponse
 type GetOrgByIDResponse struct {
 	// The response message
 	// in: body
-	Body models.OrgDetailsDTO `json:"body"`
+	Body org.OrgDetailsDTO `json:"body"`
 }
 
 // swagger:response getOrgByNameResponse
 type GetOrgByNameResponse struct {
 	// The response message
 	// in: body
-	Body models.OrgDetailsDTO `json:"body"`
+	Body org.OrgDetailsDTO `json:"body"`
 }
