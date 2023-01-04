@@ -149,7 +149,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *
 			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated types from %s kind.", comm.Name), 80, false)},
 			TypeOnly:    true,
 			Exports:     raw,
-			From:        ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s_types.gen", comm.MachineName, vpath, comm.MachineName)},
+			From:        ast.Str{Value: fmt.Sprintf("./%s/%s/%s_types.gen", comm.MachineName, vpath, comm.MachineName)},
 		})
 	}
 	if len(rawD) > 0 {
@@ -157,7 +157,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *
 			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated enums and default consts from %s kind.", lin.Name()), 80, false)},
 			TypeOnly:    false,
 			Exports:     rawD,
-			From:        ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s_types.gen", comm.MachineName, vpath, comm.MachineName)},
+			From:        ast.Str{Value: fmt.Sprintf("./%s/%s/%s_types.gen", comm.MachineName, vpath, comm.MachineName)},
 		})
 	}
 	vtfile := fmt.Sprintf("./veneer/%s.types", lin.Name())
