@@ -430,7 +430,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 				quotaService:    tt.fields.quotaService,
 				log:             tt.fields.log,
 			}
-			err := s.SyncUser(tt.args.ctx, tt.args.clientParams, tt.args.id)
+			err := s.SyncUser(tt.args.ctx, tt.args.clientParams, tt.args.id, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return

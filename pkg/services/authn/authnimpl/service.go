@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	sync "github.com/grafana/grafana/pkg/services/authn/authnimpl/usersync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
@@ -26,8 +27,11 @@ import (
 var _ authn.Service = new(Service)
 
 func ProvideService(
-	cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service, accessControlService accesscontrol.Service,
-	apikeyService apikey.Service, userService user.Service, loginAttempts loginattempt.Service, quotaService quota.Service,
+	cfg *setting.Cfg, tracer tracing.Tracer,
+	orgService org.Service, sessionService auth.UserTokenService,
+	accessControlService accesscontrol.Service,
+	apikeyService apikey.Service, userService user.Service,
+	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 ) *Service {
 	s := &Service{
@@ -40,6 +44,10 @@ func ProvideService(
 
 	s.clients[authn.ClientRender] = clients.ProvideRender(userService, renderService)
 	s.clients[authn.ClientAPIKey] = clients.ProvideAPIKey(apikeyService, userService)
+
+	sessionClient := clients.ProvideSession(sessionService, userService, cfg.LoginCookieName, cfg.LoginMaxLifetime)
+	s.clients[authn.ClientSession] = sessionClient
+	s.RegisterPostAuthHook(sessionClient.RefreshTokenHook)
 
 	if s.cfg.AnonymousEnabled {
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
@@ -107,7 +115,7 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 	params := c.ClientParams()
 
 	for _, hook := range s.postAuthHooks {
-		if err := hook(ctx, params, identity); err != nil {
+		if err := hook(ctx, params, identity, r); err != nil {
 			return nil, false, err
 		}
 	}

@@ -9,13 +9,16 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
 	"golang.org/x/oauth2"
 )
 
 const (
 	ClientAPIKey    = "auth.client.api-key" // #nosec G101
+	ClientSession   = "auth.client.session"
 	ClientAnonymous = "auth.client.anonymous"
 	ClientBasic     = "auth.client.basic"
 	ClientRender    = "auth.client.render"
@@ -27,7 +30,8 @@ type ClientParams struct {
 	EnableDisabledUsers bool
 }
 
-type PostAuthHookFn func(ctx context.Context, clientParams *ClientParams, identity *Identity) error
+type PostAuthHookFn func(ctx context.Context,
+	clientParams *ClientParams, identity *Identity, r *Request) error
 
 type Service interface {
 	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
@@ -48,6 +52,9 @@ type Request struct {
 	// OrgID will be populated by authn.Service
 	OrgID       int64
 	HTTPRequest *http.Request
+
+	// for use in post auth hooks
+	Resp web.ResponseWriter
 }
 
 const (
@@ -69,12 +76,14 @@ type Identity struct {
 	IsGrafanaAdmin *bool
 	AuthModule     string // AuthModule is the name of the external system
 	AuthID         string // AuthId is the unique identifier for the user in the external system
-	OAuthToken     *oauth2.Token
 	LookUpParams   models.UserLookupParams
 	IsDisabled     bool
 	HelpFlags1     user.HelpFlags1
 	LastSeenAt     time.Time
 	Teams          []int64
+
+	OAuthToken   *oauth2.Token
+	SessionToken *auth.UserToken
 }
 
 func (i *Identity) Role() org.RoleType {

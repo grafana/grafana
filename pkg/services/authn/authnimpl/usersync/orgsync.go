@@ -27,7 +27,8 @@ type OrgSync struct {
 	log log.Logger
 }
 
-func (s *OrgSync) SyncOrgUser(ctx context.Context, clientParams *authn.ClientParams, id *authn.Identity) error {
+func (s *OrgSync) SyncOrgUser(ctx context.Context,
+	clientParams *authn.ClientParams, id *authn.Identity, _ *authn.Request) error {
 	if !clientParams.SyncUser {
 		s.log.Debug("Not syncing org user", "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return nil
