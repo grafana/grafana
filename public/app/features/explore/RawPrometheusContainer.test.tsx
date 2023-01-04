@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
-import { FieldType, InternalTimeZones, TimeRange, toDataFrame } from '@grafana/data';
+import { FieldType, getDefaultTimeRange, InternalTimeZones, toDataFrame } from '@grafana/data';
 import { ExploreId, TABLE_RESULTS_STYLE } from 'app/types/explore';
 
 import { RawPrometheusContainer } from './RawPrometheusContainer';
