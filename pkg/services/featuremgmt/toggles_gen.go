@@ -75,6 +75,10 @@ const (
 	// Enables public access to dashboards
 	FlagPublicDashboards = "publicDashboards"
 
+	// FlagPublicDashboardsEmailSharing
+	// Allows public dashboard sharing to be restricted to only allowed emails
+	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
+
 	// FlagLokiLive
 	// Support WebSocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
@@ -114,6 +118,10 @@ const (
 	// FlagK8s
 	// Explore native k8s integrations
 	FlagK8s = "k8s"
+
+	// FlagSupportBundles
+	// Support bundles for troubleshooting
+	FlagSupportBundles = "supportBundles"
 
 	// FlagDashboardsFromStorage
 	// Load dashboards from the generic storage interface

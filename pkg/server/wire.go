@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/infra/supportbundles"
+	"github.com/grafana/grafana/pkg/infra/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
@@ -354,6 +356,8 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideService,
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
 	k8saccess.ProvideK8SAccess,
+	supportbundlesimpl.ProvideService,
+	wire.Bind(new(supportbundles.Service), new(*supportbundlesimpl.Service)),
 )
 
 var wireSet = wire.NewSet(

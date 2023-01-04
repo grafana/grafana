@@ -67,6 +67,7 @@ Alpha features might be changed or removed without prior notice.
 | `dashboardComments`                | Enable dashboard-wide comments                                                                                                                                               |
 | `annotationComments`               | Enable annotation comments                                                                                                                                                   |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                                                                              |
+| `supportBundles`                   | Support bundles for troubleshooting                                                                                                                                          |
 | `exploreMixedDatasource`           | Enable mixed datasource in Explore                                                                                                                                           |
 | `tracing`                          | Adds trace ID to error notifications                                                                                                                                         |
 | `correlations`                     | Correlations page                                                                                                                                                            |
@@ -98,16 +99,17 @@ Alpha features might be changed or removed without prior notice.
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name                    | Description                                               |
-| -------------------------------------- | --------------------------------------------------------- |
-| `dashboardPreviewsAdmin`               | Manage the dashboard previews crawler process from the UI |
-| `showFeatureFlagsInUI`                 | Show feature flags in the settings UI                     |
-| `k8s`                                  | Explore native k8s integrations                           |
-| `dashboardsFromStorage`                | Load dashboards from the generic storage interface        |
-| `export`                               | Export grafana instance (to git, etc)                     |
-| `azureMonitorResourcePickerForMetrics` | New UI for Azure Monitor Metrics Query                    |
-| `grpcServer`                           | Run GRPC server                                           |
-| `entityStore`                          | SQL-based entity store (requires storage flag also)       |
-| `queryLibrary`                         | Reusable query library                                    |
-| `accessControlOnCall`                  | Access control primitives for OnCall                      |
-| `nestedFolders`                        | Enable folder nesting                                     |
+| Feature toggle name                    | Description                                                             |
+| -------------------------------------- | ----------------------------------------------------------------------- |
+| `dashboardPreviewsAdmin`               | Manage the dashboard previews crawler process from the UI               |
+| `showFeatureFlagsInUI`                 | Show feature flags in the settings UI                                   |
+| `publicDashboardsEmailSharing`         | Allows public dashboard sharing to be restricted to only allowed emails |
+| `k8s`                                  | Explore native k8s integrations                                         |
+| `dashboardsFromStorage`                | Load dashboards from the generic storage interface                      |
+| `export`                               | Export grafana instance (to git, etc)                                   |
+| `azureMonitorResourcePickerForMetrics` | New UI for Azure Monitor Metrics Query                                  |
+| `grpcServer`                           | Run GRPC server                                                         |
+| `entityStore`                          | SQL-based entity store (requires storage flag also)                     |
+| `queryLibrary`                         | Reusable query library                                                  |
+| `accessControlOnCall`                  | Access control primitives for OnCall                                    |
+| `nestedFolders`                        | Enable folder nesting                                                   |

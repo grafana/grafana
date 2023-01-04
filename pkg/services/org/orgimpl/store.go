@@ -767,7 +767,7 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 			}
 		} else if cmd.ShouldDeleteOrphanedUser {
 			// no other orgs, delete the full user
-			if err := ss.deleteUserInTransaction(sess, &models.DeleteUserCommand{UserId: usr.ID}); err != nil {
+			if err := ss.deleteUserInTransaction(sess, &user.DeleteUserCommand{UserID: usr.ID}); err != nil {
 				return err
 			}
 
@@ -784,9 +784,9 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 	})
 }
 
-func (ss *sqlStore) deleteUserInTransaction(sess *db.Session, cmd *models.DeleteUserCommand) error {
+func (ss *sqlStore) deleteUserInTransaction(sess *db.Session, cmd *user.DeleteUserCommand) error {
 	// Check if user exists
-	usr := user.User{ID: cmd.UserId}
+	usr := user.User{ID: cmd.UserID}
 	has, err := sess.Where(ss.notServiceAccountFilter()).Get(&usr)
 	if err != nil {
 		return err
@@ -795,13 +795,13 @@ func (ss *sqlStore) deleteUserInTransaction(sess *db.Session, cmd *models.Delete
 		return user.ErrUserNotFound
 	}
 	for _, sql := range ss.userDeletions() {
-		_, err := sess.Exec(sql, cmd.UserId)
+		_, err := sess.Exec(sql, cmd.UserID)
 		if err != nil {
 			return err
 		}
 	}
 
-	return deleteUserAccessControl(sess, cmd.UserId)
+	return deleteUserAccessControl(sess, cmd.UserID)
 }
 
 func deleteUserAccessControl(sess *db.Session, userID int64) error {
