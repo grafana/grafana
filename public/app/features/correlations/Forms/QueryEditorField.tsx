@@ -81,7 +81,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
 
     if (datasource) {
       runRequest(datasource, transaction.request).subscribe((panelData) => {
-if (
+        if (
           !panelData ||
           panelData.state === 'Error' ||
           (panelData.state === 'Done' && panelData.series.length === 0)
