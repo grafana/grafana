@@ -1184,7 +1184,7 @@ export class PrometheusDatasource
     const end = endTimeQuantizedSeconds.toString();
 
     if (start === end) {
-      throw new Error('Start and end cannae be the sae value');
+      throw new Error('Start and end cannot be the same value');
     }
 
     return { start, end };
