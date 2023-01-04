@@ -245,7 +245,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const isTopnav = config.featureToggles.topnav;
 
-    const dashnav = (
+    const shareButton = (
       <DashNavButton
         key="share"
         tooltip="Copy shortened link"
@@ -267,18 +267,18 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         />
       );
 
-    const topNavActions = [dashnav, <div style={{ flex: 1 }} key="spacer" />];
-
-    const toolbarLeftItems = [exploreId === ExploreId.left && !isTopnav && dashnav, getDataSourcePicker()].filter(
-      Boolean
-    );
+    const toolbarLeftItems = [
+      // We only want to show the shortened link button in the left Toolbar if topnav is not enabled as with topnav enabled it sits next to the brecrumbs
+      !isTopnav && exploreId === ExploreId.left && shareButton,
+      getDataSourcePicker(),
+    ].filter(Boolean);
 
     return (
       <div ref={topOfViewRef}>
         {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
         {isTopnav && (
           <div ref={topOfViewRef}>
-            <AppChromeUpdate actions={topNavActions} />
+            <AppChromeUpdate actions={[shareButton, <div style={{ flex: 1 }} key="spacer" />]} />
           </div>
         )}
         <PageToolbar
