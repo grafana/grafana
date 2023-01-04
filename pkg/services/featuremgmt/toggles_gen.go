@@ -286,4 +286,8 @@ const (
 	// FlagSessionRemoteCache
 	// Enable using remote cache for user sessions
 	FlagSessionRemoteCache = "sessionRemoteCache"
+
+	// FlagSecureSocksDatasourceProxy
+	// Enable secure socks tunneling for supported core datasources
+	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
 )

@@ -387,5 +387,10 @@ var (
 			Description: "Enable using remote cache for user sessions",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "secureSocksDatasourceProxy",
+			Description: "Enable secure socks tunneling for supported core datasources",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

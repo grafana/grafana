@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/mwitkow/go-conntrack"
 )
@@ -50,10 +51,18 @@ func New(cfg *setting.Cfg, validator models.PluginRequestValidator, tracer traci
 				return
 			}
 			datasourceLabelName, err := metricutil.SanitizeLabelName(datasourceName)
-
 			if err != nil {
 				return
 			}
+
+			if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) &&
+				cfg.SecureSocksDSProxy.Enabled && secureSocksProxyEnabledOnDS(opts) {
+				err = newSecureSocksProxy(&cfg.SecureSocksDSProxy, transport)
+				if err != nil {
+					logger.Error("Failed to enable secure socks proxy", "error", err.Error(), "datasource", datasourceName)
+				}
+			}
+
 			newConntrackRoundTripper(datasourceLabelName, transport)
 		},
 	})
