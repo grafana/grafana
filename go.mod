@@ -80,16 +80,16 @@ require (
 	github.com/magefile/mage v1.14.0
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mattn/go-sqlite3 v1.14.16
-	github.com/matttproud/golang_protobuf_extensions v1.0.2
+	github.com/matttproud/golang_protobuf_extensions v1.0.4
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/alertmanager v0.24.1-0.20221003101219-ae510d09c048
-	github.com/prometheus/client_golang v1.13.1
-	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.37.0
+	github.com/prometheus/client_golang v1.14.0
+	github.com/prometheus/client_model v0.3.0
+	github.com/prometheus/common v0.39.0
 	github.com/prometheus/prometheus v1.8.2-0.20211011171444-354d8d2ecfac
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.1
@@ -111,14 +111,14 @@ require (
 	go.opentelemetry.io/otel/trace v1.7.0
 	golang.org/x/crypto v0.3.0
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
-	golang.org/x/net v0.2.0
-	golang.org/x/oauth2 v0.2.0
+	golang.org/x/net v0.4.0
+	golang.org/x/oauth2 v0.3.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/time v0.2.0
 	golang.org/x/tools v0.3.0
 	gonum.org/v1/gonum v0.11.0
 	google.golang.org/api v0.84.0
-	google.golang.org/grpc v1.47.0
+	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.67.0
@@ -149,7 +149,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/centrifugal/protocol v0.8.10 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
 	github.com/deepmap/oapi-codegen v1.10.1
@@ -233,11 +233,11 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.10.0
 	go.uber.org/goleak v1.1.12 // indirect
-	golang.org/x/sys v0.2.0 // indirect
-	golang.org/x/text v0.4.0
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/text v0.5.0
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220708155623-50e5f4832e73
+	google.golang.org/genproto v0.0.0-20221227171554-f9683d7f8bef
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 )
 
@@ -250,7 +250,7 @@ require (
 	github.com/armon/go-radix v1.0.0
 	github.com/blugelabs/bluge v0.1.9
 	github.com/blugelabs/bluge_segment_api v0.2.0
-	github.com/bufbuild/connect-go v1.0.0
+	github.com/bufbuild/connect-go v1.4.1
 	github.com/dlmiddlecote/sqlstats v1.0.2
 	github.com/drone/drone-cli v1.6.1
 	github.com/getkin/kin-openapi v0.103.0
@@ -258,6 +258,7 @@ require (
 	github.com/google/go-github/v45 v45.2.0
 	github.com/grafana/codejen v0.0.3
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
+	github.com/grafana/phlare/api v0.1.1
 	github.com/huandu/xstrings v1.3.1
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/matryer/is v1.4.0
@@ -323,7 +324,7 @@ require (
 	github.com/unknwon/com v1.0.1 // indirect
 	github.com/unknwon/log v0.0.0-20150304194804-e617c87089d3 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
-	golang.org/x/term v0.2.0 // indirect
+	golang.org/x/term v0.3.0 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/api v0.25.0 // indirect
@@ -367,7 +368,7 @@ require (
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/go-github v17.0.0+incompatible
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.3 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
