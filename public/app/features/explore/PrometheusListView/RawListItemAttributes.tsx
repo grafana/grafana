@@ -22,7 +22,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: block;
       text-indent: 1em;
     `,
-    contracted: css``,
   };
 };
 
@@ -46,7 +45,7 @@ const RawListItemAttributes = ({
   const attributeValue = value.value;
 
   return (
-    <span className={isExpandedView ? styles.expanded : styles.contracted} key={index}>
+    <span className={isExpandedView ? styles.expanded : ''} key={index}>
       <span className={styles.metricName}>{attributeName}</span>
       <span>=</span>
       <span>&quot;</span>
