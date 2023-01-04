@@ -54,7 +54,7 @@ const defaultProps = {
   onCellFilterAdded: jest.fn(),
   tableResult: [dataFrame],
   splitOpenFn: () => {},
-  range: {} as TimeRange,
+  range: getDefaultTimeRange(),
   timeZone: InternalTimeZones.utc,
 };
 
