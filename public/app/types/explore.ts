@@ -197,10 +197,14 @@ export interface ExploreItemState {
 
   // properties below should be more generic if we add more providers
   // see also: DataSourceWithLogsVolumeSupport
-  suppQueriesEnabled: string[];
-  suppQueryDataProvider?: Observable<DataQueryResponse>;
-  suppQueryDataSubscription?: SubscriptionLike;
-  suppQueryData?: DataQueryResponse;
+  suppQueriesEnabled: { [key: string]: boolean };
+  suppQueryDataProvider?: { [key: string]: Observable<DataQueryResponse> };
+  suppQueryDataSubscription?: { [key: string]: SubscriptionLike };
+  suppQueryData?: { [key: string]: DataQueryResponse };
+  // we can store the last type of query used so we know if we should
+  // clean up data provider and subscription or not
+  // TODO: Implement this
+  // suppQueryDataTypeLastUsed?: string;
 
   panelsState: ExplorePanelsState;
 

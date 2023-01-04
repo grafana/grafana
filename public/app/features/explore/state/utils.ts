@@ -32,8 +32,10 @@ export const storeGraphStyle = (graphStyle: string): void => {
 
 export const LOGS_VOLUME_QUERY = 'logsVolume';
 const LOGS_VOLUME_ENABLED_KEY = SETTINGS_KEYS.enableVolumeHistogram;
-export const storeSuppQueryEnabled = (enabled: boolean): void => {
-  store.set(LOGS_VOLUME_ENABLED_KEY, enabled ? 'true' : 'false');
+export const storeSuppQueryEnabled = (enabled: boolean, type: string): void => {
+  if (type === LOGS_VOLUME_QUERY) {
+    store.set(LOGS_VOLUME_ENABLED_KEY, enabled ? 'true' : 'false');
+  }
 };
 
 const loadSuppQueriesEnabled = (): string[] => {

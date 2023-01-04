@@ -95,8 +95,8 @@ export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionP
   'explore/queryStoreSubscription'
 );
 
-const setSuppQueryEnabledAction = createAction<{ exploreId: ExploreId; enabled: boolean }>(
-  'explore/setSuppQueryEnabledAction'
+const setSuppQueriesEnabledAction = createAction<{ exploreId: ExploreId; enabled: boolean; type: string }>(
+  'explore/setSuppQueriesEnabledAction'
 );
 
 export interface StoreSuppQueryDataProvider {
@@ -565,6 +565,14 @@ export const runQueries = (
           })
         );
         dispatch(cleanSuppQueryVolumeAction({ exploreId }));
+        // In this whole part., we need to figure out
+        // checking the type of enabled supp queries
+        // then for which enabled supp queries has data source support
+        // and then we need to run the supp queries
+        // but we need to make sure that supp queries that dont work
+        // return undefined provider
+        // we should also make sure we store the type of provider that
+        // was last stored
       } else if (hasLogsVolumeSupport(datasourceInstance)) {
         // we always prepare the logsVolumeProvider,
         // but we only load it, if the logs-volume-histogram is enabled.
@@ -587,7 +595,7 @@ export const runQueries = (
         if (!canReuseSuppQueryData(suppQueryData, queries, absoluteRange)) {
           dispatch(cleanSuppQueryVolumeAction({ exploreId }));
           if (suppQueriesEnabled.includes(LOGS_VOLUME_QUERY)) {
-            dispatch(loadSuppQueryData(exploreId));
+            dispatch(loadSuppQueryData(exploreId, LOGS_VOLUME_QUERY));
           }
         }
       } else {
@@ -680,10 +688,11 @@ export function clearCache(exploreId: ExploreId): ThunkResult<void> {
 /**
  * Initializes loading logs volume data and stores emitted value.
  */
-export function loadSuppQueryData(exploreId: ExploreId): ThunkResult<void> {
+export function loadSuppQueryData(exploreId: ExploreId, type: string): ThunkResult<void> {
   return (dispatch, getState) => {
     const { suppQueryDataProvider } = getState().explore[exploreId]!;
-    if (suppQueryDataProvider) {
+    // here we should check if type is the same as previous type
+    if (suppQueryDataProvider && type === LOGS_VOLUME_QUERY) {
       const suppQueryDataSubscription = suppQueryDataProvider.subscribe({
         next: (suppQueryData: DataQueryResponse) => {
           dispatch(updateSuppQueryDataAction({ exploreId, suppQueryData }));
@@ -694,12 +703,12 @@ export function loadSuppQueryData(exploreId: ExploreId): ThunkResult<void> {
   };
 }
 
-export function setSuppQueryEnabled(exploreId: ExploreId, enabled: boolean): ThunkResult<void> {
+export function setSuppQueriesEnabled(exploreId: ExploreId, enabled: boolean, type: string): ThunkResult<void> {
   return (dispatch, getState) => {
-    dispatch(setSuppQueryEnabledAction({ exploreId, enabled }));
-    storeSuppQueryEnabled(enabled);
+    dispatch(setSuppQueriesEnabledAction({ exploreId, enabled, type }));
+    storeSuppQueryEnabled(enabled, type);
     if (enabled) {
-      dispatch(loadSuppQueryData(exploreId));
+      dispatch(loadSuppQueryData(exploreId, type));
     }
   };
 }
@@ -763,7 +772,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (setSuppQueryEnabledAction.match(action)) {
+  if (setSuppQueriesEnabledAction.match(action)) {
     const { enabled } = action.payload;
     if (!enabled && state.suppQueryDataSubscription) {
       state.suppQueryDataSubscription.unsubscribe();

@@ -20,7 +20,7 @@ import { getTimeZone } from '../profile/state/selectors';
 
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
-import { addResultsToCache, clearCache, loadSuppQueryData, setSuppQueryEnabled } from './state/query';
+import { addResultsToCache, clearCache, loadSuppQueryData, setSuppQueriesEnabled } from './state/query';
 import { updateTimeRange } from './state/time';
 import { LOGS_VOLUME_QUERY } from './state/utils';
 import { LiveTailControls } from './useLiveTailControls';
@@ -105,6 +105,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       clearCache,
       scrollElement,
       suppQueriesEnabled,
+      setSuppQueriesEnabled,
     } = this.props;
 
     if (!logRows) {
@@ -137,7 +138,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             logsMeta={logsMeta}
             logsSeries={logsSeries}
             logsVolumeEnabled={suppQueriesEnabled.includes(LOGS_VOLUME_QUERY)}
-            onSetLogsVolumeEnabled={(enabled) => this.props.setSuppQueryEnabled(exploreId, enabled)}
+            onSetLogsVolumeEnabled={(enabled) => setSuppQueriesEnabled(exploreId, enabled, LOGS_VOLUME_QUERY)}
             logsVolumeData={suppQueryData}
             logsQueries={logsQueries}
             width={width}
@@ -213,7 +214,7 @@ const mapDispatchToProps = {
   addResultsToCache,
   clearCache,
   loadSuppQueryData,
-  setSuppQueryEnabled,
+  setSuppQueriesEnabled,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
