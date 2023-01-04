@@ -128,12 +128,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
       )}
       <div key={listKey} className={styles.rowWrapper}>
         <span className={styles.copyToClipboardWrapper}>
-          <IconButton
-            role={'button'}
-            tooltip="Copy to clipboard"
-            onClick={() => copyToClipboard(stringRep)}
-            name="copy"
-          />
+          <IconButton tooltip="Copy to clipboard" onClick={() => copyToClipboard(stringRep)} name="copy" />
         </span>
         <span role={'cell'} className={styles.rowLabelWrapWrap}>
           <div className={styles.rowLabelWrap}>
