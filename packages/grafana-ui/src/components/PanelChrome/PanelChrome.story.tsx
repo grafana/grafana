@@ -77,8 +77,8 @@ export const Examples = () => {
             title: 'Default title',
             loadingState: LoadingState.Error,
           })}
-          {renderPanel('No title with streaming state', {
-            title: '',
+          {renderPanel('Default panel with streaming state', {
+            title: 'Default title',
             loadingState: LoadingState.Streaming,
           })}
         </VerticalGroup>
