@@ -184,4 +184,25 @@ describe('getQueryHints', () => {
       );
     });
   });
+
+  describe('suggest remove pipeline error', () => {
+    const logfmtSeries: DataFrame = {
+      name: 'logs',
+      length: 1,
+      fields: [
+        {
+          name: 'labels',
+          type: FieldType.other,
+          config: {},
+          values: new ArrayVector([{ __error__: 'some error', job: 'a' }]),
+        },
+      ],
+    };
+
+    it('suggest remove pipeline error', () => {
+      expect(getQueryHints('{job="grafana" | json', [logfmtSeries])).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_NO_PIPELINE_ERROR' })])
+      );
+    });
+  });
 });
