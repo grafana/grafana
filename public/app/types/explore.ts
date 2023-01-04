@@ -17,6 +17,7 @@ import {
   ExplorePanelsState,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
+import { SupportingQueryType } from 'app/features/explore/state/utils';
 
 import { CorrelationData } from '../features/correlations/useCorrelations';
 
@@ -204,24 +205,14 @@ export interface ExploreItemState {
    */
   cache: Array<{ key: string; value: ExplorePanelData }>;
 
-  // properties below should be more generic if we add more providers
-  // see also: DataSourceWithLogsVolumeSupport
+  /**
+   * Supplementary queries are additional queries used in Explore, e.g. for logs volume
+   */
   supportingQueries: SupportingQueries;
 
   panelsState: ExplorePanelsState;
 
   isFromCompactUrl?: boolean;
-}
-
-export interface SupportingQuery {
-  enabled: boolean;
-  dataProvider?: Observable<DataQueryResponse>;
-  dataSubscription?: SubscriptionLike;
-  data?: DataQueryResponse;
-}
-
-export interface SupportingQueries {
-  [key: string]: SupportingQuery;
 }
 
 export interface ExploreUpdateState {
@@ -278,3 +269,14 @@ export enum TABLE_RESULTS_STYLE {
 }
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
 export type TableResultsStyle = typeof TABLE_RESULTS_STYLES[number];
+
+export interface SupportingQuery {
+  enabled: boolean;
+  dataProvider?: Observable<DataQueryResponse>;
+  dataSubscription?: SubscriptionLike;
+  data?: DataQueryResponse;
+}
+
+export type SupportingQueries = {
+  [key in SupportingQueryType]: SupportingQuery;
+};

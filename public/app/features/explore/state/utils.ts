@@ -12,13 +12,25 @@ import {
   PanelData,
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
-import { ExploreItemState, SupportingQueries, SupportingQuery } from 'app/types/explore';
+import { ExploreItemState, SupportingQueries } from 'app/types/explore';
 
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { SETTINGS_KEYS } from '../utils/logs';
 import { toRawTimeRange } from '../utils/time';
+
+export enum SupportingQueryType {
+  LogsVolume = 'LogsVolume',
+}
+// Used to match SupportingQueryType to corresponding local storage key
+const supportingQuerySettings: { [key in SupportingQueryType]: string } = {
+  [SupportingQueryType.LogsVolume]: SETTINGS_KEYS.enableVolumeHistogram,
+};
+// Used to validate query type
+export const isSuppQueryType = (type: string): type is SupportingQueryType => {
+  return Object.values(SupportingQueryType).includes(type as SupportingQueryType);
+};
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -30,31 +42,25 @@ export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
 };
 
-export const LOGS_VOLUME_QUERY = 'logsVolume';
-const LOGS_VOLUME_ENABLED_KEY = SETTINGS_KEYS.enableVolumeHistogram;
-
-const supportingQuerySettings: { [key: string]: string } = {
-  [LOGS_VOLUME_ENABLED_KEY]: LOGS_VOLUME_ENABLED_KEY,
-};
-
-export const storeSuppQueryEnabled = (enabled: boolean, type: string): void => {
+export const storeSuppQueryEnabled = (enabled: boolean, type: SupportingQueryType): void => {
   if (supportingQuerySettings[type]) {
     store.set(supportingQuerySettings[type], enabled ? 'true' : 'false');
   }
 };
 
-const loadSupportingQueries = (): SupportingQueries => {
-  const suppQueryTypes = [LOGS_VOLUME_QUERY];
-  const suppQueries: { [key: string]: SupportingQuery } = {};
+export const loadSupportingQueries = (): SupportingQueries => {
+  // We default to true for all supp queries
+  const suppQueries: SupportingQueries = {
+    [SupportingQueryType.LogsVolume]: { enabled: true },
+  };
 
-  for (const type of suppQueryTypes) {
-    if (supportingQuerySettings[type]) {
-      const data = store.get(supportingQuerySettings[type]);
-      if (data === 'false') {
-        suppQueries[supportingQuerySettings[type]] = { enabled: false };
+  for (const type of Object.keys(SupportingQueryType)) {
+    if (isSuppQueryType(type) && supportingQuerySettings[type]) {
+      // Only if "false" value in local storage, we disable it
+      if (store.get(supportingQuerySettings[type]) === 'false') {
+        suppQueries[type] = { enabled: false };
       }
-    } // we default to `enabled=true`
-    suppQueries[supportingQuerySettings[type]] = { enabled: false };
+    }
   }
   return suppQueries;
 };

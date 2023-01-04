@@ -22,7 +22,7 @@ import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { addResultsToCache, clearCache, loadSuppQueryData, setSuppQueryEnabled } from './state/query';
 import { updateTimeRange } from './state/time';
-import { LOGS_VOLUME_QUERY } from './state/utils';
+import { SupportingQueryType } from './state/utils';
 import { LiveTailControls } from './useLiveTailControls';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { getFieldLinksForExplore } from './utils/links';
@@ -137,14 +137,16 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             logsMeta={logsMeta}
             logsSeries={logsSeries}
             logsVolumeEnabled={logsVolume.enabled}
-            onSetLogsVolumeEnabled={(enabled) => setSuppQueryEnabled(exploreId, enabled, LOGS_VOLUME_QUERY)}
+            onSetLogsVolumeEnabled={(enabled) =>
+              setSuppQueryEnabled(exploreId, enabled, SupportingQueryType.LogsVolume)
+            }
             logsVolumeData={logsVolume.data}
             logsQueries={logsQueries}
             width={width}
             splitOpen={splitOpenFn}
             loading={loading}
             loadingState={loadingState}
-            loadLogsVolumeData={() => loadSuppQueryData(exploreId, LOGS_VOLUME_QUERY)}
+            loadLogsVolumeData={() => loadSuppQueryData(exploreId, SupportingQueryType.LogsVolume)}
             onChangeTime={this.onChangeTime}
             onClickFilterLabel={onClickFilterLabel}
             onClickFilterOutLabel={onClickFilterOutLabel}
@@ -185,7 +187,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     supportingQueries,
   } = item;
   const timeZone = getTimeZone(state.user);
-  const logsVolume = supportingQueries[LOGS_VOLUME_QUERY];
+  const logsVolume = supportingQueries[SupportingQueryType.LogsVolume];
 
   return {
     loading,
