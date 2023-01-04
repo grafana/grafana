@@ -6,6 +6,7 @@ package queryv1alpha1
 
 import (
 	context "context"
+	binary "encoding/binary"
 	fmt "fmt"
 	v1alpha11 "github.com/parca-dev/parca/gen/proto/go/parca/metastore/v1alpha1"
 	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/profilestore/v1alpha1"
@@ -16,6 +17,7 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
+	math "math"
 	bits "math/bits"
 )
 
@@ -1101,6 +1103,19 @@ func (m *QueryRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			}
 		}
 	}
+	if m.NodeTrimThreshold != nil {
+		i -= 4
+		binary.LittleEndian.PutUint32(dAtA[i:], uint32(math.Float32bits(float32(*m.NodeTrimThreshold))))
+		i--
+		dAtA[i] = 0x3d
+	}
+	if m.FilterQuery != nil {
+		i -= len(*m.FilterQuery)
+		copy(dAtA[i:], *m.FilterQuery)
+		i = encodeVarint(dAtA, i, uint64(len(*m.FilterQuery)))
+		i--
+		dAtA[i] = 0x32
+	}
 	if m.ReportType != 0 {
 		i = encodeVarint(dAtA, i, uint64(m.ReportType))
 		i--
@@ -1394,6 +1409,56 @@ func (m *Flamegraph) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.UntrimmedTotal != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.UntrimmedTotal))
+		i--
+		dAtA[i] = 0x48
+	}
+	if len(m.Function) > 0 {
+		for iNdEx := len(m.Function) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Function[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0x42
+		}
+	}
+	if len(m.Mapping) > 0 {
+		for iNdEx := len(m.Mapping) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Mapping[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0x3a
+		}
+	}
+	if len(m.Locations) > 0 {
+		for iNdEx := len(m.Locations) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Locations[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0x32
+		}
+	}
+	if len(m.StringTable) > 0 {
+		for iNdEx := len(m.StringTable) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.StringTable[iNdEx])
+			copy(dAtA[i:], m.StringTable[iNdEx])
+			i = encodeVarint(dAtA, i, uint64(len(m.StringTable[iNdEx])))
+			i--
+			dAtA[i] = 0x2a
+		}
+	}
 	if m.Height != 0 {
 		i = encodeVarint(dAtA, i, uint64(m.Height))
 		i--
@@ -1574,6 +1639,16 @@ func (m *FlamegraphNodeMeta) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.LineIndex != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.LineIndex))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.LocationIndex != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.LocationIndex))
+		i--
+		dAtA[i] = 0x28
+	}
 	if m.Line != nil {
 		size, err := m.Line.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
@@ -1646,6 +1721,11 @@ func (m *CallgraphNode) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.Flat != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.Flat))
+		i--
+		dAtA[i] = 0x20
 	}
 	if m.Cumulative != 0 {
 		i = encodeVarint(dAtA, i, uint64(m.Cumulative))
@@ -2856,6 +2936,13 @@ func (m *QueryRequest) SizeVT() (n int) {
 	if m.ReportType != 0 {
 		n += 1 + sov(uint64(m.ReportType))
 	}
+	if m.FilterQuery != nil {
+		l = len(*m.FilterQuery)
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.NodeTrimThreshold != nil {
+		n += 5
+	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -2999,6 +3086,33 @@ func (m *Flamegraph) SizeVT() (n int) {
 	if m.Height != 0 {
 		n += 1 + sov(uint64(m.Height))
 	}
+	if len(m.StringTable) > 0 {
+		for _, s := range m.StringTable {
+			l = len(s)
+			n += 1 + l + sov(uint64(l))
+		}
+	}
+	if len(m.Locations) > 0 {
+		for _, e := range m.Locations {
+			l = e.SizeVT()
+			n += 1 + l + sov(uint64(l))
+		}
+	}
+	if len(m.Mapping) > 0 {
+		for _, e := range m.Mapping {
+			l = e.SizeVT()
+			n += 1 + l + sov(uint64(l))
+		}
+	}
+	if len(m.Function) > 0 {
+		for _, e := range m.Function {
+			l = e.SizeVT()
+			n += 1 + l + sov(uint64(l))
+		}
+	}
+	if m.UntrimmedTotal != 0 {
+		n += 1 + sov(uint64(m.UntrimmedTotal))
+	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -3079,6 +3193,12 @@ func (m *FlamegraphNodeMeta) SizeVT() (n int) {
 		l = m.Line.SizeVT()
 		n += 1 + l + sov(uint64(l))
 	}
+	if m.LocationIndex != 0 {
+		n += 1 + sov(uint64(m.LocationIndex))
+	}
+	if m.LineIndex != 0 {
+		n += 1 + sov(uint64(m.LineIndex))
+	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -3101,6 +3221,9 @@ func (m *CallgraphNode) SizeVT() (n int) {
 	}
 	if m.Cumulative != 0 {
 		n += 1 + sov(uint64(m.Cumulative))
+	}
+	if m.Flat != 0 {
+		n += 1 + sov(uint64(m.Flat))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -5206,6 +5329,51 @@ func (m *QueryRequest) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FilterQuery", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			s := string(dAtA[iNdEx:postIndex])
+			m.FilterQuery = &s
+			iNdEx = postIndex
+		case 7:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NodeTrimThreshold", wireType)
+			}
+			var v uint32
+			if (iNdEx + 4) > l {
+				return io.ErrUnexpectedEOF
+			}
+			v = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
+			iNdEx += 4
+			v2 := float32(math.Float32frombits(v))
+			m.NodeTrimThreshold = &v2
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -5857,6 +6025,159 @@ func (m *Flamegraph) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StringTable", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StringTable = append(m.StringTable, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Locations", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Locations = append(m.Locations, &v1alpha11.Location{})
+			if err := m.Locations[len(m.Locations)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Mapping", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Mapping = append(m.Mapping, &v1alpha11.Mapping{})
+			if err := m.Mapping[len(m.Mapping)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Function", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Function = append(m.Function, &v1alpha11.Function{})
+			if err := m.Function[len(m.Function)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UntrimmedTotal", wireType)
+			}
+			m.UntrimmedTotal = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.UntrimmedTotal |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -6334,6 +6655,44 @@ func (m *FlamegraphNodeMeta) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LocationIndex", wireType)
+			}
+			m.LocationIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.LocationIndex |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LineIndex", wireType)
+			}
+			m.LineIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.LineIndex |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -6468,6 +6827,25 @@ func (m *CallgraphNode) UnmarshalVT(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.Cumulative |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Flat", wireType)
+			}
+			m.Flat = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Flat |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

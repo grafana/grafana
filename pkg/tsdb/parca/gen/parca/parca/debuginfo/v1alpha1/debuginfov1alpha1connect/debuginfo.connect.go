@@ -21,117 +21,141 @@ import (
 const _ = connect_go.IsAtLeastVersion0_1_0
 
 const (
-	// DebugInfoServiceName is the fully-qualified name of the DebugInfoService service.
-	DebugInfoServiceName = "parca.debuginfo.v1alpha1.DebugInfoService"
+	// DebuginfoServiceName is the fully-qualified name of the DebuginfoService service.
+	DebuginfoServiceName = "parca.debuginfo.v1alpha1.DebuginfoService"
 )
 
-// DebugInfoServiceClient is a client for the parca.debuginfo.v1alpha1.DebugInfoService service.
-type DebugInfoServiceClient interface {
-	// Exists returns true if the given build_id has debug info uploaded for it.
-	Exists(context.Context, *connect_go.Request[v1alpha1.ExistsRequest]) (*connect_go.Response[v1alpha1.ExistsResponse], error)
+// DebuginfoServiceClient is a client for the parca.debuginfo.v1alpha1.DebuginfoService service.
+type DebuginfoServiceClient interface {
 	// Upload ingests debug info for a given build_id
 	Upload(context.Context) *connect_go.ClientStreamForClient[v1alpha1.UploadRequest, v1alpha1.UploadResponse]
-	// Download returns the debug info for a given build_id.
-	Download(context.Context, *connect_go.Request[v1alpha1.DownloadRequest]) (*connect_go.ServerStreamForClient[v1alpha1.DownloadResponse], error)
+	// ShouldInitiateUpload returns whether an upload for a given build_id should be initiated or not.
+	ShouldInitiateUpload(context.Context, *connect_go.Request[v1alpha1.ShouldInitiateUploadRequest]) (*connect_go.Response[v1alpha1.ShouldInitiateUploadResponse], error)
+	// InitiateUpload returns a strategy and information to upload debug info for a given build_id.
+	InitiateUpload(context.Context, *connect_go.Request[v1alpha1.InitiateUploadRequest]) (*connect_go.Response[v1alpha1.InitiateUploadResponse], error)
+	// MarkUploadFinished marks the upload as finished for a given build_id.
+	MarkUploadFinished(context.Context, *connect_go.Request[v1alpha1.MarkUploadFinishedRequest]) (*connect_go.Response[v1alpha1.MarkUploadFinishedResponse], error)
 }
 
-// NewDebugInfoServiceClient constructs a client for the parca.debuginfo.v1alpha1.DebugInfoService
+// NewDebuginfoServiceClient constructs a client for the parca.debuginfo.v1alpha1.DebuginfoService
 // service. By default, it uses the Connect protocol with the binary Protobuf Codec, asks for
 // gzipped responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply
 // the connect.WithGRPC() or connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewDebugInfoServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) DebugInfoServiceClient {
+func NewDebuginfoServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) DebuginfoServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
-	return &debugInfoServiceClient{
-		exists: connect_go.NewClient[v1alpha1.ExistsRequest, v1alpha1.ExistsResponse](
-			httpClient,
-			baseURL+"/parca.debuginfo.v1alpha1.DebugInfoService/Exists",
-			opts...,
-		),
+	return &debuginfoServiceClient{
 		upload: connect_go.NewClient[v1alpha1.UploadRequest, v1alpha1.UploadResponse](
 			httpClient,
-			baseURL+"/parca.debuginfo.v1alpha1.DebugInfoService/Upload",
+			baseURL+"/parca.debuginfo.v1alpha1.DebuginfoService/Upload",
 			opts...,
 		),
-		download: connect_go.NewClient[v1alpha1.DownloadRequest, v1alpha1.DownloadResponse](
+		shouldInitiateUpload: connect_go.NewClient[v1alpha1.ShouldInitiateUploadRequest, v1alpha1.ShouldInitiateUploadResponse](
 			httpClient,
-			baseURL+"/parca.debuginfo.v1alpha1.DebugInfoService/Download",
+			baseURL+"/parca.debuginfo.v1alpha1.DebuginfoService/ShouldInitiateUpload",
+			opts...,
+		),
+		initiateUpload: connect_go.NewClient[v1alpha1.InitiateUploadRequest, v1alpha1.InitiateUploadResponse](
+			httpClient,
+			baseURL+"/parca.debuginfo.v1alpha1.DebuginfoService/InitiateUpload",
+			opts...,
+		),
+		markUploadFinished: connect_go.NewClient[v1alpha1.MarkUploadFinishedRequest, v1alpha1.MarkUploadFinishedResponse](
+			httpClient,
+			baseURL+"/parca.debuginfo.v1alpha1.DebuginfoService/MarkUploadFinished",
 			opts...,
 		),
 	}
 }
 
-// debugInfoServiceClient implements DebugInfoServiceClient.
-type debugInfoServiceClient struct {
-	exists   *connect_go.Client[v1alpha1.ExistsRequest, v1alpha1.ExistsResponse]
-	upload   *connect_go.Client[v1alpha1.UploadRequest, v1alpha1.UploadResponse]
-	download *connect_go.Client[v1alpha1.DownloadRequest, v1alpha1.DownloadResponse]
+// debuginfoServiceClient implements DebuginfoServiceClient.
+type debuginfoServiceClient struct {
+	upload               *connect_go.Client[v1alpha1.UploadRequest, v1alpha1.UploadResponse]
+	shouldInitiateUpload *connect_go.Client[v1alpha1.ShouldInitiateUploadRequest, v1alpha1.ShouldInitiateUploadResponse]
+	initiateUpload       *connect_go.Client[v1alpha1.InitiateUploadRequest, v1alpha1.InitiateUploadResponse]
+	markUploadFinished   *connect_go.Client[v1alpha1.MarkUploadFinishedRequest, v1alpha1.MarkUploadFinishedResponse]
 }
 
-// Exists calls parca.debuginfo.v1alpha1.DebugInfoService.Exists.
-func (c *debugInfoServiceClient) Exists(ctx context.Context, req *connect_go.Request[v1alpha1.ExistsRequest]) (*connect_go.Response[v1alpha1.ExistsResponse], error) {
-	return c.exists.CallUnary(ctx, req)
-}
-
-// Upload calls parca.debuginfo.v1alpha1.DebugInfoService.Upload.
-func (c *debugInfoServiceClient) Upload(ctx context.Context) *connect_go.ClientStreamForClient[v1alpha1.UploadRequest, v1alpha1.UploadResponse] {
+// Upload calls parca.debuginfo.v1alpha1.DebuginfoService.Upload.
+func (c *debuginfoServiceClient) Upload(ctx context.Context) *connect_go.ClientStreamForClient[v1alpha1.UploadRequest, v1alpha1.UploadResponse] {
 	return c.upload.CallClientStream(ctx)
 }
 
-// Download calls parca.debuginfo.v1alpha1.DebugInfoService.Download.
-func (c *debugInfoServiceClient) Download(ctx context.Context, req *connect_go.Request[v1alpha1.DownloadRequest]) (*connect_go.ServerStreamForClient[v1alpha1.DownloadResponse], error) {
-	return c.download.CallServerStream(ctx, req)
+// ShouldInitiateUpload calls parca.debuginfo.v1alpha1.DebuginfoService.ShouldInitiateUpload.
+func (c *debuginfoServiceClient) ShouldInitiateUpload(ctx context.Context, req *connect_go.Request[v1alpha1.ShouldInitiateUploadRequest]) (*connect_go.Response[v1alpha1.ShouldInitiateUploadResponse], error) {
+	return c.shouldInitiateUpload.CallUnary(ctx, req)
 }
 
-// DebugInfoServiceHandler is an implementation of the parca.debuginfo.v1alpha1.DebugInfoService
+// InitiateUpload calls parca.debuginfo.v1alpha1.DebuginfoService.InitiateUpload.
+func (c *debuginfoServiceClient) InitiateUpload(ctx context.Context, req *connect_go.Request[v1alpha1.InitiateUploadRequest]) (*connect_go.Response[v1alpha1.InitiateUploadResponse], error) {
+	return c.initiateUpload.CallUnary(ctx, req)
+}
+
+// MarkUploadFinished calls parca.debuginfo.v1alpha1.DebuginfoService.MarkUploadFinished.
+func (c *debuginfoServiceClient) MarkUploadFinished(ctx context.Context, req *connect_go.Request[v1alpha1.MarkUploadFinishedRequest]) (*connect_go.Response[v1alpha1.MarkUploadFinishedResponse], error) {
+	return c.markUploadFinished.CallUnary(ctx, req)
+}
+
+// DebuginfoServiceHandler is an implementation of the parca.debuginfo.v1alpha1.DebuginfoService
 // service.
-type DebugInfoServiceHandler interface {
-	// Exists returns true if the given build_id has debug info uploaded for it.
-	Exists(context.Context, *connect_go.Request[v1alpha1.ExistsRequest]) (*connect_go.Response[v1alpha1.ExistsResponse], error)
+type DebuginfoServiceHandler interface {
 	// Upload ingests debug info for a given build_id
 	Upload(context.Context, *connect_go.ClientStream[v1alpha1.UploadRequest]) (*connect_go.Response[v1alpha1.UploadResponse], error)
-	// Download returns the debug info for a given build_id.
-	Download(context.Context, *connect_go.Request[v1alpha1.DownloadRequest], *connect_go.ServerStream[v1alpha1.DownloadResponse]) error
+	// ShouldInitiateUpload returns whether an upload for a given build_id should be initiated or not.
+	ShouldInitiateUpload(context.Context, *connect_go.Request[v1alpha1.ShouldInitiateUploadRequest]) (*connect_go.Response[v1alpha1.ShouldInitiateUploadResponse], error)
+	// InitiateUpload returns a strategy and information to upload debug info for a given build_id.
+	InitiateUpload(context.Context, *connect_go.Request[v1alpha1.InitiateUploadRequest]) (*connect_go.Response[v1alpha1.InitiateUploadResponse], error)
+	// MarkUploadFinished marks the upload as finished for a given build_id.
+	MarkUploadFinished(context.Context, *connect_go.Request[v1alpha1.MarkUploadFinishedRequest]) (*connect_go.Response[v1alpha1.MarkUploadFinishedResponse], error)
 }
 
-// NewDebugInfoServiceHandler builds an HTTP handler from the service implementation. It returns the
+// NewDebuginfoServiceHandler builds an HTTP handler from the service implementation. It returns the
 // path on which to mount the handler and the handler itself.
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewDebugInfoServiceHandler(svc DebugInfoServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+func NewDebuginfoServiceHandler(svc DebuginfoServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle("/parca.debuginfo.v1alpha1.DebugInfoService/Exists", connect_go.NewUnaryHandler(
-		"/parca.debuginfo.v1alpha1.DebugInfoService/Exists",
-		svc.Exists,
-		opts...,
-	))
-	mux.Handle("/parca.debuginfo.v1alpha1.DebugInfoService/Upload", connect_go.NewClientStreamHandler(
-		"/parca.debuginfo.v1alpha1.DebugInfoService/Upload",
+	mux.Handle("/parca.debuginfo.v1alpha1.DebuginfoService/Upload", connect_go.NewClientStreamHandler(
+		"/parca.debuginfo.v1alpha1.DebuginfoService/Upload",
 		svc.Upload,
 		opts...,
 	))
-	mux.Handle("/parca.debuginfo.v1alpha1.DebugInfoService/Download", connect_go.NewServerStreamHandler(
-		"/parca.debuginfo.v1alpha1.DebugInfoService/Download",
-		svc.Download,
+	mux.Handle("/parca.debuginfo.v1alpha1.DebuginfoService/ShouldInitiateUpload", connect_go.NewUnaryHandler(
+		"/parca.debuginfo.v1alpha1.DebuginfoService/ShouldInitiateUpload",
+		svc.ShouldInitiateUpload,
 		opts...,
 	))
-	return "/parca.debuginfo.v1alpha1.DebugInfoService/", mux
+	mux.Handle("/parca.debuginfo.v1alpha1.DebuginfoService/InitiateUpload", connect_go.NewUnaryHandler(
+		"/parca.debuginfo.v1alpha1.DebuginfoService/InitiateUpload",
+		svc.InitiateUpload,
+		opts...,
+	))
+	mux.Handle("/parca.debuginfo.v1alpha1.DebuginfoService/MarkUploadFinished", connect_go.NewUnaryHandler(
+		"/parca.debuginfo.v1alpha1.DebuginfoService/MarkUploadFinished",
+		svc.MarkUploadFinished,
+		opts...,
+	))
+	return "/parca.debuginfo.v1alpha1.DebuginfoService/", mux
 }
 
-// UnimplementedDebugInfoServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedDebugInfoServiceHandler struct{}
+// UnimplementedDebuginfoServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedDebuginfoServiceHandler struct{}
 
-func (UnimplementedDebugInfoServiceHandler) Exists(context.Context, *connect_go.Request[v1alpha1.ExistsRequest]) (*connect_go.Response[v1alpha1.ExistsResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("parca.debuginfo.v1alpha1.DebugInfoService.Exists is not implemented"))
+func (UnimplementedDebuginfoServiceHandler) Upload(context.Context, *connect_go.ClientStream[v1alpha1.UploadRequest]) (*connect_go.Response[v1alpha1.UploadResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("parca.debuginfo.v1alpha1.DebuginfoService.Upload is not implemented"))
 }
 
-func (UnimplementedDebugInfoServiceHandler) Upload(context.Context, *connect_go.ClientStream[v1alpha1.UploadRequest]) (*connect_go.Response[v1alpha1.UploadResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("parca.debuginfo.v1alpha1.DebugInfoService.Upload is not implemented"))
+func (UnimplementedDebuginfoServiceHandler) ShouldInitiateUpload(context.Context, *connect_go.Request[v1alpha1.ShouldInitiateUploadRequest]) (*connect_go.Response[v1alpha1.ShouldInitiateUploadResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("parca.debuginfo.v1alpha1.DebuginfoService.ShouldInitiateUpload is not implemented"))
 }
 
-func (UnimplementedDebugInfoServiceHandler) Download(context.Context, *connect_go.Request[v1alpha1.DownloadRequest], *connect_go.ServerStream[v1alpha1.DownloadResponse]) error {
-	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("parca.debuginfo.v1alpha1.DebugInfoService.Download is not implemented"))
+func (UnimplementedDebuginfoServiceHandler) InitiateUpload(context.Context, *connect_go.Request[v1alpha1.InitiateUploadRequest]) (*connect_go.Response[v1alpha1.InitiateUploadResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("parca.debuginfo.v1alpha1.DebuginfoService.InitiateUpload is not implemented"))
+}
+
+func (UnimplementedDebuginfoServiceHandler) MarkUploadFinished(context.Context, *connect_go.Request[v1alpha1.MarkUploadFinishedRequest]) (*connect_go.Response[v1alpha1.MarkUploadFinishedResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("parca.debuginfo.v1alpha1.DebuginfoService.MarkUploadFinished is not implemented"))
 }

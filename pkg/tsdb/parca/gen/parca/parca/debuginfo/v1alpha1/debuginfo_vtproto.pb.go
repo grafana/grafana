@@ -10,7 +10,9 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
 	bits "math/bits"
 )
@@ -27,59 +29,52 @@ const (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// DebugInfoServiceClient is the client API for DebugInfoService service.
+// DebuginfoServiceClient is the client API for DebuginfoService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type DebugInfoServiceClient interface {
-	// Exists returns true if the given build_id has debug info uploaded for it.
-	Exists(ctx context.Context, in *ExistsRequest, opts ...grpc.CallOption) (*ExistsResponse, error)
+type DebuginfoServiceClient interface {
 	// Upload ingests debug info for a given build_id
-	Upload(ctx context.Context, opts ...grpc.CallOption) (DebugInfoService_UploadClient, error)
-	// Download returns the debug info for a given build_id.
-	Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (DebugInfoService_DownloadClient, error)
+	Upload(ctx context.Context, opts ...grpc.CallOption) (DebuginfoService_UploadClient, error)
+	// ShouldInitiateUpload returns whether an upload for a given build_id should be initiated or not.
+	ShouldInitiateUpload(ctx context.Context, in *ShouldInitiateUploadRequest, opts ...grpc.CallOption) (*ShouldInitiateUploadResponse, error)
+	// InitiateUpload returns a strategy and information to upload debug info for a given build_id.
+	InitiateUpload(ctx context.Context, in *InitiateUploadRequest, opts ...grpc.CallOption) (*InitiateUploadResponse, error)
+	// MarkUploadFinished marks the upload as finished for a given build_id.
+	MarkUploadFinished(ctx context.Context, in *MarkUploadFinishedRequest, opts ...grpc.CallOption) (*MarkUploadFinishedResponse, error)
 }
 
-type debugInfoServiceClient struct {
+type debuginfoServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewDebugInfoServiceClient(cc grpc.ClientConnInterface) DebugInfoServiceClient {
-	return &debugInfoServiceClient{cc}
+func NewDebuginfoServiceClient(cc grpc.ClientConnInterface) DebuginfoServiceClient {
+	return &debuginfoServiceClient{cc}
 }
 
-func (c *debugInfoServiceClient) Exists(ctx context.Context, in *ExistsRequest, opts ...grpc.CallOption) (*ExistsResponse, error) {
-	out := new(ExistsResponse)
-	err := c.cc.Invoke(ctx, "/parca.debuginfo.v1alpha1.DebugInfoService/Exists", in, out, opts...)
+func (c *debuginfoServiceClient) Upload(ctx context.Context, opts ...grpc.CallOption) (DebuginfoService_UploadClient, error) {
+	stream, err := c.cc.NewStream(ctx, &DebuginfoService_ServiceDesc.Streams[0], "/parca.debuginfo.v1alpha1.DebuginfoService/Upload", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
-}
-
-func (c *debugInfoServiceClient) Upload(ctx context.Context, opts ...grpc.CallOption) (DebugInfoService_UploadClient, error) {
-	stream, err := c.cc.NewStream(ctx, &DebugInfoService_ServiceDesc.Streams[0], "/parca.debuginfo.v1alpha1.DebugInfoService/Upload", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &debugInfoServiceUploadClient{stream}
+	x := &debuginfoServiceUploadClient{stream}
 	return x, nil
 }
 
-type DebugInfoService_UploadClient interface {
+type DebuginfoService_UploadClient interface {
 	Send(*UploadRequest) error
 	CloseAndRecv() (*UploadResponse, error)
 	grpc.ClientStream
 }
 
-type debugInfoServiceUploadClient struct {
+type debuginfoServiceUploadClient struct {
 	grpc.ClientStream
 }
 
-func (x *debugInfoServiceUploadClient) Send(m *UploadRequest) error {
+func (x *debuginfoServiceUploadClient) Send(m *UploadRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *debugInfoServiceUploadClient) CloseAndRecv() (*UploadResponse, error) {
+func (x *debuginfoServiceUploadClient) CloseAndRecv() (*UploadResponse, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
@@ -90,114 +85,96 @@ func (x *debugInfoServiceUploadClient) CloseAndRecv() (*UploadResponse, error) {
 	return m, nil
 }
 
-func (c *debugInfoServiceClient) Download(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (DebugInfoService_DownloadClient, error) {
-	stream, err := c.cc.NewStream(ctx, &DebugInfoService_ServiceDesc.Streams[1], "/parca.debuginfo.v1alpha1.DebugInfoService/Download", opts...)
+func (c *debuginfoServiceClient) ShouldInitiateUpload(ctx context.Context, in *ShouldInitiateUploadRequest, opts ...grpc.CallOption) (*ShouldInitiateUploadResponse, error) {
+	out := new(ShouldInitiateUploadResponse)
+	err := c.cc.Invoke(ctx, "/parca.debuginfo.v1alpha1.DebuginfoService/ShouldInitiateUpload", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &debugInfoServiceDownloadClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
+	return out, nil
+}
+
+func (c *debuginfoServiceClient) InitiateUpload(ctx context.Context, in *InitiateUploadRequest, opts ...grpc.CallOption) (*InitiateUploadResponse, error) {
+	out := new(InitiateUploadResponse)
+	err := c.cc.Invoke(ctx, "/parca.debuginfo.v1alpha1.DebuginfoService/InitiateUpload", in, out, opts...)
+	if err != nil {
 		return nil, err
 	}
-	if err := x.ClientStream.CloseSend(); err != nil {
+	return out, nil
+}
+
+func (c *debuginfoServiceClient) MarkUploadFinished(ctx context.Context, in *MarkUploadFinishedRequest, opts ...grpc.CallOption) (*MarkUploadFinishedResponse, error) {
+	out := new(MarkUploadFinishedResponse)
+	err := c.cc.Invoke(ctx, "/parca.debuginfo.v1alpha1.DebuginfoService/MarkUploadFinished", in, out, opts...)
+	if err != nil {
 		return nil, err
 	}
-	return x, nil
+	return out, nil
 }
 
-type DebugInfoService_DownloadClient interface {
-	Recv() (*DownloadResponse, error)
-	grpc.ClientStream
-}
-
-type debugInfoServiceDownloadClient struct {
-	grpc.ClientStream
-}
-
-func (x *debugInfoServiceDownloadClient) Recv() (*DownloadResponse, error) {
-	m := new(DownloadResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-// DebugInfoServiceServer is the server API for DebugInfoService service.
-// All implementations must embed UnimplementedDebugInfoServiceServer
+// DebuginfoServiceServer is the server API for DebuginfoService service.
+// All implementations must embed UnimplementedDebuginfoServiceServer
 // for forward compatibility
-type DebugInfoServiceServer interface {
-	// Exists returns true if the given build_id has debug info uploaded for it.
-	Exists(context.Context, *ExistsRequest) (*ExistsResponse, error)
+type DebuginfoServiceServer interface {
 	// Upload ingests debug info for a given build_id
-	Upload(DebugInfoService_UploadServer) error
-	// Download returns the debug info for a given build_id.
-	Download(*DownloadRequest, DebugInfoService_DownloadServer) error
-	mustEmbedUnimplementedDebugInfoServiceServer()
+	Upload(DebuginfoService_UploadServer) error
+	// ShouldInitiateUpload returns whether an upload for a given build_id should be initiated or not.
+	ShouldInitiateUpload(context.Context, *ShouldInitiateUploadRequest) (*ShouldInitiateUploadResponse, error)
+	// InitiateUpload returns a strategy and information to upload debug info for a given build_id.
+	InitiateUpload(context.Context, *InitiateUploadRequest) (*InitiateUploadResponse, error)
+	// MarkUploadFinished marks the upload as finished for a given build_id.
+	MarkUploadFinished(context.Context, *MarkUploadFinishedRequest) (*MarkUploadFinishedResponse, error)
+	mustEmbedUnimplementedDebuginfoServiceServer()
 }
 
-// UnimplementedDebugInfoServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedDebugInfoServiceServer struct {
+// UnimplementedDebuginfoServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedDebuginfoServiceServer struct {
 }
 
-func (UnimplementedDebugInfoServiceServer) Exists(context.Context, *ExistsRequest) (*ExistsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Exists not implemented")
-}
-func (UnimplementedDebugInfoServiceServer) Upload(DebugInfoService_UploadServer) error {
+func (UnimplementedDebuginfoServiceServer) Upload(DebuginfoService_UploadServer) error {
 	return status.Errorf(codes.Unimplemented, "method Upload not implemented")
 }
-func (UnimplementedDebugInfoServiceServer) Download(*DownloadRequest, DebugInfoService_DownloadServer) error {
-	return status.Errorf(codes.Unimplemented, "method Download not implemented")
+func (UnimplementedDebuginfoServiceServer) ShouldInitiateUpload(context.Context, *ShouldInitiateUploadRequest) (*ShouldInitiateUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ShouldInitiateUpload not implemented")
 }
-func (UnimplementedDebugInfoServiceServer) mustEmbedUnimplementedDebugInfoServiceServer() {}
+func (UnimplementedDebuginfoServiceServer) InitiateUpload(context.Context, *InitiateUploadRequest) (*InitiateUploadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InitiateUpload not implemented")
+}
+func (UnimplementedDebuginfoServiceServer) MarkUploadFinished(context.Context, *MarkUploadFinishedRequest) (*MarkUploadFinishedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarkUploadFinished not implemented")
+}
+func (UnimplementedDebuginfoServiceServer) mustEmbedUnimplementedDebuginfoServiceServer() {}
 
-// UnsafeDebugInfoServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to DebugInfoServiceServer will
+// UnsafeDebuginfoServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to DebuginfoServiceServer will
 // result in compilation errors.
-type UnsafeDebugInfoServiceServer interface {
-	mustEmbedUnimplementedDebugInfoServiceServer()
+type UnsafeDebuginfoServiceServer interface {
+	mustEmbedUnimplementedDebuginfoServiceServer()
 }
 
-func RegisterDebugInfoServiceServer(s grpc.ServiceRegistrar, srv DebugInfoServiceServer) {
-	s.RegisterService(&DebugInfoService_ServiceDesc, srv)
+func RegisterDebuginfoServiceServer(s grpc.ServiceRegistrar, srv DebuginfoServiceServer) {
+	s.RegisterService(&DebuginfoService_ServiceDesc, srv)
 }
 
-func _DebugInfoService_Exists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExistsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DebugInfoServiceServer).Exists(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/parca.debuginfo.v1alpha1.DebugInfoService/Exists",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DebugInfoServiceServer).Exists(ctx, req.(*ExistsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+func _DebuginfoService_Upload_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DebuginfoServiceServer).Upload(&debuginfoServiceUploadServer{stream})
 }
 
-func _DebugInfoService_Upload_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(DebugInfoServiceServer).Upload(&debugInfoServiceUploadServer{stream})
-}
-
-type DebugInfoService_UploadServer interface {
+type DebuginfoService_UploadServer interface {
 	SendAndClose(*UploadResponse) error
 	Recv() (*UploadRequest, error)
 	grpc.ServerStream
 }
 
-type debugInfoServiceUploadServer struct {
+type debuginfoServiceUploadServer struct {
 	grpc.ServerStream
 }
 
-func (x *debugInfoServiceUploadServer) SendAndClose(m *UploadResponse) error {
+func (x *debuginfoServiceUploadServer) SendAndClose(m *UploadResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *debugInfoServiceUploadServer) Recv() (*UploadRequest, error) {
+func (x *debuginfoServiceUploadServer) Recv() (*UploadRequest, error) {
 	m := new(UploadRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -205,55 +182,91 @@ func (x *debugInfoServiceUploadServer) Recv() (*UploadRequest, error) {
 	return m, nil
 }
 
-func _DebugInfoService_Download_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(DownloadRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _DebuginfoService_ShouldInitiateUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShouldInitiateUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(DebugInfoServiceServer).Download(m, &debugInfoServiceDownloadServer{stream})
+	if interceptor == nil {
+		return srv.(DebuginfoServiceServer).ShouldInitiateUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/parca.debuginfo.v1alpha1.DebuginfoService/ShouldInitiateUpload",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DebuginfoServiceServer).ShouldInitiateUpload(ctx, req.(*ShouldInitiateUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
-type DebugInfoService_DownloadServer interface {
-	Send(*DownloadResponse) error
-	grpc.ServerStream
+func _DebuginfoService_InitiateUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InitiateUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DebuginfoServiceServer).InitiateUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/parca.debuginfo.v1alpha1.DebuginfoService/InitiateUpload",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DebuginfoServiceServer).InitiateUpload(ctx, req.(*InitiateUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
-type debugInfoServiceDownloadServer struct {
-	grpc.ServerStream
+func _DebuginfoService_MarkUploadFinished_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkUploadFinishedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DebuginfoServiceServer).MarkUploadFinished(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/parca.debuginfo.v1alpha1.DebuginfoService/MarkUploadFinished",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DebuginfoServiceServer).MarkUploadFinished(ctx, req.(*MarkUploadFinishedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
-func (x *debugInfoServiceDownloadServer) Send(m *DownloadResponse) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-// DebugInfoService_ServiceDesc is the grpc.ServiceDesc for DebugInfoService service.
+// DebuginfoService_ServiceDesc is the grpc.ServiceDesc for DebuginfoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var DebugInfoService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "parca.debuginfo.v1alpha1.DebugInfoService",
-	HandlerType: (*DebugInfoServiceServer)(nil),
+var DebuginfoService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "parca.debuginfo.v1alpha1.DebuginfoService",
+	HandlerType: (*DebuginfoServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Exists",
-			Handler:    _DebugInfoService_Exists_Handler,
+			MethodName: "ShouldInitiateUpload",
+			Handler:    _DebuginfoService_ShouldInitiateUpload_Handler,
+		},
+		{
+			MethodName: "InitiateUpload",
+			Handler:    _DebuginfoService_InitiateUpload_Handler,
+		},
+		{
+			MethodName: "MarkUploadFinished",
+			Handler:    _DebuginfoService_MarkUploadFinished_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Upload",
-			Handler:       _DebugInfoService_Upload_Handler,
+			Handler:       _DebuginfoService_Upload_Handler,
 			ClientStreams: true,
-		},
-		{
-			StreamName:    "Download",
-			Handler:       _DebugInfoService_Download_Handler,
-			ServerStreams: true,
 		},
 	},
 	Metadata: "parca/debuginfo/v1alpha1/debuginfo.proto",
 }
 
-func (m *ExistsRequest) MarshalVT() (dAtA []byte, err error) {
+func (m *ShouldInitiateUploadRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -266,12 +279,12 @@ func (m *ExistsRequest) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ExistsRequest) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ShouldInitiateUploadRequest) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ExistsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ShouldInitiateUploadRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -300,7 +313,7 @@ func (m *ExistsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *ExistsResponse) MarshalVT() (dAtA []byte, err error) {
+func (m *ShouldInitiateUploadResponse) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -313,12 +326,12 @@ func (m *ExistsResponse) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ExistsResponse) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ShouldInitiateUploadResponse) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ExistsResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ShouldInitiateUploadResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -330,15 +343,256 @@ func (m *ExistsResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.Exists {
+	if len(m.Reason) > 0 {
+		i -= len(m.Reason)
+		copy(dAtA[i:], m.Reason)
+		i = encodeVarint(dAtA, i, uint64(len(m.Reason)))
 		i--
-		if m.Exists {
+		dAtA[i] = 0x12
+	}
+	if m.ShouldInitiateUpload {
+		i--
+		if m.ShouldInitiateUpload {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
 		i--
 		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *InitiateUploadRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *InitiateUploadRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *InitiateUploadRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.Hash) > 0 {
+		i -= len(m.Hash)
+		copy(dAtA[i:], m.Hash)
+		i = encodeVarint(dAtA, i, uint64(len(m.Hash)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Size != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.Size))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.BuildId) > 0 {
+		i -= len(m.BuildId)
+		copy(dAtA[i:], m.BuildId)
+		i = encodeVarint(dAtA, i, uint64(len(m.BuildId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *InitiateUploadResponse) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *InitiateUploadResponse) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *InitiateUploadResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.UploadInstructions != nil {
+		size, err := m.UploadInstructions.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *UploadInstructions) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *UploadInstructions) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *UploadInstructions) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.SignedUrl) > 0 {
+		i -= len(m.SignedUrl)
+		copy(dAtA[i:], m.SignedUrl)
+		i = encodeVarint(dAtA, i, uint64(len(m.SignedUrl)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.UploadStrategy != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.UploadStrategy))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.UploadId) > 0 {
+		i -= len(m.UploadId)
+		copy(dAtA[i:], m.UploadId)
+		i = encodeVarint(dAtA, i, uint64(len(m.UploadId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.BuildId) > 0 {
+		i -= len(m.BuildId)
+		copy(dAtA[i:], m.BuildId)
+		i = encodeVarint(dAtA, i, uint64(len(m.BuildId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MarkUploadFinishedRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MarkUploadFinishedRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *MarkUploadFinishedRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.UploadId) > 0 {
+		i -= len(m.UploadId)
+		copy(dAtA[i:], m.UploadId)
+		i = encodeVarint(dAtA, i, uint64(len(m.UploadId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.BuildId) > 0 {
+		i -= len(m.BuildId)
+		copy(dAtA[i:], m.BuildId)
+		i = encodeVarint(dAtA, i, uint64(len(m.BuildId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MarkUploadFinishedResponse) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MarkUploadFinishedResponse) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *MarkUploadFinishedResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
 	}
 	return len(dAtA) - i, nil
 }
@@ -451,10 +705,10 @@ func (m *UploadInfo) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Hash) > 0 {
-		i -= len(m.Hash)
-		copy(dAtA[i:], m.Hash)
-		i = encodeVarint(dAtA, i, uint64(len(m.Hash)))
+	if len(m.UploadId) > 0 {
+		i -= len(m.UploadId)
+		copy(dAtA[i:], m.UploadId)
+		i = encodeVarint(dAtA, i, uint64(len(m.UploadId)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -513,7 +767,7 @@ func (m *UploadResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *DownloadRequest) MarshalVT() (dAtA []byte, err error) {
+func (m *Debuginfo) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -526,12 +780,12 @@ func (m *DownloadRequest) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *DownloadRequest) MarshalToVT(dAtA []byte) (int, error) {
+func (m *Debuginfo) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *DownloadRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *Debuginfo) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -542,6 +796,31 @@ func (m *DownloadRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.Quality != nil {
+		size, err := m.Quality.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.Upload != nil {
+		size, err := m.Upload.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Source != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.Source))
+		i--
+		dAtA[i] = 0x10
 	}
 	if len(m.BuildId) > 0 {
 		i -= len(m.BuildId)
@@ -553,7 +832,7 @@ func (m *DownloadRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *DownloadResponse) MarshalVT() (dAtA []byte, err error) {
+func (m *DebuginfoUpload) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -566,12 +845,12 @@ func (m *DownloadResponse) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *DownloadResponse) MarshalToVT(dAtA []byte) (int, error) {
+func (m *DebuginfoUpload) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *DownloadResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *DebuginfoUpload) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -583,55 +862,73 @@ func (m *DownloadResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if vtmsg, ok := m.Data.(interface {
-		MarshalToVT([]byte) (int, error)
-		SizeVT() int
-	}); ok {
-		{
-			size := vtmsg.SizeVT()
-			i -= size
-			if _, err := vtmsg.MarshalToVT(dAtA[i:]); err != nil {
+	if m.FinishedAt != nil {
+		if marshalto, ok := interface{}(m.FinishedAt).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
 				return 0, err
 			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.FinishedAt)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = encodeVarint(dAtA, i, uint64(len(encoded)))
 		}
+		i--
+		dAtA[i] = 0x2a
 	}
-	return len(dAtA) - i, nil
-}
-
-func (m *DownloadResponse_Info) MarshalToVT(dAtA []byte) (int, error) {
-	size := m.SizeVT()
-	return m.MarshalToSizedBufferVT(dAtA[:size])
-}
-
-func (m *DownloadResponse_Info) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	if m.Info != nil {
-		size, err := m.Info.MarshalToSizedBufferVT(dAtA[:i])
-		if err != nil {
-			return 0, err
+	if m.StartedAt != nil {
+		if marshalto, ok := interface{}(m.StartedAt).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.StartedAt)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = encodeVarint(dAtA, i, uint64(len(encoded)))
 		}
-		i -= size
-		i = encodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.State != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.State))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.Hash) > 0 {
+		i -= len(m.Hash)
+		copy(dAtA[i:], m.Hash)
+		i = encodeVarint(dAtA, i, uint64(len(m.Hash)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Id) > 0 {
+		i -= len(m.Id)
+		copy(dAtA[i:], m.Id)
+		i = encodeVarint(dAtA, i, uint64(len(m.Id)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
-func (m *DownloadResponse_ChunkData) MarshalToVT(dAtA []byte) (int, error) {
-	size := m.SizeVT()
-	return m.MarshalToSizedBufferVT(dAtA[:size])
-}
 
-func (m *DownloadResponse_ChunkData) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	i -= len(m.ChunkData)
-	copy(dAtA[i:], m.ChunkData)
-	i = encodeVarint(dAtA, i, uint64(len(m.ChunkData)))
-	i--
-	dAtA[i] = 0x12
-	return len(dAtA) - i, nil
-}
-func (m *DownloadInfo) MarshalVT() (dAtA []byte, err error) {
+func (m *DebuginfoQuality) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -644,12 +941,12 @@ func (m *DownloadInfo) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *DownloadInfo) MarshalToVT(dAtA []byte) (int, error) {
+func (m *DebuginfoQuality) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *DownloadInfo) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *DebuginfoQuality) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -661,8 +958,53 @@ func (m *DownloadInfo) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.Source != 0 {
-		i = encodeVarint(dAtA, i, uint64(m.Source))
+	if m.HasDynsym {
+		i--
+		if m.HasDynsym {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.HasSymtab {
+		i--
+		if m.HasSymtab {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.HasGoPclntab {
+		i--
+		if m.HasGoPclntab {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.HasDwarf {
+		i--
+		if m.HasDwarf {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.NotValidElf {
+		i--
+		if m.NotValidElf {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
 		i--
 		dAtA[i] = 0x8
 	}
@@ -680,7 +1022,7 @@ func encodeVarint(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *ExistsRequest) SizeVT() (n int) {
+func (m *ShouldInitiateUploadRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -700,15 +1042,117 @@ func (m *ExistsRequest) SizeVT() (n int) {
 	return n
 }
 
-func (m *ExistsResponse) SizeVT() (n int) {
+func (m *ShouldInitiateUploadResponse) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Exists {
+	if m.ShouldInitiateUpload {
 		n += 2
 	}
+	l = len(m.Reason)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.unknownFields != nil {
+		n += len(m.unknownFields)
+	}
+	return n
+}
+
+func (m *InitiateUploadRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.BuildId)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.Size != 0 {
+		n += 1 + sov(uint64(m.Size))
+	}
+	l = len(m.Hash)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.unknownFields != nil {
+		n += len(m.unknownFields)
+	}
+	return n
+}
+
+func (m *InitiateUploadResponse) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.UploadInstructions != nil {
+		l = m.UploadInstructions.SizeVT()
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.unknownFields != nil {
+		n += len(m.unknownFields)
+	}
+	return n
+}
+
+func (m *UploadInstructions) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.BuildId)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	l = len(m.UploadId)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.UploadStrategy != 0 {
+		n += 1 + sov(uint64(m.UploadStrategy))
+	}
+	l = len(m.SignedUrl)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.unknownFields != nil {
+		n += len(m.unknownFields)
+	}
+	return n
+}
+
+func (m *MarkUploadFinishedRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.BuildId)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	l = len(m.UploadId)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.unknownFields != nil {
+		n += len(m.unknownFields)
+	}
+	return n
+}
+
+func (m *MarkUploadFinishedResponse) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -762,7 +1206,7 @@ func (m *UploadInfo) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	l = len(m.Hash)
+	l = len(m.UploadId)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
@@ -791,7 +1235,7 @@ func (m *UploadResponse) SizeVT() (n int) {
 	return n
 }
 
-func (m *DownloadRequest) SizeVT() (n int) {
+func (m *Debuginfo) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -801,57 +1245,86 @@ func (m *DownloadRequest) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
 	}
-	if m.unknownFields != nil {
-		n += len(m.unknownFields)
-	}
-	return n
-}
-
-func (m *DownloadResponse) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if vtmsg, ok := m.Data.(interface{ SizeVT() int }); ok {
-		n += vtmsg.SizeVT()
-	}
-	if m.unknownFields != nil {
-		n += len(m.unknownFields)
-	}
-	return n
-}
-
-func (m *DownloadResponse_Info) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Info != nil {
-		l = m.Info.SizeVT()
-		n += 1 + l + sov(uint64(l))
-	}
-	return n
-}
-func (m *DownloadResponse_ChunkData) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.ChunkData)
-	n += 1 + l + sov(uint64(l))
-	return n
-}
-func (m *DownloadInfo) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
 	if m.Source != 0 {
 		n += 1 + sov(uint64(m.Source))
+	}
+	if m.Upload != nil {
+		l = m.Upload.SizeVT()
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.Quality != nil {
+		l = m.Quality.SizeVT()
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.unknownFields != nil {
+		n += len(m.unknownFields)
+	}
+	return n
+}
+
+func (m *DebuginfoUpload) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Id)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	l = len(m.Hash)
+	if l > 0 {
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.State != 0 {
+		n += 1 + sov(uint64(m.State))
+	}
+	if m.StartedAt != nil {
+		if size, ok := interface{}(m.StartedAt).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.StartedAt)
+		}
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.FinishedAt != nil {
+		if size, ok := interface{}(m.FinishedAt).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.FinishedAt)
+		}
+		n += 1 + l + sov(uint64(l))
+	}
+	if m.unknownFields != nil {
+		n += len(m.unknownFields)
+	}
+	return n
+}
+
+func (m *DebuginfoQuality) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.NotValidElf {
+		n += 2
+	}
+	if m.HasDwarf {
+		n += 2
+	}
+	if m.HasGoPclntab {
+		n += 2
+	}
+	if m.HasSymtab {
+		n += 2
+	}
+	if m.HasDynsym {
+		n += 2
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -865,7 +1338,7 @@ func sov(x uint64) (n int) {
 func soz(x uint64) (n int) {
 	return sov(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *ExistsRequest) UnmarshalVT(dAtA []byte) error {
+func (m *ShouldInitiateUploadRequest) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -888,10 +1361,10 @@ func (m *ExistsRequest) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ExistsRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: ShouldInitiateUploadRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ExistsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ShouldInitiateUploadRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -980,7 +1453,7 @@ func (m *ExistsRequest) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ExistsResponse) UnmarshalVT(dAtA []byte) error {
+func (m *ShouldInitiateUploadResponse) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1003,15 +1476,15 @@ func (m *ExistsResponse) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ExistsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: ShouldInitiateUploadResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ExistsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ShouldInitiateUploadResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Exists", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ShouldInitiateUpload", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -1028,7 +1501,592 @@ func (m *ExistsResponse) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
-			m.Exists = bool(v != 0)
+			m.ShouldInitiateUpload = bool(v != 0)
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reason", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Reason = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *InitiateUploadRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: InitiateUploadRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: InitiateUploadRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BuildId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BuildId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Size", wireType)
+			}
+			m.Size = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Size |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Hash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *InitiateUploadResponse) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: InitiateUploadResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: InitiateUploadResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UploadInstructions", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.UploadInstructions == nil {
+				m.UploadInstructions = &UploadInstructions{}
+			}
+			if err := m.UploadInstructions.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *UploadInstructions) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: UploadInstructions: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: UploadInstructions: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BuildId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BuildId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UploadId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UploadId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UploadStrategy", wireType)
+			}
+			m.UploadStrategy = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.UploadStrategy |= UploadInstructions_UploadStrategy(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SignedUrl", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SignedUrl = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MarkUploadFinishedRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MarkUploadFinishedRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MarkUploadFinishedRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BuildId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BuildId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UploadId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.UploadId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MarkUploadFinishedResponse) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MarkUploadFinishedResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MarkUploadFinishedResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -1239,7 +2297,7 @@ func (m *UploadInfo) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field UploadId", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1267,7 +2325,7 @@ func (m *UploadInfo) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Hash = string(dAtA[iNdEx:postIndex])
+			m.UploadId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1393,7 +2451,7 @@ func (m *UploadResponse) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *DownloadRequest) UnmarshalVT(dAtA []byte) error {
+func (m *Debuginfo) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1416,10 +2474,10 @@ func (m *DownloadRequest) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: DownloadRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: Debuginfo: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: DownloadRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: Debuginfo: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1454,60 +2512,28 @@ func (m *DownloadRequest) UnmarshalVT(dAtA []byte) error {
 			}
 			m.BuildId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skip(dAtA[iNdEx:])
-			if err != nil {
-				return err
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Source", wireType)
 			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLength
+			m.Source = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Source |= Debuginfo_Source(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
 			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *DownloadResponse) UnmarshalVT(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflow
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: DownloadResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: DownloadResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
+		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Info", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Upload", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1534,23 +2560,18 @@ func (m *DownloadResponse) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Data.(*DownloadResponse_Info); ok {
-				if err := oneof.Info.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-			} else {
-				v := &DownloadInfo{}
-				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-				m.Data = &DownloadResponse_Info{v}
+			if m.Upload == nil {
+				m.Upload = &DebuginfoUpload{}
+			}
+			if err := m.Upload.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
 			iNdEx = postIndex
-		case 2:
+		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChunkData", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Quality", wireType)
 			}
-			var byteLen int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -1560,24 +2581,27 @@ func (m *DownloadResponse) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if byteLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLength
 			}
-			postIndex := iNdEx + byteLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLength
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			v := make([]byte, postIndex-iNdEx)
-			copy(v, dAtA[iNdEx:postIndex])
-			m.Data = &DownloadResponse_ChunkData{v}
+			if m.Quality == nil {
+				m.Quality = &DebuginfoQuality{}
+			}
+			if err := m.Quality.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1601,7 +2625,7 @@ func (m *DownloadResponse) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *DownloadInfo) UnmarshalVT(dAtA []byte) error {
+func (m *DebuginfoUpload) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1624,17 +2648,17 @@ func (m *DownloadInfo) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: DownloadInfo: wiretype end group for non-group")
+			return fmt.Errorf("proto: DebuginfoUpload: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: DownloadInfo: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: DebuginfoUpload: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Source", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
 			}
-			m.Source = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflow
@@ -1644,11 +2668,314 @@ func (m *DownloadInfo) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Source |= DownloadInfo_Source(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Id = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Hash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
+			}
+			m.State = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.State |= DebuginfoUpload_State(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StartedAt", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.StartedAt == nil {
+				m.StartedAt = &timestamppb.Timestamp{}
+			}
+			if unmarshal, ok := interface{}(m.StartedAt).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.StartedAt); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FinishedAt", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.FinishedAt == nil {
+				m.FinishedAt = &timestamppb.Timestamp{}
+			}
+			if unmarshal, ok := interface{}(m.FinishedAt).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.FinishedAt); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DebuginfoQuality) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DebuginfoQuality: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DebuginfoQuality: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NotValidElf", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.NotValidElf = bool(v != 0)
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HasDwarf", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.HasDwarf = bool(v != 0)
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HasGoPclntab", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.HasGoPclntab = bool(v != 0)
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HasSymtab", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.HasSymtab = bool(v != 0)
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HasDynsym", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.HasDynsym = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

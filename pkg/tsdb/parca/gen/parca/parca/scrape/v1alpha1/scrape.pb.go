@@ -287,7 +287,7 @@ type Target struct {
 	DiscoveredLabels *v1alpha1.LabelSet `protobuf:"bytes,1,opt,name=discovered_labels,json=discoveredLabels,proto3" json:"discovered_labels,omitempty"`
 	// labels are the set of labels given for the target
 	Labels *v1alpha1.LabelSet `protobuf:"bytes,2,opt,name=labels,proto3" json:"labels,omitempty"`
-	// lase_error is the error message most recently received from a scrape attempt
+	// last_error is the error message most recently received from a scrape attempt
 	LastError string `protobuf:"bytes,3,opt,name=last_error,json=lastError,proto3" json:"last_error,omitempty"`
 	// last_scrape is the time stamp the last scrape request was performed
 	LastScrape *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=last_scrape,json=lastScrape,proto3" json:"last_scrape,omitempty"`

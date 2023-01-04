@@ -23,6 +23,8 @@ const _ = connect_go.IsAtLeastVersion0_1_0
 const (
 	// ProfileStoreServiceName is the fully-qualified name of the ProfileStoreService service.
 	ProfileStoreServiceName = "parca.profilestore.v1alpha1.ProfileStoreService"
+	// AgentsServiceName is the fully-qualified name of the AgentsService service.
+	AgentsServiceName = "parca.profilestore.v1alpha1.AgentsService"
 )
 
 // ProfileStoreServiceClient is a client for the parca.profilestore.v1alpha1.ProfileStoreService
@@ -88,4 +90,67 @@ type UnimplementedProfileStoreServiceHandler struct{}
 
 func (UnimplementedProfileStoreServiceHandler) WriteRaw(context.Context, *connect_go.Request[v1alpha1.WriteRawRequest]) (*connect_go.Response[v1alpha1.WriteRawResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("parca.profilestore.v1alpha1.ProfileStoreService.WriteRaw is not implemented"))
+}
+
+// AgentsServiceClient is a client for the parca.profilestore.v1alpha1.AgentsService service.
+type AgentsServiceClient interface {
+	// Agents return the agents that pushed data to the server
+	Agents(context.Context, *connect_go.Request[v1alpha1.AgentsRequest]) (*connect_go.Response[v1alpha1.AgentsResponse], error)
+}
+
+// NewAgentsServiceClient constructs a client for the parca.profilestore.v1alpha1.AgentsService
+// service. By default, it uses the Connect protocol with the binary Protobuf Codec, asks for
+// gzipped responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply
+// the connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewAgentsServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) AgentsServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	return &agentsServiceClient{
+		agents: connect_go.NewClient[v1alpha1.AgentsRequest, v1alpha1.AgentsResponse](
+			httpClient,
+			baseURL+"/parca.profilestore.v1alpha1.AgentsService/Agents",
+			opts...,
+		),
+	}
+}
+
+// agentsServiceClient implements AgentsServiceClient.
+type agentsServiceClient struct {
+	agents *connect_go.Client[v1alpha1.AgentsRequest, v1alpha1.AgentsResponse]
+}
+
+// Agents calls parca.profilestore.v1alpha1.AgentsService.Agents.
+func (c *agentsServiceClient) Agents(ctx context.Context, req *connect_go.Request[v1alpha1.AgentsRequest]) (*connect_go.Response[v1alpha1.AgentsResponse], error) {
+	return c.agents.CallUnary(ctx, req)
+}
+
+// AgentsServiceHandler is an implementation of the parca.profilestore.v1alpha1.AgentsService
+// service.
+type AgentsServiceHandler interface {
+	// Agents return the agents that pushed data to the server
+	Agents(context.Context, *connect_go.Request[v1alpha1.AgentsRequest]) (*connect_go.Response[v1alpha1.AgentsResponse], error)
+}
+
+// NewAgentsServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewAgentsServiceHandler(svc AgentsServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	mux := http.NewServeMux()
+	mux.Handle("/parca.profilestore.v1alpha1.AgentsService/Agents", connect_go.NewUnaryHandler(
+		"/parca.profilestore.v1alpha1.AgentsService/Agents",
+		svc.Agents,
+		opts...,
+	))
+	return "/parca.profilestore.v1alpha1.AgentsService/", mux
+}
+
+// UnimplementedAgentsServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedAgentsServiceHandler struct{}
+
+func (UnimplementedAgentsServiceHandler) Agents(context.Context, *connect_go.Request[v1alpha1.AgentsRequest]) (*connect_go.Response[v1alpha1.AgentsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("parca.profilestore.v1alpha1.AgentsService.Agents is not implemented"))
 }

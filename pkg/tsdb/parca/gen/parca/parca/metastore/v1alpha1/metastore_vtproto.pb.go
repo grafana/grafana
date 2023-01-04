@@ -1727,6 +1727,11 @@ func (m *Location) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.MappingIndex != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.MappingIndex))
+		i--
+		dAtA[i] = 0x38
+	}
 	if len(m.Lines) > 0 {
 		for iNdEx := len(m.Lines) - 1; iNdEx >= 0; iNdEx-- {
 			size, err := m.Lines[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
@@ -1801,6 +1806,11 @@ func (m *Line) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.FunctionIndex != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.FunctionIndex))
+		i--
+		dAtA[i] = 0x18
+	}
 	if m.Line != 0 {
 		i = encodeVarint(dAtA, i, uint64(m.Line))
 		i--
@@ -1845,6 +1855,21 @@ func (m *Function) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.FilenameStringIndex != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.FilenameStringIndex))
+		i--
+		dAtA[i] = 0x40
+	}
+	if m.SystemNameStringIndex != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.SystemNameStringIndex))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.NameStringIndex != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.NameStringIndex))
+		i--
+		dAtA[i] = 0x30
 	}
 	if len(m.Filename) > 0 {
 		i -= len(m.Filename)
@@ -1911,6 +1936,16 @@ func (m *Mapping) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.BuildIdStringIndex != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.BuildIdStringIndex))
+		i--
+		dAtA[i] = 0x60
+	}
+	if m.FileStringIndex != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.FileStringIndex))
+		i--
+		dAtA[i] = 0x58
 	}
 	if m.HasInlineFrames {
 		i--
@@ -2537,6 +2572,9 @@ func (m *Location) SizeVT() (n int) {
 			n += 1 + l + sov(uint64(l))
 		}
 	}
+	if m.MappingIndex != 0 {
+		n += 1 + sov(uint64(m.MappingIndex))
+	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -2555,6 +2593,9 @@ func (m *Line) SizeVT() (n int) {
 	}
 	if m.Line != 0 {
 		n += 1 + sov(uint64(m.Line))
+	}
+	if m.FunctionIndex != 0 {
+		n += 1 + sov(uint64(m.FunctionIndex))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -2586,6 +2627,15 @@ func (m *Function) SizeVT() (n int) {
 	l = len(m.Filename)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
+	}
+	if m.NameStringIndex != 0 {
+		n += 1 + sov(uint64(m.NameStringIndex))
+	}
+	if m.SystemNameStringIndex != 0 {
+		n += 1 + sov(uint64(m.SystemNameStringIndex))
+	}
+	if m.FilenameStringIndex != 0 {
+		n += 1 + sov(uint64(m.FilenameStringIndex))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -2631,6 +2681,12 @@ func (m *Mapping) SizeVT() (n int) {
 	}
 	if m.HasInlineFrames {
 		n += 2
+	}
+	if m.FileStringIndex != 0 {
+		n += 1 + sov(uint64(m.FileStringIndex))
+	}
+	if m.BuildIdStringIndex != 0 {
+		n += 1 + sov(uint64(m.BuildIdStringIndex))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -5478,6 +5534,25 @@ func (m *Location) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MappingIndex", wireType)
+			}
+			m.MappingIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MappingIndex |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -5576,6 +5651,25 @@ func (m *Line) UnmarshalVT(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.Line |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FunctionIndex", wireType)
+			}
+			m.FunctionIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.FunctionIndex |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -5778,6 +5872,63 @@ func (m *Function) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Filename = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NameStringIndex", wireType)
+			}
+			m.NameStringIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.NameStringIndex |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SystemNameStringIndex", wireType)
+			}
+			m.SystemNameStringIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SystemNameStringIndex |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FilenameStringIndex", wireType)
+			}
+			m.FilenameStringIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.FilenameStringIndex |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -6062,6 +6213,44 @@ func (m *Mapping) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.HasInlineFrames = bool(v != 0)
+		case 11:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FileStringIndex", wireType)
+			}
+			m.FileStringIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.FileStringIndex |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 12:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BuildIdStringIndex", wireType)
+			}
+			m.BuildIdStringIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BuildIdStringIndex |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
