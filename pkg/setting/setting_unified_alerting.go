@@ -58,6 +58,7 @@ const (
 	SchedulerBaseInterval = 10 * time.Second
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
 	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
+	stateHistoryDefaultEnabled    = true
 )
 
 type UnifiedAlertingSettings struct {
@@ -83,6 +84,7 @@ type UnifiedAlertingSettings struct {
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
+	StateHistory                  UnifiedAlertingStateHistorySettings
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -93,6 +95,10 @@ type UnifiedAlertingScreenshotSettings struct {
 
 type UnifiedAlertingReservedLabelSettings struct {
 	DisabledLabels map[string]struct{}
+}
+
+type UnifiedAlertingStateHistorySettings struct {
+	Enabled bool
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -293,6 +299,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		uaCfgReservedLabels.DisabledLabels[label] = struct{}{}
 	}
 	uaCfg.ReservedLabels = uaCfgReservedLabels
+
+	stateHistory := iniFile.Section("unified_alerting.state_history")
+	uaCfgStateHistory := UnifiedAlertingStateHistorySettings{
+		Enabled: stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
+	}
+	uaCfg.StateHistory = uaCfgStateHistory
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
