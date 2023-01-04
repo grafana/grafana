@@ -3,6 +3,8 @@ package channels
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"math/rand"
 	"net/url"
 	"testing"
 	"time"
@@ -12,12 +14,13 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/alerting/alerting/notifier/channels"
 )
 
 func TestGoogleChatNotifier(t *testing.T) {
 	constNow := time.Now()
 	defer mockTimeNow(constNow)()
+	appVersion := fmt.Sprintf("%d.0.0", rand.Uint32())
 
 	cases := []struct {
 		name         string
@@ -73,7 +76,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -132,7 +135,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									},
 									textParagraphWidget{
 										Text: text{
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -192,7 +195,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -247,7 +250,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -302,7 +305,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -352,7 +355,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -397,7 +400,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -441,7 +444,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 									textParagraphWidget{
 										Text: text{
 											// RFC822 only has the minute, hence it works in most cases.
-											Text: "Grafana v" + setting.BuildVersion + " | " + constNow.Format(time.RFC822),
+											Text: "Grafana v" + appVersion + " | " + constNow.Format(time.RFC822),
 										},
 									},
 								},
@@ -462,10 +465,10 @@ func TestGoogleChatNotifier(t *testing.T) {
 			tmpl.ExternalURL = externalURL
 
 			webhookSender := mockNotificationService()
-			imageStore := &UnavailableImageStore{}
+			imageStore := &channels.UnavailableImageStore{}
 
-			fc := FactoryConfig{
-				Config: &NotificationChannelConfig{
+			fc := channels.FactoryConfig{
+				Config: &channels.NotificationChannelConfig{
 					Name:     "googlechat_testing",
 					Type:     "googlechat",
 					Settings: json.RawMessage(c.settings),
@@ -473,7 +476,8 @@ func TestGoogleChatNotifier(t *testing.T) {
 				ImageStore:          imageStore,
 				NotificationService: webhookSender,
 				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				Logger:              &channels.FakeLogger{},
+				GrafanaBuildVersion: appVersion,
 			}
 
 			pn, err := newGoogleChatNotifier(fc)
@@ -496,7 +500,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			require.NotEmpty(t, webhookSender.Webhook.Url)
+			require.NotEmpty(t, webhookSender.Webhook.URL)
 
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)

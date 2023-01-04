@@ -154,6 +154,11 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:        "supportBundles",
+			Description: "Support bundles for troubleshooting",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:            "dashboardsFromStorage",
 			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,
@@ -381,6 +386,11 @@ var (
 			Name:        "sessionRemoteCache",
 			Description: "Enable using remote cache for user sessions",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "disablePrometheusExemplarSampling",
+			Description: "Disable Prometheus examplar sampling",
+			State:       FeatureStateStable,
 		},
 		{
 			Name:        "alertingBacktesting",

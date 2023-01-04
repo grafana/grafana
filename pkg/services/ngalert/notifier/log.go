@@ -1,8 +1,9 @@
 package notifier
 
 import (
+	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
 var LoggerFactory channels.LoggerFactory = func(ctx ...interface{}) channels.Logger {

@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -28,7 +30,7 @@ func TestWithStoredImages(t *testing.T) {
 			},
 		},
 	}}
-	imageStore := &fakeImageStore{Images: []*Image{{
+	imageStore := &fakeImageStore{Images: []*channels.Image{{
 		Token:     "test-image-1",
 		URL:       "https://www.example.com/test-image-1.jpg",
 		CreatedAt: time.Now().UTC(),
@@ -44,7 +46,7 @@ func TestWithStoredImages(t *testing.T) {
 	)
 
 	// should iterate all images
-	err = withStoredImages(ctx, &FakeLogger{}, imageStore, func(index int, image Image) error {
+	err = withStoredImages(ctx, &channels.FakeLogger{}, imageStore, func(index int, image channels.Image) error {
 		i += 1
 		return nil
 	}, alerts...)
@@ -53,9 +55,9 @@ func TestWithStoredImages(t *testing.T) {
 
 	// should iterate just the first image
 	i = 0
-	err = withStoredImages(ctx, &FakeLogger{}, imageStore, func(index int, image Image) error {
+	err = withStoredImages(ctx, &channels.FakeLogger{}, imageStore, func(index int, image channels.Image) error {
 		i += 1
-		return ErrImagesDone
+		return channels.ErrImagesDone
 	}, alerts...)
 	require.NoError(t, err)
 	assert.Equal(t, 1, i)

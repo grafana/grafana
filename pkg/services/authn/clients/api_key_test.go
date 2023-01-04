@@ -75,11 +75,12 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				Name:             "test",
 			},
 			expectedIdentity: &authn.Identity{
-				ID:       "service-account:1",
-				OrgID:    1,
-				OrgCount: 1,
-				Name:     "test",
-				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				ID:             "service-account:1",
+				OrgID:          1,
+				OrgCount:       1,
+				Name:           "test",
+				OrgRoles:       map[int64]org.RoleType{1: org.RoleViewer},
+				IsGrafanaAdmin: boolPtr(false),
 			},
 		},
 		{
@@ -126,7 +127,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				assert.ErrorIs(t, err, tt.expectedErr)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, *tt.expectedIdentity, *identity)
+				assert.EqualValues(t, *tt.expectedIdentity, *identity)
 			}
 		})
 	}
@@ -191,6 +192,10 @@ func TestAPIKey_Test(t *testing.T) {
 
 func intPtr(n int64) *int64 {
 	return &n
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }
 
 func genApiKey(legacy bool) (string, string) {

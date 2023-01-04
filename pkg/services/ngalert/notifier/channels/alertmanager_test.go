@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -39,12 +40,36 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 			expectedInitError: `invalid url property in settings: parse "://alertmanager.com/api/v1/alerts": missing protocol scheme`,
 			receiverName:      "Alertmanager",
 		},
+		{
+			name: "Error in initing: empty URL",
+			settings: `{
+				"url": ""
+			}`,
+			expectedInitError: `could not find url property in settings`,
+			receiverName:      "Alertmanager",
+		},
+		{
+			name: "Error in initing: null URL",
+			settings: `{
+				"url": null
+			}`,
+			expectedInitError: `could not find url property in settings`,
+			receiverName:      "Alertmanager",
+		},
+		{
+			name: "Error in initing: one of multiple URLs is invalid",
+			settings: `{
+				"url": "https://alertmanager-01.com,://url"
+			}`,
+			expectedInitError: "invalid url property in settings: parse \"://url/api/v1/alerts\": missing protocol scheme",
+			receiverName:      "Alertmanager",
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			secureSettings := make(map[string][]byte)
 
-			m := &NotificationChannelConfig{
+			m := &channels.NotificationChannelConfig{
 				Name:           c.receiverName,
 				Type:           "prometheus-alertmanager",
 				Settings:       json.RawMessage(c.settings),
@@ -54,14 +79,20 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 			decryptFn := func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
 				return fallback
 			}
-			cfg, err := NewAlertmanagerConfig(m, decryptFn)
-			if c.expectedInitError != "" {
-				require.Equal(t, c.expectedInitError, err.Error())
-				return
+
+			fc := channels.FactoryConfig{
+				Config:      m,
+				DecryptFunc: decryptFn,
+				ImageStore:  &channels.UnavailableImageStore{},
+				Template:    tmpl,
+				Logger:      &channels.FakeLogger{},
 			}
-			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, &FakeLogger{}, &UnavailableImageStore{}, tmpl, decryptFn)
-			require.NotNil(t, sn)
+			sn, err := buildAlertmanagerNotifier(fc)
+			if c.expectedInitError != "" {
+				require.ErrorContains(t, err, c.expectedInitError)
+			} else {
+				require.NotNil(t, sn)
+			}
 		})
 	}
 }
@@ -142,7 +173,7 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 			require.NoError(t, err)
 			secureSettings := make(map[string][]byte)
 
-			m := &NotificationChannelConfig{
+			m := &channels.NotificationChannelConfig{
 				Name:           c.receiverName,
 				Type:           "prometheus-alertmanager",
 				Settings:       settingsJSON,
@@ -152,15 +183,22 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 			decryptFn := func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
 				return fallback
 			}
-			cfg, err := NewAlertmanagerConfig(m, decryptFn)
+			fc := channels.FactoryConfig{
+				Config:      m,
+				DecryptFunc: decryptFn,
+				ImageStore:  images,
+				Template:    tmpl,
+				Logger:      &channels.FakeLogger{},
+			}
+			sn, err := buildAlertmanagerNotifier(fc)
 			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, &FakeLogger{}, images, tmpl, decryptFn)
+
 			var body []byte
 			origSendHTTPRequest := sendHTTPRequest
 			t.Cleanup(func() {
 				sendHTTPRequest = origSendHTTPRequest
 			})
-			sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logger Logger) ([]byte, error) {
+			sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logger channels.Logger) ([]byte, error) {
 				body = cfg.body
 				return nil, c.sendHTTPRequestError
 			}

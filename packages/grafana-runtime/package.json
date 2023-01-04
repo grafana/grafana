@@ -52,7 +52,7 @@
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@rollup/plugin-commonjs": "23.0.2",
     "@rollup/plugin-node-resolve": "15.0.1",
-    "@testing-library/dom": "8.13.0",
+    "@testing-library/dom": "8.19.0",
     "@testing-library/react": "12.1.4",
     "@testing-library/react-hooks": "8.0.1",
     "@testing-library/user-event": "14.4.3",
@@ -74,7 +74,7 @@
     "rollup-plugin-node-externals": "^5.0.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "typescript": "4.8.4"
+    "typescript": "4.9.3"
   },
   "peerDependencies": {
     "react": "17.0.2",

@@ -2,14 +2,7 @@ import { AnnotationSupport, AnnotationQuery } from '@grafana/data';
 
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import CloudMonitoringDatasource from './datasource';
-import {
-  AlignmentTypes,
-  CloudMonitoringQuery,
-  EditorMode,
-  LegacyCloudMonitoringAnnotationQuery,
-  MetricKind,
-  QueryType,
-} from './types';
+import { AlignmentTypes, CloudMonitoringQuery, LegacyCloudMonitoringAnnotationQuery, QueryType } from './types';
 
 // The legacy query format sets the title and text values to empty strings by default.
 // If the title or text is not undefined at the top-level of the annotation target,
@@ -42,13 +35,9 @@ export const CloudMonitoringAnnotationSupport: (
           intervalMs: ds.intervalMs,
           refId: target?.refId || 'annotationQuery',
           queryType: QueryType.ANNOTATION,
-          metricQuery: {
+          timeSeriesList: {
             projectName: target?.projectName || ds.getDefaultProject(),
-            editorMode: EditorMode.Visual,
-            metricType: target?.metricType || '',
             filters: target?.filters || [],
-            metricKind: target?.metricKind || MetricKind.GAUGE,
-            query: '',
             crossSeriesReducer: 'REDUCE_NONE',
             perSeriesAligner: AlignmentTypes.ALIGN_NONE,
             title: target?.title || '',
@@ -65,11 +54,8 @@ export const CloudMonitoringAnnotationSupport: (
 
       return {
         ...anno.target,
-        queryType: QueryType.METRICS,
+        queryType: QueryType.ANNOTATION,
         type: 'annotationQuery',
-        metricQuery: {
-          ...anno.target.metricQuery,
-        },
       };
     },
     QueryEditor: AnnotationQueryEditor,

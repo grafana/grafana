@@ -40,7 +40,7 @@ const checkoutBranch = async (branchName: string): Promise<Command> => {
 };
 
 const gitUrlParse = (url: string): { owner: string; name: string } => {
-  let matchResult: RegExpMatchArray | null = [];
+  let matchResult: string[] | null = [];
 
   if (url.match(/^git@github.com/)) {
     // We have an ssh style url.

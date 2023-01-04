@@ -16,17 +16,19 @@ type exemplar struct {
 }
 
 type exemplarSampler struct {
-	buckets  map[time.Time][]exemplar
-	labelSet map[string]struct{}
-	count    int
-	mean     float64
-	m2       float64
+	buckets         map[time.Time][]exemplar
+	labelSet        map[string]struct{}
+	disableSampling bool
+	count           int
+	mean            float64
+	m2              float64
 }
 
-func newExemplarSampler() *exemplarSampler {
+func newExemplarSampler(disableSampling bool) *exemplarSampler {
 	return &exemplarSampler{
-		buckets:  map[time.Time][]exemplar{},
-		labelSet: map[string]struct{}{},
+		buckets:         map[time.Time][]exemplar{},
+		labelSet:        map[string]struct{}{},
+		disableSampling: disableSampling,
 	}
 }
 
@@ -98,7 +100,18 @@ func (e *exemplarSampler) getLabelNames() []string {
 
 // getSampledExemplars returns the exemplars sorted by timestamp
 func (e *exemplarSampler) getSampledExemplars() []exemplar {
-	exemplars := make([]exemplar, 0, len(e.buckets))
+	var exemplars []exemplar
+
+	if e.disableSampling {
+		for _, bucket := range e.buckets {
+			exemplars = append(exemplars, bucket...)
+		}
+
+		return exemplars
+	}
+
+	exemplars = make([]exemplar, 0, len(e.buckets))
+
 	for _, b := range e.buckets {
 		// sort by value in descending order
 		sort.SliceStable(b, func(i, j int) bool {

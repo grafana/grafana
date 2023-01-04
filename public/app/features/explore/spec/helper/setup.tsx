@@ -203,16 +203,12 @@ export const localStorageHasAlreadyBeenMigrated = () => {
 };
 
 export const setupLocalStorageRichHistory = (dsName: string) => {
-  window.localStorage.setItem(
-    RICH_HISTORY_KEY,
-    JSON.stringify([
-      {
-        ts: Date.now(),
-        datasourceName: dsName,
-        starred: true,
-        comment: '',
-        queries: [{ refId: 'A' }],
-      } as RichHistoryLocalStorageDTO,
-    ])
-  );
+  const richHistoryDTO: RichHistoryLocalStorageDTO = {
+    ts: Date.now(),
+    datasourceName: dsName,
+    starred: true,
+    comment: '',
+    queries: [{ refId: 'A' }],
+  };
+  window.localStorage.setItem(RICH_HISTORY_KEY, JSON.stringify([richHistoryDTO]));
 };

@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -113,8 +114,8 @@ func TestKafkaNotifier(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			webhookSender := mockNotificationService()
 
-			fc := FactoryConfig{
-				Config: &NotificationChannelConfig{
+			fc := channels.FactoryConfig{
+				Config: &channels.NotificationChannelConfig{
 					Name:     "kafka_testing",
 					Type:     "kafka",
 					Settings: json.RawMessage(c.settings),
@@ -124,7 +125,7 @@ func TestKafkaNotifier(t *testing.T) {
 				NotificationService: webhookSender,
 				DecryptFunc:         nil,
 				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				Logger:              &channels.FakeLogger{},
 			}
 
 			pn, err := newKafkaNotifier(fc)
@@ -148,7 +149,7 @@ func TestKafkaNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			require.Equal(t, c.expUrl, webhookSender.Webhook.Url)
+			require.Equal(t, c.expUrl, webhookSender.Webhook.URL)
 			require.JSONEq(t, c.expMsg, webhookSender.Webhook.Body)
 		})
 	}

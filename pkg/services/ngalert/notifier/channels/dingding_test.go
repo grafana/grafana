@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -79,7 +80,7 @@ func TestDingdingNotifier(t *testing.T) {
 			expMsgError: nil,
 		}, {
 			name:     "Default config with one alert and custom title and description",
-			settings: `{"url": "http://localhost", "title": "Alerts firing: {{ len .Alerts.Firing }}", "message": "customMessage"}}`,
+			settings: `{"url": "http://localhost", "title": "Alerts firing: {{ len .Alerts.Firing }}", "message": "customMessage"}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -165,8 +166,8 @@ func TestDingdingNotifier(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			webhookSender := mockNotificationService()
-			fc := FactoryConfig{
-				Config: &NotificationChannelConfig{
+			fc := channels.FactoryConfig{
+				Config: &channels.NotificationChannelConfig{
 					Name:     "dingding_testing",
 					Type:     "dingding",
 					Settings: json.RawMessage(c.settings),
@@ -174,7 +175,7 @@ func TestDingdingNotifier(t *testing.T) {
 				// TODO: allow changing the associated values for different tests.
 				NotificationService: webhookSender,
 				Template:            tmpl,
-				Logger:              &FakeLogger{},
+				Logger:              &channels.FakeLogger{},
 			}
 			pn, err := newDingDingNotifier(fc)
 			if c.expInitError != "" {
@@ -195,7 +196,7 @@ func TestDingdingNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			require.NotEmpty(t, webhookSender.Webhook.Url)
+			require.NotEmpty(t, webhookSender.Webhook.URL)
 
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)

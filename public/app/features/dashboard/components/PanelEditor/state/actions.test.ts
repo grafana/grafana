@@ -1,8 +1,9 @@
+import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { panelModelAndPluginReady, removePanel } from 'app/features/panel/state/reducers';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
 import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
-import { DashboardModel, PanelModel } from '../../../state';
+import { PanelModel } from '../../../state';
 
 import { exitPanelEditor, initPanelEditor, skipPanelUpdate } from './actions';
 import { closeEditor, initialState, PanelEditorState } from './reducers';
@@ -10,7 +11,7 @@ import { closeEditor, initialState, PanelEditorState } from './reducers';
 describe('panelEditor actions', () => {
   describe('initPanelEditor', () => {
     it('initPanelEditor should create edit panel model as clone', async () => {
-      const dashboard = new DashboardModel({
+      const dashboard = createDashboardModelFixture({
         panels: [{ id: 12, type: 'graph' }],
       });
       const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
@@ -34,7 +35,7 @@ describe('panelEditor actions', () => {
   describe('panelEditorCleanUp', () => {
     it('should update source panel', async () => {
       const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
-      const dashboard = new DashboardModel({
+      const dashboard = createDashboardModelFixture({
         panels: [{ id: 12, type: 'graph' }],
       });
 
@@ -66,7 +67,7 @@ describe('panelEditor actions', () => {
 
     it('should dispatch panelModelAndPluginReady if type changed', async () => {
       const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
-      const dashboard = new DashboardModel({
+      const dashboard = createDashboardModelFixture({
         panels: [{ id: 12, type: 'graph' }],
       });
 
@@ -105,7 +106,7 @@ describe('panelEditor actions', () => {
         customFieldConfigs: {},
       } as any;
 
-      const dashboard = new DashboardModel({
+      const dashboard = createDashboardModelFixture({
         panels: [{ id: 12, type: 'graph' }],
       });
 
@@ -138,7 +139,7 @@ describe('panelEditor actions', () => {
       sourcePanel.plugin = getPanelPlugin({});
       sourcePanel.plugin.angularPanelCtrl = undefined;
 
-      const dashboard = new DashboardModel({
+      const dashboard = createDashboardModelFixture({
         panels: [{ id: 12, type: 'graph' }],
       });
 
@@ -168,7 +169,7 @@ describe('panelEditor actions', () => {
       sourcePanel.plugin = getPanelPlugin({});
       sourcePanel.plugin.angularPanelCtrl = undefined;
 
-      const dashboard = new DashboardModel({
+      const dashboard = createDashboardModelFixture({
         panels: [{ id: 12, type: 'graph' }],
       });
 
@@ -207,7 +208,7 @@ describe('panelEditor actions', () => {
       sourcePanel.plugin = getPanelPlugin({});
       sourcePanel.plugin.angularPanelCtrl = {};
 
-      const dashboard = new DashboardModel({
+      const dashboard = createDashboardModelFixture({
         panels: [{ id: 12, type: 'graph' }],
       });
 
