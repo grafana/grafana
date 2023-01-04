@@ -26,7 +26,7 @@ import {
   addResultsToCache,
   cancelQueries,
   cancelQueriesAction,
-  cleanSuppQueryVolumeAction,
+  cleanSuppQueryAction,
   clearCache,
   importQueries,
   queryReducer,
@@ -179,8 +179,8 @@ describe('running queries', () => {
     expect(dispatchedActions).toEqual([
       scanStopAction({ exploreId }),
       cancelQueriesAction({ exploreId }),
-      storeSuppQueryDataProviderAction({ exploreId, suppQueryDataProvider: undefined }),
-      cleanSuppQueryVolumeAction({ exploreId }),
+      storeSuppQueryDataProviderAction({ exploreId, suppQueryDataProvider: {} }),
+      cleanSuppQueryAction({ exploreId }),
     ]);
   });
 });
@@ -479,7 +479,7 @@ describe('reducer', () => {
     it('do not load logsVolume data when disabled', async () => {
       // turn logsvolume off
       dispatch(setSuppQueriesEnabled(ExploreId.left, false, LOGS_VOLUME_QUERY));
-      expect(getState().explore[ExploreId.left].suppQueriesEnabled.includes(LOGS_VOLUME_QUERY)).toBe(false);
+      expect(getState().explore[ExploreId.left].suppQueriesEnabled[LOGS_VOLUME_QUERY]).toBe(false);
 
       // verify that if we run a query, it will not do logsvolume, but the Provider will still be set
       await dispatch(runQueries(ExploreId.left));
@@ -500,7 +500,7 @@ describe('reducer', () => {
       await dispatch(setSuppQueriesEnabled(ExploreId.left, true, LOGS_VOLUME_QUERY));
 
       // verify it was turned on
-      expect(getState().explore[ExploreId.left].suppQueriesEnabled.includes(LOGS_VOLUME_QUERY)).toBe(true);
+      expect(getState().explore[ExploreId.left].suppQueriesEnabled[LOGS_VOLUME_QUERY]).toBe(true);
 
       expect(getState().explore[ExploreId.left].suppQueryDataSubscription).toBeDefined();
     });

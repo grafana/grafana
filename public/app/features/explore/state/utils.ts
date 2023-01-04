@@ -38,14 +38,14 @@ export const storeSuppQueryEnabled = (enabled: boolean, type: string): void => {
   }
 };
 
-const loadSuppQueriesEnabled = (): string[] => {
+const loadSuppQueriesEnabled = () => {
   const data = store.get(LOGS_VOLUME_ENABLED_KEY);
   // we default to `enabled=true`
   if (data === 'false') {
-    return [];
+    return { [LOGS_VOLUME_QUERY]: false };
   }
 
-  return [LOGS_VOLUME_QUERY];
+  return { [LOGS_VOLUME_QUERY]: true };
 };
 
 /**
@@ -80,8 +80,9 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   cache: [],
   richHistory: [],
   suppQueriesEnabled: loadSuppQueriesEnabled(),
-  suppQueryDataProvider: undefined,
-  suppQueryData: undefined,
+  suppQueryDataProvider: {},
+  suppQueryDataSubscription: {},
+  suppQueryData: {},
   panelsState: {},
 });
 

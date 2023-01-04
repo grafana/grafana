@@ -137,9 +137,9 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             logRows={logRows}
             logsMeta={logsMeta}
             logsSeries={logsSeries}
-            logsVolumeEnabled={suppQueriesEnabled.includes(LOGS_VOLUME_QUERY)}
+            logsVolumeEnabled={suppQueriesEnabled[LOGS_VOLUME_QUERY]}
             onSetLogsVolumeEnabled={(enabled) => setSuppQueriesEnabled(exploreId, enabled, LOGS_VOLUME_QUERY)}
-            logsVolumeData={suppQueryData}
+            logsVolumeData={suppQueryData[LOGS_VOLUME_QUERY]}
             logsQueries={logsQueries}
             width={width}
             splitOpen={splitOpenFn}
