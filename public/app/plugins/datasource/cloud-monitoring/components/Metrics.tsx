@@ -9,6 +9,7 @@ import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
 import CloudMonitoringDatasource from '../datasource';
 import { MetricDescriptor, TimeSeriesList } from '../types';
 
+import { defaultTimeSeriesList } from './MetricQueryEditor';
 import { Project } from './Project';
 
 export interface Props {
@@ -109,8 +110,8 @@ export function Metrics(props: Props) {
         label: m.displayName,
         description: m.description,
       }));
-    // Empty the filters here so that only the metric.type filter is set on service change
-    query.filters = [];
+    // On service change reset all query values except the project name
+    Object.assign(query, { ...defaultTimeSeriesList(datasource), projectName: query.projectName });
 
     if (metrics.length > 0 && !metrics.some((m) => m.value === templateSrv.replace(metricType))) {
       onMetricTypeChange(metrics[0]);

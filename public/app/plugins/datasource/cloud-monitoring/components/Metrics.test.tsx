@@ -7,6 +7,7 @@ import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDe
 import { createMockTimeSeriesList } from '../__mocks__/cloudMonitoringQuery';
 
 import { LabelFilter } from './LabelFilter';
+import { defaultTimeSeriesList } from './MetricQueryEditor';
 import { Metrics } from './Metrics';
 
 describe('Metrics', () => {
@@ -202,7 +203,7 @@ describe('Metrics', () => {
     expect(screen.getAllByLabelText('Select option').length).toEqual(2);
   });
 
-  it('resets filters when service changes', async () => {
+  it('resets query to default when service changes', async () => {
     const query = createMockTimeSeriesList({ filters: ['metric.test_label', '=', 'test', 'AND'] });
     const onChange = jest.fn();
     const datasource = createMockDatasource({
@@ -213,6 +214,7 @@ describe('Metrics', () => {
           createMockMetricDescriptor({ type: 'type2', service: 'service2', serviceShortName: 'srv2' }),
         ]),
     });
+    const defaultQuery = { ...query, ...defaultTimeSeriesList(datasource) };
 
     render(
       <Metrics
@@ -234,6 +236,6 @@ describe('Metrics', () => {
     await openMenu(service);
     await select(service, 'Srv 2', { container: document.body });
     expect(onChange).toBeCalledWith(expect.objectContaining({ service: 'service2' }));
-    expect(query.filters).toHaveLength(0);
+    expect(query).toEqual(defaultQuery);
   });
 });
