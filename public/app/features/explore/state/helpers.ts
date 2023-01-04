@@ -42,7 +42,11 @@ export const createDefaultInitialState = () => {
         },
         cache: [],
         richHistory: [],
-        suppQueryEnabled: { [LOGS_VOLUME_QUERY]: true },
+        supportingQueries: {
+          [LOGS_VOLUME_QUERY]: {
+            enabled: true,
+          },
+        },
         suppQueryDataProvider: {},
         suppQueryDataSubscription: {},
         suppQueryData: {},

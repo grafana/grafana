@@ -198,14 +198,22 @@ export interface ExploreItemState {
 
   // properties below should be more generic if we add more providers
   // see also: DataSourceWithLogsVolumeSupport
-  suppQueryEnabled: { [key: string]: boolean };
-  suppQueryDataProvider: { [key: string]: Observable<DataQueryResponse> };
-  suppQueryDataSubscription: { [key: string]: SubscriptionLike };
-  suppQueryData: { [key: string]: DataQueryResponse };
+  supportingQueries: SupportingQueries;
 
   panelsState: ExplorePanelsState;
 
   isFromCompactUrl?: boolean;
+}
+
+export interface SupportingQuery {
+  enabled: boolean;
+  dataProvider?: Observable<DataQueryResponse>;
+  dataSubscription?: SubscriptionLike;
+  data?: DataQueryResponse;
+}
+
+export interface SupportingQueries {
+  [key: string]: SupportingQuery;
 }
 
 export interface ExploreUpdateState {

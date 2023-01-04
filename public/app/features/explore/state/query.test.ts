@@ -164,11 +164,7 @@ describe('running queries', () => {
           querySubscription: unsubscribable,
           queries: ['A'],
           range: testRange,
-          // HERE
-          suppQueryData: { logVolume: {} },
-          suppQueryEnabled: {},
-          suppQueryDataProvider: {},
-          suppQueryDataSubscription: {},
+          supportingQueries: { [LOGS_VOLUME_QUERY]: {} },
         },
       },
 
@@ -176,7 +172,7 @@ describe('running queries', () => {
         orgId: 'A',
       },
     };
-
+    const type = LOGS_VOLUME_QUERY;
     const dispatchedActions = await thunkTester(initialState)
       .givenThunk(cancelQueries)
       .whenThunkIsDispatched(exploreId);
@@ -184,8 +180,8 @@ describe('running queries', () => {
     expect(dispatchedActions).toEqual([
       scanStopAction({ exploreId }),
       cancelQueriesAction({ exploreId }),
-      storeSuppQueryDataProviderAction({ exploreId, suppQueryDataProvider: {} }),
-      cleanSuppQueryAction({ exploreId }),
+      storeSuppQueryDataProviderAction({ exploreId, type }),
+      cleanSuppQueryAction({ exploreId, type }),
     ]);
   });
 });
@@ -438,8 +434,8 @@ describe('reducer', () => {
       expect(unsubscribes).toHaveLength(1);
       expect(unsubscribes[0]).toBeCalled();
 
-      expect(getState().explore[ExploreId.left].suppQueryData).toStrictEqual({});
-      expect(getState().explore[ExploreId.left].suppQueryDataProvider).toStrictEqual({});
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].data).toBeUndefined();
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].dataProvider).toBeUndefined();
     });
 
     it('should load logs volume after running the query', async () => {
@@ -453,13 +449,15 @@ describe('reducer', () => {
       };
       await dispatch(runQueries(ExploreId.left));
 
-      expect(getState().explore[ExploreId.left].suppQueryData).toBeDefined();
-      expect(getState().explore[ExploreId.left].suppQueryData[LOGS_VOLUME_QUERY].state).toBe(LoadingState.Loading);
-      expect(getState().explore[ExploreId.left].suppQueryDataProvider).toBeDefined();
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].data).toBeDefined();
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].data!.state).toBe(
+        LoadingState.Loading
+      );
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].dataProvider).toBeDefined();
 
       await dispatch(cancelQueries(ExploreId.left));
-      expect(getState().explore[ExploreId.left].suppQueryData).toStrictEqual({});
-      expect(getState().explore[ExploreId.left].suppQueryDataProvider).toStrictEqual({});
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].data).toBeUndefined();
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].data).toBeUndefined();
     });
 
     it('keeps complete log volume data when main query is canceled', async () => {
@@ -471,26 +469,30 @@ describe('reducer', () => {
       };
       await dispatch(runQueries(ExploreId.left));
 
-      expect(getState().explore[ExploreId.left].suppQueryData).toBeDefined();
-      expect(getState().explore[ExploreId.left].suppQueryData[LOGS_VOLUME_QUERY].state).toBe(LoadingState.Done);
-      expect(getState().explore[ExploreId.left].suppQueryDataProvider).toBeDefined();
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].data).toBeDefined();
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].data!.state).toBe(
+        LoadingState.Done
+      );
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].dataProvider).toBeDefined();
 
       await dispatch(cancelQueries(ExploreId.left));
-      expect(getState().explore[ExploreId.left].suppQueryData).toBeDefined();
-      expect(getState().explore[ExploreId.left].suppQueryData[LOGS_VOLUME_QUERY].state).toBe(LoadingState.Done);
-      expect(getState().explore[ExploreId.left].suppQueryDataProvider).toStrictEqual({});
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].data).toBeDefined();
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].data!.state).toBe(
+        LoadingState.Done
+      );
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].dataProvider).toBeUndefined();
     });
 
     it('do not load logsVolume data when disabled', async () => {
       // turn logsvolume off
       dispatch(setSuppQueryEnabled(ExploreId.left, false, LOGS_VOLUME_QUERY));
-      expect(getState().explore[ExploreId.left].suppQueryEnabled[LOGS_VOLUME_QUERY]).toBe(false);
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].enabled).toBe(false);
 
       // verify that if we run a query, it will not do logsvolume, but the Provider will still be set
       await dispatch(runQueries(ExploreId.left));
-      expect(getState().explore[ExploreId.left].suppQueryData).toStrictEqual({});
-      expect(getState().explore[ExploreId.left].suppQueryDataSubscription).toStrictEqual({});
-      expect(getState().explore[ExploreId.left].suppQueryDataProvider).toBeDefined();
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].data).toBeUndefined();
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].dataSubscription).toBeUndefined();
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].dataProvider).toBeDefined();
     });
 
     it('load logsVolume data when it gets enabled', async () => {
@@ -499,15 +501,15 @@ describe('reducer', () => {
 
       // runQueries sets up the logsVolume query, but does not run it
       await dispatch(runQueries(ExploreId.left));
-      expect(getState().explore[ExploreId.left].suppQueryDataProvider).toBeDefined();
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].dataProvider).toBeDefined();
 
       // we turn logsvolume on
       await dispatch(setSuppQueryEnabled(ExploreId.left, true, LOGS_VOLUME_QUERY));
 
       // verify it was turned on
-      expect(getState().explore[ExploreId.left].suppQueryEnabled[LOGS_VOLUME_QUERY]).toBe(true);
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].enabled).toBe(true);
 
-      expect(getState().explore[ExploreId.left].suppQueryDataSubscription).toBeDefined();
+      expect(getState().explore[ExploreId.left].supportingQueries[LOGS_VOLUME_QUERY].dataSubscription).toBeDefined();
     });
   });
 });

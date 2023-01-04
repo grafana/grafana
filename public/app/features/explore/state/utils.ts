@@ -12,7 +12,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
-import { ExploreItemState } from 'app/types/explore';
+import { ExploreItemState, SupportingQueries, SupportingQuery } from 'app/types/explore';
 
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
@@ -32,20 +32,31 @@ export const storeGraphStyle = (graphStyle: string): void => {
 
 export const LOGS_VOLUME_QUERY = 'logsVolume';
 const LOGS_VOLUME_ENABLED_KEY = SETTINGS_KEYS.enableVolumeHistogram;
+
+const supportingQuerySettings: { [key: string]: string } = {
+  [LOGS_VOLUME_ENABLED_KEY]: LOGS_VOLUME_ENABLED_KEY,
+};
+
 export const storeSuppQueryEnabled = (enabled: boolean, type: string): void => {
-  if (type === LOGS_VOLUME_QUERY) {
-    store.set(LOGS_VOLUME_ENABLED_KEY, enabled ? 'true' : 'false');
+  if (supportingQuerySettings[type]) {
+    store.set(supportingQuerySettings[type], enabled ? 'true' : 'false');
   }
 };
 
-const loadSuppQueryEnabled = () => {
-  const data = store.get(LOGS_VOLUME_ENABLED_KEY);
-  // we default to `enabled=true`
-  if (data === 'false') {
-    return { [LOGS_VOLUME_QUERY]: false };
-  }
+const loadSupportingQueries = (): SupportingQueries => {
+  const suppQueryTypes = [LOGS_VOLUME_QUERY];
+  const suppQueries: { [key: string]: SupportingQuery } = {};
 
-  return { [LOGS_VOLUME_QUERY]: true };
+  for (const type of suppQueryTypes) {
+    if (supportingQuerySettings[type]) {
+      const data = store.get(supportingQuerySettings[type]);
+      if (data === 'false') {
+        suppQueries[supportingQuerySettings[type]] = { enabled: false };
+      }
+    } // we default to `enabled=true`
+    suppQueries[supportingQuerySettings[type]] = { enabled: false };
+  }
+  return suppQueries;
 };
 
 /**
@@ -79,10 +90,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
-  suppQueryEnabled: loadSuppQueryEnabled(),
-  suppQueryDataProvider: {},
-  suppQueryDataSubscription: {},
-  suppQueryData: {},
+  supportingQueries: loadSupportingQueries(),
   panelsState: {},
 });
 

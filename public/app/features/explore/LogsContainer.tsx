@@ -86,8 +86,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       logsMeta,
       logsSeries,
       logsQueries,
-      suppQueryData,
       loadSuppQueryData,
+      setSuppQueryEnabled,
       onClickFilterLabel,
       onClickFilterOutLabel,
       onStartScanning,
@@ -104,8 +104,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       addResultsToCache,
       clearCache,
       scrollElement,
-      suppQueryEnabled,
-      setSuppQueryEnabled,
+      logsVolume,
     } = this.props;
 
     if (!logRows) {
@@ -137,15 +136,15 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             logRows={logRows}
             logsMeta={logsMeta}
             logsSeries={logsSeries}
-            logsVolumeEnabled={suppQueryEnabled[LOGS_VOLUME_QUERY]}
+            logsVolumeEnabled={logsVolume.enabled}
             onSetLogsVolumeEnabled={(enabled) => setSuppQueryEnabled(exploreId, enabled, LOGS_VOLUME_QUERY)}
-            logsVolumeData={suppQueryData[LOGS_VOLUME_QUERY]}
+            logsVolumeData={logsVolume.data}
             logsQueries={logsQueries}
             width={width}
             splitOpen={splitOpenFn}
             loading={loading}
             loadingState={loadingState}
-            loadLogsVolumeData={loadSuppQueryData}
+            loadLogsVolumeData={() => loadSuppQueryData(exploreId, LOGS_VOLUME_QUERY)}
             onChangeTime={this.onChangeTime}
             onClickFilterLabel={onClickFilterLabel}
             onClickFilterOutLabel={onClickFilterOutLabel}
@@ -183,11 +182,10 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    suppQueryEnabled,
-    suppQueryDataProvider,
-    suppQueryData,
+    supportingQueries,
   } = item;
   const timeZone = getTimeZone(state.user);
+  const logsVolume = supportingQueries[LOGS_VOLUME_QUERY];
 
   return {
     loading,
@@ -203,9 +201,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    suppQueryEnabled,
-    suppQueryDataProvider,
-    suppQueryData,
+    logsVolume,
   };
 }
 
