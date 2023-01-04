@@ -624,6 +624,24 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext) w
 }
 
 func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext) bool {
+	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientRender, &authn.Request{HTTPRequest: reqContext.Req})
+		if !ok {
+			return false
+		}
+
+		if err != nil {
+			writeErr(reqContext, err)
+			return true
+		}
+
+		reqContext.IsSignedIn = true
+		reqContext.IsRenderCall = true
+		reqContext.LastSeenAt = time.Now()
+		reqContext.SignedInUser = identity.SignedInUser()
+		return true
+	}
+
 	key := reqContext.GetCookie("renderKey")
 	if key == "" {
 		return false

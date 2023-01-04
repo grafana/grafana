@@ -21,6 +21,7 @@ const (
 	ClientSession   = "auth.client.session"
 	ClientAnonymous = "auth.client.anonymous"
 	ClientBasic     = "auth.client.basic"
+	ClientRender    = "auth.client.render"
 )
 
 type ClientParams struct {
@@ -60,7 +61,6 @@ const (
 	NamespaceUser           = "user"
 	NamespaceAPIKey         = "api-key"
 	NamespaceServiceAccount = "service-account"
-	UserIDPrefix            = "user:"
 )
 
 type Identity struct {

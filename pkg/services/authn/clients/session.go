@@ -82,7 +82,7 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	}
 
 	// FIXME (jguer): oauth token refresh not implemented
-	identity := authn.IdentityFromSignedInUser(fmt.Sprintf("%s%d", authn.UserIDPrefix, signedInUser.UserID), signedInUser)
+	identity := authn.IdentityFromSignedInUser(fmt.Sprintf("%s:%d", authn.NamespaceUser, signedInUser.UserID), signedInUser)
 	identity.SessionToken = token
 
 	return identity, nil

@@ -76,7 +76,7 @@ describe('QueryEditor should render right editor', () => {
       const query = {
         ...migratedFields,
         alias: '',
-        apiMode: 'Logs',
+        apiMode: 'Metrics',
         dimensions: {
           InstanceId: 'i-123',
         },
@@ -87,7 +87,7 @@ describe('QueryEditor should render right editor', () => {
         metricName: 'CPUUtilization',
         namespace: 'AWS/EC2',
         period: '',
-        queryMode: 'Logs',
+        queryMode: 'Metrics',
         refId: 'A',
         region: 'ap-northeast-2',
         statistics: 'Average',
@@ -95,7 +95,7 @@ describe('QueryEditor should render right editor', () => {
       await act(async () => {
         render(<QueryEditor {...props} query={query} />);
       });
-      expect(screen.getByText('Choose Log Groups')).toBeInTheDocument();
+      expect(screen.getByText('Metric name')).toBeInTheDocument();
     });
   });
 
