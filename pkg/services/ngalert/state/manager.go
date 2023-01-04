@@ -14,7 +14,6 @@ import (
 )
 
 var (
-	pausedStateReason     = "Paused"
 	ResendDelay           = 30 * time.Second
 	MetricsScrapeInterval = 15 * time.Second // TODO: parameterize? // Setting to a reasonable default scrape interval for Prometheus.
 )
