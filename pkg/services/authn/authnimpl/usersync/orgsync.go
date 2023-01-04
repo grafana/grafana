@@ -81,7 +81,7 @@ func (s *OrgSync) SyncOrgUser(ctx context.Context, clientParams *authn.ClientPar
 		// add role
 		cmd := &org.AddOrgUserCommand{UserID: userID, Role: orgRole, OrgID: orgId}
 		err := s.orgService.AddOrgUser(ctx, cmd)
-		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
+		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
 			return err
 		}
 	}

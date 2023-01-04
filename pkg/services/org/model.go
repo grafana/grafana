@@ -90,7 +90,7 @@ type OrgDTO struct {
 	Name string `json:"name"`
 }
 
-type GetOrgByIdQuery struct {
+type GetOrgByIDQuery struct {
 	ID int64
 }
 
