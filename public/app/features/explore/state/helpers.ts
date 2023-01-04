@@ -43,6 +43,9 @@ export const createDefaultInitialState = () => {
         cache: [],
         richHistory: [],
         suppQueriesEnabled: { [LOGS_VOLUME_QUERY]: true },
+        suppQueryDataProvider: {},
+        suppQueryDataSubscription: {},
+        suppQueryData: {},
       },
     },
   };

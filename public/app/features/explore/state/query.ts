@@ -237,6 +237,7 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
         suppQueryDataProvider: {},
       })
     );
+
     // clear any incomplete data
     if (
       Object.values(getState().explore[exploreId]!.suppQueryData).some(
@@ -703,8 +704,8 @@ export function loadSuppQueryData(exploreId: ExploreId, type: string): ThunkResu
   return (dispatch, getState) => {
     const { suppQueryDataProvider } = getState().explore[exploreId]!;
     // here we should check if type is the same as previous type
-    if (suppQueryDataProvider) {
-      const suppQueryDataSubscription = suppQueryDataProvider[LOGS_VOLUME_QUERY].subscribe({
+    if (suppQueryDataProvider[type]) {
+      const suppQueryDataSubscription = suppQueryDataProvider[type].subscribe({
         next: (suppQueryData: DataQueryResponse) => {
           dispatch(updateSuppQueryDataAction({ exploreId, suppQueryData: { [LOGS_VOLUME_QUERY]: suppQueryData } }));
         },
