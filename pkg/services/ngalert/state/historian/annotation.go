@@ -98,9 +98,9 @@ func (h *AnnotationStateHistorian) recordAnnotationsSync(ctx context.Context, pa
 			return
 		}
 
-		for _, i := range annotations {
-			i.DashboardId = dashID
-			i.PanelId = panel.panelID
+		for i := range annotations {
+			annotations[i].DashboardId = dashID
+			annotations[i].PanelId = panel.panelID
 		}
 	}
 
