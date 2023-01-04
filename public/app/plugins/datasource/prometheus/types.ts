@@ -2,8 +2,8 @@ import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@gra
 
 import { PromApplication } from '../../../types/unified-alerting-dto';
 
+import { PrometheusCacheLevel } from './datasource';
 import { QueryEditorMode } from './querybuilder/shared/types';
-import {PrometheusCacheLevel} from "./datasource";
 
 export interface PromQuery extends DataQuery {
   expr: string;
@@ -35,7 +35,8 @@ export interface PromOptions extends DataSourceJsonData {
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
   prometheusType?: PromApplication;
   prometheusVersion?: string;
-  cacheLevel?: PrometheusCacheLevel
+  enableSecureSocksProxy?: boolean;
+  cacheLevel?: PrometheusCacheLevel;
 }
 
 export type ExemplarTraceIdDestination = {
