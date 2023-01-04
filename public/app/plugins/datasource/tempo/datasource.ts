@@ -820,7 +820,11 @@ export function buildExpr(
   extraParams: string,
   request: DataQueryRequest<TempoQuery>
 ) {
-  let serviceMapQuery = request.targets[0]?.serviceMapQuery?.replace('{', '').replace('}', '') ?? '';
+  let serviceMapQuery = request.targets[0]?.serviceMapQuery ?? '';
+  const serviceMapQueryMatch = serviceMapQuery.match(/^{(.*)}$/);
+  if (serviceMapQueryMatch?.length) {
+    serviceMapQuery = serviceMapQueryMatch[1];
+  }
   // map serviceGraph metric tags to APM metric tags
   serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
   const metricParams = serviceMapQuery.includes('span_name')

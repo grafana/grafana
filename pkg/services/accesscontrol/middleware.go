@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -215,7 +216,7 @@ func UseOrgFromContextParams(c *models.ReqContext) (int64, error) {
 
 	// Special case of macaron handling invalid params
 	if orgID == 0 || err != nil {
-		return 0, models.ErrOrgNotFound
+		return 0, org.ErrOrgNotFound
 	}
 
 	return orgID, nil
