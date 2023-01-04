@@ -125,7 +125,7 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
   if (!hasLineFilter) {
     hints.push({
       type: 'ADD_LINE_FILTER',
-      label: 'Consider filtering logs based on if they contain a specific string.',
+      label: 'Consider filtering logs for specific string.',
       fix: {
         title: 'add line filter',
         label: '',
