@@ -34,7 +34,7 @@ import {
   scanStartAction,
   scanStopAction,
   storeSuppQueryDataProviderAction,
-  setSuppQueriesEnabled,
+  setSuppQueryEnabled,
 } from './query';
 import { LOGS_VOLUME_QUERY, makeExplorePaneState } from './utils';
 
@@ -166,7 +166,7 @@ describe('running queries', () => {
           range: testRange,
           // HERE
           suppQueryData: { logVolume: {} },
-          suppQueriesEnabled: {},
+          suppQueryEnabled: {},
           suppQueryDataProvider: {},
           suppQueryDataSubscription: {},
         },
@@ -483,8 +483,8 @@ describe('reducer', () => {
 
     it('do not load logsVolume data when disabled', async () => {
       // turn logsvolume off
-      dispatch(setSuppQueriesEnabled(ExploreId.left, false, LOGS_VOLUME_QUERY));
-      expect(getState().explore[ExploreId.left].suppQueriesEnabled[LOGS_VOLUME_QUERY]).toBe(false);
+      dispatch(setSuppQueryEnabled(ExploreId.left, false, LOGS_VOLUME_QUERY));
+      expect(getState().explore[ExploreId.left].suppQueryEnabled[LOGS_VOLUME_QUERY]).toBe(false);
 
       // verify that if we run a query, it will not do logsvolume, but the Provider will still be set
       await dispatch(runQueries(ExploreId.left));
@@ -495,17 +495,17 @@ describe('reducer', () => {
 
     it('load logsVolume data when it gets enabled', async () => {
       // first it is disabled
-      dispatch(setSuppQueriesEnabled(ExploreId.left, false, LOGS_VOLUME_QUERY));
+      dispatch(setSuppQueryEnabled(ExploreId.left, false, LOGS_VOLUME_QUERY));
 
       // runQueries sets up the logsVolume query, but does not run it
       await dispatch(runQueries(ExploreId.left));
       expect(getState().explore[ExploreId.left].suppQueryDataProvider).toBeDefined();
 
       // we turn logsvolume on
-      await dispatch(setSuppQueriesEnabled(ExploreId.left, true, LOGS_VOLUME_QUERY));
+      await dispatch(setSuppQueryEnabled(ExploreId.left, true, LOGS_VOLUME_QUERY));
 
       // verify it was turned on
-      expect(getState().explore[ExploreId.left].suppQueriesEnabled[LOGS_VOLUME_QUERY]).toBe(true);
+      expect(getState().explore[ExploreId.left].suppQueryEnabled[LOGS_VOLUME_QUERY]).toBe(true);
 
       expect(getState().explore[ExploreId.left].suppQueryDataSubscription).toBeDefined();
     });

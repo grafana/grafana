@@ -20,7 +20,7 @@ import { getTimeZone } from '../profile/state/selectors';
 
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
-import { addResultsToCache, clearCache, loadSuppQueryData, setSuppQueriesEnabled } from './state/query';
+import { addResultsToCache, clearCache, loadSuppQueryData, setSuppQueryEnabled } from './state/query';
 import { updateTimeRange } from './state/time';
 import { LOGS_VOLUME_QUERY } from './state/utils';
 import { LiveTailControls } from './useLiveTailControls';
@@ -104,8 +104,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       addResultsToCache,
       clearCache,
       scrollElement,
-      suppQueriesEnabled,
-      setSuppQueriesEnabled,
+      suppQueryEnabled,
+      setSuppQueryEnabled,
     } = this.props;
 
     if (!logRows) {
@@ -137,8 +137,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             logRows={logRows}
             logsMeta={logsMeta}
             logsSeries={logsSeries}
-            logsVolumeEnabled={suppQueriesEnabled[LOGS_VOLUME_QUERY]}
-            onSetLogsVolumeEnabled={(enabled) => setSuppQueriesEnabled(exploreId, enabled, LOGS_VOLUME_QUERY)}
+            logsVolumeEnabled={suppQueryEnabled[LOGS_VOLUME_QUERY]}
+            onSetLogsVolumeEnabled={(enabled) => setSuppQueryEnabled(exploreId, enabled, LOGS_VOLUME_QUERY)}
             logsVolumeData={suppQueryData[LOGS_VOLUME_QUERY]}
             logsQueries={logsQueries}
             width={width}
@@ -183,7 +183,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    suppQueriesEnabled,
+    suppQueryEnabled,
     suppQueryDataProvider,
     suppQueryData,
   } = item;
@@ -203,7 +203,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    suppQueriesEnabled,
+    suppQueryEnabled,
     suppQueryDataProvider,
     suppQueryData,
   };
@@ -214,7 +214,7 @@ const mapDispatchToProps = {
   addResultsToCache,
   clearCache,
   loadSuppQueryData,
-  setSuppQueriesEnabled,
+  setSuppQueryEnabled,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

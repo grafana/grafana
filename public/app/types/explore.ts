@@ -1,3 +1,4 @@
+import { Provider } from 'react-redux';
 import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
 
 import {
@@ -197,10 +198,11 @@ export interface ExploreItemState {
 
   // properties below should be more generic if we add more providers
   // see also: DataSourceWithLogsVolumeSupport
-  suppQueriesEnabled: { [key: string]: boolean };
+  suppQueryEnabled: { [key: string]: boolean };
   suppQueryDataProvider: { [key: string]: Observable<DataQueryResponse> };
   suppQueryDataSubscription: { [key: string]: SubscriptionLike };
-  suppQueryData: { [key: string]: DataQueryResponse | undefined };
+  suppQueryData: { [key: string]: DataQueryResponse };
+
   panelsState: ExplorePanelsState;
 
   isFromCompactUrl?: boolean;

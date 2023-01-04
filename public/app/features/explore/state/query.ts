@@ -95,8 +95,8 @@ export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionP
   'explore/queryStoreSubscription'
 );
 
-const setSuppQueriesEnabledAction = createAction<{ exploreId: ExploreId; enabled: boolean; type: string }>(
-  'explore/setSuppQueriesEnabledAction'
+const setSuppQueryEnabledAction = createAction<{ exploreId: ExploreId; enabled: boolean; type: string }>(
+  'explore/setSuppQueryEnabledAction'
 );
 
 export interface StoreSuppQueryDataProvider {
@@ -430,7 +430,7 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
-      suppQueriesEnabled,
+      suppQueryEnabled,
       suppQueryDataProvider,
     } = exploreItemState;
     let newQuerySub;
@@ -606,7 +606,7 @@ export const runQueries = (
         const { suppQueryData, absoluteRange } = getState().explore[exploreId]!;
         if (!canReuseSuppQueryData(suppQueryData[LOGS_VOLUME_QUERY], queries, absoluteRange)) {
           dispatch(cleanSuppQueryAction({ exploreId }));
-          if (suppQueriesEnabled[LOGS_VOLUME_QUERY]) {
+          if (suppQueryEnabled[LOGS_VOLUME_QUERY]) {
             dispatch(loadSuppQueryData(exploreId, LOGS_VOLUME_QUERY));
           }
         }
@@ -720,9 +720,9 @@ export function loadSuppQueryData(exploreId: ExploreId, type: string): ThunkResu
   };
 }
 
-export function setSuppQueriesEnabled(exploreId: ExploreId, enabled: boolean, type: string): ThunkResult<void> {
+export function setSuppQueryEnabled(exploreId: ExploreId, enabled: boolean, type: string): ThunkResult<void> {
   return (dispatch, getState) => {
-    dispatch(setSuppQueriesEnabledAction({ exploreId, enabled, type }));
+    dispatch(setSuppQueryEnabledAction({ exploreId, enabled, type }));
     storeSuppQueryEnabled(enabled, type);
     if (enabled) {
       dispatch(loadSuppQueryData(exploreId, type));
@@ -789,17 +789,17 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (setSuppQueriesEnabledAction.match(action)) {
+  if (setSuppQueryEnabledAction.match(action)) {
     const { enabled, type } = action.payload;
     if (!enabled && state.suppQueryDataSubscription[type]) {
       state.suppQueryDataSubscription[type].unsubscribe();
     }
 
-    const currSuppQueries = state.suppQueriesEnabled;
+    const currSuppQueries = state.suppQueryEnabled;
     currSuppQueries[LOGS_VOLUME_QUERY] = enabled;
     return {
       ...state,
-      suppQueriesEnabled: currSuppQueries,
+      suppQueryEnabled: currSuppQueries,
       // NOTE: the dataProvider is not cleared, we may need it later,
       // if the user re-enables the histogram-visualization
       suppQueryData: {},

@@ -38,7 +38,7 @@ export const storeSuppQueryEnabled = (enabled: boolean, type: string): void => {
   }
 };
 
-const loadSuppQueriesEnabled = () => {
+const loadSuppQueryEnabled = () => {
   const data = store.get(LOGS_VOLUME_ENABLED_KEY);
   // we default to `enabled=true`
   if (data === 'false') {
@@ -79,7 +79,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
-  suppQueriesEnabled: loadSuppQueriesEnabled(),
+  suppQueryEnabled: loadSuppQueryEnabled(),
   suppQueryDataProvider: {},
   suppQueryDataSubscription: {},
   suppQueryData: {},
