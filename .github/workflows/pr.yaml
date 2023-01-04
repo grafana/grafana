@@ -1,0 +1,32 @@
+name: pr
+
+on:
+ pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Get Grafana Version
+        run: echo "GF_VERSION=$(npm pkg get version | tr -d '"')" >> $GITHUB_ENV
+      -
+        name: Build Docker Image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: false
+          target: groundcover
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: GF_VERSION=${{ env.GF_VERSION }}
+          tags: grafana-groundcover

@@ -1,0 +1,55 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Login to Quay.io
+        uses: docker/login-action@v2
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+      -
+        name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::125608480246:role/grafana-github-actions
+      -
+        name: Login to Amazon ECR Public
+        id: login-ecr-public
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          registry-type: public
+      -
+        name: Get Grafana Version
+        run: echo "GF_VERSION=$(npm pkg get version | tr -d '"')" >> $GITHUB_ENV
+      -
+        name: Build Docker Image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          target: groundcover
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: GF_VERSION=${{ env.GF_VERSION }}
+          tags: |
+            quay.io/groundcover/grafana-groundcover:${{ github.ref_name	}}-grafana${{ env.GF_VERSION }}
+            public.ecr.aws/groundcovercom/grafana-groundcover:${{ github.ref_name	}}-grafana${{ env.GF_VERSION }}

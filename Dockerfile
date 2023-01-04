@@ -1,3 +1,5 @@
+ARG GF_VERSION
+
 FROM node:16-alpine3.15 as js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
@@ -92,3 +94,9 @@ COPY ./packaging/docker/run.sh /run.sh
 
 USER grafana
 ENTRYPOINT [ "/run.sh" ]
+
+
+FROM grafana/grafana:${GF_VERSION} as groundcover
+
+COPY --from=js-builder /grafana/public ./public
+COPY --from=js-builder /grafana/tools ./tools
