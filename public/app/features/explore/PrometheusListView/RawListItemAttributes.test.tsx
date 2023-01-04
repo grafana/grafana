@@ -1,7 +1,6 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
-import { getMockString } from './ItemValues.test';
 import { RawListValue } from './RawListItem';
 import RawListItemAttributes from './RawListItemAttributes';
 
@@ -13,8 +12,8 @@ const getDefaultProps = (
     isExpandedView: boolean;
   }>
 ) => {
-  const key = getMockString(8);
-  const value = getMockString(12);
+  const key = 'key';
+  const value = 'value';
 
   return {
     value: {
