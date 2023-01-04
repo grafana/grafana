@@ -94,14 +94,14 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *models.ReqContext) response.Respo
 		}
 		return response.Error(500, "Failed to get user", err)
 	}
-	result := models.UserProfileDTO{
-		Id:             usr.ID,
+	result := user.UserProfileDTO{
+		ID:             usr.ID,
 		Name:           usr.Name,
 		Email:          usr.Email,
 		Login:          usr.Login,
 		Theme:          usr.Theme,
 		IsGrafanaAdmin: usr.IsAdmin,
-		OrgId:          usr.OrgID,
+		OrgID:          usr.OrgID,
 		UpdatedAt:      usr.Updated,
 		CreatedAt:      usr.Created,
 	}
@@ -560,7 +560,7 @@ type UpdateSignedInUserParams struct {
 	// To change the email, name, login, theme, provide another one.
 	// in:body
 	// required:true
-	Body models.UpdateUserCommand `json:"body"`
+	Body user.UpdateUserCommand `json:"body"`
 }
 
 // swagger:parameters userSetUsingOrg
@@ -582,7 +582,7 @@ type ChangeUserPasswordParams struct {
 	// To change the email, name, login, theme, provide another one.
 	// in:body
 	// required:true
-	Body models.ChangeUserPasswordCommand `json:"body"`
+	Body user.ChangeUserPasswordCommand `json:"body"`
 }
 
 // swagger:parameters getUserByID
@@ -619,7 +619,7 @@ type UpdateUserParams struct {
 	// To change the email, name, login, theme, provide another one.
 	// in:body
 	// required:true
-	Body models.UpdateUserCommand `json:"body"`
+	Body user.UpdateUserCommand `json:"body"`
 	// in:path
 	// required:true
 	UserID int64 `json:"user_id"`
@@ -629,14 +629,14 @@ type UpdateUserParams struct {
 type SearchUsersResponse struct {
 	// The response message
 	// in: body
-	Body models.SearchUserQueryResult `json:"body"`
+	Body user.SearchUserQueryResult `json:"body"`
 }
 
 // swagger:response userResponse
 type UserResponse struct {
 	// The response message
 	// in: body
-	Body models.UserProfileDTO `json:"body"`
+	Body user.UserProfileDTO `json:"body"`
 }
 
 // swagger:response getUserOrgListResponse

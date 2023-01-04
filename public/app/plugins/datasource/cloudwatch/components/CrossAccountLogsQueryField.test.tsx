@@ -5,6 +5,8 @@ import lodash from 'lodash';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
+import { ResourceResponse, LogGroupResponse } from '../types';
+
 import { CrossAccountLogsQueryField } from './CrossAccountLogsQueryField';
 
 const defaultProps = {
@@ -24,16 +26,20 @@ const defaultProps = {
   fetchLogGroups: () =>
     Promise.resolve([
       {
-        label: 'logGroup1',
-        text: 'logGroup1',
-        value: 'arn:partition:service:region:account-id123:loggroup:someloggroup',
+        accountId: '123',
+        value: {
+          name: 'logGroup1',
+          arn: 'arn:partition:service:region:account-id123:loggroup:someloggroup',
+        },
       },
       {
-        label: 'logGroup2',
-        text: 'logGroup2',
-        value: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        accountId: '456',
+        value: {
+          name: 'logGroup2',
+          arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        },
       },
-    ]),
+    ] as Array<ResourceResponse<LogGroupResponse>>),
   onChange: jest.fn(),
 };
 
@@ -155,9 +161,10 @@ describe('CrossAccountLogsQueryField', () => {
     await userEvent.click(screen.getByText('Add log groups'));
     expect(onChange).toHaveBeenCalledWith([
       {
-        label: 'logGroup2',
-        text: 'logGroup2',
-        value: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        name: 'logGroup2',
+        arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        accountId: '456',
+        accountLabel: undefined,
       },
     ]);
   });
@@ -171,9 +178,10 @@ describe('CrossAccountLogsQueryField', () => {
     await userEvent.click(screen.getByText('Cancel'));
     expect(onChange).not.toHaveBeenCalledWith([
       {
-        label: 'logGroup2',
-        text: 'logGroup2',
-        value: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        name: 'logGroup2',
+        arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        accountId: '456',
+        accountLabel: undefined,
       },
     ]);
   });
@@ -198,9 +206,10 @@ describe('CrossAccountLogsQueryField', () => {
     const fetchLogGroups = jest.fn(async () => {
       await Promise.all([defer.promise]);
       return Array(50).map((i) => ({
-        value: `logGroup${i}`,
-        text: `logGroup${i}`,
-        label: `logGroup${i}`,
+        value: {
+          arn: `logGroup${i}`,
+          name: `logGroup${i}`,
+        },
       }));
     });
     render(<CrossAccountLogsQueryField {...defaultProps} fetchLogGroups={fetchLogGroups} />);
