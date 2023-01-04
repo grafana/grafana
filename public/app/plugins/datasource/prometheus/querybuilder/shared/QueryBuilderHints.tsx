@@ -46,7 +46,7 @@ export const QueryBuilderHints = <T extends PromLokiVisualQuery>({
               <Tooltip content={`${hint.label} ${hint.fix?.label}`} key={hint.type}>
                 <Button
                   onClick={() => {
-                    reportInteraction('grafana_explore_query_builder_hints_clicked', {
+                    reportInteraction('grafana_query_builder_hints_clicked', {
                       hint: hint.type,
                       datasourceType: datasource.type,
                     });
