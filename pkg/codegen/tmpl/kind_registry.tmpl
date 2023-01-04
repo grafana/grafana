@@ -23,7 +23,7 @@ import (
 // For example, a validation HTTP middleware for any kind-schematized object type.
 type Base struct {
 	all []kindsys.Interface
-	numRaw, numStructured int
+	numStructured int
 	{{- range .Kinds }}
 	{{ .Properties.MachineName }} *{{ .Properties.MachineName }}.Kind{{end}}
 }
@@ -31,7 +31,7 @@ type Base struct {
 // type guards
 var (
 {{- range .Kinds }}
-	_ kindsys.{{ if .IsRaw }}Raw{{ else }}Structured{{ end }} = &{{ .Properties.MachineName }}.Kind{}{{end}}
+	_ kindsys.Structured = &{{ .Properties.MachineName }}.Kind{}{{end}}
 )
 
 {{range .Kinds }}
@@ -44,7 +44,6 @@ func (b *Base) {{ .Properties.Name }}() *{{ .Properties.MachineName }}.Kind {
 func doNewBase(rt *thema.Runtime) *Base {
 	var err error
 	reg := &Base{
-	  numRaw: {{ .NumRaw }},
 	  numStructured: {{ .NumStructured }},
 	}
 

@@ -47,20 +47,6 @@ func (b *Base) All() []kindsys.Interface {
 	return ret
 }
 
-// AllRaw returns a slice of the [kindsys.Raw] instances for all raw kinds.
-//
-// The returned slice is sorted lexicographically by kind machine name.
-func (b *Base) AllRaw() []kindsys.Raw {
-	ret := make([]kindsys.Raw, 0, b.numRaw)
-	for _, k := range b.all {
-		if rk, is := k.(kindsys.Raw); is {
-			ret = append(ret, rk)
-		}
-	}
-
-	return ret
-}
-
 // AllStructured returns a slice of the [kindsys.Structured] instances for
 // all core structured kinds.
 //
