@@ -177,7 +177,7 @@ OptionsWithLegend: {
 
 // TODO docs
 OptionsWithTimezones: {
-	timezone?: [...string]
+	timezone?: [...TimeZone]
 } @cuetsy(kind="interface")
 
 // TODO docs
@@ -265,3 +265,13 @@ VizTooltipOptions: {
 	mode: TooltipDisplayMode
 	sort: SortOrder
 } @cuetsy(kind="interface")
+
+
+// TODO docs
+TimeZoneUtc: "utc"  // TODO @cuetsy(kind="const")
+
+// TODO docs
+TimeZoneBrowser: "browser"  // TODO @cuetsy(kind="const")
+
+// TODO docs
+TimeZone: *TimeZoneBrowser | TimeZoneUtc | string  @cuetsy(kind="type")

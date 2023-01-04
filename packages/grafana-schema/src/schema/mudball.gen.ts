@@ -331,7 +331,7 @@ export interface OptionsWithLegend {
  * TODO docs
  */
 export interface OptionsWithTimezones {
-  timezone?: Array<string>;
+  timezone?: Array<TimeZone>;
 }
 
 export const defaultOptionsWithTimezones: Partial<OptionsWithTimezones> = {
@@ -499,3 +499,10 @@ export interface VizTooltipOptions {
   mode: TooltipDisplayMode;
   sort: SortOrder;
 }
+
+/**
+ * TODO docs
+ */
+export type TimeZone = ('utc' | string);
+
+export const defaultTimeZone: TimeZone = 'browser';
