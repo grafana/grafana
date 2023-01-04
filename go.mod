@@ -60,7 +60,7 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grafana/alerting v0.0.0-20221221211348-c5ab25d1cb8a
-	github.com/grafana/cuetsy v0.1.1
+	github.com/grafana/cuetsy v0.1.5
 	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.5.1
 	github.com/grafana/grafana-plugin-sdk-go v0.147.0
@@ -402,6 +402,8 @@ replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
 // happen, for example, during a read when the sqlite db is under heavy write load.
 // This patch cherry picks compatible fixes from upstream xorm PR#1998 and can be reverted on upgrade to xorm v1.2.0+.
 replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6
+
+// replace xorm.io/xorm => ./pkg/util/xorm
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.

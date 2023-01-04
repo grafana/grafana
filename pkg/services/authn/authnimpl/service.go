@@ -7,11 +7,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	sync "github.com/grafana/grafana/pkg/services/authn/authnimpl/usersync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
@@ -20,7 +25,11 @@ import (
 // make sure service implements authn.Service interface
 var _ authn.Service = new(Service)
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service, apikeyService apikey.Service, userService user.Service) *Service {
+func ProvideService(
+	cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service, accessControlService accesscontrol.Service,
+	apikeyService apikey.Service, userService user.Service, loginAttempts loginattempt.Service, quotaService quota.Service,
+	authInfoService login.AuthInfoService, renderService rendering.Service,
+) *Service {
 	s := &Service{
 		log:           log.New("authn.service"),
 		cfg:           cfg,
@@ -29,15 +38,21 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Serv
 		postAuthHooks: []authn.PostAuthHookFn{},
 	}
 
+	s.clients[authn.ClientRender] = clients.ProvideRender(userService, renderService)
 	s.clients[authn.ClientAPIKey] = clients.ProvideAPIKey(apikeyService, userService)
 
 	if s.cfg.AnonymousEnabled {
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
 	}
 
+	// FIXME (kalleep): handle cfg.DisableLogin as well?
+	if s.cfg.BasicAuthEnabled && !s.cfg.DisableLogin {
+		s.clients[authn.ClientBasic] = clients.ProvideBasic(userService, loginAttempts)
+	}
+
 	// FIXME (jguer): move to User package
-	userSyncService := &sync.UserSync{}
-	orgUserSyncService := &sync.OrgSync{}
+	userSyncService := sync.ProvideUserSync(userService, authInfoService, quotaService)
+	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
 	s.RegisterPostAuthHook(userSyncService.SyncUser)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgUser)
 

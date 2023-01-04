@@ -7,7 +7,7 @@ Useful for testing a second implementation
 ## Currently configured in DB and instructions
 
 - [x] LDAP
-- [ ] SAML
+- [x] SAML
 - [ ] OAuth
 
 ## Deployment
@@ -37,6 +37,40 @@ config_file = devenv/docker/blocks/auth/authentik/ldap_authentik.toml
 sync_cron = "* * * * 1"
 active_sync_enabled = true
 ```
+
+## SAML Setup
+
+**Warning:** SLO
+
+Grafana expects SLO support to be communicated in the metadata
+
+Single Logout is not supported by authentik.
+https://github.com/goauthentik/authentik/issues/3321 
+
+**Warning** Client signature validation
+
+Grafana expects the idP to retrieve the client's public key from the metadata.
+Authentik does not seem to support this and therefore client signature verification is set
+as optional.
+
+```ini
+[auth.saml]
+enabled = true
+certificate_path = devenv/docker/blocks/auth/authentik/cert.crt
+private_key_path = devenv/docker/blocks/auth/authentik/key.pem
+idp_metadata_url = http://localhost:9000/api/v3/providers/saml/2/metadata/?download
+assertion_attribute_name = http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name
+assertion_attribute_login = http://schemas.goauthentik.io/2021/02/saml/username
+assertion_attribute_email = http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
+assertion_attribute_groups = http://schemas.xmlsoap.org/claims/Group
+assertion_attribute_org = http://schemas.xmlsoap.org/claims/Group
+allow_sign_up = true
+single_logout = false # not supported by authentik
+signature_algorithm = rsa-sha256
+allow_idp_initiated = true
+org_mapping = admin:1:Admin, editor:1:Editor, viewer:1:Viewer
+```
+
 
 ## Available users and groups
 
