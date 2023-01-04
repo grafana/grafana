@@ -84,7 +84,7 @@
     "contact-admin": "",
     "explanation": "",
     "logo": "",
-    "new-dashboard": "",
+    "new-dashboard": "新建仪表板",
     "preferred": "",
     "sampleData": "",
     "viewAll": "",
@@ -142,7 +142,7 @@
       "title": "组"
     },
     "alerting-home": {
-      "title": ""
+      "title": "首页"
     },
     "alerting-legacy": {
       "title": "警报（遗留）"
