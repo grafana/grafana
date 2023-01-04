@@ -1,4 +1,4 @@
-import * as raw from '../raw/dashboard/x/dashboard_types.gen';
+import * as raw from '../dashboard/x/dashboard_types.gen';
 
 export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = Record<string, unknown>>
   extends raw.Panel {
