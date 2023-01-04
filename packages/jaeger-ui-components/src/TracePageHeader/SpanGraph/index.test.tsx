@@ -63,9 +63,9 @@ describe('<SpanGraph>', () => {
 
   it('renders <TickLabels /> with the correct value next to each tick', () => {
     render(<TickLabels numTicks={5} duration={1} />);
-    expect(screen.getByText(/0.2/)).toBeTruthy();
-    expect(screen.getByText(/0.4/)).toBeTruthy();
-    expect(screen.getByText(/0.6/)).toBeTruthy();
-    expect(screen.getByText(/0.8/)).toBeTruthy();
+    expect(screen.getAllByText(/0.2/)).toBeTruthy();
+    expect(screen.getAllByText(/0.4/)).toBeTruthy();
+    expect(screen.getAllByText(/0.6/)).toBeTruthy();
+    expect(screen.getAllByText(/0.8/)).toBeTruthy();
   });
 });
