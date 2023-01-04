@@ -51,7 +51,7 @@ e2e.scenario({
       .window()
       .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
         if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.PageToolbar.containerV2().click();
+          e2e.components.NavToolbar.container().click();
         } else {
           e2e.components.PageToolbar.container().click();
         }

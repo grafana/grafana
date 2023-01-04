@@ -37,7 +37,7 @@ export function NavToolbar({
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
 
   return (
-    <div data-testid={Components.PageToolbar.containerV2} className={styles.pageToolbar}>
+    <div data-testid={Components.NavToolbar.container} className={styles.pageToolbar}>
       <div className={styles.menuButton}>
         <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={onToggleMegaMenu} />
       </div>

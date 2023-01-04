@@ -228,12 +228,11 @@ export const Components = {
     },
     searchInput: 'search transformations',
   },
+  NavToolbar: {
+    container: 'data-testid Nav toolbar',
+  },
   PageToolbar: {
-    /**
-     * @deprecated use containerV2 from Grafana 9.4 instead
-     */
     container: () => '.page-toolbar',
-    containerV2: 'data-testid Page toolbar',
     item: (tooltip: string) => `${tooltip}`,
   },
   QueryEditorToolbarItem: {

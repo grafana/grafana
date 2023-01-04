@@ -16,7 +16,7 @@ describe('Variables - Set options from ui', () => {
       .window()
       .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
         if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.PageToolbar.containerV2().click();
+          e2e.components.NavToolbar.container().click();
         } else {
           e2e.components.PageToolbar.container().click();
         }
@@ -72,7 +72,7 @@ describe('Variables - Set options from ui', () => {
       .window()
       .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
         if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.PageToolbar.containerV2().click();
+          e2e.components.NavToolbar.container().click();
         } else {
           e2e.components.PageToolbar.container().click();
         }
@@ -130,7 +130,7 @@ describe('Variables - Set options from ui', () => {
       .window()
       .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
         if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.PageToolbar.containerV2().click();
+          e2e.components.NavToolbar.container().click();
         } else {
           e2e.components.PageToolbar.container().click();
         }
