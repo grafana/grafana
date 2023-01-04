@@ -109,6 +109,8 @@ export function Metrics(props: Props) {
         label: m.displayName,
         description: m.description,
       }));
+    // Empty the filters here so that only the metric.type filter is set on service change
+    query.filters = [];
 
     if (metrics.length > 0 && !metrics.some((m) => m.value === templateSrv.replace(metricType))) {
       onMetricTypeChange(metrics[0]);
