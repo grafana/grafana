@@ -1,11 +1,10 @@
 import { dateTime, TimeRange } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { FormatRegistryID, TestVariable } from '@grafana/scenes';
 
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
 import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
-import { FormatRegistryID } from '../scenes/variables/interpolation/formatRegistry';
-import { TestVariable } from '../scenes/variables/variants/TestVariable';
 import { VariableAdapter, variableAdapters } from '../variables/adapters';
 import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../variables/query/adapter';
