@@ -21,8 +21,8 @@ export function CloudWatchLink({ panelData, query, datasource }: Props) {
   useEffect(() => {
     if (prevPanelData !== panelData && panelData?.request?.range) {
       const arns = (query.logGroups ?? [])
-        .filter((group) => group?.value)
-        .map((group) => (group.value ?? '').replace(/:\*$/, '')); // remove `:*` from end of arn
+        .filter((group) => group?.arn)
+        .map((group) => (group.arn ?? '').replace(/:\*$/, '')); // remove `:*` from end of arn
       const logGroupNames = query.logGroupNames;
       let sources = arns?.length ? arns : logGroupNames;
 
