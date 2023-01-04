@@ -25,6 +25,10 @@ export function getPageStyles(theme: GrafanaTheme2) {
       height: 100%;
       flex: 1 1 0;
       min-width: 0;
+
+      & .css-1x0t2fg {
+        left: 0;
+      }
     }
 
     .page-scrollbar-content {
