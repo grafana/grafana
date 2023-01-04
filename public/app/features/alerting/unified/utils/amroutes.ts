@@ -160,12 +160,9 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
     formRoutes.push(subFormRoute);
   });
 
-  // Frontend migration to use object_matchers instead of matchers
-  const matchers = route.matchers
-    ? route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? []
-    : route.object_matchers?.map(
-        (matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] } as MatcherFieldValue)
-      ) ?? [];
+  const objectMatchers =
+    route.object_matchers?.map((matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] })) ?? [];
+  const matchers = route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? [];
 
   const [groupWaitValue, groupWaitValueType] = intervalToValueAndType(route.group_wait, ['', 's']);
   const [groupIntervalValue, groupIntervalValueType] = intervalToValueAndType(route.group_interval, ['', 'm']);
@@ -173,8 +170,10 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
 
   return {
     id,
+    // Frontend migration to use object_matchers instead of matchers, match, and match_re
     object_matchers: [
       ...matchers,
+      ...objectMatchers,
       ...matchersToArrayFieldMatchers(route.match, false),
       ...matchersToArrayFieldMatchers(route.match_re, true),
     ],
@@ -224,27 +223,36 @@ export const formAmRouteToAmRoute = (
 
   const overrideRepeatInterval = overrideTimings && repeatIntervalValue;
   const repeat_interval = overrideRepeatInterval ? `${repeatIntervalValue}${repeatIntervalValueType}` : undefined;
+  const object_matchers = formAmRoute.object_matchers
+    ?.filter((route) => route.name && route.value && route.operator)
+    .map(({ name, operator, value }) => [name, operator, value] as ObjectMatcher);
+
+  const routes = formAmRoute.routes?.map((subRoute) =>
+    formAmRouteToAmRoute(alertManagerSourceName, subRoute, routeTree)
+  );
 
   const amRoute: Route = {
     ...(existing ?? {}),
     continue: formAmRoute.continue,
     group_by: group_by,
-    object_matchers: formAmRoute.object_matchers?.length
-      ? formAmRoute.object_matchers.map((matcher) => [matcher.name, matcher.operator, matcher.value])
-      : undefined,
+    object_matchers: object_matchers,
     match: undefined, // DEPRECATED: Use matchers
     match_re: undefined, // DEPRECATED: Use matchers
     group_wait,
     group_interval,
     repeat_interval,
-    routes: formAmRoute.routes?.map((subRoute) => formAmRouteToAmRoute(alertManagerSourceName, subRoute, routeTree)),
+    routes: routes,
     mute_time_intervals: formAmRoute.muteTimeIntervals,
   };
 
+  // non-Grafana managed rules should use "matchers", Grafana-managed rules should use "object_matchers"
+  // Grafana maintains a fork of AM to support all utf-8 characters in the "object_matchers" property values but this
+  // does not exist in upstream AlertManager
   if (alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
     amRoute.matchers = formAmRoute.object_matchers?.map(({ name, operator, value }) => `${name}${operator}${value}`);
     amRoute.object_matchers = undefined;
   } else {
+    amRoute.object_matchers = normalizeMatchers(amRoute);
     amRoute.matchers = undefined;
   }
 
