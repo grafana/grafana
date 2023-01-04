@@ -1,6 +1,7 @@
 import { defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@grafana/schema';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { SceneGridLayout, SceneGridRow, VizPanel } from '../components';
 import { SceneQueryRunner } from '../querying/SceneQueryRunner';
@@ -137,31 +138,18 @@ describe('DashboardLoader', () => {
 
   describe('when organizing panels as scene children', () => {
     it('should create panels within collapsed rows', () => {
-      const panel: Panel = {
+      const panel = createPanelJSONFixture({
         title: 'test',
-        type: 'timeseries',
         gridPos: { x: 1, y: 0, w: 12, h: 8 },
-        fieldConfig: {
-          defaults: {},
-          overrides: [],
-        },
-        options: {
-          defaults: {},
-          overrides: [],
-        },
-        transformations: [],
-        transparent: false,
-        repeatDirection: 'h',
-      };
+      }) as Panel;
 
-      const row: RowPanel = {
+      const row = createPanelJSONFixture({
         title: 'test',
         type: 'row',
         gridPos: { x: 0, y: 0, w: 12, h: 1 },
         collapsed: true,
-        id: 1,
         panels: [panel],
-      };
+      }) as unknown as RowPanel;
 
       const dashboard = {
         ...defaultDashboard,
@@ -183,7 +171,7 @@ describe('DashboardLoader', () => {
     });
 
     it('should create panels within expanded row', () => {
-      const panelOutOfRow: Panel = {
+      const panelOutOfRow = createPanelJSONFixture({
         title: 'Out of a row',
         gridPos: {
           h: 8,
@@ -191,22 +179,8 @@ describe('DashboardLoader', () => {
           x: 0,
           y: 0,
         },
-        id: 2,
-        pluginVersion: '9.4.0-pre',
-        type: 'text',
-        fieldConfig: {
-          defaults: {},
-          overrides: [],
-        },
-        options: {
-          defaults: {},
-          overrides: [],
-        },
-        transformations: [],
-        transparent: false,
-        repeatDirection: 'h',
-      };
-      const rowWithPanel: RowPanel = {
+      });
+      const rowWithPanel = createPanelJSONFixture({
         title: 'Row with panel',
         type: 'row',
         collapsed: false,
@@ -216,36 +190,19 @@ describe('DashboardLoader', () => {
           x: 0,
           y: 8,
         },
-        id: 7,
         // This panels array is not used if the row is not collapsed
         panels: [],
-      };
-      const panelInRow: Panel = {
-        datasource: {},
-        description: '',
-        repeatDirection: 'h',
+      });
+      const panelInRow = createPanelJSONFixture({
         gridPos: {
           h: 8,
           w: 12,
           x: 0,
           y: 9,
         },
-        id: 3,
-        pluginVersion: '9.4.0-pre',
         title: 'In row 1',
-        type: 'text',
-        fieldConfig: {
-          defaults: {},
-          overrides: [],
-        },
-        options: {
-          defaults: {},
-          overrides: [],
-        },
-        transformations: [],
-        transparent: false,
-      };
-      const emptyRow: RowPanel = {
+      });
+      const emptyRow = createPanelJSONFixture({
         collapsed: false,
         gridPos: {
           h: 1,
@@ -253,12 +210,11 @@ describe('DashboardLoader', () => {
           x: 0,
           y: 17,
         },
-        id: 5,
         // This panels array is not used if the row is not collapsed
         panels: [],
         title: 'Empty row',
         type: 'row',
-      };
+      });
       const dashboard = {
         ...defaultDashboard,
         panels: [panelOutOfRow, rowWithPanel, panelInRow, emptyRow],
