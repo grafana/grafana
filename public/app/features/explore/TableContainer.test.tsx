@@ -1,7 +1,7 @@
 import { screen, render, within } from '@testing-library/react';
 import React from 'react';
 
-import { DataFrame, toDataFrame, FieldType, InternalTimeZones, TimeRange } from '@grafana/data';
+import { DataFrame, toDataFrame, FieldType, InternalTimeZones, TimeRange, getDefaultTimeRange } from '@grafana/data';
 import { ExploreId } from 'app/types/explore';
 
 import { TableContainer } from './TableContainer';
