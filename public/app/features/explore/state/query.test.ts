@@ -172,7 +172,7 @@ describe('running queries', () => {
         orgId: 'A',
       },
     };
-    const type = LOGS_VOLUME_QUERY;
+
     const dispatchedActions = await thunkTester(initialState)
       .givenThunk(cancelQueries)
       .whenThunkIsDispatched(exploreId);
@@ -180,8 +180,8 @@ describe('running queries', () => {
     expect(dispatchedActions).toEqual([
       scanStopAction({ exploreId }),
       cancelQueriesAction({ exploreId }),
-      storeSuppQueryDataProviderAction({ exploreId, type }),
-      cleanSuppQueryAction({ exploreId, type }),
+      storeSuppQueryDataProviderAction({ exploreId, type: LOGS_VOLUME_QUERY }),
+      cleanSuppQueryAction({ exploreId, type: LOGS_VOLUME_QUERY }),
     ]);
   });
 });

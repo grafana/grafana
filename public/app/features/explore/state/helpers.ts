@@ -47,9 +47,6 @@ export const createDefaultInitialState = () => {
             enabled: true,
           },
         },
-        suppQueryDataProvider: {},
-        suppQueryDataSubscription: {},
-        suppQueryData: {},
       },
     },
   };

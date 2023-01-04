@@ -135,7 +135,7 @@ const storeSuppQueryDataSubscriptionAction = createAction<StoreSuppQueryDataSubs
 const updateSuppQueryDataAction = createAction<{
   exploreId: ExploreId;
   type: string;
-  data?: DataQueryResponse;
+  data: DataQueryResponse;
 }>('explore/updateSuppQueryDataAction');
 
 export interface QueryEndedPayload {
@@ -237,11 +237,13 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
     dispatch(scanStopAction({ exploreId }));
     dispatch(cancelQueriesAction({ exploreId }));
 
-    const suppQueries = getState().explore[exploreId]!.supportingQueries;
-    for (const type of Object.keys(suppQueries)) {
+    const supportingQueries = getState().explore[exploreId]!.supportingQueries;
+    // Cancel all data providers
+    for (const type of Object.keys(supportingQueries)) {
       dispatch(storeSuppQueryDataProviderAction({ exploreId, dataProvider: undefined, type }));
 
-      if (suppQueries[type] && suppQueries[type].data?.state !== LoadingState.Done) {
+      // And clear any incomplete data
+      if (supportingQueries[type].data?.state !== LoadingState.Done) {
         dispatch(cleanSuppQueryAction({ exploreId, type }));
       }
     }
@@ -570,8 +572,6 @@ export const runQueries = (
               type,
             })
           );
-        }
-        for (const type of Object.keys(supportingQueries)) {
           dispatch(cleanSuppQueryAction({ exploreId, type }));
         }
 

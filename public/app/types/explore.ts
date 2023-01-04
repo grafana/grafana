@@ -1,4 +1,3 @@
-import { Provider } from 'react-redux';
 import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
 
 import {
