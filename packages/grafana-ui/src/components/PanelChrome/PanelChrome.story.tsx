@@ -65,26 +65,21 @@ export const Examples = () => {
     <DashboardStoryCanvas>
       <HorizontalGroup spacing="md" align="flex-start">
         <VerticalGroup spacing="md">
-          {renderPanel('Default panel with error state indicator', {
+          {renderPanel('Default panel with error status', {
             title: 'Default title',
-            leftItems: [
-              <PanelChrome.ErrorIndicator
-                key="errorIndicator"
-                error="Error text"
-                onClick={action('ErrorIndicator: onClick fired')}
-              />,
-            ],
+            status: {
+              message: 'Error text',
+              onClick: action('ErrorIndicator: onClick fired'),
+            },
           })}
-          {renderPanel('No padding with error state indicator', {
+          {renderPanel('No padding with error state', {
             padding: 'none',
             title: 'Default title',
-            leftItems: [
-              <PanelChrome.ErrorIndicator
-                key="errorIndicator"
-                error="Error text"
-                onClick={action('ErrorIndicator: onClick fired')}
-              />,
-            ],
+            loadingState: LoadingState.Error,
+          })}
+          {renderPanel('No title with streaming state', {
+            title: '',
+            loadingState: LoadingState.Streaming,
           })}
         </VerticalGroup>
         <VerticalGroup spacing="md">
@@ -94,22 +89,21 @@ export const Examples = () => {
           })}
         </VerticalGroup>
       </HorizontalGroup>
-      <HorizontalGroup spacing="md">
+      <HorizontalGroup spacing="md" align="flex-start">
         <VerticalGroup spacing="md">
-          {renderPanel('No title and loading indicator', {
-            title: '',
+          {renderPanel('Default panel with deprecated error indicator', {
+            title: 'Default title',
             leftItems: [
-              <PanelChrome.LoadingIndicator
-                loading={loading}
-                onCancel={() => setLoading(false)}
-                key="loading-indicator"
+              <PanelChrome.ErrorIndicator
+                key="errorIndicator"
+                error="Error text"
+                onClick={action('ErrorIndicator: onClick fired')}
               />,
             ],
           })}
-        </VerticalGroup>
-        <VerticalGroup spacing="md">
-          {renderPanel('Very long title', {
-            title: 'Very long title that should get ellipsis when there is no more space',
+          {renderPanel('No padding with deprecated loading indicator', {
+            padding: 'none',
+            title: 'Default title',
             leftItems: [
               <PanelChrome.LoadingIndicator
                 loading={loading}
@@ -129,7 +123,9 @@ export const Basic: ComponentStory<typeof PanelChrome> = (args: PanelChromeProps
 
   return (
     <PanelChrome {...args}>
-      {(width: number, height: number) => <div style={{ height, width, ...contentStyle }}>Description text</div>}
+      {(width: number, height: number) => (
+        <div style={{ height, width, ...contentStyle }}>Panel in a loading state</div>
+      )}
     </PanelChrome>
   );
 };

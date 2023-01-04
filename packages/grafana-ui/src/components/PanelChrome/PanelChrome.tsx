@@ -79,7 +79,11 @@ export function PanelChrome({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const headerHeight = getHeaderHeight(theme, title, leftItems);
+  // To Do rely on hoverHeader prop for header, not separate props
+  // once hoverHeader is implemented
+  const hasHeader = title.length > 0 || leftItems.length > 0;
+
+  const headerHeight = getHeaderHeight(theme, hasHeader);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
 
   const headerStyles: CSSProperties = {
@@ -174,8 +178,8 @@ const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => Rea
   return toRender.length > 0 ? renderer(toRender) : null;
 };
 
-const getHeaderHeight = (theme: GrafanaTheme2, title: string, items: ReactNode[]) => {
-  if (title.length > 0 || items.length > 0) {
+const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean) => {
+  if (hasHeader) {
     return theme.spacing.gridSize * theme.components.panel.headerHeight;
   }
   return 0;
