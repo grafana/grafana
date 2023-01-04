@@ -26,10 +26,6 @@ const styles = {
     height: 100%;
     overflow: scroll;
   `,
-  mobileWrapper: css`
-    height: 100%;
-    overflow: scroll;
-  `,
   switchWrapper: css`
     display: flex;
     flex-direction: row;
@@ -134,7 +130,7 @@ const RawListContainer = (props: RawListContainerProps) => {
             <List
               ref={listRef}
               itemCount={items.length}
-              className={isExpandedView ? styles.mobileWrapper : styles.wrapper}
+              className={styles.wrapper}
               itemSize={(index) => getListItemHeight(index, isExpandedView)}
               height={calculateInitialHeight(items.length)}
               width="100%"
