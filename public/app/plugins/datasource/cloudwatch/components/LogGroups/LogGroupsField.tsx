@@ -36,9 +36,7 @@ export const LogGroupsField = ({
     // If log group names are stored in the query model, make a new DescribeLogGroups request for each log group to load the arn. Then update the query model.
     if (!logGroups?.length && legacyLogGroupNames?.length) {
       Promise.all(
-        legacyLogGroupNames.map((lg) =>
-          datasource.api.describeCrossAccountLogGroups({ region: region, logGroupNamePrefix: lg })
-        )
+        legacyLogGroupNames.map((lg) => datasource.api.describeLogGroups({ region: region, logGroupNamePrefix: lg }))
       ).then((results) => {
         onChange(
           results.flatMap((r) =>
@@ -57,7 +55,7 @@ export const LogGroupsField = ({
     <div className={`gf-form gf-form--grow flex-grow-1 ${rowGap}`}>
       <LogGroupsSelector
         fetchLogGroups={(params: Partial<DescribeLogGroupsRequest>) =>
-          datasource.api.describeCrossAccountLogGroups({ region: region, ...params })
+          datasource.api.describeLogGroups({ region: region, ...params })
         }
         onChange={onChange}
         accountOptions={accountState.value}
