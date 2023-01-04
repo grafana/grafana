@@ -2,7 +2,7 @@
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
   "clipboard-button": {
     "inline-toast": {
-      "success": ""
+      "success": "Copiado"
     }
   },
   "common": {
@@ -105,13 +105,13 @@
       "title": "Administrador del servidor"
     },
     "admin-access": {
-      "title": ""
+      "title": "Usuarios y acceso"
     },
     "admin-general": {
-      "title": ""
+      "title": "General"
     },
     "admin-plugins": {
-      "title": ""
+      "title": "Plugins y datos"
     },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
@@ -197,7 +197,7 @@
       "title": "Organizaciones"
     },
     "global-users": {
-      "subtitle": "",
+      "subtitle": "Gestionar usuarios de Grafana",
       "title": "Usuarios",
       "titleBeforeTopnav": "Usuarios"
     },
@@ -242,7 +242,7 @@
     },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
-      "title": "",
+      "title": "Preferencias por defecto",
       "titleBeforeTopnav": "Preferencias"
     },
     "playlists": {
@@ -270,7 +270,7 @@
       "placeholder": "Buscar Grafana"
     },
     "search-dashboards": {
-      "title": ""
+      "title": "Buscar dashboards"
     },
     "server-settings": {
       "subtitle": "Vea la configuración definida en los ajustes de Grafana",
@@ -319,36 +319,36 @@
     "title": "Últimas entradas del blog"
   },
   "notifications": {
-    "starred-dashboard": "",
-    "unstarred-dashboard": ""
+    "starred-dashboard": "Dashboard destacado",
+    "unstarred-dashboard": "Dashboard no destacado"
   },
   "panel": {
     "header-menu": {
-      "hide-legend": "",
+      "hide-legend": "Ocultar leyenda",
       "inspect": "Inspeccionar",
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
       "share": "Compartir",
-      "show-legend": "",
+      "show-legend": "Mostrar leyenda",
       "view": "Vista"
     }
   },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Actualización automática desactivada. Elija un intervalo de tiempo de actualización",
-      "duration-selected": ""
+      "duration-selected": "Elegir intervalo de tiempo de actualización con el intervalo actual {{durationAriaLabel}} seleccionado"
     },
     "live-option": {
-      "aria-label": "",
-      "label": ""
+      "aria-label": "Activar transmisión en directo",
+      "label": "En directo"
     },
     "off-option": {
       "aria-label": "Desactivar actualización automática",
       "label": "Apagado"
     },
     "select-button": {
-      "auto-refresh": ""
+      "auto-refresh": "Establecer intervalo de actualización automática"
     }
   },
   "share-modal": {
@@ -407,7 +407,7 @@
       "name": "Nombre de la instantánea",
       "timeout": "Tiempo de espera (segundos)",
       "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel.",
-      "url-label": ""
+      "url-label": "Capturar URL"
     },
     "tab-title": {
       "embed": "Incrustar",
@@ -423,7 +423,7 @@
       "light": "Claro"
     },
     "view-json": {
-      "copy-button": ""
+      "copy-button": "Copiar al portapapeles"
     }
   },
   "shared-dashboard": {
@@ -453,46 +453,46 @@
       "title": "Intervalo de tiempo absoluto"
     },
     "calendar": {
-      "apply-button": "",
+      "apply-button": "Aplicar rango de tiempo",
       "cancel-button": "Cancelar",
-      "select-time": ""
+      "select-time": "Seleccionar un rango de tiempo"
     },
     "content": {
-      "empty-recent-list": "",
-      "filter-placeholder": ""
+      "empty-recent-list": "<0><0>Parece que no has utilizado antes este selector de tiempo. En cuanto introduzcas algún intervalo de tiempo, los intervalos que hayas usado recientemente aparecerán aquí./0></0><1><0>Lee la documentación</0><1> para saber más sobre cómo introducir rangos de tiempo personalizados.</1></1>",
+      "filter-placeholder": "Buscar rangos rápidos"
     },
     "footer": {
-      "change-settings-button": "",
-      "fiscal-year-option": "",
-      "fiscal-year-start": "",
-      "time-zone-option": "",
-      "time-zone-selection": ""
+      "change-settings-button": "Cambiar ajustes de tiempo",
+      "fiscal-year-option": "Ejercicio fiscal",
+      "fiscal-year-start": "Mes de inicio del ejercicio fiscal",
+      "time-zone-option": "Huso horario",
+      "time-zone-selection": "Selección del huso horario"
     },
     "range-content": {
-      "apply-button": "",
-      "default-error": "",
-      "fiscal-year": "",
-      "from-input": "",
-      "range-error": "",
-      "to-input": ""
+      "apply-button": "Aplicar rango de tiempo",
+      "default-error": "Introducir una fecha anterior o «ahora»",
+      "fiscal-year": "Ejercicio fiscal",
+      "from-input": "Desde",
+      "range-error": "«Desde» no puede ser posterior a «hasta»",
+      "to-input": "Hasta"
     },
     "range-picker": {
-      "backwards-time-aria-label": "",
-      "current-time-selected": "",
-      "forwards-time-aria-label": "",
-      "to": "",
-      "zoom-out-button": "",
-      "zoom-out-tooltip": ""
+      "backwards-time-aria-label": "Retrasar el rango de tiempo",
+      "current-time-selected": "Rango de tiempo seleccionado: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Adelantar el rango de tiempo",
+      "to": "hasta",
+      "zoom-out-button": "Reducir el rango de tiempo",
+      "zoom-out-tooltip": "Reducir el rango de tiempo <1></1> CTRL+Z"
     },
     "time-range": {
-      "aria-role": "",
-      "default-title": "",
-      "example-title": "",
-      "specify": ""
+      "aria-role": "Selección del rango de tiempo",
+      "default-title": "Rangos de tiempo",
+      "example-title": "Ejemplos de rangos de tiempo",
+      "specify": "Especificar el rango de tiempo <1></1>"
     },
     "zone": {
-      "select-aria-label": "",
-      "select-search-input": ""
+      "select-aria-label": "Selector de huso horario",
+      "select-search-input": "Escribir para buscar (país, ciudad, abreviatura)"
     }
   },
   "user-orgs": {
@@ -524,11 +524,11 @@
   },
   "variable": {
     "picker": {
-      "input": "",
-      "link-all": "",
-      "option-all": "",
-      "option-selected-values": "",
-      "option-tooltip": ""
+      "input": "Introducir el valor de la variable",
+      "link-all": "Todo",
+      "option-all": "Todo",
+      "option-selected-values": "Seleccionados",
+      "option-tooltip": "Eliminar selecciones"
     }
   }
 }
