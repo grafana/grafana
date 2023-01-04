@@ -81,6 +81,12 @@
         "@types/d3"
       ]
     },
+    {
+      "groupName": "visx",
+      "matchPackagePrefixes": [
+        "@visx/"
+      ]
+    }
   ],
   "pin": {
     "enabled": false
