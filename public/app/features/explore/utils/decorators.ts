@@ -29,6 +29,7 @@ import { preProcessPanelData } from '../../query/state/runRequest';
 export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData => {
   const graphFrames: DataFrame[] = [];
   const tableFrames: DataFrame[] = [];
+  const rawPrometheusFrames: DataFrame[] = [];
   const logsFrames: DataFrame[] = [];
   const traceFrames: DataFrame[] = [];
   const nodeGraphFrames: DataFrame[] = [];
@@ -47,6 +48,9 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
         break;
       case 'table':
         tableFrames.push(frame);
+        break;
+      case 'rawPrometheus':
+        rawPrometheusFrames.push(frame);
         break;
       case 'nodeGraph':
         nodeGraphFrames.push(frame);
@@ -73,9 +77,11 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     traceFrames,
     nodeGraphFrames,
     flameGraphFrames,
+    rawPrometheusFrames,
     graphResult: null,
     tableResult: null,
     logsResult: null,
+    rawPrometheusResult: null,
   };
 };
 
@@ -105,7 +111,7 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
 
 /**
  * This processing returns Observable because it uses Transformer internally which result type is also Observable.
- * In this case the transformer should return single result but it is possible that in the future it could return
+ * In this case the transformer should return single result, but it is possible that in the future it could return
  * multiple results and so this should be used with mergeMap or similar to unbox the internal observable.
  */
 export const decorateWithTableResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
@@ -158,6 +164,56 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
   );
 };
 
+export const decorateWithRawPrometheusResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
+  // Prometheus has a custom frame visualization alongside the table view, but they both handle the data the same
+  const tableFrames = data.rawPrometheusFrames;
+
+  if (!tableFrames || tableFrames.length === 0) {
+    return of({ ...data, tableResult: null });
+  }
+
+  tableFrames.sort((frameA: DataFrame, frameB: DataFrame) => {
+    const frameARefId = frameA.refId!;
+    const frameBRefId = frameB.refId!;
+
+    if (frameARefId > frameBRefId) {
+      return 1;
+    }
+    if (frameARefId < frameBRefId) {
+      return -1;
+    }
+    return 0;
+  });
+
+  const hasOnlyTimeseries = tableFrames.every((df) => isTimeSeries(df));
+
+  // If we have only timeseries we do join on default time column which makes more sense. If we are showing
+  // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
+  // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
+  const transformer = hasOnlyTimeseries
+    ? of(tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}))
+    : of(tableFrames).pipe(standardTransformers.mergeTransformer.operator({}));
+
+  return transformer.pipe(
+    map((frames) => {
+      const frame = frames[0];
+
+      // set display processor
+      for (const field of frame.fields) {
+        field.display =
+          field.display ??
+          getDisplayProcessor({
+            field,
+            theme: config.theme2,
+            timeZone: data.request?.timezone ?? 'browser',
+          });
+      }
+
+      return { ...data, rawPrometheusResult: frame };
+    })
+  );
+};
+
 export const decorateWithLogsResult =
   (
     options: {
@@ -198,7 +254,9 @@ export function decorateData(
     map(decorateWithCorrelations({ queries, correlations })),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
+    map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable })),
+    mergeMap(decorateWithRawPrometheusResult),
     mergeMap(decorateWithTableResult)
   );
 }

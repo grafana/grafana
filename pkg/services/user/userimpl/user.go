@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -191,6 +192,10 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	if s.cfg.CaseInsensitiveLogin {
+		cmd.Login = strings.ToLower(cmd.Login)
+		cmd.Email = strings.ToLower(cmd.Email)
+	}
 	return s.store.Update(ctx, cmd)
 }
 
@@ -440,7 +445,7 @@ func (s *Service) CreateUserForTests(ctx context.Context, cmd *user.CreateUserCo
 
 func (s *Service) getOrgIDForNewUser(ctx context.Context, cmd *user.CreateUserCommand) (int64, error) {
 	if s.cfg.AutoAssignOrg && cmd.OrgID != 0 {
-		if _, err := s.orgService.GetByID(ctx, &org.GetOrgByIdQuery{ID: cmd.OrgID}); err != nil {
+		if _, err := s.orgService.GetByID(ctx, &org.GetOrgByIDQuery{ID: cmd.OrgID}); err != nil {
 			return -1, err
 		}
 		return cmd.OrgID, nil

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -67,7 +68,7 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 
 	usr, err := hs.userService.Create(c.Req.Context(), &cmd)
 	if err != nil {
-		if errors.Is(err, models.ErrOrgNotFound) {
+		if errors.Is(err, org.ErrOrgNotFound) {
 			return response.Error(400, err.Error(), nil)
 		}
 

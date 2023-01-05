@@ -25,6 +25,12 @@ const createSupportBundle = async (data: SupportBundleCreateRequest) => {
   return result;
 };
 
+const subTitle = (
+  <span>
+    Choose the components for the support bundle. The support bundle will be available for 3 days after creation.
+  </span>
+);
+
 export const SupportBundlesCreate = ({}: Props): JSX.Element => {
   const onSubmit = useCallback(async (data) => {
     try {
@@ -57,7 +63,7 @@ export const SupportBundlesCreate = ({}: Props): JSX.Element => {
   }, {});
 
   return (
-    <Page navId="support-bundles" pageNav={{ text: 'Create support bundle' }}>
+    <Page navId="support-bundles" pageNav={{ text: 'Create support bundle' }} subTitle={subTitle}>
       <Page.Contents>
         <Page.OldNavOnly>
           <h3 className="page-sub-heading">Create support bundle</h3>
