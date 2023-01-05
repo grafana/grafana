@@ -600,7 +600,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			path:         "/api/annotations/mass-delete",
 			body:         "{\"dashboardId\": 2, \"panelId\": 1}",
 			method:       http.MethodPost,
-			expectedCode: http.StatusOK,
+			expectedCode: http.StatusForbidden,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
 		},
 	}
