@@ -14,7 +14,7 @@ To enable GrafanaCom as your authentication provider, you configure it to genera
 
 To use Grafana Com authentication:
 
-1. Log in to Grafana Com.
+1. Log in to [Grafana Com](https://grafana.com).
 1. To create an OAuth client, locate your organization and click **OAuth Clients**.
 1. Click **Add OAuth Client Application**.
 1. Add the name and URL of your running Grafana instance.
@@ -32,17 +32,15 @@ client_secret = eyJ0Ijoib2F1dGgyYyIhlmlkIjoiNzUwYmMzM2MxMGRjMjE6NDh3OWQiLCJ2Ijoi
 scopes = user:email
 allowed_organizations = sampleorganization
 enabled = true
-
-# prevents the sync of org roles from Grafana.com
-skip_org_role_sync = false
 ```
 
 ## Skip organization role sync
 
-To prevent the sync of org roles from Grafana.com, set `skip_org_role_sync` to `true`. This is useful if you want to use Grafana.com as an identity provider but want to manage the org roles in Grafana.
+To prevent the sync of org roles from Grafana.com, set `skip_org_role_sync` to `true`. This is useful if you want to use your Grafana instance to manage the organization roles for your users.
 
 ```ini
 [auth.grafana_com]
 # ..
+# prevents the sync of org roles from Grafana.com
 skip_org_role_sync = true
 ```

@@ -849,6 +849,8 @@ Administrators can increase this if they experience OAuth login state mismatch e
 
 ### oauth_skip_org_role_update_sync
 
+> **Note**: This option will soon be a legacy option in favor of OAuth provider specific `skip_org_role_sync` settings.
+
 Skip forced assignment of OrgID `1` or `auto_assign_org_id` for external logins. Default is `false`.
 Use this setting to allow users with external login to be manually assigned to multiple organizations.
 
@@ -857,6 +859,21 @@ By default, the users' organization and role is reset on every new login.
 > **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't update the user's organization role.
 > With Grafana 10, if `oauth_skip_org_role_update_sync` option is set to `false`, users with no mapping will be
 > reset to the default organization role on every login. [See `auto_assign_org_role` option]({{< relref ".#auto_assign_org_role" >}}).
+
+### [auth].<provider> skip_org_role_update_sync
+
+If you want to prevent org roles from being synced for a specific OAuth integration, set `skip_org_role_update_sync` to `true`.
+
+The `oauth_skip_org_role_update_sync` are independent of each other. `skip_org_role_sync` is specific to the provider integration, while `oauth_skip_org_role_sync_update` is a generic setting that only applies to `Github`, `Gitlab`, `AzureAD`, `Generic OAuth` integrations. We are deprecating the generic setting in favor of the provider specific settings.
+
+A table detailing what happens when the legacy option is enabled/disabled and an auth specific version is enabled/disabled is shown below.
+
+The table below shows the available OAuth providers and their setting with the default value and the skip org role sync setting.
+| OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
+| --- | --- | --- | --- | --- |
+| Grafana.com | true | false | will still sync Org Roles from Grafana.Com |
+| Grafana.com | false | true | skip org role sync for grafana.com |
+| Grafana.com | true | true | no sync from any OAuth integration as well as Grafana.Com |
 
 ### api_key_max_seconds_to_live
 
