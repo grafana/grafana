@@ -253,6 +253,9 @@
       "subtitle": "Applications de suivi et d'infrastructure",
       "title": "Suivi"
     },
+    "new": {
+      "title": ""
+    },
     "new-dashboard": {
       "title": "Nouveau tableau de bord"
     },
@@ -347,13 +350,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "Masquer la légende",
       "inspect": "Inspecter",
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
+      "query": "",
+      "remove": "",
       "share": "Partager",
       "show-legend": "Afficher la légende",
+      "unlink-library-panel": "",
       "view": "Afficher"
     }
   },
@@ -372,6 +384,14 @@
     },
     "select-button": {
       "auto-refresh": "Définir l'intervalle d'actualisation automatique"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
     }
   },
   "share-modal": {
