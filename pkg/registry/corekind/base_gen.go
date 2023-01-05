@@ -30,18 +30,17 @@ import (
 // Prefer All*() methods when performing operations generically across all kinds.
 // For example, a validation HTTP middleware for any kind-schematized object type.
 type Base struct {
-	all           []kindsys.Interface
-	numStructured int
-	dashboard     *dashboard.Kind
-	playlist      *playlist.Kind
-	team          *team.Kind
+	all       []kindsys.Core
+	dashboard *dashboard.Kind
+	playlist  *playlist.Kind
+	team      *team.Kind
 }
 
 // type guards
 var (
-	_ kindsys.Structured = &dashboard.Kind{}
-	_ kindsys.Structured = &playlist.Kind{}
-	_ kindsys.Structured = &team.Kind{}
+	_ kindsys.Core = &dashboard.Kind{}
+	_ kindsys.Core = &playlist.Kind{}
+	_ kindsys.Core = &team.Kind{}
 )
 
 // Dashboard returns the [kindsys.Interface] implementation for the dashboard kind.
@@ -61,9 +60,7 @@ func (b *Base) Team() *team.Kind {
 
 func doNewBase(rt *thema.Runtime) *Base {
 	var err error
-	reg := &Base{
-		numStructured: 3,
-	}
+	reg := &Base{}
 
 	reg.dashboard, err = dashboard.NewKind(rt)
 	if err != nil {

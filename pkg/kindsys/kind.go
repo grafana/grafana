@@ -67,14 +67,14 @@ type Interface interface {
 	Maturity() Maturity // TODO unclear if we want maturity for raw kinds
 }
 
-type Structured interface {
+type Core interface {
 	Interface
 
 	// TODO docs
 	Lineage() thema.Lineage
 
 	// TODO docs
-	Decl() *Decl[CoreStructuredProperties] // TODO figure out how to reconcile this interface with CustomStructuredProperties
+	Decl() *Decl[CoreProperties] // TODO figure out how to reconcile this interface with CustomProperties
 }
 
 // type Composable interface {
@@ -84,5 +84,5 @@ type Structured interface {
 // 	Lineage() thema.Lineage
 //
 // 	// TODO docs
-// 	Properties() CoreStructuredProperties // TODO figure out how to reconcile this interface with CustomStructuredProperties
+// 	Properties() CoreProperties // TODO figure out how to reconcile this interface with CustomProperties
 // }

@@ -26,11 +26,11 @@ type Kind struct {
 	lin    thema.ConvergentLineage[*Team]
 	jcodec vmux.Codec
 	valmux vmux.ValueMux[*Team]
-	decl   kindsys.Decl[kindsys.CoreStructuredProperties]
+	decl   kindsys.Decl[kindsys.CoreProperties]
 }
 
 // type guard
-var _ kindsys.Structured = &Kind{}
+var _ kindsys.Core = &Kind{}
 
 // TODO standard generated docs
 func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
@@ -100,12 +100,12 @@ func (k *Kind) Maturity() kindsys.Maturity {
 
 // Decl returns the [kindsys.Decl] containing both CUE and Go representations of the
 // team declaration in .cue files.
-func (k *Kind) Decl() *kindsys.Decl[kindsys.CoreStructuredProperties] {
+func (k *Kind) Decl() *kindsys.Decl[kindsys.CoreProperties] {
 	d := k.decl
 	return &d
 }
 
-// Props returns a [kindsys.SomeKindProps], with underlying type [kindsys.CoreStructuredProperties],
+// Props returns a [kindsys.SomeKindProps], with underlying type [kindsys.CoreProperties],
 // representing the static properties declared in the team kind.
 //
 // This method is identical to calling Decl().Props. It is provided to satisfy [kindsys.Interface].

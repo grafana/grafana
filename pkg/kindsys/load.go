@@ -95,9 +95,9 @@ func ToKindMeta[T KindProperties](v cue.Value) (T, error) {
 
 	anyprops := any(*props).(SomeKindProperties)
 	switch anyprops.(type) {
-	case CoreStructuredProperties:
+	case CoreProperties:
 		kdef = fw.LookupPath(cue.MakePath(cue.Def("CoreStructured")))
-	case CustomStructuredProperties:
+	case CustomProperties:
 		kdef = fw.LookupPath(cue.MakePath(cue.Def("CustomStructured")))
 	case ComposableProperties:
 		kdef = fw.LookupPath(cue.MakePath(cue.Def("Composable")))
@@ -139,7 +139,7 @@ func (decl *SomeDecl) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOptio
 		rt = cuectx.GrafanaThemaRuntime()
 	}
 	switch decl.Properties.(type) {
-	case CoreStructuredProperties, CustomStructuredProperties, ComposableProperties:
+	case CoreProperties, CustomProperties, ComposableProperties:
 		return thema.BindLineage(decl.V.LookupPath(cue.MakePath(cue.Str("lineage"))), rt, opts...)
 	default:
 		panic("unreachable")
@@ -148,13 +148,13 @@ func (decl *SomeDecl) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOptio
 
 // IsCoreStructured indicates whether the represented kind is a core structured kind.
 func (decl *SomeDecl) IsCoreStructured() bool {
-	_, is := decl.Properties.(CoreStructuredProperties)
+	_, is := decl.Properties.(CoreProperties)
 	return is
 }
 
 // IsCustomStructured indicates whether the represented kind is a custom structured kind.
 func (decl *SomeDecl) IsCustomStructured() bool {
-	_, is := decl.Properties.(CustomStructuredProperties)
+	_, is := decl.Properties.(CustomProperties)
 	return is
 }
 
@@ -200,15 +200,15 @@ func (decl *Decl[T]) Some() *SomeDecl {
 // This is a low-level function, primarily intended for use in code generation.
 // For representations of core kinds that are useful in Go programs at runtime,
 // see ["github.com/grafana/grafana/pkg/registry/corekind"].
-func LoadCoreKind(declpath string, ctx *cue.Context, overlay fs.FS) (*Decl[CoreStructuredProperties], error) {
+func LoadCoreKind(declpath string, ctx *cue.Context, overlay fs.FS) (*Decl[CoreProperties], error) {
 	vk, err := cuectx.BuildGrafanaInstance(ctx, declpath, "kind", overlay)
 	if err != nil {
 		return nil, err
 	}
-	decl := &Decl[CoreStructuredProperties]{
+	decl := &Decl[CoreProperties]{
 		V: vk,
 	}
-	decl.Properties, err = ToKindMeta[CoreStructuredProperties](vk)
+	decl.Properties, err = ToKindMeta[CoreProperties](vk)
 	if err != nil {
 		return nil, err
 	}

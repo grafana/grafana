@@ -93,9 +93,9 @@ func main() {
 
 func nameFor(m kindsys.SomeKindProperties) string {
 	switch x := m.(type) {
-	case kindsys.CoreStructuredProperties:
+	case kindsys.CoreProperties:
 		return x.Name
-	case kindsys.CustomStructuredProperties:
+	case kindsys.CustomProperties:
 		return x.Name
 	case kindsys.ComposableProperties:
 		return x.Name
