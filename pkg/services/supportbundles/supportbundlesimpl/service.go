@@ -118,7 +118,13 @@ func (s *Service) create(ctx context.Context, collectors []string, usr *user.Sig
 
 	go func(uid string, collectors []string) {
 		ctx, cancel := context.WithTimeout(context.Background(), bundleCreationTimeout)
-		defer cancel()
+		defer func() {
+			if err := recover(); err != nil {
+				s.log.Error("support bundle collection panic", "err", err)
+			}
+			cancel()
+		}()
+
 		s.startBundleWork(ctx, collectors, uid)
 	}(bundle.UID, collectors)
 
