@@ -613,6 +613,65 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 		})
 	}
 }
+func TestService_AnnotationTypeScopeResolver(t *testing.T) {
+	type testCaseResolver struct {
+		desc    string
+		given   string
+		want    string
+		wantErr error
+	}
+
+	testCases := []testCaseResolver{
+		{
+			desc:    "correctly resolves dashboard annotations",
+			given:   "annotations:id:1",
+			want:    accesscontrol.ScopeAnnotationsTypeDashboard,
+			wantErr: nil,
+		},
+		{
+			desc:    "correctly resolves organization annotations",
+			given:   "annotations:id:2",
+			want:    accesscontrol.ScopeAnnotationsTypeOrganization,
+			wantErr: nil,
+		},
+		{
+			desc:    "invalid annotation ID",
+			given:   "annotations:id:123abc",
+			want:    "",
+			wantErr: accesscontrol.ErrInvalidScope,
+		},
+		{
+			desc:    "malformed scope",
+			given:   "annotations:1",
+			want:    "",
+			wantErr: accesscontrol.ErrInvalidScope,
+		},
+	}
+
+	dashboardAnnotation := annotations.Item{Id: 1, DashboardId: 1}
+	organizationAnnotation := annotations.Item{Id: 2}
+
+	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
+	_ = fakeAnnoRepo.Save(context.Background(), &dashboardAnnotation)
+	_ = fakeAnnoRepo.Save(context.Background(), &organizationAnnotation)
+
+	prefix, resolver := AnnotationTypeScopeResolver(fakeAnnoRepo)
+	require.Equal(t, "annotations:id:", prefix)
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			resolved, err := resolver.Resolve(context.Background(), 1, tc.given)
+			if tc.wantErr != nil {
+				require.Error(t, err)
+				require.Equal(t, tc.wantErr, err)
+			} else {
+				require.NoError(t, err)
+				require.Len(t, resolved, 1)
+				require.Equal(t, tc.want, resolved[0])
+			}
+		})
+	}
+}
 
 func setUpACL() {
 	viewerRole := org.RoleViewer
