@@ -50,7 +50,7 @@ func (gen *genCoreStructuredKind) JennyName() string {
 }
 
 func (gen *genCoreStructuredKind) Generate(decl *DeclForGen) (*codejen.File, error) {
-	if !decl.IsCoreStructured() {
+	if !decl.IsCore() {
 		return nil, nil
 	}
 

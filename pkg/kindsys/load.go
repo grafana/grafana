@@ -146,14 +146,14 @@ func (decl *SomeDecl) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOptio
 	}
 }
 
-// IsCoreStructured indicates whether the represented kind is a core structured kind.
-func (decl *SomeDecl) IsCoreStructured() bool {
+// IsCore indicates whether the represented kind is a core kind.
+func (decl *SomeDecl) IsCore() bool {
 	_, is := decl.Properties.(CoreProperties)
 	return is
 }
 
-// IsCustomStructured indicates whether the represented kind is a custom structured kind.
-func (decl *SomeDecl) IsCustomStructured() bool {
+// IsCustom indicates whether the represented kind is a custom kind.
+func (decl *SomeDecl) IsCustom() bool {
 	_, is := decl.Properties.(CustomProperties)
 	return is
 }
@@ -189,7 +189,7 @@ func (decl *Decl[T]) Some() *SomeDecl {
 //
 // declpath is the path to the directory containing the core kind declaration,
 // relative to the grafana/grafana root. For example, dashboards are in
-// "kinds/structured/dashboard".
+// "kinds/dashboard".
 //
 // The .cue file bytes containing the core kind declaration will be retrieved
 // from the central embedded FS, [grafana.CueSchemaFS]. If desired (e.g. for
