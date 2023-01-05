@@ -218,12 +218,14 @@ func ParsePluginFS(f fs.FS, rt *thema.Runtime) (*Tree, error) {
 		}
 		for _, s := range allslots {
 			iv := val.LookupPath(cue.ParsePath(s.slot.Name()))
-			lin, err := bindSlotLineage(iv, s.slot, r.meta, rt)
-			if lin != nil {
-				r.slotimpls[s.slot.Name()] = lin
-			}
-			if err != nil {
-				return nil, err
+			if iv.Exists() {
+				lin, err := bindSlotLineage(iv, s.slot, r.meta, rt)
+				if lin != nil {
+					r.slotimpls[s.slot.Name()] = lin
+				}
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
