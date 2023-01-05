@@ -10,7 +10,6 @@ export {
   type TableFieldOptions,
   TableCellDisplayMode,
   type FieldTextAlignment,
-  BarGaugeDisplayMode,
   TableCellBackgroundDisplayMode,
 } from '@grafana/schema';
 

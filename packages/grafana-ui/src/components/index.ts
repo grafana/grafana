@@ -79,12 +79,7 @@ export { PageToolbar } from './PageLayout/PageToolbar';
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
-export {
-  BarGaugeDisplayMode,
-  TableCellDisplayMode,
-  type TableSortByFieldState,
-  type TableFooterCalc,
-} from './Table/types';
+export { TableCellDisplayMode, type TableSortByFieldState, type TableFooterCalc } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
@@ -266,7 +261,7 @@ export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
 export * from './uPlot/config';
-export { ScaleDistribution } from '@grafana/schema';
+export { ScaleDistribution, BarGaugeDisplayMode } from '@grafana/schema';
 export { UPlotConfigBuilder } from './uPlot/config/UPlotConfigBuilder';
 export { UPLOT_AXIS_FONT_SIZE } from './uPlot/config/UPlotAxisBuilder';
 export { UPlotChart } from './uPlot/Plot';
