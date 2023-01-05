@@ -3,7 +3,6 @@ import { TemplateSrvStub } from 'test/specs/helpers';
 
 import { ScopedVars } from '@grafana/data/src';
 import { FetchResponse } from '@grafana/runtime';
-import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
@@ -325,7 +324,6 @@ describe('InfluxDataSource', () => {
       it('should apply all template variables with InfluxQL mode', () => {
         ds.isFlux = false;
         ds.access = 'proxy';
-        config.featureToggles.influxdbBackendMigration = true;
         const query = ds.applyTemplateVariables(influxQuery, {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
@@ -336,7 +334,6 @@ describe('InfluxDataSource', () => {
       it('should apply all scopedVars to tags', () => {
         ds.isFlux = false;
         ds.access = 'proxy';
-        config.featureToggles.influxdbBackendMigration = true;
         const query = ds.applyTemplateVariables(influxQuery, {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
