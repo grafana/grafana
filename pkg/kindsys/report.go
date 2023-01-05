@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/grafana/codejen"
@@ -161,6 +162,12 @@ func buildKindStateReport() *KindStateReport {
 				}
 				r.add(props, "composable")
 			}
+		}
+	}
+
+	for _, d := range r.Dimensions {
+		for _, dv := range d {
+			sort.Strings(dv.Items)
 		}
 	}
 
