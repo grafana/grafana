@@ -6,8 +6,6 @@ import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
 import { createMockTimeSeriesList } from '../__mocks__/cloudMonitoringQuery';
 
-import { LabelFilter } from './LabelFilter';
-import { defaultTimeSeriesList } from './MetricQueryEditor';
 import { Metrics } from './Metrics';
 
 describe('Metrics', () => {
@@ -201,41 +199,5 @@ describe('Metrics', () => {
     const service = await screen.findByLabelText('Service');
     await openMenu(service);
     expect(screen.getAllByLabelText('Select option').length).toEqual(2);
-  });
-
-  it('resets query to default when service changes', async () => {
-    const query = createMockTimeSeriesList({ filters: ['metric.test_label', '=', 'test', 'AND'] });
-    const onChange = jest.fn();
-    const datasource = createMockDatasource({
-      getMetricTypes: jest
-        .fn()
-        .mockResolvedValue([
-          createMockMetricDescriptor(),
-          createMockMetricDescriptor({ type: 'type2', service: 'service2', serviceShortName: 'srv2' }),
-        ]),
-    });
-    const defaultQuery = { ...query, ...defaultTimeSeriesList(datasource) };
-
-    render(
-      <Metrics
-        refId="refId"
-        metricType="type"
-        projectName="projectName"
-        templateVariableOptions={[]}
-        datasource={datasource}
-        onChange={onChange}
-        onProjectChange={jest.fn()}
-        query={query}
-      >
-        {() => <LabelFilter labels={{}} filters={query.filters!} onChange={onChange} variableOptionGroup={{}} />}
-      </Metrics>
-    );
-
-    expect(document.body).toHaveTextContent('metric.test_label');
-    const service = await screen.findByLabelText('Service');
-    await openMenu(service);
-    await select(service, 'Srv 2', { container: document.body });
-    expect(onChange).toBeCalledWith(expect.objectContaining({ service: 'service2' }));
-    expect(query).toEqual(defaultQuery);
   });
 });

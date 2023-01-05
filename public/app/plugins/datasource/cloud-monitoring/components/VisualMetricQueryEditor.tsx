@@ -53,6 +53,8 @@ function Editor({
           ? PreprocessorType.None
           : PreprocessorType.Rate;
       const { perSeriesAligner } = getAlignmentPickerData(valueType, metricKind, query.perSeriesAligner, preprocessor);
+
+      // On metric name change reset query to defaults except project name and filters
       Object.assign(query, {
         ...defaultTimeSeriesList(datasource),
         projectName: query.projectName,
