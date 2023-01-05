@@ -591,7 +591,7 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			result, err := orgUserStore.SearchOrgUsers(context.Background(), tt.query)
 			require.NoError(t, err)
-			require.Len(t, result, tt.expectedNumUsers)
+			require.Len(t, result.OrgUsers, tt.expectedNumUsers)
 
 			if !hasWildcardScope(tt.query.User, accesscontrol.ActionOrgUsersRead) {
 				for _, u := range result.OrgUsers {
