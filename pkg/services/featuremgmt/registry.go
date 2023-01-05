@@ -284,7 +284,8 @@ var (
 		{
 			Name:        "topnav",
 			Description: "New top nav and page layouts",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:            "grpcServer",
