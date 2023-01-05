@@ -7,15 +7,6 @@ managed:
       - buf.build/googleapis/googleapis
 
 plugins:
-  # renovate: datasource=github-releases depName=protocolbuffers/protobuf-go
-  - remote: buf.build/protocolbuffers/plugins/go:v1.28.1-1
-    out: gen/parca
-    opt: paths=source_relative
-  # renovate: datasource=github-releases depName=planetscale/vtprotobuf
-  - remote: buf.build/planetscale/plugins/vtproto:v0.3.0
-    out: gen/parca
-    opt:
-      - paths=source_relative,features=marshal+unmarshal+size+pool+grpc
   - remote: buf.build/bufbuild/plugins/connect-go
     out: gen/parca
     opt: paths=source_relative
