@@ -4,11 +4,8 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
-
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -46,7 +43,7 @@ func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule *ngmodel
 func (h *AnnotationBackend) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
-		if !shouldAnnotate(state) {
+		if !shouldRecord(state) {
 			continue
 		}
 		logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())
@@ -66,32 +63,6 @@ func (h *AnnotationBackend) buildAnnotations(rule *ngmodels.AlertRule, states []
 		items = append(items, item)
 	}
 	return items
-}
-
-// panelKey uniquely identifies a panel.
-type panelKey struct {
-	orgID   int64
-	dashUID string
-	panelID int64
-}
-
-// panelKey attempts to get the key of the panel attached to the given rule. Returns nil if the rule is not attached to a panel.
-func parsePanelKey(rule *ngmodels.AlertRule, logger log.Logger) *panelKey {
-	dashUID, ok := rule.Annotations[ngmodels.DashboardUIDAnnotation]
-	if ok {
-		panelAnno := rule.Annotations[ngmodels.PanelIDAnnotation]
-		panelID, err := strconv.ParseInt(panelAnno, 10, 64)
-		if err != nil {
-			logger.Error("Error parsing panelUID for alert annotation", "actual", panelAnno, "error", err)
-			return nil
-		}
-		return &panelKey{
-			orgID:   rule.OrgID,
-			dashUID: dashUID,
-			panelID: panelID,
-		}
-	}
-	return nil
 }
 
 func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *panelKey, annotations []annotations.Item, logger log.Logger) {
@@ -147,22 +118,4 @@ func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.St
 
 	labels := removePrivateLabels(currentState.Labels)
 	return fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), value), jsonData
-}
-
-func removePrivateLabels(labels data.Labels) data.Labels {
-	result := make(data.Labels)
-	for k, v := range labels {
-		if !strings.HasPrefix(k, "__") && !strings.HasSuffix(k, "__") {
-			result[k] = v
-		}
-	}
-	return result
-}
-
-func shouldAnnotate(transition state.StateTransition) bool {
-	// Do not log not transitioned states normal states if it was marked as stale
-	if !transition.Changed() || transition.StateReason == ngmodels.StateReasonMissingSeries && transition.PreviousState == eval.Normal && transition.State.State == eval.Normal {
-		return false
-	}
-	return true
 }
