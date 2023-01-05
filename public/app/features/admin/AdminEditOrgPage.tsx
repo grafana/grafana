@@ -51,7 +51,7 @@ const AdminEditOrgPage = ({ match }: Props) => {
   const [orgState, fetchOrg] = useAsyncFn(() => getOrg(orgId), []);
   const [, fetchOrgUsers] = useAsyncFn(async (page) => {
     const result = await getOrgUsers(orgId, page);
-    const totalPages = Math.ceil(result.totalCount / perPage);
+    const totalPages = result?.perPage !== 0 ? Math.ceil(result.totalCount / result.perPage) : 0;
     setTotalPages(totalPages);
     setUsers(result.orgUsers);
     return result.orgUsers;
