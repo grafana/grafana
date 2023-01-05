@@ -80,6 +80,16 @@
       "unmark-favorite": "Supprimer des favoris"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "",
+    "explanation": "",
+    "logo": "",
+    "new-dashboard": "",
+    "preferred": "",
+    "sampleData": "",
+    "viewAll": "",
+    "welcome": ""
+  },
   "folder-picker": {
     "loading": "Chargement des dossiers..."
   },
@@ -130,6 +140,9 @@
     "alerting-groups": {
       "subtitle": "Consulter les alertes groupées d'une instance Alertmanager",
       "title": "Groupes"
+    },
+    "alerting-home": {
+      "title": ""
     },
     "alerting-legacy": {
       "title": "Alerte (existante)"
@@ -208,6 +221,7 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Raccourcis clavier",
     "help/support": "Assistance",
+    "help/support-bundle": "",
     "home": {
       "title": "Accueil"
     },
@@ -297,6 +311,10 @@
     "storage": {
       "subtitle": "Gérer le stockage de fichiers",
       "title": "Stockage"
+    },
+    "support-bundles": {
+      "subtitle": "",
+      "title": ""
     },
     "teams": {
       "subtitle": "Groupes d'utilisateurs ayant des besoins communs en matière de tableau de bord et d'autorisations",

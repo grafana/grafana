@@ -285,6 +285,8 @@ export class ElementState implements LayerElement {
 
     this.applyLayoutStylesToDiv();
     this.revId++;
+
+    this.getScene()?.save();
   }
 
   updateData(ctx: DimensionContext) {

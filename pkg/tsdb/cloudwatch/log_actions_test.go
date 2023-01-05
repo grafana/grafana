@@ -410,7 +410,7 @@ func Test_executeStartQuery(t *testing.T) {
 						"subtype": "StartQuery",
 						"limit":   12,
 						"queryString":"fields @message",
-						"logGroups":[{"value": "fakeARN"}]
+						"logGroups":[{"arn": "fakeARN"}]
 					}`),
 				},
 			},
@@ -446,7 +446,7 @@ func Test_executeStartQuery(t *testing.T) {
 						"subtype": "StartQuery",
 						"limit":   12,
 						"queryString":"fields @message",
-						"logGroups":[{"value": "*fake**ARN*"}]
+						"logGroups":[{"arn": "*fake**ARN*"}]
 					}`),
 				},
 			},
