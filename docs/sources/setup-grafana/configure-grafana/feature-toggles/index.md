@@ -44,6 +44,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                             |
 | `autoMigrateGraphPanels`          | Replace the angular graph panel with timeseries                                 |
 | `datasourceLogger`                | Logs all datasource requests                                                    |
+| `accessControlOnCall`             | Access control primitives for OnCall                                            |
 
 ## Alpha feature toggles
 
@@ -111,5 +112,4 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `grpcServer`                           | Run GRPC server                                                         |
 | `entityStore`                          | SQL-based entity store (requires storage flag also)                     |
 | `queryLibrary`                         | Reusable query library                                                  |
-| `accessControlOnCall`                  | Access control primitives for OnCall                                    |
 | `nestedFolders`                        | Enable folder nesting                                                   |
