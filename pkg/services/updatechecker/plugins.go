@@ -69,6 +69,7 @@ func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store, tracer t
 }
 
 type httpClient interface {
+	// TODO: change this so it accepts context (for tracing)
 	Get(url string) (resp *http.Response, err error)
 }
 
@@ -141,6 +142,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 
 	localPlugins := s.pluginsEligibleForVersionCheck(ctx)
 
+	// TODO: move all http-related tracing to a new struct implementing the httpClient interface
 	url := "https://grafana.com/api/plugins/versioncheck?slugIn=" +
 		s.pluginIDsCSV(localPlugins) + "&grafanaVersion=" + s.grafanaVersion
 	_, requestSpan := s.tracer.Start(
