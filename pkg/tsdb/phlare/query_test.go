@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
-	querierv1alpha1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1alpha1"
-	typesv1alpha1 "github.com/grafana/phlare/api/gen/proto/go/types/v1alpha1"
+	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
+	typesv1 "github.com/grafana/phlare/api/gen/proto/go/types/v1"
 )
 
 // This is where the tests for the datasource backend live.
@@ -59,7 +59,7 @@ func Test_query(t *testing.T) {
 		dataQuery.QueryType = queryTypeMetrics
 		resp := ds.query(context.Background(), pCtx, *dataQuery)
 		require.Nil(t, resp.Error)
-		r, ok := client.Req.(*connect.Request[querierv1alpha1.SelectSeriesRequest])
+		r, ok := client.Req.(*connect.Request[querierv1.SelectSeriesRequest])
 		require.True(t, ok)
 		require.Equal(t, float64(30), r.Msg.Step)
 	})
@@ -74,7 +74,7 @@ func Test_query(t *testing.T) {
 		}
 		resp := ds.query(context.Background(), pCtxNoMinStep, *dataQuery)
 		require.Nil(t, resp.Error)
-		r, ok := client.Req.(*connect.Request[querierv1alpha1.SelectSeriesRequest])
+		r, ok := client.Req.(*connect.Request[querierv1.SelectSeriesRequest])
 		require.True(t, ok)
 		require.Equal(t, float64(15), r.Msg.Step)
 	})
@@ -85,7 +85,7 @@ func Test_query(t *testing.T) {
 		dataQuery.JSON = []byte(`{"profileTypeId":"memory:alloc_objects:count:space:bytes","labelSelector":"{app=\\\"baz\\\"}","groupBy":["app","instance"]}`)
 		resp := ds.query(context.Background(), pCtx, *dataQuery)
 		require.Nil(t, resp.Error)
-		r, ok := client.Req.(*connect.Request[querierv1alpha1.SelectSeriesRequest])
+		r, ok := client.Req.(*connect.Request[querierv1.SelectSeriesRequest])
 		require.True(t, ok)
 		require.Equal(t, []string{"app", "instance"}, r.Msg.GroupBy)
 	})
@@ -107,11 +107,11 @@ func makeDataQuery() *backend.DataQuery {
 
 // This is where the tests for the datasource backend live.
 func Test_profileToDataFrame(t *testing.T) {
-	resp := &connect.Response[querierv1alpha1.SelectMergeStacktracesResponse]{
-		Msg: &querierv1alpha1.SelectMergeStacktracesResponse{
-			Flamegraph: &querierv1alpha1.FlameGraph{
+	resp := &connect.Response[querierv1.SelectMergeStacktracesResponse]{
+		Msg: &querierv1.SelectMergeStacktracesResponse{
+			Flamegraph: &querierv1.FlameGraph{
 				Names: []string{"func1", "func2", "func3"},
-				Levels: []*querierv1alpha1.Level{
+				Levels: []*querierv1.Level{
 					{Values: []int64{0, 20, 1, 2}},
 					{Values: []int64{0, 10, 3, 1, 4, 5, 5, 2}},
 				},
@@ -131,7 +131,7 @@ func Test_profileToDataFrame(t *testing.T) {
 // This is where the tests for the datasource backend live.
 func Test_levelsToTree(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
-		levels := []*querierv1alpha1.Level{
+		levels := []*querierv1.Level{
 			{Values: []int64{0, 100, 0, 0}},
 			{Values: []int64{0, 40, 0, 1, 0, 30, 0, 2}},
 			{Values: []int64{0, 15, 0, 3}},
@@ -151,7 +151,7 @@ func Test_levelsToTree(t *testing.T) {
 	})
 
 	t.Run("medium", func(t *testing.T) {
-		levels := []*querierv1alpha1.Level{
+		levels := []*querierv1.Level{
 			{Values: []int64{0, 100, 0, 0}},
 			{Values: []int64{0, 40, 0, 1, 0, 30, 0, 2, 0, 30, 0, 3}},
 			{Values: []int64{0, 20, 0, 4, 50, 10, 0, 5}},
@@ -200,10 +200,10 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 
 func Test_seriesToDataFrame(t *testing.T) {
 	t.Run("single series", func(t *testing.T) {
-		resp := &connect.Response[querierv1alpha1.SelectSeriesResponse]{
-			Msg: &querierv1alpha1.SelectSeriesResponse{
-				Series: []*typesv1alpha1.Series{
-					{Labels: []*typesv1alpha1.LabelPair{}, Points: []*typesv1alpha1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
+		resp := &connect.Response[querierv1.SelectSeriesResponse]{
+			Msg: &querierv1.SelectSeriesResponse{
+				Series: []*typesv1.Series{
+					{Labels: []*typesv1.LabelPair{}, Points: []*typesv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
 				},
 			},
 		}
@@ -213,10 +213,10 @@ func Test_seriesToDataFrame(t *testing.T) {
 		require.Equal(t, data.NewField("samples", map[string]string{}, []float64{30, 10}).SetConfig(&data.FieldConfig{Unit: "short"}), frames[0].Fields[1])
 
 		// with a label pair, the value field should name itself with a label pair name and not the profile type
-		resp = &connect.Response[querierv1alpha1.SelectSeriesResponse]{
-			Msg: &querierv1alpha1.SelectSeriesResponse{
-				Series: []*typesv1alpha1.Series{
-					{Labels: []*typesv1alpha1.LabelPair{{Name: "app", Value: "bar"}}, Points: []*typesv1alpha1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
+		resp = &connect.Response[querierv1.SelectSeriesResponse]{
+			Msg: &querierv1.SelectSeriesResponse{
+				Series: []*typesv1.Series{
+					{Labels: []*typesv1.LabelPair{{Name: "app", Value: "bar"}}, Points: []*typesv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
 				},
 			},
 		}
@@ -225,11 +225,11 @@ func Test_seriesToDataFrame(t *testing.T) {
 	})
 
 	t.Run("single series", func(t *testing.T) {
-		resp := &connect.Response[querierv1alpha1.SelectSeriesResponse]{
-			Msg: &querierv1alpha1.SelectSeriesResponse{
-				Series: []*typesv1alpha1.Series{
-					{Labels: []*typesv1alpha1.LabelPair{{Name: "foo", Value: "bar"}}, Points: []*typesv1alpha1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
-					{Labels: []*typesv1alpha1.LabelPair{{Name: "foo", Value: "baz"}}, Points: []*typesv1alpha1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
+		resp := &connect.Response[querierv1.SelectSeriesResponse]{
+			Msg: &querierv1.SelectSeriesResponse{
+				Series: []*typesv1.Series{
+					{Labels: []*typesv1.LabelPair{{Name: "foo", Value: "bar"}}, Points: []*typesv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
+					{Labels: []*typesv1.LabelPair{{Name: "foo", Value: "baz"}}, Points: []*typesv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
 				},
 			},
 		}
@@ -246,23 +246,23 @@ type FakeClient struct {
 	Req interface{}
 }
 
-func (f *FakeClient) ProfileTypes(ctx context.Context, c *connect.Request[querierv1alpha1.ProfileTypesRequest]) (*connect.Response[querierv1alpha1.ProfileTypesResponse], error) {
+func (f *FakeClient) ProfileTypes(ctx context.Context, c *connect.Request[querierv1.ProfileTypesRequest]) (*connect.Response[querierv1.ProfileTypesResponse], error) {
 	panic("implement me")
 }
 
-func (f *FakeClient) LabelValues(ctx context.Context, c *connect.Request[querierv1alpha1.LabelValuesRequest]) (*connect.Response[querierv1alpha1.LabelValuesResponse], error) {
+func (f *FakeClient) LabelValues(ctx context.Context, c *connect.Request[querierv1.LabelValuesRequest]) (*connect.Response[querierv1.LabelValuesResponse], error) {
 	panic("implement me")
 }
 
-func (f *FakeClient) LabelNames(context.Context, *connect.Request[querierv1alpha1.LabelNamesRequest]) (*connect.Response[querierv1alpha1.LabelNamesResponse], error) {
+func (f *FakeClient) LabelNames(context.Context, *connect.Request[querierv1.LabelNamesRequest]) (*connect.Response[querierv1.LabelNamesResponse], error) {
 	panic("implement me")
 }
 
-func (f *FakeClient) Series(ctx context.Context, c *connect.Request[querierv1alpha1.SeriesRequest]) (*connect.Response[querierv1alpha1.SeriesResponse], error) {
-	return &connect.Response[querierv1alpha1.SeriesResponse]{
-		Msg: &querierv1alpha1.SeriesResponse{
-			LabelsSet: []*typesv1alpha1.Labels{{
-				Labels: []*typesv1alpha1.LabelPair{
+func (f *FakeClient) Series(ctx context.Context, c *connect.Request[querierv1.SeriesRequest]) (*connect.Response[querierv1.SeriesResponse], error) {
+	return &connect.Response[querierv1.SeriesResponse]{
+		Msg: &querierv1.SeriesResponse{
+			LabelsSet: []*typesv1.Labels{{
+				Labels: []*typesv1.LabelPair{
 					{
 						Name:  "__unit__",
 						Value: "cpu",
@@ -281,13 +281,13 @@ func (f *FakeClient) Series(ctx context.Context, c *connect.Request[querierv1alp
 	}, nil
 }
 
-func (f *FakeClient) SelectMergeStacktraces(ctx context.Context, c *connect.Request[querierv1alpha1.SelectMergeStacktracesRequest]) (*connect.Response[querierv1alpha1.SelectMergeStacktracesResponse], error) {
+func (f *FakeClient) SelectMergeStacktraces(ctx context.Context, c *connect.Request[querierv1.SelectMergeStacktracesRequest]) (*connect.Response[querierv1.SelectMergeStacktracesResponse], error) {
 	f.Req = c
-	return &connect.Response[querierv1alpha1.SelectMergeStacktracesResponse]{
-		Msg: &querierv1alpha1.SelectMergeStacktracesResponse{
-			Flamegraph: &querierv1alpha1.FlameGraph{
+	return &connect.Response[querierv1.SelectMergeStacktracesResponse]{
+		Msg: &querierv1.SelectMergeStacktracesResponse{
+			Flamegraph: &querierv1.FlameGraph{
 				Names: []string{"foo", "bar", "baz"},
-				Levels: []*querierv1alpha1.Level{
+				Levels: []*querierv1.Level{
 					{Values: []int64{0, 10, 0, 0}},
 					{Values: []int64{0, 9, 0, 1}},
 					{Values: []int64{0, 8, 8, 2}},
@@ -299,14 +299,14 @@ func (f *FakeClient) SelectMergeStacktraces(ctx context.Context, c *connect.Requ
 	}, nil
 }
 
-func (f *FakeClient) SelectSeries(ctx context.Context, req *connect.Request[querierv1alpha1.SelectSeriesRequest]) (*connect.Response[querierv1alpha1.SelectSeriesResponse], error) {
+func (f *FakeClient) SelectSeries(ctx context.Context, req *connect.Request[querierv1.SelectSeriesRequest]) (*connect.Response[querierv1.SelectSeriesResponse], error) {
 	f.Req = req
-	return &connect.Response[querierv1alpha1.SelectSeriesResponse]{
-		Msg: &querierv1alpha1.SelectSeriesResponse{
-			Series: []*typesv1alpha1.Series{
+	return &connect.Response[querierv1.SelectSeriesResponse]{
+		Msg: &querierv1.SelectSeriesResponse{
+			Series: []*typesv1.Series{
 				{
-					Labels: []*typesv1alpha1.LabelPair{{Name: "foo", Value: "bar"}},
-					Points: []*typesv1alpha1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}},
+					Labels: []*typesv1.LabelPair{{Name: "foo", Value: "bar"}},
+					Points: []*typesv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}},
 				},
 			},
 		},

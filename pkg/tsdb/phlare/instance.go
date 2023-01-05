@@ -12,9 +12,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	querierv1alpha1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1alpha1"
-	"github.com/grafana/phlare/api/gen/proto/go/querier/v1alpha1/querierv1alpha1connect"
-	typesv1alpha1 "github.com/grafana/phlare/api/gen/proto/go/types/v1alpha1"
+	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
+	"github.com/grafana/phlare/api/gen/proto/go/querier/v1/querierv1connect"
+	typesv1 "github.com/grafana/phlare/api/gen/proto/go/types/v1"
 )
 
 var (
@@ -26,7 +26,7 @@ var (
 
 // PhlareDatasource is a datasource for querying application performance profiles.
 type PhlareDatasource struct {
-	client querierv1alpha1connect.QuerierServiceClient
+	client querierv1connect.QuerierServiceClient
 }
 
 // NewPhlareDatasource creates a new datasource instance.
@@ -41,7 +41,7 @@ func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backen
 	}
 
 	return &PhlareDatasource{
-		client: querierv1alpha1connect.NewQuerierServiceClient(httpClient, settings.URL),
+		client: querierv1connect.NewQuerierServiceClient(httpClient, settings.URL),
 	}, nil
 }
 
@@ -62,7 +62,7 @@ func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallRe
 }
 
 func (d *PhlareDatasource) callProfileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	res, err := d.client.ProfileTypes(ctx, connect.NewRequest(&querierv1alpha1.ProfileTypesRequest{}))
+	res, err := d.client.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{}))
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (d *PhlareDatasource) callSeries(ctx context.Context, req *backend.CallReso
 		matchers = []string{"{}"}
 	}
 
-	res, err := d.client.Series(ctx, connect.NewRequest(&querierv1alpha1.SeriesRequest{Matchers: matchers}))
+	res, err := d.client.Series(ctx, connect.NewRequest(&querierv1.SeriesRequest{Matchers: matchers}))
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (d *PhlareDatasource) callSeries(ctx context.Context, req *backend.CallReso
 }
 
 func (d *PhlareDatasource) callLabelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	res, err := d.client.LabelNames(ctx, connect.NewRequest(&querierv1alpha1.LabelNamesRequest{}))
+	res, err := d.client.LabelNames(ctx, connect.NewRequest(&querierv1.LabelNamesRequest{}))
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (d *PhlareDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHeal
 	status := backend.HealthStatusOk
 	message := "Data source is working"
 
-	if _, err := d.client.ProfileTypes(ctx, connect.NewRequest(&querierv1alpha1.ProfileTypesRequest{})); err != nil {
+	if _, err := d.client.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{})); err != nil {
 		status = backend.HealthStatusError
 		message = err.Error()
 	}
@@ -234,8 +234,8 @@ func (d *PhlareDatasource) PublishStream(_ context.Context, _ *backend.PublishSt
 	}, nil
 }
 
-func withoutPrivateLabels(labels []*typesv1alpha1.LabelPair) []*typesv1alpha1.LabelPair {
-	res := make([]*typesv1alpha1.LabelPair, 0, len(labels))
+func withoutPrivateLabels(labels []*typesv1.LabelPair) []*typesv1.LabelPair {
+	res := make([]*typesv1.LabelPair, 0, len(labels))
 	for _, l := range labels {
 		if !strings.HasPrefix(l.Name, "__") {
 			res = append(res, l)

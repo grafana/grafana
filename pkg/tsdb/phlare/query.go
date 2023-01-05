@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
-	querierv1alpha1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1alpha1"
+	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
 )
 
 type queryModel struct {
@@ -62,7 +62,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 				logger.Debug("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep)
 			}
 		}
-		req := connect.NewRequest(&querierv1alpha1.SelectSeriesRequest{
+		req := connect.NewRequest(&querierv1.SelectSeriesRequest{
 			ProfileTypeID: qm.ProfileTypeID,
 			LabelSelector: qm.LabelSelector,
 			Start:         query.TimeRange.From.UnixMilli(),
@@ -110,9 +110,9 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 	return response
 }
 
-func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querierv1alpha1.SelectMergeStacktracesRequest] {
-	return &connect.Request[querierv1alpha1.SelectMergeStacktracesRequest]{
-		Msg: &querierv1alpha1.SelectMergeStacktracesRequest{
+func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querierv1.SelectMergeStacktracesRequest] {
+	return &connect.Request[querierv1.SelectMergeStacktracesRequest]{
+		Msg: &querierv1.SelectMergeStacktracesRequest{
 			ProfileTypeID: qm.ProfileTypeID,
 			LabelSelector: qm.LabelSelector,
 			Start:         query.TimeRange.From.UnixMilli(),
@@ -124,7 +124,7 @@ func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querie
 // responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *connect.Response[querierv1alpha1.SelectMergeStacktracesResponse], profileTypeID string) *data.Frame {
+func responseToDataFrames(resp *connect.Response[querierv1.SelectMergeStacktracesResponse], profileTypeID string) *data.Frame {
 	tree := levelsToTree(resp.Msg.Flamegraph.Levels, resp.Msg.Flamegraph.Names)
 	return treeToNestedSetDataFrame(tree, profileTypeID)
 }
@@ -155,7 +155,7 @@ type ProfileTree struct {
 
 // levelsToTree converts flamebearer format into a tree. This is needed to then convert it into nested set format
 // dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Phlare API.
-func levelsToTree(levels []*querierv1alpha1.Level, names []string) *ProfileTree {
+func levelsToTree(levels []*querierv1.Level, names []string) *ProfileTree {
 	tree := &ProfileTree{
 		Start: 0,
 		Value: levels[0].Values[VALUE_OFFSET],
@@ -284,7 +284,7 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 	}
 }
 
-func seriesToDataFrames(seriesResp *connect.Response[querierv1alpha1.SelectSeriesResponse], profileTypeID string) []*data.Frame {
+func seriesToDataFrames(seriesResp *connect.Response[querierv1.SelectSeriesResponse], profileTypeID string) []*data.Frame {
 	var frames []*data.Frame
 
 	for _, series := range seriesResp.Msg.Series {
