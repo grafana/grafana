@@ -12,7 +12,7 @@ interface ExtendedOptionProps extends OptionProps<any, any> {
   data: any;
 }
 
-export const TagOption: FC<ExtendedOptionProps> = ({ data, className, label, isFocused, innerProps }) => {
+export const TagOption = ({ data, className, label, isFocused, innerProps }: ExtendedOptionProps) => {
   const styles = useStyles2(getStyles);
 
   return (
