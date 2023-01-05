@@ -8,7 +8,7 @@ import (
 )
 
 type PluginDecl struct {
-	Slot       *kindsys.Slot
+	Slot       *kindsys.SchemaInterface
 	Lineage    thema.Lineage
 	Imports    []*ast.ImportSpec
 	PluginPath string

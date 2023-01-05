@@ -60,7 +60,7 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 				continue
 			}
 			decls = append(decls, &PluginDecl{
-				Slot:       slot,
+				Slot:       &slot,
 				Lineage:    lin,
 				Imports:    p.CUEImports(),
 				PluginMeta: p.Meta(),

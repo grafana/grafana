@@ -22,7 +22,7 @@ import (
 // Grafana provides a standard mechanism for representing its kinds as CRDs.
 //
 // There are three categories of kinds: Core, Custom, and Composable.
-#Kind: #Composable | #Core | #Custom
+Kind: Composable | Core | Custom
 
 // properties shared between all kind categories.
 _sharedKind: {
@@ -86,37 +86,9 @@ _sharedKind: {
 // Core specifies the kind category for core-defined arbitrary types.
 // Familiar types and functional resources in Grafana, such as dashboards and
 // and datasources, are represented as core kinds.
-#Core: S=close({
+Core: S=close({
 	_sharedKind
 
 	lineage: { name: S.machineName }
 	lineageIsGroup: false
 })
-
-// Composable is a category of kind that provides schema elements for
-// composition into Core and Custom kinds. Grafana plugins
-// provide composable kinds; for example, a datasource plugin provides one to
-// describe the structure of its queries, which is then composed into dashboards
-// and alerting rules.
-//
-// Each Composable is an implementation of exactly one Slot, a shared meta-schema
-// defined by Grafana itself that constrains the shape of schemas declared in
-// that ComposableKind.
-#Composable: S={
-	_sharedKind
-
-	// TODO docs
-	// TODO unify this with the existing slots decls in pkg/framework/coremodel
-	slot: "Panel" | "Query" | "DSConfig"
-
-	// TODO unify this with the existing slots decls in pkg/framework/coremodel
-	lineageIsGroup: bool & [
-		if slot == "Panel" { true },
-		if slot == "DSConfig" { true },
-		if slot == "Query" { false },
-	][0]
-
-	// lineage is the Thema lineage containing all the schemas that have existed for this kind.
-	// It is required that lineage.name is the same as the [machineName].
-	lineage: thema.#Lineage & { name: S.machineName }
-}
