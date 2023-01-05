@@ -30,7 +30,6 @@ export interface FeatureToggles {
   panelTitleSearch?: boolean;
   tempoApmTable?: boolean;
   prometheusAzureOverrideAudience?: boolean;
-  influxdbBackendMigration?: boolean;
   showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;

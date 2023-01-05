@@ -84,12 +84,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:         "influxdbBackendMigration",
-			Description:  "Query InfluxDB InfluxQL without the proxy",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:            "showFeatureFlagsInUI",
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
