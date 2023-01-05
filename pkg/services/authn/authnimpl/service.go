@@ -91,14 +91,13 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 	span.SetAttributes("authn.client", client, attribute.Key("authn.client").String(client))
 
 	r.OrgID = orgIDFromRequest(r)
-	identity, err := c.Authenticate(ctx, r)
+	identity, params, err := c.Authenticate(ctx, r)
 	if err != nil {
 		s.log.FromContext(ctx).Warn("auth client could not authenticate request", "client", client, "error", err)
 		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client could not authenticate request"}})
 		return nil, true, err
 	}
 
-	params := c.ClientParams()
 	for _, hook := range s.postAuthHooks {
 		if err := hook(ctx, params, identity, r); err != nil {
 			return nil, false, err

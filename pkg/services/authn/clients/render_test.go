@@ -91,7 +91,7 @@ func TestRender_Authenticate(t *testing.T) {
 			renderService.EXPECT().GetRenderUser(gomock.Any(), tt.renderKey).Return(tt.expectedRenderUsr, tt.expectedRenderUsr != nil)
 
 			c := ProvideRender(&usertest.FakeUserService{ExpectedSignedInUser: tt.expectedUsr}, renderService)
-			identity, err := c.Authenticate(context.Background(), tt.req)
+			identity, _, err := c.Authenticate(context.Background(), tt.req)
 			if tt.expectedErr != nil {
 				assert.ErrorIs(t, tt.expectedErr, err)
 				assert.Nil(t, identity)

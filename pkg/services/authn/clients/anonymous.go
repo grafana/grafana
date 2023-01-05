@@ -25,22 +25,18 @@ type Anonymous struct {
 	orgService org.Service
 }
 
-func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, *authn.ClientParams, error) {
 	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.AnonymousOrgName})
 	if err != nil {
 		a.log.FromContext(ctx).Error("failed to find organization", "name", a.cfg.AnonymousOrgName, "error", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	return &authn.Identity{
 		OrgID:    o.ID,
 		OrgName:  o.Name,
 		OrgRoles: map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
-	}, nil
-}
-
-func (a *Anonymous) ClientParams() *authn.ClientParams {
-	return &authn.ClientParams{}
+	}, &authn.ClientParams{}, nil
 }
 
 func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {

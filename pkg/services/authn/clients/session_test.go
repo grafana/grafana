@@ -20,15 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSession_ClientParams(t *testing.T) {
-	s := ProvideSession(nil, nil, "", 0)
-	require.Equal(t, &authn.ClientParams{
-		SyncUser:            false,
-		AllowSignUp:         false,
-		EnableDisabledUsers: false,
-	}, s.ClientParams())
-}
-
 func TestSession_Test(t *testing.T) {
 	cookieName := "grafana_session"
 
@@ -123,7 +114,7 @@ func TestSession_Authenticate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := ProvideSession(tt.fields.sessionService, tt.fields.userService, cookieName, 20*time.Second)
 
-			got, err := s.Authenticate(context.Background(), tt.args.r)
+			got, _, err := s.Authenticate(context.Background(), tt.args.r)
 			require.True(t, (err != nil) == tt.wantErr, err)
 			if err != nil {
 				return

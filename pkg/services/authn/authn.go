@@ -42,8 +42,7 @@ type Service interface {
 
 type Client interface {
 	// Authenticate performs the authentication for the request
-	Authenticate(ctx context.Context, r *Request) (*Identity, error)
-	ClientParams() *ClientParams
+	Authenticate(ctx context.Context, r *Request) (*Identity, *ClientParams, error)
 	// Test should return true if client can be used to authenticate request
 	Test(ctx context.Context, r *Request) bool
 }
