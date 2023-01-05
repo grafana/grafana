@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
-	ngchannels "github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -217,7 +216,7 @@ func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *
 		Template:   emailTmpl,
 		Logger:     &channels.FakeLogger{},
 	}
-	emailNotifier, err := ngchannels.EmailFactory(fc)
+	emailNotifier, err := channels.EmailFactory(fc)
 	require.NoError(t, err)
 	return emailNotifier
 }

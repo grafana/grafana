@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { dateTimeFormat } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -11,6 +11,12 @@ const subTitle = (
     Support bundles allow you to easily collect and share Grafana logs, configuration, and data with the Grafana Labs
     team.
   </span>
+);
+
+const newButton = (
+  <LinkButton icon="plus" href="admin/support-bundles/create" variant="primary">
+    New Support Bundle
+  </LinkButton>
 );
 
 type SupportBundleState = 'complete' | 'error' | 'timeout' | 'pending';
@@ -34,17 +40,17 @@ function SupportBundles() {
     fetchBundles();
   }, [fetchBundles]);
 
+  const actions = config.featureToggles.topnav ? newButton : undefined;
+
   return (
-    <Page navId="support-bundles" subTitle={subTitle}>
+    <Page navId="support-bundles" subTitle={subTitle} actions={actions}>
       <Page.Contents isLoading={bundlesState.loading}>
-        <LinkButton href="admin/support-bundles/create" variant="primary">
-          Create New Support Bundle
-        </LinkButton>
+        {!config.featureToggles.topnav && newButton}
 
         <table className="filter-table form-inline">
           <thead>
             <tr>
-              <th>Date</th>
+              <th>Created on</th>
               <th>Requested by</th>
               <th>Expires</th>
               <th style={{ width: '1%' }} />
@@ -57,7 +63,12 @@ function SupportBundles() {
                 <th>{b.creator}</th>
                 <th>{dateTimeFormat(b.expiresAt * 1000)}</th>
                 <th>
-                  <LinkButton disabled={b.state !== 'complete'} target={'_self'} href={'/api/support-bundles/' + b.uid}>
+                  <LinkButton
+                    fill="outline"
+                    disabled={b.state !== 'complete'}
+                    target={'_self'}
+                    href={'/api/support-bundles/' + b.uid}
+                  >
                     Download
                   </LinkButton>
                 </th>
