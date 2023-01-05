@@ -42,7 +42,6 @@ func (gen *genTSVeneerIndex) JennyName() string {
 func (gen *genTSVeneerIndex) Generate(decls ...*DeclForGen) (*codejen.File, error) {
 	tsf := new(ast.File)
 	for _, decl := range decls {
-
 		sch := decl.Lineage().Latest()
 		f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
 			RootName: decl.Properties.Common().Name,
