@@ -685,7 +685,7 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	}
 	result, err := orgUserStore.SearchOrgUsers(context.Background(), query)
 	require.NoError(t, err)
-	require.Len(t, result, 1)
+	require.Len(t, result.OrgUsers, 1)
 
 	actual := result.OrgUsers[0]
 	assert.Equal(t, int64(1), actual.OrgID)
