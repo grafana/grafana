@@ -205,6 +205,18 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options, data.structureRev, data.series.length]);
 
+  if (!info) {
+    return (
+      <PanelDataErrorView
+        panelId={id}
+        fieldConfig={fieldConfig}
+        data={data}
+        needsTimeField={true}
+        needsNumberField={true}
+      />
+    );
+  }
+
   if (shouldRenderPrice) {
     // hide series from legend that are rendered as composite markers
     for (let key in renderers[0].fieldMap) {
@@ -217,18 +229,6 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
         },
       };
     }
-  }
-
-  if (!info) {
-    return (
-      <PanelDataErrorView
-        panelId={id}
-        fieldConfig={fieldConfig}
-        data={data}
-        needsTimeField={true}
-        needsNumberField={true}
-      />
-    );
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
