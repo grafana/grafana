@@ -1403,6 +1403,15 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"pre_tags":      []string{"@HIGHLIGHT@"},
 			})
 		})
+
+		t.Run("With invalid query should return error", (func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"query": "foo",
+			}`, from, to)
+			require.Error(t, err)
+		}))
 	})
 }
 
