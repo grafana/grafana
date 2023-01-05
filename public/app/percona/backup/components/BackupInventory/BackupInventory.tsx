@@ -1,8 +1,7 @@
 /* eslint-disable react/display-name */
 import { logger } from '@percona/platform-core';
 import { CancelToken } from 'axios';
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { FC, useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { Column, Row } from 'react-table';
 
 import { AppEvents } from '@grafana/data';
@@ -20,8 +19,9 @@ import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backupLo
 import { getBackupLocations, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { apiErrorParser, isApiCancelError } from 'app/percona/shared/helpers/api';
 import { useAppDispatch } from 'app/store/store';
+import { useSelector } from 'app/types';
 
-import { NEW_BACKUP_URL } from '../../Backup.constants';
+import { NEW_BACKUP_URL, RESTORES_URL } from '../../Backup.constants';
 import { Messages } from '../../Backup.messages';
 import { formatBackupMode } from '../../Backup.utils';
 import { useRecurringCall } from '../../hooks/recurringCall.hook';
@@ -154,6 +154,8 @@ export const BackupInventory: FC = () => {
       await BackupInventoryService.restore(serviceId, artifactId, pitrTimestamp, generateToken(RESTORE_CANCEL_TOKEN));
       setRestoreErrors([]);
       setRestoreModalVisible(false);
+      appEvents.emit(AppEvents.alertSuccess, [Messages.backupInventory.restoreStarted]);
+      locationService.push(RESTORES_URL);
     } catch (e) {
       setRestoreErrors(apiErrorParser(e));
       logger.error(e);

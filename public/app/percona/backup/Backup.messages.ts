@@ -37,6 +37,7 @@ export const Messages = {
     deleteFromStorage: 'Delete from storage',
     deleteWarning:
       "For security reasons, we won't delete this backup from the filesystem. Please make sure to manually remove it.",
+    restoreStarted: 'Restore has successfully started',
     getLogsTitle: (name: string) => `Backup logs for ${name}`,
     getDeleteMessage: (name: string) => `Are you sure you want to delete "${name}"?`,
     addSuccess: 'Backup successfully started',
