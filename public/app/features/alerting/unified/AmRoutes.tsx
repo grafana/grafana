@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { groupBy, take, uniqueId, upperFirst } from 'lodash';
+import { groupBy, merge, pick, reduce, take, uniqueId, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, Fragment, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -301,6 +301,7 @@ interface PolicyComponentProps {
   timingOptions?: TimingOptions;
   continueMatching?: boolean;
   alertManagerSourceName: string;
+  inheritedProperties?: InhertitableProperties;
 
   currentRoute: RouteWithID;
   onEditPolicy: (route: RouteWithID, isDefault?: boolean) => void;
@@ -322,6 +323,7 @@ const Policy: FC<PolicyComponentProps> = ({
   continueMatching = false,
   alertManagerSourceName,
   currentRoute,
+  inheritedProperties,
   onEditPolicy,
   onAddPolicy,
   onDeletePolicy,
@@ -347,6 +349,7 @@ const Policy: FC<PolicyComponentProps> = ({
 
   const hasChildPolicies = Boolean(childPolicies.length);
   const isGrouping = Array.isArray(groupBy) && groupBy.length > 0;
+  const hasInheritedProperties = inheritedProperties && Object.keys(inheritedProperties).length > 0;
 
   const isEditable = canEditRoutes;
   const isDeletable = canDeleteRoutes && !isDefault;
@@ -487,35 +490,97 @@ const Policy: FC<PolicyComponentProps> = ({
               {timingOptions && Object.values(timingOptions).some(Boolean) && (
                 <TimingOptionsMeta timingOptions={timingOptions} />
               )}
+              {hasInheritedProperties && (
+                <>
+                  <MetaText icon="corner-down-right-alt">
+                    <span>Inherited</span>
+                    <HoverCard
+                      arrow
+                      placement="top"
+                      showAfter={100}
+                      content={
+                        <Stack direction="row" gap={0.5}>
+                          {Object.entries(inheritedProperties).map(([key, value]) => {
+                            // no idea how to do this with TypeScript
+                            return (
+                              <Label
+                                key={key}
+                                // @ts-ignore
+                                label={routePropertyToLabel(key)}
+                                value={<Strong>{Array.isArray(value) ? value.join(', ') : value}</Strong>}
+                              />
+                            );
+                          })}
+                        </Stack>
+                      }
+                    >
+                      <div>
+                        <Strong>{pluralize('property', Object.keys(inheritedProperties).length, true)}</Strong>
+                      </div>
+                    </HoverCard>
+                  </MetaText>
+                </>
+              )}
             </Stack>
           </div>
         </Stack>
       </div>
       <div className={styles.childPolicies}>
         {/* pass the "readOnly" prop from the parent, because if you can't edit the parent you can't edit children */}
-        {childPolicies.map((route) => (
-          <Policy
-            key={uniqueId()}
-            currentRoute={route}
-            receivers={receivers}
-            contactPoint={route.receiver}
-            groupBy={route.group_by}
-            timingOptions={{
-              group_wait: route.group_wait,
-              group_interval: route.group_interval,
-              repeat_interval: route.repeat_interval,
-            }}
-            readOnly={readOnly}
-            matchers={normalizeMatchers(route)}
-            muteTimings={route.mute_time_intervals}
-            childPolicies={route.routes ?? []}
-            continueMatching={route.continue}
-            onAddPolicy={onAddPolicy}
-            onEditPolicy={onEditPolicy}
-            onDeletePolicy={onDeletePolicy}
-            alertManagerSourceName={alertManagerSourceName}
-          />
-        ))}
+        {childPolicies.map((route) => {
+          // inherited properties are config properties that exist on the parent but not on currentRoute
+          const inheritableProperties: InhertitableProperties = pick(currentRoute, [
+            'receiver',
+            'group_by',
+            'group_wait',
+            'group_interval',
+            'repeat_interval',
+            'mute_time_intervals',
+          ]);
+
+          // TODO how to solve this TypeScript mystery
+          const inherited = merge(
+            reduce(
+              inheritableProperties,
+              (acc: Partial<Route> = {}, value, key) => {
+                // @ts-ignore
+                if (value !== undefined && route[key] === undefined) {
+                  // @ts-ignore
+                  acc[key] = value;
+                }
+
+                return acc;
+              },
+              {}
+            ),
+            inheritedProperties
+          );
+
+          return (
+            <Policy
+              key={uniqueId()}
+              currentRoute={route}
+              receivers={receivers}
+              contactPoint={route.receiver}
+              groupBy={route.group_by}
+              timingOptions={{
+                group_wait: route.group_wait,
+                group_interval: route.group_interval,
+                repeat_interval: route.repeat_interval,
+              }}
+              readOnly={readOnly}
+              matchers={normalizeMatchers(route)}
+              muteTimings={route.mute_time_intervals}
+              childPolicies={route.routes ?? []}
+              continueMatching={route.continue}
+              inheritedProperties={inherited}
+              onAddPolicy={onAddPolicy}
+              onEditPolicy={onEditPolicy}
+              onDeletePolicy={onDeletePolicy}
+              alertManagerSourceName={alertManagerSourceName}
+            />
+          );
+        })}
       </div>
       <div className={styles.addPolicyWrapper(hasChildPolicies)}>
         <CreateOrAddPolicy
@@ -526,6 +591,28 @@ const Policy: FC<PolicyComponentProps> = ({
       </div>
     </Stack>
   );
+};
+
+type InhertitableProperties = Pick<
+  Route,
+  'receiver' | 'group_by' | 'group_wait' | 'group_interval' | 'repeat_interval' | 'mute_time_intervals'
+>;
+
+const routePropertyToLabel = (key: keyof InhertitableProperties): string => {
+  switch (key) {
+    case 'receiver':
+      return 'Contact Point';
+    case 'group_by':
+      return 'Group by';
+    case 'group_interval':
+      return 'Group interval';
+    case 'group_wait':
+      return 'Group wait';
+    case 'mute_time_intervals':
+      return 'Mute timings';
+    case 'repeat_interval':
+      return 'Repeat interval';
+  }
 };
 
 const TimingOptionsMeta = ({ timingOptions }: { timingOptions: TimingOptions }) => (
