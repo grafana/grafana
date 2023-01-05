@@ -4,14 +4,12 @@ import { RegistryItemWithOptions } from '../utils/Registry';
 
 import { DataFrame, Field } from './dataFrame';
 import { InterpolateFunction } from './panel';
-import { DataQuery } from './query';
 
 /**
  * Context passed to transformDataFrame and to each transform operator
  */
 export interface DataTransformContext {
   interpolate: InterpolateFunction;
-  queries?: DataQuery[];
 }
 
 /**
