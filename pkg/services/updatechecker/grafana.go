@@ -3,6 +3,7 @@ package updatechecker
 import (
 	"context"
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"io"
 	"net/http"
 	"strings"
@@ -21,17 +22,19 @@ type GrafanaService struct {
 
 	enabled        bool
 	grafanaVersion string
-	httpClient     http.Client
+	httpClient     httpClient
 	mutex          sync.RWMutex
 	log            log.Logger
+	tracer         tracing.Tracer
 }
 
-func ProvideGrafanaService(cfg *setting.Cfg) *GrafanaService {
+func ProvideGrafanaService(cfg *setting.Cfg, tracer tracing.Tracer) *GrafanaService {
 	return &GrafanaService{
 		enabled:        cfg.CheckForGrafanaUpdates,
 		grafanaVersion: cfg.BuildVersion,
-		httpClient:     http.Client{Timeout: 10 * time.Second},
+		httpClient:     newInstrumentedHTTPClient(&http.Client{Timeout: time.Second * 10}, tracer),
 		log:            log.New("grafana.update.checker"),
+		tracer:         tracer,
 	}
 }
 
@@ -40,7 +43,7 @@ func (s *GrafanaService) IsDisabled() bool {
 }
 
 func (s *GrafanaService) Run(ctx context.Context) error {
-	s.checkForUpdates()
+	s.checkForUpdates(ctx)
 
 	ticker := time.NewTicker(time.Minute * 10)
 	run := true
@@ -48,7 +51,7 @@ func (s *GrafanaService) Run(ctx context.Context) error {
 	for run {
 		select {
 		case <-ticker.C:
-			s.checkForUpdates()
+			s.checkForUpdates(ctx)
 		case <-ctx.Done():
 			run = false
 		}
@@ -57,8 +60,25 @@ func (s *GrafanaService) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (s *GrafanaService) checkForUpdates() {
-	resp, err := s.httpClient.Get("https://raw.githubusercontent.com/grafana/grafana/main/latest.json")
+func (s *GrafanaService) checkForUpdates(ctx context.Context) {
+	var err error
+
+	traceID := tracing.TraceIDFromContext(ctx, false)
+	traceIDLogOpts := []interface{}{"traceID", traceID}
+	s.log.Debug("Checking for updates", traceIDLogOpts...)
+
+	ctx, span := s.tracer.Start(ctx, "updatechecker.GrafanaService.checkForUpdates")
+	defer span.End()
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			s.log.Debug("Update check failed", traceIDLogOpts...)
+		} else {
+			s.log.Debug("Update check succeeded", traceIDLogOpts...)
+		}
+	}()
+
+	resp, err := s.httpClient.Get(ctx, "https://raw.githubusercontent.com/grafana/grafana/main/latest.json")
 	if err != nil {
 		s.log.Debug("Failed to get latest.json repo from github.com", "error", err)
 		return
