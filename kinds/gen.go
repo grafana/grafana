@@ -36,7 +36,7 @@ func main() {
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
 		codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
-		codegen.CoreStructuredKindJenny(kindsys.GoCoreKindParentPath, nil),
+		codegen.CoreKindJenny(kindsys.GoCoreKindParentPath, nil),
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
 		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
@@ -54,14 +54,13 @@ func main() {
 	rt := cuectx.GrafanaThemaRuntime()
 	var all []*codegen.DeclForGen
 
-	// structured kinddirs first
-	f := os.DirFS(filepath.Join(groot, kindsys.CoreStructuredDeclParentPath))
-	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading structured fs root directory")
+	f := os.DirFS(filepath.Join(groot, kindsys.CoreDeclParentPath))
+	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
 	for _, ent := range kinddirs {
 		if !ent.IsDir() {
 			continue
 		}
-		rel := filepath.Join(kindsys.CoreStructuredDeclParentPath, ent.Name())
+		rel := filepath.Join(kindsys.CoreDeclParentPath, ent.Name())
 		decl, err := kindsys.LoadCoreKind(rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))

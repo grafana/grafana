@@ -6,25 +6,23 @@ import (
 	"github.com/grafana/thema"
 )
 
-// A Kind specifies a type of Grafana resource.
+// A Kind is a specification for a type of object that Grafana knows
+// how to work with. Each kind definition contains a schema, and some
+// declarative metadata and constraints.
 //
-// An instance of a Kind is called an entity. An entity is a sequence of bytes -
-// for example, a JSON file or HTTP request body - that conforms to the
-// constraints defined in a Kind, and enforced by Grafana's entity system.
+// An instance of a kind is called a resource. Resources are a sequence of
+// bytes - for example, a JSON file or HTTP request body - that conforms
+// to the schemas and other constraints defined in a Kind.
 //
 // Once Grafana has determined a given byte sequence to be an
 // instance of a known Kind, kind-specific behaviors can be applied,
 // requests can be routed, events can be triggered, etc.
 //
-// Classes and objects in most programming languages are analogous:
-//   - #Kind is like a `class` keyword
-//   - Each declaration of #Kind is like a class declaration
-//   - Byte sequences are like arguments to the class constructor
-//   - Entities are like objects - what's returned from the constructor
+// Grafana's kinds are similar to Kubernetes CustomResourceDefinitions.
+// Grafana provides a standard mechanism for representing its kinds as CRDs.
 //
-// There are four categories of kinds: Composable, CoreStructured,
-// and CustomStructured.
-#Kind: #Composable | #CoreStructured | #CustomStructured
+// There are three categories of kinds: Core, Custom, and Composable.
+#Kind: #Composable | #Core | #Custom
 
 // properties shared between all kind categories.
 _sharedKind: {
@@ -66,6 +64,13 @@ _sharedKind: {
 	// https://github.com/grafana/thema/issues/62
 	lineageIsGroup: bool
 
+	// lineage is the Thema lineage containing all the schemas that have existed for this kind.
+	lineage: thema.#Lineage
+
+	// currentVersion is computed to be the syntactic version number of the latest
+	// schema in lineage.
+	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & {lin: lineage}).out
+
 	maturity: #Maturity
 
 	// The kind system itself is not mature enough yet for any single
@@ -78,36 +83,18 @@ _sharedKind: {
 // journey. Mature kinds still evolve, but with guarantees about compatibility.
 #Maturity: "merged" | "experimental" | "stable" | "mature"
 
-// Structured encompasses all three of the structured kind categories, in which
-// a schema specifies validity rules for the byte sequence. These represent all
-// the conventional types and functional resources in Grafana, such as
-// dashboards and datasources.
-//
-// Structured kinds may be defined either by Grafana itself (#CoreStructured),
-// or by plugins (#CustomStructured). Plugin-defined kinds have a slightly
-// reduced set of capabilities, due to the constraints imposed by them being run
-// in separate processes, and the risks arising from executing code from
-// potentially untrusted third parties.
-#Structured: S={
+// Core specifies the kind category for core-defined arbitrary types.
+// Familiar types and functional resources in Grafana, such as dashboards and
+// and datasources, are represented as core kinds.
+#Core: S=close({
 	_sharedKind
-	form: "structured"
 
-	// lineage is the Thema lineage containing all the schemas that have existed for this kind.
-	// It is required that lineage.name is the same as the [machineName].
-	lineage: thema.#Lineage & { name: S.machineName }
-
-	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & {lin: lineage}).out
-}
-
-// TODO
-#CoreStructured: {
-	#Structured
-
+	lineage: { name: S.machineName }
 	lineageIsGroup: false
-}
+})
 
-// Composable is a category of structured kind that provides schema elements for
-// composition into CoreStructured and CustomStructured kinds. Grafana plugins
+// Composable is a category of kind that provides schema elements for
+// composition into Core and Custom kinds. Grafana plugins
 // provide composable kinds; for example, a datasource plugin provides one to
 // describe the structure of its queries, which is then composed into dashboards
 // and alerting rules.
@@ -117,7 +104,6 @@ _sharedKind: {
 // that ComposableKind.
 #Composable: S={
 	_sharedKind
-	form: "structured"
 
 	// TODO docs
 	// TODO unify this with the existing slots decls in pkg/framework/coremodel

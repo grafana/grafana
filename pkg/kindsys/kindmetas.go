@@ -13,12 +13,12 @@ type CommonProperties struct {
 }
 
 // CoreProperties represents the static properties in the declaration of a
-// #CoreStructured kind that are representable with basic Go types. This
+// #Core kind that are representable with basic Go types. This
 // excludes Thema schemas.
 //
-// When a .cue #CoreStructured declaration is loaded through the standard [LoadCoreKind],
+// When a .cue #Core declaration is loaded through the standard [LoadCoreKind],
 // func, it is fully validated and populated according to all rules specified
-// in CUE for #CoreStructured kinds.
+// in CUE for #Core kinds.
 type CoreProperties struct {
 	CommonProperties
 	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
@@ -30,7 +30,7 @@ func (m CoreProperties) Common() CommonProperties {
 }
 
 // CustomProperties represents the static properties in the declaration of a
-// #CustomStructured kind that are representable with basic Go types. This
+// #Custom kind that are representable with basic Go types. This
 // excludes Thema schemas.
 type CustomProperties struct {
 	CommonProperties

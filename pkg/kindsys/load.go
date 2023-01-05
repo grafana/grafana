@@ -12,15 +12,10 @@ import (
 	"github.com/grafana/thema"
 )
 
-// DeclParentPath is the path, relative to the repository root, where
-// each child directory is expected to contain directories with .cue files,
-// declaring one kind.
-var DeclParentPath = "kinds"
-
-// CoreStructuredDeclParentPath is the path, relative to the repository root, where
+// CoreDeclParentPath is the path, relative to the repository root, where
 // each child directory is expected to contain .cue files declaring one
-// CoreStructured kind.
-var CoreStructuredDeclParentPath = filepath.Join(DeclParentPath, "structured")
+// Core kind.
+var CoreDeclParentPath = "kinds"
 
 // GoCoreKindParentPath is the path, relative to the repository root, to the directory
 // containing one directory per kind, full of generated Go kind output: types and bindings.
@@ -96,9 +91,9 @@ func ToKindMeta[T KindProperties](v cue.Value) (T, error) {
 	anyprops := any(*props).(SomeKindProperties)
 	switch anyprops.(type) {
 	case CoreProperties:
-		kdef = fw.LookupPath(cue.MakePath(cue.Def("CoreStructured")))
+		kdef = fw.LookupPath(cue.MakePath(cue.Def("Core")))
 	case CustomProperties:
-		kdef = fw.LookupPath(cue.MakePath(cue.Def("CustomStructured")))
+		kdef = fw.LookupPath(cue.MakePath(cue.Def("Custom")))
 	case ComposableProperties:
 		kdef = fw.LookupPath(cue.MakePath(cue.Def("Composable")))
 	default:
