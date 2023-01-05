@@ -32,7 +32,6 @@ func (gen *genBaseRegistry) JennyName() string {
 }
 
 func (gen *genBaseRegistry) Generate(decls ...*DeclForGen) (*codejen.File, error) {
-
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("kind_registry.tmpl").Execute(buf, tvars_kind_registry{
 		NumStructured:     len(decls),
