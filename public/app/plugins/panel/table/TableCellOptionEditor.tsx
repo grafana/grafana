@@ -65,6 +65,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
         settingCache[v.value] = merge(value, settingCache[v.value]);
         setSettingCache(settingCache);
         onChange(settingCache[v.value]);
+        return;
       }
 
       onChange(value);
