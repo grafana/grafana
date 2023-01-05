@@ -50,6 +50,8 @@ const (
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultLegacyMinInterval       = 1
 	screenshotsDefaultCapture               = false
+	screenshotsDefaultCaptureTimeout        = 10 * time.Second
+	screenshotsMaxCaptureTimeout            = 30 * time.Second
 	screenshotsDefaultMaxConcurrent         = 5
 	screenshotsDefaultUploadImageStorage    = false
 	// SchedulerBaseInterval base interval of the scheduler. Controls how often the scheduler fetches database for new changes as well as schedules evaluation of a rule
@@ -87,6 +89,7 @@ type UnifiedAlertingSettings struct {
 
 type UnifiedAlertingScreenshotSettings struct {
 	Capture                    bool
+	CaptureTimeout             time.Duration
 	MaxConcurrentScreenshots   int64
 	UploadExternalImageStorage bool
 }
@@ -281,6 +284,13 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfgScreenshots := uaCfg.Screenshots
 
 	uaCfgScreenshots.Capture = screenshots.Key("capture").MustBool(screenshotsDefaultCapture)
+
+	captureTimeout := screenshots.Key("capture_timeout").MustDuration(screenshotsDefaultCaptureTimeout)
+	if captureTimeout > screenshotsMaxCaptureTimeout {
+		return fmt.Errorf("value of setting 'capture_timeout' cannot exceed %s", screenshotsMaxCaptureTimeout)
+	}
+	uaCfgScreenshots.CaptureTimeout = captureTimeout
+
 	uaCfgScreenshots.MaxConcurrentScreenshots = screenshots.Key("max_concurrent_screenshots").MustInt64(screenshotsDefaultMaxConcurrent)
 	uaCfgScreenshots.UploadExternalImageStorage = screenshots.Key("upload_external_image_storage").MustBool(screenshotsDefaultUploadImageStorage)
 	uaCfg.Screenshots = uaCfgScreenshots
