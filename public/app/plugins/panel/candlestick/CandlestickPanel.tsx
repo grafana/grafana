@@ -1,10 +1,10 @@
 // this file is pretty much a copy-paste of TimeSeriesPanel.tsx :(
 // with some extra renderers passed to the <TimeSeries> component
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import uPlot from 'uplot';
 
-import { Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
+import { DataFrame, Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { TimeSeries, TooltipPlugin, UPlotConfigBuilder, usePanelContext, useTheme2, ZoomPlugin } from '@grafana/ui';
@@ -38,6 +38,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
   onChangeTimeRange,
   replaceVariables,
 }) => {
+  const [frames, setFrames] = useState<DataFrame[]>(data.series);
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, onSplitOpen } =
     usePanelContext();
 
@@ -48,10 +49,14 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
   const theme = useTheme2();
 
   const info = useMemo(() => {
-    return prepareCandlestickFields(data.series, options, theme, timeRange);
+    const candleStickData = prepareCandlestickFields(data.series, options, theme, timeRange);
+    if (candleStickData?.frame) {
+      setFrames([candleStickData?.frame]);
+    }
+    return candleStickData;
   }, [data, options, theme, timeRange]);
 
-  const { renderers, tweakScale, tweakAxis } = useMemo(() => {
+  const { renderers, tweakScale, tweakAxis, shouldRenderPrice } = useMemo(() => {
     let tweakScale = (opts: ScaleProps, forField: Field) => opts;
     let tweakAxis = (opts: AxisProps, forField: Field) => opts;
 
@@ -59,6 +64,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
       renderers: [],
       tweakScale,
       tweakAxis,
+      shouldRenderPrice: false,
     };
 
     if (!info) {
@@ -159,18 +165,6 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
 
     if (shouldRenderPrice) {
       fields = { open, high: high!, low: low!, close };
-
-      // hide series from legend that are rendered as composite markers
-      for (let key in fields) {
-        let field = (info as any)[key] as Field;
-        field.config = {
-          ...field.config,
-          custom: {
-            ...field.config.custom,
-            hideFrom: { legend: true, tooltip: false, viz: false },
-          },
-        };
-      }
     } else {
       // these fields should not be omitted from normal rendering if they arent rendered
       // as part of price markers. they're only here so we can get back their indicies in the
@@ -211,8 +205,29 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
       ],
       tweakScale,
       tweakAxis,
+      shouldRenderPrice,
     };
-  }, [options, info]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options, data.structureRev, data.series.length]);
+
+  useEffect(() => {
+    if (shouldRenderPrice) {
+      // hide series from legend that are rendered as composite markers
+      for (let key in info?.names) {
+        let field = (info as any)[key] as Field;
+        field.config = {
+          ...field.config,
+          custom: {
+            ...field.config.custom,
+            hideFrom: { legend: true, tooltip: false, viz: false },
+          },
+        };
+      }
+      setFrames((previousFrame) => {
+        return [...previousFrame];
+      });
+    }
+  }, [info, renderers, shouldRenderPrice]);
 
   if (!info) {
     return (
@@ -230,7 +245,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
 
   return (
     <TimeSeries
-      frames={[info.frame]}
+      frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}
