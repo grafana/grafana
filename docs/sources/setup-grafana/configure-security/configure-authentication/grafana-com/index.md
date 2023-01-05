@@ -36,7 +36,7 @@ enabled = true
 
 ## Skip organization role sync
 
-To prevent the sync of org roles from Grafana.com, set `skip_org_role_sync` to `true`. This is useful if you want to use your Grafana instance to manage the organization roles for your users.
+To prevent the sync of org roles from Grafana.com, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
 
 ```ini
 [auth.grafana_com]
