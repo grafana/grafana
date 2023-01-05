@@ -66,11 +66,7 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, ErrBasicAuthCredentials.Errorf("failed to fetch user: %w", err)
 	}
 
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser), nil
-}
-
-func (c *Basic) ClientParams() *authn.ClientParams {
-	return &authn.ClientParams{}
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{}), nil
 }
 
 func (c *Basic) Test(ctx context.Context, r *authn.Request) bool {
