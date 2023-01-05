@@ -612,7 +612,6 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 		})
 	}
-
 }
 
 func setUpACL() {
