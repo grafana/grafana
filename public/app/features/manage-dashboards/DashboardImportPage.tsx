@@ -146,13 +146,12 @@ class UnthemedDashboardImport extends PureComponent<Props> {
       <DropZone
         onDrop={this.onFileDrop}
         noClick
-        maxSize={200000}
         accept={{ 'application/json': ['.json'], 'text/plain': ['.txt'] }}
         multiple={false}
       >
         {({ getRootProps, isDragActive }) => {
           return (
-            <div {...getRootProps({ className: 'styles.dropzone' })}>
+            <div {...getRootProps()}>
               <div className={styles.option}>
                 <FileUpload accept="application/json, text/plain" onFileUpload={this.onFileUpload}>
                   Upload JSON file
