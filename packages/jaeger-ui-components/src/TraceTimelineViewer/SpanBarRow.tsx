@@ -290,7 +290,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-type SpanBarRowProps = {
+export type SpanBarRowProps = {
   className?: string;
   theme: GrafanaTheme2;
   color: string;

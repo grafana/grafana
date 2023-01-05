@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -659,10 +660,10 @@ func createDatasource(t *testing.T, id int64, orgId int64, uid string) *datasour
 	}
 }
 
-func createOrg(t *testing.T, id int64) *models.Org {
+func createOrg(t *testing.T, id int64) *org.Org {
 	t.Helper()
-	return &models.Org{
-		Id:      id,
+	return &org.Org{
+		ID:      id,
 		Version: 1,
 		Name:    fmt.Sprintf("org_%d", id),
 		Created: time.Now(),
@@ -701,7 +702,7 @@ func runDashAlertMigrationTestRun(t *testing.T, x *xorm.Engine) {
 func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
 	t.Helper()
 
-	orgs := []models.Org{
+	orgs := []org.Org{
 		*createOrg(t, 1),
 		*createOrg(t, 2),
 	}

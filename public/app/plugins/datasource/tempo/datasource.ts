@@ -181,7 +181,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         // Check whether this is a trace ID or traceQL query by checking if it only contains hex characters
         if (queryValue.trim().match(hexOnlyRegex)) {
           // There's only hex characters so let's assume that this is a trace ID
-          reportInteraction('grafana_traces_traceql_traceID_queried', {
+          reportInteraction('grafana_traces_traceID_queried', {
             datasourceType: 'tempo',
             app: options.app ?? '',
             query: queryValue ?? '',
@@ -820,7 +820,11 @@ export function buildExpr(
   extraParams: string,
   request: DataQueryRequest<TempoQuery>
 ) {
-  let serviceMapQuery = request.targets[0]?.serviceMapQuery?.replace('{', '').replace('}', '') ?? '';
+  let serviceMapQuery = request.targets[0]?.serviceMapQuery ?? '';
+  const serviceMapQueryMatch = serviceMapQuery.match(/^{(.*)}$/);
+  if (serviceMapQueryMatch?.length) {
+    serviceMapQuery = serviceMapQueryMatch[1];
+  }
   // map serviceGraph metric tags to APM metric tags
   serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
   const metricParams = serviceMapQuery.includes('span_name')
