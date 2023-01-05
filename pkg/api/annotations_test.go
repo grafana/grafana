@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -29,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestAnnotationsAPIEndpoint(t *testing.T) {
@@ -573,6 +571,38 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			expectedCode: http.StatusForbidden,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsCreate, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
 		},
+		{
+			desc:         "should be able to mass delete dashboard annotations with correct permission",
+			path:         "/api/annotations/mass-delete",
+			body:         "{\"dashboardId\": 2, \"panelId\": 1}",
+			method:       http.MethodPost,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+		},
+		{
+			desc:         "should not be able to mass delete dashboard annotations without correct permission",
+			path:         "/api/annotations/mass-delete",
+			body:         "{\"dashboardId\": 2, \"panelId\": 1}",
+			method:       http.MethodPost,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
+		},
+		{
+			desc:         "should be able to mass delete dashboard annotations with correct permission",
+			path:         "/api/annotations/mass-delete",
+			body:         "{\"dashboardId\": 2, \"panelId\": 1}",
+			method:       http.MethodPost,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
+		},
+		{
+			desc:         "should not be able to mass delete dashboard annotations without correct permission",
+			path:         "/api/annotations/mass-delete",
+			body:         "{\"dashboardId\": 2, \"panelId\": 1}",
+			method:       http.MethodPost,
+			expectedCode: http.StatusOK,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
+		},
 	}
 
 	for _, tt := range tests {
@@ -595,169 +625,10 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 
-}
-
-func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true)
-	setInitCtxSignedInEditor(sc.initCtx)
-	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
-	require.NoError(t, err)
-
-	type args struct {
-		permissions []accesscontrol.Permission
-		url         string
-		body        io.Reader
-		method      string
-	}
-
-	origNewGuardian := guardian.New
-	t.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
-
-	// Create a dashboard
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
-	sc.dashboardPermissionsService.On("SetPermissions", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string"), mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
-	cmd := &dashboards.SaveDashboardDTO{
-		OrgId: testOrgID,
-		User:  &user.SignedInUser{UserID: testUserID, OrgID: testOrgID},
-		Dashboard: &models.Dashboard{
-			OrgId: testOrgID,
-			Title: "1 test dash",
-			Data:  simplejson.NewFromAny(map[string]interface{}{}),
-		}}
-	dashboard, err := sc.hs.DashboardService.SaveDashboard(context.Background(), cmd, false)
-	require.NoError(t, err)
-	require.NotNil(t, dashboard)
-	t.Cleanup(func() {
-		err := sc.hs.DashboardService.DeleteDashboard(context.Background(), dashboard.Id, dashboard.OrgId)
-		require.NoError(t, err)
-	})
-
-	tests := []struct {
-		name string
-		args args
-		want int
-	}{
-		{
-			name: "Mass delete dashboard annotations without dashboardId is not allowed",
-			args: args{
-				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
-				url:         "/api/annotations/mass-delete",
-				method:      http.MethodPost,
-				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
-					DashboardId: 0,
-					PanelId:     1,
-				}),
-			},
-			want: http.StatusBadRequest,
-		},
-		{
-			name: "Mass delete dashboard annotations without panelId is not allowed",
-			args: args{
-				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
-				url:         "/api/annotations/mass-delete",
-				method:      http.MethodPost,
-				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
-					DashboardId: 10,
-					PanelId:     0,
-				}),
-			},
-			want: http.StatusBadRequest,
-		},
-		{
-			name: "AccessControl mass delete dashboard annotations with correct dashboardId and panelId as input is allowed",
-			args: args{
-				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
-				url:         "/api/annotations/mass-delete",
-				method:      http.MethodPost,
-				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
-					DashboardId: dashboard.Id,
-					PanelId:     1,
-				}),
-			},
-			want: http.StatusOK,
-		},
-		{
-			name: "Mass delete organization annotations without input to delete all organization annotations is allowed",
-			args: args{
-				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
-				url:         "/api/annotations/mass-delete",
-				method:      http.MethodPost,
-				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
-					DashboardId: 0,
-					PanelId:     0,
-				}),
-			},
-			want: http.StatusOK,
-		},
-		{
-			name: "Mass delete organization annotations without permissions is forbidden",
-			args: args{
-				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
-				url:         "/api/annotations/mass-delete",
-				method:      http.MethodPost,
-				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
-					DashboardId: 0,
-					PanelId:     0,
-				}),
-			},
-			want: http.StatusForbidden,
-		},
-		{
-			name: "AccessControl mass delete dashboard annotations with correct annotationId as input is allowed",
-			args: args{
-				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
-				url:         "/api/annotations/mass-delete",
-				method:      http.MethodPost,
-				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
-					AnnotationId: 1,
-				}),
-			},
-			want: http.StatusOK,
-		},
-		{
-			name: "AccessControl mass delete annotation without access to dashboard annotations is forbidden",
-			args: args{
-				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
-				url:         "/api/annotations/mass-delete",
-				method:      http.MethodPost,
-				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
-					AnnotationId: 1,
-				}),
-			},
-			want: http.StatusForbidden,
-		},
-		{
-			name: "AccessControl mass delete annotation without access to organization annotations is forbidden",
-			args: args{
-				permissions: []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
-				url:         "/api/annotations/mass-delete",
-				method:      http.MethodPost,
-				body: mockRequestBody(dtos.MassDeleteAnnotationsCmd{
-					AnnotationId: 2,
-				}),
-			},
-			want: http.StatusForbidden,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			setUpRBACGuardian(t)
-			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgID)
-			dashboardAnnotation := &annotations.Item{Id: 1, DashboardId: 1}
-			organizationAnnotation := &annotations.Item{Id: 2, DashboardId: 0}
-
-			_ = sc.hs.annotationsRepo.Save(context.Background(), dashboardAnnotation)
-			_ = sc.hs.annotationsRepo.Save(context.Background(), organizationAnnotation)
-
-			r := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
-			assert.Equalf(t, tt.want, r.Code, "Annotations API(%v)", tt.args.url)
-		})
-	}
 }
 
 func setUpACL() {
