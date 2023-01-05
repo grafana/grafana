@@ -46,10 +46,6 @@ type Client interface {
 	Test(ctx context.Context, r *Request) bool
 }
 
-type PasswordClient interface {
-	Authenticate(ctx context.Context, orgID int64, username, password string) (*Identity, *ClientParams, error)
-}
-
 type Request struct {
 	// OrgID will be populated by authn.Service
 	OrgID       int64
