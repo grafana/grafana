@@ -39,7 +39,6 @@ type store interface {
 	CreateWithMember(context.Context, *org.CreateOrgCommand) (*org.Org, error)
 	AddOrgUser(context.Context, *org.AddOrgUserCommand) error
 	UpdateOrgUser(context.Context, *org.UpdateOrgUserCommand) error
-	GetOrgUsers(context.Context, *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error)
 	GetByID(context.Context, *org.GetOrgByIDQuery) (*org.Org, error)
 	GetByName(context.Context, *org.GetOrgByNameQuery) (*org.Org, error)
 	SearchOrgUsers(context.Context, *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error)
@@ -624,22 +623,6 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 		return nil, err
 	}
 	return &result, nil
-}
-
-func (ss *sqlStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
-	result, err := ss.SearchOrgUsers(ctx, &org.SearchOrgUsersQuery{
-		UserID:                   query.UserID,
-		OrgID:                    query.OrgID,
-		Query:                    query.Query,
-		Page:                     query.Page,
-		Limit:                    query.Limit,
-		DontEnforceAccessControl: query.DontEnforceAccessControl,
-		User:                     query.User,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.OrgUsers, nil
 }
 
 func (ss *sqlStore) GetByName(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {

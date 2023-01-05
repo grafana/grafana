@@ -327,35 +327,35 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 			err = orgUserStore.UpdateOrgUser(context.Background(), &updateCmd)
 			require.NoError(t, err)
 
-			orgUsersQuery := org.GetOrgUsersQuery{
+			orgUsersQuery := org.SearchOrgUsersQuery{
 				OrgID: ac1.OrgID,
 				User: &user.SignedInUser{
 					OrgID:       ac1.OrgID,
 					Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 				},
 			}
-			result, err := orgUserStore.GetOrgUsers(context.Background(), &orgUsersQuery)
+			result, err := orgUserStore.SearchOrgUsers(context.Background(), &orgUsersQuery)
 			require.NoError(t, err)
 
-			require.EqualValues(t, result[1].Role, org.RoleAdmin)
+			require.EqualValues(t, result.OrgUsers[1].Role, org.RoleAdmin)
 		})
 		t.Run("Can get organization users", func(t *testing.T) {
-			query := org.GetOrgUsersQuery{
+			query := org.SearchOrgUsersQuery{
 				OrgID: ac1.OrgID,
 				User: &user.SignedInUser{
 					OrgID:       ac1.OrgID,
 					Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 				},
 			}
-			result, err := orgUserStore.GetOrgUsers(context.Background(), &query)
+			result, err := orgUserStore.SearchOrgUsers(context.Background(), &query)
 
 			require.NoError(t, err)
-			require.Equal(t, len(result), 2)
-			require.Equal(t, result[0].Role, "Admin")
+			require.Equal(t, len(result.OrgUsers), 2)
+			require.Equal(t, result.OrgUsers[0].Role, "Admin")
 		})
 
 		t.Run("Can get organization users with query", func(t *testing.T) {
-			query := org.GetOrgUsersQuery{
+			query := org.SearchOrgUsersQuery{
 				OrgID: ac1.OrgID,
 				Query: "ac1",
 				User: &user.SignedInUser{
@@ -363,14 +363,14 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 					Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 				},
 			}
-			result, err := orgUserStore.GetOrgUsers(context.Background(), &query)
+			result, err := orgUserStore.SearchOrgUsers(context.Background(), &query)
 
 			require.NoError(t, err)
-			require.Equal(t, len(result), 1)
-			require.Equal(t, result[0].Email, ac1.Email)
+			require.Equal(t, len(result.OrgUsers), 1)
+			require.Equal(t, result.OrgUsers[0].Email, ac1.Email)
 		})
 		t.Run("Can get organization users with query and limit", func(t *testing.T) {
-			query := org.GetOrgUsersQuery{
+			query := org.SearchOrgUsersQuery{
 				OrgID: ac1.OrgID,
 				Query: "ac",
 				Limit: 1,
@@ -379,11 +379,11 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 					Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 				},
 			}
-			result, err := orgUserStore.GetOrgUsers(context.Background(), &query)
+			result, err := orgUserStore.SearchOrgUsers(context.Background(), &query)
 
 			require.NoError(t, err)
-			require.Equal(t, len(result), 1)
-			require.Equal(t, result[0].Email, ac1.Email)
+			require.Equal(t, len(result.OrgUsers), 1)
+			require.Equal(t, result.OrgUsers[0].Email, ac1.Email)
 		})
 		t.Run("Cannot update role so no one is admin user", func(t *testing.T) {
 			remCmd := org.RemoveOrgUserCommand{OrgID: ac1.OrgID, UserID: ac2.ID, ShouldDeleteOrphanedUser: true}
@@ -532,12 +532,12 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 	}
 	tests := []struct {
 		desc             string
-		query            *org.GetOrgUsersQuery
+		query            *org.SearchOrgUsersQuery
 		expectedNumUsers int
 	}{
 		{
 			desc: "should return all users",
-			query: &org.GetOrgUsersQuery{
+			query: &org.SearchOrgUsersQuery{
 				OrgID: 1,
 				User: &user.SignedInUser{
 					OrgID:       1,
@@ -548,7 +548,7 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 		},
 		{
 			desc: "should return no users",
-			query: &org.GetOrgUsersQuery{
+			query: &org.SearchOrgUsersQuery{
 				OrgID: 1,
 				User: &user.SignedInUser{
 					OrgID:       1,
@@ -559,7 +559,7 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 		},
 		{
 			desc: "should return some users",
-			query: &org.GetOrgUsersQuery{
+			query: &org.SearchOrgUsersQuery{
 				OrgID: 1,
 				User: &user.SignedInUser{
 					OrgID: 1,
@@ -589,12 +589,12 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			result, err := orgUserStore.GetOrgUsers(context.Background(), tt.query)
+			result, err := orgUserStore.SearchOrgUsers(context.Background(), tt.query)
 			require.NoError(t, err)
 			require.Len(t, result, tt.expectedNumUsers)
 
 			if !hasWildcardScope(tt.query.User, accesscontrol.ActionOrgUsersRead) {
-				for _, u := range result {
+				for _, u := range result.OrgUsers {
 					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgID][accesscontrol.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserID))
 				}
 			}
@@ -675,7 +675,7 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	query := &org.GetOrgUsersQuery{
+	query := &org.SearchOrgUsersQuery{
 		OrgID:  1,
 		UserID: newUser.ID,
 		User: &user.SignedInUser{
@@ -683,11 +683,11 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 			Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 		},
 	}
-	result, err := orgUserStore.GetOrgUsers(context.Background(), query)
+	result, err := orgUserStore.SearchOrgUsers(context.Background(), query)
 	require.NoError(t, err)
 	require.Len(t, result, 1)
 
-	actual := result[0]
+	actual := result.OrgUsers[0]
 	assert.Equal(t, int64(1), actual.OrgID)
 	assert.Equal(t, int64(1), actual.UserID)
 	assert.Equal(t, "viewer@localhost", actual.Email)
