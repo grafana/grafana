@@ -145,7 +145,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *user.U
 	// user exists, add org role
 	createOrgUserCmd := org.AddOrgUserCommand{OrgID: c.OrgID, UserID: user.ID, Role: inviteDto.Role}
 	if err := hs.orgService.AddOrgUser(c.Req.Context(), &createOrgUserCmd); err != nil {
-		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
+		if errors.Is(err, org.ErrOrgUserAlreadyAdded) {
 			return response.Error(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
 		}
 		return response.Error(500, "Error while trying to create org user", err)
@@ -307,7 +307,7 @@ func (hs *HTTPServer) applyUserInvite(ctx context.Context, usr *user.User, invit
 	// add to org
 	addOrgUserCmd := org.AddOrgUserCommand{OrgID: invite.OrgId, UserID: usr.ID, Role: invite.Role}
 	if err := hs.orgService.AddOrgUser(ctx, &addOrgUserCmd); err != nil {
-		if !errors.Is(err, models.ErrOrgUserAlreadyAdded) {
+		if !errors.Is(err, org.ErrOrgUserAlreadyAdded) {
 			return false, response.Error(500, "Error while trying to create org user", err)
 		}
 	}

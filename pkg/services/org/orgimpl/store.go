@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -358,7 +357,7 @@ func (ss *sqlStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) 
 		if res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and user_id=?", cmd.OrgID, usr.ID); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return models.ErrOrgUserAlreadyAdded
+			return org.ErrOrgUserAlreadyAdded
 		}
 
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.OrgID); err != nil {
@@ -484,7 +483,7 @@ func (ss *sqlStore) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCom
 		}
 
 		if !exists {
-			return models.ErrOrgUserNotFound
+			return org.ErrOrgUserNotFound
 		}
 
 		orgUser.Role = cmd.Role
@@ -506,7 +505,7 @@ func validateOneAdminLeftInOrg(orgID int64, sess *db.Session) error {
 	}
 
 	if len(res) == 0 {
-		return models.ErrLastOrgAdmin
+		return org.ErrLastOrgAdmin
 	}
 
 	return err

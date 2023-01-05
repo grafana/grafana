@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -391,7 +390,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 			require.NoError(t, err)
 			cmd := org.UpdateOrgUserCommand{OrgID: ac1.OrgID, UserID: ac1.ID, Role: org.RoleViewer}
 			err = orgUserStore.UpdateOrgUser(context.Background(), &cmd)
-			require.Equal(t, models.ErrLastOrgAdmin, err)
+			require.Equal(t, org.ErrLastOrgAdmin, err)
 		})
 
 		t.Run("Removing user from org should delete user completely if in no other org", func(t *testing.T) {
@@ -409,7 +408,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 		t.Run("Cannot delete last admin org user", func(t *testing.T) {
 			cmd := org.RemoveOrgUserCommand{OrgID: ac1.OrgID, UserID: ac1.ID}
 			err := orgUserStore.RemoveOrgUser(context.Background(), &cmd)
-			require.Equal(t, err, models.ErrLastOrgAdmin)
+			require.Equal(t, err, org.ErrLastOrgAdmin)
 		})
 	})
 

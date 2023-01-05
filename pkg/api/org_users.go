@@ -86,7 +86,7 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd org.AddOrgUserC
 	cmd.UserID = userToAdd.ID
 
 	if err := hs.orgService.AddOrgUser(c.Req.Context(), &cmd); err != nil {
-		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
+		if errors.Is(err, org.ErrOrgUserAlreadyAdded) {
 			return response.JSON(409, util.DynMap{
 				"message": "User is already member of this organization",
 				"userId":  cmd.UserID,
@@ -353,7 +353,7 @@ func (hs *HTTPServer) updateOrgUserHelper(c *models.ReqContext, cmd org.UpdateOr
 		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
 	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
-		if errors.Is(err, models.ErrLastOrgAdmin) {
+		if errors.Is(err, org.ErrLastOrgAdmin) {
 			return response.Error(400, "Cannot change role so that there is no organization admin left", nil)
 		}
 		return response.Error(500, "Failed update org user", err)
@@ -418,7 +418,7 @@ func (hs *HTTPServer) RemoveOrgUser(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *org.RemoveOrgUserCommand) response.Response {
 	if err := hs.orgService.RemoveOrgUser(ctx, cmd); err != nil {
-		if errors.Is(err, models.ErrLastOrgAdmin) {
+		if errors.Is(err, org.ErrLastOrgAdmin) {
 			return response.Error(400, "Cannot remove last organization admin", nil)
 		}
 		return response.Error(500, "Failed to remove user from organization", err)
@@ -444,14 +444,14 @@ func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *org.RemoveOr
 type AddOrgUserToCurrentOrgParams struct {
 	// in:body
 	// required:true
-	Body models.AddOrgUserCommand `json:"body"`
+	Body org.AddOrgUserCommand `json:"body"`
 }
 
 // swagger:parameters addOrgUser
 type AddOrgUserParams struct {
 	// in:body
 	// required:true
-	Body models.AddOrgUserCommand `json:"body"`
+	Body org.AddOrgUserCommand `json:"body"`
 	// in:path
 	// required:true
 	OrgID int64 `json:"org_id"`
@@ -478,7 +478,7 @@ type GetOrgUsersParams struct {
 type UpdateOrgUserForCurrentOrgParams struct {
 	// in:body
 	// required:true
-	Body models.UpdateOrgUserCommand `json:"body"`
+	Body org.UpdateOrgUserCommand `json:"body"`
 	// in:path
 	// required:true
 	UserID int64 `json:"user_id"`
@@ -488,7 +488,7 @@ type UpdateOrgUserForCurrentOrgParams struct {
 type UpdateOrgUserParams struct {
 	// in:body
 	// required:true
-	Body models.UpdateOrgUserCommand `json:"body"`
+	Body org.UpdateOrgUserCommand `json:"body"`
 	// in:path
 	// required:true
 	OrgID int64 `json:"org_id"`
@@ -525,12 +525,12 @@ type GetOrgUsersForCurrentOrgLookupResponse struct {
 type GetOrgUsersForCurrentOrgResponse struct {
 	// The response message
 	// in: body
-	Body []*models.OrgUserDTO `json:"body"`
+	Body []*org.OrgUserDTO `json:"body"`
 }
 
 // swagger:response getOrgUsersResponse
 type GetOrgUsersResponse struct {
 	// The response message
 	// in: body
-	Body []*models.OrgUserDTO `json:"body"`
+	Body []*org.OrgUserDTO `json:"body"`
 }

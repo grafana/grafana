@@ -11,8 +11,11 @@ import (
 
 // Typed errors
 var (
-	ErrOrgNotFound  = errors.New("organization not found")
-	ErrOrgNameTaken = errors.New("organization name is taken")
+	ErrOrgNotFound         = errors.New("organization not found")
+	ErrOrgNameTaken        = errors.New("organization name is taken")
+	ErrLastOrgAdmin        = errors.New("cannot remove last organization admin")
+	ErrOrgUserNotFound     = errors.New("cannot find the organization user")
+	ErrOrgUserAlreadyAdded = errors.New("user is already added to organization")
 )
 
 type Org struct {
