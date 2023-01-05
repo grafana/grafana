@@ -14,12 +14,14 @@ type CrossAccountLogsQueryProps = {
   accountOptions?: Array<SelectableValue<string>>;
   fetchLogGroups: (params: Partial<DescribeLogGroupsRequest>) => Promise<Array<ResourceResponse<LogGroupResponse>>>;
   onChange: (selectedLogGroups: LogGroup[]) => void;
+  onBeforeOpen?: () => void;
 };
 
 export const LogGroupsSelector = ({
   accountOptions = [],
   fetchLogGroups,
   onChange,
+  onBeforeOpen,
   ...props
 }: CrossAccountLogsQueryProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -191,7 +193,16 @@ export const LogGroupsSelector = ({
       </Modal>
 
       <div>
-        <Button variant="secondary" onClick={toggleModal} type="button">
+        <Button
+          variant="secondary"
+          onClick={() => {
+            try {
+              onBeforeOpen?.();
+              toggleModal();
+            } catch (err) {}
+          }}
+          type="button"
+        >
           Select Log Groups
         </Button>
       </div>

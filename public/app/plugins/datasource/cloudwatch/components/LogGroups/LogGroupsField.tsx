@@ -10,12 +10,13 @@ import { LogGroupsSelector } from './LogGroupsSelector';
 import { SelectedLogGroups } from './SelectedLogGroups';
 
 type Props = {
-  datasource: CloudWatchDatasource;
+  datasource?: CloudWatchDatasource;
   onChange: (logGroups: LogGroup[]) => void;
   legacyLogGroupNames?: string[];
   logGroups?: LogGroup[];
   region: string;
   maxNoOfVisibleLogGroups?: number;
+  onBeforeOpen?: () => void;
 };
 
 const rowGap = css`
@@ -29,12 +30,13 @@ export const LogGroupsField = ({
   logGroups,
   region,
   maxNoOfVisibleLogGroups,
+  onBeforeOpen,
 }: Props) => {
-  const accountState = useAccountOptions(datasource.api, region);
+  const accountState = useAccountOptions(datasource?.api, region);
 
   useEffectOnce(() => {
     // If log group names are stored in the query model, make a new DescribeLogGroups request for each log group to load the arn. Then update the query model.
-    if (!logGroups?.length && legacyLogGroupNames?.length) {
+    if (datasource && !logGroups?.length && legacyLogGroupNames?.length) {
       Promise.all(
         legacyLogGroupNames.map((lg) => datasource.api.describeLogGroups({ region: region, logGroupNamePrefix: lg }))
       ).then((results) => {
@@ -54,12 +56,13 @@ export const LogGroupsField = ({
   return (
     <div className={`gf-form gf-form--grow flex-grow-1 ${rowGap}`}>
       <LogGroupsSelector
-        fetchLogGroups={(params: Partial<DescribeLogGroupsRequest>) =>
-          datasource.api.describeLogGroups({ region: region, ...params })
+        fetchLogGroups={async (params: Partial<DescribeLogGroupsRequest>) =>
+          datasource?.api.describeLogGroups({ region: region, ...params }) ?? []
         }
         onChange={onChange}
         accountOptions={accountState.value}
         selectedLogGroups={logGroups}
+        onBeforeOpen={onBeforeOpen}
       />
       <SelectedLogGroups
         selectedLogGroups={logGroups ?? []}

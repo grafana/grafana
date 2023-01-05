@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
-import { useDebounce, useEffectOnce } from 'react-use';
+import { useDebounce } from 'react-use';
 
 import { ConnectionConfig } from '@grafana/aws-sdk';
 import {
@@ -8,8 +8,7 @@ import {
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { Input, InlineField } from '@grafana/ui';
+import { Input, InlineField, FieldProps } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -24,13 +23,19 @@ import { XrayLinkConfig } from './XrayLinkConfig';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, CloudWatchSecureJsonData>;
 
+type LogGroupFieldState = Pick<FieldProps, 'invalid'> & { error?: string | null };
+
 export const ConfigEditor: FC<Props> = (props: Props) => {
   const { options, onOptionsChange } = props;
   const { defaultLogGroups, logsTimeout, defaultRegion, logGroups } = options.jsonData;
-
   const datasource = useDatasource(props);
   useAuthenticationWarning(options.jsonData);
   const logsTimeoutError = useTimoutValidation(logsTimeout);
+  const saved = useDataSourceSavedState(props);
+  const [logGroupFieldState, setLogGroupFieldState] = useState<LogGroupFieldState>({
+    invalid: false,
+  });
+  useEffect(() => setLogGroupFieldState({ invalid: false }), [props.options]);
 
   return (
     <>
@@ -82,28 +87,40 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
           labelWidth={28}
           tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
           shrink={true}
+          {...logGroupFieldState}
         >
-          {datasource ? (
-            <LogGroupsField
-              region={defaultRegion ?? ''}
-              datasource={datasource}
-              legacyLogGroupNames={defaultLogGroups}
-              logGroups={logGroups}
-              onChange={(updatedLogGroups) => {
-                onOptionsChange({
-                  ...props.options,
-                  jsonData: {
-                    ...props.options.jsonData,
-                    logGroups: updatedLogGroups,
-                    defaultLogGroups: undefined,
-                  },
-                });
-              }}
-              maxNoOfVisibleLogGroups={2}
-            />
-          ) : (
-            <></>
-          )}
+          <LogGroupsField
+            region={defaultRegion ?? ''}
+            datasource={datasource}
+            onBeforeOpen={() => {
+              if (saved) {
+                return;
+              }
+
+              let error = 'Please save the datasource before adding log groups.';
+              if (props.options.version && props.options.version > 1) {
+                error = 'You have unsaved connection detail changes. Please save before adding log groups.';
+              }
+              setLogGroupFieldState({
+                invalid: true,
+                error,
+              });
+              throw new Error(error);
+            }}
+            legacyLogGroupNames={defaultLogGroups}
+            logGroups={logGroups}
+            onChange={(updatedLogGroups) => {
+              onOptionsChange({
+                ...props.options,
+                jsonData: {
+                  ...props.options.jsonData,
+                  logGroups: updatedLogGroups,
+                  defaultLogGroups: undefined,
+                },
+              });
+            }}
+            maxNoOfVisibleLogGroups={2}
+          />
         </InlineField>
       </div>
 
@@ -135,20 +152,6 @@ function useAuthenticationWarning(jsonData: CloudWatchJsonData) {
 
 function useDatasource(props: Props) {
   const [datasource, setDatasource] = useState<CloudWatchDatasource>();
-
-  useEffectOnce(() => {
-    // save the datasource if it wasn't saved before
-    if (props.options.version === 1) {
-      getBackendSrv()
-        .put(`/api/datasources/${props.options.id}`, props.options)
-        .then((result) => {
-          props.onOptionsChange({
-            ...props.options,
-            version: result.datasource.version,
-          });
-        });
-    }
-  });
 
   useEffect(() => {
     if (props.options.version && props.options.version > 1) {
@@ -186,4 +189,26 @@ function useTimoutValidation(value: string | undefined) {
     [value]
   );
   return err;
+}
+
+function useDataSourceSavedState(props: Props) {
+  const [saved, setSaved] = useState(!!props.options.version && props.options.version > 1);
+  useEffect(() => {
+    setSaved(false);
+  }, [
+    props.options.jsonData.assumeRoleArn,
+    props.options.jsonData.authType,
+    props.options.jsonData.defaultRegion,
+    props.options.jsonData.endpoint,
+    props.options.jsonData.externalId,
+    props.options.jsonData.profile,
+    props.options.secureJsonData?.accessKey,
+    props.options.secureJsonData?.secretKey,
+  ]);
+
+  useEffect(() => {
+    setSaved(true);
+  }, [props.options.version]);
+
+  return saved;
 }
