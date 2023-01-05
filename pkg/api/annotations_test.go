@@ -595,6 +595,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				repo := annotationstest.NewFakeAnnotationsRepo()
+				_ = repo.Save(context.Background(), &annotations.Item{Id: 1, DashboardId: 0})
 				_ = repo.Save(context.Background(), &annotations.Item{Id: 2, DashboardId: 1})
 				hs.annotationsRepo = repo
 				hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
