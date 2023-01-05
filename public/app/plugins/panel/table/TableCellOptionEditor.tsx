@@ -1,5 +1,5 @@
 import { merge } from 'lodash';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { TableCellOptions } from '@grafana/schema';
@@ -20,6 +20,11 @@ const cellDisplayModeOptions = [
 // Maps display modes to editor components
 interface ComponentMap {
   [key: string]: Function;
+}
+
+// Maps cell type to options for caching
+interface SettingMap {
+  [key: string]: TableCellOptions;
 }
 
 /*
@@ -43,19 +48,35 @@ interface Props {
 export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   const cellType = value.type;
   let editor: ReactNode | null = null;
+  let [settingCache, setSettingCache] = useState<SettingMap>({});
 
   // Update display mode on change
   const onCellTypeChange = (v: SelectableValue<TableCellDisplayMode>) => {
     if (v.value !== undefined) {
-      value.type = v.value;
+      // Set the new type of cell starting
+      // with default settings
+      value = {
+        type: v.value,
+      };
+
+      // When changing cell type see if there were previously stored
+      // settings and merge those with the changed value
+      if (settingCache[v.value] !== undefined && Object.keys(settingCache[v.value]).length > 1) {
+        settingCache[v.value] = merge(value, settingCache[v.value]);
+        setSettingCache(settingCache);
+        onChange(settingCache[v.value]);
+      }
+
       onChange(value);
     }
   };
 
   // When options for a cell change we merge
-  //  any option changes with our options object
+  // any option changes with our options object
   const onCellOptionsChange = (options: TableCellOptions) => {
-    onChange(merge(value, options));
+    settingCache[value.type] = merge(value, options);
+    setSettingCache(settingCache);
+    onChange(settingCache[value.type]);
   };
 
   // Setup specific cell editor
