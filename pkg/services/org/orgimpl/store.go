@@ -40,7 +40,7 @@ type store interface {
 	AddOrgUser(context.Context, *org.AddOrgUserCommand) error
 	UpdateOrgUser(context.Context, *org.UpdateOrgUserCommand) error
 	GetOrgUsers(context.Context, *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error)
-	GetByID(context.Context, *org.GetOrgByIdQuery) (*org.Org, error)
+	GetByID(context.Context, *org.GetOrgByIDQuery) (*org.Org, error)
 	GetByName(context.Context, *org.GetOrgByNameQuery) (*org.Org, error)
 	SearchOrgUsers(context.Context, *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error)
 	RemoveOrgUser(context.Context, *org.RemoveOrgUserCommand) error
@@ -129,28 +129,28 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *org.UpdateOrgCommand) error
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
 			return err
 		} else if isNameTaken {
-			return models.ErrOrgNameTaken
+			return org.ErrOrgNameTaken
 		}
 
-		org := org.Org{
+		orga := org.Org{
 			Name:    cmd.Name,
 			Updated: time.Now(),
 		}
 
-		affectedRows, err := sess.ID(cmd.OrgId).Update(&org)
+		affectedRows, err := sess.ID(cmd.OrgId).Update(&orga)
 
 		if err != nil {
 			return err
 		}
 
 		if affectedRows == 0 {
-			return models.ErrOrgNotFound
+			return org.ErrOrgNotFound
 		}
 
 		sess.PublishAfterCommit(&events.OrgUpdated{
-			Timestamp: org.Updated,
-			Id:        org.ID,
-			Name:      org.Name,
+			Timestamp: orga.Updated,
+			Id:        orga.ID,
+			Name:      orga.Name,
 		})
 
 		return nil
@@ -207,7 +207,7 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.ID); err != nil {
 			return err
 		} else if len(res) != 1 {
-			return models.ErrOrgNotFound
+			return org.ErrOrgNotFound
 		}
 
 		deletes := []string{
@@ -310,7 +310,7 @@ func (ss *sqlStore) CreateWithMember(ctx context.Context, cmd *org.CreateOrgComm
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
-			return models.ErrOrgNameTaken
+			return org.ErrOrgNameTaken
 		}
 
 		if _, err := sess.Insert(&orga); err != nil {
@@ -364,7 +364,7 @@ func (ss *sqlStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) 
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.OrgID); err != nil {
 			return err
 		} else if len(res) != 1 {
-			return models.ErrOrgNotFound
+			return org.ErrOrgNotFound
 		}
 
 		entity := org.OrgUser{
@@ -589,7 +589,7 @@ func (ss *sqlStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery
 	return result, nil
 }
 
-func (ss *sqlStore) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
+func (ss *sqlStore) GetByID(ctx context.Context, query *org.GetOrgByIDQuery) (*org.Org, error) {
 	var orga org.Org
 	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		exists, err := dbSession.ID(query.ID).Get(&orga)
@@ -598,7 +598,7 @@ func (ss *sqlStore) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*o
 		}
 
 		if !exists {
-			return models.ErrOrgNotFound
+			return org.ErrOrgNotFound
 		}
 		return nil
 	})
@@ -699,7 +699,7 @@ func (ss *sqlStore) GetByName(ctx context.Context, query *org.GetOrgByNameQuery)
 		}
 
 		if !exists {
-			return models.ErrOrgNotFound
+			return org.ErrOrgNotFound
 		}
 		return nil
 	})
@@ -739,7 +739,7 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 		}
 
 		// check user other orgs and update user current org
-		var userOrgs []*models.UserOrgDTO
+		var userOrgs []*org.UserOrgDTO
 		sess.Table("org_user")
 		sess.Join("INNER", "org", "org_user.org_id=org.id")
 		sess.Where("org_user.user_id=?", usr.ID)
@@ -753,14 +753,14 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 		if len(userOrgs) > 0 {
 			hasCurrentOrgSet := false
 			for _, userOrg := range userOrgs {
-				if usr.OrgID == userOrg.OrgId {
+				if usr.OrgID == userOrg.OrgID {
 					hasCurrentOrgSet = true
 					break
 				}
 			}
 
 			if !hasCurrentOrgSet {
-				err = setUsingOrgInTransaction(sess, usr.ID, userOrgs[0].OrgId)
+				err = setUsingOrgInTransaction(sess, usr.ID, userOrgs[0].OrgID)
 				if err != nil {
 					return err
 				}
