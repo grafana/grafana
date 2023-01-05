@@ -2,6 +2,7 @@ package updatechecker
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"io"
 	"net/http"
 	"strings"
@@ -163,7 +164,8 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			httpClient: &fakeHTTPClient{
 				fakeResp: jsonResp,
 			},
-			log: log.NewNopLogger(),
+			log:    log.NewNopLogger(),
+			tracer: tracing.InitializeTracerForTest(),
 		}
 
 		svc.checkForUpdates(context.Background())
@@ -195,7 +197,7 @@ type fakeHTTPClient struct {
 	requestURL string
 }
 
-func (c *fakeHTTPClient) Get(url string) (*http.Response, error) {
+func (c *fakeHTTPClient) Get(ctx context.Context, url string) (*http.Response, error) {
 	c.requestURL = url
 
 	resp := &http.Response{

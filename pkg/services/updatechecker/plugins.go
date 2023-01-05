@@ -6,10 +6,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
-	"go.opentelemetry.io/otel/trace"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -60,17 +59,12 @@ func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store, tracer t
 	return &PluginsService{
 		enabled:          cfg.CheckForPluginUpdates,
 		grafanaVersion:   cfg.BuildVersion,
-		httpClient:       &http.Client{Timeout: 10 * time.Second},
+		httpClient:       newInstrumentedHTTPClient(&http.Client{Timeout: time.Second * 10}, tracer),
 		log:              log.New("plugins.update.checker"),
 		tracer:           tracer,
 		pluginStore:      pluginStore,
 		availableUpdates: make(map[string]string),
 	}
-}
-
-type httpClient interface {
-	// TODO: change this so it accepts context (for tracing)
-	Get(url string) (resp *http.Response, err error)
 }
 
 func (s *PluginsService) IsDisabled() bool {
@@ -141,28 +135,15 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 	}()
 
 	localPlugins := s.pluginsEligibleForVersionCheck(ctx)
-
-	// TODO: move all http-related tracing to a new struct implementing the httpClient interface
-	url := "https://grafana.com/api/plugins/versioncheck?slugIn=" +
-		s.pluginIDsCSV(localPlugins) + "&grafanaVersion=" + s.grafanaVersion
-	_, requestSpan := s.tracer.Start(
-		ctx,
-		"updatechecker.PluginsService.gcomAPIRequest",
-		trace.WithSpanKind(trace.SpanKindClient),
-		trace.WithAttributes(
-			semconv.HTTPMethodKey.String(http.MethodGet),
-			semconv.HTTPTargetKey.String(url),
-		),
-	)
-	resp, err := s.httpClient.Get(url)
+	requestURL := "https://grafana.com/api/plugins/versioncheck?" + url.Values{
+		"slugIn":         []string{s.pluginIDsCSV(localPlugins)},
+		"grafanaVersion": []string{s.grafanaVersion},
+	}.Encode()
+	resp, err := s.httpClient.Get(ctx, requestURL)
 	if err != nil {
-		requestSpan.RecordError(err)
-		requestSpan.End()
 		s.log.Debug("Failed to get plugins repo from grafana.com", "error", err.Error())
 		return
 	}
-	requestSpan.SetAttributes(string(semconv.HTTPStatusCodeKey), resp.StatusCode, semconv.HTTPStatusCodeKey.Int(resp.StatusCode))
-	requestSpan.End()
 	defer func() {
 		err = resp.Body.Close()
 		if err != nil {
