@@ -1316,7 +1316,9 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
-				"query": "foo"
+				"query": "foo",
+				"bucketAggs": [],
+				"metrics": [{ "id": "1", "type": "raw_data", "settings": {}	}]
 			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
@@ -1329,7 +1331,9 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
-				"query": "foo"
+				"query": "foo",
+				"bucketAggs": [],
+				"metrics": [{ "id": "1", "type": "raw_data", "settings": {}	}]
 			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
