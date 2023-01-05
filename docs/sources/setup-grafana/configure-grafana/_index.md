@@ -870,7 +870,7 @@ A table detailing what happens when the legacy option is enabled/disabled and an
 
 The table below shows the available OAuth providers and their setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
-| --- | --- | --- | --- | --- |
+| --- | --- | --- | --- |
 | Grafana.com | true | false | will still sync Org Roles from Grafana.Com |
 | Grafana.com | false | true | skip org role sync for grafana.com |
 | Grafana.com | true | true | no sync from any OAuth integration as well as Grafana.Com |
