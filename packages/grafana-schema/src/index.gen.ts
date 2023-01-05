@@ -31,7 +31,7 @@ export type {
   RowPanel,
   GraphPanel,
   HeatmapPanel
-} from './dashboard/x/dashboard_types.gen';
+} from './raw/dashboard/x/dashboard_types.gen';
 
 // Raw generated enums and default consts from dashboard kind.
 export {
@@ -49,7 +49,7 @@ export {
   defaultDashboardCursorSync,
   defaultMatcherConfig,
   defaultRowPanel
-} from './dashboard/x/dashboard_types.gen';
+} from './raw/dashboard/x/dashboard_types.gen';
 
 // The following exported declarations correspond to types in the dashboard@0.0 kind's
 // schema with attribute @grafana(TSVeneer="type").
@@ -90,13 +90,13 @@ export {
 export type {
   Playlist,
   PlaylistItem
-} from './playlist/x/playlist_types.gen';
+} from './raw/playlist/x/playlist_types.gen';
 
 // Raw generated enums and default consts from playlist kind.
-export { defaultPlaylist } from './playlist/x/playlist_types.gen';
+export { defaultPlaylist } from './raw/playlist/x/playlist_types.gen';
 
 // Raw generated types from Team kind.
-export type { Team } from './team/x/team_types.gen';
+export type { Team } from './raw/team/x/team_types.gen';
 
 // Raw generated enums and default consts from team kind.
-export { Permission } from './team/x/team_types.gen';
+export { Permission } from './raw/team/x/team_types.gen';

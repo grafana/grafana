@@ -42,6 +42,7 @@ func (gen *genTSVeneerIndex) JennyName() string {
 func (gen *genTSVeneerIndex) Generate(decls ...*DeclForGen) (*codejen.File, error) {
 	tsf := new(ast.File)
 	for _, decl := range decls {
+
 		sch := decl.Lineage().Latest()
 		f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
 			RootName: decl.Properties.Common().Name,
@@ -149,7 +150,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *
 			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated types from %s kind.", comm.Name), 80, false)},
 			TypeOnly:    true,
 			Exports:     raw,
-			From:        ast.Str{Value: fmt.Sprintf("./%s/%s/%s_types.gen", comm.MachineName, vpath, comm.MachineName)},
+			From:        ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s_types.gen", comm.MachineName, vpath, comm.MachineName)},
 		})
 	}
 	if len(rawD) > 0 {
@@ -157,7 +158,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *
 			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated enums and default consts from %s kind.", lin.Name()), 80, false)},
 			TypeOnly:    false,
 			Exports:     rawD,
-			From:        ast.Str{Value: fmt.Sprintf("./%s/%s/%s_types.gen", comm.MachineName, vpath, comm.MachineName)},
+			From:        ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s_types.gen", comm.MachineName, vpath, comm.MachineName)},
 		})
 	}
 	vtfile := fmt.Sprintf("./veneer/%s.types", lin.Name())

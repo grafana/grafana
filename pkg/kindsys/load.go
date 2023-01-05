@@ -28,7 +28,7 @@ var GoCoreKindParentPath = filepath.Join("pkg", "kinds")
 
 // TSCoreKindParentPath is the path, relative to the repository root, to the directory that
 // contains one directory per kind, full of generated TS kind output: types and default consts.
-var TSCoreKindParentPath = filepath.Join("packages", "grafana-schema", "src")
+var TSCoreKindParentPath = filepath.Join("packages", "grafana-schema", "src", "raw")
 
 var defaultFramework cue.Value
 var fwOnce sync.Once
