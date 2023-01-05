@@ -28,7 +28,7 @@ export interface PanelChromeProps {
   description?: string | (() => string);
   links?: () => Array<LinkModel<PanelModel>>;
   panelNotices?: Notices;
-  titleItems?: (innerWidth: number, innerHeight: number) => ReactNode;
+  titleItems?: ReactNode[];
   menu?: React.ReactElement;
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
   // dragClass?: string;
@@ -60,7 +60,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   description = '',
   links,
   panelNotices,
-  titleItems = () => null,
+  titleItems = [],
   menu,
   // dragClass,
   hoverHeader = false,
@@ -106,7 +106,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
           <PanelLinks links={links} />
 
           <div className={styles.titleItems} data-testid="title-items">
-            {titleItems(innerWidth, innerHeight)}
+            {itemsRenderer(titleItems, (item) => item)}
           </div>
 
           {menu && (

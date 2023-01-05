@@ -623,9 +623,9 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
     ];
 
-    const titleItems = () => {
-      return <PanelHeaderTitleItems key="title-items" alertState={alertState} data={data} panelId={panel.id} />;
-    };
+    const titleItems = [
+      <PanelHeaderTitleItems key="title-items" alertState={alertState} data={data} panelId={panel.id} />,
+    ];
     if (config.featureToggles.newPanelChromeUI) {
       return (
         <section
