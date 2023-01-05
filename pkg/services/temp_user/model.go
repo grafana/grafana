@@ -1,4 +1,4 @@
-package models
+package tempuser
 
 import (
 	"errors"
@@ -24,13 +24,13 @@ const (
 
 // TempUser holds data for org invites and unconfirmed sign ups
 type TempUser struct {
-	Id              int64
-	OrgId           int64
+	ID              int64
+	OrgID           int64 `xorm:"org_id"`
 	Version         int
 	Email           string
 	Name            string
 	Role            org.RoleType
-	InvitedByUserId int64
+	InvitedByUserID int64 `xorm:"invited_by_user_id"`
 	Status          TempUserStatus
 
 	EmailSent   bool
@@ -48,14 +48,12 @@ type TempUser struct {
 type CreateTempUserCommand struct {
 	Email           string
 	Name            string
-	OrgId           int64
-	InvitedByUserId int64
+	OrgID           int64 `xorm:"org_id"`
+	InvitedByUserID int64 `xorm:"invited_by_user_id"`
 	Status          TempUserStatus
 	Code            string
 	Role            org.RoleType
 	RemoteAddr      string
-
-	Result *TempUser
 }
 
 type UpdateTempUserStatusCommand struct {
@@ -74,22 +72,18 @@ type UpdateTempUserWithEmailSentCommand struct {
 }
 
 type GetTempUsersQuery struct {
-	OrgId  int64
+	OrgID  int64 `xorm:"org_id"`
 	Email  string
 	Status TempUserStatus
-
-	Result []*TempUserDTO
 }
 
 type GetTempUserByCodeQuery struct {
 	Code string
-
-	Result *TempUserDTO
 }
 
 type TempUserDTO struct {
-	Id             int64          `json:"id"`
-	OrgId          int64          `json:"orgId"`
+	ID             int64          `json:"id"`
+	OrgID          int64          `json:"orgId" xorm:"org_id"`
 	Name           string         `json:"name"`
 	Email          string         `json:"email"`
 	Role           org.RoleType   `json:"role"`
@@ -98,7 +92,7 @@ type TempUserDTO struct {
 	InvitedByName  string         `json:"invitedByName"`
 	Code           string         `json:"code"`
 	Status         TempUserStatus `json:"status"`
-	Url            string         `json:"url"`
+	URL            string         `json:"url"`
 	EmailSent      bool           `json:"emailSent"`
 	EmailSentOn    time.Time      `json:"emailSentOn"`
 	Created        time.Time      `json:"createdOn"`
