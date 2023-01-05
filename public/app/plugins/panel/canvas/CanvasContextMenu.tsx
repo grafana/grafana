@@ -108,12 +108,24 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
       const submenuItems: Array<
         React.ReactElement<MenuItemProps<unknown>, string | React.JSXElementConstructor<unknown>>
       > = [];
+
+      let offsetY = 0;
+      if (scene.div) {
+        const sceneContainerDimensions = scene.div.getBoundingClientRect();
+        offsetY = anchorPoint.y - sceneContainerDimensions.top;
+      }
+
       typeOptions.map((option) => {
         submenuItems.push(
           <MenuItem
             key={option.value}
             label={option.label ?? 'Canvas item'}
-            onClick={() => onAddItem(option, rootLayer, anchorPoint)}
+            onClick={() => {
+              onAddItem(option, rootLayer, {
+                ...anchorPoint,
+                y: offsetY,
+              });
+            }}
           />
         );
       });
