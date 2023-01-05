@@ -7,11 +7,6 @@ import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
 import { ROUTES } from '../../constants';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  alert: css`
-  > div:nth-child(2) {
-    > div:last-child {
-      padding-top: 0;
-  `,
   alertContent: css`
     display: flex;
     flex-direction: row;
@@ -39,13 +34,13 @@ export function ConnectionsRedirectNotice({ destinationPage }: { destinationPage
   const styles = useStyles2(getStyles);
 
   return (
-    <Alert severity="warning" title="" className={styles.alert}>
+    <Alert severity="warning" title="Data sources have a new home!">
       <div className={styles.alertContent}>
         <p className={styles.alertParagraph}>
-          Data sources have a new home! You can discover new data sources or manage existing ones in the new Connections
-          section, accessible from the left-hand navigation, or click the button here.
+          You can discover new data sources or manage existing ones in the new Connections section, accessible from the
+          left-hand navigation, or click the button here.
         </p>
-        <LinkButton icon="link" href={destinationLinks[destinationPage]}>
+        <LinkButton aria-label="Link to Connections" icon="link" href={destinationLinks[destinationPage]}>
           Connections
         </LinkButton>
       </div>
