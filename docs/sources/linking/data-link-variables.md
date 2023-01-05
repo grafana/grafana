@@ -2,7 +2,6 @@
 aliases:
   - ../variables/url-variables.md/
   - ../variables/variable-types/url-variables.md/
-  - /docs/grafana/latest/linking/data-link-variables/
 keywords:
   - grafana
   - url variables

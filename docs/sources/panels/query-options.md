@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/query-options/
   - /docs/sources/panels/reference-query-options/
   - reference-query-options/
 title: Query options

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/alerting/unified-alerting/opt-in/
 description: Enable Grafana alerts
 title: Opt-in to Grafana alerting
 weight: 115

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/best-practices/best-practices-for-managing-dashboards/
 description: Best practices for managing dashboards in Grafana
 title: Best practices for managing dashboards
 weight: 200

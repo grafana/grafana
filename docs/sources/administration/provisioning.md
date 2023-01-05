@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../installation/provisioning/
-  - /docs/grafana/latest/administration/provisioning/
 description: ''
 keywords:
   - grafana

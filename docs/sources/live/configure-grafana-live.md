@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/live/configure-grafana-live/
 description: Grafana Live configuration guide
 keywords:
   - Grafana

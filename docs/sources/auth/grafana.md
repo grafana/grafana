@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/auth/grafana/
 description: 'Grafana OAuthentication Guide '
 keywords:
   - grafana

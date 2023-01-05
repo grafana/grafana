@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../change-home-dashboard/
-  - /docs/grafana/latest/administration/preferences/change-home-dashboard/
 description: How to replace the default home dashboard
 keywords:
   - grafana

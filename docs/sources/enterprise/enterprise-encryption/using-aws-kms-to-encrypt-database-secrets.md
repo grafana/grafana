@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/enterprise/enterprise-encryption/using-aws-kms-to-encrypt-database-secrets/
 description: Using AWS KMS to encrypt database secrets
 keywords:
   - grafana

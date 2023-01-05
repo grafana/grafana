@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/specify-thresholds/delete-a-threshold/
   - /docs/sources/panels/specify-thresholds/delete-a-threshold/
 title: Delete a threshold
 weight: 30

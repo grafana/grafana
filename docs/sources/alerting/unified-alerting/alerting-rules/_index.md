@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../rules/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/
 title: Create and manage rules
 weight: 130
 ---

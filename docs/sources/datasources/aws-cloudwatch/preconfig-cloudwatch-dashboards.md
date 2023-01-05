@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../cloudwatch/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
 description: Guide for using AWS CloudWatch in Grafana
 keywords:
   - grafana

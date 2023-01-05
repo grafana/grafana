@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/specify-thresholds/add-a-threshold/
   - /docs/sources/panels/specify-thresholds/add-a-threshold/
 title: Add a threshold
 weight: 20

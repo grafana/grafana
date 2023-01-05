@@ -3,7 +3,6 @@ aliases:
   - ../features/panels/text/
   - ../panels/visualizations/text-panel/
   - ../reference/alertlist/
-  - /docs/grafana/latest/visualizations/text-panel/
 keywords:
   - grafana
   - text

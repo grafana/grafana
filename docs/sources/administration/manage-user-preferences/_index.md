@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/manage-user-preferences/
   - change-your-password/
 description: Learn how to update your user preferences and switch organizations
 keywords:

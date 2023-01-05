@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/enterprise/enterprise-configuration/
 description: Enterprise configuration documentation
 keywords:
   - grafana

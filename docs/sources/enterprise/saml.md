@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../auth/saml/
-  - /docs/grafana/latest/enterprise/saml/
 description: Grafana SAML Authentication
 keywords:
   - grafana

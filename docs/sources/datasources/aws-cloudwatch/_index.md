@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/aws-cloudwatch/
   - cloudwatch/
 description: Guide for using CloudWatch in Grafana
 keywords:

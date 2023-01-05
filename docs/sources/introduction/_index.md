@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/introduction/
   - guides/what-is-grafana/
 title: Introduction to Grafana
 weight: 5

@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../installation/configuration/
-  - /docs/grafana/latest/administration/configuration/
 description: Configuration documentation
 keywords:
   - grafana

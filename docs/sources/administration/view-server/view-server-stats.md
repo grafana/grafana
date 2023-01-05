@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../admin/view-server-stats/
-  - /docs/grafana/latest/administration/view-server/view-server-stats/
 keywords:
   - grafana
   - server

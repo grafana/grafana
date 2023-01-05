@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/plugins/plugin-signatures/
   - plugin-signature-verification/
 title: Plugin signatures
 type: docs

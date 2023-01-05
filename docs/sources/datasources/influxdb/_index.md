@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../features/datasources/influxdb/
-  - /docs/grafana/latest/datasources/influxdb/
 description: Guide for using InfluxDB in Grafana
 keywords:
   - grafana

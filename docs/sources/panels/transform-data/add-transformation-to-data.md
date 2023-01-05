@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/transform-data/add-transformation-to-data/
   - /docs/sources/panels/transform-data/add-transformation-to-data/
   - /docs/sources/panels/transform-data/apply-transformation-to-data/
   - apply-transformation-to-data/

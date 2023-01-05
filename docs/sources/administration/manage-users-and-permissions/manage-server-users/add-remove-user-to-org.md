@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/add-remove-user-to-org/
   - add-user-to-org/
 title: Add or remove a user from an organization
 weight: 30

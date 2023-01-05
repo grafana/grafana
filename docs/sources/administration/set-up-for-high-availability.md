@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../tutorials/ha_setup/
-  - /docs/grafana/latest/administration/set-up-for-high-availability/
 keywords:
   - grafana
   - tutorials

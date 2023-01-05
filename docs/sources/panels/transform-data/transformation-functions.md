@@ -2,7 +2,6 @@
 aliases:
   - ../reference-transformation-functions/
   - ../transformations/types-options/
-  - /docs/grafana/latest/panels/transform-data/transformation-functions/
   - /docs/sources/panels/reference-transformation-functions/
 title: Transformation functions
 weight: 1000

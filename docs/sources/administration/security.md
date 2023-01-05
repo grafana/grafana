@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../installation/security/
-  - /docs/grafana/latest/administration/security/
 description: Security Docs
 keywords:
   - grafana

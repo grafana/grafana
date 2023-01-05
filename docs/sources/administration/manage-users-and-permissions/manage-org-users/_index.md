@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../manage-users/org-admin/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/
 title: Manage users in an organization
 weight: 400
 ---

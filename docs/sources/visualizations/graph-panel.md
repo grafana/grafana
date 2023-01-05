@@ -3,7 +3,6 @@ aliases:
   - ../features/panels/graph/
   - ../panels/visualizations/graph-panel/
   - ../reference/graph/
-  - /docs/grafana/latest/visualizations/graph-panel/
 keywords:
   - grafana
   - graph panel

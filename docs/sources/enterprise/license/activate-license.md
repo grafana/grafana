@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../activate-license/
-  - /docs/grafana/latest/enterprise/license/activate-license/
 description: Activate an Enterprise license
 keywords:
   - grafana

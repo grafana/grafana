@@ -2,7 +2,6 @@
 aliases:
   - ../features/panels/anotations/
   - ../panels/visualizations/annotations/
-  - /docs/grafana/latest/visualizations/annotations/
 description: Annotations visualization documentation
 keywords:
   - grafana

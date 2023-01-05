@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/enterprise/usage-insights/
 description: Understand how your Grafana instance is used
 keywords:
   - grafana

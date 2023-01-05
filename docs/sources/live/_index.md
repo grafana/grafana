@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/live/
   - live-feature-overview/
 title: Grafana Live
 weight: 115

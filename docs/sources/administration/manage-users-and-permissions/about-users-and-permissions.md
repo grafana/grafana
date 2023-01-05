@@ -4,7 +4,6 @@ aliases:
   - ../../permissions/
   - ../../permissions/organization_roles/
   - ../../permissions/overview/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/about-users-and-permissions/
 title: About users and permissions
 weight: 100
 ---

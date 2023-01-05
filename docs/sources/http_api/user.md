@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/http_api/user/
 description: Grafana User HTTP API
 keywords:
   - grafana

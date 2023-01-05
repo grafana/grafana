@@ -2,7 +2,6 @@
 aliases:
   - ../../manage-users/server-admin/
   - ../../manage-users/server-admin/server-admin-manage-users/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/
 title: Manage users globally
 weight: 300
 ---

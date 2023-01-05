@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/dashboard-ui/
 title: ' Dashboard UI'
 weight: 2
 ---

@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../installation/ldap/
-  - /docs/grafana/latest/auth/ldap/
 description: 'Grafana LDAP Authentication Guide '
 keywords:
   - grafana

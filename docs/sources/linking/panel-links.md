@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../features/navigation-links/
-  - /docs/grafana/latest/linking/panel-links/
 description: ''
 keywords:
   - grafana

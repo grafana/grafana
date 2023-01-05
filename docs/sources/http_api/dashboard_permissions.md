@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/http_api/dashboard_permissions/
   - dashboardpermissions/
 description: Grafana Dashboard Permissions HTTP API
 keywords:

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/installation/mac/
 description: Installing Grafana on macOS
 keywords:
   - grafana

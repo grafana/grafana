@@ -2,7 +2,6 @@
 aliases:
   - ../guides/getting_started/
   - ../guides/gettingstarted/
-  - /docs/grafana/latest/getting-started/getting-started-prometheus/
 description: Guide for getting started with Grafana and Prometheus
 keywords:
   - grafana

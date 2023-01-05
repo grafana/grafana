@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/enterprise/white-labeling/
 description: Change the look of Grafana to match your corporate brand
 keywords:
   - grafana

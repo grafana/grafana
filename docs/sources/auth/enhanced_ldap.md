@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/auth/enhanced_ldap/
 description: 'Grafana Enhanced LDAP Integration Guide '
 keywords:
   - grafana

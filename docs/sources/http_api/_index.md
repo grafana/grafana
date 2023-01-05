@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/http_api/
   - overview/
 description: Grafana HTTP API
 keywords:

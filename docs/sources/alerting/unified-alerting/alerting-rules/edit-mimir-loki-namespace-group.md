@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/
 description: Edit Grafana Mimir or Loki rule groups and namespaces
 keywords:
   - grafana

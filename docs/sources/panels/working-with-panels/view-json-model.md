@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/working-with-panels/view-json-model/
   - /docs/sources/panels/working-with-panels/view-json-model/
 title: View a panel JSON model
 weight: 100

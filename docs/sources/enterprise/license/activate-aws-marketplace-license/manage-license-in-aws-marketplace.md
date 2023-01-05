@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../activate-aws-marketplace-license/manage-license-in-aws-marketplace/
-  - /docs/grafana/latest/enterprise/license/activate-aws-marketplace-license/manage-license-in-aws-marketplace/
 description: Manage your Grafana Enterprise license in AWS Marketplace
 keywords:
   - grafana

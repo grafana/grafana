@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/library-panels/
   - /docs/sources/panels/library-panels/
   - panel-library/
 title: Create reusable Grafana panels

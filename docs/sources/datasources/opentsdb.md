@@ -2,7 +2,6 @@
 aliases:
   - ../features/datasources/opentsdb/
   - ../features/opentsdb/
-  - /docs/grafana/latest/datasources/opentsdb/
 description: Guide for using OpenTSDB in Grafana
 keywords:
   - grafana

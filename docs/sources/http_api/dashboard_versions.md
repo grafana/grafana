@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/http_api/dashboard_versions/
   - dashboardversions/
 description: Grafana Dashboard Versions HTTP API
 keywords:

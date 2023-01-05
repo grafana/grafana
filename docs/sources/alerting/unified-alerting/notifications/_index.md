@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/alerting/unified-alerting/notifications/
 description: Notification policies
 keywords:
   - grafana

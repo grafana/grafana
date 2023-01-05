@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/usage-insights/dashboard-datasource-insights/
   - dashboard-datasource-insights.md/
 description: Understand how your dashboards and data sources are used
 keywords:

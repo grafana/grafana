@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../getting-started/intro-histograms/
-  - /docs/grafana/latest/basics/intro-histograms/
 description: An introduction to histograms and heatmaps
 keywords:
   - grafana

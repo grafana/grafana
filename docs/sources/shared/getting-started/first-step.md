@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/shared/getting-started/first-step/
 title: First step of Getting started with...
 ---
 

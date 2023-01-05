@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/image-rendering/
   - administration/image_rendering/
 description: Image rendering
 keywords:

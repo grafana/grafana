@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../plugins/developing/code-styleguide/
-  - /docs/grafana/latest/developers/plugins/legacy/style-guide/
 title: Legacy code style guide
 ---
 

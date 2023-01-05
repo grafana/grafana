@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/datasource_permissions/
   - /docs/sources/permissions/datasource_permissions.md/
 description: Grafana Datasource Permissions Guide
 keywords:

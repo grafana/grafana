@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/
   - /docs/grafana/v2.1/installation/install/
   - install/
   - installation/

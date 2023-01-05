@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../admin/metrics/
-  - /docs/grafana/latest/administration/view-server/internal-metrics/
 description: Internal metrics exposed by Grafana
 keywords:
   - grafana

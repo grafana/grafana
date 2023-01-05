@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/http_api/access_control/
   - accesscontrol/
 description: Fine-grained access control API
 keywords:

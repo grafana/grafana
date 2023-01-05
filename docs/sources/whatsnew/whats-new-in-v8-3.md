@@ -3,7 +3,6 @@ _build:
   list: false
 aliases:
   - ../guides/whats-new-in-v8-3/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v8-3/
 description: Feature and improvement highlights for Grafana v8.3
 keywords:
   - grafana

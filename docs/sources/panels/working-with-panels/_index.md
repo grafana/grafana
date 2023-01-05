@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/working-with-panels/
   - /docs/sources/panels/working-with-panels/
   - add-a-panel/
   - legend-options/

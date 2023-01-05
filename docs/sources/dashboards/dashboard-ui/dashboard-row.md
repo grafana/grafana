@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/dashboard-ui/dashboard-row/
 title: Dashboard rows
 weight: 80
 ---

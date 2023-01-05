@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../panels/visualizations/time-series/
-  - /docs/grafana/latest/visualizations/time-series/
 keywords:
   - grafana
   - graph panel

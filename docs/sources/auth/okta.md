@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/auth/okta/
 description: 'Grafana Okta OAuth Guide '
 keywords:
   - grafana

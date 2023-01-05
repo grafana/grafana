@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../panels/visualizations/time-series/graph-color-scheme/
-  - /docs/grafana/latest/visualizations/time-series/graph-color-scheme/
 keywords:
   - grafana
   - time series panel

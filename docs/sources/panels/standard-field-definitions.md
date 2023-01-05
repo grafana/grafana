@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/standard-field-definitions/
   - /docs/sources/panels/reference-standard-field-definitions/
   - reference-standard-field-definitions/
 title: Standard field definitions

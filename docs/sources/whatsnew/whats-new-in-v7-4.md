@@ -3,7 +3,6 @@ _build:
   list: false
 aliases:
   - ../guides/whats-new-in-v7-4/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-4/
 description: Feature and improvement highlights for Grafana v7.4
 keywords:
   - grafana

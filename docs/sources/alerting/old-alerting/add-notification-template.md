@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../add-notification-template/
-  - /docs/grafana/latest/alerting/old-alerting/add-notification-template/
 keywords:
   - grafana
   - documentation

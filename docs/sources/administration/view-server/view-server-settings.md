@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../admin/view-server-settings/
-  - /docs/grafana/latest/administration/view-server/view-server-settings/
 description: How to view server settings in the Grafana UI
 keywords:
   - grafana

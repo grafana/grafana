@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/enterprise/access-control/manage-role-assignments/
 description: ''
 keywords:
   - grafana

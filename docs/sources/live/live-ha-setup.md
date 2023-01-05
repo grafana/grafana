@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/live/live-ha-setup/
 description: Grafana Live HA setup guide
 keywords:
   - Grafana

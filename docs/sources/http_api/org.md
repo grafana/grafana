@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/http_api/org/
   - organization/
 description: Grafana Organization HTTP API
 keywords:
