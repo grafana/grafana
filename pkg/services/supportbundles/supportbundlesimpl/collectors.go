@@ -7,10 +7,10 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/supportbundles"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
