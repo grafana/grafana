@@ -97,17 +97,4 @@ describe('LogDetailsRow', () => {
     expect(screen.getByTestId('logLabelStats')).toBeInTheDocument();
     expect(screen.getByTestId('logLabelStats')).toHaveTextContent('another value');
   });
-
-  // TODO: skipped for now because I don't know a way of testing CSS styles
-  // it('should render clipboard button on hover of log row table value', async () => {
-  //   setup({ parsedKey: 'key', parsedValue: 'value' });
-
-  //   const valueCell = screen.getByRole('cell', { name: 'value' });
-  //   await userEvent.hover(valueCell);
-
-  //   expect(screen.getByRole('button', { name: 'Copy value to clipboard' })).toBeInTheDocument();
-  //   await userEvent.unhover(valueCell);
-
-  //   expect(screen.queryByRole('button', { name: 'Copy value to clipboard' })).not.toBeInTheDocument();
-  // });
 });
