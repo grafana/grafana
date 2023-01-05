@@ -2,6 +2,7 @@ import React from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
+import { CoreApp } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Field, LoadingPlaceholder, Alert } from '@grafana/ui';
 
@@ -53,7 +54,15 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
             return <Alert title="Data source does not export a query editor."></Alert>;
           }
 
-          return <QueryEditor onRunQuery={() => {}} onChange={onChange} datasource={datasource} query={value} />;
+          return (
+            <QueryEditor
+              app={CoreApp.Correlations}
+              onRunQuery={() => {}}
+              onChange={onChange}
+              datasource={datasource}
+              query={value}
+            />
+          );
         }}
       />
     </Field>
