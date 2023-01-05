@@ -74,7 +74,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   graphResult: null,
   logsResult: null,
   rawPrometheusResult: null,
-  eventBridge: (null as unknown) as EventBusExtended,
+  eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
   logsVolumeEnabled: loadLogsVolumeEnabled(),

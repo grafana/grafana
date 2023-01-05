@@ -55,7 +55,7 @@ describe('Tempo data source', () => {
   beforeEach(() => (console.error = consoleErrorMock));
 
   it('returns empty response when traceId is empty', async () => {
-    const templateSrv: TemplateSrv = ({ replace: jest.fn() } as unknown) as TemplateSrv;
+    const templateSrv: TemplateSrv = { replace: jest.fn() } as unknown as TemplateSrv;
     const ds = new TempoDatasource(defaultSettings, templateSrv);
     const response = await lastValueFrom(
       ds.query({ targets: [{ refId: 'refid1', queryType: 'traceql', query: '' } as Partial<TempoQuery>] } as any),
@@ -600,8 +600,7 @@ describe('Tempo apm table', () => {
           title: 'Request rate',
           internal: {
             query: {
-              expr:
-                'sum by (client, server)(rate(traces_service_graph_request_total{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval]))',
+              expr: 'sum by (client, server)(rate(traces_service_graph_request_total{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval]))',
               range: true,
               exemplar: true,
               instant: false,
@@ -615,8 +614,7 @@ describe('Tempo apm table', () => {
           title: 'Request histogram',
           internal: {
             query: {
-              expr:
-                'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))',
+              expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))',
               range: true,
               exemplar: true,
               instant: false,
@@ -630,8 +628,7 @@ describe('Tempo apm table', () => {
           title: 'Failed request rate',
           internal: {
             query: {
-              expr:
-                'sum by (client, server)(rate(traces_service_graph_request_failed_total{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval]))',
+              expr: 'sum by (client, server)(rate(traces_service_graph_request_failed_total{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval]))',
               range: true,
               exemplar: true,
               instant: false,
@@ -710,8 +707,7 @@ describe('Tempo apm table', () => {
       {
         refId:
           'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{status_code="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range])) by (le))',
-        expr:
-          'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{status_code="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range])) by (le))',
+        expr: 'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{status_code="STATUS_CODE_ERROR",service="app",service="app",span_name=~"HTTP Client"}[$__range])) by (le))',
         instant: true,
       },
     ]);
@@ -801,8 +797,7 @@ const rateMetric = new MutableDataFrame({
     { name: 'Time', values: [1653725618609, 1653725618609] },
     { name: 'span_name', values: ['HTTP Client', 'HTTP GET - root'] },
     {
-      name:
-        'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[$__range])) by (span_name))',
+      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[$__range])) by (span_name))',
       values: [12.75164671814457, 12.121331111401608],
     },
   ],
@@ -815,8 +810,7 @@ const errorRateMetric = new MutableDataFrame({
     { name: 'Time', values: [1653725618609, 1653725618609] },
     { name: 'span_name', values: ['HTTP Client', 'HTTP GET - root'] },
     {
-      name:
-        'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR"}[$__range])) by (span_name))',
+      name: 'Value #topk(5, sum(rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR"}[$__range])) by (span_name))',
       values: [3.75164671814457, 3.121331111401608],
     },
   ],
@@ -828,8 +822,7 @@ const durationMetric = new MutableDataFrame({
   fields: [
     { name: 'Time', values: [1653725618609] },
     {
-      name:
-        'Value #histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{span_name=~"HTTP GET - root"}[$__range])) by (le))',
+      name: 'Value #histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{span_name=~"HTTP GET - root"}[$__range])) by (le))',
       values: [0.12003505696757232],
     },
   ],
@@ -913,8 +906,7 @@ const serviceGraphLinks = [
     title: 'Request rate',
     internal: {
       query: {
-        expr:
-          'sum by (client, server)(rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__rate_interval]))',
+        expr: 'sum by (client, server)(rate(traces_service_graph_request_total{server="${__data.fields.id}"}[$__rate_interval]))',
         instant: false,
         range: true,
         exemplar: true,
@@ -928,8 +920,7 @@ const serviceGraphLinks = [
     title: 'Request histogram',
     internal: {
       query: {
-        expr:
-          'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__rate_interval])) by (le, client, server))',
+        expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__rate_interval])) by (le, client, server))',
         instant: false,
         range: true,
         exemplar: true,
@@ -943,8 +934,7 @@ const serviceGraphLinks = [
     title: 'Failed request rate',
     internal: {
       query: {
-        expr:
-          'sum by (client, server)(rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__rate_interval]))',
+        expr: 'sum by (client, server)(rate(traces_service_graph_request_failed_total{server="${__data.fields.id}"}[$__rate_interval]))',
         instant: false,
         range: true,
         exemplar: true,

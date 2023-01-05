@@ -80,15 +80,15 @@ describe('Prometheus Result Transformer', () => {
 
   describe('transformV2', () => {
     it('results with time_series format should be enriched with preferredVisualisationType', () => {
-      const request = ({
+      const request = {
         targets: [
           {
             format: 'time_series',
             refId: 'A',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
-      const response = ({
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
         state: 'Done',
         data: [
           {
@@ -98,7 +98,7 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
           },
         ],
-      } as unknown) as DataQueryResponse;
+      } as unknown as DataQueryResponse;
       const series = transformV2(response, request, {});
       expect(series).toEqual({
         data: [{ fields: [], length: 2, meta: { preferredVisualisationType: 'graph' }, name: 'ALERTS', refId: 'A' }],
@@ -107,15 +107,15 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('results with table format should be transformed to table dataFrames', () => {
-      const request = ({
+      const request = {
         targets: [
           {
             format: 'table',
             refId: 'A',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
-      const response = ({
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
         state: 'Done',
         data: [
           new MutableDataFrame({
@@ -131,7 +131,7 @@ describe('Prometheus Result Transformer', () => {
             ],
           }),
         ],
-      } as unknown) as DataQueryResponse;
+      } as unknown as DataQueryResponse;
       const series = transformV2(response, request, {});
 
       expect(series.data[0].fields[0].name).toEqual('Time');
@@ -142,15 +142,15 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('results with table format and multiple data frames should be transformed to 1 table dataFrame', () => {
-      const request = ({
+      const request = {
         targets: [
           {
             format: 'table',
             refId: 'A',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
-      const response = ({
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
         state: 'Done',
         data: [
           new MutableDataFrame({
@@ -178,7 +178,7 @@ describe('Prometheus Result Transformer', () => {
             ],
           }),
         ],
-      } as unknown) as DataQueryResponse;
+      } as unknown as DataQueryResponse;
       const series = transformV2(response, request, {});
 
       expect(series.data.length).toEqual(1);
@@ -192,7 +192,7 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('results with table and time_series format should be correctly transformed', () => {
-      const options = ({
+      const options = {
         targets: [
           {
             format: 'table',
@@ -203,8 +203,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'B',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
-      const response = ({
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
         state: 'Done',
         data: [
           new MutableDataFrame({
@@ -232,7 +232,7 @@ describe('Prometheus Result Transformer', () => {
             ],
           }),
         ],
-      } as unknown) as DataQueryResponse;
+      } as unknown as DataQueryResponse;
       const series = transformV2(response, options, {});
       expect(series.data[0].fields.length).toEqual(2);
       expect(series.data[0].meta?.preferredVisualisationType).toEqual('graph');
@@ -241,15 +241,15 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('results with heatmap format should be correctly transformed', () => {
-      const options = ({
+      const options = {
         targets: [
           {
             format: 'heatmap',
             refId: 'A',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
-      const response = ({
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
         state: 'Done',
         data: [
           new MutableDataFrame({
@@ -289,7 +289,7 @@ describe('Prometheus Result Transformer', () => {
             ],
           }),
         ],
-      } as unknown) as DataQueryResponse;
+      } as unknown as DataQueryResponse;
 
       const series = transformV2(response, options, {});
       expect(series.data[0].fields.length).toEqual(4);
@@ -302,7 +302,7 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('results with heatmap format from multiple queries should be correctly transformed', () => {
-      const options = ({
+      const options = {
         targets: [
           {
             format: 'heatmap',
@@ -313,8 +313,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'B',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
-      const response = ({
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
         state: 'Done',
         data: [
           new MutableDataFrame({
@@ -390,7 +390,7 @@ describe('Prometheus Result Transformer', () => {
             ],
           }),
         ],
-      } as unknown) as DataQueryResponse;
+      } as unknown as DataQueryResponse;
 
       const series = transformV2(response, options, {});
       expect(series.data[0].fields.length).toEqual(4);
@@ -400,15 +400,15 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('results with heatmap format and multiple histograms should be grouped and de-accumulated by non-le labels', () => {
-      const options = ({
+      const options = {
         targets: [
           {
             format: 'heatmap',
             refId: 'A',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
-      const response = ({
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
         state: 'Done',
         data: [
           // 10
@@ -523,7 +523,7 @@ describe('Prometheus Result Transformer', () => {
             ],
           }),
         ],
-      } as unknown) as DataQueryResponse;
+      } as unknown as DataQueryResponse;
 
       const series = transformV2(response, options, {});
       expect(series.data[0].fields.length).toEqual(4);
@@ -541,15 +541,15 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('Retains exemplar frames when data returned is a heatmap', () => {
-      const options = ({
+      const options = {
         targets: [
           {
             format: 'heatmap',
             refId: 'A',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
-      const response = ({
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
         state: 'Done',
         data: [
           new MutableDataFrame({
@@ -589,7 +589,7 @@ describe('Prometheus Result Transformer', () => {
             ],
           }),
         ],
-      } as unknown) as DataQueryResponse;
+      } as unknown as DataQueryResponse;
 
       const series = transformV2(response, options, {});
       expect(series.data[0].fields.length).toEqual(2);
@@ -606,7 +606,7 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('should not add a link with an error when exemplarTraceIdDestinations is not configured properly', () => {
-      const response = ({
+      const response = {
         state: 'Done',
         data: [
           new MutableDataFrame({
@@ -646,15 +646,15 @@ describe('Prometheus Result Transformer', () => {
             ],
           }),
         ],
-      } as unknown) as DataQueryResponse;
-      const request = ({
+      } as unknown as DataQueryResponse;
+      const request = {
         targets: [
           {
             format: 'heatmap',
             refId: 'A',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
+      } as unknown as DataQueryRequest<PromQuery>;
       const testOptions: any = {
         exemplarTraceIdDestinations: [
           {
@@ -788,10 +788,7 @@ describe('Prometheus Result Transformer', () => {
           },
         });
         expect(result[0].fields[0].values.toArray()).toEqual([
-          1443454528000,
-          1443454530000,
-          1443454529000,
-          1443454531000,
+          1443454528000, 1443454530000, 1443454529000, 1443454531000,
         ]);
         expect(result[0].fields[0].name).toBe('Time');
         expect(result[0].fields[0].type).toBe(FieldType.time);

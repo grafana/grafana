@@ -39,9 +39,9 @@ describe('DashboardLoader', () => {
 
     it('should call dashboard loader server if the dashboard is not cached', async () => {
       const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
-      setDashboardLoaderSrv(({
+      setDashboardLoaderSrv({
         loadDashboard: loadDashboardMock,
-      } as unknown) as DashboardLoaderSrv);
+      } as unknown as DashboardLoaderSrv);
 
       const loader = new DashboardLoader({});
       await loader.load('fake-dash');
@@ -51,9 +51,9 @@ describe('DashboardLoader', () => {
 
     it("should error when the dashboard doesn't exist", async () => {
       const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: undefined, meta: undefined });
-      setDashboardLoaderSrv(({
+      setDashboardLoaderSrv({
         loadDashboard: loadDashboardMock,
-      } as unknown) as DashboardLoaderSrv);
+      } as unknown as DashboardLoaderSrv);
 
       const loader = new DashboardLoader({});
       await loader.load('fake-dash');
@@ -67,9 +67,9 @@ describe('DashboardLoader', () => {
 
     it('should initialize the dashboard scene with the loaded dashboard', async () => {
       const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
-      setDashboardLoaderSrv(({
+      setDashboardLoaderSrv({
         loadDashboard: loadDashboardMock,
-      } as unknown) as DashboardLoaderSrv);
+      } as unknown as DashboardLoaderSrv);
 
       const loader = new DashboardLoader({});
       await loader.load('fake-dash');
@@ -84,9 +84,9 @@ describe('DashboardLoader', () => {
 
     it('should use DashboardScene creator to initialize the scene', async () => {
       const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
-      setDashboardLoaderSrv(({
+      setDashboardLoaderSrv({
         loadDashboard: loadDashboardMock,
-      } as unknown) as DashboardLoaderSrv);
+      } as unknown as DashboardLoaderSrv);
 
       const loader = new DashboardLoader({});
       await loader.load('fake-dash');
@@ -143,13 +143,13 @@ describe('DashboardLoader', () => {
         gridPos: { x: 1, y: 0, w: 12, h: 8 },
       }) as Panel;
 
-      const row = (createPanelJSONFixture({
+      const row = createPanelJSONFixture({
         title: 'test',
         type: 'row',
         gridPos: { x: 0, y: 0, w: 12, h: 1 },
         collapsed: true,
         panels: [panel],
-      }) as unknown) as RowPanel;
+      }) as unknown as RowPanel;
 
       const dashboard = {
         ...defaultDashboard,
