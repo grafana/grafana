@@ -111,15 +111,18 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
       > = [];
 
       const onClickItem = (option: SelectableValue<string>) => {
-        let offsetY = 0;
+        let offsetY = anchorPoint.y;
+        let offsetX = anchorPoint.x;
         if (scene.div) {
           const sceneContainerDimensions = scene.div.getBoundingClientRect();
-          offsetY = anchorPoint.y - sceneContainerDimensions.top;
+          offsetY = offsetY - sceneContainerDimensions.top;
+          offsetX = offsetX - sceneContainerDimensions.left;
         }
 
         onAddItem(option, rootLayer, {
           ...anchorPoint,
           y: offsetY,
+          x: offsetX,
         });
       };
 
