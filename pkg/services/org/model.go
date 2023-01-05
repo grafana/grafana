@@ -90,7 +90,7 @@ type OrgDTO struct {
 	Name string `json:"name"`
 }
 
-type GetOrgByIdQuery struct {
+type GetOrgByIDQuery struct {
 	ID int64
 }
 
@@ -186,6 +186,12 @@ type SearchOrgUsersQueryResult struct {
 }
 
 type ByOrgName []*UserOrgDTO
+
+type OrgDetailsDTO struct {
+	ID      int64   `json:"id"`
+	Name    string  `json:"name"`
+	Address Address `json:"address"`
+}
 
 // Len returns the length of an array of organisations.
 func (o ByOrgName) Len() int {

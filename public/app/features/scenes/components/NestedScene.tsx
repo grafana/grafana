@@ -13,7 +13,7 @@ interface NestedSceneState extends SceneLayoutChildState {
   isCollapsed?: boolean;
   canCollapse?: boolean;
   canRemove?: boolean;
-  layout: SceneLayout;
+  body: SceneLayout;
   actions?: SceneObject[];
 }
 
@@ -23,8 +23,8 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
   public onToggle = () => {
     this.setState({
       isCollapsed: !this.state.isCollapsed,
-      size: {
-        ...this.state.size,
+      placement: {
+        ...this.state.placement,
         ySizing: this.state.isCollapsed ? 'fill' : 'content',
       },
     });
@@ -42,7 +42,7 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
 }
 
 export function NestedSceneRenderer({ model, isEditing }: SceneComponentProps<NestedScene>) {
-  const { title, isCollapsed, canCollapse, canRemove, layout, actions } = model.useState();
+  const { title, isCollapsed, canCollapse, canRemove, body, actions } = model.useState();
   const styles = useStyles2(getStyles);
 
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
@@ -81,7 +81,7 @@ export function NestedSceneRenderer({ model, isEditing }: SceneComponentProps<Ne
         </Stack>
         <div className={styles.actions}>{toolbarActions}</div>
       </div>
-      {!isCollapsed && <layout.Component model={layout} isEditing={isEditing} />}
+      {!isCollapsed && <body.Component model={body} isEditing={isEditing} />}
     </div>
   );
 }

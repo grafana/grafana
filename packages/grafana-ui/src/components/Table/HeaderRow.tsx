@@ -3,22 +3,21 @@ import { HeaderGroup, Column } from 'react-table';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
 import { getFieldTypeIcon } from '../../types';
 import { Icon } from '../Icon/Icon';
 
 import { Filter } from './Filter';
-import { getTableStyles, TableStyles } from './styles';
+import { TableStyles } from './styles';
 
 export interface HeaderRowProps {
   headerGroups: HeaderGroup[];
   showTypeIcons?: boolean;
+  tableStyles: TableStyles;
 }
 
 export const HeaderRow = (props: HeaderRowProps) => {
-  const { headerGroups, showTypeIcons } = props;
+  const { headerGroups, showTypeIcons, tableStyles } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
-  const tableStyles = useStyles2(getTableStyles);
 
   return (
     <div role="rowgroup" className={tableStyles.headerRow}>

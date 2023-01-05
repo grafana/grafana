@@ -2,28 +2,20 @@ import { omit } from 'lodash';
 import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
-import {
-  DataQuery,
-  DataSourceInstanceSettings,
-  LoadingState,
-  PanelData,
-  RelativeTimeRange,
-  ThresholdsConfig,
-  ThresholdsMode,
-} from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery, DataSourceInstanceSettings, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, Card, Icon } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
-import { errorFromSeries } from './util';
+import { errorFromSeries, getThresholdsForQueries } from './util';
 
 interface Props {
   // The query configuration
   queries: AlertQuery[];
+  expressions: AlertQuery[];
   data: Record<string, PanelData>;
   onRunQueries: () => void;
 
@@ -118,53 +110,9 @@ export class QueryRows extends PureComponent<Props> {
     return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
   };
 
-  getThresholdsForQueries = (queries: AlertQuery[]): Record<string, ThresholdsConfig> => {
-    const record: Record<string, ThresholdsConfig> = {};
-
-    for (const query of queries) {
-      if (!isExpressionQuery(query.model)) {
-        continue;
-      }
-
-      if (!Array.isArray(query.model.conditions)) {
-        continue;
-      }
-
-      query.model.conditions.forEach((condition, index) => {
-        if (index > 0) {
-          return;
-        }
-        const threshold = condition.evaluator.params[0];
-        const refId = condition.query.params[0];
-
-        if (condition.evaluator.type === 'outside_range' || condition.evaluator.type === 'within_range') {
-          return;
-        }
-        if (!record[refId]) {
-          record[refId] = {
-            mode: ThresholdsMode.Absolute,
-            steps: [
-              {
-                value: -Infinity,
-                color: config.theme2.colors.success.main,
-              },
-            ],
-          };
-        }
-
-        record[refId].steps.push({
-          value: threshold,
-          color: config.theme2.colors.error.main,
-        });
-      });
-    }
-
-    return record;
-  };
-
   render() {
-    const { queries } = this.props;
-    const thresholdByRefId = this.getThresholdsForQueries(queries);
+    const { queries, expressions } = this.props;
+    const thresholdByRefId = getThresholdsForQueries([...queries, ...expressions]);
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
@@ -215,7 +163,8 @@ export class QueryRows extends PureComponent<Props> {
                       onChangeDataSource={this.onChangeDataSource}
                       onDuplicateQuery={this.props.onDuplicateQuery}
                       onChangeTimeRange={this.onChangeTimeRange}
-                      thresholds={thresholdByRefId[query.refId]}
+                      thresholds={thresholdByRefId[query.refId]?.config}
+                      thresholdsType={thresholdByRefId[query.refId]?.mode}
                       onRunQueries={this.props.onRunQueries}
                       condition={this.props.condition}
                       onSetCondition={this.props.onSetCondition}
