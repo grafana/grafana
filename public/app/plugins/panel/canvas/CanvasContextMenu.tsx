@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { first } from 'rxjs/operators';
 
+import { SelectableValue } from '@grafana/data';
 import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
@@ -109,24 +110,22 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
         React.ReactElement<MenuItemProps<unknown>, string | React.JSXElementConstructor<unknown>>
       > = [];
 
-      let offsetY = 0;
-      if (scene.div) {
-        const sceneContainerDimensions = scene.div.getBoundingClientRect();
-        offsetY = anchorPoint.y - sceneContainerDimensions.top;
-      }
+      const onClickItem = (option: SelectableValue<string>) => {
+        let offsetY = 0;
+        if (scene.div) {
+          const sceneContainerDimensions = scene.div.getBoundingClientRect();
+          offsetY = anchorPoint.y - sceneContainerDimensions.top;
+        }
+
+        onAddItem(option, rootLayer, {
+          ...anchorPoint,
+          y: offsetY,
+        });
+      };
 
       typeOptions.map((option) => {
         submenuItems.push(
-          <MenuItem
-            key={option.value}
-            label={option.label ?? 'Canvas item'}
-            onClick={() => {
-              onAddItem(option, rootLayer, {
-                ...anchorPoint,
-                y: offsetY,
-              });
-            }}
-          />
+          <MenuItem key={option.value} label={option.label ?? 'Canvas item'} onClick={() => onClickItem(option)} />
         );
       });
 
