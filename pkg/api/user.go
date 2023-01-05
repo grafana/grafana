@@ -643,14 +643,14 @@ type UserResponse struct {
 type GetUserOrgListResponse struct {
 	// The response message
 	// in: body
-	Body []*models.UserOrgDTO `json:"body"`
+	Body []*org.UserOrgDTO `json:"body"`
 }
 
 // swagger:response getSignedInUserOrgListResponse
 type GetSignedInUserOrgListResponse struct {
 	// The response message
 	// in: body
-	Body []*models.UserOrgDTO `json:"body"`
+	Body []*org.UserOrgDTO `json:"body"`
 }
 
 // swagger:response getUserTeamsResponse
