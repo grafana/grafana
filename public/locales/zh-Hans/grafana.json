@@ -82,7 +82,7 @@
   },
   "datasource-onboarding": {
     "contact-admin": "请联系您的管理员配置数据源。",
-    "explanation": "想要让数据可视化，请先连接数据。",
+    "explanation": "如需可视化您的数据，请先连接数据。",
     "logo": "{{datasourceName}} 数据源徽标",
     "new-dashboard": "新建仪表板",
     "preferred": "连接您的首选数据源：",
@@ -284,7 +284,7 @@
       "placeholder": "搜索 Grafana"
     },
     "search-dashboards": {
-      "title": "查找仪表板"
+      "title": "搜索仪表板"
     },
     "server-settings": {
       "subtitle": "查看 Grafana 配置中定义的设置",
@@ -482,7 +482,7 @@
     "footer": {
       "change-settings-button": "更改时间设置",
       "fiscal-year-option": "财政年度",
-      "fiscal-year-start": "财政年度开始月",
+      "fiscal-year-start": "财政年度起始月",
       "time-zone-option": "时区",
       "time-zone-selection": "时区选择"
     },
@@ -492,7 +492,7 @@
       "fiscal-year": "财政年度",
       "from-input": "发件人",
       "range-error": "“发件人”不能在“收件人”之后",
-      "to-input": "收件人"
+      "to-input": "结束"
     },
     "range-picker": {
       "backwards-time-aria-label": "向后移动时间范围",
@@ -510,7 +510,7 @@
     },
     "zone": {
       "select-aria-label": "时区选择器",
-      "select-search-input": "要搜索的类型(国家、城市、缩写)"
+      "select-search-input": "输入以搜索(国家、城市、缩写)"
     }
   },
   "user-orgs": {
