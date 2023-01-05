@@ -2,7 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v6-1/
+  - ../guides/whats-new-in-v6-1/
   - /docs/grafana/latest/whatsnew/whats-new-in-v6-1/
 description: Feature and improvement highlights for Grafana v6.1
 keywords:

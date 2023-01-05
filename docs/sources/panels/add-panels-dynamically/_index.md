@@ -1,8 +1,8 @@
 ---
 aliases:
   - /docs/grafana/latest/panels/add-panels-dynamically/
-  - /docs/grafana/latest/panels/repeat-panels-or-rows/
   - /docs/sources/panels/add-panels-dynamically/
+  - repeat-panels-or-rows/
 keywords:
   - dynamic
   - variable

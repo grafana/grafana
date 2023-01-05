@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/reference-standard-field-definitions/
   - /docs/grafana/latest/panels/standard-field-definitions/
   - /docs/sources/panels/reference-standard-field-definitions/
+  - reference-standard-field-definitions/
 title: Standard field definitions
 weight: 1200
 ---

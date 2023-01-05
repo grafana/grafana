@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/add-ad-hoc-filters.md/
+  - ../add-ad-hoc-filters.md/
   - /docs/grafana/latest/variables/variable-types/add-ad-hoc-filters/
 title: Add ad hoc filters
 weight: 700

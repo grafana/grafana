@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/create-alerts/
+  - ../create-alerts/
   - /docs/grafana/latest/alerting/old-alerting/create-alerts/
 description: Configure alert rules
 keywords:

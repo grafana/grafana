@@ -1,12 +1,12 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/add-a-panel/
-  - /docs/grafana/latest/panels/legend-options/
-  - /docs/grafana/latest/panels/panel-editor/
-  - /docs/grafana/latest/panels/panel-options/
-  - /docs/grafana/latest/panels/standard-options/
   - /docs/grafana/latest/panels/working-with-panels/
   - /docs/sources/panels/working-with-panels/
+  - add-a-panel/
+  - legend-options/
+  - panel-editor/
+  - panel-options/
+  - standard-options/
 title: Working with Grafana panels
 weight: 100
 ---

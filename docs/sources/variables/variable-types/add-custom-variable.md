@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/add-custom-variable.md/
+  - ../add-custom-variable.md/
   - /docs/grafana/latest/variables/variable-types/add-custom-variable/
 title: Add a custom variable
 weight: 200

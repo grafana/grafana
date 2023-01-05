@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/reference/templating/
+  - ../reference/templating/
   - /docs/grafana/latest/variables/inspect-variable/
 keywords:
   - grafana

@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/text/
-  - /docs/grafana/latest/panels/visualizations/text-panel/
-  - /docs/grafana/latest/reference/alertlist/
+  - ../features/panels/text/
+  - ../panels/visualizations/text-panel/
+  - ../reference/alertlist/
   - /docs/grafana/latest/visualizations/text-panel/
 keywords:
   - grafana

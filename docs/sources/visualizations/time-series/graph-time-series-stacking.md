@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/histogram/
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-stacking/
+  - ../../features/panels/histogram/
+  - ../../panels/visualizations/time-series/graph-time-series-stacking/
   - /docs/grafana/latest/visualizations/time-series/graph-time-series-stacking/
 keywords:
   - grafana

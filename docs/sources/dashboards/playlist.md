@@ -1,7 +1,7 @@
 ---
 aliases:
+  - ../reference/playlist/
   - /docs/grafana/latest/dashboards/playlist/
-  - /docs/grafana/latest/reference/playlist/
 keywords:
   - grafana
   - dashboard

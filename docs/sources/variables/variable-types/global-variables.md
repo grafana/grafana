@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/global-variables.md/
+  - ../global-variables.md/
   - /docs/grafana/latest/variables/variable-types/global-variables/
 keywords:
   - grafana

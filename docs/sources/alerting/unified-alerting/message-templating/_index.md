@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/message-templating/
+  - ../message-templating/
   - /docs/grafana/latest/alerting/unified-alerting/message-templating/
 description: Message templating
 keywords:

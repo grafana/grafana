@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/reference/templating/
+  - ../reference/templating/
   - /docs/grafana/latest/variables/manage-variable/
 keywords:
   - grafana

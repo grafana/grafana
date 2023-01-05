@@ -1,7 +1,7 @@
 ---
 aliases:
+  - ../features/datasources/postgres/
   - /docs/grafana/latest/datasources/postgres/
-  - /docs/grafana/latest/features/datasources/postgres/
 description: Guide for using PostgreSQL in Grafana
 keywords:
   - grafana

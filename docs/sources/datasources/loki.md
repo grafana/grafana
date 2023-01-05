@@ -1,7 +1,7 @@
 ---
 aliases:
+  - ../features/datasources/loki/
   - /docs/grafana/latest/datasources/loki/
-  - /docs/grafana/latest/features/datasources/loki/
 description: Guide for using Loki in Grafana
 keywords:
   - grafana

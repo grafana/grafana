@@ -1,7 +1,7 @@
 ---
 aliases:
+  - ../installation/configure-docker/
   - /docs/grafana/latest/administration/configure-docker/
-  - /docs/grafana/latest/installation/configure-docker/
 description: Guide for configuring the Grafana Docker image
 keywords:
   - grafana

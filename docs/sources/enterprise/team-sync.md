@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/saml/
+  - ../auth/saml/
   - /docs/grafana/latest/enterprise/team-sync/
 description: Grafana Team Sync
 keywords:

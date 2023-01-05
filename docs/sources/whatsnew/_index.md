@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/guides/
   - /docs/grafana/latest/whatsnew/
+  - guides/
 title: What's new
 weight: 1
 ---

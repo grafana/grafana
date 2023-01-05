@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/license-restrictions/
+  - ../license-restrictions/
   - /docs/grafana/latest/enterprise/license/license-restrictions/
 description: Grafana Enterprise license restrictions
 keywords:

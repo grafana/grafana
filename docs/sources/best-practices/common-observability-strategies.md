@@ -1,7 +1,7 @@
 ---
 aliases:
+  - ../getting-started/strategies/
   - /docs/grafana/latest/best-practices/common-observability-strategies/
-  - /docs/grafana/latest/getting-started/strategies/
 description: Common observability strategies
 keywords:
   - grafana
