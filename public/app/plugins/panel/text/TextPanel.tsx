@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import React, { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelProps, renderTextPanelMarkdown, textUtil, InterpolateFunction } from '@grafana/data';
 import { CustomScrollbar, CodeEditor, useStyles2 } from '@grafana/ui';
@@ -11,25 +11,37 @@ import { defaultCodeOptions, PanelOptions, TextMode } from './models.gen';
 
 export interface Props extends PanelProps<PanelOptions> {}
 
-export function TextPanel({ options, replaceVariables, width, height }: Props) {
+export function TextPanel(props: Props) {
   const styles = useStyles2(getStyles);
-  const location = useLocation();
+  const [processed, setProcessed] = useState<PanelOptions>({
+    mode: props.options.mode,
+    content: processContent(props.options, props.replaceVariables, config.disableSanitizeHtml),
+  });
 
-  const processed = useMemo(() => {
-    return processContent(options, replaceVariables, config.disableSanitizeHtml);
-    // include "location" since it will updat whenever variables change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, replaceVariables, location]);
+  useDebounce(
+    () => {
+      const { options, replaceVariables } = props;
+      const content = processContent(options, replaceVariables, config.disableSanitizeHtml);
+      if (content !== processed.content || options.mode !== processed.mode) {
+        setProcessed({
+          mode: options.mode,
+          content,
+        });
+      }
+    },
+    100,
+    [props]
+  );
 
-  if (options.mode === TextMode.Code) {
-    const code = options.code ?? defaultCodeOptions;
+  if (processed.mode === TextMode.Code) {
+    const code = props.options.code ?? defaultCodeOptions;
     return (
       <CodeEditor
         key={`${code.showLineNumbers}/${code.showMiniMap}`} // will reinit-on change
-        value={processed}
+        value={processed.content}
         language={code.language ?? defaultCodeOptions.language!}
-        width={width}
-        height={height}
+        width={props.width}
+        height={props.height}
         containerStyles={styles.codeEditorContainer}
         showMiniMap={code.showMiniMap}
         showLineNumbers={code.showLineNumbers}
@@ -41,7 +53,7 @@ export function TextPanel({ options, replaceVariables, width, height }: Props) {
   return (
     <CustomScrollbar autoHeightMin="100%">
       <DangerouslySetHtmlContent
-        html={processed}
+        html={processed.content}
         className={styles.markdown}
         data-testid="TextPanel-converted-content"
       />
@@ -49,11 +61,7 @@ export function TextPanel({ options, replaceVariables, width, height }: Props) {
   );
 }
 
-export function processContent(
-  options: PanelOptions,
-  interpolate: InterpolateFunction,
-  disableSanitizeHtml: boolean
-): string {
+function processContent(options: PanelOptions, interpolate: InterpolateFunction, disableSanitizeHtml: boolean): string {
   let { mode, content } = options;
   if (!content) {
     return '';
