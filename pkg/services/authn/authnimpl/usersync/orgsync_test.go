@@ -113,7 +113,7 @@ func TestOrgSync_SyncOrgUser(t *testing.T) {
 				accessControl: tt.fields.accessControl,
 				log:           tt.fields.log,
 			}
-			if err := s.SyncOrgUser(tt.args.ctx, tt.args.clientParams, tt.args.id); (err != nil) != tt.wantErr {
+			if err := s.SyncOrgUser(tt.args.ctx, tt.args.clientParams, tt.args.id, nil); (err != nil) != tt.wantErr {
 				t.Errorf("OrgSync.SyncOrgUser() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
