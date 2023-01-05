@@ -21,7 +21,7 @@ To use Grafana Com authentication:
 1. Click **Add OAuth Client**.
 1. Copy the client ID and secret key or the configuration that has been generated.
 
-The following code shows an example configuration:
+The following snippet shows an example configuration:
 
 ```ini
 [auth.grafana_com]
