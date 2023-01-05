@@ -11,6 +11,7 @@ import {
   EventFilterOptions,
   FieldConfigSource,
   getDefaultTimeRange,
+  LinkModel,
   LoadingState,
   PanelData,
   PanelPlugin,
@@ -576,6 +577,16 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return interpolatedDescription;
   };
 
+  onShowPanelLinks = (): LinkModel[] => {
+    const { panel } = this.props;
+    const linkSupplier = getPanelLinksSupplier(panel);
+    if (linkSupplier) {
+      const panelLinks = linkSupplier && linkSupplier.getLinks(panel.replaceVariables);
+      return panelLinks;
+    }
+    return [];
+  };
+
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
@@ -606,19 +617,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
     ];
 
-    const titleItems = (innerWidth: number, innerHeight: number) => {
-      return (
-        <PanelHeaderTitleItems
-          key="title-items"
-          innerHeight={innerHeight}
-          innerWidth={innerWidth}
-          links={getPanelLinksSupplier(panel)}
-          replaceVariables={panel.replaceVariables}
-          alertState={alertState}
-          data={data}
-          panelId={panel.id}
-        />
-      );
+    const titleItems = () => {
+      return <PanelHeaderTitleItems key="title-items" alertState={alertState} data={data} panelId={panel.id} />;
     };
     if (config.featureToggles.newPanelChromeUI) {
       return (
@@ -631,6 +631,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             height={height}
             title={title}
             description={!!panel.description ? this.onShowPanelDescription : undefined}
+            links={!!panel.links ? this.onShowPanelLinks : undefined}
             titleItems={titleItems}
             leftItems={leftItems}
             padding={noPadding}

@@ -1,13 +1,15 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, PanelModel } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { IconButton } from '../IconButton/IconButton';
 
 import { PanelDescription } from './PanelDescription';
+import { PanelLinks } from './PanelLinks';
+
 /**
  * @internal
  */
@@ -18,6 +20,7 @@ export interface PanelChromeProps {
   padding?: PanelPadding;
   title?: string;
   description?: string | (() => string);
+  links?: () => Array<LinkModel<PanelModel>>;
   titleItems?: (innerWidth: number, innerHeight: number) => ReactNode;
   menu?: React.ReactElement;
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
@@ -48,6 +51,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   padding = 'md',
   title = '',
   description = '',
+  links,
   titleItems = () => null,
   menu,
   // dragClass,
@@ -86,6 +90,8 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
           )}
 
           <PanelDescription description={description} />
+
+          <PanelLinks links={links} />
 
           <div className={styles.titleItems} data-testid="title-items">
             {titleItems(innerWidth, innerHeight)}

@@ -11,8 +11,6 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { Menu } from '../Menu/Menu';
 
-import { PanelChromeInfoState } from './PanelChrome';
-
 const meta: ComponentMeta<typeof PanelChrome> = {
   title: 'Visualizations/PanelChrome',
   component: PanelChrome,
