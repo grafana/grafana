@@ -163,18 +163,69 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-// ResetStateByRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) []*State {
-	logger := st.log.New(ruleKey.LogContext()...)
-	logger.Debug("Resetting state of the rule")
-	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
+// ResetStateByDeletedRuleUID deletes all entries in the state manager that match the given rule UID.
+func (st *Manager) ResetStateByDeletedRuleUID(ctx context.Context, rule *ngModels.AlertRule) []*State {
+	key := rule.GetKey()
+	logger := st.log.New(key.LogContext()...)
+	logger.Debug("Resetting state of the deleted rule")
+
+	states := st.cache.removeByRuleUID(rule.OrgID, rule.UID)
 	if len(states) > 0 && st.instanceStore != nil {
-		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
+		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, key)
 		if err != nil {
-			logger.Error("Failed to delete states that belong to a rule from database", "error", err)
+			logger.Error("Failed to delete states that belong to a deleted rule from database", "error", err)
 		}
 	}
-	logger.Info("Rules state was reset", "states", len(states))
+
+	transitions := make([]StateTransition, 0, len(states))
+	for _, s := range states {
+		transitions = append(transitions, StateTransition{
+			State:               nil,
+			PreviousState:       s.State,
+			PreviousStateReason: s.StateReason,
+		})
+	}
+
+	if st.historian != nil {
+		st.historian.RecordStatesAsync(ctx, rule, transitions)
+	}
+
+	logger.Info("Deleted rules state was reset", "states", len(states))
+	return states
+}
+
+// ResetStateByPausedRuleUID deletes all entries in the state manager that match the given rule UID.
+func (st *Manager) ResetStateByPausedRuleUID(ctx context.Context, rule *ngModels.AlertRule) []*State {
+	key := rule.GetKey()
+	logger := st.log.New(key.LogContext()...)
+	logger.Debug("Resetting state of the paused rule")
+
+	states := st.cache.getStatesForRuleUID(rule.OrgID, rule.UID)
+	if len(states) > 0 && st.instanceStore != nil {
+		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, key)
+		if err != nil {
+			logger.Error("Failed to delete states that belong to a paused rule from database", "error", err)
+		}
+	}
+
+	transitions := make([]StateTransition, 0, len(states)*2)
+	for _, s := range states {
+		transitions = append(transitions, StateTransition{
+			State:               nil,
+			PreviousState:       s.State,
+			PreviousStateReason: s.StateReason,
+		}, StateTransition{
+			State:               nil,
+			PreviousState:       s.State,
+			PreviousStateReason: ngModels.StateReasonPaused,
+		})
+	}
+
+	if st.historian != nil {
+		st.historian.RecordStatesAsync(ctx, rule, transitions)
+	}
+
+	logger.Info("Paused rules state was reset", "states", len(states))
 	return states
 }
 
@@ -265,59 +316,6 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	}
 
 	return nextState
-}
-
-// PauseStates sets all states from an alert rule to pause. If states need to be resolved it tries to take an image.
-func (st *Manager) PauseStates(ctx context.Context, r *ngModels.AlertRule) []StateTransition {
-	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
-	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
-	hasResolvedImage := false
-
-	var stateTransitions []StateTransition
-
-	states := st.GetStatesForRuleUID(r.OrgID, r.UID)
-	for _, s := range states {
-		if s.StateReason == ngModels.StateReasonPaused {
-			continue
-		}
-
-		oldState := s.State
-		oldReason := s.StateReason
-
-		s.State = eval.Normal
-		s.StateReason = ngModels.StateReasonPaused
-		now := time.Now()
-		s.EndsAt = now
-		s.LastEvaluationTime = now
-		s.Error = nil
-
-		if oldState == eval.Alerting {
-			s.Resolved = true
-			// If there is no resolved image for this rule then take one
-			if !hasResolvedImage {
-				tryToTakeAnImage(ctx, st.log, &st.images, r, func(img *ngModels.Image) {
-					hasResolvedImage = true
-					s.Image = img
-				})
-			}
-		}
-
-		st.cache.set(s)
-
-		stateTransition := StateTransition{
-			State:               s,
-			PreviousState:       oldState,
-			PreviousStateReason: oldReason,
-		}
-		stateTransitions = append(stateTransitions, stateTransition)
-	}
-
-	st.saveAlertStates(ctx, st.log, stateTransitions...)
-
-	if st.historian != nil {
-		st.historian.RecordStatesAsync(ctx, r, stateTransitions)
-	}
-	return stateTransitions
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {

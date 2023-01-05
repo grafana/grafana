@@ -11,8 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var errRuleDeleted = errors.New("rule deleted")
-var errRulePaused = errors.New("rule paused")
+var (
+	ErrRuleDeleted = errors.New("rule deleted")
+	ErrRulePaused  = errors.New("rule paused")
+)
 
 type alertRuleInfoRegistry struct {
 	mu            sync.Mutex

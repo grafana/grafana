@@ -183,8 +183,8 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 	t.Run("when rule evaluation is stopped", func(t *testing.T) {
 		t.Run("Update should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
-			r.stop(errRuleDeleted)
-			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
+			r.stop(ErrRuleDeleted)
+			require.ErrorIs(t, r.ctx.Err(), ErrRuleDeleted)
 			require.False(t, r.update(ruleVersion(rand.Int63())))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {

@@ -174,7 +174,7 @@ func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 			continue
 		}
 		// stop rule evaluation
-		ruleInfo.stop(errRuleDeleted)
+		ruleInfo.stop(ErrRuleDeleted)
 	}
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
 	alertRules, _ := sch.schedulableAlertRules.all()
@@ -234,20 +234,14 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	for _, item := range alertRules {
 		key := item.GetKey()
 		if item.IsPaused {
+			delete(registeredDefinitions, key)
 			ruleInfo, ok := sch.registry.del(key)
 			if !ok {
 				continue
 			}
-			ruleInfo.stop(errRulePaused)
-			delete(registeredDefinitions, key)
+			ruleInfo.stop(ErrRulePaused)
 
-			pausedStates := sch.stateManager.PauseStates(ctx, item)
-			alerts := FromStateTransitionToPostableAlerts(pausedStates, sch.stateManager, sch.appURL)
-			if len(alerts.PostableAlerts) > 0 {
-				sch.alertsSender.Send(key, alerts)
-			}
-
-			sch.log.Info("alert rule paused", "alertRule", item.UID)
+			sch.log.Info("alert rule paused", key.LogContext()...)
 		}
 
 		ruleInfo, isRoutineNew := sch.registry.getOrCreateInfo(ctx, key)
@@ -262,7 +256,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		if isRoutineNew && isIntervalValid {
 			dispatcherGroup.Go(func() error {
-				return sch.ruleRoutine(ruleInfo.ctx, key, ruleInfo.evalCh, ruleInfo.updateCh)
+				return sch.ruleRoutine(ruleInfo.ctx, item, ruleInfo.evalCh, ruleInfo.updateCh)
 			})
 		}
 
@@ -322,21 +316,32 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	return readyToRun, registeredDefinitions
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersion) error {
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, rule *ngmodels.AlertRule, evalCh <-chan *evaluation, updateCh <-chan ruleVersion) error {
+	key := rule.GetKey()
 	grafanaCtx = ngmodels.WithRuleKey(grafanaCtx, key)
 	logger := sch.log.FromContext(grafanaCtx)
-	logger.Debug("Alert rule routine started")
+	logger.Debug("Alert rule routine started", key.LogContext()...)
 
 	orgID := fmt.Sprint(key.OrgID)
 	evalTotal := sch.metrics.EvalTotal.WithLabelValues(orgID)
 	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
-	clearState := func() {
-		states := sch.stateManager.ResetStateByRuleUID(grafanaCtx, key)
-		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
-		if len(expiredAlerts.PostableAlerts) > 0 {
-			sch.alertsSender.Send(key, expiredAlerts)
+	clearState := func(err error) {
+		// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted/paused
+		isRuleDeleted := errors.Is(err, ErrRuleDeleted)
+		isRulePaused := errors.Is(err, ErrRulePaused)
+		if isRuleDeleted || isRulePaused {
+			var states []*state.State
+			if isRuleDeleted {
+				states = sch.stateManager.ResetStateByDeletedRuleUID(grafanaCtx, rule)
+			} else if isRulePaused {
+				states = sch.stateManager.ResetStateByPausedRuleUID(grafanaCtx, rule)
+			}
+			expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
+			if len(expiredAlerts.PostableAlerts) > 0 {
+				sch.alertsSender.Send(key, expiredAlerts)
+			}
 		}
 	}
 
@@ -450,7 +455,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			}
 			logger.Info("Clearing the state of the rule because version has changed", "version", currentRuleVersion, "newVersion", lastVersion)
 			// clear the state. So the next evaluation will start from the scratch.
-			clearState()
+			clearState(ErrRuleDeleted)
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
@@ -474,7 +479,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					if currentRuleVersion != newVersion {
 						if currentRuleVersion > 0 { // do not clean up state if the eval loop has just started.
 							logger.Debug("Got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "newVersion", newVersion)
-							clearState()
+							clearState(ErrRuleDeleted)
 						}
 						currentRuleVersion = newVersion
 					}
@@ -495,10 +500,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				}
 			}()
 		case <-grafanaCtx.Done():
-			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
-			if errors.Is(grafanaCtx.Err(), errRuleDeleted) {
-				clearState()
-			}
+			clearState(grafanaCtx.Err())
 			logger.Debug("Stopping alert rule routine")
 			return nil
 		}
