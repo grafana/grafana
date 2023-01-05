@@ -31,10 +31,10 @@ export const AlertInstances = ({ alerts, options }: Props) => {
 
   // TODO Filtering instances here has some implications
   // If a rule has 0 instances after filtering there is no way not to show that rule
-  const filteredAlerts = useMemo((): Alert[] => filterAlerts(options, sortAlerts(options.sortOrder, alerts)) ?? [], [
-    alerts,
-    options,
-  ]);
+  const filteredAlerts = useMemo(
+    (): Alert[] => filterAlerts(options, sortAlerts(options.sortOrder, alerts)) ?? [],
+    [alerts, options]
+  );
 
   const hiddenInstances = alerts.length - filteredAlerts.length;
 
