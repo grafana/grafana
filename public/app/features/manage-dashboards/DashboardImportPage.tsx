@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, PureComponent } from 'react';
-import DropZone, { FileRejection } from 'react-dropzone';
+import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, LoadingState, NavModelItem } from '@grafana/data';
@@ -9,7 +8,6 @@ import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Field,
-  FileUpload,
   Form,
   HorizontalGroup,
   Input,
@@ -18,7 +16,10 @@ import {
   TextArea,
   Themeable2,
   VerticalGroup,
+  FileDropzone,
   withTheme2,
+  DropzoneFile,
+  FileDropzoneDefaultChildren,
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
@@ -68,38 +69,21 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     this.props.cleanUpAction({ cleanupAction: (state) => (state.importDashboard = initialImportDashboardState) });
   }
 
-  onFileUpload = (event: FormEvent<HTMLInputElement>) => {
-    const file = event.currentTarget.files && event.currentTarget.files.length > 0 && event.currentTarget.files[0];
-    this.doFileUpload(file);
-  };
+  // Do not display upload file list
+  fileListRenderer = (file: DropzoneFile, removeFile: (file: DropzoneFile) => void) => null;
 
-  doFileUpload = (file: File | null | false) => {
+  onFileUpload = (result: string | ArrayBuffer | null) => {
     reportInteraction(IMPORT_STARTED_EVENT_NAME, {
       import_source: 'json_uploaded',
     });
 
-    const { importDashboardJson } = this.props;
-    if (file) {
-      const reader = new FileReader();
-      const readerOnLoad = () => {
-        return (e: any) => {
-          let dashboard: any;
-          try {
-            dashboard = JSON.parse(e.target.result);
-          } catch (error) {
-            if (error instanceof Error) {
-              appEvents.emit(AppEvents.alertError, [
-                'Import failed',
-                'JSON -> JS Serialization failed: ' + error.message,
-              ]);
-            }
-            return;
-          }
-          importDashboardJson(dashboard);
-        };
-      };
-      reader.onload = readerOnLoad();
-      reader.readAsText(file);
+    try {
+      this.props.importDashboardJson(JSON.parse(result as string));
+    } catch (error) {
+      if (error instanceof Error) {
+        appEvents.emit(AppEvents.alertError, ['Import failed', 'JSON -> JS Serialization failed: ' + error.message]);
+      }
+      return;
     }
   };
 
@@ -129,87 +113,73 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     }
   };
 
-  onFileDrop = (files: File[], rejectedFiles: FileRejection[]) => {
-    if (rejectedFiles.length) {
-      for (const rejected of rejectedFiles) {
-        appEvents.emit(AppEvents.alertWarning, ['Invalid file: ' + rejected.file.name]);
-      }
-      return;
-    }
-    this.doFileUpload(files[0]);
-  };
-
   renderImportForm() {
     const styles = importStyles(this.props.theme);
 
     return (
-      <DropZone
-        onDrop={this.onFileDrop}
-        noClick
-        accept={{ 'application/json': ['.json'], 'text/plain': ['.txt'] }}
-        multiple={false}
-      >
-        {({ getRootProps, isDragActive }) => {
-          return (
-            <div {...getRootProps()}>
-              <div className={styles.option}>
-                <FileUpload accept="application/json, text/plain" onFileUpload={this.onFileUpload}>
-                  Upload JSON file
-                </FileUpload>
-                {isDragActive && <span>&nbsp; Drop dashboard JSON</span>}
-              </div>
-              <div className={styles.option}>
-                <Form onSubmit={this.getGcomDashboard} defaultValues={{ gcomDashboard: '' }}>
-                  {({ register, errors }) => (
-                    <Field
-                      label="Import via grafana.com"
-                      invalid={!!errors.gcomDashboard}
-                      error={errors.gcomDashboard && errors.gcomDashboard.message}
-                    >
-                      <Input
-                        id="url-input"
-                        placeholder="Grafana.com dashboard URL or ID"
-                        type="text"
-                        {...register('gcomDashboard', {
-                          required: 'A Grafana dashboard URL or ID is required',
-                          validate: validateGcomDashboard,
-                        })}
-                        addonAfter={<Button type="submit">Load</Button>}
-                      />
-                    </Field>
-                  )}
-                </Form>
-              </div>
-              <div className={styles.option}>
-                <Form onSubmit={this.getDashboardFromJson} defaultValues={{ dashboardJson: '' }}>
-                  {({ register, errors }) => (
-                    <>
-                      <Field
-                        label="Import via panel json"
-                        invalid={!!errors.dashboardJson}
-                        error={errors.dashboardJson && errors.dashboardJson.message}
-                      >
-                        <TextArea
-                          {...register('dashboardJson', {
-                            required: 'Need a dashboard JSON model',
-                            validate: validateDashboardJson,
-                          })}
-                          data-testid={selectors.components.DashboardImportPage.textarea}
-                          id="dashboard-json-textarea"
-                          rows={10}
-                        />
-                      </Field>
-                      <Button type="submit" data-testid={selectors.components.DashboardImportPage.submit}>
-                        Load
-                      </Button>
-                    </>
-                  )}
-                </Form>
-              </div>
-            </div>
-          );
-        }}
-      </DropZone>
+      <>
+        <div className={styles.option}>
+          <FileDropzone
+            options={{ multiple: false, accept: ['.json', '.txt'] }}
+            readAs="readAsText"
+            fileListRenderer={this.fileListRenderer}
+            onLoad={this.onFileUpload}
+          >
+            <FileDropzoneDefaultChildren
+              primaryText="Upload dashboard JSON file"
+              secondaryText="Drag and drop here or click to browse"
+            />
+          </FileDropzone>
+        </div>
+        <div className={styles.option}>
+          <Form onSubmit={this.getGcomDashboard} defaultValues={{ gcomDashboard: '' }}>
+            {({ register, errors }) => (
+              <Field
+                label="Import via grafana.com"
+                invalid={!!errors.gcomDashboard}
+                error={errors.gcomDashboard && errors.gcomDashboard.message}
+              >
+                <Input
+                  id="url-input"
+                  placeholder="Grafana.com dashboard URL or ID"
+                  type="text"
+                  {...register('gcomDashboard', {
+                    required: 'A Grafana dashboard URL or ID is required',
+                    validate: validateGcomDashboard,
+                  })}
+                  addonAfter={<Button type="submit">Load</Button>}
+                />
+              </Field>
+            )}
+          </Form>
+        </div>
+        <div className={styles.option}>
+          <Form onSubmit={this.getDashboardFromJson} defaultValues={{ dashboardJson: '' }}>
+            {({ register, errors }) => (
+              <>
+                <Field
+                  label="Import via panel json"
+                  invalid={!!errors.dashboardJson}
+                  error={errors.dashboardJson && errors.dashboardJson.message}
+                >
+                  <TextArea
+                    {...register('dashboardJson', {
+                      required: 'Need a dashboard JSON model',
+                      validate: validateDashboardJson,
+                    })}
+                    data-testid={selectors.components.DashboardImportPage.textarea}
+                    id="dashboard-json-textarea"
+                    rows={10}
+                  />
+                </Field>
+                <Button type="submit" data-testid={selectors.components.DashboardImportPage.submit}>
+                  Load
+                </Button>
+              </>
+            )}
+          </Form>
+        </div>
+      </>
     );
   }
 
@@ -249,6 +219,7 @@ const importStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     option: css`
       margin-bottom: ${theme.spacing(4)};
+      max-width: 600px;
     `,
   };
 });
