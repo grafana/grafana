@@ -8,7 +8,7 @@ interface Props {
   description: string | (() => string);
 }
 
-export const PanelDescription = ({ description }: Props) => {
+export function PanelDescription({ description }: Props) {
   const styles = getStyles();
 
   const getDescriptionContent = (): JSX.Element => {
@@ -27,7 +27,7 @@ export const PanelDescription = ({ description }: Props) => {
       <ToolbarButton icon="info-circle" className={styles.description} />
     </Tooltip>
   ) : null;
-};
+}
 
 const getStyles = () => {
   return {

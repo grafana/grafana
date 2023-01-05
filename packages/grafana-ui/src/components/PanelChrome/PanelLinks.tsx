@@ -11,7 +11,7 @@ interface Props {
   links: (() => LinkModel[]) | undefined;
 }
 
-export const PanelLinks = ({ links }: Props) => {
+export function PanelLinks({ links }: Props) {
   const styles = getStyles();
 
   const getLinksContent = (): JSX.Element => {
@@ -30,7 +30,7 @@ export const PanelLinks = ({ links }: Props) => {
       <ToolbarButton icon="external-link-alt" aria-label="panel links" className={styles.item} />
     </Dropdown>
   ) : null;
-};
+}
 
 const getStyles = () => {
   return {
