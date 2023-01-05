@@ -4,8 +4,6 @@ import React from 'react';
 import { PanelData, GrafanaTheme2 } from '@grafana/data';
 import { Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { PanelHeaderNotices } from './PanelHeaderNotices';
-
 export interface Props {
   alertState?: string;
   data: PanelData;
@@ -13,7 +11,7 @@ export interface Props {
 }
 
 export function PanelHeaderTitleItems(props: Props) {
-  const { alertState, data, panelId } = props;
+  const { alertState, data } = props;
   const styles = useStyles2(getStyles);
 
   const alertStateItem = (
@@ -34,7 +32,6 @@ export function PanelHeaderTitleItems(props: Props) {
 
   return (
     <>
-      {data.series && <PanelHeaderNotices frames={data.series} panelId={panelId} />}
       {data.request && data.request.timeInfo && timeshift}
       {alertState && alertStateItem}
     </>

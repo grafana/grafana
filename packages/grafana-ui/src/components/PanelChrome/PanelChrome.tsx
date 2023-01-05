@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactNode } from 'react';
 
-import { GrafanaTheme2, LinkModel, PanelModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, PanelModel, QueryResultMetaNotice } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { Dropdown } from '../Dropdown/Dropdown';
@@ -9,6 +9,12 @@ import { IconButton } from '../IconButton/IconButton';
 
 import { PanelDescription } from './PanelDescription';
 import { PanelLinks } from './PanelLinks';
+import { PanelNotices } from './PanelNotices';
+
+interface Notices {
+  getPanelNotices: () => QueryResultMetaNotice[];
+  onClick?: (e: React.SyntheticEvent, tab: string) => void;
+}
 
 /**
  * @internal
@@ -21,6 +27,7 @@ export interface PanelChromeProps {
   title?: string;
   description?: string | (() => string);
   links?: () => Array<LinkModel<PanelModel>>;
+  panelNotices?: Notices;
   titleItems?: (innerWidth: number, innerHeight: number) => ReactNode;
   menu?: React.ReactElement;
   /** dragClass, hoverHeader, loadingState, and states not yet implemented */
@@ -52,6 +59,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   title = '',
   description = '',
   links,
+  panelNotices,
   titleItems = () => null,
   menu,
   // dragClass,
@@ -87,6 +95,10 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
             <div title={title} className={styles.title}>
               {title}
             </div>
+          )}
+
+          {panelNotices && typeof panelNotices.getPanelNotices === 'function' && (
+            <PanelNotices notices={panelNotices.getPanelNotices()} onClick={panelNotices.onClick} />
           )}
 
           <PanelDescription description={description} />

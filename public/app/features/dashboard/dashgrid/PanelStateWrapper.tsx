@@ -36,6 +36,7 @@ import {
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
+import { getPanelQueryNotices } from 'app/features/dashboard/utils/panelQueryNotices';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { RenderEvent } from 'app/types/events';
@@ -587,6 +588,11 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return [];
   };
 
+  onOpenInspector = (e: React.SyntheticEvent, tab: string) => {
+    e.stopPropagation();
+    locationService.partial({ inspect: this.props.panel.id, inspectTab: tab });
+  };
+
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
@@ -632,6 +638,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             title={title}
             description={!!panel.description ? this.onShowPanelDescription : undefined}
             links={!!panel.links ? this.onShowPanelLinks : undefined}
+            panelNotices={{
+              getPanelNotices: () => getPanelQueryNotices({ frames: data.series }),
+              onClick: (e: React.SyntheticEvent, tab: string) => this.onOpenInspector(e, tab),
+            }}
             titleItems={titleItems}
             leftItems={leftItems}
             padding={noPadding}
