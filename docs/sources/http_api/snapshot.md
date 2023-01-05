@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/http_api/snapshot/
 description: Grafana HTTP API
 keywords:
   - grafana

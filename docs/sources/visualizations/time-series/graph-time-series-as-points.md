@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-points/
-  - /docs/grafana/latest/visualizations/time-series/graph-time-series-as-points/
+  - ../../panels/visualizations/time-series/graph-time-series-as-points/
 keywords:
   - grafana
   - time series panel

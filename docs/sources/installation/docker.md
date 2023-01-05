@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/installation/docker/
 description: Guide for running Grafana using Docker
 keywords:
   - grafana

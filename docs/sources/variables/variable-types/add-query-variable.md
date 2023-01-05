@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/add-query-variable.md/
-  - /docs/grafana/latest/variables/variable-types/add-query-variable/
+  - ../add-query-variable.md/
 title: Add a query variable
 weight: 100
 ---

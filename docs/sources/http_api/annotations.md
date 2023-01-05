@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/http_api/annotations/
 description: Grafana Annotations HTTP API
 keywords:
   - grafana

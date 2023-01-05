@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/navigation-links/
-  - /docs/grafana/latest/linking/linking-overview/
+  - ../features/navigation-links/
 keywords:
   - grafana
   - linking

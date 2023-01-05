@@ -1,8 +1,6 @@
 ---
 _build:
   list: false
-aliases:
-  - /docs/grafana/latest/release-notes/release-notes-8-3-0-beta1/
 title: Release notes for Grafana 8.3.0-beta1
 ---
 

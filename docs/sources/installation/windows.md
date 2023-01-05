@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/installation/windows/
 description: Install Grafana on Windows
 keywords:
   - grafana

@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/usage-insights/presence-indicator.md/
-  - /docs/grafana/latest/enterprise/usage-insights/presence-indicator/
+  - presence-indicator.md/
 description: Know who is looking at the same dashboard as you are
 keywords:
   - grafana

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/image-rendering/troubleshooting/
 description: Image rendering troubleshooting
 keywords:
   - grafana

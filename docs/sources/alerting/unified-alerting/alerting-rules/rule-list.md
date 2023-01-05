@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/rule-list/
 description: Manage alerting rules
 keywords:
   - grafana

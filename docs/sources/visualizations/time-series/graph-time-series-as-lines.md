@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-lines/
-  - /docs/grafana/latest/visualizations/time-series/graph-time-series-as-lines/
+  - ../../panels/visualizations/time-series/graph-time-series-as-lines/
 keywords:
   - grafana
   - time series panel

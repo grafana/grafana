@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/http_api/library_element/
 description: Grafana Library Element HTTP API
 keywords:
   - grafana

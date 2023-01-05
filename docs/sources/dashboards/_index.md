@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/
-  - /docs/grafana/latest/features/dashboard/dashboards/
+  - features/dashboard/dashboards/
 title: Dashboards
 weight: 80
 ---

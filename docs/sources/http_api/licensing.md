@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/http_api/licensing/
 description: Enterprise Licensing HTTP API
 keywords:
   - grafana

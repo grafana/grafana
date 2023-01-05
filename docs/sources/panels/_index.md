@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/panels/
-  - /docs/grafana/latest/panels/
   - /docs/sources/panels/
+  - features/panels/panels/
 description: Panels
 title: Panels
 weight: 72

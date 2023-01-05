@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/auth/jwt/
 description: Grafana JWT Authentication
 keywords:
   - grafana

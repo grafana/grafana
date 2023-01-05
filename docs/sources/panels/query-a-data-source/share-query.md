@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/query-a-data-source/share-query/
   - /docs/sources/panels/query-a-data-source/share-query/
 title: Share query results with another panel
 weight: 60

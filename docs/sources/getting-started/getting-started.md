@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/getting-started/getting-started/
-  - /docs/grafana/latest/guides/getting_started/
-  - /docs/grafana/latest/guides/gettingstarted/
+  - ../guides/getting_started/
+  - ../guides/gettingstarted/
 description: Guide for getting started with Grafana
 keywords:
   - grafana

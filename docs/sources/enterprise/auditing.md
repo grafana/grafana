@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/enterprise/auditing/
 description: Auditing
 keywords:
   - grafana

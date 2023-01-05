@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/guides/what-is-grafana/
-  - /docs/grafana/latest/introduction/oss-details/
+  - ../guides/what-is-grafana/
 title: What is Grafana OSS
 weight: 5
 ---

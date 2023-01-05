@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/prometheus/
-  - /docs/grafana/latest/features/datasources/prometheus/
+  - ../features/datasources/prometheus/
 description: Guide for using Prometheus in Grafana
 keywords:
   - grafana

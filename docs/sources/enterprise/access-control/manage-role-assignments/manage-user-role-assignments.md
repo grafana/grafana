@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/enterprise/access-control/manage-role-assignments/manage-user-role-assignments/
 description: Manage user role assignments
 keywords:
   - grafana

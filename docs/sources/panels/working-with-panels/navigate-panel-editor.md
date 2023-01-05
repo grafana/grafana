@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/working-with-panels/navigate-panel-editor/
   - /docs/sources/panels/working-with-panels/navigate-panel-editor/
 title: Navigate the Grafana panel editor
 weight: 10

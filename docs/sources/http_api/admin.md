@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/http_api/admin/
 description: Grafana Admin HTTP API
 keywords:
   - grafana

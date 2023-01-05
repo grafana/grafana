@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/installation/upgrading/
 description: Guide for upgrading Grafana
 keywords:
   - grafana

@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/search/
-  - /docs/grafana/latest/reference/search/
+  - ../reference/search/
 keywords:
   - grafana
   - dashboard

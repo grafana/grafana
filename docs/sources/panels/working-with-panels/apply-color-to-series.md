@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/working-with-panels/apply-color-to-series/
   - /docs/sources/panels/working-with-panels/apply-color-to-series/
 title: Apply color to series and fields
 weight: 50

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/alerting/unified-alerting/difference-old-new/
 description: What's New with Grafana alerts
 keywords:
   - grafana

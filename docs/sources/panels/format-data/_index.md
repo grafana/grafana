@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/format-data/
-  - /docs/grafana/latest/panels/value-mappings/
   - /docs/sources/panels/format-data/
+  - value-mappings/
 title: Format data using value mapping
 weight: 600
 ---

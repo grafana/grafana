@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/format-data/map-a-regular-expression/
   - /docs/sources/panels/format-data/map-a-regular-expression/
 title: Map a regular expression
 weight: 40

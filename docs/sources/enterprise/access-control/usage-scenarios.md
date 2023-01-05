@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/enterprise/access-control/usage-scenarios/
 description: Fine-grained access control usage scenarios
 keywords:
   - grafana

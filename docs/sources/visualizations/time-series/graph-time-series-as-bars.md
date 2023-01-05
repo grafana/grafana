@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-bars/
-  - /docs/grafana/latest/visualizations/time-series/graph-time-series-as-bars/
+  - ../../panels/visualizations/time-series/graph-time-series-as-bars/
 keywords:
   - grafana
   - time series panel

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/http_api/other/
 description: Grafana Other HTTP API
 keywords:
   - grafana

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/enterprise/access-control/manage-role-assignments/manage-team-role-assignments/
 description: Manage team role assignments
 keywords:
   - grafana

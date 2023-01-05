@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/http_api/short_url/
 description: Grafana Short URL HTTP API
 keywords:
   - grafana

@@ -1,9 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/table_panel/
-  - /docs/grafana/latest/panels/visualizations/table/filter-table-columns/
-  - /docs/grafana/latest/reference/table/
-  - /docs/grafana/latest/visualizations/table/filter-table-columns/
+  - ../../features/panels/table_panel/
+  - ../../panels/visualizations/table/filter-table-columns/
+  - ../../reference/table/
   - /docs/grafana/next/panels/visualizations/table/table-field-options/
 keywords:
   - grafana

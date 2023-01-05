@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/explore/trace-integration/
 description: Tracing in Explore
 keywords:
   - explore

@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/specify-thresholds/add-threshold-to-graph/
   - /docs/sources/panels/specify-thresholds/add-threshold-to-graph/
 title: Add a threshold to a legacy graph panel
 weight: 40

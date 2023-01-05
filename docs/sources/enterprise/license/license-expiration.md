@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/license-expiration/
-  - /docs/grafana/latest/enterprise/license/license-expiration/
+  - ../license-expiration/
 description: ''
 keywords:
   - grafana

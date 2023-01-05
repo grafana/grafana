@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/http_api/data_source/
-  - /docs/grafana/latest/http_api/datasource/
+  - datasource/
 description: Grafana Data source HTTP API
 keywords:
   - grafana

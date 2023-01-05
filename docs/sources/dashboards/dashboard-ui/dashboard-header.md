@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/dashboard-ui/dashboard-header/
-  - /docs/grafana/latest/features/dashboard/dashboards/
+  - ../../features/dashboard/dashboards/
 title: Dashboard header
 weight: 80
 ---

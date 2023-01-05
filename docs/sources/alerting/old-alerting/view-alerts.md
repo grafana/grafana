@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/old-alerting/view-alerts/
-  - /docs/grafana/latest/alerting/view-alerts/
+  - ../view-alerts/
 description: View existing alert rules
 keywords:
   - grafana

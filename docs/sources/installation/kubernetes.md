@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/installation/kubernetes/
 description: Guide for deploying Grafana on Kubernetes
 keywords:
   - grafana

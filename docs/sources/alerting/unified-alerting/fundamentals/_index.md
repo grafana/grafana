@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/metrics/
-  - /docs/grafana/latest/alerting/unified-alerting/fundamentals/
+  - ../metrics/
 title: Alerting fundamentals
 weight: 120
 ---

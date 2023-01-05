@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/administration/preferences/
 title: Preferences
 weight: 50
 ---

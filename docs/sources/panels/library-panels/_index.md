@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/library-panels/
-  - /docs/grafana/latest/panels/panel-library/
   - /docs/sources/panels/library-panels/
+  - panel-library/
 title: Create reusable Grafana panels
 weight: 700
 ---

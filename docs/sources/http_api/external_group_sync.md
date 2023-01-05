@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/http_api/external_group_sync/
 description: Grafana External Group Sync HTTP API
 keywords:
   - grafana

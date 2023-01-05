@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/add-data-source-variable.md/
-  - /docs/grafana/latest/variables/variable-types/add-data-source-variable/
+  - ../add-data-source-variable.md/
 title: Add a data source variable
 weight: 500
 ---

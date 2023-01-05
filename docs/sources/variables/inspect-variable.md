@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/reference/templating/
-  - /docs/grafana/latest/variables/inspect-variable/
+  - ../reference/templating/
 keywords:
   - grafana
   - templating

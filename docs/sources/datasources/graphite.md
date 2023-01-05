@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/graphite/
-  - /docs/grafana/latest/features/datasources/graphite/
+  - ../features/datasources/graphite/
 description: Guide for using graphite in Grafana
 keywords:
   - grafana

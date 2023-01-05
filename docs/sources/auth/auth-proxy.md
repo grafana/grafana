@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/auth-proxy/
-  - /docs/grafana/latest/tutorials/authproxy/
+  - ../tutorials/authproxy/
 description: 'Grafana Auth Proxy Guide '
 keywords:
   - grafana

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/administration/jaeger-instrumentation/
 description: Jaeger traces emitted and propagation by Grafana
 keywords:
   - grafana

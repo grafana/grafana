@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/
-  - /docs/grafana/latest/plugins/developing/
+  - ../plugins/developing/
 title: Build a plugin
 ---
 
