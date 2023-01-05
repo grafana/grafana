@@ -3,6 +3,11 @@ package updatechecker
 import (
 	"context"
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"go.opentelemetry.io/otel/trace"
 	"io"
 	"net/http"
 	"strings"
@@ -16,6 +21,29 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var (
+	pluginUpdaterRequestTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "grafana",
+		Name:      "plugin_updater_request_total",
+		Help:      "The total number of plugin updater update requests",
+	})
+	pluginUpdaterRequestFailureTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "grafana",
+		Name:      "plugin_updater_request_failure_total",
+		Help:      "The total number of failed plugin updater update requests",
+	})
+	pluginUpdaterRequestDurationSeconds = promauto.NewHistogram(prometheus.HistogramOpts{
+		Namespace: "grafana",
+		Name:      "plugin_updater_request_duration_seconds",
+		Help:      "Plugin updater request duration",
+	})
+	pluginUpdaterInFlightRequest = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "grafana",
+		Name:      "plugin_updater_in_flight_request_total",
+		Help:      "Plugin updater request currently in progress",
+	})
+)
+
 type PluginsService struct {
 	availableUpdates map[string]string
 
@@ -25,14 +53,16 @@ type PluginsService struct {
 	httpClient     httpClient
 	mutex          sync.RWMutex
 	log            log.Logger
+	tracer         tracing.Tracer
 }
 
-func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store) *PluginsService {
+func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store, tracer tracing.Tracer) *PluginsService {
 	return &PluginsService{
 		enabled:          cfg.CheckForPluginUpdates,
 		grafanaVersion:   cfg.BuildVersion,
 		httpClient:       &http.Client{Timeout: 10 * time.Second},
 		log:              log.New("plugins.update.checker"),
+		tracer:           tracer,
 		pluginStore:      pluginStore,
 		availableUpdates: make(map[string]string),
 	}
@@ -84,17 +114,56 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 }
 
 func (s *PluginsService) checkForUpdates(ctx context.Context) {
-	s.log.Debug("Checking for updates")
+	var err error
+
+	ctx, span := s.tracer.Start(ctx, "updatechecker.PluginsService.checkForUpdates")
+	defer span.End()
+
+	traceID := tracing.TraceIDFromContext(ctx, false)
+	traceIDLogOpts := []interface{}{"traceID", traceID}
+	s.log.Debug("Checking for updates", traceIDLogOpts...)
+
+	startTime := time.Now()
+	pluginUpdaterInFlightRequest.Inc()
+	defer func() {
+		pluginUpdaterInFlightRequest.Dec()
+		pluginUpdaterRequestTotal.Inc()
+		pluginUpdaterRequestDurationSeconds.Observe(time.Since(startTime).Seconds())
+
+		if err != nil {
+			pluginUpdaterRequestFailureTotal.Inc()
+			span.RecordError(err)
+			s.log.Debug("Update check failed", traceIDLogOpts...)
+		} else {
+			s.log.Debug("Update check succeeded", traceIDLogOpts...)
+		}
+	}()
 
 	localPlugins := s.pluginsEligibleForVersionCheck(ctx)
-	resp, err := s.httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" +
-		s.pluginIDsCSV(localPlugins) + "&grafanaVersion=" + s.grafanaVersion)
+
+	url := "https://grafana.com/api/plugins/versioncheck?slugIn=" +
+		s.pluginIDsCSV(localPlugins) + "&grafanaVersion=" + s.grafanaVersion
+	_, requestSpan := s.tracer.Start(
+		ctx,
+		"updatechecker.PluginsService.gcomAPIRequest",
+		trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(
+			semconv.HTTPMethodKey.String(http.MethodGet),
+			semconv.HTTPTargetKey.String(url),
+		),
+	)
+	resp, err := s.httpClient.Get(url)
 	if err != nil {
+		requestSpan.RecordError(err)
+		requestSpan.End()
 		s.log.Debug("Failed to get plugins repo from grafana.com", "error", err.Error())
 		return
 	}
+	requestSpan.SetAttributes(string(semconv.HTTPStatusCodeKey), resp.StatusCode, semconv.HTTPStatusCodeKey.Int(resp.StatusCode))
+	requestSpan.End()
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
+		err = resp.Body.Close()
+		if err != nil {
 			s.log.Warn("Failed to close response body", "err", err)
 		}
 	}()
