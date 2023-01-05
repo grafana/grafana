@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/infra/supportbundles"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
 )
 
 type bundleResult struct {

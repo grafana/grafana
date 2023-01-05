@@ -5,23 +5,22 @@ import { EditorField, Space } from '@grafana/experimental';
 import { Button, Checkbox, Icon, Label, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
 
 import Search from '../Search';
-import { SelectableResourceValue } from '../api';
-import { DescribeLogGroupsRequest } from '../types';
+import { DescribeLogGroupsRequest, LogGroup, LogGroupResponse, ResourceResponse } from '../types';
 
 import { Account, ALL_ACCOUNTS_OPTION } from './Account';
 import { SelectedLogsGroups } from './SelectedLogsGroups';
 import getStyles from './styles';
 
 type CrossAccountLogsQueryProps = {
-  selectedLogGroups: SelectableResourceValue[];
+  selectedLogGroups: LogGroup[];
   accountOptions: Array<SelectableValue<string>>;
-  fetchLogGroups: (params: Partial<DescribeLogGroupsRequest>) => Promise<SelectableResourceValue[]>;
-  onChange: (selectedLogGroups: SelectableResourceValue[]) => void;
+  fetchLogGroups: (params: Partial<DescribeLogGroupsRequest>) => Promise<Array<ResourceResponse<LogGroupResponse>>>;
+  onChange: (selectedLogGroups: LogGroup[]) => void;
 };
 
 export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectableLogGroups, setSelectableLogGroups] = useState<SelectableResourceValue[]>([]);
+  const [selectableLogGroups, setSelectableLogGroups] = useState<LogGroup[]>([]);
   const [selectedLogGroups, setSelectedLogGroups] = useState(props.selectedLogGroups);
   const [searchPhrase, setSearchPhrase] = useState('');
   const [searchAccountId, setSearchAccountId] = useState(ALL_ACCOUNTS_OPTION.value);
@@ -36,6 +35,16 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
     }
   };
 
+  const accountNameById = useMemo(() => {
+    const idsToNames: Record<string, string> = {};
+    props.accountOptions.forEach((a) => {
+      if (a.value && a.label) {
+        idsToNames[a.value] = a.label;
+      }
+    });
+    return idsToNames;
+  }, [props.accountOptions]);
+
   const searchFn = async (searchTerm?: string, accountId?: string) => {
     setIsLoading(true);
     try {
@@ -43,18 +52,25 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
         logGroupPattern: searchTerm,
         accountId: accountId,
       });
-      setSelectableLogGroups(possibleLogGroups);
+      setSelectableLogGroups(
+        possibleLogGroups.map((lg) => ({
+          arn: lg.value.arn,
+          name: lg.value.name,
+          accountId: lg.accountId,
+          accountLabel: lg.accountId ? accountNameById[lg.accountId] : undefined,
+        }))
+      );
     } catch (err) {
       setSelectableLogGroups([]);
     }
     setIsLoading(false);
   };
 
-  const handleSelectCheckbox = (row: SelectableResourceValue, isChecked: boolean) => {
+  const handleSelectCheckbox = (row: LogGroup, isChecked: boolean) => {
     if (isChecked) {
       setSelectedLogGroups([...selectedLogGroups, row]);
     } else {
-      setSelectedLogGroups(selectedLogGroups.filter((lg) => lg.value !== row.value));
+      setSelectedLogGroups(selectedLogGroups.filter((lg) => lg.arn !== row.arn));
     }
   };
 
@@ -67,16 +83,6 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
     setSelectedLogGroups(props.selectedLogGroups);
     toggleModal();
   };
-
-  const accountNameById = useMemo(() => {
-    const idsToNames: Record<string, string> = {};
-    props.accountOptions.forEach((a) => {
-      if (a.value && a.label) {
-        idsToNames[a.value] = a.label;
-      }
-    });
-    return idsToNames;
-  }, [props.accountOptions]);
 
   return (
     <>
@@ -139,22 +145,22 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
                 )}
                 {!isLoading &&
                   selectableLogGroups.map((row) => (
-                    <tr className={styles.row} key={`${row.value}`}>
+                    <tr className={styles.row} key={`${row.arn}`}>
                       <td className={styles.cell}>
                         <div className={styles.nestedEntry}>
                           <Checkbox
-                            id={row.value}
+                            id={row.arn}
                             onChange={(ev) => handleSelectCheckbox(row, ev.currentTarget.checked)}
-                            value={!!(row.value && selectedLogGroups.some((lg) => lg.value === row.value))}
+                            value={!!(row.arn && selectedLogGroups.some((lg) => lg.arn === row.arn))}
                           />
                           <Space layout="inline" h={2} />
-                          <label className={styles.logGroupSearchResults} htmlFor={row.value}>
-                            {row.label}
+                          <label className={styles.logGroupSearchResults} htmlFor={row.arn}>
+                            {row.name}
                           </label>
                         </div>
                       </td>
-                      <td className={styles.cell}>{accountNameById[row.text]}</td>
-                      <td className={styles.cell}>{row.text}</td>
+                      <td className={styles.cell}>{row.accountLabel}</td>
+                      <td className={styles.cell}>{row.accountId}</td>
                     </tr>
                   ))}
               </tbody>
