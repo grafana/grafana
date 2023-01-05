@@ -50,4 +50,11 @@ describe('<TickLabels>', () => {
       expect(tick).toHaveStyle(`left: ${pos};`);
     });
   });
+  it('shows the correct value above each tick', () => {
+    expect(screen.getAllByText(/0/)).toBeTruthy();
+    expect(screen.getByText(/1.25/)).toBeTruthy();
+    expect(screen.getByText(/2.5/)).toBeTruthy();
+    expect(screen.getByText(/3.75/)).toBeTruthy();
+    expect(screen.getAllByText(/5/)).toBeTruthy();
+  });
 });
