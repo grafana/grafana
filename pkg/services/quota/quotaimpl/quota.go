@@ -2,7 +2,6 @@ package quotaimpl
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -33,7 +32,7 @@ func (s *serviceDisabled) CheckQuotaReached(ctx context.Context, targetSrv quota
 }
 
 func (s *serviceDisabled) DeleteQuotaForUser(ctx context.Context, userID int64) error {
-	return quota.ErrDisabled
+	return nil
 }
 
 func (s *serviceDisabled) RegisterQuotaReporter(e *quota.NewUsageReporter) error {
@@ -205,9 +204,24 @@ func (s *service) CheckQuotaReached(ctx context.Context, targetSrv quota.TargetS
 		case limit == 0:
 			return true, nil
 		default:
+			scope, err := t.GetScope()
+			if err != nil {
+				return false, quota.ErrFailedToGetScope.Errorf("failed to get the scope for target: %s", t)
+			}
+
+			// do not check user quota if the user information is not available (eg no user is signed in)
+			if scope == quota.UserScope && (scopeParams == nil || scopeParams.UserID == 0) {
+				continue
+			}
+
+			// do not check user quota if the org information is not available (eg no user is signed in)
+			if scope == quota.OrgScope && (scopeParams == nil || scopeParams.OrgID == 0) {
+				continue
+			}
+
 			u, ok := targetUsage.Get(t)
 			if !ok {
-				return false, fmt.Errorf("no usage for target:%s", t)
+				return false, quota.ErrUsageFoundForTarget.Errorf("no usage for target:%s", t)
 			}
 			if u >= limit {
 				return true, nil

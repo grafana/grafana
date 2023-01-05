@@ -141,12 +141,6 @@ const getStyles = (theme: GrafanaTheme2, hasSplit: boolean) => {
   `;
 
   return {
-    singleLeftPane: css`
-      height: 100%;
-      position: absolute;
-      overflow: hidden;
-      width: 100%;
-    `,
     resizerV: cx(
       resizer,
       css`

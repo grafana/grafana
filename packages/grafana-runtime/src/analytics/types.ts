@@ -1,3 +1,5 @@
+import { CoreApp } from '@grafana/data';
+
 import { EchoEvent, EchoEventType } from '../services/EchoSrv';
 
 /**
@@ -20,6 +22,7 @@ export interface DashboardInfo {
  * @public
  */
 export interface DataRequestInfo extends Partial<DashboardInfo> {
+  source?: CoreApp | string;
   datasourceName: string;
   datasourceId: number;
   datasourceUid: string;

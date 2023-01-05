@@ -1,3 +1,5 @@
+import tinycolor from 'tinycolor2';
+
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { Monaco, monacoTypes } from './types';
@@ -6,11 +8,22 @@ function getColors(theme?: GrafanaTheme2): monacoTypes.editor.IColors {
   if (theme === undefined) {
     return {};
   } else {
-    return {
+    const colors: Record<string, string> = {
       'editor.background': theme.components.input.background,
       'minimap.background': theme.colors.background.secondary,
     };
+
+    Object.keys(colors).forEach((resultKey) => {
+      colors[resultKey] = normalizeColorForMonaco(colors[resultKey]);
+    });
+    return colors;
   }
+}
+
+function normalizeColorForMonaco(color?: string): string {
+  // monaco needs 6char hex colors
+  // see https://github.com/grafana/grafana/issues/43158
+  return tinycolor(color).toHexString();
 }
 
 // we support calling this without a theme, it will make sure the themes
@@ -24,9 +37,9 @@ export default function defineThemes(monaco: Monaco, theme?: GrafanaTheme2) {
     colors: colors,
     // fallback syntax highlighting for languages that microsoft doesn't handle (ex cloudwatch's metric math)
     rules: [
-      { token: 'predefined', foreground: theme?.visualization.getColorByName('purple') },
-      { token: 'operator', foreground: theme?.visualization.getColorByName('orange') },
-      { token: 'tag', foreground: theme?.visualization.getColorByName('green') },
+      { token: 'predefined', foreground: normalizeColorForMonaco(theme?.visualization.getColorByName('purple')) },
+      { token: 'operator', foreground: normalizeColorForMonaco(theme?.visualization.getColorByName('orange')) },
+      { token: 'tag', foreground: normalizeColorForMonaco(theme?.visualization.getColorByName('green')) },
     ],
   });
 
@@ -36,9 +49,9 @@ export default function defineThemes(monaco: Monaco, theme?: GrafanaTheme2) {
     colors: colors,
     // fallback syntax highlighting for languages that microsoft doesn't handle (ex cloudwatch's metric math)
     rules: [
-      { token: 'predefined', foreground: theme?.visualization.getColorByName('purple') },
-      { token: 'operator', foreground: theme?.visualization.getColorByName('orange') },
-      { token: 'tag', foreground: theme?.visualization.getColorByName('green') },
+      { token: 'predefined', foreground: normalizeColorForMonaco(theme?.visualization.getColorByName('purple')) },
+      { token: 'operator', foreground: normalizeColorForMonaco(theme?.visualization.getColorByName('orange')) },
+      { token: 'tag', foreground: normalizeColorForMonaco(theme?.visualization.getColorByName('green')) },
     ],
   });
 }

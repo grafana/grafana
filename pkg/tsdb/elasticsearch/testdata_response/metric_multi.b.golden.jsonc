@@ -1,7 +1,7 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "custom": null
+//      "type": "timeseries-multi"
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
@@ -23,7 +23,7 @@
     {
       "schema": {
         "meta": {
-          "custom": null
+          "type": "timeseries-multi"
         },
         "fields": [
           {
@@ -31,9 +31,6 @@
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
-            },
-            "config": {
-              "displayNameFromDS": "Min float"
             }
           },
           {

@@ -13,9 +13,11 @@ interface Props {
  */
 export class CompletionProvider implements monacoTypes.languages.CompletionItemProvider {
   languageProvider: TempoLanguageProvider;
+  registerInteractionCommandId: string | null;
 
   constructor(props: Props) {
     this.languageProvider = props.languageProvider;
+    this.registerInteractionCommandId = null;
   }
 
   triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
@@ -56,13 +58,22 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       // to stop it, we use a number-as-string sortkey,
       // so that monaco keeps the order we use
       const maxIndexDigits = items.length.toString().length;
-      const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => ({
-        kind: getMonacoCompletionItemKind(item.type, this.monaco!),
-        label: item.label,
-        insertText: item.insertText,
-        sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
-        range,
-      }));
+      const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => {
+        const suggestion: monacoTypes.languages.CompletionItem = {
+          kind: getMonacoCompletionItemKind(item.type, this.monaco!),
+          label: item.label,
+          insertText: item.insertText,
+          sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
+          range,
+          command: {
+            id: this.registerInteractionCommandId || 'noOp',
+            title: 'Report Interaction',
+            arguments: [item.label, item.type],
+          },
+        };
+        fixSuggestion(suggestion, item.type, model, offset);
+        return suggestion;
+      });
       return { suggestions };
     });
   }
@@ -72,6 +83,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    */
   setTags(tags: string[]) {
     tags.forEach((t) => (this.tags[t] = new Set<string>()));
+  }
+
+  /**
+   * Set the ID for the registerInteraction command, to be used to keep track of how many completions are used by the users
+   */
+  setRegisterInteractionCommandId(id: string | null) {
+    this.registerInteractionCommandId = id;
   }
 
   private overrideTagName(tagName: string): string {
@@ -84,7 +102,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private async getTagValues(tagName: string): Promise<Array<SelectableValue<string>>> {
-    let tagValues: Array<SelectableValue<string>> = [];
+    let tagValues: Array<SelectableValue<string>>;
 
     if (this.cachedValues.hasOwnProperty(tagName)) {
       tagValues = this.cachedValues[tagName];
@@ -116,10 +134,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       }
       case 'SPANSET_EMPTY':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions('.'));
+      case 'SPANSET_ONLY_DOT': {
+        return this.getTagsCompletions();
+      }
       case 'SPANSET_IN_NAME':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions());
       case 'SPANSET_IN_NAME_SCOPE':
-        return this.getIntrinsicsCompletions().concat(this.getTagsCompletions());
+        return this.getTagsCompletions();
       case 'SPANSET_AFTER_NAME':
         return CompletionProvider.operators.map((key) => ({
           label: key,
@@ -216,6 +237,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       if (!nameFull) {
         return {
           type: 'SPANSET_EMPTY',
+        };
+      }
+
+      if (nameFull === '.') {
+        return {
+          type: 'SPANSET_ONLY_DOT',
         };
       }
 
@@ -341,6 +368,9 @@ export type Situation =
       type: 'SPANSET_EMPTY';
     }
   | {
+      type: 'SPANSET_ONLY_DOT';
+    }
+  | {
       type: 'SPANSET_AFTER_NAME';
     }
   | {
@@ -378,4 +408,43 @@ function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel,
 
   const offset = model.getOffsetAt(positionClone);
   return { offset, range };
+}
+
+/**
+ * Fix the suggestions range and insert text. For the range we have to adjust because monaco by default replaces just
+ * the last word which stops at dot while traceQL tags contain dots themselves and we want to replace the whole tag
+ * name when suggesting. The insert text needs to be adjusted for scope (leading dot) if scope is currently missing.
+ * This may be doable also when creating the suggestions but for a particular situation this seems to be easier to do
+ * here.
+ */
+function fixSuggestion(
+  suggestion: monacoTypes.languages.CompletionItem,
+  itemType: CompletionType,
+  model: monacoTypes.editor.ITextModel,
+  offset: number
+) {
+  if (itemType === 'TAG_NAME') {
+    const match = model
+      .getValue()
+      .substring(0, offset)
+      .match(/(span\.|resource\.|\.)?([\w./-]*)$/);
+
+    if (match) {
+      const scope = match[1];
+      const tag = match[2];
+
+      if (tag) {
+        // Add the default scope if needed.
+        if (!scope && suggestion.insertText[0] !== '.') {
+          suggestion.insertText = '.' + suggestion.insertText;
+        }
+
+        // Adjust the range, so that we will replace the whole tag.
+        suggestion.range = {
+          ...suggestion.range,
+          startColumn: offset - tag.length + 1,
+        };
+      }
+    }
+  }
 }

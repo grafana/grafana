@@ -189,8 +189,8 @@ describe('Tween', () => {
     it('releases references to callbacks', () => {
       const tween = new Tween({ ...baseOptions, onComplete: () => {}, onUpdate: () => {} });
       tween.cancel();
-      expect(tween.callbackComplete).toBe(undefined);
-      expect(tween.callbackUpdate).toBe(undefined);
+      expect(tween.onComplete).toBe(undefined);
+      expect(tween.onUpdate).toBe(undefined);
     });
   });
 });

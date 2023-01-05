@@ -1,5 +1,5 @@
 import { VizPanel } from '../components';
-import { Scene } from '../components/Scene';
+import { EmbeddedScene, Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
 import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneGridLayout } from '../components/layout/SceneGridLayout';
@@ -8,45 +8,41 @@ import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getMultipleGridLayoutTest(): Scene {
-  const scene = new Scene({
+export function getMultipleGridLayoutTest(standalone: boolean): Scene {
+  const state = {
     title: 'Multiple grid layouts test',
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       children: [
         new SceneGridLayout({
           children: [
             new VizPanel({
-              size: {
+              placement: {
                 x: 0,
                 y: 0,
                 width: 12,
                 height: 10,
+                isDraggable: true,
+                isResizable: true,
               },
-              isDraggable: true,
-              isResizable: true,
               pluginId: 'timeseries',
               title: 'Dragabble and resizable',
             }),
             new VizPanel({
-              isResizable: false,
-              isDraggable: true,
-              size: { x: 12, y: 0, width: 12, height: 10 },
+              placement: { x: 12, y: 0, width: 12, height: 10, isResizable: false, isDraggable: true },
               pluginId: 'timeseries',
               title: 'Draggable only',
             }),
             new SceneFlexLayout({
-              isResizable: true,
-              isDraggable: true,
-              size: { x: 6, y: 11, width: 12, height: 10 },
+              placement: { x: 6, y: 11, width: 12, height: 10, isResizable: false, isDraggable: true },
               direction: 'column',
               children: [
                 new VizPanel({
-                  size: { ySizing: 'fill' },
+                  placement: { ySizing: 'fill' },
                   pluginId: 'timeseries',
                   title: 'Fill height',
                 }),
                 new VizPanel({
-                  size: { ySizing: 'fill' },
+                  placement: { ySizing: 'fill' },
                   pluginId: 'timeseries',
                   title: 'Fill height',
                 }),
@@ -58,36 +54,32 @@ export function getMultipleGridLayoutTest(): Scene {
         new SceneGridLayout({
           children: [
             new VizPanel({
-              size: {
+              placement: {
                 x: 0,
                 y: 0,
                 width: 12,
                 height: 10,
+                isDraggable: true,
               },
-              isDraggable: true,
               pluginId: 'timeseries',
               title: 'Fill height',
             }),
             new VizPanel({
-              isResizable: false,
-              isDraggable: true,
-              size: { x: 12, y: 0, width: 12, height: 10 },
+              placement: { x: 12, y: 0, width: 12, height: 10, isResizable: false, isDraggable: true },
               pluginId: 'timeseries',
               title: 'Fill height',
             }),
             new SceneFlexLayout({
-              size: { x: 6, y: 11, width: 12, height: 10 },
+              placement: { x: 6, y: 11, width: 12, height: 10 },
               direction: 'column',
               children: [
                 new VizPanel({
-                  size: { ySizing: 'fill' },
-                  isDraggable: true,
+                  placement: { ySizing: 'fill', isDraggable: true },
                   pluginId: 'timeseries',
                   title: 'Fill height',
                 }),
                 new VizPanel({
-                  isDraggable: true,
-                  size: { ySizing: 'fill' },
+                  placement: { ySizing: 'fill', isDraggable: true },
                   pluginId: 'timeseries',
                   title: 'Fill height',
                 }),
@@ -102,7 +94,7 @@ export function getMultipleGridLayoutTest(): Scene {
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  });
+  };
 
-  return scene;
+  return standalone ? new Scene(state) : new EmbeddedScene(state);
 }

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
+import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -11,6 +12,7 @@ import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { CompletionDataProvider } from './monaco-completion-provider/CompletionDataProvider';
+import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -77,12 +79,13 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initialValue }: Props) => {
+const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasource }: Props) => {
+  const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const langProviderRef = useLatest(languageProvider);
+  const langProviderRef = useLatest(datasource.languageProvider);
   const historyRef = useLatest(history);
   const onRunQueryRef = useLatest(onRunQuery);
   const onBlurRef = useLatest(onBlur);
@@ -115,11 +118,36 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
           ensureLogQL(monaco);
         }}
         onMount={(editor, monaco) => {
+          // Monaco has a bug where it runs actions on all instances (https://github.com/microsoft/monaco-editor/issues/2947), so we ensure actions are executed on instance-level with this ContextKey.
+          const isEditorFocused = editor.createContextKey<boolean>('isEditorFocused' + id, false);
           // we setup on-blur
           editor.onDidBlurEditorWidget(() => {
+            isEditorFocused.set(false);
             onBlurRef.current(editor.getValue());
           });
-          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef.current);
+          editor.onDidChangeModelContent((e) => {
+            const model = editor.getModel();
+            if (!model) {
+              return;
+            }
+            const query = model.getValue();
+            const errors =
+              validateQuery(
+                query,
+                datasource.interpolateString(query, placeHolderScopedVars),
+                model.getLinesContent()
+              ) || [];
+
+            const markers = errors.map(({ error, ...boundary }) => ({
+              message: `${
+                error ? `Error parsing "${error}"` : 'Parse error'
+              }. The query appears to be incorrect and could fail to be executed.`,
+              severity: monaco.MarkerSeverity.Error,
+              ...boundary,
+            }));
+            monaco.editor.setModelMarkers(model, 'owner', markers);
+          });
+          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef);
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,
@@ -162,14 +190,18 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
 
           editor.onDidContentSizeChange(updateElementHeight);
           updateElementHeight();
-
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?
-          editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
-            onRunQueryRef.current(editor.getValue());
-          });
+          editor.addCommand(
+            monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+            () => {
+              onRunQueryRef.current(editor.getValue());
+            },
+            'isEditorFocused' + id
+          );
 
           editor.onDidFocusEditorText(() => {
+            isEditorFocused.set(true);
             if (editor.getValue().trim() === '') {
               editor.trigger('', 'editor.action.triggerSuggest', {});
             }

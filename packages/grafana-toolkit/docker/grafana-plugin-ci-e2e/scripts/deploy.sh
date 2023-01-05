@@ -22,8 +22,8 @@ source "/etc/profile"
 npm i -g yarn
 
 # Install Go
-filename="go1.19.3.linux-amd64.tar.gz"
-get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "74b9640724fd4e6bb0ed2a1bc44ae813a03f1e72a4c76253e2d5c015494430ba"
+filename="go1.19.4.linux-amd64.tar.gz"
+get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "c9c08f783325c4cf840a94333159cc937f05f75d36a8b307951d5bd959cf2ab8"
 untar_file "/tmp/$filename"
 
 # Install golangci-lint

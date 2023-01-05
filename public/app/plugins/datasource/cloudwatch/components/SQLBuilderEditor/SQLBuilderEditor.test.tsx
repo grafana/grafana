@@ -32,7 +32,6 @@ describe('Cloudwatch SQLBuilderEditor', () => {
     query: makeSQLQuery(),
     datasource,
     onChange: () => {},
-    onRunQuery: () => {},
   };
 
   it('Displays the namespace', async () => {

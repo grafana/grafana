@@ -24,6 +24,7 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { InlineToast } from './InlineToast/InlineToast';
 
 export { LoadingPlaceholder, type LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
+export { LoadingBar, type LoadingBarProps } from './LoadingBar/LoadingBar';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { ColorPickerInput } from './ColorPicker/ColorPickerInput';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';

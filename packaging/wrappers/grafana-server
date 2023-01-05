@@ -5,17 +5,7 @@
 # the system-wide Grafana configuration that was bundled with the package as we
 # use the binary.
 
-DEFAULT=/etc/default/grafana
-
 GRAFANA_HOME="${GRAFANA_HOME:-/usr/share/grafana}"
-
-CONF_DIR=/etc/grafana
-DATA_DIR=/var/lib/grafana
-PLUGINS_DIR=/var/lib/grafana/plugins
-LOG_DIR=/var/log/grafana
-
-CONF_FILE=$CONF_DIR/grafana.ini
-PROVISIONING_CFG_DIR=$CONF_DIR/provisioning
 
 EXECUTABLE="$GRAFANA_HOME/bin/grafana"
 
@@ -24,18 +14,6 @@ if [ ! -x $EXECUTABLE ]; then
  exit 5
 fi
 
-# overwrite settings from default file
-if [ -f "$DEFAULT" ]; then
-  . "$DEFAULT"
-fi
-
-OPTS="--homepath=${GRAFANA_HOME} \
-      --config=${CONF_FILE} \
-      --configOverrides='cfg:default.paths.provisioning=$PROVISIONING_CFG_DIR \
-                        cfg:default.paths.data=${DATA_DIR} \
-                        cfg:default.paths.logs=${LOG_DIR} \
-                        cfg:default.paths.plugins=${PLUGINS_DIR}'"
-
 CMD=server
 
-eval $EXECUTABLE "$CMD" "$OPTS" "$@"
+eval $EXECUTABLE "$CMD" "$@"

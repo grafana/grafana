@@ -30,7 +30,7 @@ func main() {
 	// Core kinds composite code generator. Produces all generated code in
 	// grafana/grafana that derives from raw and structured core kinds.
 	coreKindsGen := codejen.JennyListWithNamer(func(decl *codegen.DeclForGen) string {
-		return decl.Meta.Common().MachineName
+		return decl.Properties.Common().MachineName
 	})
 
 	// All the jennies that comprise the core kinds generator pipeline
@@ -63,12 +63,12 @@ func main() {
 			continue
 		}
 		rel := filepath.Join(kindsys.CoreStructuredDeclParentPath, ent.Name())
-		decl, err := kindsys.LoadCoreKind[kindsys.CoreStructuredMeta](rel, rt.Context(), nil)
+		decl, err := kindsys.LoadCoreKind[kindsys.CoreStructuredProperties](rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
 		}
-		if decl.Meta.MachineName != ent.Name() {
-			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))
+		if decl.Properties.MachineName != ent.Name() {
+			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Properties.Name, ent.Name()))
 		}
 
 		all = append(all, elsedie(codegen.ForGen(rt, decl.Some()))(rel))
@@ -82,19 +82,19 @@ func main() {
 			continue
 		}
 		rel := filepath.Join(kindsys.RawDeclParentPath, ent.Name())
-		decl, err := kindsys.LoadCoreKind[kindsys.RawMeta](rel, rt.Context(), nil)
+		decl, err := kindsys.LoadCoreKind[kindsys.RawProperties](rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
 		}
-		if decl.Meta.MachineName != ent.Name() {
-			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))
+		if decl.Properties.MachineName != ent.Name() {
+			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Properties.Name, ent.Name()))
 		}
 		dfg, _ := codegen.ForGen(nil, decl.Some())
 		all = append(all, dfg)
 	}
 
 	sort.Slice(all, func(i, j int) bool {
-		return nameFor(all[i].Meta) < nameFor(all[j].Meta)
+		return nameFor(all[i].Properties) < nameFor(all[j].Properties)
 	})
 
 	jfs, err := coreKindsGen.GenerateFS(all...)
@@ -111,18 +111,18 @@ func main() {
 	}
 }
 
-func nameFor(m kindsys.SomeKindMeta) string {
+func nameFor(m kindsys.SomeKindProperties) string {
 	switch x := m.(type) {
-	case kindsys.RawMeta:
+	case kindsys.RawProperties:
 		return x.Name
-	case kindsys.CoreStructuredMeta:
+	case kindsys.CoreStructuredProperties:
 		return x.Name
-	case kindsys.CustomStructuredMeta:
+	case kindsys.CustomStructuredProperties:
 		return x.Name
-	case kindsys.ComposableMeta:
+	case kindsys.ComposableProperties:
 		return x.Name
 	default:
-		// unreachable so long as all the possibilities in KindMetas have switch branches
+		// unreachable so long as all the possibilities in KindProperties have switch branches
 		panic("unreachable")
 	}
 }

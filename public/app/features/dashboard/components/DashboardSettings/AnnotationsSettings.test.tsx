@@ -13,6 +13,7 @@ import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified
 
 import { configureStore } from '../../../../store/configureStore';
 import { DashboardModel } from '../../state/DashboardModel';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { AnnotationsSettings } from './AnnotationsSettings';
 
@@ -83,7 +84,7 @@ describe('AnnotationsSettings', () => {
   });
 
   beforeEach(() => {
-    dashboard = new DashboardModel({
+    dashboard = createDashboardModelFixture({
       id: 74,
       version: 7,
       annotations: {
@@ -96,6 +97,7 @@ describe('AnnotationsSettings', () => {
             iconColor: 'rgba(0, 211, 255, 1)',
             name: 'Annotations & Alerts',
             type: 'dashboard',
+            showIn: 1,
           },
         ],
       },

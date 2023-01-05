@@ -8,7 +8,7 @@ import {
   FieldType,
   LoadingState,
   PanelData,
-  TimeRange,
+  getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { config } from '@grafana/runtime/src/config';
@@ -86,17 +86,19 @@ const getTestContext = () => {
 const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelData => {
   const defaults: ExplorePanelData = {
     series: [],
-    timeRange: {} as unknown as TimeRange,
+    timeRange: getDefaultTimeRange(),
     state: LoadingState.Done,
     graphFrames: [],
-    graphResult: undefined as unknown as null,
+    graphResult: null,
     logsFrames: [],
-    logsResult: undefined as unknown as null,
+    logsResult: null,
     tableFrames: [],
-    tableResult: undefined as unknown as null,
+    tableResult: null,
     traceFrames: [],
     nodeGraphFrames: [],
     flameGraphFrames: [],
+    rawPrometheusFrames: [],
+    rawPrometheusResult: null,
   };
 
   return { ...defaults, ...args };
@@ -106,10 +108,11 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
   it('should correctly classify the dataFrames', () => {
     const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
     const series = [table, logs, timeSeries, emptyTable, flameGraph];
+    const timeRange = getDefaultTimeRange();
     const panelData: PanelData = {
       series,
       state: LoadingState.Done,
-      timeRange: {} as unknown as TimeRange,
+      timeRange,
     };
     // Needed so flamegraph does not fallback to table, will be removed when feature flag no longer necessary
     config.featureToggles.flameGraph = true;
@@ -117,7 +120,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
     expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series,
       state: LoadingState.Done,
-      timeRange: {},
+      timeRange,
       graphFrames: [timeSeries],
       tableFrames: [table, emptyTable],
       logsFrames: [logs],
@@ -127,21 +130,24 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
+      rawPrometheusResult: null,
     });
   });
 
   it('should handle empty array', () => {
     const series: DataFrame[] = [];
+    const timeRange = getDefaultTimeRange();
     const panelData: PanelData = {
       series,
       state: LoadingState.Done,
-      timeRange: {} as unknown as TimeRange,
+      timeRange,
     };
 
     expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series: [],
       state: LoadingState.Done,
-      timeRange: {},
+      timeRange: timeRange,
       graphFrames: [],
       tableFrames: [],
       logsFrames: [],
@@ -151,24 +157,27 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
+      rawPrometheusResult: null,
     });
   });
 
   it('should return frames even if there is an error', () => {
     const { timeSeries, logs, table } = getTestContext();
     const series: DataFrame[] = [timeSeries, logs, table];
+    const timeRange = getDefaultTimeRange();
     const panelData: PanelData = {
       series,
       error: {},
       state: LoadingState.Error,
-      timeRange: {} as unknown as TimeRange,
+      timeRange,
     };
 
     expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series: [timeSeries, logs, table],
       error: {},
       state: LoadingState.Error,
-      timeRange: {},
+      timeRange,
       graphFrames: [timeSeries],
       tableFrames: [table],
       logsFrames: [logs],
@@ -178,6 +187,8 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
+      rawPrometheusResult: null,
     });
   });
 });
@@ -324,7 +335,7 @@ describe('decorateWithLogsResult', () => {
           labels: {},
           logLevel: 'unknown',
           raw: 'this is a message',
-          searchWords: [] as string[],
+          searchWords: [],
           timeEpochMs: 100,
           timeEpochNs: '100000002',
           timeFromNow: 'fromNow() jest mocked',
@@ -343,7 +354,7 @@ describe('decorateWithLogsResult', () => {
           labels: {},
           logLevel: 'unknown',
           raw: 'third',
-          searchWords: [] as string[],
+          searchWords: [],
           timeEpochMs: 100,
           timeEpochNs: '100000001',
           timeFromNow: 'fromNow() jest mocked',
@@ -362,7 +373,7 @@ describe('decorateWithLogsResult', () => {
           labels: {},
           logLevel: 'unknown',
           raw: 'second message',
-          searchWords: [] as string[],
+          searchWords: [],
           timeEpochMs: 100,
           timeEpochNs: '100000000',
           timeFromNow: 'fromNow() jest mocked',

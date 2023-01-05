@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
+import { selectors } from '../e2e/selectors';
+
 import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
 
 const setup = (propsFunc?: (props: Props) => Props) => {
@@ -17,7 +19,6 @@ const setup = (propsFunc?: (props: Props) => Props) => {
     azureCloudOptions: [
       { value: 'azuremonitor', label: 'Azure' },
       { value: 'govazuremonitor', label: 'Azure US Government' },
-      { value: 'germanyazuremonitor', label: 'Azure Germany' },
       { value: 'chinaazuremonitor', label: 'Azure China' },
     ],
     onCredentialsChange: jest.fn(),
@@ -64,7 +65,9 @@ describe('Render', () => {
         clientSecret: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
       },
     }));
-    await waitFor(() => expect(screen.getByText('Load Subscriptions')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId(selectors.components.configEditor.loadSubscriptions.button)).not.toBeDisabled()
+    );
   });
 
   describe('when disabled', () => {
@@ -83,7 +86,9 @@ describe('Render', () => {
         ...props,
         disabled: true,
       }));
-      await waitFor(() => expect(screen.queryByText('Load Subscriptions')).not.toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.getByTestId(selectors.components.configEditor.loadSubscriptions.button)).toBeDisabled()
+      );
     });
 
     it('should render children components', () => {

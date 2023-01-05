@@ -26,6 +26,7 @@ func TestUserService(t *testing.T) {
 		cacheService: localcache.ProvideService(),
 		teamService:  &teamtest.FakeService{},
 	}
+	userService.cfg = setting.NewCfg()
 
 	t.Run("create user", func(t *testing.T) {
 		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
@@ -44,7 +45,6 @@ func TestUserService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "login", u.Login)
 		require.Equal(t, "name", u.Name)
-
 		require.Equal(t, "email", u.Email)
 	})
 
@@ -226,6 +226,10 @@ func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
 }
 
 func (f *FakeUserStore) CaseInsensitiveLoginConflict(context.Context, string, string) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserStore) LoginConflict(context.Context, string, string, bool) error {
 	return f.ExpectedError
 }
 

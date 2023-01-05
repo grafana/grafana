@@ -35,7 +35,7 @@ func (j *latestj) Generate(decl *DeclForGen) (*codejen.File, error) {
 	if decl.IsRaw() {
 		return nil, nil
 	}
-	comm := decl.Meta.Common()
+	comm := decl.Properties.Common()
 	sfg := SchemaForGen{
 		Name:    comm.Name,
 		Schema:  decl.Lineage().Latest(),
@@ -44,7 +44,7 @@ func (j *latestj) Generate(decl *DeclForGen) (*codejen.File, error) {
 
 	f, err := j.inner.Generate(sfg)
 	if err != nil {
-		return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), decl.Meta.Common().Name, err)
+		return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), decl.Properties.Common().Name, err)
 	}
 	if f == nil || !f.Exists() {
 		return nil, nil

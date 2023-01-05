@@ -24,7 +24,7 @@ import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { HelpModal } from '../components/help/HelpModal';
 import { contextSrv } from '../core';
 
-import { toggleTheme } from './toggleTheme';
+import { toggleTheme } from './theme';
 import { withFocusedPanel } from './withFocusedPanelId';
 
 export class KeybindingSrv {

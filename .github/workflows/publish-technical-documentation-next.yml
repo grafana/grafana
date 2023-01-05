@@ -6,10 +6,10 @@ on:
       - "main"
     paths:
       - "docs/sources/**"
-      - "packages/grafana-*/**"
   workflow_dispatch:
 jobs:
   sync:
+    if: "github.repository == 'grafana/grafana'"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout Grafana repo"

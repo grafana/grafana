@@ -1,9 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/gauge/
-  - /docs/grafana/latest/panels/visualizations/gauge-panel/
-  - /docs/grafana/latest/visualizations/gauge-panel/
-  - /docs/grafana/latest/panels-visualizations/visualizations/gauge/
+  - ../../features/panels/gauge/
+  - ../../panels/visualizations/gauge-panel/
+  - ../../visualizations/gauge-panel/
 description: Gauge panel docs
 keywords:
   - grafana
