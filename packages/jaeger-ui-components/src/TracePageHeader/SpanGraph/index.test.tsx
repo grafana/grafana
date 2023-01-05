@@ -19,8 +19,6 @@ import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
-import TickLabels from './TickLabels';
-
 import SpanGraph, { SpanGraphProps, TIMELINE_TICK_INTERVAL } from './index';
 
 describe('<SpanGraph>', () => {
