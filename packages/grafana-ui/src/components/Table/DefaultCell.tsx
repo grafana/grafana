@@ -88,9 +88,10 @@ function getCellStyle(
   }
   // Set colors using updated sub-options format
   else {
-    const cellDisplayMode = field.config.custom.cellOptions?.mode;
+    const cellDisplayMode = field.config.custom?.cellOptions?.mode;
+    const cellDisplayType = field.config.custom?.cellOptions?.type;
 
-    if (field.config.custom.cellOptions?.type === TableCellDisplayMode.ColorText) {
+    if (cellDisplayType === TableCellDisplayMode.ColorText) {
       textColor = displayValue.color;
     } else if (cellDisplayMode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
