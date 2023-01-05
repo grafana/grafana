@@ -115,18 +115,18 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd org.AddOrgUserC
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID: c.OrgID,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
 		User:  c.SignedInUser,
-	}, c.SignedInUser)
+	})
 
 	if err != nil {
 		return response.Error(500, "Failed to get users for current organization", err)
 	}
 
-	return response.JSON(http.StatusOK, result)
+	return response.JSON(http.StatusOK, result.OrgUsers)
 }
 
 // swagger:route GET /org/users/lookup org getOrgUsersForCurrentOrgLookup
@@ -144,13 +144,13 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 // 500: internalServerError
 
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
-	orgUsers, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+	orgUsersResult, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID:                    c.OrgID,
 		Query:                    c.Query("query"),
 		Limit:                    c.QueryInt("limit"),
 		User:                     c.SignedInUser,
 		DontEnforceAccessControl: !hs.License.FeatureEnabled("accesscontrol.enforcement"),
-	}, c.SignedInUser)
+	})
 
 	if err != nil {
 		return response.Error(500, "Failed to get users for current organization", err)
@@ -158,7 +158,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 
 	result := make([]*dtos.UserLookupDTO, 0)
 
-	for _, u := range orgUsers {
+	for _, u := range orgUsersResult.OrgUsers {
 		result = append(result, &dtos.UserLookupDTO{
 			UserID:    u.UserID,
 			Login:     u.Login,
@@ -190,58 +190,18 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
 
-	result, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID: orgId,
 		Query: "",
 		Limit: 0,
 		User:  c.SignedInUser,
-	}, c.SignedInUser)
+	})
 
 	if err != nil {
 		return response.Error(500, "Failed to get users for organization", err)
 	}
 
-	return response.JSON(http.StatusOK, result)
-}
-
-func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgUsersQuery, signedInUser *user.SignedInUser) ([]*org.OrgUserDTO, error) {
-	result, err := hs.orgService.GetOrgUsers(c.Req.Context(), query)
-	if err != nil {
-		return nil, err
-	}
-
-	filteredUsers := make([]*org.OrgUserDTO, 0, len(result))
-	userIDs := map[string]bool{}
-	authLabelsUserIDs := make([]int64, 0, len(result))
-	for _, user := range result {
-		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
-			continue
-		}
-		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
-
-		userIDs[fmt.Sprint(user.UserID)] = true
-		authLabelsUserIDs = append(authLabelsUserIDs, user.UserID)
-		filteredUsers = append(filteredUsers, user)
-	}
-
-	modules, err := hs.authInfoService.GetUserLabels(c.Req.Context(), models.GetUserLabelsQuery{
-		UserIDs: authLabelsUserIDs,
-	})
-
-	if err != nil {
-		hs.log.Warn("failed to retrieve users IDP label", err)
-	}
-
-	// Get accesscontrol metadata and IPD labels for users in the target org
-	accessControlMetadata := hs.getMultiAccessControlMetadata(c, query.OrgID, "users:id:", userIDs)
-	for i := range filteredUsers {
-		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
-		if module, ok := modules[filteredUsers[i].UserID]; ok {
-			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
-		}
-	}
-
-	return filteredUsers, nil
+	return response.JSON(http.StatusOK, result.OrgUsers)
 }
 
 // swagger:route GET /orgs/{org_id}/users/search orgs searchOrgUsers
@@ -342,6 +302,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *models.ReqContext, query *org.Sear
 	modules, err := hs.authInfoService.GetUserLabels(c.Req.Context(), models.GetUserLabelsQuery{
 		UserIDs: authLabelsUserIDs,
 	})
+
 	if err != nil {
 		hs.log.Warn("failed to retrieve users IDP label", err)
 	}
