@@ -19,15 +19,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
-// AnnotationStateHistorian is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
-type AnnotationStateHistorian struct {
+// AnnotationBackend is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
+type AnnotationBackend struct {
 	annotations annotations.Repository
 	dashboards  *dashboardResolver
 	log         log.Logger
 }
 
-func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashboards.DashboardService) *AnnotationStateHistorian {
-	return &AnnotationStateHistorian{
+func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboards.DashboardService) *AnnotationBackend {
+	return &AnnotationBackend{
 		annotations: annotations,
 		dashboards:  newDashboardResolver(dashboards, defaultDashboardCacheExpiry),
 		log:         log.New("ngalert.state.historian"),
@@ -35,7 +35,7 @@ func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashb
 }
 
 // RecordStates writes a number of state transitions for a given rule to state history.
-func (h *AnnotationStateHistorian) RecordStatesAsync(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) {
+func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) {
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
 	annotations := h.buildAnnotations(rule, states, logger)
@@ -43,7 +43,7 @@ func (h *AnnotationStateHistorian) RecordStatesAsync(ctx context.Context, rule *
 	go h.recordAnnotationsSync(ctx, panel, annotations, logger)
 }
 
-func (h *AnnotationStateHistorian) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
+func (h *AnnotationBackend) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
 		if !shouldAnnotate(state) {
@@ -94,7 +94,7 @@ func parsePanelKey(rule *ngmodels.AlertRule, logger log.Logger) *panelKey {
 	return nil
 }
 
-func (h *AnnotationStateHistorian) recordAnnotationsSync(ctx context.Context, panel *panelKey, annotations []annotations.Item, logger log.Logger) {
+func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *panelKey, annotations []annotations.Item, logger log.Logger) {
 	if panel != nil {
 		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
 		if err != nil {

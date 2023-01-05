@@ -200,11 +200,9 @@ func (ng *AlertNG) init() error {
 		AlertSender:          alertsRouter,
 	}
 
-	var history state.Historian
-	if ng.Cfg.UnifiedAlerting.StateHistory.Enabled {
-		history = historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)
-	} else {
-		history = historian.NewNopHistorian()
+	history, err := configureHistorianBackend(ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService)
+	if err != nil {
+		return err
 	}
 	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, ng.imageService, clk, history)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
@@ -364,4 +362,22 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits.Set(globalQuotaTag, alertGlobalQuota)
 	limits.Set(orgQuotaTag, alertOrgQuota)
 	return limits, nil
+}
+
+func configureHistorianBackend(cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService) (state.Historian, error) {
+	if !cfg.Enabled {
+		return historian.NewNopHistorian(), nil
+	}
+
+	if cfg.Backend == "annotations" {
+		return historian.NewAnnotationBackend(ar, ds), nil
+	}
+	if cfg.Backend == "loki" {
+		return historian.NewRemoteLokiBackend(), nil
+	}
+	if cfg.Backend == "sql" {
+		return historian.NewSqlBackend(), nil
+	}
+
+	return nil, fmt.Errorf("unrecognized state history backend: %s", cfg.Backend)
 }
