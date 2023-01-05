@@ -247,7 +247,7 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 func Test_setAdditionalFrameMeta(t *testing.T) {
 	t.Run("it should not error with an empty response", func(t *testing.T) {
 		frame := data.NewFrame("test")
-		err := setAdditionalFrameMeta(frame, "", "", "")
+		err := setAdditionalFrameMeta(frame, "", "")
 		require.NoError(t, err)
 	})
 }

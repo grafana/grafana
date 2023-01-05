@@ -104,6 +104,8 @@ export const availableIconsIndex = {
   'gf-landscape': true,
   'gf-layout-simple': true,
   'gf-logs': true,
+  'gf-movepane-left': true,
+  'gf-movepane-right': true,
   'gf-portrait': true,
   'gf-service-account': true,
   'gf-show-context': true,

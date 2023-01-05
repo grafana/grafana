@@ -5,7 +5,7 @@ import React from 'react';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
-import { createMockMetricQuery } from '../__mocks__/cloudMonitoringQuery';
+import { createMockTimeSeriesList } from '../__mocks__/cloudMonitoringQuery';
 import { MetricKind, ValueTypes } from '../types';
 
 import { Preprocessor } from './Preprocessor';
@@ -17,7 +17,7 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('Preprocessor', () => {
   it('only provides "None" as an option if no metric descriptor is provided', () => {
-    const query = createMockMetricQuery();
+    const query = createMockTimeSeriesList();
     const onChange = jest.fn();
 
     render(<Preprocessor onChange={onChange} query={query} />);
@@ -28,7 +28,7 @@ describe('Preprocessor', () => {
   });
 
   it('only provides "None" as an option if metric kind is "Gauge"', () => {
-    const query = createMockMetricQuery();
+    const query = createMockTimeSeriesList();
     const onChange = jest.fn();
     const metricDescriptor = createMockMetricDescriptor({ metricKind: MetricKind.GAUGE });
 
@@ -40,7 +40,7 @@ describe('Preprocessor', () => {
   });
 
   it('only provides "None" as an option if value type is "Distribution"', () => {
-    const query = createMockMetricQuery();
+    const query = createMockTimeSeriesList();
     const onChange = jest.fn();
     const metricDescriptor = createMockMetricDescriptor({ valueType: ValueTypes.DISTRIBUTION });
 
@@ -52,7 +52,7 @@ describe('Preprocessor', () => {
   });
 
   it('provides "None" and "Rate" as options if metric kind is not "Delta" or "Cumulative" and value type is not "Distribution"', () => {
-    const query = createMockMetricQuery();
+    const query = createMockTimeSeriesList();
     const onChange = jest.fn();
     const metricDescriptor = createMockMetricDescriptor({ metricKind: MetricKind.DELTA });
 
@@ -64,7 +64,7 @@ describe('Preprocessor', () => {
   });
 
   it('provides all options if metric kind is "Cumulative" and value type is not "Distribution"', () => {
-    const query = createMockMetricQuery();
+    const query = createMockTimeSeriesList();
     const onChange = jest.fn();
     const metricDescriptor = createMockMetricDescriptor({ metricKind: MetricKind.CUMULATIVE });
 
@@ -76,7 +76,7 @@ describe('Preprocessor', () => {
   });
 
   it('provides all options if metric kind is "Cumulative" and value type is not "Distribution"', async () => {
-    const query = createMockMetricQuery();
+    const query = createMockTimeSeriesList();
     const onChange = jest.fn();
     const metricDescriptor = createMockMetricDescriptor({ metricKind: MetricKind.CUMULATIVE });
 

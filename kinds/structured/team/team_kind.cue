@@ -21,13 +21,13 @@ lineage: seqs: [
 				// TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
 				permission: #Permission @grafanamaturity(ToMetadata="kind", MaybeRemove)
 				// AccessControl metadata associated with a given resource.
-				accessControl: [string]: bool @grafanamaturity(ToMetadata="sys")
+				accessControl?: [string]: bool @grafanamaturity(ToMetadata="sys")
 				// Created indicates when the team was created.
 				created: int64 @grafanamaturity(ToMetadata="sys")
 				// Updated indicates when the team was updated.
 				updated: int64 @grafanamaturity(ToMetadata="sys")
 
-				#Permission: 1 | 2 | 4 @cuetsy(kind="enum",memberNames="viewer|editor|admin")
+				#Permission: 0 | 1 | 2 | 4 @cuetsy(kind="enum",memberNames="Member|Viewer|Editor|Admin")
 			},
 		]
 	},

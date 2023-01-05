@@ -29,21 +29,20 @@ func (api *Api) ViewPublicDashboard(c *models.ReqContext) response.Response {
 	}
 
 	meta := dtos.DashboardMeta{
-		Slug:                                dash.Slug,
-		Type:                                models.DashTypeDB,
-		CanStar:                             false,
-		CanSave:                             false,
-		CanEdit:                             false,
-		CanAdmin:                            false,
-		CanDelete:                           false,
-		Created:                             dash.Created,
-		Updated:                             dash.Updated,
-		Version:                             dash.Version,
-		IsFolder:                            false,
-		FolderId:                            dash.FolderId,
-		PublicDashboardAccessToken:          pubdash.AccessToken,
-		PublicDashboardUID:                  pubdash.Uid,
-		PublicDashboardTimeSelectionEnabled: pubdash.TimeSelectionEnabled,
+		Slug:                       dash.Slug,
+		Type:                       models.DashTypeDB,
+		CanStar:                    false,
+		CanSave:                    false,
+		CanEdit:                    false,
+		CanAdmin:                   false,
+		CanDelete:                  false,
+		Created:                    dash.Created,
+		Updated:                    dash.Updated,
+		Version:                    dash.Version,
+		IsFolder:                   false,
+		FolderId:                   dash.FolderId,
+		PublicDashboardAccessToken: pubdash.AccessToken,
+		PublicDashboardUID:         pubdash.Uid,
 	}
 
 	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}
