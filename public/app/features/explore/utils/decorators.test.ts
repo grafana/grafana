@@ -97,6 +97,8 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
     traceFrames: [],
     nodeGraphFrames: [],
     flameGraphFrames: [],
+    rawPrometheusFrames: [],
+    rawPrometheusResult: null,
   };
 
   return { ...defaults, ...args };
@@ -128,6 +130,8 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
+      rawPrometheusResult: null,
     });
   });
 
@@ -153,6 +157,8 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
+      rawPrometheusResult: null,
     });
   });
 
@@ -181,6 +187,8 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
+      rawPrometheusResult: null,
     });
   });
 });
@@ -311,7 +319,7 @@ describe('decorateWithTableResult', () => {
 describe('decorateWithLogsResult', () => {
   it('should correctly transform logs dataFrames', () => {
     const { logs } = getTestContext();
-    const request = { timezone: 'utc', intervalMs: 60000 } as unknown as DataQueryRequest;
+    const request = ({ timezone: 'utc', intervalMs: 60000 } as unknown) as DataQueryRequest;
     const panelData = createExplorePanelData({ logsFrames: [logs], request });
     expect(decorateWithLogsResult()(panelData).logsResult).toEqual({
       hasUniqueLabels: false,

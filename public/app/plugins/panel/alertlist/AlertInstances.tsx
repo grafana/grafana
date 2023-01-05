@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
 import pluralize from 'pluralize';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
@@ -19,7 +19,7 @@ interface Props {
   options: PanelProps<UnifiedAlertListOptions>['options'];
 }
 
-export const AlertInstances: FC<Props> = ({ alerts, options }) => {
+export const AlertInstances = ({ alerts, options }: Props) => {
   // when custom grouping is enabled, we will always uncollapse the list of alert instances
   const defaultShowInstances = options.groupMode === GroupMode.Custom ? true : options.showInstances;
   const [displayInstances, setDisplayInstances] = useState<boolean>(defaultShowInstances);
@@ -31,10 +31,10 @@ export const AlertInstances: FC<Props> = ({ alerts, options }) => {
 
   // TODO Filtering instances here has some implications
   // If a rule has 0 instances after filtering there is no way not to show that rule
-  const filteredAlerts = useMemo(
-    (): Alert[] => filterAlerts(options, sortAlerts(options.sortOrder, alerts)) ?? [],
-    [alerts, options]
-  );
+  const filteredAlerts = useMemo((): Alert[] => filterAlerts(options, sortAlerts(options.sortOrder, alerts)) ?? [], [
+    alerts,
+    options,
+  ]);
 
   const hiddenInstances = alerts.length - filteredAlerts.length;
 

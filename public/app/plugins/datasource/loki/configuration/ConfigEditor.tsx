@@ -1,7 +1,12 @@
 import React from 'react';
 
-import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
+import {
+  DataSourcePluginOptionsEditorProps,
+  DataSourceSettings,
+  onUpdateDatasourceJsonDataOptionChecked,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { AlertingSettings, DataSourceHttpSettings, InlineField, InlineSwitch } from '@grafana/ui';
 
 import { LokiOptions } from '../types';
 
@@ -10,23 +15,25 @@ import { MaxLinesField } from './MaxLinesField';
 
 export type Props = DataSourcePluginOptionsEditorProps<LokiOptions>;
 
-const makeJsonUpdater =
-  <T extends any>(field: keyof LokiOptions) =>
-  (options: DataSourceSettings<LokiOptions>, value: T): DataSourceSettings<LokiOptions> => {
-    return {
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        [field]: value,
-      },
-    };
+const makeJsonUpdater = <T extends any>(field: keyof LokiOptions) => (
+  options: DataSourceSettings<LokiOptions>,
+  value: T
+): DataSourceSettings<LokiOptions> => {
+  return {
+    ...options,
+    jsonData: {
+      ...options.jsonData,
+      [field]: value,
+    },
   };
+};
 
 const setMaxLines = makeJsonUpdater('maxLines');
 const setDerivedFields = makeJsonUpdater('derivedFields');
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
+  const socksProxy = config.featureToggles.secureSocksDatasourceProxy;
 
   return (
     <>
@@ -36,6 +43,25 @@ export const ConfigEditor = (props: Props) => {
         showAccessOptions={false}
         onChange={onOptionsChange}
       />
+
+      {socksProxy && (
+        <>
+          <h3 className="page-heading">Secure Socks Proxy</h3>
+          <div className="gf-form-group">
+            <div className="gf-form-inline"></div>
+            <InlineField
+              labelWidth={28}
+              label="Enabled"
+              tooltip="Connect to this datasource via the secure socks proxy."
+            >
+              <InlineSwitch
+                value={options.jsonData.enableSecureSocksProxy ?? false}
+                onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'enableSecureSocksProxy')}
+              />
+            </InlineField>
+          </div>
+        </>
+      )}
 
       <AlertingSettings<LokiOptions> options={options} onOptionsChange={onOptionsChange} />
 

@@ -10,8 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"reflect"
-	"sort"
 	"strings"
 
 	"github.com/grafana/codejen"
@@ -55,18 +53,20 @@ var plannedCoreKinds = []string{
 	"QueryHistory",
 }
 
-type Kind struct {
-	Name     string `json:"name"`
-	Type     string `json:"type"`
-	Maturity string `json:"maturity"`
-}
-
 type KindStateReport struct {
-	Kinds      map[string]Kind      `json:"kinds"`
-	Dimensions map[string]Dimension `json:"dimensions"`
+	Kinds      map[string]kindsys.SomeKindProperties `json:"kinds"`
+	Dimensions map[string]Dimension                  `json:"dimensions"`
 }
 
-type Dimension map[string]DimensionValue
+func (r *KindStateReport) add(k kindsys.SomeKindProperties, category string) {
+	kName := k.Common().MachineName
+
+	r.Kinds[kName] = k
+	r.Dimensions["maturity"][k.Common().Maturity.String()].add(kName)
+	r.Dimensions["category"][category].add(kName)
+}
+
+type Dimension map[string]*DimensionValue
 
 type DimensionValue struct {
 	Name  string   `json:"name"`
@@ -74,105 +74,68 @@ type DimensionValue struct {
 	Count int      `json:"count"`
 }
 
+func (dv *DimensionValue) add(s string) {
+	dv.Count++
+	dv.Items = append(dv.Items, s)
+}
+
 // emptyKindStateReport is used to ensure certain
 // dimension values are present (even if empty) in
 // the final report.
-func emptyKindStateReport() KindStateReport {
-	return KindStateReport{
-		Kinds: make(map[string]Kind),
+func emptyKindStateReport() *KindStateReport {
+	return &KindStateReport{
+		Kinds: make(map[string]kindsys.SomeKindProperties),
 		Dimensions: map[string]Dimension{
 			"maturity": {
+				"planned":      emptyDimensionValue("planned"),
 				"merged":       emptyDimensionValue("merged"),
 				"experimental": emptyDimensionValue("experimental"),
 				"stable":       emptyDimensionValue("stable"),
 				"mature":       emptyDimensionValue("mature"),
 			},
-			"type": {
+			"category": {
 				"core":       emptyDimensionValue("core"),
-				"raw":        emptyDimensionValue("raw"),
 				"composable": emptyDimensionValue("composable"),
 			},
 		},
 	}
 }
 
-func emptyDimensionValue(name string) DimensionValue {
-	return DimensionValue{
+func emptyDimensionValue(name string) *DimensionValue {
+	return &DimensionValue{
 		Name:  name,
 		Items: make([]string, 0),
 		Count: 0,
 	}
 }
 
-func buildKindStateReport() KindStateReport {
+func buildKindStateReport() *KindStateReport {
 	r := emptyKindStateReport()
-	kk := buildKindsList()
-
-	for _, k := range kk {
-		r.Kinds[k.Name] = k
-
-		// We consider every Kind field as a dimension
-		for _, field := range reflect.VisibleFields(reflect.TypeOf(k)) {
-			// Except for the Kind's name (id) -- its machine name.
-			if field.Name == "Name" {
-				continue
-			}
-
-			// If we haven't seen that dimension yet.
-			dimName := machinize(field.Name)
-			if _, ok := r.Dimensions[dimName]; !ok {
-				r.Dimensions[dimName] = make(Dimension)
-			}
-
-			// If we haven't seen that dimension value yet.
-			value := reflect.Indirect(reflect.ValueOf(k)).FieldByName(field.Name).String()
-			if _, ok := r.Dimensions[dimName][value]; !ok {
-				r.Dimensions[dimName][value] = emptyDimensionValue(value)
-			}
-
-			// Finally, we account the Kind for the dimension value
-			dimValue := r.Dimensions[dimName][value]
-			dimValue.Count++
-			dimValue.Items = append(dimValue.Items, k.Name)
-			r.Dimensions[dimName][value] = dimValue
-		}
-	}
-
-	return r
-}
-
-func buildKindsList() []Kind {
-	kk := make([]Kind, 0)
 	b := corekind.NewBase(nil)
 
 	seen := make(map[string]bool)
 	for _, k := range b.All() {
 		seen[k.Props().Common().Name] = true
-
-		var kType string
 		switch k.Props().(type) {
-		case kindsys.CoreStructuredProperties:
-			kType = "core"
-		case kindsys.RawProperties:
-			kType = "raw"
+		case kindsys.CoreProperties:
+			r.add(k.Props(), "core")
 		}
-
-		kk = append(kk, Kind{
-			Name:     k.MachineName(),
-			Type:     kType,
-			Maturity: k.Props().Common().Maturity.String(),
-		})
 	}
 
 	for _, kn := range plannedCoreKinds {
 		if seen[kn] {
 			continue
 		}
-		kk = append(kk, Kind{
-			Name:     machinize(kn),
-			Type:     "core",
-			Maturity: "planned",
-		})
+
+		r.add(kindsys.CoreProperties{
+			CommonProperties: kindsys.CommonProperties{
+				Name:              kn,
+				PluralName:        kn + "s",
+				MachineName:       machinize(kn),
+				PluralMachineName: machinize(kn) + "s",
+				Maturity:          "planned",
+			},
+		}, "core")
 	}
 
 	all := kindsys.AllSlots(nil)
@@ -182,24 +145,26 @@ func buildKindsList() []Kind {
 		for _, slot := range all {
 			if may, _ := slot.ForPluginType(string(rp.Meta().Type)); may {
 				n := fmt.Sprintf("%s-%s", strings.Title(rp.Meta().Id), slot.Name())
-				maturity := "planned"
-				if _, has := rp.SlotImplementations()[slot.Name()]; has {
-					maturity = "merged"
+				props := kindsys.ComposableProperties{
+					CommonProperties: kindsys.CommonProperties{
+						Name:              n,
+						PluralName:        n + "s",
+						MachineName:       machinize(n),
+						PluralMachineName: machinize(n) + "s",
+						LineageIsGroup:    slot.IsGroup(),
+						Maturity:          "planned",
+					},
 				}
-				kk = append(kk, Kind{
-					Name:     machinize(n),
-					Type:     "composable",
-					Maturity: maturity,
-				})
+				if ck, has := rp.SlotImplementations()[slot.Name()]; has {
+					props.CommonProperties.Maturity = "merged"
+					props.CurrentVersion = ck.Latest().Version()
+				}
+				r.add(props, "composable")
 			}
 		}
 	}
 
-	sort.Slice(kk, func(i, j int) bool {
-		return kk[i].Name < kk[j].Name
-	})
-
-	return kk
+	return r
 }
 
 func machinize(s string) string {

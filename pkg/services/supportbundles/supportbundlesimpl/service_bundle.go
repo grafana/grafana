@@ -5,13 +5,17 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 
-	"github.com/grafana/grafana/pkg/infra/supportbundles"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
 )
+
+var ErrCollectorPanicked = errors.New("collector panicked")
 
 type bundleResult struct {
 	path string
@@ -20,7 +24,15 @@ type bundleResult struct {
 
 func (s *Service) startBundleWork(ctx context.Context, collectors []string, uid string) {
 	result := make(chan bundleResult)
+
 	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				s.log.Error("support bundle collector panic", "err", err, "stack", string(debug.Stack()))
+				result <- bundleResult{err: ErrCollectorPanicked}
+			}
+		}()
+
 		sbFilePath, err := s.bundle(ctx, collectors, uid)
 		if err != nil {
 			result <- bundleResult{err: err}
