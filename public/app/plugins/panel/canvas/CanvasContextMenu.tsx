@@ -113,7 +113,7 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
           <MenuItem
             key={option.value}
             label={option.label ?? 'Canvas item'}
-            onClick={() => onAddItem(option, rootLayer)}
+            onClick={() => onAddItem(option, rootLayer, anchorPoint)}
           />
         );
       });
