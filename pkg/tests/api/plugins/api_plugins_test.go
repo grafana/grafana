@@ -139,8 +139,9 @@ func makePostRequest(t *testing.T, URL string) (int, map[string]interface{}) {
 	resp, err := http.Post(URL, "application/json", bytes.NewBufferString(""))
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		_ = resp.Body.Close()
-		fmt.Printf("Failed to close response body err: %s", err)
+		if err := resp.Body.Close(); err != nil {
+			fmt.Printf("Failed to close response body err: %s", err)
+		}
 	})
 	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
