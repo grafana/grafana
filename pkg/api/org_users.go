@@ -220,7 +220,7 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) SearchOrgUsers(c *models.ReqContext) response.Response {
-	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
@@ -236,7 +236,7 @@ func (hs *HTTPServer) SearchOrgUsers(c *models.ReqContext) response.Response {
 	}
 
 	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
-		OrgID: orgId,
+		OrgID: orgID,
 		Query: c.Query("query"),
 		Page:  page,
 		Limit: perPage,
