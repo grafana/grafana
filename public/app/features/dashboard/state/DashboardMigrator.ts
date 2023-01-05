@@ -812,24 +812,26 @@ export class DashboardMigrator {
     // format which uses an object for configuration
     if (oldVersion < 38) {
       panelUpgrades.push((panel: PanelModel) => {
-        const displayMode = panel.fieldConfig.defaults.custom?.displayMode;
+        if (panel.type === 'table' && panel.fieldConfig !== undefined) {
+          const displayMode = panel.fieldConfig.defaults?.custom?.displayMode;
 
-        // Update field configuration
-        if (panel.type === 'table' && displayMode !== undefined) {
-          // Migrate any options for the panel
-          panel.fieldConfig.defaults.custom.cellOptions = migrateTableCellConfig(displayMode);
+          // Update field configuration
+          if (displayMode !== undefined) {
+            // Migrate any options for the panel
+            panel.fieldConfig.defaults.custom.cellOptions = migrateTableCellConfig(displayMode);
 
-          // Delete the legacy field
-          delete panel.fieldConfig.defaults.custom.displayMode;
+            // Delete the legacy field
+            delete panel.fieldConfig.defaults.custom.displayMode;
 
-          // Update any overrides referencing the cell display mode
-          for (let i = 0; i < panel.fieldConfig.overrides.length; i++) {
-            for (let j = 0; j < panel.fieldConfig.overrides[i].properties.length; j++) {
-              let overrideDisplayMode = panel.fieldConfig.overrides[i].properties[j].value;
+            // Update any overrides referencing the cell display mode
+            for (let i = 0; i < panel.fieldConfig.overrides.length; i++) {
+              for (let j = 0; j < panel.fieldConfig.overrides[i].properties.length; j++) {
+                let overrideDisplayMode = panel.fieldConfig.overrides[i].properties[j].value;
 
-              if (panel.fieldConfig.overrides[i].properties[j].id === 'custom.displayMode') {
-                panel.fieldConfig.overrides[i].properties[j].id = 'custom.cellOptions';
-                panel.fieldConfig.overrides[i].properties[j].value = migrateTableCellConfig(overrideDisplayMode);
+                if (panel.fieldConfig.overrides[i].properties[j].id === 'custom.displayMode') {
+                  panel.fieldConfig.overrides[i].properties[j].id = 'custom.cellOptions';
+                  panel.fieldConfig.overrides[i].properties[j].value = migrateTableCellConfig(overrideDisplayMode);
+                }
               }
             }
           }
