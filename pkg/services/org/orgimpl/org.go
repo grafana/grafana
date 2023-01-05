@@ -121,7 +121,7 @@ func (s *Service) Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*or
 	return s.store.Search(ctx, query)
 }
 
-func (s *Service) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
+func (s *Service) GetByID(ctx context.Context, query *org.GetOrgByIDQuery) (*org.Org, error) {
 	return s.store.GetByID(ctx, query)
 }
 
