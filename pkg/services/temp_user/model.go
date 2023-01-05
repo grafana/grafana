@@ -24,7 +24,7 @@ const (
 
 // TempUser holds data for org invites and unconfirmed sign ups
 type TempUser struct {
-	ID              int64
+	ID              int64 `xorm:"id"`
 	OrgID           int64 `xorm:"org_id"`
 	Version         int
 	Email           string
@@ -82,7 +82,7 @@ type GetTempUserByCodeQuery struct {
 }
 
 type TempUserDTO struct {
-	ID             int64          `json:"id"`
+	ID             int64          `json:"id" xorm:"id"`
 	OrgID          int64          `json:"orgId" xorm:"org_id"`
 	Name           string         `json:"name"`
 	Email          string         `json:"email"`
