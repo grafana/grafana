@@ -190,7 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       min-width: 0;
     `,
     h1Styles: css`
-      margin: 0 ${spacing(1)} 0 0;
+      margin: ${spacing(0, 1, 0, 0)};
       line-height: inherit;
       flex-grow: 1;
       min-width: 0;
