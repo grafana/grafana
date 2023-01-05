@@ -189,6 +189,7 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onCopyQuery = () => {
+    reportInteraction('grafana_explore_query_history_copy_query');
     const queriesToCopy = query.queries.map((q) => createQueryText(q, queryDsInstance)).join('\n');
     copyStringToClipboard(queriesToCopy);
     dispatch(notifyApp(createSuccessNotification('Query copied to clipboard')));
