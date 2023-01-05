@@ -353,10 +353,9 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "accessControlOnCall",
-			Description:     "Access control primitives for OnCall",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			Name:        "accessControlOnCall",
+			Description: "Access control primitives for OnCall",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "nestedFolders",
