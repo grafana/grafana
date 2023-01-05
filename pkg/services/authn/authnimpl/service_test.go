@@ -108,9 +108,9 @@ func TestService_AuthenticateOrgID(t *testing.T) {
 			var calledWith int64
 			s := setupTests(t, func(svc *Service) {
 				svc.clients["fake"] = authntest.MockClient{
-					AuthenticateFunc: func(ctx context.Context, r *authn.Request) (*authn.Identity, *authn.ClientParams, error) {
+					AuthenticateFunc: func(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 						calledWith = r.OrgID
-						return nil, nil, nil
+						return nil, nil
 					},
 					TestFunc: func(ctx context.Context, r *authn.Request) bool {
 						return true

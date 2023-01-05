@@ -28,33 +28,33 @@ type Basic struct {
 	loginAttempts loginattempt.Service
 }
 
-func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, *authn.ClientParams, error) {
+func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	username, password, err := util.DecodeBasicAuthHeader(getBasicAuthHeaderFromRequest(r))
 	if err != nil {
-		return nil, nil, ErrDecodingBasicAuthHeader.Errorf("failed to decode basic auth header: %w", err)
+		return nil, ErrDecodingBasicAuthHeader.Errorf("failed to decode basic auth header: %w", err)
 	}
 
 	ok, err := c.loginAttempts.Validate(ctx, username)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if !ok {
-		return nil, nil, ErrBasicAuthCredentials.Errorf("too many consecutive incorrect login attempts for user - login for user temporarily blocked")
+		return nil, ErrBasicAuthCredentials.Errorf("too many consecutive incorrect login attempts for user - login for user temporarily blocked")
 	}
 
 	if len(password) == 0 {
-		return nil, nil, ErrBasicAuthCredentials.Errorf("no password provided")
+		return nil, ErrBasicAuthCredentials.Errorf("no password provided")
 	}
 
 	// FIXME (kalleep): decide if we should handle ldap here
 	usr, err := c.userService.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: username})
 	if err != nil {
-		return nil, nil, ErrBasicAuthCredentials.Errorf("failed to fetch user: %w", err)
+		return nil, ErrBasicAuthCredentials.Errorf("failed to fetch user: %w", err)
 	}
 
 	if ok := comparePassword(password, usr.Salt, usr.Password); !ok {
 		_ = c.loginAttempts.Add(ctx, username, r.HTTPRequest.RemoteAddr)
-		return nil, nil, ErrBasicAuthCredentials.Errorf("incorrect password provided")
+		return nil, ErrBasicAuthCredentials.Errorf("incorrect password provided")
 	}
 
 	signedInUser, err := c.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
@@ -63,10 +63,10 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	})
 
 	if err != nil {
-		return nil, nil, ErrBasicAuthCredentials.Errorf("failed to fetch user: %w", err)
+		return nil, ErrBasicAuthCredentials.Errorf("failed to fetch user: %w", err)
 	}
 
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser), &authn.ClientParams{}, nil
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{}), nil
 }
 
 func (c *Basic) Test(ctx context.Context, r *authn.Request) bool {

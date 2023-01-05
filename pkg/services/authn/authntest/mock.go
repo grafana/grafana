@@ -9,15 +9,15 @@ import (
 var _ authn.Client = new(MockClient)
 
 type MockClient struct {
-	AuthenticateFunc func(ctx context.Context, r *authn.Request) (*authn.Identity, *authn.ClientParams, error)
+	AuthenticateFunc func(ctx context.Context, r *authn.Request) (*authn.Identity, error)
 	TestFunc         func(ctx context.Context, r *authn.Request) bool
 }
 
-func (m MockClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, *authn.ClientParams, error) {
+func (m MockClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	if m.AuthenticateFunc != nil {
 		return m.AuthenticateFunc(ctx, r)
 	}
-	return nil, nil, nil
+	return nil, nil
 }
 
 func (m MockClient) Test(ctx context.Context, r *authn.Request) bool {

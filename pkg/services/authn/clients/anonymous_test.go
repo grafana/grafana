@@ -49,7 +49,7 @@ func TestAnonymous_Authenticate(t *testing.T) {
 				orgService: &orgtest.FakeOrgService{ExpectedOrg: tt.org, ExpectedError: tt.err},
 			}
 
-			identity, _, err := c.Authenticate(context.Background(), &authn.Request{})
+			identity, err := c.Authenticate(context.Background(), &authn.Request{})
 			if err != nil {
 				require.Error(t, err)
 				require.Nil(t, identity)

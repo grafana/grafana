@@ -29,26 +29,27 @@ type Render struct {
 	renderService rendering.Service
 }
 
-func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, *authn.ClientParams, error) {
+func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	key := getRenderKey(r)
 	renderUsr, ok := c.renderService.GetRenderUser(ctx, key)
 	if !ok {
-		return nil, nil, ErrInvalidRenderKey.Errorf("found no render user for key: %s", key)
+		return nil, ErrInvalidRenderKey.Errorf("found no render user for key: %s", key)
 	}
 
 	if renderUsr.UserID <= 0 {
 		return &authn.Identity{
-			ID:       authn.NamespacedID(authn.NamespaceUser, 0),
-			OrgID:    renderUsr.OrgID,
-			OrgRoles: map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
-		}, &authn.ClientParams{}, nil
+			ID:           authn.NamespacedID(authn.NamespaceUser, 0),
+			OrgID:        renderUsr.OrgID,
+			OrgRoles:     map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
+			ClientParams: authn.ClientParams{},
+		}, nil
 	}
 
 	usr, err := c.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{UserID: renderUsr.UserID, OrgID: renderUsr.OrgID})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr), &authn.ClientParams{}, nil
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{}), nil
 }
 
 func (c *Render) Test(ctx context.Context, r *authn.Request) bool {

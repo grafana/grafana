@@ -63,7 +63,7 @@ func TestBasic_Authenticate(t *testing.T) {
 				ExpectedValid: !tt.blockLogin,
 			})
 
-			identity, _, err := c.Authenticate(context.Background(), tt.req)
+			identity, err := c.Authenticate(context.Background(), tt.req)
 			if tt.expectedErr != nil {
 				assert.ErrorIs(t, err, tt.expectedErr)
 				assert.Nil(t, identity)

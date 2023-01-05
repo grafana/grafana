@@ -30,8 +30,7 @@ type ClientParams struct {
 	EnableDisabledUsers bool
 }
 
-type PostAuthHookFn func(ctx context.Context,
-	clientParams *ClientParams, identity *Identity, r *Request) error
+type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
 
 type Service interface {
 	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
@@ -42,9 +41,13 @@ type Service interface {
 
 type Client interface {
 	// Authenticate performs the authentication for the request
-	Authenticate(ctx context.Context, r *Request) (*Identity, *ClientParams, error)
+	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 	// Test should return true if client can be used to authenticate request
 	Test(ctx context.Context, r *Request) bool
+}
+
+type PasswordClient interface {
+	Authenticate(ctx context.Context, orgID int64, username, password string) (*Identity, *ClientParams, error)
 }
 
 type Request struct {
@@ -83,6 +86,7 @@ type Identity struct {
 
 	OAuthToken   *oauth2.Token
 	SessionToken *auth.UserToken
+	ClientParams ClientParams
 }
 
 func (i *Identity) Role() org.RoleType {
@@ -156,7 +160,7 @@ func NamespacedID(namespace string, id int64) string {
 	return fmt.Sprintf("%s:%d", namespace, id)
 }
 
-func IdentityFromSignedInUser(id string, usr *user.SignedInUser) *Identity {
+func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientParams) *Identity {
 	return &Identity{
 		ID:             id,
 		OrgID:          usr.OrgID,
@@ -171,5 +175,6 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser) *Identity {
 		HelpFlags1:     usr.HelpFlags1,
 		LastSeenAt:     usr.LastSeenAt,
 		Teams:          usr.Teams,
+		ClientParams:   params,
 	}
 }

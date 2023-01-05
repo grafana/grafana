@@ -121,7 +121,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				ExpectedSignedInUser: tt.expectedUser,
 			})
 
-			identity, _, err := c.Authenticate(context.Background(), tt.req)
+			identity, err := c.Authenticate(context.Background(), tt.req)
 			if tt.expectedErr != nil {
 				assert.Nil(t, identity)
 				assert.ErrorIs(t, err, tt.expectedErr)

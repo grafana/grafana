@@ -114,7 +114,7 @@ func TestSession_Authenticate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := ProvideSession(tt.fields.sessionService, tt.fields.userService, cookieName, 20*time.Second)
 
-			got, _, err := s.Authenticate(context.Background(), tt.args.r)
+			got, err := s.Authenticate(context.Background(), tt.args.r)
 			require.True(t, (err != nil) == tt.wantErr, err)
 			if err != nil {
 				return
@@ -169,7 +169,7 @@ func TestSession_RefreshHook(t *testing.T) {
 		Resp: web.NewResponseWriter(http.MethodConnect, mockResponseWriter),
 	}
 
-	err := s.RefreshTokenHook(context.Background(), &authn.ClientParams{}, sampleID, resp)
+	err := s.RefreshTokenHook(context.Background(), sampleID, resp)
 	require.NoError(t, err)
 
 	resp.Resp.WriteHeader(201)
