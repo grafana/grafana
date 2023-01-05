@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 import { Observable } from 'rxjs';
 
-import { TimeRange, LoadingState, InternalTimeZones } from '@grafana/data';
+import { LoadingState, InternalTimeZones, getDefaultTimeRange } from '@grafana/data';
 import { ExploreId } from 'app/types';
 
 import { ExploreQueryInspector } from './ExploreQueryInspector';
@@ -19,7 +19,7 @@ jest.mock('app/core/services/backend_srv', () => ({
       new Observable((subscriber) => {
         subscriber.next(response());
         subscriber.next(response(true));
-      }) as any,
+      }),
   },
 }));
 
@@ -44,16 +44,18 @@ const setup = (propOverrides = {}) => {
     queryResponse: {
       state: LoadingState.Done,
       series: [],
-      timeRange: {} as TimeRange,
+      timeRange: getDefaultTimeRange(),
       graphFrames: [],
       logsFrames: [],
       tableFrames: [],
       traceFrames: [],
       nodeGraphFrames: [],
       flameGraphFrames: [],
+      rawPrometheusFrames: [],
       graphResult: null,
       logsResult: null,
       tableResult: null,
+      rawPrometheusResult: null,
     },
     runQueries: jest.fn(),
     ...propOverrides,
@@ -87,11 +89,11 @@ const response = (hideFromInspector = false) => ({
   status: 1,
   statusText: '',
   ok: true,
-  headers: {} as any,
+  headers: {},
   redirected: false,
   type: 'basic',
   url: '',
-  request: {} as any,
+  request: {},
   data: {
     test: {
       testKey: 'Very unique test value',

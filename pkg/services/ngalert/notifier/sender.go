@@ -3,8 +3,9 @@ package notifier
 import (
 	"context"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
+
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -14,12 +15,12 @@ type sender struct {
 
 func (s sender) SendWebhook(ctx context.Context, cmd *channels.SendWebhookSettings) error {
 	return s.ns.SendWebhookSync(ctx, &models.SendWebhookSync{
-		Url:         cmd.Url,
+		Url:         cmd.URL,
 		User:        cmd.User,
 		Password:    cmd.Password,
 		Body:        cmd.Body,
-		HttpMethod:  cmd.HttpMethod,
-		HttpHeader:  cmd.HttpHeader,
+		HttpMethod:  cmd.HTTPMethod,
+		HttpHeader:  cmd.HTTPHeader,
 		ContentType: cmd.ContentType,
 		Validation:  cmd.Validation,
 	})

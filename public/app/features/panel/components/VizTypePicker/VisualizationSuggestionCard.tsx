@@ -14,11 +14,10 @@ export interface Props {
   data: PanelData;
   width: number;
   suggestion: VisualizationSuggestion;
-  showTitle?: boolean;
   onChange: (details: VizTypeChangeDetails) => void;
 }
 
-export function VisualizationSuggestionCard({ data, suggestion, onChange, width, showTitle }: Props) {
+export function VisualizationSuggestionCard({ data, suggestion, onChange, width }: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};

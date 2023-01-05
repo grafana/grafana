@@ -630,6 +630,9 @@ export function createTableFrameFromTraceQlQuery(
         config: {
           unit: 'string',
           displayNameFromDS: 'Trace ID',
+          custom: {
+            width: 200,
+          },
           links: [
             {
               title: 'Trace: ${__value.raw}',
@@ -646,9 +649,28 @@ export function createTableFrameFromTraceQlQuery(
           ],
         },
       },
+      {
+        name: 'startTime',
+        type: FieldType.string,
+        config: {
+          displayNameFromDS: 'Start time',
+          custom: {
+            width: 200,
+          },
+        },
+      },
       { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
-      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
-      { name: 'traceDuration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+      {
+        name: 'traceDuration',
+        type: FieldType.number,
+        config: {
+          displayNameFromDS: 'Duration',
+          unit: 'ms',
+          custom: {
+            width: 120,
+          },
+        },
+      },
     ],
     meta: {
       preferredVisualisationType: 'table',
@@ -710,6 +732,9 @@ const traceSubFrame = (
         config: {
           unit: 'string',
           displayNameFromDS: 'Span ID',
+          custom: {
+            width: 200,
+          },
           links: [
             {
               title: 'Span: ${__value.raw}',
@@ -732,20 +757,31 @@ const traceSubFrame = (
         },
       },
       {
+        name: 'spanStartTime',
+        type: FieldType.string,
+        config: {
+          displayNameFromDS: 'Start time',
+          custom: {
+            width: 200,
+          },
+        },
+      },
+      {
         name: 'name',
         type: FieldType.string,
         config: { displayNameFromDS: 'Name', custom: { hidden: !hasNameAttribute } },
-      },
-      {
-        name: 'spanStartTime',
-        type: FieldType.string,
-        config: { displayNameFromDS: 'Start time' },
       },
       ...Object.values(spanDynamicAttrs),
       {
         name: 'duration',
         type: FieldType.number,
-        config: { displayNameFromDS: 'Duration', unit: 'ns' },
+        config: {
+          displayNameFromDS: 'Duration',
+          unit: 'ns',
+          custom: {
+            width: 120,
+          },
+        },
       },
     ],
     meta: {

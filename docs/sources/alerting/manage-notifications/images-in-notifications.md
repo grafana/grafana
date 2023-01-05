@@ -41,6 +41,8 @@ When using Grafana as its own cloud storage service screenshots are copied from 
 
 ## Configuration
 
+> **Note:** Grafana Cloud users can request this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
+
 Having installed either the image rendering plugin, or set up Grafana to use a remote rendering service, set `capture` in `[unified_alerting.screenshots]` to `true`:
 
     # Enable screenshots in notifications. This option requires the Grafana Image Renderer plugin.

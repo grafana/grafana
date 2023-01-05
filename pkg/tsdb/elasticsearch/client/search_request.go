@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+const (
+	highlightPreTagsString  = "@HIGHLIGHT@"
+	highlightPostTagsString = "@/HIGHLIGHT@"
+	highlightFragmentSize   = 2147483647
+)
+
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
 	interval time.Duration
@@ -97,9 +103,9 @@ func (b *SearchRequestBuilder) AddHighlight() *SearchRequestBuilder {
 		"fields": map[string]interface{}{
 			"*": map[string]interface{}{},
 		},
-		"pre_tags":      []string{"@HIGHLIGHT@"},
-		"post_tags":     []string{"@/HIGHLIGHT@"},
-		"fragment_size": 2147483647,
+		"pre_tags":      []string{highlightPreTagsString},
+		"post_tags":     []string{highlightPostTagsString},
+		"fragment_size": highlightFragmentSize,
 	}
 	return b
 }
