@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"strings"
 	"testing"
@@ -124,53 +123,6 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 			}, mock)
 	})
 }
-
-func createUser(db db.DB, orgId int64, t *testing.T) int64 {
-	quotaService := quotaimpl.ProvideService(db, setting.NewCfg())
-	orgService, err := orgimpl.ProvideService(db, setting.NewCfg(), quotaService)
-	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(db, orgService, setting.NewCfg(), nil, nil, quotaService)
-	require.NoError(t, err)
-
-	user, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{
-		Login:    fmt.Sprintf("TestUser%d", rand.Int()),
-		OrgID:    orgId,
-		Password: "password",
-	})
-	require.NoError(t, err)
-
-	return user.ID
-}
-
-func setupTeamTestScenario(userCount int, db *sqlstore.SQLStore, orgService org.Service, t *testing.T) int64 {
-	teamService := teamimpl.ProvideService(db, setting.NewCfg()) // FIXME
-	quotaService := quotaimpl.ProvideService(db, db.Cfg)
-	usrSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, teamService, nil, quotaService)
-	require.NoError(t, err)
-
-	user, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{SkipOrgSetup: true, Login: testUserLogin})
-	require.NoError(t, err)
-	cmd := &org.CreateOrgCommand{Name: "TestOrg", UserID: user.ID}
-	testOrg, err := orgService.CreateWithMember(context.Background(), cmd)
-	require.NoError(t, err)
-
-	team, err := teamService.CreateTeam("test", "test@test.com", testOrg.ID)
-	require.NoError(t, err)
-
-	for i := 0; i < userCount; i++ {
-		userId := createUser(db, testOrg.ID, t)
-		require.NoError(t, err)
-
-		err = teamService.AddTeamMember(userId, testOrg.ID, team.Id, false, 0)
-		require.NoError(t, err)
-	}
-
-	return testOrg.ID
-}
-
-var (
-	teamMemberDeleteRoute = "/api/teams/%s/members/%s"
-)
 
 func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
