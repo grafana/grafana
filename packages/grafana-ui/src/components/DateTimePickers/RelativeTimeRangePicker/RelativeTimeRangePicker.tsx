@@ -54,7 +54,10 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
   const [from, setFrom] = useState<InputState>({ value: timeOption.from, validation: isRangeValid(timeOption.from) });
   const [to, setTo] = useState<InputState>({ value: timeOption.to, validation: isRangeValid(timeOption.to) });
   const ref = useRef<HTMLDivElement>(null);
-  const { overlayProps } = useOverlay({ onClose: () => setIsOpen(false), isDismissable: true, isOpen }, ref);
+  const { overlayProps, underlayProps } = useOverlay(
+    { onClose: () => setIsOpen(false), isDismissable: true, isOpen },
+    ref
+  );
   const { dialogProps } = useDialog({}, ref);
 
   const [markerElement, setMarkerElement] = useState<HTMLDivElement | null>(null);
@@ -121,6 +124,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
       </button>
       {isOpen && (
         <Portal>
+          <div role="presentation" className={styles.backdrop} {...underlayProps} />
           <FocusScope contain autoFocus restoreFocus>
             <div ref={ref} {...overlayProps} {...dialogProps}>
               <div
@@ -218,6 +222,14 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
   const bodyHeight = bodyMinimumHeight + calculateErrorHeight(theme, fromError) + calculateErrorHeight(theme, toError);
 
   return {
+    backdrop: css`
+      position: fixed;
+      z-index: ${theme.zIndex.modalBackdrop};
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+    `,
     container: css`
       display: flex;
       position: relative;
@@ -253,7 +265,7 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
       position: absolute;
-      z-index: ${theme.zIndex.dropdown};
+      z-index: ${theme.zIndex.modal};
       width: 500px;
       top: 100%;
       border-radius: 2px;
