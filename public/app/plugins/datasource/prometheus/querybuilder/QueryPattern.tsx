@@ -31,6 +31,7 @@ export const QueryPattern = (props: Props) => {
       <Card.Heading>{pattern.name}</Card.Heading>
       <div className={styles.rawQueryContainer}>
         <RawQuery
+          aria-label={`${pattern.name} raw query`}
           query={promQueryModeller.renderQuery({
             labels: [],
             operations: pattern.operations,
@@ -44,6 +45,7 @@ export const QueryPattern = (props: Props) => {
         {selectedPatternName !== pattern.name ? (
           <Button
             size="sm"
+            aria-label="use this query button"
             onClick={() => {
               if (hasPreviousQuery) {
                 // If user has previous query, we need to confirm that they want to replace it
@@ -64,11 +66,12 @@ export const QueryPattern = (props: Props) => {
                   : 'your current query will be replaced'
               }.`}
             </div>
-            <Button size="sm" fill="outline" onClick={() => setSelectedPatternName(null)}>
+            <Button size="sm" aria-label="back button" fill="outline" onClick={() => setSelectedPatternName(null)}>
               Back
             </Button>
             <Button
               size="sm"
+              aria-label="replace query starter button"
               onClick={() => {
                 onPatternSelect(pattern);
               }}
@@ -78,6 +81,7 @@ export const QueryPattern = (props: Props) => {
             {hasNewQueryOption && (
               <Button
                 size="sm"
+                aria-label="create new query button"
                 onClick={() => {
                   onPatternSelect(pattern, true);
                 }}

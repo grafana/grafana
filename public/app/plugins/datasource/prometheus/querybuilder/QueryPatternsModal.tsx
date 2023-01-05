@@ -66,13 +66,14 @@ export const QueryPatternsModal = (props: Props) => {
   };
 
   return (
-    <Modal isOpen={isOpen} title="Kick start your query" onDismiss={onClose}>
+    <Modal aria-label="Kick start your query modal" isOpen={isOpen} title="Kick start your query" onDismiss={onClose}>
       <div className={styles.spacing}>
         Kick start your query by selecting one of these queries. You can then continue to complete your query.
       </div>
       {Object.values(PromQueryPatternType).map((patternType) => {
         return (
           <Collapse
+            aria-label={`open and close ${patternType} query starter card`}
             key={patternType}
             label={`${capitalize(patternType)} query starters`}
             isOpen={openTabs.includes(patternType)}
@@ -103,7 +104,7 @@ export const QueryPatternsModal = (props: Props) => {
           </Collapse>
         );
       })}
-      <Button variant="secondary" onClick={onClose}>
+      <Button aria-label="close kick start your query modal" variant="secondary" onClick={onClose}>
         Close
       </Button>
     </Modal>
