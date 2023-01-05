@@ -590,7 +590,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 	// Connections (main)
 	navLink = &navtree.NavLink{
 		Text:       "Connections",
-		Icon:       "link",
+		Icon:       "adjust-circle",
 		Id:         "connections",
 		Url:        baseUrl,
 		Children:   children,
