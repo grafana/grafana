@@ -37,5 +37,6 @@ func (c *httpLokiClient) ping() error {
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		return fmt.Errorf("request to the loki buildinfo endpoint returned a non-200 status code: %d", res.StatusCode)
 	}
+	c.log.Debug("Request to Loki buildinfo endpoint succeeded", "status", res.StatusCode)
 	return nil
 }

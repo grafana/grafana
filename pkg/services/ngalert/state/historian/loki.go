@@ -2,6 +2,7 @@ package historian
 
 import (
 	"context"
+	"net/url"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -17,10 +18,10 @@ type RemoteLokiBackend struct {
 	log    log.Logger
 }
 
-func NewRemoteLokiBackend() *RemoteLokiBackend {
+func NewRemoteLokiBackend(url *url.URL) *RemoteLokiBackend {
 	logger := log.New("ngalert.state.historian", "backend", "loki")
 	return &RemoteLokiBackend{
-		client: newLokiClient(nil, logger),
+		client: newLokiClient(url, logger),
 		log:    logger,
 	}
 }
