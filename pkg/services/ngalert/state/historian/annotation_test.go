@@ -94,7 +94,7 @@ func TestBuildAnnotations(t *testing.T) {
 		require.Len(t, items, 1)
 		assertValidJSON(t, items[0].Data)
 		// Since we're comparing floats, avoid require.JSONEq to avoid intermittency caused by floating point rounding.
-		vs, _ := items[0].Data.MustMap()["values"]
+		vs := items[0].Data.MustMap()["values"]
 		require.NotNil(t, vs)
 		vals := vs.(*simplejson.Json).MustMap()
 		require.InDelta(t, 1.0, vals["a"], 0.1)
