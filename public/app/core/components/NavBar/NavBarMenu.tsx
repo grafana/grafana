@@ -15,7 +15,6 @@ import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarToggle } from './NavBarToggle';
 import { NavFeatureHighlight } from './NavFeatureHighlight';
-import { getNavTitle } from './navBarItem-translations';
 import { isMatchOrChildMatch } from './utils';
 
 const MENU_WIDTH = '350px';
@@ -256,7 +255,7 @@ export function NavItem({
                   }}
                   styleOverrides={styles.item}
                   target={childLink.target}
-                  text={getNavTitle(childLink.id) ?? childLink.text}
+                  text={childLink.text}
                   url={childLink.url}
                   isMobile={true}
                 />

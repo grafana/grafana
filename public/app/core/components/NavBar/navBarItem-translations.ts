@@ -1,12 +1,9 @@
-// Maps the ID of the nav item to a translated phrase to later pass to <Trans />
-// Because the navigation content is dynamic (defined in the backend), we can not use
-// the normal inline message definition method.
-
 import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
-// The keys of the TRANSLATED_MENU_ITEMS object (NOT the id inside the defineMessage function)
-// must match the ID of the navigation item, as defined in the backend nav model
+// Maps the ID of the nav item to a translated phrase to later pass to <Trans />
+// Because the navigation content is dynamic (defined in the backend), we can not use
+// the normal inline message definition method.
 
 // see pkg/api/index.go
 export function getNavTitle(navId: string | undefined) {

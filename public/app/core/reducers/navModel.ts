@@ -29,6 +29,7 @@ function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?
       ...node,
       text: getNavTitle(node.id) ?? node.text,
       subTitle: getNavSubTitle(node.id) ?? node.subTitle,
+      emptyMessage: getNavTitle(node.emptyMessageId),
       parentItem: parentItem,
     };
 

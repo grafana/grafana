@@ -5,8 +5,6 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, Icon } from '@grafana/ui';
 
-import { getNavTitle } from '../NavBar/navBarItem-translations';
-
 export interface Props {
   item: NavModelItem;
   isSectionRoot?: boolean;
@@ -41,7 +39,7 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
       >
         {isSectionRoot && item.icon && <Icon name={item.icon} />}
         {isSectionRoot && item.img && <img className={styles.sectionImg} src={item.img} alt={`logo of ${item.text}`} />}
-        {getNavTitle(item.id) ?? item.text}
+        {item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>
       {children?.map((child, index) => (

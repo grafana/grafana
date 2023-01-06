@@ -16,6 +16,7 @@ function translateNav(navTree: NavModelItem[]): NavModelItem[] {
       children: children,
       text: getNavTitle(navItem.id) ?? navItem.text,
       subTitle: getNavSubTitle(navItem.id) ?? navItem.subTitle,
+      emptyMessage: getNavTitle(navItem.emptyMessageId),
     };
   });
 }
