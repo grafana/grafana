@@ -4,10 +4,9 @@ import React from 'react';
 import { config } from '@grafana/runtime';
 import { LegacyForms } from '@grafana/ui';
 
-import { SelectableResourceValue } from '../api';
 import { CloudWatchDatasource } from '../datasource';
 import { useAccountOptions } from '../hooks';
-import { CloudWatchLogsQuery, CloudWatchQuery, DescribeLogGroupsRequest } from '../types';
+import { CloudWatchLogsQuery, CloudWatchQuery, DescribeLogGroupsRequest, LogGroup } from '../types';
 
 import { CrossAccountLogsQueryField } from './CrossAccountLogsQueryField';
 import { LogGroupSelector } from './LogGroupSelector';
@@ -32,7 +31,7 @@ export const LogGroupSelection = ({ datasource, query, onChange }: Props) => {
           fetchLogGroups={(params: Partial<DescribeLogGroupsRequest>) =>
             datasource.api.describeCrossAccountLogGroups({ region: query.region, ...params })
           }
-          onChange={(selectedLogGroups: SelectableResourceValue[]) => {
+          onChange={(selectedLogGroups: LogGroup[]) => {
             onChange({ ...query, logGroups: selectedLogGroups, logGroupNames: [] });
           }}
           accountOptions={accountState.value}

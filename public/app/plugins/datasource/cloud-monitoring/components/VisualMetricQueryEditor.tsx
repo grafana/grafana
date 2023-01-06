@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
 
 import CloudMonitoringDatasource from '../datasource';
-import { CustomMetaData, MetricDescriptor, MetricQuery, SLOQuery } from '../types';
+import { getAlignmentPickerData, getMetricType, setMetricType } from '../functions';
+import { CustomMetaData, MetricDescriptor, MetricKind, PreprocessorType, TimeSeriesList, ValueTypes } from '../types';
 
 import { AliasBy } from './AliasBy';
 import { Alignment } from './Alignment';
@@ -17,28 +18,59 @@ export interface Props {
   refId: string;
   customMetaData: CustomMetaData;
   variableOptionGroup: SelectableValue<string>;
-  onMetricTypeChange: (query: MetricDescriptor) => void;
-  onChange: (query: MetricQuery | SLOQuery) => void;
-  query: MetricQuery;
+  onChange: (query: TimeSeriesList) => void;
+  query: TimeSeriesList;
   datasource: CloudMonitoringDatasource;
-  labels: any;
+  aliasBy?: string;
+  onChangeAliasBy: (aliasBy: string) => void;
 }
 
 function Editor({
   refId,
   query,
-  labels,
   datasource,
   onChange,
-  onMetricTypeChange,
   customMetaData,
   variableOptionGroup,
+  aliasBy,
+  onChangeAliasBy,
 }: React.PropsWithChildren<Props>) {
+  const [labels, setLabels] = useState<{ [k: string]: any }>({});
+  const { projectName, groupBys, crossSeriesReducer } = query;
+  const metricType = getMetricType(query);
+
+  useEffect(() => {
+    if (projectName && metricType) {
+      datasource.getLabels(metricType, refId, projectName).then((labels) => setLabels(labels));
+    }
+  }, [datasource, groupBys, metricType, projectName, refId, crossSeriesReducer]);
+
+  const onMetricTypeChange = useCallback(
+    ({ valueType, metricKind, type }: MetricDescriptor) => {
+      const preprocessor =
+        metricKind === MetricKind.GAUGE || valueType === ValueTypes.DISTRIBUTION
+          ? PreprocessorType.None
+          : PreprocessorType.Rate;
+      const { perSeriesAligner } = getAlignmentPickerData(valueType, metricKind, query.perSeriesAligner, preprocessor);
+      onChange({
+        ...setMetricType(
+          {
+            ...query,
+            perSeriesAligner,
+          },
+          type
+        ),
+        preprocessor,
+      });
+    },
+    [onChange, query]
+  );
+
   return (
     <Metrics
       refId={refId}
       projectName={query.projectName}
-      metricType={query.metricType}
+      metricType={metricType}
       templateVariableOptions={variableOptionGroup.options}
       datasource={datasource}
       onChange={onMetricTypeChange}
@@ -70,14 +102,10 @@ function Editor({
               query={query}
               customMetaData={customMetaData}
               onChange={onChange}
+              metricDescriptor={metric}
+              preprocessor={query.preprocessor}
             />
-            <AliasBy
-              refId={refId}
-              value={query.aliasBy}
-              onChange={(aliasBy) => {
-                onChange({ ...query, aliasBy });
-              }}
-            />
+            <AliasBy refId={refId} value={aliasBy} onChange={onChangeAliasBy} />
           </EditorRow>
         </>
       )}

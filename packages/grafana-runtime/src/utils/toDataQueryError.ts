@@ -7,11 +7,11 @@ import { DataQueryError } from '@grafana/data';
  * @public
  */
 export function toDataQueryError(err: DataQueryError | string | unknown): DataQueryError {
-  const error = (err || {}) as DataQueryError;
+  const error: DataQueryError = err || {};
 
   if (!error.message) {
-    if (typeof err === 'string' || err instanceof String) {
-      return { message: err } as DataQueryError;
+    if (typeof err === 'string') {
+      return { message: err };
     }
 
     let message = 'Query error';

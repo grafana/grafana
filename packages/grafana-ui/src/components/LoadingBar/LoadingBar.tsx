@@ -30,7 +30,7 @@ const getStyles = (width?: string, height?: string) => (_: GrafanaTheme2) => {
       transform: 'translateX(0)',
     },
     '100%': {
-      transform: `translateX(calc(100% - ${barWidth}))`,
+      transform: `translateX(100%)`,
     },
   });
 

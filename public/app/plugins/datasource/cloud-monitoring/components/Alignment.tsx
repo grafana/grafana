@@ -6,18 +6,20 @@ import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { ALIGNMENT_PERIODS } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
 import { alignmentPeriodLabel } from '../functions';
-import { CustomMetaData, MetricQuery, SLOQuery } from '../types';
+import { CustomMetaData, MetricDescriptor, PreprocessorType, TimeSeriesList } from '../types';
 
 import { AlignmentFunction } from './AlignmentFunction';
 import { PeriodSelect } from './PeriodSelect';
 
 export interface Props {
   refId: string;
-  onChange: (query: MetricQuery | SLOQuery) => void;
-  query: MetricQuery;
+  onChange: (query: TimeSeriesList) => void;
+  query: TimeSeriesList;
   templateVariableOptions: Array<SelectableValue<string>>;
   customMetaData: CustomMetaData;
   datasource: CloudMonitoringDatasource;
+  metricDescriptor?: MetricDescriptor;
+  preprocessor?: PreprocessorType;
 }
 
 export const Alignment: FC<Props> = ({
@@ -27,6 +29,8 @@ export const Alignment: FC<Props> = ({
   query,
   customMetaData,
   datasource,
+  metricDescriptor,
+  preprocessor,
 }) => {
   const alignmentLabel = useMemo(() => alignmentPeriodLabel(customMetaData, datasource), [customMetaData, datasource]);
   return (
@@ -39,7 +43,9 @@ export const Alignment: FC<Props> = ({
           inputId={`${refId}-alignment-function`}
           templateVariableOptions={templateVariableOptions}
           query={query}
-          onChange={onChange}
+          onChange={(q) => onChange({ ...query, ...q })}
+          metricDescriptor={metricDescriptor}
+          preprocessor={preprocessor}
         />
       </EditorField>
       <EditorField label="Alignment period" tooltip={alignmentLabel}>
