@@ -245,13 +245,13 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
     >
       {(config, alignedDataFrame) => {
         alignedDataFrame.fields.forEach((field) => {
-          field.getLinks = getLinksSupplier(
-            alignedDataFrame,
+          field.getLinks = getLinksSupplier({
+            frame: alignedDataFrame,
             field,
-            field.state!.scopedVars!,
+            fieldScopedVars: field.state!.scopedVars!,
             replaceVariables,
-            timeZone
-          );
+            timeZone,
+          });
         });
 
         return (

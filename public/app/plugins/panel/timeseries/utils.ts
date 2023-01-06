@@ -168,7 +168,13 @@ export function regenerateLinksSupplier(
       length: alignedDataFrame.fields.length + tempFields.length,
     };
 
-    field.getLinks = getLinksSupplier(tempFrame, field, field.state!.scopedVars!, replaceVariables, timeZone);
+    field.getLinks = getLinksSupplier({
+      frame: tempFrame,
+      field,
+      fieldScopedVars: field.state!.scopedVars!,
+      replaceVariables,
+      timeZone,
+    });
   });
 
   return alignedDataFrame;

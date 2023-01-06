@@ -592,7 +592,12 @@ describe('getLinksSupplier', () => {
     });
 
     const replaceSpy = jest.fn();
-    const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy);
+    const supplier = getLinksSupplier({
+      frame: f0,
+      field: f0.fields[0],
+      fieldScopedVars: {},
+      replaceVariables: replaceSpy,
+    });
     supplier({});
 
     expect(replaceSpy).toBeCalledTimes(2);
@@ -633,13 +638,13 @@ describe('getLinksSupplier', () => {
       ],
     });
 
-    const supplier = getLinksSupplier(
-      f0,
-      f0.fields[0],
-      {},
+    const supplier = getLinksSupplier({
+      frame: f0,
+      field: f0.fields[0],
+      fieldScopedVars: {},
       // We do not need to interpolate anything for this test
-      (value, vars, format) => value
-    );
+      replaceVariables: (value, vars, format) => value,
+    });
 
     const links = supplier({ valueRowIndex: 0 });
     const encodeURIParams = `{"datasource":"${datasourceUid}","queries":["12345"],"panelsState":{}}`;
@@ -688,7 +693,12 @@ describe('getLinksSupplier', () => {
         ],
       });
 
-      const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy);
+      const supplier = getLinksSupplier({
+        frame: f0,
+        field: f0.fields[0],
+        fieldScopedVars: {},
+        replaceVariables: replaceSpy,
+      });
       const links = supplier({});
 
       expect(links.length).toBe(2);
@@ -731,7 +741,12 @@ describe('getLinksSupplier', () => {
         ],
       });
 
-      const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy);
+      const supplier = getLinksSupplier({
+        frame: f0,
+        field: f0.fields[0],
+        fieldScopedVars: {},
+        replaceVariables: replaceSpy,
+      });
       const links = supplier({});
 
       expect(onBuildUrlSpy).toBeCalledTimes(1);

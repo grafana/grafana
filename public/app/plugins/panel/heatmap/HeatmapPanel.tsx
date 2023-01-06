@@ -49,7 +49,12 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
   const getFieldLinksSupplier = useCallback(
     (exemplars: DataFrame, field: Field) => {
-      return getLinksSupplier(exemplars, field, field.state?.scopedVars ?? {}, replaceVariables);
+      return getLinksSupplier({
+        frame: exemplars,
+        field,
+        fieldScopedVars: field.state?.scopedVars ?? {},
+        replaceVariables,
+      });
     },
     [replaceVariables]
   );

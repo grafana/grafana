@@ -201,13 +201,13 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       }
 
       // Attach data links supplier
-      field.getLinks = getLinksSupplier(
-        newFrame,
-        field,
-        field.state!.scopedVars,
-        context.replaceVariables,
-        options.timeZone
-      );
+      field.getLinks = getLinksSupplier({
+        frame: newFrame,
+        field: field,
+        fieldScopedVars: field.state!.scopedVars,
+        replaceVariables: context.replaceVariables,
+        timeZone: options.timeZone,
+      });
     }
 
     return newFrame;
@@ -357,14 +357,15 @@ export function validateFieldConfig(config: FieldConfig) {
 }
 
 export const getLinksSupplier =
-  (
-    frame: DataFrame,
-    field: Field,
-    fieldScopedVars: ScopedVars,
-    replaceVariables: InterpolateFunction,
-    timeZone?: TimeZone
-  ) =>
+  (options: {
+    frame: DataFrame;
+    field: Field;
+    fieldScopedVars: ScopedVars;
+    replaceVariables: InterpolateFunction;
+    timeZone?: TimeZone;
+  }) =>
   (config: ValueLinkConfig): Array<LinkModel<Field>> => {
+    const { frame, field, fieldScopedVars, replaceVariables, timeZone } = options;
     if (!field.config.links || field.config.links.length === 0) {
       return [];
     }
