@@ -108,7 +108,7 @@ func doSchemaInterfaces(ctx *cue.Context) map[string]SchemaInterface {
 	for iter.Next() {
 		k := iter.Selector().String()
 		v := &typ{}
-		iter.Value().Decode(&v) //nolint:errcheck
+		_ = iter.Value().Decode(&v) //nolint:errcheck,gosec
 		ifaces[k] = SchemaInterface{
 			name:    v.Name,
 			plugins: v.PluginTypes,
