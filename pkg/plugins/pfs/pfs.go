@@ -93,7 +93,7 @@ func (t *Tree) SubPlugins() map[string]PluginInfo {
 type TreeList []*Tree
 
 // LineagesForSlot returns the set of plugin-defined lineages that implement a
-// particular named Grafana slot (See ["github.com/grafana/grafana/pkg/framework/coremodel".Slot]).
+// particular named Grafana slot (See ["github.com/grafana/grafana/pkg/framework/coremodel".SchemaInterface]).
 func (tl TreeList) LineagesForSlot(slotname string) map[string]thema.Lineage {
 	m := make(map[string]thema.Lineage)
 	for _, tree := range tl {

@@ -19,7 +19,7 @@ package kindsys
 //  - "Which" subset of known composable subschemas ("whats") should be provided in composition ("how")?
 //
 // On the producer side, Grafana plugin authors may provide Thema lineages
-// within #Composable kinds declared in .cue files adjacent to their
+// within Composable kinds declared in .cue files adjacent to their
 // plugin.json, following a pattern (see
 // github.com/grafana/grafana/pkg/plugins/pfs.#GrafanaPlugin.composableKinds)
 // corresponding to the name of the schema interface. Each such definition is
@@ -32,12 +32,11 @@ package kindsys
 //
 // Composable kinds declared by a plugin are parsed and validated by Grafana's
 // plugin system when a plugin is installed. This gives each Grafana instance a
-// set of all known #Composable kinds ("whats"), which can be narrowed into the
-// subsets ("which") that each known #CoreStructured or #CustomStructured can
-// consume. These subsets are injected dynamically into the consumers, resulting
-// in the actual schema
+// set of all known Composable kinds ("whats"), which can be narrowed into the
+// subsets ("which") that each known Core or Custom can consume. These subsets
+// are injected dynamically into the consumers, resulting in the final schema.
 //
-// For example, in the Thema lineage for the dashboard #CoreStructured kind:
+// For example, in the Thema lineage for the dashboard core kind:
 //  - There is a slot named `panelcfg`
 //  - It is constrained to accept only Thema lineages following the `panelcfg` schema interface
 //  - The composition logic specifies that the `panelcfg.PanelOptions` from each lineage provided
