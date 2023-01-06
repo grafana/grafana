@@ -9,21 +9,21 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+)
+
+const (
+	defaultSize = 500
 )
 
 type timeSeriesQuery struct {
-	client             es.Client
-	dataQueries        []backend.DataQuery
-	intervalCalculator intervalv2.Calculator
+	client      es.Client
+	dataQueries []backend.DataQuery
 }
 
-var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery,
-	intervalCalculator intervalv2.Calculator) *timeSeriesQuery {
+var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery) *timeSeriesQuery {
 	return &timeSeriesQuery{
-		client:             client,
-		dataQueries:        dataQuery,
-		intervalCalculator: intervalCalculator,
+		client:      client,
+		dataQueries: dataQuery,
 	}
 }
 
@@ -37,11 +37,8 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 
 	from := e.dataQueries[0].TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := e.dataQueries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
-	result := backend.QueryDataResponse{
-		Responses: backend.Responses{},
-	}
 	for _, q := range queries {
-		if err := e.processQuery(q, ms, from, to, result); err != nil {
+		if err := e.processQuery(q, ms, from, to); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
 	}
@@ -59,16 +56,10 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	return parseResponse(res.Responses, queries)
 }
 
-func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64,
-	result backend.QueryDataResponse) error {
-	minInterval, err := e.client.GetMinInterval(q.Interval)
-	if err != nil {
-		return err
-	}
-	interval := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval, q.MaxDataPoints)
+func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
 	defaultTimeField := e.client.GetTimeField()
 
-	b := ms.Search(interval)
+	b := ms.Search(q.Interval)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)
@@ -76,11 +67,8 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 	if len(q.BucketAggs) == 0 {
 		// If no aggregations, only document and logs queries are valid
-		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == "raw_data" || q.Metrics[0].Type == "raw_document" || q.Metrics[0].Type == "logs") {
-			result.Responses[q.RefID] = backend.DataResponse{
-				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
-			}
-			return nil
+		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType || q.Metrics[0].Type == logsType) {
+			return fmt.Errorf("invalid query, missing metrics and aggregations")
 		}
 
 		// Defaults for log and document queries
@@ -88,11 +76,11 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		b.SortDesc(e.client.GetTimeField(), "boolean")
 		b.SortDesc("_doc", "")
 		b.AddDocValueField(e.client.GetTimeField())
-		b.Size(metric.Settings.Get("size").MustInt(500))
+		b.Size(metric.Settings.Get("size").MustInt(defaultSize))
 
 		if metric.Type == "logs" {
 			// Add additional defaults for log query
-			b.Size(metric.Settings.Get("limit").MustInt(500))
+			b.Size(metric.Settings.Get("limit").MustInt(defaultSize))
 			b.AddHighlight()
 
 			// For log query, we add a date histogram aggregation
@@ -321,13 +309,13 @@ func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, metrics []*Metr
 		} else if size, err := bucketAgg.Settings.Get("size").String(); err == nil {
 			a.Size, err = strconv.Atoi(size)
 			if err != nil {
-				a.Size = 500
+				a.Size = defaultSize
 			}
 		} else {
-			a.Size = 500
+			a.Size = defaultSize
 		}
 		if a.Size == 0 {
-			a.Size = 500
+			a.Size = defaultSize
 		}
 
 		if minDocCount, err := bucketAgg.Settings.Get("min_doc_count").Int(); err == nil {

@@ -80,6 +80,16 @@
       "unmark-favorite": "Deshacer marca como favorito"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "",
+    "explanation": "",
+    "logo": "",
+    "new-dashboard": "",
+    "preferred": "",
+    "sampleData": "",
+    "viewAll": "",
+    "welcome": ""
+  },
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
@@ -130,6 +140,9 @@
     "alerting-groups": {
       "subtitle": "Ver alertas agrupadas de una instancia de Alertmanager",
       "title": "Grupos"
+    },
+    "alerting-home": {
+      "title": ""
     },
     "alerting-legacy": {
       "title": "Alertas (heredado)"
@@ -197,8 +210,8 @@
       "title": "Organizaciones"
     },
     "global-users": {
-      "subtitle": "Gestione y cree usuarios en todo el servidor Grafana",
-      "title": "",
+      "subtitle": "",
+      "title": "Usuarios",
       "titleBeforeTopnav": "Usuarios"
     },
     "help": {
@@ -208,6 +221,7 @@
     "help/documentation": "Documentación",
     "help/keyboard-shortcuts": "Atajos de teclado",
     "help/support": "Asistencia",
+    "help/support-bundle": "",
     "home": {
       "title": "Inicio"
     },
@@ -297,6 +311,10 @@
     "storage": {
       "subtitle": "Gestionar el almacenamiento de archivos",
       "title": "Almacenamiento"
+    },
+    "support-bundles": {
+      "subtitle": "",
+      "title": ""
     },
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",

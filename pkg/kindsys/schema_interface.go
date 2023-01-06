@@ -57,7 +57,7 @@ func (s SchemaInterface) IsGroup() bool {
 	return s.group
 }
 
-func FindSlot(name string) (SchemaInterface, error) {
+func FindSchemaInterface(name string) (SchemaInterface, error) {
 	sl, has := SchemaInterfaces(nil)[name]
 	if !has {
 		return SchemaInterface{}, fmt.Errorf("unsupported slot: %s", name)
@@ -104,11 +104,11 @@ func doSchemaInterfaces(ctx *cue.Context) map[string]SchemaInterface {
 	}
 
 	ifaces := make(map[string]SchemaInterface)
-	iter, _ := defs.Fields() // nolint:errcheck
+	iter, _ := defs.Fields() //nolint:errcheck
 	for iter.Next() {
 		k := iter.Selector().String()
 		v := &typ{}
-		iter.Value().Decode(&v)
+		_ = iter.Value().Decode(&v) //nolint:errcheck,gosec
 		ifaces[k] = SchemaInterface{
 			name:    v.Name,
 			plugins: v.PluginTypes,

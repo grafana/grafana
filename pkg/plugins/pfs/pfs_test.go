@@ -112,9 +112,7 @@ func TestParseTreeTestdata(t *testing.T) {
 		},
 		"valid-model-panel":      {},
 		"valid-model-datasource": {},
-		"missing-slot-impl": {
-			err: ErrComposableNotExpected,
-		},
+		"missing-kind-datasource": {},
 		"panel-conflicting-joinschema": {
 			err:  ErrInvalidLineage,
 			skip: "TODO implement BindOption in thema, SatisfiesJoinSchema, then use it here",

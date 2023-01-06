@@ -45,8 +45,8 @@ func (m Maturity) String() string {
 	return string(m)
 }
 
-// Interface describes a Grafana kind object: a Go representation of a kind
-// definition of one of Grafana's categories of kinds.
+// Interface describes a Grafana kind object: a Go representation of the definition of
+// one of Grafana's categories of kinds.
 type Interface interface {
 	// Props returns a [kindsys.SomeKindProps], representing the properties
 	// of the kind as declared in the .cue source. The underlying type is
@@ -56,6 +56,9 @@ type Interface interface {
 	// expected to implement one of the other interfaces, each of which contain
 	// a Decl() method through which these same properties are accessible.
 	Props() SomeKindProperties
+
+	// TODO docs
+	Lineage() thema.Lineage
 
 	// TODO remove, unnecessary with Props()
 	Name() string
@@ -67,37 +70,22 @@ type Interface interface {
 	Maturity() Maturity // TODO unclear if we want maturity for raw kinds
 }
 
-// TODO docs
-type Raw interface {
-	Interface
-
-	// TODO docs
-	Decl() Decl[RawProperties]
-}
-
-type Structured interface {
-	Interface
-
-	// TODO docs
-	Lineage() thema.Lineage
-}
-
 type Core interface {
-	Structured
+	Interface
 
 	// TODO docs
-	Decl() Decl[CoreStructuredProperties] // TODO figure out how to reconcile this interface with CustomStructuredProperties
+	Decl() Decl[CoreProperties]
 }
 
 type Custom interface {
-	Structured
+	Interface
 
 	// TODO docs
-	Decl() Decl[CoreStructuredProperties]
+	Decl() Decl[CustomProperties]
 }
 
 type Composable interface {
-	Structured
+	Interface
 
 	// TODO docs
 	Decl() Decl[ComposableProperties]

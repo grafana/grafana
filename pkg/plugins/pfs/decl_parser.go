@@ -51,12 +51,12 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 		}
 
 		for slotName, kind := range pp.ComposableKinds {
-			slot, err := kindsys.FindSlot(slotName)
+			slot, err := kindsys.FindSchemaInterface(slotName)
 			if err != nil {
 				return nil, fmt.Errorf("parsing plugin failed for %s: %s", dir, err)
 			}
 			decls = append(decls, &PluginDecl{
-				Slot:       &slot,
+				SchemaInterface: &slot,
 				Lineage:    kind.Lineage(),
 				Imports:    pp.CUEImports,
 				PluginMeta: pp.Properties,
