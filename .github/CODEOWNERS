@@ -17,22 +17,22 @@
 /docs/sources/developers/plugins/ @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend/ @grafana/docs-squad @grafana/plugins-platform-backend
 /.changelog-archive @grafana/docs-squad
-CHANGELOG.md
-CODE_OF_CONDUCT.md
-CONTRIBUTING.md
-GOVERNANCE.md
-HALL_OF_FAME.md
-ISSUE_TRIAGE.md
-LICENSE
-LICENSING.md
-MAINTAINERS.md
-NOTICE.md
-README.md
-ROADMAP.md
-SECURITY.md
-SUPPORT.md
-UPGRADING_DEPENDENCIES.md
-WORKFLOW.md
+CHANGELOG.md @grafana/docs-squad
+CODE_OF_CONDUCT.md @grafana/docs-squad
+CONTRIBUTING.md @grafana/docs-squad
+GOVERNANCE.md @RichiH
+HALL_OF_FAME.md @grafana/docs-squad
+ISSUE_TRIAGE.md @grafana/docs-squad
+LICENSE @torkelo
+LICENSING.md @torkelo
+MAINTAINERS.md @RichiH
+NOTICE.md @torkelo
+README.md @grafana/docs-squad
+ROADMAP.md @torkelo
+SECURITY.md @grafana/security-team
+SUPPORT.md @torkelo
+UPGRADING_DEPENDENCIES.md @grafana/docs-squad
+WORKFLOW.md @torkelo
 
 
 # Set up, dashboards/visualization, best practices: Chris Moyer
@@ -56,6 +56,7 @@ WORKFLOW.md
 /pkg/ruleguard.rules.go @grafana/backend-platform
 /.bra.toml @grafana/backend-platform
 /.golangci.toml @grafana/backend-platform
+/build.go @grafana/backend-platform
 
 /pkg/api/ @grafana/backend-platform
 /pkg/bus/ @grafana/backend-platform
@@ -256,7 +257,7 @@ tsconfig.json @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
 /.linguirc @grafana/user-essentials
-/.babel.config.json @grafana/frontend-ops
+/babel.config.json @grafana/frontend-ops
 lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
 /.eslintrc @grafana/frontend-ops
@@ -300,6 +301,7 @@ lerna.json @grafana/frontend-ops
 .pa11yci-pr.conf.js @grafana/user-essentials
 .betterer.results @joshhunt
 .betterer.ts @joshhunt
+/babel.config.json @grafana/user-essentials
 
 # @grafana/ui component documentation
 *.mdx @grafana/plugins-platform-frontend
