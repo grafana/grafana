@@ -90,7 +90,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		return nil, ErrServiceAccountDisabled.Errorf("Disabled service account")
 	}
 
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceServiceAccount, usr.UserID), usr), nil
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceServiceAccount, usr.UserID), usr, authn.ClientParams{}), nil
 }
 
 func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {
@@ -143,10 +143,6 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 	}
 
 	return keyQuery.Result, nil
-}
-
-func (s *APIKey) ClientParams() *authn.ClientParams {
-	return &authn.ClientParams{}
 }
 
 func (s *APIKey) Test(ctx context.Context, r *authn.Request) bool {

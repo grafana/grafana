@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { DataFrame, DataTransformerID, getFrameDisplayName, SelectableValue } from '@grafana/data';
 import { Field, HorizontalGroup, Select, Switch, VerticalGroup } from '@grafana/ui';
@@ -24,7 +24,7 @@ interface Props {
   onOptionsChange?: (options: GetDataOptions) => void;
 }
 
-export const InspectDataOptions: FC<Props> = ({
+export const InspectDataOptions = ({
   options,
   onOptionsChange,
   panel,
@@ -36,7 +36,7 @@ export const InspectDataOptions: FC<Props> = ({
   onDataFrameChange,
   downloadForExcel,
   toggleDownloadForExcel,
-}) => {
+}: Props) => {
   const styles = getPanelInspectorStyles();
 
   const panelTransformations = panel?.getTransformations();
