@@ -268,7 +268,7 @@ lerna.json @grafana/frontend-ops
 *.mdx @grafana/plugins-platform-frontend
 
 # Design system
-/public/img/icons/unicorns/ @grafana/design-system
+/public/img/icons/unicons/ @grafana/design-system
 
 # Core datasources
 /public/app/plugins/datasource/cloudwatch/ @grafana/aws-plugins
