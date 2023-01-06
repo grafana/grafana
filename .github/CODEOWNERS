@@ -16,6 +16,8 @@
 /contribute/ @grafana/docs-squad
 /docs/sources/developers/plugins/ @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend/ @grafana/docs-squad @grafana/plugins-platform-backend
+/.changelog-archive @grafana/docs-squad
+
 # Set up, dashboards/visualization, best practices: Chris Moyer
 # Alerting: Brenda Muir
 /docs/sources/administration/ @Eve832 @GrafanaWriter
@@ -30,11 +32,13 @@
 /docs/sources/whatsnew/ @Eve832 @GrafanaWriter
 
 # Backend code
-go.mod @grafana/backend-platform
-go.sum @grafana/backend-platform
+/go.mod @grafana/backend-platform
+/go.sum @grafana/backend-platform
 /.bingo/ @grafana/backend-platform
 /pkg/README.md @grafana/backend-platform
 /pkg/ruleguard.rules.go @grafana/backend-platform
+/.bra.toml @grafana/backend-platform
+/.golangci.toml @grafana/backend-platform
 
 /pkg/api/ @grafana/backend-platform
 /pkg/bus/ @grafana/backend-platform
@@ -203,6 +207,7 @@ go.sum @grafana/backend-platform
 /contribute/architecture/backend/ @grafana/backend-platform
 /contribute/engineering/backend/ @grafana/backend-platform
 
+.browserslistrc @grafana/frontend-ops
 package.json @grafana/frontend-ops
 tsconfig.json @grafana/frontend-ops
 /crowdin.yml @grafana/user-essentials
@@ -224,6 +229,11 @@ tsconfig.json @grafana/frontend-ops
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
 /packages/jaeger-ui-components// @grafana/observability-traces-and-profiling
 /plugins-bundled/ @grafana/plugins-platform-frontend
+/.editorconfig @grafana/frontend-ops
+/.eslintignore @grafana/frontend-ops
+/.gitattributes @grafana/frontend-ops
+/.gitignore @grafana/frontend-ops
+
 # public folder
 /public/app/core/components/TimePicker/ @grafana/user-essentials
 /public/app/core/components/Layers/ @grafana/grafana-edge-squad
@@ -263,6 +273,7 @@ lerna.json @grafana/frontend-ops
 .pa11yci.conf.js @grafana/user-essentials
 .pa11yci-pr.conf.js @grafana/user-essentials
 .betterer.results @joshhunt
+.betterer.ts @joshhunt
 
 # @grafana/ui component documentation
 *.mdx @grafana/plugins-platform-frontend
