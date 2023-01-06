@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
+
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/pfs/corelist"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -54,27 +55,71 @@ var plannedCoreKinds = []string{
 }
 
 type KindStateReport struct {
-	Core       []kindsys.CoreProperties       `json:"core"`
-	Composable []kindsys.ComposableProperties `json:"composable"`
+	Kinds      map[string]kindsys.SomeKindProperties `json:"kinds"`
+	Dimensions map[string]Dimension                  `json:"dimensions"`
 }
 
-func emptyKindStateReport() KindStateReport {
-	return KindStateReport{
-		Core:       make([]kindsys.CoreProperties, 0),
-		Composable: make([]kindsys.ComposableProperties, 0),
+func (r *KindStateReport) add(k kindsys.SomeKindProperties, category string) {
+	kName := k.Common().MachineName
+
+	r.Kinds[kName] = k
+	r.Dimensions["maturity"][k.Common().Maturity.String()].add(kName)
+	r.Dimensions["category"][category].add(kName)
+}
+
+type Dimension map[string]*DimensionValue
+
+type DimensionValue struct {
+	Name  string   `json:"name"`
+	Items []string `json:"items"`
+	Count int      `json:"count"`
+}
+
+func (dv *DimensionValue) add(s string) {
+	dv.Count++
+	dv.Items = append(dv.Items, s)
+}
+
+// emptyKindStateReport is used to ensure certain
+// dimension values are present (even if empty) in
+// the final report.
+func emptyKindStateReport() *KindStateReport {
+	return &KindStateReport{
+		Kinds: make(map[string]kindsys.SomeKindProperties),
+		Dimensions: map[string]Dimension{
+			"maturity": {
+				"planned":      emptyDimensionValue("planned"),
+				"merged":       emptyDimensionValue("merged"),
+				"experimental": emptyDimensionValue("experimental"),
+				"stable":       emptyDimensionValue("stable"),
+				"mature":       emptyDimensionValue("mature"),
+			},
+			"category": {
+				"core":       emptyDimensionValue("core"),
+				"composable": emptyDimensionValue("composable"),
+			},
+		},
 	}
 }
 
-func buildKindStateReport() KindStateReport {
+func emptyDimensionValue(name string) *DimensionValue {
+	return &DimensionValue{
+		Name:  name,
+		Items: make([]string, 0),
+		Count: 0,
+	}
+}
+
+func buildKindStateReport() *KindStateReport {
 	r := emptyKindStateReport()
 	b := corekind.NewBase(nil)
 
 	seen := make(map[string]bool)
 	for _, k := range b.All() {
 		seen[k.Props().Common().Name] = true
-		switch props := k.Props().(type) {
+		switch k.Props().(type) {
 		case kindsys.CoreProperties:
-			r.Core = append(r.Core, props)
+			r.add(k.Props(), "core")
 		}
 	}
 
@@ -82,7 +127,8 @@ func buildKindStateReport() KindStateReport {
 		if seen[kn] {
 			continue
 		}
-		r.Core = append(r.Core, kindsys.CoreProperties{
+
+		r.add(kindsys.CoreProperties{
 			CommonProperties: kindsys.CommonProperties{
 				Name:              kn,
 				PluralName:        kn + "s",
@@ -90,7 +136,7 @@ func buildKindStateReport() KindStateReport {
 				PluralMachineName: machinize(kn) + "s",
 				Maturity:          "planned",
 			},
-		})
+		}, "core")
 	}
 
 	all := kindsys.AllSlots(nil)
@@ -114,17 +160,16 @@ func buildKindStateReport() KindStateReport {
 					props.CommonProperties.Maturity = "merged"
 					props.CurrentVersion = ck.Latest().Version()
 				}
-				r.Composable = append(r.Composable, props)
+				r.add(props, "composable")
 			}
 		}
 	}
 
-	sort.Slice(r.Core, func(i, j int) bool {
-		return r.Core[i].Common().Name < r.Core[j].Common().Name
-	})
-	sort.Slice(r.Composable, func(i, j int) bool {
-		return r.Composable[i].Common().Name < r.Composable[j].Common().Name
-	})
+	for _, d := range r.Dimensions {
+		for _, dv := range d {
+			sort.Strings(dv.Items)
+		}
+	}
 
 	return r
 }
