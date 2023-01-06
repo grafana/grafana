@@ -170,7 +170,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 			// fetch folder from dashboard store
 			dashFolder, err := s.dashboardStore.GetFolderByUID(ctx, f.OrgID, f.UID)
 			if err != nil {
-				s.log.Error("failed to fetch folder by UID: %s from dashboad store", f.UID, err)
+				s.log.Error("failed to fetch folder by UID: %s from dashboard store", f.UID, err)
 				continue
 			}
 
