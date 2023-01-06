@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
+import debounce from 'debounce-promise';
 import {
   KBarAnimator,
   KBarPortal,
@@ -14,7 +15,7 @@ import {
   useRegisterActions,
   useKBar,
 } from 'kbar';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction, locationService } from '@grafana/runtime';
@@ -22,7 +23,7 @@ import { useStyles2 } from '@grafana/ui';
 import { useSelector } from 'app/types';
 
 import { ResultItem } from './ResultItem';
-import getDashboardNavActions from './actions/dashboard.nav.actions';
+import { getDashboardSearchResultActions } from './actions/dashboard.nav.actions';
 import getGlobalActions from './actions/global.static.actions';
 
 /**
@@ -30,12 +31,17 @@ import getGlobalActions from './actions/global.static.actions';
  * @constructor
  */
 
+const debouncedDashboardSearch = debounce(getDashboardSearchResultActions, 100);
+
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
-  const [actions, setActions] = useState<Action[]>([]);
+
   const [staticActions, setStaticActions] = useState<Action[]>([]);
-  const { query, showing } = useKBar((state) => ({
+  const [dashboardResultActions, setDashboardResultActions] = useState<Action[]>([]);
+
+  const { query, showing, searchQuery } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
+    searchQuery: state.searchQuery,
   }));
   const isNotLogin = locationService.getLocation().pathname !== '/login';
 
@@ -52,25 +58,29 @@ export const CommandPalette = () => {
   );
   const { dialogProps } = useDialog({}, ref);
 
+  // Load standard actions, except on login
   useEffect(() => {
     if (isNotLogin) {
       const staticActionsResp = getGlobalActions(navBarTree);
       setStaticActions(staticActionsResp);
-      setActions([...staticActionsResp]);
     }
   }, [isNotLogin, navBarTree]);
 
+  // Update actions based on dashboard search results
   useEffect(() => {
     if (showing) {
-      reportInteraction('command_palette_opened');
-
-      // Do dashboard search on demand
-      getDashboardNavActions('go/dashboard').then((dashAct) => {
-        setActions([...staticActions, ...dashAct]);
+      debouncedDashboardSearch('go/dashboard', searchQuery).then((resultActions) => {
+        setDashboardResultActions(resultActions);
       });
     }
-  }, [showing, staticActions]);
+  }, [showing, searchQuery]);
 
+  // Report interaction when opened
+  useEffect(() => {
+    showing && reportInteraction('command_palette_opened');
+  }, [showing]);
+
+  const actions = useMemo(() => [...staticActions, ...dashboardResultActions], [staticActions, dashboardResultActions]);
   useRegisterActions(actions, [actions]);
 
   return actions.length > 0 ? (
