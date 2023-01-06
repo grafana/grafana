@@ -350,7 +350,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/canvas/ @grafana/grafana-edge-squad
 /public/app/features/commandPalette/ @grafana/user-essentials
 /public/app/features/comments/ @grafana/grafana-edge-squad
-/public/app/features/connections/ @grafana/cloud-auth-frontend
+/public/app/features/connections/ @grafana/plugins-platform-frontend
 /public/app/features/correlations/ @grafana/explore-squad
 /public/app/features/dashboard/ @grafana/dashboards-squad
 /public/app/features/datasources/ @grafana/user-essentials
