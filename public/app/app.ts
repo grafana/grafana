@@ -121,6 +121,10 @@ export class GrafanaApp {
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
+
+      // We must wait for translations to load because some preloaded store state requires translating
+      await initI18nPromise;
+
       // Important that extension reducers are initialized before store
       addExtensionReducers();
       configureStore();
@@ -172,12 +176,8 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
-      await Promise.all([
-        initI18nPromise,
-
-        // Preload selected app plugins
-        await preloadPlugins(config.pluginsToPreload),
-      ]);
+      // Preload selected app plugins
+      await preloadPlugins(config.pluginsToPreload);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();

@@ -4,6 +4,8 @@ import { cloneDeep } from 'lodash';
 import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
+import { getNavSubTitle, getNavTitle } from '../components/NavBar/navBarItem-translations';
+
 export const HOME_NAV_ID = 'home';
 
 export function buildInitialState(): NavIndex {
@@ -23,14 +25,19 @@ export function buildInitialState(): NavIndex {
 
 function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {
   for (const node of children) {
-    node.parentItem = parentItem;
+    const translatedNode: NavModelItem = {
+      ...node,
+      text: getNavTitle(node.id) ?? node.text,
+      subTitle: getNavSubTitle(node.id) ?? node.subTitle,
+      parentItem: parentItem,
+    };
 
-    if (node.id) {
-      navIndex[node.id] = node;
+    if (translatedNode.id) {
+      navIndex[translatedNode.id] = translatedNode;
     }
 
-    if (node.children) {
-      buildNavIndex(navIndex, node.children, node);
+    if (translatedNode.children) {
+      buildNavIndex(navIndex, translatedNode.children, translatedNode);
     }
   }
 
