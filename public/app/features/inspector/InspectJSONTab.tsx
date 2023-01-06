@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { firstValueFrom } from 'rxjs';
@@ -56,11 +56,17 @@ interface Props {
 }
 
 export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
-  const hasPanelJSON = !!(panel && dashboard);
-  const jsonOptions = hasPanelJSON ? options : options.slice(1, options.length);
-
   const styles = useStyles2(getPanelInspectorStyles2);
-  const [show, setShow] = useState(hasPanelJSON ? ShowContent.PanelJSON : ShowContent.DataFrames);
+  const jsonOptions = useMemo(() => {
+    if (panel) {
+      if (panel.plugin?.meta.skipDataQuery) {
+        return [options[0]];
+      }
+      return options;
+    }
+    return options.slice(1, options.length);
+  }, [panel]);
+  const [show, setShow] = useState(panel ? ShowContent.PanelJSON : ShowContent.DataFrames);
   const [text, setText] = useState('');
 
   useAsync(async () => {
@@ -119,7 +125,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
             onChange={(v) => setShow(v.value!)}
           />
         </Field>
-        {hasPanelJSON && isPanelJSON && canEdit && (
+        {panel && isPanelJSON && canEdit && (
           <Button className={styles.toolbarItem} onClick={onApplyPanelModel}>
             Apply
           </Button>
