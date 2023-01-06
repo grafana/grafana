@@ -9,12 +9,13 @@ title: Team kind
 # Team kind
 
 ### Maturity: merged
+
 ### Version: 0.0
 
 ## Properties
 
 | Property        | Type                     | Required | Description                                              |
-|-----------------|--------------------------|----------|----------------------------------------------------------|
+| --------------- | ------------------------ | -------- | -------------------------------------------------------- |
 | `accessControl` | [object](#accesscontrol) | **Yes**  | AccessControl metadata associated with a given resource. |
 | `created`       | integer                  | **Yes**  | Created indicates when the team was created.             |
 | `memberCount`   | integer                  | **Yes**  | MemberCount is the number of the team members.           |
@@ -30,6 +31,4 @@ title: Team kind
 AccessControl metadata associated with a given resource.
 
 | Property | Type | Required | Description |
-|----------|------|----------|-------------|
-
-
+| -------- | ---- | -------- | ----------- |
