@@ -20,15 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSession_ClientParams(t *testing.T) {
-	s := ProvideSession(nil, nil, "", 0)
-	require.Equal(t, &authn.ClientParams{
-		SyncUser:            false,
-		AllowSignUp:         false,
-		EnableDisabledUsers: false,
-	}, s.ClientParams())
-}
-
 func TestSession_Test(t *testing.T) {
 	cookieName := "grafana_session"
 
@@ -178,7 +169,7 @@ func TestSession_RefreshHook(t *testing.T) {
 		Resp: web.NewResponseWriter(http.MethodConnect, mockResponseWriter),
 	}
 
-	err := s.RefreshTokenHook(context.Background(), &authn.ClientParams{}, sampleID, resp)
+	err := s.RefreshTokenHook(context.Background(), sampleID, resp)
 	require.NoError(t, err)
 
 	resp.Resp.WriteHeader(201)
