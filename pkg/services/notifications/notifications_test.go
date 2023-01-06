@@ -206,9 +206,7 @@ func TestSendEmailAsync(t *testing.T) {
 		// verify code
 		query := models.ValidateResetPasswordCodeQuery{Code: code}
 		getUserByLogin := func(ctx context.Context, login string) (*user.User, error) {
-			query := models.GetUserByLoginQuery{LoginOrEmail: login}
-			query.Result = &testuser
-			return query.Result, nil
+			return &testuser, nil
 		}
 		err = sut.ValidateResetPasswordCode(context.Background(), &query, getUserByLogin)
 		require.NoError(t, err)

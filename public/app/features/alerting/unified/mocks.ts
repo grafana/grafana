@@ -516,3 +516,26 @@ export function mockStore(recipe: (state: StoreState) => void) {
 
   return configureStore(produce(defaultState, recipe));
 }
+
+export function getGrafanaRule(override?: Partial<CombinedRule>) {
+  return mockCombinedRule({
+    namespace: {
+      groups: [],
+      name: 'Grafana',
+      rulesSource: 'grafana',
+    },
+    ...override,
+  });
+}
+export function getCloudRule(override?: Partial<CombinedRule>) {
+  return mockCombinedRule({
+    namespace: {
+      groups: [],
+      name: 'Cortex',
+      rulesSource: mockDataSource(),
+    },
+    promRule: mockPromAlertingRule(),
+    rulerRule: mockRulerAlertingRule(),
+    ...override,
+  });
+}

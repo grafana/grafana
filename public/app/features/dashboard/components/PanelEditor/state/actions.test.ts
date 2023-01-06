@@ -1,6 +1,6 @@
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { panelModelAndPluginReady, removePanel } from 'app/features/panel/state/reducers';
-import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
 import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
 import { PanelModel } from '../../../state';

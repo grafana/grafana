@@ -1,6 +1,8 @@
 package elasticsearch
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -11,7 +13,7 @@ type Query struct {
 	BucketAggs    []*BucketAgg `json:"bucketAggs"`
 	Metrics       []*MetricAgg `json:"metrics"`
 	Alias         string       `json:"alias"`
-	Interval      string
+	Interval      time.Duration
 	IntervalMs    int64
 	RefID         string
 	MaxDataPoints int64
