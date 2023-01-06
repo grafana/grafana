@@ -8,14 +8,14 @@ import (
 	"github.com/grafana/codejen"
 )
 
-// CoreStructuredKindJenny generates the implementation of
-// [kindsys.Structured] for the provided kind declaration.
+// CoreKindJenny generates the implementation of [kindsys.Core] for the provided
+// kind declaration.
 //
 // gokindsdir should be the relative path to the parent directory that contains
 // all generated kinds.
 //
 // This generator only has output for core structured kinds.
-func CoreStructuredKindJenny(gokindsdir string, cfg *CoreStructuredKindGeneratorConfig) OneToOne {
+func CoreKindJenny(gokindsdir string, cfg *CoreStructuredKindGeneratorConfig) OneToOne {
 	if cfg == nil {
 		cfg = new(CoreStructuredKindGeneratorConfig)
 	}
@@ -25,39 +25,39 @@ func CoreStructuredKindJenny(gokindsdir string, cfg *CoreStructuredKindGenerator
 		}
 	}
 
-	return &genCoreStructuredKind{
+	return &coreKindJenny{
 		gokindsdir: gokindsdir,
 		cfg:        cfg,
 	}
 }
 
-// CoreStructuredKindGeneratorConfig holds configuration options for [CoreStructuredKindJenny].
+// CoreStructuredKindGeneratorConfig holds configuration options for [CoreKindJenny].
 type CoreStructuredKindGeneratorConfig struct {
 	// GenDirName returns the name of the directory in which the file should be
 	// generated. Defaults to DeclForGen.Lineage().Name() if nil.
 	GenDirName func(*DeclForGen) string
 }
 
-type genCoreStructuredKind struct {
+type coreKindJenny struct {
 	gokindsdir string
 	cfg        *CoreStructuredKindGeneratorConfig
 }
 
-var _ OneToOne = &genCoreStructuredKind{}
+var _ OneToOne = &coreKindJenny{}
 
-func (gen *genCoreStructuredKind) JennyName() string {
-	return "CoreStructuredKindJenny"
+func (gen *coreKindJenny) JennyName() string {
+	return "CoreKindJenny"
 }
 
-func (gen *genCoreStructuredKind) Generate(decl *DeclForGen) (*codejen.File, error) {
-	if !decl.IsCoreStructured() {
+func (gen *coreKindJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
+	if !decl.IsCore() {
 		return nil, nil
 	}
 
 	path := filepath.Join(gen.gokindsdir, gen.cfg.GenDirName(decl), decl.Properties.Common().MachineName+"_kind_gen.go")
 	buf := new(bytes.Buffer)
-	if err := tmpls.Lookup("kind_corestructured.tmpl").Execute(buf, decl); err != nil {
-		return nil, fmt.Errorf("failed executing kind_corestructured template for %s: %w", path, err)
+	if err := tmpls.Lookup("kind_core.tmpl").Execute(buf, decl); err != nil {
+		return nil, fmt.Errorf("failed executing kind_core template for %s: %w", path, err)
 	}
 	b, err := postprocessGoFile(genGoFile{
 		path: path,
