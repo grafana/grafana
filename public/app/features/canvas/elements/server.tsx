@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -20,10 +20,10 @@ interface ServerData {
   bulbColor?: string;
 }
 
-const ServerDisplay: FC<CanvasElementProps<ServerConfig, ServerData>> = (props) => {
-  const styles = useStyles2(getStyles);
+type Props = CanvasElementProps<ServerConfig, ServerData>;
 
-  const { data } = props;
+const ServerDisplay = ({ data }: Props) => {
+  const styles = useStyles2(getStyles);
 
   const bulbColor = data?.bulbColor;
   const bulbAnimation = `blink ${data?.blinkRate ? data.blinkRate : 0}s infinite`;
