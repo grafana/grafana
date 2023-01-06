@@ -47,10 +47,32 @@ You can also configure settings specific to the Jaeger data source:
 
 ### Configure trace to logs
 
+{{< figure src="/static/img/docs/explore/traces-to-logs-settings-8-2.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
+
 > **Note:** Available in Grafana v7.4 and higher.
 
-The **Trace to logs** section configures the [trace to logs feature]({{< relref "../../explore/trace-integration/" >}}).
-Select a target data source, limited to Loki and Splunk \[logs\] data sources, and which tags to use in the logs query.
+The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) available when integrating Grafana with Tempo.
+
+**To configure trace to logs:**
+
+1. Select the target data source.
+2. Select which tags to use in the logs query.
+
+The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear.
+
+**Single tag**
+
+Configuring `job` as a tag and clicking on a span link will take you to your configured logs datasource with the query `{job='value from clicked span'}`.
+
+**Multiple tags**
+
+If multiple tags are used they will be concatenated so the logs query would look like `{job='value from clicked span', service='value from clicked span'}`.
+
+**Mapped tags**
+
+For a mapped tag `service.name` with value `service`, clicking on a span link will take you to your configured logs datasource with the query `{service='value from clicked span'}` instead of `{service.name='value from clicked span'}`.
+
+This is useful for instances where your tracing datasource tags and your logs datasource tags don't match 1:1.
 
 | Name                      | Description                                                                                                                                                                        |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
