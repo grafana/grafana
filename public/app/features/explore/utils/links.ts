@@ -12,12 +12,11 @@ import {
   SplitOpen,
   DataLink,
 } from '@grafana/data';
+import { DataLinkFilter } from '@grafana/data/src/field/fieldOverrides';
 import { getTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
-
-type DataLinkFilter = (link: DataLink, scopedVars: ScopedVars) => boolean;
 
 const dataLinkHasRequiredPermissions = (link: DataLink) => {
   return !link.internal || contextSrv.hasAccessToExplore();

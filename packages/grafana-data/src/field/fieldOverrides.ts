@@ -28,6 +28,7 @@ import {
   NumericRange,
   PanelData,
   ScopedVars,
+  TimeRange,
   TimeZone,
   ValueLinkConfig,
 } from '../types';
@@ -356,28 +357,34 @@ export function validateFieldConfig(config: FieldConfig) {
   }
 }
 
+export type DataLinkFilter = (link: DataLink, scopedVars: ScopedVars) => boolean;
+
 export const getLinksSupplier =
   (options: {
-    frame: DataFrame;
+    frame?: DataFrame;
     field: Field;
     fieldScopedVars: ScopedVars;
     replaceVariables: InterpolateFunction;
     timeZone?: TimeZone;
+    dataLinkFilters?: DataLinkFilter[];
   }) =>
   (config: ValueLinkConfig): Array<LinkModel<Field>> => {
-    const { frame, field, fieldScopedVars, replaceVariables, timeZone } = options;
+    const { frame, field, fieldScopedVars, replaceVariables, timeZone, dataLinkFilters } = options;
+
     if (!field.config.links || field.config.links.length === 0) {
       return [];
     }
+
+    // find and set all relevant variables for links
+    const scopedVars: ScopedVars = { ...(fieldScopedVars || {}) };
     const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
-    const { timeField } = getTimeField(frame);
+    const variablesQuery = locationUtil.getVariablesUrlParams();
 
-    return field.config.links.map((link: DataLink) => {
-      const variablesQuery = locationUtil.getVariablesUrlParams();
-      let dataFrameVars = {};
-      let valueVars = {};
+    let valueVars = {};
 
-      // We are not displaying reduction result
+    if (frame) {
+      const { timeField } = getTimeField(frame);
+
       if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
         const fieldsProxy = getFieldDisplayValuesProxy({
           frame,
@@ -385,98 +392,95 @@ export const getLinksSupplier =
           timeZone: timeZone,
         });
 
+        scopedVars['__data'] = {
+          value: {
+            name: frame.name,
+            refId: frame.refId,
+            fields: fieldsProxy,
+          },
+          text: 'Data',
+        };
+
         valueVars = {
           raw: field.values.get(config.valueRowIndex),
           numeric: fieldsProxy[field.name].numeric,
           text: fieldsProxy[field.name].text,
           time: timeField ? timeField.values.get(config.valueRowIndex) : undefined,
         };
-
-        dataFrameVars = {
-          __data: {
-            value: {
-              name: frame.name,
-              refId: frame.refId,
-              fields: fieldsProxy,
-            },
-            text: 'Data',
-          },
+      } else if (config.calculatedValue) {
+        valueVars = {
+          raw: config.calculatedValue.numeric,
+          numeric: config.calculatedValue.numeric,
+          text: formattedValueToString(config.calculatedValue),
         };
-      } else {
-        if (config.calculatedValue) {
-          valueVars = {
-            raw: config.calculatedValue.numeric,
-            numeric: config.calculatedValue.numeric,
-            text: formattedValueToString(config.calculatedValue),
-          };
-        }
       }
+    }
 
-      const variables = {
-        ...fieldScopedVars,
-        __value: {
-          text: 'Value',
-          value: valueVars,
-        },
-        ...dataFrameVars,
-        [DataLinkBuiltInVars.keepTime]: {
-          text: timeRangeUrl,
-          value: timeRangeUrl,
-        },
-        [DataLinkBuiltInVars.includeVars]: {
-          text: variablesQuery,
-          value: variablesQuery,
-        },
-      };
+    scopedVars['__value'] = {
+      text: 'Value',
+      value: valueVars,
+    };
 
+    scopedVars[DataLinkBuiltInVars.keepTime] = {
+      text: timeRangeUrl,
+      value: timeRangeUrl,
+    };
+    scopedVars[DataLinkBuiltInVars.includeVars] = {
+      text: variablesQuery,
+      value: variablesQuery,
+    };
+
+    const filteredLinks = field.config.links.filter((link) => {
+      return dataLinkFilters ? dataLinkFilters.every((filter) => filter(link, scopedVars)) : true;
+    });
+
+    return filteredLinks.map((link: DataLink) => {
       if (link.onClick) {
         return {
           href: link.url,
-          title: replaceVariables(link.title || '', variables),
+          title: replaceVariables(link.title || '', scopedVars),
           target: link.targetBlank ? '_blank' : undefined,
           onClick: (evt, origin) => {
             link.onClick!({
               origin: origin ?? field,
               e: evt,
-              replaceVariables: (v) => replaceVariables(v, variables),
+              replaceVariables: (v) => replaceVariables(v, scopedVars),
             });
           },
           origin: field,
         };
-      }
-
-      if (link.internal) {
+      } else if (link.internal) {
         // For internal links at the moment only destination is Explore.
         return mapInternalLinkToExplore({
           link,
           internalLink: link.internal,
-          scopedVars: variables,
+          scopedVars: scopedVars,
           field,
-          range: {} as any,
+          range: {} as TimeRange,
           replaceVariables,
         });
+      } else {
+        let href = link.onBuildUrl
+          ? link.onBuildUrl({
+              origin: field,
+              replaceVariables,
+            })
+          : link.url;
+
+        if (href) {
+          locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
+          href = replaceVariables(href, scopedVars);
+          href = locationUtil.processUrl(href);
+        }
+
+        const info: LinkModel<Field> = {
+          href,
+          title: replaceVariables(link.title || '', scopedVars),
+          target: link.targetBlank ? '_blank' : undefined,
+          origin: field,
+        };
+        return info;
       }
-
-      let href = link.onBuildUrl
-        ? link.onBuildUrl({
-            origin: field,
-            replaceVariables,
-          })
-        : link.url;
-
-      if (href) {
-        locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = replaceVariables(href, variables);
-        href = locationUtil.processUrl(href);
-      }
-
-      const info: LinkModel<Field> = {
-        href,
-        title: replaceVariables(link.title || '', variables),
-        target: link.targetBlank ? '_blank' : undefined,
-        origin: field,
-      };
-      return info;
     });
   };
 
