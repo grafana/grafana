@@ -26,6 +26,7 @@ const (
 
 type ClientParams struct {
 	SyncUser            bool
+	SyncTeamMembers     bool
 	AllowSignUp         bool
 	EnableDisabledUsers bool
 }
@@ -79,6 +80,10 @@ type Identity struct {
 	HelpFlags1     user.HelpFlags1
 	LastSeenAt     time.Time
 	Teams          []int64
+
+	// idP Groups that the user is a member of. This is only populated if the
+	// identity provider supports groups.
+	Groups []string
 
 	OAuthToken   *oauth2.Token
 	SessionToken *auth.UserToken
