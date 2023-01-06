@@ -200,8 +200,13 @@ func (ng *AlertNG) init() error {
 		AlertSender:          alertsRouter,
 	}
 
-	historian := historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)
-	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, ng.imageService, clk, historian)
+	var history state.Historian
+	if ng.Cfg.UnifiedAlerting.StateHistory.Enabled {
+		history = historian.NewAnnotationHistorian(ng.annotationsRepo, ng.dashboardService)
+	} else {
+		history = historian.NewNopHistorian()
+	}
+	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, ng.imageService, clk, history)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title

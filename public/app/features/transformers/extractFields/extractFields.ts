@@ -26,7 +26,8 @@ export const extractFieldsTransformer: SynchronousDataTransformerInfo<ExtractFie
   description: 'Parse fields from the contends of another',
   defaultOptions: {},
 
-  operator: (options) => (source) => source.pipe(map((data) => extractFieldsTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => extractFieldsTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: ExtractFieldsOptions) => {
     return (data: DataFrame[]) => {

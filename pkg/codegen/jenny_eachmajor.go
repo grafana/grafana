@@ -30,9 +30,6 @@ func (j *lmox) JennyName() string {
 }
 
 func (j *lmox) Generate(decl *DeclForGen) (codejen.Files, error) {
-	if decl.IsRaw() {
-		return nil, nil
-	}
 	comm := decl.Properties.Common()
 	sfg := SchemaForGen{
 		Name:    comm.Name,

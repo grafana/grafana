@@ -97,6 +97,8 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
     traceFrames: [],
     nodeGraphFrames: [],
     flameGraphFrames: [],
+    rawPrometheusFrames: [],
+    rawPrometheusResult: null,
   };
 
   return { ...defaults, ...args };
@@ -128,6 +130,8 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
+      rawPrometheusResult: null,
     });
   });
 
@@ -153,6 +157,8 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
+      rawPrometheusResult: null,
     });
   });
 
@@ -181,6 +187,8 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
+      rawPrometheusResult: null,
     });
   });
 });

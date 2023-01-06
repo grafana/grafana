@@ -11,7 +11,6 @@ export const plugin = new PanelPlugin<PanelOptions>(TextPanel)
       .addRadio({
         path: 'mode',
         name: 'Mode',
-        description: 'text mode of the panel',
         settings: {
           options: [
             { value: TextMode.Markdown, label: 'Markdown' },
@@ -49,7 +48,6 @@ export const plugin = new PanelPlugin<PanelOptions>(TextPanel)
         id: 'content',
         path: 'content',
         name: 'Content',
-        description: 'Content of the panel',
         editor: TextPanelEditor,
         defaultValue: defaultPanelOptions.content,
       });
