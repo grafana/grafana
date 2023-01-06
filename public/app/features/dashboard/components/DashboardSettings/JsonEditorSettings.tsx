@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/PageNew/Page';
+import { getDashboardSchema } from 'app/features/inspector/panelSchemas';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
@@ -17,6 +19,10 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
     await getDashboardSrv().saveJSONDashboard(dashboardJson);
     dashboardWatcher.reloadPage();
   };
+
+  const dashboardSchema = useAsync(() => {
+    return getDashboardSchema();
+  });
 
   const styles = useStyles2(getStyles);
   const subTitle =
@@ -32,6 +38,7 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
           showLineNumbers={true}
           onBlur={setDashboardJson}
           containerStyles={styles.codeEditor}
+          jsonValidation={dashboardSchema?.value}
         />
         {dashboard.meta.canSave && (
           <div>

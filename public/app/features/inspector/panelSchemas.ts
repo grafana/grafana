@@ -1,5 +1,22 @@
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 
+export async function getDashboardSchema(): Promise<monacoType.languages.json.DiagnosticsOptions | undefined> {
+  return Promise.resolve({
+    validate: true,
+    schemas: [
+      {
+        uri: 'http://dashboard-xxx.json',
+        fileMatch: ['*'], // associate with our model
+        schema: '$ref:http://dashboard.json/#/components/schemas/dashboard',
+      },
+      {
+        uri: 'http://dashboard.json',
+        schema: dashboard,
+      },
+    ],
+  });
+}
+
 export async function getPanelSchema(type: string): Promise<monacoType.languages.json.DiagnosticsOptions | undefined> {
   const openapi = hardcoded[type];
   if (!openapi) {
@@ -16,11 +33,11 @@ export async function getPanelSchema(type: string): Promise<monacoType.languages
           type: 'object',
           properties: {
             id: {
-              description: 'if showing all values limit',
+              description: 'the numeric unique id within a dashboard',
               type: 'number',
             },
             gridPos: {
-              description: 'if showing all values limit',
+              description: 'The grid layout coordinates',
               type: 'object',
             },
             type: {
@@ -29,7 +46,8 @@ export async function getPanelSchema(type: string): Promise<monacoType.languages
             },
             pluginVersion: {
               type: 'string',
-              description: 'this gets bumped whenever the panel is saved',
+              description:
+                'The plugin version defined when the panel was last saved.  This updated when the dashbaord is saved again.',
             },
             title: {
               type: 'string',
