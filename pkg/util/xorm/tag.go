@@ -25,8 +25,6 @@ type tagContext struct {
 	isUnique        bool
 	indexNames      map[string]int
 	engine          *Engine
-	hasCacheTag     bool
-	hasNoCacheTag   bool
 	ignoreNext      bool
 }
 
@@ -52,8 +50,6 @@ var (
 		"NOTNULL":  NotNullTagHandler,
 		"INDEX":    IndexTagHandler,
 		"UNIQUE":   UniqueTagHandler,
-		"CACHE":    CacheTagHandler,
-		"NOCACHE":  NoCacheTagHandler,
 		"COMMENT":  CommentTagHandler,
 	}
 )
@@ -103,17 +99,6 @@ func NotNullTagHandler(ctx *tagContext) error {
 // AutoIncrTagHandler describes autoincr tag handler
 func AutoIncrTagHandler(ctx *tagContext) error {
 	ctx.col.IsAutoIncrement = true
-	/*
-		if len(ctx.params) > 0 {
-			autoStartInt, err := strconv.Atoi(ctx.params[0])
-			if err != nil {
-				return err
-			}
-			ctx.col.AutoIncrStart = autoStartInt
-		} else {
-			ctx.col.AutoIncrStart = 1
-		}
-	*/
 	return nil
 }
 
@@ -290,22 +275,6 @@ func ExtendsTagHandler(ctx *tagContext) error {
 		}
 	default:
 		//TODO: warning
-	}
-	return nil
-}
-
-// CacheTagHandler describes cache tag handler
-func CacheTagHandler(ctx *tagContext) error {
-	if !ctx.hasCacheTag {
-		ctx.hasCacheTag = true
-	}
-	return nil
-}
-
-// NoCacheTagHandler describes nocache tag handler
-func NoCacheTagHandler(ctx *tagContext) error {
-	if !ctx.hasNoCacheTag {
-		ctx.hasNoCacheTag = true
 	}
 	return nil
 }

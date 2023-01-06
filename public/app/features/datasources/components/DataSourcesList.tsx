@@ -21,6 +21,8 @@ export function DataSourcesList() {
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
   const hasFetched = useSelector(({ dataSources }: StoreState) => dataSources.hasFetched);
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
+  const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+  const hasExploreRights = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
   return (
     <DataSourcesListView
@@ -28,6 +30,8 @@ export function DataSourcesList() {
       dataSourcesCount={dataSourcesCount}
       isLoading={!hasFetched}
       hasCreateRights={hasCreateRights}
+      hasWriteRights={hasWriteRights}
+      hasExploreRights={hasExploreRights}
     />
   );
 }
@@ -37,12 +41,20 @@ export type ViewProps = {
   dataSourcesCount: number;
   isLoading: boolean;
   hasCreateRights: boolean;
+  hasWriteRights: boolean;
+  hasExploreRights: boolean;
 };
 
-export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, hasCreateRights }: ViewProps) {
+export function DataSourcesListView({
+  dataSources,
+  dataSourcesCount,
+  isLoading,
+  hasCreateRights,
+  hasWriteRights,
+  hasExploreRights,
+}: ViewProps) {
   const styles = useStyles2(getStyles);
   const dataSourcesRoutes = useDataSourcesRoutes();
-  const canExploreDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
   if (isLoading) {
     return <PageLoader />;
@@ -75,7 +87,7 @@ export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, 
           const dsLink = config.appSubUrl + dataSourcesRoutes.Edit.replace(/:uid/gi, dataSource.uid);
           return (
             <li key={dataSource.uid}>
-              <Card href={dsLink}>
+              <Card href={hasWriteRights ? dsLink : undefined}>
                 <Card.Heading>{dataSource.name}</Card.Heading>
                 <Card.Figure>
                   <img src={dataSource.typeLogoUrl} alt="" height="40px" width="40px" className={styles.logo} />
@@ -96,7 +108,7 @@ export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, 
                   >
                     Build a dashboard
                   </LinkButton>
-                  {canExploreDataSources && (
+                  {hasExploreRights && (
                     <LinkButton
                       icon="compass"
                       fill="outline"

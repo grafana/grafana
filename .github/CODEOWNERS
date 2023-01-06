@@ -39,8 +39,8 @@ go.sum @grafana/backend-platform
 /pkg/api/ @grafana/backend-platform
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
-/pkg/components/apikeygen/ @grafana/backend-platform
-/pkg/components/apikeygenprefixed/ @grafana/backend-platform
+/pkg/components/apikeygen/ @grafana/grafana-authnz-team
+/pkg/components/apikeygenprefixed/ @grafana/grafana-authnz-team
 /pkg/components/dashdiffs/ @grafana/backend-platform
 /pkg/components/imguploader/ @grafana/backend-platform
 /pkg/components/loki/ @grafana/backend-platform
@@ -104,7 +104,7 @@ go.sum @grafana/backend-platform
 /pkg/services/star/ @grafana/backend-platform
 /pkg/services/stats/ @grafana/backend-platform
 /pkg/services/tag/ @grafana/backend-platform
-/pkg/services/team/ @grafana/backend-platform
+/pkg/services/team/ @grafana/grafana-authnz-team
 /pkg/services/temp_user/ @grafana/backend-platform
 /pkg/services/updatechecker/ @grafana/backend-platform
 /pkg/services/user/ @grafana/backend-platform
@@ -236,7 +236,7 @@ tsconfig.json @grafana/frontend-ops
 /public/app/features/storage/ @grafana/grafana-edge-squad
 /public/app/features/live/ @grafana/grafana-edge-squad
 /public/app/features/query-library/ @grafana/grafana-edge-squad
-/public/app/features/explore/ @grafana/observability-experience-squad
+/public/app/features/explore/ @grafana/explore-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
 /public/app/features/transformers/spatial/ @grafana/grafana-edge-squad
 /public/app/plugins/panel/alertlist/ @grafana/alerting-squad-frontend
@@ -316,7 +316,7 @@ lerna.json @grafana/frontend-ops
 
 # Support bundles
 /public/app/features/support-bundles/ @grafana/grafana-authnz-team
-/pkg/infra/supportbundles/ @grafana/grafana-authnz-team
+/pkg/services/supportbundles/ @grafana/grafana-authnz-team
 
 # Grafana Partnerships Team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team

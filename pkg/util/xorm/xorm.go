@@ -92,7 +92,6 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		TagIdentifier:  "xorm",
 		TZLocation:     time.Local,
 		tagHandlers:    defaultTagHandlers,
-		cachers:        make(map[string]core.Cacher),
 		defaultContext: context.Background(),
 	}
 
@@ -110,16 +109,4 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 	runtime.SetFinalizer(engine, close)
 
 	return engine, nil
-}
-
-// NewEngineWithParams new a db manager with params. The params will be passed to dialect.
-func NewEngineWithParams(driverName string, dataSourceName string, params map[string]string) (*Engine, error) {
-	engine, err := NewEngine(driverName, dataSourceName)
-	engine.dialect.SetParams(params)
-	return engine, err
-}
-
-// Clone clone an engine
-func (engine *Engine) Clone() (*Engine, error) {
-	return NewEngine(engine.DriverName(), engine.DataSourceName())
 }

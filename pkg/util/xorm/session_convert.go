@@ -17,6 +17,11 @@ import (
 	"xorm.io/core"
 )
 
+const (
+	zeroTime0 = "0000-00-00 00:00:00"
+	zeroTime1 = "0001-01-01 00:00:00"
+)
+
 func (session *Session) str2Time(col *core.Column, data string) (outTime time.Time, outErr error) {
 	sdata := strings.TrimSpace(data)
 	var x time.Time
@@ -627,7 +632,7 @@ func (session *Session) value2Interface(col *core.Column, fieldValue reflect.Val
 			}
 			return bytes, nil
 		}
-		return nil, fmt.Errorf("Unsupported type %v", fieldValue.Type())
+		return nil, fmt.Errorf("unsupported type %v", fieldValue.Type())
 	case reflect.Complex64, reflect.Complex128:
 		bytes, err := DefaultJSONHandler.Marshal(fieldValue.Interface())
 		if err != nil {

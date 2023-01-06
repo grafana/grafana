@@ -17,7 +17,7 @@ import (
 )
 
 // ErrNoElementsOnSlice represents an error there is no element when insert
-var ErrNoElementsOnSlice = errors.New("No element on slice when insert")
+var ErrNoElementsOnSlice = errors.New("no element on slice when insert")
 
 // Insert insert one or more beans
 func (session *Session) Insert(beans ...interface{}) (int64, error) {
@@ -35,32 +35,30 @@ func (session *Session) Insert(beans ...interface{}) (int64, error) {
 	}()
 
 	for _, bean := range beans {
-		switch bean.(type) {
+		switch bean := bean.(type) {
 		case map[string]interface{}:
-			cnt, err := session.insertMapInterface(bean.(map[string]interface{}))
+			cnt, err := session.insertMapInterface(bean)
 			if err != nil {
 				return affected, err
 			}
 			affected += cnt
 		case []map[string]interface{}:
-			s := bean.([]map[string]interface{})
-			for i := 0; i < len(s); i++ {
-				cnt, err := session.insertMapInterface(s[i])
+			for i := 0; i < len(bean); i++ {
+				cnt, err := session.insertMapInterface(bean[i])
 				if err != nil {
 					return affected, err
 				}
 				affected += cnt
 			}
 		case map[string]string:
-			cnt, err := session.insertMapString(bean.(map[string]string))
+			cnt, err := session.insertMapString(bean)
 			if err != nil {
 				return affected, err
 			}
 			affected += cnt
 		case []map[string]string:
-			s := bean.([]map[string]string)
-			for i := 0; i < len(s); i++ {
-				cnt, err := session.insertMapString(s[i])
+			for i := 0; i < len(bean); i++ {
+				cnt, err := session.insertMapString(bean[i])
 				if err != nil {
 					return affected, err
 				}
@@ -144,7 +142,6 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 		if processor, ok := interface{}(elemValue).(BeforeInsertProcessor); ok {
 			processor.BeforeInsert()
 		}
-		// --
 
 		if i == 0 {
 			for _, col := range table.Columns() {
@@ -270,8 +267,6 @@ func (session *Session) innerInsertMulti(rowsSlicePtr interface{}) (int64, error
 		return 0, err
 	}
 
-	session.cacheInsert(tableName)
-
 	lenAfterClosures := len(session.afterClosures)
 	for i := 0; i < size; i++ {
 		elemValue := reflect.Indirect(sliceValue.Index(i)).Addr().Interface()
@@ -358,9 +353,6 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 	var tableName = session.statement.TableName()
 	var output string
-	if session.engine.dialect.DBType() == core.MSSQL && len(table.AutoIncrement) > 0 {
-		output = fmt.Sprintf(" OUTPUT Inserted.%s", table.AutoIncrement)
-	}
 
 	var buf = builder.NewWriter()
 	if _, err := buf.WriteString(fmt.Sprintf("INSERT INTO %s", session.engine.Quote(tableName))); err != nil {
@@ -477,8 +469,6 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 
 		defer handleAfterInsertProcessorFunc(bean)
 
-		session.cacheInsert(tableName)
-
 		if table.Version != "" && session.statement.checkVersion {
 			verValue, err := table.VersionColumn().ValueOf(bean)
 			if err != nil {
@@ -510,15 +500,13 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		aiValue.Set(int64ToIntValue(id, aiValue.Type()))
 
 		return 1, nil
-	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == core.POSTGRES || session.engine.dialect.DBType() == core.MSSQL) {
+	} else if len(table.AutoIncrement) > 0 && (session.engine.dialect.DBType() == core.POSTGRES) {
 		res, err := session.queryBytes(sqlStr, args...)
 
 		if err != nil {
 			return 0, err
 		}
 		defer handleAfterInsertProcessorFunc(bean)
-
-		session.cacheInsert(tableName)
 
 		if table.Version != "" && session.statement.checkVersion {
 			verValue, err := table.VersionColumn().ValueOf(bean)
@@ -558,8 +546,6 @@ func (session *Session) innerInsert(bean interface{}) (int64, error) {
 		}
 
 		defer handleAfterInsertProcessorFunc(bean)
-
-		session.cacheInsert(tableName)
 
 		if table.Version != "" && session.statement.checkVersion {
 			verValue, err := table.VersionColumn().ValueOf(bean)
@@ -604,19 +590,6 @@ func (session *Session) InsertOne(bean interface{}) (int64, error) {
 	}
 
 	return session.innerInsert(bean)
-}
-
-func (session *Session) cacheInsert(table string) error {
-	if !session.statement.UseCache {
-		return nil
-	}
-	cacher := session.engine.getCacher(table)
-	if cacher == nil {
-		return nil
-	}
-	session.engine.logger.Debug("[cache] clear sql:", table)
-	cacher.ClearIds(table)
-	return nil
 }
 
 // genInsertColumns generates insert needed columns
@@ -838,10 +811,6 @@ func (session *Session) insertMap(columns []string, args []interface{}) (int64, 
 
 	sql := w.String()
 	args = w.Args()
-
-	if err := session.cacheInsert(tableName); err != nil {
-		return 0, err
-	}
 
 	res, err := session.exec(sql, args...)
 	if err != nil {

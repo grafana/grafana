@@ -1,20 +1,23 @@
-import React, { RefCallback } from 'react';
+import React, { RefCallback, useMemo } from 'react';
 import { useMeasure } from 'react-use';
 
-import { PluginContextProvider } from '@grafana/data';
-import { PanelChrome, ErrorBoundaryAlert } from '@grafana/ui';
+import { PluginContextProvider, useFieldOverrides } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { PanelChrome, ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
-import { useFieldOverrides } from 'app/features/panel/components/PanelRenderer';
 
 import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps } from '../../core/types';
 import { SceneQueryRunner } from '../../querying/SceneQueryRunner';
+import { CustomFormatterFn } from '../../variables/interpolation/sceneInterpolator';
 import { SceneDragHandle } from '../SceneDragHandle';
 
 import { VizPanel } from './VizPanel';
 
 export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   const { title, options, fieldConfig, pluginId, pluginLoadError, $data, placement } = model.useState();
+  const theme = useTheme2();
+  const replace = useMemo(() => getTemplateSrv().replace, []);
   const [ref, { width, height }] = useMeasure();
   const plugin = model.getPlugin();
   const { data } = sceneGraph.getData(model).useState();
@@ -30,7 +33,7 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   // Not sure we need to subscribe to this state
   const timeZone = sceneGraph.getTimeRange(model).state.timeZone;
 
-  const dataWithOverrides = useFieldOverrides(plugin, fieldConfig, data, timeZone);
+  const dataWithOverrides = useFieldOverrides(plugin, fieldConfig, data, timeZone, theme, replace);
 
   if (pluginLoadError) {
     return <div>Failed to load plugin: {pluginLoadError}</div>;
@@ -77,7 +80,9 @@ export function VizPanelRenderer({ model }: SceneComponentProps<VizPanel>) {
                     width={innerWidth}
                     height={innerHeight}
                     renderCounter={0}
-                    replaceVariables={(str: string) => str}
+                    replaceVariables={(str, scopedVars, format) =>
+                      sceneGraph.interpolate(model, str, scopedVars, format as string | CustomFormatterFn | undefined)
+                    }
                     onOptionsChange={model.onOptionsChange}
                     onFieldConfigChange={model.onFieldConfigChange}
                     onChangeTimeRange={model.onChangeTimeRange}
