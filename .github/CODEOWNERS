@@ -353,6 +353,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/datasources/ @grafana/user-essentials
 /public/app/features/dimensions/ @grafana/grafana-edge-squad
 /public/app/features/explore/ @grafana/explore-squad
+/public/app/features/expressions/ @grafana/observability-metrics
 /public/app/features/folders/ @grafana/user-essentials
 /public/app/features/inspector/ @grafana/user-essentials
 /public/app/features/invites/ @grafana/user-essentials
@@ -367,14 +368,16 @@ lerna.json @grafana/frontend-ops
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
 /public/app/features/profile/ @grafana/user-essentials
+/public/app/features/runtime/ @ryantxu
 /public/app/features/query/ @grafana/dashboards-squad
 /public/app/features/query-library/ @grafana/grafana-edge-squad
 /public/app/features/sandbox/ @grafana/user-essentials
 /public/app/features/scenes/ @grafana/dashboards-squad
 /public/app/features/search/ @grafana/user-essentials
 /public/app/features/serviceaccounts/ @grafana/grafana-authnz-team
-/public/app/features/teams/ @grafana/grafana-authnz-team
 /public/app/features/storage/ @grafana/grafana-edge-squad
+/public/app/features/teams/ @grafana/grafana-authnz-team
+/public/app/features/templating/ @grafana/dashboards-squad
 /public/app/features/transformers/ @grafana/grafana-edge-squad
 /public/app/features/users/ @grafana/grafana-authnz-team
 /public/app/features/variables/ @grafana/dashboards-squad
@@ -400,7 +403,10 @@ lerna.json @grafana/frontend-ops
 /public/app/angular/ @torkelo
 /public/app/app.ts @grafana/frontend-ops
 /public/app/dev.ts @grafana/frontend-ops
+/public/app/index.ts @grafana/frontend-ops
 /public/app/AppWrapper.tsx @grafana/frontend-ops
+/public/app/partials/ @grafana/user-essentials
+
 
 
 
@@ -419,6 +425,7 @@ lerna.json @grafana/frontend-ops
 /public/img/icons/unicons/ @grafana/design-system
 
 # Core datasources
+/public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
 /public/app/plugins/datasource/cloudwatch/ @grafana/aws-plugins
 /public/app/plugins/datasource/elasticsearch/ @grafana/observability-logs
 /public/app/plugins/datasource/grafana-azure-monitor-datasource/ @grafana/cloud-provider-plugins
@@ -426,6 +433,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/influxdb/ @grafana/observability-metrics
 /public/app/plugins/datasource/jaeger/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/loki/ @grafana/observability-logs
+/public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mssql/ @grafana/grafana-bi-squad
 /public/app/plugins/datasource/mysql/ @grafana/grafana-bi-squad
 /public/app/plugins/datasource/opentsdb/ @grafana/backend-platform
