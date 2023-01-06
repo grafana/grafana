@@ -227,7 +227,7 @@ tsconfig.json @grafana/frontend-ops
 /packages/jaeger-ui-components// @grafana/observability-traces-and-profiling
 /plugins-bundled/ @grafana/plugins-platform-frontend
 # public folder
-/public/app/core/components/TimePicker/ @grafana/grafana-bi-squad
+/public/app/core/components/TimePicker/ @grafana/user-essentials
 /public/app/core/components/Layers/ @grafana/grafana-edge-squad
 /public/app/features/canvas/ @grafana/grafana-edge-squad
 /public/app/features/comments/ @grafana/grafana-edge-squad
