@@ -121,7 +121,7 @@ const ServerDisplay: FC<CanvasElementProps<ServerConfig, ServerData>> = (props) 
   );
 };
 
-export const serverItem: CanvasElementItem<any, any> = {
+export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
   id: 'server',
   name: 'Server',
   description: 'Basic server with status',
