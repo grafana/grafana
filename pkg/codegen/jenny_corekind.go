@@ -15,9 +15,9 @@ import (
 // all generated kinds.
 //
 // This generator only has output for core structured kinds.
-func CoreKindJenny(gokindsdir string, cfg *CoreStructuredKindGeneratorConfig) OneToOne {
+func CoreKindJenny(gokindsdir string, cfg *CoreKindJennyConfig) OneToOne {
 	if cfg == nil {
-		cfg = new(CoreStructuredKindGeneratorConfig)
+		cfg = new(CoreKindJennyConfig)
 	}
 	if cfg.GenDirName == nil {
 		cfg.GenDirName = func(decl *DeclForGen) string {
@@ -31,8 +31,8 @@ func CoreKindJenny(gokindsdir string, cfg *CoreStructuredKindGeneratorConfig) On
 	}
 }
 
-// CoreStructuredKindGeneratorConfig holds configuration options for [CoreKindJenny].
-type CoreStructuredKindGeneratorConfig struct {
+// CoreKindJennyConfig holds configuration options for [CoreKindJenny].
+type CoreKindJennyConfig struct {
 	// GenDirName returns the name of the directory in which the file should be
 	// generated. Defaults to DeclForGen.Lineage().Name() if nil.
 	GenDirName func(*DeclForGen) string
@@ -40,7 +40,7 @@ type CoreStructuredKindGeneratorConfig struct {
 
 type coreKindJenny struct {
 	gokindsdir string
-	cfg        *CoreStructuredKindGeneratorConfig
+	cfg        *CoreKindJennyConfig
 }
 
 var _ OneToOne = &coreKindJenny{}

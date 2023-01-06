@@ -1,7 +1,7 @@
 {
   "type": "datasource",
-  "name": "Missing slot impl",
-  "id": "missing-slot-datasource",
+  "name": "Missing kind impl",
+  "id": "missing-kind-datasource",
   "backend": true,
   "state": "alpha",
   "info": {

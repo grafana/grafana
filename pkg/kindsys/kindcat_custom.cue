@@ -7,10 +7,9 @@ package kindsys
 //
 // Grafana provides Kubernetes apiserver-shaped HTTP APIs for interacting with custom
 // kinds - the same API patterns (and clients) used to interact with k8s CustomResources.
-#Custom: S={
+Custom: S={
 	_sharedKind
 
 	lineage: { name: S.machineName }
 	lineageIsGroup: false
-	...
 }
