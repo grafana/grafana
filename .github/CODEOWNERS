@@ -180,6 +180,7 @@ WORKFLOW.md @torkelo
 /devenv/docker/blocks/memcached/ @grafana/backend-platform
 /devenv/docker/blocks/mssql/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/mssql_arm64/ @grafana/grafana-bi-squad
+/devenv/docker/blocks/mssql_tests/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/mssql_tls/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/mysql/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/mysql_exporter/ @grafana/grafana-bi-squad
@@ -208,7 +209,7 @@ WORKFLOW.md @torkelo
 /devenv/jsonnet/ @grafana/grafana-edge-squad
 /devenv/local-npm/ @grafana/frontend-ops
 /devenv/vscode/ @grafana/frontend-ops
-
+/devenv/setup.sh @grafana/backend-platform
 
 # Emails
 /emails/ @grafana/alerting-squad-frontend
@@ -336,18 +337,47 @@ lerna.json @grafana/frontend-ops
 
 
 # public folder
+/public/app/core/ @grafana/user-essentials
 /public/app/core/components/TimePicker/ @grafana/user-essentials
 /public/app/core/components/Layers/ @grafana/grafana-edge-squad
+/public/app/features/all.ts @grafana/user-essentials
+/public/app/features/admin/ @grafana/grafana-authnz-team
+/public/app/features/annotations/ @grafana/user-essentials
+/public/app/features/api-keys/ @grafana/user-essentials
 /public/app/features/canvas/ @grafana/grafana-edge-squad
+/public/app/features/commandPalette/ @grafana/user-essentials
 /public/app/features/comments/ @grafana/grafana-edge-squad
+/public/app/features/connections/ @grafana/cloud-auth-frontend
+/public/app/features/correlations/ @grafana/explore-squad
+/public/app/features/dashboard/ @grafana/dashboards-squad
+/public/app/features/datasources/ @grafana/user-essentials
 /public/app/features/dimensions/ @grafana/grafana-edge-squad
-/public/app/features/geo/ @grafana/grafana-edge-squad
-/public/app/features/storage/ @grafana/grafana-edge-squad
-/public/app/features/live/ @grafana/grafana-edge-squad
-/public/app/features/query-library/ @grafana/grafana-edge-squad
 /public/app/features/explore/ @grafana/explore-squad
+/public/app/features/folders/ @grafana/user-essentials
+/public/app/features/inspector/ @grafana/user-essentials
+/public/app/features/invites/ @grafana/user-essentials
+/public/app/features/geo/ @grafana/grafana-edge-squad
+/public/app/features/library-panels/ @grafana/user-essentials
+/public/app/features/logs/ @grafana/observability-logs
+/public/app/features/live/ @grafana/grafana-edge-squad
+/public/app/features/manage-dashboards/ @grafana/dashboards-squad
+/public/app/features/notifications/ @grafana/user-essentials
+/public/app/features/org/ @grafana/user-essentials
+/public/app/features/panel/ @grafana/user-essentials
+/public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
-/public/app/features/transformers/spatial/ @grafana/grafana-edge-squad
+/public/app/features/profile/ @grafana/user-essentials
+/public/app/features/query/ @grafana/dashboards-squad
+/public/app/features/query-library/ @grafana/grafana-edge-squad
+/public/app/features/sandbox/ @grafana/user-essentials
+/public/app/features/scenes/ @grafana/dashboards-squad
+/public/app/features/search/ @grafana/user-essentials
+/public/app/features/serviceaccounts/ @grafana/grafana-authnz-team
+/public/app/features/teams/ @grafana/grafana-authnz-team
+/public/app/features/storage/ @grafana/grafana-edge-squad
+/public/app/features/transformers/ @grafana/grafana-edge-squad
+/public/app/features/users/ @grafana/grafana-authnz-team
+/public/app/features/variables/ @grafana/dashboards-squad
 /public/app/plugins/panel/alertlist/ @grafana/alerting-squad-frontend
 /public/app/plugins/panel/barchart/ @grafana/grafana-bi-squad
 /public/app/plugins/panel/heatmap/ @grafana/grafana-bi-squad
@@ -368,6 +398,9 @@ lerna.json @grafana/frontend-ops
 /public/api-merged.json @grafana/backend-platform
 /public/api-spec.json @grafana/backend-platform
 /public/app/angular/ @torkelo
+/public/app/app.ts @grafana/frontend-ops
+/public/app/dev.ts @grafana/frontend-ops
+/public/app/AppWrapper.tsx @grafana/frontend-ops
 
 
 
