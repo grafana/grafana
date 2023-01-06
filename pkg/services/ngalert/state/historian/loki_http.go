@@ -18,7 +18,7 @@ func newLokiClient(u *url.URL, logger log.Logger) *httpLokiClient {
 	return &httpLokiClient{
 		client: http.Client{},
 		url:    u,
-		log:    logger.New("backend", "loki"),
+		log:    logger.New("protocol", "http"),
 	}
 }
 
