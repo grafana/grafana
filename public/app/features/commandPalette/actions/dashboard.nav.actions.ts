@@ -9,7 +9,7 @@ const MAX_ITEMS = 100;
 
 const SECTION_STARRED = {
   name: 'Starred dashboards',
-  priority: 1,
+  priority: 3,
 };
 
 const SECTION_RECENT = {
@@ -19,7 +19,7 @@ const SECTION_RECENT = {
 
 const SECTION_SEARCH_RESULTS = {
   name: 'Dashboard search results',
-  priority: 3,
+  priority: 1,
 };
 
 async function getRecentDashboards() {
@@ -80,7 +80,7 @@ async function getInitialDashboards(parentId: string): Promise<Action[]> {
     };
   });
 
-  return [...recentDashboardActions, ...starredDashboardActions];
+  return [...starredDashboardActions, ...recentDashboardActions];
 }
 
 export async function getDashboardSearchResultActions(parentId: string, searchQuery: string): Promise<Action[]> {
