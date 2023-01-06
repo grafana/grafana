@@ -43,11 +43,14 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipConfi
       return false;
     }
 
-    const cfgA = fA.config as any;
-    const cfgB = fB.config as any;
+    const cfgA = fA.config;
+    const cfgB = fB.config;
 
-    let aKeys = Object.keys(cfgA);
-    let bKeys = Object.keys(cfgB);
+    // need to type assert on the object keys here
+    // see e.g. https://github.com/Microsoft/TypeScript/issues/12870
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    let aKeys = Object.keys(cfgA) as Array<keyof typeof cfgA>;
+    let bKeys = Object.keys(cfgB) as Array<keyof typeof cfgB>;
 
     if (aKeys.length !== bKeys.length) {
       return false;

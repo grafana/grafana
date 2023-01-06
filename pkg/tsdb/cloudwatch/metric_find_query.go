@@ -17,7 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 )
 
@@ -316,7 +315,6 @@ func (e *cloudWatchExecutor) handleGetLogGroups(pluginCtx backend.PluginContext,
 	if err != nil || response == nil {
 		return nil, err
 	}
-
 	result := make([]suggestData, 0)
 	for _, logGroup := range response.LogGroups {
 		logGroupName := *logGroup.LogGroupName

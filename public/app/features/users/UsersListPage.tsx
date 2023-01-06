@@ -48,7 +48,7 @@ export interface State {
 
 const pageLimit = 30;
 
-export class UsersListPage extends PureComponent<Props, State> {
+export class UsersListPageUnconnected extends PureComponent<Props, State> {
   declare externalUserMngInfoHtml: string;
 
   constructor(props: Props) {
@@ -127,19 +127,23 @@ export class UsersListPage extends PureComponent<Props, State> {
     const externalUserMngInfoHtml = this.externalUserMngInfoHtml;
 
     return (
-      <Page navId="users">
-        <Page.Contents isLoading={!hasFetched}>
-          <>
-            <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
-            {externalUserMngInfoHtml && (
-              <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
-            )}
-            {hasFetched && this.renderTable()}
-          </>
-        </Page.Contents>
-      </Page>
+      <Page.Contents isLoading={!hasFetched}>
+        <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
+        {externalUserMngInfoHtml && (
+          <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
+        )}
+        {hasFetched && this.renderTable()}
+      </Page.Contents>
     );
   }
 }
 
-export default connector(UsersListPage);
+export const UsersListPageContent = connector(UsersListPageUnconnected);
+
+export default function UsersListPage() {
+  return (
+    <Page navId="users">
+      <UsersListPageContent />
+    </Page>
+  );
+}

@@ -20,10 +20,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -52,7 +54,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				},
 			},
 			expectedDS: DataSource{
-				Settings: &models.CloudWatchSettings{
+				Settings: models.CloudWatchSettings{
 					AWSDatasourceSettings: awsds.AWSDatasourceSettings{
 						Profile:       "foo",
 						Region:        "us-east2",
@@ -96,23 +98,25 @@ func TestNewInstanceSettings(t *testing.T) {
 func Test_CheckHealth(t *testing.T) {
 	origNewMetricsAPI := NewMetricsAPI
 	origNewCWLogsClient := NewCWLogsClient
+	origNewLogsAPI := NewLogsAPI
 	t.Cleanup(func() {
 		NewMetricsAPI = origNewMetricsAPI
 		NewCWLogsClient = origNewCWLogsClient
+		NewLogsAPI = origNewLogsAPI
 	})
 
 	var client fakeCheckHealthClient
 	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
 		return client
 	}
-	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
 		return client
 	}
 
 	t.Run("successfully query metrics and logs", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
@@ -133,7 +137,7 @@ func Test_CheckHealth(t *testing.T) {
 				return nil, fmt.Errorf("some logs query error")
 			}}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
@@ -154,7 +158,7 @@ func Test_CheckHealth(t *testing.T) {
 				return fmt.Errorf("some list metrics error")
 			}}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
@@ -172,7 +176,7 @@ func Test_CheckHealth(t *testing.T) {
 	t.Run("fail to get clients", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
 			return nil, fmt.Errorf("some sessions error")
@@ -203,13 +207,13 @@ func Test_executeLogAlertQuery(t *testing.T) {
 	t.Run("getCWLogsClient is called with region from input JSON", func(t *testing.T) {
 		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 		sess := fakeSessionCache{}
 		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
 
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			Headers:       map[string]string{"FromAlert": "some value"},
+			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -229,13 +233,13 @@ func Test_executeLogAlertQuery(t *testing.T) {
 	t.Run("getCWLogsClient is called with region from instance manager when region is default", func(t *testing.T) {
 		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")}}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}}, nil
 		})
 		sess := fakeSessionCache{}
 
 		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			Headers:       map[string]string{"FromAlert": "some value"},
+			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -266,7 +270,7 @@ func TestQuery_ResourceRequest_DescribeAllLogGroups(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -412,7 +416,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -467,7 +471,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -505,7 +509,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -535,174 +539,65 @@ func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
 	})
 }
 
-func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
+func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *testing.T) {
 	sender := &mockedCallResourceResponseSenderForOauth{}
 	origNewMetricsAPI := NewMetricsAPI
+	origNewOAMAPI := NewOAMAPI
+	origNewLogsAPI := NewLogsAPI
+	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider { return nil }
+	NewOAMAPI = func(sess *session.Session) models.OAMAPIProvider { return nil }
 	t.Cleanup(func() {
+		NewOAMAPI = origNewOAMAPI
 		NewMetricsAPI = origNewMetricsAPI
+		NewLogsAPI = origNewLogsAPI
 	})
-	var api mocks.FakeMetricsAPI
-	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider {
-		return &api
+
+	var logsApi mocks.LogsAPI
+	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
+		return &logsApi
 	}
+
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
-	t.Run("Should handle dimension value request and return values from the api", func(t *testing.T) {
-		pageLimit := 100
-		api = mocks.FakeMetricsAPI{Metrics: []*cloudwatch.Metric{
-			{MetricName: aws.String("Test_MetricName1"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1"), Value: aws.String("Value1")}, {Name: aws.String("Test_DimensionName2"), Value: aws.String("Value2")}}},
-			{MetricName: aws.String("Test_MetricName2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1"), Value: aws.String("Value3")}}},
-			{MetricName: aws.String("Test_MetricName3"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName2"), Value: aws.String("Value1")}}},
-			{MetricName: aws.String("Test_MetricName10"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4"), Value: aws.String("Value2")}, {Name: aws.String("Test_DimensionName5")}}},
-			{MetricName: aws.String("Test_MetricName4"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName2"), Value: aws.String("Value3")}}},
-			{MetricName: aws.String("Test_MetricName5"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1"), Value: aws.String("Value4")}}},
-			{MetricName: aws.String("Test_MetricName6"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1"), Value: aws.String("Value6")}}},
-			{MetricName: aws.String("Test_MetricName7"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4"), Value: aws.String("Value7")}}},
-			{MetricName: aws.String("Test_MetricName8"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4"), Value: aws.String("Value1")}}},
-			{MetricName: aws.String("Test_MetricName9"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1"), Value: aws.String("Value2")}}},
-		}, MetricsPerPage: 100}
-		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: pageLimit}, &fakeSessionCache{}, featuremgmt.WithFeatures())
-
+	t.Run("maps log group api response to resource response of describe-log-groups", func(t *testing.T) {
+		logsApi = mocks.LogsAPI{}
+		logsApi.On("DescribeLogGroups", mock.Anything).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+			LogGroups: []*cloudwatchlogs.LogGroup{
+				{Arn: aws.String("arn:aws:logs:us-east-1:111:log-group:group_a"), LogGroupName: aws.String("group_a")},
+			},
+		}, nil)
 		req := &backend.CallResourceRequest{
 			Method: "GET",
-			Path:   `/dimension-values?region=us-east-2&dimensionKey=Test_DimensionName4&namespace=AWS/EC2&metricName=CPUUtilization`,
+			Path:   `/describe-log-groups?logGroupPattern=some-pattern&accountId=some-account-id`,
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
 				PluginID:                   "cloudwatch",
 			},
 		}
+
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchCrossAccountQuerying))
 		err := executor.CallResource(context.Background(), req, sender)
+		assert.NoError(t, err)
 
-		require.NoError(t, err)
-		sent := sender.Response
-		require.NotNil(t, sent)
-		require.Equal(t, http.StatusOK, sent.Status)
-		res := []string{}
-		err = json.Unmarshal(sent.Body, &res)
-		require.Nil(t, err)
-		assert.Equal(t, []string{"Value1", "Value2", "Value7"}, res)
-	})
+		assert.JSONEq(t, `[
+		   {
+			  "accountId":"111",
+			  "value":{
+				 "arn":"arn:aws:logs:us-east-1:111:log-group:group_a",
+				 "name":"group_a"
+			  }
+		   }
+		]`, string(sender.Response.Body))
 
-	t.Run("Should handle dimension key filter query and return keys from the api", func(t *testing.T) {
-		pageLimit := 3
-		api = mocks.FakeMetricsAPI{Metrics: []*cloudwatch.Metric{
-			{MetricName: aws.String("Test_MetricName1"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}, {Name: aws.String("Test_DimensionName2")}}},
-			{MetricName: aws.String("Test_MetricName2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
-			{MetricName: aws.String("Test_MetricName3"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName2")}}},
-			{MetricName: aws.String("Test_MetricName10"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}, {Name: aws.String("Test_DimensionName5")}}},
-			{MetricName: aws.String("Test_MetricName4"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName2")}}},
-			{MetricName: aws.String("Test_MetricName5"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
-			{MetricName: aws.String("Test_MetricName6"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
-			{MetricName: aws.String("Test_MetricName7"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}}},
-			{MetricName: aws.String("Test_MetricName8"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}}},
-			{MetricName: aws.String("Test_MetricName9"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
-		}, MetricsPerPage: 2}
-		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: pageLimit}, &fakeSessionCache{}, featuremgmt.WithFeatures())
-
-		req := &backend.CallResourceRequest{
-			Method: "GET",
-			Path:   `/dimension-keys?region=us-east-2&namespace=AWS/EC2&metricName=CPUUtilization&dimensionFilters={"NodeID":["Shared"],"stage":["QueryCommit"]}`,
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
-				PluginID:                   "cloudwatch",
-			},
-		}
-		err := executor.CallResource(context.Background(), req, sender)
-
-		require.NoError(t, err)
-		sent := sender.Response
-		require.NotNil(t, sent)
-		require.Equal(t, http.StatusOK, sent.Status)
-		res := []string{}
-		err = json.Unmarshal(sent.Body, &res)
-		require.Nil(t, err)
-		assert.Equal(t, []string{"Test_DimensionName1", "Test_DimensionName2", "Test_DimensionName4", "Test_DimensionName5"}, res)
-	})
-
-	t.Run("Should handle standard dimension key query and return hard coded keys", func(t *testing.T) {
-		api = mocks.FakeMetricsAPI{}
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-
-		req := &backend.CallResourceRequest{
-			Method: "GET",
-			Path:   `/dimension-keys?region=us-east-2&namespace=AWS/CloudSearch&metricName=CPUUtilization`,
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
-				PluginID:                   "cloudwatch",
-			},
-		}
-		err := executor.CallResource(context.Background(), req, sender)
-
-		require.NoError(t, err)
-		sent := sender.Response
-		require.NotNil(t, sent)
-		require.Equal(t, http.StatusOK, sent.Status)
-		res := []string{}
-		err = json.Unmarshal(sent.Body, &res)
-		require.Nil(t, err)
-		assert.Equal(t, []string{"ClientId", "DomainName"}, res)
-	})
-
-	t.Run("Should handle custom namespace dimension key query and return hard coded keys", func(t *testing.T) {
-		api = mocks.FakeMetricsAPI{}
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-
-		req := &backend.CallResourceRequest{
-			Method: "GET",
-			Path:   `/dimension-keys?region=us-east-2&namespace=AWS/CloudSearch&metricName=CPUUtilization`,
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
-				PluginID:                   "cloudwatch",
-			},
-		}
-		err := executor.CallResource(context.Background(), req, sender)
-
-		require.NoError(t, err)
-		sent := sender.Response
-		require.NotNil(t, sent)
-		require.Equal(t, http.StatusOK, sent.Status)
-		res := []string{}
-		err = json.Unmarshal(sent.Body, &res)
-		require.Nil(t, err)
-		assert.Equal(t, []string{"ClientId", "DomainName"}, res)
-	})
-
-	t.Run("Should handle custom namespace metrics query and return metrics from api", func(t *testing.T) {
-		pageLimit := 3
-		api = mocks.FakeMetricsAPI{Metrics: []*cloudwatch.Metric{
-			{MetricName: aws.String("Test_MetricName1"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}, {Name: aws.String("Test_DimensionName2")}}},
-			{MetricName: aws.String("Test_MetricName2"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
-			{MetricName: aws.String("Test_MetricName3"), Namespace: aws.String("AWS/ECS"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName2")}}},
-			{MetricName: aws.String("Test_MetricName10"), Namespace: aws.String("AWS/ECS"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}, {Name: aws.String("Test_DimensionName5")}}},
-			{MetricName: aws.String("Test_MetricName4"), Namespace: aws.String("AWS/ECS"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName2")}}},
-			{MetricName: aws.String("Test_MetricName5"), Namespace: aws.String("AWS/Redshift"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
-			{MetricName: aws.String("Test_MetricName6"), Namespace: aws.String("AWS/Redshift"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
-			{MetricName: aws.String("Test_MetricName7"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}}},
-			{MetricName: aws.String("Test_MetricName8"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}}},
-			{MetricName: aws.String("Test_MetricName9"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
-		}, MetricsPerPage: 2}
-		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: pageLimit}, &fakeSessionCache{}, featuremgmt.WithFeatures())
-
-		req := &backend.CallResourceRequest{
-			Method: "GET",
-			Path:   `/metrics?region=us-east-2&namespace=custom-namespace`,
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
-				PluginID:                   "cloudwatch",
-			},
-		}
-		err := executor.CallResource(context.Background(), req, sender)
-
-		require.NoError(t, err)
-		sent := sender.Response
-		require.NotNil(t, sent)
-		require.Equal(t, http.StatusOK, sent.Status)
-		res := []models.Metric{}
-		err = json.Unmarshal(sent.Body, &res)
-		require.Nil(t, err)
-		assert.Equal(t, []models.Metric{{Name: "Test_MetricName1", Namespace: "AWS/EC2"}, {Name: "Test_MetricName2", Namespace: "AWS/EC2"}, {Name: "Test_MetricName3", Namespace: "AWS/ECS"}, {Name: "Test_MetricName10", Namespace: "AWS/ECS"}, {Name: "Test_MetricName4", Namespace: "AWS/ECS"}, {Name: "Test_MetricName5", Namespace: "AWS/Redshift"}}, res)
+		logsApi.AssertCalled(t, "DescribeLogGroups",
+			&cloudwatchlogs.DescribeLogGroupsInput{
+				AccountIdentifiers:    []*string{utils.Pointer("some-account-id")},
+				IncludeLinkedAccounts: utils.Pointer(true),
+				Limit:                 utils.Pointer(int64(50)),
+				LogGroupNamePrefix:    utils.Pointer("some-pattern"),
+			})
 	})
 }
 

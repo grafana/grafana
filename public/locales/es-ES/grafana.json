@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Por defecto"
@@ -75,29 +80,48 @@
       "unmark-favorite": "Deshacer marca como favorito"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "",
+    "explanation": "",
+    "logo": "",
+    "new-dashboard": "",
+    "preferred": "",
+    "sampleData": "",
+    "viewAll": "",
+    "welcome": ""
+  },
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancelar",
-      "create": "Crear panel de biblioteca",
-      "error": "Ya existe un panel de biblioteca con este nombre",
+      "create": "Crear panel de librería",
+      "error": "Ya existe un panel de librería con este nombre",
       "folder": "Guardar en carpeta",
-      "folder-description": "Los permisos del panel de biblioteca se derivan de los permisos de la carpeta",
-      "name": "Nombre del panel de biblioteca"
+      "folder-description": "Los permisos del panel de librería se derivan de los permisos de la carpeta",
+      "name": "Nombre del panel de librería"
     }
   },
   "library-panels": {
     "save": {
-      "error": "Error al guardar el panel de la biblioteca: «{{errorMsg}}»",
-      "success": "Panel de biblioteca guardado"
+      "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
+      "success": "Panel de librería guardado"
     }
   },
   "nav": {
     "admin": {
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
+    },
+    "admin-access": {
+      "title": ""
+    },
+    "admin-general": {
+      "title": ""
+    },
+    "admin-plugins": {
+      "title": ""
     },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
@@ -116,6 +140,9 @@
     "alerting-groups": {
       "subtitle": "Ver alertas agrupadas de una instancia de Alertmanager",
       "title": "Grupos"
+    },
+    "alerting-home": {
+      "title": ""
     },
     "alerting-legacy": {
       "title": "Alertas (heredado)"
@@ -183,8 +210,9 @@
       "title": "Organizaciones"
     },
     "global-users": {
-      "subtitle": "Gestione y cree usuarios en todo el servidor Grafana",
-      "title": "Usuarios"
+      "subtitle": "",
+      "title": "Usuarios",
+      "titleBeforeTopnav": "Usuarios"
     },
     "help": {
       "title": "Ayuda"
@@ -193,12 +221,13 @@
     "help/documentation": "Documentación",
     "help/keyboard-shortcuts": "Atajos de teclado",
     "help/support": "Asistencia",
+    "help/support-bundle": "",
     "home": {
       "title": "Inicio"
     },
     "library-panels": {
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
-      "title": "Paneles de la biblioteca"
+      "title": "Paneles de la librería"
     },
     "live": {
       "title": "Transmisión de eventos"
@@ -227,7 +256,8 @@
     },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
-      "title": "Preferencias"
+      "title": "",
+      "titleBeforeTopnav": "Preferencias"
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
@@ -252,6 +282,9 @@
     },
     "search": {
       "placeholder": "Buscar Grafana"
+    },
+    "search-dashboards": {
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Vea la configuración definida en los ajustes de Grafana",
@@ -279,6 +312,10 @@
       "subtitle": "Gestionar el almacenamiento de archivos",
       "title": "Almacenamiento"
     },
+    "support-bundles": {
+      "subtitle": "",
+      "title": ""
+    },
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
       "title": "Equipos"
@@ -299,19 +336,25 @@
   "news": {
     "title": "Últimas entradas del blog"
   },
+  "notifications": {
+    "starred-dashboard": "",
+    "unstarred-dashboard": ""
+  },
   "panel": {
     "header-menu": {
+      "hide-legend": "",
       "inspect": "Inspeccionar",
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
       "share": "Compartir",
+      "show-legend": "",
       "view": "Vista"
     }
   },
   "refresh-picker": {
     "aria-label": {
-      "choose-interval": "",
+      "choose-interval": "Actualización automática desactivada. Elija un intervalo de tiempo de actualización",
       "duration-selected": ""
     },
     "live-option": {
@@ -319,8 +362,8 @@
       "label": ""
     },
     "off-option": {
-      "aria-label": "",
-      "label": ""
+      "aria-label": "Desactivar actualización automática",
+      "label": "Apagado"
     },
     "select-button": {
       "auto-refresh": ""
@@ -347,7 +390,7 @@
       "view-button": "Ver JSON"
     },
     "library": {
-      "info": "Cree un panel de biblioteca."
+      "info": "Cree un panel de librería."
     },
     "link": {
       "copy-link-button": "Copiar",
@@ -381,12 +424,13 @@
       "mistake-message": "¿Ha cometido un error? ",
       "name": "Nombre de la instantánea",
       "timeout": "Tiempo de espera (segundos)",
-      "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel."
+      "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel.",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "Incrustar",
       "export": "Exportar",
-      "library-panel": "Panel de biblioteca",
+      "library-panel": "Panel de librería",
       "link": "Enlace",
       "snapshot": "Vista rápida"
     },
@@ -395,6 +439,9 @@
       "dark": "Oscuro",
       "field-name": "Tema",
       "light": "Claro"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {
@@ -425,7 +472,7 @@
     },
     "calendar": {
       "apply-button": "",
-      "cancel-button": "",
+      "cancel-button": "Cancelar",
       "select-time": ""
     },
     "content": {
@@ -492,5 +539,14 @@
   },
   "user-sessions": {
     "loading": "Cargando sesiones..."
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }

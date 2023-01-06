@@ -199,16 +199,16 @@ describe('toDataFrame', () => {
     };
     const dataFrame = toDataFrame(msg);
     expect(dataFrame.fields.map((f) => ({ [f.name]: f.values.toArray() }))).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "First": Array [
+      [
+        {
+          "First": [
             "2019-02-15",
             "2019-03-15",
             "2019-04-15",
           ],
         },
-        Object {
-          "Second": Array [
+        {
+          "Second": [
             3,
             9,
             16,

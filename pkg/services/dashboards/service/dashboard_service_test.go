@@ -255,4 +255,26 @@ func TestDashboardService(t *testing.T) {
 		err := service.DeleteACLByUser(context.Background(), 1)
 		require.NoError(t, err)
 	})
+
+	t.Run("When org user is deleted", func(t *testing.T) {
+		fakeStore := dashboards.FakeDashboardStore{}
+		fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil)
+		t.Run("Should remove dependent permissions for deleted org user", func(t *testing.T) {
+			permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: 1, Result: nil}
+
+			err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
+			require.NoError(t, err)
+
+			require.Equal(t, len(permQuery.Result), 0)
+		})
+
+		t.Run("Should not remove dashboard permissions for same user in another org", func(t *testing.T) {
+			fakeStore := dashboards.FakeDashboardStore{}
+			fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil)
+			permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 2, OrgID: 3}
+
+			err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
+			require.NoError(t, err)
+		})
+	})
 }

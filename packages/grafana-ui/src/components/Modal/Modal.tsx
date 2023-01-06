@@ -69,6 +69,7 @@ export function Modal(props: PropsWithChildren<Props>) {
   return (
     <OverlayContainer>
       <div
+        role="presentation"
         className={styles.modalBackdrop}
         onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
         {...underlayProps}

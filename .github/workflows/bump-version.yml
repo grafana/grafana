@@ -17,7 +17,7 @@ jobs:
         id: regex-match
         with:
           text: ${{ github.event.inputs.version }}
-          regex: '^(\d+.\d+).\d+(?:-beta.\d+)?$'
+          regex: '^(\d+.\d+).\d+(?:-beta\d+)?$'
       - uses: actions-ecosystem/action-regex-match@v2.0.2
         if: ${{ inputs.version_call != '' }}
         id: regex-match-version-call
@@ -29,7 +29,7 @@ jobs:
         run: |
           echo "The input version format is not correct, please respect:\
           major.minor.patch or major.minor.patch-beta.number format. \
-          example: 7.4.3 or 7.4.3-beta.1"
+          example: 7.4.3 or 7.4.3-beta1"
           exit 1
       - name: Validate input version call
         if: ${{ inputs.version_call != '' && steps.regex-match-version-call.outputs.match == '' }}

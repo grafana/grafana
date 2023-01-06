@@ -330,7 +330,7 @@ func readString(iter *jsoniter.Iterator) *backend.DataResponse {
 
 	frame := data.NewFrame("", timeField, valueField)
 	frame.Meta = &data.FrameMeta{
-		Type:   data.FrameTypeTimeSeriesMany,
+		Type:   data.FrameTypeTimeSeriesMulti,
 		Custom: resultTypeToCustomMeta("string"),
 	}
 
@@ -354,7 +354,7 @@ func readScalar(iter *jsoniter.Iterator) *backend.DataResponse {
 
 	frame := data.NewFrame("", timeField, valueField)
 	frame.Meta = &data.FrameMeta{
-		Type:   data.FrameTypeTimeSeriesMany,
+		Type:   data.FrameTypeTimeSeriesMulti,
 		Custom: resultTypeToCustomMeta("scalar"),
 	}
 
@@ -544,7 +544,7 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string) *backen
 		} else {
 			frame := data.NewFrame("", timeField, valueField)
 			frame.Meta = &data.FrameMeta{
-				Type:   data.FrameTypeTimeSeriesMany,
+				Type:   data.FrameTypeTimeSeriesMulti,
 				Custom: resultTypeToCustomMeta(resultType),
 			}
 			rsp.Frames = append(rsp.Frames, frame)

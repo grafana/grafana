@@ -1,14 +1,14 @@
 import { uniqBy } from 'lodash';
 
-import { LOCALES, VALID_LOCALES } from './constants';
+import { LANGUAGES, VALID_LANGUAGES } from './constants';
 
 describe('internationalization constants', () => {
   it('should not have duplicate languages codes', () => {
-    const uniqLocales = uniqBy(LOCALES, (v) => v.code);
-    expect(LOCALES).toHaveLength(uniqLocales.length);
+    const uniqLocales = uniqBy(LANGUAGES, (v) => v.code);
+    expect(LANGUAGES).toHaveLength(uniqLocales.length);
   });
 
   it('should have a correct list of valid locale codes', () => {
-    expect(VALID_LOCALES).toEqual(LOCALES.map((v) => v.code));
+    expect(VALID_LANGUAGES).toEqual(LANGUAGES.map((v) => v.code));
   });
 });

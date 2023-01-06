@@ -15,6 +15,7 @@ export const getMockUsers = (amount: number) => {
       role: 'Admin',
       userId: i,
       isDisabled: false,
+      authLabels: [],
     });
   }
 

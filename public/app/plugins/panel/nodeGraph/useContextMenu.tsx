@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { MouseEvent, useCallback, useState } from 'react';
 
-import { DataFrame, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { ContextMenu, MenuGroup, MenuItem, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { Config } from './layout';
@@ -14,8 +14,10 @@ import { getEdgeFields, getNodeFields } from './utils';
  */
 export function useContextMenu(
   getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[],
-  nodes: DataFrame,
-  edges: DataFrame,
+  // This can be undefined if we only use edge dataframe
+  nodes: DataFrame | undefined,
+  // This can be undefined if we have only single node
+  edges: DataFrame | undefined,
   config: Config,
   setConfig: (config: Config) => void,
   setFocusedNodeId: (id: string) => void
@@ -28,13 +30,9 @@ export function useContextMenu(
 
   const onNodeOpen = useCallback(
     (event: MouseEvent<SVGElement>, node: NodeDatum) => {
-      let label = 'Show in Grid layout';
-      let showGridLayout = true;
-
-      if (config.gridLayout) {
-        label = 'Show in Graph layout';
-        showGridLayout = false;
-      }
+      const [label, showGridLayout] = config.gridLayout
+        ? ['Show in Graph layout', false]
+        : ['Show in Grid layout', true];
 
       const extraNodeItem = [
         {
@@ -47,18 +45,11 @@ export function useContextMenu(
         },
       ];
 
-      const renderer = getItemsRenderer(getLinks(nodes, node.dataFrameRowIndex), node, extraNodeItem);
+      const links = nodes ? getLinks(nodes, node.dataFrameRowIndex) : [];
+      const renderer = getItemsRenderer(links, node, extraNodeItem);
 
       if (renderer) {
-        setMenu(
-          <ContextMenu
-            renderHeader={() => <NodeHeader node={node} nodes={nodes} />}
-            renderMenuItems={renderer}
-            onClose={() => setMenu(undefined)}
-            x={event.pageX}
-            y={event.pageY}
-          />
-        );
+        setMenu(makeContextMenu(<NodeHeader node={node} nodes={nodes} />, renderer, event, setMenu));
       }
     },
     [config, nodes, getLinks, setMenu, setConfig, setFocusedNodeId]
@@ -66,24 +57,39 @@ export function useContextMenu(
 
   const onEdgeOpen = useCallback(
     (event: MouseEvent<SVGElement>, edge: EdgeDatum) => {
-      const renderer = getItemsRenderer(getLinks(edges, edge.dataFrameRowIndex), edge);
+      if (!edges) {
+        // This could happen if we have only one node and no edges, in which case this is not needed as there is no edge
+        // to click on.
+        return;
+      }
+      const links = getLinks(edges, edge.dataFrameRowIndex);
+      const renderer = getItemsRenderer(links, edge);
 
       if (renderer) {
-        setMenu(
-          <ContextMenu
-            renderHeader={() => <EdgeHeader edge={edge} edges={edges} />}
-            renderMenuItems={renderer}
-            onClose={() => setMenu(undefined)}
-            x={event.pageX}
-            y={event.pageY}
-          />
-        );
+        setMenu(makeContextMenu(<EdgeHeader edge={edge} edges={edges} />, renderer, event, setMenu));
       }
     },
     [edges, getLinks, setMenu]
   );
 
   return { onEdgeOpen, onNodeOpen, MenuComponent: menu };
+}
+
+function makeContextMenu(
+  header: JSX.Element,
+  renderer: () => React.ReactNode,
+  event: MouseEvent<SVGElement>,
+  setMenu: (el: JSX.Element | undefined) => void
+) {
+  return (
+    <ContextMenu
+      renderHeader={() => header}
+      renderMenuItems={renderer}
+      onClose={() => setMenu(undefined)}
+      x={event.pageX}
+      y={event.pageY}
+    />
+  );
 }
 
 function getItemsRenderer<T extends NodeDatum | EdgeDatum>(
@@ -173,24 +179,45 @@ function getItems(links: LinkModel[]) {
   });
 }
 
-function NodeHeader(props: { node: NodeDatum; nodes: DataFrame }) {
-  const index = props.node.dataFrameRowIndex;
-  const fields = getNodeFields(props.nodes);
-  return (
-    <div>
-      {fields.title && <Label field={fields.title} index={index} />}
-      {fields.subTitle && <Label field={fields.subTitle} index={index} />}
-      {fields.details.map((f) => (
-        <Label key={f.name} field={f} index={index} />
-      ))}
-    </div>
-  );
+function NodeHeader({ node, nodes }: { node: NodeDatum; nodes?: DataFrame }) {
+  const index = node.dataFrameRowIndex;
+  if (nodes) {
+    const fields = getNodeFields(nodes);
+
+    return (
+      <div>
+        {fields.title && (
+          <Label
+            label={fields.title.config.displayName || fields.title.name}
+            value={fields.title.values.get(index) || ''}
+          />
+        )}
+        {fields.subTitle && (
+          <Label
+            label={fields.subTitle.config.displayName || fields.subTitle.name}
+            value={fields.subTitle.values.get(index) || ''}
+          />
+        )}
+        {fields.details.map((f) => (
+          <Label key={f.name} label={f.config.displayName || f.name} value={f.values.get(index) || ''} />
+        ))}
+      </div>
+    );
+  } else {
+    // Fallback if we don't have nodes dataFrame. Can happen if we use just the edges frame to construct this.
+    return (
+      <div>
+        {node.title && <Label label={'Title'} value={node.title} />}
+        {node.subTitle && <Label label={'Subtitle'} value={node.subTitle} />}
+      </div>
+    );
+  }
 }
 
 function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
   const index = props.edge.dataFrameRowIndex;
-  const fields = getEdgeFields(props.edges);
   const styles = getLabelStyles(useTheme2());
+  const fields = getEdgeFields(props.edges);
   const valueSource = fields.source?.values.get(index) || '';
   const valueTarget = fields.target?.values.get(index) || '';
 
@@ -205,20 +232,18 @@ function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
         </div>
       )}
       {fields.details.map((f) => (
-        <Label key={f.name} field={f} index={index} />
+        <Label key={f.name} label={f.config.displayName || f.name} value={f.values.get(index) || ''} />
       ))}
     </div>
   );
 }
 
-function Label(props: { field: Field; index: number }) {
-  const { field, index } = props;
-  const value = field.values.get(index) || '';
+function Label({ label, value }: { label: string; value: string | number }) {
   const styles = useStyles2(getLabelStyles);
 
   return (
     <div className={styles.label}>
-      <div>{field.config.displayName || field.name}</div>
+      <div>{label}</div>
       <span className={styles.value}>{value}</span>
     </div>
   );

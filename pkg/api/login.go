@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	loginService "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -91,19 +92,6 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	enabledOAuths := make(map[string]interface{})
-	providers := hs.SocialService.GetOAuthInfoProviders()
-	for key, oauth := range providers {
-		enabledOAuths[key] = map[string]string{
-			"name": oauth.Name,
-			"icon": oauth.Icon,
-		}
-	}
-
-	viewData.Settings["oauth"] = enabledOAuths
-	viewData.Settings["samlEnabled"] = hs.samlEnabled()
-	viewData.Settings["samlName"] = hs.samlName()
-
 	if loginError, ok := hs.tryGetEncryptedCookie(c, loginErrorCookieName); ok {
 		// this cookie is only set whenever an OAuth login fails
 		// therefore the loginError should be passed to the view data
@@ -154,8 +142,11 @@ func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 		return false
 	}
 	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
-	if len(oauthInfos) != 1 {
+	if len(oauthInfos) > 1 {
 		c.Logger.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
+		return false
+	} else if len(oauthInfos) == 0 {
+		c.Logger.Warn("Skipping OAuth auto login because no OAuth providers are configured")
 		return false
 	}
 	for key := range oauthInfos {
@@ -207,7 +198,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		ReqContext: c,
 		Username:   cmd.User,
 		Password:   cmd.Password,
-		IpAddress:  c.Req.RemoteAddr,
+		IpAddress:  c.RemoteAddr(),
 		Cfg:        hs.Cfg,
 	}
 
@@ -240,7 +231,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 
 	err = hs.loginUserWithUser(usr, c)
 	if err != nil {
-		var createTokenErr *models.CreateTokenErr
+		var createTokenErr *auth.CreateTokenErr
 		if errors.As(err, &createTokenErr) {
 			resp = response.Error(createTokenErr.StatusCode, createTokenErr.ExternalErr, createTokenErr.InternalErr)
 		} else {
@@ -312,7 +303,7 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 	}
 
 	err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken, false)
-	if err != nil && !errors.Is(err, models.ErrUserTokenNotFound) {
+	if err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}
 
@@ -383,7 +374,7 @@ func (hs *HTTPServer) samlSingleLogoutEnabled() bool {
 }
 
 func getLoginExternalError(err error) string {
-	var createTokenErr *models.CreateTokenErr
+	var createTokenErr *auth.CreateTokenErr
 	if errors.As(err, &createTokenErr) {
 		return createTokenErr.ExternalErr
 	}

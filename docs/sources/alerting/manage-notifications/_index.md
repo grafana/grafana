@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/alerting/manage-notifications
 description: Manage alert notifications
 keywords:
   - grafana

@@ -15,3 +15,5 @@ func disableMiddleware(shouldDisable bool) web.Handler {
 		}
 	}
 }
+
+func nopMiddleware(c *models.ReqContext) {}

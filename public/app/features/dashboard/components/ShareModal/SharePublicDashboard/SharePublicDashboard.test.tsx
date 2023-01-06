@@ -5,14 +5,16 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import 'whatwg-fetch';
-import { BootData } from '@grafana/data/src';
+import { BootData, DataQuery } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { setEchoSrv } from '@grafana/runtime/src';
+import { Panel } from '@grafana/schema';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { configureStore } from 'app/store/configureStore';
 
 import { ShareModal } from '../ShareModal';
@@ -69,9 +71,8 @@ beforeAll(() => {
 
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
-  mockDashboard = new DashboardModel({
+  mockDashboard = createDashboardModelFixture({
     uid: 'mockDashboardUid',
-    timezone: 'utc',
   });
 
   mockPanel = new PanelModel({
@@ -146,7 +147,7 @@ describe('SharePublic', () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
 
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
-    expect(screen.getByText('2022-08-30 00:00:00 to 2022-09-04 00:59:59')).toBeInTheDocument();
+    expect(screen.getByText('2022-08-30 00:00:00 to 2022-09-04 01:59:59')).toBeInTheDocument();
   });
   it('when modal is opened, then loader spinner appears and inputs are disabled', async () => {
     mockDashboard.meta.hasPublicDashboard = true;
@@ -192,6 +193,23 @@ describe('SharePublic - New config setup', () => {
   it('when modal is opened, then save button is disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
+  });
+  it('when dashboard has unsupported datasources, warning is shown', async () => {
+    const panelModel = {
+      targets: [
+        {
+          datasource: { type: 'notSupportedDatasource', uid: 'abc123' },
+        } as DataQuery,
+      ] as DataQuery[],
+    } as unknown as Panel;
+    const dashboard = createDashboardModelFixture({
+      id: 1,
+      panels: [panelModel],
+    });
+
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard, onDismiss: () => {} });
+
+    expect(screen.queryByTestId(selectors.UnsupportedDatasourcesWarningAlert)).toBeInTheDocument();
   });
   it('when fetch is done, then no loader spinner appears, inputs are enabled and save button is disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });

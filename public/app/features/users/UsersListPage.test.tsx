@@ -6,7 +6,7 @@ import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { configureStore } from 'app/store/configureStore';
 import { Invitee, OrgUser } from 'app/types';
 
-import { Props, UsersListPage } from './UsersListPage';
+import { Props, UsersListPageUnconnected } from './UsersListPage';
 import { setUsersSearchPage, setUsersSearchQuery } from './state/reducers';
 
 jest.mock('../../core/app_events', () => ({
@@ -42,7 +42,7 @@ const setup = (propOverrides?: object) => {
 
   render(
     <Provider store={store}>
-      <UsersListPage {...props} />
+      <UsersListPageUnconnected {...props} />
     </Provider>
   );
 };

@@ -321,7 +321,7 @@ describe('FieldDisplay', () => {
       });
 
       const cache = { numeric: 10, text: 'Value' };
-      options.data![0].fields[1].display = (v: any) => {
+      options.data![0].fields[1].display = () => {
         return cache;
       };
 
@@ -528,5 +528,5 @@ function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}
     theme: createTheme(),
   };
 
-  return merge<GetFieldDisplayValuesOptions, any>(options, extend);
+  return merge(options, extend);
 }

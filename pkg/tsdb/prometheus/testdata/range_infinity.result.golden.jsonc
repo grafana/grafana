@@ -1,7 +1,7 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "custom": {
 //          "resultType": "matrix"
 //      },
@@ -28,7 +28,7 @@
       "schema": {
         "name": "1 / 0",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "custom": {
             "resultType": "matrix"
           },

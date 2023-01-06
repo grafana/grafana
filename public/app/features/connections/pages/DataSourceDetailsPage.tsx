@@ -1,24 +1,41 @@
 import * as React from 'react';
+import { useParams } from 'react-router-dom';
 
-import { Page } from 'app/core/components/Page/Page';
-import { StoreState, useSelector } from 'app/types';
+import { Alert, Badge } from '@grafana/ui';
+import { PluginDetailsPage } from 'app/features/plugins/admin/components/PluginDetailsPage';
+import { StoreState, useSelector, AppNotificationSeverity } from 'app/types';
+
+import { ROUTES } from '../constants';
 
 export function DataSourceDetailsPage() {
   const overrideNavId = 'standalone-plugin-page-/connections/connect-data';
+  const { id } = useParams<{ id: string }>();
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const isConnectDataPageOverriden = Boolean(navIndex[overrideNavId]);
   const navId = isConnectDataPageOverriden ? overrideNavId : 'connections-connect-data'; // The nav id changes (gets a prefix) if it is overriden by a plugin
 
   return (
-    <Page
+    <PluginDetailsPage
+      pluginId={id}
       navId={navId}
-      pageNav={{
-        text: 'Datasource details',
-        subTitle: 'This is going to be the details page for a datasource',
+      notFoundComponent={<NotFoundDatasource />}
+      notFoundNavModel={{
+        text: 'Unknown datasource',
+        subTitle: 'No datasource with this ID could be found.',
         active: true,
       }}
-    >
-      <Page.Contents>Data Source Details (no exposed component from plugins yet)</Page.Contents>
-    </Page>
+    />
+  );
+}
+
+function NotFoundDatasource() {
+  const { id } = useParams<{ id: string }>();
+
+  return (
+    <Alert severity={AppNotificationSeverity.Warning} title="">
+      Maybe you mistyped the URL or the plugin with the id <Badge text={id} color="orange" /> is unavailable.
+      <br />
+      To see a list of available datasources please <a href={ROUTES.ConnectData}>click here</a>.
+    </Alert>
   );
 }

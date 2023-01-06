@@ -9,6 +9,7 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -28,7 +29,6 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 	login := Implementation{
 		QuotaService:    quotatest.New(false, nil),
 		AuthInfoService: authInfoMock,
-		SQLStore:        nil,
 		userService:     usertest.NewUserServiceFake(),
 		orgService:      orgtest.NewOrgServiceFake(),
 	}
@@ -53,9 +53,9 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	login := Implementation{
 		QuotaService:    quotatest.New(false, nil),
 		AuthInfoService: authInfoMock,
-		SQLStore:        nil,
 		userService:     usertest.NewUserServiceFake(),
 		orgService:      orgService,
+		accessControl:   &actest.FakeService{},
 	}
 
 	err := login.syncOrgRoles(context.Background(), &user, &externalUser)

@@ -237,7 +237,7 @@ type tplVars struct {
 }
 
 func (cd *CoremodelDeclaration) GenerateTypescriptCoremodel() (*tsast.File, error) {
-	schv := thema.SchemaP(cd.Lineage, thema.LatestVersion(cd.Lineage)).UnwrapCUE()
+	schv := cd.Lineage.Latest().Underlying()
 
 	tf, err := cuetsy.GenerateAST(schv, cuetsy.Config{
 		Export: true,

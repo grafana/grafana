@@ -54,7 +54,7 @@ const testDash = {
         },
         showHeader: true,
       },
-      pluginVersion: '9.3.0-pre',
+      pluginVersion: '9.4.0-pre',
       targets: [
         {
           csvContent: '',

@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/
-  - /docs/grafana/latest/features/dashboard/dashboards/
+  - features/dashboard/dashboards/
 title: Dashboards
 weight: 70
 ---
@@ -22,7 +21,6 @@ Before you begin, ensure that you have configured a data source. See also:
 - [Annotations]({{< relref "./build-dashboards/annotate-visualizations" >}})
 - [Playlist]({{< relref "./create-manage-playlists/" >}})
 - [Reporting]({{< relref "./create-reports" >}})
-- [Time range controls]({{< relref "./manage-dashboards/#common-time-range-controls" >}})
 - [Version history]({{< relref "./build-dashboards/manage-version-history" >}})
 - [Export and import]({{< relref "./manage-dashboards/#export-and-import-dashboards" >}})
 - [JSON model]({{< relref "./build-dashboards/view-dashboard-json-model/" >}})

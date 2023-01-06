@@ -34,6 +34,7 @@ func TestHeadlessScreenshotService(t *testing.T) {
 	assert.EqualError(t, err, "Dashboard not found")
 	assert.Nil(t, screenshot)
 
+	// should take a screenshot
 	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
 		q := args.Get(1).(*models.GetDashboardQuery)
 		q.Result = &models.Dashboard{Id: 1, Uid: "foo", Slug: "bar", OrgId: 2}
@@ -54,10 +55,12 @@ func TestHeadlessScreenshotService(t *testing.T) {
 		Width:           DefaultWidth,
 		Height:          DefaultHeight,
 		Theme:           DefaultTheme,
-		Path:            "d-solo/foo/bar?orgId=2&panelId=4",
+		Path:            "d-solo/foo/bar?from=now-6h&orgId=2&panelId=4&to=now-2h",
 		ConcurrentLimit: setting.AlertingRenderLimit,
 	}
 
+	opts.From = "now-6h"
+	opts.To = "now-2h"
 	opts.DashboardUID = "foo"
 	opts.PanelID = 4
 	r.EXPECT().

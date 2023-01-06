@@ -190,7 +190,10 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
-	appendErrorNotice(frame, logResponse.Error)
+	frame = appendErrorNotice(frame, logResponse.Error)
+	if frame == nil {
+		return dataResponse
+	}
 
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
@@ -199,8 +202,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 
 	err = setAdditionalFrameMeta(frame,
 		query.Params.Get("query"),
-		model.Get("subscriptionId").MustString(),
-		model.Get("azureLogAnalytics").Get("workspace").MustString())
+		model.Get("azureLogAnalytics").Get("resource").MustString())
 	if err != nil {
 		frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "could not add custom metadata: " + err.Error()})
 		logger.Warn("failed to add custom metadata to azure log analytics response", err)
@@ -222,10 +224,15 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 	return dataResponse
 }
 
-func appendErrorNotice(frame *data.Frame, err *AzureLogAnalyticsAPIError) {
-	if err != nil {
-		frame.AppendNotices(apiErrorToNotice(err))
+func appendErrorNotice(frame *data.Frame, err *AzureLogAnalyticsAPIError) *data.Frame {
+	if err == nil {
+		return frame
 	}
+	if frame == nil {
+		frame = &data.Frame{}
+	}
+	frame.AppendNotices(apiErrorToNotice(err))
+	return frame
 }
 
 func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, logger log.Logger, url string) (*http.Request, error) {
@@ -309,19 +316,21 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(logger log.Logger, res *
 // LogAnalyticsMeta is a type for the a Frame's Meta's Custom property.
 type LogAnalyticsMeta struct {
 	ColumnTypes  []string `json:"azureColumnTypes"`
-	Subscription string   `json:"subscription"`
-	Workspace    string   `json:"workspace"`
 	EncodedQuery []byte   `json:"encodedQuery"` // EncodedQuery is used for deep links.
+	Resource     string   `json:"resource"`
 }
 
-func setAdditionalFrameMeta(frame *data.Frame, query, subscriptionID, workspace string) error {
+func setAdditionalFrameMeta(frame *data.Frame, query, resource string) error {
+	if frame.Meta == nil || frame.Meta.Custom == nil {
+		// empty response
+		return nil
+	}
 	frame.Meta.ExecutedQueryString = query
 	la, ok := frame.Meta.Custom.(*LogAnalyticsMeta)
 	if !ok {
 		return fmt.Errorf("unexpected type found for frame's custom metadata")
 	}
-	la.Subscription = subscriptionID
-	la.Workspace = workspace
+	la.Resource = resource
 	encodedQuery, err := encodeQuery(query)
 	if err == nil {
 		la.EncodedQuery = encodedQuery

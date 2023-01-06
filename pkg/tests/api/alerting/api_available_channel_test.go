@@ -15,7 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestAvailableChannels(t *testing.T) {
+func TestIntegrationAvailableChannels(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,

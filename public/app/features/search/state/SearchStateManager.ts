@@ -105,7 +105,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
-    const starred = (e.target as HTMLInputElement).checked;
+    const starred = e.currentTarget.checked;
     this.setStateAndDoSearch({ starred });
   };
 
@@ -220,10 +220,11 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   /**
    * When item is selected clear some filters and report interaction
    */
-  onSearchItemClicked = () => {
-    // Clear some filters
-    this.setState({ tag: [], starred: false, sort: null, query: '', folderUid: undefined });
-    this.onCloseSearch();
+  onSearchItemClicked = (e: React.MouseEvent<HTMLElement>) => {
+    // Clear some filters only if we're not opening a search item in a new tab
+    if (!e.altKey && !e.ctrlKey && !e.metaKey) {
+      this.setState({ tag: [], starred: false, sort: null, query: '', folderUid: undefined });
+    }
 
     reportSearchResultInteraction(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
@@ -238,7 +239,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   /**
    * Caller should handle debounce
    */
-  onReportSearchUsage() {
+  onReportSearchUsage = () => {
     reportDashboardListViewed(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,
@@ -247,7 +248,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
     });
-  }
+  };
 }
 
 let stateManager: SearchStateManager;

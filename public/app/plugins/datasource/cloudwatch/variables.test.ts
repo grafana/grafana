@@ -1,5 +1,6 @@
 import { toOption } from '@grafana/data';
 
+import { setupMockedAPI } from './__mocks__/API';
 import { dimensionVariable, labelsVariable, setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
 import { VariableQuery, VariableQueryType } from './types';
 import { CloudWatchVariableSupport } from './variables';
@@ -22,6 +23,7 @@ mock.datasource.api.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', v
 mock.datasource.api.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
 mock.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([{ label: 'd', value: 'd' }]);
 mock.datasource.api.describeAllLogGroups = jest.fn().mockResolvedValue(['a', 'b'].map(toOption));
+mock.datasource.api.getAccounts = jest.fn().mockResolvedValue([]);
 const getDimensionValues = jest.fn().mockResolvedValue([{ label: 'e', value: 'e' }]);
 const getEbsVolumeIds = jest.fn().mockResolvedValue([{ label: 'f', value: 'f' }]);
 const getEc2InstanceAttribute = jest.fn().mockResolvedValue([{ label: 'g', value: 'g' }]);
@@ -48,6 +50,28 @@ describe('variables', () => {
   it('should run dimension keys', async () => {
     const result = await variables.execute({ ...defaultQuery, queryType: VariableQueryType.DimensionKeys });
     expect(result).toEqual([{ text: 'd', value: 'd', expandable: true }]);
+  });
+
+  describe('accounts', () => {
+    it('should run accounts', async () => {
+      const { api } = setupMockedAPI();
+      const getAccountMock = jest.fn().mockResolvedValue([]);
+      api.getAccounts = getAccountMock;
+      const variables = new CloudWatchVariableSupport(api);
+      await variables.execute({ ...defaultQuery, queryType: VariableQueryType.Accounts });
+      expect(getAccountMock).toHaveBeenCalledWith({ region: defaultQuery.region });
+    });
+
+    it('should map accounts to metric find value and insert "all" option', async () => {
+      const { api } = setupMockedAPI();
+      api.getAccounts = jest.fn().mockResolvedValue([{ id: '123', label: 'Account1' }]);
+      const variables = new CloudWatchVariableSupport(api);
+      const result = await variables.execute({ ...defaultQuery, queryType: VariableQueryType.Accounts });
+      expect(result).toEqual([
+        { text: 'All', value: 'all', expandable: true },
+        { text: 'Account1', value: '123', expandable: true },
+      ]);
+    });
   });
 
   describe('dimension values', () => {

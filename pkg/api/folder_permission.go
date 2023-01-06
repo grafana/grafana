@@ -28,13 +28,16 @@ import (
 // 500: internalServerError
 func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
-	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid})
+	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid, SignedInUser: c.SignedInUser})
 
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	g, err := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return apierrors.ToFolderErrorResponse(dashboards.ErrFolderAccessDenied)
@@ -90,12 +93,16 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 	}
 
 	uid := web.Params(c.Req)[":uid"]
-	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid})
+	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid, SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	g, err := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
+
 	canAdmin, err := g.CanAdmin()
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -105,7 +112,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		return apierrors.ToFolderErrorResponse(dashboards.ErrFolderAccessDenied)
 	}
 
-	var items []*models.DashboardACL
+	items := make([]*models.DashboardACL, 0, len(apiCmd.Items))
 	for _, item := range apiCmd.Items {
 		items = append(items, &models.DashboardACL{
 			OrgID:       c.OrgID,

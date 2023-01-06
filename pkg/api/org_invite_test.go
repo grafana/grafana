@@ -72,7 +72,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			userService.ExpectedUser = &user.User{ID: 2}
 			sc.hs.userService = userService
 			setInitCtxSignedInViewer(sc.initCtx)
-			setupOrgUsersDBForAccessControlTests(t, sc.db)
+			setupOrgUsersDBForAccessControlTests(t, sc.db, sc.hs.orgService)
 			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgID)
 
 			input := strings.NewReader(test.input)

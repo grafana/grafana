@@ -1,6 +1,3 @@
-// The ID of the app plugin that we render under that "Cloud Integrations" tab
-export const CLOUD_ONBOARDING_APP_ID = 'grafana-easystart-app';
-
 // The ID of the main nav-tree item (the main item in the NavIndex)
 export const ROUTE_BASE_ID = 'connections';
 
@@ -18,5 +15,5 @@ export const ROUTES = {
 
   // Connect Data
   ConnectData: `/${ROUTE_BASE_ID}/connect-data`,
-  DataSourcesDetails: `/${ROUTE_BASE_ID}/connect-data/datasources/:id`,
+  DataSourcesDetails: `/${ROUTE_BASE_ID}/datasources/:id`,
 } as const;

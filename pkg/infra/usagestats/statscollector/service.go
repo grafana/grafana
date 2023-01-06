@@ -8,6 +8,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -18,16 +19,17 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
 	cfg                *setting.Cfg
-	sqlstore           sqlstore.Store
+	sqlstore           db.DB
 	plugins            plugins.Store
 	social             social.Service
 	usageStats         usagestats.Service
+	statsService       stats.Service
 	features           *featuremgmt.FeatureManager
 	datasources        datasources.DataSourceService
 	httpClientProvider httpclient.Provider
@@ -42,8 +44,9 @@ type Service struct {
 
 func ProvideService(
 	us usagestats.Service,
+	statsService stats.Service,
 	cfg *setting.Cfg,
-	store sqlstore.Store,
+	store db.DB,
 	social social.Service,
 	plugins plugins.Store,
 	features *featuremgmt.FeatureManager,
@@ -56,6 +59,7 @@ func ProvideService(
 		plugins:            plugins,
 		social:             social,
 		usageStats:         us,
+		statsService:       statsService,
 		features:           features,
 		datasources:        datasourceService,
 		httpClientProvider: httpClientProvider,
@@ -106,7 +110,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	m := map[string]interface{}{}
 
 	statsQuery := models.GetSystemStatsQuery{}
-	if err := s.sqlstore.GetSystemStats(ctx, &statsQuery); err != nil {
+	if err := s.statsService.GetSystemStats(ctx, &statsQuery); err != nil {
 		s.log.Error("Failed to get system stats", "error", err)
 		return nil, err
 	}
@@ -219,7 +223,7 @@ func (s *Service) collectAlertNotifierStats(ctx context.Context) (map[string]int
 	m := map[string]interface{}{}
 	// get stats about alert notifier usage
 	anStats := models.GetAlertNotifierUsageStatsQuery{}
-	if err := s.sqlstore.GetAlertNotifiersUsageStats(ctx, &anStats); err != nil {
+	if err := s.statsService.GetAlertNotifiersUsageStats(ctx, &anStats); err != nil {
 		s.log.Error("Failed to get alert notification stats", "error", err)
 		return nil, err
 	}
@@ -233,7 +237,7 @@ func (s *Service) collectAlertNotifierStats(ctx context.Context) (map[string]int
 func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 	dsStats := models.GetDataSourceStatsQuery{}
-	if err := s.sqlstore.GetDataSourceStats(ctx, &dsStats); err != nil {
+	if err := s.statsService.GetDataSourceStats(ctx, &dsStats); err != nil {
 		s.log.Error("Failed to get datasource stats", "error", err)
 		return nil, err
 	}
@@ -280,7 +284,7 @@ func (s *Service) collectDatasourceAccess(ctx context.Context) (map[string]inter
 
 	// fetch datasource access stats
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
-	if err := s.sqlstore.GetDataSourceAccessStats(ctx, &dsAccessStats); err != nil {
+	if err := s.statsService.GetDataSourceAccessStats(ctx, &dsAccessStats); err != nil {
 		s.log.Error("Failed to get datasource access stats", "error", err)
 		return nil, err
 	}
@@ -316,8 +320,13 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
-	if err := s.sqlstore.GetSystemStats(ctx, &statsQuery); err != nil {
+	if err := s.statsService.GetSystemStats(ctx, &statsQuery); err != nil {
 		s.log.Error("Failed to get system stats", "error", err)
+		return false
+	}
+
+	if statsQuery.Result == nil {
+		s.log.Error("Cannot retrieve system stats")
 		return false
 	}
 
@@ -346,7 +355,7 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.MStatTotalPublicDashboards.Set(float64(statsQuery.Result.PublicDashboards))
 
 	dsStats := models.GetDataSourceStatsQuery{}
-	if err := s.sqlstore.GetDataSourceStats(ctx, &dsStats); err != nil {
+	if err := s.statsService.GetDataSourceStats(ctx, &dsStats); err != nil {
 		s.log.Error("Failed to get datasource stats", "error", err)
 		return true
 	}
