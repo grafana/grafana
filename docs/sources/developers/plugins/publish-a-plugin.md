@@ -106,7 +106,7 @@ To speed up the time it takes to review your plugin:
 
 ## Publishing your plugin for the first time
 
-{{< figure src="/static/img/docs/plugins/plugins-submission-create.png" class="docs-image--no-shadow" max-width="650px" >}}
+{{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
 
 1. [Sign in](https://grafana.com/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
