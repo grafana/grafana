@@ -29,7 +29,7 @@ jobs:
           check_failure_level: "error"
 
           # The comma-separated list of patterns that should be ignored by not-owned-checker. For example, you can specify * and as a result, the * pattern from the CODEOWNERS file will be ignored and files owned by this pattern will be reported as unowned unless a later specific pattern will match that path. It's useful because often we have default owners entry at the begging of the CODOEWNERS file, e.g. * @global-owner1 @global-owner2"
-          not_owned_checker_skip_patterns: ""
+          not_owned_checker_skip_patterns: ".github"
 
           # Specifies whether CODEOWNERS may have unowned files. For example, `/infra/oncall-rotator/oncall-config.yml` doesn't have owner and this is not reported.
           owner_checker_allow_unowned_patterns: "false"
