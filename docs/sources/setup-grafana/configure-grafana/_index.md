@@ -862,7 +862,9 @@ By default, the users' organization and role is reset on every new login.
 
 ### [auth].<provider> skip_org_role_update_sync
 
-To prevent synchronization of organization roles for a specific OAuth integration, you can set the `skip_org_role_sync` option to `true`. Please note that there is also a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the provider integration, `oauth_skip_org_role_update_sync` is a generic setting that affects GitHub, GitLab, AzureAD, and Generic OAuth integrations. However, we are planning to phase out the use of the generic setting in favor of provider-specific settings.
+To prevent synchronization of organization roles for a specific OAuth integration, you can set the `skip_org_role_sync` option to `true`. Please note that there is also a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers. 
+
+ The setting `oauth_skip_org_role_update_sync` is deprecated in favor of provider-specific settings.
 
 A table detailing what happens when the soon to be legacy option `oauth_skip_org_role_update_sync` is enabled/disabled and an auth specific setting `skip_org_role_sync` is enabled/disabled is shown below.
 
