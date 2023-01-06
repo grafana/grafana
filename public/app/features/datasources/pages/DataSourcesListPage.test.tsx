@@ -71,7 +71,7 @@ describe('Render', () => {
       getDataSourcesMock.mockResolvedValue(getMockDataSources(3));
       setup({ isSortAscending: true });
 
-      expect(await screen.findAllByRole('link', { name: 'Build a Dashboard' })).toHaveLength(3);
+      expect(await screen.findAllByRole('link', { name: /Build a dashboard/i })).toHaveLength(3);
       expect(screen.queryAllByRole('link', { name: 'Explore' })).toHaveLength(0);
     });
 
@@ -88,7 +88,7 @@ describe('Render', () => {
     getDataSourcesMock.mockResolvedValue(getMockDataSources(3));
     setup({ isSortAscending: true });
 
-    expect(await screen.findAllByRole('link', { name: 'Build a Dashboard' })).toHaveLength(3);
+    expect(await screen.findAllByRole('link', { name: /Build a dashboard/i })).toHaveLength(3);
     expect(screen.queryAllByRole('link', { name: 'Explore' })).toHaveLength(3);
   });
 
