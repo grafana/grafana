@@ -431,6 +431,9 @@ lerna.json @grafana/frontend-ops
 /public/robots.txt @grafana/frontend-ops
 /public/sass/ @grafana/user-essentials
 /public/test/ @grafana/user-essentials
+/public/testdata/ @grafana/user-essentials
+/public/views/ @grafana/user-essentials
+
 
 /public/api-merged.json @grafana/backend-platform
 /public/api-spec.json @grafana/backend-platform
@@ -451,6 +454,7 @@ lerna.json @grafana/frontend-ops
 /scripts/circle-* @grafana/grafana-release-eng
 /scripts/ci-frontend-metrics.sh @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
 /scripts/cli/ @grafana/user-essentials
+/scripts/clean-git-or-error.sh @grafana/grafana-as-code
 /scripts/grafana-server/ @grafana/user-essentials
 /scripts/helpers/ @grafana/grafana-release-eng
 /scripts/import_many_dashboards.sh @torkelo
