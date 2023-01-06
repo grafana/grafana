@@ -29,7 +29,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
   }
 
   componentDidUpdate(oldProps: Props) {
-    const { getSuggestions, language } = this.props;
+    const { getSuggestions, language, jsonValidation } = this.props;
 
     const newLanguage = oldProps.language !== language;
     const newGetSuggestions = oldProps.getSuggestions !== getSuggestions;
@@ -51,6 +51,10 @@ class UnthemedCodeEditor extends PureComponent<Props> {
 
     if (newLanguage) {
       this.loadCustomLanguage();
+    }
+
+    if (jsonValidation !== oldProps.jsonValidation && this.monaco) {
+      this.monaco.languages.json.jsonDefaults.setDiagnosticsOptions(jsonValidation ?? {});
     }
   }
 
@@ -95,12 +99,16 @@ class UnthemedCodeEditor extends PureComponent<Props> {
   };
 
   handleOnMount = (editor: MonacoEditorType, monaco: Monaco) => {
-    const { onChange, onEditorDidMount } = this.props;
+    const { onChange, onEditorDidMount, jsonValidation } = this.props;
 
     this.getEditorValue = () => editor.getValue();
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, this.onSave);
     const languagePromise = this.loadCustomLanguage();
+
+    if (jsonValidation) {
+      monaco.languages.json.jsonDefaults.setDiagnosticsOptions(jsonValidation);
+    }
 
     if (onEditorDidMount) {
       languagePromise.then(() => onEditorDidMount(editor, monaco));

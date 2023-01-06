@@ -53,6 +53,11 @@ export interface CodeEditorProps {
    */
   getSuggestions?: CodeEditorSuggestionProvider;
 
+  /**
+   * Apply schema valiation to json objects.  This option is only valid with the 'json' language
+   */
+  jsonValidation?: monacoType.languages.json.DiagnosticsOptions;
+
   containerStyles?: string;
 }
 

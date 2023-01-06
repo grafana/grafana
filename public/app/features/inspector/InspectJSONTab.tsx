@@ -1,4 +1,5 @@
 import { isEqual } from 'lodash';
+import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 import React, { useState, useCallback } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -16,6 +17,7 @@ import { getPanelDataFrames } from '../dashboard/components/HelpWizard/utils';
 import { getPanelInspectorStyles2 } from '../inspector/styles';
 import { reportPanelInspectInteraction } from '../search/page/reporting';
 
+import { getPanelSchema } from './panelSchemas';
 import { InspectTab } from './types';
 
 enum ShowContent {
@@ -62,10 +64,18 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
   const styles = useStyles2(getPanelInspectorStyles2);
   const [show, setShow] = useState(hasPanelJSON ? ShowContent.PanelJSON : ShowContent.DataFrames);
   const [text, setText] = useState('');
+  const [schema, setSchema] = useState<monacoType.languages.json.DiagnosticsOptions>();
 
   useAsync(async () => {
     const v = await getJSONObject(show, panel, data);
     setText(getPrettyJSON(v));
+
+    // Update the schema based on type
+    let s = schema;
+    if (show === ShowContent.PanelJSON && panel?.type) {
+      s = await getPanelSchema(panel.type);
+    }
+    setSchema(s);
   }, [show, panel, data]);
 
   const onApplyPanelModel = useCallback(() => {
@@ -143,6 +153,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
               value={text || ''}
               readOnly={!isPanelJSON}
               onBlur={setText}
+              jsonValidation={schema}
             />
           )}
         </AutoSizer>
