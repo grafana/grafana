@@ -469,12 +469,14 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						currentRuleVersion = newVersion
 					}
 					tracingCtx, span := sch.tracer.Start(grafanaCtx, "alert rule execution")
+					defer span.End()
+
 					span.SetAttributes("rule_uid", ctx.rule.UID, attribute.String("rule_uid", ctx.rule.UID))
 					span.SetAttributes("org_id", ctx.rule.OrgID, attribute.Int64("org_id", ctx.rule.OrgID))
 					span.SetAttributes("rule_version", ctx.rule.Version, attribute.Int64("rule_version", ctx.rule.Version))
 					utcTick := ctx.scheduledAt.UTC().Format(time.RFC3339Nano)
 					span.SetAttributes("tick", utcTick, attribute.String("tick", utcTick))
-					defer span.End()
+
 					evaluate(tracingCtx, attempt, ctx, span)
 					return nil
 				})
