@@ -266,7 +266,7 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 			if expr.IsDataSource(q.DatasourceUID) {
 				ds = expr.DataSourceModel()
 			} else {
-				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, true)
+				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, false /*skipCache*/)
 				if err != nil {
 					return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 				}
