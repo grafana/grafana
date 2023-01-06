@@ -17,6 +17,23 @@
 /docs/sources/developers/plugins/ @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend/ @grafana/docs-squad @grafana/plugins-platform-backend
 /.changelog-archive @grafana/docs-squad
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+GOVERNANCE.md
+HALL_OF_FAME.md
+ISSUE_TRIAGE.md
+LICENSE
+LICENSING.md
+MAINTAINERS.md
+NOTICE.md
+README.md
+ROADMAP.md
+SECURITY.md
+SUPPORT.md
+UPGRADING_DEPENDENCIES.md
+WORKFLOW.md
+
 
 # Set up, dashboards/visualization, best practices: Chris Moyer
 # Alerting: Brenda Muir
@@ -233,6 +250,18 @@ tsconfig.json @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
 /.gitignore @grafana/frontend-ops
+/.husky/pre-commit @grafana/frontend-ops
+/.nvmrc @grafana/frontend-ops
+/.prettierignore @grafana/frontend-ops
+/.yarn @grafana/frontend-ops
+/.yarnrc.yml @grafana/frontend-ops
+/.linguirc @grafana/user-essentials
+/.babel.config.json @grafana/frontend-ops
+lerna.json @grafana/frontend-ops
+/.prettierrc.js @grafana/frontend-ops
+/.eslintrc @grafana/frontend-ops
+/.vim @zoltanbedi
+
 
 # public folder
 /public/app/core/components/TimePicker/ @grafana/user-essentials
@@ -267,9 +296,6 @@ tsconfig.json @grafana/frontend-ops
 /scripts/ci-frontend-metrics.sh @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/user-essentials
-lerna.json @grafana/frontend-ops
-.prettierrc.js @grafana/frontend-ops
-.eslintrc @grafana/frontend-ops
 .pa11yci.conf.js @grafana/user-essentials
 .pa11yci-pr.conf.js @grafana/user-essentials
 .betterer.results @joshhunt
