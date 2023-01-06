@@ -44,6 +44,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                             |
 | `autoMigrateGraphPanels`          | Replace the angular graph panel with timeseries                                 |
 | `datasourceLogger`                | Logs all datasource requests                                                    |
+| `accessControlOnCall`             | Access control primitives for OnCall                                            |
 
 ## Alpha feature toggles
 
@@ -99,16 +100,16 @@ Alpha features might be changed or removed without prior notice.
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name                    | Description                                               |
-| -------------------------------------- | --------------------------------------------------------- |
-| `dashboardPreviewsAdmin`               | Manage the dashboard previews crawler process from the UI |
-| `showFeatureFlagsInUI`                 | Show feature flags in the settings UI                     |
-| `k8s`                                  | Explore native k8s integrations                           |
-| `dashboardsFromStorage`                | Load dashboards from the generic storage interface        |
-| `export`                               | Export grafana instance (to git, etc)                     |
-| `azureMonitorResourcePickerForMetrics` | New UI for Azure Monitor Metrics Query                    |
-| `grpcServer`                           | Run GRPC server                                           |
-| `entityStore`                          | SQL-based entity store (requires storage flag also)       |
-| `queryLibrary`                         | Reusable query library                                    |
-| `accessControlOnCall`                  | Access control primitives for OnCall                      |
-| `nestedFolders`                        | Enable folder nesting                                     |
+| Feature toggle name                    | Description                                                             |
+| -------------------------------------- | ----------------------------------------------------------------------- |
+| `dashboardPreviewsAdmin`               | Manage the dashboard previews crawler process from the UI               |
+| `showFeatureFlagsInUI`                 | Show feature flags in the settings UI                                   |
+| `publicDashboardsEmailSharing`         | Allows public dashboard sharing to be restricted to only allowed emails |
+| `k8s`                                  | Explore native k8s integrations                                         |
+| `dashboardsFromStorage`                | Load dashboards from the generic storage interface                      |
+| `export`                               | Export grafana instance (to git, etc)                                   |
+| `azureMonitorResourcePickerForMetrics` | New UI for Azure Monitor Metrics Query                                  |
+| `grpcServer`                           | Run GRPC server                                                         |
+| `entityStore`                          | SQL-based entity store (requires storage flag also)                     |
+| `queryLibrary`                         | Reusable query library                                                  |
+| `nestedFolders`                        | Enable folder nesting                                                   |

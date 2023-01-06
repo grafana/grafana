@@ -17,6 +17,23 @@ func CLICommand(version string) *cli.Command {
 		Usage: "run the grafana cli",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
+				Name:  "config",
+				Usage: "Path to config file",
+			},
+			&cli.StringFlag{
+				Name:  "homepath",
+				Usage: "Path to Grafana install/home path, defaults to working directory",
+			},
+			&cli.StringFlag{
+				Name:  "configOverrides",
+				Usage: "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
+			},
+			cli.VersionFlag,
+			&cli.BoolFlag{
+				Name:  "debug, d",
+				Usage: "Enable debug logging",
+			},
+			&cli.StringFlag{
 				Name:    "pluginsDir",
 				Usage:   "Path to the Grafana plugin directory",
 				Value:   utils.GetGrafanaPluginDir(runtime.GOOS),
@@ -38,23 +55,6 @@ func CLICommand(version string) *cli.Command {
 				Name:  "insecure",
 				Usage: "Skip TLS verification (insecure)",
 			},
-			&cli.BoolFlag{
-				Name:  "debug, d",
-				Usage: "Enable debug logging",
-			},
-			&cli.StringFlag{
-				Name:  "configOverrides",
-				Usage: "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
-			},
-			&cli.StringFlag{
-				Name:  "homepath",
-				Usage: "Path to Grafana install/home path, defaults to working directory",
-			},
-			&cli.StringFlag{
-				Name:  "config",
-				Usage: "Path to config file",
-			},
-			cli.VersionFlag,
 		},
 		Subcommands: Commands,
 		Before: func(c *cli.Context) error {

@@ -66,7 +66,9 @@ describe('MetricMath: CompletionItemProvider', () => {
     it('returns a suggestion for every period if the third arg of a search function', async () => {
       const { query, position } = MetricMathTestData.thirdArgAfterSearchQuery;
       const suggestions = await getSuggestions(query, position);
-      expect(suggestions.length).toEqual(METRIC_MATH_PERIODS.length);
+      // +1 because one suggestion is also added for the  $__period_auto macro
+      const expectedSuggestionsLength = METRIC_MATH_PERIODS.length + 1;
+      expect(suggestions.length).toEqual(expectedSuggestionsLength);
     });
   });
 });

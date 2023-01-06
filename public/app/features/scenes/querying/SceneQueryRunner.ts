@@ -193,15 +193,13 @@ export const getTransformationsStream: (
         return of(data);
       }
 
-      const replace: (option?: string) => string = (option) => {
-        return sceneGraph.interpolate(sceneObject, option, data?.request?.scopedVars);
+      const ctx = {
+        interpolate: (value: string) => {
+          return sceneGraph.interpolate(sceneObject, value, data?.request?.scopedVars);
+        },
       };
 
-      transformations.forEach((transform: DataTransformerConfig) => {
-        transform.replace = replace;
-      });
-
-      return transformDataFrame(transformations, data.series).pipe(map((series) => ({ ...data, series })));
+      return transformDataFrame(transformations, data.series, ctx).pipe(map((series) => ({ ...data, series })));
     })
   );
 };
