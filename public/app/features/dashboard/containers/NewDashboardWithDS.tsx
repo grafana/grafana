@@ -28,7 +28,7 @@ export default function NewDashboardWithDS(props: GrafanaRouteComponentProps<{ d
     };
 
     setDashboardToFetchFromLocalStorage(newDashboard);
-    locationService.push('/dashboard/new');
+    locationService.replace('/dashboard/new');
   }, [datasourceUid]);
 
   if (error) {
