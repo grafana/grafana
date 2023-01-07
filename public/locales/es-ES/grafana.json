@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
   "clipboard-button": {
     "inline-toast": {
       "success": "Copiado"
@@ -44,9 +44,9 @@
       "transformations-label": "Aplicar transformaciones de panel"
     },
     "inspect-json": {
-      "dataframe-description": "Datos brutos sin transformaciones y configuración de campo aplicada. ",
+      "dataframe-description": "Datos brutos sin configuración de campo ni transformaciones aplicadas. ",
       "dataframe-label": "JSON del marco de datos (de la consulta)",
-      "panel-data-description": "El modelo RAW ha pasado a la visualización del panel",
+      "panel-data-description": "El modelo bruto (RAW) ha pasado a la visualización del panel",
       "panel-data-label": "Datos de panel",
       "panel-json-description": "El modelo guardado en el panel de control JSON que configura cómo funciona todo.",
       "panel-json-label": "JSON de panel",
@@ -85,10 +85,10 @@
     "explanation": "Para visualizar sus datos, primero tendrá que conectar una fuente.",
     "logo": "Logo para la fuente de datos {{datasourceName}}",
     "new-dashboard": "Nuevo panel de control",
-    "preferred": "",
-    "sampleData": "",
-    "viewAll": "",
-    "welcome": ""
+    "preferred": "Conecte su fuente de datos preferida:",
+    "sampleData": "O configure un nuevo panel de control con datos de muestra",
+    "viewAll": "Ver todo",
+    "welcome": "¡Te damos la bienvenida a los paneles de Grafana!"
   },
   "folder-picker": {
     "loading": "Cargando carpetas..."
@@ -221,7 +221,7 @@
     "help/documentation": "Documentación",
     "help/keyboard-shortcuts": "Atajos de teclado",
     "help/support": "Asistencia",
-    "help/support-bundle": "",
+    "help/support-bundle": "Paquetes de apoyo",
     "home": {
       "title": "Inicio"
     },
@@ -313,8 +313,8 @@
       "title": "Almacenamiento"
     },
     "support-bundles": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Descargar paquetes de apoyo",
+      "title": "Paquetes de apoyo"
     },
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
