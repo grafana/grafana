@@ -28,6 +28,7 @@ import {
   NumericRange,
   PanelData,
   ScopedVars,
+  SplitOpen,
   TimeRange,
   TimeZone,
   ValueLinkConfig,
@@ -363,13 +364,16 @@ export const getLinksSupplier =
   (options: {
     frame?: DataFrame;
     field: Field;
-    fieldScopedVars: ScopedVars;
+    fieldScopedVars?: ScopedVars;
     replaceVariables: InterpolateFunction;
     timeZone?: TimeZone;
+    range?: TimeRange;
     dataLinkFilters?: DataLinkFilter[];
+    exploreSplitOpenFn?: SplitOpen;
   }) =>
   (config: ValueLinkConfig): Array<LinkModel<Field>> => {
-    const { frame, field, fieldScopedVars, replaceVariables, timeZone, dataLinkFilters } = options;
+    const { frame, field, fieldScopedVars, replaceVariables, timeZone, range, dataLinkFilters, exploreSplitOpenFn } =
+      options;
 
     if (!field.config.links || field.config.links.length === 0) {
       return [];
@@ -456,8 +460,9 @@ export const getLinksSupplier =
           internalLink: link.internal,
           scopedVars: scopedVars,
           field,
-          range: {} as TimeRange,
+          range: range || ({} as TimeRange),
           replaceVariables,
+          onClickFn: exploreSplitOpenFn,
         });
       } else {
         let href = link.onBuildUrl

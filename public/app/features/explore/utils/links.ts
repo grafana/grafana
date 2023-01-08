@@ -4,19 +4,16 @@ import {
   Field,
   LinkModel,
   TimeRange,
-  mapInternalLinkToExplore,
   InterpolateFunction,
   ScopedVars,
   DataFrame,
-  getFieldDisplayValuesProxy,
   SplitOpen,
   DataLink,
+  getLinksSupplier,
 } from '@grafana/data';
 import { DataLinkFilter } from '@grafana/data/src/field/fieldOverrides';
 import { getTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-
-import { getLinkSrv } from '../../panel/panellinks/link_srv';
 
 const dataLinkHasRequiredPermissions = (link: DataLink) => {
   return !link.internal || contextSrv.hasAccessToExplore();
@@ -46,14 +43,8 @@ const dataLinkHasAllVariablesDefined = (link: DataLink, scopedVars: ScopedVars) 
  * be passed back to the visualization.
  */
 const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasAllVariablesDefined, dataLinkHasRequiredPermissions];
+const replaceFunction: InterpolateFunction = (value, vars) => getTemplateSrv().replace(value, vars);
 
-/**
- * Get links from the field of a dataframe and in addition check if there is associated
- * metadata with datasource in which case we will add onClick to open the link in new split window. This assumes
- * that we just supply datasource name and field value and Explore split window will know how to render that
- * appropriately. This is for example used for transition from log with traceId to trace datasource to show that
- * trace.
- */
 export const getFieldLinksForExplore = (options: {
   field: Field;
   rowIndex: number;
@@ -63,60 +54,19 @@ export const getFieldLinksForExplore = (options: {
   dataFrame?: DataFrame;
 }): Array<LinkModel<Field>> => {
   const { field, vars, splitOpenFn, range, rowIndex, dataFrame } = options;
-  const scopedVars: any = { ...(vars || {}) };
-  scopedVars['__value'] = {
-    value: {
-      raw: field.values.get(rowIndex),
-    },
-    text: 'Raw value',
-  };
-
-  // If we have a dataFrame we can allow referencing other columns and their values in the interpolation.
-  if (dataFrame) {
-    scopedVars['__data'] = {
-      value: {
-        name: dataFrame.name,
-        refId: dataFrame.refId,
-        fields: getFieldDisplayValuesProxy({
-          frame: dataFrame,
-          rowIndex,
-        }),
-      },
-      text: 'Data',
-    };
-  }
-
-  if (field.config.links) {
-    const links = field.config.links.filter((link) => {
-      return DATA_LINK_FILTERS.every((filter) => filter(link, scopedVars));
-    });
-
-    return links.map((link) => {
-      if (!link.internal) {
-        const replace: InterpolateFunction = (value, vars) =>
-          getTemplateSrv().replace(value, { ...vars, ...scopedVars });
-
-        const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
-        if (!linkModel.title) {
-          linkModel.title = getTitleFromHref(linkModel.href);
-        }
-        return linkModel;
-      } else {
-        return mapInternalLinkToExplore({
-          link,
-          internalLink: link.internal,
-          scopedVars: scopedVars,
-          range,
-          field,
-          onClickFn: splitOpenFn,
-          replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-        });
-      }
-    });
-  }
-
-  return [];
+  return getLinksSupplier({
+    frame: dataFrame,
+    field,
+    fieldScopedVars: vars,
+    replaceVariables: replaceFunction,
+    range,
+    dataLinkFilters: DATA_LINK_FILTERS,
+    exploreSplitOpenFn: splitOpenFn,
+  })({ valueRowIndex: rowIndex });
 };
+
+/*
+TODO : do we make this logic part of getLinksSupplier? Or optionally pass it in? Or forget it? 
 
 function getTitleFromHref(href: string): string {
   // The URL constructor needs the url to have protocol
@@ -133,7 +83,7 @@ function getTitleFromHref(href: string): string {
     title = href;
   }
   return title;
-}
+}*/
 
 /**
  * Hook that returns a function that can be used to retrieve all the links for a row. This returns all the links from
