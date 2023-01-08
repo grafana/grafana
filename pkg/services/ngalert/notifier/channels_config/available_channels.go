@@ -176,6 +176,94 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Required:     true,
 				},
 				{
+					Label:        "Do you want to use basic authentication?",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "basicAuth",
+					Required:     false,
+				},
+				{
+					Label:        "Username",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "basicAuthUser",
+					Required:     false,
+					// TODO: Figure out a way to only show these fields when basicAuth is checked.
+					// ShowWhen doesn't seem to work with checkboxes.
+				},
+				{
+					Label:        "Password?",
+					Element:      ElementTypeSelect,
+					InputType:    InputTypeText,
+					PropertyName: "passwordSource",
+					Description:  "You can either choose to enter the password here or choose to have it read from a file on the server",
+					SelectOptions: []SelectOption{
+						{
+							Value: "password",
+							Label: "Enter password here",
+						},
+						{
+							Value: "passwordFile",
+							Label: "Read password from a file on the Grafana Server",
+						},
+					},
+					Required: false,
+				},
+				{
+					Label:        "Password",
+					Element:      ElementTypeInput,
+					InputType:    InputTypePassword,
+					Description:  "The password to use when making a call to the Kafka REST Proxy",
+					PropertyName: "password",
+					Required:     false,
+					ShowWhen: ShowWhen{
+						Field: "passwordSource",
+						Is:    "password",
+					},
+				},
+				{
+					Label:        "Password File Path",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Read the password to use from the file at this path. The file should contain only the password.",
+					PropertyName: "passwordFilePath",
+					Required:     false,
+					ShowWhen: ShowWhen{
+						Field: "passwordSource",
+						Is:    "passwordFile",
+					},
+				},
+				{
+					Label:        "API version",
+					Element:      ElementTypeSelect,
+					InputType:    InputTypeText,
+					Description:  "The API version to use when contacting the Kafka REST Server. By default v2 will be used.",
+					PropertyName: "apiVersion",
+					Required:     false,
+					SelectOptions: []SelectOption{
+						{
+							Value: "v2",
+							Label: "v2",
+						},
+						{
+							Value: "v3",
+							Label: "v3",
+						},
+					},
+				},
+				{
+					Label:        "Cluster ID",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "v3 APIs require a clusterID to be specified.",
+					Placeholder:  "lkc-abcde",
+					PropertyName: "kafkaClusterId",
+					Required:     false,
+					ShowWhen: ShowWhen{
+						Field: "apiVersion",
+						Is:    "v3",
+					},
+				},
+				{
 					Label:        "Description",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
