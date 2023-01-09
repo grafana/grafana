@@ -71,17 +71,13 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 	if isLogsQuery(q) {
 		processLogsQuery(q, b, from, to, defaultTimeField)
-		return nil
-	}
-
-	if isDocumentQuery(q) {
+	} else if (isDocumentQuery(q)) {
 		processDocumentQuery(q, b, from, to, defaultTimeField)
-		return nil
+	} else {
+		// Otherwise, it is a time series query and we process it
+		processTimeSeriesQuery(q, b, from, to, defaultTimeField)
 	}
 
-	// It is a time series query so we need to process buckets and metrics
-	aggBuilder := processAggregationsAndCreateAggBuilderInQuery(q, b, from, to, defaultTimeField)
-	processMetricsInQuery(q, b, aggBuilder, from, to, defaultTimeField)
 	return nil
 }
 
@@ -346,7 +342,30 @@ func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, 
 	b.Size(metric.Settings.Get("size").MustInt(defaultSize))
 }
 
-func processMetricsInQuery(q *Query, b *es.SearchRequestBuilder, aggBuilder es.AggBuilder, from, to int64, defaultTimeField string) {
+
+func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {
+	aggBuilder := b.Agg()
+	// Process buckets
+	// iterate backwards to create aggregations bottom-down
+	for _, bucketAgg := range q.BucketAggs {
+		bucketAgg.Settings = simplejson.NewFromAny(
+			bucketAgg.generateSettingsForDSL(),
+		)
+		switch bucketAgg.Type {
+		case dateHistType:
+			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
+		case histogramType:
+			aggBuilder = addHistogramAgg(aggBuilder, bucketAgg)
+		case filtersType:
+			aggBuilder = addFiltersAgg(aggBuilder, bucketAgg)
+		case termsType:
+			aggBuilder = addTermsAgg(aggBuilder, bucketAgg, q.Metrics)
+		case geohashGridType:
+			aggBuilder = addGeoHashGridAgg(aggBuilder, bucketAgg)
+		}
+	}
+	
+	// Process metrics
 	for _, m := range q.Metrics {
 		m := m
 
@@ -413,27 +432,4 @@ func processMetricsInQuery(q *Query, b *es.SearchRequestBuilder, aggBuilder es.A
 			})
 		}
 	}
-}
-
-func processAggregationsAndCreateAggBuilderInQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) es.AggBuilder {
-	aggBuilder := b.Agg()
-	// iterate backwards to create aggregations bottom-down
-	for _, bucketAgg := range q.BucketAggs {
-		bucketAgg.Settings = simplejson.NewFromAny(
-			bucketAgg.generateSettingsForDSL(),
-		)
-		switch bucketAgg.Type {
-		case dateHistType:
-			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
-		case histogramType:
-			aggBuilder = addHistogramAgg(aggBuilder, bucketAgg)
-		case filtersType:
-			aggBuilder = addFiltersAgg(aggBuilder, bucketAgg)
-		case termsType:
-			aggBuilder = addTermsAgg(aggBuilder, bucketAgg, q.Metrics)
-		case geohashGridType:
-			aggBuilder = addGeoHashGridAgg(aggBuilder, bucketAgg)
-		}
-	}
-	return aggBuilder
 }
