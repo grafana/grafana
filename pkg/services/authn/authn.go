@@ -26,6 +26,7 @@ const (
 
 type ClientParams struct {
 	SyncUser            bool
+	SyncTeamMembers     bool
 	AllowSignUp         bool
 	EnableDisabledUsers bool
 }
@@ -48,10 +49,12 @@ type Client interface {
 
 type Request struct {
 	// OrgID will be populated by authn.Service
-	OrgID       int64
+	OrgID int64
+	// HTTPRequest is the original HTTP request to authenticate
 	HTTPRequest *http.Request
 
-	// for use in post auth hooks
+	// Resp is the response writer to use for the request
+	// Used to set cookies and headers
 	Resp web.ResponseWriter
 }
 
@@ -62,29 +65,57 @@ const (
 )
 
 type Identity struct {
-	OrgID    int64
+	// OrgID is the active organization for the entity.
+	OrgID int64
+	// OrgCount is the number of organizations the entity is a member of.
 	OrgCount int
-	OrgName  string
+	// OrgName is the name of the active organization.
+	OrgName string
+	// OrgRoles is the list of organizations the entity is a member of and their roles.
 	OrgRoles map[int64]org.RoleType
-
-	ID             string
-	Login          string
-	Name           string
-	Email          string
+	// ID is the unique identifier for the entity in the Grafana database.
+	// It is in the format <namespace>:<id> where namespace is one of the
+	// Namespace* constants. For example, "user:1" or "api-key:1".
+	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
+	ID string
+	// Login is the short hand identifier of the entity. Should be unique.
+	Login string
+	// Name is the display name of the entity. It is not guaranteed to be unique.
+	Name string
+	// Email is the email address of the entity. Should be unique.
+	Email string
+	// IsGrafanaAdmin is true if the entity is a Grafana admin.
 	IsGrafanaAdmin *bool
-	AuthModule     string // AuthModule is the name of the external system
-	AuthID         string // AuthId is the unique identifier for the user in the external system
-	LookUpParams   models.UserLookupParams
-	IsDisabled     bool
-	HelpFlags1     user.HelpFlags1
-	LastSeenAt     time.Time
-	Teams          []int64
-
-	OAuthToken   *oauth2.Token
+	// AuthModule is the name of the external system. For example, "auth_ldap" or "auth_saml".
+	// Empty if the identity is provided by Grafana.
+	AuthModule string
+	// AuthId is the unique identifier for the entity in the external system.
+	// Empty if the identity is provided by Grafana.
+	AuthID string
+	// LookUpParams are the arguments used to look up the entity in the DB.
+	// Empty if the identity is provided by Grafana. TODO: move to client params
+	LookUpParams models.UserLookupParams
+	// IsDisabled is true if the entity is disabled.
+	IsDisabled bool
+	// HelpFlags1 is the help flags for the entity.
+	HelpFlags1 user.HelpFlags1
+	// LastSeenAt is the time when the entity was last seen.
+	LastSeenAt time.Time
+	// Teams is the list of teams the entity is a member of.
+	Teams []int64
+	// idP Groups that the entity is a member of. This is only populated if the
+	// identity provider supports groups.
+	Groups []string
+	// OAuthToken is the OAuth token used to authenticate the entity.
+	OAuthToken *oauth2.Token
+	// SessionToken is the session token used to authenticate the entity.
 	SessionToken *auth.UserToken
+	// ClientParams are hints for the auth service on how to handle the identity.
+	// Set by the authenticating client.
 	ClientParams ClientParams
 }
 
+// Role returns the role of the identity in the active organization.
 func (i *Identity) Role() org.RoleType {
 	return i.OrgRoles[i.OrgID]
 }
@@ -116,6 +147,12 @@ func (i *Identity) NamespacedID() (string, int64) {
 	return namespace, id
 }
 
+// NamespacedID builds a namespaced ID from a namespace and an ID.
+func NamespacedID(namespace string, id int64) string {
+	return fmt.Sprintf("%s:%d", namespace, id)
+}
+
+// SignedInUser returns a SignedInUser from the identity.
 func (i *Identity) SignedInUser() *user.SignedInUser {
 	var isGrafanaAdmin bool
 	if i.IsGrafanaAdmin != nil {
@@ -152,10 +189,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 	return u
 }
 
-func NamespacedID(namespace string, id int64) string {
-	return fmt.Sprintf("%s:%d", namespace, id)
-}
-
+// IdentityFromSignedInUser creates an identity from a SignedInUser.
 func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientParams) *Identity {
 	return &Identity{
 		ID:             id,
