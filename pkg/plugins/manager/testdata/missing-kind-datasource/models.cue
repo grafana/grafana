@@ -3,7 +3,7 @@ package grafanaplugin
 import "github.com/grafana/thema"
 
 Query: thema.#Lineage & {
-	name: "missing_slot_impl"
+	name: "missing_kind_datasource"
 	seqs: [
 		{
 			schemas: [

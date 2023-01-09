@@ -33,14 +33,11 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 	}
 
 	return &authn.Identity{
-		OrgID:    o.ID,
-		OrgName:  o.Name,
-		OrgRoles: map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
+		OrgID:        o.ID,
+		OrgName:      o.Name,
+		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
+		ClientParams: authn.ClientParams{},
 	}, nil
-}
-
-func (a *Anonymous) ClientParams() *authn.ClientParams {
-	return &authn.ClientParams{}
 }
 
 func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {

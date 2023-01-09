@@ -15,7 +15,7 @@ const subTitle = (
 
 const newButton = (
   <LinkButton icon="plus" href="admin/support-bundles/create" variant="primary">
-    New Support Bundle
+    New support bundle
   </LinkButton>
 );
 
