@@ -90,8 +90,8 @@ In addition to the **Run query** button and mode switcher, Builder mode provides
 | Name                      | Description                                                                               |
 | ------------------------- | ----------------------------------------------------------------------------------------- |
 | **Kick start your query** | A list of useful operation patterns you can use to add multiple operations to your query. |
-| **Explain**               | Displays a step-by-step explanation of all query components and operations.               |
-| **Raw query**             | Displays the raw LogQL query that the Builder would send to Loki.                         |
+| **Label browser**         | Used to navigate through your labels and values, and also build queries.                  |
+| **Explain query**         | Displays a step-by-step explanation of all query components and operations.               |
 
 ### Use the Labels selector
 
