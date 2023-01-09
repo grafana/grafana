@@ -14,15 +14,14 @@ import {
 } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, SupportingQueryType } from 'app/types/explore';
 
 import { getTimeZone } from '../profile/state/selectors';
 
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
-import { addResultsToCache, clearCache, loadSuppQueryData, setSuppQueryEnabled } from './state/query';
+import { addResultsToCache, clearCache, loadSupportingQueryData, setSupportingQueryEnabled } from './state/query';
 import { updateTimeRange } from './state/time';
-import { SuppQueryType } from './state/utils';
 import { LiveTailControls } from './useLiveTailControls';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { getFieldLinksForExplore } from './utils/links';
@@ -86,8 +85,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       logsMeta,
       logsSeries,
       logsQueries,
-      loadSuppQueryData,
-      setSuppQueryEnabled,
+      loadSupportingQueryData,
+      setSupportingQueryEnabled,
       onClickFilterLabel,
       onClickFilterOutLabel,
       onStartScanning,
@@ -137,14 +136,16 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             logsMeta={logsMeta}
             logsSeries={logsSeries}
             logsVolumeEnabled={logsVolume.enabled}
-            onSetLogsVolumeEnabled={(enabled) => setSuppQueryEnabled(exploreId, enabled, SuppQueryType.LogsVolume)}
+            onSetLogsVolumeEnabled={(enabled) =>
+              setSupportingQueryEnabled(exploreId, enabled, SupportingQueryType.LogsVolume)
+            }
             logsVolumeData={logsVolume.data}
             logsQueries={logsQueries}
             width={width}
             splitOpen={splitOpenFn}
             loading={loading}
             loadingState={loadingState}
-            loadLogsVolumeData={() => loadSuppQueryData(exploreId, SuppQueryType.LogsVolume)}
+            loadLogsVolumeData={() => loadSupportingQueryData(exploreId, SupportingQueryType.LogsVolume)}
             onChangeTime={this.onChangeTime}
             onClickFilterLabel={onClickFilterLabel}
             onClickFilterOutLabel={onClickFilterOutLabel}
@@ -173,10 +174,19 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
-  const { logsResult, loading, scanning, datasourceInstance, isLive, isPaused, range, absoluteRange, suppQueries } =
-    item;
+  const {
+    logsResult,
+    loading,
+    scanning,
+    datasourceInstance,
+    isLive,
+    isPaused,
+    range,
+    absoluteRange,
+    supportingQueries,
+  } = item;
   const timeZone = getTimeZone(state.user);
-  const logsVolume = suppQueries[SuppQueryType.LogsVolume];
+  const logsVolume = supportingQueries[SupportingQueryType.LogsVolume];
 
   return {
     loading,
@@ -200,8 +210,8 @@ const mapDispatchToProps = {
   updateTimeRange,
   addResultsToCache,
   clearCache,
-  loadSuppQueryData,
-  setSuppQueryEnabled,
+  loadSupportingQueryData,
+  setSupportingQueryEnabled,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

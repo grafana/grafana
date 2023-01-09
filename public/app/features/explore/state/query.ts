@@ -36,7 +36,7 @@ import { getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { store } from 'app/store/store';
 import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
-import { ExploreId, ExploreState, QueryOptions, SuppQueries } from 'app/types/explore';
+import { ExploreId, ExploreState, QueryOptions, SupportingQueryType, SupportingQueries } from 'app/types/explore';
 
 import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
@@ -46,7 +46,7 @@ import { decorateData } from '../utils/decorators';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
 import { updateTime } from './time';
-import { createCacheKey, getResultsFromCache, storeSuppQueryEnabled, SuppQueryType, SUPP_QUERY_TYPES } from './utils';
+import { createCacheKey, getResultsFromCache, storeSupportingQueryEnabled, SUPP_QUERY_TYPES } from './utils';
 
 //
 // Actions and Payloads
@@ -95,48 +95,50 @@ export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionP
   'explore/queryStoreSubscription'
 );
 
-const setSuppQueryEnabledAction = createAction<{ exploreId: ExploreId; type: SuppQueryType; enabled: boolean }>(
-  'explore/setSuppQueryEnabledAction'
-);
+const setSupportingQueryEnabledAction = createAction<{
+  exploreId: ExploreId;
+  type: SupportingQueryType;
+  enabled: boolean;
+}>('explore/setSupportingQueryEnabledAction');
 
-export interface StoreSuppQueryDataProvider {
+export interface StoreSupportingQueryDataProvider {
   exploreId: ExploreId;
   dataProvider?: Observable<DataQueryResponse>;
-  type: SuppQueryType;
+  type: SupportingQueryType;
 }
 
 /**
  * Stores available logs volume provider after running the query. Used internally by runQueries().
  */
-export const storeSuppQueryDataProviderAction = createAction<StoreSuppQueryDataProvider>(
-  'explore/storeSuppQueryDataProviderAction'
+export const storeSupportingQueryDataProviderAction = createAction<StoreSupportingQueryDataProvider>(
+  'explore/storeSupportingQueryDataProviderAction'
 );
 
-export const cleanSuppQueryAction = createAction<{ exploreId: ExploreId; type: SuppQueryType }>(
-  'explore/cleanSuppQueryAction'
+export const cleanSupportingQueryAction = createAction<{ exploreId: ExploreId; type: SupportingQueryType }>(
+  'explore/cleanSupportingQueryAction'
 );
 
-export interface StoreSuppQueryDataSubscriptionPayload {
+export interface StoreSupportingQueryDataSubscriptionPayload {
   exploreId: ExploreId;
   dataSubscription?: SubscriptionLike;
-  type: SuppQueryType;
+  type: SupportingQueryType;
 }
 
 /**
  * Stores current logs volume subscription for given explore pane.
  */
-const storeSuppQueryDataSubscriptionAction = createAction<StoreSuppQueryDataSubscriptionPayload>(
-  'explore/storeSuppQueryDataSubscriptionAction'
+const storeSupportingQueryDataSubscriptionAction = createAction<StoreSupportingQueryDataSubscriptionPayload>(
+  'explore/storeSupportingQueryDataSubscriptionAction'
 );
 
 /**
- * Stores data returned by the provider. Used internally by loadSuppQueryData().
+ * Stores data returned by the provider. Used internally by loadSupportingQueryData().
  */
-const updateSuppQueryDataAction = createAction<{
+const updateSupportingQueryDataAction = createAction<{
   exploreId: ExploreId;
-  type: SuppQueryType;
+  type: SupportingQueryType;
   data: DataQueryResponse;
-}>('explore/updateSuppQueryDataAction');
+}>('explore/updateSupportingQueryDataAction');
 
 export interface QueryEndedPayload {
   exploreId: ExploreId;
@@ -237,14 +239,14 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
     dispatch(scanStopAction({ exploreId }));
     dispatch(cancelQueriesAction({ exploreId }));
 
-    const suppQueries = getState().explore[exploreId]!.suppQueries;
+    const supportingQueries = getState().explore[exploreId]!.supportingQueries;
     // Cancel all data providers
     for (const type of SUPP_QUERY_TYPES) {
-      dispatch(storeSuppQueryDataProviderAction({ exploreId, dataProvider: undefined, type }));
+      dispatch(storeSupportingQueryDataProviderAction({ exploreId, dataProvider: undefined, type }));
 
       // And clear any incomplete data
-      if (suppQueries[type]?.data?.state !== LoadingState.Done) {
-        dispatch(cleanSuppQueryAction({ exploreId, type }));
+      if (supportingQueries[type]?.data?.state !== LoadingState.Done) {
+        dispatch(cleanSupportingQueryAction({ exploreId, type }));
       }
     }
     dispatch(stateSave());
@@ -565,13 +567,13 @@ export const runQueries = (
       if (live) {
         for (const type of SUPP_QUERY_TYPES) {
           dispatch(
-            storeSuppQueryDataProviderAction({
+            storeSupportingQueryDataProviderAction({
               exploreId,
               dataProvider: undefined,
               type,
             })
           );
-          dispatch(cleanSuppQueryAction({ exploreId, type }));
+          dispatch(cleanSupportingQueryAction({ exploreId, type }));
         }
 
         // In this whole part., we need to figure out
@@ -593,29 +595,29 @@ export const runQueries = (
           ...transaction.request,
           requestId: transaction.request.requestId + '_log_volume',
         };
-        const type = SuppQueryType.LogsVolume;
+        const type = SupportingQueryType.LogsVolume;
         const dataProvider = datasourceInstance.getLogsVolumeDataProvider(sourceRequest);
         dispatch(
-          storeSuppQueryDataProviderAction({
+          storeSupportingQueryDataProviderAction({
             exploreId,
             type,
             dataProvider,
           })
         );
 
-        const { suppQueries, absoluteRange } = getState().explore[exploreId]!;
-        if (!canReuseSuppQueryData(suppQueries[type].data, queries, absoluteRange)) {
-          dispatch(cleanSuppQueryAction({ exploreId, type }));
-          if (suppQueries[type].enabled) {
-            dispatch(loadSuppQueryData(exploreId, type));
+        const { supportingQueries, absoluteRange } = getState().explore[exploreId]!;
+        if (!canReuseSupportingQueryData(supportingQueries[type].data, queries, absoluteRange)) {
+          dispatch(cleanSupportingQueryAction({ exploreId, type }));
+          if (supportingQueries[type].enabled) {
+            dispatch(loadSupportingQueryData(exploreId, type));
           }
         }
       } else {
         dispatch(
-          storeSuppQueryDataProviderAction({
+          storeSupportingQueryDataProviderAction({
             exploreId,
             dataProvider: undefined,
-            type: SuppQueryType.LogsVolume,
+            type: SupportingQueryType.LogsVolume,
           })
         );
       }
@@ -629,17 +631,18 @@ export const runQueries = (
  * Checks if after changing the time range the existing data can be used to show logs volume.
  * It can happen if queries are the same and new time range is within existing data time range.
  */
-function canReuseSuppQueryData(
-  suppQueryData: DataQueryResponse | undefined,
+function canReuseSupportingQueryData(
+  supportingQueryData: DataQueryResponse | undefined,
   queries: DataQuery[],
   selectedTimeRange: AbsoluteTimeRange
 ): boolean {
-  if (suppQueryData && suppQueryData.data[0]) {
+  if (supportingQueryData && supportingQueryData.data[0]) {
     // check if queries are the same
-    if (!deepEqual(suppQueryData.data[0].meta?.custom?.targets, queries)) {
+    if (!deepEqual(supportingQueryData.data[0].meta?.custom?.targets, queries)) {
       return false;
     }
-    const dataRange = suppQueryData && suppQueryData.data[0] && suppQueryData.data[0].meta?.custom?.absoluteRange;
+    const dataRange =
+      supportingQueryData && supportingQueryData.data[0] && supportingQueryData.data[0].meta?.custom?.absoluteRange;
     // if selected range is within loaded logs volume
     if (dataRange && dataRange.from <= selectedTimeRange.from && selectedTimeRange.to <= dataRange.to) {
       return true;
@@ -701,19 +704,19 @@ export function clearCache(exploreId: ExploreId): ThunkResult<void> {
 /**
  * Initializes loading logs volume data and stores emitted value.
  */
-export function loadSuppQueryData(exploreId: ExploreId, type: SuppQueryType): ThunkResult<void> {
+export function loadSupportingQueryData(exploreId: ExploreId, type: SupportingQueryType): ThunkResult<void> {
   return (dispatch, getState) => {
-    const { suppQueries } = getState().explore[exploreId]!;
-    const dataProvider = suppQueries[type].dataProvider;
+    const { supportingQueries } = getState().explore[exploreId]!;
+    const dataProvider = supportingQueries[type].dataProvider;
 
     if (dataProvider) {
       const dataSubscription = dataProvider.subscribe({
-        next: (suppQueryData: DataQueryResponse) => {
-          dispatch(updateSuppQueryDataAction({ exploreId, type, data: suppQueryData }));
+        next: (supportingQueryData: DataQueryResponse) => {
+          dispatch(updateSupportingQueryDataAction({ exploreId, type, data: supportingQueryData }));
         },
       });
       dispatch(
-        storeSuppQueryDataSubscriptionAction({
+        storeSupportingQueryDataSubscriptionAction({
           exploreId,
           type,
           dataSubscription,
@@ -723,12 +726,16 @@ export function loadSuppQueryData(exploreId: ExploreId, type: SuppQueryType): Th
   };
 }
 
-export function setSuppQueryEnabled(exploreId: ExploreId, enabled: boolean, type: SuppQueryType): ThunkResult<void> {
+export function setSupportingQueryEnabled(
+  exploreId: ExploreId,
+  enabled: boolean,
+  type: SupportingQueryType
+): ThunkResult<void> {
   return (dispatch, getState) => {
-    dispatch(setSuppQueryEnabledAction({ exploreId, enabled, type }));
-    storeSuppQueryEnabled(enabled, type);
+    dispatch(setSupportingQueryEnabledAction({ exploreId, enabled, type }));
+    storeSupportingQueryEnabled(enabled, type);
     if (enabled) {
-      dispatch(loadSuppQueryData(exploreId, type));
+      dispatch(loadSupportingQueryData(exploreId, type));
     }
   };
 }
@@ -792,87 +799,87 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (setSuppQueryEnabledAction.match(action)) {
+  if (setSupportingQueryEnabledAction.match(action)) {
     const { enabled, type } = action.payload;
-    const { suppQueries } = state;
-    const dataSubscription = suppQueries[type].dataSubscription;
+    const { supportingQueries } = state;
+    const dataSubscription = supportingQueries[type].dataSubscription;
     if (!enabled && dataSubscription) {
       dataSubscription.unsubscribe();
     }
 
-    const nextSuppQueries: SuppQueries = {
-      ...suppQueries,
+    const nextSupportingQueries: SupportingQueries = {
+      ...supportingQueries,
       // NOTE: the dataProvider is not cleared, we may need it later,
       // if the user re-enables the histogram-visualization
-      [type]: { ...suppQueries[type], enabled, data: undefined },
+      [type]: { ...supportingQueries[type], enabled, data: undefined },
     };
 
     return {
       ...state,
-      suppQueries: nextSuppQueries,
+      supportingQueries: nextSupportingQueries,
     };
   }
 
-  if (storeSuppQueryDataProviderAction.match(action)) {
+  if (storeSupportingQueryDataProviderAction.match(action)) {
     const { dataProvider, type } = action.payload;
-    const { suppQueries } = state;
-    const suppQuery = suppQueries[type];
+    const { supportingQueries } = state;
+    const supportingQuery = supportingQueries[type];
 
-    if (suppQuery?.dataSubscription) {
-      suppQuery.dataSubscription.unsubscribe();
+    if (supportingQuery?.dataSubscription) {
+      supportingQuery.dataSubscription.unsubscribe();
     }
 
-    const nextSuppQueries = {
-      ...suppQueries,
-      [type]: { ...suppQuery, dataProvider, dataSubscription: undefined },
+    const nextSupportingQueries = {
+      ...supportingQueries,
+      [type]: { ...supportingQuery, dataProvider, dataSubscription: undefined },
     };
 
     return {
       ...state,
-      suppQueries: nextSuppQueries,
+      supportingQueries: nextSupportingQueries,
     };
   }
 
-  if (cleanSuppQueryAction.match(action)) {
+  if (cleanSupportingQueryAction.match(action)) {
     const { type } = action.payload;
-    const { suppQueries } = state;
-    const nextSuppQueries = {
-      ...suppQueries,
-      [type]: { ...suppQueries[type], data: undefined },
+    const { supportingQueries } = state;
+    const nextSupportingQueries = {
+      ...supportingQueries,
+      [type]: { ...supportingQueries[type], data: undefined },
     };
     return {
       ...state,
-      suppQueries: nextSuppQueries,
+      supportingQueries: nextSupportingQueries,
     };
   }
 
-  if (storeSuppQueryDataSubscriptionAction.match(action)) {
+  if (storeSupportingQueryDataSubscriptionAction.match(action)) {
     const { dataSubscription, type } = action.payload;
 
-    const { suppQueries } = state;
-    const nextSuppQueries = {
-      ...suppQueries,
-      [type]: { ...suppQueries[type], dataSubscription },
+    const { supportingQueries } = state;
+    const nextSupportingQueries = {
+      ...supportingQueries,
+      [type]: { ...supportingQueries[type], dataSubscription },
     };
 
     return {
       ...state,
-      suppQueries: nextSuppQueries,
+      supportingQueries: nextSupportingQueries,
     };
   }
 
-  if (updateSuppQueryDataAction.match(action)) {
+  if (updateSupportingQueryDataAction.match(action)) {
     let { data, type } = action.payload;
-    const { suppQueries } = state;
+    const { supportingQueries } = state;
 
-    const nextSuppQueries = {
-      ...suppQueries,
-      [type]: { ...suppQueries[type], data },
+    const nextSupportingQueries = {
+      ...supportingQueries,
+      [type]: { ...supportingQueries[type], data },
     };
 
     return {
       ...state,
-      suppQueries: nextSuppQueries,
+      supportingQueries: nextSupportingQueries,
     };
   }
 
