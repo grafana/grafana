@@ -14,7 +14,6 @@ import {
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
-  BarHighlightPlugin,
   GraphGradientMode,
   GraphNG,
   GraphNGProps,
@@ -198,7 +197,9 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
           columnIndex={seriesIdx}
           sortOrder={options.tooltip.sort}
           mode={
-            options.barHighlight && options.stacking !== StackingMode.None
+            options.barHighlight &&
+            options.stacking !== StackingMode.None &&
+            options.orientation === VizOrientation.Vertical
               ? TooltipDisplayMode.Multi
               : options.tooltip.mode
           }
@@ -351,20 +352,17 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
         }
 
         return (
-          <>
-            {options.barHighlight && <BarHighlightPlugin config={config} />}
-            <Portal>
-              {hover && coords && focusedSeriesIdx && (
-                <VizTooltipContainer
-                  position={{ x: coords.viewport.x, y: coords.viewport.y }}
-                  offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
-                  allowPointerEvents={isToolTipOpen.current}
-                >
-                  {renderTooltip(info.aligned, focusedSeriesIdx, focusedPointIdx)}
-                </VizTooltipContainer>
-              )}
-            </Portal>
-          </>
+          <Portal>
+            {hover && coords && focusedSeriesIdx && (
+              <VizTooltipContainer
+                position={{ x: coords.viewport.x, y: coords.viewport.y }}
+                offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+                allowPointerEvents={isToolTipOpen.current}
+              >
+                {renderTooltip(info.aligned, focusedSeriesIdx, focusedPointIdx)}
+              </VizTooltipContainer>
+            )}
+          </Portal>
         );
       }}
     </GraphNG>
