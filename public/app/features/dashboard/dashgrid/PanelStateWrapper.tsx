@@ -34,6 +34,7 @@ import {
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
+import { InspectTab } from 'app/features/inspector/types';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { RenderEvent } from 'app/types/events';
 
@@ -45,7 +46,6 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { PanelHeaderLoadingIndicator } from './PanelHeader/PanelHeaderLoadingIndicator';
 import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
@@ -567,6 +567,11 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return !panel.hasTitle();
   }
 
+  onOpenErrorInspect(e: React.SyntheticEvent, tab: string) {
+    e.stopPropagation();
+    locationService.partial({ inspect: this.props.panel.id, inspectTab: tab });
+  }
+
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
@@ -582,13 +587,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       [`panel-alert-state--${alertState}`]: alertState !== undefined,
     });
 
-    // for new panel header design
-    const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
     const title = panel.getDisplayTitle();
-    const noPadding: PanelPadding = plugin.noPadding ? 'none' : 'md';
-    const leftItems = [
-      <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
-    ];
+    const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
 
     let menu;
     if (!dashboard.meta.publicDashboardAccessToken) {
@@ -601,7 +601,18 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     if (config.featureToggles.newPanelChromeUI) {
       return (
-        <PanelChrome width={width} height={height} title={title} leftItems={leftItems} padding={noPadding} menu={menu}>
+        <PanelChrome
+          width={width}
+          height={height}
+          padding={padding}
+          title={title}
+          menu={menu}
+          loadingState={data.state}
+          status={{
+            message: errorMessage,
+            onClick: (e: React.SyntheticEvent) => this.onOpenErrorInspect(e, InspectTab.Error),
+          }}
+        >
           {(innerWidth, innerHeight) => (
             <>
               <ErrorBoundary

@@ -293,7 +293,7 @@ When configured, Grafana will pass the user's token to the plugin in an Authoriz
 
 ```go
 func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	token := strings.Fields(req.Headers["Authorization"])
+	token := strings.Fields(req.GetHTTPHeader(backend.OAuthIdentityTokenHeaderName))
 	var (
 		tokenType   = token[0]
 		accessToken = token[1]
@@ -304,7 +304,7 @@ func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 }
 
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-  token := strings.Fields(req.Headers["Authorization"])
+  token := strings.Fields(req.GetHTTPHeader(backend.OAuthIdentityTokenHeaderName))
 	var (
 		tokenType   = token[0]
 		accessToken = token[1]
@@ -320,14 +320,14 @@ In addition, if the user's token includes an ID token, Grafana will pass the use
 
 ```go
 func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	idToken := req.Headers["X-ID-Token"]
+	idToken := req.GetHTTPHeader(backend.OAuthIdentityIDTokenHeaderName)
 
 	// ...
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk}, nil
 }
 
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-  idToken := req.Headers["X-ID-Token"]
+  idToken := req.GetHTTPHeader(backend.OAuthIdentityIDTokenHeaderName)
 
 	for _, q := range req.Queries {
 		// ...
@@ -339,14 +339,12 @@ The `Authorization` and `X-ID-Token` headers will also be available on the `Call
 
 ```go
 func (ds *dataSource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-  token := req.Headers["Authorization"]
-  idToken := req.Headers["X-ID-Token"] // present if user's token includes an ID token
+  token := req.GetHTTPHeader(backend.OAuthIdentityTokenHeaderName)
+  idToken := req.GetHTTPHeader(backend.OAuthIdentityIDTokenHeaderName) // present if user's token includes an ID token
 
   // ...
 }
 ```
-
-> **Note:** Due to a bug in Grafana, using this feature with PostgreSQL can cause a deadlock. For more information, refer to [Grafana causes deadlocks in PostgreSQL, while trying to refresh users token](https://github.com/grafana/grafana/issues/20515).
 
 ## Forward cookies for the logged-in user
 
@@ -356,19 +354,43 @@ When configured, Grafana will pass these cookies to the plugin in the `Cookie` h
 
 ```go
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-  cookies:= req.Headers["Cookie"]
+  cookies:= req.GetHTTPHeader(backend.CookiesHeaderName)
 
   // ...
 }
 
 func (ds *dataSource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-  cookies := req.Headers["Cookie"]
+  cookies:= req.GetHTTPHeader(backend.CookiesHeaderName)
 
   // ...
 }
 
 func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-  cookies:= req.Headers["Cookie"]
+  cookies:= req.GetHTTPHeader(backend.CookiesHeaderName)
+
+  // ...
+}
+```
+
+## Forward user header for the logged-in user
+
+When [send_user_header]({{< relref "../../setup-grafana/configure-grafana/_index.md#send_user_header" >}}) is enabled, Grafana will pass the user header to the plugin in the `X-Grafana-User` header, available in the `QueryData`, `CallResource` and `CheckHealth` requests in your backend data source.
+
+```go
+func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+  u := req.GetHTTPHeader("X-Grafana-User")
+
+  // ...
+}
+
+func (ds *dataSource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+  u := req.GetHTTPHeader("X-Grafana-User")
+
+  // ...
+}
+
+func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+  u := req.GetHTTPHeader("X-Grafana-User")
 
   // ...
 }

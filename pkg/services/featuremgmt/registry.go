@@ -20,13 +20,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "promQueryBuilder",
-			Description:  "Show Prometheus query builder",
-			State:        FeatureStateStable,
-			Expression:   "true", // on by default
-			FrontendOnly: true,
-		},
-		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -108,6 +101,13 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "publicDashboardsEmailSharing",
+			Description:     "Allows public dashboard sharing to be restricted to only allowed emails",
+			State:           FeatureStateAlpha,
+			RequiresLicense: true,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "lokiLive",
 			Description: "Support WebSocket streaming for loki (early prototype)",
 			State:       FeatureStateAlpha,
@@ -159,6 +159,11 @@ var (
 			Description:     "Explore native k8s integrations",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+		},
+		{
+			Name:        "supportBundles",
+			Description: "Support bundles for troubleshooting",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:            "dashboardsFromStorage",
@@ -348,10 +353,9 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "accessControlOnCall",
-			Description:     "Access control primitives for OnCall",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			Name:        "accessControlOnCall",
+			Description: "Access control primitives for OnCall",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "nestedFolders",
@@ -387,6 +391,16 @@ var (
 		{
 			Name:        "sessionRemoteCache",
 			Description: "Enable using remote cache for user sessions",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "disablePrometheusExemplarSampling",
+			Description: "Disable Prometheus examplar sampling",
+			State:       FeatureStateStable,
+		},
+		{
+			Name:        "alertingBacktesting",
+			Description: "Rule backtesting API for alerting",
 			State:       FeatureStateAlpha,
 		},
 	}

@@ -342,7 +342,11 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 	dashboardID := query.Result.Dashboard.Get("id").MustInt64()
 
 	if dashboardID != 0 {
-		guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+		guardian, err := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+		if err != nil {
+			return response.Err(err)
+		}
+
 		canEdit, err := guardian.CanEdit()
 		// check for permissions only if the dashboard is found
 		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {

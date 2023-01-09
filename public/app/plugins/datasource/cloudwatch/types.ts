@@ -1,7 +1,6 @@
 import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
 import { DataFrame, DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 
-import { SelectableResourceValue } from './api';
 import {
   QueryEditorArrayExpression,
   QueryEditorFunctionExpression,
@@ -41,7 +40,7 @@ export interface SQLExpression {
 }
 
 export interface CloudWatchMetricsQuery extends MetricStat, DataQuery {
-  queryMode?: 'Metrics';
+  queryMode?: CloudWatchQueryMode;
   metricQueryType?: MetricQueryType;
   metricEditorMode?: MetricEditorMode;
 
@@ -96,20 +95,26 @@ export enum CloudWatchLogsQueryStatus {
 }
 
 export interface CloudWatchLogsQuery extends DataQuery {
-  queryMode: 'Logs';
+  queryMode: CloudWatchQueryMode;
   id: string;
   region: string;
   expression?: string;
   statsGroups?: string[];
-  logGroups?: SelectableResourceValue[];
-  /* not quite deprecated yet, but will be soon */
+  logGroups?: LogGroup[];
+  /* deprecated, use logGroups instead */
   logGroupNames?: string[];
 }
+// We want to allow setting defaults for both Logs and Metrics queries
+export type CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery;
 
-export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery | CloudWatchAnnotationQuery;
+export type CloudWatchQuery =
+  | CloudWatchMetricsQuery
+  | CloudWatchLogsQuery
+  | CloudWatchAnnotationQuery
+  | CloudWatchDefaultQuery;
 
 export interface CloudWatchAnnotationQuery extends MetricStat, DataQuery {
-  queryMode: 'Annotations';
+  queryMode: CloudWatchQueryMode;
   prefixMatching?: boolean;
   actionPrefix?: string;
   alarmNamePrefix?: string;
@@ -257,42 +262,6 @@ export interface TSDBTimeSeries {
 }
 export type TSDBTimePoint = [number, number];
 
-export interface LogGroup {
-  /**
-   * The name of the log group.
-   */
-  logGroupName?: string;
-  /**
-   * The creation time of the log group, expressed as the number of milliseconds after Jan 1, 1970 00:00:00 UTC.
-   */
-  creationTime?: number;
-  retentionInDays?: number;
-  /**
-   * The number of metric filters.
-   */
-  metricFilterCount?: number;
-  /**
-   * The Amazon Resource Name (ARN) of the log group.
-   */
-  arn?: string;
-  /**
-   * The number of bytes stored.
-   */
-  storedBytes?: number;
-  /**
-   * The Amazon Resource Name (ARN) of the CMK to use when encrypting log data.
-   */
-  kmsKeyId?: string;
-}
-
-export interface DescribeLogGroupsResponse {
-  /**
-   * The log groups.
-   */
-  logGroups?: LogGroup[];
-  nextToken?: string;
-}
-
 export interface GetLogGroupFieldsRequest {
   /**
    * The name of the log group to search.
@@ -332,7 +301,7 @@ export interface StartQueryRequest {
    * The list of log groups to be queried. You can include up to 20 log groups. A StartQuery operation must include a logGroupNames or a logGroupName parameter, but not both.
    */
   logGroupNames?: string[] /* not quite deprecated yet, but will be soon */;
-  logGroups?: SelectableResourceValue[];
+  logGroups?: LogGroup[];
   /**
    * The query string to use. For more information, see CloudWatch Logs Insights Query Syntax.
    */
@@ -494,4 +463,11 @@ export interface MetricResponse {
 export interface ResourceResponse<T> {
   accountId?: string;
   value: T;
+}
+
+export interface LogGroup {
+  arn: string;
+  name: string;
+  accountId?: string;
+  accountLabel?: string;
 }
