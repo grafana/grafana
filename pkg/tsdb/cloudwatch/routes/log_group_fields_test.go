@@ -41,7 +41,7 @@ func Test_log_group_fields_route(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
-		assert.Equal(t, `{"Message":"error in LogGroupFieldsHandler: error from api","Error":"you need to specify either logGroupName or logGroupArn","StatusCode":400}`, rr.Body.String())
+		assert.Equal(t, `{"Message":"GetLogGroupFields error: error from api","Error":"error from api","StatusCode":500}`, rr.Body.String())
 	})
 
 	t.Run("returns valid json response if everything is ok", func(t *testing.T) {
