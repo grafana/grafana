@@ -814,7 +814,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     const nextSupplementaryQueries: SupplementaryQueries = {
       ...supplementaryQueries,
       // NOTE: the dataProvider is not cleared, we may need it later,
-      // if the user re-enables the histogram-visualization
+      // if the user re-enables the supplementary query
       [type]: { ...supplementaryQueries[type], enabled, data: undefined },
     };
 
