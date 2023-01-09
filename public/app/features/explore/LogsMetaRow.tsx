@@ -49,7 +49,7 @@ export const LogsMetaRow = React.memo(
       reportInteraction('grafana_logs_download_logs_clicked', {
         app: CoreApp.Explore,
         format: 'logs',
-        dimension: 'logs-meta-row',
+        area: 'logs-meta-row',
       });
       downloadLogsModelAsTxt({ meta, rows: logRows }, 'Explore');
     };
