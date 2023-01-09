@@ -2,8 +2,9 @@ import { map } from 'rxjs/operators';
 
 import { getDisplayProcessor } from '../../field';
 import { createTheme, GrafanaTheme2 } from '../../themes';
-import { SynchronousDataTransformerInfo } from '../../types';
+import { DataFrameType, SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
+import { roundDecimals } from '../../utils';
 import { ArrayVector } from '../../vector/ArrayVector';
 
 import { DataTransformerID } from './ids';
@@ -134,6 +135,30 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
       counts.push(field);
     }
   }
+
+  // guess bucket size from single explicit bucket field
+  if (!xMax && xMin && xMin.values.length > 1) {
+    let vals = xMin.values.toArray();
+    let bucketSize = roundDecimals(vals[1] - vals[0], 6);
+
+    xMax = {
+      ...xMin,
+      name: histogramFrameBucketMaxFieldName,
+      values: new ArrayVector(vals.map((v) => v + bucketSize)),
+    };
+  }
+
+  if (!xMin && xMax && xMax?.values.length > 1) {
+    let vals = xMax.values.toArray();
+    let bucketSize = roundDecimals(vals[1] - vals[0], 6);
+
+    xMin = {
+      ...xMax,
+      name: histogramFrameBucketMinFieldName,
+      values: new ArrayVector(vals.map((v) => v - bucketSize)),
+    };
+  }
+
   if (xMin && xMax && counts.length) {
     return {
       xMin,
@@ -380,7 +405,10 @@ export function histogramFieldsToFrame(info: HistogramFields, theme?: GrafanaThe
   });
 
   return {
-    fields: [info.xMin, info.xMax, ...info.counts],
     length: info.xMin.values.length,
+    meta: {
+      type: DataFrameType.Histogram,
+    },
+    fields: [info.xMin, info.xMax, ...info.counts],
   };
 }
