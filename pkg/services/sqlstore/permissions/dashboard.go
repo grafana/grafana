@@ -133,7 +133,7 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 	folderWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
 
 	filter, params := accesscontrol.UserRolesFilter(f.user.OrgID, f.user.UserID, f.user.Teams, accesscontrol.GetOrgRoles(f.user))
-	rolesFilter := " AND role_id IN(SELECT distinct id FROM role " + filter + ") "
+	rolesFilter := " AND role_id IN(SELECT id FROM role " + filter + ") "
 	var args []interface{}
 	builder := strings.Builder{}
 	builder.WriteRune('(')
