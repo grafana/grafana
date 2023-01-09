@@ -1,7 +1,10 @@
+import Prism, { Grammar } from 'prismjs';
 import { Observable, of } from 'rxjs';
 
-import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
+import { AbstractQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
+
+import { extractLabelMatchers, toPromLikeExpr } from '../prometheus/language_utils';
 
 import { normalizeQuery } from './QueryEditor/QueryEditor';
 import { PhlareDataSourceOptions, Query, ProfileTypeMessage, SeriesMessage } from './types';
@@ -45,4 +48,58 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
   async getLabelNames(): Promise<string[]> {
     return await super.getResource('labelNames');
   }
+
+  async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<Query[]> {
+    return abstractQueries.map((abstractQuery) => this.importFromAbstractQuery(abstractQuery));
+  }
+
+  importFromAbstractQuery(labelBasedQuery: AbstractQuery): Query {
+    return {
+      refId: labelBasedQuery.refId,
+      labelSelector: toPromLikeExpr(labelBasedQuery),
+      queryType: 'both',
+      profileTypeId: '',
+      groupBy: [''],
+    };
+  }
+
+  async exportToAbstractQueries(queries: Query[]): Promise<AbstractQuery[]> {
+    return queries.map((query) => this.exportToAbstractQuery(query));
+  }
+
+  exportToAbstractQuery(query: Query): AbstractQuery {
+    const phlareQuery = query.labelSelector;
+    if (!phlareQuery || phlareQuery.length === 0) {
+      return { refId: query.refId, labelMatchers: [] };
+    }
+    const tokens = Prism.tokenize(phlareQuery, grammar);
+    return {
+      refId: query.refId,
+      labelMatchers: extractLabelMatchers(tokens),
+    };
+  }
 }
+
+const grammar: Grammar = {
+  'context-labels': {
+    pattern: /\{[^}]*(?=}?)/,
+    greedy: true,
+    inside: {
+      comment: {
+        pattern: /#.*/,
+      },
+      'label-key': {
+        pattern: /[a-zA-Z_]\w*(?=\s*(=|!=|=~|!~))/,
+        alias: 'attr-name',
+        greedy: true,
+      },
+      'label-value': {
+        pattern: /"(?:\\.|[^\\"])*"/,
+        greedy: true,
+        alias: 'attr-value',
+      },
+      punctuation: /[{]/,
+    },
+  },
+  punctuation: /[{}(),.]/,
+};

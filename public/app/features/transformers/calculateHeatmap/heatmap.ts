@@ -32,7 +32,8 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   description: 'calculate heatmap from source data',
   defaultOptions: {},
 
-  operator: (options) => (source) => source.pipe(map((data) => heatmapTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => heatmapTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: HeatmapTransformerOptions) => {
     return (data: DataFrame[]) => {
@@ -173,6 +174,14 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     });
   }
 
+  const valueCfg = {
+    ...yFields[0].config,
+  };
+
+  if (valueCfg.displayNameFromDS) {
+    delete valueCfg.displayNameFromDS;
+  }
+
   return {
     length: xs.length,
     refId: opts.frame.refId,
@@ -199,7 +208,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
         name: opts.value?.length ? opts.value : 'Value',
         type: FieldType.number,
         values: new ArrayVector(counts2),
-        config: yFields[0].config,
+        config: valueCfg,
         display: yFields[0].display,
       },
     ],
