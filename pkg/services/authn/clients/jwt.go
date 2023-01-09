@@ -29,7 +29,8 @@ var (
 
 func ProvideJWT(userService user.Service, jwtService auth.JWTVerifierService, cfg *setting.Cfg) *JWT {
 	return &JWT{
-		log:         log.New(authn.ClientAPIKey),
+		cfg:         cfg,
+		log:         log.New(authn.ClientJWT),
 		jwtService:  jwtService,
 		userService: userService,
 	}
@@ -54,7 +55,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	claims, err := s.jwtService.Verify(ctx, jwtToken)
 	if err != nil {
 		s.log.Debug("Failed to verify JWT", "error", err)
-		return nil, ErrJWTInvalid
+		return nil, ErrJWTInvalid.Errorf("failed to verify JWT")
 	}
 
 	sub, _ := claims["sub"].(string)
@@ -114,7 +115,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		}
 	}
 
-	if id.Login == "" && id.Email == "" {
+	if id.Login == "" || id.Email == "" {
 		s.log.Debug("Failed to get an authentication claim from JWT",
 			"login", id.Login, "email", id.Email)
 		return nil, ErrJWTMissingClaim
@@ -124,7 +125,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		id.ClientParams.AllowSignUp = true
 	}
 
-	return nil, nil
+	return id, nil
 }
 
 func (s *JWT) Test(ctx context.Context, r *authn.Request) bool {

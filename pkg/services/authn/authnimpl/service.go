@@ -55,7 +55,7 @@ func ProvideService(
 	}
 
 	if s.cfg.JWTAuthEnabled {
-		s.clients[authn.ClientAnonymous] = clients.ProvideJWT(userService, jwtService, cfg)
+		s.clients[authn.ClientJWT] = clients.ProvideJWT(userService, jwtService, cfg)
 	}
 
 	// FIXME (kalleep): handle cfg.DisableLogin as well?
@@ -105,6 +105,7 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 
 	for _, hook := range s.postAuthHooks {
 		if err := hook(ctx, identity, r); err != nil {
+			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "id", identity)
 			return nil, false, err
 		}
 	}

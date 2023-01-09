@@ -24,7 +24,7 @@ const (
 func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64) bool {
 	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
 		identity, ok, err := h.authnService.Authenticate(ctx.Req.Context(),
-			authn.ClientAPIKey,
+			authn.ClientJWT,
 			&authn.Request{HTTPRequest: ctx.Req, Resp: ctx.Resp, OrgID: orgId})
 		if !ok {
 			return false

@@ -244,7 +244,7 @@ func (s *UserSync) LookupByOneOf(ctx context.Context, params *models.UserLookupP
 		}
 	}
 
-	if usr == nil {
+	if usr == nil || usr.ID == 0 { // id check as safeguard against returning empty user
 		return nil, user.ErrUserNotFound
 	}
 
