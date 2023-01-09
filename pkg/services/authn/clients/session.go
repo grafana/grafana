@@ -36,14 +36,6 @@ type Session struct {
 	log              log.Logger
 }
 
-func (s *Session) ClientParams() *authn.ClientParams {
-	return &authn.ClientParams{
-		SyncUser:            false,
-		AllowSignUp:         false,
-		EnableDisabledUsers: false,
-	}
-}
-
 func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
 	if s.loginCookieName == "" {
 		return false
@@ -81,14 +73,13 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	}
 
 	// FIXME (jguer): oauth token refresh not implemented
-	identity := authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser)
+	identity := authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{})
 	identity.SessionToken = token
 
 	return identity, nil
 }
 
-func (s *Session) RefreshTokenHook(ctx context.Context,
-	clientParams *authn.ClientParams, identity *authn.Identity, r *authn.Request) error {
+func (s *Session) RefreshTokenHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
 	if identity.SessionToken == nil {
 		return nil
 	}

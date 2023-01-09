@@ -98,9 +98,8 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 		return nil, true, err
 	}
 
-	params := c.ClientParams()
 	for _, hook := range s.postAuthHooks {
-		if err := hook(ctx, params, identity, r); err != nil {
+		if err := hook(ctx, identity, r); err != nil {
 			return nil, false, err
 		}
 	}
