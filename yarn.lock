@@ -5109,6 +5109,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/scenes@npm:0.0.3":
+  version: 0.0.3
+  resolution: "@grafana/scenes@npm:0.0.3"
+  checksum: 3dab6e7f6f742204da984c68490eb5eb969741340ed25149975bf7661d8ead9f793d85b110d4c6afde37bd35bdcdf1b889d58c17ca52f41f7029580b825da90c
+  languageName: node
+  linkType: hard
+
 "@grafana/schema@9.4.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
@@ -21983,6 +21990,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.1
     "@grafana/monaco-logql": ^0.0.6
     "@grafana/runtime": "workspace:*"
+    "@grafana/scenes": 0.0.3
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -22271,6 +22279,9 @@ __metadata:
     webpack-manifest-plugin: 5.0.0
     webpack-merge: 5.8.0
     whatwg-fetch: 3.6.2
+  dependenciesMeta:
+    "@grafana/scenes@0.0.3":
+      unplugged: true
   languageName: unknown
   linkType: soft
 
