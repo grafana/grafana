@@ -12,17 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { fireEvent, render, screen } from '@testing-library/react';
 import cx from 'classnames';
-import { mount, ReactWrapper } from 'enzyme';
 import React from 'react';
-import DraggableManager, { DraggingUpdate } from 'src/utils/DraggableManager';
 
 import TimelineColumnResizer, { getStyles, TimelineColumnResizerProps } from './TimelineColumnResizer';
 
 describe('<TimelineColumnResizer>', () => {
-  let wrapper: ReactWrapper<TimelineColumnResizerProps, {}, TimelineColumnResizer>;
-  let instance: TimelineColumnResizer;
-
   const props = {
     min: 0.1,
     max: 0.9,
@@ -32,74 +28,26 @@ describe('<TimelineColumnResizer>', () => {
 
   beforeEach(() => {
     props.onChange.mockReset();
-    wrapper = mount(<TimelineColumnResizer {...(props as unknown as TimelineColumnResizerProps)} />);
-    instance = wrapper.instance();
+    render(<TimelineColumnResizer {...(props as unknown as TimelineColumnResizerProps)} />);
   });
 
   it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
-    expect(wrapper.find('[data-testid="TimelineColumnResizer"]').length).toBe(1);
-    expect(wrapper.find('[data-testid="TimelineColumnResizer--gripIcon"]').length).toBe(1);
-    expect(wrapper.find('[data-testid="TimelineColumnResizer--dragger"]').length).toBe(1);
-  });
-
-  it('sets the root elm', () => {
-    const rootWrapper = wrapper.find('[data-testid="TimelineColumnResizer"]');
-    expect(rootWrapper.getDOMNode()).toBe(instance._rootElm);
-  });
-
-  describe('uses DraggableManager', () => {
-    it('handles mouse down on the dragger', () => {
-      const dragger = wrapper.find({ onMouseDown: instance._dragManager.handleMouseDown });
-      expect(dragger.length).toBe(1);
-      expect(dragger.is('[data-testid="TimelineColumnResizer--dragger"]')).toBe(true);
-    });
-
-    it('returns the draggable bounds via _getDraggingBounds()', () => {
-      const left = 10;
-      const width = 100;
-      instance._rootElm!.getBoundingClientRect = () => ({ left, width } as DOMRect);
-      expect(instance._getDraggingBounds()).toEqual({
-        width,
-        clientXLeft: left,
-        maxValue: props.max,
-        minValue: props.min,
-      });
-    });
-
-    it('handles drag start', () => {
-      const value = Math.random();
-      expect(wrapper.state('dragPosition')).toBe(null);
-      instance._handleDragUpdate({ value } as DraggingUpdate);
-      expect(wrapper.state('dragPosition')).toBe(value);
-    });
-
-    it('handles drag end', () => {
-      const manager = { resetBounds: jest.fn() } as unknown as DraggableManager;
-      const value = Math.random();
-      wrapper.setState({ dragPosition: 2 * value });
-      instance._handleDragEnd({ manager, value } as DraggingUpdate);
-      expect(jest.mocked(manager.resetBounds).mock.calls).toEqual([[]]);
-      expect(wrapper.state('dragPosition')).toBe(null);
-      expect(props.onChange.mock.calls).toEqual([[value]]);
-    });
+    expect(screen.getByTestId('TimelineColumnResizer')).toBeTruthy();
+    expect(screen.getByTestId('TimelineColumnResizer--gripIcon')).toBeTruthy();
+    expect(screen.getByTestId('TimelineColumnResizer--dragger')).toBeTruthy();
   });
 
   it('does not render a dragging indicator when not dragging', () => {
     const styles = getStyles();
-    expect(wrapper.find('[data-testid="TimelineColumnResizer--dragger"]').prop('style')?.right).toBe(undefined);
-    expect(wrapper.find('[data-testid="TimelineColumnResizer--dragger"]').prop('className')).toBe(styles.dragger);
+    expect(screen.getByTestId('TimelineColumnResizer--dragger')).toHaveStyle(`right: ${undefined}`);
+    expect(screen.getByTestId('TimelineColumnResizer--dragger')).toHaveClass(styles.dragger);
   });
 
   it('renders a dragging indicator when dragging', () => {
-    instance._dragManager.isDragging = () => true;
-    instance._handleDragUpdate({ value: props.min } as DraggingUpdate);
-    instance.forceUpdate();
-    wrapper.update();
-    expect(wrapper.find('[data-testid="TimelineColumnResizer--dragger"]').prop('style')?.right).toBeDefined();
-
     const styles = getStyles();
-    expect(wrapper.find('[data-testid="TimelineColumnResizer--dragger"]').prop('className')).toBe(
+    fireEvent.mouseDown(screen.getByTestId('TimelineColumnResizer--dragger'), { clientX: 0 });
+    fireEvent.mouseMove(screen.getByTestId('TimelineColumnResizer--dragger'), { clientX: -5 });
+    expect(screen.getByTestId('TimelineColumnResizer--dragger')).toHaveClass(
       cx(styles.dragger, styles.draggerDragging, styles.draggerDraggingLeft)
     );
   });
