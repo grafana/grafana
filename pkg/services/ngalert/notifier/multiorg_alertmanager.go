@@ -9,23 +9,20 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/alerting/alerting"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/secrets"
-
-	"github.com/grafana/alerting/alerting/notifier/channels"
-	"github.com/prometheus/alertmanager/cluster"
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+
+	"github.com/grafana/alerting/alerting"
+	"github.com/grafana/alerting/alerting/notifier/channels"
+	"github.com/prometheus/alertmanager/cluster"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
