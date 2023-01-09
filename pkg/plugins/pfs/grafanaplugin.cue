@@ -7,7 +7,7 @@ import "github.com/grafana/grafana/pkg/kindsys"
 GrafanaPlugin: {
 	id: string
 
-	// A plugin defines its #Composable kinds under this key.
+	// A plugin defines its Composable kinds under this key.
 	//
 	// This struct is open for forwards compatibility - older versions of Grafana (or
 	// dependent tooling) should not break if new versions introduce additional schema interfaces.

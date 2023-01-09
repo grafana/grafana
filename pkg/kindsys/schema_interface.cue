@@ -109,7 +109,8 @@ schemaInterfaces: {
 		// grouped b/c separate non-cross-referring elements always occur together in larger structure (panel)
 		group: true
 	}
-	Query: {
+
+	Queries: {
 		// The contract for the queries schema interface is itself a pattern:
 		// Each of its top-level fields must be represent a distinct query type for
 		// the datasource plugin. The queryType field acts as a discriminator, and
@@ -124,7 +125,8 @@ schemaInterfaces: {
 		// and it avoids us having to put more levels in the slot system (uggghhh)
 		group: true
 	}
-	DSOptions: {
+
+	DatasourceCfg: {
 		interface: {
 			// Normal datasource configuration options.
 			Options: {}

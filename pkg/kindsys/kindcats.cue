@@ -71,7 +71,7 @@ _sharedKind: {
 	// schema in lineage.
 	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & {lin: lineage}).out
 
-	maturity: #Maturity
+	maturity: Maturity
 
 	// The kind system itself is not mature enough yet for any single
 	// kind to advance beyond "experimental"
