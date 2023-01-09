@@ -71,7 +71,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 	if isLogsQuery(q) {
 		processLogsQuery(q, b, from, to, defaultTimeField)
-	} else if (isDocumentQuery(q)) {
+	} else if isDocumentQuery(q) {
 		processDocumentQuery(q, b, from, to, defaultTimeField)
 	} else {
 		// Otherwise, it is a time series query and we process it
@@ -342,7 +342,6 @@ func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, 
 	b.Size(metric.Settings.Get("size").MustInt(defaultSize))
 }
 
-
 func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {
 	aggBuilder := b.Agg()
 	// Process buckets
@@ -364,7 +363,7 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 			aggBuilder = addGeoHashGridAgg(aggBuilder, bucketAgg)
 		}
 	}
-	
+
 	// Process metrics
 	for _, m := range q.Metrics {
 		m := m
