@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import {
   SelectableValue,
@@ -19,11 +19,11 @@ interface XYInfo {
   yFields: Array<SelectableValue<boolean>>;
 }
 
-export const AutoEditor: FC<StandardEditorProps<XYDimensionConfig, any, XYChartOptions>> = ({
+export const AutoEditor = ({
   value,
   onChange,
   context,
-}) => {
+}: StandardEditorProps<XYDimensionConfig, any, XYChartOptions>) => {
   const frameNames = useMemo(() => {
     if (context?.data?.length) {
       return context.data.map((f, idx) => ({

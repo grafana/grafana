@@ -43,7 +43,7 @@ var allowedImportsStr string
 
 type slotandname struct {
 	name string
-	slot *kindsys.Slot
+	slot kindsys.SchemaInterface
 }
 
 var allslots []slotandname
@@ -55,7 +55,7 @@ func init() {
 	}
 	allowedImportsStr = strings.Join(all, "\n")
 
-	for n, s := range kindsys.AllSlots(nil) {
+	for n, s := range kindsys.SchemaInterfaces(nil) {
 		allslots = append(allslots, slotandname{
 			name: n,
 			slot: s,
@@ -93,7 +93,7 @@ func (t *Tree) SubPlugins() map[string]PluginInfo {
 type TreeList []*Tree
 
 // LineagesForSlot returns the set of plugin-defined lineages that implement a
-// particular named Grafana slot (See ["github.com/grafana/grafana/pkg/framework/coremodel".Slot]).
+// particular named Grafana slot (See ["github.com/grafana/grafana/pkg/framework/coremodel".SchemaInterface]).
 func (tl TreeList) LineagesForSlot(slotname string) map[string]thema.Lineage {
 	m := make(map[string]thema.Lineage)
 	for _, tree := range tl {
@@ -218,12 +218,14 @@ func ParsePluginFS(f fs.FS, rt *thema.Runtime) (*Tree, error) {
 		}
 		for _, s := range allslots {
 			iv := val.LookupPath(cue.ParsePath(s.slot.Name()))
-			lin, err := bindSlotLineage(iv, s.slot, r.meta, rt)
-			if lin != nil {
-				r.slotimpls[s.slot.Name()] = lin
-			}
-			if err != nil {
-				return nil, err
+			if iv.Exists() {
+				lin, err := bindSlotLineage(iv, s.slot, r.meta, rt)
+				if lin != nil {
+					r.slotimpls[s.slot.Name()] = lin
+				}
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -231,8 +233,10 @@ func ParsePluginFS(f fs.FS, rt *thema.Runtime) (*Tree, error) {
 	return tree, nil
 }
 
-func bindSlotLineage(v cue.Value, s *kindsys.Slot, meta plugindef.PluginDef, rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
-	accept, required := s.ForPluginType(string(meta.Type))
+func bindSlotLineage(v cue.Value, s kindsys.SchemaInterface, meta plugindef.PluginDef, rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
+	// temporarily keep this around, there are IMMEDIATE plans to refactor
+	var required bool
+	accept := s.Should(string(meta.Type))
 	exists := v.Exists()
 
 	if !accept {

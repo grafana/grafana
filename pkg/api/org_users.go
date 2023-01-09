@@ -115,18 +115,18 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd org.AddOrgUserC
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID: c.OrgID,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
 		User:  c.SignedInUser,
-	}, c.SignedInUser)
+	})
 
 	if err != nil {
 		return response.Error(500, "Failed to get users for current organization", err)
 	}
 
-	return response.JSON(http.StatusOK, result)
+	return response.JSON(http.StatusOK, result.OrgUsers)
 }
 
 // swagger:route GET /org/users/lookup org getOrgUsersForCurrentOrgLookup
@@ -144,13 +144,13 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 // 500: internalServerError
 
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
-	orgUsers, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+	orgUsersResult, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID:                    c.OrgID,
 		Query:                    c.Query("query"),
 		Limit:                    c.QueryInt("limit"),
 		User:                     c.SignedInUser,
 		DontEnforceAccessControl: !hs.License.FeatureEnabled("accesscontrol.enforcement"),
-	}, c.SignedInUser)
+	})
 
 	if err != nil {
 		return response.Error(500, "Failed to get users for current organization", err)
@@ -158,7 +158,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 
 	result := make([]*dtos.UserLookupDTO, 0)
 
-	for _, u := range orgUsers {
+	for _, u := range orgUsersResult.OrgUsers {
 		result = append(result, &dtos.UserLookupDTO{
 			UserID:    u.UserID,
 			Login:     u.Login,
@@ -190,12 +190,58 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
 
-	result, err := hs.getOrgUsersHelper(c, &org.GetOrgUsersQuery{
+	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID: orgId,
 		Query: "",
 		Limit: 0,
 		User:  c.SignedInUser,
-	}, c.SignedInUser)
+	})
+
+	if err != nil {
+		return response.Error(500, "Failed to get users for organization", err)
+	}
+
+	return response.JSON(http.StatusOK, result.OrgUsers)
+}
+
+// swagger:route GET /orgs/{org_id}/users/search orgs searchOrgUsers
+//
+// Search Users in Organization.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `org.users:read` with scope `users:*`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: searchOrgUsersResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) SearchOrgUsers(c *models.ReqContext) response.Response {
+	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
+	}
+
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+
+	if page < 1 {
+		page = 1
+	}
+
+	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
+		OrgID: orgID,
+		Query: c.Query("query"),
+		Page:  page,
+		Limit: perPage,
+		User:  c.SignedInUser,
+	})
 
 	if err != nil {
 		return response.Error(500, "Failed to get users for organization", err)
@@ -204,17 +250,46 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgUsersQuery, signedInUser *user.SignedInUser) ([]*org.OrgUserDTO, error) {
-	result, err := hs.orgService.GetOrgUsers(c.Req.Context(), query)
+// SearchOrgUsersWithPaging is an HTTP handler to search for org users with paging.
+// GET /api/org/users/search
+func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Response {
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+
+	if page < 1 {
+		page = 1
+	}
+
+	query := &org.SearchOrgUsersQuery{
+		OrgID: c.OrgID,
+		Query: c.Query("query"),
+		Page:  page,
+		Limit: perPage,
+		User:  c.SignedInUser,
+	}
+
+	result, err := hs.searchOrgUsersHelper(c, query)
+	if err != nil {
+		return response.Error(500, "Failed to get users for current organization", err)
+	}
+
+	return response.JSON(http.StatusOK, result)
+}
+
+func (hs *HTTPServer) searchOrgUsersHelper(c *models.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	result, err := hs.orgService.SearchOrgUsers(c.Req.Context(), query)
 	if err != nil {
 		return nil, err
 	}
 
-	filteredUsers := make([]*org.OrgUserDTO, 0, len(result))
+	filteredUsers := make([]*org.OrgUserDTO, 0, len(result.OrgUsers))
 	userIDs := map[string]bool{}
-	authLabelsUserIDs := make([]int64, 0, len(result))
-	for _, user := range result {
-		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
+	authLabelsUserIDs := make([]int64, 0, len(result.OrgUsers))
+	for _, user := range result.OrgUsers {
+		if dtos.IsHiddenUser(user.Login, c.SignedInUser, hs.Cfg) {
 			continue
 		}
 		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
@@ -241,51 +316,10 @@ func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *org.GetOrgU
 		}
 	}
 
-	return filteredUsers, nil
-}
-
-// SearchOrgUsersWithPaging is an HTTP handler to search for org users with paging.
-// GET /api/org/users/search
-func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Response {
-	ctx := c.Req.Context()
-	perPage := c.QueryInt("perpage")
-	if perPage <= 0 {
-		perPage = 1000
-	}
-	page := c.QueryInt("page")
-
-	if page < 1 {
-		page = 1
-	}
-
-	query := &org.SearchOrgUsersQuery{
-		OrgID: c.OrgID,
-		Query: c.Query("query"),
-		Page:  page,
-		Limit: perPage,
-		User:  c.SignedInUser,
-	}
-
-	result, err := hs.orgService.SearchOrgUsers(ctx, query)
-	if err != nil {
-		return response.Error(500, "Failed to get users for current organization", err)
-	}
-
-	filteredUsers := make([]*org.OrgUserDTO, 0, len(result.OrgUsers))
-	for _, user := range result.OrgUsers {
-		if dtos.IsHiddenUser(user.Login, c.SignedInUser, hs.Cfg) {
-			continue
-		}
-		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
-
-		filteredUsers = append(filteredUsers, user)
-	}
-
 	result.OrgUsers = filteredUsers
-	result.Page = page
-	result.PerPage = perPage
-
-	return response.JSON(http.StatusOK, result)
+	result.Page = query.Page
+	result.PerPage = query.Limit
+	return result, nil
 }
 
 // swagger:route PATCH /org/users/{user_id} org updateOrgUserForCurrentOrg
