@@ -29,6 +29,7 @@ export function TraceViewContainer(props: Props) {
   const datasource = useSelector(
     (state: StoreState) => state.explore[props.exploreId!]?.datasourceInstance ?? undefined
   );
+  const datasourceType = datasource ? datasource?.type : 'unknown';
 
   if (!traceProp) {
     return null;
@@ -45,6 +46,7 @@ export function TraceViewContainer(props: Props) {
         setSearchBarSuffix={setSearchBarSuffix}
         focusedSpanIdForSearch={focusedSpanIdForSearch}
         setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+        datasourceType={datasourceType}
       />
 
       <Collapse label="Trace View" isOpen>

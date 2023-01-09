@@ -17,6 +17,7 @@ import cx from 'classnames';
 import React, { memo, Dispatch, SetStateAction } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import UiFindInput from '../common/UiFindInput';
@@ -78,6 +79,7 @@ export type TracePageSearchBarProps = {
   focusedSpanIdForSearch: string;
   setSearchBarSuffix: Dispatch<SetStateAction<string>>;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
+  datasourceType: string;
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
@@ -90,6 +92,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     focusedSpanIdForSearch,
     setSearchBarSuffix,
     setFocusedSpanIdForSearch,
+    datasourceType,
   } = props;
   const styles = useStyles2(getStyles);
 
@@ -113,6 +116,11 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   };
 
   const nextResult = () => {
+    reportInteraction('grafana_traces_trace_view_find_next_prev_clicked', {
+      datasourceType: datasourceType,
+      direction: 'next',
+    });
+
     const spanMatches = Array.from(spanFindMatches!);
     const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
       ? spanMatches.indexOf(focusedSpanIdForSearch)
@@ -131,6 +139,11 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   };
 
   const prevResult = () => {
+    reportInteraction('grafana_traces_trace_view_find_next_prev_clicked', {
+      datasourceType: datasourceType,
+      direction: 'prev',
+    });
+
     const spanMatches = Array.from(spanFindMatches!);
     const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
       ? spanMatches.indexOf(focusedSpanIdForSearch)
