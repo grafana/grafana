@@ -12,7 +12,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
-import { ExploreItemState, SuppQueries } from 'app/types/explore';
+import { ExploreItemState, SuppQueries, SuppQueryType } from 'app/types/explore';
 
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
@@ -20,11 +20,8 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { SETTINGS_KEYS } from '../utils/logs';
 import { toRawTimeRange } from '../utils/time';
 
-export enum SuppQueryType {
-  LogsVolume = 'LogsVolume',
-}
-
 export const SUPP_QUERY_TYPES: SuppQueryType[] = [SuppQueryType.LogsVolume];
+
 // Used to match suppQueryType to corresponding local storage key
 // TODO: Remove this and unify enum values with SETTINGS_KEYS.enableVolumeHistogram
 const suppQuerySettings: { [key in SuppQueryType]: string } = {

@@ -17,7 +17,6 @@ import {
   ExplorePanelsState,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
-import { SuppQueryType } from 'app/features/explore/state/utils';
 
 import { CorrelationData } from '../features/correlations/useCorrelations';
 
@@ -280,3 +279,7 @@ export interface SuppQuery {
 export type SuppQueries = {
   [key in SuppQueryType]: SuppQuery;
 };
+
+export enum SuppQueryType {
+  LogsVolume = 'LogsVolume',
+}
