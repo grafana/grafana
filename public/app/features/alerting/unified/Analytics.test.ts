@@ -1,7 +1,7 @@
 import { dateTime } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 
-import { isNewUser } from './Analytics';
+import { isNewUser, USER_CREATION_MIN_DAYS } from './Analytics';
 
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: jest.fn().mockReturnValue({
@@ -17,26 +17,24 @@ describe('isNewUser', function () {
     };
 
     getBackendSrv().get = jest.fn().mockResolvedValue(newUser);
-    const getRequestSpy = jest.spyOn(getBackendSrv(), 'get');
 
     const isNew = await isNewUser(1);
     expect(isNew).toBe(true);
-    expect(getRequestSpy).toHaveBeenCalledTimes(1);
-    expect(getRequestSpy).toHaveBeenCalledWith('/api/users/1');
+    expect(getBackendSrv().get).toHaveBeenCalledTimes(1);
+    expect(getBackendSrv().get).toHaveBeenCalledWith('/api/users/1');
   });
 
   it('should return false if the user has been created prior to the last two weeks', async () => {
     const oldUser = {
       id: 2,
-      createdAt: dateTime().subtract(15, 'days'),
+      createdAt: dateTime().subtract(USER_CREATION_MIN_DAYS, 'days'),
     };
 
     getBackendSrv().get = jest.fn().mockResolvedValue(oldUser);
-    const getRequestSpy = jest.spyOn(getBackendSrv(), 'get');
 
     const isNew = await isNewUser(2);
     expect(isNew).toBe(false);
-    expect(getRequestSpy).toHaveBeenCalledTimes(1);
-    expect(getRequestSpy).toHaveBeenCalledWith('/api/users/2');
+    expect(getBackendSrv().get).toHaveBeenCalledTimes(1);
+    expect(getBackendSrv().get).toHaveBeenCalledWith('/api/users/2');
   });
 });

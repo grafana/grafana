@@ -3,7 +3,7 @@ import { faro, LogLevel as GrafanaLogLevel } from '@grafana/faro-web-sdk';
 import { getBackendSrv } from '@grafana/runtime';
 import { config, reportInteraction } from '@grafana/runtime/src';
 
-const USER_CREATION_MIN_DAYS = 15;
+export const USER_CREATION_MIN_DAYS = 15;
 
 export const LogMessages = {
   filterByLabel: 'filtering alert instances by label',
