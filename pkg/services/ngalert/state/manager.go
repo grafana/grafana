@@ -165,67 +165,61 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
 
 // ResetStateByDeletedRuleUID deletes all entries in the state manager that match the given rule UID.
 func (st *Manager) ResetStateByDeletedRuleUID(ctx context.Context, rule *ngModels.AlertRule) []*State {
+	return st.resetStateByRuleUID(ctx, rule, ngModels.StateReasonDeleted)
+}
+
+// ResetStateByPausedRuleUID deletes all entries in the state manager that match the given rule UID.
+func (st *Manager) ResetStateByPausedRuleUID(ctx context.Context, rule *ngModels.AlertRule) []*State {
+	return st.resetStateByRuleUID(ctx, rule, ngModels.StateReasonPaused)
+}
+
+func (st *Manager) resetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) []*State {
 	key := rule.GetKey()
 	logger := st.log.New(key.LogContext()...)
-	logger.Debug("Resetting state of the deleted rule")
+	logger.Debug("Resetting state of the rule")
 
 	states := st.cache.removeByRuleUID(rule.OrgID, rule.UID)
 	if len(states) > 0 && st.instanceStore != nil {
 		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, key)
 		if err != nil {
-			logger.Error("Failed to delete states that belong to a deleted rule from database", "error", err)
+			logger.Error("Failed to delete states that belong to a rule from database", "error", err)
 		}
 	}
 
-	transitions := make([]StateTransition, 0, len(states))
-	for _, s := range states {
-		transitions = append(transitions, StateTransition{
-			State:               nil,
-			PreviousState:       s.State,
-			PreviousStateReason: s.StateReason,
-		})
-	}
+	if reason == ngModels.StateReasonPaused {
+		transitions := make([]StateTransition, 0, len(states)*2)
+		for _, s := range states {
+			oldState := s.State
+			oldReason := s.StateReason
+			s.State = eval.Normal
+			s.StateReason = reason
+			now := time.Now()
+			s.EndsAt = now
+			s.LastEvaluationTime = now
+			s.Error = nil
+			s.Values = map[string]float64{}
+			transitions = append(transitions, StateTransition{
+				State:               s,
+				PreviousState:       oldState,
+				PreviousStateReason: oldReason,
+			})
+			oldState = s.State
+			oldReason = s.StateReason
+			ls := *s
+			ls.StateReason = ""
+			transitions = append(transitions, StateTransition{
+				State:               &ls,
+				PreviousState:       oldState,
+				PreviousStateReason: oldReason,
+			})
+		}
 
-	if st.historian != nil {
-		st.historian.RecordStatesAsync(ctx, rule, transitions)
-	}
-
-	logger.Info("Deleted rules state was reset", "states", len(states))
-	return states
-}
-
-// ResetStateByPausedRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) ResetStateByPausedRuleUID(ctx context.Context, rule *ngModels.AlertRule) []*State {
-	key := rule.GetKey()
-	logger := st.log.New(key.LogContext()...)
-	logger.Debug("Resetting state of the paused rule")
-
-	states := st.cache.getStatesForRuleUID(rule.OrgID, rule.UID)
-	if len(states) > 0 && st.instanceStore != nil {
-		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, key)
-		if err != nil {
-			logger.Error("Failed to delete states that belong to a paused rule from database", "error", err)
+		if st.historian != nil {
+			st.historian.RecordStatesAsync(ctx, rule, transitions)
 		}
 	}
 
-	transitions := make([]StateTransition, 0, len(states)*2)
-	for _, s := range states {
-		transitions = append(transitions, StateTransition{
-			State:               nil,
-			PreviousState:       s.State,
-			PreviousStateReason: s.StateReason,
-		}, StateTransition{
-			State:               nil,
-			PreviousState:       s.State,
-			PreviousStateReason: ngModels.StateReasonPaused,
-		})
-	}
-
-	if st.historian != nil {
-		st.historian.RecordStatesAsync(ctx, rule, transitions)
-	}
-
-	logger.Info("Paused rules state was reset", "states", len(states))
+	logger.Info("rules state was reset", "states", len(states))
 	return states
 }
 
