@@ -5,9 +5,9 @@ import lodash from 'lodash';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
-import { ResourceResponse, LogGroupResponse } from '../types';
+import { ResourceResponse, LogGroupResponse } from '../../types';
 
-import { CrossAccountLogsQueryField } from './CrossAccountLogsQueryField';
+import { LogGroupsSelector } from './LogGroupsSelector';
 
 const defaultProps = {
   selectedLogGroups: [],
@@ -68,9 +68,9 @@ describe('CrossAccountLogsQueryField', () => {
     lodash.debounce = originalDebounce;
   });
   it('opens a modal with a search field when the Select Log Groups Button is clicked', async () => {
-    render(<CrossAccountLogsQueryField {...defaultProps} />);
+    render(<LogGroupsSelector {...defaultProps} />);
     await userEvent.click(screen.getByText('Select Log Groups'));
-    expect(screen.getByText('Log Group Name')).toBeInTheDocument();
+    expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
   });
 
   it('calls fetchLogGroups the first time the modal opens and renders a loading widget and then a checkbox for every log group', async () => {
@@ -79,7 +79,7 @@ describe('CrossAccountLogsQueryField', () => {
       await Promise.all([defer.promise]);
       return defaultProps.fetchLogGroups();
     });
-    render(<CrossAccountLogsQueryField {...defaultProps} fetchLogGroups={fetchLogGroups} />);
+    render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select Log Groups'));
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     defer.resolve();
@@ -94,7 +94,7 @@ describe('CrossAccountLogsQueryField', () => {
       await Promise.all([defer.promise]);
       return [];
     });
-    render(<CrossAccountLogsQueryField {...defaultProps} fetchLogGroups={fetchLogGroups} />);
+    render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select Log Groups'));
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     defer.resolve();
@@ -106,9 +106,9 @@ describe('CrossAccountLogsQueryField', () => {
 
   it('calls fetchLogGroups with a search phrase when it is typed in the Search Field', async () => {
     const fetchLogGroups = jest.fn(() => defaultProps.fetchLogGroups());
-    render(<CrossAccountLogsQueryField {...defaultProps} fetchLogGroups={fetchLogGroups} />);
+    render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select Log Groups'));
-    expect(screen.getByText('Log Group Name')).toBeInTheDocument();
+    expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('log group search'), 'something');
     await waitFor(() => screen.getByDisplayValue('something'));
     expect(fetchLogGroups).toBeCalledWith({ accountId: 'all', logGroupPattern: 'something' });
@@ -127,7 +127,7 @@ describe('CrossAccountLogsQueryField', () => {
       once = true;
       return defaultProps.fetchLogGroups();
     });
-    render(<CrossAccountLogsQueryField {...defaultProps} fetchLogGroups={fetchLogGroups} />);
+    render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select Log Groups'));
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     firstCall.resolve();
@@ -145,18 +145,18 @@ describe('CrossAccountLogsQueryField', () => {
 
   it('shows a log group as checked after the user checks it', async () => {
     const onChange = jest.fn();
-    render(<CrossAccountLogsQueryField {...defaultProps} onChange={onChange} />);
+    render(<LogGroupsSelector {...defaultProps} onChange={onChange} />);
     await userEvent.click(screen.getByText('Select Log Groups'));
-    expect(screen.getByText('Log Group Name')).toBeInTheDocument();
+    expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     expect(screen.getByLabelText('logGroup2')).not.toBeChecked();
     await userEvent.click(screen.getByLabelText('logGroup2'));
     expect(screen.getByLabelText('logGroup2')).toBeChecked();
   });
   it('calls onChange with the selected log group when checked and the user clicks the Add button', async () => {
     const onChange = jest.fn();
-    render(<CrossAccountLogsQueryField {...defaultProps} onChange={onChange} />);
+    render(<LogGroupsSelector {...defaultProps} onChange={onChange} />);
     await userEvent.click(screen.getByText('Select Log Groups'));
-    expect(screen.getByText('Log Group Name')).toBeInTheDocument();
+    expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     await userEvent.click(screen.getByLabelText('logGroup2'));
     await userEvent.click(screen.getByText('Add log groups'));
     expect(onChange).toHaveBeenCalledWith([
@@ -171,9 +171,9 @@ describe('CrossAccountLogsQueryField', () => {
 
   it('does not call onChange after a selection if the user hits the cancel button', async () => {
     const onChange = jest.fn();
-    render(<CrossAccountLogsQueryField {...defaultProps} onChange={onChange} />);
+    render(<LogGroupsSelector {...defaultProps} onChange={onChange} />);
     await userEvent.click(screen.getByText('Select Log Groups'));
-    expect(screen.getByText('Log Group Name')).toBeInTheDocument();
+    expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     await userEvent.click(screen.getByLabelText('logGroup2'));
     await userEvent.click(screen.getByText('Cancel'));
     expect(onChange).not.toHaveBeenCalledWith([
@@ -194,7 +194,7 @@ describe('CrossAccountLogsQueryField', () => {
       await Promise.all([defer.promise]);
       return [];
     });
-    render(<CrossAccountLogsQueryField {...defaultProps} fetchLogGroups={fetchLogGroups} />);
+    render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select Log Groups'));
     expect(screen.queryByText(labelText)).not.toBeInTheDocument();
     defer.resolve();
@@ -212,7 +212,7 @@ describe('CrossAccountLogsQueryField', () => {
         },
       }));
     });
-    render(<CrossAccountLogsQueryField {...defaultProps} fetchLogGroups={fetchLogGroups} />);
+    render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select Log Groups'));
     expect(screen.queryByText(labelText)).not.toBeInTheDocument();
     defer.resolve();
@@ -220,7 +220,7 @@ describe('CrossAccountLogsQueryField', () => {
   });
 
   it('should display log groups counter label', async () => {
-    render(<CrossAccountLogsQueryField {...defaultProps} selectedLogGroups={[]} />);
+    render(<LogGroupsSelector {...defaultProps} selectedLogGroups={[]} />);
     await userEvent.click(screen.getByText('Select Log Groups'));
     await waitFor(() => expect(screen.getByText('0 log groups selected')).toBeInTheDocument());
     await userEvent.click(screen.getByLabelText('logGroup2'));
