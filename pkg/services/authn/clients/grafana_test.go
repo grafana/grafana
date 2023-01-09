@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGrafana_Authenticate(t *testing.T) {
+func TestGrafana_AuthenticatePassword(t *testing.T) {
 	type testCase struct {
 		desc                 string
 		username             string
@@ -61,7 +61,7 @@ func TestGrafana_Authenticate(t *testing.T) {
 			}
 
 			c := ProvideGrafana(userService)
-			identity, err := c.Authenticate(context.Background(), 1, tt.username, tt.password)
+			identity, err := c.AuthenticatePassword(context.Background(), 1, tt.username, tt.password)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)
 		})

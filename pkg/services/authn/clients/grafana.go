@@ -20,7 +20,7 @@ type Grafana struct {
 	userService user.Service
 }
 
-func (c Grafana) Authenticate(ctx context.Context, orgID int64, username, password string) (*authn.Identity, error) {
+func (c Grafana) AuthenticatePassword(ctx context.Context, orgID int64, username, password string) (*authn.Identity, error) {
 	usr, err := c.userService.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: username})
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {

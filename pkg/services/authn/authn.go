@@ -48,7 +48,7 @@ type Client interface {
 }
 
 type PasswordClient interface {
-	Authenticate(ctx context.Context, orgID int64, username, password string) (*Identity, error)
+	AuthenticatePassword(ctx context.Context, orgID int64, username, password string) (*Identity, error)
 }
 
 type Request struct {
