@@ -100,15 +100,15 @@ export function PanelChrome({
   const showStreaming = loadingState === LoadingState.Streaming && !isUsingDeprecatedLeftItems;
 
   const renderStatus = () => {
-    if (isUsingDeprecatedLeftItems) {
-      return <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>;
-    } else {
-      const showError = loadingState === LoadingState.Error || status?.message;
-      return showError ? (
+    const showError = loadingState === LoadingState.Error || status?.message;
+    if (!isUsingDeprecatedLeftItems && showError) {
+      return (
         <div className={styles.errorContainer}>
           <PanelStatus message={status?.message} onClick={status?.onClick} />
         </div>
-      ) : null;
+      );
+    } else {
+      return null;
     }
   };
   return (
@@ -150,22 +150,22 @@ export function PanelChrome({
           </div>
         )}
 
-        {menu && (
-          <Dropdown overlay={menu} placement="bottom">
-            <div
-              className={cx(styles.rightAligned, styles.item, styles.menuItem, 'menu-icon')}
-              data-testid="menu-icon"
-              style={itemStyles}
-            >
-              <IconButton
-                ariaLabel={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
-                tooltip="Menu"
-                name="ellipsis-v"
-                size="sm"
-              />
-            </div>
-          </Dropdown>
-        )}
+        <div className={styles.rightAligned}>
+          {menu && (
+            <Dropdown overlay={menu} placement="bottom">
+              <div className={cx(styles.item, styles.menuItem, 'menu-icon')} data-testid="menu-icon" style={itemStyles}>
+                <IconButton
+                  ariaLabel={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
+                  tooltip="Menu"
+                  name="ellipsis-v"
+                  size="sm"
+                />
+              </div>
+            </Dropdown>
+          )}
+
+          {isUsingDeprecatedLeftItems && <div className={styles.items}>{itemsRenderer(leftItems, (item) => item)}</div>}
+        </div>
 
         {renderStatus()}
       </div>
@@ -291,6 +291,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     rightAligned: css({
       marginLeft: 'auto',
+      display: 'flex',
     }),
   };
 };
