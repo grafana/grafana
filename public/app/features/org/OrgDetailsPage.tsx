@@ -6,7 +6,7 @@ import { VerticalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { appEvents, contextSrv } from 'app/core/core';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navBarTree';
 import { AccessControlAction, Organization, StoreState } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -78,7 +78,7 @@ export class OrgDetailsPage extends PureComponent<Props> {
 
 function mapStateToProps(state: StoreState) {
   return {
-    navModel: getNavModel(state.navIndex, 'org-settings'),
+    navModel: getNavModel(state.navBarTree, 'org-settings'),
     organization: state.organization.organization,
   };
 }

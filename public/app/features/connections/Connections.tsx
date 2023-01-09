@@ -2,8 +2,8 @@ import * as React from 'react';
 import { Route, Switch } from 'react-router-dom';
 
 import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
+import { useNavItem } from 'app/core/components/Page/usePageNav';
 import { DataSourcesRoutesContext } from 'app/features/datasources/state';
-import { StoreState, useSelector } from 'app/types';
 
 import { ROUTES } from './constants';
 import {
@@ -15,8 +15,8 @@ import {
 } from './pages';
 
 export default function Connections() {
-  const navIndex = useSelector((state: StoreState) => state.navIndex);
-  const isConnectDataPageOverriden = Boolean(navIndex['standalone-plugin-page-/connections/connect-data']);
+  const navModel = useNavItem('standalone-plugin-page-/connections/connect-data');
+  const isConnectDataPageOverriden = Boolean(navModel);
 
   return (
     <DataSourcesRoutesContext.Provider

@@ -6,13 +6,12 @@ import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { usePageNav } from 'app/core/components/Page/usePageNav';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getNavModel } from 'app/core/selectors/navModel';
 import {
   ConnectionsRedirectNotice,
   DestinationPage,
 } from 'app/features/connections/components/ConnectionsRedirectNotice';
-import { useSelector } from 'app/types';
 
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { PluginList } from '../components/PluginList';
@@ -25,7 +24,7 @@ import { PluginListDisplayMode } from '../types';
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
   const location = useLocation();
   const locationSearch = locationSearchToObject(location.search);
-  const navModel = useSelector((state) => getNavModel(state.navIndex, 'plugins'));
+  const navModel = usePageNav('plugins');
   const { displayMode, setDisplayMode } = useDisplayMode();
   const styles = useStyles2(getStyles);
   const history = useHistory();

@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom';
 
 import { NavModelItem } from '@grafana/data';
-import { useSelector } from 'app/types';
+import { useNavItem } from 'app/core/components/Page/usePageNav';
 
 import { ROUTE_BASE_ID } from '../constants';
 
@@ -10,9 +10,10 @@ import { ROUTE_BASE_ID } from '../constants';
 // the child nav-model-item's ID on the call-site.)
 export const useNavModel = () => {
   const { pathname: currentPath } = useLocation();
-  const navIndex = useSelector((state) => state.navIndex);
-  const node = navIndex[ROUTE_BASE_ID];
-  const main = node;
+  // const navIndex = useSelector((state) => state.navIndex);
+  // const node = navIndex[ROUTE_BASE_ID];
+  const node = useNavItem(ROUTE_BASE_ID)!; // TODO: sort out this not-null bang
+  const main = { ...node };
   const isDefaultRoute = (item: NavModelItem) =>
     currentPath === `/${ROUTE_BASE_ID}` && item.id === 'connections-datasources';
   const isItemActive = (item: NavModelItem) => currentPath.startsWith(item.url || '');

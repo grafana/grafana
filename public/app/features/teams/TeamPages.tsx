@@ -9,7 +9,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { UpgradeBox } from 'app/core/components/Upgrade/UpgradeBox';
 import config from 'app/core/config';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, StoreState } from 'app/types';
 
@@ -51,7 +51,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
   }
   const pageName = props.match.params.page ?? defaultPage;
   const teamLoadingNav = getTeamLoadingNav(pageName as string);
-  const pageNav = getNavModel(state.navIndex, `team-${pageName}-${teamId}`, teamLoadingNav).main;
+  const pageNav = getNavModel(state.navBarTree, `team-${pageName}-${teamId}`, teamLoadingNav).main;
   const members = getTeamMembers(state.team);
 
   return {

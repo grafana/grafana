@@ -1,14 +1,16 @@
 import { useEffect } from 'react';
 
 import { NavModel, NavModelItem } from '@grafana/data';
-import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { useSelector } from 'app/types';
+import { HOME_NAV_ID } from 'app/core/reducers/_navModel';
 
 import { Branding } from '../Branding/Branding';
 import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
+import { useNavItem } from './usePageNav';
+
 export function usePageTitle(navModel?: NavModel, pageNav?: NavModelItem) {
-  const homeNav = useSelector((state) => state.navIndex)?.[HOME_NAV_ID];
+  const homeNav = useNavItem(HOME_NAV_ID);
+
   useEffect(() => {
     const sectionNav = (navModel?.node !== navModel?.main ? navModel?.node : navModel?.main) ?? { text: 'Grafana' };
     const parts: string[] = buildBreadcrumbs(sectionNav, pageNav, homeNav)

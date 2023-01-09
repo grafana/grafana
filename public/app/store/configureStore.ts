@@ -3,7 +3,6 @@ import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { StoreState } from 'app/types/store';
 
-import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
 
@@ -25,10 +24,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         publicDashboardApi.middleware
       ),
     devTools: process.env.NODE_ENV !== 'production',
-    preloadedState: {
-      navIndex: buildInitialState(),
-      ...initialState,
-    },
+    preloadedState: initialState,
   });
 
   setStore(store);

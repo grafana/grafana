@@ -7,7 +7,7 @@ import { setAngularLoader } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
 
-import { navIndex, getMockDataSource } from '../__mocks__';
+import { getMockDataSource } from '../__mocks__';
 import * as api from '../api';
 import { initialState as dataSourcesInitialState } from '../state';
 
@@ -62,15 +62,15 @@ describe('<DataSourceDashboardsPage>', () => {
         ...dataSourcesInitialState,
         dataSource: dataSource,
       },
-      navIndex: {
-        ...navIndex,
-        [`datasource-dashboards-${uid}`]: {
-          id: `datasource-dashboards-${uid}`,
-          text: dataSourceName,
-          icon: 'list-ul',
-          url: `/datasources/edit/${uid}/dashboards`,
-        },
-      },
+      // navIndex: {
+      //   ...navIndex,
+      //   [`datasource-dashboards-${uid}`]: {
+      //     id: `datasource-dashboards-${uid}`,
+      //     text: dataSourceName,
+      //     icon: 'list-ul',
+      //     url: `/datasources/edit/${uid}/dashboards`,
+      //   },
+      // },
     });
   });
 

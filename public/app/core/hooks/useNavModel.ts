@@ -1,9 +1,8 @@
 import { NavModel } from '@grafana/data';
-import { useSelector } from 'app/types';
 
-import { getNavModel } from '../selectors/navModel';
+import { usePageNav } from '../components/Page/usePageNav';
 
+// TODO: sort out this being the same as usePageNav
 export const useNavModel = (id: string): NavModel => {
-  const navIndex = useSelector((state) => state.navIndex);
-  return getNavModel(navIndex, id);
+  return usePageNav(id)!; // TODO: sort out not-null bang
 };

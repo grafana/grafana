@@ -6,7 +6,7 @@ const { Input } = LegacyForms;
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navBarTree';
 import { StoreState } from 'app/types';
 
 import { ShowConfirmModalEvent } from '../../types/events';
@@ -20,7 +20,7 @@ export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 const mapStateToProps = (state: StoreState, props: OwnProps) => {
   const uid = props.match.params.uid;
   return {
-    pageNav: getNavModel(state.navIndex, `folder-settings-${uid}`, getLoadingNav(2)),
+    pageNav: getNavModel(state.navBarTree, `folder-settings-${uid}`, getLoadingNav(2)),
     folderUid: uid,
     folder: state.folder,
   };

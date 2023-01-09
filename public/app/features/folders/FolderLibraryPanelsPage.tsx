@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import { Page } from 'app/core/components/Page/Page';
 
 import { GrafanaRouteComponentProps } from '../../core/navigation/types';
-import { getNavModel } from '../../core/selectors/navModel';
+import { getNavModel } from '../../core/selectors/navBarTree';
 import { StoreState } from '../../types';
 import { LibraryPanelsSearch } from '../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 import { OpenLibraryPanelModal } from '../library-panels/components/OpenLibraryPanelModal/OpenLibraryPanelModal';
@@ -19,7 +19,7 @@ export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 const mapStateToProps = (state: StoreState, props: OwnProps) => {
   const uid = props.match.params.uid;
   return {
-    pageNav: getNavModel(state.navIndex, `folder-library-panels-${uid}`, getLoadingNav(1)),
+    pageNav: getNavModel(state.navBarTree, `folder-library-panels-${uid}`, getLoadingNav(1)),
     folderUid: uid,
   };
 };

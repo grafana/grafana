@@ -4,9 +4,9 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { useSelector } from 'app/types';
 
 import { Branding } from '../Branding/Branding';
+import { useNavItem } from '../Page/usePageNav';
 
 import { NewsContainer } from './News/NewsContainer';
 import { OrganizationSwitcher } from './Organization/OrganizationSwitcher';
@@ -19,10 +19,9 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export function TopSearchBar() {
   const styles = useStyles2(getStyles);
-  const navIndex = useSelector((state) => state.navIndex);
 
-  const helpNode = navIndex['help'];
-  const profileNode = navIndex['profile'];
+  const helpNode = useNavItem('help');
+  const profileNode = useNavItem('profile');
 
   return (
     <div className={styles.layout}>

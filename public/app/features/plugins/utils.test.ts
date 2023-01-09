@@ -1,6 +1,6 @@
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { HOME_NAV_ID } from 'app/core/reducers/_navModel';
 
 import { buildPluginSectionNav } from './utils';
 

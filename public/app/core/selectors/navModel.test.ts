@@ -1,8 +1,8 @@
 import { config } from '@grafana/runtime';
 
-import { buildInitialState } from '../reducers/navModel';
+import { buildInitialState } from '../reducers/_navModel';
 
-import { getNavModel } from './navModel';
+import { getNavModel } from './_navModel';
 
 describe('getNavModel', () => {
   config.bootData.navTree = [

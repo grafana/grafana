@@ -102,15 +102,15 @@ export function setupExplore(options?: SetupOptions): {
     timeZone: 'utc',
   };
 
-  storeState.getState().navIndex = {
-    explore: {
+  storeState.getState().navBarTree = [
+    {
       id: 'explore',
       text: 'Explore',
       subTitle: 'Explore your data',
       icon: 'compass',
       url: '/explore',
     },
-  };
+  ];
 
   locationService.push({ pathname: '/explore', search: options?.searchParams });
 

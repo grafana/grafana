@@ -12,7 +12,6 @@ import { configureStore } from 'app/store/configureStore';
 import { getPluginsStateMock } from '../plugins/admin/__mocks__';
 
 import Connections from './Connections';
-import { navIndex } from './__mocks__/store.navIndex.mock';
 import { ROUTE_BASE_ID, ROUTES } from './constants';
 
 jest.mock('app/core/services/context_srv');
@@ -20,7 +19,7 @@ jest.mock('app/features/datasources/api');
 
 const renderPage = (
   path = `/${ROUTE_BASE_ID}`,
-  store = configureStore({ navIndex, plugins: getPluginsStateMock([]) })
+  store = configureStore({ plugins: getPluginsStateMock([]) })
 ): RenderResult => {
   locationService.push(path);
 
@@ -78,25 +77,25 @@ describe('Connections', () => {
 
   test('does not render anything for the "Connect data" page in case it is displayed by a standalone plugin page', async () => {
     // We are overriding the navIndex to have the "Connect data" page registered by a plugin
-    const standalonePluginPage = {
-      id: 'standalone-plugin-page-/connections/connect-data',
-      text: 'Connect data',
-      subTitle: 'Browse and create new connections',
-      url: '/connections/connect-data',
-      pluginId: 'grafana-easystart-app',
-    };
-    const connections = {
-      ...navIndex.connections,
-      children: navIndex.connections.children?.map((child) => {
-        if (child.id === 'connections-connect-data') {
-          return standalonePluginPage;
-        }
+    // const standalonePluginPage = {
+    //   id: 'standalone-plugin-page-/connections/connect-data',
+    //   text: 'Connect data',
+    //   subTitle: 'Browse and create new connections',
+    //   url: '/connections/connect-data',
+    //   pluginId: 'grafana-easystart-app',
+    // };
+    // const connections = {
+    //   ...navIndex.connections,
+    //   children: navIndex.connections.children?.map((child) => {
+    //     if (child.id === 'connections-connect-data') {
+    //       return standalonePluginPage;
+    //     }
 
-        return child;
-      }),
-    };
+    //     return child;
+    //   }),
+    // };
     const store = configureStore({
-      navIndex: { ...navIndex, connections, [standalonePluginPage.id]: standalonePluginPage },
+      // navIndex: { ...navIndex, connections, [standalonePluginPage.id]: standalonePluginPage },
       plugins: getPluginsStateMock([]),
     });
 

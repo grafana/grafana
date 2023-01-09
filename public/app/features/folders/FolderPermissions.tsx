@@ -8,7 +8,7 @@ import AddPermission from 'app/core/components/PermissionList/AddPermission';
 import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navBarTree';
 import { StoreState } from 'app/types';
 import { DashboardAcl, PermissionLevel, NewDashboardAclItem } from 'app/types/acl';
 
@@ -26,7 +26,7 @@ export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 const mapStateToProps = (state: StoreState, props: OwnProps) => {
   const uid = props.match.params.uid;
   return {
-    pageNav: getNavModel(state.navIndex, `folder-permissions-${uid}`, getLoadingNav(1)),
+    pageNav: getNavModel(state.navBarTree, `folder-permissions-${uid}`, getLoadingNav(1)),
     folderUid: uid,
     folder: state.folder,
   };

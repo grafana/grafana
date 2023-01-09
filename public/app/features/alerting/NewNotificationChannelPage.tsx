@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { config } from '@grafana/runtime';
 import { Form } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navBarTree';
 
 import { NotificationChannelDTO, StoreState } from '../../types';
 
@@ -66,7 +66,7 @@ class NewNotificationChannelPage extends PureComponent<Props> {
 }
 
 const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'channels'),
+  navModel: getNavModel(state.navBarTree, 'channels'),
   notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
 });
 

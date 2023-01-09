@@ -8,7 +8,7 @@ import { setAngularLoader } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
 
-import { navIndex, getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../__mocks__';
+import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../__mocks__';
 import * as api from '../api';
 import { initialState } from '../state';
 
@@ -82,15 +82,15 @@ describe('<EditDataSourcePage>', () => {
         layoutMode: LayoutModes.Grid,
         hasFetched: true,
       },
-      navIndex: {
-        ...navIndex,
-        [`datasource-settings-${uid}`]: {
-          id: `datasource-settings-${uid}`,
-          text: name,
-          icon: 'list-ul',
-          url: `/datasources/edit/${uid}`,
-        },
-      },
+      // navIndex: {
+      //   ...navIndex,
+      //   [`datasource-settings-${uid}`]: {
+      //     id: `datasource-settings-${uid}`,
+      //     text: name,
+      //     icon: 'list-ul',
+      //     url: `/datasources/edit/${uid}`,
+      //   },
+      // },
     });
   });
 

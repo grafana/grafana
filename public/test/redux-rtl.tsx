@@ -7,12 +7,10 @@ import { Provider } from 'react-redux';
 import { createRootReducer } from 'app/core/reducers/root';
 import { StoreState } from 'app/types';
 
-import { mockNavModel } from './mocks/navModel';
-
 function render(
   ui: React.ReactElement,
   {
-    preloadedState = { navIndex: mockNavModel },
+    preloadedState = {},
     store = configureStore<
       StoreState,
       AnyAction,

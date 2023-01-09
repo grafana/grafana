@@ -2,16 +2,18 @@ import * as React from 'react';
 import { useParams } from 'react-router-dom';
 
 import { Alert, Badge } from '@grafana/ui';
+import { useNavItem } from 'app/core/components/Page/usePageNav';
 import { PluginDetailsPage } from 'app/features/plugins/admin/components/PluginDetailsPage';
-import { StoreState, useSelector, AppNotificationSeverity } from 'app/types';
+import { AppNotificationSeverity } from 'app/types';
 
 import { ROUTES } from '../constants';
 
 export function DataSourceDetailsPage() {
   const overrideNavId = 'standalone-plugin-page-/connections/connect-data';
   const { id } = useParams<{ id: string }>();
-  const navIndex = useSelector((state: StoreState) => state.navIndex);
-  const isConnectDataPageOverriden = Boolean(navIndex[overrideNavId]);
+
+  const navItem = useNavItem(overrideNavId);
+  const isConnectDataPageOverriden = Boolean(navItem);
   const navId = isConnectDataPageOverriden ? overrideNavId : 'connections-connect-data'; // The nav id changes (gets a prefix) if it is overriden by a plugin
 
   return (

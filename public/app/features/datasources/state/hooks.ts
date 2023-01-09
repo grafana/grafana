@@ -4,7 +4,7 @@ import { DataSourcePluginMeta, DataSourceSettings, NavModelItem } from '@grafana
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navBarTree';
 import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -123,7 +123,7 @@ export const useDataSourceSettings = () => {
 export const useDataSourceSettingsNav = (dataSourceId: string, pageId: string | null) => {
   const dataSource = useDataSource(dataSourceId);
   const { plugin, loadError, loading } = useDataSourceSettings();
-  const navIndex = useSelector((state) => state.navIndex);
+  const navIndex = useSelector((state) => state.navBarTree);
   const navIndexId = pageId ? `datasource-${pageId}-${dataSourceId}` : `datasource-settings-${dataSourceId}`;
 
   if (loadError) {

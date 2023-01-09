@@ -6,7 +6,7 @@ import { LayoutModes } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 
-import { navIndex, getMockDataSources } from '../__mocks__';
+import { getMockDataSources } from '../__mocks__';
 import { getDataSources } from '../api';
 import { initialState } from '../state';
 
@@ -27,7 +27,7 @@ const setup = (options: { isSortAscending: boolean }) => {
       layoutMode: LayoutModes.Grid,
       isSortAscending: options.isSortAscending,
     },
-    navIndex,
+    // navIndex,
   });
 
   return render(

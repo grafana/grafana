@@ -4,11 +4,11 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { useSelector } from 'app/types';
+import { HOME_NAV_ID } from 'app/core/reducers/_navModel';
 
 import { Breadcrumbs } from '../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../Breadcrumbs/utils';
+import { useNavItem } from '../Page/usePageNav';
 
 import { NavToolbarSeparator } from './NavToolbarSeparator';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
@@ -32,7 +32,7 @@ export function NavToolbar({
   onToggleSearchBar,
   onToggleKioskMode,
 }: Props) {
-  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
+  const homeNav = useNavItem(HOME_NAV_ID);
   const styles = useStyles2(getStyles);
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
 

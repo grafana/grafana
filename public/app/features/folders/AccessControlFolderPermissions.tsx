@@ -5,7 +5,7 @@ import { Permissions } from 'app/core/components/AccessControl';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { getNavModel } from 'app/core/selectors/navBarTree';
 import { AccessControlAction, StoreState } from 'app/types';
 
 import { getFolderByUid } from './state/actions';
@@ -17,7 +17,7 @@ function mapStateToProps(state: StoreState, props: RouteProps) {
   const uid = props.match.params.uid;
   return {
     uid: uid,
-    pageNav: getNavModel(state.navIndex, `folder-permissions-${uid}`, getLoadingNav(1)),
+    pageNav: getNavModel(state.navBarTree, `folder-permissions-${uid}`, getLoadingNav(1)),
   };
 }
 

@@ -6,7 +6,7 @@ import { GrafanaTheme2, NavModel } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { getNavModel } from '../../core/selectors/navModel';
+import { getNavModel } from '../../core/selectors/navBarTree';
 import { StoreState } from '../../types';
 
 import { LicenseChrome } from './LicenseChrome';
@@ -230,7 +230,7 @@ const Item = ({ children, title, image }: React.PropsWithChildren<ItemProps>) =>
 };
 
 const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'upgrading'),
+  navModel: getNavModel(state.navBarTree, 'upgrading'),
 });
 
 export default connect(mapStateToProps)(UpgradePage);

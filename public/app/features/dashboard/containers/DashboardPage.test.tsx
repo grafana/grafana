@@ -13,7 +13,7 @@ import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { HOME_NAV_ID } from 'app/core/reducers/_navModel';
 import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
@@ -117,10 +117,11 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
             match: { params: { slug: 'my-dash', uid: '11' } } as any,
             route: { routeName: DashboardRoutes.Normal } as any,
           }),
-          navIndex: {
-            dashboards: { text: 'Dashboards', id: 'dashboards', parentItem: { text: 'Home', id: HOME_NAV_ID } },
-            [HOME_NAV_ID]: { text: 'Home', id: HOME_NAV_ID },
-          },
+          // navIndex: {
+          //   dashboards: { text: 'Dashboards', id: 'dashboards', parentItem: { text: 'Home', id: HOME_NAV_ID } },
+          //   [HOME_NAV_ID]: { text: 'Home', id: HOME_NAV_ID },
+          // },
+          navBarTree: config.bootData.navTree,
           initPhase: DashboardInitPhase.NotStarted,
           initError: null,
           initDashboard: jest.fn(),
