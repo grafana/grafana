@@ -78,6 +78,6 @@ export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(Sta
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);
-    commonOptionsBuilder.addTooltipOptions(builder, true);
+    commonOptionsBuilder.addTooltipOptions(builder, commonOptionsBuilder.TooltipModeOptions.SingleOnly);
   })
   .setSuggestionsSupplier(new StatusHistorySuggestionsSupplier());

@@ -20,7 +20,6 @@ import {
   measureText,
   PlotLegend,
   Portal,
-  StackingMode,
   TooltipDisplayMode,
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
@@ -196,11 +195,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
           rowIndex={datapointIdx}
           columnIndex={seriesIdx}
           sortOrder={options.tooltip.sort}
-          mode={
-            options.barHighlight && options.stacking !== StackingMode.None
-              ? TooltipDisplayMode.Multi
-              : options.tooltip.mode
-          }
+          mode={options.tooltip.mode}
         />
       </>
     );
