@@ -372,8 +372,8 @@ github.com/aws/aws-sdk-go v1.38.68/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2z
 github.com/aws/aws-sdk-go v1.40.11/go.mod h1:585smgzpB/KqRA+K3y/NL/oYRqQvpNJYvLm+LY1U59Q=
 github.com/aws/aws-sdk-go v1.40.37/go.mod h1:585smgzpB/KqRA+K3y/NL/oYRqQvpNJYvLm+LY1U59Q=
 github.com/aws/aws-sdk-go v1.43.31/go.mod h1:y4AeaBuwd2Lk+GepC1E9v0qOiTws0MIWAX4oIKwKHZo=
-github.com/aws/aws-sdk-go v1.44.166 h1:oAn/wJYFoSF2e9iJYkqTlC9IY15ufPnKR1Zt8oZblhg=
-github.com/aws/aws-sdk-go v1.44.166/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
+github.com/aws/aws-sdk-go v1.44.171 h1:maREiPAmibvuONMOEZIkCH2OTosLRnDelceTtH3SYfo=
+github.com/aws/aws-sdk-go v1.44.171/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
 github.com/aws/aws-sdk-go-v2 v0.18.0/go.mod h1:JWVYvqSMppoMJC0x5wdwiImzgXTI9FuZwxzkQq9wy+g=
 github.com/aws/aws-sdk-go-v2 v1.7.0/go.mod h1:tb9wi5s61kTDA5qCkcDbt3KRVV74GGslQkl/DRdX/P4=
 github.com/aws/aws-sdk-go-v2 v1.16.2 h1:fqlCk6Iy3bnCumtrLz9r3mJ/2gUT0pJ0wLFVIdWh+JA=
@@ -1395,8 +1395,8 @@ github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58/go.m
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.147.0 h1:VavvJOa/Ubs+wzalzWIl+FQmdaD4vEK8KVYU0a8rf+E=
 github.com/grafana/grafana-plugin-sdk-go v0.147.0/go.mod h1:NMgO3t2gR5wyLx8bWZ9CTmpDk5Txp4wYFccFLHdYn3Q=
-github.com/grafana/prometheus-alertmanager v0.24.1-0.20221223152405-14ee77b330f2 h1:lduJgkyu8TCxnH0N3uRDEE295vlQ59261GUhXr5xS4s=
-github.com/grafana/prometheus-alertmanager v0.24.1-0.20221223152405-14ee77b330f2/go.mod h1:Is+bTl67aIbur/OVerec/Hb+wEukGjTAMb8zcqAvVFE=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20230109182643-002d8ba820f6 h1:teookZDfQHNJWhsXujYZLhIeLFWzZZtqeqqfkQwOcLI=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20230109182643-002d8ba820f6/go.mod h1:MnBfDPXJqXmmfPwQlCLvVUdqfnvrAw+hSPtDeaaFwj4=
 github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc h1:1PY8n+rXuBNr3r1JQhoytWDCpc+pq+BibxV0SZv+Cr4=
 github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc/go.mod h1:9Zh6dWPtB3MSzTRt8fIFH60Z351QQ+s7hCU3J/tTlA4=
 github.com/grafana/thema v0.0.0-20221222001256-d3a8fa941a6b h1:LBjw2NaMbTdx/etBbyZO0n0L2Lqj5PCDJAGwKk9TCII=
@@ -2284,8 +2284,8 @@ github.com/rogpeppe/go-internal v1.9.0/go.mod h1:WtVeX8xhTBvf0smdhujwtBcq4Qrzq/f
 github.com/rs/cors v1.6.0/go.mod h1:gFx+x8UowdsKA9AchylcLynDq+nNFfI8FkUZdN/jGCU=
 github.com/rs/cors v1.7.0/go.mod h1:gFx+x8UowdsKA9AchylcLynDq+nNFfI8FkUZdN/jGCU=
 github.com/rs/cors v1.8.0/go.mod h1:EBwu+T5AvHOcXwvZIkQFjUN6s8Czyqw12GL/Y0tUyRM=
-github.com/rs/cors v1.8.2 h1:KCooALfAYGs415Cwu5ABvv9n9509fSiG5SQJn/AQo4U=
-github.com/rs/cors v1.8.2/go.mod h1:XyqrcTp5zjWr1wsJ8PIRZssZ8b/WMcMf71DJnit4EMU=
+github.com/rs/cors v1.8.3 h1:O+qNyWn7Z+F9M0ILBHgMVPuB1xTOucVd5gtaYyXBpRo=
+github.com/rs/cors v1.8.3/go.mod h1:XyqrcTp5zjWr1wsJ8PIRZssZ8b/WMcMf71DJnit4EMU=
 github.com/rs/xid v1.2.1/go.mod h1:+uKXf+4Djp6Md1KODXJxgGQPKngRmWyn10oCKFzNHOQ=
 github.com/rs/zerolog v1.13.0/go.mod h1:YbFCdg8HfsridGWAh22vktObvhZbQsZXe4/zB0OKkWU=
 github.com/rs/zerolog v1.15.0/go.mod h1:xYTKnLHcpfU2225ny5qZjxnj9NvkumZYjJHlAThCjNc=
