@@ -148,45 +148,6 @@ export const DashNav = React.memo<Props>((props) => {
     return playlistSrv.isPlaying;
   };
 
-  const originalUrl = props.dashboard.snapshot?.originalUrl ?? '';
-  const gotoSnapshotOrigin = () => {
-    window.location.href = textUtil.sanitizeUrl(props.dashboard.snapshot.originalUrl);
-  };
-
-  const notifyApp = useAppNotification();
-  const onOpenSnapshotOriginal = () => {
-    try {
-      const sanitizedUrl = new URL(textUtil.sanitizeUrl(originalUrl), config.appUrl);
-      const appUrl = new URL(config.appUrl);
-      if (sanitizedUrl.host !== appUrl.host) {
-        appEvents.publish(
-          new ShowModalReactEvent({
-            component: ConfirmModal,
-            props: {
-              title: 'Proceed to external site?',
-              modalClass: modalStyles,
-              body: (
-                <>
-                  <p>
-                    {`This link connects to an external website at`} <code>{originalUrl}</code>
-                  </p>
-                  <p>{"Are you sure you'd like to proceed?"}</p>
-                </>
-              ),
-              confirmVariant: 'primary',
-              confirmText: 'Proceed',
-              onConfirm: gotoSnapshotOrigin,
-            },
-          })
-        );
-      } else {
-        gotoSnapshotOrigin();
-      }
-    } catch (err) {
-      notifyApp.error('Invalid URL', err instanceof Error ? err.message : undefined);
-    }
-  };
-
   const renderLeftActionsButton = () => {
     const { dashboard, kioskMode } = props;
     const { canStar, canShare, isStarred } = dashboard.meta;
