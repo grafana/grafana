@@ -1,8 +1,9 @@
 import React, { FC } from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { createBridgeURL, PluginBridge, BridgeSupportedPlugin } from '@grafana/runtime';
 import { Button, Tooltip } from '@grafana/ui';
+
+import { createBridgeURL, usePluginBridge, SupportedPlugin } from '../PluginBridge';
 
 interface Props {
   title?: string;
@@ -11,27 +12,29 @@ interface Props {
 
 export const DeclareIncident: FC<Props> = ({ title = '', severity = '' }) => {
   const history = useHistory();
-  const bridgeURL = createBridgeURL(BridgeSupportedPlugin.Incident, '/incidents/declare', { title, severity });
+  const bridgeURL = createBridgeURL(SupportedPlugin.Incident, '/incidents/declare', { title, severity });
+
+  const { loading, installed, settings } = usePluginBridge(SupportedPlugin.Incident);
 
   return (
-    <PluginBridge
-      plugin={BridgeSupportedPlugin.Incident}
-      loadingComponent={
+    <>
+      {loading && (
         <Button size="sm" type="button" disabled>
           Declare Incident
         </Button>
-      }
-      notInstalledComponent={
-        <Tooltip content={'Grafana Incident is not installed or configured incorrectly'}>
+      )}
+      {!installed && (
+        <Tooltip content={'Grafana Incident is not installed or is not configured correctly'}>
           <Button size="sm" type="button" disabled>
             Declare Incident
           </Button>
         </Tooltip>
-      }
-    >
-      <Button size="sm" type="button" onClick={() => history.push(bridgeURL)}>
-        Declare Incident
-      </Button>
-    </PluginBridge>
+      )}
+      {settings && (
+        <Button size="sm" type="button" onClick={() => history.push(bridgeURL)}>
+          Declare Incident
+        </Button>
+      )}
+    </>
   );
 };

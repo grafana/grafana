@@ -6,13 +6,14 @@ import { Button, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { getAlertmanagerByUid } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
 import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
 import { createExploreLink, makeRuleBasedSilenceLink } from '../../utils/misc';
-import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { DeclareIncident } from '../bridges/DeclareIncidentButton';
 
 interface Props {
@@ -35,6 +36,8 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const buttons: JSX.Element[] = [];
 
   const isFederated = isFederatedRuleGroup(group);
+
+  const isFiringRule = isAlertingRule(rule.promRule) && rule.promRule.state === PromAlertingRuleState.Firing;
 
   // explore does not support grafana rule queries atm
   // neither do "federated rules"
@@ -128,7 +131,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     return (
       <div className={style.wrapper}>
         <HorizontalGroup width="auto">{buttons.length ? buttons : <div />}</HorizontalGroup>
-        <DeclareIncident title={rule.name} />
+        {isFiringRule && <DeclareIncident title={rule.name} />}
       </div>
     );
   }

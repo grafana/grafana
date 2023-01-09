@@ -1,10 +1,8 @@
 import { screen, render } from '@testing-library/react';
 import React from 'react';
 
-// @ts-ignore
+import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-
-import { setBackendSrv } from '../services';
 
 import { createBridgeURL, PluginBridge, SupportedPlugin } from './PluginBridge';
 import { server, NON_EXISTING_PLUGIN } from './PluginBridge.mock';
