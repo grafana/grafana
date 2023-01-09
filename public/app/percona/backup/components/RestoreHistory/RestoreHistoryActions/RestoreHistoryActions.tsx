@@ -1,8 +1,9 @@
 import React, { FC } from 'react';
 
-import { useStyles2 } from '@grafana/ui';
+import { Tooltip, useStyles2 } from '@grafana/ui';
 import { ExpandableRowButton } from 'app/percona/shared/components/Elements/ExpandableRowButton/ExpandableRowButton';
 
+import { Messages } from './RestoreHistoryActions.messages';
 import { getStyles } from './RestoreHistoryActions.styles';
 import { BackupInventoryActionsProps } from './RestoreHistoryActions.types';
 
@@ -11,7 +12,11 @@ export const RestoreHistoryActions: FC<BackupInventoryActionsProps> = ({ row }) 
 
   return (
     <div className={styles.actionsWrapper}>
-      <ExpandableRowButton row={row} />
+      <Tooltip content={Messages.details} placement="top">
+        <span>
+          <ExpandableRowButton row={row} />
+        </span>
+      </Tooltip>
     </div>
   );
 };

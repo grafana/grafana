@@ -146,8 +146,9 @@ describe('AddBackupPage', () => {
     );
 
     await waitFor(() => expect(screen.getAllByText('Choose')).toHaveLength(2));
-    const button = screen.queryAllByTestId('type-radio-button')[1];
-    fireEvent.click(button);
+    const button = screen.getByText(Messages.schedule);
+    await fireEvent.click(button);
+
     expect(screen.getByText('Create Scheduled backup')).toBeInTheDocument();
   });
 
@@ -163,8 +164,8 @@ describe('AddBackupPage', () => {
     );
 
     await waitFor(() => expect(screen.getAllByText('Choose')).toHaveLength(2));
-    const button = screen.queryAllByTestId('type-radio-button')[0];
-    fireEvent.click(button);
+    const button = screen.getByText(Messages.onDemand);
+    await fireEvent.click(button);
     expect(screen.getByText('Create Backup on demand')).toBeInTheDocument();
   });
 });

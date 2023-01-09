@@ -20,6 +20,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { AsyncSelectField } from 'app/percona/shared/components/Form/AsyncSelectField';
 import { SelectField } from 'app/percona/shared/components/Form/SelectField';
+import { PageSwitcherValue } from 'app/percona/shared/components/PageSwitcherCard/PageSwitcherCard.types';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { ApiVerboseError, Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backupLocations';
@@ -28,8 +29,7 @@ import { apiErrorParser, isApiCancelError } from 'app/percona/shared/helpers/api
 import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 
-import { PageSwitcher } from '../../../shared/components/PageSwitcher/PageSwitcher';
-import { PageSwitcherValue } from '../../../shared/components/PageSwitcher/PageSwitcher.types';
+import { PageSwitcherCard } from '../../../shared/components/PageSwitcherCard/PageSwitcherCard';
 import { BACKUP_INVENTORY_URL, BACKUP_SCHEDULED_URL } from '../../Backup.constants';
 import { Messages as MessagesBackup } from '../../Backup.messages';
 import { BackupService } from '../../Backup.service';
@@ -49,11 +49,11 @@ import { AddBackupPageService } from './AddBackupPage.service';
 import { getStyles } from './AddBackupPage.styles';
 import { AddBackupFormProps, SelectableService } from './AddBackupPage.types';
 import {
-  toFormBackup,
   getBackupModeOptions,
   getDataModelFromVendor,
-  isDataModelDisabled,
   getLabelForStorageOption,
+  isDataModelDisabled,
+  toFormBackup,
 } from './AddBackupPage.utils';
 import { RetryModeSelector } from './RetryModeSelector';
 import { ScheduleSection } from './ScheduleSection/ScheduleSection';
@@ -112,16 +112,6 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onDemandChange = useCallback(() => {
-    setQueryParams({ scheduled: null });
-    setModalTitle(Messages.getModalTitle(false, editing));
-  }, [editing, setQueryParams]);
-
-  const onScheduledChange = useCallback(() => {
-    setQueryParams({ scheduled: true });
-    setModalTitle(Messages.getModalTitle(true, editing));
-  }, [editing, setQueryParams]);
-
   const handleBackup = async (values: AddBackupFormProps) => {
     try {
       await BackupService.backup(values, generateToken(BACKUP_CANCEL_TOKEN));
@@ -164,12 +154,38 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const onDemandClick = useCallback(() => {
+    setQueryParams({ scheduled: null });
+    setModalTitle(Messages.getModalTitle(false, editing));
+  }, [editing, setQueryParams]);
+
+  const onScheduledClick = useCallback(() => {
+    setQueryParams({ scheduled: true });
+    setModalTitle(Messages.getModalTitle(true, editing));
+  }, [editing, setQueryParams]);
+
   const pageSwitcherValues: Array<PageSwitcherValue<BackupType>> = useMemo(
     () => [
-      { name: 'type', value: BackupType.DEMAND, onChange: onDemandChange, label: Messages.onDemand },
-      { name: 'type', value: BackupType.SCHEDULED, onChange: onScheduledChange, label: Messages.schedule },
+      {
+        id: 1,
+        name: 'type',
+        selected: !scheduleMode,
+        value: BackupType.DEMAND,
+        onClick: onDemandClick,
+        label: Messages.onDemand,
+        description: Messages.backupDescription,
+      },
+      {
+        id: 2,
+        name: 'type',
+        selected: scheduleMode,
+        value: BackupType.SCHEDULED,
+        onClick: onScheduledClick,
+        label: Messages.schedule,
+        description: Messages.scheduleBackupDescription,
+      },
     ],
-    [onDemandChange, onScheduledChange]
+    [onDemandClick, onScheduledClick, scheduleMode]
   );
 
   return (
@@ -226,7 +242,7 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
               <CustomScrollbar hideHorizontalTrack={true}>
                 <div className={styles.contentInner}>
                   <div className={styles.pageWrapper}>
-                    {!editing && <PageSwitcher values={pageSwitcherValues} className={styles.pageSwitcher} />}
+                    {!editing && <PageSwitcherCard values={pageSwitcherValues} />}
                     <h4 className={styles.headingStyle}>{Messages.backupInfo}</h4>
                     <div className={styles.formContainer}>
                       <span className={styles.wideField}>

@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import { useStyles2 } from '@grafana/ui';
+import { Tooltip, useStyles2 } from '@grafana/ui';
 import { Action, MultipleActions } from 'app/percona/dbaas/components/MultipleActions';
 import { ExpandableRowButton } from 'app/percona/shared/components/Elements/ExpandableRowButton/ExpandableRowButton';
 
@@ -38,8 +38,12 @@ export const StorageLocationsActions: FC<StorageLocatationsActionProps> = ({ row
 
   return (
     <div className={styles.actionsWrapper}>
+      <Tooltip content={Messages.details} placement="top">
+        <span>
+          <ExpandableRowButton row={row} />
+        </span>
+      </Tooltip>
       <MultipleActions actions={getActions} dataTestId="storage-location-actions" />
-      <ExpandableRowButton row={row} />
     </div>
   );
 };
