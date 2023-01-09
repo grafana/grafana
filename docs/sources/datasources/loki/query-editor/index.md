@@ -131,7 +131,7 @@ Explain mode helps with understanding the query. It shows a step by step explana
 
 ### Raw query
 
-This section is shown only if the `Raw query` switch from the query editor top toolbar is set to `on`. It shows the raw query that will be created and executed by the query editor.
+It shows the raw query that will be created and executed by the query editor.
 
 There are two types of LogQL queries:
 
