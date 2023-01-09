@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
 	sync "github.com/grafana/grafana/pkg/services/authn/authnimpl/usersync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
@@ -31,6 +32,7 @@ func ProvideService(
 	orgService org.Service, sessionService auth.UserTokenService,
 	accessControlService accesscontrol.Service,
 	apikeyService apikey.Service, userService user.Service,
+	jwtService *jwt.AuthService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 ) *Service {
@@ -51,6 +53,10 @@ func ProvideService(
 
 	if s.cfg.AnonymousEnabled {
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
+	}
+
+	if s.cfg.JWTAuthEnabled {
+		s.clients[authn.ClientAnonymous] = clients.ProvideJWT(userService, jwtService, cfg)
 	}
 
 	// FIXME (kalleep): handle cfg.DisableLogin as well?
