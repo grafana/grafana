@@ -28,7 +28,7 @@ const renderMenuItems = (
               onClick={
                 link.onClick
                   ? (event) => {
-                      reportInteraction('grafana_traces_traceID_span_link_clicked', {
+                      reportInteraction('grafana_traces_trace_view_span_link_clicked', {
                         datasourceType: datasourceType,
                         type: 'log',
                         location: 'menu',
@@ -54,7 +54,7 @@ const renderMenuItems = (
               onClick={
                 link.onClick
                   ? (event) => {
-                      reportInteraction('grafana_traces_traceID_span_link_clicked', {
+                      reportInteraction('grafana_traces_trace_view_span_link_clicked', {
                         datasourceType: datasourceType,
                         type: 'metric',
                         location: 'menu',
@@ -80,7 +80,7 @@ const renderMenuItems = (
               onClick={
                 link.onClick
                   ? (event) => {
-                      reportInteraction('grafana_traces_traceID_span_link_clicked', {
+                      reportInteraction('grafana_traces_trace_view_span_link_clicked', {
                         datasourceType: datasourceType,
                         type: 'trace',
                         location: 'menu',
