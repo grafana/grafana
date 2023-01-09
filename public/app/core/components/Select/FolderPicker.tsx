@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 
 import { AppEvents, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useStyles2, ActionMeta, AsyncSelect, Input, InputActionMeta } from '@grafana/ui';
+import { useStyles2, ActionMeta, Input, InputActionMeta, AsyncSelect, AsyncVirtualizedSelect } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -43,6 +43,8 @@ export interface Props {
   accessControlMetadata?: boolean;
   customAdd?: CustomAdd;
   folderWarning?: FolderWarning;
+  sliceResults?: number;
+  virtualizeResults?: boolean;
 
   /**
    * Skips loading all folders in order to find the folder matching
@@ -76,6 +78,8 @@ export function FolderPicker(props: Props) {
     accessControlMetadata,
     customAdd,
     folderWarning,
+    sliceResults,
+    virtualizeResults,
   } = props;
 
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
@@ -90,7 +94,9 @@ export function FolderPicker(props: Props) {
   const getOptions = useCallback(
     async (query: string) => {
       const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
-      const options: Array<SelectableValue<string>> = mapSearchHitsToOptions(searchHits, filter);
+      const resultsAfterMapAndFilter = mapSearchHitsToOptions(searchHits, filter);
+      const options: Array<SelectableValue<string>> =
+        (sliceResults ?? 0) > 0 ? resultsAfterMapAndFilter.slice(0, sliceResults) : resultsAfterMapAndFilter;
 
       const hasAccess =
         contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
@@ -125,6 +131,7 @@ export function FolderPicker(props: Props) {
       filter,
       enableCreateNew,
       customAdd,
+      sliceResults,
     ]
   );
 
@@ -322,21 +329,40 @@ export function FolderPicker(props: Props) {
     return (
       <div data-testid={selectors.components.FolderPicker.containerV2}>
         <FolderWarningWhenSearching />
-        <AsyncSelect
-          inputId={inputId}
-          aria-label={selectors.components.FolderPicker.input}
-          loadingMessage={t('folder-picker.loading', 'Loading folders...')}
-          defaultOptions
-          defaultValue={folder}
-          inputValue={inputValue}
-          onInputChange={onInputChange}
-          value={folder}
-          allowCustomValue={enableCreateNew && !Boolean(customAdd)}
-          loadOptions={debouncedSearch}
-          onChange={onFolderChange}
-          onCreateOption={createNewFolder}
-          isClearable={isClearable}
-        />
+        {!virtualizeResults ? (
+          <AsyncSelect
+            inputId={inputId}
+            aria-label={selectors.components.FolderPicker.input}
+            loadingMessage={t('folder-picker.loading', 'Loading folders...')}
+            defaultOptions
+            defaultValue={folder}
+            inputValue={inputValue}
+            onInputChange={onInputChange}
+            value={folder}
+            allowCustomValue={enableCreateNew && !Boolean(customAdd)}
+            loadOptions={debouncedSearch}
+            onChange={onFolderChange}
+            onCreateOption={createNewFolder}
+            isClearable={isClearable}
+          />
+        ) : (
+          <AsyncVirtualizedSelect
+            inputId={inputId}
+            aria-label={selectors.components.FolderPicker.input}
+            loadingMessage={t('folder-picker.loading', 'Loading folders...')}
+            defaultOptions
+            defaultValue={folder}
+            inputValue={inputValue}
+            onInputChange={onInputChange}
+            value={folder}
+            allowCustomValue={enableCreateNew && !Boolean(customAdd)}
+            loadOptions={debouncedSearch}
+            onChange={onFolderChange}
+            onCreateOption={createNewFolder}
+            isClearable={isClearable}
+            width={42}
+          />
+        )}
       </div>
     );
   }

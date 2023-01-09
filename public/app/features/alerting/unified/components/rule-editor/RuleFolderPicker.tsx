@@ -31,6 +31,7 @@ const SlashesWarning = () => {
     </Stack>
   );
 };
+export const MAX_FOLDERS_IN_LIST = 1000;
 
 export const containsSlashes = (str: string): boolean => str.indexOf('/') !== -1;
 
@@ -60,6 +61,8 @@ export function RuleFolderPicker(props: RuleFolderPickerProps) {
       permissionLevel={PermissionLevelString.View}
       customAdd={customAdd}
       folderWarning={folderWarning}
+      sliceResults={MAX_FOLDERS_IN_LIST}
+      virtualizeResults
     />
   );
 }
