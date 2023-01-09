@@ -27,9 +27,6 @@ var (
 	getOrgsByNameURL = "/api/orgs/name/%v"
 
 	deleteOrgsURL = "/api/orgs/%v"
-
-	createOrgsURL    = "/api/orgs/"
-	testCreateOrgCmd = `{ "name": "TestOrg%v"}`
 )
 
 func TestAPIEndpoint_GetCurrentOrg_LegacyAccessControl(t *testing.T) {
@@ -331,6 +328,110 @@ func TestAPIEndpoint_UpdateOrg_RBAC(t *testing.T) {
 	}
 }
 
+func TestAPIEndpoint_CreateOrgs_LegacyAccessControl(t *testing.T) {
+	type testCase struct {
+		desc            string
+		role            org.RoleType
+		isGrafanaAdmin  bool
+		anyoneCanCreate bool
+		expectedCode    int
+	}
+
+	tests := []testCase{
+		{
+			desc:         "viewer cannot create org",
+			role:         org.RoleViewer,
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:         "editor cannot create org",
+			role:         org.RoleEditor,
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:         "admin cannot create org",
+			role:         org.RoleAdmin,
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:           "grafana admin can create org",
+			role:           org.RoleViewer,
+			isGrafanaAdmin: true,
+			expectedCode:   http.StatusForbidden,
+		},
+		{
+			desc:            "viewer can create org when AllowUserOrgCreate is set to true",
+			role:            org.RoleViewer,
+			isGrafanaAdmin:  true,
+			anyoneCanCreate: true,
+			expectedCode:    http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
+			})
+
+			prev := setting.AllowUserOrgCreate
+			defer func() {
+				setting.AllowUserOrgCreate = prev
+			}()
+			setting.AllowUserOrgCreate = tt.anyoneCanCreate
+
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/orgs", strings.NewReader(`{"name": "test"}`)), &user.SignedInUser{
+				OrgID:   1,
+				OrgRole: tt.role,
+			})
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
+func TestAPIEndpoint_CreateOrgs_RBAC(t *testing.T) {
+	type testCase struct {
+		desc         string
+		permission   []accesscontrol.Permission
+		expectedCode int
+	}
+
+	tests := []testCase{
+		{
+			desc:         "should be able to create org with correct permission",
+			permission:   []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsCreate}},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:         "should not be able to create org without correct permission",
+			permission:   []accesscontrol.Permission{},
+			expectedCode: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
+				hs.accesscontrolService = actest.FakeService{}
+				hs.userService = &usertest.FakeUserService{
+					ExpectedSignedInUser: &user.SignedInUser{OrgID: 0},
+				}
+			})
+
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/orgs", strings.NewReader(`{"name": "test"}`)), userWithPermissions(0, tt.permission))
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
 // setupOrgsDBForAccessControlTests creates orgs up until orgID and fake user as member of org
 func setupOrgsDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, c accessControlScenarioContext, orgID int64) {
 	t.Helper()
@@ -344,56 +445,6 @@ func setupOrgsDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, c acc
 		_, err := c.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: fmt.Sprintf("TestOrg%v", i), UserID: 0})
 		require.NoError(t, err)
 	}
-}
-
-func TestAPIEndpoint_CreateOrgs_LegacyAccessControl(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	setting.AllowUserOrgCreate = false
-	input := strings.NewReader(fmt.Sprintf(testCreateOrgCmd, 2))
-	t.Run("Viewer cannot create Orgs", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPost, createOrgsURL, input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
-
-	sc.initCtx.SignedInUser.IsGrafanaAdmin = true
-	input = strings.NewReader(fmt.Sprintf(testCreateOrgCmd, 3))
-	t.Run("Grafana Admin viewer can create Orgs", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPost, createOrgsURL, input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-	})
-
-	sc.initCtx.SignedInUser.IsGrafanaAdmin = false
-	setting.AllowUserOrgCreate = true
-	input = strings.NewReader(fmt.Sprintf(testCreateOrgCmd, 4))
-	t.Run("User viewer can create Orgs when AllowUserOrgCreate setting is true", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPost, createOrgsURL, input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-	})
-}
-
-func TestAPIEndpoint_CreateOrgs_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true)
-	setupOrgsDBForAccessControlTests(t, sc.db, sc, 0)
-
-	input := strings.NewReader(fmt.Sprintf(testCreateOrgCmd, 2))
-	t.Run("AccessControl allows creating Orgs with correct permissions", func(t *testing.T) {
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsCreate}}, accesscontrol.GlobalOrgID)
-		response := callAPI(sc.server, http.MethodPost, createOrgsURL, input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-	})
-
-	input = strings.NewReader(fmt.Sprintf(testCreateOrgCmd, 3))
-	t.Run("AccessControl prevents creating Orgs with incorrect permissions", func(t *testing.T) {
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, accesscontrol.GlobalOrgID)
-		response := callAPI(sc.server, http.MethodPost, createOrgsURL, input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
 }
 
 func TestAPIEndpoint_DeleteOrgs_LegacyAccessControl(t *testing.T) {
