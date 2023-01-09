@@ -24,10 +24,12 @@ jest.mock('./XrayLinkConfig', () => ({
 }));
 
 const putMock = jest.fn();
+const getMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     put: putMock,
+    get: getMock,
   }),
 }));
 
@@ -95,6 +97,7 @@ describe('Render', () => {
     };
     jest.resetAllMocks();
     putMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
+    getMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
     loadDataSourceMock.mockResolvedValue(datasource);
     datasource.api.getRegions = jest.fn().mockResolvedValue([
       {
@@ -172,61 +175,106 @@ describe('Render', () => {
     });
   });
 
-  it('should should save the data source if it wasnt saved before', async () => {
-    const ID = 1000;
-    const UNSAVED_VERSION = 1;
+  it('should load the data source if it was saved before', async () => {
     const SAVED_VERSION = 2;
-    const store = configureStore();
     const newProps = {
       ...props,
       options: {
         ...props.options,
-        id: ID,
-        version: UNSAVED_VERSION,
-      },
-    };
-
-    putMock.mockImplementation(async () => {
-      return {
-        datasource: {
-          version: SAVED_VERSION,
-        },
-      };
-    });
-
-    render(
-      <Provider store={store}>
-        <ConfigEditor {...newProps} />
-      </Provider>
-    );
-    await waitFor(async () => {
-      expect(putMock).toHaveBeenCalledWith('/api/datasources/1000', newProps.options);
-      expect(newProps.onOptionsChange).toHaveBeenCalledWith({ ...newProps.options, version: SAVED_VERSION });
-    });
-  });
-
-  it('should not should save the data source if it was saved before, just load it from DatasourceSrv', async () => {
-    const ID = 1000;
-    const SAVED_VERSION = 2;
-    const store = configureStore();
-    const newProps = {
-      ...props,
-      options: {
-        ...props.options,
-        id: ID,
         version: SAVED_VERSION,
       },
     };
 
-    render(
-      <Provider store={store}>
-        <ConfigEditor {...newProps} />
-      </Provider>
+    render(<ConfigEditor {...newProps} />);
+    await waitFor(async () => expect(loadDataSourceMock).toHaveBeenCalled());
+  });
+
+  it('should not load the data source if it wasnt saved before', async () => {
+    const SAVED_VERSION = undefined;
+    const newProps = {
+      ...props,
+      options: {
+        ...props.options,
+        version: SAVED_VERSION,
+      },
+    };
+
+    render(<ConfigEditor {...newProps} />);
+    await waitFor(async () => expect(loadDataSourceMock).not.toHaveBeenCalled());
+  });
+
+  it('should show error message if Select log group button is clicked when data source is never saved', async () => {
+    const SAVED_VERSION = undefined;
+    const newProps = {
+      ...props,
+      options: {
+        ...props.options,
+        version: SAVED_VERSION,
+      },
+    };
+
+    render(<ConfigEditor {...newProps} />);
+
+    await waitFor(() => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
+    await userEvent.click(screen.getByText('Select Log Groups'));
+    await waitFor(() =>
+      expect(screen.getByText('You need to save the data source before adding log groups.')).toBeInTheDocument()
     );
-    await waitFor(async () => {
-      expect(putMock).not.toHaveBeenCalled();
-      expect(newProps.onOptionsChange).not.toHaveBeenCalled();
-      expect(loadDataSourceMock).toHaveBeenCalled();
-    });
+  });
+
+  it('should show error message if Select log group button is clicked when data source is saved before but have unsaved changes', async () => {
+    const SAVED_VERSION = 3;
+    const newProps = {
+      ...props,
+      options: {
+        ...props.options,
+        version: SAVED_VERSION,
+      },
+    };
+    const { rerender } = render(<ConfigEditor {...newProps} />);
+    await waitFor(() => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
+    const rerenderProps = {
+      ...newProps,
+      options: {
+        ...newProps.options,
+        jsonData: {
+          ...newProps.options.jsonData,
+          authType: AwsAuthType.Default,
+        },
+      },
+    };
+    rerender(<ConfigEditor {...rerenderProps} />);
+    await waitFor(() => expect(screen.getByText('AWS SDK Default')).toBeInTheDocument());
+    await userEvent.click(screen.getByText('Select Log Groups'));
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          'You have unsaved connection detail changes. You need to save the data source before adding log groups.'
+        )
+      ).toBeInTheDocument()
+    );
+  });
+
+  it('should open log group selector if Select log group button is clicked when data source has saved changes', async () => {
+    const SAVED_VERSION = undefined;
+    const newProps = {
+      ...props,
+      options: {
+        ...props.options,
+        version: SAVED_VERSION,
+      },
+    };
+    const { rerender } = render(<ConfigEditor {...newProps} />);
+    await waitFor(() => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
+    const rerenderProps = {
+      ...newProps,
+      options: {
+        ...newProps.options,
+        version: 1,
+      },
+    };
+    rerender(<ConfigEditor {...rerenderProps} />);
+    await userEvent.click(screen.getByText('Select Log Groups'));
+    await waitFor(() => expect(screen.getByText('Log group name prefix')).toBeInTheDocument());
   });
 });
