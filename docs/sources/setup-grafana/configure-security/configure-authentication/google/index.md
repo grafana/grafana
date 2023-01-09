@@ -39,6 +39,7 @@ auth_url = https://accounts.google.com/o/oauth2/auth
 token_url = https://accounts.google.com/o/oauth2/token
 allowed_domains = mycompany.com mycompany.org
 allow_sign_up = true
+hosted_domain = mycompany.com
 ```
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
@@ -52,6 +53,9 @@ You may allow users to sign-up via Google authentication by setting the
 `allow_sign_up` option to `true`. When this option is set to `true`, any
 user successfully authenticating via Google authentication will be
 automatically signed up.
+
+You may specify a domain to be passed as `hd` query parameter accepted by Google's
+OAuth 2.0 authentication API. Refer to Google's OAuth [documentation](https://developers.google.com/identity/openid-connect/openid-connect#hd-param).
 
 ### Configure refresh token
 

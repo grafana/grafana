@@ -12,11 +12,10 @@ export interface Props {
   region: string;
   sql: string;
   onChange: (sql: string) => void;
-  onRunQuery: () => void;
   datasource: CloudWatchDatasource;
 }
 
-export const SQLCodeEditor: FunctionComponent<Props> = ({ region, sql, onChange, onRunQuery, datasource }) => {
+export const SQLCodeEditor: FunctionComponent<Props> = ({ region, sql, onChange, datasource }) => {
   useEffect(() => {
     datasource.sqlCompletionItemProvider.setRegion(region);
   }, [region, datasource]);
@@ -27,10 +26,9 @@ export const SQLCodeEditor: FunctionComponent<Props> = ({ region, sql, onChange,
       editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
         const text = editor.getValue();
         onChange(text);
-        onRunQuery();
       });
     },
-    [onChange, onRunQuery]
+    [onChange]
   );
 
   return (

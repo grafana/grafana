@@ -380,6 +380,7 @@ func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 
 	store.Cfg.AutoAssignOrg = true
 	store.Cfg.AutoAssignOrgId = 1
+	cmd.OrgID = 1
 
 	quotaService := quotaimpl.ProvideService(store, store.Cfg)
 	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)

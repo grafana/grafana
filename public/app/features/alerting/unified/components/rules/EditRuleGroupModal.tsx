@@ -24,13 +24,18 @@ import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
 
 const MINUTE = '1m';
+const ITEMS_PER_PAGE = 10;
 interface AlertInfo {
   alertName: string;
   forDuration: string;
   evaluationsToFire: number;
 }
-function ForError({ message }: { message: string }) {
-  return <Badge color="orange" icon="exclamation-triangle" text={'Error'} tooltip={message} />;
+function ForBadge({ message, error }: { message: string; error?: boolean }) {
+  if (error) {
+    return <Badge color="red" icon="exclamation-circle" text={'Error'} tooltip={message} />;
+  } else {
+    return <Badge color="orange" icon="exclamation-triangle" text={'Unknown'} tooltip={message} />;
+  }
 }
 
 export const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
@@ -132,6 +137,7 @@ export const RulesForGroupTable = ({
 
   const { watch } = useFormContext<FormValues>();
   const currentInterval = watch('groupInterval');
+  const unknownCurrentInterval = !Boolean(currentInterval);
 
   const rows: AlertsWithForTableProps[] = rules
     .slice()
@@ -165,23 +171,29 @@ export const RulesForGroupTable = ({
         id: 'numberEvaluations',
         label: '#Evaluations',
         renderCell: ({ data: { evaluationsToFire: numberEvaluations } }) => {
-          if (!isValidEvaluation(currentInterval)) {
-            return <ForError message={'Invalid evaluation interval format'} />;
-          }
-          if (numberEvaluations === 0) {
-            return <ForError message="Invalid 'For' value: it should be greater or equal to evaluation interval." />;
+          if (unknownCurrentInterval) {
+            return <ForBadge message="#Evaluations not available." />;
           } else {
-            return <>{numberEvaluations}</>;
+            if (!isValidEvaluation(currentInterval)) {
+              return <ForBadge message={'Invalid evaluation interval format'} error />;
+            }
+            if (numberEvaluations === 0) {
+              return (
+                <ForBadge message="Invalid 'For' value: it should be greater or equal to evaluation interval." error />
+              );
+            } else {
+              return <>{numberEvaluations}</>;
+            }
           }
         },
         size: 0.6,
       },
     ];
-  }, [currentInterval]);
+  }, [currentInterval, unknownCurrentInterval]);
 
   return (
     <div className={styles.tableWrapper}>
-      <DynamicTable items={rows} cols={columns} />
+      <DynamicTable items={rows} cols={columns} pagination={{ itemsPerPage: ITEMS_PER_PAGE }} />
     </div>
   );
 };

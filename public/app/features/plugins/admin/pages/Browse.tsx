@@ -3,11 +3,15 @@ import React, { ReactElement } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { locationSearchToObject } from '@grafana/runtime';
+import { config, locationSearchToObject } from '@grafana/runtime';
 import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
+import {
+  ConnectionsRedirectNotice,
+  DestinationPage,
+} from 'app/features/connections/components/ConnectionsRedirectNotice';
 import { useSelector } from 'app/types';
 
 import { HorizontalGroup } from '../components/HorizontalGroup';
@@ -66,6 +70,10 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   return (
     <Page navModel={navModel}>
       <Page.Contents>
+        {config.featureToggles.dataConnectionsConsole && (filterByType === 'all' || filterByType === 'datasource') && (
+          <ConnectionsRedirectNotice destinationPage={DestinationPage.connectData} />
+        )}
+
         <HorizontalGroup wrap>
           <SearchField value={query} onSearch={onSearch} />
           <HorizontalGroup wrap className={styles.actionBar}>

@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/stats"
 )
@@ -56,7 +55,7 @@ func notServiceAccount(dialect migrator.Dialect) string {
 
 func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error {
 	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
-		sb := &sqlstore.SQLBuilder{}
+		sb := &db.SQLBuilder{}
 		sb.Write("SELECT ")
 		dialect := ss.db.GetDialect()
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
