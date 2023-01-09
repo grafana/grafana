@@ -36,7 +36,8 @@ describe('LogGroupSelection', () => {
       .fn()
       .mockResolvedValue([{ value: { arn: 'arn', name: 'loggroupname' } }]);
     render(<LogGroupsField {...defaultProps} legacyLogGroupNames={['loggroupname']} />);
-    await waitFor(() => screen.getByText('Select Log Groups'));
+
+    await waitFor(async () => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
     expect(defaultProps.datasource.api.describeLogGroups).toHaveBeenCalledWith({
       region: defaultProps.region,
       logGroupNamePrefix: 'loggroupname',
@@ -50,7 +51,7 @@ describe('LogGroupSelection', () => {
       .fn()
       .mockResolvedValue([{ value: { arn: 'arn', name: 'loggroupname' } }]);
     render(<LogGroupsField {...defaultProps} logGroups={[{ arn: 'arn', name: 'loggroupname' }]} />);
-    await waitFor(() => screen.getByText('Select Log Groups'));
+    await waitFor(() => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
     expect(defaultProps.datasource.api.describeLogGroups).not.toHaveBeenCalled();
     expect(defaultProps.onChange).not.toHaveBeenCalled();
   });

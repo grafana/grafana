@@ -32,30 +32,29 @@ export const LogGroupsField = ({
   onBeforeOpen,
 }: Props) => {
   const accountState = useAccountOptions(datasource?.api, region);
-  const [loadingLogGroups, setLoadingLogGroups] = useState(false);
+  const [loadingLogGroupsStarted, setLoadingLogGroupsStarted] = useState(false);
 
   useEffect(() => {
     // If log group names are stored in the query model, make a new DescribeLogGroups request for each log group to load the arn. Then update the query model.
-    if (datasource && !loadingLogGroups && !logGroups?.length && legacyLogGroupNames?.length) {
-      setLoadingLogGroups(true);
+    if (datasource && !loadingLogGroupsStarted && !logGroups?.length && legacyLogGroupNames?.length) {
+      setLoadingLogGroupsStarted(true);
       Promise.all(
         legacyLogGroupNames.map((lg) => datasource.api.describeLogGroups({ region: region, logGroupNamePrefix: lg }))
       )
         .then((results) => {
-          onChange(
-            results.flatMap((r) =>
-              r.map((lg) => ({
-                arn: lg.value.arn,
-                name: lg.value.name,
-                accountId: lg.accountId,
-              }))
-            )
+          const a = results.flatMap((r) =>
+            r.map((lg) => ({
+              arn: lg.value.arn,
+              name: lg.value.name,
+              accountId: lg.accountId,
+            }))
           );
+
+          onChange(a);
         })
-        .catch(console.error)
-        .finally(() => setLoadingLogGroups(false));
+        .catch(console.error);
     }
-  }, [datasource, legacyLogGroupNames, logGroups, onChange, region, loadingLogGroups]);
+  }, [datasource, legacyLogGroupNames, logGroups, onChange, region, loadingLogGroupsStarted]);
 
   return (
     <div className={`gf-form gf-form--grow flex-grow-1 ${rowGap}`}>
