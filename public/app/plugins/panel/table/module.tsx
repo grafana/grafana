@@ -20,7 +20,6 @@ const footerCategory = 'Table footer';
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
-  .setNoPadding()
   .useFieldConfig({
     useCustomConfig: (builder) => {
       builder
@@ -131,6 +130,14 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         defaultValue: [ReducerID.sum],
         showIf: (cfg) => cfg.footer?.show,
       })
+      .addBooleanSwitch({
+        path: 'footer.countRows',
+        category: [footerCategory],
+        name: 'Count rows',
+        description: 'Display a single count for all data rows',
+        defaultValue: defaultPanelOptions.footer?.countRows,
+        showIf: (cfg) => cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] === ReducerID.count,
+      })
       .addMultiSelect({
         path: 'footer.fields',
         category: [footerCategory],
@@ -156,7 +163,9 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           },
         },
         defaultValue: '',
-        showIf: (cfg) => cfg.footer?.show,
+        showIf: (cfg) =>
+          (cfg.footer?.show && !cfg.footer?.countRows) ||
+          (cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] !== ReducerID.count),
       })
       .addCustomEditor({
         id: 'footer.enablePagination',

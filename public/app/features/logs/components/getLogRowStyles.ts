@@ -124,6 +124,7 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       white-space: pre-wrap;
       word-break: break-all;
       width: 100%;
+      text-align: left;
     `,
     //Log details specific CSS
     logDetailsContainer: css`

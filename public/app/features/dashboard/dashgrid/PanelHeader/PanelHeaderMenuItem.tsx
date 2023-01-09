@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Icon, toIconName, useStyles2 } from '@grafana/ui';
 
 interface Props {
-  children?: any;
+  children?: React.ReactNode;
 }
 
 export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = (props) => {

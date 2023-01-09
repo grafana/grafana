@@ -5,6 +5,8 @@ import {
   isQueryWithLabelFormat,
   isQueryWithParser,
   isValidQuery,
+  parseToNodeNamesArray,
+  getParserFromQuery,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -166,6 +168,39 @@ describe('isValidQuery', () => {
   });
 });
 
+describe('parseToArray', () => {
+  it('returns on empty query', () => {
+    expect(parseToNodeNamesArray('{}')).toEqual(['LogQL', 'Expr', 'LogExpr', 'Selector', '⚠']);
+  });
+  it('returns on invalid query', () => {
+    expect(parseToNodeNamesArray('{job="grafana"')).toEqual([
+      'LogQL',
+      'Expr',
+      'LogExpr',
+      'Selector',
+      'Matchers',
+      'Matcher',
+      'Identifier',
+      'Eq',
+      'String',
+      '⚠',
+    ]);
+  });
+  it('returns on valid query', () => {
+    expect(parseToNodeNamesArray('{job="grafana"}')).toEqual([
+      'LogQL',
+      'Expr',
+      'LogExpr',
+      'Selector',
+      'Matchers',
+      'Matcher',
+      'Identifier',
+      'Eq',
+      'String',
+    ]);
+  });
+});
+
 describe('isLogsQuery', () => {
   it('returns false if metrics query', () => {
     expect(isLogsQuery('rate({job="grafana"}[5m])')).toBe(false);
@@ -213,5 +248,18 @@ describe('isQueryWithLabelFormat', () => {
 
   it('returns false if metrics query without label format', () => {
     expect(isQueryWithLabelFormat('rate({job="grafana"} [5m])')).toBe(false);
+  });
+});
+
+describe('getParserFromQuery', () => {
+  it('returns no parser', () => {
+    expect(getParserFromQuery('{job="grafana"}')).toBeUndefined();
+  });
+
+  it.each(['json', 'logfmt', 'pattern', 'regexp', 'unpack'])('detects %s parser', (parser: string) => {
+    expect(getParserFromQuery(`{job="grafana"} | ${parser}`)).toBe(parser);
+    expect(getParserFromQuery(`sum(count_over_time({place="luna"} | ${parser} | unwrap counter )) by (place)`)).toBe(
+      parser
+    );
   });
 });

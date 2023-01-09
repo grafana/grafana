@@ -58,7 +58,7 @@ func LinuxPackageVersion(v string, buildID string) (string, string) {
 }
 
 func shortenBuildID(buildID string) string {
-	buildID = strings.Replace(buildID, "-", "", -1)
+	buildID = strings.ReplaceAll(buildID, "-", "")
 	if len(buildID) < 9 {
 		return buildID
 	}

@@ -23,5 +23,12 @@ type RuleReader interface {
 // Historian maintains an audit log of alert state history.
 type Historian interface {
 	// RecordStates writes a number of state transitions for a given rule to state history.
-	RecordStates(ctx context.Context, rule *models.AlertRule, states []StateTransition)
+	RecordStatesAsync(ctx context.Context, rule *models.AlertRule, states []StateTransition)
+}
+
+// ImageCapturer captures images.
+//
+//go:generate mockgen -destination=image_mock.go -package=state github.com/grafana/grafana/pkg/services/ngalert/state ImageCapturer
+type ImageCapturer interface {
+	NewImage(ctx context.Context, r *models.AlertRule) (*models.Image, error)
 }

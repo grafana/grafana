@@ -1,6 +1,5 @@
-import { DataTransformerConfig, FieldConfigSource } from '@grafana/data';
+import { DataTransformerConfig, FieldConfigSource, getPanelOptionsWithDefaults } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { getPanelOptionsWithDefaults } from 'app/features/dashboard/state/getPanelOptionsWithDefaults';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
@@ -8,13 +7,7 @@ import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { ThunkResult } from 'app/types';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 
-import {
-  changePanelKey,
-  cleanUpAngularComponent,
-  panelModelAndPluginReady,
-  removePanel,
-  removePanels,
-} from './reducers';
+import { changePanelKey, panelModelAndPluginReady, removePanel } from './reducers';
 
 export function initPanelState(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
@@ -45,20 +38,8 @@ export function initPanelState(panel: PanelModel): ThunkResult<void> {
 }
 
 export function cleanUpPanelState(panelKey: string): ThunkResult<void> {
-  return (dispatch, getStore) => {
-    const store = getStore().panels;
-    cleanUpAngularComponent(store[panelKey]);
+  return (dispatch) => {
     dispatch(removePanel({ key: panelKey }));
-  };
-}
-
-export function cleanAndRemoveMany(panelKeys: string[]): ThunkResult<void> {
-  return (dispatch, getStore) => {
-    const store = getStore().panels;
-    for (const key of panelKeys) {
-      cleanUpAngularComponent(store[key]);
-    }
-    dispatch(removePanels({ keys: panelKeys }));
   };
 }
 
@@ -89,8 +70,6 @@ export function changePanelPlugin({
       plugin = await dispatch(loadPanelPlugin(pluginId));
     }
 
-    let cleanUpKey = panel.key;
-
     if (panel.type !== pluginId) {
       panel.changePlugin(plugin);
     }
@@ -110,7 +89,7 @@ export function changePanelPlugin({
 
     panel.generateNewKey();
 
-    dispatch(panelModelAndPluginReady({ key: panel.key, plugin, cleanUpKey }));
+    dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
   };
 }
 
@@ -139,12 +118,10 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
         plugin = await dispatch(loadPanelPlugin(newPluginId));
       }
 
-      const oldKey = panel.key;
-
       panel.pluginLoaded(plugin);
       panel.generateNewKey();
 
-      await dispatch(panelModelAndPluginReady({ key: panel.key, plugin, cleanUpKey: oldKey }));
+      await dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
     } else {
       // Even if the plugin is the same, we want to change the key
       // to force a rerender

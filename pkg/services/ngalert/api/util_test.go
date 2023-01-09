@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/auth"
 	models2 "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -45,7 +46,7 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 			Req: &http.Request{},
 		},
 		SignedInUser:          &user.SignedInUser{},
-		UserToken:             &models.UserToken{},
+		UserToken:             &auth.UserToken{},
 		IsSignedIn:            rand.Int63()%2 == 1,
 		IsRenderCall:          rand.Int63()%2 == 1,
 		AllowAnonymous:        rand.Int63()%2 == 1,

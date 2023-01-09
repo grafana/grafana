@@ -646,8 +646,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 						Roles: []plugins.RoleRegistration{
 							{
 								Role: plugins.Role{
-									Name:        "plugins.app:test-app:reader",
-									DisplayName: "test-app reader",
+									Name:        "Reader",
 									Description: "View everything in the test-app plugin",
 									Permissions: []plugins.Permission{
 										{Action: "plugins.app:access", Scope: "plugins.app:id:test-app"},
@@ -1312,7 +1311,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 			BaseURL:   "public/app/plugins/app/testdata-app",
 		}
 
-		configureAppChildOPlugin(parent, child)
+		configureAppChildPlugin(parent, child)
 
 		require.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
 		require.Equal(t, "testdata-app", child.IncludedInAppID)

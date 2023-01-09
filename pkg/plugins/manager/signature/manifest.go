@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/gobwas/glob"
@@ -53,6 +54,8 @@ N1c5v9v/4h6qeA==
 =DNbR
 -----END PGP PUBLIC KEY BLOCK-----
 `
+
+var runningWindows = runtime.GOOS == "windows"
 
 // pluginManifest holds details for the file manifest
 type pluginManifest struct {
@@ -111,12 +114,7 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 		}, err
 	}
 
-	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
-
-	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
-	// on plugin the folder structure on disk and not user input.
-	byteValue, err := os.ReadFile(manifestPath)
+	byteValue := plugin.Manifest()
 	if err != nil || len(byteValue) < 10 {
 		mlog.Debug("Plugin is unsigned", "id", plugin.ID)
 		return plugins.Signature{
@@ -261,6 +259,11 @@ func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) 
 
 		// skip directories and MANIFEST.txt
 		if info.IsDir() || info.Name() == "MANIFEST.txt" {
+			return nil
+		}
+
+		// Ignoring unsigned Chromium debug.log so it doesn't invalidate the signature for Renderer plugin running on Windows
+		if runningWindows && plugin.IsRenderer() && strings.HasSuffix(path, filepath.Join("chrome-win", "debug.log")) {
 			return nil
 		}
 

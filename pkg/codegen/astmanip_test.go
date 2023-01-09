@@ -29,7 +29,7 @@ type FooThing struct {
 }`,
 			out: `package foo
 
-type Model struct {
+type Foo struct {
 	Id  int64
 	Ref Thing
 }
@@ -52,7 +52,7 @@ type FooThing struct {
 }`,
 			out: `package foo
 
-type Model struct {
+type Foo struct {
 	Id  int64
 	Ref *Thing
 }
@@ -77,7 +77,7 @@ type FooThing struct {
 }`,
 			out: `package foo
 
-type Model struct {
+type Foo struct {
 	Id    int64
 	Ref   []Thing
 	PRef  []*Thing
@@ -104,7 +104,7 @@ type FooThing struct {
 }`,
 			out: `package foo
 
-type Model struct {
+type Foo struct {
 	Id      int64
 	KeyRef  map[Thing]string
 	ValRef  map[string]Thing
@@ -132,7 +132,7 @@ type FooThing struct {
 }`,
 			out: `package foo
 
-type Model struct {
+type Foo struct {
 	Id      int64
 	KeyRef  map[*Thing]string
 	ValRef  map[string]*Thing
@@ -154,7 +154,7 @@ type Foo struct {
 }`,
 			out: `package foo
 
-type Model struct {
+type Foo struct {
 	Id     int64
 	FooRef []string
 }
@@ -235,6 +235,37 @@ type Thing string
 			// of objects, only types, so we shouldn't encounter this case.
 			skip: true,
 		},
+		"comments": {
+			in: `package foo
+
+// Foo is a thing. It should be Foo still.
+type Foo struct {
+	Id int64
+	Ref FooThing
+}
+
+// FooThing is also a thing. We want [FooThing] to be known properly.
+// Even if FooThing
+// were not a FooThing, in our minds, forever shall it be FooThing.
+type FooThing struct {
+	Id int64
+}`,
+			out: `package foo
+
+// Foo is a thing. It should be Foo still.
+type Foo struct {
+	Id  int64
+	Ref Thing
+}
+
+// Thing is also a thing. We want [Thing] to be known properly.
+// Even if Thing
+// were not a Thing, in our minds, forever shall it be Thing.
+type Thing struct {
+	Id int64
+}
+`,
+		},
 	}
 
 	for name, it := range tt {
@@ -250,7 +281,7 @@ type Thing string
 				t.Fatal(err)
 			}
 
-			drop := makePrefixDropper("Foo", "Model")
+			drop := PrefixDropper("Foo")
 			astutil.Apply(inf, drop, nil)
 			buf := new(bytes.Buffer)
 			err = format.Node(buf, fset, inf)

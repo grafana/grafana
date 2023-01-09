@@ -21,8 +21,5 @@ e2e.scenario({
 
     e2e.components.Search.folderContent('General').should('be.visible');
     e2e.components.Search.dashboardItem('E2E Test - Import Dashboard').should('be.visible');
-
-    // verify the imported dashboard is the only dashboard present in the folder
-    e2e().get('[data-testid^="data-testid Dashboard search item "]').should('have.length', 1);
   },
 });

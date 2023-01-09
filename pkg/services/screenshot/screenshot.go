@@ -92,14 +92,17 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 		return nil, err
 	}
 
+	opts = opts.SetDefaults()
+
 	u := url.URL{}
 	u.Path = path.Join("d-solo", q.Result.Uid, q.Result.Slug)
 	p := u.Query()
 	p.Add("orgId", strconv.FormatInt(q.Result.OrgId, 10))
 	p.Add("panelId", strconv.FormatInt(opts.PanelID, 10))
+	p.Add("from", opts.From)
+	p.Add("to", opts.To)
 	u.RawQuery = p.Encode()
 
-	opts = opts.SetDefaults()
 	renderOpts := rendering.Opts{
 		AuthOpts: rendering.AuthOpts{
 			OrgID:   q.Result.OrgId,

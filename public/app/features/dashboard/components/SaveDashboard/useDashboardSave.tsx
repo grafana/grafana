@@ -15,12 +15,12 @@ import { DashboardSavedEvent } from 'app/types/events';
 import { SaveDashboardOptions } from './types';
 
 const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
-  let folderId = options.folderId;
-  if (folderId === undefined) {
-    folderId = dashboard.meta.folderId ?? saveModel.folderId;
+  let folderUid = options.folderUid;
+  if (folderUid === undefined) {
+    folderUid = dashboard.meta.folderUid ?? saveModel.folderUid;
   }
 
-  const result = await saveDashboardApiCall({ ...options, folderId, dashboard: saveModel });
+  const result = await saveDashboardApiCall({ ...options, folderUid, dashboard: saveModel });
   // fetch updated access control permissions
   await contextSrv.fetchUserPermissions();
   return result;

@@ -1,12 +1,11 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/cloudwatch/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/provision-cloudwatch/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
-  - /docs/grafana/latest/data-sources/aws-cloudwatch/
-  - /docs/grafana/latest/data-sources/aws-cloudwatch/provision-cloudwatch/
-  - /docs/grafana/latest/data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
+  - ../data-sources/aws-cloudwatch/
+  - ../data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
+  - ../data-sources/aws-cloudwatch/provision-cloudwatch/
+  - cloudwatch/
+  - preconfig-cloudwatch-dashboards/
+  - provision-cloudwatch/
 description: Guide for using AWS CloudWatch in Grafana
 keywords:
   - grafana
@@ -162,6 +161,21 @@ You can attach these permissions to the IAM role or IAM user you configured in [
       "Sid": "AllowReadingResourcesForTags",
       "Effect": "Allow",
       "Action": "tag:GetResources",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+**Cross-account observability:**
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": ["oam:ListSinks", "oam:ListAttachedLinks"],
+      "Effect": "Allow",
       "Resource": "*"
     }
   ]

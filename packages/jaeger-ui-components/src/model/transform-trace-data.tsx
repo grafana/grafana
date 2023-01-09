@@ -135,8 +135,11 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
 
   // Eslint complains about number type not needed but then TS complains it is implicitly any.
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-  tree.walk((spanID: string, node: TreeNode, depth: number = 0) => {
+  tree.walk((spanID: string | number | undefined, node: TreeNode, depth: number = 0) => {
     if (spanID === '__root__') {
+      return;
+    }
+    if (typeof spanID !== 'string') {
       return;
     }
     const span = spanMap.get(spanID) as TraceSpan;

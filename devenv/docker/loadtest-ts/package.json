@@ -2,7 +2,7 @@
   "private": true,
   "license": "Apache-2.0",
   "name": "@grafana/perf-tests",
-  "version": "9.3.0-pre",
+  "version": "9.4.0-pre",
   "devDependencies": {
     "@babel/core": "7.19.6",
     "@babel/plugin-proposal-class-properties": "7.18.6",

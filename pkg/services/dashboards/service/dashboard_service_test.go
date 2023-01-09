@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -226,7 +227,7 @@ func TestDashboardService(t *testing.T) {
 		})
 
 		t.Run("Count dashboards in folder", func(t *testing.T) {
-			fakeStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&models.Folder{}, nil)
+			fakeStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 			fakeStore.On("CountDashboardsInFolder", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
 
 			// set up a ctx with signed in user
@@ -253,5 +254,27 @@ func TestDashboardService(t *testing.T) {
 		}
 		err := service.DeleteACLByUser(context.Background(), 1)
 		require.NoError(t, err)
+	})
+
+	t.Run("When org user is deleted", func(t *testing.T) {
+		fakeStore := dashboards.FakeDashboardStore{}
+		fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil)
+		t.Run("Should remove dependent permissions for deleted org user", func(t *testing.T) {
+			permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: 1, Result: nil}
+
+			err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
+			require.NoError(t, err)
+
+			require.Equal(t, len(permQuery.Result), 0)
+		})
+
+		t.Run("Should not remove dashboard permissions for same user in another org", func(t *testing.T) {
+			fakeStore := dashboards.FakeDashboardStore{}
+			fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil)
+			permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 2, OrgID: 3}
+
+			err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
+			require.NoError(t, err)
+		})
 	})
 }

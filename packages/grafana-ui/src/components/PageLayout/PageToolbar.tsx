@@ -24,6 +24,7 @@ export interface Props {
   className?: string;
   isFullscreen?: boolean;
   'aria-label'?: string;
+  buttonOverflowAlignment?: 'left' | 'right';
 }
 
 /** @alpha */
@@ -42,6 +43,7 @@ export const PageToolbar: FC<Props> = React.memo(
     className,
     /** main nav-container aria-label **/
     'aria-label': ariaLabel,
+    buttonOverflowAlignment = 'right',
   }) => {
     const styles = useStyles2(getStyles);
 
@@ -132,7 +134,9 @@ export const PageToolbar: FC<Props> = React.memo(
             )}
           </nav>
         </div>
-        <ToolbarButtonRow alignment="right">{React.Children.toArray(children).filter(Boolean)}</ToolbarButtonRow>
+        <ToolbarButtonRow alignment={buttonOverflowAlignment}>
+          {React.Children.toArray(children).filter(Boolean)}
+        </ToolbarButtonRow>
       </nav>
     );
   }
@@ -186,7 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       min-width: 0;
     `,
     h1Styles: css`
-      margin: 0;
+      margin: ${spacing(0, 1, 0, 0)};
       line-height: inherit;
       flex-grow: 1;
       min-width: 0;
@@ -225,7 +229,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       ${theme.breakpoints.up('md')} {
         align-items: center;
         display: flex;
-        padding-left: ${spacing(0.5)};
+        padding-right: ${spacing(0.5)};
       }
     `,
   };

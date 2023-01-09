@@ -1,7 +1,7 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "executedQueryString": "Expr: query1"
 //  }
 //  Name: {level="error", location="moon"}
@@ -17,7 +17,7 @@
 //  
 //  
 //  Frame[1] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "executedQueryString": "Expr: query1"
 //  }
 //  Name: {level="info", location="moon"}
@@ -39,7 +39,7 @@
       "schema": {
         "name": "{level=\"error\", location=\"moon\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "executedQueryString": "Expr: query1"
         },
         "fields": [
@@ -81,7 +81,7 @@
       "schema": {
         "name": "{level=\"info\", location=\"moon\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "executedQueryString": "Expr: query1"
         },
         "fields": [

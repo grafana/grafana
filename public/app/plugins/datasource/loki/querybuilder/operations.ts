@@ -2,7 +2,7 @@ import {
   createAggregationOperation,
   createAggregationOperationWithParam,
 } from '../../prometheus/querybuilder/shared/operationUtils';
-import { QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
+import { QueryBuilderOperationDef, QueryBuilderOperationParamValue } from '../../prometheus/querybuilder/shared/types';
 
 import { binaryScalarOperations } from './binaryScalarOperations';
 import { UnwrapParamEditor } from './components/UnwrapParamEditor';
@@ -324,7 +324,7 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('|~'),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that match regex \`${op.params[0]}\`.`,
+      explainHandler: (op) => `Return log lines that match a \`RE2\` regex pattern. \`${op.params[0]}\`.`,
     },
     {
       id: LokiOperationId.LineMatchesRegexNot,
@@ -346,7 +346,7 @@ Example: \`\`error_level=\`level\` \`\`
       orderRank: LokiOperationOrder.LineFilters,
       renderer: getLineFilterRenderer('!~'),
       addOperationHandler: addLokiOperation,
-      explainHandler: (op) => `Return log lines that does not match regex \`${op.params[0]}\`.`,
+      explainHandler: (op) => `Return log lines that doesn't match a \`RE2\` regex pattern. \`${op.params[0]}\`.`,
     },
     {
       id: LokiOperationId.LineFilterIpMatches,
@@ -479,4 +479,17 @@ export function explainOperator(id: LokiOperationId | string): string {
 
   // Strip markdown links
   return explain.replace(/\[(.*)\]\(.*\)/g, '$1');
+}
+
+export function getDefinitionById(id: string): QueryBuilderOperationDef | undefined {
+  return definitions.find((x) => x.id === id);
+}
+
+export function checkParamsAreValid(def: QueryBuilderOperationDef, params: QueryBuilderOperationParamValue[]): boolean {
+  // For now we only check if the operation has all the required params.
+  if (params.length < def.params.filter((param) => !param.optional).length) {
+    return false;
+  }
+
+  return true;
 }

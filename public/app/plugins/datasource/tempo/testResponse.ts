@@ -2210,6 +2210,8 @@ export const traceQlResponse = {
       traceID: 'b1586c3c8c34d',
       rootServiceName: 'lb',
       rootTraceName: 'HTTP Client',
+      startTimeUnixNano: '1643356828724000000',
+      durationMs: 65,
       spanSet: {
         spans: [
           {
@@ -2296,6 +2298,8 @@ export const traceQlResponse = {
       traceID: '9161e77388f3e',
       rootServiceName: 'lb',
       rootTraceName: 'HTTP Client',
+      startTimeUnixNano: '1643342166678000000',
+      durationMs: 93,
       spanSet: {
         spans: [
           {
@@ -2382,6 +2386,8 @@ export const traceQlResponse = {
       traceID: '480691f7c6f20',
       rootServiceName: 'lb',
       rootTraceName: 'HTTP Client',
+      startTimeUnixNano: '1643342166678000000',
+      durationMs: 44,
       spanSet: {
         spans: [
           {

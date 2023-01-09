@@ -12,8 +12,7 @@ export function getAppPluginRoutes(): RouteDescriptor[] {
   const isStandalonePluginPage = (id: string) => id.startsWith('standalone-plugin-page-/');
   const isPluginNavModelItem = (model: NavModelItem): model is PluginNavModelItem =>
     'pluginId' in model && 'id' in model;
-
-  return Object.values(navIndex)
+  const explicitAppPluginRoutes = Object.values(navIndex)
     .filter<PluginNavModelItem>(isPluginNavModelItem)
     .map((navItem) => {
       const pluginNavSection = getRootSectionForNode(navItem);
@@ -26,6 +25,17 @@ export function getAppPluginRoutes(): RouteDescriptor[] {
         component: () => <AppRootPage pluginId={navItem.pluginId} pluginNavSection={pluginNavSection} />,
       };
     });
+
+  return [
+    ...explicitAppPluginRoutes,
+
+    // Fallback route for plugins that don't have any pages under includes
+    {
+      path: '/a/:pluginId',
+      exact: false, // route everything under this path to the plugin, so it can define more routes under this path
+      component: ({ match }) => <AppRootPage pluginId={match.params.pluginId} pluginNavSection={navIndex.home} />,
+    },
+  ];
 }
 
 interface PluginNavModelItem extends Omit<NavModelItem, 'pluginId' | 'id'> {

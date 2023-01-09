@@ -119,9 +119,8 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
         }
         isClick = true;
 
-        if (e.target) {
-          const target = e.target as HTMLElement;
-          if (!target.classList.contains('u-cursor-pt')) {
+        if (e.target instanceof HTMLElement) {
+          if (!e.target.classList.contains('u-cursor-pt')) {
             pluginLog('ContextMenuPlugin', false, 'canvas click');
             setPoint({ seriesIdx: null, dataIdx: null });
           }

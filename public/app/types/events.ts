@@ -1,5 +1,5 @@
 import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
-import { IconName } from '@grafana/ui';
+import { IconName, ButtonVariant } from '@grafana/ui';
 
 /**
  * Event Payloads
@@ -37,7 +37,9 @@ export interface ShowConfirmModalPayload {
   yesText?: string;
   noText?: string;
   icon?: IconName;
+  yesButtonVariant?: ButtonVariant;
 
+  onDismiss?: () => void;
   onConfirm?: () => void;
   onAltAction?: () => void;
 }

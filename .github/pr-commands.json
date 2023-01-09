@@ -66,8 +66,7 @@
       "scripts/build/**/*",
       "scripts/*.sh",
       "Makefile",
-      "Dockerfile",
-      "Dockerfile.ubuntu"
+      "Dockerfile"
     ],
     "action": "updateLabel",
     "addLabel": "type/build-packaging"

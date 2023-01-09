@@ -1,5 +1,10 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Standard"
@@ -59,12 +64,6 @@
       "rows": "Gesamtanzahl an Zeilen",
       "table-title": "Statistiken"
     },
-    "refresh-picker": {
-      "off-arialabel": "Automatische Aktualisierung deaktivieren",
-      "off-description": "Automatische Aktualisierung deaktiviert. Zeitintervall für Aktualisierungen auswählen",
-      "off-label": "Aus",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Panel hinzufügen",
       "comments-show": "Dashboard-Kommentare anzeigen",
@@ -80,6 +79,16 @@
       "tv-button": "Zyklus-Ansichtsmodus",
       "unmark-favorite": "Markierung als Favorit entfernen"
     }
+  },
+  "datasource-onboarding": {
+    "contact-admin": "",
+    "explanation": "",
+    "logo": "",
+    "new-dashboard": "",
+    "preferred": "",
+    "sampleData": "",
+    "viewAll": "",
+    "welcome": ""
   },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
@@ -105,6 +114,15 @@
       "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
       "title": "Server-Administrator"
     },
+    "admin-access": {
+      "title": ""
+    },
+    "admin-general": {
+      "title": ""
+    },
+    "admin-plugins": {
+      "title": ""
+    },
     "alerting": {
       "subtitle": "Informiere dich über Probleme in deinen Systemen kurz nach deren Auftreten",
       "title": "Meldungen"
@@ -122,6 +140,9 @@
     "alerting-groups": {
       "subtitle": "Zeige gruppierte Warnungen vom Alertmanager an",
       "title": "Gruppen"
+    },
+    "alerting-home": {
+      "title": ""
     },
     "alerting-legacy": {
       "title": "Warnungen (Legacy)"
@@ -189,8 +210,9 @@
       "title": "Organisationen"
     },
     "global-users": {
-      "subtitle": "Erstelle und verwalte Benutzer auf dem gesamten Grafana-Server",
-      "title": "Benutzer"
+      "subtitle": "",
+      "title": "Benutzer",
+      "titleBeforeTopnav": "Benutzer"
     },
     "help": {
       "title": "Hilfe"
@@ -199,6 +221,7 @@
     "help/documentation": "Dokumentation",
     "help/keyboard-shortcuts": "Tastaturbefehle",
     "help/support": "Support",
+    "help/support-bundle": "",
     "home": {
       "title": "Home"
     },
@@ -233,7 +256,8 @@
     },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
-      "title": "Einstellungen"
+      "title": "",
+      "titleBeforeTopnav": "Einstellungen"
     },
     "playlists": {
       "subtitle": "Gruppen von Dashboards, die in einer bestimmten Reihenfolge angezeigt werden",
@@ -258,6 +282,9 @@
     },
     "search": {
       "placeholder": "Grafana durchsuchen"
+    },
+    "search-dashboards": {
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Zeige die in deiner Grafana-Konfiguration festgelegten Einstellungen an",
@@ -285,6 +312,10 @@
       "subtitle": "Dateispeicher verwalten",
       "title": "Speicher"
     },
+    "support-bundles": {
+      "subtitle": "",
+      "title": ""
+    },
     "teams": {
       "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",
       "title": "Teams"
@@ -305,14 +336,37 @@
   "news": {
     "title": "Das Neueste aus dem Blog"
   },
+  "notifications": {
+    "starred-dashboard": "",
+    "unstarred-dashboard": ""
+  },
   "panel": {
     "header-menu": {
+      "hide-legend": "",
       "inspect": "Überprüfen",
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
       "share": "Teilen",
+      "show-legend": "",
       "view": "Anzeigen"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Automatische Aktualisierung deaktiviert. Zeitintervall für Aktualisierungen auswählen",
+      "duration-selected": ""
+    },
+    "live-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "off-option": {
+      "aria-label": "Automatische Aktualisierung deaktivieren",
+      "label": "Aus"
+    },
+    "select-button": {
+      "auto-refresh": ""
     }
   },
   "share-modal": {
@@ -370,7 +424,8 @@
       "mistake-message": "Hast du einen Fehler gemacht? ",
       "name": "Name des Schnappschusses",
       "timeout": "Timeout (Sekunden)",
-      "timeout-description": "Wenn die Erfassung deiner Dashboard-Metriken lange dauert, musst du ggf. den Timeout-Wert anpassen."
+      "timeout-description": "Wenn die Erfassung deiner Dashboard-Metriken lange dauert, musst du ggf. den Timeout-Wert anpassen.",
+      "url-label": ""
     },
     "tab-title": {
       "embed": "Einbetten",
@@ -384,6 +439,9 @@
       "dark": "Dunkel",
       "field-name": "Design",
       "light": "Hell"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {
@@ -414,14 +472,45 @@
     },
     "calendar": {
       "apply-button": "",
-      "cancel-button": "",
+      "cancel-button": "Abbrechen",
       "select-time": ""
+    },
+    "content": {
+      "empty-recent-list": "",
+      "filter-placeholder": ""
+    },
+    "footer": {
+      "change-settings-button": "",
+      "fiscal-year-option": "",
+      "fiscal-year-start": "",
+      "time-zone-option": "",
+      "time-zone-selection": ""
+    },
+    "range-content": {
+      "apply-button": "",
+      "default-error": "",
+      "fiscal-year": "",
+      "from-input": "",
+      "range-error": "",
+      "to-input": ""
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "",
+      "current-time-selected": "",
+      "forwards-time-aria-label": "",
+      "to": "",
+      "zoom-out-button": "",
+      "zoom-out-tooltip": ""
     },
     "time-range": {
       "aria-role": "",
       "default-title": "",
       "example-title": "",
       "specify": ""
+    },
+    "zone": {
+      "select-aria-label": "",
+      "select-search-input": ""
     }
   },
   "user-orgs": {
@@ -450,5 +539,14 @@
   },
   "user-sessions": {
     "loading": "Sitzungen werden geladen …"
+  },
+  "variable": {
+    "picker": {
+      "input": "",
+      "link-all": "",
+      "option-all": "",
+      "option-selected-values": "",
+      "option-tooltip": ""
+    }
   }
 }

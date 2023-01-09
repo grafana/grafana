@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/guides/what-is-grafana/
-  - /docs/grafana/latest/introduction/
-  - /docs/grafana/latest/introduction/oss-details/
+  - guides/what-is-grafana/
+  - oss-details/
 title: Introduction to Grafana
 weight: 5
 ---

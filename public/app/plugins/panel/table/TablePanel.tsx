@@ -94,7 +94,7 @@ export class TablePanel extends Component<Props> {
     dispatch(applyFilterFromTable({ datasource: datasourceRef, key, operator, value }));
   };
 
-  renderTable(frame: DataFrame, width: number, height: number) {
+  renderTable(frame: DataFrame, width: number, height: number, subData?: DataFrame[]) {
     const { options } = this.props;
 
     return (
@@ -111,6 +111,7 @@ export class TablePanel extends Component<Props> {
         onCellFilterAdded={this.onCellFilterAdded}
         footerOptions={options.footer}
         enablePagination={options.footer?.enablePagination}
+        subData={subData}
       />
     );
   }
@@ -123,8 +124,10 @@ export class TablePanel extends Component<Props> {
     const { data, height, width, options, fieldConfig, id } = this.props;
 
     const frames = data.series;
-    const count = frames?.length;
-    const hasFields = frames[0]?.fields.length;
+    const mainFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex === undefined);
+    const subFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex !== undefined);
+    const count = mainFrames?.length;
+    const hasFields = mainFrames[0]?.fields.length;
 
     if (!count || !hasFields) {
       return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
@@ -133,17 +136,19 @@ export class TablePanel extends Component<Props> {
     if (count > 1) {
       const inputHeight = config.theme2.spacing.gridSize * config.theme2.components.height.md;
       const padding = 8 * 2;
-      const currentIndex = this.getCurrentFrameIndex(frames, options);
-      const names = frames.map((frame, index) => {
+      const currentIndex = this.getCurrentFrameIndex(mainFrames, options);
+      const names = mainFrames.map((frame, index) => {
         return {
           label: getFrameDisplayName(frame),
           value: index,
         };
       });
 
+      const main = mainFrames[currentIndex];
+      const subData = subFrames.filter((f) => f.refId === main.refId);
       return (
         <div className={tableStyles.wrapper}>
-          {this.renderTable(data.series[currentIndex], width, height - inputHeight - padding)}
+          {this.renderTable(main, width, height - inputHeight - padding, subData)}
           <div className={tableStyles.selectWrapper}>
             <Select options={names} value={names[currentIndex]} onChange={this.onChangeTableSelection} />
           </div>
@@ -151,7 +156,8 @@ export class TablePanel extends Component<Props> {
       );
     }
 
-    return this.renderTable(data.series[0], width, height);
+    const subData = frames.filter((f) => f.meta?.custom?.parentRowIndex !== undefined);
+    return this.renderTable(data.series[0], width, height, subData);
   }
 }
 

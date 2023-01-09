@@ -7,12 +7,16 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
 )
 
 type errorResponseBody struct {
@@ -130,11 +134,17 @@ func (c TestContext) getURL(url string, user User) string {
 
 func (c TestContext) createUser(cmd user.CreateUserCommand) {
 	c.t.Helper()
+	store := c.env.SQLStore
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = 1
 
-	c.env.SQLStore.Cfg.AutoAssignOrg = true
-	c.env.SQLStore.Cfg.AutoAssignOrgId = 1
+	quotaService := quotaimpl.ProvideService(store, store.Cfg)
+	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	require.NoError(c.t, err)
+	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService)
+	require.NoError(c.t, err)
 
-	_, err := c.env.SQLStore.CreateUser(context.Background(), cmd)
+	_, err = usrSvc.CreateUserForTests(context.Background(), &cmd)
 	require.NoError(c.t, err)
 }
 

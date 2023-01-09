@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,15 +13,21 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
+func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	const disableOrgID int64 = 3
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting:          true,
@@ -33,6 +40,9 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 
 	grafanaListedAddr, s := testinfra.StartGrafana(t, dir, path)
 
+	orgService, err := orgimpl.ProvideService(s, s.Cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
+
 	// Create a user to make authenticated requests
 	userID := createUser(t, s, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
@@ -40,8 +50,12 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		Password:       "password",
 	})
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+
 	// create another organisation
-	orgID := createOrg(t, s, "another org", userID)
+	newOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "another org", UserID: userID})
+	require.NoError(t, err)
+	orgID := newOrg.ID
+
 	// ensure that the orgID is 3 (the disabled org)
 	require.Equal(t, disableOrgID, orgID)
 
@@ -111,11 +125,64 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		require.Equal(t, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", res["message"])
 	}
 
+	// Add an alertmanager datasource
+	{
+		cmd := datasources.AddDataSourceCommand{
+			OrgId:  1,
+			Name:   "AM1",
+			Type:   datasources.DS_ALERTMANAGER,
+			Access: "proxy",
+			Url:    fakeAM1.URL(),
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"handleGrafanaManagedAlerts": true,
+				"implementation":             "prometheus",
+			}),
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err := enc.Encode(&cmd)
+		require.NoError(t, err)
+		dataSourcesUrl := fmt.Sprintf("http://grafana:password@%s/api/datasources", grafanaListedAddr)
+		resp := postRequest(t, dataSourcesUrl, buf.String(), http.StatusOK) // nolint
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		var res map[string]interface{}
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
+		require.Equal(t, "Datasource added", res["message"])
+	}
+
+	// Add another alertmanager datasource
+	{
+		cmd := datasources.AddDataSourceCommand{
+			OrgId:  1,
+			Name:   "AM2",
+			Type:   datasources.DS_ALERTMANAGER,
+			Access: "proxy",
+			Url:    fakeAM2.URL(),
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"handleGrafanaManagedAlerts": true,
+				"implementation":             "prometheus",
+			}),
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err := enc.Encode(&cmd)
+		require.NoError(t, err)
+		dataSourcesUrl := fmt.Sprintf("http://grafana:password@%s/api/datasources", grafanaListedAddr)
+		resp := postRequest(t, dataSourcesUrl, buf.String(), http.StatusOK) // nolint
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		var res map[string]interface{}
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
+		require.Equal(t, "Datasource added", res["message"])
+	}
+
 	// Now, lets re-set external Alertmanagers for main organisation
 	// and make it so that only the external Alertmanagers handle the alerts.
 	{
 		ac := apimodels.PostableNGalertConfig{
-			Alertmanagers:       []string{fakeAM1.URL(), fakeAM2.URL()},
 			AlertmanagersChoice: apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String()),
 		}
 		buf := bytes.Buffer{}
@@ -139,7 +206,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, fmt.Sprintf("{\"alertmanagers\":[\"%s\",\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM1.URL(), fakeAM2.URL(), ngmodels.ExternalAlertmanagers), string(b))
+		require.JSONEq(t, fmt.Sprintf("{\"alertmanagersChoice\": %q}\n", ngmodels.ExternalAlertmanagers), string(b))
 	}
 
 	// With the configuration set, we should eventually discover those Alertmanagers.
@@ -211,15 +278,40 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	{
 		require.Eventually(t, func() bool {
 			return fakeAM1.AlertsCount() == 1 && fakeAM2.AlertsCount() == 1
-		}, 60*time.Second, 5*time.Second)
+		}, time.Minute, 5*time.Second)
+	}
+
+	// Add an alertmanager datasource fot the other organisation
+	{
+		cmd := datasources.AddDataSourceCommand{
+			OrgId:  2,
+			Name:   "AM3",
+			Type:   datasources.DS_ALERTMANAGER,
+			Access: "proxy",
+			Url:    fakeAM3.URL(),
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"handleGrafanaManagedAlerts": true,
+				"implementation":             "prometheus",
+			}),
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err := enc.Encode(&cmd)
+		require.NoError(t, err)
+		dataSourcesUrl := fmt.Sprintf("http://admin-42:admin-42@%s/api/datasources", grafanaListedAddr)
+		resp := postRequest(t, dataSourcesUrl, buf.String(), http.StatusOK) // nolint
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		var res map[string]interface{}
+		err = json.Unmarshal(b, &res)
+		require.NoError(t, err)
+		require.Equal(t, "Datasource added", res["message"])
 	}
 
 	// Now, lets re-set external Alertmanagers for the other organisation.
 	// Sending an empty value for AlertmanagersChoice should default to AllAlertmanagers.
 	{
-		ac := apimodels.PostableNGalertConfig{
-			Alertmanagers: []string{fakeAM3.URL()},
-		}
+		ac := apimodels.PostableNGalertConfig{}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
 		err := enc.Encode(&ac)
@@ -241,7 +333,7 @@ func TestAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.JSONEq(t, fmt.Sprintf("{\"alertmanagers\":[\"%s\"], \"alertmanagersChoice\": %q}\n", fakeAM3.URL(), ngmodels.AllAlertmanagers), string(b))
+		require.JSONEq(t, fmt.Sprintf("{\"alertmanagersChoice\": %q}\n", ngmodels.AllAlertmanagers), string(b))
 	}
 
 	// With the configuration set, we should eventually not discover Alertmanagers.

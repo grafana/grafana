@@ -75,12 +75,16 @@ describe('api', () => {
     it('when getAllMetrics is called', async () => {
       const getMock = jest.fn().mockResolvedValue([
         {
-          namespace: 'AWS/EC2',
-          name: 'CPUUtilization',
+          value: {
+            namespace: 'AWS/EC2',
+            name: 'CPUUtilization',
+          },
         },
         {
-          namespace: 'AWS/Redshift',
-          name: 'CPUPercentage',
+          value: {
+            namespace: 'AWS/Redshift',
+            name: 'CPUPercentage',
+          },
         },
       ]);
       const { api } = setupMockedAPI({ getMock });
@@ -94,12 +98,16 @@ describe('api', () => {
     it('when getMetrics', async () => {
       const getMock = jest.fn().mockResolvedValue([
         {
-          namespace: 'AWS/EC2',
-          name: 'CPUUtilization',
+          value: {
+            namespace: 'AWS/EC2',
+            name: 'CPUUtilization',
+          },
         },
         {
-          namespace: 'AWS/EC2',
-          name: 'CPUPercentage',
+          value: {
+            namespace: 'AWS/EC2',
+            name: 'CPUPercentage',
+          },
         },
       ]);
       const { api } = setupMockedAPI({ getMock });

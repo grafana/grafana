@@ -10,7 +10,6 @@ import (
 	legacymodels "github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -106,7 +105,6 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
 	lbls, annotations := addMigrationInfo(&da)
-	name := normalizeRuleName(da.Name)
 	annotations["message"] = da.Message
 	var err error
 
@@ -115,10 +113,17 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		return nil, fmt.Errorf("failed to migrate alert rule queries: %w", err)
 	}
 
+	uid, err := m.seenUIDs.generateUid()
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate alert rule: %w", err)
+	}
+
+	name := normalizeRuleName(da.Name, uid)
+
 	ar := &alertRule{
 		OrgID:           da.OrgId,
 		Title:           name, // TODO: Make sure all names are unique, make new name on constraint insert error.
-		UID:             util.GenerateShortUID(),
+		UID:             uid,
 		Condition:       cond.Condition,
 		Data:            data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
@@ -286,13 +291,12 @@ func transExecErr(s string) (string, error) {
 	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
 }
 
-func normalizeRuleName(daName string) string {
+func normalizeRuleName(daName string, uid string) string {
 	// If we have to truncate, we're losing data and so there is higher risk of uniqueness conflicts.
-	// Append a UID to the suffix to forcibly break any collisions.
+	// Append the UID to the suffix to forcibly break any collisions.
 	if len(daName) > DefaultFieldMaxLength {
-		uniq := util.GenerateShortUID()
-		trunc := DefaultFieldMaxLength - 1 - len(uniq)
-		daName = daName[:trunc] + "_" + uniq
+		trunc := DefaultFieldMaxLength - 1 - len(uid)
+		daName = daName[:trunc] + "_" + uid
 	}
 
 	return daName

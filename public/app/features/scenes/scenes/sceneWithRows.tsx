@@ -1,25 +1,24 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
+import { VizPanel } from '../components';
 import { NestedScene } from '../components/NestedScene';
-import { Scene } from '../components/Scene';
-import { SceneFlexLayout } from '../components/SceneFlexLayout';
+import { EmbeddedScene, Scene } from '../components/Scene';
 import { SceneTimePicker } from '../components/SceneTimePicker';
-import { VizPanel } from '../components/VizPanel';
+import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getSceneWithRows(): Scene {
-  const scene = new Scene({
+export function getSceneWithRows(standalone: boolean): Scene {
+  const state = {
     title: 'Scene with rows',
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'column',
       children: [
         new NestedScene({
           title: 'Overview',
           canCollapse: true,
-          layout: new SceneFlexLayout({
+          // size: { ySizing: 'content', xSizing: 'fill' },
+          body: new SceneFlexLayout({
             direction: 'row',
             children: [
               new VizPanel({
@@ -35,8 +34,9 @@ export function getSceneWithRows(): Scene {
         }),
         new NestedScene({
           title: 'More server details',
+          // size: { ySizing: 'content', xSizing: 'fill' },
           canCollapse: true,
-          layout: new SceneFlexLayout({
+          body: new SceneFlexLayout({
             direction: 'row',
             children: [
               new VizPanel({
@@ -53,10 +53,10 @@ export function getSceneWithRows(): Scene {
       ],
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+    $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  });
+  };
 
-  return scene;
+  return standalone ? new Scene(state) : new EmbeddedScene(state);
 }

@@ -17,7 +17,7 @@ export interface DashboardRowProps {
   dashboard: DashboardModel;
 }
 
-export class DashboardRow extends React.Component<DashboardRowProps, any> {
+export class DashboardRow extends React.Component<DashboardRowProps> {
   sub?: Unsubscribable;
 
   componentDidMount() {

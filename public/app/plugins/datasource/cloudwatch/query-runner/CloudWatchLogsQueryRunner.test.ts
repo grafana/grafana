@@ -1,6 +1,6 @@
 import { interval, lastValueFrom, of } from 'rxjs';
 
-import { LogRowModel, MutableDataFrame, FieldType, LogLevel, dataFrameToJSON, DataQueryErrorType } from '@grafana/data';
+import { dataFrameToJSON, DataQueryErrorType, FieldType, LogLevel, LogRowModel, MutableDataFrame } from '@grafana/data';
 
 import { genMockFrames, setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
 import { validLogsQuery } from '../__mocks__/queries';

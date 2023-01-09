@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 
 	"golang.org/x/oauth2"
@@ -44,10 +43,6 @@ type claimSource struct {
 
 type azureAccessClaims struct {
 	TenantID string `json:"tid"`
-}
-
-func (s *SocialAzureAD) Type() int {
-	return int(models.AZUREAD)
 }
 
 func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {

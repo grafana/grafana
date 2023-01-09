@@ -12,6 +12,8 @@ interface Props {
   isInvalid?: boolean;
   tooltip?: PopoverContent;
   width?: number | 'auto';
+  /** Make tooltip interactive */
+  interactive?: boolean;
 }
 
 export const FormLabel: FunctionComponent<Props> = ({
@@ -22,6 +24,7 @@ export const FormLabel: FunctionComponent<Props> = ({
   htmlFor,
   tooltip,
   width,
+  interactive,
   ...rest
 }) => {
   const classes = classNames(className, `gf-form-label width-${width ? width : '10'}`, {
@@ -33,10 +36,8 @@ export const FormLabel: FunctionComponent<Props> = ({
     <label className={classes} {...rest} htmlFor={htmlFor}>
       {children}
       {tooltip && (
-        <Tooltip placement="top" content={tooltip} theme={'info'}>
-          <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-            <Icon name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
-          </div>
+        <Tooltip placement="top" content={tooltip} theme={'info'} interactive={interactive}>
+          <Icon tabIndex={0} name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
         </Tooltip>
       )}
     </label>

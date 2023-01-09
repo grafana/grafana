@@ -24,14 +24,14 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
   // TODO: we need to refactor DashboardActions to use folder.uid instead
-  const folderId = folder?.id;
-  // const folderUid = folder?.uid;
+
+  const folderUid = folder?.uid;
   const canSave = folder?.canSave;
   const { isEditor } = contextSrv;
   const hasEditPermissionInFolders = folder ? canSave : contextSrv.hasEditPermissionInFolders;
   const canCreateFolders = contextSrv.hasAccess(AccessControlAction.FoldersCreate, isEditor);
   const canCreateDashboardsFallback = hasEditPermissionInFolders || !!canSave;
-  const canCreateDashboards = folder?.id
+  const canCreateDashboards = folderUid
     ? contextSrv.hasAccessInMetadata(AccessControlAction.DashboardsCreate, folder, canCreateDashboardsFallback)
     : contextSrv.hasAccess(AccessControlAction.DashboardsCreate, canCreateDashboardsFallback);
   const viewActions = (folder === undefined && canCreateFolders) || canCreateDashboards;
@@ -55,7 +55,7 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
         </div>
         {viewActions && (
           <DashboardActions
-            folderId={folderId}
+            folderUid={folderUid}
             canCreateFolders={canCreateFolders}
             canCreateDashboards={canCreateDashboards}
           />

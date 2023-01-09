@@ -16,11 +16,17 @@ describe('getQueryHints', () => {
         },
       ],
     };
+
     it('suggest json parser when no parser in query', () => {
-      expect(getQueryHints('{job="grafana"', [jsonSeries])).toMatchObject([{ type: 'ADD_JSON_PARSER' }]);
+      expect(getQueryHints('{job="grafana"', [jsonSeries])).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_JSON_PARSER' })])
+      );
     });
+
     it('does not suggest parser when parser in query', () => {
-      expect(getQueryHints('{job="grafana" | json', [jsonSeries])).toEqual([]);
+      expect(getQueryHints('{job="grafana" | json', [jsonSeries])).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_JSON_PARSER' })])
+      );
     });
   });
 
@@ -39,10 +45,15 @@ describe('getQueryHints', () => {
     };
 
     it('suggest logfmt parser when no parser in query', () => {
-      expect(getQueryHints('{job="grafana"', [logfmtSeries])).toMatchObject([{ type: 'ADD_LOGFMT_PARSER' }]);
+      expect(getQueryHints('{job="grafana"', [logfmtSeries])).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_LOGFMT_PARSER' })])
+      );
     });
+
     it('does not suggest parser when parser in query', () => {
-      expect(getQueryHints('{job="grafana" | json', [logfmtSeries])).toEqual([]);
+      expect(getQueryHints('{job="grafana" | logfmt', [logfmtSeries])).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_LOGFMT_PARSER' })])
+      );
     });
   });
 
@@ -60,23 +71,33 @@ describe('getQueryHints', () => {
       ],
     };
 
-    it('suggest logfmt parser when no parser in query', () => {
-      expect(getQueryHints('{job="grafana"', [jsonAndLogfmtSeries])).toMatchObject([
-        { type: 'ADD_JSON_PARSER' },
-        { type: 'ADD_LOGFMT_PARSER' },
-      ]);
+    it('suggest logfmt and json parser when no parser in query', () => {
+      expect(getQueryHints('{job="grafana"', [jsonAndLogfmtSeries])).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'ADD_JSON_PARSER' }),
+          expect.objectContaining({ type: 'ADD_LOGFMT_PARSER' }),
+        ])
+      );
     });
+
     it('does not suggest parser when parser in query', () => {
-      expect(getQueryHints('{job="grafana" | json', [jsonAndLogfmtSeries])).toEqual([]);
+      expect(getQueryHints('{job="grafana" | json', [jsonAndLogfmtSeries])).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'ADD_JSON_PARSER' }),
+          expect.objectContaining({ type: 'ADD_LOGFMT_PARSER' }),
+        ])
+      );
     });
   });
 
   describe('when series with level-like label', () => {
     const createSeriesWithLabel = (labelName?: string): DataFrame => {
       const labelVariable: { [key: string]: string } = { job: 'a' };
+
       if (labelName) {
         labelVariable[labelName] = 'error';
       }
+
       return {
         name: 'logs',
         length: 2,
@@ -98,17 +119,90 @@ describe('getQueryHints', () => {
     };
 
     it('suggest level renaming when no level label', () => {
-      expect(getQueryHints('{job="grafana"', [createSeriesWithLabel('lvl')])).toMatchObject([
-        { type: 'ADD_JSON_PARSER' },
-        { type: 'ADD_LOGFMT_PARSER' },
-        { type: 'ADD_LEVEL_LABEL_FORMAT' },
-      ]);
+      expect(getQueryHints('{job="grafana"', [createSeriesWithLabel('lvl')])).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_LEVEL_LABEL_FORMAT' })])
+      );
     });
+
     it('does not suggest level renaming if level label', () => {
-      expect(getQueryHints('{job="grafana"', [createSeriesWithLabel('level')])).toMatchObject([
-        { type: 'ADD_JSON_PARSER' },
-        { type: 'ADD_LOGFMT_PARSER' },
-      ]);
+      expect(getQueryHints('{job="grafana"', [createSeriesWithLabel('level')])).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_LEVEL_LABEL_FORMAT' })])
+      );
+    });
+  });
+
+  describe('when series with line filter', () => {
+    const jsonAndLogfmtSeries: DataFrame = {
+      name: 'logs',
+      length: 2,
+      fields: [
+        {
+          name: 'Line',
+          type: FieldType.string,
+          config: {},
+          values: new ArrayVector(['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"']),
+        },
+      ],
+    };
+
+    it('suggest line filter when no line filter in query', () => {
+      expect(getQueryHints('{job="grafana"', [jsonAndLogfmtSeries])).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_LINE_FILTER' })])
+      );
+    });
+
+    it('does not suggest line filter when line filter in query', () => {
+      expect(getQueryHints('{job="grafana" |= `bar`', [jsonAndLogfmtSeries])).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_LINE_FILTER' })])
+      );
+    });
+  });
+
+  describe('when series with label filter', () => {
+    const jsonAndLogfmtSeries: DataFrame = {
+      name: 'logs',
+      length: 2,
+      fields: [
+        {
+          name: 'Line',
+          type: FieldType.string,
+          config: {},
+          values: new ArrayVector(['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"']),
+        },
+      ],
+    };
+
+    it('suggest label filter when no label filter in query', () => {
+      expect(getQueryHints('{job="grafana" | logfmt', [jsonAndLogfmtSeries])).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_LABEL_FILTER' })])
+      );
+    });
+
+    it('does not suggest label filter when label filter in query', () => {
+      expect(getQueryHints('{job="grafana" | logfmt | foo = `bar`', [jsonAndLogfmtSeries])).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_LABEL_FILTER' })])
+      );
+    });
+  });
+
+  describe('suggest remove pipeline error', () => {
+    const logfmtSeries: DataFrame = {
+      name: 'logs',
+      length: 1,
+      fields: [
+        {
+          name: 'labels',
+          type: FieldType.other,
+          config: {},
+          values: new ArrayVector([{ __error__: 'some error', job: 'a' }]),
+        },
+      ],
+    };
+
+    it('suggest remove pipeline error', () => {
+      expect(getQueryHints('{job="grafana" | json', [logfmtSeries])).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_NO_PIPELINE_ERROR' })])
+      );
     });
   });
 });

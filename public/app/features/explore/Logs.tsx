@@ -79,7 +79,7 @@ interface Props extends Themeable2 {
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
-  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;
   eventBus: EventBus;

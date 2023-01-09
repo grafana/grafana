@@ -10,9 +10,6 @@ import (
 
 type LoginServiceFake struct{}
 
-func (l *LoginServiceFake) CreateUser(cmd user.CreateUserCommand) (*user.User, error) {
-	return nil, nil
-}
 func (l *LoginServiceFake) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
 	return nil
 }
@@ -22,10 +19,16 @@ func (l *LoginServiceFake) DisableExternalUser(ctx context.Context, username str
 func (l *LoginServiceFake) SetTeamSyncFunc(login.TeamSyncFunc) {}
 
 type AuthInfoServiceFake struct {
+	login.AuthInfoService
 	LatestUserID         int64
+	ExpectedUserAuth     *models.UserAuth
 	ExpectedUser         *user.User
 	ExpectedExternalUser *models.ExternalUserInfo
 	ExpectedError        error
+	ExpectedLabels       map[int64]string
+
+	SetAuthInfoFn    func(ctx context.Context, cmd *models.SetAuthInfoCommand) error
+	UpdateAuthInfoFn func(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error
 }
 
 func (a *AuthInfoServiceFake) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*user.User, error) {
@@ -39,19 +42,36 @@ func (a *AuthInfoServiceFake) LookupAndUpdate(ctx context.Context, query *models
 
 func (a *AuthInfoServiceFake) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
 	a.LatestUserID = query.UserId
+	query.Result = a.ExpectedUserAuth
 	return a.ExpectedError
 }
 
+func (a *AuthInfoServiceFake) GetUserLabels(ctx context.Context, query models.GetUserLabelsQuery) (map[int64]string, error) {
+	return a.ExpectedLabels, a.ExpectedError
+}
+
 func (a *AuthInfoServiceFake) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
+	if a.SetAuthInfoFn != nil {
+		return a.SetAuthInfoFn(ctx, cmd)
+	}
+
 	return a.ExpectedError
 }
 
 func (a *AuthInfoServiceFake) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
+	if a.UpdateAuthInfoFn != nil {
+		return a.UpdateAuthInfoFn(ctx, cmd)
+	}
+
 	return a.ExpectedError
 }
 
 func (a *AuthInfoServiceFake) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
 	query.Result = a.ExpectedExternalUser
+	return a.ExpectedError
+}
+
+func (a *AuthInfoServiceFake) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	return a.ExpectedError
 }
 

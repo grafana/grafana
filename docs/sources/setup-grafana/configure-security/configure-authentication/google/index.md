@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/google/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/google/
+  - ../../../auth/google/
 description: Grafana OAuthentication Guide
 title: Configure Google OAuth2 Authentication
 weight: 300
@@ -40,6 +39,7 @@ auth_url = https://accounts.google.com/o/oauth2/auth
 token_url = https://accounts.google.com/o/oauth2/token
 allowed_domains = mycompany.com mycompany.org
 allow_sign_up = true
+hosted_domain = mycompany.com
 ```
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
@@ -53,3 +53,18 @@ You may allow users to sign-up via Google authentication by setting the
 `allow_sign_up` option to `true`. When this option is set to `true`, any
 user successfully authenticating via Google authentication will be
 automatically signed up.
+
+You may specify a domain to be passed as `hd` query parameter accepted by Google's
+OAuth 2.0 authentication API. Refer to Google's OAuth [documentation](https://developers.google.com/identity/openid-connect/openid-connect#hd-param).
+
+### Configure refresh token
+
+> Available in Grafana v9.3 and later versions.
+
+> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
+
+When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
+
+Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
+
+By default, Grafana includes the `access_type=offline` parameter in the authorization request to request a refresh token.

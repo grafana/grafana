@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -112,7 +114,9 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 		DataSourcesService: &dataSourcesServiceMock{
 			expectedDatasource: &datasources.DataSource{},
 		},
-		Cfg: setting.NewCfg(),
+		Cfg:                  setting.NewCfg(),
+		AccessControl:        acimpl.ProvideAccessControl(setting.NewCfg()),
+		accesscontrolService: actest.FakeService{},
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources")
@@ -224,7 +228,9 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 		DataSourcesService: &dataSourcesServiceMock{
 			expectedDatasource: &datasources.DataSource{},
 		},
-		Cfg: setting.NewCfg(),
+		Cfg:                  setting.NewCfg(),
+		AccessControl:        acimpl.ProvideAccessControl(setting.NewCfg()),
+		accesscontrolService: actest.FakeService{},
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources/1234")

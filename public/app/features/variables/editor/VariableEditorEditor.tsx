@@ -204,7 +204,11 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
                 Run query
                 {loading && <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />}
               </Button>
-              <Button variant="primary" onClick={this.onApply}>
+              <Button
+                variant="primary"
+                onClick={this.onApply}
+                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
+              >
                 Apply
               </Button>
             </HorizontalGroup>

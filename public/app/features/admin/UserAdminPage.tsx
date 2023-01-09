@@ -112,9 +112,11 @@ export class UserAdminPage extends PureComponent<Props> {
       user?.isExternal && user?.authLabels?.some((r) => SyncedOAuthLabels.includes(r));
     const isSAMLUser = user?.isExternal && user?.authLabels?.includes('SAML');
     const isGoogleUser = user?.isExternal && user?.authLabels?.includes('Google');
+    const isAuthProxyUser = user?.isExternal && user?.authLabels?.includes('Auth Proxy');
     const isUserSynced =
       !config.auth.DisableSyncLock &&
-      ((user?.isExternal && !(isGoogleUser || isOAuthUserWithSkippableSync || isSAMLUser || isLDAPUser)) ||
+      ((user?.isExternal &&
+        !(isAuthProxyUser || isGoogleUser || isOAuthUserWithSkippableSync || isSAMLUser || isLDAPUser)) ||
         (!config.auth.OAuthSkipOrgRoleUpdateSync && isOAuthUserWithSkippableSync) ||
         (!config.auth.SAMLSkipOrgRoleSync && isSAMLUser) ||
         (!config.auth.LDAPSkipOrgRoleSync && isLDAPUser));
