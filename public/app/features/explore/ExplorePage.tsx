@@ -141,7 +141,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
         maxSize={minWidth * -1}
         primary="second"
         splitVisible={hasSplit}
-        paneStyle={{ display: 'flex', flexDirection: 'column' }}
+        paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
         onDragFinished={(size) => {
           if (size) {
             updateSplitSize(size);
