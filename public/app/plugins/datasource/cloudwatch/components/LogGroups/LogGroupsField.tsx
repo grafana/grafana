@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
-import { useEffectOnce } from 'react-use';
+import React, { useEffect, useState } from 'react';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { useAccountOptions } from '../../hooks';
@@ -33,25 +32,30 @@ export const LogGroupsField = ({
   onBeforeOpen,
 }: Props) => {
   const accountState = useAccountOptions(datasource?.api, region);
+  const [loadingLogGroups, setLoadingLogGroups] = useState(false);
 
-  useEffectOnce(() => {
+  useEffect(() => {
     // If log group names are stored in the query model, make a new DescribeLogGroups request for each log group to load the arn. Then update the query model.
-    if (datasource && !logGroups?.length && legacyLogGroupNames?.length) {
+    if (datasource && !loadingLogGroups && !logGroups?.length && legacyLogGroupNames?.length) {
+      setLoadingLogGroups(true);
       Promise.all(
         legacyLogGroupNames.map((lg) => datasource.api.describeLogGroups({ region: region, logGroupNamePrefix: lg }))
-      ).then((results) => {
-        onChange(
-          results.flatMap((r) =>
-            r.map((lg) => ({
-              arn: lg.value.arn,
-              name: lg.value.name,
-              accountId: lg.accountId,
-            }))
-          )
-        );
-      });
+      )
+        .then((results) => {
+          onChange(
+            results.flatMap((r) =>
+              r.map((lg) => ({
+                arn: lg.value.arn,
+                name: lg.value.name,
+                accountId: lg.accountId,
+              }))
+            )
+          );
+        })
+        .catch(console.error)
+        .finally(() => setLoadingLogGroups(false));
     }
-  });
+  }, [datasource, legacyLogGroupNames, logGroups, onChange, region, loadingLogGroups]);
 
   return (
     <div className={`gf-form gf-form--grow flex-grow-1 ${rowGap}`}>

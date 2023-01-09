@@ -97,9 +97,10 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
                 return;
               }
 
-              let error = 'Please save the datasource before adding log groups.';
+              let error = 'You need to save the data source before adding log groups.';
               if (props.options.version && props.options.version > 1) {
-                error = 'You have unsaved connection detail changes. Please save before adding log groups.';
+                error =
+                  'You have unsaved connection detail changes. You need to save the data source before adding log groups.';
               }
               setLogGroupFieldState({
                 invalid: true,
@@ -154,7 +155,7 @@ function useDatasource(props: Props) {
   const [datasource, setDatasource] = useState<CloudWatchDatasource>();
 
   useEffect(() => {
-    if (props.options.version && props.options.version > 1) {
+    if (props.options.version) {
       getDatasourceSrv()
         .loadDatasource(props.options.name)
         .then((datasource) => {
@@ -207,7 +208,7 @@ function useDataSourceSavedState(props: Props) {
   ]);
 
   useEffect(() => {
-    setSaved(true);
+    props.options.version && setSaved(true);
   }, [props.options.version]);
 
   return saved;
