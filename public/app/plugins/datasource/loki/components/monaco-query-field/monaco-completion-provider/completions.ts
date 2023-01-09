@@ -158,14 +158,13 @@ async function getInGroupingCompletions(logQuery: string, dataProvider: Completi
 const PARSERS = ['json', 'logfmt', 'pattern', 'regexp', 'unpack'];
 
 async function getParserCompletions(
-  afterPipe: boolean,
+  prefix: string,
   hasJSON: boolean,
   hasLogfmt: boolean,
   extractedLabelKeys: string[]
 ) {
   const allParsers = new Set(PARSERS);
   const completions: Completion[] = [];
-  const prefix = afterPipe ? ' ' : '| ';
   const hasLevelInExtractedLabels = extractedLabelKeys.some((key) => key === 'level');
 
   if (hasJSON) {
@@ -210,13 +209,13 @@ async function getParserCompletions(
 async function getAfterSelectorCompletions(
   logQuery: string,
   afterPipe: boolean,
+  hasSpace: boolean,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
   const { extractedLabelKeys, hasJSON, hasLogfmt } = await dataProvider.getParserAndLabelKeys(logQuery);
 
-  const completions: Completion[] = await getParserCompletions(afterPipe, hasJSON, hasLogfmt, extractedLabelKeys);
-
-  const prefix = afterPipe ? ' ' : '| ';
+  const prefix = `${hasSpace ? '' : ' '}${afterPipe ? '' : '| '}`;
+  const completions: Completion[] = await getParserCompletions(prefix, hasJSON, hasLogfmt, extractedLabelKeys);
 
   extractedLabelKeys.forEach((key) => {
     completions.push({
@@ -249,7 +248,9 @@ async function getAfterSelectorCompletions(
     documentation: explainOperator(LokiOperationId.LabelFormat),
   });
 
-  const lineFilters = getLineFilterCompletions(afterPipe);
+  // With an space between the pipe and the cursor, we omit line filters
+  // E.g. `{label="value"} | `
+  const lineFilters = afterPipe && hasSpace ? [] : getLineFilterCompletions(afterPipe);
 
   return [...lineFilters, ...completions];
 }
@@ -307,7 +308,7 @@ export async function getCompletions(
         dataProvider
       );
     case 'AFTER_SELECTOR':
-      return getAfterSelectorCompletions(situation.logQuery, situation.afterPipe, dataProvider);
+      return getAfterSelectorCompletions(situation.logQuery, situation.afterPipe, situation.hasSpace, dataProvider);
     case 'AFTER_UNWRAP':
       return getAfterUnwrapCompletions(situation.logQuery, dataProvider);
     case 'IN_AGGREGATION':
