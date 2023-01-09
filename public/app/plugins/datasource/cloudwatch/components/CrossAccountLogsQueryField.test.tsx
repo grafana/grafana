@@ -5,6 +5,8 @@ import lodash from 'lodash';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
+import { ResourceResponse, LogGroupResponse } from '../types';
+
 import { CrossAccountLogsQueryField } from './CrossAccountLogsQueryField';
 
 const defaultProps = {
@@ -24,18 +26,21 @@ const defaultProps = {
   fetchLogGroups: () =>
     Promise.resolve([
       {
-        label: 'logGroup1',
-        text: 'logGroup1',
-        value: 'arn:partition:service:region:account-id123:loggroup:someloggroup',
+        accountId: '123',
+        value: {
+          name: 'logGroup1',
+          arn: 'arn:partition:service:region:account-id123:loggroup:someloggroup',
+        },
       },
       {
-        label: 'logGroup2',
-        text: 'logGroup2',
-        value: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        accountId: '456',
+        value: {
+          name: 'logGroup2',
+          arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        },
       },
-    ]),
+    ] as Array<ResourceResponse<LogGroupResponse>>),
   onChange: jest.fn(),
-  onRunQuery: jest.fn(),
 };
 
 const originalDebounce = lodash.debounce;
@@ -156,9 +161,10 @@ describe('CrossAccountLogsQueryField', () => {
     await userEvent.click(screen.getByText('Add log groups'));
     expect(onChange).toHaveBeenCalledWith([
       {
-        label: 'logGroup2',
-        text: 'logGroup2',
-        value: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        name: 'logGroup2',
+        arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        accountId: '456',
+        accountLabel: undefined,
       },
     ]);
   });
@@ -172,19 +178,52 @@ describe('CrossAccountLogsQueryField', () => {
     await userEvent.click(screen.getByText('Cancel'));
     expect(onChange).not.toHaveBeenCalledWith([
       {
-        label: 'logGroup2',
-        text: 'logGroup2',
-        value: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        name: 'logGroup2',
+        arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        accountId: '456',
+        accountLabel: undefined,
       },
     ]);
   });
 
-  it('runs the query on close of the modal', async () => {
-    const onRunQuery = jest.fn();
-    render(<CrossAccountLogsQueryField {...defaultProps} onRunQuery={onRunQuery} />);
+  const labelText =
+    'Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your search.';
+  it('should not display max result info label in case less than 50 logs groups are being displayed', async () => {
+    const defer = new Deferred();
+    const fetchLogGroups = jest.fn(async () => {
+      await Promise.all([defer.promise]);
+      return [];
+    });
+    render(<CrossAccountLogsQueryField {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select Log Groups'));
-    expect(screen.getByText('Log Group Name')).toBeInTheDocument();
-    await userEvent.click(screen.getByLabelText('Close dialogue'));
-    expect(onRunQuery).toBeCalledTimes(1);
+    expect(screen.queryByText(labelText)).not.toBeInTheDocument();
+    defer.resolve();
+    await waitFor(() => expect(screen.queryByText(labelText)).not.toBeInTheDocument());
+  });
+
+  it('should display max result info label in case 50 or more logs groups are being displayed', async () => {
+    const defer = new Deferred();
+    const fetchLogGroups = jest.fn(async () => {
+      await Promise.all([defer.promise]);
+      return Array(50).map((i) => ({
+        value: {
+          arn: `logGroup${i}`,
+          name: `logGroup${i}`,
+        },
+      }));
+    });
+    render(<CrossAccountLogsQueryField {...defaultProps} fetchLogGroups={fetchLogGroups} />);
+    await userEvent.click(screen.getByText('Select Log Groups'));
+    expect(screen.queryByText(labelText)).not.toBeInTheDocument();
+    defer.resolve();
+    await waitFor(() => expect(screen.getByText(labelText)).toBeInTheDocument());
+  });
+
+  it('should display log groups counter label', async () => {
+    render(<CrossAccountLogsQueryField {...defaultProps} selectedLogGroups={[]} />);
+    await userEvent.click(screen.getByText('Select Log Groups'));
+    await waitFor(() => expect(screen.getByText('0 log groups selected')).toBeInTheDocument());
+    await userEvent.click(screen.getByLabelText('logGroup2'));
+    await waitFor(() => expect(screen.getByText('1 log group selected')).toBeInTheDocument());
   });
 });

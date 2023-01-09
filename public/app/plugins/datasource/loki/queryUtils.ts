@@ -158,6 +158,21 @@ export function isQueryWithParser(query: string): { queryWithParser: boolean; pa
   return { queryWithParser: parserCount > 0, parserCount };
 }
 
+export function getParserFromQuery(query: string) {
+  const tree = parser.parse(query);
+  let logParser;
+  tree.iterate({
+    enter: (node: SyntaxNode): false | void => {
+      if (node.type.id === LabelParser || node.type.id === JsonExpressionParser) {
+        logParser = query.substring(node.from, node.to).trim();
+        return false;
+      }
+    },
+  });
+
+  return logParser;
+}
+
 export function isQueryPipelineErrorFiltering(query: string): boolean {
   let isQueryPipelineErrorFiltering = false;
   const tree = parser.parse(query);
@@ -220,4 +235,36 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   });
 
   return selector + pipelineExpr;
+}
+
+export function isQueryWithLabelFilter(query: string): boolean {
+  const tree = parser.parse(query);
+  let hasLabelFilter = false;
+
+  tree.iterate({
+    enter: ({ type, node }): false | void => {
+      if (type.id === LabelFilter) {
+        hasLabelFilter = true;
+        return;
+      }
+    },
+  });
+
+  return hasLabelFilter;
+}
+
+export function isQueryWithLineFilter(query: string): boolean {
+  const tree = parser.parse(query);
+  let queryWithLineFilter = false;
+
+  tree.iterate({
+    enter: ({ type }): false | void => {
+      if (type.id === LineFilter) {
+        queryWithLineFilter = true;
+        return;
+      }
+    },
+  });
+
+  return queryWithLineFilter;
 }

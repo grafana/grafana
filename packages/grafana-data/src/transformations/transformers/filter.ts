@@ -22,23 +22,21 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: (options: FilterOptions, replace) => (source) => {
+  operator: (options: FilterOptions, ctx) => (source) => {
     if (!options.include && !options.exclude) {
-      return source.pipe(noopTransformer.operator({}, replace));
+      return source.pipe(noopTransformer.operator({}, ctx));
     }
 
-    if (replace) {
-      if (typeof options.include?.options === 'string') {
-        options.include.options = replace(options.include?.options);
-      } else if (typeof options.include?.options?.pattern === 'string') {
-        options.include.options.pattern = replace(options.include?.options.pattern);
-      }
+    if (typeof options.include?.options === 'string') {
+      options.include.options = ctx.interpolate(options.include?.options);
+    } else if (typeof options.include?.options?.pattern === 'string') {
+      options.include.options.pattern = ctx.interpolate(options.include?.options.pattern);
+    }
 
-      if (typeof options.exclude?.options === 'string') {
-        options.exclude.options = replace(options.exclude?.options);
-      } else if (typeof options.exclude?.options?.pattern === 'string') {
-        options.exclude.options.pattern = replace(options.exclude?.options.pattern);
-      }
+    if (typeof options.exclude?.options === 'string') {
+      options.exclude.options = ctx.interpolate(options.exclude?.options);
+    } else if (typeof options.exclude?.options?.pattern === 'string') {
+      options.exclude.options.pattern = ctx.interpolate(options.exclude?.options.pattern);
     }
 
     return source.pipe(
@@ -91,9 +89,9 @@ export const filterFramesTransformer: DataTransformerInfo<FilterOptions> = {
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: (options) => (source) => {
+  operator: (options, ctx) => (source) => {
     if (!options.include && !options.exclude) {
-      return source.pipe(noopTransformer.operator({}));
+      return source.pipe(noopTransformer.operator({}, ctx));
     }
 
     return source.pipe(

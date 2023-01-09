@@ -37,6 +37,7 @@ import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getPanelQueryNotices } from 'app/features/dashboard/utils/panelQueryNotices';
+import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { RenderEvent } from 'app/types/events';
@@ -49,7 +50,6 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { PanelHeaderLoadingIndicator } from './PanelHeader/PanelHeaderLoadingIndicator';
 import { PanelHeaderTitleItems } from './PanelHeader/PanelHeaderTitleItems';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
@@ -592,6 +592,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     e.stopPropagation();
     locationService.partial({ inspect: this.props.panel.id, inspectTab: tab });
   };
+  onOpenErrorInspect(e: React.SyntheticEvent, tab: string) {
+    e.stopPropagation();
+    locationService.partial({ inspect: this.props.panel.id, inspectTab: tab });
+  }
 
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
@@ -616,12 +620,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       [`panel-alert-state--${alertState}`]: alertState !== undefined,
     });
 
-    const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
     const title = panel.getDisplayTitle();
-    const noPadding: PanelPadding = plugin.noPadding ? 'none' : 'md';
-    const leftItems = [
-      <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
-    ];
+    const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
 
     const titleItems = [
       <PanelHeaderTitleItems key="title-items" alertState={alertState} data={data} panelId={panel.id} />,
@@ -636,15 +636,19 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             width={width}
             height={height}
             title={title}
+            loadingState={data.state}
+            status={{
+              message: errorMessage,
+              onClick: (e: React.SyntheticEvent) => this.onOpenErrorInspect(e, InspectTab.Error),
+            }}
             description={!!panel.description ? this.onShowPanelDescription : undefined}
-            links={!!panel.links ? this.onShowPanelLinks : undefined}
+            links={panel.links && panel.links?.length > 0 ? this.onShowPanelLinks : undefined}
             panelNotices={{
               getPanelNotices: () => getPanelQueryNotices({ frames: data.series }),
               onClick: (e: React.SyntheticEvent, tab: string) => this.onOpenInspector(e, tab),
             }}
             titleItems={titleItems}
-            leftItems={leftItems}
-            padding={noPadding}
+            padding={padding}
           >
             {(innerWidth, innerHeight) => (
               <>

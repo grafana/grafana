@@ -10,6 +10,10 @@ export interface Props {
 }
 
 export function QueryPreview({ query }: Props) {
+  if (!query) {
+    return null;
+  }
+
   return (
     <EditorRow>
       <EditorFieldGroup>

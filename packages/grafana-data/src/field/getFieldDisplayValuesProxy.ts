@@ -19,38 +19,41 @@ export function getFieldDisplayValuesProxy(options: {
   rowIndex: number;
   timeZone?: TimeZone;
 }): Record<string, DisplayValue> {
-  return new Proxy({} as Record<string, DisplayValue>, {
-    get: (obj: any, key: string): DisplayValue | undefined => {
-      // 1. Match the name
-      let field = options.frame.fields.find((f) => key === f.name);
-      if (!field) {
-        // 2. Match the array index
-        const k = toNumber(key);
-        field = options.frame.fields[k];
-      }
-      if (!field) {
-        // 3. Match the config displayName
-        field = options.frame.fields.find((f) => key === f.config.displayName);
-      }
-      if (!field) {
-        // 4. Match the name label
-        field = options.frame.fields.find((f) => {
-          if (f.labels) {
-            return key === f.labels.name;
-          }
-          return false;
-        });
-      }
-      if (!field) {
-        return undefined;
-      }
-      // TODO: we could supply the field here for the getDisplayProcessor fallback but we would also need theme which
-      //  we do not have access to here
-      const displayProcessor = field.display ?? getDisplayProcessor();
-      const raw = field.values.get(options.rowIndex);
-      const disp = displayProcessor(raw);
-      disp.toString = () => formattedValueToString(disp);
-      return disp;
-    },
-  });
+  return new Proxy(
+    {},
+    {
+      get: (obj, key): DisplayValue | undefined => {
+        // 1. Match the name
+        let field = options.frame.fields.find((f) => key === f.name);
+        if (!field) {
+          // 2. Match the array index
+          const k = toNumber(key);
+          field = options.frame.fields[k];
+        }
+        if (!field) {
+          // 3. Match the config displayName
+          field = options.frame.fields.find((f) => key === f.config.displayName);
+        }
+        if (!field) {
+          // 4. Match the name label
+          field = options.frame.fields.find((f) => {
+            if (f.labels) {
+              return key === f.labels.name;
+            }
+            return false;
+          });
+        }
+        if (!field) {
+          return undefined;
+        }
+        // TODO: we could supply the field here for the getDisplayProcessor fallback but we would also need theme which
+        //  we do not have access to here
+        const displayProcessor = field.display ?? getDisplayProcessor();
+        const raw = field.values.get(options.rowIndex);
+        const disp = displayProcessor(raw);
+        disp.toString = () => formattedValueToString(disp);
+        return disp;
+      },
+    }
+  );
 }

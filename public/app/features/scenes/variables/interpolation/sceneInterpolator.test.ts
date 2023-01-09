@@ -1,3 +1,5 @@
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
+
 import { SceneObjectBase } from '../../core/SceneObjectBase';
 import { SceneObjectStatePlain } from '../../core/types';
 import { SceneVariableSet } from '../sets/SceneVariableSet';
@@ -43,6 +45,25 @@ describe('sceneInterpolator', () => {
     expect(sceneInterpolator(scene, '${test}')).toBe('hello');
     expect(sceneInterpolator(scene.state.nested!, '${test}')).toBe('nestedValue');
     expect(sceneInterpolator(scene.state.nested!, '${atRootOnly}')).toBe('RootValue');
+  });
+
+  describe('Given a variable with allValue', () => {
+    it('Should not escape it', () => {
+      const scene = new TestScene({
+        $variables: new SceneVariableSet({
+          variables: [
+            new TestVariable({
+              name: 'test',
+              value: ALL_VARIABLE_VALUE,
+              text: ALL_VARIABLE_TEXT,
+              allValue: '.*',
+            }),
+          ],
+        }),
+      });
+
+      expect(sceneInterpolator(scene, '${test:regex}')).toBe('.*');
+    });
   });
 
   describe('Given an expression with fieldPath', () => {

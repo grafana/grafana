@@ -2,8 +2,15 @@ import { MonoTypeOperatorFunction } from 'rxjs';
 
 import { RegistryItemWithOptions } from '../utils/Registry';
 
-import { ScopedVars } from './ScopedVars';
 import { DataFrame, Field } from './dataFrame';
+import { InterpolateFunction } from './panel';
+
+/**
+ * Context passed to transformDataFrame and to each transform operator
+ */
+export interface DataTransformContext {
+  interpolate: InterpolateFunction;
+}
 
 /**
  * Function that transform data frames (AKA transformer)
@@ -15,10 +22,7 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  operator: (
-    options: TOptions,
-    replace?: (target?: string, scopedVars?: ScopedVars, format?: string | Function) => string
-  ) => MonoTypeOperatorFunction<DataFrame[]>;
+  operator: (options: TOptions, context: DataTransformContext) => MonoTypeOperatorFunction<DataFrame[]>;
 }
 
 /**
@@ -28,7 +32,7 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
  * @public
  */
 export interface SynchronousDataTransformerInfo<TOptions = any> extends DataTransformerInfo<TOptions> {
-  transformer: (options: TOptions) => (frames: DataFrame[]) => DataFrame[];
+  transformer: (options: TOptions, context: DataTransformContext) => (frames: DataFrame[]) => DataFrame[];
 }
 
 /**
@@ -47,10 +51,6 @@ export interface DataTransformerConfig<TOptions = any> {
    * Options to be passed to the transformer
    */
   options: TOptions;
-  /**
-   * Function to apply template variable substitution to the DataTransformerConfig
-   */
-  replace?: (target?: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 }
 
 export type FrameMatcher = (frame: DataFrame) => boolean;
@@ -83,4 +83,14 @@ export interface ValueMatcherInfo<TOptions = any> extends RegistryItemWithOption
 export interface MatcherConfig<TOptions = any> {
   id: string;
   options?: TOptions;
+}
+
+/**
+ * @public
+ */
+export enum SpecialValue {
+  True = 'true',
+  False = 'false',
+  Null = 'null',
+  Empty = 'empty',
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -18,14 +19,13 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
 	cfg                *setting.Cfg
-	sqlstore           sqlstore.Store
+	sqlstore           db.DB
 	plugins            plugins.Store
 	social             social.Service
 	usageStats         usagestats.Service
@@ -46,7 +46,7 @@ func ProvideService(
 	us usagestats.Service,
 	statsService stats.Service,
 	cfg *setting.Cfg,
-	store sqlstore.Store,
+	store db.DB,
 	social social.Service,
 	plugins plugins.Store,
 	features *featuremgmt.FeatureManager,

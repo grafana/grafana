@@ -1,4 +1,3 @@
-import React from 'react';
 import { Observable, of } from 'rxjs';
 
 import { stringToJsRegex, DataSourceInstanceSettings } from '@grafana/data';
@@ -7,7 +6,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { sceneGraph } from '../../core/sceneGraph';
 import { SceneComponentProps } from '../../core/types';
 import { VariableDependencyConfig } from '../VariableDependencyConfig';
-import { VariableValueSelect } from '../components/VariableValueSelect';
+import { renderSelectForVariable } from '../components/VariableValueSelect';
 import { VariableValueOption } from '../types';
 
 import { MultiValueVariable, MultiValueVariableState, VariableGetOptionsArgs } from './MultiValueVariable';
@@ -70,11 +69,6 @@ export class DataSourceVariable extends MultiValueVariable<DataSourceVariableSta
       options.push({ label: 'No data sources found', value: '' });
     }
 
-    // TODO: Add support for include All
-    // if (instanceState.includeAll) {
-    //  options.unshift({ label: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE });
-    //}
-
     return of(options);
   }
 
@@ -83,7 +77,7 @@ export class DataSourceVariable extends MultiValueVariable<DataSourceVariableSta
   }
 
   public static Component = ({ model }: SceneComponentProps<MultiValueVariable>) => {
-    return <VariableValueSelect model={model} />;
+    return renderSelectForVariable(model);
   };
 }
 

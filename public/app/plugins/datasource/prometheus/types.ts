@@ -34,10 +34,7 @@ export interface PromOptions extends DataSourceJsonData {
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
   prometheusType?: PromApplication;
   prometheusVersion?: string;
-}
-
-export enum PromQueryType {
-  timeSeriesQuery = 'timeSeriesQuery',
+  enableSecureSocksProxy?: boolean;
 }
 
 export type ExemplarTraceIdDestination = {

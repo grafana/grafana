@@ -45,6 +45,34 @@ describe('PublicDashboardDatasource', () => {
     expect(annotation?.queryType).toEqual(GrafanaQueryType.Annotations);
   });
 
+  test('will not fetch annotations when access token is falsey', async () => {
+    mockDatasourceRequest.mockReset();
+    mockDatasourceRequest.mockReturnValue(Promise.resolve([]));
+
+    const ds = new PublicDashboardDataSource('public');
+    const panelId = 1;
+    const publicDashboardAccessToken = undefined;
+
+    await ds.query({
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      targets: [
+        {
+          refId: 'A',
+          datasource: { uid: GRAFANA_DATASOURCE_NAME, type: 'sample' },
+          queryType: GrafanaQueryType.Annotations,
+        },
+      ],
+      panelId,
+      publicDashboardAccessToken,
+      range: { from: new Date().toLocaleString(), to: new Date().toLocaleString() } as unknown as TimeRange,
+    } as DataQueryRequest);
+
+    const mock = mockDatasourceRequest.mock;
+
+    expect(mock.calls.length).toBe(0);
+  });
+
   test('fetches results from the pubdash annotations endpoint when it is an annotation query', async () => {
     mockDatasourceRequest.mockReset();
     mockDatasourceRequest.mockReturnValue(Promise.resolve([]));
