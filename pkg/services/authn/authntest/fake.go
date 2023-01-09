@@ -13,9 +13,10 @@ type FakeService struct {
 var _ authn.Client = new(FakeClient)
 
 type FakeClient struct {
-	ExpectedErr      error
-	ExpectedTest     bool
-	ExpectedIdentity *authn.Identity
+	ExpectedErr          error
+	ExpectedTest         bool
+	ExpectedIdentity     *authn.Identity
+	ExpectedClientParams *authn.ClientParams
 }
 
 func (f *FakeClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {

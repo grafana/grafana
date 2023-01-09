@@ -170,3 +170,7 @@ func (wildcards Wildcards) Contains(scope string) bool {
 	}
 	return false
 }
+
+func isWildcard(scope string) bool {
+	return scope == "*" || strings.HasSuffix(scope, ":*")
+}

@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
 import { Button, CustomScrollbar, HorizontalGroup, RadioButtonGroup, useStyles2, useTheme2 } from '@grafana/ui';
@@ -15,6 +14,19 @@ enum GroupType {
   fixed = 'fixed',
   custom = 'custom',
   plugin = 'plugin',
+}
+
+interface RoleGroupOption {
+  name: string;
+  value: string;
+  options: Role[];
+}
+
+interface RolesCollectionEntry {
+  groupType: GroupType;
+  optionGroup: RoleGroupOption[];
+  renderedName: string;
+  roles: Role[];
 }
 
 const BasicRoles = Object.values(OrgRole);
@@ -59,9 +71,7 @@ export const RolePickerMenu = ({
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(basicRole);
-  const [showSubMenu, setShowSubMenu] = useState(false);
-  const [openedMenuGroup, setOpenedMenuGroup] = useState('');
-  const [subMenuOptions, setSubMenuOptions] = useState<Role[]>([]);
+  const [rolesCollection, setRolesCollection] = useState<{ [key: string]: RolesCollectionEntry }>({});
   const subMenuNode = useRef<HTMLDivElement | null>(null);
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -78,35 +88,39 @@ export const RolePickerMenu = ({
     }
   }, [selectedBuiltInRole, onBasicRoleSelect]);
 
-  const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
-  const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
-  const pluginRoles = options.filter(filterPluginsRoles).sort(sortRolesByName);
-  const optionGroups = {
-    fixed: convertRolesToGroupOptions(fixedRoles).sort((a, b) => a.name.localeCompare(b.name)),
-    custom: convertRolesToGroupOptions(customRoles).sort((a, b) => a.name.localeCompare(b.name)),
-    plugin: convertRolesToGroupOptions(pluginRoles).sort((a, b) => a.name.localeCompare(b.name)),
-  };
+  // Evaluate rolesCollection only if options changed, otherwise
+  // it triggers unnecessary re-rendering of <RoleMenuGroupsSection /> component
+  useEffect(() => {
+    const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
+    const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
+    const pluginRoles = options.filter(filterPluginsRoles).sort(sortRolesByName);
+    const optionGroups = {
+      fixed: convertRolesToGroupOptions(fixedRoles).sort((a, b) => a.name.localeCompare(b.name)),
+      custom: convertRolesToGroupOptions(customRoles).sort((a, b) => a.name.localeCompare(b.name)),
+      plugin: convertRolesToGroupOptions(pluginRoles).sort((a, b) => a.name.localeCompare(b.name)),
+    };
 
-  const rolesCollection = {
-    fixed: {
-      groupType: GroupType.fixed,
-      optionGroup: optionGroups.fixed,
-      renderedName: `Fixed roles`,
-      roles: fixedRoles,
-    },
-    custom: {
-      groupType: GroupType.custom,
-      optionGroup: optionGroups.custom,
-      renderedName: `Custom roles`,
-      roles: customRoles,
-    },
-    pluginRoles: {
-      groupType: GroupType.plugin,
-      optionGroup: optionGroups.plugin,
-      renderedName: `Plugin roles`,
-      roles: pluginRoles,
-    },
-  };
+    setRolesCollection({
+      fixed: {
+        groupType: GroupType.fixed,
+        optionGroup: optionGroups.fixed,
+        renderedName: `Fixed roles`,
+        roles: fixedRoles,
+      },
+      custom: {
+        groupType: GroupType.custom,
+        optionGroup: optionGroups.custom,
+        renderedName: `Custom roles`,
+        roles: customRoles,
+      },
+      plugin: {
+        groupType: GroupType.plugin,
+        optionGroup: optionGroups.plugin,
+        renderedName: `Plugin roles`,
+        roles: pluginRoles,
+      },
+    });
+  }, [options]);
 
   const getSelectedGroupOptions = (group: string) => {
     const selectedGroupOptions = [];
@@ -120,13 +134,13 @@ export const RolePickerMenu = ({
 
   const groupSelected = (groupType: GroupType, group: string) => {
     const selectedGroupOptions = getSelectedGroupOptions(group);
-    const groupOptions = optionGroups[groupType].find((g) => g.value === group);
+    const groupOptions = rolesCollection[groupType]?.optionGroup.find((g) => g.value === group);
     return selectedGroupOptions.length > 0 && selectedGroupOptions.length >= groupOptions!.options.length;
   };
 
   const groupPartiallySelected = (groupType: GroupType, group: string) => {
     const selectedGroupOptions = getSelectedGroupOptions(group);
-    const groupOptions = optionGroups[groupType].find((g) => g.value === group);
+    const groupOptions = rolesCollection[groupType]?.optionGroup.find((g) => g.value === group);
     return selectedGroupOptions.length > 0 && selectedGroupOptions.length < groupOptions!.options.length;
   };
 
@@ -139,7 +153,7 @@ export const RolePickerMenu = ({
   };
 
   const onGroupChange = (groupType: GroupType, value: string) => {
-    const group = optionGroups[groupType].find((g) => {
+    const group = rolesCollection[groupType]?.optionGroup.find((g) => {
       return g.value === value;
     });
 
@@ -156,23 +170,6 @@ export const RolePickerMenu = ({
     }
   };
 
-  const onOpenSubMenu = (groupType: GroupType, value: string) => {
-    setOpenedMenuGroup(value);
-    setShowSubMenu(true);
-    const group = optionGroups[groupType].find((g) => {
-      return g.value === value;
-    });
-    if (group) {
-      setSubMenuOptions(group.options);
-    }
-  };
-
-  const onCloseSubMenu = (value: string) => {
-    setShowSubMenu(false);
-    setOpenedMenuGroup('');
-    setSubMenuOptions([]);
-  };
-
   const onSelectedBuiltinRoleChange = (newRole: OrgRole) => {
     setSelectedBuiltInRole(newRole);
   };
@@ -181,10 +178,10 @@ export const RolePickerMenu = ({
     setSelectedOptions([]);
   };
 
-  const onClearSubMenu = () => {
+  const onClearSubMenu = (group: string) => {
     const options = selectedOptions.filter((role) => {
-      const groupName = getRoleGroup(role);
-      return groupName !== openedMenuGroup;
+      const roleGroup = getRoleGroup(role);
+      return roleGroup !== group;
     });
     setSelectedOptions(options);
   };
@@ -220,33 +217,23 @@ export const RolePickerMenu = ({
               />
             </div>
           )}
-          {Object.entries(rolesCollection).map(([groupId, collection]) => {
-            return (
-              <RoleMenuGroupsSection
-                key={groupId}
-                roles={collection.roles}
-                renderedName={collection.renderedName}
-                menuSectionStyle={customStyles.menuSection}
-                groupHeaderStyle={customStyles.groupHeader}
-                optionBodyStyle={styles.optionBody}
-                showGroups={showGroups}
-                optionGroups={collection.optionGroup}
-                groupSelected={(group: string) => groupSelected(collection.groupType, group)}
-                groupPartiallySelected={(group: string) => groupPartiallySelected(collection.groupType, group)}
-                onChange={(group: string) => onGroupChange(collection.groupType, group)}
-                onOpenSubMenuRMGS={(group: string) => onOpenSubMenu(collection.groupType, group)}
-                onCloseSubMenu={onCloseSubMenu}
-                subMenuNode={subMenuNode?.current!}
-                showSubMenu={showSubMenu}
-                openedMenuGroup={openedMenuGroup}
-                subMenuOptions={subMenuOptions}
-                selectedOptions={selectedOptions}
-                onChangeSubMenu={onChange}
-                onClearSubMenu={onClearSubMenu}
-                showOnLeftSubMenu={offset.horizontal > 0}
-              ></RoleMenuGroupsSection>
-            );
-          })}
+          {Object.entries(rolesCollection).map(([groupId, collection]) => (
+            <RoleMenuGroupsSection
+              key={groupId}
+              roles={collection.roles}
+              renderedName={collection.renderedName}
+              showGroups={showGroups}
+              optionGroups={collection.optionGroup}
+              groupSelected={(group: string) => groupSelected(collection.groupType, group)}
+              groupPartiallySelected={(group: string) => groupPartiallySelected(collection.groupType, group)}
+              onGroupChange={(group: string) => onGroupChange(collection.groupType, group)}
+              subMenuNode={subMenuNode?.current!}
+              selectedOptions={selectedOptions}
+              onRoleChange={onChange}
+              onClearSubMenu={onClearSubMenu}
+              showOnLeftSubMenu={offset.horizontal > 0}
+            />
+          ))}
         </CustomScrollbar>
         <div className={customStyles.menuButtonRow}>
           <HorizontalGroup justify="flex-end">
@@ -268,28 +255,46 @@ const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:') &
 const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
 const filterPluginsRoles = (option: Role) => option.name?.startsWith('plugins:');
 
+interface GroupsMap {
+  [key: string]: { roles: Role[]; name: string };
+}
+
 const convertRolesToGroupOptions = (roles: Role[]) => {
-  const groupsMap: { [key: string]: Role[] } = {};
+  const groupsMap: GroupsMap = {};
   roles.forEach((role) => {
-    const groupName = getRoleGroup(role);
-    if (!groupsMap[groupName]) {
-      groupsMap[groupName] = [];
+    const groupId = getRoleGroup(role);
+    const groupName = getRoleGroupName(role);
+    if (!groupsMap[groupId]) {
+      groupsMap[groupId] = { name: groupName, roles: [] };
     }
-    groupsMap[groupName].push(role);
+    groupsMap[groupId].roles.push(role);
   });
-  const groups = Object.entries(groupsMap).map(([groupName, roles]) => {
+  const groups = Object.entries(groupsMap).map(([groupId, groupEntry]) => {
     return {
-      name: fixedRoleGroupNames[groupName] || capitalize(groupName),
-      value: groupName,
-      options: roles.sort(sortRolesByName),
-      uid: uuidv4(),
+      name: fixedRoleGroupNames[groupId] || capitalize(groupEntry.name),
+      value: groupId,
+      options: groupEntry.roles.sort(sortRolesByName),
     };
   });
   return groups;
 };
 
 const getRoleGroup = (role: Role) => {
+  const prefix = getRolePrefix(role);
+  const name = getRoleGroupName(role);
+  return `${prefix}:${name}`;
+};
+
+const getRoleGroupName = (role: Role) => {
   return role.group || 'Other';
+};
+
+const getRolePrefix = (role: Role) => {
+  const prefixEnd = role.name.indexOf(':');
+  if (prefixEnd < 0) {
+    return 'unknown';
+  }
+  return role.name.substring(0, prefixEnd);
 };
 
 const sortRolesByName = (a: Role, b: Role) => a.name.localeCompare(b.name);

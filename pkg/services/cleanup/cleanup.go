@@ -227,7 +227,7 @@ func (srv *CleanUpService) expireOldUserInvites(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
 	maxInviteLifetime := srv.Cfg.UserInviteMaxLifetime
 
-	cmd := models.ExpireTempUsersCommand{
+	cmd := tempuser.ExpireTempUsersCommand{
 		OlderThan: time.Now().Add(-maxInviteLifetime),
 	}
 

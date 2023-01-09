@@ -56,7 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-type TimelineHeaderRowProps = {
+export type TimelineHeaderRowProps = {
   duration: number;
   nameColumnWidth: number;
   numTicks: number;

@@ -8,7 +8,6 @@ on:
       - v[0-9]+.[0-9]+.[0-9]+
     paths:
       - "docs/sources/**"
-      - "packages/grafana-*/**"
   workflow_dispatch:
 jobs:
   sync:
