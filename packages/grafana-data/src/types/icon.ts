@@ -5,6 +5,7 @@ export const availableIconsIndex = {
   gitlab: true,
   okta: true,
   anchor: true,
+  'adjust-circle': true,
   'angle-double-down': true,
   'angle-double-right': true,
   'angle-double-up': true,

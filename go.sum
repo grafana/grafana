@@ -1380,8 +1380,8 @@ github.com/grafana/alerting v0.0.0-20221223161756-4c2eff00d2b7 h1:a3AAUFbHvXRy6l
 github.com/grafana/alerting v0.0.0-20221223161756-4c2eff00d2b7/go.mod h1:UJIU64SlV8RV+80OE1jNLZx1cM5pHsA46UlzlkSm/Io=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
-github.com/grafana/cuetsy v0.1.1 h1:+1jaDDYCpvKlcOWJgBRbkc5+VZIClCEn5mbI+4PLZqM=
-github.com/grafana/cuetsy v0.1.1/go.mod h1:4KWkUOslwvRTpEv7wdQG0jDFTuJmU+0L9x0h4kWxa2A=
+github.com/grafana/cuetsy v0.1.5 h1:mnFwAXdbqCsyL8r7kkdUMJ4kOAR26cxIPmrZj7JzTeY=
+github.com/grafana/cuetsy v0.1.5/go.mod h1:4KWkUOslwvRTpEv7wdQG0jDFTuJmU+0L9x0h4kWxa2A=
 github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f h1:FvvSVEbnGeM2bUivGmsiXTi8URJyBU7TcFEEoRe5wWI=
 github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f/go.mod h1:uPG2nyK4CtgNDmWv7qyzYcdI+S90kHHRWvHnBtEMBXM=
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5JIhUUrggPcPBhOn+eT8+WsHiebvq7GgA=
@@ -2087,8 +2087,8 @@ github.com/openzipkin/zipkin-go v0.2.1/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnh
 github.com/openzipkin/zipkin-go v0.2.2/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnhQw8ySjnjRyN4=
 github.com/openzipkin/zipkin-go v0.2.5/go.mod h1:KpXfKdgRDnnhsxw4pNIH9Md5lyFqKUa4YDFlwRYAMyE=
 github.com/pact-foundation/pact-go v1.0.4/go.mod h1:uExwJY4kCzNPcHRj+hCR/HBbOOIwwtUjcrb0b5/5kLM=
-github.com/parca-dev/parca v0.12.1 h1:QZ5UudbnXeLxER4gEeD0urP/cInTUc8GvSlWsg1AJyo=
-github.com/parca-dev/parca v0.12.1/go.mod h1:MWhbinjhcb96IlRxk9GJvz9bTkHSTwDM+GQoGDpytGc=
+github.com/parca-dev/parca v0.12.0 h1:RfRMbteOxtZER6p6opUkP3TqlQJxdHizjh0rXuX673Q=
+github.com/parca-dev/parca v0.12.0/go.mod h1:MWhbinjhcb96IlRxk9GJvz9bTkHSTwDM+GQoGDpytGc=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0 h1:cBOtyMzM9HTpWjXfbbunk26uA6nG3a8n06Wieeh0MwY=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
