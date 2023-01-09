@@ -13,26 +13,25 @@ import (
 var _ authn.PasswordClient = new(LDAP)
 
 func ProvideLDAP(cfg *setting.Cfg) *LDAP {
-	return &LDAP{cfg}
+	return &LDAP{cfg, &ldapServiceImpl{cfg}}
 }
 
 type LDAP struct {
-	cfg *setting.Cfg
+	cfg     *setting.Cfg
+	service ldapService
 }
 
 func (c *LDAP) AuthenticatePassword(ctx context.Context, orgID int64, username, password string) (*authn.Identity, error) {
-	cfg, err := multildap.GetConfig(c.cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := multildap.New(cfg.Servers)
-	info, err := client.Login(&models.LoginUserQuery{
+	info, err := c.service.Login(&models.LoginUserQuery{
 		Username: username,
 		Password: password,
 	})
 
 	if err != nil {
+		if errors.Is(err, multildap.ErrInvalidCredentials) {
+			return nil, errInvalidPassword.Errorf("invalid password: %w", err)
+		}
+
 		// FIXME: disable user in grafana if not found
 		if errors.Is(err, multildap.ErrCouldNotFindUser) {
 			return nil, errIdentityNotFound.Errorf("no user found: %w", err)
@@ -55,9 +54,28 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, orgID int64, username, 
 		},
 		Groups: info.Groups,
 		ClientParams: authn.ClientParams{
-			SyncUser:        true,
-			SyncTeamMembers: true,
-			AllowSignUp:     c.cfg.LDAPAllowSignup,
+			SyncUser:            true,
+			SyncTeamMembers:     true,
+			AllowSignUp:         c.cfg.LDAPAllowSignup,
+			EnableDisabledUsers: true,
 		},
 	}, nil
+}
+
+type ldapService interface {
+	Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error)
+}
+
+// FIXME: remove the implementation if we convert ldap to an actual service
+type ldapServiceImpl struct {
+	cfg *setting.Cfg
+}
+
+func (s *ldapServiceImpl) Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error) {
+	cfg, err := multildap.GetConfig(s.cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return multildap.New(cfg.Servers).Login(query)
 }
