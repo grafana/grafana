@@ -37,7 +37,22 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
   const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
-  const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement);
+  const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement, {
+    modifiers: [
+      {
+        name: 'preventOverflow',
+        options: {
+          altAxis: true,
+        },
+      },
+      {
+        name: 'flip',
+        options: {
+          fallbackPlacements: ['top', 'left-start'],
+        },
+      },
+    ],
+  });
   const popoverRenderTimeout = useRef<NodeJS.Timer>();
 
   const getSymbol = () => {

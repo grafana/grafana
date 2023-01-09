@@ -2,15 +2,11 @@ package state
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"math"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
-
-	text_template "text/template"
 
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/pkg/timestamp"
@@ -59,15 +55,7 @@ func expandTemplate(ctx context.Context, name, text string, labels map[string]st
 		[]string{"missingkey=invalid"},
 	)
 
-	expander.Funcs(text_template.FuncMap{
-		"graphLink": graphLink,
-		"tableLink": tableLink,
-
-		// This function is a no-op for now.
-		"strvalue": func(value templateCaptureValue) string {
-			return ""
-		},
-	})
+	expander.Funcs(FuncMap)
 	result, resultErr = expander.Expand()
 	// Replace missing key value to one that does not look like an HTML tag. This can cause problems downstream in some notifiers.
 	// For example, Telegram in HTML mode rejects requests with unsupported tags.
@@ -95,30 +83,4 @@ func newTemplateCaptureValues(values map[string]eval.NumberValueCapture) map[str
 type query struct {
 	Datasource string `json:"datasource"`
 	Expr       string `json:"expr"`
-}
-
-func graphLink(rawQuery string) string {
-	var q query
-	if err := json.Unmarshal([]byte(rawQuery), &q); err != nil {
-		return ""
-	}
-
-	escapedExpression := url.QueryEscape(q.Expr)
-	escapedDatasource := url.QueryEscape(q.Datasource)
-
-	return fmt.Sprintf(
-		`/explore?left={"datasource":%[1]q,"queries":[{"datasource":%[1]q,"expr":%q,"instant":false,"range":true,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`, escapedDatasource, escapedExpression)
-}
-
-func tableLink(rawQuery string) string {
-	var q query
-	if err := json.Unmarshal([]byte(rawQuery), &q); err != nil {
-		return ""
-	}
-
-	escapedExpression := url.QueryEscape(q.Expr)
-	escapedDatasource := url.QueryEscape(q.Datasource)
-
-	return fmt.Sprintf(
-		`/explore?left={"datasource":%[1]q,"queries":[{"datasource":%[1]q,"expr":%q,"instant":true,"range":false,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`, escapedDatasource, escapedExpression)
 }
