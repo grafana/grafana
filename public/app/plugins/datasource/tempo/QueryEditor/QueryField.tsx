@@ -2,9 +2,11 @@ import { css } from '@emotion/css';
 import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
+import { EditorHeader, EditorRow, EditorRows, FlexItem, Stack } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import {
+  Button,
   FileDropzone,
   InlineField,
   InlineFieldRow,
@@ -17,8 +19,10 @@ import {
 import { LokiQueryField } from '../../loki/components/LokiQueryField';
 import { LokiDatasource } from '../../loki/datasource';
 import { LokiQuery } from '../../loki/types';
+import { QueryOptionGroup } from '../../prometheus/querybuilder/shared/QueryOptionGroup';
 import { TempoDatasource } from '../datasource';
 import { QueryEditor } from '../traceql/QueryEditor';
+import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
 import { TempoQuery, TempoQueryType } from '../types';
 
 import NativeSearch from './NativeSearch';
@@ -26,12 +30,18 @@ import { ServiceGraphSection } from './ServiceGraphSection';
 import { getDS } from './utils';
 
 interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
+interface State {
+  searchType: string;
+}
 
 const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceql';
 
-class TempoQueryFieldComponent extends React.PureComponent<Props> {
+class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
+    this.state = {
+      searchType: 'traceQL',
+    };
   }
 
   // Set the default query type when the component mounts.
@@ -70,7 +80,8 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
   };
 
   render() {
-    const { query, onChange, datasource, app } = this.props;
+    const { query, onChange, datasource, theme } = this.props;
+    const styles = getStyles(theme);
 
     const logsDatasourceUid = datasource.getLokiSearchDS();
 
@@ -98,73 +109,129 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
 
     return (
       <>
-        <InlineFieldRow>
-          <InlineField label="Query type">
+        <EditorHeader>
+          <Stack gap={1}>
+            <label htmlFor={'tempo-query-type-radio-group'} className={styles.switchLabel}>
+              Query type
+            </label>
             <RadioButtonGroup<TempoQueryType>
-              options={queryTypeOptions}
+              id={'tempo-query-type-radio-group'}
+              options={[
+                { value: 'traces', label: 'Traces' },
+                { value: 'serviceMap', label: 'Service Graph' },
+              ]}
+              size="sm"
               value={query.queryType}
               onChange={(v) => {
-                reportInteraction('grafana_traces_query_type_changed', {
-                  datasourceType: 'tempo',
-                  app: app ?? '',
-                  newQueryType: v,
-                  previousQueryType: query.queryType ?? '',
-                });
-
-                this.onClearResults();
-
                 onChange({
                   ...query,
                   queryType: v,
                 });
               }}
-              size="md"
             />
-          </InlineField>
-        </InlineFieldRow>
-        {query.queryType === 'search' && (
-          <SearchSection
-            logsDatasourceUid={logsDatasourceUid}
-            query={query}
-            onRunQuery={this.onRunLinkedQuery}
-            onChange={this.onChangeLinkedQuery}
-          />
-        )}
-        {query.queryType === 'nativeSearch' && (
-          <NativeSearch
-            datasource={this.props.datasource}
-            query={query}
-            onChange={onChange}
-            onBlur={this.props.onBlur}
-            onRunQuery={this.props.onRunQuery}
-          />
-        )}
-        {query.queryType === 'upload' && (
-          <div className={css({ padding: this.props.theme.spacing(2) })}>
-            <FileDropzone
-              options={{ multiple: false }}
-              onLoad={(result) => {
-                this.props.datasource.uploadedJson = result;
-                this.props.onRunQuery();
+          </Stack>
+          <FlexItem grow={1} />
+
+          {query.queryType === 'traces' && (
+            <RadioButtonGroup
+              options={[
+                { value: 'traceQL', label: 'TraceQL' },
+                { value: 'uiSearch', label: 'UI Search' },
+              ]}
+              size="sm"
+              value={this.state.searchType}
+              onChange={(v) => {
+                this.setState({ searchType: v });
               }}
             />
-          </div>
-        )}
-        {query.queryType === 'serviceMap' && (
-          <ServiceGraphSection graphDatasourceUid={graphDatasourceUid} query={query} onChange={onChange} />
-        )}
-        {query.queryType === 'traceql' && (
-          <QueryEditor
-            datasource={this.props.datasource}
-            query={query}
-            onRunQuery={this.props.onRunQuery}
-            onChange={onChange}
-          />
-        )}
+          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              /* open modal*/
+            }}
+          >
+            Import trace
+          </Button>
+        </EditorHeader>
+
+        <EditorRows>
+          {query.queryType === 'traces' && this.state.searchType === 'traceQL' && (
+            <>
+              <EditorRow>
+                <QueryEditor
+                  datasource={this.props.datasource}
+                  query={query}
+                  onRunQuery={this.props.onRunQuery}
+                  onChange={onChange}
+                />
+              </EditorRow>
+              {/*<EditorRow>*/}
+              {/*  <QueryOptionGroup title="UI search" collapsedInfo={[]}>*/}
+              {/*    <NativeSearch*/}
+              {/*      datasource={this.props.datasource}*/}
+              {/*      query={query}*/}
+              {/*      onChange={onChange}*/}
+              {/*      onBlur={this.props.onBlur}*/}
+              {/*      onRunQuery={this.props.onRunQuery}*/}
+              {/*    />*/}
+              {/*  </QueryOptionGroup>*/}
+              {/*</EditorRow>*/}
+              <TempoQueryBuilderOptions query={query} onChange={onChange} />
+            </>
+          )}
+
+          {query.queryType === 'traces' && this.state.searchType === 'uiSearch' && (
+            <>
+              <EditorRow>
+                <NativeSearch
+                  datasource={this.props.datasource}
+                  query={query}
+                  onChange={onChange}
+                  onBlur={this.props.onBlur}
+                  onRunQuery={this.props.onRunQuery}
+                />
+              </EditorRow>
+              <TempoQueryBuilderOptions query={query} onChange={onChange} />
+            </>
+          )}
+
+          {query.queryType === 'serviceMap' && (
+            <EditorRow>
+              <ServiceGraphSection graphDatasourceUid={graphDatasourceUid} query={query} onChange={onChange} />
+            </EditorRow>
+          )}
+        </EditorRows>
+
+        {/*{query.queryType === 'upload' && (*/}
+        {/*  <div className={css({ padding: this.props.theme.spacing(2) })}>*/}
+        {/*    <FileDropzone*/}
+        {/*      options={{ multiple: false }}*/}
+        {/*      onLoad={(result) => {*/}
+        {/*        this.props.datasource.uploadedJson = result;*/}
+        {/*        this.props.onRunQuery();*/}
+        {/*      }}*/}
+        {/*    />*/}
+        {/*  </div>*/}
+        {/*)}*/}
       </>
     );
   }
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    switchLabel: css({
+      color: theme.colors.text.secondary,
+      cursor: 'pointer',
+      fontSize: theme.typography.bodySmall.fontSize,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
+  };
+};
 
 interface SearchSectionProps {
   logsDatasourceUid?: string;
