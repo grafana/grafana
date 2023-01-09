@@ -197,9 +197,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
           columnIndex={seriesIdx}
           sortOrder={options.tooltip.sort}
           mode={
-            options.barHighlight &&
-            options.stacking !== StackingMode.None &&
-            options.orientation === VizOrientation.Vertical
+            options.barHighlight && options.stacking !== StackingMode.None
               ? TooltipDisplayMode.Multi
               : options.tooltip.mode
           }
