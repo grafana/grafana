@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	v1alpha1 "buf.build/gen/go/parca-dev/parca/protocolbuffers/go/parca/query/v1alpha1"
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
