@@ -186,13 +186,12 @@ function expectBuilder() {
 }
 
 function expectRunQueriesButton() {
-  expect(screen.queryByText('Run queries')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /run queries/i })).toBeInTheDocument();
 }
 
 function expectNoRunQueriesButton() {
-  expect(screen.queryByText('Run queries')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /run queries/i })).not.toBeInTheDocument();
 }
-
 async function switchToMode(mode: QueryEditorMode) {
   const label = {
     [QueryEditorMode.Code]: /Code/,
