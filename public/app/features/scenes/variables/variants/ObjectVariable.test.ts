@@ -5,6 +5,7 @@ describe('ObjectVariable', () => {
     it('it should return value according to fieldPath', () => {
       const variable = new ObjectVariable({
         name: 'test',
+        type: 'custom',
         value: {
           field1: 'value1',
           array: ['value1', 'value2', 'value3'],

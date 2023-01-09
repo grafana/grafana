@@ -1,14 +1,13 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/saml/
-  - /docs/grafana/latest/enterprise/configure-saml/
-  - /docs/grafana/latest/enterprise/saml/
-  - /docs/grafana/latest/enterprise/saml/about-saml/
-  - /docs/grafana/latest/enterprise/saml/configure-saml/
-  - /docs/grafana/latest/enterprise/saml/enable-saml/
-  - /docs/grafana/latest/enterprise/saml/set-up-saml-with-okta/
-  - /docs/grafana/latest/enterprise/saml/troubleshoot-saml/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml/
+  - ../../../auth/saml/
+  - ../../../enterprise/configure-saml/
+  - ../../../enterprise/saml/
+  - ../../../enterprise/saml/about-saml/
+  - ../../../enterprise/saml/configure-saml/
+  - ../../../enterprise/saml/enable-saml/
+  - ../../../enterprise/saml/set-up-saml-with-okta/
+  - ../../../enterprise/saml/troubleshoot-saml/
 description: Learn how to configure SAML authentication in Grafana.
 menuTitle: Configure SAML authentication
 title: Configure SAML authentication in Grafana
@@ -21,7 +20,7 @@ SAML authentication integration allows your Grafana users to log in by using an 
 
 The SAML single sign-on (SSO) standard is varied and flexible. Our implementation contains a subset of features needed to provide a smooth authentication experience into Grafana.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
 ## Supported SAML
 

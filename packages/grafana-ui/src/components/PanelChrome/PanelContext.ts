@@ -46,6 +46,13 @@ export interface PanelContext {
   canEditThresholds?: boolean;
 
   /**
+   * Shows threshold indicators on the right-hand side of the panel
+   *
+   * @alpha -- experimental
+   */
+  showThresholds?: boolean;
+
+  /**
    * Called when a panel wants to change default thresholds configuration
    *
    * @alpha -- experimental

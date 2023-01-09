@@ -10,7 +10,10 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 
+import { SceneObjectBase } from '../scenes/core/SceneObjectBase';
+import { sceneGraph } from '../scenes/core/sceneGraph';
 import { formatRegistry, FormatRegistryID } from '../scenes/variables/interpolation/formatRegistry';
+import { CustomFormatterFn } from '../scenes/variables/interpolation/sceneInterpolator';
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 import { isAdHoc } from '../variables/guard';
@@ -166,7 +169,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       formatItem = formatRegistry.get(FormatRegistryID.glob);
     }
 
-    const formatVariable = getVariableWrapper(variable.name, value, text ?? value);
+    const formatVariable = getVariableWrapper(variable, value, text ?? value);
     return formatItem.formatter(value, args, formatVariable);
   }
 
@@ -276,6 +279,15 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
+    if (scopedVars && scopedVars.__sceneObject && scopedVars.__sceneObject.value instanceof SceneObjectBase) {
+      return sceneGraph.interpolate(
+        scopedVars.__sceneObject.value,
+        target,
+        scopedVars,
+        format as string | CustomFormatterFn | undefined
+      );
+    }
+
     if (!target) {
       return target ?? '';
     }

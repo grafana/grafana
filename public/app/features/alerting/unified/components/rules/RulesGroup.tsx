@@ -3,6 +3,7 @@ import pluralize from 'pluralize';
 import React, { FC, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { logInfo } from '@grafana/runtime';
 import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
@@ -213,12 +214,22 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
         </h6>
         <div className={styles.spacer} />
         <div className={styles.headerStats}>
-          <RuleStats showInactive={false} group={group} />
+          <RuleStats group={group} />
         </div>
+        {isProvisioned && (
+          <>
+            <div className={styles.actionsSeparator}>|</div>
+            <div className={styles.actionIcons}>
+              <Badge color="purple" text="Provisioned" />
+            </div>
+          </>
+        )}
         {!!actionIcons.length && (
           <>
             <div className={styles.actionsSeparator}>|</div>
-            <div className={styles.actionIcons}>{actionIcons}</div>
+            <div className={styles.actionIcons}>
+              <Stack gap={0.5}>{actionIcons}</Stack>
+            </div>
           </>
         )}
       </div>
@@ -313,9 +324,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     margin: 0 ${theme.spacing(2)};
   `,
   actionIcons: css`
-    & > * + * {
-      margin-left: ${theme.spacing(0.5)};
-    }
+    width: 80px;
+    align-items: center;
   `,
   rulesTable: css`
     margin-top: ${theme.spacing(3)};

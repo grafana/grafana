@@ -1,9 +1,8 @@
-import React from 'react';
 import { Observable, of } from 'rxjs';
 
 import { SceneComponentProps } from '../../core/types';
 import { VariableDependencyConfig } from '../VariableDependencyConfig';
-import { VariableValueSelect } from '../components/VariableValueSelect';
+import { renderSelectForVariable } from '../components/VariableValueSelect';
 import { VariableValueOption } from '../types';
 
 import { MultiValueVariable, MultiValueVariableState, VariableGetOptionsArgs } from './MultiValueVariable';
@@ -19,6 +18,7 @@ export class CustomVariable extends MultiValueVariable<CustomVariableState> {
 
   public constructor(initialState: Partial<CustomVariableState>) {
     super({
+      type: 'custom',
       query: '',
       value: '',
       text: '',
@@ -30,7 +30,6 @@ export class CustomVariable extends MultiValueVariable<CustomVariableState> {
 
   public getValueOptions(args: VariableGetOptionsArgs): Observable<VariableValueOption[]> {
     const match = this.state.query.match(/(?:\\,|[^,])+/g) ?? [];
-
     const options = match.map((text) => {
       text = text.replace(/\\,/g, ',');
       const textMatch = /^(.+)\s:\s(.+)$/g.exec(text) ?? [];
@@ -43,14 +42,9 @@ export class CustomVariable extends MultiValueVariable<CustomVariableState> {
     });
 
     return of(options);
-
-    // TODO: Support 'All'
-    //if (this.state.includeAll) {
-    //  options.unshift({ text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false });
-    //}
   }
 
   public static Component = ({ model }: SceneComponentProps<MultiValueVariable>) => {
-    return <VariableValueSelect model={model} />;
+    return renderSelectForVariable(model);
   };
 }

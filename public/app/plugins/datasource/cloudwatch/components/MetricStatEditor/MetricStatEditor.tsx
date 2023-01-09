@@ -19,7 +19,6 @@ export type Props = {
   datasource: CloudWatchDatasource;
   disableExpressions?: boolean;
   onChange: (value: MetricStat) => void;
-  onRunQuery: () => void;
 };
 
 export function MetricStatEditor({
@@ -28,7 +27,6 @@ export function MetricStatEditor({
   datasource,
   disableExpressions = false,
   onChange,
-  onRunQuery,
 }: React.PropsWithChildren<Props>) {
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, metricStat);
@@ -47,14 +45,9 @@ export function MetricStatEditor({
     });
   }, [accountState, metricStat, onChange, datasource.api]);
 
-  const onMetricStatChange = (metricStat: MetricStat) => {
-    onChange(metricStat);
-    onRunQuery();
-  };
-
   const onNamespaceChange = async (metricStat: MetricStat) => {
     const validatedQuery = await validateMetricName(metricStat);
-    onMetricStatChange(validatedQuery);
+    onChange(validatedQuery);
   };
 
   const validateMetricName = async (metricStat: MetricStat) => {
@@ -78,7 +71,6 @@ export function MetricStatEditor({
             accountId={metricStat.accountId}
             onChange={(accountId?: string) => {
               onChange({ ...metricStat, accountId });
-              onRunQuery();
             }}
             accountOptions={accountState?.value || []}
           ></Account>
@@ -105,7 +97,7 @@ export function MetricStatEditor({
               options={metrics}
               onChange={({ value: metricName }) => {
                 if (metricName) {
-                  onMetricStatChange({ ...metricStat, metricName });
+                  onChange({ ...metricStat, metricName });
                 }
               }}
             />
@@ -130,7 +122,7 @@ export function MetricStatEditor({
                   return;
                 }
 
-                onMetricStatChange({ ...metricStat, statistic });
+                onChange({ ...metricStat, statistic });
               }}
             />
           </EditorField>
@@ -141,7 +133,7 @@ export function MetricStatEditor({
         <EditorField label="Dimensions">
           <Dimensions
             metricStat={metricStat}
-            onChange={(dimensions) => onMetricStatChange({ ...metricStat, dimensions })}
+            onChange={(dimensions) => onChange({ ...metricStat, dimensions })}
             dimensionKeys={dimensionKeys}
             disableExpressions={disableExpressions}
             datasource={datasource}
@@ -157,7 +149,7 @@ export function MetricStatEditor({
               id={`${refId}-cloudwatch-match-exact`}
               value={!!metricStat.matchExact}
               onChange={(e) => {
-                onMetricStatChange({
+                onChange({
                   ...metricStat,
                   matchExact: e.currentTarget.checked,
                 });

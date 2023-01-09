@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/notifications/
+  - ../notifications/
 description: Notifications
 keywords:
   - grafana

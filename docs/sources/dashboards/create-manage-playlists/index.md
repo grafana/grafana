@@ -1,14 +1,14 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/playlist/
-  - /docs/grafana/latest/reference/playlist/
+  - ../reference/playlist/
+  - playlist/
 keywords:
   - grafana
   - dashboard
   - documentation
   - playlist
-title: Manage playlists
 menuTitle: Manage playlists
+title: Manage playlists
 weight: 9
 ---
 

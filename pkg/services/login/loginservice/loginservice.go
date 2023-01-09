@@ -295,7 +295,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 		// add role
 		cmd := &org.AddOrgUserCommand{UserID: usr.ID, Role: orgRole, OrgID: orgId}
 		err := ls.orgService.AddOrgUser(ctx, cmd)
-		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
+		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
 			return err
 		}
 	}
@@ -310,11 +310,12 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 				logger.Error(err.Error(), "userId", cmd.UserID, "orgId", cmd.OrgID)
 				continue
 			}
-			if err := ls.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserID); err != nil {
-				logger.Warn("failed to delete permissions for user", "userID", cmd.UserID, "orgID", orgId)
-			}
 
 			return err
+		}
+
+		if err := ls.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserID); err != nil {
+			logger.Warn("failed to delete permissions for user", "error", err, "userID", cmd.UserID, "orgID", orgId)
 		}
 	}
 

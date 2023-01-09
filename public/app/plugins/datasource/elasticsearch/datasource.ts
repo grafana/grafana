@@ -418,7 +418,7 @@ export class ElasticDatasource
       (query): ElasticsearchQuery => ({
         ...query,
         datasource: this.getRef(),
-        query: this.interpolateLuceneQuery(query.query || '', scopedVars),
+        query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars)),
         bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
       })
     );
@@ -638,7 +638,8 @@ export class ElasticDatasource
     const shouldRunTroughBackend =
       request.app === CoreApp.Explore && config.featureToggles.elasticsearchBackendMigration;
     if (shouldRunTroughBackend) {
-      return super.query(request).pipe(tap((response) => trackQuery(response, request.targets, request.app)));
+      const start = new Date();
+      return super.query(request).pipe(tap((response) => trackQuery(response, request, start)));
     }
     let payload = '';
     const targets = this.interpolateVariablesInQueries(cloneDeep(request.targets), request.scopedVars);
@@ -705,6 +706,7 @@ export class ElasticDatasource
 
     const url = this.getMultiSearchUrl();
 
+    const start = new Date();
     return this.post(url, payload).pipe(
       map((res) => {
         const er = new ElasticResponse(sentTargets, res);
@@ -721,7 +723,7 @@ export class ElasticDatasource
 
         return er.getTimeSeries();
       }),
-      tap((response) => trackQuery(response, request.targets, request.app))
+      tap((response) => trackQuery(response, request, start))
     );
   }
 
@@ -967,6 +969,37 @@ export class ElasticDatasource
       }
     }
     return { ...query, query: expression };
+  }
+
+  addAdHocFilters(query: string) {
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    if (adhocFilters.length === 0) {
+      return query;
+    }
+    const esFilters = adhocFilters.map((filter) => {
+      const { key, operator, value } = filter;
+      if (!key || !value) {
+        return;
+      }
+      switch (operator) {
+        case '=':
+          return `${key}:"${value}"`;
+        case '!=':
+          return `-${key}:"${value}"`;
+        case '=~':
+          return `${key}:/${value}/`;
+        case '!~':
+          return `-${key}:/${value}/`;
+        case '>':
+          return `${key}:>${value}`;
+        case '<':
+          return `${key}:<${value}`;
+      }
+      return;
+    });
+
+    const finalQuery = [query, ...esFilters].filter((f) => f).join(' AND ');
+    return finalQuery;
   }
 }
 

@@ -119,8 +119,8 @@ export const getVisibleLabels = (config: UPlotConfigBuilder, frames: DataFrame[]
       const fieldIndex = plotInstance.props?.dataFrameFieldIndex?.fieldIndex;
 
       if (frameIndex !== undefined && fieldIndex !== undefined) {
-        const field = frames[frameIndex].fields[fieldIndex];
-        if (field.labels) {
+        const field = frames[frameIndex]?.fields[fieldIndex];
+        if (field?.labels) {
           // Note that this may be an empty object in the case of a metric being rendered with no labels
           visibleLabels.push({
             labels: field.labels,

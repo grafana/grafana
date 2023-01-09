@@ -3,13 +3,12 @@ import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   FileDropzone,
   InlineField,
   InlineFieldRow,
   InlineLabel,
-  QueryField,
   RadioButtonGroup,
   Themeable2,
   withTheme2,
@@ -28,7 +27,7 @@ import { getDS } from './utils';
 
 interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
 
-const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceId';
+const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceql';
 
 class TempoQueryFieldComponent extends React.PureComponent<Props> {
   constructor(props: Props) {
@@ -77,8 +76,8 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
 
     const graphDatasourceUid = datasource.serviceMap?.datasourceUid;
 
-    const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
-      { value: 'traceId', label: 'TraceID' },
+    let queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
+      { value: 'traceql', label: 'TraceQL' },
       { value: 'upload', label: 'JSON File' },
       { value: 'serviceMap', label: 'Service Graph' },
     ];
@@ -95,10 +94,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
         // Place at end as Loki Search if native search is enabled
         queryTypeOptions.push({ value: 'search', label: 'Loki Search' });
       }
-    }
-
-    if (config.featureToggles.traceqlEditor) {
-      queryTypeOptions.push({ value: 'traceql', label: 'TraceQL' });
     }
 
     return (
@@ -154,27 +149,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
               }}
             />
           </div>
-        )}
-        {query.queryType === 'traceId' && (
-          <InlineFieldRow>
-            <InlineField label="Trace ID" labelWidth={14} grow>
-              <QueryField
-                query={query.query}
-                onChange={(val) => {
-                  onChange({
-                    ...query,
-                    query: val,
-                    queryType: 'traceId',
-                    linkedQuery: undefined,
-                  });
-                }}
-                onBlur={this.props.onBlur}
-                onRunQuery={this.props.onRunQuery}
-                placeholder={'Enter a Trace ID (run with Shift+Enter)'}
-                portalOrigin="tempo"
-              />
-            </InlineField>
-          </InlineFieldRow>
         )}
         {query.queryType === 'serviceMap' && (
           <ServiceGraphSection graphDatasourceUid={graphDatasourceUid} query={query} onChange={onChange} />
