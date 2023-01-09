@@ -46,7 +46,7 @@ import { decorateData } from '../utils/decorators';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
 import { updateTime } from './time';
-import { createCacheKey, getResultsFromCache, isSuppQueryType, storeSuppQueryEnabled, SuppQueryType } from './utils';
+import { createCacheKey, getResultsFromCache, storeSuppQueryEnabled, SuppQueryType, SUPP_QUERY_TYPES } from './utils';
 
 //
 // Actions and Payloads
@@ -239,14 +239,11 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
 
     const suppQueries = getState().explore[exploreId]!.suppQueries;
     // Cancel all data providers
-    for (const type of Object.keys(suppQueries)) {
-      if (!isSuppQueryType(type)) {
-        continue;
-      }
+    for (const type of SUPP_QUERY_TYPES) {
       dispatch(storeSuppQueryDataProviderAction({ exploreId, dataProvider: undefined, type }));
 
       // And clear any incomplete data
-      if (suppQueries[type].data?.state !== LoadingState.Done) {
+      if (suppQueries[type]?.data?.state !== LoadingState.Done) {
         dispatch(cleanSuppQueryAction({ exploreId, type }));
       }
     }
@@ -434,7 +431,6 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
-      suppQueries,
     } = exploreItemState;
     let newQuerySub;
 
@@ -567,10 +563,7 @@ export const runQueries = (
         });
 
       if (live) {
-        for (const type of Object.keys(suppQueries)) {
-          if (!isSuppQueryType(type)) {
-            continue;
-          }
+        for (const type of SUPP_QUERY_TYPES) {
           dispatch(
             storeSuppQueryDataProviderAction({
               exploreId,

@@ -23,13 +23,12 @@ import { toRawTimeRange } from '../utils/time';
 export enum SuppQueryType {
   LogsVolume = 'LogsVolume',
 }
+
+export const SUPP_QUERY_TYPES: SuppQueryType[] = [SuppQueryType.LogsVolume];
 // Used to match suppQueryType to corresponding local storage key
+// TODO: Remove this and unify enum values with SETTINGS_KEYS.enableVolumeHistogram
 const suppQuerySettings: { [key in SuppQueryType]: string } = {
   [SuppQueryType.LogsVolume]: SETTINGS_KEYS.enableVolumeHistogram,
-};
-// Used to validate query type
-export const isSuppQueryType = (type: string): type is SuppQueryType => {
-  return Object.values(SuppQueryType).includes(type as SuppQueryType);
 };
 
 export const DEFAULT_RANGE = {
@@ -50,16 +49,14 @@ export const storeSuppQueryEnabled = (enabled: boolean, type: SuppQueryType): vo
 
 export const loadSuppQueries = (): SuppQueries => {
   // We default to true for all supp queries
-  const suppQueries: SuppQueries = {
+  let suppQueries: SuppQueries = {
     [SuppQueryType.LogsVolume]: { enabled: true },
   };
 
-  for (const type of Object.keys(SuppQueryType)) {
-    if (isSuppQueryType(type) && suppQuerySettings[type]) {
-      // Only if "false" value in local storage, we disable it
-      if (store.get(suppQuerySettings[type]) === 'false') {
-        suppQueries[type] = { enabled: false };
-      }
+  for (const type of SUPP_QUERY_TYPES) {
+    // Only if "false" value in local storage, we disable it
+    if (store.get(suppQuerySettings[type]) === 'false') {
+      suppQueries[type] = { enabled: false };
     }
   }
   return suppQueries;
