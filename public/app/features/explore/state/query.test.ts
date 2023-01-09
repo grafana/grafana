@@ -13,7 +13,7 @@ import {
   MutableDataFrame,
   RawTimeRange,
 } from '@grafana/data';
-import { ExploreId, ExploreItemState, StoreState, SupportingQueryType, ThunkDispatch } from 'app/types';
+import { ExploreId, ExploreItemState, StoreState, SupplementaryQueryType, ThunkDispatch } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { configureStore } from '../../../store/configureStore';
@@ -26,15 +26,15 @@ import {
   addResultsToCache,
   cancelQueries,
   cancelQueriesAction,
-  cleanSupportingQueryAction,
+  cleanSupplementaryQueryAction,
   clearCache,
   importQueries,
   queryReducer,
   runQueries,
   scanStartAction,
   scanStopAction,
-  storeSupportingQueryDataProviderAction,
-  setSupportingQueryEnabled,
+  storeSupplementaryQueryDataProviderAction,
+  setSupplementaryQueryEnabled,
 } from './query';
 import { makeExplorePaneState } from './utils';
 
@@ -164,7 +164,7 @@ describe('running queries', () => {
           querySubscription: unsubscribable,
           queries: ['A'],
           range: testRange,
-          supportingQueries: { [SupportingQueryType.LogsVolume]: { enabled: true } },
+          supplementaryQueries: { [SupplementaryQueryType.LogsVolume]: { enabled: true } },
         },
       },
 
@@ -180,8 +180,8 @@ describe('running queries', () => {
     expect(dispatchedActions).toEqual([
       scanStopAction({ exploreId }),
       cancelQueriesAction({ exploreId }),
-      storeSupportingQueryDataProviderAction({ exploreId, type: SupportingQueryType.LogsVolume }),
-      cleanSupportingQueryAction({ exploreId, type: SupportingQueryType.LogsVolume }),
+      storeSupplementaryQueryDataProviderAction({ exploreId, type: SupplementaryQueryType.LogsVolume }),
+      cleanSupplementaryQueryAction({ exploreId, type: SupplementaryQueryType.LogsVolume }),
     ]);
   });
 });
@@ -434,9 +434,11 @@ describe('reducer', () => {
       expect(unsubscribes).toHaveLength(1);
       expect(unsubscribes[0]).toBeCalled();
 
-      expect(getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].data).toBeUndefined();
       expect(
-        getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].dataProvider
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
+      ).toBeUndefined();
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
       ).toBeUndefined();
     });
 
@@ -451,17 +453,23 @@ describe('reducer', () => {
       };
       await dispatch(runQueries(ExploreId.left));
 
-      expect(getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].data).toBeDefined();
-      expect(getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].data!.state).toBe(
-        LoadingState.Loading
-      );
       expect(
-        getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].dataProvider
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
+      ).toBeDefined();
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data!.state
+      ).toBe(LoadingState.Loading);
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
       ).toBeDefined();
 
       await dispatch(cancelQueries(ExploreId.left));
-      expect(getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].data).toBeUndefined();
-      expect(getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].data).toBeUndefined();
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
+      ).toBeUndefined();
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
+      ).toBeUndefined();
     });
 
     it('keeps complete log volume data when main query is canceled', async () => {
@@ -473,58 +481,68 @@ describe('reducer', () => {
       };
       await dispatch(runQueries(ExploreId.left));
 
-      expect(getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].data).toBeDefined();
-      expect(getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].data!.state).toBe(
-        LoadingState.Done
-      );
       expect(
-        getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].dataProvider
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
+      ).toBeDefined();
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data!.state
+      ).toBe(LoadingState.Done);
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
       ).toBeDefined();
 
       await dispatch(cancelQueries(ExploreId.left));
-      expect(getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].data).toBeDefined();
-      expect(getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].data!.state).toBe(
-        LoadingState.Done
-      );
       expect(
-        getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].dataProvider
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
+      ).toBeDefined();
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data!.state
+      ).toBe(LoadingState.Done);
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
       ).toBeUndefined();
     });
 
     it('do not load logsVolume data when disabled', async () => {
       // turn logsvolume off
-      dispatch(setSupportingQueryEnabled(ExploreId.left, false, SupportingQueryType.LogsVolume));
-      expect(getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].enabled).toBe(false);
+      dispatch(setSupplementaryQueryEnabled(ExploreId.left, false, SupplementaryQueryType.LogsVolume));
+      expect(getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].enabled).toBe(
+        false
+      );
 
       // verify that if we run a query, it will not do logsvolume, but the Provider will still be set
       await dispatch(runQueries(ExploreId.left));
-      expect(getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].data).toBeUndefined();
       expect(
-        getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].dataSubscription
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
       ).toBeUndefined();
       expect(
-        getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].dataProvider
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataSubscription
+      ).toBeUndefined();
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
       ).toBeDefined();
     });
 
     it('load logsVolume data when it gets enabled', async () => {
       // first it is disabled
-      dispatch(setSupportingQueryEnabled(ExploreId.left, false, SupportingQueryType.LogsVolume));
+      dispatch(setSupplementaryQueryEnabled(ExploreId.left, false, SupplementaryQueryType.LogsVolume));
 
       // runQueries sets up the logsVolume query, but does not run it
       await dispatch(runQueries(ExploreId.left));
       expect(
-        getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].dataProvider
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
       ).toBeDefined();
 
       // we turn logsvolume on
-      await dispatch(setSupportingQueryEnabled(ExploreId.left, true, SupportingQueryType.LogsVolume));
+      await dispatch(setSupplementaryQueryEnabled(ExploreId.left, true, SupplementaryQueryType.LogsVolume));
 
       // verify it was turned on
-      expect(getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].enabled).toBe(true);
+      expect(getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].enabled).toBe(
+        true
+      );
 
       expect(
-        getState().explore[ExploreId.left].supportingQueries[SupportingQueryType.LogsVolume].dataSubscription
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataSubscription
       ).toBeDefined();
     });
   });

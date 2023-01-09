@@ -207,7 +207,7 @@ export interface ExploreItemState {
   /**
    * Supplementary queries are additional queries used in Explore, e.g. for logs volume
    */
-  supportingQueries: SupportingQueries;
+  supplementaryQueries: SupplementaryQueries;
 
   panelsState: ExplorePanelsState;
 
@@ -276,10 +276,10 @@ export interface SuppQuery {
   data?: DataQueryResponse;
 }
 
-export type SupportingQueries = {
-  [key in SupportingQueryType]: SuppQuery;
+export type SupplementaryQueries = {
+  [key in SupplementaryQueryType]: SuppQuery;
 };
 
-export enum SupportingQueryType {
+export enum SupplementaryQueryType {
   LogsVolume = 'LogsVolume',
 }

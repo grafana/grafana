@@ -10,7 +10,7 @@ import { ExploreId } from 'app/types/explore';
 
 import { importQueries, runQueries } from './query';
 import { changeRefreshInterval } from './time';
-import { createEmptyQueryResponse, loadAndInitDatasource, loadSupportingQueries } from './utils';
+import { createEmptyQueryResponse, loadAndInitDatasource, loadSupplementaryQueries } from './utils';
 
 //
 // Actions and Payloads
@@ -99,7 +99,7 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
       graphResult: null,
       tableResult: null,
       logsResult: null,
-      supportingQueries: loadSupportingQueries(),
+      supplementaryQueries: loadSupplementaryQueries(),
       queryResponse: createEmptyQueryResponse(),
       loading: false,
       queryKeys: [],

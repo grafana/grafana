@@ -12,7 +12,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
-import { ExploreItemState, SupportingQueries, SupportingQueryType } from 'app/types/explore';
+import { ExploreItemState, SupplementaryQueries, SupplementaryQueryType } from 'app/types/explore';
 
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
@@ -20,12 +20,12 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { SETTINGS_KEYS } from '../utils/logs';
 import { toRawTimeRange } from '../utils/time';
 
-export const SUPPORTING_QUERY_TYPES: SupportingQueryType[] = [SupportingQueryType.LogsVolume];
+export const SUPPLEMENTARY_QUERY_TYPES: SupplementaryQueryType[] = [SupplementaryQueryType.LogsVolume];
 
-// Used to match supportingQueryType to corresponding local storage key
+// Used to match supplementaryQueryType to corresponding local storage key
 // TODO: Remove this and unify enum values with SETTINGS_KEYS.enableVolumeHistogram
-const supportingQuerySettings: { [key in SupportingQueryType]: string } = {
-  [SupportingQueryType.LogsVolume]: SETTINGS_KEYS.enableVolumeHistogram,
+const supplementaryQuerySettings: { [key in SupplementaryQueryType]: string } = {
+  [SupplementaryQueryType.LogsVolume]: SETTINGS_KEYS.enableVolumeHistogram,
 };
 
 export const DEFAULT_RANGE = {
@@ -38,25 +38,25 @@ export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
 };
 
-export const storeSupportingQueryEnabled = (enabled: boolean, type: SupportingQueryType): void => {
-  if (supportingQuerySettings[type]) {
-    store.set(supportingQuerySettings[type], enabled ? 'true' : 'false');
+export const storeSupplementaryQueryEnabled = (enabled: boolean, type: SupplementaryQueryType): void => {
+  if (supplementaryQuerySettings[type]) {
+    store.set(supplementaryQuerySettings[type], enabled ? 'true' : 'false');
   }
 };
 
-export const loadSupportingQueries = (): SupportingQueries => {
+export const loadSupplementaryQueries = (): SupplementaryQueries => {
   // We default to true for all supp queries
-  let supportingQueries: SupportingQueries = {
-    [SupportingQueryType.LogsVolume]: { enabled: true },
+  let supplementaryQueries: SupplementaryQueries = {
+    [SupplementaryQueryType.LogsVolume]: { enabled: true },
   };
 
-  for (const type of SUPPORTING_QUERY_TYPES) {
+  for (const type of SUPPLEMENTARY_QUERY_TYPES) {
     // Only if "false" value in local storage, we disable it
-    if (store.get(supportingQuerySettings[type]) === 'false') {
-      supportingQueries[type] = { enabled: false };
+    if (store.get(supplementaryQuerySettings[type]) === 'false') {
+      supplementaryQueries[type] = { enabled: false };
     }
   }
-  return supportingQueries;
+  return supplementaryQueries;
 };
 
 /**
@@ -91,7 +91,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
-  supportingQueries: loadSupportingQueries(),
+  supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
 });
 
