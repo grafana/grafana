@@ -6,6 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
+import { ElementState } from '../../../features/canvas/runtime/element';
 import { FrameState } from '../../../features/canvas/runtime/frame';
 
 import { CanvasPanel } from './CanvasPanel';
@@ -207,25 +208,12 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
     }
   };
 
-  const contextMenuAction = (actionType: string) => {
+  const contextMenuAction = (actionType: LayerActionID) => {
     scene.selection.pipe(first()).subscribe((currentSelectedElements) => {
-      const currentSelectedElement = currentSelectedElements[0];
-      const currentLayer = currentSelectedElement.parent!;
-
-      switch (actionType) {
-        case LayerActionID.Delete:
-          currentLayer.doAction(LayerActionID.Delete, currentSelectedElement);
-          break;
-        case LayerActionID.Duplicate:
-          currentLayer.doAction(LayerActionID.Duplicate, currentSelectedElement);
-          break;
-        case LayerActionID.MoveTop:
-          currentLayer.doAction(LayerActionID.MoveTop, currentSelectedElement);
-          break;
-        case LayerActionID.MoveBottom:
-          currentLayer.doAction(LayerActionID.MoveBottom, currentSelectedElement);
-          break;
-      }
+      const currentLayer = currentSelectedElements[0].parent!;
+      currentSelectedElements.forEach((currentSelectedElement: ElementState) => {
+        currentLayer.doAction(actionType, currentSelectedElement);
+      });
     });
   };
 
