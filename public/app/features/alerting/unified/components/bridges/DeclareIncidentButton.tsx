@@ -18,12 +18,12 @@ export const DeclareIncident: FC<Props> = ({ title = '', severity = '' }) => {
 
   return (
     <>
-      {loading && (
+      {loading === true && (
         <Button size="sm" type="button" disabled>
           Declare Incident
         </Button>
       )}
-      {!installed && (
+      {installed === false && (
         <Tooltip content={'Grafana Incident is not installed or is not configured correctly'}>
           <Button size="sm" type="button" disabled>
             Declare Incident

@@ -24,9 +24,9 @@ export interface PluginBridgeProps {
 
 interface PluginBridgeHookResponse {
   loading: boolean;
-  installed: boolean;
+  installed?: boolean;
   error?: Error;
-  settings: PluginMeta<{}> | {};
+  settings?: PluginMeta<{}>;
 }
 
 export interface PluginBridgeProps {
@@ -59,11 +59,11 @@ export function usePluginBridge(plugin: PluginID): PluginBridgeHookResponse {
   const isLoading = loading && !value;
 
   if (isLoading) {
-    return { loading, installed: false, settings: {} };
+    return { loading: true };
   }
 
   if (!installed || !enabled) {
-    return { loading, installed: false, settings: {} };
+    return { loading: false, installed: false };
   }
 
   return { loading, installed: true, settings: value };

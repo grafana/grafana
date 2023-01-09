@@ -191,7 +191,6 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
           onClipboardError={(copiedText) => {
             notifyApp.error('Error while copying URL', copiedText);
           }}
-          className={style.button}
           size="sm"
           getText={buildShareUrl}
         >
@@ -200,7 +199,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
       );
 
       rightButtons.push(
-        <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
+        <LinkButton size="sm" key="edit" variant="secondary" icon="pen" href={editURL}>
           Edit
         </LinkButton>
       );
@@ -209,8 +208,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
     if (isRemovable && rulerRule && !isFederated && !isProvisioned) {
       rightButtons.push(
         <Button
-          className={style.button}
-          size="xs"
+          size="sm"
           type="button"
           key="delete"
           variant="secondary"
@@ -255,9 +253,5 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: space-between;
     flex-wrap: wrap;
     border-bottom: solid 1px ${theme.colors.border.medium};
-  `,
-  button: css`
-    height: 24px;
-    font-size: ${theme.typography.size.sm};
   `,
 });
