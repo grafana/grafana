@@ -18,20 +18,22 @@ import (
 	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-composableKinds: PanelCfg: lineage: {
-	seqs: [
-		{
-			schemas: [
-				{
-					PanelOptions: {
-						frameIndex:    number | *0
-						showHeader:    bool | *true
-						showTypeIcons: bool | *false
-						sortBy?: [...ui.TableSortByFieldState]
-					} @cuetsy(kind="interface")
-					PanelFieldConfig: ui.TableFieldOptions & {} @cuetsy(kind="interface")
-				},
-			]
-		},
-	]
+composableKinds: PanelCfg: {
+	lineage: {
+		seqs: [
+			{
+				schemas: [
+					{
+						PanelOptions: {
+							frameIndex:    number | *0
+							showHeader:    bool | *true
+							showTypeIcons: bool | *false
+							sortBy?: [...ui.TableSortByFieldState]
+						} @cuetsy(kind="interface")
+						PanelFieldConfig: ui.TableFieldOptions & {} @cuetsy(kind="interface")
+					},
+				]
+			},
+		]
+	}
 }

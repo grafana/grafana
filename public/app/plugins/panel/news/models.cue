@@ -14,18 +14,22 @@
 
 package grafanaplugin
 
-composableKinds: PanelCfg: lineage: {
-	seqs: [
-		{
-			schemas: [
-				{
-					PanelOptions: {
-						// empty/missing will default to grafana blog
-						feedUrl?:   string
-						showImage?: bool | *true
-					} @cuetsy(kind="interface")
-				},
-			]
-		},
-	]
+composableKinds: PanelCfg: {
+	maturity: "experimental"
+
+	lineage: {
+		seqs: [
+			{
+				schemas: [
+					{
+						PanelOptions: {
+							// empty/missing will default to grafana blog
+							feedUrl?:   string
+							showImage?: bool | *true
+						} @cuetsy(kind="interface")
+					},
+				]
+			},
+		]
+	}
 }

@@ -18,20 +18,24 @@ import (
 	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-composableKinds: PanelCfg: lineage: {
-	seqs: [
-		{
-			schemas: [
-				{
-					PanelOptions: {
-						ui.SingleStatBaseOptions
-						displayMode:  ui.BarGaugeDisplayMode | *"gradient"
-						showUnfilled: bool | *true
-						minVizWidth:  uint32 | *0
-						minVizHeight: uint32 | *10
-					} @cuetsy(kind="interface")
-				},
-			]
-		},
-	]
+composableKinds: PanelCfg: {
+	maturity: "experimental"
+
+	lineage: {
+		seqs: [
+			{
+				schemas: [
+					{
+						PanelOptions: {
+							ui.SingleStatBaseOptions
+							displayMode:  ui.BarGaugeDisplayMode | *"gradient"
+							showUnfilled: bool | *true
+							minVizWidth:  uint32 | *0
+							minVizHeight: uint32 | *10
+						} @cuetsy(kind="interface")
+					},
+				]
+			},
+		]
+	}
 }

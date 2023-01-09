@@ -18,18 +18,20 @@ import (
 	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-composableKinds: PanelCfg: lineage: {
-	seqs: [
-		{
-			schemas: [
-				{
-					PanelOptions: {
-						legend:  ui.VizLegendOptions
-						tooltip: ui.VizTooltipOptions
-					} @cuetsy(kind="interface")
-					PanelFieldConfig: ui.GraphFieldConfig & {} @cuetsy(kind="interface")
-				},
-			]
-		},
-	]
+composableKinds: PanelCfg: {
+	lineage: {
+		seqs: [
+			{
+				schemas: [
+					{
+						PanelOptions: {
+							legend:  ui.VizLegendOptions
+							tooltip: ui.VizTooltipOptions
+						} @cuetsy(kind="interface")
+						PanelFieldConfig: ui.GraphFieldConfig & {} @cuetsy(kind="interface")
+					},
+				]
+			},
+		]
+	}
 }

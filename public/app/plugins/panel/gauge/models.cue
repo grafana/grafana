@@ -18,18 +18,22 @@ import (
 	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-composableKinds: PanelCfg: lineage: {
-	seqs: [
-		{
-			schemas: [
-				{
-					PanelOptions: {
-						ui.SingleStatBaseOptions
-						showThresholdLabels:  bool | *false
-						showThresholdMarkers: bool | *true
-					} @cuetsy(kind="interface")
-				},
-			]
-		},
-	]
+composableKinds: PanelCfg: {
+	maturity: "experimental"
+
+	lineage: {
+		seqs: [
+			{
+				schemas: [
+					{
+						PanelOptions: {
+							ui.SingleStatBaseOptions
+							showThresholdLabels:  bool | *false
+							showThresholdMarkers: bool | *true
+						} @cuetsy(kind="interface")
+					},
+				]
+			},
+		]
+	}
 }

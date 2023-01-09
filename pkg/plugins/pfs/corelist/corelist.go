@@ -24,7 +24,7 @@ func New(rt *thema.Runtime) []pfs.ParsedPlugin {
 		pl = make([]pfs.ParsedPlugin, len(coreTrees))
 		copy(pl, coreTrees)
 	} else {
-		return coreTreeList(rt)
+		return corePlugins(rt)
 	}
 	return pl
 }

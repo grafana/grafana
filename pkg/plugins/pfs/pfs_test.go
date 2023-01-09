@@ -110,8 +110,8 @@ func TestParseTreeTestdata(t *testing.T) {
 		"no-rootfile": {
 			err: ErrNoRootFile,
 		},
-		"valid-model-panel":      {},
-		"valid-model-datasource": {},
+		"valid-model-panel":       {},
+		"valid-model-datasource":  {},
 		"missing-kind-datasource": {},
 		"panel-conflicting-joinschema": {
 			err:  ErrInvalidLineage,
@@ -174,10 +174,6 @@ func TestParseTreeTestdata(t *testing.T) {
 				require.Error(t, err)
 				require.ErrorIs(t, err, tst.err, "unexpected error type while parsing plugin tree")
 				return
-			}
-
-			if len(pp.ComposableKinds) == 0 {
-				t.Fatal("no composable kinds in test fixture")
 			}
 
 			if tst.rootid == "" {

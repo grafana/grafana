@@ -18,20 +18,24 @@ import (
 	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-composableKinds: PanelCfg: lineage: {
-	seqs: [
-		{
-			schemas: [
-				{
-					PanelOptions: {
-						ui.SingleStatBaseOptions
-						graphMode:   ui.BigValueGraphMode | *"area"
-						colorMode:   ui.BigValueColorMode | *"value"
-						justifyMode: ui.BigValueJustifyMode | *"auto"
-						textMode:    ui.BigValueTextMode | *"auto"
-					} @cuetsy(kind="interface")
-				},
-			]
-		},
-	]
+composableKinds: PanelCfg: {
+	maturity: "experimental"
+
+	lineage: {
+		seqs: [
+			{
+				schemas: [
+					{
+						PanelOptions: {
+							ui.SingleStatBaseOptions
+							graphMode:   ui.BigValueGraphMode | *"area"
+							colorMode:   ui.BigValueColorMode | *"value"
+							justifyMode: ui.BigValueJustifyMode | *"auto"
+							textMode:    ui.BigValueTextMode | *"auto"
+						} @cuetsy(kind="interface")
+					},
+				]
+			},
+		]
+	}
 }

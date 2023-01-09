@@ -12,7 +12,7 @@ GrafanaPlugin: {
 	// This struct is open for forwards compatibility - older versions of Grafana (or
 	// dependent tooling) should not break if new versions introduce additional schema interfaces.
 	composableKinds?: [Iface=string]: kindsys.Composable & {
-		name: Iface
+		name: Iface + "-" + id
 		schemaInterface: Iface
 		lineage: name: id
 	}

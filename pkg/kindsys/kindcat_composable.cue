@@ -31,5 +31,5 @@ Composable: S={
 //	lineage: { joinSchema: schif.interface }
 //	lineage: { joinSchema: (schif.interface | *{}) }
 
-	lineageIsGroup: schif.group | *false
+	lineageIsGroup: schif.group
 }

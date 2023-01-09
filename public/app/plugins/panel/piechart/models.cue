@@ -18,37 +18,41 @@ import (
 	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
-composableKinds: PanelCfg: lineage: {
-	seqs: [
-		{
-			schemas: [
-				// v0.0
-				{
-          // Select the pie chart display style.
-          PieChartType: "pie" | "donut" @cuetsy(kind="enum")
-          // Select labels to display on the pie chart.
-          //  - Name - The series or field name.
-          //  - Percent - The percentage of the whole.
-          //  - Value - The raw numerical value.
-          PieChartLabels: "name" | "value" | "percent" @cuetsy(kind="enum")
-          // Select values to display in the legend.
-          //  - Percent: The percentage of the whole.
-          //  - Value: The raw numerical value.
-          PieChartLegendValues: "value" | "percent" @cuetsy(kind="enum")
-          PieChartLegendOptions: {
-            ui.VizLegendOptions
-            values: [...PieChartLegendValues]
-          } @cuetsy(kind="interface")
-					PanelOptions: {
-            ui.OptionsWithTooltip
-            ui.SingleStatBaseOptions
-						pieType: PieChartType
-            displayLabels: [...PieChartLabels]
-            legend: PieChartLegendOptions
-					} @cuetsy(kind="interface")
-					PanelFieldConfig: ui.HideableFieldConfig @cuetsy(kind="interface")
-				},
-			]
-		},
-	]
+composableKinds: PanelCfg: {
+	maturity: "experimental"
+
+	lineage: {
+		seqs: [
+			{
+				schemas: [
+					// v0.0
+					{
+						// Select the pie chart display style.
+						PieChartType: "pie" | "donut" @cuetsy(kind="enum")
+						// Select labels to display on the pie chart.
+						//  - Name - The series or field name.
+						//  - Percent - The percentage of the whole.
+						//  - Value - The raw numerical value.
+						PieChartLabels: "name" | "value" | "percent" @cuetsy(kind="enum")
+						// Select values to display in the legend.
+						//  - Percent: The percentage of the whole.
+						//  - Value: The raw numerical value.
+						PieChartLegendValues: "value" | "percent" @cuetsy(kind="enum")
+						PieChartLegendOptions: {
+							ui.VizLegendOptions
+							values: [...PieChartLegendValues]
+						} @cuetsy(kind="interface")
+						PanelOptions: {
+							ui.OptionsWithTooltip
+							ui.SingleStatBaseOptions
+							pieType: PieChartType
+							displayLabels: [...PieChartLabels]
+							legend: PieChartLegendOptions
+						} @cuetsy(kind="interface")
+						PanelFieldConfig: ui.HideableFieldConfig @cuetsy(kind="interface")
+					},
+				]
+			},
+		]
+	}
 }

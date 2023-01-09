@@ -21,7 +21,7 @@ package kindsys
 // On the producer side, Grafana plugin authors may provide Thema lineages
 // within Composable kinds declared in .cue files adjacent to their
 // plugin.json, following a pattern (see
-// github.com/grafana/grafana/pkg/plugins/pfs.#GrafanaPlugin.composableKinds)
+// github.com/grafana/grafana/pkg/plugins/pfs.GrafanaPlugin.composableKinds)
 // corresponding to the name of the schema interface. Each such definition is
 // an answer to "what."
 //
@@ -90,7 +90,7 @@ SchemaInterface: {
 // The canonical list of all Grafana schema interfaces.
 schemaInterfaces: [N=string]: SchemaInterface & { name: N }
 schemaInterfaces: {
-	Panel: {
+	PanelCfg: {
 		interface: {
 			// Defines plugin-specific options for a panel that should be persisted. Required,
 			// though a panel without any options may specify an empty struct.

@@ -14,33 +14,37 @@
 
 package grafanaplugin
 
-composableKinds: PanelCfg: lineage: {
-	seqs: [
-		{
-			schemas: [
-				{
-					TextMode: "html" | "markdown" | "code" @cuetsy(kind="enum",memberNames="HTML|Markdown|Code")
+composableKinds: PanelCfg: {
+	maturity: "experimental"
 
-					CodeLanguage: "json" | "yaml" | "xml" | "typescript" | "sql" | "go" | "markdown" | "html" | *"plaintext"  @cuetsy(kind="enum")
+	lineage: {
+		seqs: [
+			{
+				schemas: [
+					{
+						TextMode: "html" | "markdown" | "code" @cuetsy(kind="enum",memberNames="HTML|Markdown|Code")
 
-					CodeOptions: {
-						// The language passed to monaco code editor
-						language:  CodeLanguage
-						showLineNumbers: bool | *false
-						showMiniMap: bool | *false
-					} @cuetsy(kind="interface")
+						CodeLanguage: "json" | "yaml" | "xml" | "typescript" | "sql" | "go" | "markdown" | "html" | *"plaintext" @cuetsy(kind="enum")
 
-					PanelOptions: {
-						mode:    TextMode | *"markdown"
-						code?: CodeOptions
-						content: string | *"""
+						CodeOptions: {
+							// The language passed to monaco code editor
+							language:        CodeLanguage
+							showLineNumbers: bool | *false
+							showMiniMap:     bool | *false
+						} @cuetsy(kind="interface")
+
+						PanelOptions: {
+							mode:    TextMode | *"markdown"
+							code?:   CodeOptions
+							content: string | *"""
                     # Title
 
                     For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
                     """
-					} @cuetsy(kind="interface")
-				},
-			]
-		},
-	]
+						} @cuetsy(kind="interface")
+					},
+				]
+			},
+		]
+	}
 }

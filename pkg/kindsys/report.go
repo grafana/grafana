@@ -139,12 +139,12 @@ func buildKindStateReport() *KindStateReport {
 	}
 
 	all := kindsys.SchemaInterfaces(nil)
-	// TODO this is all hacks until #59001, which will unite plugins with kindsys
-	for _, tree := range corelist.New(nil) {
-		rp := tree.RootPlugin()
+	for _, pp := range corelist.New(nil) {
 		for _, si := range all {
-			if si.Should(string(rp.Meta().Type)) {
-				n := fmt.Sprintf("%s-%s", strings.Title(rp.Meta().Id), si.Name())
+			if ck, has := pp.ComposableKinds[si.Name()]; has {
+				r.add(ck.Props(), "composable")
+			} else if may := si.Should(string(pp.Properties.Type)); may {
+				n := fmt.Sprintf("%s-%s", strings.Title(pp.Properties.Id), si.Name())
 				props := kindsys.ComposableProperties{
 					CommonProperties: kindsys.CommonProperties{
 						Name:              n,
@@ -154,10 +154,6 @@ func buildKindStateReport() *KindStateReport {
 						LineageIsGroup:    si.IsGroup(),
 						Maturity:          "planned",
 					},
-				}
-				if ck, has := rp.SlotImplementations()[si.Name()]; has {
-					props.CommonProperties.Maturity = "merged"
-					props.CurrentVersion = ck.Latest().Version()
 				}
 				r.add(props, "composable")
 			}

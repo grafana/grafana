@@ -2,7 +2,7 @@ package grafanaplugin
 
 import "github.com/grafana/thema"
 
-Query: thema.#Lineage & {
+composableKinds: Queries: lineage: {
 	name: "valid_model_datasource"
 	seqs: [
 		{
@@ -15,7 +15,7 @@ Query: thema.#Lineage & {
 	]
 }
 
-DSOptions: thema.#Lineage & {
+composableKinds: DatasourceCfg: lineage: {
 	name: "valid_model_datasource"
 	seqs: [
 		{

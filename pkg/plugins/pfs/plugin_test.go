@@ -15,7 +15,7 @@ import (
 // - They're not being loaded correctly - there's a bug in kindsys or pfs somewhere, fix it
 // - The set of schema interfaces has been modified - update the static list here
 func TestSchemaInterfacesAreLoaded(t *testing.T) {
-	knownSI := []string{"PanelCfg", "Queries", "DSCfg"}
+	knownSI := []string{"PanelCfg", "Queries", "DatasourceCfg"}
 	all := kindsys.SchemaInterfaces(nil)
 	var loadedSI []string
 	for k := range all {
