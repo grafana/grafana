@@ -198,3 +198,49 @@ func Test_GetLogGroups_crossAccountQuerying(t *testing.T) {
 		})
 	})
 }
+
+func Test_GetLogGroupFields(t *testing.T) {
+	t.Run("Should map log group fields response", func(t *testing.T) {
+		mockLogsAPI := &mocks.LogsAPI{}
+		mockLogsAPI.On("GetLogGroupFields", mock.Anything).Return(
+			&cloudwatchlogs.GetLogGroupFieldsOutput{
+				LogGroupFields: []*cloudwatchlogs.LogGroupField{
+					{
+						Name:    utils.Pointer("field1"),
+						Percent: utils.Pointer(int64(10)),
+					}, {
+						Name:    utils.Pointer("field2"),
+						Percent: utils.Pointer(int64(10)),
+					}, {
+						Name:    utils.Pointer("field3"),
+						Percent: utils.Pointer(int64(10)),
+					},
+				},
+			}, nil)
+
+		service := NewLogGroupsService(mockLogsAPI, false)
+		resp, err := service.GetLogGroupFields(resources.LogGroupFieldsRequest{})
+
+		assert.NoError(t, err)
+		assert.Equal(t, []resources.ResourceResponse[resources.LogGroupField]{
+			{
+				Value: resources.LogGroupField{
+					Name:    "field1",
+					Percent: 10,
+				},
+			},
+			{
+				Value: resources.LogGroupField{
+					Name:    "field2",
+					Percent: 10,
+				},
+			},
+			{
+				Value: resources.LogGroupField{
+					Name:    "field3",
+					Percent: 10,
+				},
+			},
+		}, resp)
+	})
+}

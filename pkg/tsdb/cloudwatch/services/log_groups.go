@@ -51,3 +51,30 @@ func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resou
 
 	return result, nil
 }
+
+func (s *LogGroupsService) GetLogGroupFields(request resources.LogGroupFieldsRequest) ([]resources.ResourceResponse[resources.LogGroupField], error) {
+	input := &cloudwatchlogs.GetLogGroupFieldsInput{
+		LogGroupName: aws.String(request.LogGroupName),
+	}
+	// we should use LogGroupIdentifier instead of LogGroupName, but currently the api doesn't accept LogGroupIdentifier. need to check if it's a bug or not.
+	// if request.LogGroupARN != "" Lo. need
+	// 	input.LogGroupIdentifier = aws.String(strings.TrimSuffix(request.LogGroupARN, ":*"))
+	// }
+
+	getLogGroupFieldsOutput, err := s.logGroupsAPI.GetLogGroupFields(input)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]resources.ResourceResponse[resources.LogGroupField], 0)
+	for _, logGroupField := range getLogGroupFieldsOutput.LogGroupFields {
+		result = append(result, resources.ResourceResponse[resources.LogGroupField]{
+			Value: resources.LogGroupField{
+				Name:    *logGroupField.Name,
+				Percent: *logGroupField.Percent,
+			},
+		})
+	}
+
+	return result, nil
+}
