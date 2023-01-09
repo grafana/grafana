@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -27,7 +27,7 @@ var (
 		"jwt.invalid_role", errutil.WithPublicMessage("Invalid Role in claim"))
 )
 
-func ProvideJWT(userService user.Service, jwtService models.JWTService, cfg *setting.Cfg) *JWT {
+func ProvideJWT(userService user.Service, jwtService auth.JWTVerifierService, cfg *setting.Cfg) *JWT {
 	return &JWT{
 		log:         log.New(authn.ClientAPIKey),
 		jwtService:  jwtService,
@@ -38,7 +38,7 @@ func ProvideJWT(userService user.Service, jwtService models.JWTService, cfg *set
 type JWT struct {
 	cfg         *setting.Cfg
 	log         log.Logger
-	jwtService  models.JWTService
+	jwtService  auth.JWTVerifierService
 	userService user.Service
 }
 

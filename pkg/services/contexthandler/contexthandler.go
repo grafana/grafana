@@ -77,7 +77,7 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 type ContextHandler struct {
 	Cfg               *setting.Cfg
 	AuthTokenService  auth.UserTokenService
-	JWTAuthService    models.JWTService
+	JWTAuthService    auth.JWTVerifierService
 	RemoteCache       *remotecache.RemoteCache
 	RenderService     rendering.Service
 	SQLStore          db.DB
