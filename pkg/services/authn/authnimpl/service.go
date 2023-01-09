@@ -55,7 +55,7 @@ func ProvideService(
 	}
 
 	if s.cfg.JWTAuthEnabled {
-		s.clients[authn.ClientJWT] = clients.ProvideJWT(userService, jwtService, cfg)
+		s.clients[authn.ClientJWT] = clients.ProvideJWT(jwtService, cfg)
 	}
 
 	// FIXME (kalleep): handle cfg.DisableLogin as well?

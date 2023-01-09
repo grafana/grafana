@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/jmespath/go-jmespath"
@@ -27,20 +26,18 @@ var (
 		"jwt.invalid_role", errutil.WithPublicMessage("Invalid Role in claim"))
 )
 
-func ProvideJWT(userService user.Service, jwtService auth.JWTVerifierService, cfg *setting.Cfg) *JWT {
+func ProvideJWT(jwtService auth.JWTVerifierService, cfg *setting.Cfg) *JWT {
 	return &JWT{
-		cfg:         cfg,
-		log:         log.New(authn.ClientJWT),
-		jwtService:  jwtService,
-		userService: userService,
+		cfg:        cfg,
+		log:        log.New(authn.ClientJWT),
+		jwtService: jwtService,
 	}
 }
 
 type JWT struct {
-	cfg         *setting.Cfg
-	log         log.Logger
-	jwtService  auth.JWTVerifierService
-	userService user.Service
+	cfg        *setting.Cfg
+	log        log.Logger
+	jwtService auth.JWTVerifierService
 }
 
 func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -118,7 +115,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	if id.Login == "" || id.Email == "" {
 		s.log.Debug("Failed to get an authentication claim from JWT",
 			"login", id.Login, "email", id.Email)
-		return nil, ErrJWTMissingClaim
+		return nil, ErrJWTMissingClaim.Errorf("missing login or email claim in JWT")
 	}
 
 	if s.cfg.JWTAuthAutoSignUp {
