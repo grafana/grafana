@@ -54,13 +54,23 @@ func ProvideService(
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
 	}
 
-	if s.cfg.JWTAuthEnabled {
-		s.clients[authn.ClientJWT] = clients.ProvideJWT(jwtService, cfg)
+	var passwordClients []authn.PasswordClient
+
+	if !s.cfg.DisableLogin {
+		passwordClients = append(passwordClients, clients.ProvideGrafana(userService))
 	}
 
-	// FIXME (kalleep): handle cfg.DisableLogin as well?
-	if s.cfg.BasicAuthEnabled && !s.cfg.DisableLogin {
-		s.clients[authn.ClientBasic] = clients.ProvideBasic(userService, loginAttempts)
+	if s.cfg.LDAPEnabled {
+		passwordClients = append(passwordClients, clients.ProvideLDAP(cfg))
+	}
+
+	// only configure basic auth client if it is enabled, and we have at least one password client enabled
+	if s.cfg.BasicAuthEnabled && len(passwordClients) > 0 {
+		s.clients[authn.ClientBasic] = clients.ProvideBasic(loginAttempts, passwordClients...)
+	}
+
+	if s.cfg.JWTAuthEnabled {
+		s.clients[authn.ClientJWT] = clients.ProvideJWT(jwtService, cfg)
 	}
 
 	// FIXME (jguer): move to User package

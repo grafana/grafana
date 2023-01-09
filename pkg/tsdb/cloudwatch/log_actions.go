@@ -18,7 +18,6 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -213,19 +212,16 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		QueryString: aws.String(modifiedQueryString),
 	}
 
-	if e.features.IsEnabled(featuremgmt.FlagCloudWatchCrossAccountQuerying) {
-		if logsQuery.LogGroups != nil && len(logsQuery.LogGroups) > 0 {
-			var logGroupIdentifiers []string
-			for _, lg := range logsQuery.LogGroups {
-				arn := lg.ARN
-				// due to a bug in the startQuery api, we remove * from the arn, otherwise it throws an error
-				logGroupIdentifiers = append(logGroupIdentifiers, strings.TrimSuffix(arn, "*"))
-			}
-			startQueryInput.LogGroupIdentifiers = aws.StringSlice(logGroupIdentifiers)
+	if logsQuery.LogGroups != nil && len(logsQuery.LogGroups) > 0 {
+		var logGroupIdentifiers []string
+		for _, lg := range logsQuery.LogGroups {
+			arn := lg.ARN
+			// due to a bug in the startQuery api, we remove * from the arn, otherwise it throws an error
+			logGroupIdentifiers = append(logGroupIdentifiers, strings.TrimSuffix(arn, "*"))
 		}
-	}
-
-	if startQueryInput.LogGroupIdentifiers == nil {
+		startQueryInput.LogGroupIdentifiers = aws.StringSlice(logGroupIdentifiers)
+	} else {
+		// even though log group names are being phased out, we still need to support them for backwards compatibility and alert queries
 		startQueryInput.LogGroupNames = aws.StringSlice(logsQuery.LogGroupNames)
 	}
 

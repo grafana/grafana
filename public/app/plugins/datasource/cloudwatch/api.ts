@@ -62,16 +62,7 @@ export class CloudWatchAPI extends CloudWatchRequest {
     );
   }
 
-  async describeLogGroups(params: DescribeLogGroupsRequest) {
-    return this.memoizedGetRequest<SelectableResourceValue[]>('log-groups', {
-      ...params,
-      region: this.templateSrv.replace(this.getActualRegion(params.region)),
-    });
-  }
-
-  async describeCrossAccountLogGroups(
-    params: DescribeLogGroupsRequest
-  ): Promise<Array<ResourceResponse<LogGroupResponse>>> {
+  async describeLogGroups(params: DescribeLogGroupsRequest): Promise<Array<ResourceResponse<LogGroupResponse>>> {
     return this.memoizedGetRequest<Array<ResourceResponse<LogGroupResponse>>>('describe-log-groups', {
       ...params,
       region: this.templateSrv.replace(this.getActualRegion(params.region)),
