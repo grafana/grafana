@@ -110,7 +110,7 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) []apimodels.Receiver {
 	defer am.reloadConfigMtx.RUnlock()
 
 	var apiReceivers []apimodels.Receiver
-	for _, rcv := range am.receivers {
+	for _, rcv := range am.Base.GetReceivers() {
 		// Build integrations slice for each receiver.
 		var integrations []*models.Integration
 		for _, integration := range rcv.Integrations() {
