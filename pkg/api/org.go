@@ -348,7 +348,7 @@ type UpdateCurrentOrgAddressParams struct {
 type UpdateCurrentOrgUserParams struct {
 	// in:body
 	// required:true
-	Body models.UpdateOrgUserCommand `json:"body"`
+	Body org.UpdateOrgUserCommand `json:"body"`
 	// in:path
 	// required:true
 	UserID int64 `json:"user_id"`

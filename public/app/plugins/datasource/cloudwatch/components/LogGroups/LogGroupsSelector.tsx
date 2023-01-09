@@ -1,54 +1,64 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, Space } from '@grafana/experimental';
 import { Button, Checkbox, Icon, Label, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
 
-import Search from '../Search';
-import { DescribeLogGroupsRequest, LogGroup, LogGroupResponse, ResourceResponse } from '../types';
-
-import { Account, ALL_ACCOUNTS_OPTION } from './Account';
-import { SelectedLogsGroups } from './SelectedLogsGroups';
-import getStyles from './styles';
+import Search from '../../Search';
+import { DescribeLogGroupsRequest, LogGroup, LogGroupResponse, ResourceResponse } from '../../types';
+import { Account, ALL_ACCOUNTS_OPTION } from '../Account';
+import getStyles from '../styles';
 
 type CrossAccountLogsQueryProps = {
-  selectedLogGroups: LogGroup[];
-  accountOptions: Array<SelectableValue<string>>;
+  selectedLogGroups?: LogGroup[];
+  accountOptions?: Array<SelectableValue<string>>;
   fetchLogGroups: (params: Partial<DescribeLogGroupsRequest>) => Promise<Array<ResourceResponse<LogGroupResponse>>>;
   onChange: (selectedLogGroups: LogGroup[]) => void;
+  onBeforeOpen?: () => void;
 };
 
-export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) => {
+export const LogGroupsSelector = ({
+  accountOptions = [],
+  fetchLogGroups,
+  onChange,
+  onBeforeOpen,
+  ...props
+}: CrossAccountLogsQueryProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectableLogGroups, setSelectableLogGroups] = useState<LogGroup[]>([]);
-  const [selectedLogGroups, setSelectedLogGroups] = useState(props.selectedLogGroups);
+  const [selectedLogGroups, setSelectedLogGroups] = useState(props.selectedLogGroups ?? []);
   const [searchPhrase, setSearchPhrase] = useState('');
   const [searchAccountId, setSearchAccountId] = useState(ALL_ACCOUNTS_OPTION.value);
   const [isLoading, setIsLoading] = useState(false);
   const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    setSelectedLogGroups(props.selectedLogGroups ?? []);
+  }, [props.selectedLogGroups]);
+
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
     if (isModalOpen) {
     } else {
-      setSelectedLogGroups(props.selectedLogGroups);
+      setSelectedLogGroups(selectedLogGroups);
       searchFn(searchPhrase, searchAccountId);
     }
   };
 
   const accountNameById = useMemo(() => {
     const idsToNames: Record<string, string> = {};
-    props.accountOptions.forEach((a) => {
+    accountOptions.forEach((a) => {
       if (a.value && a.label) {
         idsToNames[a.value] = a.label;
       }
     });
     return idsToNames;
-  }, [props.accountOptions]);
+  }, [accountOptions]);
 
   const searchFn = async (searchTerm?: string, accountId?: string) => {
     setIsLoading(true);
     try {
-      const possibleLogGroups = await props.fetchLogGroups({
+      const possibleLogGroups = await fetchLogGroups({
         logGroupPattern: searchTerm,
         accountId: accountId,
       });
@@ -75,12 +85,12 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
   };
 
   const handleApply = () => {
-    props.onChange(selectedLogGroups);
+    onChange(selectedLogGroups);
     toggleModal();
   };
 
   const handleCancel = () => {
-    setSelectedLogGroups(props.selectedLogGroups);
+    setSelectedLogGroups(selectedLogGroups);
     toggleModal();
   };
 
@@ -89,7 +99,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
       <Modal className={styles.modal} title="Select Log Groups" isOpen={isModalOpen} onDismiss={toggleModal}>
         <div className={styles.logGroupSelectionArea}>
           <div className={styles.searchField}>
-            <EditorField label="Log Group Name">
+            <EditorField label="Log group name prefix">
               <Search
                 searchFn={(phrase) => {
                   searchFn(phrase, searchAccountId);
@@ -105,7 +115,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
               searchFn(searchPhrase, accountId);
               setSearchAccountId(accountId || ALL_ACCOUNTS_OPTION.value);
             }}
-            accountOptions={props.accountOptions}
+            accountOptions={accountOptions}
             accountId={searchAccountId}
           />
         </div>
@@ -154,7 +164,7 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
                             value={!!(row.arn && selectedLogGroups.some((lg) => lg.arn === row.arn))}
                           />
                           <Space layout="inline" h={2} />
-                          <label className={styles.logGroupSearchResults} htmlFor={row.arn}>
+                          <label className={styles.logGroupSearchResults} htmlFor={row.arn} title={row.name}>
                             {row.name}
                           </label>
                         </div>
@@ -183,12 +193,19 @@ export const CrossAccountLogsQueryField = (props: CrossAccountLogsQueryProps) =>
       </Modal>
 
       <div>
-        <Button variant="secondary" onClick={toggleModal} type="button">
+        <Button
+          variant="secondary"
+          onClick={() => {
+            try {
+              onBeforeOpen?.();
+              toggleModal();
+            } catch (err) {}
+          }}
+          type="button"
+        >
           Select Log Groups
         </Button>
       </div>
-
-      <SelectedLogsGroups selectedLogGroups={props.selectedLogGroups} onChange={props.onChange}></SelectedLogsGroups>
     </>
   );
 };

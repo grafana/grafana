@@ -27,6 +27,8 @@ export interface SelectCommonProps<T> {
   closeMenuOnSelect?: boolean;
   /** Used for custom components. For more information, see `react-select` */
   components?: any;
+  /** Sets the position of the createOption element in your options list. Defaults to 'last' */
+  createOptionPosition?: 'first' | 'last';
   defaultValue?: any;
   disabled?: boolean;
   filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
@@ -140,6 +142,7 @@ export type ControlComponent<T> = React.ComponentType<CustomControlProps<T>>;
 export interface SelectableOptGroup<T = any> {
   label: string;
   options: Array<SelectableValue<T>>;
+
   [key: string]: any;
 }
 

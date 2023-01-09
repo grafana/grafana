@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel } from '@grafana/data';
+import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { downloadLogsModelAsTxt } from '../inspector/utils/download';
@@ -45,6 +46,11 @@ export const LogsMetaRow = React.memo(
     const style = useStyles2(getStyles);
 
     const downloadLogs = () => {
+      reportInteraction('grafana_logs_download_logs_clicked', {
+        app: CoreApp.Explore,
+        format: 'logs',
+        area: 'logs-meta-row',
+      });
       downloadLogsModelAsTxt({ meta, rows: logRows }, 'Explore');
     };
 
