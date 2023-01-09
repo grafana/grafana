@@ -14,7 +14,6 @@ import {
   GrafanaTheme2,
   LoadingState,
   PanelData,
-  readSpreadsheet,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
@@ -23,6 +22,7 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
+import { readSpreadsheet } from 'app/core/utils/sheet';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
@@ -501,11 +501,12 @@ class UnThemedQueryGroup extends PureComponent<Props, State> {
       type: 'grafana',
       uid: 'grafana',
     };
-    const query = {
+    const query: GrafanaQuery = {
+      refId: 'A',
       queryType: GrafanaQueryType.Snapshot,
       snapshot,
       datasource: grafanaDS,
-    } as GrafanaQuery;
+    };
     this.onChange({
       dataSource: grafanaDS,
       queries: [query],

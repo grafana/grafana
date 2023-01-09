@@ -4896,7 +4896,6 @@ __metadata:
     tslib: 2.4.1
     typescript: 4.8.4
     uplot: 1.6.23
-    xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
     xss: 1.0.14
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
