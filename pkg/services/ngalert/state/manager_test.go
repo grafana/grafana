@@ -210,7 +210,7 @@ func TestDashboardAnnotations(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-	hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{})
+	hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{})
 	st := state.NewManager(testMetrics.GetStateMetrics(), nil, dbstore, &state.NoopImageService{}, clock.New(), hist)
 
 	const mainOrgID int64 = 1
@@ -2191,7 +2191,7 @@ func TestProcessEvalResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-		hist := historian.NewAnnotationHistorian(fakeAnnoRepo, &dashboards.FakeDashboardService{})
+		hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{})
 		st := state.NewManager(testMetrics.GetStateMetrics(), nil, &state.FakeInstanceStore{}, &state.NotAvailableImageService{}, clock.New(), hist)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, res := range tc.evalResults {

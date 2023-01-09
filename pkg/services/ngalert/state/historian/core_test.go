@@ -6,12 +6,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
-func TestShouldAnnotate(t *testing.T) {
+func TestShouldRecord(t *testing.T) {
 	allStates := []eval.State{
 		eval.Normal,
 		eval.Alerting,
@@ -94,7 +96,126 @@ func TestShouldAnnotate(t *testing.T) {
 		}
 
 		t.Run(fmt.Sprintf("%s -> %s should be %v", trans.PreviousFormatted(), trans.Formatted(), !ok), func(t *testing.T) {
-			require.Equal(t, !ok, shouldAnnotate(trans))
+			require.Equal(t, !ok, shouldRecord(trans))
+		})
+	}
+}
+
+func TestRemovePrivateLabels(t *testing.T) {
+	type testCase struct {
+		name string
+		in   data.Labels
+		exp  data.Labels
+	}
+
+	cases := []testCase{
+		{
+			name: "empty",
+			in:   map[string]string{},
+			exp:  map[string]string{},
+		},
+		{
+			name: "nil",
+			in:   nil,
+			exp:  map[string]string{},
+		},
+		{
+			name: "prefix",
+			in:   map[string]string{"__asdf": "one", "b": "c"},
+			exp:  map[string]string{"b": "c"},
+		},
+		{
+			name: "suffix",
+			in:   map[string]string{"asdf__": "one", "b": "c"},
+			exp:  map[string]string{"b": "c"},
+		},
+		{
+			name: "both",
+			in:   map[string]string{"__asdf__": "one", "b": "c"},
+			exp:  map[string]string{"b": "c"},
+		},
+		{
+			name: "all",
+			in:   map[string]string{"__a__": "a", "__b": "b", "c__": "c"},
+			exp:  map[string]string{},
+		},
+		{
+			name: "whitespace",
+			in:   map[string]string{"  __asdf__ ": "one", "b": "c"},
+			exp:  map[string]string{"  __asdf__ ": "one", "b": "c"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := removePrivateLabels(tc.in)
+			require.Equal(t, tc.exp, res)
+		})
+	}
+}
+
+func TestParsePanelKey(t *testing.T) {
+	logger := log.NewNopLogger()
+
+	type testCase struct {
+		name string
+		in   models.AlertRule
+		exp  *panelKey
+	}
+
+	cases := []testCase{
+		{
+			name: "no dash UID",
+			in: models.AlertRule{
+				OrgID: 1,
+				Annotations: map[string]string{
+					models.PanelIDAnnotation: "123",
+				},
+			},
+			exp: nil,
+		},
+		{
+			name: "no panel ID",
+			in: models.AlertRule{
+				OrgID: 1,
+				Annotations: map[string]string{
+					models.DashboardUIDAnnotation: "abcd-uid",
+				},
+			},
+			exp: nil,
+		},
+		{
+			name: "invalid panel ID",
+			in: models.AlertRule{
+				OrgID: 1,
+				Annotations: map[string]string{
+					models.DashboardUIDAnnotation: "abcd-uid",
+					models.PanelIDAnnotation:      "bad-id",
+				},
+			},
+			exp: nil,
+		},
+		{
+			name: "success",
+			in: models.AlertRule{
+				OrgID: 1,
+				Annotations: map[string]string{
+					models.DashboardUIDAnnotation: "abcd-uid",
+					models.PanelIDAnnotation:      "123",
+				},
+			},
+			exp: &panelKey{
+				orgID:   1,
+				dashUID: "abcd-uid",
+				panelID: 123,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := parsePanelKey(&tc.in, logger)
+			require.Equal(t, tc.exp, res)
 		})
 	}
 }
