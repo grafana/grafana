@@ -77,7 +77,9 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.Item) error {
 	hasTags := make([]annotations.Item, 0)
 	hasNoTags := make([]annotations.Item, 0)
-
+	if len(items) == 0 {
+		return nil
+	}
 	for i := range items {
 		// The validation logic needs to work in terms of pointers.
 		// So, force everything else to work in terms of pointers too, to avoid any implicit extra copying.

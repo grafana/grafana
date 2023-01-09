@@ -37,11 +37,8 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 
 	from := e.dataQueries[0].TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := e.dataQueries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
-	result := backend.QueryDataResponse{
-		Responses: backend.Responses{},
-	}
 	for _, q := range queries {
-		if err := e.processQuery(q, ms, from, to, result); err != nil {
+		if err := e.processQuery(q, ms, from, to); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
 	}
@@ -59,8 +56,7 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	return parseResponse(res.Responses, queries)
 }
 
-func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64,
-	result backend.QueryDataResponse) error {
+func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
 	err := isQueryWithError(q)
 	if err != nil {
 		return err
@@ -73,12 +69,12 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	filters.AddDateRangeFilter(defaultTimeField, to, from, es.DateFormatEpochMS)
 	filters.AddQueryStringFilter(q.RawQuery, true)
 
-	if (isLogsQuery(q)) {
+	if isLogsQuery(q) {
 		processLogsQuery(q, b, from, to, defaultTimeField)
 		return nil
 	}
 
-	if (isDocumentQuery(q)) {
+	if isDocumentQuery(q) {
 		processDocumentQuery(q, b, from, to, defaultTimeField)
 		return nil
 	}
@@ -302,7 +298,7 @@ func isQueryWithError(query *Query) error {
 		if len(query.Metrics) == 0 || !(isLogsQuery(query) || isDocumentQuery(query)) {
 			return fmt.Errorf("invalid query, missing metrics and aggregations")
 		}
-	} 
+	}
 	return nil
 }
 
@@ -320,7 +316,7 @@ func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defa
 	b.SortDesc("_doc", "")
 	b.AddDocValueField(defaultTimeField)
 	b.Size(metric.Settings.Get("size").MustInt(defaultSize))
-	
+
 	// Add additional defaults for log query
 	b.Size(metric.Settings.Get("limit").MustInt(defaultSize))
 	b.AddHighlight()
@@ -350,8 +346,8 @@ func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, 
 	b.Size(metric.Settings.Get("size").MustInt(defaultSize))
 }
 
-func processMetricsInQuery(q *Query, b *es.SearchRequestBuilder, aggBuilder es.AggBuilder,from, to int64, defaultTimeField string) {
-		for _, m := range q.Metrics {
+func processMetricsInQuery(q *Query, b *es.SearchRequestBuilder, aggBuilder es.AggBuilder, from, to int64, defaultTimeField string) {
+	for _, m := range q.Metrics {
 		m := m
 
 		if m.Type == countType {
