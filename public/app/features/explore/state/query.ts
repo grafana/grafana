@@ -633,7 +633,7 @@ export const runQueries = (
 };
 
 /**
- * Checks if after changing the time range the existing data can be used to show logs volume.
+ * Checks if after changing the time range the existing data can be used to show supplementary query.
  * It can happen if queries are the same and new time range is within existing data time range.
  */
 function canReuseSupplementaryQueryData(
