@@ -45,7 +45,7 @@ export const PageToolbar: FC<Props> = React.memo(
     'aria-label': ariaLabel,
     buttonOverflowAlignment = 'right',
   }) => {
-    const styles = useStyles2(getStyles);
+    const styles = useStyles2(getStyles(!!pageIcon));
 
     /**
      * .page-toolbar css class is used for some legacy css view modes (TV/Kiosk) and
@@ -144,7 +144,7 @@ export const PageToolbar: FC<Props> = React.memo(
 
 PageToolbar.displayName = 'PageToolbar';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (hasPageIcon: boolean) => (theme: GrafanaTheme2) => {
   const { spacing, typography } = theme;
 
   const focusStyle = getFocusStyles(theme);
@@ -160,6 +160,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: ${theme.spacing(2)};
       justify-content: space-between;
       padding: ${theme.spacing(1.5, 2)};
+
+      ${theme.breakpoints.down('md')} {
+        padding-left: ${hasPageIcon ? '53px' : theme.spacing(2)};
+      }
     `,
     leftWrapper: css`
       display: flex;

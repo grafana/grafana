@@ -41,6 +41,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     justify-content: end;
     height: 30px;
+    padding: ${theme.spacing(0, 1, 0, 1)};
   `,
   logoText: css`
     margin-right: ${theme.spacing(1)};

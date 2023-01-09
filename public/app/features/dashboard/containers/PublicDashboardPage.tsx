@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
-import { PageLayoutType, TimeZone } from '@grafana/data';
-import { PageToolbar, ToolbarButtonRow } from '@grafana/ui';
+import { GrafanaTheme2, PageLayoutType, TimeZone } from '@grafana/data';
+import { PageToolbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -30,12 +31,10 @@ const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
   };
 
   return (
-    <PageToolbar title={dashboard.title}>
-      <ToolbarButtonRow alignment="right">
-        {!dashboard.timepicker.hidden && (
-          <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={onChangeTimeZone} />
-        )}
-      </ToolbarButtonRow>
+    <PageToolbar title={dashboard.title} buttonOverflowAlignment="right">
+      {!dashboard.timepicker.hidden && (
+        <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={onChangeTimeZone} />
+      )}
     </PageToolbar>
   );
 };
@@ -45,6 +44,7 @@ const PublicDashboardPage = (props: Props) => {
   const dispatch = useDispatch();
   const context = useGrafana();
   const prevProps = usePrevious(props);
+  const styles = useStyles2(getStyles);
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel();
 
@@ -80,14 +80,21 @@ const PublicDashboardPage = (props: Props) => {
   }
 
   return (
-    <>
-      <Page layout={PageLayoutType.Canvas} toolbar={<Toolbar dashboard={dashboard} />}>
-        {dashboardState.initError && <DashboardFailed />}
+    <Page layout={PageLayoutType.Custom} toolbar={<Toolbar dashboard={dashboard} />}>
+      {dashboardState.initError && <DashboardFailed />}
+      <div className={styles.gridContainer}>
         <DashboardGrid dashboard={dashboard} isEditable={false} viewPanel={null} editPanel={null} />
-      </Page>
+      </div>
       <PublicDashboardFooter />
-    </>
+    </Page>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  gridContainer: css({
+    padding: theme.spacing(0, 2, 2, 2),
+    overflow: 'auto',
+  }),
+});
 
 export default PublicDashboardPage;
