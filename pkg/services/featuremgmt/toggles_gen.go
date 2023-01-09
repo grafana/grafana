@@ -75,6 +75,10 @@ const (
 	// Enables public access to dashboards
 	FlagPublicDashboards = "publicDashboards"
 
+	// FlagPublicDashboardsEmailSharing
+	// Allows public dashboard sharing to be restricted to only allowed emails
+	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
+
 	// FlagLokiLive
 	// Support WebSocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"

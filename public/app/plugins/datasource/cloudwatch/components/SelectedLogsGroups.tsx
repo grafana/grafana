@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 
-import { SelectableResourceValue } from '../api';
+import { LogGroup } from '../types';
 
 import getStyles from './styles';
 
 type CrossAccountLogsQueryProps = {
-  selectedLogGroups: SelectableResourceValue[];
-  onChange: (selectedLogGroups: SelectableResourceValue[]) => void;
+  selectedLogGroups: LogGroup[];
+  onChange: (selectedLogGroups: LogGroup[]) => void;
 };
 
 const MAX_VISIBLE_LOG_GROUPS = 6;
@@ -29,16 +29,16 @@ export const SelectedLogsGroups = ({ selectedLogGroups, onChange }: CrossAccount
       <div className={styles.selectedLogGroupsContainer}>
         {visibleSelectecLogGroups.map((lg) => (
           <Button
-            key={lg.value}
+            key={lg.arn}
             size="sm"
             variant="secondary"
             icon="times"
             className={styles.removeButton}
             onClick={() => {
-              onChange(selectedLogGroups.filter((slg) => slg.value !== lg.value));
+              onChange(selectedLogGroups.filter((slg) => slg.arn !== lg.arn));
             }}
           >
-            {lg.label}
+            {`${lg.name}`}
           </Button>
         ))}
         {visibleSelectecLogGroups.length !== selectedLogGroups.length && (

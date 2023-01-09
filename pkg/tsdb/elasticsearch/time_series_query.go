@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 const (
@@ -17,17 +16,14 @@ const (
 )
 
 type timeSeriesQuery struct {
-	client             es.Client
-	dataQueries        []backend.DataQuery
-	intervalCalculator intervalv2.Calculator
+	client      es.Client
+	dataQueries []backend.DataQuery
 }
 
-var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery,
-	intervalCalculator intervalv2.Calculator) *timeSeriesQuery {
+var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery) *timeSeriesQuery {
 	return &timeSeriesQuery{
-		client:             client,
-		dataQueries:        dataQuery,
-		intervalCalculator: intervalCalculator,
+		client:      client,
+		dataQueries: dataQuery,
 	}
 }
 
@@ -41,11 +37,8 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 
 	from := e.dataQueries[0].TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := e.dataQueries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
-	result := backend.QueryDataResponse{
-		Responses: backend.Responses{},
-	}
 	for _, q := range queries {
-		if err := e.processQuery(q, ms, from, to, result); err != nil {
+		if err := e.processQuery(q, ms, from, to); err != nil {
 			return &backend.QueryDataResponse{}, err
 		}
 	}
@@ -63,16 +56,10 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	return parseResponse(res.Responses, queries)
 }
 
-func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64,
-	result backend.QueryDataResponse) error {
-	minInterval, err := e.client.GetMinInterval(q.Interval)
-	if err != nil {
-		return err
-	}
-	interval := e.intervalCalculator.Calculate(e.dataQueries[0].TimeRange, minInterval, q.MaxDataPoints)
+func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
 	defaultTimeField := e.client.GetTimeField()
 
-	b := ms.Search(interval)
+	b := ms.Search(q.Interval)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)
@@ -81,10 +68,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	if len(q.BucketAggs) == 0 {
 		// If no aggregations, only document and logs queries are valid
 		if len(q.Metrics) == 0 || !(q.Metrics[0].Type == rawDataType || q.Metrics[0].Type == rawDocumentType || q.Metrics[0].Type == logsType) {
-			result.Responses[q.RefID] = backend.DataResponse{
-				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
-			}
-			return nil
+			return fmt.Errorf("invalid query, missing metrics and aggregations")
 		}
 
 		// Defaults for log and document queries
