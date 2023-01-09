@@ -17,7 +17,7 @@ export const LogMessages = {
 };
 
 // logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent and Sentry correctly
-export function logInfo(message: string, context: Record<string, string | number> = {}) {
+export function logInfo(message: string, context: Record<string, string | number | boolean> = {}) {
   if (config.grafanaJavascriptAgent.enabled) {
     faro.api.pushLog([message], {
       level: GrafanaLogLevel.INFO,
