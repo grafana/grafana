@@ -456,13 +456,15 @@ type Cfg struct {
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
 
-	// Grafana.com
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
 	// Grafana.com API URL. Can be set separately to GrafanaComURL
 	// in case API is not publicly accessible.
 	// Defaults to GrafanaComURL setting + "/api" if unset.
-	GrafanaComAPIURL          string
+	GrafanaComAPIURL string
+	// GrafanaComSkipOrgRoleSync can be set for
+	// letting users set org roles from within Grafana and
+	// skip the org roles coming from GrafanaCom
 	GrafanaComSkipOrgRoleSync bool
 
 	// Geomap base layer config

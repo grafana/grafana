@@ -860,17 +860,16 @@ By default, the users' organization and role is reset on every new login.
 > With Grafana 10, if `oauth_skip_org_role_update_sync` option is set to `false`, users with no mapping will be
 > reset to the default organization role on every login. [See `auto_assign_org_role` option]({{< relref ".#auto_assign_org_role" >}}).
 
-### [auth].<provider> skip_org_role_update_sync
+### [auth].grafanacom skip_org_role_update_sync
 
 To prevent synchronization of organization roles for a specific OAuth integration, you can set the `skip_org_role_sync` option to `true`. Please note that there is also a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers. 
 
  The setting `oauth_skip_org_role_update_sync` is deprecated in favor of provider-specific settings.
 
-A table detailing what happens when the soon to be legacy option `oauth_skip_org_role_update_sync` is enabled/disabled and an auth specific setting `skip_org_role_sync` is enabled/disabled is shown below.
-
 The table below shows the available OAuth providers and their setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
 | --- | --- | --- | --- |
+| Grafana.com | false | false | will sync with Grafana.Com roles |
 | Grafana.com | true | false | will still sync Org Roles from Grafana.Com |
 | Grafana.com | false | true | skip org role sync for grafana.com |
 | Grafana.com | true | true | no sync from any OAuth integration as well as Grafana.Com |

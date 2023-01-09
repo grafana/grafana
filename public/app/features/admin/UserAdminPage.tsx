@@ -39,7 +39,7 @@ interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   error?: UserAdminError;
 }
 
-const SyncedOAuthLabels: string[] = ['GitHub', 'GitLab', 'AzureAD', 'OAuth'];
+const SyncedOAuthLabels: string[] = ['GitHub', 'GitLab', 'AzureAD', 'OAuth', 'grafana.com'];
 
 export class UserAdminPage extends PureComponent<Props> {
   async componentDidMount() {
