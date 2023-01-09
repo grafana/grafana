@@ -24,7 +24,6 @@ import (
 
 var (
 	searchOrgsURL           = "/api/orgs/"
-	getCurrentOrgURL        = "/api/org/"
 	getOrgsURL              = "/api/orgs/%v"
 	getOrgsByNameURL        = "/api/orgs/name/%v"
 	putCurrentOrgURL        = "/api/org/"
@@ -49,25 +48,41 @@ var (
 // `/api/org` endpoints test
 
 func TestAPIEndpoint_GetCurrentOrg_LegacyAccessControl(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
-	})
+	type testCase struct {
+		desc         string
+		user         *user.SignedInUser
+		expectedCode int
+	}
 
-	t.Run("Viewer can view CurrentOrg", func(t *testing.T) {
-		req := webtest.RequestWithSignedInUser(server.NewGetRequest("/api/org/"), &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer})
-		res, err := server.Send(req)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-		require.NoError(t, res.Body.Close())
-	})
+	tests := []testCase{
+		{
+			desc:         "viewer can view current org",
+			user:         &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:         "unauthenticated request cannot view current org",
+			expectedCode: http.StatusUnauthorized,
+		},
+	}
 
-	t.Run("Unsigned user cannot view CurrentOrg", func(t *testing.T) {
-		req := server.NewGetRequest("/api/org/")
-		res, err := server.Send(req)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
-		require.NoError(t, res.Body.Close())
-	})
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
+			})
+
+			req := server.NewGetRequest("/api/org/")
+			if tt.user != nil {
+				req = webtest.RequestWithSignedInUser(req, tt.user)
+			}
+
+			res, err := server.Send(req)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
 }
 
 func TestAPIEndpoint_GetCurrentOrg_RBAC(t *testing.T) {
@@ -104,30 +119,6 @@ func TestAPIEndpoint_GetCurrentOrg_RBAC(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 		})
 	}
-}
-
-func TestAPIEndpoint_GetCurrentOrg_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true)
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
-	require.NoError(t, err)
-
-	t.Run("AccessControl allows viewing CurrentOrg with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsRead}}, sc.initCtx.OrgID)
-		response := callAPI(sc.server, http.MethodGet, getCurrentOrgURL, nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-	})
-	t.Run("AccessControl prevents viewing CurrentOrg with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsRead}}, 2)
-		response := callAPI(sc.server, http.MethodGet, getCurrentOrgURL, nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
-	t.Run("AccessControl prevents viewing CurrentOrg with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgID)
-		response := callAPI(sc.server, http.MethodGet, getCurrentOrgURL, nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
 }
 
 func TestAPIEndpoint_PutCurrentOrg_LegacyAccessControl(t *testing.T) {
