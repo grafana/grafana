@@ -2,27 +2,31 @@ import React, { useEffect, useState } from 'react';
 
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 
-import { LogGroup } from '../types';
-
-import getStyles from './styles';
+import { LogGroup } from '../../types';
+import getStyles from '../styles';
 
 type CrossAccountLogsQueryProps = {
-  selectedLogGroups: LogGroup[];
+  selectedLogGroups?: LogGroup[];
   onChange: (selectedLogGroups: LogGroup[]) => void;
+  maxNoOfVisibleLogGroups?: number;
 };
 
-const MAX_VISIBLE_LOG_GROUPS = 6;
+const MAX_NO_OF_VISIBLE_LOG_GROUPS = 6;
 
-export const SelectedLogsGroups = ({ selectedLogGroups, onChange }: CrossAccountLogsQueryProps) => {
+export const SelectedLogGroups = ({
+  selectedLogGroups = [],
+  onChange,
+  maxNoOfVisibleLogGroups = MAX_NO_OF_VISIBLE_LOG_GROUPS,
+}: CrossAccountLogsQueryProps) => {
   const styles = useStyles2(getStyles);
   const [showConfirm, setShowConfirm] = useState(false);
   const [visibleSelectecLogGroups, setVisibleSelectecLogGroups] = useState(
-    selectedLogGroups.slice(0, MAX_VISIBLE_LOG_GROUPS)
+    selectedLogGroups.slice(0, MAX_NO_OF_VISIBLE_LOG_GROUPS)
   );
 
   useEffect(() => {
-    setVisibleSelectecLogGroups(selectedLogGroups.slice(0, MAX_VISIBLE_LOG_GROUPS));
-  }, [selectedLogGroups]);
+    setVisibleSelectecLogGroups(selectedLogGroups.slice(0, maxNoOfVisibleLogGroups));
+  }, [selectedLogGroups, maxNoOfVisibleLogGroups]);
 
   return (
     <>
