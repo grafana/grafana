@@ -114,9 +114,7 @@ go.sum @grafana/backend-platform
 /pkg/services/thumbs @grafana/grafana-edge-squad
 
 # Backend code docs
-/contribute/style-guides/backend.md @grafana/backend-platform
-/contribute/architecture/backend @grafana/backend-platform
-/contribute/engineering/backend @grafana/backend-platform
+/contribute/backend @grafana/backend-platform
 
 package.json @grafana/frontend-ops
 tsconfig.json @grafana/frontend-ops
