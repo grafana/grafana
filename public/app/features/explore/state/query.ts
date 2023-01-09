@@ -46,7 +46,7 @@ import { decorateData } from '../utils/decorators';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
 import { updateTime } from './time';
-import { createCacheKey, getResultsFromCache, storeSupportingQueryEnabled, SUPP_QUERY_TYPES } from './utils';
+import { createCacheKey, getResultsFromCache, storeSupportingQueryEnabled, SUPPORTING_QUERY_TYPES } from './utils';
 
 //
 // Actions and Payloads
@@ -241,7 +241,7 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
 
     const supportingQueries = getState().explore[exploreId]!.supportingQueries;
     // Cancel all data providers
-    for (const type of SUPP_QUERY_TYPES) {
+    for (const type of SUPPORTING_QUERY_TYPES) {
       dispatch(storeSupportingQueryDataProviderAction({ exploreId, dataProvider: undefined, type }));
 
       // And clear any incomplete data
@@ -565,7 +565,7 @@ export const runQueries = (
         });
 
       if (live) {
-        for (const type of SUPP_QUERY_TYPES) {
+        for (const type of SUPPORTING_QUERY_TYPES) {
           dispatch(
             storeSupportingQueryDataProviderAction({
               exploreId,

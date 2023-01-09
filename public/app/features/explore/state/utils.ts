@@ -20,7 +20,7 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { SETTINGS_KEYS } from '../utils/logs';
 import { toRawTimeRange } from '../utils/time';
 
-export const SUPP_QUERY_TYPES: SupportingQueryType[] = [SupportingQueryType.LogsVolume];
+export const SUPPORTING_QUERY_TYPES: SupportingQueryType[] = [SupportingQueryType.LogsVolume];
 
 // Used to match supportingQueryType to corresponding local storage key
 // TODO: Remove this and unify enum values with SETTINGS_KEYS.enableVolumeHistogram
@@ -50,7 +50,7 @@ export const loadSupportingQueries = (): SupportingQueries => {
     [SupportingQueryType.LogsVolume]: { enabled: true },
   };
 
-  for (const type of SUPP_QUERY_TYPES) {
+  for (const type of SUPPORTING_QUERY_TYPES) {
     // Only if "false" value in local storage, we disable it
     if (store.get(supportingQuerySettings[type]) === 'false') {
       supportingQueries[type] = { enabled: false };
