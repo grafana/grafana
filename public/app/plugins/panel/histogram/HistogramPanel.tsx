@@ -45,7 +45,6 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
       options={options}
       theme={theme}
       legend={options.legend}
-      rawSeries={data.series}
       structureRev={data.structureRev}
       width={width}
       height={height}
