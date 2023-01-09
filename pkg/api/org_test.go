@@ -7,6 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web/webtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -46,24 +49,61 @@ var (
 // `/api/org` endpoints test
 
 func TestAPIEndpoint_GetCurrentOrg_LegacyAccessControl(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
-	require.NoError(t, err)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
+	})
 
 	t.Run("Viewer can view CurrentOrg", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodGet, getCurrentOrgURL, nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest("/api/org/"), &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer})
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
-	sc.initCtx.IsSignedIn = false
 	t.Run("Unsigned user cannot view CurrentOrg", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodGet, getCurrentOrgURL, nil, t)
-		assert.Equal(t, http.StatusUnauthorized, response.Code)
+		req := server.NewGetRequest("/api/org/")
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
+}
+
+func TestAPIEndpoint_GetCurrentOrg_RBAC(t *testing.T) {
+	type testCase struct {
+		desc         string
+		expectedCode int
+		permission   []accesscontrol.Permission
+	}
+
+	tests := []testCase{
+		{
+			desc:         "should be able to view current org with correct permission",
+			expectedCode: http.StatusOK,
+			permission:   []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsRead}},
+		},
+		{
+			desc:         "should not be able to view current org without correct permission",
+			expectedCode: http.StatusForbidden,
+			permission:   []accesscontrol.Permission{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
+			})
+
+			req := webtest.RequestWithSignedInUser(server.NewGetRequest("/api/org/"), userWithPermissions(1, tt.permission))
+			res, err := server.Send(req)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
 }
 
 func TestAPIEndpoint_GetCurrentOrg_AccessControl(t *testing.T) {
