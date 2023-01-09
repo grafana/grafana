@@ -66,6 +66,9 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 }
 
 func (c *Basic) Test(ctx context.Context, r *authn.Request) bool {
+	if len(c.clients) == 0 {
+		return false
+	}
 	return looksLikeBasicAuthRequest(r)
 }
 
