@@ -16,6 +16,7 @@ export function GrafanaMonitoringApp2() {
     routes: [
       { path: '/scenes/grafana-monitoring', getScene: getMainPageScene },
       { path: '/scenes/grafana-monitoring/handlers', getScene: getMainPageScene },
+      { path: '/scenes/grafana-monitoring/logs', getScene: getMainPageScene },
       { path: '/scenes/grafana-monitoring/handlers/:handler', getScene: getDrilldownPageScene },
       { path: '/scenes/grafana-monitoring/handlers/:handler/:tab', getScene: getDrilldownPageScene },
     ],
