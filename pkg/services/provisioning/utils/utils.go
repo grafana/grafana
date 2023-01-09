@@ -14,10 +14,10 @@ type DashboardStore interface {
 }
 
 func CheckOrgExists(ctx context.Context, orgService org.Service, orgID int64) error {
-	query := org.GetOrgByIdQuery{ID: orgID}
+	query := org.GetOrgByIDQuery{ID: orgID}
 	_, err := orgService.GetByID(ctx, &query)
 	if err != nil {
-		if errors.Is(err, models.ErrOrgNotFound) {
+		if errors.Is(err, org.ErrOrgNotFound) {
 			return err
 		}
 		return fmt.Errorf("failed to check whether org. with the given ID exists: %w", err)
