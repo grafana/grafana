@@ -170,7 +170,11 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   }
 
   if (isFiringRule) {
-    buttons.push(<DeclareIncident title={rule.name} />);
+    buttons.push(
+      <Fragment key="declare-incident">
+        <DeclareIncident title={rule.name} />
+      </Fragment>
+    );
   }
 
   if (isViewMode) {
