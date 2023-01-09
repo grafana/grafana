@@ -97,6 +97,7 @@ export function SelectBase<T>({
   className,
   closeMenuOnSelect = true,
   components,
+  createOptionPosition = 'last',
   defaultOptions,
   defaultValue,
   disabled = false,
@@ -256,6 +257,7 @@ export function SelectBase<T>({
     creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
     creatableProps.formatCreateLabel = formatCreateLabel ?? defaultFormatCreateLabel;
     creatableProps.onCreateOption = onCreateOption;
+    creatableProps.createOptionPosition = createOptionPosition;
     creatableProps.isValidNewOption = isValidNewOption;
   }
 
