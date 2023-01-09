@@ -200,7 +200,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     ? {
         ...links?.logLinks?.[0],
         onClick: (event: React.MouseEvent) => {
-          reportInteraction('grafana_traces_traceID_span_link_clicked', {
+          reportInteraction('grafana_traces_trace_view_span_link_clicked', {
             datasourceType: datasourceType,
             type: 'log',
             location: 'spanDetails',
