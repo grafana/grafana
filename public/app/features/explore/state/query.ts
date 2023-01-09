@@ -646,10 +646,7 @@ function canReuseSupplementaryQueryData(
     if (!deepEqual(supplementaryQueryData.data[0].meta?.custom?.targets, queries)) {
       return false;
     }
-    const dataRange =
-      supplementaryQueryData &&
-      supplementaryQueryData.data[0] &&
-      supplementaryQueryData.data[0].meta?.custom?.absoluteRange;
+    const dataRange = supplementaryQueryData.data[0].meta?.custom?.absoluteRange;
     // if selected range is within loaded logs volume
     if (dataRange && dataRange.from <= selectedTimeRange.from && selectedTimeRange.to <= dataRange.to) {
       return true;
