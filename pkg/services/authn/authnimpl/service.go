@@ -136,11 +136,18 @@ func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn) {
 	s.postAuthHooks = append(s.postAuthHooks, hook)
 }
 
-func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
-	identity, ok, err := s.Authenticate(ctx, client, r)
+func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (identity *authn.Identity, err error) {
+	var ok bool
+	identity, ok, err = s.Authenticate(ctx, client, r)
 	if !ok {
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
+
+	defer func() {
+		for _, hook := range s.postLoginHooks {
+			hook(ctx, identity, r, err)
+		}
+	}()
 
 	if err != nil {
 		return nil, err
@@ -149,7 +156,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (*
 	namespace, id := identity.NamespacedID()
 
 	// Login is only supported for users
-	if namespace != authn.NamespaceUser {
+	if namespace != authn.NamespaceUser || id <= 0 {
 		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", namespace)
 	}
 
@@ -163,8 +170,6 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (*
 	if err != nil {
 		return nil, err
 	}
-
-	// FIXME: add login hooks to replace the one used in HookService
 
 	identity.SessionToken = sessionToken
 	return identity, nil

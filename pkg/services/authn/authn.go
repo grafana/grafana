@@ -41,7 +41,7 @@ type ClientParams struct {
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
-type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request) error
+type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
 
 type Service interface {
 	// Authenticate authenticates a request using the specified client.
