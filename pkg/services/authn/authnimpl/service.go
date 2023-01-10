@@ -53,9 +53,19 @@ func ProvideService(
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
 	}
 
-	// FIXME (kalleep): handle cfg.DisableLogin as well?
-	if s.cfg.BasicAuthEnabled && !s.cfg.DisableLogin {
-		s.clients[authn.ClientBasic] = clients.ProvideBasic(userService, loginAttempts)
+	var passwordClients []authn.PasswordClient
+
+	if !s.cfg.DisableLogin {
+		passwordClients = append(passwordClients, clients.ProvideGrafana(userService))
+	}
+
+	if s.cfg.LDAPEnabled {
+		passwordClients = append(passwordClients, clients.ProvideLDAP(cfg))
+	}
+
+	// only configure basic auth client if it is enabled, and we have at least one password client enabled
+	if s.cfg.BasicAuthEnabled && len(passwordClients) > 0 {
+		s.clients[authn.ClientBasic] = clients.ProvideBasic(loginAttempts, passwordClients...)
 	}
 
 	// FIXME (jguer): move to User package
@@ -98,9 +108,8 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 		return nil, true, err
 	}
 
-	params := c.ClientParams()
 	for _, hook := range s.postAuthHooks {
-		if err := hook(ctx, params, identity, r); err != nil {
+		if err := hook(ctx, identity, r); err != nil {
 			return nil, false, err
 		}
 	}

@@ -28,7 +28,7 @@ func main() {
 	}
 
 	// Core kinds composite code generator. Produces all generated code in
-	// grafana/grafana that derives from raw and structured core kinds.
+	// grafana/grafana that derives from core kinds.
 	coreKindsGen := codejen.JennyListWithNamer(func(decl *codegen.DeclForGen) string {
 		return decl.Properties.Common().MachineName
 	})
@@ -36,8 +36,7 @@ func main() {
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
 		codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
-		codegen.CoreStructuredKindJenny(kindsys.GoCoreKindParentPath, nil),
-		codegen.RawKindJenny(kindsys.GoCoreKindParentPath, nil),
+		codegen.CoreKindJenny(kindsys.GoCoreKindParentPath, nil),
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
 		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
@@ -55,15 +54,14 @@ func main() {
 	rt := cuectx.GrafanaThemaRuntime()
 	var all []*codegen.DeclForGen
 
-	// structured kinddirs first
-	f := os.DirFS(filepath.Join(groot, kindsys.CoreStructuredDeclParentPath))
-	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading structured fs root directory")
+	f := os.DirFS(filepath.Join(groot, kindsys.CoreDeclParentPath))
+	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
 	for _, ent := range kinddirs {
 		if !ent.IsDir() {
 			continue
 		}
-		rel := filepath.Join(kindsys.CoreStructuredDeclParentPath, ent.Name())
-		decl, err := kindsys.LoadCoreKind[kindsys.CoreStructuredProperties](rel, rt.Context(), nil)
+		rel := filepath.Join(kindsys.CoreDeclParentPath, ent.Name())
+		decl, err := kindsys.LoadCoreKind(rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
 		}
@@ -72,25 +70,6 @@ func main() {
 		}
 
 		all = append(all, elsedie(codegen.ForGen(rt, decl.Some()))(rel))
-	}
-
-	// now raw kinddirs
-	f = os.DirFS(filepath.Join(groot, kindsys.RawDeclParentPath))
-	kinddirs = elsedie(fs.ReadDir(f, "."))("error reading raw fs root directory")
-	for _, ent := range kinddirs {
-		if !ent.IsDir() {
-			continue
-		}
-		rel := filepath.Join(kindsys.RawDeclParentPath, ent.Name())
-		decl, err := kindsys.LoadCoreKind[kindsys.RawProperties](rel, rt.Context(), nil)
-		if err != nil {
-			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
-		}
-		if decl.Properties.MachineName != ent.Name() {
-			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Properties.Name, ent.Name()))
-		}
-		dfg, _ := codegen.ForGen(nil, decl.Some())
-		all = append(all, dfg)
 	}
 
 	sort.Slice(all, func(i, j int) bool {
@@ -113,11 +92,9 @@ func main() {
 
 func nameFor(m kindsys.SomeKindProperties) string {
 	switch x := m.(type) {
-	case kindsys.RawProperties:
+	case kindsys.CoreProperties:
 		return x.Name
-	case kindsys.CoreStructuredProperties:
-		return x.Name
-	case kindsys.CustomStructuredProperties:
+	case kindsys.CustomProperties:
 		return x.Name
 	case kindsys.ComposableProperties:
 		return x.Name
