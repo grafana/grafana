@@ -1,6 +1,8 @@
+import { Observable } from 'rxjs';
+
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryResponse } from './datasource';
+import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
 
@@ -175,4 +177,32 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
   const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
 
   return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
+};
+
+/**
+ * Data sources that support log volume.
+ * This will enable full-range log volume histogram in Explore.
+ */
+export interface DataSourceWithLogsVolumeSupport<TQuery extends DataQuery> {
+  getLogsVolumeDataProvider(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> | undefined;
+}
+
+export const hasLogsVolumeSupport = <TQuery extends DataQuery>(
+  datasource: unknown
+): datasource is DataSourceWithLogsVolumeSupport<TQuery> => {
+  return (datasource as DataSourceWithLogsVolumeSupport<TQuery>).getLogsVolumeDataProvider !== undefined;
+};
+
+/**
+ * Data sources that support log sample.
+ * This will enable users to see log samples when running metric queries.
+ */
+export interface DataSourceWithLogsSampleSupport<TQuery extends DataQuery> {
+  getLogsSampleDataProvider(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> | undefined;
+}
+
+export const hasLogsSampleSupport = <TQuery extends DataQuery>(
+  datasource: unknown
+): datasource is DataSourceWithLogsSampleSupport<TQuery> => {
+  return (datasource as DataSourceWithLogsSampleSupport<TQuery>).getLogsSampleDataProvider !== undefined;
 };
