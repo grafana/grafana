@@ -26,11 +26,12 @@ import {
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { ObjectMatcher, Receiver, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+import { ReceiversState, useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
 
 import { alertmanagerApi } from './api/alertmanagerApi';
+import { useGetContactPointsState } from './api/receiversApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
@@ -72,6 +73,7 @@ const AmRoutes = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
+  const contactPointsState = useGetContactPointsState(alertManagerSourceName ?? '');
 
   useEffect(() => {
     if (alertManagerSourceName) {
@@ -254,6 +256,7 @@ const AmRoutes = () => {
                     receivers={receivers}
                     currentRoute={rootRoute}
                     contactPoint={rootRoute.receiver}
+                    contactPointsState={contactPointsState.receivers}
                     groupBy={rootRoute.group_by}
                     timingOptions={timingOptions}
                     readOnly={readOnly}
@@ -295,6 +298,7 @@ interface PolicyComponentProps {
   matchers?: ObjectMatcher[];
   numberOfInstances?: number;
   contactPoint?: string;
+  contactPointsState: ReceiversState;
   groupBy?: string[];
   muteTimings?: string[];
   readOnly?: boolean;
@@ -316,6 +320,7 @@ const Policy: FC<PolicyComponentProps> = ({
   matchers,
   numberOfInstances = 0,
   contactPoint,
+  contactPointsState,
   groupBy,
   muteTimings = [],
   timingOptions,
@@ -338,14 +343,30 @@ const Policy: FC<PolicyComponentProps> = ({
   const hasMatchers = Boolean(matchers && matchers.length);
   const hasMuteTimings = Boolean(muteTimings.length);
 
-  // gather warnings here
+  // gather warnings and errors here
   const warnings: ReactNode[] = [];
+  const errors: ReactNode[] = [];
 
   // if the route has no matchers, is not the default policy (that one has none) and it does not continue
   // then we should warn the user that it's a suspicious setup
   if (!hasMatchers && !isDefaultPolicy && !continueMatching) {
     warnings.push(wildcardRouteWarning);
   }
+
+  // if the receiver / contact point has any errors show it on the policy
+  const actualContactPoint = contactPoint ?? inheritedProperties?.receiver ?? '';
+  const contactPointErrors = Object.entries(contactPointsState[actualContactPoint]?.notifiers).map(([_, state]) => (
+    <Label
+      icon="at"
+      key={uniqueId()}
+      label={'Contact Point'}
+      value={state.map((state) => state.lastNotifyAttemptError)}
+    />
+  ));
+
+  contactPointErrors.forEach((error) => {
+    errors.push(error);
+  });
 
   const hasChildPolicies = Boolean(childPolicies.length);
   const isGrouping = Array.isArray(groupBy) && groupBy.length > 0;
@@ -389,6 +410,23 @@ const Policy: FC<PolicyComponentProps> = ({
                 <span className={styles.metadata}>No matchers</span>
               )}
               <Spacer />
+              {errors.length > 0 && (
+                <HoverCard
+                  arrow
+                  placement="top"
+                  content={
+                    <Stack direction="column" gap={0.5}>
+                      {errors.map((error) => (
+                        <Fragment key={uniqueId()}>{error}</Fragment>
+                      ))}
+                    </Stack>
+                  }
+                >
+                  <span>
+                    <Badge icon="exclamation-circle" color="red" text={pluralize('error', errors.length, true)} />
+                  </span>
+                </HoverCard>
+              )}
               {warnings.length === 1 && warnings[0]}
               {warnings.length > 1 && (
                 <HoverCard
@@ -562,6 +600,7 @@ const Policy: FC<PolicyComponentProps> = ({
               currentRoute={route}
               receivers={receivers}
               contactPoint={route.receiver}
+              contactPointsState={contactPointsState}
               groupBy={route.group_by}
               timingOptions={{
                 group_wait: route.group_wait,
