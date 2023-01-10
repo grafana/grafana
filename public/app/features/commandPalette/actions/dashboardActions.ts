@@ -8,12 +8,13 @@ import { CommandPaletteAction } from '../types';
 import { RECENT_DASHBOARDS_PRORITY, SEARCH_RESULTS_PRORITY } from '../values';
 
 const MAX_SEARCH_RESULTS = 100;
+const MAX_RECENT_DASHBOARDS = 5;
 
 export async function getRecentDashboardActions(): Promise<CommandPaletteAction[]> {
-  const recentUids = (await impressionSrv.getDashboardOpened()).slice(0, MAX_SEARCH_RESULTS);
+  const recentUids = (await impressionSrv.getDashboardOpened()).slice(0, MAX_RECENT_DASHBOARDS);
   const resultsDataFrame = await getGrafanaSearcher().search({
     kind: ['dashboard'],
-    limit: MAX_SEARCH_RESULTS,
+    limit: MAX_RECENT_DASHBOARDS,
     uid: recentUids,
   });
 
@@ -50,7 +51,7 @@ export async function getDashboardSearchResultActions(searchQuery: string): Prom
   const data = await getGrafanaSearcher().search({
     kind: ['dashboard'],
     query: searchQuery,
-    limit: 100,
+    limit: MAX_SEARCH_RESULTS,
   });
 
   const goToDashboardActions: CommandPaletteAction[] = data.view.map((item) => {
