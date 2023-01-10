@@ -53,7 +53,7 @@ You can also configure settings specific to the Tempo data source:
 > **Note:** Available in Grafana v7.4 and higher.
 > If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
 
-The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) available when integrating Grafana with Tempo.
+The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) that is available when you integrate Grafana with Tempo.
 
 **To configure trace to logs:**
 

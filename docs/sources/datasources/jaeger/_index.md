@@ -51,7 +51,7 @@ You can also configure settings specific to the Jaeger data source:
 
 > **Note:** Available in Grafana v7.4 and higher.
 
-The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) available when integrating Grafana with Tempo.
+The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) that is available when you integrate Grafana with Jaeger.
 
 **To configure trace to logs:**
 
