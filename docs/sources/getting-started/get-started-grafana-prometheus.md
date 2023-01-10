@@ -14,7 +14,16 @@ Prometheus is an open source monitoring system for which Grafana provides out-of
 
 {{< docs/shared "getting-started/first-step.md" >}}
 
-#### 1. Download Prometheus and node_exporter
+_Grafana and Prometheus_:
+
+1. Download Prometheus and node_exporter
+1. Install Prometheus node_exporter
+1. Install and configure Prometheus
+1. Configure Prometheus for Grafana
+1. Check Prometheus metrics in Grafana Explore view
+1. Start building dashboards
+
+#### Download Prometheus and node_exporter
 
 Download the following components:
 
@@ -23,7 +32,7 @@ Download the following components:
 
 Like Grafana, you can install Prometheus on many different operating systems. Refer to the [Prometheus download page](https://prometheus.io/download/) to see a list of stable versions of Prometheus components.
 
-#### 2. Install Prometheus node_exporter
+#### Install Prometheus node_exporter
 
 Install node_exporter on all hosts you want to monitor. This guide shows you how to install it locally.
 
@@ -33,7 +42,7 @@ When you run node_exporter locally, navigate to `http://localhost:9100/metrics` 
 
 > **Note**: The instructions in the referenced topic are intended for Linux users. You may have to alter the instructions slightly depending on your operating system. For example, if you are on Windows, use the [windows_exporter](https://github.com/prometheus-community/windows_exporter) instead.
 
-#### 3. Install and configure Prometheus
+#### Install and configure Prometheus
 
 1. After [downloading Prometheus](https://prometheus.io/download/#prometheus), extract it and navigate to the directory.
 
@@ -73,7 +82,7 @@ The following example shows you the code you should add. Notice that static conf
 
 You can see that the node_exporter metrics have been delivered to Prometheus. Next, the metrics will be sent to Grafana.
 
-#### 4. Configure Prometheus for Grafana
+#### Configure Prometheus for Grafana
 
 When running Prometheus locally, there are two ways to configure Prometheus for Grafana. You can use a hosted Grafana instance at [Grafana Cloud](https://grafana.com/) or run Grafana locally.
 
@@ -97,7 +106,7 @@ remote_write:
 
 > **Note**: To configure your Prometheus instance to work with Grafana locally instead of Grafana Cloud, install Grafana [here](https://grafana.com/grafana/download) and follow the configuration steps listed [here](https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source).
 
-#### 5. Check Prometheus metrics in Grafana Explore view
+#### Check Prometheus metrics in Grafana Explore view
 
 In your Grafana instance, go to the [Explore]({{< relref "../explore/" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics from Prometheus. Pay special attention to the [Prometheus-specific features]({{< relref "../explore/#prometheus-specific-features" >}}) to avail custom querying experience for Prometheus.
 
