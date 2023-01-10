@@ -24,7 +24,11 @@ export function PanelHeaderTitleItems(props: Props) {
 
   const timeshift = (
     <>
-      <ToolbarButton aria-label="timeshift" className={styles.timeshift} icon="clock-nine">
+      <ToolbarButton
+        tooltip={data.request?.range ? `Timeshift: ${data.request.range.from} to ${data.request.range.to}` : ''}
+        className={styles.timeshift}
+        icon="clock-nine"
+      >
         {data.request?.timeInfo}
       </ToolbarButton>
     </>

@@ -3,6 +3,7 @@ import { isEmpty } from 'lodash';
 import React, { CSSProperties, ReactNode } from 'react';
 
 import { GrafanaTheme2, LinkModel, PanelModel, QueryResultMetaNotice, LoadingState } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { Dropdown } from '../Dropdown/Dropdown';
@@ -82,7 +83,18 @@ export function PanelChrome({
 
   // To Do rely on hoverHeader prop for header, not separate props
   // once hoverHeader is implemented
-  const hasHeader = title.length > 0 || leftItems.length > 0;
+  //
+  // Backwards compatibility for having a designated space for the header
+
+  const hasHeader =
+    hoverHeader === false &&
+    (title.length > 0 ||
+      titleItems.length > 0 ||
+      description !== '' ||
+      links !== undefined ||
+      panelNotices !== undefined ||
+      loadingState === LoadingState.Streaming ||
+      leftItems.length > 0);
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
@@ -112,8 +124,10 @@ export function PanelChrome({
       ) : null;
     }
   };
+
+  const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
   return (
-    <div className={styles.container} style={containerStyles}>
+    <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
       <div className={styles.loadingBarContainer}>
         {showLoading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
       </div>
@@ -125,17 +139,17 @@ export function PanelChrome({
           </h6>
         )}
 
-        {panelNotices && typeof panelNotices.getPanelNotices === 'function' && (
-          <PanelNotices notices={panelNotices.getPanelNotices()} onClick={panelNotices.onClick} />
-        )}
+        {panelNotices && <PanelNotices notices={panelNotices.getPanelNotices()} onClick={panelNotices.onClick} />}
 
         <PanelDescription description={description} />
 
         <PanelLinks links={links} />
 
-        <div className={styles.titleItems} data-testid="title-items">
-          {itemsRenderer(titleItems, (item) => item)}
-        </div>
+        {titleItems && (
+          <div className={styles.titleItems} data-testid="title-items">
+            {itemsRenderer(titleItems, (item) => item)}
+          </div>
+        )}
 
         {showStreaming && (
           <div className={styles.item} style={itemStyles}>

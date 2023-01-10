@@ -198,7 +198,6 @@ Basic.args = {
   title: 'Very long title that should get ellipsis when there is no more space',
   description,
   menu,
-  loadingState: LoadingState.Loading,
 };
 
 export default meta;
