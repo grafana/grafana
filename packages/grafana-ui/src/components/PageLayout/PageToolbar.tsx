@@ -56,9 +56,9 @@ export const PageToolbar: FC<Props> = React.memo(
     const mainStyle = cx(
       'page-toolbar',
       styles.toolbar,
-      { [styles.noPageIcon]: !pageIcon },
       {
         ['page-toolbar--fullscreen']: isFullscreen,
+        [styles.noPageIcon]: !pageIcon,
       },
       className
     );
