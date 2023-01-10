@@ -90,7 +90,7 @@ This guide describes configuring Prometheus in a hosted Grafana instance on Graf
 
 1. Sign up for [https://grafana.com/](https://grafana.com/auth/sign-up/create-user). Grafana gives you a Prometheus instance out of the box.
 
-![Prometheus dashboards](/static/img/docs/getting-started/screenshot-grafana-prometheus-details.png)
+![Prometheus details in Grafana.com](/static/img/docs/getting-started/screenshot-grafana-prometheus-details.png)
 
 1. Because you are running your own Prometheus instance locally, you must `remote_write` your metrics to the Grafana.com Prometheus instance. Grafana provides code to add to your `prometheus.yml` config file. This includes a remote write endpoint, your user name and password.
 
