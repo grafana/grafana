@@ -1,8 +1,5 @@
-import React from 'react';
-
 import { locationUtil, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Icon } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 

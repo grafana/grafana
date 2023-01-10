@@ -8,7 +8,7 @@ import { CommandPaletteAction } from '../types';
 import { getDashboardSearchResultActions, getRecentDashboardActions } from './dashboardActions';
 import getStaticActions from './staticActions';
 
-const debouncedDashboardSearch = debounce(getDashboardSearchResultActions, 100);
+const debouncedDashboardSearch = debounce(getDashboardSearchResultActions, 200);
 
 export default function useActions(searchQuery: string, isShowing: boolean) {
   const [staticActions, setStaticActions] = useState<CommandPaletteAction[]>([]);
@@ -26,6 +26,7 @@ export default function useActions(searchQuery: string, isShowing: boolean) {
     setStaticActions(staticActionsResp);
   }, [navBarTree]);
 
+  // Load recent dashboards - we don't want them to reload when the nav tree changes
   useEffect(() => {
     getRecentDashboardActions()
       .then((recentDashboardActions) => setStaticActions((v) => [...v, ...recentDashboardActions]))
@@ -36,7 +37,7 @@ export default function useActions(searchQuery: string, isShowing: boolean) {
 
   // Hit dashboards API
   useEffect(() => {
-    if (isShowing) {
+    if (isShowing && searchQuery.length > 0) {
       debouncedDashboardSearch(searchQuery).then((resultActions) => {
         setDashboardResultActions(resultActions);
       });
