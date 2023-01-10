@@ -34,6 +34,7 @@ func ProvideService(
 	orgService org.Service, sessionService auth.UserTokenService,
 	accessControlService accesscontrol.Service,
 	apikeyService apikey.Service, userService user.Service,
+	jwtService auth.JWTVerifierService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 ) *Service {
@@ -70,6 +71,10 @@ func ProvideService(
 	// only configure basic auth client if it is enabled, and we have at least one password client enabled
 	if s.cfg.BasicAuthEnabled && len(passwordClients) > 0 {
 		s.clients[authn.ClientBasic] = clients.ProvideBasic(loginAttempts, passwordClients...)
+	}
+
+	if s.cfg.JWTAuthEnabled {
+		s.clients[authn.ClientJWT] = clients.ProvideJWT(jwtService, cfg)
 	}
 
 	// FIXME (jguer): move to User package
@@ -117,6 +122,7 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 
 	for _, hook := range s.postAuthHooks {
 		if err := hook(ctx, identity, r); err != nil {
+			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "id", identity)
 			return nil, false, err
 		}
 	}
