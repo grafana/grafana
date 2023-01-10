@@ -1,8 +1,23 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
   "clipboard-button": {
     "inline-toast": {
-      "success": ""
+      "success": "Copiado"
+    }
+  },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
     }
   },
   "common": {
@@ -44,9 +59,9 @@
       "transformations-label": "Aplicar transformaciones de panel"
     },
     "inspect-json": {
-      "dataframe-description": "Datos brutos sin transformaciones y configuración de campo aplicada. ",
+      "dataframe-description": "Datos brutos sin configuración de campo ni transformaciones aplicadas. ",
       "dataframe-label": "JSON del marco de datos (de la consulta)",
-      "panel-data-description": "El modelo RAW ha pasado a la visualización del panel",
+      "panel-data-description": "El modelo bruto (RAW) ha pasado a la visualización del panel",
       "panel-data-label": "Datos de panel",
       "panel-json-description": "El modelo guardado en el panel de control JSON que configura cómo funciona todo.",
       "panel-json-label": "JSON de panel",
@@ -80,6 +95,15 @@
       "unmark-favorite": "Deshacer marca como favorito"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "Póngase en contacto con su administrador para configurar las fuentes de datos.",
+    "explanation": "Para visualizar sus datos, primero tendrá que conectar una fuente.",
+    "new-dashboard": "Nuevo panel de control",
+    "preferred": "Conecte su fuente de datos preferida:",
+    "sampleData": "O configure un nuevo panel de control con datos de muestra",
+    "viewAll": "Ver todo",
+    "welcome": "¡Te damos la bienvenida a los paneles de Grafana!"
+  },
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
@@ -105,13 +129,13 @@
       "title": "Administrador del servidor"
     },
     "admin-access": {
-      "title": ""
+      "title": "Usuarios y acceso"
     },
     "admin-general": {
-      "title": ""
+      "title": "General"
     },
     "admin-plugins": {
-      "title": ""
+      "title": "Complementos y datos"
     },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
@@ -130,6 +154,9 @@
     "alerting-groups": {
       "subtitle": "Ver alertas agrupadas de una instancia de Alertmanager",
       "title": "Grupos"
+    },
+    "alerting-home": {
+      "title": "Inicio"
     },
     "alerting-legacy": {
       "title": "Alertas (heredado)"
@@ -197,8 +224,8 @@
       "title": "Organizaciones"
     },
     "global-users": {
-      "subtitle": "Gestione y cree usuarios en todo el servidor Grafana",
-      "title": "",
+      "subtitle": "Gestionar usuarios de Grafana",
+      "title": "Usuarios",
       "titleBeforeTopnav": "Usuarios"
     },
     "help": {
@@ -208,6 +235,7 @@
     "help/documentation": "Documentación",
     "help/keyboard-shortcuts": "Atajos de teclado",
     "help/support": "Asistencia",
+    "help/support-bundle": "Paquetes de apoyo",
     "home": {
       "title": "Inicio"
     },
@@ -242,7 +270,7 @@
     },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
-      "title": "",
+      "title": "Preferencias por defecto",
       "titleBeforeTopnav": "Preferencias"
     },
     "playlists": {
@@ -270,7 +298,7 @@
       "placeholder": "Buscar Grafana"
     },
     "search-dashboards": {
-      "title": ""
+      "title": "Buscar paneles de control"
     },
     "server-settings": {
       "subtitle": "Vea la configuración definida en los ajustes de Grafana",
@@ -298,6 +326,10 @@
       "subtitle": "Gestionar el almacenamiento de archivos",
       "title": "Almacenamiento"
     },
+    "support-bundles": {
+      "subtitle": "Descargar paquetes de apoyo",
+      "title": "Paquetes de apoyo"
+    },
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
       "title": "Equipos"
@@ -319,36 +351,36 @@
     "title": "Últimas entradas del blog"
   },
   "notifications": {
-    "starred-dashboard": "",
-    "unstarred-dashboard": ""
+    "starred-dashboard": "Panel de control destacado",
+    "unstarred-dashboard": "Panel de control no destacado"
   },
   "panel": {
     "header-menu": {
-      "hide-legend": "",
+      "hide-legend": "Ocultar leyenda",
       "inspect": "Inspeccionar",
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
       "share": "Compartir",
-      "show-legend": "",
+      "show-legend": "Mostrar leyenda",
       "view": "Vista"
     }
   },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Actualización automática desactivada. Elija un intervalo de tiempo de actualización",
-      "duration-selected": ""
+      "duration-selected": "Elegir intervalo de tiempo de actualización con el intervalo actual {{durationAriaLabel}} seleccionado"
     },
     "live-option": {
-      "aria-label": "",
-      "label": ""
+      "aria-label": "Activar transmisión en directo",
+      "label": "En directo"
     },
     "off-option": {
       "aria-label": "Desactivar actualización automática",
       "label": "Apagado"
     },
     "select-button": {
-      "auto-refresh": ""
+      "auto-refresh": "Establecer intervalo de actualización automática"
     }
   },
   "share-modal": {
@@ -407,14 +439,14 @@
       "name": "Nombre de la instantánea",
       "timeout": "Tiempo de espera (segundos)",
       "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel.",
-      "url-label": ""
+      "url-label": "URL de la instantánea"
     },
     "tab-title": {
       "embed": "Incrustar",
       "export": "Exportar",
       "library-panel": "Panel de librería",
       "link": "Enlace",
-      "snapshot": "Vista rápida"
+      "snapshot": "Instantánea"
     },
     "theme-picker": {
       "current": "Actual",
@@ -423,7 +455,7 @@
       "light": "Claro"
     },
     "view-json": {
-      "copy-button": ""
+      "copy-button": "Copiar al portapapeles"
     }
   },
   "shared-dashboard": {
@@ -453,46 +485,46 @@
       "title": "Intervalo de tiempo absoluto"
     },
     "calendar": {
-      "apply-button": "",
+      "apply-button": "Aplicar intervalo de tiempo",
       "cancel-button": "Cancelar",
-      "select-time": ""
+      "select-time": "Seleccionar un intervalo de tiempo"
     },
     "content": {
-      "empty-recent-list": "",
-      "filter-placeholder": ""
+      "empty-recent-list": "<0><0>Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí./0></0><1><0>Lea la documentación</0><1> para saber más sobre cómo introducir intervalos de tiempo personalizados.</1></1>",
+      "filter-placeholder": "Buscar intervalos rápidos"
     },
     "footer": {
-      "change-settings-button": "",
-      "fiscal-year-option": "",
-      "fiscal-year-start": "",
-      "time-zone-option": "",
-      "time-zone-selection": ""
+      "change-settings-button": "Cambiar ajustes de tiempo",
+      "fiscal-year-option": "Ejercicio fiscal",
+      "fiscal-year-start": "Mes de inicio del ejercicio fiscal",
+      "time-zone-option": "Huso horario",
+      "time-zone-selection": "Selección del huso horario"
     },
     "range-content": {
-      "apply-button": "",
-      "default-error": "",
-      "fiscal-year": "",
-      "from-input": "",
-      "range-error": "",
-      "to-input": ""
+      "apply-button": "Aplicar intervalo de tiempo",
+      "default-error": "Introducir una fecha anterior o «ahora»",
+      "fiscal-year": "Ejercicio fiscal",
+      "from-input": "Desde",
+      "range-error": "«Desde» no puede ser posterior a «hasta»",
+      "to-input": "Hasta"
     },
     "range-picker": {
-      "backwards-time-aria-label": "",
-      "current-time-selected": "",
-      "forwards-time-aria-label": "",
-      "to": "",
-      "zoom-out-button": "",
-      "zoom-out-tooltip": ""
+      "backwards-time-aria-label": "Retrasar el intervalo de tiempo",
+      "current-time-selected": "Intervalo de tiempo seleccionado: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Adelantar el intervalo de tiempo",
+      "to": "hasta",
+      "zoom-out-button": "Reducir el intervalo de tiempo",
+      "zoom-out-tooltip": "Reducir el intervalo de tiempo <1></1> CTRL+Z"
     },
     "time-range": {
-      "aria-role": "",
-      "default-title": "",
-      "example-title": "",
-      "specify": ""
+      "aria-role": "Selección de intervalo de tiempo",
+      "default-title": "Intervalos de tiempo",
+      "example-title": "Ejemplos de intervalos de tiempo",
+      "specify": "Especificar el intervalo de tiempo <1></1>"
     },
     "zone": {
-      "select-aria-label": "",
-      "select-search-input": ""
+      "select-aria-label": "Selector de huso horario",
+      "select-search-input": "Escribir para buscar (país, ciudad, abreviatura)"
     }
   },
   "user-orgs": {
@@ -524,11 +556,11 @@
   },
   "variable": {
     "picker": {
-      "input": "",
-      "link-all": "",
-      "option-all": "",
-      "option-selected-values": "",
-      "option-tooltip": ""
+      "input": "Introducir el valor de la variable",
+      "link-all": "Todo",
+      "option-all": "Todo",
+      "option-selected-values": "Seleccionados",
+      "option-tooltip": "Eliminar selecciones"
     }
   }
 }

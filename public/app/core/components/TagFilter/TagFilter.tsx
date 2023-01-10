@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { components } from 'react-select';
 
 import { escapeStringForRegex, GrafanaTheme2 } from '@grafana/data';
@@ -38,7 +38,7 @@ const filterOption = (option: any, searchQuery: string) => {
   return regex.test(option.value);
 };
 
-export const TagFilter: FC<Props> = ({
+export const TagFilter = ({
   allowCustomValue = false,
   formatCreateLabel,
   hideValues,
@@ -49,7 +49,7 @@ export const TagFilter: FC<Props> = ({
   tagOptions,
   tags,
   width,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   const currentlySelectedTags = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
