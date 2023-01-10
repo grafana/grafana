@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
@@ -964,7 +963,7 @@ func (d *DashboardStore) GetDashboardUIDById(ctx context.Context, query *models.
 func (d *DashboardStore) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
 	return d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		if len(query.DashboardIds) == 0 && len(query.DashboardUIds) == 0 {
-			return star.ErrCommandValidationFailed
+			return models.ErrCommandValidationFailed
 		}
 
 		var dashboards = make([]*models.Dashboard, 0)
