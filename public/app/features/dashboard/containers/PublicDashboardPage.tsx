@@ -19,9 +19,17 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state';
 import { initDashboard } from '../state/initDashboard';
 
-import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './DashboardPage';
+interface PublicDashboardPageRouteParams {
+  accessToken?: string;
+}
 
-export type Props = GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>;
+interface PublicDashboardPageRouteSearchParams {
+  from?: string;
+  to?: string;
+  refresh?: string;
+}
+
+export type Props = GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams>;
 
 const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
   const dispatch = useDispatch();
