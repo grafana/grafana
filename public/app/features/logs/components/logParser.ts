@@ -53,7 +53,7 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   if (field.name === 'labels' && field.type === FieldType.other) {
     return true;
   }
-  // "id" field which we use for react key
+  // id and tsNs are arbitrary added fields in the backend and should be hidden in the UI
   if (field.name === 'id' || field.name === 'tsNs') {
     return true;
   }
