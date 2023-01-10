@@ -68,7 +68,7 @@ You can use the Loki label browser to navigate through your labels and values, a
 1. Choose a query type between [**logs query**]({{< relref "#create-a-log-query" >}}) and [**rate metrics query**]({{< relref "#create-a-metric-query" >}}).
    You can also validate the selector.
 
-{{< figure src="/static/img/docs/v75/loki_log_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
+{{< figure src="/static/img/docs/v75/loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
 
 ### Configure query settings
 
