@@ -10,6 +10,7 @@ import {
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
+  hasLogsSampleSupport,
   hasLogsVolumeSupport,
   hasQueryExportSupport,
   hasQueryImportSupport,
@@ -49,6 +50,7 @@ import { updateTime } from './time';
 import {
   createCacheKey,
   getResultsFromCache,
+  hasSupplementaryQuerySupport,
   storeSupplementaryQueryEnabled,
   SUPPLEMENTARY_QUERY_TYPES,
 } from './utils';
@@ -112,11 +114,20 @@ export interface StoreSupplementaryQueryDataProvider {
   type: SupplementaryQueryType;
 }
 
+export interface CleanSupplementaryQueryDataProvider {
+  exploreId: ExploreId;
+  type: SupplementaryQueryType;
+}
+
 /**
  * Stores available logs volume provider after running the query. Used internally by runQueries().
  */
 export const storeSupplementaryQueryDataProviderAction = createAction<StoreSupplementaryQueryDataProvider>(
   'explore/storeSupplementaryQueryDataProviderAction'
+);
+
+export const cleanSupplementaryQueryDataProviderAction = createAction<CleanSupplementaryQueryDataProvider>(
+  'explore/cleanSupplementaryQueryDataProviderAction'
 );
 
 export const cleanSupplementaryQueryAction = createAction<{ exploreId: ExploreId; type: SupplementaryQueryType }>(
@@ -247,7 +258,7 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
     const supplementaryQueries = getState().explore[exploreId]!.supplementaryQueries;
     // Cancel all data providers
     for (const type of SUPPLEMENTARY_QUERY_TYPES) {
-      dispatch(storeSupplementaryQueryDataProviderAction({ exploreId, dataProvider: undefined, type }));
+      dispatch(cleanSupplementaryQueryDataProviderAction({ exploreId, type }));
 
       // And clear any incomplete data
       if (supplementaryQueries[type]?.data?.state !== LoadingState.Done) {
@@ -407,6 +418,30 @@ async function handleHistory(
   await dispatch(loadRichHistory(ExploreId.left));
   await dispatch(loadRichHistory(ExploreId.right));
 }
+
+const handleSupplementaryQuery = (
+  dispatch: ThunkDispatch,
+  state: ExploreState,
+  exploreId: ExploreId,
+  type: SupplementaryQueryType,
+  dataProvider: Observable<DataQueryResponse> | undefined
+) => {
+  dispatch(
+    storeSupplementaryQueryDataProviderAction({
+      exploreId,
+      type,
+      dataProvider,
+    })
+  );
+
+  const { supplementaryQueries, absoluteRange, queries } = state[exploreId]!;
+  if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
+    dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
+    if (supplementaryQueries[type].enabled) {
+      dispatch(loadSupplementaryQueryData(exploreId, type));
+    }
+  }
+};
 
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
@@ -572,59 +607,72 @@ export const runQueries = (
       if (live) {
         for (const type of SUPPLEMENTARY_QUERY_TYPES) {
           dispatch(
-            storeSupplementaryQueryDataProviderAction({
+            cleanSupplementaryQueryDataProviderAction({
               exploreId,
-              dataProvider: undefined,
               type,
             })
           );
           dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
         }
-
-        // In this whole part., we need to figure out
-        // checking the type of enabled supp queries
-        // then for which enabled supp queries has data source support
-        // and then we need to run the supp queries
-        // but we need to make sure that supp queries that dont work
-        // return undefined provider
-        // we should also make sure we store the type of provider that
-        // was last stored
-      } else if (hasLogsVolumeSupport(datasourceInstance)) {
-        // we always prepare the logsVolumeProvider,
-        // but we only load it, if the logs-volume-histogram is enabled.
-        // (we need to have the logsVolumeProvider always actual,
-        // even when the visuals are disabled, because when the user
-        // enables the visuals again, we need to load the histogram,
-        // so we need the provider)
-        const sourceRequest = {
-          ...transaction.request,
-          requestId: transaction.request.requestId + '_log_volume',
-        };
-        const type = SupplementaryQueryType.LogsVolume;
-        const dataProvider = datasourceInstance.getLogsVolumeDataProvider(sourceRequest);
-        dispatch(
-          storeSupplementaryQueryDataProviderAction({
+        // We support multiple supplementary queries, so we check if data source supports at least 1
+        // If it does, we then check for each of them individually and process accordingly
+      } else if (hasSupplementaryQuerySupport(datasourceInstance)) {
+        if (hasLogsVolumeSupport(datasourceInstance)) {
+          // We always prepare provider, even is supplementary query is disabled because when the user
+          // enables the query, we need to load the data, so we need the provider
+          const dataProvider = datasourceInstance.getLogsVolumeDataProvider({
+            ...transaction.request,
+            requestId: transaction.request.requestId + '_log_volume',
+          });
+          handleSupplementaryQuery(
+            dispatch,
+            getState().explore,
             exploreId,
-            type,
-            dataProvider,
-          })
-        );
+            SupplementaryQueryType.LogsVolume,
+            dataProvider
+          );
+        } else {
+          // If data source instance doesn't support this supplementary query, we clean the data provider
+          dispatch(
+            cleanSupplementaryQueryDataProviderAction({
+              exploreId,
+              type: SupplementaryQueryType.LogsVolume,
+            })
+          );
+        }
 
-        const { supplementaryQueries, absoluteRange } = getState().explore[exploreId]!;
-        if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
-          dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
-          if (supplementaryQueries[type].enabled) {
-            dispatch(loadSupplementaryQueryData(exploreId, type));
-          }
+        if (hasLogsSampleSupport(datasourceInstance)) {
+          // We always prepare provider, even is supplementary query is disabled because when the user
+          // enables the query, we need to load the data, so we need the provider
+          const dataProvider = datasourceInstance.getLogsSampleDataProvider({
+            ...transaction.request,
+            requestId: transaction.request.requestId + '_log_sample',
+          });
+          handleSupplementaryQuery(
+            dispatch,
+            getState().explore,
+            exploreId,
+            SupplementaryQueryType.LogsSample,
+            dataProvider
+          );
+        } else {
+          // If data source instance doesn't support this supplementary query, we clean the data provider
+          dispatch(
+            cleanSupplementaryQueryDataProviderAction({
+              exploreId,
+              type: SupplementaryQueryType.LogsSample,
+            })
+          );
         }
       } else {
-        dispatch(
-          storeSupplementaryQueryDataProviderAction({
-            exploreId,
-            dataProvider: undefined,
-            type: SupplementaryQueryType.LogsVolume,
-          })
-        );
+        for (const type of SUPPLEMENTARY_QUERY_TYPES) {
+          dispatch(
+            cleanSupplementaryQueryDataProviderAction({
+              exploreId,
+              type,
+            })
+          );
+        }
       }
     }
 
@@ -836,6 +884,26 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     const nextSupplementaryQueries = {
       ...supplementaryQueries,
       [type]: { ...supplementaryQuery, dataProvider, dataSubscription: undefined },
+    };
+
+    return {
+      ...state,
+      supplementaryQueries: nextSupplementaryQueries,
+    };
+  }
+
+  if (cleanSupplementaryQueryDataProviderAction.match(action)) {
+    const { type } = action.payload;
+    const { supplementaryQueries } = state;
+    const supplementaryQuery = supplementaryQueries[type];
+
+    if (supplementaryQuery?.dataSubscription) {
+      supplementaryQuery.dataSubscription.unsubscribe();
+    }
+
+    const nextSupplementaryQueries = {
+      ...supplementaryQueries,
+      [type]: { ...supplementaryQuery, dataProvider: undefined, dataSubscription: undefined },
     };
 
     return {
