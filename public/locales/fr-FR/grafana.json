@@ -2,7 +2,22 @@
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
   "clipboard-button": {
     "inline-toast": {
-      "success": ""
+      "success": "Copié"
+    }
+  },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
     }
   },
   "common": {
@@ -80,6 +95,15 @@
       "unmark-favorite": "Supprimer des favoris"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "Veuillez contacter votre administrateur pour configurer les sources de données.",
+    "explanation": "Pour visualiser vos données, vous devrez d’abord les connecter.",
+    "new-dashboard": "Nouveau tableau de bord",
+    "preferred": "Connectez votre source de données préférée\u00a0:",
+    "sampleData": "Ou établissez un nouveau tableau de bord avec des exemples de données",
+    "viewAll": "Afficher tout",
+    "welcome": "Bienvenue aux tableaux de bord Grafana !"
+  },
   "folder-picker": {
     "loading": "Chargement des dossiers..."
   },
@@ -105,13 +129,13 @@
       "title": "Administrateur de serveur"
     },
     "admin-access": {
-      "title": ""
+      "title": "Utilisateurs et droits d'accès"
     },
     "admin-general": {
-      "title": ""
+      "title": "Général"
     },
     "admin-plugins": {
-      "title": ""
+      "title": "Modules complémentaires et données"
     },
     "alerting": {
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
@@ -130,6 +154,9 @@
     "alerting-groups": {
       "subtitle": "Consulter les alertes groupées d'une instance Alertmanager",
       "title": "Groupes"
+    },
+    "alerting-home": {
+      "title": "Accueil"
     },
     "alerting-legacy": {
       "title": "Alerte (existante)"
@@ -197,8 +224,8 @@
       "title": "Organisations"
     },
     "global-users": {
-      "subtitle": "Gérer et créer des utilisateurs sur l'ensemble du serveur Grafana",
-      "title": "",
+      "subtitle": "Gérer les utilisateurs dans Grafana",
+      "title": "Utilisateurs",
       "titleBeforeTopnav": "Utilisateurs"
     },
     "help": {
@@ -208,6 +235,7 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Raccourcis clavier",
     "help/support": "Assistance",
+    "help/support-bundle": "Packs d’assistance",
     "home": {
       "title": "Accueil"
     },
@@ -242,7 +270,7 @@
     },
     "org-settings": {
       "subtitle": "Gérer les préférences au sein d'une organisation",
-      "title": "",
+      "title": "Préférences par défaut",
       "titleBeforeTopnav": "Préférences"
     },
     "playlists": {
@@ -270,7 +298,7 @@
       "placeholder": "Rechercher dans Grafana"
     },
     "search-dashboards": {
-      "title": ""
+      "title": "Rechercher dans les tableaux de bord"
     },
     "server-settings": {
       "subtitle": "Afficher les paramètres définis dans votre configuration Grafana",
@@ -298,6 +326,10 @@
       "subtitle": "Gérer le stockage de fichiers",
       "title": "Stockage"
     },
+    "support-bundles": {
+      "subtitle": "Télécharger les packs d’assistance",
+      "title": "Packs d’assistance"
+    },
     "teams": {
       "subtitle": "Groupes d'utilisateurs ayant des besoins communs en matière de tableau de bord et d'autorisations",
       "title": "Équipes"
@@ -319,36 +351,36 @@
     "title": "Dernières nouvelles sur le blog"
   },
   "notifications": {
-    "starred-dashboard": "",
-    "unstarred-dashboard": ""
+    "starred-dashboard": "Tableau de bord favori",
+    "unstarred-dashboard": "Tableau de bord non favori"
   },
   "panel": {
     "header-menu": {
-      "hide-legend": "",
+      "hide-legend": "Masquer la légende",
       "inspect": "Inspecter",
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
       "share": "Partager",
-      "show-legend": "",
+      "show-legend": "Afficher la légende",
       "view": "Afficher"
     }
   },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Actualisation automatique désactivée. Choisir un intervalle de temps d'actualisation",
-      "duration-selected": ""
+      "duration-selected": "Choisir l'intervalle de temps d'actualisation avec l'intervalle actuel {{durationAriaLabel}} sélectionné"
     },
     "live-option": {
-      "aria-label": "",
-      "label": ""
+      "aria-label": "Activer la diffusion en direct",
+      "label": "En direct"
     },
     "off-option": {
       "aria-label": "Désactiver l'actualisation automatique",
       "label": "Désactivé"
     },
     "select-button": {
-      "auto-refresh": ""
+      "auto-refresh": "Définir l'intervalle d'actualisation automatique"
     }
   },
   "share-modal": {
@@ -407,7 +439,7 @@
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
       "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",
-      "url-label": ""
+      "url-label": "Capturer l'URL"
     },
     "tab-title": {
       "embed": "Intégrer",
@@ -423,7 +455,7 @@
       "light": "Clair"
     },
     "view-json": {
-      "copy-button": ""
+      "copy-button": "Copier dans le presse-papiers"
     }
   },
   "shared-dashboard": {
@@ -453,46 +485,46 @@
       "title": "Période temporelle absolue"
     },
     "calendar": {
-      "apply-button": "",
+      "apply-button": "Appliquer la plage de temps",
       "cancel-button": "Annuler",
-      "select-time": ""
+      "select-time": "Sélectionner une plage de temps"
     },
     "content": {
-      "empty-recent-list": "",
-      "filter-placeholder": ""
+      "empty-recent-list": "<0><0>Il semble que vous n'ayez jamais utilisé ce sélecteur de temps dans le passé. Lorsque vous commencerez à utiliser des plages de temps, celles récemment utilisées apparaîtront ici. /0></0><1><0>Lisez la documentation</0><1> pour savoir comment entrer des plages de temps personnalisées.</1></1>",
+      "filter-placeholder": "Rechercher dans les plages rapides"
     },
     "footer": {
-      "change-settings-button": "",
-      "fiscal-year-option": "",
-      "fiscal-year-start": "",
-      "time-zone-option": "",
-      "time-zone-selection": ""
+      "change-settings-button": "Modifier les paramètres de l'heure",
+      "fiscal-year-option": "Exercice fiscal",
+      "fiscal-year-start": "Mois de début de l'exercice fiscal",
+      "time-zone-option": "Fuseau horaire",
+      "time-zone-selection": "Sélection du fuseau horaire"
     },
     "range-content": {
-      "apply-button": "",
-      "default-error": "",
-      "fiscal-year": "",
-      "from-input": "",
-      "range-error": "",
-      "to-input": ""
+      "apply-button": "Appliquer la plage de temps",
+      "default-error": "Entrez une date dans le passé ou « maintenant »",
+      "fiscal-year": "Exercice fiscal",
+      "from-input": "De",
+      "range-error": "« De » ne peut pas être ultérieur à « À »",
+      "to-input": "À"
     },
     "range-picker": {
-      "backwards-time-aria-label": "",
-      "current-time-selected": "",
-      "forwards-time-aria-label": "",
-      "to": "",
-      "zoom-out-button": "",
-      "zoom-out-tooltip": ""
+      "backwards-time-aria-label": "Reculer la plage de temps",
+      "current-time-selected": "Plage de temps sélectionnée : {{currentTimeRange}}",
+      "forwards-time-aria-label": "Avancer la plage de temps",
+      "to": "à",
+      "zoom-out-button": "Dézoomer la plage de temps",
+      "zoom-out-tooltip": "Dézoomer la plage de temps <1></1> CTRL+Z"
     },
     "time-range": {
-      "aria-role": "",
-      "default-title": "",
-      "example-title": "",
-      "specify": ""
+      "aria-role": "Sélection de la plage de temps",
+      "default-title": "Plages de temps",
+      "example-title": "Exemple de plages de temps",
+      "specify": "Spécifiez la plage de temps <1></1>"
     },
     "zone": {
-      "select-aria-label": "",
-      "select-search-input": ""
+      "select-aria-label": "Outil de sélection du fuseau horaire",
+      "select-search-input": "Tapez pour rechercher (pays, ville, abréviation)"
     }
   },
   "user-orgs": {
@@ -524,11 +556,11 @@
   },
   "variable": {
     "picker": {
-      "input": "",
-      "link-all": "",
-      "option-all": "",
-      "option-selected-values": "",
-      "option-tooltip": ""
+      "input": "Entrer la valeur de la variable",
+      "link-all": "Tout",
+      "option-all": "Tout",
+      "option-selected-values": "Sélection",
+      "option-tooltip": "Effacer les sélections"
     }
   }
 }

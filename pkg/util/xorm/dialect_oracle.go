@@ -755,7 +755,7 @@ func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Colum
 		}
 
 		if _, ok := core.SqlTypes[col.SQLType.Name]; !ok {
-			return nil, nil, fmt.Errorf("Unknown colType %v %v", *dataType, col.SQLType)
+			return nil, nil, fmt.Errorf("unknown colType %v %v", *dataType, col.SQLType)
 		}
 
 		col.Length = dataLen

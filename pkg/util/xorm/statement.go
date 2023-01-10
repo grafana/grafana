@@ -578,7 +578,7 @@ func (statement *Statement) col2NewColsWithQuote(columns ...string) []string {
 }
 
 func (statement *Statement) colmap2NewColsWithQuote() []string {
-	newColumns := make([]string, len(statement.columnMap), len(statement.columnMap))
+	newColumns := make([]string, len(statement.columnMap))
 	copy(newColumns, statement.columnMap)
 	for i := 0; i < len(statement.columnMap); i++ {
 		newColumns[i] = statement.Engine.Quote(newColumns[i])
@@ -840,10 +840,6 @@ func (statement *Statement) genIndexSQL() []string {
 	for _, index := range statement.RefTable.Indexes {
 		if index.Type == core.IndexType {
 			sql := statement.Engine.dialect.CreateIndexSql(tbName, index)
-			/*idxTBName := strings.Replace(tbName, ".", "_", -1)
-			idxTBName = strings.Replace(idxTBName, `"`, "", -1)
-			sql := fmt.Sprintf("CREATE INDEX %v ON %v (%v);", quote(indexName(idxTBName, idxName)),
-				quote(tbName), quote(strings.Join(index.Cols, quote(","))))*/
 			sqls = append(sqls, sql)
 		}
 	}
@@ -1052,11 +1048,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 		whereStr = " WHERE " + condSQL
 	}
 
-	if dialect.DBType() == core.MSSQL && strings.Contains(statement.TableName(), "..") {
-		fromStr += statement.TableName()
-	} else {
-		fromStr += quote(statement.TableName())
-	}
+	fromStr += quote(statement.TableName())
 
 	if statement.TableAlias != "" {
 		if dialect.DBType() == core.ORACLE {
@@ -1070,47 +1062,6 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 	}
 
 	pLimitN := statement.LimitN
-	if dialect.DBType() == core.MSSQL {
-		if pLimitN != nil {
-			LimitNValue := *pLimitN
-			top = fmt.Sprintf("TOP %d ", LimitNValue)
-		}
-		if statement.Start > 0 {
-			var column string
-			if len(statement.RefTable.PKColumns()) == 0 {
-				for _, index := range statement.RefTable.Indexes {
-					if len(index.Cols) == 1 {
-						column = index.Cols[0]
-						break
-					}
-				}
-				if len(column) == 0 {
-					column = statement.RefTable.ColumnsSeq()[0]
-				}
-			} else {
-				column = statement.RefTable.PKColumns()[0].Name
-			}
-			if statement.needTableName() {
-				if len(statement.TableAlias) > 0 {
-					column = statement.TableAlias + "." + column
-				} else {
-					column = statement.TableName() + "." + column
-				}
-			}
-
-			var orderStr string
-			if needOrderBy && len(statement.OrderStr) > 0 {
-				orderStr = " ORDER BY " + statement.OrderStr
-			}
-
-			var groupStr string
-			if len(statement.GroupByStr) > 0 {
-				groupStr = " GROUP BY " + statement.GroupByStr
-			}
-			mssqlCondi = fmt.Sprintf("(%s NOT IN (SELECT TOP %d %s%s%s%s%s))",
-				column, statement.Start, column, fromStr, whereStr, orderStr, groupStr)
-		}
-	}
 
 	var buf strings.Builder
 	fmt.Fprintf(&buf, "SELECT %v%v%v%v%v", distinct, top, columnStr, fromStr, whereStr)
@@ -1132,7 +1083,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 		fmt.Fprint(&buf, " ORDER BY ", statement.OrderStr)
 	}
 	if needLimit {
-		if dialect.DBType() != core.MSSQL && dialect.DBType() != core.ORACLE {
+		if dialect.DBType() != core.ORACLE {
 			if statement.Start > 0 {
 				if pLimitN != nil {
 					fmt.Fprintf(&buf, " LIMIT %v OFFSET %v", *pLimitN, statement.Start)
@@ -1142,7 +1093,7 @@ func (statement *Statement) genSelectSQL(columnStr, condSQL string, needLimit, n
 			} else if pLimitN != nil {
 				fmt.Fprint(&buf, " LIMIT ", *pLimitN)
 			}
-		} else if dialect.DBType() == core.ORACLE {
+		} else {
 			if statement.Start != 0 || pLimitN != nil {
 				oldString := buf.String()
 				buf.Reset()
@@ -1179,83 +1130,4 @@ func (statement *Statement) processIDParam() error {
 		statement.cond = statement.cond.And(builder.Eq{colName: (*(statement.idParam))[i]})
 	}
 	return nil
-}
-
-func (statement *Statement) joinColumns(cols []*core.Column, includeTableName bool) string {
-	var colnames = make([]string, len(cols))
-	for i, col := range cols {
-		if includeTableName {
-			colnames[i] = statement.Engine.Quote(statement.TableName()) +
-				"." + statement.Engine.Quote(col.Name)
-		} else {
-			colnames[i] = statement.Engine.Quote(col.Name)
-		}
-	}
-	return strings.Join(colnames, ", ")
-}
-
-func (statement *Statement) convertIDSQL(sqlStr string) string {
-	if statement.RefTable != nil {
-		cols := statement.RefTable.PKColumns()
-		if len(cols) == 0 {
-			return ""
-		}
-
-		colstrs := statement.joinColumns(cols, false)
-		sqls := splitNNoCase(sqlStr, " from ", 2)
-		if len(sqls) != 2 {
-			return ""
-		}
-
-		var top string
-		pLimitN := statement.LimitN
-		if pLimitN != nil && statement.Engine.dialect.DBType() == core.MSSQL {
-			top = fmt.Sprintf("TOP %d ", *pLimitN)
-		}
-
-		newsql := fmt.Sprintf("SELECT %s%s FROM %v", top, colstrs, sqls[1])
-		return newsql
-	}
-	return ""
-}
-
-func (statement *Statement) convertUpdateSQL(sqlStr string) (string, string) {
-	if statement.RefTable == nil || len(statement.RefTable.PrimaryKeys) != 1 {
-		return "", ""
-	}
-
-	colstrs := statement.joinColumns(statement.RefTable.PKColumns(), true)
-	sqls := splitNNoCase(sqlStr, "where", 2)
-	if len(sqls) != 2 {
-		if len(sqls) == 1 {
-			return sqls[0], fmt.Sprintf("SELECT %v FROM %v",
-				colstrs, statement.Engine.Quote(statement.TableName()))
-		}
-		return "", ""
-	}
-
-	var whereStr = sqls[1]
-
-	// TODO: for postgres only, if any other database?
-	var paraStr string
-	if statement.Engine.dialect.DBType() == core.POSTGRES {
-		paraStr = "$"
-	} else if statement.Engine.dialect.DBType() == core.MSSQL {
-		paraStr = ":"
-	}
-
-	if paraStr != "" {
-		if strings.Contains(sqls[1], paraStr) {
-			dollers := strings.Split(sqls[1], paraStr)
-			whereStr = dollers[0]
-			for i, c := range dollers[1:] {
-				ccs := strings.SplitN(c, " ", 2)
-				whereStr += fmt.Sprintf(paraStr+"%v %v", i+1, ccs[1])
-			}
-		}
-	}
-
-	return sqls[0], fmt.Sprintf("SELECT %v FROM %v WHERE %v",
-		colstrs, statement.Engine.Quote(statement.TableName()),
-		whereStr)
 }

@@ -50,9 +50,8 @@ func TestOrgSync_SyncOrgUser(t *testing.T) {
 		log           log.Logger
 	}
 	type args struct {
-		ctx          context.Context
-		clientParams *authn.ClientParams
-		id           *authn.Identity
+		ctx context.Context
+		id  *authn.Identity
 	}
 	tests := []struct {
 		name    string
@@ -71,9 +70,6 @@ func TestOrgSync_SyncOrgUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser: true,
-				},
 				id: &authn.Identity{
 					ID:             "user:1",
 					Login:          "test",
@@ -81,10 +77,13 @@ func TestOrgSync_SyncOrgUser(t *testing.T) {
 					Email:          "test",
 					OrgRoles:       map[int64]roletype.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
 					IsGrafanaAdmin: ptrBool(false),
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  ptrString("test"),
-						Login:  nil,
+					ClientParams: authn.ClientParams{
+						SyncUser: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  ptrString("test"),
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -96,10 +95,13 @@ func TestOrgSync_SyncOrgUser(t *testing.T) {
 				OrgRoles:       map[int64]roletype.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
 				OrgID:          1, //set using org
 				IsGrafanaAdmin: ptrBool(false),
-				LookUpParams: models.UserLookupParams{
-					UserID: nil,
-					Email:  ptrString("test"),
-					Login:  nil,
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test"),
+						Login:  nil,
+					},
 				},
 			},
 			wantErr: false,
@@ -113,7 +115,7 @@ func TestOrgSync_SyncOrgUser(t *testing.T) {
 				accessControl: tt.fields.accessControl,
 				log:           tt.fields.log,
 			}
-			if err := s.SyncOrgUser(tt.args.ctx, tt.args.clientParams, tt.args.id); (err != nil) != tt.wantErr {
+			if err := s.SyncOrgUser(tt.args.ctx, tt.args.id, nil); (err != nil) != tt.wantErr {
 				t.Errorf("OrgSync.SyncOrgUser() error = %v, wantErr %v", err, tt.wantErr)
 			}
 

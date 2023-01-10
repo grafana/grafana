@@ -21,7 +21,15 @@ export enum LoadingState {
 }
 
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
-export const preferredVisualizationTypes = ['graph', 'table', 'logs', 'trace', 'nodeGraph', 'flamegraph'] as const;
+export const preferredVisualizationTypes = [
+  'graph',
+  'table',
+  'logs',
+  'trace',
+  'nodeGraph',
+  'flamegraph',
+  'rawPrometheus',
+] as const;
 export type PreferredVisualisationType = typeof preferredVisualizationTypes[number];
 
 /**

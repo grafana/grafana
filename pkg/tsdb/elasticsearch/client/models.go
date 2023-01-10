@@ -2,14 +2,13 @@ package es
 
 import (
 	"encoding/json"
-
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"time"
 )
 
 // SearchRequest represents a search request
 type SearchRequest struct {
 	Index       string
-	Interval    intervalv2.Interval
+	Interval    time.Duration
 	Size        int
 	Sort        map[string]interface{}
 	Query       *Query

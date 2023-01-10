@@ -1281,7 +1281,7 @@ func TestBucketScript(t *testing.T) {
 	requireFrameLength(t, frames[0], 2)
 	requireTimeSeriesName(t, "Sum @value", frames[0])
 	requireTimeSeriesName(t, "Max @value", frames[1])
-	// requireTimeSeriesName(t, "Sum @value * Max @value", frames[2]) // FIXME
+	requireTimeSeriesName(t, "Sum @value * Max @value", frames[2])
 
 	requireNumberValue(t, 2, frames[0], 0)
 	requireNumberValue(t, 3, frames[1], 0)
