@@ -516,9 +516,15 @@ policies:
     #        a very low alert volume or your upstream notification system performs
     #        its own grouping.
     group_by: ['...']
-    # <list> a list of matchers that an alert has to fulfill to match the node
+    # <list> a list of prometheus-like matchers that an alert has to fulfill to match the node (allowed chars [a-zA-Z_:])
     matchers:
       - alertname = Watchdog
+      - service_id_X = serviceX
+      - severity =~ "warning|critical"
+    # <list> a list of grafana-like matchers that an alert has to fulfill to match the node
+    object_matchers:
+      - alertname = CPUUsage
+      - service_id-X = serviceX
       - severity =~ "warning|critical"
     # <list> Times when the route should be muted. These must match the name of a
     #        mute time interval.
