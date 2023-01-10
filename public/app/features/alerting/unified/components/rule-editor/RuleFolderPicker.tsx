@@ -61,7 +61,6 @@ export function RuleFolderPicker(props: RuleFolderPickerProps) {
       customAdd={customAdd}
       folderWarning={folderWarning}
       sliceResults={MAX_FOLDERS_IN_LIST}
-      virtualizeResults
     />
   );
 }
