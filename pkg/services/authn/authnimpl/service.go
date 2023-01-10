@@ -96,6 +96,8 @@ type Service struct {
 
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
 	postAuthHooks []authn.PostAuthHookFn
+	// postLoginHooks are called after a login request is performed, both for failing and successful requests.
+	postLoginHooks []authn.PostLoginHookFn
 }
 
 func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Request) (*authn.Identity, bool, error) {
@@ -128,6 +130,10 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 	}
 
 	return identity, true, nil
+}
+
+func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn) {
+	s.postAuthHooks = append(s.postAuthHooks, hook)
 }
 
 func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
@@ -164,8 +170,8 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (*
 	return identity, nil
 }
 
-func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn) {
-	s.postAuthHooks = append(s.postAuthHooks, hook)
+func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn) {
+	s.postLoginHooks = append(s.postLoginHooks, hook)
 }
 
 func orgIDFromRequest(r *authn.Request) int64 {
