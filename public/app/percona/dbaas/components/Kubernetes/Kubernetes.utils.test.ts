@@ -1,5 +1,5 @@
-import { Operators } from '../DBCluster/EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import { DATABASE_OPTIONS } from '../DBCluster/DBCluster.constants';
+import { Operators } from '../DBCluster/EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
 import { getActiveOperators, getDatabaseOptionFromOperator, isKubernetesListUnavailable } from './Kubernetes.utils';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus.types';

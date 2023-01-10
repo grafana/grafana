@@ -7,7 +7,6 @@ import { Kubernetes, OperatorsList } from '../../../Kubernetes/Kubernetes.types'
 export interface DBClusterBasicOptionsProps {
   kubernetes: Kubernetes[];
   form: FormApi;
-  className?: string;
 }
 
 export enum Operators {
@@ -36,4 +35,11 @@ export interface KubernetesOption {
   label: JSX.Element;
   operators: OperatorsList;
   availableOperators: Operators[];
+}
+
+export enum BasicOptionsFields {
+  name = 'name',
+  kubernetesCluster = 'kubernetesCluster',
+  databaseType = 'databaseType',
+  databaseVersion = 'databaseVersion',
 }

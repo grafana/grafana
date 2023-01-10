@@ -1,4 +1,3 @@
-import { DBClusterTopology } from './DBClusterAdvancedOptions.types';
 import { canGetExpectedResources, resourceValidator } from './DBClusterAdvancedOptions.utils';
 
 describe('EditDBClusterAdvancedOptions.utils::', () => {
@@ -22,7 +21,6 @@ describe('EditDBClusterAdvancedOptions.utils::', () => {
       label: 'test',
     };
     const values = {
-      topology: DBClusterTopology.cluster,
       memory: 2,
       cpu: 4,
       disk: 20,
@@ -42,18 +40,6 @@ describe('EditDBClusterAdvancedOptions.utils::', () => {
       expect(canGetExpectedResources(kubernetesCluster, { ...values, nodes: -3 })).toBeFalsy();
       expect(canGetExpectedResources(kubernetesCluster, { ...values, nodes: 2 })).toBeTruthy();
       expect(canGetExpectedResources(kubernetesCluster, { ...values, nodes: '7' })).toBeTruthy();
-    });
-    it('returns true when resources are valid and topology is not cluster', () => {
-      expect(
-        canGetExpectedResources(kubernetesCluster, { ...values, topology: DBClusterTopology.single })
-      ).toBeTruthy();
-      expect(
-        canGetExpectedResources(kubernetesCluster, {
-          ...values,
-          topology: DBClusterTopology.single,
-          nodes: 'test_invalid_nodes',
-        })
-      ).toBeTruthy();
     });
   });
 });

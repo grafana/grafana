@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { useSelector } from 'react-redux';
+
+import { useSelector } from 'app/types';
 
 import { getPerconaSettings } from '../../core/selectors';
 

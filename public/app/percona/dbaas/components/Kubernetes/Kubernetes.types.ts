@@ -82,6 +82,13 @@ export interface InstallOperatorRequest {
   version: string;
 }
 
+export interface StorageClassesRequest {
+  kubernetes_cluster_name: string;
+}
+export interface StorageClassesResponse {
+  storage_classes?: string[];
+}
+
 export interface InstallOperatorResponse {
   status: KubernetesOperatorStatus;
 }

@@ -17,3 +17,5 @@ export const DATABASE_COMPONENT_TO_UPDATE_MAP = {
 export const GET_KUBERNETES_CANCEL_TOKEN = 'getKubernetes';
 export const DELETE_KUBERNETES_CANCEL_TOKEN = 'deleteKubernetes';
 export const CHECK_OPERATOR_UPDATE_CANCEL_TOKEN = 'checkOperatorUpdate';
+
+export const RECHECK_INTERVAL = 10000;

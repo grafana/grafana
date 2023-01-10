@@ -1,6 +1,9 @@
-export enum DBClusterTopology {
-  cluster = 'cluster',
-  single = 'single',
+export enum AdvancedOptionsFields {
+  nodes = 'nodes',
+  resources = 'resources',
+  memory = 'memory',
+  cpu = 'cpu',
+  disk = 'disk',
 }
 
 export enum DBClusterResources {

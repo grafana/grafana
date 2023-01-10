@@ -1,4 +1,4 @@
-import { render, fireEvent, screen } from '@testing-library/react';
+import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
@@ -57,7 +57,7 @@ describe('EditDBClusterPage::', () => {
 
     expect(screen.getByTestId('dbcluster-basic-options-step')).toBeTruthy();
     expect(screen.getByTestId('dbCluster-advanced-settings')).toBeTruthy();
-    expect(screen.queryByTestId('dbcluster-advanced-options-step')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('nodes-field-container')).not.toBeInTheDocument();
 
     expect(screen.getByTestId('db-cluster-cancel-button')).toBeInTheDocument();
     expect(screen.getByTestId('db-cluster-submit-button')).toBeInTheDocument();
@@ -101,7 +101,7 @@ describe('EditDBClusterPage::', () => {
 
     expect(screen.queryByTestId('dbcluster-basic-options-step')).not.toBeInTheDocument();
     expect(screen.getByTestId('dbCluster-advanced-settings')).toBeInTheDocument();
-    expect(screen.getByTestId('dbcluster-advanced-options-step')).toBeInTheDocument();
+    expect(screen.getByTestId('nodes-field-container')).toBeInTheDocument();
 
     expect(screen.getByTestId('db-cluster-cancel-button')).toBeInTheDocument();
     expect(screen.getByTestId('db-cluster-submit-button')).toBeInTheDocument();
@@ -110,35 +110,37 @@ describe('EditDBClusterPage::', () => {
   });
 
   it('should disable submit button when there is no values', async () => {
-    render(
-      <Provider
-        store={configureStore({
-          percona: {
-            user: { isAuthorized: true },
-            settings: {
-              loading: false,
-              result: { isConnectedToPortal: true, alertingEnabled: true, dbaasEnabled: true },
-            },
-            kubernetes: {
-              loading: false,
-              result: [
-                {
-                  kubernetesClusterName: 'cluster1',
-                  status: KubernetesClusterStatus.ok,
-                  operators: {
-                    psmdb: { status: KubernetesOperatorStatus.ok, version: '1', availableVersion: '1' },
-                    pxc: { status: KubernetesOperatorStatus.ok, version: '1', availableVersion: '1' },
+    await waitFor(() =>
+      render(
+        <Provider
+          store={configureStore({
+            percona: {
+              user: { isAuthorized: true },
+              settings: {
+                loading: false,
+                result: { isConnectedToPortal: true, alertingEnabled: true, dbaasEnabled: true },
+              },
+              kubernetes: {
+                loading: false,
+                result: [
+                  {
+                    kubernetesClusterName: 'cluster1',
+                    status: KubernetesClusterStatus.ok,
+                    operators: {
+                      psmdb: { status: KubernetesOperatorStatus.ok, version: '1', availableVersion: '1' },
+                      pxc: { status: KubernetesOperatorStatus.ok, version: '1', availableVersion: '1' },
+                    },
                   },
-                },
-              ],
+                ],
+              },
             },
-          },
-        } as StoreState)}
-      >
-        <Router history={locationService.getHistory()}>
-          <EditDBClusterPage kubernetes={kubernetesStub} />
-        </Router>
-      </Provider>
+          } as StoreState)}
+        >
+          <Router history={locationService.getHistory()}>
+            <EditDBClusterPage kubernetes={kubernetesStub} />
+          </Router>
+        </Provider>
+      )
     );
 
     fireEvent.click(screen.getByTestId('dbCluster-advanced-settings'));

@@ -27,7 +27,9 @@ export const DBaaSPage: FC<DBaaSPageProps> = ({
       </PageToolbar>
       <PageHeader header={pageHeader} />
       <FeatureLoader {...featureLoaderProps}>
-        <div className={styles.pageContent}>{children}</div>
+        <div className={styles.scrollWrapper}>
+          <div className={styles.pageContent}>{children}</div>
+        </div>
       </FeatureLoader>
     </>
   );

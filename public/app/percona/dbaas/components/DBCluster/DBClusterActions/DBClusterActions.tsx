@@ -105,7 +105,7 @@ export const DBClusterActions: FC<DBClusterActionsProps> = ({
 
   return (
     <div className={styles.actionsColumn}>
-      <MultipleActions actions={getActions(dbCluster)} dataTestId="dbcluster-actions" />
+      <MultipleActions actions={getActions(dbCluster)} data-testid="dbcluster-actions" />
     </div>
   );
 };

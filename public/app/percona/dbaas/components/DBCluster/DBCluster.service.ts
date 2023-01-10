@@ -49,6 +49,8 @@ export abstract class DBClusterService {
 
   abstract getExpectedResources(dbCluster: DBCluster): Promise<DBClusterExpectedResources>;
 
+  abstract getClusterConfiguration(dbCluster: DBCluster): Promise<DBClusterPayload>;
+
   abstract toModel(dbCluster: DBClusterPayload, kubernetesClusterName: string, databaseType: Databases): DBCluster;
 
   static async getDBClusters(kubernetes: Kubernetes, token?: CancelToken): Promise<DBClusterListResponse> {

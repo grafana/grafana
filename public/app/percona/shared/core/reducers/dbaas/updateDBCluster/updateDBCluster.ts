@@ -3,7 +3,6 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { withAppEvents } from '../../../../../../features/alerting/unified/utils/redux';
 import { DBCluster } from '../../../../../dbaas/components/DBCluster/DBCluster.types';
 import { newDBClusterService } from '../../../../../dbaas/components/DBCluster/DBCluster.utils';
-import { DBClusterTopology } from '../../../../../dbaas/components/DBCluster/EditDBClusterPage/DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
 
 import { PerconaUpdateDBClusterState } from './updateDBCluster.types';
 
@@ -42,7 +41,7 @@ const perconaUpdateDBClusterSlice = createSlice({
 export const updateDBClusterAction = createAsyncThunk(
   'percona/updateDBCluster',
   async (args: { values: Record<string, any>; selectedDBCluster: DBCluster }, thunkAPI): Promise<void> => {
-    const { cpu, memory, disk, nodes, single, topology } = args.values;
+    const { cpu, memory, disk, nodes, configuration, sourceRanges, expose, internetFacing, storageClass } = args.values;
     const { selectedDBCluster } = args;
 
     const dbClusterService = newDBClusterService(selectedDBCluster.databaseType);
@@ -54,10 +53,15 @@ export const updateDBClusterAction = createAsyncThunk(
         databaseType: selectedDBCluster.databaseType,
         clusterName: selectedDBCluster.clusterName,
         kubernetesClusterName: selectedDBCluster.kubernetesClusterName,
-        clusterSize: topology === DBClusterTopology.cluster ? nodes : single,
+        clusterSize: nodes,
         cpu,
         memory,
         disk,
+        expose,
+        internetFacing,
+        configuration,
+        sourceRanges: sourceRanges ? sourceRanges.map((item: any) => item?.sourceRange || '') : [],
+        ...(storageClass?.value && { storageClass: storageClass?.value }),
       }),
       {
         successMessage: 'Cluster was successfully updated',

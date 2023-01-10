@@ -1,18 +1,13 @@
 import { SelectableValue } from '@grafana/data/src';
-import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 
-import { DBClusterTopology, DBClusterResources, DBClusterDefaultResources } from './DBClusterAdvancedOptions.types';
-
-export const TOPOLOGY_OPTIONS: SelectableValue[] = [
-  { value: DBClusterTopology.cluster, label: Messages.dbcluster.addModal.topology.cluster },
-  { value: DBClusterTopology.single, label: Messages.dbcluster.addModal.topology.single },
-];
+import { Messages } from './DBClusterAdvancedOptions.messages';
+import { DBClusterResources, DBClusterDefaultResources } from './DBClusterAdvancedOptions.types';
 
 export const RESOURCES_OPTIONS: SelectableValue[] = [
-  { value: DBClusterResources.small, label: Messages.dbcluster.addModal.resources.small },
-  { value: DBClusterResources.medium, label: Messages.dbcluster.addModal.resources.medium },
-  { value: DBClusterResources.large, label: Messages.dbcluster.addModal.resources.large },
-  { value: DBClusterResources.custom, label: Messages.dbcluster.addModal.resources.custom },
+  { value: DBClusterResources.small, label: Messages.resources.small },
+  { value: DBClusterResources.medium, label: Messages.resources.medium },
+  { value: DBClusterResources.large, label: Messages.resources.large },
+  { value: DBClusterResources.custom, label: Messages.resources.custom },
 ];
 
 export const DEFAULT_SIZES: DBClusterDefaultResources = {
@@ -34,16 +29,16 @@ export const DEFAULT_SIZES: DBClusterDefaultResources = {
 };
 
 export const INITIAL_VALUES = {
-  topology: DBClusterTopology.cluster,
   nodes: 3,
   single: 1,
   resources: DBClusterResources.small,
   memory: DEFAULT_SIZES.small.memory,
   cpu: DEFAULT_SIZES.small.cpu,
   disk: DEFAULT_SIZES.small.disk,
+  sourceRanges: [{}],
 };
 
-export const MIN_NODES = 3;
+export const MIN_NODES = 1;
 export const MIN_RESOURCES = 0.1;
 export const MIN_DISK_SIZE = 1;
 export const RECHECK_INTERVAL = 10000;

@@ -44,6 +44,7 @@ export const Messages = {
       [KubernetesClusterStatus.ok]: 'Active',
       [KubernetesClusterStatus.unavailable]: 'Unavailable',
       [KubernetesClusterStatus.invalid]: 'Invalid',
+      [KubernetesClusterStatus.provisioning]: 'Provisioning',
     },
     updateOperatorModal: {
       cancel: 'Cancel',
@@ -68,57 +69,10 @@ export const Messages = {
     publicAddressWarningBegin: 'If you want to use monitoring, you need to set your PMM installation public address in',
     publicAddressWarningLink: 'settings',
     publicAddressWarningEnd: 'before cluster creation',
-    addModal: {
-      title: 'Create Cluster',
-      confirm: 'Create Cluster',
-      fields: {
-        clusterName: 'Cluster Name',
-        kubernetesCluster: 'Kubernetes Cluster',
-        databaseType: 'Database Type',
-        databaseVersion: 'Database Version',
-        topology: 'Topology',
-        nodes: 'Number of Nodes',
-        resources: 'Resources per Node',
-        memory: 'Memory (GB)',
-        cpu: 'CPU',
-        disk: 'Disk (GB)',
-        expose: 'External Access',
-      },
-      steps: {
-        basicOptions: 'Basic Options',
-        advancedOptions: 'Advanced Options',
-      },
-      topology: {
-        cluster: 'Cluster',
-        single: 'Single Node',
-      },
-      resources: {
-        small: 'Small',
-        medium: 'Medium',
-        large: 'Large',
-        custom: 'Custom',
-      },
-      validationMessages: {
-        clusterName: 'Should start with a letter, may only contain lower case, number, dash and end with alphanumeric',
-        notInstalledOperator: 'Operators must be installed to use database type',
-        requiredField: 'Required field',
-      },
-      noOperatorsMessage: 'No clusters found with installed operators',
-      resourcesBar: {
-        memory: 'Memory',
-        cpu: 'CPU',
-        disk: 'Disk',
-      },
-      resourcesInfo: 'Resource calculations are an estimate',
-      exposeTooltip: 'Allows external access to the database cluster',
-    },
     deleteModal: {
       cancel: 'Cancel',
       confirm: 'Proceed',
       title: 'Confirm action',
-    },
-    editModal: {
-      confirm: 'Save',
     },
     table: {
       nameColumn: 'Name',

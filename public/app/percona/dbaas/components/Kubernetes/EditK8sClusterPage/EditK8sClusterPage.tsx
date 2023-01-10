@@ -1,10 +1,10 @@
 import { PasswordInputField, TextareaInputField, TextInputField, validators } from '@percona/platform-core';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
-import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 
 import { Button, Icon, Tooltip, useStyles } from '@grafana/ui/src';
+import { useDispatch, useSelector } from 'app/types';
 
 import { FeatureLoader } from '../../../../shared/components/Elements/FeatureLoader';
 import { PageSwitcher } from '../../../../shared/components/PageSwitcher/PageSwitcher';

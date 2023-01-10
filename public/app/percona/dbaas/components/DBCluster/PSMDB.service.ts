@@ -27,6 +27,7 @@ import {
   DBClusterType,
   DBClusterStatus,
   DBClusterSuspendResumeRequest,
+  DBClusterConfigurationAPI,
 } from './DBCluster.types';
 import { Operators } from './EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
@@ -123,6 +124,15 @@ export class PSMDBService extends DBClusterService {
       }));
   }
 
+  getClusterConfiguration(dbCluster: DBCluster): Promise<DBClusterPayload> {
+    return apiManagement
+      .post<DBClusterConfigurationAPI, Partial<DBClusterPayload>>('/DBaaS/DBClusters/Get', {
+        kubernetes_cluster_name: dbCluster.kubernetesClusterName,
+        name: dbCluster.clusterName,
+      })
+      .then((result): DBClusterPayload => result?.psmdb_cluster);
+  }
+
   toModel(dbCluster: DBClusterPayload, kubernetesClusterName: string, databaseType: Databases): DBCluster {
     return {
       clusterName: dbCluster.name,
@@ -143,10 +153,12 @@ export class PSMDBService extends DBClusterService {
   }
 }
 
-const toAPI = (dbCluster: DBCluster) => ({
+const toAPI = (dbCluster: DBCluster): DBClusterPayload => ({
   kubernetes_cluster_name: dbCluster.kubernetesClusterName,
   name: dbCluster.clusterName,
   expose: dbCluster.expose,
+  internet_facing: dbCluster.internetFacing,
+  source_ranges: dbCluster.sourceRanges,
   params: {
     cluster_size: dbCluster.clusterSize,
     replicaset: {
@@ -154,6 +166,7 @@ const toAPI = (dbCluster: DBCluster) => ({
         cpu_m: dbCluster.cpu * THOUSAND,
         memory_bytes: dbCluster.memory * BILLION,
       },
+      storage_class: dbCluster.storageClass,
       disk_size: dbCluster.disk * BILLION,
     },
     image: dbCluster.databaseImage,

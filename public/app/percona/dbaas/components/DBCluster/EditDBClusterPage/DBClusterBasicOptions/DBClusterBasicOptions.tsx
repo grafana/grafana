@@ -1,29 +1,30 @@
-import { cx } from '@emotion/css';
 import { TextInputField, validators } from '@percona/platform-core';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { Field } from 'react-final-form';
 
 import { SelectableValue } from '@grafana/data/src';
 import { useStyles } from '@grafana/ui/src';
-import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import {
   AsyncSelectFieldAdapter,
   SelectFieldAdapter,
 } from 'app/percona/shared/components/Form/FieldAdapters/FieldAdapters';
-import { Databases } from 'app/percona/shared/core';
 
 import { Kubernetes, Operator } from '../../../Kubernetes/Kubernetes.types';
 import { getDatabaseOptionFromOperator } from '../../../Kubernetes/Kubernetes.utils';
 import { KubernetesOperatorStatus } from '../../../Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 import { DATABASE_OPTIONS } from '../../DBCluster.constants';
 import { isOptionEmpty } from '../../DBCluster.utils';
-import { DBClusterTopology } from '../DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
-import { AddDBClusterFields } from '../EditDBClusterPage.types';
 
 import { CLUSTER_NAME_MAX_LENGTH } from './DBClusterBasicOptions.constants';
 import { useDatabaseVersions } from './DBClusterBasicOptions.hooks';
+import { Messages } from './DBClusterBasicOptions.messages';
 import { getStyles } from './DBClusterBasicOptions.styles';
-import { DatabaseOption, DBClusterBasicOptionsProps, Operators } from './DBClusterBasicOptions.types';
+import {
+  BasicOptionsFields,
+  DatabaseOption,
+  DBClusterBasicOptionsProps,
+  Operators,
+} from './DBClusterBasicOptions.types';
 import { getKubernetesOptions, kubernetesClusterNameValidator, optionRequired } from './DBClusterBasicOptions.utils';
 
 const getAvailableDatabaseOptions = (kubernetesCluster: Kubernetes): DatabaseOption[] => {
@@ -40,7 +41,7 @@ const getAvailableDatabaseOptions = (kubernetesCluster: Kubernetes): DatabaseOpt
   return availableDatabaseOptions;
 };
 
-export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernetes, form, className }) => {
+export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernetes, form }) => {
   const styles = useStyles(getStyles);
   const { required, maxLength } = validators;
   const { change } = form;
@@ -49,11 +50,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
   const [loadingDatabaseVersions, setLoadingDatabaseVersions] = useState(false);
 
   const onChangeDatabase = useCallback((databaseType) => {
-    if (databaseType.value !== Databases.mysql) {
-      change(AddDBClusterFields.topology, DBClusterTopology.cluster);
-    }
-
-    change(AddDBClusterFields.databaseType, databaseType);
+    change(BasicOptionsFields.databaseType, databaseType);
     form.mutators.setClusterName(databaseType.value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -71,16 +68,16 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
     const availableDatabaseOptions = getAvailableDatabaseOptions(selectedKubernetes);
 
     if (availableDatabaseOptions.length === 1) {
-      change(AddDBClusterFields.databaseType, availableDatabaseOptions[0]);
+      change(BasicOptionsFields.databaseType, availableDatabaseOptions[0]);
     } else {
-      change(AddDBClusterFields.databaseType, {
+      change(BasicOptionsFields.databaseType, {
         value: undefined,
         label: undefined,
       });
     }
 
     setDatabaseOptions(availableDatabaseOptions);
-    change(AddDBClusterFields.kubernetesCluster, selectedKubernetes);
+    change(BasicOptionsFields.kubernetesCluster, selectedKubernetes);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -88,23 +85,23 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
   useDatabaseVersions(form, databaseType, kubernetesCluster, setLoadingDatabaseVersions, setDatabaseVersions);
 
   return (
-    <div data-testid="dbcluster-basic-options-step" className={cx(styles.basicOptionsWrapper, className)}>
+    <div data-testid="dbcluster-basic-options-step">
       <Field
         dataTestId="dbcluster-kubernetes-cluster-field"
-        name={AddDBClusterFields.kubernetesCluster}
-        label={Messages.dbcluster.addModal.fields.kubernetesCluster}
+        name={BasicOptionsFields.kubernetesCluster}
+        label={Messages.kubernetesCluster}
         options={kubernetesOptions}
         component={SelectFieldAdapter}
-        noOptionsMessage={Messages.dbcluster.addModal.noOperatorsMessage}
+        noOptionsMessage={Messages.noOperatorsMessage}
         validate={required}
         onChange={onChangeCluster}
       />
       <div className={styles.line}>
         <Field
-          disabled={!form.getState().values[AddDBClusterFields.kubernetesCluster] || !databaseOptions.length}
+          disabled={!form.getState().values[BasicOptionsFields.kubernetesCluster] || !databaseOptions.length}
           dataTestId="dbcluster-database-type-field"
-          name={AddDBClusterFields.databaseType}
-          label={Messages.dbcluster.addModal.fields.databaseType}
+          name={BasicOptionsFields.databaseType}
+          label={Messages.databaseType}
           options={databaseOptions}
           component={SelectFieldAdapter}
           validate={optionRequired}
@@ -113,8 +110,8 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
         <Field
           disabled={isDatabaseVersionDisabled}
           dataTestId="dbcluster-database-version-field"
-          name={AddDBClusterFields.databaseVersion}
-          label={Messages.dbcluster.addModal.fields.databaseVersion}
+          name={BasicOptionsFields.databaseVersion}
+          label={Messages.databaseVersion}
           component={AsyncSelectFieldAdapter}
           loading={loadingDatabaseVersions}
           options={databaseVersions}
@@ -122,8 +119,8 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
         />
       </div>
       <TextInputField
-        name={AddDBClusterFields.name}
-        label={Messages.dbcluster.addModal.fields.clusterName}
+        name={BasicOptionsFields.name}
+        label={Messages.clusterName}
         validators={[required, kubernetesClusterNameValidator, maxLength(CLUSTER_NAME_MAX_LENGTH)]}
       />
     </div>

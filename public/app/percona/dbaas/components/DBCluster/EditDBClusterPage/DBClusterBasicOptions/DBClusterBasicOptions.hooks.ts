@@ -5,8 +5,8 @@ import { useEffect } from 'react';
 import { SelectableValue } from '@grafana/data/src';
 
 import { isOptionEmpty, newDBClusterService } from '../../DBCluster.utils';
-import { AddDBClusterFields } from '../EditDBClusterPage.types';
 
+import { BasicOptionsFields } from './DBClusterBasicOptions.types';
 import { findDefaultDatabaseVersion } from './DBClusterBasicOptions.utils';
 
 export const useDatabaseVersions = (
@@ -28,7 +28,7 @@ export const useDatabaseVersions = (
         ).filter(({ disabled }) => !disabled);
 
         setDatabaseVersions(databaseVersions);
-        form.change(AddDBClusterFields.databaseVersion, findDefaultDatabaseVersion(databaseVersions));
+        form.change(BasicOptionsFields.databaseVersion, findDefaultDatabaseVersion(databaseVersions));
       } catch (e) {
         logger.error(e);
       } finally {

@@ -32,6 +32,10 @@ export interface DBCluster {
   expose?: boolean;
   installedImage?: string;
   availableImage?: string;
+  configuration?: string;
+  internetFacing?: boolean;
+  sourceRanges?: string[];
+  storageClass?: string;
 }
 
 export enum DBClusterStatus {
@@ -142,6 +146,9 @@ export interface DBClusterPayload {
   installed_image?: string;
   available_image?: string;
   image?: string;
+  pxcConfiguration?: string;
+  internet_facing?: boolean;
+  source_ranges?: string[];
 }
 
 export interface DBClusterActionAPI {
@@ -150,18 +157,21 @@ export interface DBClusterActionAPI {
   cluster_type: DBClusterType;
 }
 
-interface DBClusterParamsAPI {
+export interface DBClusterParamsAPI {
   cluster_size: number;
   pxc?: DBClusterContainerAPI;
-  haproxy?: Omit<DBClusterContainerAPI, 'disk_size'>;
-  replicaset?: DBClusterContainerAPI;
+  haproxy?: Omit<DBClusterContainerAPI, 'disk_size' | 'configuration' | 'image' | 'storage_class'>;
+  replicaset?: Omit<DBClusterContainerAPI, 'image'>;
+  proxysql?: Omit<DBClusterContainerAPI, 'configuration' | 'storage_class'>;
   image?: string;
 }
 
 interface DBClusterContainerAPI {
   compute_resources: DBClusterComputeResourcesAPI;
   disk_size: number;
+  configuration?: string;
   image?: string;
+  storage_class?: string;
 }
 
 interface DBClusterComputeResourcesAPI {
@@ -170,7 +180,7 @@ interface DBClusterComputeResourcesAPI {
 }
 
 interface DBClusterOperationAPI {
-  message: string;
+  message?: string;
   finished_steps: number;
   total_steps: number;
 }
@@ -196,6 +206,11 @@ export interface DBClusterAllocatedResourcesAPI {
 
 export interface DBClusterExpectedResourcesAPI {
   expected: ResourcesAPI;
+}
+
+export interface DBClusterConfigurationAPI {
+  pxc_cluster: DBClusterPayload;
+  psmdb_cluster: DBClusterPayload;
 }
 
 interface ResourcesAPI {

@@ -24,7 +24,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       margin-left: ${spacing.xl};
-      width: 336px;
+      width: 100%;
     `,
     nodesWrapper: css`
       margin-bottom: ${spacing.md};
@@ -66,6 +66,11 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     line: css`
       display: flex;
+      gap: ${spacing.lg};
+      > div {
+        flex: 0 1 auto;
+        width: 100%;
+      }
     `,
     resourcesRadioBtnGroup: css`
       & {

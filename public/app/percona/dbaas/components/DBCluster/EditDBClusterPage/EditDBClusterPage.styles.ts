@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ spacing, typography, colors, palette }: GrafanaTheme) => ({
+export const getStyles = ({ spacing }: GrafanaTheme2) => ({
   optionsWrapper: css`
-    margin-top: ${spacing.lg};
-    max-width: 650px;
+    margin-top: ${spacing(3)};
+    max-width: 720px;
   `,
 
   basicOptions: css`
@@ -14,6 +14,6 @@ export const getStyles = ({ spacing, typography, colors, palette }: GrafanaTheme
 
   collapsableSection: css`
     max-width: 170px;
-    margin-bottom: ${spacing.md};
+    margin: ${spacing(6)} 0 ${spacing(3)} 0;
   `,
 });

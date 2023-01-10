@@ -2,11 +2,11 @@ import { render, fireEvent, screen } from '@testing-library/react';
 import React from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
 
-import { Messages } from '../../../../DBaaS.messages';
 import { kubernetesStub } from '../../../Kubernetes/__mocks__/kubernetesStubs';
-import { AddDBClusterFields } from '../EditDBClusterPage.types';
+import { Messages } from '../EditDBClusterPage.messages';
 
 import { DBClusterBasicOptions } from './DBClusterBasicOptions';
+import { BasicOptionsFields } from './DBClusterBasicOptions.types';
 import { kubernetesClusterNameValidator } from './DBClusterBasicOptions.utils';
 
 describe('DBClusterBasicOptions::', () => {
@@ -30,7 +30,7 @@ describe('DBClusterBasicOptions::', () => {
     render(
       <Form
         initialValues={{
-          [AddDBClusterFields.name]: 'dbcluster',
+          [BasicOptionsFields.name]: 'dbcluster',
         }}
         onSubmit={jest.fn()}
         render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}
@@ -44,12 +44,8 @@ describe('DBClusterBasicOptions::', () => {
     const clusterName2 = '1bcd';
     const clusterName3 = 'abcd';
 
-    expect(kubernetesClusterNameValidator(clusterName1)).toEqual(
-      Messages.dbcluster.addModal.validationMessages.clusterName
-    );
-    expect(kubernetesClusterNameValidator(clusterName2)).toEqual(
-      Messages.dbcluster.addModal.validationMessages.clusterName
-    );
+    expect(kubernetesClusterNameValidator(clusterName1)).toEqual(Messages.validationMessages.clusterName);
+    expect(kubernetesClusterNameValidator(clusterName2)).toEqual(Messages.validationMessages.clusterName);
     expect(kubernetesClusterNameValidator(clusterName3)).toEqual(undefined);
   });
 
@@ -57,7 +53,7 @@ describe('DBClusterBasicOptions::', () => {
     render(
       <Form
         initialValues={{
-          [AddDBClusterFields.name]: 'testname',
+          [BasicOptionsFields.name]: 'testname',
         }}
         onSubmit={jest.fn()}
         render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}

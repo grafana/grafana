@@ -2,7 +2,6 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import { withAppEvents } from '../../../../../../features/alerting/unified/utils/redux';
 import { newDBClusterService } from '../../../../../dbaas/components/DBCluster/DBCluster.utils';
-import { DBClusterTopology } from '../../../../../dbaas/components/DBCluster/EditDBClusterPage/DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
 import { SETTINGS_TIMEOUT } from '../../../constants';
 import { updateSettingsAction } from '../../index';
 
@@ -48,14 +47,17 @@ export const addDbClusterAction = createAsyncThunk(
       kubernetesCluster,
       databaseType,
       databaseVersion,
-      topology,
       nodes,
-      single,
       memory,
       cpu,
       disk,
       expose,
+      internetFacing,
+      sourceRanges,
+      configuration,
+      storageClass,
     } = args.values;
+
     const dbClusterService = newDBClusterService(databaseType.value);
     thunkAPI.dispatch(setAddDBClusterLoading());
     if (args.setPMMAddress) {
@@ -67,18 +69,22 @@ export const addDbClusterAction = createAsyncThunk(
         kubernetesClusterName: kubernetesCluster.value,
         clusterName: name,
         databaseType: databaseType.value,
-        clusterSize: topology === DBClusterTopology.cluster ? nodes : single,
+        clusterSize: nodes,
         cpu,
         memory,
         disk,
         databaseImage: databaseVersion.value,
         expose,
+        internetFacing,
+        sourceRanges: sourceRanges.map((item: any) => item?.sourceRange || ''),
+        configuration,
+        ...(storageClass?.value && { storageClass: storageClass?.value }),
       }),
       {
         successMessage: 'Cluster was successfully added',
       }
     )
-      .then((value) => {
+      .then(() => {
         thunkAPI.dispatch(setAddDBClusterResult('ok'));
       })
       .catch(() => {

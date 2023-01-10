@@ -11,6 +11,8 @@ import {
   KubernetesListAPI,
   NewKubernetesCluster,
   NewKubernetesClusterAPI,
+  StorageClassesRequest,
+  StorageClassesResponse,
 } from './Kubernetes.types';
 
 export const KubernetesService = {
@@ -22,6 +24,13 @@ export const KubernetesService = {
   },
   getKubernetesConfig(kubernetes: Kubernetes, token?: CancelToken) {
     return apiManagement.post<any, any>('/DBaaS/Kubernetes/Get', toAPI(kubernetes), false, token);
+  },
+  getStorageClasses(kubernetesClasterName: string): Promise<StorageClassesResponse> {
+    return apiManagement.post<any, StorageClassesRequest>(
+      '/DBaaS/Kubernetes/StorageClasses/List',
+      { kubernetes_cluster_name: kubernetesClasterName },
+      false
+    );
   },
   addKubernetes(kubernetes: NewKubernetesCluster, token?: CancelToken) {
     return apiManagement.post<NewKubernetesClusterAPI, any>(

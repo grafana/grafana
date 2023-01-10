@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+
+import { useDispatch, useSelector } from 'app/types';
 
 import { useCancelToken } from '../../shared/components/hooks/cancelToken.hook';
 import { fetchKubernetesAction } from '../../shared/core/reducers';

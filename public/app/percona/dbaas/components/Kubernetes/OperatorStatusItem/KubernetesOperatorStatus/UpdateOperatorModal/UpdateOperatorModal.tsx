@@ -1,10 +1,10 @@
 import { Modal, logger } from '@percona/platform-core';
 import React, { FC, useCallback } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { instalKuberneteslOperatorAction } from 'app/percona/shared/core/reducers';
+import { useDispatch } from 'app/types';
 
 import { getStyles } from './UpdateOperatorModal.styles';
 import { UpdateOperatorModalProps } from './UpdateOperatorModal.types';

@@ -1,12 +1,12 @@
 /* eslint-disable react/display-name */
 import { cx } from '@emotion/css';
 import React, { FC, useEffect, useMemo, useRef, useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { Icon, useStyles2, Tooltip } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { ProgressBar } from 'app/percona/dbaas/components/ProgressBar/ProgressBar';
 import { ProgressBarStatus } from 'app/percona/dbaas/components/ProgressBar/ProgressBar.types';
+import { useDispatch } from 'app/types';
 
 import { selectDBCluster } from '../../../../shared/core/reducers/dbaas/dbaas';
 import { DBClusterStatus as Status } from '../DBCluster.types';

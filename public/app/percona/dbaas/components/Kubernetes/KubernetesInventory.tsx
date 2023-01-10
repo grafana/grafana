@@ -1,8 +1,7 @@
 /* eslint-disable react/display-name */
-import { Modal, CheckboxField } from '@percona/platform-core';
-import React, { FC, useCallback, useState, useMemo, useEffect } from 'react';
+import { CheckboxField, Modal } from '@percona/platform-core';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Form } from 'react-final-form';
-import { useDispatch, useSelector } from 'react-redux';
 import { Column } from 'react-table';
 
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
@@ -12,23 +11,31 @@ import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoa
 import { Table } from 'app/percona/shared/components/Elements/Table';
 import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { useCatchCancellationError } from 'app/percona/shared/components/hooks/catchCancellationError';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
-import { fetchKubernetesAction, deleteKubernetesAction } from 'app/percona/shared/core/reducers';
+import { deleteKubernetesAction, fetchKubernetesAction } from 'app/percona/shared/core/reducers';
 import {
-  getKubernetes as getKubernetesSelector,
-  getDeleteKubernetes,
   getAddKubernetes,
+  getDeleteKubernetes,
+  getKubernetes as getKubernetesSelector,
   getPerconaSettingFlag,
 } from 'app/percona/shared/core/selectors';
+import { useSelector } from 'app/types';
 
+import { useAppDispatch } from '../../../../store/store';
 import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
 
 import { clusterActionsRender } from './ColumnRenderers/ColumnRenderers';
 import { K8sPageMode } from './K8sRouting/K8sRouting';
-import { GET_KUBERNETES_CANCEL_TOKEN, CHECK_OPERATOR_UPDATE_CANCEL_TOKEN } from './Kubernetes.constants';
+import {
+  CHECK_OPERATOR_UPDATE_CANCEL_TOKEN,
+  GET_KUBERNETES_CANCEL_TOKEN,
+  RECHECK_INTERVAL,
+} from './Kubernetes.constants';
 import { getStyles } from './Kubernetes.styles';
 import { Kubernetes, OperatorToUpdate } from './Kubernetes.types';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus';
+import { KubernetesClusterStatus as K8SStatus } from './KubernetesClusterStatus/KubernetesClusterStatus.types';
 import { ManageComponentsVersionsModal } from './ManageComponentsVersionsModal/ManageComponentsVersionsModal';
 import { UpdateOperatorModal } from './OperatorStatusItem/KubernetesOperatorStatus/UpdateOperatorModal/UpdateOperatorModal';
 import { OperatorStatusRow } from './OperatorStatusRow/OperatorStatusRow';
@@ -41,7 +48,7 @@ interface KubernetesInventoryProps {
 
 export const KubernetesInventory: FC<KubernetesInventoryProps> = ({ setMode }) => {
   const styles = useStyles(getStyles);
-  const dispatch = useDispatch();
+  const appDispatch = useAppDispatch();
   const navModel = usePerconaNavModel('kubernetes');
   const [selectedCluster, setSelectedCluster] = useState<Kubernetes | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -53,18 +60,37 @@ export const KubernetesInventory: FC<KubernetesInventoryProps> = ({ setMode }) =
   const { result: kubernetes, loading: kubernetesLoading } = useSelector(getKubernetesSelector);
   const { loading: deleteKubernetesLoading } = useSelector(getDeleteKubernetes);
   const { loading: addKubernetesLoading } = useSelector(getAddKubernetes);
-  const loading = kubernetesLoading || deleteKubernetesLoading || addKubernetesLoading;
+  const [update, setUpdate] = useState(false);
+  const [catchFromAsyncThunkAction] = useCatchCancellationError();
+
+  const loading = (kubernetesLoading || deleteKubernetesLoading || addKubernetesLoading) && !update;
+  const k8sListShouldBeUpdated = kubernetes && kubernetes.find((item) => item.status === K8SStatus.provisioning);
 
   const deleteKubernetesCluster = useCallback(
     async (force?: boolean) => {
       if (selectedCluster) {
         setDeleteModalVisible(false);
-        await dispatch(deleteKubernetesAction({ kubernetesToDelete: selectedCluster, force }));
+        await appDispatch(deleteKubernetesAction({ kubernetesToDelete: selectedCluster, force }));
         setSelectedCluster(null);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [selectedCluster]
+  );
+
+  const updateK8Clusters = useCallback(
+    async (triggerLoading = true) => {
+      await catchFromAsyncThunkAction(
+        appDispatch(
+          fetchKubernetesAction({
+            kubernetes: generateToken(GET_KUBERNETES_CANCEL_TOKEN),
+            operator: generateToken(CHECK_OPERATOR_UPDATE_CANCEL_TOKEN),
+          })
+        )
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [kubernetes]
   );
 
   const columns = useMemo(
@@ -117,7 +143,7 @@ export const KubernetesInventory: FC<KubernetesInventoryProps> = ({ setMode }) =
   const featureSelector = useCallback(getPerconaSettingFlag('dbaasEnabled'), []);
 
   useEffect(() => {
-    dispatch(
+    appDispatch(
       fetchKubernetesAction({
         kubernetes: generateToken(GET_KUBERNETES_CANCEL_TOKEN),
         operator: generateToken(CHECK_OPERATOR_UPDATE_CANCEL_TOKEN),
@@ -125,6 +151,18 @@ export const KubernetesInventory: FC<KubernetesInventoryProps> = ({ setMode }) =
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (!kubernetesLoading && k8sListShouldBeUpdated) {
+      if (!update) {
+        setUpdate(true);
+      }
+      timeout = setTimeout(updateK8Clusters, RECHECK_INTERVAL, false);
+    }
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kubernetesLoading]);
 
   return (
     <OldPage navModel={navModel}>

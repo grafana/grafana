@@ -27,6 +27,7 @@ import {
   DBClusterType,
   DBClusterStatus,
   DBClusterSuspendResumeRequest,
+  DBClusterConfigurationAPI,
 } from './DBCluster.types';
 import { Operators } from './EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
@@ -131,6 +132,15 @@ export class XtraDBService extends DBClusterService {
       }));
   }
 
+  getClusterConfiguration(dbCluster: DBCluster): Promise<DBClusterPayload> {
+    return apiManagement
+      .post<DBClusterConfigurationAPI, Partial<DBClusterPayload>>('/DBaaS/DBClusters/Get', {
+        kubernetes_cluster_name: dbCluster.kubernetesClusterName,
+        name: dbCluster.clusterName,
+      })
+      .then((result): DBClusterPayload => result?.pxc_cluster);
+  }
+
   toModel(dbCluster: DBClusterPayload, kubernetesClusterName: string, databaseType: Databases): DBCluster {
     return {
       clusterName: dbCluster.name,
@@ -155,6 +165,8 @@ const toAPI = (dbCluster: DBCluster): DBClusterPayload => ({
   kubernetes_cluster_name: dbCluster.kubernetesClusterName,
   name: dbCluster.clusterName,
   expose: dbCluster.expose,
+  internet_facing: dbCluster.internetFacing,
+  source_ranges: dbCluster.sourceRanges,
   params: {
     cluster_size: dbCluster.clusterSize,
     pxc: {
@@ -163,6 +175,8 @@ const toAPI = (dbCluster: DBCluster): DBClusterPayload => ({
         memory_bytes: dbCluster.memory * BILLION,
       },
       disk_size: dbCluster.disk * BILLION,
+      configuration: dbCluster.configuration,
+      storage_class: dbCluster.storageClass,
       image: dbCluster.databaseImage,
     },
     // Temporary mock data
