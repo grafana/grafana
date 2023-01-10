@@ -1,20 +1,21 @@
 import {
-  Scene,
-  SceneCanvasText,
-  ScenePanelRepeater,
-  SceneTimePicker,
-  SceneToolbarInput,
   SceneFlexLayout,
+  SceneTimeRange,
+  SceneTimePicker,
+  ScenePanelRepeater,
   VizPanel,
-} from '../components';
-import { EmbeddedScene } from '../components/Scene';
-import { panelBuilders } from '../components/VizPanel/panelBuilders';
-import { SceneTimeRange } from '../core/SceneTimeRange';
+  SceneCanvasText,
+  SceneToolbarInput,
+  EmbeddedScene,
+} from '@grafana/scenes';
+
+import { panelBuilders } from '../builders/panelBuilders';
+import { Scene } from '../components/Scene';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getFlexLayoutTest(standalone: boolean): Scene {
+export function getFlexLayoutTest(standalone: boolean): Scene | EmbeddedScene {
   const state = {
     title: 'Flex layout test',
     body: new SceneFlexLayout({
@@ -66,7 +67,7 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
   return standalone ? new Scene(state) : new EmbeddedScene(state);
 }
 
-export function getScenePanelRepeaterTest(standalone: boolean): Scene {
+export function getScenePanelRepeaterTest(standalone: boolean): Scene | EmbeddedScene {
   const queryRunner = getQueryRunnerWithRandomWalkQuery({
     seriesCount: 2,
     alias: '__server_names',
