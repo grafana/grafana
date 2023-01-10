@@ -73,7 +73,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   }
 
   const hasCurrencyUnit = unit?.startsWith('currency');
-  const hasBoolUnit = unit === 'bool';
+  const hasBoolUnit = isBooleanUnit(unit);
   const isNumType = field.type === FieldType.number;
   const isLocaleFormat = unit === 'locale';
   const canTrimTrailingDecimalZeros =
