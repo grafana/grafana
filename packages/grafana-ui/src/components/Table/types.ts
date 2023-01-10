@@ -65,6 +65,7 @@ export interface Props {
   data: DataFrame;
   width: number;
   height: number;
+  maxHeight?: number;
   /** Minimal column width specified in pixels */
   columnMinWidth?: number;
   noHeader?: boolean;

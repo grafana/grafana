@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 
+	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -243,8 +244,8 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			t.Run("it should add extra labels", func(t *testing.T) {
 				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 				for _, s := range states {
-					assert.Equal(t, rule.UID, s.Labels[models.RuleUIDLabel])
-					assert.Equal(t, rule.NamespaceUID, s.Labels[models.NamespaceUIDLabel])
+					assert.Equal(t, rule.UID, s.Labels[alertingModels.RuleUIDLabel])
+					assert.Equal(t, rule.NamespaceUID, s.Labels[alertingModels.NamespaceUIDLabel])
 					assert.Equal(t, rule.Title, s.Labels[prometheusModel.AlertNameLabel])
 					assert.Equal(t, folderTitle, s.Labels[models.FolderTitleLabel])
 				}

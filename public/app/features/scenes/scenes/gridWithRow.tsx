@@ -1,12 +1,18 @@
-import { VizPanel, SceneGridLayout, SceneGridRow } from '../components';
-import { EmbeddedScene, Scene } from '../components/Scene';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneTimeRange } from '../core/SceneTimeRange';
+import {
+  VizPanel,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneTimePicker,
+  SceneTimeRange,
+  EmbeddedScene,
+} from '@grafana/scenes';
+
+import { Scene } from '../components/Scene';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getGridWithRowLayoutTest(standalone: boolean): Scene {
+export function getGridWithRowLayoutTest(standalone: boolean): Scene | EmbeddedScene {
   const state = {
     title: 'Grid with row layout test',
     body: new SceneGridLayout({
