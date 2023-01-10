@@ -62,7 +62,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
     const transaction: QueryTransaction = {
       queries,
       request: {
-        app: CoreApp.Unknown,
+        app: CoreApp.Correlations,
         timezone: 'utc',
         startTime: Date.now(),
         interval,

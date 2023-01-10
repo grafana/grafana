@@ -32,8 +32,8 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       duration: data.request.endTime! - data.request.startTime,
     };
 
-    if (data.request.app === CoreApp.Explore) {
-      enrichWithExploreInfo(eventData, data);
+    if (data.request.app === CoreApp.Explore || data.request.app === CoreApp.Correlations) {
+      enrichWithInfo(eventData, data);
     } else {
       enrichWithDashboardInfo(eventData, data);
     }
@@ -50,7 +50,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
     done = true;
   };
 
-  function enrichWithExploreInfo(eventData: DataRequestEventPayload, data: PanelData) {
+  function enrichWithInfo(eventData: DataRequestEventPayload, data: PanelData) {
     const totalQueries = Object.keys(data.series).length;
     eventData.totalQueries = totalQueries;
   }
@@ -71,7 +71,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
     eventData.totalQueries = totalQueries;
     eventData.cachedQueries = cachedQueries;
 
-    const dashboard = getDashboardSrv().dashboard;
+    const dashboard = getDashboardSrv().getCurrent();
     if (dashboard) {
       eventData.dashboardId = dashboard.id;
       eventData.dashboardName = dashboard.title;

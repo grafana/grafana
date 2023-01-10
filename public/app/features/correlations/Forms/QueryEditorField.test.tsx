@@ -35,12 +35,12 @@ const renderWithContext = (
 };
 
 const initiateDsApi = () => {
-  const dsApi = new MockDataSourceApi('something');
+  const dsApi = new MockDataSourceApi('dsApiMock');
   dsApi.components = {
     QueryEditor: () => <>query editor</>,
   };
 
-  renderWithContext(<QueryEditorField name="query" dsUid="something" />, async () => {
+  renderWithContext(<QueryEditorField name="query" dsUid="randomDsUid" />, async () => {
     return dsApi;
   });
 
