@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useId } from '@react-aria/utils';
-import React, { HTMLAttributes, ReactNode } from 'react';
+import React, { AriaRole, HTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -23,6 +22,8 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
   topSpacing?: number;
+  role?: AriaRole;
+  ariaLabel?: string;
 }
 
 export function getIconFromSeverity(severity: AlertVariant): IconName {
@@ -49,6 +50,8 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
       topSpacing,
       className,
       severity = 'error',
+      role = 'alert',
+      ariaLabel,
       ...restProps
     },
     ref
@@ -56,15 +59,14 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     const theme = useTheme2();
     const hasTitle = Boolean(title);
     const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
-    const titleId = useId();
 
     return (
       <div
         ref={ref}
         className={cx(styles.alert, className)}
         data-testid={selectors.components.Alert.alertV2(severity)}
-        role="alert"
-        aria-labelledby={titleId}
+        role={role}
+        aria-label={ariaLabel || title}
         {...restProps}
       >
         <div className={styles.icon}>
@@ -72,9 +74,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         </div>
 
         <div className={styles.body}>
-          <div id={titleId} className={styles.title}>
-            {title}
-          </div>
+          <div className={styles.title}>{title}</div>
           {children && <div className={styles.content}>{children}</div>}
         </div>
 
