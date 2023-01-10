@@ -2104,6 +2104,8 @@ github.com/openzipkin/zipkin-go v0.2.1/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnh
 github.com/openzipkin/zipkin-go v0.2.2/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnhQw8ySjnjRyN4=
 github.com/openzipkin/zipkin-go v0.2.5/go.mod h1:KpXfKdgRDnnhsxw4pNIH9Md5lyFqKUa4YDFlwRYAMyE=
 github.com/pact-foundation/pact-go v1.0.4/go.mod h1:uExwJY4kCzNPcHRj+hCR/HBbOOIwwtUjcrb0b5/5kLM=
+github.com/parca-dev/parca v0.12.1 h1:QZ5UudbnXeLxER4gEeD0urP/cInTUc8GvSlWsg1AJyo=
+github.com/parca-dev/parca v0.12.1/go.mod h1:MWhbinjhcb96IlRxk9GJvz9bTkHSTwDM+GQoGDpytGc=
 github.com/parca-dev/parca v0.15.0 h1:4BMYVLjkyJInM8FQNSqPRgIPfV69osOX0iShP8b5jBc=
 github.com/parca-dev/parca v0.15.0/go.mod h1:wwZlGYTZuUuj97Y+KINw1sgixjj9rr7FGM5weNLg494=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
