@@ -89,34 +89,29 @@ export const getFieldLinksForExplore = (options: {
     };
 
     // only correlations add the fieldName to the internal object, get those fieldNames and add special variables for correlations
-    const correlationLinks = dataFrame.fields
-      .map((field) => {
-        const linksWithFieldName = field.config.links
-          ?.map((link) => {
-            return link.internal?.fieldName;
-          })
-          .filter((link) => link !== undefined);
-
-        return linksWithFieldName?.flat();
+    const correlationLinks = field.config.links
+      ?.map((link) => {
+        return link.internal?.fieldName;
       })
-      .filter((field) => field !== undefined)
+      .filter((link) => link !== undefined)
       .flat();
 
-    if (correlationLinks.length === 1 && correlationLinks[0]) {
-      scopedVars['__targetField'] = {
-        value: fieldDisplayValuesProxy[correlationLinks[0]],
-        text: fieldDisplayValuesProxy[correlationLinks[0]],
-      };
-    }
-
-    correlationLinks.forEach((correlationFieldName) => {
-      if (correlationFieldName) {
-        scopedVars[correlationFieldName] = {
-          value: fieldDisplayValuesProxy[correlationFieldName],
-          text: fieldDisplayValuesProxy[correlationFieldName],
+    if (correlationLinks) {
+      if (correlationLinks.length === 1 && correlationLinks[0]) {
+        scopedVars['__targetField'] = {
+          value: fieldDisplayValuesProxy[correlationLinks[0]],
+          text: fieldDisplayValuesProxy[correlationLinks[0]],
         };
       }
-    });
+      correlationLinks.forEach((correlationFieldName) => {
+        if (correlationFieldName) {
+          scopedVars[correlationFieldName] = {
+            value: fieldDisplayValuesProxy[correlationFieldName],
+            text: fieldDisplayValuesProxy[correlationFieldName],
+          };
+        }
+      });
+    }
   }
 
   if (field.config.links) {
