@@ -335,11 +335,11 @@ func (am *Alertmanager) getTemplate() (*template.Template, error) {
 	for name := range am.config.TemplateFiles {
 		paths = append(paths, filepath.Join(am.WorkingDirPath(), name))
 	}
-	return am.templateFromPaths(paths...)
+	return am.templateFromPaths(paths)
 }
 
-func (am *Alertmanager) templateFromPaths(paths ...string) (*template.Template, error) {
-	tmpl, err := template.FromGlobs(paths...)
+func (am *Alertmanager) templateFromPaths(paths []string) (*template.Template, error) {
+	tmpl, err := template.FromGlobs(paths)
 	if err != nil {
 		return nil, err
 	}
@@ -395,7 +395,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	}
 
 	// With the templates persisted, create the template list using the paths.
-	tmpl, err := am.templateFromPaths(paths...)
+	tmpl, err := am.templateFromPaths(paths)
 	if err != nil {
 		return err
 	}
