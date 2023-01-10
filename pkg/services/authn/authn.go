@@ -34,10 +34,10 @@ type ClientParams struct {
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
 
 type Service interface {
-	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
-	RegisterPostAuthHook(hook PostAuthHookFn)
 	// Authenticate authenticates a request using the specified client.
 	Authenticate(ctx context.Context, client string, r *Request) (*Identity, bool, error)
+	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
+	RegisterPostAuthHook(hook PostAuthHookFn)
 }
 
 type Client interface {
