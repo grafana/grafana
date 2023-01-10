@@ -592,7 +592,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     let menu;
     if (!dashboard.meta.publicDashboardAccessToken) {
-      menu = (): React.ReactElement => (
+      menu = (
         <div data-testid="panel-dropdown">
           <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} onClose={() => {}} />
         </div>
