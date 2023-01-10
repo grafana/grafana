@@ -290,8 +290,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
     }),
     rightAligned: css({
+      label: 'right-aligned-container',
       marginLeft: 'auto',
       display: 'flex',
+      alignItems: 'center',
     }),
   };
 };
