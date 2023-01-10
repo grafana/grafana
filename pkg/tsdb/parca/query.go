@@ -74,7 +74,7 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 				},
 			},
 			// We should change this to QueryRequest_REPORT_TYPE_FLAMEGRAPH_TABLE later on
-			//goland:noinspection GoDeprecation
+			// nolint:staticcheck
 			ReportType: v1alpha1.QueryRequest_REPORT_TYPE_FLAMEGRAPH_UNSPECIFIED,
 		},
 	}
