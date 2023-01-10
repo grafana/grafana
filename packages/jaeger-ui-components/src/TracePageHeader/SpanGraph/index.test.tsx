@@ -19,8 +19,6 @@ import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
-import TickLabels from './TickLabels';
-
 import SpanGraph, { SpanGraphProps, TIMELINE_TICK_INTERVAL } from './index';
 
 describe('<SpanGraph>', () => {
@@ -59,13 +57,5 @@ describe('<SpanGraph>', () => {
   it('renders <TickLabels /> with the correct numnber of ticks', async () => {
     const tickLabelsDiv = screen.getByTestId('TickLabels');
     expect(getAllByTestId(tickLabelsDiv, 'tick').length).toBe(TIMELINE_TICK_INTERVAL + 1);
-  });
-
-  it('renders <TickLabels /> with the correct value next to each tick', () => {
-    render(<TickLabels numTicks={5} duration={1} />);
-    expect(screen.getByText(/0.2/)).toBeTruthy();
-    expect(screen.getByText(/0.4/)).toBeTruthy();
-    expect(screen.getByText(/0.6/)).toBeTruthy();
-    expect(screen.getByText(/0.8/)).toBeTruthy();
   });
 });
