@@ -253,7 +253,7 @@ describe('reducer', () => {
   });
 
   describe('query rows', () => {
-    it('adds a new query row', () => {
+    it('should add query row: no query row yet and rootDatasource is not mixed', () => {
       reducerTester<ExploreItemState>()
         .givenReducer(queryReducer, {
           queries: [],
@@ -268,6 +268,26 @@ describe('reducer', () => {
         .thenStateShouldEqual({
           queries: [{ refId: 'A', key: 'mockKey' }],
           queryKeys: ['mockKey-0'],
+        } as unknown as ExploreItemState);
+    });
+    it('should add query row: one query row and rootDatasource is not mixed', () => {
+      reducerTester<ExploreItemState>()
+        .givenReducer(queryReducer, {
+          queries: [{ refId: 'A', key: 'initialRow' }],
+        } as unknown as ExploreItemState)
+        .whenActionIsDispatched(
+          addQueryRowAction({
+            exploreId: ExploreId.left,
+            query: { refId: 'B', key: 'mockKey' },
+            index: 0,
+          })
+        )
+        .thenStateShouldEqual({
+          queries: [
+            { refId: 'A', key: 'initialRow' },
+            { refId: 'B', key: 'mockKey' },
+          ],
+          queryKeys: ['initialRow-0', 'mockKey-1'],
         } as unknown as ExploreItemState);
     });
   });
