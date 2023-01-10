@@ -21,7 +21,7 @@ export const formatTemplateOptions = (templates: Template[]): Array<SelectableVa
     : [];
 
 export const formatCreateAPIPayload = (data: RuleFormValues): AlertRuleCreatePayload => {
-  const { duration, filters, name, severity, template, folder, group } = data;
+  const { duration, filters, ruleName, severity, template, folder, group } = data;
   const durationObj = parseDuration(duration);
   const durationSeconds = durationToMilliseconds(durationObj) / 1000;
 
@@ -31,7 +31,7 @@ export const formatCreateAPIPayload = (data: RuleFormValues): AlertRuleCreatePay
     for: `${durationSeconds}s`,
     severity: severity!,
     template_name: template?.name!,
-    name,
+    name: ruleName,
     params: [],
     group,
     folder_uid: folder?.uid || '',

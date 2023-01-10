@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import React, { FC, useMemo, useState } from 'react';
 import { FormProvider, useForm, UseFormWatch } from 'react-hook-form';
-import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,6 +9,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
+import { useDispatch, useSelector } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';

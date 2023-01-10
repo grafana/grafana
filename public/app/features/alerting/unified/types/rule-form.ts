@@ -47,6 +47,8 @@ export interface RuleFormValues {
 
   // @PERCONA
   // templated rules
+  // to avoid keeping the name between Percona / Grafana rule forms
+  ruleName: string;
   template: Template | null;
   // This is the same as evaluateFor, but we have a different validation
   duration: string;

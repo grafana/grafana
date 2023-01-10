@@ -70,6 +70,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
 
     // @PERCONA
     // templated rules
+    ruleName: '',
     template: null,
     duration: '1m',
     filters: [],
