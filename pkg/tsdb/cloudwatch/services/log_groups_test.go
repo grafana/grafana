@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func Test_GetLogGroups(t *testing.T) {
+func TestGetLogGroups(t *testing.T) {
 	t.Run("Should map log groups response", func(t *testing.T) {
 		mockLogsAPI := &mocks.LogsAPI{}
 		mockLogsAPI.On("DescribeLogGroups", mock.Anything).Return(
@@ -88,7 +88,7 @@ func Test_GetLogGroups(t *testing.T) {
 	})
 }
 
-func Test_GetLogGroups_crossAccountQuerying(t *testing.T) {
+func TestGetLogGroupsCrossAccountQuerying(t *testing.T) {
 	t.Run("Should not includeLinkedAccounts or accountId if isCrossAccountEnabled is set to false", func(t *testing.T) {
 		mockLogsAPI := &mocks.LogsAPI{}
 		mockLogsAPI.On("DescribeLogGroups", mock.Anything).Return(&cloudwatchlogs.DescribeLogGroupsOutput{}, nil)
@@ -199,7 +199,7 @@ func Test_GetLogGroups_crossAccountQuerying(t *testing.T) {
 	})
 }
 
-func Test_GetLogGroupFields(t *testing.T) {
+func TestGetLogGroupFields(t *testing.T) {
 	t.Run("Should map log group fields response", func(t *testing.T) {
 		mockLogsAPI := &mocks.LogsAPI{}
 		mockLogsAPI.On("GetLogGroupFields", mock.Anything).Return(
