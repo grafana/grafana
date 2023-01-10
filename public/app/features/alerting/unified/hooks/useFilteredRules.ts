@@ -24,7 +24,8 @@ import { isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
 import { useURLSearchParams } from './useURLSearchParams';
 
 export interface SearchFilterState {
-  query?: string;
+  // query?: string;
+  freeFormWords: string[];
   namespace?: string;
   groupName?: string;
   ruleName?: string;
@@ -51,7 +52,8 @@ function isPromRuleType(ruleType: string): ruleType is PromRuleType {
 function getSearchFilterFromQuery(query: string): SearchFilterState {
   const parsed = parser.parse(query);
 
-  const filterState: SearchFilterState = { labels: [] };
+  const filterState: SearchFilterState = { labels: [], freeFormWords: [] };
+  const freeFormWords: string[] = [];
 
   let cursor = parsed.cursor();
   do {
@@ -95,7 +97,8 @@ function getSearchFilterFromQuery(query: string): SearchFilterState {
         }
       }
     } else if (cursor.node.type.id === terms.FreeFormExpression) {
-      filterState.query = query.substring(cursor.node.from, cursor.node.to);
+      freeFormWords.push(query.slice(cursor.node.from, cursor.node.to));
+      filterState.freeFormWords.push(query.slice(cursor.node.from, cursor.node.to));
     }
   } while (cursor.next());
 
@@ -108,8 +111,8 @@ function updateSearchFilterQuery(query: string, filter: SearchFilterState): stri
   let cursor = parsed.cursor();
 
   const filterStateArray: Array<{ type: number; value: string }> = [];
-  if (filter.query) {
-    filterStateArray.push({ type: terms.FreeFormExpression, value: filter.query });
+  if (filter.freeFormWords) {
+    filterStateArray.push(...filter.freeFormWords.map((word) => ({ type: terms.FreeFormExpression, value: word })));
   }
   if (filter.dataSourceName) {
     filterStateArray.push({ type: terms.DataSourceFilter, value: filter.dataSourceName });
@@ -139,6 +142,9 @@ function updateSearchFilterQuery(query: string, filter: SearchFilterState): stri
     if (cursor.node.type.id === terms.FilterExpression && cursor.node.firstChild) {
       existingTreeFilters.push(cursor.node.firstChild);
     }
+    if (cursor.node.type.id === terms.FreeFormExpression) {
+      existingTreeFilters.push(cursor.node);
+    }
   } while (cursor.next());
 
   let newQueryExpressions: string[] = [];
@@ -150,6 +156,9 @@ function updateSearchFilterQuery(query: string, filter: SearchFilterState): stri
       const filterToken = query.substring(filterNode.from, filterValueNode.from); // Extract the filter type only
       const filterItem = filterStateArray.splice(matchingFilterIdx, 1)[0];
       newQueryExpressions.push(`${filterToken}${getSafeFilterValue(filterItem.value)}`);
+    } else if (matchingFilterIdx !== -1 && filterNode.node.type.id === terms.FreeFormExpression) {
+      const freeFormWordNode = filterStateArray.splice(matchingFilterIdx, 1)[0];
+      newQueryExpressions.push(freeFormWordNode.value);
     }
   });
 
@@ -229,7 +238,7 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
 
 export const filterRules = (
   namespaces: CombinedRuleNamespace[],
-  ngFilters: SearchFilterState = { labels: [] }
+  ngFilters: SearchFilterState = { labels: [], freeFormWords: [] }
 ): CombinedRuleNamespace[] => {
   return (
     namespaces
@@ -272,6 +281,15 @@ const reduceGroups = (ngFilters: SearchFilterState) => {
         ngFilters.dataSourceName &&
         isGrafanaRulerRule(rule.rulerRule) &&
         !isQueryingDataSource(rule.rulerRule, ngFilters)
+      ) {
+        return false;
+      }
+
+      const ruleNameLc = rule.name?.toLocaleLowerCase();
+      // Free Form Query is used to filter by rule name
+      if (
+        ngFilters.freeFormWords.length > 0 &&
+        !ngFilters.freeFormWords.every((w) => ruleNameLc.includes(w.toLocaleLowerCase()))
       ) {
         return false;
       }
