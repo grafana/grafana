@@ -1,5 +1,5 @@
 // Libraries
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -9,7 +9,7 @@ import { getDashboardLoader } from './DashboardsLoader';
 
 export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
 
-export const DashboardScenePage: FC<Props> = ({ match }) => {
+export const DashboardScenePage = ({ match }: Props) => {
   const loader = getDashboardLoader();
   const { dashboard, isLoading } = loader.useState();
 

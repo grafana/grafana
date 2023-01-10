@@ -277,8 +277,6 @@ func GetAzurePortalUrl(azureCloud string) (string, error) {
 		return "https://portal.azure.cn", nil
 	case azsettings.AzureUSGovernment:
 		return "https://portal.azure.us", nil
-	case azsettings.AzureGermany:
-		return "https://portal.microsoftazure.de", nil
 	default:
 		return "", fmt.Errorf("the cloud is not supported")
 	}

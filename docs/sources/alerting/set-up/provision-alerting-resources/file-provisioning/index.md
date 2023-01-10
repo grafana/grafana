@@ -176,7 +176,7 @@ deleteContactPoints:
 #### Settings
 
 Here are some examples of settings you can use for the different
-contact point types.
+contact point integrations.
 
 ##### Alertmanager
 

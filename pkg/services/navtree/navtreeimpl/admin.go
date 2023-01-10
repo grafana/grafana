@@ -161,6 +161,16 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 		}
 		adminNavLinks = append(adminNavLinks, storage)
 
+		if s.features.IsEnabled(featuremgmt.FlagExport) {
+			storage.Children = append(storage.Children, &navtree.NavLink{
+				Text:     "Export",
+				Id:       "export",
+				SubTitle: "Export grafana settings",
+				Icon:     "cube",
+				Url:      s.cfg.AppSubURL + "/admin/storage/export",
+			})
+		}
+
 		if s.features.IsEnabled(featuremgmt.FlagK8s) {
 			storage.Children = append(storage.Children, &navtree.NavLink{
 				Text:     "Kubernetes",

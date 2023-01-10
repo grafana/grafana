@@ -57,7 +57,10 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if err != nil {
 			return false, err
 		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
+		if err != nil {
+			return false, err
+		}
 		if ok, err := guard.CanView(); err != nil || !ok {
 			return false, nil
 		}
@@ -81,7 +84,10 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if err != nil {
 			return false, err
 		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
+		if err != nil {
+			return false, err
+		}
 		if ok, err := guard.CanView(); err != nil || !ok {
 			return false, nil
 		}
@@ -103,7 +109,10 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if err != nil {
 			return false, err
 		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
+		if err != nil {
+			return false, err
+		}
 		if ok, err := guard.CanEdit(); err != nil || !ok {
 			return false, nil
 		}
@@ -133,7 +142,10 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if err != nil {
 			return false, nil
 		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
+		if err != nil {
+			return false, err
+		}
 		if ok, err := guard.CanEdit(); err != nil || !ok {
 			return false, nil
 		}
