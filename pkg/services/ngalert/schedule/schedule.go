@@ -305,10 +305,11 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	}
 
 	// unregister and stop routines of the deleted alert rules
+	toDelete := make([]ngmodels.AlertRuleKey, 0, len(registeredDefinitions))
 	for key := range registeredDefinitions {
-		sch.DeleteAlertRule(key)
+		toDelete = append(toDelete, key)
 	}
-
+	sch.DeleteAlertRule(toDelete...)
 	return readyToRun, registeredDefinitions
 }
 
