@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
+
+	"github.com/jmespath/go-jmespath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -13,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/jmespath/go-jmespath"
 )
 
 var _ authn.Client = new(JWT)
@@ -42,18 +44,12 @@ type JWT struct {
 }
 
 func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	jwtToken := r.HTTPRequest.Header.Get(s.cfg.JWTAuthHeaderName)
-	if jwtToken == "" && s.cfg.JWTAuthURLLogin {
-		jwtToken = r.HTTPRequest.URL.Query().Get("auth_token")
-	}
-
-	// Strip the 'Bearer' prefix if it exists.
-	jwtToken = strings.TrimPrefix(jwtToken, "Bearer ")
+	jwtToken := s.retrieveToken(r.HTTPRequest)
 
 	claims, err := s.jwtService.Verify(ctx, jwtToken)
 	if err != nil {
 		s.log.Debug("Failed to verify JWT", "error", err)
-		return nil, ErrJWTInvalid.Errorf("failed to verify JWT")
+		return nil, ErrJWTInvalid.Errorf("failed to verify JWT: %w", err)
 	}
 
 	sub, _ := claims["sub"].(string)
@@ -126,22 +122,26 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	return id, nil
 }
 
+// retrieveToken retrieves the JWT token from the request.
+func (s *JWT) retrieveToken(httpRequest *http.Request) string {
+	jwtToken := httpRequest.Header.Get(s.cfg.JWTAuthHeaderName)
+	if jwtToken == "" && s.cfg.JWTAuthURLLogin {
+		jwtToken = httpRequest.URL.Query().Get("auth_token")
+	}
+	// Strip the 'Bearer' prefix if it exists.
+	return strings.TrimPrefix(jwtToken, "Bearer ")
+}
+
 func (s *JWT) Test(ctx context.Context, r *authn.Request) bool {
 	if !s.cfg.JWTAuthEnabled || s.cfg.JWTAuthHeaderName == "" {
 		return false
 	}
 
-	jwtToken := r.HTTPRequest.Header.Get(s.cfg.JWTAuthHeaderName)
-	if jwtToken == "" && s.cfg.JWTAuthURLLogin {
-		jwtToken = r.HTTPRequest.URL.Query().Get("auth_token")
-	}
+	jwtToken := s.retrieveToken(r.HTTPRequest)
 
 	if jwtToken == "" {
 		return false
 	}
-
-	// Strip the 'Bearer' prefix if it exists.
-	jwtToken = strings.TrimPrefix(jwtToken, "Bearer ")
 
 	// The header is Authorization and the token does not look like a JWT,
 	// this is likely an API key. Pass it on.
