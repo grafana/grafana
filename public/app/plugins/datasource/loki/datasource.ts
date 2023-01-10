@@ -15,6 +15,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   DataSourceWithLogsVolumeSupport,
+  DataSourceWithLogsSampleSupport,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
   dateMath,
@@ -34,7 +35,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
-import { queryLogsVolume } from 'app/core/logsModel';
+import { queryLogsSample, queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -65,7 +66,7 @@ import {
   getLabelFilterPositions,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
-import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
+import { getLogQueryFromMetricsQuery, getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
@@ -86,6 +87,7 @@ export const REF_ID_DATA_SAMPLES = 'loki-data-samples';
 export const REF_ID_STARTER_ANNOTATION = 'annotation-';
 export const REF_ID_STARTER_LOG_ROW_CONTEXT = 'log-row-context-query-';
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
+export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
 const NS_IN_MS = 1000000;
 
 function makeRequest(
@@ -115,6 +117,7 @@ export class LokiDatasource
   implements
     DataSourceWithLogsContextSupport,
     DataSourceWithLogsVolumeSupport<LokiQuery>,
+    DataSourceWithLogsSampleSupport<LokiQuery>,
     DataSourceWithQueryImportSupport<LokiQuery>,
     DataSourceWithQueryExportSupport<LokiQuery>
 {
@@ -169,6 +172,31 @@ export class LokiDatasource
       range: request.range,
       targets: request.targets,
     });
+  }
+
+  getLogsSampleDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+    const isQuerySuitable = (query: LokiQuery) => {
+      return query.expr && !isLogsQuery(query.expr);
+    };
+
+    const isLogsSampleAvailable = request.targets.some(isQuerySuitable);
+
+    if (!isLogsSampleAvailable) {
+      return undefined;
+    }
+
+    const logsSampleRequest = cloneDeep(request);
+    logsSampleRequest.targets = logsSampleRequest.targets.filter(isQuerySuitable).map((target) => {
+      const query = removeCommentsFromQuery(target.expr);
+      return {
+        ...target,
+        refId: `${REF_ID_STARTER_LOG_SAMPLE}${target.refId}`,
+        expr: getLogQueryFromMetricsQuery(query),
+        maxLines: 100,
+      };
+    });
+
+    return queryLogsSample(this, logsSampleRequest);
   }
 
   query(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
