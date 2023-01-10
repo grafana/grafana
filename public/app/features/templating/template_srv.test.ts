@@ -19,7 +19,8 @@ variableAdapters.setInit(() => [
 
 const interpolateMock = jest.fn();
 
-jest.mock('../scenes/core/sceneGraph', () => ({
+jest.mock('@grafana/scenes', () => ({
+  ...jest.requireActual('@grafana/scenes'),
   sceneGraph: {
     interpolate: (...args: any[]) => interpolateMock(...args),
   },
