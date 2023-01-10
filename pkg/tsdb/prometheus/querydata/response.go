@@ -46,7 +46,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	return r, nil
 }
 
-func (s *QueryData) processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataResponse {
+func (s *QueryData) processExemplars(q *models.Query, dr backend.DataResponse) backend.DataResponse {
 	s.exemplarSampler.Reset()
 	labelTracker := exemplar.NewLabelTracker()
 
@@ -89,7 +89,7 @@ func (s *QueryData) processExemplars(q *models.Query, dr *backend.DataResponse) 
 
 	frames, err := framer.Frames()
 
-	return &backend.DataResponse{
+	return backend.DataResponse{
 		Frames: frames,
 		Error:  err,
 	}
