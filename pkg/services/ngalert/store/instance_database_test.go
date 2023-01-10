@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -19,7 +19,7 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 	b.StopTimer()
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(b, baseIntervalSeconds)
-	dbstore.FeatureToggles.(*fakes.FakeFeatures).BigTransactions = false
+	dbstore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingBigTransactions)
 
 	const mainOrgID int64 = 1
 
@@ -88,7 +88,8 @@ func TestIntegrationAlertInstanceBulkWrite(t *testing.T) {
 	}
 
 	for _, bigStmts := range []bool{false, true} {
-		dbstore.FeatureToggles.(*fakes.FakeFeatures).BigTransactions = bigStmts
+		dbstore.FeatureToggles = featuremgmt.WithFeatures([]interface{}{featuremgmt.FlagAlertingBigTransactions, bigStmts})
+		t.Log("Saving")
 		err := dbstore.SaveAlertInstances(ctx, instances...)
 		require.NoError(t, err)
 		t.Log("Finished database write")
@@ -296,7 +297,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		containsHash(t, listQuery.Result, instance1.LabelsHash)
 
 		f := dbstore.FeatureToggles
-		dbstore.FeatureToggles = &fakes.FakeFeatures{NoNormalState: true}
+		dbstore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingNoNormalState)
 		t.Cleanup(func() {
 			dbstore.FeatureToggles = f
 		})
