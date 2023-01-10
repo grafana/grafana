@@ -4,7 +4,7 @@ import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
 import { CommandPaletteAction } from '../types';
-import { DEFAULT_PRIORITY } from '../values';
+import { DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
 
 // We reuse this, but translations cannot be in module scope (t must be called after i18n has set up,)
 const getPagesSectionTranslation = () => t('command-palette.section.pages', 'Pages');
@@ -64,23 +64,23 @@ export default (navBarTree: NavModelItem[]): CommandPaletteAction[] => {
       keywords: 'interface color dark light',
       section: t('command-palette.section.preferences', 'Preferences'),
       shortcut: ['c', 't'],
-      priority: DEFAULT_PRIORITY,
+      priority: PREFERENCES_PRIORITY,
     },
     {
-      id: 'preferences/theme/dark-theme',
+      id: 'preferences/dark-theme',
       name: t('command-palette.action.dark-theme', 'Dark'),
       keywords: 'dark theme',
       perform: () => changeTheme('dark'),
       parent: 'preferences/theme',
-      priority: DEFAULT_PRIORITY,
+      priority: PREFERENCES_PRIORITY,
     },
     {
-      id: 'preferences/theme/light-theme',
+      id: 'preferences/light-theme',
       name: t('command-palette.action.light-theme', 'Light'),
       keywords: 'light theme',
       perform: () => changeTheme('light'),
       parent: 'preferences/theme',
-      priority: DEFAULT_PRIORITY,
+      priority: PREFERENCES_PRIORITY,
     },
   ];
 
