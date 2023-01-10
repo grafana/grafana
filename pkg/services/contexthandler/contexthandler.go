@@ -77,7 +77,7 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 type ContextHandler struct {
 	Cfg               *setting.Cfg
 	AuthTokenService  auth.UserTokenService
-	JWTAuthService    models.JWTService
+	JWTAuthService    auth.JWTVerifierService
 	RemoteCache       *remotecache.RemoteCache
 	RenderService     rendering.Service
 	SQLStore          db.DB
@@ -396,6 +396,26 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 }
 
 func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext, orgID int64) bool {
+	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientBasic, &authn.Request{HTTPRequest: reqContext.Req})
+		if !ok {
+			return false
+		}
+
+		// include auth header in context
+		ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
+		*reqContext.Req = *reqContext.Req.WithContext(ctx)
+
+		if err != nil {
+			writeErr(reqContext, err)
+			return true
+		}
+
+		reqContext.IsSignedIn = true
+		reqContext.SignedInUser = identity.SignedInUser()
+		return true
+	}
+
 	if !h.Cfg.BasicAuthEnabled {
 		return false
 	}
@@ -456,6 +476,29 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 }
 
 func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, orgID int64) bool {
+	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(),
+			authn.ClientSession, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
+		if !ok {
+			return false
+		}
+
+		if err != nil {
+			if errors.Is(err, auth.ErrUserTokenNotFound) || errors.Is(err, auth.ErrInvalidSessionToken) {
+				// Burn the cookie in case of invalid, expired or missing token
+				reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
+			}
+
+			reqContext.LookupTokenErr = err
+			return false
+		}
+
+		reqContext.IsSignedIn = true
+		reqContext.SignedInUser = identity.SignedInUser()
+		reqContext.UserToken = identity.SessionToken
+		return true
+	}
+
 	if h.Cfg.LoginCookieName == "" {
 		return false
 	}
@@ -522,7 +565,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 
 	// Rotate the token just before we write response headers to ensure there is no delay between
 	// the new token being generated and the client receiving it.
-	reqContext.Resp.Before(h.rotateEndOfRequestFunc(reqContext, h.AuthTokenService, token))
+	reqContext.Resp.Before(h.rotateEndOfRequestFunc(reqContext))
 
 	return true
 }
@@ -539,8 +582,7 @@ func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.
 	}
 }
 
-func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService auth.UserTokenService,
-	token *auth.UserToken) web.BeforeFunc {
+func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
 		if w.Written() {
@@ -553,6 +595,11 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, a
 			return
 		}
 
+		// if there is no user token attached to reqContext, skip.
+		if reqContext.UserToken == nil {
+			return
+		}
+
 		ctx, span := h.tracer.Start(reqContext.Req.Context(), "rotateEndOfRequestFunc")
 		defer span.End()
 
@@ -562,19 +609,39 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, a
 			reqContext.Logger.Debug("Failed to get client IP address", "addr", addr, "err", err)
 			ip = nil
 		}
-		rotated, err := authTokenService.TryRotateToken(ctx, token, ip, reqContext.Req.UserAgent())
+
+		// FIXME (jguer): rotation should return a new token instead of modifying the existing one.
+		rotated, err := h.AuthTokenService.TryRotateToken(ctx, reqContext.UserToken, ip, reqContext.Req.UserAgent())
 		if err != nil {
 			reqContext.Logger.Error("Failed to rotate token", "error", err)
 			return
 		}
 
 		if rotated {
-			cookies.WriteSessionCookie(reqContext, h.Cfg, token.UnhashedToken, h.Cfg.LoginMaxLifetime)
+			cookies.WriteSessionCookie(reqContext, h.Cfg, reqContext.UserToken.UnhashedToken, h.Cfg.LoginMaxLifetime)
 		}
 	}
 }
 
 func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext) bool {
+	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientRender, &authn.Request{HTTPRequest: reqContext.Req})
+		if !ok {
+			return false
+		}
+
+		if err != nil {
+			writeErr(reqContext, err)
+			return true
+		}
+
+		reqContext.IsSignedIn = true
+		reqContext.IsRenderCall = true
+		reqContext.LastSeenAt = time.Now()
+		reqContext.SignedInUser = identity.SignedInUser()
+		return true
+	}
+
 	key := reqContext.GetCookie("renderKey")
 	if key == "" {
 		return false

@@ -295,7 +295,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 		// add role
 		cmd := &org.AddOrgUserCommand{UserID: usr.ID, Role: orgRole, OrgID: orgId}
 		err := ls.orgService.AddOrgUser(ctx, cmd)
-		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
+		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
 			return err
 		}
 	}
@@ -306,7 +306,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 			"userId", usr.ID, "orgId", orgId)
 		cmd := &org.RemoveOrgUserCommand{OrgID: orgId, UserID: usr.ID}
 		if err := ls.orgService.RemoveOrgUser(ctx, cmd); err != nil {
-			if errors.Is(err, models.ErrLastOrgAdmin) {
+			if errors.Is(err, org.ErrLastOrgAdmin) {
 				logger.Error(err.Error(), "userId", cmd.UserID, "orgId", cmd.OrgID)
 				continue
 			}

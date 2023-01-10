@@ -25,3 +25,14 @@ func (f *FakeClient) Authenticate(ctx context.Context, r *authn.Request) (*authn
 func (f *FakeClient) Test(ctx context.Context, r *authn.Request) bool {
 	return f.ExpectedTest
 }
+
+var _ authn.PasswordClient = new(FakePasswordClient)
+
+type FakePasswordClient struct {
+	ExpectedErr      error
+	ExpectedIdentity *authn.Identity
+}
+
+func (f FakePasswordClient) AuthenticatePassword(ctx context.Context, orgID int64, username, password string) (*authn.Identity, error) {
+	return f.ExpectedIdentity, f.ExpectedErr
+}
