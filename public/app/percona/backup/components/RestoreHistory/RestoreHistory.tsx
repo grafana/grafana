@@ -69,6 +69,10 @@ export const RestoreHistory: FC = () => {
         width: '200px',
       },
       {
+        Header: Messages.restoreHistory.table.columns.targetService,
+        accessor: 'serviceName',
+      },
+      {
         Header: Messages.backupInventory.table.columns.location,
         accessor: 'locationName',
         Cell: ({ row, value }) => (
