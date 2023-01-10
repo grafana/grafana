@@ -32,7 +32,8 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   description: 'calculate heatmap from source data',
   defaultOptions: {},
 
-  operator: (options) => (source) => source.pipe(map((data) => heatmapTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => heatmapTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: HeatmapTransformerOptions) => {
     return (data: DataFrame[]) => {

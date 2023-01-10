@@ -7,11 +7,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	sync "github.com/grafana/grafana/pkg/services/authn/authnimpl/usersync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
@@ -20,7 +26,14 @@ import (
 // make sure service implements authn.Service interface
 var _ authn.Service = new(Service)
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Service, apikeyService apikey.Service, userService user.Service) *Service {
+func ProvideService(
+	cfg *setting.Cfg, tracer tracing.Tracer,
+	orgService org.Service, sessionService auth.UserTokenService,
+	accessControlService accesscontrol.Service,
+	apikeyService apikey.Service, userService user.Service,
+	loginAttempts loginattempt.Service, quotaService quota.Service,
+	authInfoService login.AuthInfoService, renderService rendering.Service,
+) *Service {
 	s := &Service{
 		log:           log.New("authn.service"),
 		cfg:           cfg,
@@ -29,15 +42,35 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, orgService org.Serv
 		postAuthHooks: []authn.PostAuthHookFn{},
 	}
 
+	s.clients[authn.ClientRender] = clients.ProvideRender(userService, renderService)
 	s.clients[authn.ClientAPIKey] = clients.ProvideAPIKey(apikeyService, userService)
+
+	sessionClient := clients.ProvideSession(sessionService, userService, cfg.LoginCookieName, cfg.LoginMaxLifetime)
+	s.clients[authn.ClientSession] = sessionClient
+	s.RegisterPostAuthHook(sessionClient.RefreshTokenHook)
 
 	if s.cfg.AnonymousEnabled {
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
 	}
 
+	var passwordClients []authn.PasswordClient
+
+	if !s.cfg.DisableLogin {
+		passwordClients = append(passwordClients, clients.ProvideGrafana(userService))
+	}
+
+	if s.cfg.LDAPEnabled {
+		passwordClients = append(passwordClients, clients.ProvideLDAP(cfg))
+	}
+
+	// only configure basic auth client if it is enabled, and we have at least one password client enabled
+	if s.cfg.BasicAuthEnabled && len(passwordClients) > 0 {
+		s.clients[authn.ClientBasic] = clients.ProvideBasic(loginAttempts, passwordClients...)
+	}
+
 	// FIXME (jguer): move to User package
-	userSyncService := &sync.UserSync{}
-	orgUserSyncService := &sync.OrgSync{}
+	userSyncService := sync.ProvideUserSync(userService, authInfoService, quotaService)
+	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
 	s.RegisterPostAuthHook(userSyncService.SyncUser)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgUser)
 
@@ -54,45 +87,29 @@ type Service struct {
 }
 
 func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Request) (*authn.Identity, bool, error) {
-	ctx, span := s.tracer.Start(ctx, "authn.Authenticate")
-	defer span.End()
-
-	span.SetAttributes("authn.client", client, attribute.Key("authn.client").String(client))
-	logger := s.log.FromContext(ctx)
-
 	c, ok := s.clients[client]
 	if !ok {
-		logger.Debug("auth client not found", "client", client)
-		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client is not configured"}})
 		return nil, false, nil
 	}
 
 	if !c.Test(ctx, r) {
-		logger.Debug("auth client cannot handle request", "client", client)
-		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client cannot handle request"}})
 		return nil, false, nil
 	}
+
+	ctx, span := s.tracer.Start(ctx, "authn.Authenticate")
+	defer span.End()
+	span.SetAttributes("authn.client", client, attribute.Key("authn.client").String(client))
 
 	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
-		logger.Warn("auth client could not authenticate request", "client", client, "error", err)
+		s.log.FromContext(ctx).Warn("auth client could not authenticate request", "client", client, "error", err)
 		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client could not authenticate request"}})
 		return nil, true, err
 	}
 
-	// FIXME: We want to perform common authentication operations here.
-	// We will add them as we start to implement clients that requires them.
-	// Those operations can be Syncing user, syncing teams, create a session etc.
-	// We would need to check what operations a client support and also if they are requested
-	// because for e.g. basic auth we want to create a session if the call is coming from the
-	// login handler, but if we want to perform basic auth during a request (called from contexthandler) we don't
-	// want a session to be created.
-
-	params := c.ClientParams()
-
 	for _, hook := range s.postAuthHooks {
-		if err := hook(ctx, params, identity); err != nil {
+		if err := hook(ctx, identity, r); err != nil {
 			return nil, false, err
 		}
 	}

@@ -21,6 +21,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -37,6 +38,7 @@ type evalAppliedInfo struct {
 }
 
 func TestProcessTicks(t *testing.T) {
+	testTracer := tracing.InitializeTracerForTest()
 	testMetrics := metrics.NewNGAlert(prometheus.NewPedanticRegistry())
 	ctx := context.Background()
 	dispatcherGroup, ctx := errgroup.WithContext(ctx)
@@ -67,6 +69,7 @@ func TestProcessTicks(t *testing.T) {
 		RuleStore:    ruleStore,
 		Metrics:      testMetrics.GetSchedulerMetrics(),
 		AlertSender:  notifier,
+		Tracer:       testTracer,
 	}
 	st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{})
 
@@ -639,6 +642,7 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 
 func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock eval.EvaluatorFactory) *schedule {
 	t.Helper()
+	testTracer := tracing.InitializeTracerForTest()
 
 	mockedClock := clock.NewMock()
 
@@ -684,6 +688,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		RuleStore:        rs,
 		Metrics:          m.GetSchedulerMetrics(),
 		AlertSender:      senderMock,
+		Tracer:           testTracer,
 	}
 
 	st := state.NewManager(m.GetStateMetrics(), nil, is, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{})

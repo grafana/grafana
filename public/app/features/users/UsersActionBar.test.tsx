@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
-import { Props, UsersActionBar } from './UsersActionBar';
-import { setUsersSearchQuery } from './state/reducers';
+import { Props, UsersActionBarUnconnected } from './UsersActionBar';
+import { searchQueryChanged } from './state/reducers';
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
@@ -15,7 +15,7 @@ jest.mock('app/core/core', () => ({
 const setup = (propOverrides?: object) => {
   const props: Props = {
     searchQuery: '',
-    setUsersSearchQuery: mockToolkitActionCreator(setUsersSearchQuery),
+    changeSearchQuery: mockToolkitActionCreator(searchQueryChanged),
     onShowInvites: jest.fn(),
     pendingInvitesCount: 0,
     canInvite: false,
@@ -26,7 +26,7 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  const { rerender } = render(<UsersActionBar {...props} />);
+  const { rerender } = render(<UsersActionBarUnconnected {...props} />);
 
   return { rerender, props };
 };

@@ -77,8 +77,13 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.Item) error {
 	hasTags := make([]annotations.Item, 0)
 	hasNoTags := make([]annotations.Item, 0)
-
-	for i, item := range items {
+	if len(items) == 0 {
+		return nil
+	}
+	for i := range items {
+		// The validation logic needs to work in terms of pointers.
+		// So, force everything else to work in terms of pointers too, to avoid any implicit extra copying.
+		item := &items[i]
 		tags := tag.ParseTagPairs(item.Tags)
 		item.Tags = tag.JoinTagPairs(tags)
 		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
@@ -86,14 +91,14 @@ func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.It
 		if item.Epoch == 0 {
 			item.Epoch = item.Created
 		}
-		if err := r.validateItem(&items[i]); err != nil {
+		if err := r.validateItem(item); err != nil {
 			return err
 		}
 
 		if len(item.Tags) > 0 {
-			hasTags = append(hasTags, item)
+			hasTags = append(hasTags, *item)
 		} else {
-			hasNoTags = append(hasNoTags, item)
+			hasNoTags = append(hasNoTags, *item)
 		}
 	}
 
