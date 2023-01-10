@@ -22,7 +22,10 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
   topSpacing?: number;
+  // The role property of the alert component (e.g. 'log', 'status' or 'alert'.) Defaults to 'alert'.
+  // More info: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Live_Regions#roles_with_implicit_live_region_attributes
   role?: AriaRole;
+  // Specifies the aria-label for the alert. Defaults to use the `title` in case it's not defined.
   ariaLabel?: string;
 }
 
