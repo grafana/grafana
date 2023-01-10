@@ -23,7 +23,7 @@ jest.mock('@percona/platform-core', () => {
   };
 });
 
-describe('DBClusterAdvancedOptions::', () => {
+describe('EditDBClusterAdvancedOptions::', () => {
   it('renders correctly', async () => {
     act(() => {
       render(

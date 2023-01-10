@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { SelectableValue } from '@grafana/data/src';
+
 import { Kubernetes } from '../../Kubernetes/Kubernetes.types';
 
 import { DBClusterResources, DBClusterTopology } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
@@ -8,7 +10,6 @@ export type DBClusterPageMode = 'create' | 'edit' | 'list';
 
 export interface EditDBClusterPageProps {
   kubernetes: Kubernetes[];
-  mode: DBClusterPageMode;
 }
 
 export enum AddDBClusterFields {
@@ -26,7 +27,20 @@ export enum AddDBClusterFields {
   expose = 'expose',
 }
 
-export interface AddDbClusterFormValues {
+export enum EditDBClusterFields {
+  name = 'name',
+  kubernetesCluster = 'kubernetesCluster',
+  databaseType = 'databaseType',
+  topology = 'topology',
+  nodes = 'nodes',
+  single = 'single',
+  resources = 'resources',
+  memory = 'memory',
+  cpu = 'cpu',
+  disk = 'disk',
+}
+
+export interface AddDBClusterFormValues {
   [AddDBClusterFields.topology]: DBClusterTopology;
   [AddDBClusterFields.nodes]: number;
   [AddDBClusterFields.single]: number;
@@ -39,9 +53,20 @@ export interface AddDbClusterFormValues {
   [AddDBClusterFields.name]?: string;
 }
 
+export interface EditDBClusterFormValues {
+  [EditDBClusterFields.topology]?: string;
+  [EditDBClusterFields.resources]?: DBClusterResources;
+  [EditDBClusterFields.nodes]: number;
+  [EditDBClusterFields.single]: number;
+  [EditDBClusterFields.databaseType]: SelectableValue;
+  [EditDBClusterFields.cpu]: number;
+  [EditDBClusterFields.disk]: number;
+  [EditDBClusterFields.memory]: number;
+}
+
 export interface DBClusterFormSubmitProps {
   mode: DBClusterPageMode;
   showPMMAddressWarning: boolean;
 }
 
-export type AddCluster = (values: Record<string, any>, showPMMAddressWarning: boolean) => Promise<void>;
+export type ClusterSubmit = (values: Record<string, any>) => Promise<void>;

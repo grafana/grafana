@@ -1,7 +1,7 @@
-import { DBCluster, DBClusterPayload } from '../../../../dbaas/components/DBCluster/DBCluster.types';
-import { newDBClusterService } from '../../../../dbaas/components/DBCluster/DBCluster.utils';
-import { Kubernetes } from '../../../../dbaas/components/Kubernetes/Kubernetes.types';
-import { Databases } from '../../types';
+import { DBCluster, DBClusterPayload } from '../../../../../dbaas/components/DBCluster/DBCluster.types';
+import { newDBClusterService } from '../../../../../dbaas/components/DBCluster/DBCluster.utils';
+import { Kubernetes } from '../../../../../dbaas/components/Kubernetes/Kubernetes.types';
+import { Databases } from '../../../types';
 
 import { DBClusterListApi } from './dbClusters.types';
 

@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { NumberInputField, RadioButtonGroupField, logger } from '@percona/platform-core';
-import React, { FC, useCallback, useState, useMemo, useEffect } from 'react';
+import React, { FC, useCallback, useState, useMemo, useEffect, useRef } from 'react';
 import { FormRenderProps } from 'react-final-form';
 
 import { Icon, useStyles } from '@grafana/ui/src';
@@ -12,8 +12,8 @@ import validators from 'app/percona/shared/helpers/validators';
 import { CPU, Disk, Memory } from '../../../DBaaSIcons';
 import { SwitchField } from '../../../Switch/Switch';
 import { DBClusterService } from '../../DBCluster.service';
-import { DBClusterAllocatedResources, DBClusterExpectedResources } from '../../DBCluster.types';
-import { newDBClusterService } from '../../DBCluster.utils';
+import { DBCluster, DBClusterAllocatedResources, DBClusterExpectedResources } from '../../DBCluster.types';
+import { getExpectedResourcesDifference, newDBClusterService } from '../../DBCluster.utils';
 import { ResourcesBar } from '../../ResourcesBar/ResourcesBar';
 import { AddDBClusterFields } from '../EditDBClusterPage.types';
 
@@ -33,19 +33,24 @@ import { canGetExpectedResources, resourceValidator } from './DBClusterAdvancedO
 
 export interface DBClusterAdvancedOptionsProps extends FormRenderProps {
   setShowUnsafeConfigurationWarning: React.Dispatch<React.SetStateAction<boolean>>;
+  selectedCluster?: DBCluster | null;
 }
 
 export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
   setShowUnsafeConfigurationWarning,
+  selectedCluster,
   values,
   form,
 }) => {
   let allocatedTimer: NodeJS.Timeout;
   let expectedTimer: NodeJS.Timeout;
   const styles = useStyles(getStyles);
+  const initialExpected = useRef<DBClusterExpectedResources>();
   const [prevResources, setPrevResources] = useState(DBClusterResources.small);
-  const [customMemory, setCustomMemory] = useState(DEFAULT_SIZES.small.memory);
-  const [customCPU, setCustomCPU] = useState(DEFAULT_SIZES.small.cpu);
+  const [customMemory, setCustomMemory] = useState(
+    selectedCluster ? selectedCluster.memory : DEFAULT_SIZES.small.memory
+  );
+  const [customCPU, setCustomCPU] = useState(selectedCluster ? selectedCluster.cpu : DEFAULT_SIZES.small.cpu);
   const [customDisk, setCustomDisk] = useState(DEFAULT_SIZES.small.disk);
   const [allocatedResources, setAllocatedResources] = useState<DBClusterAllocatedResources>();
   const [loadingAllocatedResources, setLoadingAllocatedResources] = useState(false);
@@ -72,13 +77,12 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
     [allocatedResources, styles.resourcesBar, styles.resourcesBarEmpty]
   );
 
-  const topologies = useMemo(
-    () =>
-      databaseType?.value !== Databases.mysql && databaseType?.value !== Databases.mongodb
-        ? [TOPOLOGY_OPTIONS[0], { ...TOPOLOGY_OPTIONS[1], disabled: true }]
-        : TOPOLOGY_OPTIONS,
-    [databaseType]
-  );
+  const topologies = useMemo(() => {
+    const dbTypeValue = selectedCluster ? selectedCluster.databaseType : databaseType?.value;
+    return dbTypeValue !== Databases.mysql && dbTypeValue !== Databases.mongodb
+      ? [TOPOLOGY_OPTIONS[0], { ...TOPOLOGY_OPTIONS[1], disabled: true }]
+      : TOPOLOGY_OPTIONS;
+  }, [databaseType, selectedCluster]);
 
   const getAllocatedResources = async (triggerLoading = true) => {
     try {
@@ -89,7 +93,9 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
       if (triggerLoading) {
         setLoadingAllocatedResources(true);
       }
-      const alloc = await DBClusterService.getAllocatedResources(kubernetesCluster.value);
+      const alloc = await DBClusterService.getAllocatedResources(
+        selectedCluster ? selectedCluster.kubernetesClusterName : kubernetesCluster.value
+      );
       setAllocatedResources(alloc);
     } catch (e) {
       logger.error(e);
@@ -110,17 +116,17 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
     if (prevResources === DBClusterResources.custom) {
       setCustomMemory(memory);
       setCustomCPU(cpu);
-      setCustomDisk(disk);
+      !selectedCluster && setCustomDisk(disk);
     }
 
     if (resources && resources !== DBClusterResources.custom) {
       change(AddDBClusterFields.cpu, DEFAULT_SIZES[resources].cpu);
       change(AddDBClusterFields.memory, DEFAULT_SIZES[resources].memory);
-      change(AddDBClusterFields.disk, DEFAULT_SIZES[resources].disk);
+      !selectedCluster && change(AddDBClusterFields.disk, DEFAULT_SIZES[resources].disk);
     } else {
       change(AddDBClusterFields.cpu, customCPU);
       change(AddDBClusterFields.memory, customMemory);
-      change(AddDBClusterFields.disk, customDisk);
+      !selectedCluster && change(AddDBClusterFields.disk, customDisk);
     }
 
     setPrevResources(resources);
@@ -128,7 +134,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
   }, [resources]);
 
   useEffect(() => {
-    if (kubernetesCluster) {
+    if (selectedCluster ? selectedCluster : kubernetesCluster) {
       getAllocatedResources();
     }
 
@@ -141,19 +147,26 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
 
   useEffect(() => {
     const getExpectedResources = async () => {
+      const dbTypeValue = selectedCluster ? selectedCluster.databaseType : databaseType?.value;
+
       try {
-        const dbClusterService = newDBClusterService(databaseType.value);
+        const dbClusterService = newDBClusterService(dbTypeValue);
         setLoadingExpectedResources(true);
+
+        const expected = await dbClusterService.getExpectedResources({
+          clusterName: selectedCluster ? selectedCluster.clusterName : name,
+          kubernetesClusterName: selectedCluster ? selectedCluster.kubernetesClusterName : kubernetesCluster,
+          databaseType: dbTypeValue,
+          clusterSize: topology === DBClusterTopology.cluster ? nodes : single,
+          cpu,
+          memory,
+          disk,
+        });
+        if (!initialExpected.current) {
+          initialExpected.current = expected;
+        }
         setExpectedResources(
-          await dbClusterService.getExpectedResources({
-            clusterName: name,
-            kubernetesClusterName: kubernetesCluster,
-            databaseType: databaseType.value,
-            clusterSize: topology === DBClusterTopology.cluster ? nodes : single,
-            cpu,
-            memory,
-            disk,
-          })
+          selectedCluster ? getExpectedResourcesDifference(expected, initialExpected.current) : expected
         );
       } catch (e) {
         logger.error(e);
@@ -162,7 +175,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
       }
     };
 
-    if (canGetExpectedResources(kubernetesCluster, values)) {
+    if (canGetExpectedResources(selectedCluster ? selectedCluster : kubernetesCluster, values)) {
       if (expectedTimer) {
         clearTimeout(expectedTimer);
       }
@@ -175,7 +188,8 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
   }, [memory, cpu, disk, kubernetesCluster, topology, nodes, single, databaseType]);
 
   useEffect(() => {
-    if (databaseType?.value === Databases.mongodb) {
+    const dbTypeValue = selectedCluster ? selectedCluster.databaseType : databaseType?.value;
+    if (dbTypeValue === Databases.mongodb) {
       if (topology === DBClusterTopology.cluster) {
         setShowUnsafeConfigurationWarning(false);
       } else {
@@ -213,11 +227,13 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
             />
           )}
         </div>
-        <SwitchField
-          name={AddDBClusterFields.expose}
-          label={Messages.dbcluster.addModal.fields.expose}
-          tooltip={Messages.dbcluster.addModal.exposeTooltip}
-        />
+        {!selectedCluster && (
+          <SwitchField
+            name={AddDBClusterFields.expose}
+            label={Messages.dbcluster.addModal.fields.expose}
+            tooltip={Messages.dbcluster.addModal.exposeTooltip}
+          />
+        )}
       </div>
       <div className={styles.resourcesRadioWrapper}>
         <RadioButtonGroupField
@@ -251,7 +267,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
             name={AddDBClusterFields.disk}
             label={Messages.dbcluster.addModal.fields.disk}
             validators={diskValidators}
-            disabled={resources !== DBClusterResources.custom}
+            disabled={selectedCluster ? true : resources !== DBClusterResources.custom}
             parse={parsePositiveInt}
           />
         </div>

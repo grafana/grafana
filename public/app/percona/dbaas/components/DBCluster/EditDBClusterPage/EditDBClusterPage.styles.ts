@@ -8,9 +8,12 @@ export const getStyles = ({ spacing, typography, colors, palette }: GrafanaTheme
     max-width: 650px;
   `,
 
+  basicOptions: css`
+    margin-bottom: 64px;
+  `,
+
   collapsableSection: css`
     max-width: 170px;
     margin-bottom: ${spacing.md};
-    margin-top: 64px;
   `,
 });

@@ -1,10 +1,10 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
-import { withAppEvents } from '../../../../../features/alerting/unified/utils/redux';
-import { newDBClusterService } from '../../../../dbaas/components/DBCluster/DBCluster.utils';
-import { DBClusterTopology } from '../../../../dbaas/components/DBCluster/EditDBClusterPage/DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
-import { SETTINGS_TIMEOUT } from '../../constants';
-import { updateSettingsAction } from '../index';
+import { withAppEvents } from '../../../../../../features/alerting/unified/utils/redux';
+import { newDBClusterService } from '../../../../../dbaas/components/DBCluster/DBCluster.utils';
+import { DBClusterTopology } from '../../../../../dbaas/components/DBCluster/EditDBClusterPage/DBClusterAdvancedOptions/DBClusterAdvancedOptions.types';
+import { SETTINGS_TIMEOUT } from '../../../constants';
+import { updateSettingsAction } from '../../index';
 
 import { PerconaAddDBClusterState } from './addDBCluster.types';
 

@@ -1,7 +1,7 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 
 import { Alert, useStyles2 } from '@grafana/ui';
+import { useSelector } from 'app/types';
 
 import { getPerconaServer } from '../../../../shared/core/selectors';
 

@@ -20,24 +20,16 @@ export const databaseTypeRender = (dbCluster: DBCluster) =>
   `${DATABASE_LABELS[dbCluster.databaseType]} ${formatDBClusterVersion(dbCluster.installedImage)}`;
 
 export const clusterStatusRender =
-  ({ setSelectedCluster, setLogsModalVisible }: DBClusterStatusProps) =>
+  ({ setLogsModalVisible }: DBClusterStatusProps) =>
   (dbCluster: DBCluster) =>
-    (
-      <DBClusterStatus
-        dbCluster={dbCluster}
-        setSelectedCluster={setSelectedCluster}
-        setLogsModalVisible={setLogsModalVisible}
-      />
-    );
+    <DBClusterStatus dbCluster={dbCluster} setLogsModalVisible={setLogsModalVisible} />;
 
 export const connectionRender = (dbCluster: DBCluster) => <DBClusterConnection dbCluster={dbCluster} />;
 export const parametersRender = (dbCluster: DBCluster) => <DBClusterParameters dbCluster={dbCluster} />;
 
 export const clusterActionsRender =
   ({
-    setSelectedCluster,
     setDeleteModalVisible,
-    setEditModalVisible,
     setLogsModalVisible,
     setUpdateModalVisible,
     getDBClusters,
@@ -46,9 +38,7 @@ export const clusterActionsRender =
     (
       <DBClusterActions
         dbCluster={dbCluster}
-        setSelectedCluster={setSelectedCluster}
         setDeleteModalVisible={setDeleteModalVisible}
-        setEditModalVisible={setEditModalVisible}
         setLogsModalVisible={setLogsModalVisible}
         setUpdateModalVisible={setUpdateModalVisible}
         getDBClusters={getDBClusters}

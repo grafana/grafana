@@ -1,11 +1,11 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { CancelToken } from 'axios';
 
-import { withAppEvents } from '../../../../../features/alerting/unified/utils/redux';
-import { KubernetesService } from '../../../../dbaas/components/Kubernetes/Kubernetes.service';
-import { NewKubernetesCluster } from '../../../../dbaas/components/Kubernetes/Kubernetes.types';
-import { SETTINGS_TIMEOUT } from '../../constants';
-import { fetchKubernetesAction, updateSettingsAction } from '../index';
+import { withAppEvents } from '../../../../../../features/alerting/unified/utils/redux';
+import { KubernetesService } from '../../../../../dbaas/components/Kubernetes/Kubernetes.service';
+import { NewKubernetesCluster } from '../../../../../dbaas/components/Kubernetes/Kubernetes.types';
+import { SETTINGS_TIMEOUT } from '../../../constants';
+import { fetchKubernetesAction, updateSettingsAction } from '../../index';
 
 import { PerconaK8SClusterState } from './k8sCluster.types';
 

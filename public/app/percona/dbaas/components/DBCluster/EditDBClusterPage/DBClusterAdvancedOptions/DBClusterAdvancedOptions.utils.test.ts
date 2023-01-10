@@ -1,7 +1,7 @@
 import { DBClusterTopology } from './DBClusterAdvancedOptions.types';
 import { canGetExpectedResources, resourceValidator } from './DBClusterAdvancedOptions.utils';
 
-describe('DBClusterAdvancedOptions.utils::', () => {
+describe('EditDBClusterAdvancedOptions.utils::', () => {
   describe('resourceValidator::', () => {
     it('returns undefined on undefined value', () => {
       expect(resourceValidator(undefined)).toBeUndefined();

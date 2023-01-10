@@ -1,6 +1,5 @@
 import { Databases } from 'app/percona/shared/core';
 
-import { Operators } from '../EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import {
   CpuUnits,
   DBCluster,
@@ -11,6 +10,7 @@ import {
   DBClusterAllocatedResources,
   ResourcesWithUnits,
 } from '../DBCluster.types';
+import { Operators } from '../EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
 export const dbClustersStub: DBCluster[] = [
   {

@@ -11,7 +11,10 @@ import { PageSwitcher } from '../../../../shared/components/PageSwitcher/PageSwi
 import { PageSwitcherValue } from '../../../../shared/components/PageSwitcher/PageSwitcher.types';
 import { useCancelToken } from '../../../../shared/components/hooks/cancelToken.hook';
 import { useShowPMMAddressWarning } from '../../../../shared/components/hooks/showPMMAddressWarning';
-import { addKubernetesAction, resetAddK8SClusterState } from '../../../../shared/core/reducers/k8sCluster/k8sCluster';
+import {
+  addKubernetesAction,
+  resetAddK8SClusterState,
+} from '../../../../shared/core/reducers/dbaas/k8sCluster/k8sCluster';
 import { getAddKubernetes, getPerconaSettingFlag } from '../../../../shared/core/selectors';
 import { Messages as DBaaSMessages } from '../../../DBaaS.messages';
 import DBaaSPage from '../../DBaaSPage/DBaaSPage';

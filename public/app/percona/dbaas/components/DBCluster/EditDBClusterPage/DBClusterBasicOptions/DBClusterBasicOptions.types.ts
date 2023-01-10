@@ -7,6 +7,7 @@ import { Kubernetes, OperatorsList } from '../../../Kubernetes/Kubernetes.types'
 export interface DBClusterBasicOptionsProps {
   kubernetes: Kubernetes[];
   form: FormApi;
+  className?: string;
 }
 
 export enum Operators {

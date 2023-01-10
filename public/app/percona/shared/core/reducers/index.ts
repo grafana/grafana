@@ -24,10 +24,12 @@ import { api } from 'app/percona/shared/helpers/api';
 
 import { ServerInfo } from '../types';
 
-import perconaAddDBCluster from './addDBCluster/addDBCluster';
 import perconaBackupLocations from './backupLocations';
-import perconaDBClustersReducer from './dbClusters/dbClusters';
-import perconaK8SCluster from './k8sCluster/k8sCluster';
+import perconaAddDBCluster from './dbaas/addDBCluster/addDBCluster';
+import perconaDBClustersReducer from './dbaas/dbClusters/dbClusters';
+import perconaDBaaSReducer from './dbaas/dbaas';
+import perconaK8SCluster from './dbaas/k8sCluster/k8sCluster';
+import perconaUpdateDBCluster from './dbaas/updateDBCluster/updateDBCluster';
 import servicesReducer from './services';
 import tourReducer from './tour/tour';
 import perconaUserReducers from './user/user';
@@ -181,28 +183,6 @@ export const deleteKubernetesAction = createAsyncThunk(
   }
 );
 
-export interface PerconaDBaaSState {
-  selectedKubernetesCluster: Kubernetes | null;
-}
-
-export const initialDBaaSState: PerconaDBaaSState = {
-  selectedKubernetesCluster: null,
-};
-
-const perconaDBaaSSlice = createSlice({
-  name: 'perconaDBaaS',
-  initialState: initialDBaaSState,
-  reducers: {
-    selectKubernetesCluster: (state, action: PayloadAction<Kubernetes | null>): PerconaDBaaSState => ({
-      ...state,
-      selectedKubernetesCluster: action.payload,
-    }),
-  },
-});
-
-export const { selectKubernetesCluster } = perconaDBaaSSlice.actions;
-export const perconaDBaaSReducers = perconaDBaaSSlice.reducer;
-
 export const instalKuberneteslOperatorAction = createAsyncThunk(
   'percona/instalKuberneteslOperator',
   async (
@@ -300,11 +280,12 @@ export default {
     settings: settingsReducer,
     updateSettings: updateSettingsReducer,
     user: perconaUserReducers,
-    dbaas: perconaDBaaSReducers,
+    dbaas: perconaDBaaSReducer,
     kubernetes: kubernetesReducer,
     deleteKubernetes: deleteKubernetesReducer,
     addKubernetes: perconaK8SCluster,
     addDBCluster: perconaAddDBCluster,
+    updateDBCluster: perconaUpdateDBCluster,
     installKubernetesOperator: installKubernetesOperatorReducer,
     dbClusters: perconaDBClustersReducer,
     server: perconaServerReducers,

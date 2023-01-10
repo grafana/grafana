@@ -1,12 +1,14 @@
 /* eslint-disable react/display-name */
 import { cx } from '@emotion/css';
 import React, { FC, useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 import { Icon, useStyles2, Tooltip } from '@grafana/ui';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { ProgressBar } from 'app/percona/dbaas/components/ProgressBar/ProgressBar';
 import { ProgressBarStatus } from 'app/percona/dbaas/components/ProgressBar/ProgressBar.types';
 
+import { selectDBCluster } from '../../../../shared/core/reducers/dbaas/dbaas';
 import { DBClusterStatus as Status } from '../DBCluster.types';
 
 import { COMPLETE_PROGRESS_DELAY, STATUS_DATA_QA } from './DBClusterStatus.constants';
@@ -14,7 +16,8 @@ import { getStyles } from './DBClusterStatus.styles';
 import { DBClusterStatusProps } from './DBClusterStatus.types';
 import { getProgressMessage, getShowProgressBarValue } from './DBClusterStatus.utils';
 
-export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setSelectedCluster, setLogsModalVisible }) => {
+export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setLogsModalVisible }) => {
+  const dispatch = useDispatch();
   const { message, finishedSteps, totalSteps } = dbCluster;
   const status = dbCluster.status as Status;
   const styles = useStyles2(getStyles);
@@ -40,7 +43,7 @@ export const DBClusterStatus: FC<DBClusterStatusProps> = ({ dbCluster, setSelect
     [message]
   );
   const openLogs = () => {
-    setSelectedCluster(dbCluster);
+    dispatch(selectDBCluster(null));
     setLogsModalVisible(true);
   };
 

@@ -1,10 +1,10 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { CancelToken } from 'axios';
 
-import { withSerializedError } from '../../../../../features/alerting/unified/utils/redux';
-import { DBClusterService } from '../../../../dbaas/components/DBCluster/DBCluster.service';
-import { DBCluster } from '../../../../dbaas/components/DBCluster/DBCluster.types';
-import { Kubernetes } from '../../../../dbaas/components/Kubernetes/Kubernetes.types';
+import { withSerializedError } from '../../../../../../features/alerting/unified/utils/redux';
+import { DBClusterService } from '../../../../../dbaas/components/DBCluster/DBCluster.service';
+import { DBCluster } from '../../../../../dbaas/components/DBCluster/DBCluster.types';
+import { Kubernetes } from '../../../../../dbaas/components/Kubernetes/Kubernetes.types';
 
 import { PerconaDBClustersState } from './dbClusters.types';
 import { formatDBClusters } from './dbClusters.utils';
@@ -53,5 +53,5 @@ export const fetchDBClustersAction = createAsyncThunk(
     )
 );
 
-export const { resetDBClustersToInitial, setDBClusters, setDBClustersLoading } = perconaDBClustersSlice.actions;
+export const { setDBClusters, setDBClustersLoading } = perconaDBClustersSlice.actions;
 export default perconaDBClustersSlice.reducer;

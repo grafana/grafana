@@ -1,13 +1,15 @@
 /* eslint-disable react/display-name */
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Form } from 'react-final-form';
-import { useDispatch } from 'react-redux';
 import { Redirect, useHistory } from 'react-router-dom';
 
 import { CollapsableSection, Spinner, useStyles } from '@grafana/ui/src';
 import { useShowPMMAddressWarning } from 'app/percona/shared/components/hooks/showPMMAddressWarning';
+import { useDispatch } from 'app/types';
 
-import { resetAddDBClusterState } from '../../../../shared/core/reducers/addDBCluster/addDBCluster';
+import { resetAddDBClusterState } from '../../../../shared/core/reducers/dbaas/addDBCluster/addDBCluster';
+import { resetDBCluster } from '../../../../shared/core/reducers/dbaas/dbaas';
+import { resetUpdateDBClusterState } from '../../../../shared/core/reducers/dbaas/updateDBCluster/updateDBCluster';
 import { getPerconaSettingFlag } from '../../../../shared/core/selectors';
 import { Messages as DBaaSMessages } from '../../../DBaaS.messages';
 import { useUpdateOfKubernetesList } from '../../../hooks/useKubernetesList';
@@ -39,7 +41,7 @@ export const EditDBClusterPage: FC<EditDBClusterPageProps> = () => {
   const [kubernetes, kubernetesLoading] = useUpdateOfKubernetesList();
   const [showPMMAddressWarning] = useShowPMMAddressWarning();
   const [showUnsafeConfigurationWarning, setShowUnsafeConfigurationWarning] = useState(false);
-  const [initialValues] = useEditDBClusterPageDefaultValues({ kubernetes });
+  const [initialValues, selectedDBCluster] = useEditDBClusterPageDefaultValues({ kubernetes, mode });
   const [onSubmit, loading, buttonMessage] = useEditDBClusterFormSubmit({ mode, showPMMAddressWarning });
   const [result] = useEditDBClusterPageResult(mode);
 
@@ -51,7 +53,12 @@ export const EditDBClusterPage: FC<EditDBClusterPageProps> = () => {
       history.push(DB_CLUSTER_INVENTORY_URL);
     }
     return () => {
-      dispatch(resetAddDBClusterState());
+      if (mode === 'create') {
+        dispatch(resetAddDBClusterState());
+      } else {
+        dispatch(resetDBCluster());
+        dispatch(resetUpdateDBClusterState());
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result]);
@@ -63,7 +70,7 @@ export const EditDBClusterPage: FC<EditDBClusterPageProps> = () => {
   ) : kubernetes && kubernetes?.length > 0 ? (
     <Form
       initialValues={initialValues}
-      onSubmit={(values) => onSubmit(values, showPMMAddressWarning)}
+      onSubmit={onSubmit}
       mutators={{
         setClusterName: (databaseTypeValue: string, state, { changeValue }) => {
           changeValue(state, `${AddDBClusterFields.name}`, () => `${databaseTypeValue}-${generateUID()}`);
@@ -79,28 +86,31 @@ export const EditDBClusterPage: FC<EditDBClusterPageProps> = () => {
               parentHref: DBAAS_INVENTORY_URL,
             }}
             submitBtnProps={{
-              disabled: !valid || pristine || loading, // TODO check in edit mode
-              loading: loading, // TODO check in edit mode
+              disabled: !valid || pristine || loading,
+              loading,
               buttonMessage: buttonMessage,
             }}
-            pageHeader="Create DB Cluster"
+            pageHeader={`${mode === 'create' ? 'Create' : 'Edit'} DB Cluster`}
             pageName="db-cluster"
             cancelUrl={DBAAS_INVENTORY_URL}
             featureLoaderProps={{ featureName: DBaaSMessages.dbaas, featureSelector: featureSelector }}
           >
             {showPMMAddressWarning && <PMMServerUrlWarning />}
             <div className={styles.optionsWrapper}>
-              <DBClusterBasicOptions kubernetes={kubernetes} form={form} />
+              {mode === 'create' && (
+                <DBClusterBasicOptions kubernetes={kubernetes} form={form} className={styles.basicOptions} />
+              )}
               <CollapsableSection
                 label={Messages.advancedSettings}
-                isOpen={false}
-                buttonDataTestId={`${mode}-dbCluster-advanced-settings`}
+                isOpen={mode === 'edit'}
+                buttonDataTestId="dbCluster-advanced-settings"
                 className={styles.collapsableSection}
               >
                 {showUnsafeConfigurationWarning && <UnsafeConfigurationWarning />}
                 <DBClusterAdvancedOptions
                   setShowUnsafeConfigurationWarning={setShowUnsafeConfigurationWarning}
                   form={form}
+                  selectedCluster={selectedDBCluster}
                   handleSubmit={handleSubmit}
                   pristine={pristine}
                   valid={valid}

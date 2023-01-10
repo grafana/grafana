@@ -29,6 +29,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
     nodesWrapper: css`
       margin-bottom: ${spacing.md};
       flex: 1 0 auto;
+      max-width: 235px;
       div,
       label {
         white-space: nowrap;
@@ -38,10 +39,12 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
     resourcesBar: css`
       margin-top: ${spacing.lg};
       margin-bottom: 67px;
+      min-height: 75px;
     `,
     resourcesBarEmpty: css`
       margin-top: ${spacing.lg};
       margin-bottom: 78px;
+      min-height: 75px;
     `,
     resourcesBarLast: css`
       margin-top: ${spacing.lg};

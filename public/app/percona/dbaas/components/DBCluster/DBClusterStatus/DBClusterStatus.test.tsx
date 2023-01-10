@@ -1,6 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { Provider } from 'react-redux';
 
+import { configureStore } from '../../../../../store/configureStore';
+import { StoreState } from '../../../../../types';
 import { DBCluster, DBClusterStatus as Status } from '../DBCluster.types';
 import { dbClustersStub } from '../__mocks__/dbClustersStubs';
 
@@ -16,7 +19,16 @@ describe('DBClusterStatus::', () => {
       totalSteps: 10,
     };
     const { container } = render(
-      <DBClusterStatus dbCluster={dbCluster} setSelectedCluster={jest.fn()} setLogsModalVisible={jest.fn()} />
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { result: { dbaasEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <DBClusterStatus dbCluster={dbCluster} setLogsModalVisible={jest.fn()} />
+      </Provider>
     );
 
     expect(screen.getByTestId('cluster-status-active')).toBeInTheDocument();
@@ -32,7 +44,18 @@ describe('DBClusterStatus::', () => {
       finishedSteps: 5,
       totalSteps: 10,
     };
-    render(<DBClusterStatus dbCluster={dbCluster} setSelectedCluster={jest.fn()} setLogsModalVisible={jest.fn()} />);
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { result: { dbaasEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <DBClusterStatus dbCluster={dbCluster} setLogsModalVisible={jest.fn()} />
+      </Provider>
+    );
 
     expect(screen.queryByTestId('cluster-status-active')).not.toBeInTheDocument();
     expect(screen.getByTestId('cluster-progress-bar')).toBeInTheDocument();
@@ -47,7 +70,18 @@ describe('DBClusterStatus::', () => {
       finishedSteps: 10,
       totalSteps: 10,
     };
-    render(<DBClusterStatus dbCluster={dbCluster} setSelectedCluster={jest.fn()} setLogsModalVisible={jest.fn()} />);
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { result: { dbaasEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <DBClusterStatus dbCluster={dbCluster} setLogsModalVisible={jest.fn()} />
+      </Provider>
+    );
 
     expect(screen.queryByTestId('cluster-status-active')).not.toBeInTheDocument();
     expect(screen.getByTestId('cluster-progress-bar')).toBeInTheDocument();

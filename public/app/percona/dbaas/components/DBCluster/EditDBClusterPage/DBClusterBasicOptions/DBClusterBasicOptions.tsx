@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import { TextInputField, validators } from '@percona/platform-core';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { Field } from 'react-final-form';
@@ -39,7 +40,7 @@ const getAvailableDatabaseOptions = (kubernetesCluster: Kubernetes): DatabaseOpt
   return availableDatabaseOptions;
 };
 
-export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernetes, form }) => {
+export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernetes, form, className }) => {
   const styles = useStyles(getStyles);
   const { required, maxLength } = validators;
   const { change } = form;
@@ -87,7 +88,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
   useDatabaseVersions(form, databaseType, kubernetesCluster, setLoadingDatabaseVersions, setDatabaseVersions);
 
   return (
-    <div data-testid="dbcluster-basic-options-step" className={styles.basicOptionsWrapper}>
+    <div data-testid="dbcluster-basic-options-step" className={cx(styles.basicOptionsWrapper, className)}>
       <Field
         dataTestId="dbcluster-kubernetes-cluster-field"
         name={AddDBClusterFields.kubernetesCluster}

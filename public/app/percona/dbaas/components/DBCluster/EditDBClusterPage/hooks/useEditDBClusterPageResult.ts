@@ -1,9 +1,9 @@
-import { useSelector } from 'react-redux';
+import { useSelector } from 'app/types';
 
-import { getAddDbCluster } from '../../../../../shared/core/selectors';
+import { getAddDbCluster, getUpdateDbCluster } from '../../../../../shared/core/selectors';
 import { DBClusterPageMode } from '../EditDBClusterPage.types';
 
 export const useEditDBClusterPageResult = (mode: DBClusterPageMode): [any] => {
-  const { result } = useSelector(getAddDbCluster); // TODO mode === 'create'? getAddDbCluster/edit will be changes in other branch
+  const { result } = useSelector(mode === 'create' ? getAddDbCluster : getUpdateDbCluster);
   return [result];
 };

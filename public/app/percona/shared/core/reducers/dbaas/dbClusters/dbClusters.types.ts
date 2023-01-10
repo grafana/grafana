@@ -1,4 +1,4 @@
-import { DBCluster, DBClusterPayload } from '../../../../dbaas/components/DBCluster/DBCluster.types';
+import { DBCluster, DBClusterPayload } from '../../../../../dbaas/components/DBCluster/DBCluster.types';
 
 export interface PerconaDBClustersState {
   result: DBCluster[];
