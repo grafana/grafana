@@ -154,7 +154,7 @@ export function PanelChrome({
         {showStreaming && (
           <div className={styles.item} style={itemStyles}>
             <Tooltip content="Streaming">
-              <Icon name="circle" type="mono" size="sm" className={styles.streaming} />
+              <Icon name="circle-mono" size="sm" className={styles.streaming} />
             </Tooltip>
           </div>
         )}

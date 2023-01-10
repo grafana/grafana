@@ -44,6 +44,7 @@ export const availableIconsIndex = {
   'check-circle': true,
   'check-square': true,
   circle: true,
+  'circle-mono': true,
   'clipboard-alt': true,
   'clock-nine': true,
   cloud: true,
