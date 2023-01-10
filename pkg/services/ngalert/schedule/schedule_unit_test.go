@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -71,7 +72,15 @@ func TestProcessTicks(t *testing.T) {
 		AlertSender:  notifier,
 		Tracer:       testTracer,
 	}
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{}, false)
+	managerCfg := state.ManagerCfg{
+		Metrics:       testMetrics.GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: nil,
+		Images:        &state.NoopImageService{},
+		Clock:         mockedClock,
+		Historian:     &state.FakeHistorian{},
+	}
+	st := state.NewManager(managerCfg)
 
 	sched := NewScheduler(schedCfg, st)
 
@@ -243,8 +252,8 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			t.Run("it should add extra labels", func(t *testing.T) {
 				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 				for _, s := range states {
-					assert.Equal(t, rule.UID, s.Labels[models.RuleUIDLabel])
-					assert.Equal(t, rule.NamespaceUID, s.Labels[models.NamespaceUIDLabel])
+					assert.Equal(t, rule.UID, s.Labels[alertingModels.RuleUIDLabel])
+					assert.Equal(t, rule.NamespaceUID, s.Labels[alertingModels.NamespaceUIDLabel])
 					assert.Equal(t, rule.Title, s.Labels[prometheusModel.AlertNameLabel])
 					assert.Equal(t, folderTitle, s.Labels[models.FolderTitleLabel])
 				}
@@ -690,8 +699,16 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		AlertSender:      senderMock,
 		Tracer:           testTracer,
 	}
+	managerCfg := state.ManagerCfg{
+		Metrics:       m.GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: is,
+		Images:        &state.NoopImageService{},
+		Clock:         mockedClock,
+		Historian:     &state.FakeHistorian{},
+	}
+	st := state.NewManager(managerCfg)
 
-	st := state.NewManager(m.GetStateMetrics(), nil, is, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{}, false)
 	return NewScheduler(schedCfg, st)
 }
 

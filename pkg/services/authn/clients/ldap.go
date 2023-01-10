@@ -48,16 +48,16 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, orgID int64, username, 
 		IsGrafanaAdmin: info.IsGrafanaAdmin,
 		AuthModule:     info.AuthModule,
 		AuthID:         info.AuthId,
-		LookUpParams: models.UserLookupParams{
-			Login: &info.Login,
-			Email: &info.Email,
-		},
-		Groups: info.Groups,
+		Groups:         info.Groups,
 		ClientParams: authn.ClientParams{
 			SyncUser:            true,
 			SyncTeamMembers:     true,
 			AllowSignUp:         c.cfg.LDAPAllowSignup,
 			EnableDisabledUsers: true,
+			LookUpParams: models.UserLookupParams{
+				Login: &info.Login,
+				Email: &info.Email,
+			},
 		},
 	}, nil
 }

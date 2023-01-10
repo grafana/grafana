@@ -2,21 +2,10 @@ import React from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { SceneObjectBase, SceneComponentProps, SceneState, UrlSyncManager } from '@grafana/scenes';
 import { PageToolbar, ToolbarButton } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-
-import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneComponentProps, SceneObjectStatePlain, SceneObject } from '../core/types';
-import { UrlSyncManager } from '../services/UrlSyncManager';
-
-interface SceneState extends SceneObjectStatePlain {
-  title: string;
-  body: SceneObject;
-  actions?: SceneObject[];
-  subMenu?: SceneObject;
-  isEditing?: boolean;
-}
 
 export class Scene extends SceneObjectBase<SceneState> {
   public static Component = SceneRenderer;
@@ -34,30 +23,6 @@ export class Scene extends SceneObjectBase<SceneState> {
   }
 }
 
-export class EmbeddedScene extends Scene {
-  public static Component = EmbeddedSceneRenderer;
-}
-
-function EmbeddedSceneRenderer({ model }: SceneComponentProps<Scene>) {
-  const { body, isEditing, subMenu } = model.useState();
-  return (
-    <div
-      style={{
-        flexGrow: 1,
-        display: 'flex',
-        gap: '8px',
-        overflow: 'auto',
-        minHeight: '100%',
-        flexDirection: 'column',
-      }}
-    >
-      {subMenu && <subMenu.Component model={subMenu} />}
-      <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
-        <body.Component model={body} isEditing={isEditing} />
-      </div>
-    </div>
-  );
-}
 function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   const { title, body, actions = [], isEditing, $editor, subMenu } = model.useState();
 

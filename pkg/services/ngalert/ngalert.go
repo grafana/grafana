@@ -209,7 +209,15 @@ func (ng *AlertNG) init() error {
 	if err != nil {
 		return err
 	}
-	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, ng.imageService, clk, history, ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState))
+	cfg := state.ManagerCfg{
+		Metrics:       ng.Metrics.GetStateMetrics(),
+		ExternalURL:   appUrl,
+		InstanceStore: store,
+		Images:        ng.imageService,
+		Clock:         clk,
+		Historian:     history,
+	}
+	stateManager := state.NewManager(cfg)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title

@@ -5,6 +5,21 @@
       "success": "Copied"
     }
   },
+  "command-palette": {
+    "action": {
+      "change-theme": "Change theme...",
+      "dark-theme": "Dark",
+      "light-theme": "Light",
+      "search": "Search"
+    },
+    "section": {
+      "actions": "Actions",
+      "dashboard-search-results": "Dashboards",
+      "pages": "Pages",
+      "preferences": "Preferences",
+      "recent-dashboards": "Recently viewed dashboards"
+    }
+  },
   "common": {
     "locale": {
       "default": "Default"
@@ -83,7 +98,6 @@
   "datasource-onboarding": {
     "contact-admin": "Please contact your administrator to configure data sources.",
     "explanation": "To visualize your data, you'll need to connect it first.",
-    "logo": "Logo for {{datasourceName}} data source",
     "new-dashboard": "New dashboard",
     "preferred": "Connect your preferred data source:",
     "sampleData": "Or set up a new dashboard with sample data",
@@ -314,7 +328,7 @@
     },
     "support-bundles": {
       "subtitle": "Download support bundles",
-      "title": "Support Bundles"
+      "title": "Support bundles"
     },
     "teams": {
       "subtitle": "Groups of users that have common dashboard and permission needs",

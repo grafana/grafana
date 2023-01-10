@@ -127,6 +127,7 @@ export const availableIconsIndex = {
   import: true,
   info: true,
   'info-circle': true,
+  k6: true,
   'key-skeleton-alt': true,
   keyboard: true,
   'layer-group': true,
