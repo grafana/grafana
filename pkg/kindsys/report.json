@@ -41,7 +41,7 @@
       "pluralName": "Alertmanager-Querys",
       "machineName": "alertmanager_query",
       "pluralMachineName": "alertmanager_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -113,7 +113,7 @@
       "pluralName": "Cloudwatch-Querys",
       "machineName": "cloudwatch_query",
       "pluralMachineName": "cloudwatch_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -149,7 +149,7 @@
       "pluralName": "Dashboard-Querys",
       "machineName": "dashboard_query",
       "pluralMachineName": "dashboard_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -209,7 +209,7 @@
       "pluralName": "Elasticsearch-Querys",
       "machineName": "elasticsearch_query",
       "pluralMachineName": "elasticsearch_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -293,7 +293,7 @@
       "pluralName": "Grafana-Azure-Monitor-Datasource-Querys",
       "machineName": "grafana_azure_monitor_datasource_query",
       "pluralMachineName": "grafana_azure_monitor_datasource_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -317,7 +317,7 @@
       "pluralName": "Grafana-Querys",
       "machineName": "grafana_query",
       "pluralMachineName": "grafana_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -353,7 +353,7 @@
       "pluralName": "Graphite-Querys",
       "machineName": "graphite_query",
       "pluralMachineName": "graphite_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -401,7 +401,7 @@
       "pluralName": "Jaeger-Querys",
       "machineName": "jaeger_query",
       "pluralMachineName": "jaeger_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -449,7 +449,7 @@
       "pluralName": "Loki-Querys",
       "machineName": "loki_query",
       "pluralMachineName": "loki_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -473,7 +473,7 @@
       "pluralName": "Mssql-Querys",
       "machineName": "mssql_query",
       "pluralMachineName": "mssql_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -497,7 +497,7 @@
       "pluralName": "Mysql-Querys",
       "machineName": "mysql_query",
       "pluralMachineName": "mysql_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -545,7 +545,7 @@
       "pluralName": "Parca-Querys",
       "machineName": "parca_query",
       "pluralMachineName": "parca_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -569,7 +569,7 @@
       "pluralName": "Phlare-Querys",
       "machineName": "phlare_query",
       "pluralMachineName": "phlare_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -617,7 +617,7 @@
       "pluralName": "Postgres-Querys",
       "machineName": "postgres_query",
       "pluralMachineName": "postgres_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -641,7 +641,7 @@
       "pluralName": "Prometheus-Querys",
       "machineName": "prometheus_query",
       "pluralMachineName": "prometheus_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -701,7 +701,7 @@
       "pluralName": "Stackdriver-Querys",
       "machineName": "stackdriver_query",
       "pluralMachineName": "stackdriver_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -761,7 +761,7 @@
       "pluralName": "Tempo-Querys",
       "machineName": "tempo_query",
       "pluralMachineName": "tempo_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -785,7 +785,7 @@
       "pluralName": "Testdata-Querys",
       "machineName": "testdata_query",
       "pluralMachineName": "testdata_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,
@@ -881,7 +881,7 @@
       "pluralName": "Zipkin-Querys",
       "machineName": "zipkin_query",
       "pluralMachineName": "zipkin_querys",
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "maturity": "planned",
       "currentVersion": [
         0,

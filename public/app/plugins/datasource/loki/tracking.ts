@@ -113,7 +113,7 @@ const isQueryWithChangedResolution = (query: LokiQuery): boolean => {
 };
 
 const isQueryWithChangedLineLimit = (query: LokiQuery): boolean => {
-  return query.maxLines !== null || query.maxLines !== undefined;
+  return query.maxLines !== null && query.maxLines !== undefined;
 };
 
 const isQueryWithChangedLegend = (query: LokiQuery): boolean => {

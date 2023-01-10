@@ -30,7 +30,7 @@ func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
 		return nil, err
 	}
 	k := &Kind{
-		decl: *decl,
+		decl: decl,
 	}
 
 	lin, err := decl.Some().BindKindLineage(rt, opts...)
@@ -91,9 +91,8 @@ func (k *Kind) Maturity() kindsys.Maturity {
 
 // Decl returns the [kindsys.Decl] containing both CUE and Go representations of the
 // {{ .Properties.MachineName }} declaration in .cue files.
-func (k *Kind) Decl() *kindsys.Decl[kindsys.CoreProperties] {
-	d := k.decl
-	return &d
+func (k *Kind) Decl() kindsys.Decl[kindsys.CoreProperties] {
+  return k.decl
 }
 
 // Props returns a [kindsys.SomeKindProps], with underlying type [kindsys.CoreProperties],
