@@ -23,7 +23,7 @@ export interface TweenState {
 
 type TTweenCallback = (state: TweenState) => void;
 
-type TTweenOptions = {
+export type TTweenOptions = {
   delay?: number;
   duration: number;
   from: number;
@@ -33,8 +33,8 @@ type TTweenOptions = {
 };
 
 export default class Tween {
-  callbackComplete: TTweenCallback | TNil;
-  callbackUpdate: TTweenCallback | TNil;
+  onComplete: TTweenCallback | TNil;
+  onUpdate: TTweenCallback | TNil;
   delay: number | TNil;
   duration: number;
   from: number;
@@ -49,13 +49,13 @@ export default class Tween {
     this.from = from;
     this.to = to;
     if (!onUpdate && !onComplete) {
-      this.callbackComplete = undefined;
-      this.callbackUpdate = undefined;
+      this.onComplete = undefined;
+      this.onUpdate = undefined;
       this.timeoutID = undefined;
       this.requestID = undefined;
     } else {
-      this.callbackComplete = onComplete;
-      this.callbackUpdate = onUpdate;
+      this.onComplete = onComplete;
+      this.onUpdate = onUpdate;
       if (delay) {
         // setTimeout from @types/node returns NodeJS.Timeout, so prefix with `window.`
         this.timeoutID = window.setTimeout(this._frameCallback, delay);
@@ -71,15 +71,15 @@ export default class Tween {
     this.timeoutID = undefined;
     this.requestID = undefined;
     const current = Object.freeze(this.getCurrent());
-    if (this.callbackUpdate) {
-      this.callbackUpdate(current);
+    if (this.onUpdate) {
+      this.onUpdate(current);
     }
-    if (this.callbackComplete && current.done) {
-      this.callbackComplete(current);
+    if (this.onComplete && current.done) {
+      this.onComplete(current);
     }
     if (current.done) {
-      this.callbackComplete = undefined;
-      this.callbackUpdate = undefined;
+      this.onComplete = undefined;
+      this.onUpdate = undefined;
     } else {
       this.requestID = window.requestAnimationFrame(this._frameCallback);
     }
@@ -94,8 +94,8 @@ export default class Tween {
       window.cancelAnimationFrame(this.requestID);
       this.requestID = undefined;
     }
-    this.callbackComplete = undefined;
-    this.callbackUpdate = undefined;
+    this.onComplete = undefined;
+    this.onUpdate = undefined;
   }
 
   getCurrent(): TweenState {

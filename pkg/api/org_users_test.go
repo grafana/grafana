@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
@@ -37,11 +38,17 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	sqlStore.Cfg.AutoAssignOrg = true
 	sqlStore.Cfg.AutoAssignOrgId = int(testOrgID)
 
-	_, err := sqlStore.CreateUser(context.Background(), user.CreateUserCommand{Email: "testUser@grafana.com", Login: testUserLogin})
+	quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 	require.NoError(t, err)
-	_, err = sqlStore.CreateUser(context.Background(), user.CreateUserCommand{Email: "user1@grafana.com", Login: "user1"})
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService)
 	require.NoError(t, err)
-	_, err = sqlStore.CreateUser(context.Background(), user.CreateUserCommand{Email: "user2@grafana.com", Login: "user2"})
+
+	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: "testUser@grafana.com", Login: testUserLogin})
+	require.NoError(t, err)
+	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: "user1@grafana.com", Login: "user1"})
+	require.NoError(t, err)
+	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: "user2@grafana.com", Login: "user2"})
 	require.NoError(t, err)
 }
 
@@ -56,19 +63,22 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}
 	hs.orgService = orgService
 	mock := mockstore.NewSQLStoreMock()
+
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
-		orgService.ExpectedOrgUsers = []*org.OrgUserDTO{
-			{Login: testUserLogin, Email: "testUser@grafana.com"},
-			{Login: "user1", Email: "user1@grafana.com"},
-			{Login: "user2", Email: "user2@grafana.com"},
+		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
+			OrgUsers: []*org.OrgUserDTO{
+				{Login: testUserLogin, Email: "testUser@grafana.com"},
+				{Login: "user1", Email: "user1@grafana.com"},
+				{Login: "user2", Email: "user2@grafana.com"},
+			},
 		}
 		sc.handlerFunc = hs.GetOrgUsersForCurrentOrg
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 
-		var resp []models.OrgUserDTO
+		var resp []org.OrgUserDTO
 		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.Len(t, resp, 3)
@@ -146,13 +156,20 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
 			setUpGetOrgUsersDB(t, sqlStore)
+			orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
+				OrgUsers: []*org.OrgUserDTO{
+					{Login: testUserLogin, Email: "testUser@grafana.com"},
+					{Login: "user1", Email: "user1@grafana.com"},
+					{Login: "user2", Email: "user2@grafana.com"},
+				},
+			}
 
 			sc.handlerFunc = hs.GetOrgUsersForCurrentOrg
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 			require.Equal(t, http.StatusOK, sc.resp.Code)
 
-			var resp []models.OrgUserDTO
+			var resp []org.OrgUserDTO
 			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 			require.NoError(t, err)
 			assert.Len(t, resp, 2)
@@ -331,13 +348,15 @@ var (
 func setupOrgUsersDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, orgService org.Service) {
 	t.Helper()
 
-	var err error
+	quotaService := quotaimpl.ProvideService(db, db.Cfg)
+	usrSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService)
+	require.NoError(t, err)
 
-	_, err = db.CreateUser(context.Background(), user.CreateUserCommand{Email: testServerAdminViewer.Email, SkipOrgSetup: true, Login: testServerAdminViewer.Login})
+	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: testServerAdminViewer.Email, SkipOrgSetup: true, Login: testServerAdminViewer.Login})
 	require.NoError(t, err)
-	_, err = db.CreateUser(context.Background(), user.CreateUserCommand{Email: testAdminOrg2.Email, SkipOrgSetup: true, Login: testAdminOrg2.Login})
+	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: testAdminOrg2.Email, SkipOrgSetup: true, Login: testAdminOrg2.Login})
 	require.NoError(t, err)
-	_, err = db.CreateUser(context.Background(), user.CreateUserCommand{Email: testEditorOrg1.Email, SkipOrgSetup: true, Login: testEditorOrg1.Login})
+	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: testEditorOrg1.Email, SkipOrgSetup: true, Login: testEditorOrg1.Login})
 	require.NoError(t, err)
 
 	// Create both orgs with server admin
@@ -377,10 +396,11 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 			enableAccessControl: true,
 			expectedCode:        http.StatusOK,
 			expectedMetadata: map[string]bool{
-				"org.users:write":  true,
-				"org.users:add":    true,
-				"org.users:read":   true,
-				"org.users:remove": true},
+				"org.users:write":        true,
+				"org.users:add":          true,
+				"org.users:read":         true,
+				"org.users:remove":       true,
+				"users.permissions:read": true},
 			user:      testServerAdminViewer,
 			targetOrg: testServerAdminViewer.OrgID,
 		},
@@ -405,7 +425,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 			response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, tc.targetOrg), nil, t)
 			require.Equal(t, tc.expectedCode, response.Code)
 
-			var userList []*models.OrgUserDTO
+			var userList []*org.OrgUserDTO
 			err = json.NewDecoder(response.Body).Decode(&userList)
 			require.NoError(t, err)
 
@@ -513,7 +533,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			require.Equal(t, tc.expectedCode, response.Code)
 
 			if tc.expectedCode != http.StatusForbidden {
-				var userList []*models.OrgUserDTO
+				var userList []*org.OrgUserDTO
 				err := json.NewDecoder(response.Body).Decode(&userList)
 				require.NoError(t, err)
 

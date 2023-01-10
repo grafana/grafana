@@ -322,8 +322,11 @@ describe('RuleList', () => {
 
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);
-    expect(groups[0]).toHaveTextContent('1 rule');
-    expect(groups[1]).toHaveTextContent('4 rules: 1 firing, 1 pending');
+    expect(groups[0]).toHaveTextContent('1 firing');
+    expect(groups[1]).toHaveTextContent('1 firing');
+    expect(groups[1]).toHaveTextContent('1 pending');
+    expect(groups[1]).toHaveTextContent('1 recording');
+    expect(groups[1]).toHaveTextContent('1 normal');
 
     // expand second group to see rules table
     expect(ui.rulesTable.query()).not.toBeInTheDocument();

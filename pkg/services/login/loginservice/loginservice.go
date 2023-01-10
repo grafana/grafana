@@ -43,11 +43,6 @@ type Implementation struct {
 	orgService      org.Service
 }
 
-// CreateUser creates inserts a new one.
-func (ls *Implementation) CreateUser(cmd user.CreateUserCommand) (*user.User, error) {
-	return ls.userService.Create(context.Background(), &cmd)
-}
-
 // UpsertUser updates an existing user, or if it doesn't exist, inserts a new one.
 func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
@@ -80,7 +75,12 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 			}
 		}
 
-		result, errCreateUser := ls.createUser(extUser)
+		result, errCreateUser := ls.userService.Create(ctx, &user.CreateUserCommand{
+			Login:        extUser.Login,
+			Email:        extUser.Email,
+			Name:         extUser.Name,
+			SkipOrgSetup: len(extUser.OrgRoles) > 0,
+		})
 		if errCreateUser != nil {
 			return errCreateUser
 		}
@@ -207,16 +207,6 @@ func (ls *Implementation) SetTeamSyncFunc(teamSyncFunc login.TeamSyncFunc) {
 	ls.TeamSync = teamSyncFunc
 }
 
-func (ls *Implementation) createUser(extUser *models.ExternalUserInfo) (*user.User, error) {
-	cmd := user.CreateUserCommand{
-		Login:        extUser.Login,
-		Email:        extUser.Email,
-		Name:         extUser.Name,
-		SkipOrgSetup: len(extUser.OrgRoles) > 0,
-	}
-	return ls.CreateUser(cmd)
-}
-
 func (ls *Implementation) updateUser(ctx context.Context, usr *user.User, extUser *models.ExternalUserInfo) error {
 	// sync user info
 	updateCmd := &user.UpdateUserCommand{
@@ -305,7 +295,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 		// add role
 		cmd := &org.AddOrgUserCommand{UserID: usr.ID, Role: orgRole, OrgID: orgId}
 		err := ls.orgService.AddOrgUser(ctx, cmd)
-		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
+		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
 			return err
 		}
 	}
@@ -316,15 +306,16 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 			"userId", usr.ID, "orgId", orgId)
 		cmd := &org.RemoveOrgUserCommand{OrgID: orgId, UserID: usr.ID}
 		if err := ls.orgService.RemoveOrgUser(ctx, cmd); err != nil {
-			if errors.Is(err, models.ErrLastOrgAdmin) {
+			if errors.Is(err, org.ErrLastOrgAdmin) {
 				logger.Error(err.Error(), "userId", cmd.UserID, "orgId", cmd.OrgID)
 				continue
 			}
-			if err := ls.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserID); err != nil {
-				logger.Warn("failed to delete permissions for user", "userID", cmd.UserID, "orgID", orgId)
-			}
 
 			return err
+		}
+
+		if err := ls.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserID); err != nil {
+			logger.Warn("failed to delete permissions for user", "error", err, "userID", cmd.UserID, "orgID", orgId)
 		}
 	}
 

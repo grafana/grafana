@@ -1,16 +1,10 @@
+import { css } from '@emotion/css';
 import React, { lazy, PureComponent, RefObject, Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { config, DataSourcePicker, reportInteraction } from '@grafana/runtime';
-import {
-  defaultIntervals,
-  PageToolbar,
-  RefreshPicker,
-  SetInterval,
-  ToolbarButton,
-  ToolbarButtonRow,
-} from '@grafana/ui';
+import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -35,6 +29,19 @@ import { LiveTailControls } from './useLiveTailControls';
 const AddToDashboard = lazy(() =>
   import('./AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
 );
+
+const getStyles = (exploreId: ExploreId, isLargerExploreId: boolean) => {
+  return {
+    rotateIcon: css({
+      '> div > svg': {
+        transform:
+          (exploreId === 'left' && isLargerExploreId) || (exploreId === 'right' && !isLargerExploreId)
+            ? 'rotate(180deg)'
+            : 'none',
+      },
+    }),
+  };
+};
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -128,16 +135,14 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       syncedTimes,
       onChangeTimeZone,
       onChangeFiscalYearStartMonth,
-      refreshInterval,
-      loading,
       isPaused,
       hasLiveOption,
       containerWidth,
       largerExploreId,
     } = this.props;
     const showSmallTimePicker = splitted || containerWidth < 1210;
-
     const isLargerExploreId = largerExploreId === exploreId;
+    const styles = getStyles(exploreId, isLargerExploreId);
 
     const showExploreToDashboard =
       contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
@@ -154,6 +159,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     return [
       !splitted ? (
         <ToolbarButton
+          variant="canvas"
           key="split"
           tooltip="Split the pane"
           onClick={this.onOpenSplitView}
@@ -163,21 +169,19 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
           Split
         </ToolbarButton>
       ) : (
-        <React.Fragment key="splitActions">
+        <ButtonGroup key="split-controls">
           <ToolbarButton
+            variant="canvas"
             tooltip={`${isLargerExploreId ? 'Narrow' : 'Widen'} pane`}
-            disabled={isLive}
             onClick={onClickResize}
-            icon={
-              (exploreId === 'left' && isLargerExploreId) || (exploreId === 'right' && !isLargerExploreId)
-                ? 'angle-left'
-                : 'angle-right'
-            }
+            icon={isLargerExploreId ? 'gf-movepane-left' : 'gf-movepane-right'}
+            iconOnly={true}
+            className={styles.rotateIcon}
           />
-          <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
+          <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times" variant="canvas">
             Close
           </ToolbarButton>
-        </React.Fragment>
+        </ButtonGroup>
       ),
 
       showExploreToDashboard && (
@@ -204,10 +208,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       ),
 
       this.renderRefreshPicker(showSmallTimePicker),
-
-      refreshInterval && (
-        <SetInterval key="setInterval" func={this.onRunQuery} interval={refreshInterval} loading={loading} />
-      ),
 
       hasLiveOption && (
         <LiveTailControls key="liveControls" exploreId={exploreId}>
@@ -239,12 +239,13 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   };
 
   render() {
-    const { datasourceMissing, exploreId, splitted, containerWidth, topOfViewRef } = this.props;
+    const { datasourceMissing, exploreId, splitted, containerWidth, topOfViewRef, refreshInterval, loading } =
+      this.props;
 
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const isTopnav = config.featureToggles.topnav;
 
-    const getDashNav = () => (
+    const shareButton = (
       <DashNavButton
         key="share"
         tooltip="Copy shortened link"
@@ -266,39 +267,25 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         />
       );
 
-    const topNavActions = [
-      getDashNav(),
-      !splitted && getDataSourcePicker(),
-      <div style={{ flex: 1 }} key="spacer" />,
-      <ToolbarButtonRow key="actions" alignment="right">
-        {this.renderActions()}
-      </ToolbarButtonRow>,
-    ].filter(Boolean);
-
-    const toolbarLeftItems = [exploreId === ExploreId.left && getDashNav(), getDataSourcePicker()].filter(Boolean);
-
-    const toolbarLeftItemsTopNav = [
-      exploreId === ExploreId.left && (
-        <AppChromeUpdate
-          actions={[getDashNav(), !splitted && getDataSourcePicker(), <div style={{ flex: 1 }} key="spacer" />].filter(
-            Boolean
-          )}
-        />
-      ),
+    const toolbarLeftItems = [
+      // We only want to show the shortened link button in the left Toolbar if topnav is not enabled as with topnav enabled it sits next to the brecrumbs
+      !isTopnav && exploreId === ExploreId.left && shareButton,
       getDataSourcePicker(),
     ].filter(Boolean);
 
-    return isTopnav && !splitted ? (
+    return (
       <div ref={topOfViewRef}>
-        <AppChromeUpdate actions={topNavActions} />
-      </div>
-    ) : (
-      <div ref={topOfViewRef}>
+        {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
+        {isTopnav && (
+          <div ref={topOfViewRef}>
+            <AppChromeUpdate actions={[shareButton, <div style={{ flex: 1 }} key="spacer" />]} />
+          </div>
+        )}
         <PageToolbar
           aria-label="Explore toolbar"
           title={exploreId === ExploreId.left && !isTopnav ? 'Explore' : undefined}
           pageIcon={exploreId === ExploreId.left && !isTopnav ? 'compass' : undefined}
-          leftItems={isTopnav ? toolbarLeftItemsTopNav : toolbarLeftItems}
+          leftItems={toolbarLeftItems}
         >
           {this.renderActions()}
         </PageToolbar>

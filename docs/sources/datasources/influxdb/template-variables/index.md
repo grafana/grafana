@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/influxdb/influxdb-templates/
-  - /docs/grafana/latest/data-sources/influxdb/influxdb-templates/
-  - /docs/grafana/latest/data-sources/influxdb/template-variables/
+  - ../../data-sources/influxdb/influxdb-templates/
+  - ../../data-sources/influxdb/template-variables/
+  - influxdb-templates/
 description: Guide for template variables in InfluxDB
 keywords:
   - grafana

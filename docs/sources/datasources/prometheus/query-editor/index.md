@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/prometheus/query-editor/
+  - ../../data-sources/prometheus/query-editor/
 description: Guide for using the Prometheus data source's query editor
 keywords:
   - grafana

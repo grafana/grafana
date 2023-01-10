@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 )
 
-func GetObjectKindInfo() models.ObjectKindInfo {
-	return models.ObjectKindInfo{
+func GetEntityKindInfo() models.EntityKindInfo {
+	return models.EntityKindInfo{
 		ID:            models.StandardKindGeoJSON,
 		Name:          "GeoJSON",
 		Description:   "JSON formatted spatial data",
@@ -20,8 +20,8 @@ func GetObjectKindInfo() models.ObjectKindInfo {
 }
 
 // Very basic geojson validator
-func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
-	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
+func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
+	return func(ctx context.Context, uid string, body []byte) (*models.EntitySummary, []byte, error) {
 		var geojson map[string]interface{}
 		err := json.Unmarshal(body, &geojson)
 		if err != nil {
@@ -38,7 +38,7 @@ func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 			return nil, nil, err
 		}
 
-		summary := &models.ObjectSummary{
+		summary := &models.EntitySummary{
 			Kind: models.StandardKindGeoJSON,
 			Name: store.GuessNameFromUID(uid),
 			UID:  uid,

@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/azure-monitor/query-editor/
+  - ../../data-sources/azure-monitor/query-editor/
 description: Guide for using the Azure Monitor data source's query editor
 keywords:
   - grafana

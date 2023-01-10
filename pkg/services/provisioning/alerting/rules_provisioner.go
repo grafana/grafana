@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -99,7 +100,7 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 	ctx context.Context, folderName string, orgID int64) (string, error) {
 	cmd := &models.GetDashboardQuery{
-		Slug:  models.SlugifyTitle(folderName),
+		Slug:  slugify.Slugify(folderName),
 		OrgId: orgID,
 	}
 	err := prov.dashboardService.GetDashboard(ctx, cmd)

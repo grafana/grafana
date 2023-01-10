@@ -1,13 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/alert-groups/
-  - /docs/grafana/latest/alerting/unified-alerting/alert-groups/
-  - /docs/grafana/latest/alerting/alert-groups/filter-alerts/
-  - /docs/grafana/latest/alerting/unified-alerting/alert-groups/
-  - /docs/grafana/latest/alerting/alert-groups/
-  - /docs/grafana/latest/alerting/alert-groups/view-alert-grouping/
-  - /docs/grafana/latest/alerting/unified-alerting/alert-groups/
   - -docs/grafana/latest/alerting/manage-notifications/view-alert-groups/
+  - ../alert-groups/
+  - ../alert-groups/filter-alerts/
+  - ../alert-groups/view-alert-grouping/
+  - ../unified-alerting/alert-groups/
 description: Alert groups
 keywords:
   - grafana

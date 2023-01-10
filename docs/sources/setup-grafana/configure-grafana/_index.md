@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/configuration/
-  - /docs/grafana/latest/installation/configuration/
-  - /docs/grafana/latest/setup-grafana/configure-grafana/
+  - ../administration/configuration/
+  - ../installation/configuration/
 description: Configuration documentation
 title: Configure Grafana
 weight: 200
@@ -292,6 +291,17 @@ Sets the maximum time using a duration format (5s/5m/5ms) before timing out read
 
 <hr />
 
+## [server.custom_response_headers]
+
+This setting enables you to specify additional headers that the server adds to HTTP(S) responses.
+
+```
+exampleHeader1 = exampleValue1
+exampleHeader2 = exampleValue2
+```
+
+<hr />
+
 ## [database]
 
 Grafana needs a database to store users and dashboards (and other
@@ -536,7 +546,7 @@ If you want to track Grafana usage via Azure Application Insights, then specify 
 
 ### application_insights_endpoint_url
 
-    	Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
+Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
 
 <hr />
 
@@ -759,6 +769,10 @@ Text used as placeholder text on login page for password input.
 ### default_theme
 
 Set the default UI theme: `dark` or `light`. Default is `dark`.
+
+### default_language
+
+This setting configures the default UI language, which must be a supported IETF language tag, such as `en-US`.
 
 ### home_page
 
@@ -1369,7 +1383,7 @@ For example: `disabled_labels=grafana_folder`
 
 ## [alerting]
 
-For more information about the legacy dashboard alerting feature in Grafana, refer to [the legacy Grafana alerts]({{< relref "https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/" >}}).
+For more information about the legacy dashboard alerting feature in Grafana, refer to [the legacy Grafana alerts](https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/).
 
 ### enabled
 

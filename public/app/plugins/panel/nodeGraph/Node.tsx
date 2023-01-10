@@ -96,9 +96,14 @@ export const Node = memo(function Node(props: {
       <g className={styles.text}>
         <foreignObject x={node.x - (isHovered ? 100 : 35)} y={node.y - 15} width={isHovered ? '200' : '70'} height="40">
           <div className={cx(styles.statsText, isHovered && styles.textHovering)}>
-            <span>{node.mainStat && statToString(node.mainStat, node.dataFrameRowIndex)}</span>
+            <span>
+              {node.mainStat && statToString(node.mainStat.config, node.mainStat.values.get(node.dataFrameRowIndex))}
+            </span>
             <br />
-            <span>{node.secondaryStat && statToString(node.secondaryStat, node.dataFrameRowIndex)}</span>
+            <span>
+              {node.secondaryStat &&
+                statToString(node.secondaryStat.config, node.secondaryStat.values.get(node.dataFrameRowIndex))}
+            </span>
           </div>
         </foreignObject>
         <foreignObject

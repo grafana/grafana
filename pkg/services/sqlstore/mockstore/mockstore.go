@@ -71,12 +71,7 @@ func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd user.CreateUserComman
 	return nil, m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
-	query.Result = m.ExpectedSignedInUser
+func (m *SQLStoreMock) GetUserProfile(ctx context.Context, query *user.GetUserProfileQuery) error {
 	return m.ExpectedError
 }
 

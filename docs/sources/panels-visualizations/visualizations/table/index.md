@@ -1,15 +1,12 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/table_panel/
-  - /docs/grafana/latest/reference/table/
-  - /docs/grafana/latest/visualizations/table/
+  - ../../features/panels/table_panel/
+  - ../../panels/visualizations/table/filter-table-columns/
+  - ../../reference/table/
+  - ../../visualizations/table/
+  - ../../visualizations/table/filter-table-columns/
   - /docs/grafana/next/panels/visualizations/table/table-field-options/
-  - /docs/grafana/latest/features/panels/table_panel/
-  - /docs/grafana/latest/panels/visualizations/table/filter-table-columns/
-  - /docs/grafana/latest/reference/table/
-  - /docs/grafana/latest/visualizations/table/filter-table-columns/
-  - /docs/grafana/latest/visualizations/table/
-  - /docs/grafana/latest/panels-visualizations/visualizations/table/
+description: Learn about table panel visualization features.
 keywords:
   - grafana
   - dashboard
@@ -19,9 +16,8 @@ keywords:
   - format tables
   - table filter
   - filter columns
-title: Table
 menuTitle: Table
-description: Learn about table panel visualization features.
+title: Table
 weight: 1000
 ---
 
@@ -165,10 +161,13 @@ To remove the filter, click the blue funnel icon and then click **Clear filter**
 
 You can use the table footer to show [calculations]({{< relref "../../calculation-types/" >}}) on fields.
 
-After enabling the table footer, you can select your **Calculation** and select the **Fields** that should be calculated. Not selecting any field apply the calculation to all numeric fields.
+After you enable the table footer:
+
+1. Select the **Calculation**
+2. Select the **Fields** that you want to calculate
+
+The system applies the calculation to all numeric fields if you do not select a field.
 
 ### Count rows
 
-On selecting the **Count** calculation, you will see the **Count rows** switch.
-
-By enabling this option the footer will show the number of rows in the dataset instead of the number of values in the selected fields.
+If you want to show the number of rows in the dataset instead of the number of values in the selected fields, select the **Count** calculation and enable **Count rows**.

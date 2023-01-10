@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -72,14 +73,14 @@ func TestSlugifyTitle(t *testing.T) {
 	testCases := map[string]string{
 		"Grafana Play Home": "grafana-play-home",
 		"snöräv-över-ån":    "snorav-over-an",
-		"漢字":                "han-zi",      // Hanzi for hanzi
+		"漢字":                "5ryi5a2X",    // "han-zi",      // Hanzi for hanzi
 		"🇦🇶":                "8J-HpvCfh7Y", // flag of Antarctica-emoji, using fallback
 		"𒆠":                 "8JKGoA",      // cuneiform Ki, using fallback
 	}
 
 	for input, expected := range testCases {
 		t.Run(input, func(t *testing.T) {
-			slug := SlugifyTitle(input)
+			slug := slugify.Slugify(input)
 			assert.Equal(t, expected, slug)
 		})
 	}

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -75,7 +76,7 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUser
 }
 
 type TempUserStore interface {
-	UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error
+	UpdateTempUserWithEmailSent(ctx context.Context, cmd *tempuser.UpdateTempUserWithEmailSentCommand) error
 }
 
 type NotificationService struct {
@@ -235,7 +236,7 @@ func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *ev
 		return err
 	}
 
-	emailSentCmd := models.UpdateTempUserWithEmailSentCommand{Code: evt.Code}
+	emailSentCmd := tempuser.UpdateTempUserWithEmailSentCommand{Code: evt.Code}
 	return ns.store.UpdateTempUserWithEmailSent(ctx, &emailSentCmd)
 }
 

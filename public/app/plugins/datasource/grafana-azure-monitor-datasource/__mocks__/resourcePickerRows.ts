@@ -1,4 +1,5 @@
 import { ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
+import { AzureMonitorLocations } from '../types';
 
 export const createMockSubscriptions = (): ResourceRowGroup => [
   {
@@ -117,3 +118,6 @@ export const mockSearchResults = (): ResourceRowGroup => [
     location: 'northeurope',
   },
 ];
+
+export const mockGetValidLocations = (): Map<string, AzureMonitorLocations> =>
+  new Map([['northeurope', { displayName: 'North Europe', name: 'northeurope', supportsLogs: true }]]);
