@@ -1,9 +1,8 @@
+import { VizPanel, VizPanelState } from '@grafana/scenes';
 import { GraphFieldConfig, TableFieldOptions } from '@grafana/schema';
 import { PanelOptions as BarGaugePanelOptions } from 'app/plugins/panel/bargauge/models.gen';
 import { PanelOptions as TablePanelOptions } from 'app/plugins/panel/table/models.gen';
 import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
-
-import { VizPanel, VizPanelState } from './VizPanel';
 
 export type TypedVizPanelState<TOptions, TFieldConfig> = Omit<
   Partial<VizPanelState<TOptions, TFieldConfig>>,

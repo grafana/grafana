@@ -125,13 +125,13 @@ To re-order operations manually, drag the operation box by its name and drop it 
 
 In same cases the query editor can detect which operations would be most appropriate for a selected log stream. In such cases it will show a hint next to the `+ Operations` button. Click on the hint to add the operations to your query.
 
-### Explain mode
+### Explain query
 
-Explain mode helps with understanding the query. It shows a step by step explanation of all query parts and the operations.
+This section is only shown if the `Explain query` switch from the query editor top toolbar is set to `on`. It shows a step by step explanation of all query parts and the operations.
 
 ### Raw query
 
-This section is shown only if the `Raw query` switch from the query editor top toolbar is set to `on`. It shows the raw query that will be created and executed by the query editor.
+It shows the raw query that will be created and executed by the query editor.
 
 There are two types of LogQL queries:
 
