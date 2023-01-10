@@ -28,7 +28,7 @@ import {
   RowContextOptions,
 } from './LogRowContextProvider';
 import { LogRowMessage } from './LogRowMessage';
-import { LogRowMessageDetectedFields } from './LogRowMessageDetectedFields';
+import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
 import { getLogRowStyles } from './getLogRowStyles';
 
 //Components
@@ -218,7 +218,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             </td>
           )}
           {displayedFields && displayedFields.length > 0 ? (
-            <LogRowMessageDetectedFields
+            <LogRowMessageDisplayedFields
               row={processedRow}
               showDetectedFields={displayedFields!}
               getFieldLinks={getFieldLinks}
