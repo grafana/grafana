@@ -14,108 +14,41 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
-type FakePluginInstaller struct {
-	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error
-	// Remove removes a plugin from the store.
-	RemoveFunc func(ctx context.Context, pluginID string) error
+type FakePluginStore struct {
+	PluginList []plugins.PluginDTO
 }
 
-func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
-	if i.AddFunc != nil {
-		return i.AddFunc(ctx, pluginID, version, opts)
+func (pr FakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	for _, v := range pr.PluginList {
+		if v.ID == pluginID {
+			return v, true
+		}
 	}
-	return nil
+
+	return plugins.PluginDTO{}, false
 }
 
-func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error {
-	if i.RemoveFunc != nil {
-		return i.RemoveFunc(ctx, pluginID)
+func (pr FakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
+	var result []plugins.PluginDTO
+	if len(pluginTypes) == 0 {
+		pluginTypes = plugins.PluginTypes
 	}
-	return nil
-}
 
-type FakeLoader struct {
-	LoadFunc   func(_ context.Context, _ plugins.Class, paths []string) ([]*plugins.Plugin, error)
-	UnloadFunc func(_ context.Context, _ string) error
-}
-
-func (l *FakeLoader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
-	if l.LoadFunc != nil {
-		return l.LoadFunc(ctx, class, paths)
+	for _, v := range pr.PluginList {
+		for _, t := range pluginTypes {
+			if v.Type == t {
+				result = append(result, v)
+			}
+		}
 	}
-	return nil, nil
-}
-
-func (l *FakeLoader) Unload(ctx context.Context, pluginID string) error {
-	if l.UnloadFunc != nil {
-		return l.UnloadFunc(ctx, pluginID)
-	}
-	return nil
+	return result
 }
 
 type FakePluginClient struct {
-	ID      string
-	Managed bool
-	Log     log.Logger
-
-	startCount     int
-	stopCount      int
-	exited         bool
-	decommissioned bool
 	backend.CollectMetricsHandlerFunc
 	backend.CheckHealthHandlerFunc
 	backend.QueryDataHandlerFunc
 	backend.CallResourceHandlerFunc
-	mutex sync.RWMutex
-
-	backendplugin.Plugin
-}
-
-func (pc *FakePluginClient) PluginID() string {
-	return pc.ID
-}
-
-func (pc *FakePluginClient) Logger() log.Logger {
-	return pc.Log
-}
-
-func (pc *FakePluginClient) Start(_ context.Context) error {
-	pc.mutex.Lock()
-	defer pc.mutex.Unlock()
-	pc.exited = false
-	pc.startCount++
-	return nil
-}
-
-func (pc *FakePluginClient) Stop(_ context.Context) error {
-	pc.mutex.Lock()
-	defer pc.mutex.Unlock()
-	pc.stopCount++
-	pc.exited = true
-	return nil
-}
-
-func (pc *FakePluginClient) IsManaged() bool {
-	return pc.Managed
-}
-
-func (pc *FakePluginClient) Exited() bool {
-	pc.mutex.RLock()
-	defer pc.mutex.RUnlock()
-	return pc.exited
-}
-
-func (pc *FakePluginClient) Decommission() error {
-	pc.mutex.Lock()
-	defer pc.mutex.Unlock()
-	pc.decommissioned = true
-	return nil
-}
-
-func (pc *FakePluginClient) IsDecommissioned() bool {
-	pc.mutex.RLock()
-	defer pc.mutex.RUnlock()
-	return pc.decommissioned
 }
 
 func (pc *FakePluginClient) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
@@ -159,6 +92,154 @@ func (pc *FakePluginClient) PublishStream(_ context.Context, _ *backend.PublishS
 }
 
 func (pc *FakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
+	return backendplugin.ErrMethodNotImplemented
+}
+
+type FakePluginInstaller struct {
+	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error
+	// Remove removes a plugin from the store.
+	RemoveFunc func(ctx context.Context, pluginID string) error
+}
+
+func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+	if i.AddFunc != nil {
+		return i.AddFunc(ctx, pluginID, version, opts)
+	}
+	return nil
+}
+
+func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error {
+	if i.RemoveFunc != nil {
+		return i.RemoveFunc(ctx, pluginID)
+	}
+	return nil
+}
+
+type FakeLoader struct {
+	LoadFunc   func(_ context.Context, _ plugins.Class, paths []string) ([]*plugins.Plugin, error)
+	UnloadFunc func(_ context.Context, _ string) error
+}
+
+func (l *FakeLoader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
+	if l.LoadFunc != nil {
+		return l.LoadFunc(ctx, class, paths)
+	}
+	return nil, nil
+}
+
+func (l *FakeLoader) Unload(ctx context.Context, pluginID string) error {
+	if l.UnloadFunc != nil {
+		return l.UnloadFunc(ctx, pluginID)
+	}
+	return nil
+}
+
+type FakeBackendClient struct {
+	ID      string
+	Managed bool
+	Log     log.Logger
+
+	startCount     int
+	stopCount      int
+	exited         bool
+	decommissioned bool
+	backend.CollectMetricsHandlerFunc
+	backend.CheckHealthHandlerFunc
+	backend.QueryDataHandlerFunc
+	backend.CallResourceHandlerFunc
+	mutex sync.RWMutex
+
+	backendplugin.Plugin
+}
+
+func (pc *FakeBackendClient) PluginID() string {
+	return pc.ID
+}
+
+func (pc *FakeBackendClient) Logger() log.Logger {
+	return pc.Log
+}
+
+func (pc *FakeBackendClient) Start(_ context.Context) error {
+	pc.mutex.Lock()
+	defer pc.mutex.Unlock()
+	pc.exited = false
+	pc.startCount++
+	return nil
+}
+
+func (pc *FakeBackendClient) Stop(_ context.Context) error {
+	pc.mutex.Lock()
+	defer pc.mutex.Unlock()
+	pc.stopCount++
+	pc.exited = true
+	return nil
+}
+
+func (pc *FakeBackendClient) IsManaged() bool {
+	return pc.Managed
+}
+
+func (pc *FakeBackendClient) Exited() bool {
+	pc.mutex.RLock()
+	defer pc.mutex.RUnlock()
+	return pc.exited
+}
+
+func (pc *FakeBackendClient) Decommission() error {
+	pc.mutex.Lock()
+	defer pc.mutex.Unlock()
+	pc.decommissioned = true
+	return nil
+}
+
+func (pc *FakeBackendClient) IsDecommissioned() bool {
+	pc.mutex.RLock()
+	defer pc.mutex.RUnlock()
+	return pc.decommissioned
+}
+
+func (pc *FakeBackendClient) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	if pc.CollectMetricsHandlerFunc != nil {
+		return pc.CollectMetricsHandlerFunc(ctx, req)
+	}
+
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (pc *FakeBackendClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	if pc.CheckHealthHandlerFunc != nil {
+		return pc.CheckHealthHandlerFunc(ctx, req)
+	}
+
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (pc *FakeBackendClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if pc.QueryDataHandlerFunc != nil {
+		return pc.QueryDataHandlerFunc(ctx, req)
+	}
+
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (pc *FakeBackendClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	if pc.CallResourceHandlerFunc != nil {
+		return pc.CallResourceHandlerFunc(ctx, req, sender)
+	}
+
+	return backendplugin.ErrMethodNotImplemented
+}
+
+func (pc *FakeBackendClient) SubscribeStream(_ context.Context, _ *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (pc *FakeBackendClient) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (pc *FakeBackendClient) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
 	return backendplugin.ErrMethodNotImplemented
 }
 
@@ -312,7 +393,7 @@ func (pr *FakeBackendProcessProvider) BackendFactory(_ context.Context, p *plugi
 	pr.Requested[p.ID]++
 	return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
 		pr.Invoked[pluginID]++
-		return &FakePluginClient{}, nil
+		return &FakeBackendClient{}, nil
 	}
 }
 

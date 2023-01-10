@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
@@ -40,11 +39,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, plugins.ErrPluginNotRegistered.Errorf("%w", backendplugin.ErrPluginNotRegistered)
 	}
 
-	var resp *backend.QueryDataResponse
-	err := instrumentation.InstrumentQueryDataRequest(ctx, &req.PluginContext, s.cfg, func() (innerErr error) {
-		resp, innerErr = plugin.QueryData(ctx, req)
-		return
-	})
+	resp, err := plugin.QueryData(ctx, req)
 
 	if err != nil {
 		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
@@ -83,26 +78,19 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
-	err := instrumentation.InstrumentCallResourceRequest(ctx, &req.PluginContext, s.cfg, func() error {
-		removeConnectionHeaders(req.Headers)
-		removeHopByHopHeaders(req.Headers)
+	removeConnectionHeaders(req.Headers)
+	removeHopByHopHeaders(req.Headers)
 
-		wrappedSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-			if res != nil && len(res.Headers) > 0 {
-				removeConnectionHeaders(res.Headers)
-				removeHopByHopHeaders(res.Headers)
-			}
-
-			return sender.Send(res)
-		})
-
-		if err := p.CallResource(ctx, req, wrappedSender); err != nil {
-			return err
+	wrappedSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		if res != nil && len(res.Headers) > 0 {
+			removeConnectionHeaders(res.Headers)
+			removeHopByHopHeaders(res.Headers)
 		}
-		return nil
+
+		return sender.Send(res)
 	})
 
-	if err != nil {
+	if err := p.CallResource(ctx, req, wrappedSender); err != nil {
 		return err
 	}
 
@@ -119,11 +107,7 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
-	var resp *backend.CollectMetricsResult
-	err := instrumentation.InstrumentCollectMetrics(ctx, &req.PluginContext, s.cfg, func() (innerErr error) {
-		resp, innerErr = p.CollectMetrics(ctx, req)
-		return
-	})
+	resp, err := p.CollectMetrics(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -141,11 +125,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
-	var resp *backend.CheckHealthResult
-	err := instrumentation.InstrumentCheckHealthRequest(ctx, &req.PluginContext, s.cfg, func() (innerErr error) {
-		resp, innerErr = p.CheckHealth(ctx, req)
-		return
-	})
+	resp, err := p.CheckHealth(ctx, req)
 
 	if err != nil {
 		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
