@@ -8,12 +8,13 @@ import { PanelHeaderMenuProvider } from './PanelHeaderMenuProvider';
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
+  isStreaming?: boolean;
   onClose: () => void;
 }
 
-export function PanelHeaderMenuWrapper({ panel, dashboard }: Props) {
+export function PanelHeaderMenuWrapper({ panel, dashboard, isStreaming }: Props) {
   return (
-    <PanelHeaderMenuProvider panel={panel} dashboard={dashboard}>
+    <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} isStreaming={isStreaming}>
       {({ items }) => {
         return <PanelHeaderMenu items={items} />;
       }}

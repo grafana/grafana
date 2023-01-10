@@ -14,16 +14,17 @@ interface PanelHeaderMenuProviderApi {
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
+  isStreaming?: boolean;
   children: (props: PanelHeaderMenuProviderApi) => ReactElement;
 }
 
-export function PanelHeaderMenuProvider({ panel, dashboard, children }: Props) {
+export function PanelHeaderMenuProvider({ panel, dashboard, isStreaming, children }: Props) {
   const [items, setItems] = useState<PanelMenuItem[]>([]);
   const angularComponent = useSelector((state) => getPanelStateForModel(state, panel)?.angularComponent);
 
   useEffect(() => {
-    setItems(getPanelMenu(dashboard, panel, angularComponent));
-  }, [dashboard, panel, angularComponent, setItems]);
+    setItems(getPanelMenu(dashboard, panel, isStreaming, angularComponent));
+  }, [dashboard, panel, angularComponent, isStreaming, setItems]);
 
   return children({ items });
 }

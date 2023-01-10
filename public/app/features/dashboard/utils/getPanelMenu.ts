@@ -26,6 +26,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
+  isStreaming?: boolean,
   angularComponent?: AngularComponent | null
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
@@ -98,6 +99,12 @@ export function getPanelMenu(
     event.preventDefault();
     toggleLegend(panel);
   };
+
+  const onCancelStreaming = (event: React.MouseEvent) => {
+    event.preventDefault();
+    panel.getQueryRunner().cancelQuery();
+  };
+
   const menu: PanelMenuItem[] = [];
 
   if (!panel.isEditing) {
@@ -116,6 +123,14 @@ export function getPanelMenu(
       iconClassName: 'edit',
       onClick: onEditPanel,
       shortcut: 'e',
+    });
+  }
+
+  if (dashboard.canEditPanel(panel) && isStreaming) {
+    menu.push({
+      text: 'Stop streaming',
+      iconClassName: 'circle',
+      onClick: onCancelStreaming,
     });
   }
 
