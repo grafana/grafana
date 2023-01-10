@@ -228,7 +228,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           narrow
           icon="eye"
           onClick={this.hideField}
-        ></ToolbarButton>
+        />
       ) : (
         <ToolbarButton
           tooltip="Show this field instead of the message"
@@ -236,7 +236,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           narrow
           icon="eye"
           onClick={this.showField}
-        ></ToolbarButton>
+        />
       );
 
     return (
@@ -251,7 +251,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                   icon="search-plus"
                   tooltip="Filter for value"
                   onClick={this.filterLabel}
-                ></ToolbarButton>
+                />
               )}
               {hasFilteringFunctionality && (
                 <ToolbarButton
@@ -260,7 +260,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                   icon="search-minus"
                   tooltip="Filter out value"
                   onClick={this.filterOutLabel}
-                ></ToolbarButton>
+                />
               )}
               {displayedFields && toggleFieldButton}
               <ToolbarButton
@@ -270,7 +270,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                 icon="signal"
                 tooltip="Ad-hoc statistics"
                 onClick={this.showStats}
-              ></ToolbarButton>
+              />
             </ToolbarButtonRow>
           </td>
 
@@ -311,7 +311,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                   icon="signal"
                   tooltip="Hide ad-hoc statistics"
                   onClick={this.showStats}
-                ></ToolbarButton>
+                />
               </ToolbarButtonRow>
             </td>
             <td colSpan={2}>
