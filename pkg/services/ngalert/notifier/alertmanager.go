@@ -34,6 +34,7 @@ import (
 
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 
+	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -557,7 +558,7 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 		}
 
 		for k, v := range a.Labels {
-			if len(v) == 0 || k == ngmodels.NamespaceUIDLabel { // Skip empty and namespace UID labels.
+			if len(v) == 0 || k == alertingModels.NamespaceUIDLabel { // Skip empty and namespace UID labels.
 				continue
 			}
 			alert.Alert.Labels[model.LabelName(k)] = model.LabelValue(v)
