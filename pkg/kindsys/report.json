@@ -6,7 +6,7 @@
       "machineName": "alertgroups_panel",
       "pluralMachineName": "alertgroups_panels",
       "lineageIsGroup": true,
-      "maturity": "planned",
+      "maturity": "merged",
       "currentVersion": [
         0,
         0
@@ -992,6 +992,7 @@
       "merged": {
         "name": "merged",
         "items": [
+          "alertgroups_panel",
           "annolist_panel",
           "barchart_panel",
           "bargauge_panel",
@@ -1006,12 +1007,11 @@
           "team",
           "text_panel"
         ],
-        "count": 13
+        "count": 14
       },
       "planned": {
         "name": "planned",
         "items": [
-          "alertgroups_panel",
           "alertlist_panel",
           "alertmanager_dsoptions",
           "alertmanager_query",
@@ -1073,7 +1073,7 @@
           "zipkin_dsoptions",
           "zipkin_query"
         ],
-        "count": 61
+        "count": 60
       },
       "stable": {
         "name": "stable",
