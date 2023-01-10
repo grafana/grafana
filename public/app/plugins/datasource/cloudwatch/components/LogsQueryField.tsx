@@ -23,7 +23,7 @@ import syntax from '../syntax';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
-import { LogGroupSelection } from './LogGroupSelection';
+import { LogGroupsField } from './LogGroups/LogGroupsField';
 
 export interface CloudWatchLogsQueryFieldProps
   extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>,
@@ -84,7 +84,15 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
 
   return (
     <>
-      <LogGroupSelection datasource={datasource} query={query} onChange={onChange} />
+      <LogGroupsField
+        region={query.region}
+        datasource={datasource}
+        legacyLogGroupNames={query.logGroupNames}
+        logGroups={query.logGroups}
+        onChange={(logGroups) => {
+          onChange({ ...query, logGroups, logGroupNames: undefined });
+        }}
+      />
       <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
         <div className="gf-form gf-form--grow flex-shrink-1">
           <QueryField
