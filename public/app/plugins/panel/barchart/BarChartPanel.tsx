@@ -280,7 +280,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       text,
       xTickLabelRotation,
       xTickLabelSpacing,
-      barHighlight,
+      fullHighlight,
     } = options;
 
     return preparePlotConfigBuilder({
@@ -306,7 +306,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       getColor,
       fillOpacity,
       allFrames: info.viz,
-      barHighlight,
+      fullHighlight,
     });
   };
 

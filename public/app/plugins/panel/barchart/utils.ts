@@ -79,7 +79,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   xTickLabelSpacing = 0,
   legend,
   timeZone,
-  barHighlight,
+  fullHighlight,
 }) => {
   const builder = new UPlotConfigBuilder();
 
@@ -119,7 +119,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     xSpacing: xTickLabelSpacing,
     xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
     negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
-    barHighlight,
+    fullHighlight,
   };
 
   const config = getConfig(opts, theme);

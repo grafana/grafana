@@ -105,7 +105,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);
-    commonOptionsBuilder.addTooltipOptions(builder, commonOptionsBuilder.TooltipModeOptions.SingleOnly);
+    commonOptionsBuilder.addTooltipOptions(builder, commonOptionsBuilder.TooltipMode.SingleOnly);
   })
   .setSuggestionsSupplier(new StatTimelineSuggestionsSupplier())
   .setDataSupport({ annotations: true });

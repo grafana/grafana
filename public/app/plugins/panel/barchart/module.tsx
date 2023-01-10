@@ -228,9 +228,9 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
         },
       })
       .addBooleanSwitch({
-        path: 'barHighlight',
+        path: 'fullHighlight',
         name: 'Highlight bar on hover',
-        defaultValue: defaultPanelOptions.barHighlight,
+        defaultValue: defaultPanelOptions.fullHighlight,
       });
 
     builder.addFieldNamePicker({
@@ -239,10 +239,10 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
       description: 'Use the color value for a sibling field to color each bar value.',
     });
 
-    let tooltipMode = commonOptionsBuilder.TooltipModeOptions.Both;
+    let tooltipMode = commonOptionsBuilder.TooltipMode.Both;
 
-    if (context.options?.barHighlight && context.options?.stacking !== StackingMode.None) {
-      tooltipMode = commonOptionsBuilder.TooltipModeOptions.MultiOnly;
+    if (context.options?.fullHighlight && context.options?.stacking !== StackingMode.None) {
+      tooltipMode = commonOptionsBuilder.TooltipMode.MultiOnly;
 
       if (context.options?.tooltip && context.options?.tooltip?.mode === TooltipDisplayMode.Single) {
         context.options.tooltip.mode = TooltipDisplayMode.Multi;

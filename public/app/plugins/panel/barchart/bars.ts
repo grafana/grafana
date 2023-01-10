@@ -60,7 +60,7 @@ export interface BarsOptions {
   xSpacing?: number;
   xTimeAuto?: boolean;
   negY?: boolean[];
-  barHighlight?: boolean;
+  fullHighlight?: boolean;
 }
 
 /**
@@ -317,7 +317,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
 
-      if (opts.barHighlight) {
+      if (opts.fullHighlight) {
         if (opts.xOri === ScaleOrientation.Horizontal) {
           barRect.y = 0;
           barRect.h = u.bbox.height;
