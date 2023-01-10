@@ -44,3 +44,11 @@ func (i fakeEntityStore) History(ctx context.Context, r *entity.EntityHistoryReq
 func (i fakeEntityStore) Search(ctx context.Context, r *entity.EntitySearchRequest) (*entity.EntitySearchResponse, error) {
 	return nil, fmt.Errorf("unimplemented")
 }
+
+func (i fakeEntityStore) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
+	return fmt.Errorf("unimplemented")
+}
+
+func (i fakeEntityStore) WatchQuery(*entity.EntityWatchQueryRequest, entity.EntityStore_WatchQueryServer) error {
+	return fmt.Errorf("unimplemented")
+}

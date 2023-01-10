@@ -69,17 +69,32 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 		},
 	})
 
-	// when saving a folder, keep a path version cached
+	// when saving a folder, keep a path version cached (all info is derived from entity table)
 	tables = append(tables, migrator.Table{
 		Name: "entity_folder",
 		Columns: []*migrator.Column{
-			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
+			{Name: "tenant_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
 			getLatinPathColumn("path"), // slug/slug/slug/...
 			{Name: "depth", Type: migrator.DB_Int, Nullable: false},
 			{Name: "tree", Type: migrator.DB_Text, Nullable: false}, // JSON array from root
 		},
 		Indices: []*migrator.Index{
+			{Cols: []string{"tenant_id", "uid"}, Type: migrator.UniqueIndex},
 			{Cols: []string{"path"}, Type: migrator.UniqueIndex},
+		},
+	})
+	tables = append(tables, migrator.Table{
+		Name: "entity_folder_tree",
+		Columns: []*migrator.Column{
+			{Name: "tenant_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			// one row for each upstream folder UID
+			{Name: "upstream", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "depth", Type: migrator.DB_Int, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"tenant_id", "uid", "upstream"}, Type: migrator.UniqueIndex},
 		},
 	})
 
@@ -154,7 +169,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v8)" // change this when we want to wipe and reset the object tables
+	suffix := " (v03)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("EntityStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'EntityStore init%';
 	`)))

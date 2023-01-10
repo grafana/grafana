@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -46,7 +47,7 @@ type sqlEntityServer struct {
 
 func getReadSelect(r *entity.ReadEntityRequest) string {
 	fields := []string{
-		"tenant_id", "kind", "uid", // The PK
+		"tenant_id", "kind", "uid", "folder", // GRN + folder
 		"version", "size", "etag", "errors", // errors are always returned
 		"created_at", "created_by",
 		"updated_at", "updated_by",
@@ -56,7 +57,7 @@ func getReadSelect(r *entity.ReadEntityRequest) string {
 		fields = append(fields, `body`)
 	}
 	if r.WithSummary {
-		fields = append(fields, "name", "slug", "folder", "description", "labels", "fields")
+		fields = append(fields, "name", "slug", "description", "labels", "fields")
 	}
 	return "SELECT " + strings.Join(fields, ",") + " FROM entity WHERE "
 }
@@ -69,7 +70,7 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 
 	summaryjson := &summarySupport{}
 	args := []interface{}{
-		&raw.GRN.TenantId, &raw.GRN.Kind, &raw.GRN.UID,
+		&raw.GRN.TenantId, &raw.GRN.Kind, &raw.GRN.UID, &raw.Folder,
 		&raw.Version, &raw.Size, &raw.ETag, &summaryjson.errors,
 		&raw.CreatedAt, &raw.CreatedBy,
 		&raw.UpdatedAt, &raw.UpdatedBy,
@@ -79,7 +80,7 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 		args = append(args, &raw.Body)
 	}
 	if r.WithSummary {
-		args = append(args, &summaryjson.name, &summaryjson.slug, &summaryjson.folder, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
+		args = append(args, &summaryjson.name, &summaryjson.slug, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
 	}
 
 	err := rows.Scan(args...)
@@ -303,6 +304,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		return nil, err
 	}
 
+	isFolder := models.StandardKindFolder == r.GRN.Kind
 	etag := createContentsHash(body)
 	rsp := &entity.WriteEntityResponse{
 		GRN:    grn,
@@ -376,6 +378,14 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			if _, err := tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", oid); err != nil {
 				return err
 			}
+			if isFolder {
+				if _, err := tx.Exec(ctx, "DELETE FROM entity_folder WHERE tenant_id=? AND uid=?", grn.TenantId, grn.UID); err != nil {
+					return err
+				}
+				if _, err := tx.Exec(ctx, "DELETE FROM entity_folder_tree WHERE tenant_id=? AND uid=?", grn.TenantId, grn.UID); err != nil {
+					return err
+				}
+			}
 		}
 
 		// 1. Add the `entity_history` values
@@ -422,6 +432,44 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				oid, ref.Kind, ref.Type, ref.UID,
 				resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
 			)
+			if err != nil {
+				return err
+			}
+		}
+
+		if isFolder {
+			// TODO query upstream on insert
+			upstream := []string{"uidA", "uidB"}
+			slugs := []string{"slugA", "slugB", *summary.slug}
+			tree, err := json.Marshal(upstream)
+			if err != nil {
+				return err
+			}
+
+			_, err = tx.Exec(ctx, `INSERT INTO entity_folder (`+
+				"tenant_id, uid, "+
+				"path, depth, tree) "+
+				`VALUES (?, ?, ?, ?, ?)`,
+				grn.TenantId, grn.UID,
+				strings.Join(slugs, "/"),
+				len(slugs),   // depth 1 is minimum
+				string(tree), // JSON array of parent elements
+			)
+			if err != nil {
+				return err
+			}
+
+			args := []interface{}{}
+			stmt := "INSERT INTO entity_folder_tree (tenant_id, uid, upstream, depth) VALUES "
+			for i, uid := range upstream {
+				if i > 0 {
+					stmt += ", "
+				}
+				stmt += "(?, ?, ?, ?)"
+				args = append(args, grn.TenantId, grn.UID, uid, i+1)
+			}
+
+			_, err = tx.Exec(ctx, stmt, args...)
 			if err != nil {
 				return err
 			}
@@ -537,11 +585,6 @@ func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntit
 		return nil, nil, err
 	}
 
-	summaryjson, err := newSummarySupport(summary)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	// Update a summary based on the name (unless the root suggested one)
 	if summary.Slug == "" {
 		t := summary.Name
@@ -549,6 +592,11 @@ func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntit
 			t = r.GRN.UID
 		}
 		summary.Slug = slugify.Slugify(t)
+	}
+
+	summaryjson, err := newSummarySupport(summary)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return summaryjson, body, nil
@@ -760,4 +808,12 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 
 	return rsp, err
+}
+
+func (s *sqlEntityServer) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
+	return fmt.Errorf("unimplemented")
+}
+
+func (s *sqlEntityServer) WatchQuery(*entity.EntityWatchQueryRequest, entity.EntityStore_WatchQueryServer) error {
+	return fmt.Errorf("unimplemented")
 }
