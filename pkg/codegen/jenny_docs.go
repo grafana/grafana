@@ -37,10 +37,6 @@ func (j docsJenny) JennyName() string {
 }
 
 func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
-	if !decl.IsCoreStructured() {
-		return nil, nil
-	}
-
 	f, err := jsonschema.GenerateSchema(decl.Lineage().Latest())
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate json representation for the schema: %v", err)
