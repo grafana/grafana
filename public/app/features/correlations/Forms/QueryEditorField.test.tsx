@@ -32,8 +32,6 @@ const renderWithContext = (
   setDataSourceSrv(dsServer);
 
   render(<Wrapper>{children}</Wrapper>);
-
-  return dsServer.get;
 };
 
 const initiateDsApi = () => {
