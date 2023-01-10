@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import debounce from 'debounce-promise';
 import {
   KBarAnimator,
   KBarPortal,
@@ -10,46 +9,34 @@ import {
   KBarResults,
   KBarSearch,
   useMatches,
-  Action,
   VisualState,
   useRegisterActions,
   useKBar,
 } from 'kbar';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction, locationService } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { useSelector } from 'app/types';
 
 import { ResultItem } from './ResultItem';
-import { getDashboardSearchResultActions } from './actions/dashboard.nav.actions';
-import getGlobalActions from './actions/global.static.actions';
+import useActions from './actions/useActions';
 
 /**
  * Wrap all the components from KBar here.
  * @constructor
  */
 
-const debouncedDashboardSearch = debounce(getDashboardSearchResultActions, 100);
-
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
-
-  const [staticActions, setStaticActions] = useState<Action[]>([]);
-  const [dashboardResultActions, setDashboardResultActions] = useState<Action[]>([]);
 
   const { query, showing, searchQuery } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
     searchQuery: state.searchQuery,
   }));
-  const isNotLogin = locationService.getLocation().pathname !== '/login';
 
-  const { navBarTree } = useSelector((state) => {
-    return {
-      navBarTree: state.navBarTree,
-    };
-  });
+  const actions = useActions(searchQuery, showing);
+  useRegisterActions(actions, [actions]);
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
@@ -58,30 +45,10 @@ export const CommandPalette = () => {
   );
   const { dialogProps } = useDialog({}, ref);
 
-  // Load standard actions, except on login
-  useEffect(() => {
-    if (isNotLogin) {
-      const staticActionsResp = getGlobalActions(navBarTree);
-      setStaticActions(staticActionsResp);
-    }
-  }, [isNotLogin, navBarTree]);
-
-  // Update actions based on dashboard search results
-  useEffect(() => {
-    if (showing) {
-      debouncedDashboardSearch('go/dashboard', searchQuery).then((resultActions) => {
-        setDashboardResultActions(resultActions);
-      });
-    }
-  }, [showing, searchQuery]);
-
   // Report interaction when opened
   useEffect(() => {
     showing && reportInteraction('command_palette_opened');
   }, [showing]);
-
-  const actions = useMemo(() => [...staticActions, ...dashboardResultActions], [staticActions, dashboardResultActions]);
-  useRegisterActions(actions, [actions]);
 
   return actions.length > 0 ? (
     <KBarPortal>
