@@ -2,7 +2,7 @@ import { DashboardLoadedEvent } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import pluginJson from './plugin.json';
-import { TempoQuery, QueryType } from './types';
+import { TempoQuery } from './types';
 
 type TempoOnDashboardLoadedTrackingEvent = {
   grafana_version?: string;
@@ -41,15 +41,15 @@ export const onDashboardLoadedHandler = ({
         continue;
       }
 
-      if (query.queryType === QueryType.TRACEQL) {
+      if (query.queryType === 'traceql') {
         stats.traceql_query_count++;
-      } else if (query.queryType === QueryType.SEARCH) {
+      } else if (query.queryType === 'search') {
         stats.search_query_count++;
-      } else if (query.queryType === QueryType.SERVICE_MAP) {
+      } else if (query.queryType === 'serviceMap') {
         stats.service_map_query_count++;
-      } else if (query.queryType === QueryType.UPLOAD) {
+      } else if (query.queryType === 'upload') {
         stats.upload_query_count++;
-      } else if (query.queryType === QueryType.NATIVE_SEARCH) {
+      } else if (query.queryType === 'nativeSearch') {
         stats.native_search_query_count++;
       }
     }
