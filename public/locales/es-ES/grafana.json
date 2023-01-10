@@ -5,6 +5,21 @@
       "success": "Copiado"
     }
   },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "Oscuro",
+      "light-theme": "Claro",
+      "search": ""
+    },
+    "section": {
+      "actions": "Acciones",
+      "dashboard-search-results": "Paneles de control",
+      "pages": "",
+      "preferences": "Preferencias",
+      "recent-dashboards": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Por defecto"
@@ -83,7 +98,6 @@
   "datasource-onboarding": {
     "contact-admin": "Póngase en contacto con su administrador para configurar las fuentes de datos.",
     "explanation": "Para visualizar sus datos, primero tendrá que conectar una fuente.",
-    "logo": "Logo para la fuente de datos {{datasourceName}}",
     "new-dashboard": "Nuevo panel de control",
     "preferred": "Conecte su fuente de datos preferida:",
     "sampleData": "O configure un nuevo panel de control con datos de muestra",
@@ -314,7 +328,7 @@
     },
     "support-bundles": {
       "subtitle": "Descargar paquetes de apoyo",
-      "title": "Paquetes de apoyo"
+      "title": ""
     },
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
