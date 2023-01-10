@@ -484,7 +484,7 @@ export const saveRuleFormAction = createAsyncThunk(
             throw new Error('Unexpected rule form type');
           }
 
-          logInfo(LogMessages.successSavingAlertRule);
+          logInfo(LogMessages.successSavingAlertRule, { type, isNew: !existing });
 
           if (!existing) {
             trackNewAlerRuleFormSaved({

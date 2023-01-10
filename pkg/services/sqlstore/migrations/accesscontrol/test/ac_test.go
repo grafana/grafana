@@ -273,38 +273,38 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 	require.NoError(t, errInsertUsers)
 	require.Equal(t, int64(5), usersCount, "needed 5 users for this test to run")
 
-	orgUsers := []models.OrgUser{
+	orgUsers := []org.OrgUser{
 		{
-			OrgId:   1,
-			UserId:  1,
+			OrgID:   1,
+			UserID:  1,
 			Role:    org.RoleViewer,
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   1,
-			UserId:  2,
+			OrgID:   1,
+			UserID:  2,
 			Role:    org.RoleViewer,
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   1,
-			UserId:  3,
+			OrgID:   1,
+			UserID:  3,
 			Role:    org.RoleEditor,
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   1,
-			UserId:  4,
+			OrgID:   1,
+			UserID:  4,
 			Role:    org.RoleAdmin,
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   2,
-			UserId:  5,
+			OrgID:   2,
+			UserID:  5,
 			Role:    org.RoleEditor,
 			Created: now,
 			Updated: now,
