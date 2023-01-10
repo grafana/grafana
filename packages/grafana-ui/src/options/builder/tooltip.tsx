@@ -1,40 +1,21 @@
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
-export enum TooltipMode {
-  SingleOnly = 'single',
-  MultiOnly = 'multi',
-  Both = 'both',
-}
-
 export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder: PanelOptionsEditorBuilder<T>,
-  mode = TooltipMode.Both
+  singleOnly = false
 ) {
   const category = ['Tooltip'];
-  let modeOptions = [];
-
-  switch (mode) {
-    case TooltipMode.MultiOnly:
-      modeOptions = [
-        { value: TooltipDisplayMode.Multi, label: 'All' },
-        { value: TooltipDisplayMode.None, label: 'Hidden' },
-      ];
-      break;
-    case TooltipMode.SingleOnly:
-      modeOptions = [
+  const modeOptions = singleOnly
+    ? [
         { value: TooltipDisplayMode.Single, label: 'Single' },
         { value: TooltipDisplayMode.None, label: 'Hidden' },
-      ];
-      break;
-    case TooltipMode.Both:
-      modeOptions = [
+      ]
+    : [
         { value: TooltipDisplayMode.Single, label: 'Single' },
         { value: TooltipDisplayMode.Multi, label: 'All' },
         { value: TooltipDisplayMode.None, label: 'Hidden' },
       ];
-      break;
-  }
 
   const sortOptions = [
     { value: SortOrder.None, label: 'None' },

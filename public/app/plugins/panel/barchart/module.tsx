@@ -9,13 +9,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import {
-  GraphTransform,
-  GraphTresholdsStyleMode,
-  StackingMode,
-  TooltipDisplayMode,
-  VisibilityMode,
-} from '@grafana/schema';
+import { GraphTransform, GraphTresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
@@ -239,17 +233,13 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
       description: 'Use the color value for a sibling field to color each bar value.',
     });
 
-    let tooltipMode = commonOptionsBuilder.TooltipMode.Both;
-
-    if (context.options?.fullHighlight && context.options?.stacking !== StackingMode.None) {
-      tooltipMode = commonOptionsBuilder.TooltipMode.MultiOnly;
-
-      if (context.options?.tooltip && context.options?.tooltip?.mode === TooltipDisplayMode.Single) {
-        context.options.tooltip.mode = TooltipDisplayMode.Multi;
-      }
+    if (
+      !context.options?.fullHighlight ||
+      (context.options?.fullHighlight && context.options?.stacking === StackingMode.None)
+    ) {
+      commonOptionsBuilder.addTooltipOptions(builder);
     }
 
-    commonOptionsBuilder.addTooltipOptions(builder, tooltipMode);
     commonOptionsBuilder.addLegendOptions(builder);
     commonOptionsBuilder.addTextSizeOptions(builder, false);
   })

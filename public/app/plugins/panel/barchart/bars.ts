@@ -441,6 +441,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     u.root.querySelectorAll('.u-cursor-pt').forEach((el) => {
       if (el instanceof HTMLElement) {
         el.style.borderRadius = '0';
+        if (opts.fullHighlight) {
+          el.style.zIndex = '-1';
+        }
       }
     });
   };
