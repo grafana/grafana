@@ -105,6 +105,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     reportInteraction('grafana_logs_download_logs_clicked', {
       app,
       format: 'logs',
+      area: 'inspector',
     });
 
     const logsModel = dataFrameToLogsModel(data || [], undefined);

@@ -134,9 +134,14 @@ const afterSelectorCompletions = [
   },
 ];
 
-function buildAfterSelectorCompletions(detectedParser: string, otherParser: string, afterPipe: boolean) {
+function buildAfterSelectorCompletions(
+  detectedParser: string,
+  otherParser: string,
+  afterPipe: boolean,
+  hasSpace: boolean
+) {
   const explanation = '(detected)';
-  const expectedCompletions = afterSelectorCompletions.map((completion) => {
+  let expectedCompletions = afterSelectorCompletions.map((completion) => {
     if (completion.type === 'DETECTED_PARSER_PLACEHOLDER') {
       return {
         ...completion,
@@ -158,16 +163,21 @@ function buildAfterSelectorCompletions(detectedParser: string, otherParser: stri
 
   if (afterPipe) {
     // Remove pipe
-    return (
-      expectedCompletions
-        .map((completion) => {
-          completion.insertText = completion.insertText.replace('|', '');
-          return completion;
-        })
-        // Remove != and !~
-        .filter((completion) => !completion.insertText.startsWith('!'))
-    );
+    expectedCompletions = expectedCompletions
+      .map((completion) => {
+        completion.insertText = completion.insertText.replace('|', '').trimStart();
+        return completion;
+      })
+      // Remove != and !~
+      .filter((completion) => !completion.insertText.startsWith('!'))
+      .filter((completion) => (hasSpace ? completion.type !== 'LINE_FILTER' : true));
   }
+
+  expectedCompletions.forEach((completion) => {
+    if (completion.type !== 'LINE_FILTER') {
+      completion.insertText = hasSpace ? completion.insertText.trimStart() : ` ${completion.insertText}`;
+    }
+  });
 
   return expectedCompletions;
 }
@@ -307,34 +317,39 @@ describe('getCompletions', () => {
     ]);
   });
 
-  test.each([true, false])(
-    'Returns completion options when the situation is AFTER_SELECTOR, detected JSON parser, and afterPipe %s',
-    async (afterPipe: boolean) => {
+  test.each([
+    [true, true],
+    [false, true],
+    [true, false],
+    [false, false],
+  ])(
+    'Returns completion options when the situation is AFTER_SELECTOR, detected JSON parser, afterPipe %s, and hasSpace: %s',
+    async (afterPipe: boolean, hasSpace: boolean) => {
       jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
         extractedLabelKeys,
         hasJSON: true,
         hasLogfmt: false,
       });
-      const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '', afterPipe };
+      const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '', afterPipe, hasSpace };
       const completions = await getCompletions(situation, completionProvider);
 
-      const expected = buildAfterSelectorCompletions('json', 'logfmt', afterPipe);
+      const expected = buildAfterSelectorCompletions('json', 'logfmt', afterPipe, hasSpace);
       expect(completions).toEqual(expected);
     }
   );
 
   test.each([true, false])(
-    'Returns completion options when the situation is AFTER_SELECTOR, detected Logfmt parser, and afterPipe %s',
+    'Returns completion options when the situation is AFTER_SELECTOR, detected Logfmt parser, afterPipe %s, and hasSpace: %s',
     async (afterPipe: boolean) => {
       jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
         extractedLabelKeys,
         hasJSON: false,
         hasLogfmt: true,
       });
-      const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '', afterPipe };
+      const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '', afterPipe, hasSpace: true };
       const completions = await getCompletions(situation, completionProvider);
 
-      const expected = buildAfterSelectorCompletions('logfmt', 'json', afterPipe);
+      const expected = buildAfterSelectorCompletions('logfmt', 'json', afterPipe, true);
       expect(completions).toEqual(expected);
     }
   );

@@ -194,7 +194,19 @@ func (s *Service) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserComma
 
 // TODO: refactor service to call store CRUD method
 func (s *Service) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) ([]*org.OrgUserDTO, error) {
-	return s.store.GetOrgUsers(ctx, query)
+	result, err := s.store.SearchOrgUsers(ctx, &org.SearchOrgUsersQuery{
+		UserID:                   query.UserID,
+		OrgID:                    query.OrgID,
+		Query:                    query.Query,
+		Page:                     query.Page,
+		Limit:                    query.Limit,
+		DontEnforceAccessControl: query.DontEnforceAccessControl,
+		User:                     query.User,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.OrgUsers, nil
 }
 
 // TODO: refactor service to call store CRUD method

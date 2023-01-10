@@ -489,8 +489,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 				reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 			}
 
-			writeErr(reqContext, err)
-			return true
+			reqContext.LookupTokenErr = err
+			return false
 		}
 
 		reqContext.IsSignedIn = true
