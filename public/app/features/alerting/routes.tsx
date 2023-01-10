@@ -11,16 +11,15 @@ import { AccessControlAction } from 'app/types';
 
 import { evaluateAccess } from './unified/utils/access-control';
 
-const commonRoutes: RouteDescriptor[] = [
+const commonRoutes: RouteDescriptor[] = [];
+
+const legacyRoutes: RouteDescriptor[] = [
+  ...commonRoutes,
   {
     path: '/alerting',
     component: () =>
       config.featureToggles.topnav ? <NavLandingPage navId="alerting" /> : <Redirect to="/alerting/list" />,
   },
-];
-
-const legacyRoutes: RouteDescriptor[] = [
-  ...commonRoutes,
   {
     path: '/alerting/list',
     component: SafeDynamicImport(
@@ -91,6 +90,19 @@ const legacyRoutes: RouteDescriptor[] = [
 
 const unifiedRoutes: RouteDescriptor[] = [
   ...commonRoutes,
+  config.featureToggles.topnav
+    ? {
+        path: '/alerting',
+        component: SafeDynamicImport(
+          () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/Home')
+        ),
+      }
+    : {
+        path: '/alerting/home',
+        component: SafeDynamicImport(
+          () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/Home')
+        ),
+      },
   {
     path: '/alerting/list',
     roles: evaluateAccess(

@@ -41,7 +41,10 @@ const (
 	GMDApiModeSQLExpression
 )
 
+const defaultRegion = "default"
+
 type CloudWatchQuery struct {
+	logger            log.Logger
 	RefId             string
 	Region            string
 	Id                string
@@ -63,7 +66,7 @@ type CloudWatchQuery struct {
 	AccountId         *string
 }
 
-func (q *CloudWatchQuery) GetGMDAPIMode(logger log.Logger) GMDApiMode {
+func (q *CloudWatchQuery) GetGetMetricDataAPIMode() GMDApiMode {
 	if q.MetricQueryType == MetricQueryTypeSearch && q.MetricEditorMode == MetricEditorModeBuilder {
 		if q.IsInferredSearchExpression() {
 			return GMDApiModeInferredSearchExpression
@@ -75,7 +78,7 @@ func (q *CloudWatchQuery) GetGMDAPIMode(logger log.Logger) GMDApiMode {
 		return GMDApiModeSQLExpression
 	}
 
-	logger.Warn("could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
+	q.logger.Warn("could not resolve CloudWatch metric query type. Falling back to metric stat.", "query", q)
 	return GMDApiModeMetricStat
 }
 
@@ -227,7 +230,7 @@ type metricsDataQuery struct {
 
 // ParseMetricDataQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
 // The CloudWatchQuery has a 1 to 1 mapping to a query editor row
-func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, dynamicLabelsEnabled,
+func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, defaultRegion string, logger log.Logger, dynamicLabelsEnabled,
 	crossAccountQueryingEnabled bool) ([]*CloudWatchQuery, error) {
 	var metricDataQueries = make(map[string]metricsDataQuery)
 	for _, query := range dataQueries {
@@ -248,6 +251,7 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 	var result []*CloudWatchQuery
 	for refId, mdq := range metricDataQueries {
 		cwQuery := &CloudWatchQuery{
+			logger:            logger,
 			Alias:             mdq.Alias,
 			RefId:             refId,
 			Id:                mdq.Id,
@@ -260,9 +264,11 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			Expression:        mdq.Expression,
 		}
 
-		if err := cwQuery.validateAndSetDefaults(refId, mdq, startTime, endTime, crossAccountQueryingEnabled); err != nil {
+		if err := cwQuery.validateAndSetDefaults(refId, mdq, startTime, endTime, defaultRegion, crossAccountQueryingEnabled); err != nil {
 			return nil, &QueryError{Err: err, RefID: refId}
 		}
+
+		cwQuery.applyMacros(startTime, endTime)
 
 		cwQuery.migrateLegacyQuery(mdq, dynamicLabelsEnabled)
 
@@ -272,13 +278,19 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 	return result, nil
 }
 
+func (q *CloudWatchQuery) applyMacros(startTime, endTime time.Time) {
+	if q.GetGetMetricDataAPIMode() == GMDApiModeMathExpression {
+		q.Expression = strings.ReplaceAll(q.Expression, "$__period_auto", strconv.Itoa(calculatePeriodBasedOnTimeRange(startTime, endTime)))
+	}
+}
+
 func (q *CloudWatchQuery) migrateLegacyQuery(query metricsDataQuery, dynamicLabelsEnabled bool) {
 	q.Statistic = getStatistic(query)
 	q.Label = getLabel(query, dynamicLabelsEnabled)
 }
 
 func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery metricsDataQuery, startTime, endTime time.Time,
-	crossAccountQueryingEnabled bool) error {
+	defaultRegionValue string, crossAccountQueryingEnabled bool) error {
 	if metricsDataQuery.Statistic == nil && metricsDataQuery.Statistics == nil {
 		return fmt.Errorf("query must have either statistic or statistics field")
 	}
@@ -337,6 +349,10 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		}
 	}
 
+	if q.Region == defaultRegion {
+		q.Region = defaultRegionValue
+	}
+
 	return nil
 }
 
@@ -390,21 +406,27 @@ func getLabel(query metricsDataQuery, dynamicLabelsEnabled bool) string {
 	return result
 }
 
+func calculatePeriodBasedOnTimeRange(startTime, endTime time.Time) int {
+	deltaInSeconds := endTime.Sub(startTime).Seconds()
+	periods := getRetainedPeriods(time.Since(startTime))
+	datapoints := int(math.Ceil(deltaInSeconds / 2000))
+	period := periods[len(periods)-1]
+	for _, value := range periods {
+		if datapoints <= value {
+			period = value
+			break
+		}
+	}
+
+	return period
+}
+
 func getPeriod(query metricsDataQuery, startTime, endTime time.Time) (int, error) {
 	periodString := query.Period
 	var period int
 	var err error
 	if strings.ToLower(periodString) == "auto" || periodString == "" {
-		deltaInSeconds := endTime.Sub(startTime).Seconds()
-		periods := getRetainedPeriods(time.Since(startTime))
-		datapoints := int(math.Ceil(deltaInSeconds / 2000))
-		period = periods[len(periods)-1]
-		for _, value := range periods {
-			if datapoints <= value {
-				period = value
-				break
-			}
-		}
+		period = calculatePeriodBasedOnTimeRange(startTime, endTime)
 	} else {
 		period, err = strconv.Atoi(periodString)
 		if err != nil {

@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
+	"github.com/grafana/grafana/pkg/services/store/k8saccess"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -150,7 +152,7 @@ type HTTPServer struct {
 	QueryLibraryHTTPService      querylibrary.HTTPService
 	QueryLibraryService          querylibrary.Service
 	ContextHandler               *contexthandler.ContextHandler
-	SQLStore                     sqlstore.Store
+	SQLStore                     db.DB
 	AlertEngine                  *alerting.AlertEngine
 	AlertNG                      *ngalert.AlertNG
 	LibraryPanelService          librarypanels.Service
@@ -252,6 +254,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service,
+	k8saccess k8saccess.K8SAccess, // required so that the router is registered
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()

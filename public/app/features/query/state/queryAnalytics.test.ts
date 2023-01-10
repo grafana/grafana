@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { MetaAnalyticsEventName, reportMetaAnalytics } from '@grafana/runtime';
 
-import { DashboardModel } from '../../dashboard/state';
+import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 
 import { emitDataRequestEvent } from './queryAnalytics';
 
@@ -24,7 +24,7 @@ const datasource = {
   uid: 'test',
 } as DataSourceApi;
 
-const dashboardModel = new DashboardModel(
+const dashboardModel = createDashboardModelFixture(
   { id: 1, title: 'Test Dashboard', uid: 'test' },
   { folderTitle: 'Test Folder' }
 );

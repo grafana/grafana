@@ -57,6 +57,12 @@ import {
   addNoPipelineErrorToQuery,
   addParserToQuery,
   removeCommentsFromQuery,
+  addFilterAsLabelFilter,
+  getParserPositions,
+  toLabelFilter,
+  addLineFilter,
+  findLastPosition,
+  getLabelFilterPositions,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
@@ -170,7 +176,7 @@ export class LokiDatasource
       .map(getNormalizedLokiQuery) // "fix" the `.queryType` prop
       .map((q) => ({ ...q, maxLines: q.maxLines || this.maxLines })); // set maxLines if not set
 
-    const fixedRequest = {
+    const fixedRequest: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] } = {
       ...request,
       targets: queries,
     };
@@ -197,12 +203,13 @@ export class LokiDatasource
     if (fixedRequest.liveStreaming) {
       return this.runLiveQueryThroughBackend(fixedRequest);
     } else {
+      const startTime = new Date();
       return super.query(fixedRequest).pipe(
         // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
         map((response) =>
           transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
         ),
-        tap((response) => trackQuery(response, fixedRequest.targets, fixedRequest.app))
+        tap((response) => trackQuery(response, fixedRequest, startTime))
       );
     }
   }
@@ -493,6 +500,18 @@ export class LokiDatasource
             originalLabel: action.options.originalLabel,
           });
         }
+        break;
+      }
+      case 'ADD_LABEL_FILTER': {
+        const parserPositions = getParserPositions(query.expr);
+        const labelFilterPositions = getLabelFilterPositions(query.expr);
+        const lastPosition = findLastPosition([...parserPositions, ...labelFilterPositions]);
+        const filter = toLabelFilter('', '', '=');
+        expression = addFilterAsLabelFilter(expression, [lastPosition], filter);
+        break;
+      }
+      case 'ADD_LINE_FILTER': {
+        expression = addLineFilter(expression);
         break;
       }
       default:
@@ -794,8 +813,8 @@ export class LokiDatasource
     };
   }
 
-  interpolateString(string: string) {
-    return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
+  interpolateString(string: string, scopedVars?: ScopedVars) {
+    return this.templateSrv.replace(string, scopedVars, this.interpolateQueryExpr);
   }
 
   getVariables(): string[] {

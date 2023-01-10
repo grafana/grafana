@@ -288,8 +288,8 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
   description: `Will stretch data frames from the wide format into the long format. This is really helpful to be able to keep backwards compatibility for panels not supporting the new wide format.`,
   defaultOptions: {},
 
-  operator: (options) => (source) =>
-    source.pipe(map((data) => prepareTimeSeriesTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => prepareTimeSeriesTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: PrepareTimeSeriesOptions) => {
     const format = options?.format ?? timeSeriesFormat.TimeSeriesWide;

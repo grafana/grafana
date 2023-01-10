@@ -3,25 +3,24 @@ import { HeaderGroup, Column } from 'react-table';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
 import { getFieldTypeIcon } from '../../types';
 import { Icon } from '../Icon/Icon';
 
 import { Filter } from './Filter';
-import { getTableStyles, TableStyles } from './styles';
+import { TableStyles } from './styles';
 
 export interface HeaderRowProps {
   headerGroups: HeaderGroup[];
   showTypeIcons?: boolean;
+  tableStyles: TableStyles;
 }
 
 export const HeaderRow = (props: HeaderRowProps) => {
-  const { headerGroups, showTypeIcons } = props;
+  const { headerGroups, showTypeIcons, tableStyles } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
-  const tableStyles = useStyles2(getTableStyles);
 
   return (
-    <div role="rowgroup">
+    <div role="rowgroup" className={tableStyles.headerRow}>
       {headerGroups.map((headerGroup: HeaderGroup) => {
         const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
         return (
@@ -62,9 +61,12 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
               <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" className={tableStyles.typeIcon} />
             )}
             <div>{column.render('Header')}</div>
-            <div>
-              {column.isSorted && (column.isSortedDesc ? <Icon name="arrow-down" /> : <Icon name="arrow-up" />)}
-            </div>
+            {column.isSorted &&
+              (column.isSortedDesc ? (
+                <Icon size="lg" name="arrow-down" className={tableStyles.sortIcon} />
+              ) : (
+                <Icon name="arrow-up" size="lg" className={tableStyles.sortIcon} />
+              ))}
           </button>
           {column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
         </>

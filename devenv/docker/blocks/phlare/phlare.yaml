@@ -1,0 +1,5 @@
+scrape_configs:
+  - job_name: "default"
+    scrape_interval: "15s"
+    static_configs:
+      - targets: ["127.0.0.1:4100"]

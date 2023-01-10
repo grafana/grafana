@@ -11,17 +11,19 @@ import {
   EventFilterOptions,
   FieldConfigSource,
   getDefaultTimeRange,
+  LinkModel,
   LoadingState,
   PanelData,
   PanelPlugin,
   PanelPluginMeta,
   PluginContextProvider,
+  renderMarkdown,
   TimeRange,
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { getTemplateSrv, config, locationService, RefreshEvent } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
 import {
   ErrorBoundary,
@@ -34,6 +36,8 @@ import {
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
+import { getPanelQueryNotices } from 'app/features/dashboard/utils/panelQueryNotices';
+import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { RenderEvent } from 'app/types/events';
@@ -46,7 +50,6 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { PanelHeaderLoadingIndicator } from './PanelHeader/PanelHeaderLoadingIndicator';
 import { PanelHeaderTitleItems } from './PanelHeader/PanelHeaderTitleItems';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
@@ -568,6 +571,32 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return !panel.hasTitle();
   }
 
+  onShowPanelDescription = () => {
+    const { panel } = this.props;
+    const descriptionMarkdown = getTemplateSrv().replace(panel.description, panel.scopedVars);
+    const interpolatedDescription = renderMarkdown(descriptionMarkdown);
+    return interpolatedDescription;
+  };
+
+  onShowPanelLinks = (): LinkModel[] => {
+    const { panel } = this.props;
+    const linkSupplier = getPanelLinksSupplier(panel);
+    if (linkSupplier) {
+      const panelLinks = linkSupplier && linkSupplier.getLinks(panel.replaceVariables);
+      return panelLinks;
+    }
+    return [];
+  };
+
+  onOpenInspector = (e: React.SyntheticEvent, tab: string) => {
+    e.stopPropagation();
+    locationService.partial({ inspect: this.props.panel.id, inspectTab: tab });
+  };
+  onOpenErrorInspect(e: React.SyntheticEvent, tab: string) {
+    e.stopPropagation();
+    locationService.partial({ inspect: this.props.panel.id, inspectTab: tab });
+  }
+
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
@@ -584,56 +613,61 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     });
 
     // for new panel header design
-    const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
-    const title = panel.getDisplayTitle();
-    const noPadding: PanelPadding = plugin.noPadding ? 'none' : 'md';
-    const leftItems = [
-      <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} key="loading-indicator" />,
-    ];
+    const containerClassNamesNewPanelChrome = classNames({
+      'panel-container--absolute': isSoloRoute(locationService.getLocation().pathname),
+      'panel-container--transparent': transparent,
+      'panel-container--no-title': this.hasOverlayHeader(),
+      [`panel-alert-state--${alertState}`]: alertState !== undefined,
+    });
 
-    const titleItems = ({ itemWidth, itemHeight }: { itemWidth?: number; itemHeight?: number }) => {
-      return (
-        <PanelHeaderTitleItems
-          key="title-items"
-          panelId={panel.id}
-          panelDescription={panel.description}
-          links={getPanelLinksSupplier(panel)}
-          replaceVariables={panel.replaceVariables}
-          scopedVars={panel.scopedVars}
-          alertState={alertState}
-          data={data}
-          itemHeight={itemHeight}
-          itemWidth={itemWidth}
-        />
-      );
-    };
+    const title = panel.getDisplayTitle();
+    const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
+
+    const titleItems = [
+      <PanelHeaderTitleItems key="title-items" alertState={alertState} data={data} panelId={panel.id} />,
+    ];
     if (config.featureToggles.newPanelChromeUI) {
       return (
-        <PanelChrome
-          width={width}
-          height={height}
-          title={title}
-          titleItems={titleItems}
-          leftItems={leftItems}
-          padding={noPadding}
+        <section
+          className={containerClassNamesNewPanelChrome}
+          aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
         >
-          {(innerWidth, innerHeight) => (
-            <>
-              <ErrorBoundary
-                dependencies={[data, plugin, panel.getOptions()]}
-                onError={this.onPanelError}
-                onRecover={this.onPanelErrorRecover}
-              >
-                {({ error }) => {
-                  if (error) {
-                    return null;
-                  }
-                  return this.renderPanelContent(innerWidth, innerHeight);
-                }}
-              </ErrorBoundary>
-            </>
-          )}
-        </PanelChrome>
+          <PanelChrome
+            width={width}
+            height={height}
+            title={title}
+            loadingState={data.state}
+            status={{
+              message: errorMessage,
+              onClick: (e: React.SyntheticEvent) => this.onOpenErrorInspect(e, InspectTab.Error),
+            }}
+            description={!!panel.description ? this.onShowPanelDescription : undefined}
+            links={panel.links && panel.links?.length > 0 ? this.onShowPanelLinks : undefined}
+            panelNotices={{
+              getPanelNotices: () => getPanelQueryNotices({ frames: data.series }),
+              onClick: (e: React.SyntheticEvent, tab: string) => this.onOpenInspector(e, tab),
+            }}
+            titleItems={titleItems}
+            padding={padding}
+          >
+            {(innerWidth, innerHeight) => (
+              <>
+                <ErrorBoundary
+                  dependencies={[data, plugin, panel.getOptions()]}
+                  onError={this.onPanelError}
+                  onRecover={this.onPanelErrorRecover}
+                >
+                  {({ error }) => {
+                    if (error) {
+                      return null;
+                    }
+                    return this.renderPanelContent(innerWidth, innerHeight);
+                  }}
+                </ErrorBoundary>
+              </>
+            )}
+          </PanelChrome>
+        </section>
       );
     } else {
       return (

@@ -69,6 +69,10 @@ func TestParseTreeTestdata(t *testing.T) {
 			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
+		"renderer-added-file": {
+			rootid:  "test-renderer",
+			subpath: "plugin",
+		},
 		"symbolic-plugin-dirs": {
 			skip: "io/fs-based scanner will not traverse symlinks; caller of ParsePluginFS() must do it",
 		},
@@ -111,9 +115,7 @@ func TestParseTreeTestdata(t *testing.T) {
 		"wrong-slot-panel": {
 			err: ErrImplementedSlots,
 		},
-		"missing-slot-impl": {
-			err: ErrImplementedSlots,
-		},
+		"missing-kind-datasource": {},
 		"panel-conflicting-joinschema": {
 			err:  ErrInvalidLineage,
 			skip: "TODO implement BindOption in thema, SatisfiesJoinSchema, then use it here",

@@ -4,10 +4,9 @@ import React from 'react';
 import { config } from '@grafana/runtime';
 import { LegacyForms } from '@grafana/ui';
 
-import { SelectableResourceValue } from '../api';
 import { CloudWatchDatasource } from '../datasource';
 import { useAccountOptions } from '../hooks';
-import { CloudWatchLogsQuery, CloudWatchQuery, DescribeLogGroupsRequest } from '../types';
+import { CloudWatchLogsQuery, CloudWatchQuery, DescribeLogGroupsRequest, LogGroup } from '../types';
 
 import { CrossAccountLogsQueryField } from './CrossAccountLogsQueryField';
 import { LogGroupSelector } from './LogGroupSelector';
@@ -16,14 +15,13 @@ type Props = {
   datasource: CloudWatchDatasource;
   query: CloudWatchLogsQuery;
   onChange: (value: CloudWatchQuery) => void;
-  onRunQuery: () => void;
 };
 
 const rowGap = css`
   gap: 3px;
 `;
 
-export const LogGroupSelection = ({ datasource, query, onChange, onRunQuery }: Props) => {
+export const LogGroupSelection = ({ datasource, query, onChange }: Props) => {
   const accountState = useAccountOptions(datasource.api, query.region);
 
   return (
@@ -33,11 +31,10 @@ export const LogGroupSelection = ({ datasource, query, onChange, onRunQuery }: P
           fetchLogGroups={(params: Partial<DescribeLogGroupsRequest>) =>
             datasource.api.describeCrossAccountLogGroups({ region: query.region, ...params })
           }
-          onChange={(selectedLogGroups: SelectableResourceValue[]) => {
+          onChange={(selectedLogGroups: LogGroup[]) => {
             onChange({ ...query, logGroups: selectedLogGroups, logGroupNames: [] });
           }}
           accountOptions={accountState.value}
-          onRunQuery={onRunQuery}
           selectedLogGroups={query.logGroups ?? []} /* todo handle defaults */
         />
       ) : (
@@ -53,7 +50,6 @@ export const LogGroupSelection = ({ datasource, query, onChange, onRunQuery }: P
               onChange={function (logGroupNames: string[]): void {
                 onChange({ ...query, logGroupNames, logGroups: [] });
               }}
-              onRunQuery={onRunQuery}
               refId={query.refId}
             />
           }

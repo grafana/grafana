@@ -1,41 +1,23 @@
-import React, { FC } from 'react';
-import { Row } from 'react-table';
+import React from 'react';
 
-import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
-import { getTableStyles } from './styles';
+import { TableStyles } from './styles';
+import { GrafanaTableRow } from './types';
 
 export interface Props {
-  row: Row;
-  expandedIndexes: Set<number>;
-  setExpandedIndexes: (indexes: Set<number>) => void;
+  row: GrafanaTableRow;
+  tableStyles: TableStyles;
 }
 
-export const RowExpander: FC<Props> = ({ row, expandedIndexes, setExpandedIndexes }) => {
-  const tableStyles = useStyles2(getTableStyles);
-  const isExpanded = expandedIndexes.has(row.index);
-  // Use Cell to render an expander for each row.
-  // We can use the getToggleRowExpandedProps prop-getter
-  // to build the expander.
+export function RowExpander({ row, tableStyles }: Props) {
   return (
-    <div
-      className={tableStyles.expanderCell}
-      onClick={() => {
-        const newExpandedIndexes = new Set(expandedIndexes);
-        if (isExpanded) {
-          newExpandedIndexes.delete(row.index);
-        } else {
-          newExpandedIndexes.add(row.index);
-        }
-        setExpandedIndexes(newExpandedIndexes);
-      }}
-    >
+    <div className={tableStyles.expanderCell} {...row.getToggleRowExpandedProps()}>
       <Icon
-        aria-label={isExpanded ? 'Close trace' : 'Open trace'}
-        name={isExpanded ? 'angle-down' : 'angle-right'}
+        aria-label={row.isExpanded ? 'Collapse row' : 'Expand row'}
+        name={row.isExpanded ? 'angle-down' : 'angle-right'}
         size="xl"
       />
     </div>
   );
-};
+}

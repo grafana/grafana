@@ -1,86 +1,59 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { PanelModel, renderMarkdown, ScopedVars, LinkModelSupplier, PanelData } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
-import { Button, Dropdown, IconButton, Menu } from '@grafana/ui';
-
-import { PanelHeaderNotices } from './PanelHeaderNotices';
+import { PanelData, GrafanaTheme2 } from '@grafana/data';
+import { Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 export interface Props {
-  panelId: number;
-  data: PanelData;
-  panelDescription?: string;
-  links?: LinkModelSupplier<PanelModel>;
-  replaceVariables: (value: string, extraVars: ScopedVars | undefined, format?: string | Function) => string;
-  scopedVars?: ScopedVars;
   alertState?: string;
-  itemHeight?: number;
-  itemWidth?: number;
+  data: PanelData;
+  panelId: number;
 }
 
 export function PanelHeaderTitleItems(props: Props) {
-  const { panelDescription, alertState, scopedVars, links, replaceVariables, data, panelId } = props;
-
-  // description
-  const rawDescription = panelDescription || '';
-  const descriptionMarkdown = getTemplateSrv().replace(rawDescription, scopedVars);
-  const description = renderMarkdown(descriptionMarkdown);
-
-  const getDescriptionContent = (): JSX.Element => {
-    return (
-      <div className="panel-info-content markdown-html">
-        <div dangerouslySetInnerHTML={{ __html: description }} />
-      </div>
-    );
-  };
-
-  const descriptionItem = <IconButton name="info-circle" tooltip={getDescriptionContent} />;
-
-  // panel links
-  const panelLinks = links && links.getLinks(replaceVariables);
-
-  const getLinksContent = (): JSX.Element => {
-    return (
-      <Menu>
-        {panelLinks?.map((link, idx) => {
-          return <Menu.Item key={idx} label={link.title} url={link.href} target={link.target} />;
-        })}
-      </Menu>
-    );
-  };
-
-  const linksItem = (
-    <Dropdown overlay={getLinksContent}>
-      <Button icon="external-link-alt" aria-label="panel links" variant="secondary" />
-    </Dropdown>
-  );
+  const { alertState, data } = props;
+  const styles = useStyles2(getStyles);
 
   // panel health
   const alertStateItem = (
-    <IconButton
-      name={alertState === 'alerting' ? 'heart-break' : 'heart'}
+    <ToolbarButton
+      icon={<Icon name={alertState === 'alerting' ? 'heart-break' : 'heart'} className="panel-alert-icon" />}
       tooltip={`alerting is ${alertState}`}
-      className="icon-gf panel-alert-icon"
-      style={{ marginRight: '4px' }}
-      size="sm"
+      className={styles.item}
     />
   );
 
-  // panel time range
   const timeshift = (
     <>
-      <IconButton name="clock-nine" size="sm" />
-      {data.request && data.request.timeInfo}
+      <ToolbarButton
+        tooltip={data.request?.range ? `Timeshift: ${data.request.range.from} to ${data.request.range.to}` : ''}
+        className={styles.timeshift}
+        icon="clock-nine"
+      >
+        {data.request?.timeInfo}
+      </ToolbarButton>
     </>
   );
 
   return (
     <>
-      {data.series && <PanelHeaderNotices frames={data.series} panelId={panelId} />}
-      {description && descriptionItem}
-      {panelLinks && panelLinks.length > 0 && linksItem}
-      {data.request && timeshift}
+      {data.request && data.request.timeInfo && timeshift}
       {alertState && alertStateItem}
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  item: css({
+    border: 'none',
+  }),
+
+  timeshift: css({
+    border: 'none',
+    color: theme.colors.text.link,
+
+    '&:hover': {
+      color: theme.colors.emphasize(theme.colors.text.link, 0.03),
+    },
+  }),
+});

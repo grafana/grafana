@@ -21,8 +21,12 @@ export interface ConfirmModalProps {
   description?: React.ReactNode;
   /** Text for confirm button */
   confirmText: string;
+  /** Variant for confirm button */
+  confirmVariant?: ButtonVariant;
   /** Text for dismiss button */
   dismissText?: string;
+  /** Variant for dismiss button */
+  dismissVariant?: ButtonVariant;
   /** Icon for the modal header */
   icon?: IconName;
   /** Additional styling for modal container */
@@ -47,8 +51,10 @@ export const ConfirmModal = ({
   body,
   description,
   confirmText,
+  confirmVariant = 'destructive',
   confirmationText,
   dismissText = 'Cancel',
+  dismissVariant = 'secondary',
   alternativeText,
   modalClass,
   icon = 'exclamation-triangle',
@@ -85,7 +91,7 @@ export const ConfirmModal = ({
         ) : null}
       </div>
       <Modal.ButtonRow>
-        <Button variant="secondary" onClick={onDismiss} fill="outline">
+        <Button variant={dismissVariant} onClick={onDismiss} fill="outline">
           {dismissText}
         </Button>
         <Button
