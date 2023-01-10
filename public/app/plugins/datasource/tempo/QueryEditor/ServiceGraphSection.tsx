@@ -3,12 +3,14 @@ import React, { useEffect, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { EditorField, EditorList } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Alert, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 
 import { AdHocFilter } from '../../../../features/variables/adhoc/picker/AdHocFilter';
 import { AdHocVariableFilter } from '../../../../features/variables/types';
 import { PrometheusDatasource } from '../../prometheus/datasource';
+import { LabelFilterItem } from '../../prometheus/querybuilder/shared/LabelFilterItem';
 import { TempoQuery } from '../types';
 
 import { getDS } from './utils';
@@ -23,6 +25,15 @@ export function ServiceGraphSection({
   onChange: (value: TempoQuery) => void;
 }) {
   const styles = useStyles2(getStyles);
+  const [filters, setFilters] = useState<
+    Array<
+      Partial<{
+        label: string;
+        op: string;
+        value: string;
+      }>
+    >
+  >([]);
 
   const dsState = useAsync(() => getDS(graphDatasourceUid), [graphDatasourceUid]);
 
@@ -62,52 +73,74 @@ export function ServiceGraphSection({
       </div>
     );
   }
-  const filters = queryToFilter(query.serviceMapQuery || '');
+  // const filters = queryToFilter(query.serviceMapQuery || '');
 
   return (
     <div>
-      <InlineFieldRow>
-        <InlineField label="Filter" labelWidth={14} grow>
-          <AdHocFilter
-            datasource={{ uid: graphDatasourceUid }}
-            filters={filters}
-            getTagKeysOptions={{
-              series: config.featureToggles.tempoApmTable
-                ? ['traces_service_graph_request_total', 'traces_spanmetrics_calls_total']
-                : ['traces_service_graph_request_total'],
-            }}
-            addFilter={(filter: AdHocVariableFilter) => {
-              onChange({
-                ...query,
-                serviceMapQuery: filtersToQuery([...filters, filter]),
-              });
-            }}
-            removeFilter={(index: number) => {
-              const newFilters = [...filters];
-              newFilters.splice(index, 1);
-              onChange({ ...query, serviceMapQuery: filtersToQuery(newFilters) });
-            }}
-            changeFilter={(index: number, filter: AdHocVariableFilter) => {
-              const newFilters = [...filters];
-              newFilters.splice(index, 1, filter);
-              onChange({ ...query, serviceMapQuery: filtersToQuery(newFilters) });
-            }}
-          />
-        </InlineField>
-      </InlineFieldRow>
-      {hasKeys === false ? (
-        <Alert title="No service graph data found" severity="info" className={styles.alert}>
-          Please ensure that service graph metrics are set up correctly according to the{' '}
-          <a
-            target="_blank"
-            rel="noreferrer noopener"
-            href="https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/"
-          >
-            Tempo documentation
-          </a>
-          .
-        </Alert>
-      ) : null}
+      <EditorField label="Filters">
+        <EditorList<{
+          label: string;
+          op: string;
+          value: string;
+        }>
+          items={filters}
+          onChange={(val) => {
+            setFilters(val);
+          }}
+          renderItem={(item, onChangeItem, onDelete) => (
+            <LabelFilterItem
+              item={item}
+              defaultOp={'='}
+              onChange={onChangeItem}
+              onDelete={onDelete}
+              onGetLabelNames={() => Promise.resolve([])}
+              onGetLabelValues={() => Promise.resolve([])}
+            />
+          )}
+        />
+      </EditorField>
+      {/*<InlineFieldRow>*/}
+      {/*  <InlineField label="Filter" labelWidth={14} grow>*/}
+      {/*    <AdHocFilter*/}
+      {/*      datasource={{ uid: graphDatasourceUid }}*/}
+      {/*      filters={filters}*/}
+      {/*      getTagKeysOptions={{*/}
+      {/*        series: config.featureToggles.tempoApmTable*/}
+      {/*          ? ['traces_service_graph_request_total', 'traces_spanmetrics_calls_total']*/}
+      {/*          : ['traces_service_graph_request_total'],*/}
+      {/*      }}*/}
+      {/*      addFilter={(filter: AdHocVariableFilter) => {*/}
+      {/*        onChange({*/}
+      {/*          ...query,*/}
+      {/*          serviceMapQuery: filtersToQuery([...filters, filter]),*/}
+      {/*        });*/}
+      {/*      }}*/}
+      {/*      removeFilter={(index: number) => {*/}
+      {/*        const newFilters = [...filters];*/}
+      {/*        newFilters.splice(index, 1);*/}
+      {/*        onChange({ ...query, serviceMapQuery: filtersToQuery(newFilters) });*/}
+      {/*      }}*/}
+      {/*      changeFilter={(index: number, filter: AdHocVariableFilter) => {*/}
+      {/*        const newFilters = [...filters];*/}
+      {/*        newFilters.splice(index, 1, filter);*/}
+      {/*        onChange({ ...query, serviceMapQuery: filtersToQuery(newFilters) });*/}
+      {/*      }}*/}
+      {/*    />*/}
+      {/*  </InlineField>*/}
+      {/*</InlineFieldRow>*/}
+      {/*{hasKeys === false ? (*/}
+      {/*  <Alert title="No service graph data found" severity="info" className={styles.alert}>*/}
+      {/*    Please ensure that service graph metrics are set up correctly according to the{' '}*/}
+      {/*    <a*/}
+      {/*      target="_blank"*/}
+      {/*      rel="noreferrer noopener"*/}
+      {/*      href="https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/"*/}
+      {/*    >*/}
+      {/*      Tempo documentation*/}
+      {/*    </a>*/}
+      {/*    .*/}
+      {/*  </Alert>*/}
+      {/*) : null}*/}
     </div>
   );
 }

@@ -4,13 +4,14 @@ import useAsync from 'react-use/lib/useAsync';
 
 import { GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorHeader, EditorRow, EditorRows, FlexItem, Stack } from '@grafana/experimental';
-import { reportInteraction } from '@grafana/runtime';
+// import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
   FileDropzone,
-  InlineField,
-  InlineFieldRow,
+  // InlineField,
+  // InlineFieldRow,
   InlineLabel,
+  Modal,
   RadioButtonGroup,
   Themeable2,
   withTheme2,
@@ -19,7 +20,7 @@ import {
 import { LokiQueryField } from '../../loki/components/LokiQueryField';
 import { LokiDatasource } from '../../loki/datasource';
 import { LokiQuery } from '../../loki/types';
-import { QueryOptionGroup } from '../../prometheus/querybuilder/shared/QueryOptionGroup';
+// import { QueryOptionGroup } from '../../prometheus/querybuilder/shared/QueryOptionGroup';
 import { TempoDatasource } from '../datasource';
 import { QueryEditor } from '../traceql/QueryEditor';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
@@ -32,6 +33,7 @@ import { getDS } from './utils';
 interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
 interface State {
   searchType: string;
+  uploadModalOpen: boolean;
 }
 
 const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceql';
@@ -41,6 +43,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     super(props);
     this.state = {
       searchType: 'traceQL',
+      uploadModalOpen: false,
     };
   }
 
@@ -109,6 +112,21 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
 
     return (
       <>
+        <Modal
+          title={'Upload trace'}
+          isOpen={this.state.uploadModalOpen}
+          onDismiss={() => this.setState({ uploadModalOpen: false })}
+        >
+          <div className={css({ padding: this.props.theme.spacing(2) })}>
+            <FileDropzone
+              options={{ multiple: false }}
+              onLoad={(result) => {
+                this.props.datasource.uploadedJson = result;
+                this.props.onRunQuery();
+              }}
+            />
+          </div>
+        </Modal>
         <EditorHeader>
           <Stack gap={1}>
             <label htmlFor={'tempo-query-type-radio-group'} className={styles.switchLabel}>
@@ -149,7 +167,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             variant="secondary"
             size="sm"
             onClick={() => {
-              /* open modal*/
+              this.setState({ uploadModalOpen: true });
             }}
           >
             Import trace
