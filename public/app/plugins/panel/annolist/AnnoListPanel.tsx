@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { FocusScope } from '@react-aria/focus';
 import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
@@ -14,7 +13,7 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
-import { CustomScrollbar, stylesFactory, TagList } from '@grafana/ui';
+import { Button, CustomScrollbar, stylesFactory, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -263,21 +262,25 @@ export class AnnoListPanel extends PureComponent<Props, State> {
           <div className={this.style.filter}>
             <b>Filter:</b>
             {queryUser && (
-              <span onClick={this.onClearUser} className="pointer">
+              <Button
+                size="sm"
+                variant="secondary"
+                fill="text"
+                onClick={this.onClearUser}
+                aria-label={`Remove filter: ${queryUser.email}`}
+              >
                 {queryUser.email}
-              </span>
+              </Button>
             )}
             {queryTags.length > 0 && (
-              <FocusScope restoreFocus>
-                <TagList
-                  icon="times"
-                  tags={queryTags}
-                  onClick={(tag) => this.onTagClick(tag, true)}
-                  getAriaLabel={(name) => `Remove ${name} tag`}
-                  className={this.style.tagList}
-                  ref={this.tagListRef}
-                />
-              </FocusScope>
+              <TagList
+                icon="times"
+                tags={queryTags}
+                onClick={(tag) => this.onTagClick(tag, true)}
+                getAriaLabel={(name) => `Remove ${name} tag`}
+                className={this.style.tagList}
+                ref={this.tagListRef}
+              />
             )}
           </div>
         )}
@@ -299,11 +302,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     height: calc(100% - 30px);
   `,
   filter: css({
+    alignItems: 'center',
     display: 'flex',
-    padding: `0px ${theme.spacing(0.5)}`,
-    b: {
-      paddingRight: theme.spacing(1),
-    },
+    flexWrap: 'wrap',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(0.5),
   }),
   tagList: css({
     justifyContent: 'flex-start',

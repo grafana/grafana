@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -35,19 +34,19 @@ type Manager struct {
 	ResendDelay time.Duration
 
 	instanceStore InstanceStore
-	imageService  image.ImageService
+	images        ImageCapturer
 	historian     Historian
 	externalURL   *url.URL
 }
 
-func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, imageService image.ImageService, clock clock.Clock, historian Historian) *Manager {
+func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, images ImageCapturer, clock clock.Clock, historian Historian) *Manager {
 	return &Manager{
 		cache:         newCache(),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           log.New("ngalert.state.manager"),
 		metrics:       metrics,
 		instanceStore: instanceStore,
-		imageService:  imageService,
+		images:        images,
 		historian:     historian,
 		clock:         clock,
 		externalURL:   externalURL,
@@ -168,7 +167,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
-func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
+func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	var states []StateTransition
@@ -177,27 +176,16 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
 		states = append(states, s)
 	}
-	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, logger)
+	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
+	st.deleteAlertStates(ctx, logger, staleStates)
 
 	st.saveAlertStates(ctx, logger, states...)
 
-	changedStates := make([]StateTransition, 0, len(states))
-	for _, s := range states {
-		if s.changed() {
-			changedStates = append(changedStates, s)
-		}
-	}
-
+	allChanges := append(states, staleStates...)
 	if st.historian != nil {
-		st.historian.RecordStates(ctx, alertRule, changedStates)
+		st.historian.RecordStatesAsync(ctx, alertRule, allChanges)
 	}
-
-	deltas := append(states, resolvedStates...)
-	nextStates := make([]*State, 0, len(states))
-	for _, s := range deltas {
-		nextStates = append(nextStates, s.State)
-	}
-	return nextStates
+	return allChanges
 }
 
 // Set the current state based on evaluation results
@@ -217,17 +205,24 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	oldState := currentState.State
 	oldReason := currentState.StateReason
 
-	logger.Debug("Setting alert state")
+	// Add the instance to the log context to help correlate log lines for a state
+	logger = logger.New("instance", result.Instance)
+
 	switch result.State {
 	case eval.Normal:
-		currentState.resultNormal(alertRule, result)
+		logger.Debug("Setting next state", "handler", "resultNormal")
+		resultNormal(currentState, alertRule, result, logger)
 	case eval.Alerting:
-		currentState.resultAlerting(alertRule, result)
+		logger.Debug("Setting next state", "handler", "resultAlerting")
+		resultAlerting(currentState, alertRule, result, logger)
 	case eval.Error:
-		currentState.resultError(alertRule, result)
+		logger.Debug("Setting next state", "handler", "resultError")
+		resultError(currentState, alertRule, result, logger)
 	case eval.NoData:
-		currentState.resultNoData(alertRule, result)
+		logger.Debug("Setting next state", "handler", "resultNoData")
+		resultNoData(currentState, alertRule, result, logger)
 	case eval.Pending: // we do not emit results with this state
+		logger.Debug("Ignoring set next state as result is pending")
 	}
 
 	// Set reason iff: result is different than state, reason is not Alerting or Normal
@@ -244,11 +239,11 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
 
 	if shouldTakeImage(currentState.State, oldState, currentState.Image, currentState.Resolved) {
-		image, err := takeImage(ctx, st.imageService, alertRule)
+		image, err := takeImage(ctx, st.images, alertRule)
 		if err != nil {
 			logger.Warn("Failed to take an image",
-				"dashboard", alertRule.DashboardUID,
-				"panel", alertRule.PanelID,
+				"dashboard", alertRule.GetDashboardUID(),
+				"panel", alertRule.GetPanelID(),
 				"error", err)
 		} else if image != nil {
 			currentState.Image = image
@@ -282,7 +277,7 @@ func (st *Manager) Put(states []*State) {
 
 // TODO: Is the `State` type necessary? Should it embed the instance?
 func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, states ...StateTransition) {
-	if st.instanceStore == nil {
+	if st.instanceStore == nil || len(states) == 0 {
 		return
 	}
 
@@ -320,19 +315,47 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 	}
 }
 
-// TODO: why wouldn't you allow other types like NoData or Error?
+func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {
+	if st.instanceStore == nil || len(states) == 0 {
+		return
+	}
+
+	logger.Debug("Deleting alert states", "count", len(states))
+	toDelete := make([]ngModels.AlertInstanceKey, 0, len(states))
+
+	for _, s := range states {
+		key, err := s.GetAlertInstanceKey()
+		if err != nil {
+			logger.Error("Failed to delete alert instance with invalid labels", "cacheID", s.CacheID, "error", err)
+			continue
+		}
+		toDelete = append(toDelete, key)
+	}
+
+	err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...)
+	if err != nil {
+		logger.Error("Failed to delete stale states", "error", err)
+	}
+}
+
 func translateInstanceState(state ngModels.InstanceStateType) eval.State {
-	switch {
-	case state == ngModels.InstanceStateFiring:
+	switch state {
+	case ngModels.InstanceStateFiring:
 		return eval.Alerting
-	case state == ngModels.InstanceStateNormal:
+	case ngModels.InstanceStateNormal:
 		return eval.Normal
+	case ngModels.InstanceStateError:
+		return eval.Error
+	case ngModels.InstanceStateNoData:
+		return eval.NoData
+	case ngModels.InstanceStatePending:
+		return eval.Pending
 	default:
 		return eval.Error
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, logger log.Logger) []StateTransition {
+func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule) []StateTransition {
 	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
 	var resolvedImage *ngModels.Image
@@ -342,58 +365,39 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
 	})
 
-	toDelete := make([]ngModels.AlertInstanceKey, 0)
-
 	for _, s := range staleStates {
 		logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
+		oldState := s.State
+		oldReason := s.StateReason
 
-		key, err := s.GetAlertInstanceKey()
-		if err != nil {
-			logger.Error("Unable to get alert instance key to delete it from database. Ignoring", "error", err.Error())
-		} else {
-			toDelete = append(toDelete, key)
-		}
+		s.State = eval.Normal
+		s.StateReason = ngModels.StateReasonMissingSeries
+		s.EndsAt = evaluatedAt
+		s.LastEvaluationTime = evaluatedAt
 
-		if s.State == eval.Alerting {
-			oldState := s.State
-			oldReason := s.StateReason
-
-			s.State = eval.Normal
-			s.StateReason = ngModels.StateReasonMissingSeries
-			s.EndsAt = evaluatedAt
+		if oldState == eval.Alerting {
 			s.Resolved = true
-			s.LastEvaluationTime = evaluatedAt
-			record := StateTransition{
-				State:               s,
-				PreviousState:       oldState,
-				PreviousStateReason: oldReason,
-			}
-
 			// If there is no resolved image for this rule then take one
 			if resolvedImage == nil {
-				image, err := takeImage(ctx, st.imageService, alertRule)
+				image, err := takeImage(ctx, st.images, alertRule)
 				if err != nil {
 					logger.Warn("Failed to take an image",
-						"dashboard", alertRule.DashboardUID,
-						"panel", alertRule.PanelID,
+						"dashboard", alertRule.GetDashboardUID(),
+						"panel", alertRule.GetPanelID(),
 						"error", err)
 				} else if image != nil {
 					resolvedImage = image
 				}
 			}
 			s.Image = resolvedImage
-			resolvedStates = append(resolvedStates, record)
 		}
-	}
 
-	if st.historian != nil {
-		st.historian.RecordStates(ctx, alertRule, resolvedStates)
-	}
-
-	if st.instanceStore != nil {
-		if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
-			logger.Error("Unable to delete stale instances from database", "error", err, "count", len(toDelete))
+		record := StateTransition{
+			State:               s,
+			PreviousState:       oldState,
+			PreviousStateReason: oldReason,
 		}
+		resolvedStates = append(resolvedStates, record)
 	}
 	return resolvedStates
 }

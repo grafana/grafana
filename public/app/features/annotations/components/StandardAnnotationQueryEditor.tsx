@@ -35,7 +35,7 @@ interface State {
 }
 
 export default class StandardAnnotationQueryEditor extends PureComponent<Props, State> {
-  state = {} as State;
+  state: State = {};
 
   componentDidMount() {
     this.verifyDataSource();

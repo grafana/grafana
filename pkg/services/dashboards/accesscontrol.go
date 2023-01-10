@@ -53,7 +53,7 @@ func NewFolderNameScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 		if err != nil {
 			return nil, err
 		}
-		return []string{ScopeFoldersProvider.GetResourceScopeUID(folder.Uid)}, nil
+		return []string{ScopeFoldersProvider.GetResourceScopeUID(folder.UID)}, nil
 	})
 }
 
@@ -79,7 +79,7 @@ func NewFolderIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 			return nil, err
 		}
 
-		return []string{ScopeFoldersProvider.GetResourceScopeUID(folder.Uid)}, nil
+		return []string{ScopeFoldersProvider.GetResourceScopeUID(folder.UID)}, nil
 	})
 }
 
@@ -142,7 +142,7 @@ func resolveDashboardScope(ctx context.Context, db Store, orgID int64, dashboard
 		if err != nil {
 			return nil, err
 		}
-		folderUID = folder.Uid
+		folderUID = folder.UID
 	}
 
 	return []string{

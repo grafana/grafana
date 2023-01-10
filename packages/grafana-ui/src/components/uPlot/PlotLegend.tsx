@@ -80,7 +80,7 @@ export const PlotLegend: React.FC<PlotLegendProps> = React.memo(
                     ...field,
                     config: {
                       ...field.config,
-                      unit: 'percent',
+                      unit: 'percentunit',
                     },
                   },
                   theme,

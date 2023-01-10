@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -37,7 +38,7 @@ type gitExportJob struct {
 	helper      *commitHelper
 }
 
-func startGitExportJob(cfg ExportConfig, sql db.DB,
+func startGitExportJob(ctx context.Context, cfg ExportConfig, sql db.DB,
 	dashboardsnapshotsService dashboardsnapshots.Service, rootDir string, orgID int64,
 	broadcaster statusBroadcaster, playlistService playlist.Service, orgService org.Service,
 	datasourceService datasources.DataSourceService) (Job, error) {
@@ -60,7 +61,7 @@ func startGitExportJob(cfg ExportConfig, sql db.DB,
 	}
 
 	broadcaster(job.status)
-	go job.start()
+	go job.start(ctx)
 	return job, nil
 }
 
@@ -83,7 +84,7 @@ func (e *gitExportJob) requestStop() {
 }
 
 // Utility function to export dashboards
-func (e *gitExportJob) start() {
+func (e *gitExportJob) start(ctx context.Context) {
 	defer func() {
 		e.logger.Info("Finished git export job")
 		e.statusMu.Lock()
@@ -91,6 +92,7 @@ func (e *gitExportJob) start() {
 		s := e.status
 		if err := recover(); err != nil {
 			e.logger.Error("export panic", "error", err)
+			e.logger.Error("trace", "error", string(debug.Stack()))
 			s.Status = fmt.Sprintf("ERROR: %v", err)
 		}
 		// Make sure it finishes OK
@@ -106,7 +108,7 @@ func (e *gitExportJob) start() {
 		e.broadcaster(s)
 	}()
 
-	err := e.doExportWithHistory()
+	err := e.doExportWithHistory(ctx)
 	if err != nil {
 		e.logger.Error("ERROR", "e", err)
 		e.status.Status = "ERROR"
@@ -115,7 +117,7 @@ func (e *gitExportJob) start() {
 	}
 }
 
-func (e *gitExportJob) doExportWithHistory() error {
+func (e *gitExportJob) doExportWithHistory(ctx context.Context) error {
 	r, err := git.PlainInit(e.rootDir, false)
 	if err != nil {
 		return err
@@ -134,7 +136,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 	e.helper = &commitHelper{
 		repo:    r,
 		work:    w,
-		ctx:     context.Background(),
+		ctx:     ctx,
 		workDir: e.rootDir,
 		orgDir:  e.rootDir,
 		broadcast: func(p string) {
@@ -157,7 +159,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 			e.helper.orgDir = path.Join(e.rootDir, fmt.Sprintf("org_%d", org.ID))
 			e.status.Count["orgs"] += 1
 		}
-		err = e.helper.initOrg(e.sql, org.ID)
+		err = e.helper.initOrg(ctx, e.sql, org.ID)
 		if err != nil {
 			return err
 		}

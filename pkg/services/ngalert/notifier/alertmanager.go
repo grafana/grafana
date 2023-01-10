@@ -15,6 +15,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/alertmanager/config"
@@ -38,7 +39,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
@@ -334,11 +335,11 @@ func (am *Alertmanager) getTemplate() (*template.Template, error) {
 	for name := range am.config.TemplateFiles {
 		paths = append(paths, filepath.Join(am.WorkingDirPath(), name))
 	}
-	return am.templateFromPaths(paths...)
+	return am.templateFromPaths(paths)
 }
 
-func (am *Alertmanager) templateFromPaths(paths ...string) (*template.Template, error) {
-	tmpl, err := template.FromGlobs(paths...)
+func (am *Alertmanager) templateFromPaths(paths []string) (*template.Template, error) {
+	tmpl, err := template.FromGlobs(paths)
 	if err != nil {
 		return nil, err
 	}
@@ -394,7 +395,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	}
 
 	// With the templates persisted, create the template list using the paths.
-	tmpl, err := am.templateFromPaths(paths...)
+	tmpl, err := am.templateFromPaths(paths)
 	if err != nil {
 		return err
 	}
@@ -510,18 +511,18 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 			Name:                  r.Name,
 			Type:                  r.Type,
 			DisableResolveMessage: r.DisableResolveMessage,
-			Settings:              r.Settings,
+			Settings:              json.RawMessage(r.Settings),
 			SecureSettings:        secureSettings,
 		}
 	)
-	factoryConfig, err := channels.NewFactoryConfig(cfg, am.NotificationService, am.decryptFn, tmpl, am.Store)
+	factoryConfig, err := channels.NewFactoryConfig(cfg, NewNotificationSender(am.NotificationService), am.decryptFn, tmpl, newImageStore(am.Store), LoggerFactory, setting.BuildVersion)
 	if err != nil {
 		return nil, InvalidReceiverError{
 			Receiver: r,
 			Err:      err,
 		}
 	}
-	receiverFactory, exists := channels.Factory(r.Type)
+	receiverFactory, exists := channels_config.Factory(r.Type)
 	if !exists {
 		return nil, InvalidReceiverError{
 			Receiver: r,

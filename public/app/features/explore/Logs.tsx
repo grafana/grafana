@@ -71,7 +71,7 @@ interface Props extends Themeable2 {
   logsVolumeData: DataQueryResponse | undefined;
   scrollElement?: HTMLDivElement;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
-  loadLogsVolumeData: (exploreId: ExploreId) => void;
+  loadLogsVolumeData: () => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -79,7 +79,7 @@ interface Props extends Themeable2 {
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
-  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;
   eventBus: EventBus;
@@ -389,7 +389,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               onUpdateTimeRange={onChangeTime}
               timeZone={timeZone}
               splitOpen={splitOpen}
-              onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
+              onLoadLogsVolume={loadLogsVolumeData}
               onHiddenSeriesChanged={this.onToggleLogLevel}
               eventBus={this.logsVolumeEventBus}
             />

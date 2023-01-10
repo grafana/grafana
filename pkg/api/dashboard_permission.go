@@ -56,11 +56,10 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		return rsp
 	}
 
-	if dashID == 0 {
-		dashID = dash.Id
+	g, err := guardian.NewByDashboard(c.Req.Context(), dash, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
 	}
-
-	g := guardian.New(c.Req.Context(), dashID, c.OrgID, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
@@ -147,16 +146,16 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		return rsp
 	}
 
-	if dashUID != "" {
-		dashID = dash.Id
+	g, err := guardian.NewByDashboard(c.Req.Context(), dash, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
 	}
 
-	g := guardian.New(c.Req.Context(), dashID, c.OrgID, c.SignedInUser)
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
 	}
 
-	var items []*models.DashboardACL
+	items := make([]*models.DashboardACL, 0, len(apiCmd.Items))
 	for _, item := range apiCmd.Items {
 		items = append(items, &models.DashboardACL{
 			OrgID:       c.OrgID,

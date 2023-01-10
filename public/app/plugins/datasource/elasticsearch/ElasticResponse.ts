@@ -484,7 +484,11 @@ export class ElasticResponse {
     if (this.targets.some((target) => queryDef.hasMetricOfType(target, 'raw_data'))) {
       return this.processResponseToDataFrames(false);
     }
-    return this.processResponseToSeries();
+    const result = this.processResponseToSeries();
+    return {
+      ...result,
+      data: result.data.map((item) => toDataFrame(item)),
+    };
   }
 
   getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {

@@ -28,6 +28,8 @@ export interface NavLinkDTO {
   emptyMessageId?: string;
   // The ID of the plugin that registered the page (in case it was registered by a plugin, otherwise left empty)
   pluginId?: string;
+  // Whether the page is used to create a new resource. We may place these in a different position in the UI.
+  isCreateAction?: boolean;
 }
 
 export interface NavModelItem extends NavLinkDTO {
@@ -42,8 +44,6 @@ export interface NavModelItem extends NavLinkDTO {
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
   hideFromBreadcrumbs?: boolean;
-  /** To render custom things between title and child tabs */
-  headerExtra?: ComponentType;
 }
 
 export enum NavSection {

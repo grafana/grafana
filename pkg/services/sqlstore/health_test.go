@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestIntegrationGetDBHealthQuery(t *testing.T) {

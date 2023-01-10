@@ -189,6 +189,11 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onCopyQuery = () => {
+    const datasources = [...query.queries.map((q) => q.datasource?.type || 'unknown')];
+    reportInteraction('grafana_explore_query_history_copy_query', {
+      datasources,
+      mixed: Boolean(queryDsInstance?.meta.mixed),
+    });
     const queriesToCopy = query.queries.map((q) => createQueryText(q, queryDsInstance)).join('\n');
     copyStringToClipboard(queriesToCopy);
     dispatch(notifyApp(createSuccessNotification('Query copied to clipboard')));
@@ -260,6 +265,7 @@ export function RichHistoryCard(props: Props) {
   const updateComment = (
     <div className={styles.updateCommentContainer} aria-label={comment ? 'Update comment form' : 'Add comment form'}>
       <TextArea
+        onKeyDown={onKeyDown}
         value={comment}
         placeholder={comment ? undefined : 'An optional description of what the query does.'}
         onChange={(e) => setComment(e.currentTarget.value)}
@@ -298,7 +304,7 @@ export function RichHistoryCard(props: Props) {
   );
 
   return (
-    <div className={styles.queryCard} onKeyDown={onKeyDown}>
+    <div className={styles.queryCard}>
       <div className={styles.cardRow}>
         <div className={styles.datasourceContainer}>
           <img src={dsImg} aria-label="Data source icon" />

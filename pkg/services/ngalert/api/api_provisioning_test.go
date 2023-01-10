@@ -229,7 +229,7 @@ func TestProvisioningApi(t *testing.T) {
 
 	t.Run("alert rules", func(t *testing.T) {
 		t.Run("are invalid", func(t *testing.T) {
-			t.Run("POST returns 400", func(t *testing.T) {
+			t.Run("POST returns 400 on wrong body params", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				rule := createInvalidAlertRule()
@@ -241,7 +241,7 @@ func TestProvisioningApi(t *testing.T) {
 				require.Contains(t, string(response.Body()), "invalid alert rule")
 			})
 
-			t.Run("PUT returns 400", func(t *testing.T) {
+			t.Run("PUT returns 400 on wrong body params", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				uid := "123123"
@@ -258,9 +258,10 @@ func TestProvisioningApi(t *testing.T) {
 		})
 
 		t.Run("exist in non-default orgs", func(t *testing.T) {
-			t.Run("POST sets expected fields", func(t *testing.T) {
+			t.Run("POST sets expected fields with no provenance", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
+				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"true"}}
 				rc.OrgID = 3
 				rule := createTestAlertRule("rule", 1)
 
@@ -269,15 +270,17 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 201, response.Status())
 				created := deserializeRule(t, response.Body())
 				require.Equal(t, int64(3), created.OrgID)
+				require.Equal(t, models.ProvenanceNone, created.Provenance)
 			})
 
-			t.Run("PUT sets expected fields", func(t *testing.T) {
+			t.Run("PUT sets expected fields with no provenance", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				uid := t.Name()
 				rule := createTestAlertRule("rule", 1)
 				rule.UID = uid
 				insertRuleInOrg(t, sut, rule, 3)
 				rc := createTestRequestCtx()
+				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"hello"}}
 				rc.OrgID = 3
 				rule.OrgID = 1 // Set the org back to something wrong, we should still prefer the value from the req context.
 
@@ -286,6 +289,7 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 200, response.Status())
 				created := deserializeRule(t, response.Body())
 				require.Equal(t, int64(3), created.OrgID)
+				require.Equal(t, models.ProvenanceNone, created.Provenance)
 			})
 		})
 

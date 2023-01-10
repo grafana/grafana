@@ -165,7 +165,7 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
         title="This folder doesn't have any dashboards yet"
         buttonIcon="plus"
         buttonTitle="Create Dashboard"
-        buttonLink={`dashboard/new?folderId=${folderDTO.id}`}
+        buttonLink={`dashboard/new?folderUid=${folderDTO.uid}`}
         proTip="Add/move dashboards to your folder at ->"
         proTipLink="dashboards"
         proTipLinkTitle="Manage dashboards"

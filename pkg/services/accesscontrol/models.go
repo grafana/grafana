@@ -165,7 +165,7 @@ func (r RoleDTO) MarshalJSON() ([]byte, error) {
 func fallbackDisplayName(rName string) string {
 	// removing prefix for fixed roles
 	rNameWithoutPrefix := strings.Replace(rName, FixedRolePrefix, "", 1)
-	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
+	return strings.TrimSpace(strings.ReplaceAll(rNameWithoutPrefix, ":", " "))
 }
 
 type TeamRole struct {
@@ -215,11 +215,11 @@ func (p Permission) OSSPermission() Permission {
 }
 
 type GetUserPermissionsQuery struct {
-	OrgID   int64 `json:"-"`
-	UserID  int64 `json:"userId"`
-	Roles   []string
-	Actions []string
-	TeamIDs []int64
+	OrgID      int64
+	UserID     int64
+	Roles      []string
+	TeamIDs    []int64
+	RolePrefix string
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
@@ -309,6 +309,7 @@ const (
 	ActionUsersLogout            = "users:logout"
 	ActionUsersQuotasList        = "users.quotas:read"
 	ActionUsersQuotasUpdate      = "users.quotas:write"
+	ActionUsersPermissionsRead   = "users.permissions:read"
 
 	// Org actions
 	ActionOrgsRead             = "orgs:read"

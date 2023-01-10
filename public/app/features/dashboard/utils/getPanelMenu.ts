@@ -227,7 +227,9 @@ export function getPanelMenu(
 
   if (panel.options.legend) {
     subMenu.push({
-      text: panel.options.legend.showLegend ? 'Hide legend' : 'Show legend',
+      text: panel.options.legend.showLegend
+        ? t('panel.header-menu.hide-legend', 'Hide legend')
+        : t('panel.header-menu.show-legend', 'Show legend'),
       onClick: onToggleLegend,
       shortcut: 'p l',
     });

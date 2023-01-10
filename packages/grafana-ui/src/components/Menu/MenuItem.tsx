@@ -35,6 +35,8 @@ export interface MenuItemProps<T = any> {
   className?: string;
   /** Active */
   active?: boolean;
+  /** Disabled */
+  disabled?: boolean;
   /** Show in destructive style (error color) */
   destructive?: boolean;
   tabIndex?: number;
@@ -57,6 +59,7 @@ export const MenuItem = React.memo(
       onClick,
       className,
       active,
+      disabled,
       destructive,
       childItems,
       role = 'menuitem',
@@ -68,13 +71,21 @@ export const MenuItem = React.memo(
     const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
     const [openedWithArrow, setOpenedWithArrow] = useState(false);
     const onMouseEnter = useCallback(() => {
+      if (disabled) {
+        return;
+      }
+
       setIsSubMenuOpen(true);
       setIsActive(true);
-    }, []);
+    }, [disabled]);
     const onMouseLeave = useCallback(() => {
+      if (disabled) {
+        return;
+      }
+
       setIsSubMenuOpen(false);
       setIsActive(false);
-    }, []);
+    }, [disabled]);
 
     const hasSubMenu = childItems && childItems.length > 0;
     const ItemElement = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
@@ -82,10 +93,19 @@ export const MenuItem = React.memo(
       {
         [styles.item]: true,
         [styles.active]: isActive,
-        [styles.destructive]: destructive,
+        [styles.disabled]: disabled,
+        [styles.destructive]: destructive && !disabled,
       },
       className
     );
+    const disabledProps = {
+      [ItemElement === 'button' ? 'disabled' : 'aria-disabled']: disabled,
+      ...(ItemElement === 'a' && disabled && { href: undefined, onClick: undefined }),
+      ...(disabled && {
+        tabIndex: -1,
+        ['data-disabled']: disabled, // used to identify disabled items in Menu.tsx
+      }),
+    };
 
     const localRef = useRef<MenuItemElement>(null);
     useImperativeHandle(ref, () => localRef.current!);
@@ -128,6 +148,7 @@ export const MenuItem = React.memo(
         aria-label={ariaLabel}
         aria-checked={ariaChecked}
         tabIndex={tabIndex}
+        {...disabledProps}
       >
         <>
           {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
@@ -198,6 +219,17 @@ const getStyles = (theme: GrafanaTheme2) => {
         svg {
           color: ${theme.colors.error.contrastText};
         }
+      }
+    `,
+    disabled: css`
+      color: ${theme.colors.action.disabledText};
+
+      &:hover,
+      &:focus,
+      &:focus-visible {
+        cursor: not-allowed;
+        background: none;
+        color: ${theme.colors.action.disabledText};
       }
     `,
     icon: css`

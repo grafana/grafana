@@ -1,4 +1,11 @@
-import { DataFrame, DataQueryRequest, DataQueryResponse, FieldType, MutableDataFrame } from '@grafana/data';
+import {
+  DataFrame,
+  DataQueryRequest,
+  DataQueryResponse,
+  FieldType,
+  MutableDataFrame,
+  PreferredVisualisationType,
+} from '@grafana/data';
 
 import { parseSampleValue, transform, transformDFToTable, transformV2 } from './result_transformer';
 import { PromQuery } from './types';
@@ -131,7 +138,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[1].name).toEqual('label1');
       expect(series.data[0].fields[2].name).toEqual('label2');
       expect(series.data[0].fields[3].name).toEqual('Value');
-      expect(series.data[0].meta?.preferredVisualisationType).toEqual('table');
+      expect(series.data[0].meta?.preferredVisualisationType).toEqual('rawPrometheus');
     });
 
     it('results with table format and multiple data frames should be transformed to 1 table dataFrame', () => {
@@ -181,7 +188,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[3].name).toEqual('label3');
       expect(series.data[0].fields[4].name).toEqual('label4');
       expect(series.data[0].fields[5].name).toEqual('Value');
-      expect(series.data[0].meta?.preferredVisualisationType).toEqual('table');
+      expect(series.data[0].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
     it('results with table and time_series format should be correctly transformed', () => {
@@ -230,7 +237,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields.length).toEqual(2);
       expect(series.data[0].meta?.preferredVisualisationType).toEqual('graph');
       expect(series.data[1].fields.length).toEqual(4);
-      expect(series.data[1].meta?.preferredVisualisationType).toEqual('table');
+      expect(series.data[1].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
     it('results with heatmap format should be correctly transformed', () => {
@@ -264,8 +271,8 @@ describe('Prometheus Result Transformer', () => {
               {
                 name: 'Value',
                 type: FieldType.number,
-                values: [20, 10, 30],
-                labels: { le: '2' },
+                values: [30, 10, 40],
+                labels: { le: '+Inf' },
               },
             ],
           }),
@@ -276,8 +283,8 @@ describe('Prometheus Result Transformer', () => {
               {
                 name: 'Value',
                 type: FieldType.number,
-                values: [30, 10, 40],
-                labels: { le: '3' },
+                values: [20, 10, 30],
+                labels: { le: '2' },
               },
             ],
           }),
@@ -289,6 +296,9 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
       expect(series.data[0].fields[2].values.toArray()).toEqual([10, 0, 30]);
       expect(series.data[0].fields[3].values.toArray()).toEqual([10, 0, 10]);
+      expect(series.data[0].fields[1].name).toEqual('1');
+      expect(series.data[0].fields[2].name).toEqual('2');
+      expect(series.data[0].fields[3].name).toEqual('+Inf');
     });
 
     it('results with heatmap format from multiple queries should be correctly transformed', () => {

@@ -169,7 +169,7 @@ describe('datasource_srv', () => {
         expect(ds?.name).toBe('${datasource}');
         expect(ds?.uid).toBe('${datasource}');
         expect(ds?.rawRef).toMatchInlineSnapshot(`
-          Object {
+          {
             "type": "test-db",
             "uid": "uid-code-BBB",
           }
@@ -193,7 +193,7 @@ describe('datasource_srv', () => {
         expect(ds?.name).toBe('${datasourceDefault}');
         expect(ds?.uid).toBe('${datasourceDefault}');
         expect(ds?.rawRef).toMatchInlineSnapshot(`
-          Object {
+          {
             "type": "test-db",
             "uid": "uid-code-BBB",
           }
@@ -239,26 +239,26 @@ describe('datasource_srv', () => {
 
     it('Can get list  of data sources with metrics: true, builtIn: true, mixed: true', () => {
       expect(dataSourceSrv.getList({ metrics: true, dashboard: true, mixed: true })).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "meta": Object {
+        [
+          {
+            "meta": {
               "metrics": true,
             },
             "name": "aaa",
             "type": "test-db",
             "uid": "uid-code-aaa",
           },
-          Object {
+          {
             "isDefault": true,
-            "meta": Object {
+            "meta": {
               "metrics": true,
             },
             "name": "BBB",
             "type": "test-db",
             "uid": "uid-code-BBB",
           },
-          Object {
-            "meta": Object {
+          {
+            "meta": {
               "annotations": true,
               "metrics": true,
             },
@@ -266,16 +266,16 @@ describe('datasource_srv', () => {
             "type": "test-db",
             "uid": "uid-code-mmm",
           },
-          Object {
-            "meta": Object {
+          {
+            "meta": {
               "metrics": true,
             },
             "name": "ZZZ",
             "type": "test-db",
             "uid": "uid-code-ZZZ",
           },
-          Object {
-            "meta": Object {
+          {
+            "meta": {
               "builtIn": true,
               "id": "mixed",
               "metrics": true,
@@ -284,8 +284,8 @@ describe('datasource_srv', () => {
             "type": "test-db",
             "uid": "-- Mixed --",
           },
-          Object {
-            "meta": Object {
+          {
+            "meta": {
               "builtIn": true,
               "id": "dashboard",
               "metrics": true,
@@ -294,8 +294,8 @@ describe('datasource_srv', () => {
             "type": "dashboard",
             "uid": "-- Dashboard --",
           },
-          Object {
-            "meta": Object {
+          {
+            "meta": {
               "builtIn": true,
               "id": "grafana",
               "metrics": true,

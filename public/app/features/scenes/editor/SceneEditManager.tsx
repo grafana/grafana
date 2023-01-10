@@ -2,11 +2,17 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import {
+  SceneObjectBase,
+  SceneEditorState,
+  SceneEditor,
+  SceneObject,
+  SceneComponentProps,
+  SceneComponent,
+} from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneEditorState, SceneEditor, SceneObject, SceneComponentProps, SceneComponent } from '../core/types';
-
+import { SceneComponentEditWrapper } from './SceneComponentEditWrapper';
 import { SceneObjectEditor } from './SceneObjectEditor';
 import { SceneObjectTree } from './SceneObjectTree';
 
@@ -31,6 +37,10 @@ export class SceneEditManager extends SceneObjectBase<SceneEditorState> implemen
 
   public onSelectObject(model: SceneObject) {
     this.setState({ selectedObject: { ref: model } });
+  }
+
+  public getEditComponentWrapper() {
+    return SceneComponentEditWrapper;
   }
 }
 

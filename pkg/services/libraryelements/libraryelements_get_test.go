@@ -49,7 +49,7 @@ func TestGetLibraryElement(t *testing.T) {
 						Version: 1,
 						Meta: LibraryElementDTOMeta{
 							FolderName:          "ScenarioFolder",
-							FolderUID:           sc.folder.Uid,
+							FolderUID:           sc.folder.UID,
 							ConnectedDashboards: 0,
 							Created:             res.Result.Meta.Created,
 							Updated:             res.Result.Meta.Updated,
@@ -119,7 +119,7 @@ func TestGetLibraryElement(t *testing.T) {
 				Title: "Testing getHandler",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.Id)
 			require.NoError(t, err)
 
@@ -144,7 +144,7 @@ func TestGetLibraryElement(t *testing.T) {
 						Version: 1,
 						Meta: LibraryElementDTOMeta{
 							FolderName:          "ScenarioFolder",
-							FolderUID:           sc.folder.Uid,
+							FolderUID:           sc.folder.UID,
 							ConnectedDashboards: 1,
 							Created:             res.Result.Meta.Created,
 							Updated:             res.Result.Meta.Updated,

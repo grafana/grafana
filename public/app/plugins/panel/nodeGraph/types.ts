@@ -35,6 +35,8 @@ export type NodeDatum = SimulationNodeDatum & {
   color?: Field;
 };
 
+export type NodeDatumFromEdge = NodeDatum & { mainStatNumeric?: number; secondaryStatNumeric?: number };
+
 // This is the data we have before the graph is laid out with source and target being string IDs.
 type LinkDatum = SimulationLinkDatum<NodeDatum> & {
   source: string;

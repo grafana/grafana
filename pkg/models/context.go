@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -15,7 +16,7 @@ import (
 type ReqContext struct {
 	*web.Context
 	*user.SignedInUser
-	UserToken *UserToken
+	UserToken *usertoken.UserToken
 
 	IsSignedIn     bool
 	IsRenderCall   bool

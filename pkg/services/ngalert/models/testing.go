@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr"
-	models2 "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -140,9 +140,27 @@ func WithOrgID(orgId int64) AlertRuleMutator {
 	}
 }
 
-func WithNamespace(namespace *models2.Folder) AlertRuleMutator {
+func WithNamespace(namespace *folder.Folder) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.NamespaceUID = namespace.Uid
+		rule.NamespaceUID = namespace.UID
+	}
+}
+
+func WithInterval(interval time.Duration) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.IntervalSeconds = int64(interval.Seconds())
+	}
+}
+
+func WithTitle(title string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Title = title
+	}
+}
+
+func WithFor(duration time.Duration) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.For = duration
 	}
 }
 

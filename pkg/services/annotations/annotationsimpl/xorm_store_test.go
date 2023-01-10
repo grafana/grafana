@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,7 +57,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		dashboardStore := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
+		quotaService := quotatest.New(false, nil)
+		dashboardStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
+		require.NoError(t, err)
 
 		testDashboard1 := models.SaveDashboardCommand{
 			UserId: 1,
@@ -87,6 +90,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			Type:        "alert",
 			Epoch:       10,
 			Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
+			Data:        simplejson.NewFromAny(map[string]interface{}{"data1": "I am a cool data", "data2": "I am another cool data"}),
 		}
 		err = repo.Add(context.Background(), annotation)
 		require.NoError(t, err)
@@ -181,6 +185,11 @@ func TestIntegrationAnnotations(t *testing.T) {
 			inserted, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 			assert.Len(t, inserted, count)
+			for _, ins := range inserted {
+				require.Equal(t, int64(12), ins.Time)
+				require.Equal(t, int64(12), ins.TimeEnd)
+				require.Equal(t, ins.Created, ins.Updated)
+			}
 		})
 
 		t.Run("Can batch-insert annotations with tags", func(t *testing.T) {
@@ -318,6 +327,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.Equal(t, annotationId, items[0].Id)
 			assert.Empty(t, items[0].Tags)
 			assert.Equal(t, "something new", items[0].Text)
+			data, err := items[0].Data.Map()
+			assert.NoError(t, err)
+			assert.Equal(t, data, map[string]interface{}{"data1": "I am a cool data", "data2": "I am another cool data"})
 		})
 
 		t.Run("Can update annotation with new tags", func(t *testing.T) {
@@ -347,6 +359,38 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.Equal(t, []string{"newtag1", "newtag2"}, items[0].Tags)
 			assert.Equal(t, "something new", items[0].Text)
 			assert.Greater(t, items[0].Updated, items[0].Created)
+		})
+
+		t.Run("Can update annotations with data", func(t *testing.T) {
+			query := &annotations.ItemQuery{
+				OrgId:        1,
+				DashboardId:  1,
+				From:         0,
+				To:           15,
+				SignedInUser: testUser,
+			}
+			items, err := repo.Get(context.Background(), query)
+			require.NoError(t, err)
+
+			annotationId := items[0].Id
+			data := simplejson.NewFromAny(map[string]interface{}{"data": "I am a data", "data2": "I am also a data"})
+			err = repo.Update(context.Background(), &annotations.Item{
+				Id:    annotationId,
+				OrgId: 1,
+				Text:  "something new",
+				Tags:  []string{"newtag1", "newtag2"},
+				Data:  data,
+			})
+			require.NoError(t, err)
+
+			items, err = repo.Get(context.Background(), query)
+			require.NoError(t, err)
+
+			assert.Equal(t, annotationId, items[0].Id)
+			assert.Equal(t, []string{"newtag1", "newtag2"}, items[0].Tags)
+			assert.Equal(t, "something new", items[0].Text)
+			assert.Greater(t, items[0].Updated, items[0].Created)
+			assert.Equal(t, data, items[0].Data)
 		})
 
 		t.Run("Can delete annotation", func(t *testing.T) {
@@ -453,7 +497,9 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 
 	var maximumTagsLength int64 = 60
 	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength}
-	dashboardStore := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg))
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
+	require.NoError(t, err)
 
 	testDashboard1 := models.SaveDashboardCommand{
 		UserId:   1,

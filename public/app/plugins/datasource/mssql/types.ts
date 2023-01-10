@@ -15,4 +15,5 @@ export interface MssqlOptions extends SQLOptions {
   encrypt?: MSSQLEncryptOptions;
   sslRootCertFile?: string;
   serverName?: string;
+  connectionTimeout?: number;
 }

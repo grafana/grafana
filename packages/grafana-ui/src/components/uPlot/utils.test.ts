@@ -31,23 +31,23 @@ describe('preparePlotData2', () => {
 
   it('creates array from DataFrame', () => {
     expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
-      Array [
-        Array [
+      [
+        [
           9997,
           9998,
           9999,
         ],
-        Array [
+        [
           -10,
           20,
           10,
         ],
-        Array [
+        [
           10,
           10,
           10,
         ],
-        Array [
+        [
           20,
           20,
           20,
@@ -67,23 +67,23 @@ describe('preparePlotData2', () => {
         ],
       });
       expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
-        Array [
-          Array [
+        [
+          [
             9997,
             9998,
             9999,
           ],
-          Array [
+          [
             -10,
             20,
             10,
           ],
-          Array [
+          [
             10,
             10,
             10,
           ],
-          Array [
+          [
             -20,
             -20,
             -20,
@@ -108,62 +108,62 @@ describe('preparePlotData2', () => {
         ],
       });
       expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
-        Array [
-          Array [
+        [
+          [
             9997,
             9998,
             9999,
             undefined,
           ],
-          Array [
+          [
             -10,
             20,
             10,
             30,
           ],
-          Array [
+          [
             10,
             10,
             10,
             null,
           ],
-          Array [
+          [
             null,
             -20,
             -20,
             -20,
           ],
-          Array [
+          [
             -20,
             -20,
             -20,
             null,
           ],
-          Array [
+          [
             -20,
             null,
             -20,
             -20,
           ],
-          Array [
+          [
             10,
             10,
             10,
             undefined,
           ],
-          Array [
+          [
             undefined,
             -20,
             -20,
             -20,
           ],
-          Array [
+          [
             -20,
             -20,
             -20,
             undefined,
           ],
-          Array [
+          [
             -20,
             undefined,
             -20,
@@ -182,23 +182,23 @@ describe('preparePlotData2', () => {
         ],
       });
       expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
-        Array [
-          Array [
+        [
+          [
             9997,
             9998,
             9999,
           ],
-          Array [
+          [
             -10,
             undefined,
             undefined,
           ],
-          Array [
+          [
             10,
             10,
             10,
           ],
-          Array [
+          [
             20,
             20,
             20,
@@ -230,23 +230,23 @@ describe('preparePlotData2', () => {
         ],
       });
       expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
-        Array [
-          Array [
+        [
+          [
             9997,
             9998,
             9999,
           ],
-          Array [
+          [
             -10,
             20,
             10,
           ],
-          Array [
+          [
             10,
             10,
             10,
           ],
-          Array [
+          [
             20,
             20,
             20,
@@ -277,23 +277,23 @@ describe('preparePlotData2', () => {
         ],
       });
       expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
-        Array [
-          Array [
+        [
+          [
             9997,
             9998,
             9999,
           ],
-          Array [
+          [
             -10,
             20,
             10,
           ],
-          Array [
+          [
             10,
             10,
             10,
           ],
-          Array [
+          [
             30,
             30,
             30,
@@ -333,28 +333,28 @@ describe('preparePlotData2', () => {
         ],
       });
       expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
-        Array [
-          Array [
+        [
+          [
             9997,
             9998,
             9999,
           ],
-          Array [
+          [
             -10,
             20,
             10,
           ],
-          Array [
+          [
             10,
             10,
             10,
           ],
-          Array [
+          [
             -30,
             0,
             -10,
           ],
-          Array [
+          [
             -40,
             -10,
             -20,
@@ -401,38 +401,38 @@ describe('preparePlotData2', () => {
       });
 
       expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
-        Array [
-          Array [
+        [
+          [
             9997,
             9998,
             9999,
           ],
-          Array [
+          [
             -10,
             20,
             10,
           ],
-          Array [
+          [
             10,
             10,
             10,
           ],
-          Array [
+          [
             30,
             30,
             30,
           ],
-          Array [
+          [
             1,
             2,
             3,
           ],
-          Array [
+          [
             2,
             4,
             6,
           ],
-          Array [
+          [
             3,
             6,
             9,
@@ -476,33 +476,33 @@ describe('preparePlotData2', () => {
       });
 
       expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
-        Array [
-          Array [
+        [
+          [
             9997,
             9998,
             9999,
           ],
-          Array [
+          [
             -10,
             20,
             10,
           ],
-          Array [
+          [
             10,
             10,
             10,
           ],
-          Array [
+          [
             1,
             2,
             3,
           ],
-          Array [
+          [
             1,
             2,
             3,
           ],
-          Array [
+          [
             2,
             4,
             6,
@@ -615,8 +615,8 @@ describe('preparePlotData2', () => {
     })!;
 
     expect(preparePlotData2(df, getStackingGroups(df))).toMatchInlineSnapshot(`
-      Array [
-        Array [
+      [
+        [
           1639455966000,
           1639629625944,
           1639803285888,
@@ -636,7 +636,7 @@ describe('preparePlotData2', () => {
           1642234525104,
           1642408185048,
         ],
-        Array [
+        [
           0,
           0,
           0,
@@ -656,7 +656,7 @@ describe('preparePlotData2', () => {
           0,
           0,
         ],
-        Array [
+        [
           0,
           0,
           2500,
@@ -676,7 +676,7 @@ describe('preparePlotData2', () => {
           0,
           0,
         ],
-        Array [
+        [
           0,
           0,
           30500,
@@ -696,7 +696,7 @@ describe('preparePlotData2', () => {
           0,
           0,
         ],
-        Array [
+        [
           0,
           0,
           30500,
@@ -716,7 +716,7 @@ describe('preparePlotData2', () => {
           0,
           0,
         ],
-        Array [
+        [
           0,
           0,
           35500,
@@ -736,7 +736,7 @@ describe('preparePlotData2', () => {
           0,
           0,
         ],
-        Array [
+        [
           122,
           123,
           47845,
@@ -756,7 +756,7 @@ describe('preparePlotData2', () => {
           0,
           0,
         ],
-        Array [
+        [
           122,
           123,
           47845,
@@ -776,7 +776,7 @@ describe('preparePlotData2', () => {
           0,
           0,
         ],
-        Array [
+        [
           122,
           123,
           47845,
@@ -796,7 +796,7 @@ describe('preparePlotData2', () => {
           0,
           0,
         ],
-        Array [
+        [
           122,
           123,
           47845,
@@ -816,7 +816,7 @@ describe('preparePlotData2', () => {
           0,
           0,
         ],
-        Array [
+        [
           122,
           123,
           48095,
@@ -836,7 +836,7 @@ describe('preparePlotData2', () => {
           0,
           0,
         ],
-        Array [
+        [
           122,
           123,
           48095,
@@ -856,7 +856,7 @@ describe('preparePlotData2', () => {
           1520,
           665.35,
         ],
-        Array [
+        [
           122,
           123,
           48095,
@@ -876,7 +876,7 @@ describe('preparePlotData2', () => {
           1520,
           665.35,
         ],
-        Array [
+        [
           122,
           123,
           48095,
@@ -896,7 +896,7 @@ describe('preparePlotData2', () => {
           5120,
           665.35,
         ],
-        Array [
+        [
           122,
           123,
           48095,
@@ -916,7 +916,7 @@ describe('preparePlotData2', () => {
           6795,
           665.35,
         ],
-        Array [
+        [
           122,
           123,
           48095,
@@ -936,7 +936,7 @@ describe('preparePlotData2', () => {
           6795,
           665.35,
         ],
-        Array [
+        [
           122,
           123,
           48095,
@@ -956,7 +956,7 @@ describe('preparePlotData2', () => {
           62118.84,
           14496.31,
         ],
-        Array [
+        [
           122,
           123,
           48095,
@@ -976,7 +976,7 @@ describe('preparePlotData2', () => {
           62118.84,
           14496.31,
         ],
-        Array [
+        [
           122,
           123,
           48095,
@@ -1020,16 +1020,16 @@ describe('auto stacking groups', () => {
     });
 
     expect(getStackingGroups(df)).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             1,
           ],
         },
-        Object {
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             2,
           ],
         },
@@ -1068,17 +1068,17 @@ describe('auto stacking groups', () => {
     });
 
     expect(getStackingGroups(df)).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "dir": -1,
-          "series": Array [
+          "series": [
             1,
             4,
           ],
         },
-        Object {
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             2,
             3,
           ],
@@ -1115,10 +1115,10 @@ describe('auto stacking groups', () => {
     });
 
     expect(getStackingGroups(df)).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             1,
             2,
             3,
@@ -1186,34 +1186,34 @@ describe('auto stacking groups', () => {
     });
 
     expect(getStackingGroups(df)).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             1,
           ],
         },
-        Object {
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             2,
           ],
         },
-        Object {
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             3,
           ],
         },
-        Object {
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             4,
           ],
         },
-        Object {
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             5,
           ],
         },
@@ -1239,16 +1239,16 @@ describe('auto stacking groups', () => {
     });
 
     expect(getStackingGroups(df)).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             1,
           ],
         },
-        Object {
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             2,
           ],
         },
@@ -1296,35 +1296,35 @@ describe('auto stacking groups', () => {
     });
 
     expect(getStackingGroups(df)).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             1,
             2,
           ],
         },
-        Object {
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             3,
           ],
         },
-        Object {
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             4,
           ],
         },
-        Object {
+        {
           "dir": 1,
-          "series": Array [
+          "series": [
             5,
           ],
         },
-        Object {
+        {
           "dir": -1,
-          "series": Array [
+          "series": [
             6,
           ],
         },

@@ -55,35 +55,35 @@ describe('Join by labels', () => {
       },
       input
     );
-    expect(result.fields[result.fields.length - 1].config).toMatchInlineSnapshot(`Object {}`);
+    expect(result.fields[result.fields.length - 1].config).toMatchInlineSnapshot(`{}`);
     expect(toRowsSnapshow(result)).toMatchInlineSnapshot(`
-      Object {
-        "columns": Array [
+      {
+        "columns": [
           "cluster",
           "job",
           "Temp",
           "Speed",
         ],
-        "rows": Array [
-          Array [
+        "rows": [
+          [
             "A",
             "J1",
             10,
             undefined,
           ],
-          Array [
+          [
             "A",
             "J1",
             200,
             undefined,
           ],
-          Array [
+          [
             "B",
             "J1",
             10,
             22,
           ],
-          Array [
+          [
             "B",
             "J1",
             200,
@@ -115,21 +115,21 @@ describe('Join by labels', () => {
       input
     );
     expect(result).toMatchInlineSnapshot(`
-      Object {
-        "fields": Array [
-          Object {
-            "config": Object {},
+      {
+        "fields": [
+          {
+            "config": {},
             "name": "Error",
             "type": "string",
-            "values": Array [
+            "values": [
               "No labels in result",
             ],
           },
         ],
         "length": 0,
-        "meta": Object {
-          "notices": Array [
-            Object {
+        "meta": {
+          "notices": [
+            {
               "severity": "error",
               "text": "No labels in result",
             },

@@ -22,7 +22,7 @@ function getDefaultEditorMode(expr: string) {
     return QueryEditorMode.Code;
   }
 
-  const value = store.get(queryEditorModeDefaultLocalStorageKey) as QueryEditorMode;
+  const value: QueryEditorMode = store.get(queryEditorModeDefaultLocalStorageKey);
   switch (value) {
     case QueryEditorMode.Builder:
     case QueryEditorMode.Code:

@@ -10,10 +10,12 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	models2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fake_ds "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -29,7 +31,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestSendingToExternalAlertmanager(t *testing.T) {
+func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ruleKey := models.GenerateRuleKey(1)
 
 	fakeAM := NewFakeExternalAlertmanager(t)
@@ -47,11 +52,20 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 		Host:   "localhost",
 	}
 
+	ds1 := datasources.DataSource{
+		Url:   fakeAM.Server.URL,
+		OrgId: ruleKey.OrgID,
+		Type:  datasources.DS_ALERTMANAGER,
+		JsonData: simplejson.NewFromAny(map[string]interface{}{
+			"handleGrafanaManagedAlerts": true,
+			"implementation":             "prometheus",
+		}),
+	}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
-		&fake_ds.FakeDataSourceService{}, fake_secrets.NewFakeSecretsService())
+		&fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}, fake_secrets.NewFakeSecretsService())
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.AllAlertmanagers},
+		{OrgID: ruleKey.OrgID, SendAlertsTo: models.AllAlertmanagers},
 	}, nil)
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
@@ -86,7 +100,10 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey.OrgID, 0, 0)
 }
 
-func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
+func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ruleKey1 := models.GenerateRuleKey(1)
 	ruleKey2 := models.GenerateRuleKey(2)
 
@@ -105,11 +122,21 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 		Host:   "localhost",
 	}
 
+	ds1 := datasources.DataSource{
+		Url:   fakeAM.Server.URL,
+		OrgId: ruleKey1.OrgID,
+		Type:  datasources.DS_ALERTMANAGER,
+		JsonData: simplejson.NewFromAny(map[string]interface{}{
+			"handleGrafanaManagedAlerts": true,
+			"implementation":             "prometheus",
+		}),
+	}
+	fakeDs := &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
-		&fake_ds.FakeDataSourceService{}, fake_secrets.NewFakeSecretsService())
+		fakeDs, fake_secrets.NewFakeSecretsService())
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey1.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.AllAlertmanagers},
+		{OrgID: ruleKey1.OrgID, SendAlertsTo: models.AllAlertmanagers},
 	}, nil)
 
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
@@ -122,9 +149,20 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey1.OrgID, 1, 0)
 
 	// 1. Now, let's assume a new org comes along.
+	ds2 := datasources.DataSource{
+		Url:   fakeAM.Server.URL,
+		OrgId: ruleKey2.OrgID,
+		Type:  datasources.DS_ALERTMANAGER,
+		JsonData: simplejson.NewFromAny(map[string]interface{}{
+			"handleGrafanaManagedAlerts": true,
+			"implementation":             "prometheus",
+		}),
+	}
+	fakeDs.DataSources = append(fakeDs.DataSources, &ds2)
+
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey1.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.AllAlertmanagers},
-		{OrgID: ruleKey2.OrgID, Alertmanagers: []string{fakeAM.Server.URL}},
+		{OrgID: ruleKey1.OrgID, SendAlertsTo: models.AllAlertmanagers},
+		{OrgID: ruleKey2.OrgID},
 	}, nil)
 
 	// If we sync again, new externalAlertmanagers must have spawned.
@@ -157,10 +195,20 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 
 	// 2. Next, let's modify the configuration of an organization by adding an extra alertmanager.
 	fakeAM2 := NewFakeExternalAlertmanager(t)
+	ds3 := datasources.DataSource{
+		Url:   fakeAM2.Server.URL,
+		OrgId: ruleKey2.OrgID,
+		Type:  datasources.DS_ALERTMANAGER,
+		JsonData: simplejson.NewFromAny(map[string]interface{}{
+			"handleGrafanaManagedAlerts": true,
+			"implementation":             "prometheus",
+		}),
+	}
+	fakeDs.DataSources = append(fakeDs.DataSources, &ds3)
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey1.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.AllAlertmanagers},
-		{OrgID: ruleKey2.OrgID, Alertmanagers: []string{fakeAM.Server.URL, fakeAM2.Server.URL}},
+		{OrgID: ruleKey1.OrgID, SendAlertsTo: models.AllAlertmanagers},
+		{OrgID: ruleKey2.OrgID},
 	}, nil)
 
 	// Before we sync, let's grab the existing hash of this particular org.
@@ -177,9 +225,10 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey2.OrgID, 2, 0)
 
 	// 3. Now, let's provide a configuration that fails for OrgID = 1.
+	fakeDs.DataSources[0].Url = "123://invalid.org"
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey1.OrgID, Alertmanagers: []string{"123://invalid.org"}, SendAlertsTo: models.AllAlertmanagers},
-		{OrgID: ruleKey2.OrgID, Alertmanagers: []string{fakeAM.Server.URL, fakeAM2.Server.URL}},
+		{OrgID: ruleKey1.OrgID, SendAlertsTo: models.AllAlertmanagers},
+		{OrgID: ruleKey2.OrgID},
 	}, nil)
 
 	// Before we sync, let's get the current config hash.
@@ -188,14 +237,15 @@ func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
 	// Now, sync again.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
 
-	// The old configuration should still be running.
-	require.Equal(t, alertsRouter.externalAlertmanagersCfgHash[ruleKey1.OrgID], currentHash)
-	require.Equal(t, 1, len(alertsRouter.AlertmanagersFor(ruleKey1.OrgID)))
+	// The old configuration should not be running.
+	require.NotEqual(t, alertsRouter.externalAlertmanagersCfgHash[ruleKey1.OrgID], currentHash)
+	require.Equal(t, 0, len(alertsRouter.AlertmanagersFor(ruleKey1.OrgID)))
 
 	// If we fix it - it should be applied.
+	fakeDs.DataSources[0].Url = "notarealalertmanager:3030"
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey1.OrgID, Alertmanagers: []string{"notarealalertmanager:3030"}, SendAlertsTo: models.AllAlertmanagers},
-		{OrgID: ruleKey2.OrgID, Alertmanagers: []string{fakeAM.Server.URL, fakeAM2.Server.URL}},
+		{OrgID: ruleKey1.OrgID, SendAlertsTo: models.AllAlertmanagers},
+		{OrgID: ruleKey2.OrgID},
 	}, nil)
 
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
@@ -232,11 +282,20 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 		Host:   "localhost",
 	}
 
+	ds := datasources.DataSource{
+		Url:   fakeAM.Server.URL,
+		OrgId: ruleKey.OrgID,
+		Type:  datasources.DS_ALERTMANAGER,
+		JsonData: simplejson.NewFromAny(map[string]interface{}{
+			"handleGrafanaManagedAlerts": true,
+			"implementation":             "prometheus",
+		}),
+	}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
-		10*time.Minute, &fake_ds.FakeDataSourceService{}, fake_secrets.NewFakeSecretsService())
+		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}}, fake_secrets.NewFakeSecretsService())
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.AllAlertmanagers},
+		{OrgID: ruleKey.OrgID, SendAlertsTo: models.AllAlertmanagers},
 	}, nil)
 	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
 	// when the first alert triggers.
@@ -262,7 +321,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 
 	// Now, let's change the Alertmanagers choice to send only to the external Alertmanager.
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.ExternalAlertmanagers},
+		{OrgID: ruleKey.OrgID, SendAlertsTo: models.ExternalAlertmanagers},
 	}, nil)
 	// Again, make sure we sync and verify the externalAlertmanagers.
 	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase())
@@ -274,7 +333,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 
 	// Finally, let's change the Alertmanagers choice to send only to the internal Alertmanager.
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
-		{OrgID: ruleKey.OrgID, Alertmanagers: []string{fakeAM.Server.URL}, SendAlertsTo: models.InternalAlertmanager},
+		{OrgID: ruleKey.OrgID, SendAlertsTo: models.InternalAlertmanager},
 	}, nil)
 
 	// Again, make sure we sync and verify the externalAlertmanagers.
@@ -438,6 +497,65 @@ func TestBuildExternalURL(t *testing.T) {
 			url, err := sch.buildExternalURL(test.ds)
 			require.NoError(t, err)
 			require.Equal(t, test.expectedURL, url)
+		})
+	}
+}
+
+func TestAlertManegers_asSHA256(t *testing.T) {
+	tc := []struct {
+		name       string
+		amUrls     []string
+		ciphertext string
+	}{
+		{
+			name:       "asSHA256",
+			amUrls:     []string{"http://localhost:9093"},
+			ciphertext: "3ec9db375a5ba12f7c7b704922cf4b8e21a31e30d85be2386803829f0ee24410",
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.ciphertext, asSHA256(tt.amUrls))
+		})
+	}
+}
+
+func TestAlertManagers_buildRedactedAMs(t *testing.T) {
+	fakeLogger := logtest.Fake{}
+
+	tc := []struct {
+		name     string
+		orgId    int64
+		amUrls   []string
+		errCalls int
+		errLog   string
+		errCtx   []interface{}
+		expected []string
+	}{
+		{
+			name:     "buildRedactedAMs",
+			orgId:    1,
+			amUrls:   []string{"http://user:password@localhost:9093"},
+			errCalls: 0,
+			errLog:   "",
+			expected: []string{"http://user:xxxxx@localhost:9093"},
+		},
+		{
+			name:     "Error building redacted AM URLs",
+			orgId:    2,
+			amUrls:   []string{"1234://user:password@localhost:9094"},
+			errCalls: 1,
+			errLog:   "Failed to parse alertmanager string",
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, buildRedactedAMs(&fakeLogger, tt.amUrls, tt.orgId))
+			require.Equal(t, tt.errCalls, fakeLogger.ErrorLogs.Calls)
+			require.Equal(t, tt.errLog, fakeLogger.ErrorLogs.Message)
 		})
 	}
 }

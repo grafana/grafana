@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
-func GetObjectKindInfo() models.ObjectKindInfo {
-	return models.ObjectKindInfo{
+func GetEntityKindInfo() models.EntityKindInfo {
+	return models.EntityKindInfo{
 		ID:            models.StandardKindSVG,
 		Name:          "SVG",
 		Description:   "Scalable Vector Graphics",
@@ -21,8 +21,8 @@ func GetObjectKindInfo() models.ObjectKindInfo {
 }
 
 // SVG sanitizer based on the rendering service
-func GetObjectSummaryBuilder(allowUnsanitizedSvgUpload bool, renderer rendering.Service) models.ObjectSummaryBuilder {
-	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
+func GetEntitySummaryBuilder(allowUnsanitizedSvgUpload bool, renderer rendering.Service) models.EntitySummaryBuilder {
+	return func(ctx context.Context, uid string, body []byte) (*models.EntitySummary, []byte, error) {
 		if !IsSVG(body) {
 			return nil, nil, fmt.Errorf("invalid svg")
 		}
@@ -45,7 +45,7 @@ func GetObjectSummaryBuilder(allowUnsanitizedSvgUpload bool, renderer rendering.
 			sanitized = body
 		}
 
-		return &models.ObjectSummary{
+		return &models.EntitySummary{
 			Kind: models.StandardKindSVG,
 			Name: guessNameFromUID(uid),
 			UID:  uid,

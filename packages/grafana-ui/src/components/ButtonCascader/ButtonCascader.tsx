@@ -51,7 +51,7 @@ export const ButtonCascader: React.FC<ButtonCascaderProps> = (props) => {
 
   // Weird way to do this bit it goes around a styling issue in Button where even null/undefined child triggers
   // styling change which messes up the look if there is only single icon content.
-  let content: any = props.children;
+  let content: React.ReactNode = props.children;
   if (!hideDownIcon) {
     content = [props.children, <Icon key={'down-icon'} name="angle-down" className={styles.icons.right} />];
   }

@@ -24,7 +24,7 @@ const queryTypeProfile = "profile"
 const queryTypeMetrics = "metrics"
 const queryTypeBoth = "both"
 
-// query processes single Fire query transforming the response to data.Frame packaged in DataResponse
+// query processes single Parca query transforming the response to data.Frame packaged in DataResponse
 func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	var qm queryModel
 	response := backend.DataResponse{}
@@ -97,7 +97,7 @@ type CustomMeta struct {
 	ProfileTypeID string
 }
 
-// responseToDataFrames turns fire response to data.Frame. We encode the data into a nested set format where we have
+// responseToDataFrames turns Parca response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
 func responseToDataFrames(resp *connect.Response[v1alpha1.QueryResponse]) *data.Frame {

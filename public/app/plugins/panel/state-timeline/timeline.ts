@@ -13,6 +13,8 @@ const { round, min, ceil } = Math;
 
 const textPadding = 2;
 
+let pxPerChar = 6;
+
 const laneDistr = SPACE_BETWEEN;
 
 type WalkCb = (idx: number, offPx: number, dimPx: number) => void;
@@ -318,19 +320,20 @@ export function getConfig(opts: TimelineCoreOptions) {
                 if (dataY[ix] != null) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
 
-                  // Todo refine this to better know when to not render text (when values do not fit)
-                  if (!boxRect || (showValue === VisibilityMode.Auto && boxRect.w < 25)) {
+                  if (!boxRect || boxRect.x >= xDim) {
                     continue;
                   }
 
-                  if (boxRect.x >= xDim) {
-                    continue; // out of view
+                  let maxChars = Math.floor(boxRect?.w / pxPerChar);
+
+                  if (showValue === VisibilityMode.Auto && maxChars < 2) {
+                    continue;
                   }
+
+                  let txt = formatValue(sidx, dataY[ix]);
 
                   // center-aligned
                   let x = round(boxRect.x + xOff + boxRect.w / 2);
-                  const txt = formatValue(sidx, dataY[ix]);
-
                   if (mode === TimelineMode.Changes) {
                     if (alignValue === 'left') {
                       x = round(boxRect.x + xOff + strokeWidth + textPadding);
@@ -341,7 +344,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
                   // TODO: cache by fillColor to avoid setting ctx for label
                   u.ctx.fillStyle = theme.colors.getContrastText(boxRect.fillColor, 3);
-                  u.ctx.fillText(txt, x, y);
+                  u.ctx.fillText(txt.slice(0, maxChars), x, y);
                 }
               }
             }
@@ -354,6 +357,15 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   const init = (u: uPlot) => {
     let over = u.over;
+    let chars = '';
+    for (let i = 32; i <= 126; i++) {
+      chars += String.fromCharCode(i);
+    }
+    pxPerChar = Math.ceil((u.ctx.measureText(chars).width / chars.length) * uPlot.pxRatio);
+
+    // be a bit more conservtive to prevent overlap
+    pxPerChar += 2.5;
+
     over.style.overflow = 'hidden';
     hoverMarks.forEach((m) => {
       over.appendChild(m);

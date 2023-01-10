@@ -8,12 +8,13 @@ describe('Fields from JSON', () => {
       source: 'line',
       replace: true,
     };
+    const ctx = { interpolate: (v: string) => v };
     const data = toDataFrame({
       columns: ['ts', 'line'],
       rows: appl,
     });
 
-    const frames = extractFieldsTransformer.transformer(cfg)([data]);
+    const frames = extractFieldsTransformer.transformer(cfg, ctx)([data]);
     expect(frames.length).toEqual(1);
     expect(
       frames[0].fields.reduce((acc, v) => {
@@ -21,7 +22,7 @@ describe('Fields from JSON', () => {
         return acc;
       }, {} as any)
     ).toMatchInlineSnapshot(`
-      Object {
+      {
         "a": "string",
         "av": "number",
         "c": "string",
