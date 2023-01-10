@@ -100,8 +100,13 @@ export function DataSourcesListView({
                   ]}
                 </Card.Meta>
                 <Card.Tags>
-                  <LinkButton icon="apps" fill="outline" variant="secondary" href={config.appSubUrl + '/dashboard/new'}>
-                    Build a Dashboard
+                  <LinkButton
+                    icon="apps"
+                    fill="outline"
+                    variant="secondary"
+                    href={`dashboard/new-with-ds/${dataSource.uid}`}
+                  >
+                    Build a dashboard
                   </LinkButton>
                   {hasExploreRights && (
                     <LinkButton

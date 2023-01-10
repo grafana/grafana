@@ -34,7 +34,6 @@ func (gen *genBaseRegistry) JennyName() string {
 func (gen *genBaseRegistry) Generate(decls ...*DeclForGen) (*codejen.File, error) {
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("kind_registry.tmpl").Execute(buf, tvars_kind_registry{
-		NumStructured:     len(decls),
 		PackageName:       filepath.Base(gen.path),
 		KindPackagePrefix: filepath.ToSlash(filepath.Join("github.com/grafana/grafana", gen.kindrelroot)),
 		Kinds:             decls,

@@ -3,10 +3,14 @@ package authnimpl
 import (
 	"context"
 	"errors"
+	"net"
 	"net/http"
 	"net/url"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -120,6 +124,76 @@ func TestService_AuthenticateOrgID(t *testing.T) {
 
 			_, _, _ = s.Authenticate(context.Background(), "fake", tt.req)
 			assert.Equal(t, tt.expectedOrgID, calledWith)
+		})
+	}
+}
+
+func TestService_Login(t *testing.T) {
+	type TestCase struct {
+		desc   string
+		client string
+
+		expectedClientOK       bool
+		expectedClientErr      error
+		expectedClientIdentity *authn.Identity
+
+		expectedSessionErr error
+
+		expectedErr      error
+		expectedIdentity *authn.Identity
+	}
+
+	tests := []TestCase{
+		{
+			desc:             "should authenticate and create session for valid request",
+			client:           "fake",
+			expectedClientOK: true,
+			expectedClientIdentity: &authn.Identity{
+				ID: "user:1",
+			},
+			expectedIdentity: &authn.Identity{
+				ID:           "user:1",
+				SessionToken: &auth.UserToken{UserId: 1},
+			},
+		},
+		{
+			desc:        "should not authenticate with invalid client",
+			client:      "invalid",
+			expectedErr: authn.ErrClientNotConfigured,
+		},
+		{
+			desc:                   "should not authenticate non user identity",
+			client:                 "fake",
+			expectedClientOK:       true,
+			expectedClientIdentity: &authn.Identity{ID: "apikey:1"},
+			expectedErr:            authn.ErrUnsupportedIdentity,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			s := setupTests(t, func(svc *Service) {
+				svc.clients["fake"] = &authntest.FakeClient{
+					ExpectedErr:      tt.expectedClientErr,
+					ExpectedTest:     tt.expectedClientOK,
+					ExpectedIdentity: tt.expectedClientIdentity,
+				}
+				svc.sessionService = &authtest.FakeUserAuthTokenService{
+					CreateTokenProvider: func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
+						if tt.expectedSessionErr != nil {
+							return nil, tt.expectedSessionErr
+						}
+						return &auth.UserToken{UserId: user.ID}, nil
+					},
+				}
+			})
+
+			identity, err := s.Login(context.Background(), tt.client, &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    &url.URL{},
+			}})
+			assert.ErrorIs(t, err, tt.expectedErr)
+			assert.EqualValues(t, tt.expectedIdentity, identity)
 		})
 	}
 }
