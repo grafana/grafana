@@ -25,7 +25,7 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Comma
       continue;
     }
 
-    const section = isCreateAction ? t('command-palette.section.actions', 'actions') : getPagesSectionTranslation();
+    const section = isCreateAction ? t('command-palette.section.actions', 'Actions') : getPagesSectionTranslation();
 
     const action = {
       id: idForNavItem(navItem),
