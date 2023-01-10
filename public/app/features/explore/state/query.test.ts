@@ -33,8 +33,8 @@ import {
   runQueries,
   scanStartAction,
   scanStopAction,
-  storeSupplementaryQueryDataProviderAction,
   setSupplementaryQueryEnabled,
+  cleanSupplementaryQueryDataProviderAction,
 } from './query';
 import { makeExplorePaneState } from './utils';
 
@@ -164,7 +164,10 @@ describe('running queries', () => {
           querySubscription: unsubscribable,
           queries: ['A'],
           range: testRange,
-          supplementaryQueries: { [SupplementaryQueryType.LogsVolume]: { enabled: true } },
+          supplementaryQueries: {
+            [SupplementaryQueryType.LogsVolume]: { enabled: true },
+            [SupplementaryQueryType.LogsSample]: { enabled: true },
+          },
         },
       },
 
@@ -180,8 +183,10 @@ describe('running queries', () => {
     expect(dispatchedActions).toEqual([
       scanStopAction({ exploreId }),
       cancelQueriesAction({ exploreId }),
-      storeSupplementaryQueryDataProviderAction({ exploreId, type: SupplementaryQueryType.LogsVolume }),
+      cleanSupplementaryQueryDataProviderAction({ exploreId, type: SupplementaryQueryType.LogsVolume }),
       cleanSupplementaryQueryAction({ exploreId, type: SupplementaryQueryType.LogsVolume }),
+      cleanSupplementaryQueryDataProviderAction({ exploreId, type: SupplementaryQueryType.LogsSample }),
+      cleanSupplementaryQueryAction({ exploreId, type: SupplementaryQueryType.LogsSample }),
     ]);
   });
 });

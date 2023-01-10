@@ -24,6 +24,7 @@ export const createDefaultInitialState = () => {
           query: jest.fn(),
           getRef: jest.fn(),
           getLogsVolumeDataProvider: jest.fn(),
+          getLogsSampleDataProvider: jest.fn(),
           meta: {
             id: 'something',
           },
@@ -42,6 +43,9 @@ export const createDefaultInitialState = () => {
         richHistory: [],
         supplementaryQueries: {
           [SupplementaryQueryType.LogsVolume]: {
+            enabled: true,
+          },
+          [SupplementaryQueryType.LogsSample]: {
             enabled: true,
           },
         },
