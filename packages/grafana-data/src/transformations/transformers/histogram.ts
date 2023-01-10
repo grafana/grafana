@@ -106,7 +106,21 @@ export const histogramFrameBucketMinFieldName = 'xMin';
 /**
  * @internal
  */
+export function isHistogramFrameBucketMinFieldName(v: string) {
+  return v === histogramFrameBucketMinFieldName || 'BucketMin'; // REMOVE 'BuckentMin/Max'
+}
+
+/**
+ * @internal
+ */
 export const histogramFrameBucketMaxFieldName = 'xMax';
+
+/**
+ * @internal
+ */
+export function isHistogramFrameBucketMaxFieldName(v: string) {
+  return v === histogramFrameBucketMinFieldName || 'BucketMax'; // REMOVE 'BuckentMin/Max'
+}
 
 /**
  * @alpha
@@ -127,9 +141,9 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
   let xMax: Field | undefined = undefined;
   const counts: Field[] = [];
   for (const field of frame.fields) {
-    if (field.name === histogramFrameBucketMinFieldName) {
+    if (isHistogramFrameBucketMinFieldName(field.name)) {
       xMin = field;
-    } else if (field.name === histogramFrameBucketMaxFieldName) {
+    } else if (isHistogramFrameBucketMaxFieldName(field.name)) {
       xMax = field;
     } else if (field.type === FieldType.number) {
       counts.push(field);
