@@ -85,9 +85,8 @@ func TestUserSync_SyncUser(t *testing.T) {
 		log             log.Logger
 	}
 	type args struct {
-		ctx          context.Context
-		clientParams *authn.ClientParams
-		id           *authn.Identity
+		ctx context.Context
+		id  *authn.Identity
 	}
 	tests := []struct {
 		name    string
@@ -106,11 +105,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            false,
-					AllowSignUp:         false,
-					EnableDisabledUsers: false,
-				},
 				id: &authn.Identity{
 					ID:    "",
 					Login: "test",
@@ -121,6 +115,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 						Email:  ptrString("test"),
 						Login:  nil,
 					},
+					ClientParams: authn.ClientParams{},
 				},
 			},
 			wantErr: false,
@@ -134,6 +129,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email:  ptrString("test"),
 					Login:  nil,
 				},
+				ClientParams: authn.ClientParams{},
 			},
 		},
 		{
@@ -146,11 +142,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         false,
-					EnableDisabledUsers: false,
-				},
 				id: &authn.Identity{
 					ID:    "",
 					Login: "test",
@@ -160,6 +151,9 @@ func TestUserSync_SyncUser(t *testing.T) {
 						UserID: nil,
 						Email:  ptrString("test"),
 						Login:  nil,
+					},
+					ClientParams: authn.ClientParams{
+						SyncUser: true,
 					},
 				},
 			},
@@ -175,6 +169,9 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email:  ptrString("test"),
 					Login:  nil,
 				},
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 		},
 		{
@@ -187,11 +184,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         false,
-					EnableDisabledUsers: false,
-				},
 				id: &authn.Identity{
 					ID:    "",
 					Login: "test",
@@ -201,6 +193,9 @@ func TestUserSync_SyncUser(t *testing.T) {
 						UserID: nil,
 						Email:  nil,
 						Login:  ptrString("test"),
+					},
+					ClientParams: authn.ClientParams{
+						SyncUser: true,
 					},
 				},
 			},
@@ -216,6 +211,9 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email:  nil,
 					Login:  ptrString("test"),
 				},
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 		},
 		{
@@ -228,11 +226,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         false,
-					EnableDisabledUsers: false,
-				},
 				id: &authn.Identity{
 					ID:    "",
 					Login: "test",
@@ -242,6 +235,9 @@ func TestUserSync_SyncUser(t *testing.T) {
 						UserID: ptrInt64(1),
 						Email:  nil,
 						Login:  nil,
+					},
+					ClientParams: authn.ClientParams{
+						SyncUser: true,
 					},
 				},
 			},
@@ -257,6 +253,9 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email:  nil,
 					Login:  nil,
 				},
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 		},
 		{
@@ -269,11 +268,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         false,
-					EnableDisabledUsers: false,
-				},
+
 				id: &authn.Identity{
 					ID:    "",
 					Login: "test",
@@ -283,6 +278,9 @@ func TestUserSync_SyncUser(t *testing.T) {
 						UserID: nil,
 						Email:  nil,
 						Login:  nil,
+					},
+					ClientParams: authn.ClientParams{
+						SyncUser: true,
 					},
 				},
 			},
@@ -298,6 +296,9 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email:  nil,
 					Login:  nil,
 				},
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+				},
 			},
 		},
 		{
@@ -310,11 +311,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         false,
-					EnableDisabledUsers: false,
-				},
 				id: &authn.Identity{
 					ID:         "",
 					Login:      "test",
@@ -326,6 +322,9 @@ func TestUserSync_SyncUser(t *testing.T) {
 						UserID: nil,
 						Email:  nil,
 						Login:  nil,
+					},
+					ClientParams: authn.ClientParams{
+						SyncUser: true,
 					},
 				},
 			},
@@ -341,11 +340,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         true,
-					EnableDisabledUsers: true,
-				},
 				id: &authn.Identity{
 					ID:             "",
 					Login:          "test_create",
@@ -358,6 +352,11 @@ func TestUserSync_SyncUser(t *testing.T) {
 						UserID: nil,
 						Email:  ptrString("test_create"),
 						Login:  nil,
+					},
+					ClientParams: authn.ClientParams{
+						SyncUser:            true,
+						AllowSignUp:         true,
+						EnableDisabledUsers: true,
 					},
 				},
 			},
@@ -375,6 +374,11 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email:  ptrString("test_create"),
 					Login:  nil,
 				},
+				ClientParams: authn.ClientParams{
+					SyncUser:            true,
+					AllowSignUp:         true,
+					EnableDisabledUsers: true,
+				},
 			},
 		},
 		{
@@ -387,11 +391,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         false,
-					EnableDisabledUsers: true,
-				},
 				id: &authn.Identity{
 					ID:             "",
 					Login:          "test_mod",
@@ -403,6 +402,10 @@ func TestUserSync_SyncUser(t *testing.T) {
 						UserID: ptrInt64(3),
 						Email:  nil,
 						Login:  nil,
+					},
+					ClientParams: authn.ClientParams{
+						SyncUser:            true,
+						EnableDisabledUsers: true,
 					},
 				},
 			},
@@ -419,6 +422,10 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email:  nil,
 					Login:  nil,
 				},
+				ClientParams: authn.ClientParams{
+					SyncUser:            true,
+					EnableDisabledUsers: true,
+				},
 			},
 		},
 	}
@@ -430,7 +437,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 				quotaService:    tt.fields.quotaService,
 				log:             tt.fields.log,
 			}
-			err := s.SyncUser(tt.args.ctx, tt.args.clientParams, tt.args.id)
+			err := s.SyncUser(tt.args.ctx, tt.args.id, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
