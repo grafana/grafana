@@ -282,4 +282,5 @@ export type SupplementaryQueries = {
 
 export enum SupplementaryQueryType {
   LogsVolume = 'LogsVolume',
+  LogsSample = 'LogsSample',
 }
