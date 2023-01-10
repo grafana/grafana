@@ -9,7 +9,7 @@ keywords:
   - edit templates
   - delete templates
 title: Create message templates
-weight: 300
+weight: 200
 ---
 
 # Create message templates
