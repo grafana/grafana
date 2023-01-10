@@ -1,9 +1,13 @@
-import { VizPanel, SceneGridRow } from '../components';
+import {
+  VizPanel,
+  SceneGridRow,
+  SceneTimePicker,
+  SceneFlexLayout,
+  SceneGridLayout,
+  SceneTimeRange,
+} from '@grafana/scenes';
+
 import { Scene } from '../components/Scene';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
-import { SceneGridLayout } from '../components/layout/SceneGridLayout';
-import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
