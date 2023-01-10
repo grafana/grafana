@@ -107,7 +107,7 @@ export const histogramFrameBucketMinFieldName = 'xMin';
  * @internal
  */
 export function isHistogramFrameBucketMinFieldName(v: string) {
-  return v === histogramFrameBucketMinFieldName || 'BucketMin'; // REMOVE 'BuckentMin/Max'
+  return v === histogramFrameBucketMinFieldName || v === 'BucketMin'; // REMOVE 'BuckentMin/Max'
 }
 
 /**
@@ -119,7 +119,7 @@ export const histogramFrameBucketMaxFieldName = 'xMax';
  * @internal
  */
 export function isHistogramFrameBucketMaxFieldName(v: string) {
-  return v === histogramFrameBucketMinFieldName || 'BucketMax'; // REMOVE 'BuckentMin/Max'
+  return v === histogramFrameBucketMaxFieldName || v === 'BucketMax'; // REMOVE 'BuckentMin/Max'
 }
 
 /**
