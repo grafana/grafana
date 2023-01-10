@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func Test_log_group_fields_route(t *testing.T) {
+func TestLogGroupFieldsRoute(t *testing.T) {
 	mockFeatures := mocks.MockFeatures{}
 	reqCtxFunc := func(pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
 		return models.RequestContext{Features: &mockFeatures}, err
