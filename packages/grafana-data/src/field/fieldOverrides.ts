@@ -418,6 +418,10 @@ export const getLinksSupplier =
           text: formattedValueToString(config.calculatedValue),
         };
       }
+    } else if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
+      valueVars = {
+        raw: field.values.get(config.valueRowIndex),
+      };
     }
 
     scopedVars['__value'] = {
