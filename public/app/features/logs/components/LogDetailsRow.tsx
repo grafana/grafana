@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
 import { CoreApp, Field, GrafanaTheme2, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
@@ -32,7 +33,7 @@ interface State {
   fieldStats: LogLabelStatsModel[] | null;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
   return {
     noHoverBackground: css`
       label: noHoverBackground;
@@ -94,6 +95,9 @@ const getStyles = (theme: GrafanaTheme2) => {
           }
         }
       }
+      & div:last-child > button {
+        color: ${activeButton ? theme.colors.primary.text : theme.colors.text.secondary};
+      }
     `,
     logDetailsStats: css`
       padding: 0 ${theme.spacing(1)};
@@ -114,7 +118,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
   };
-};
+});
 
 class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   state: State = {
@@ -215,7 +219,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       onClickFilterOutLabel,
     } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
-    const styles = getStyles(theme);
+    const activeButton = displayedFields?.includes(parsedKey) || showFieldsStats;
+    const styles = getStyles(theme, activeButton);
     const style = getLogRowStyles(theme);
     const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
 
