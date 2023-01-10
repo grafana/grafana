@@ -1,9 +1,9 @@
-import { debounce } from 'lodash';
-import React from 'react';
+// import { debounce } from 'lodash';
+import React, { useRef } from 'react';
 
+import { Field } from '../Forms/Field';
+import { InlineToast } from '../InlineToast/InlineToast';
 import { Input, Props as InputProps } from '../Input/Input';
-
-import { AutoSaveBadge } from './AutoSaveBadge';
 
 /**
 1.- Use the Input component as a base
@@ -22,13 +22,9 @@ export interface Props extends InputProps {
   onFinishChange: (string: string) => Promise<void>;
 }
 
-enum AutoSaveState {
-  DEFAULT_STATE = 'defaultState',
-  SAVED_STATE = 'savedState',
-  ERROR_STATE = 'errorState',
-}
+const SHOW_SUCCESS_DURATION = 2 * 1000;
 
-export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props) => {
   const {
     defaultValue = '',
     className,
@@ -43,36 +39,23 @@ export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props, r
   } = props;
   const [value, setValue] = React.useState(defaultValue);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [autoSaveState, setAutoSaveState] = React.useState(AutoSaveState.DEFAULT_STATE);
-  const [autoSaveIcon, setAutoSaveIcon] = React.useState('');
-
+  const [showSuccess, setShowSuccess] = React.useState(false);
+  const [showError, setShowError] = React.useState(false);
   //const debouncedValue = useMemo(()=> debounce(onFinishChange, 600), [onFinishChange]);
+  const inputRef = useRef<null | HTMLInputElement>(null);
+  React.useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
 
-  const autoSaveInfo = (currentState: AutoSaveState) => {
-    switch (currentState) {
-      case 'savedState':
-        return {
-          icon: setAutoSaveIcon('check'),
-          message: 'Saved!',
-          action: () => null,
-        };
-        break;
-      case 'errorState':
-        return {
-          icon: setAutoSaveIcon('repeat'),
-          message: 'Error saving',
-          action: () => null, //change it to return focus to input
-        };
-        break;
-      default:
-        return {
-          icon: setAutoSaveIcon(''),
-          message: '',
-          action: () => null,
-        };
-        break;
+    if (showSuccess) {
+      timeoutId = setTimeout(() => {
+        setShowSuccess(false);
+      }, SHOW_SUCCESS_DURATION);
     }
-  };
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [showSuccess]);
 
   const saveInputValue = async (event: React.FormEvent<HTMLInputElement>) => {
     if (value !== event.currentTarget.value) {
@@ -80,13 +63,12 @@ export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props, r
       try {
         await onFinishChange(event.currentTarget.value);
         setValue(event.currentTarget.value);
-        setAutoSaveState(AutoSaveState.SAVED_STATE);
         setIsLoading(false);
+        setShowError(false);
       } catch {
-        setAutoSaveState(AutoSaveState.ERROR_STATE);
         setIsLoading(false);
+        setShowError(true);
       }
-      autoSaveInfo(autoSaveState);
     }
   };
 
@@ -95,22 +77,23 @@ export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props, r
    * use InlineToast.tsx to show the save message
    */
   return (
-    <Input
-      {...restProps}
-      ref={ref}
-      value={value.toString()}
-      addonAfter={
-        <AutoSaveBadge
-          // icon={autoSaveIcon}
-          text={autoSaveInfo(autoSaveState).message}
-        />
-      }
-      onChange={(event) => {
-        saveInputValue(event);
-      }}
-      loading={isLoading}
-      data-testid={'autosave-input'}
-    />
+    <Field label="" invalid={showError} error={showError && 'Error saving this value'}>
+      <Input
+        {...restProps}
+        ref={inputRef}
+        value={value.toString()}
+        addonAfter={
+          <InlineToast suffixIcon={'check'} referenceElement={inputRef.current} placement={'right'}>
+            Saved!
+          </InlineToast>
+        }
+        onChange={(event) => {
+          saveInputValue(event);
+        }}
+        loading={isLoading}
+        data-testid={'autosave-input'}
+      />
+    </Field>
   );
 });
 
