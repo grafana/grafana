@@ -22,7 +22,6 @@ import (
 )
 
 var (
-	searchOrgsURL    = "/api/orgs/"
 	getOrgsURL       = "/api/orgs/%v"
 	getOrgsByNameURL = "/api/orgs/name/%v"
 )
@@ -520,6 +519,97 @@ func TestAPIEndpoint_DeleteOrgs_RBAC(t *testing.T) {
 	}
 }
 
+func TestAPIEndpoint_SearchOrgs_LegacyAccessControl(t *testing.T) {
+	type testCase struct {
+		desc           string
+		role           org.RoleType
+		isGrafanaAdmin bool
+		expectedCode   int
+	}
+
+	tests := []testCase{
+		{
+			desc:           "should not be able to search orgs as viewer",
+			role:           org.RoleViewer,
+			isGrafanaAdmin: false,
+			expectedCode:   http.StatusForbidden,
+		},
+		{
+			desc:           "should not be able to search orgs as editor",
+			role:           org.RoleEditor,
+			isGrafanaAdmin: false,
+			expectedCode:   http.StatusForbidden,
+		},
+		{
+			desc:           "should not be able to search orgs as amin",
+			role:           org.RoleAdmin,
+			isGrafanaAdmin: false,
+			expectedCode:   http.StatusForbidden,
+		},
+		{
+			desc:           "should be able to search orgs as grafana admin",
+			role:           org.RoleViewer,
+			isGrafanaAdmin: true,
+			expectedCode:   http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
+			})
+
+			req := webtest.RequestWithSignedInUser(server.NewGetRequest("/api/orgs"), &user.SignedInUser{
+				OrgID:          1,
+				OrgRole:        tt.role,
+				IsGrafanaAdmin: tt.isGrafanaAdmin,
+			})
+			res, err := server.Send(req)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
+func TestAPIEndpoint_SearchOrgs_RBAC(t *testing.T) {
+	type testCase struct {
+		desc         string
+		permissions  []accesscontrol.Permission
+		expectedCode int
+	}
+
+	tests := []testCase{
+		{
+			desc:         "should be able to search orgs as with correct permissions",
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsRead}},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:         "should not be able to search orgs without correct permissions",
+			expectedCode: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
+				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{OrgID: 1}}
+				hs.accesscontrolService = &actest.FakeService{ExpectedPermissions: tt.permissions}
+			})
+
+			req := webtest.RequestWithSignedInUser(server.NewGetRequest("/api/orgs"), userWithPermissions(1, nil))
+			res, err := server.Send(req)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
 // setupOrgsDBForAccessControlTests creates orgs up until orgID and fake user as member of org
 func setupOrgsDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, c accessControlScenarioContext, orgID int64) {
 	t.Helper()
@@ -533,47 +623,6 @@ func setupOrgsDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, c acc
 		_, err := c.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: fmt.Sprintf("TestOrg%v", i), UserID: 0})
 		require.NoError(t, err)
 	}
-}
-
-func TestAPIEndpoint_SearchOrgs_LegacyAccessControl(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	t.Run("Viewer cannot list Orgs", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodGet, searchOrgsURL, nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
-
-	sc.initCtx.SignedInUser.IsGrafanaAdmin = true
-	t.Run("Grafana Admin viewer can list Orgs", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodGet, searchOrgsURL, nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-	})
-}
-
-func TestAPIEndpoint_SearchOrgs_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true)
-
-	t.Run("AccessControl allows listing Orgs with correct permissions", func(t *testing.T) {
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsRead}}, accesscontrol.GlobalOrgID)
-		response := callAPI(sc.server, http.MethodGet, searchOrgsURL, nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-	})
-	t.Run("AccessControl prevents listing Orgs with correct permissions not granted globally", func(t *testing.T) {
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsRead}}, 1)
-		response := callAPI(sc.server, http.MethodGet, searchOrgsURL, nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
-	t.Run("AccessControl prevents listing Orgs with incorrect permissions", func(t *testing.T) {
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, accesscontrol.GlobalOrgID)
-		response := callAPI(sc.server, http.MethodGet, searchOrgsURL, nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
 }
 
 func TestAPIEndpoint_GetOrg_LegacyAccessControl(t *testing.T) {
