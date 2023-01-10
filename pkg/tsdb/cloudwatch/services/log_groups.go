@@ -57,8 +57,9 @@ func (s *LogGroupsService) GetLogGroupFields(request resources.LogGroupFieldsReq
 		LogGroupName: aws.String(request.LogGroupName),
 	}
 	// we should use LogGroupIdentifier instead of LogGroupName, but currently the api doesn't accept LogGroupIdentifier. need to check if it's a bug or not.
-	// if request.LogGroupARN != "" Lo. need
+	// if request.LogGroupARN != "" {
 	// 	input.LogGroupIdentifier = aws.String(strings.TrimSuffix(request.LogGroupARN, ":*"))
+	// 	input.LogGroupName = nil
 	// }
 
 	getLogGroupFieldsOutput, err := s.logGroupsAPI.GetLogGroupFields(input)

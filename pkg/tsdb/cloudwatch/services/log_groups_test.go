@@ -243,4 +243,63 @@ func Test_GetLogGroupFields(t *testing.T) {
 			},
 		}, resp)
 	})
+
+	// uncomment this test if when it's possible to pass only LogGroupIdentifier to the api
+	// t.Run("Should only set LogGroupIdentifier as api input in case both LogGroupName and LogGroupARN are specified", func(t *testing.T) {
+	// 	mockLogsAPI := &mocks.LogsAPI{}
+	// 	mockLogsAPI.On("GetLogGroupFields", mock.Anything).Return(
+	// 		&cloudwatchlogs.GetLogGroupFieldsOutput{}, nil)
+
+	// 	service := NewLogGroupsService(mockLogsAPI, false)
+	// 	resp, err := service.GetLogGroupFields(resources.LogGroupFieldsRequest{
+	// 		LogGroupName: "logGroupName",
+	// 		LogGroupARN:  "logGroupARN",
+	// 	})
+
+	// 	mockLogsAPI.AssertCalled(t, "GetLogGroupFields", &cloudwatchlogs.GetLogGroupFieldsInput{
+	// 		LogGroupIdentifier: utils.Pointer("logGroupARN"),
+	// 		LogGroupName:       nil,
+	// 	})
+	// 	assert.NotNil(t, resp)
+	// 	assert.NoError(t, err)
+	// })
+
+	// remove this test once the above test is uncommented
+	t.Run("Should only set LogGroupName as api input in case both LogGroupName and LogGroupARN are specified", func(t *testing.T) {
+		mockLogsAPI := &mocks.LogsAPI{}
+		mockLogsAPI.On("GetLogGroupFields", mock.Anything).Return(
+			&cloudwatchlogs.GetLogGroupFieldsOutput{}, nil)
+
+		service := NewLogGroupsService(mockLogsAPI, false)
+		resp, err := service.GetLogGroupFields(resources.LogGroupFieldsRequest{
+			LogGroupName: "logGroupName",
+			LogGroupARN:  "logGroupARN",
+		})
+
+		mockLogsAPI.AssertCalled(t, "GetLogGroupFields", &cloudwatchlogs.GetLogGroupFieldsInput{
+			LogGroupIdentifier: nil,
+			LogGroupName:       utils.Pointer("logGroupName"),
+		})
+		assert.NotNil(t, resp)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Should only set LogGroupName as api input in case only LogGroupName is specified", func(t *testing.T) {
+		mockLogsAPI := &mocks.LogsAPI{}
+		mockLogsAPI.On("GetLogGroupFields", mock.Anything).Return(
+			&cloudwatchlogs.GetLogGroupFieldsOutput{}, nil)
+
+		service := NewLogGroupsService(mockLogsAPI, false)
+		resp, err := service.GetLogGroupFields(resources.LogGroupFieldsRequest{
+			LogGroupName: "logGroupName",
+			LogGroupARN:  "",
+		})
+
+		mockLogsAPI.AssertCalled(t, "GetLogGroupFields", &cloudwatchlogs.GetLogGroupFieldsInput{
+			LogGroupIdentifier: nil,
+			LogGroupName:       utils.Pointer("logGroupName"),
+		})
+		assert.NotNil(t, resp)
+		assert.NoError(t, err)
+	})
 }
