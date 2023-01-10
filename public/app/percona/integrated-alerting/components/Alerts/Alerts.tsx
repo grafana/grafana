@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { cx } from '@emotion/css';
 import { format } from 'date-fns';
-import React, { FC, useCallback, useEffect } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Cell, Column, Row } from 'react-table';
 
 import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
@@ -12,18 +12,19 @@ import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/
 import { fetchAmAlertsAction } from 'app/features/alerting/unified/state/actions';
 import { makeLabelBasedSilenceLink } from 'app/features/alerting/unified/utils/misc';
 import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
+import { useRecurringCall } from 'app/percona/backup/hooks/recurringCall.hook';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { AlertmanagerAlert, AlertState } from 'app/plugins/datasource/alertmanager/types';
-import { dispatch } from 'app/store/store';
+import { useAppDispatch } from 'app/store/store';
 
 import { Messages } from '../../IntegratedAlerting.messages';
 import { Severity } from '../Severity';
 import { Table } from '../Table/Table';
 
 import { AlertDetails } from './AlertDetails/AlertDetails';
-import { ACTIONS_COLUMN, SILENCES_URL } from './Alerts.constants';
+import { DATA_INTERVAL, ACTIONS_COLUMN, SILENCES_URL } from './Alerts.constants';
 import { Messages as AlertMessages } from './Alerts.messages';
 import { getStyles } from './Alerts.styles';
 
@@ -40,9 +41,12 @@ const {
 } = columns;
 
 export const Alerts: FC = () => {
+  const dispatch = useAppDispatch();
   const style = useStyles2(getStyles);
   const navModel = useNavModel('integrated-alerting-alerts');
   const alertsRequests = useUnifiedAlertingSelector((state) => state.amAlerts);
+  const [triggerTimeout] = useRecurringCall();
+  const [loading, setLoading] = useState(false);
   const alertsRequest = alertsRequests['grafana'] || initialAsyncRequestState;
 
   const columns = React.useMemo(
@@ -148,13 +152,20 @@ export const Alerts: FC = () => {
     []
   );
 
+  const getData = useCallback(async (showLoading = false) => {
+    showLoading && setLoading(true);
+    await dispatch(fetchAmAlertsAction('grafana'));
+    setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const featureSelector = useCallback(getPerconaSettingFlag('alertingEnabled'), []);
 
   useEffect(() => {
-    dispatch(fetchAmAlertsAction('grafana'));
+    getData(true).then(() => triggerTimeout(getData, DATA_INTERVAL));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [getData]);
 
   return (
     <OldPage navModel={navModel}>
@@ -164,7 +175,8 @@ export const Alerts: FC = () => {
             totalItems={alertsRequest?.result?.length || 0}
             data={alertsRequest?.result || []}
             columns={columns}
-            pendingRequest={alertsRequest?.loading}
+            pendingRequest={loading}
+            autoResetExpanded={false}
             emptyMessage={
               <h1>
                 <Icon name="check-circle" size="xxl" /> No alerts detected
