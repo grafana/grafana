@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -92,7 +91,7 @@ func (s *OrgSync) SyncOrgUser(ctx context.Context, id *authn.Identity, _ *authn.
 			"userId", userID, "orgId", orgId)
 		cmd := &org.RemoveOrgUserCommand{OrgID: orgId, UserID: userID}
 		if err := s.orgService.RemoveOrgUser(ctx, cmd); err != nil {
-			if errors.Is(err, models.ErrLastOrgAdmin) {
+			if errors.Is(err, org.ErrLastOrgAdmin) {
 				logger.Error(err.Error(), "userId", cmd.UserID, "orgId", cmd.OrgID)
 				continue
 			}
