@@ -18,17 +18,20 @@ import React from 'react';
 
 import TimelineColumnResizer, { getStyles, TimelineColumnResizerProps } from './TimelineColumnResizer';
 
+const mockOnChange = jest.fn();
+
 describe('<TimelineColumnResizer>', () => {
-  const props = {
+  const props: TimelineColumnResizerProps = {
     min: 0.1,
     max: 0.9,
-    onChange: jest.fn(),
+    onChange: mockOnChange,
     position: 0.5,
+    columnResizeHandleHeight: 10,
   };
 
   beforeEach(() => {
-    props.onChange.mockReset();
-    render(<TimelineColumnResizer {...(props as unknown as TimelineColumnResizerProps)} />);
+    mockOnChange.mockReset();
+    render(<TimelineColumnResizer {...props} />);
   });
 
   it('renders without exploding', () => {
