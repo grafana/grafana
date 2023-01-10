@@ -248,7 +248,7 @@ async function getAfterSelectorCompletions(
     documentation: explainOperator(LokiOperationId.LabelFormat),
   });
 
-  // With an space between the pipe and the cursor, we omit line filters
+  // With a space between the pipe and the cursor, we omit line filters
   // E.g. `{label="value"} | `
   const lineFilters = afterPipe && hasSpace ? [] : getLineFilterCompletions(afterPipe);
 
