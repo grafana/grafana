@@ -130,6 +130,10 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (*
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
 
+	if err != nil {
+		return nil, err
+	}
+
 	namespace, id := identity.NamespacedID()
 
 	// Login is only supported for users
