@@ -38,7 +38,7 @@ type Manager struct {
 	historian     Historian
 	externalURL   *url.URL
 
-	doNotKeepNormalState bool
+	doNotSaveNormalState bool
 }
 
 type ManagerCfg struct {
@@ -48,19 +48,22 @@ type ManagerCfg struct {
 	Images        ImageCapturer
 	Clock         clock.Clock
 	Historian     Historian
+	// DoNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods
+	DoNotSaveNormalState bool
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
-		cache:         newCache(),
-		ResendDelay:   ResendDelay, // TODO: make this configurable
-		log:           log.New("ngalert.state.manager"),
-		metrics:       cfg.Metrics,
-		instanceStore: cfg.InstanceStore,
-		images:        cfg.Images,
-		historian:     cfg.Historian,
-		clock:         cfg.Clock,
-		externalURL:   cfg.ExternalURL,
+		cache:                newCache(),
+		ResendDelay:          ResendDelay, // TODO: make this configurable
+		log:                  log.New("ngalert.state.manager"),
+		metrics:              cfg.Metrics,
+		instanceStore:        cfg.InstanceStore,
+		images:               cfg.Images,
+		historian:            cfg.Historian,
+		clock:                cfg.Clock,
+		externalURL:          cfg.ExternalURL,
+		doNotSaveNormalState: cfg.DoNotSaveNormalState,
 	}
 }
 
@@ -273,11 +276,11 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {
-	allStates := st.cache.getAll(orgID, st.doNotKeepNormalState)
+	allStates := st.cache.getAll(orgID, st.doNotSaveNormalState)
 	return allStates
 }
 func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
-	return st.cache.getStatesForRuleUID(orgID, alertRuleUID, st.doNotKeepNormalState)
+	return st.cache.getStatesForRuleUID(orgID, alertRuleUID, st.doNotSaveNormalState)
 }
 
 func (st *Manager) Put(states []*State) {
@@ -297,7 +300,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 
 	for _, s := range states {
 		// Do not save normal state to database and remove transition to Normal state but keep mapped states
-		if st.doNotKeepNormalState && IsNormalState(s.State) && !s.Changed() {
+		if st.doNotSaveNormalState && IsNormalState(s.State) && !s.Changed() {
 			continue
 		}
 
