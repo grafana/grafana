@@ -14,7 +14,7 @@ jest.mock('@grafana/runtime', () => {
             dashboardId: 'dash',
             orgId: 1,
             userId: 1,
-            grafanaVersion: 'v10.0.0',
+            grafanaVersion: 'v9.4.0',
             queries: {
               tempo: [
                 {
@@ -59,7 +59,7 @@ jest.mock('@grafana/runtime', () => {
 describe('on dashboard loaded', () => {
   it('triggers reportInteraction with grafana_tempo_dashboard_loaded', () => {
     expect(reportInteraction).toHaveBeenCalledWith('grafana_tempo_dashboard_loaded', {
-      grafana_version: 'v10.0.0',
+      grafana_version: 'v9.4.0',
       dashboard_id: 'dash',
       org_id: 1,
       traceql_query_count: 1,
