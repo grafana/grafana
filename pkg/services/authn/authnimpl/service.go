@@ -5,7 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -20,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"go.opentelemetry.io/otel/attribute"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // make sure service implements authn.Service interface
@@ -35,11 +38,12 @@ func ProvideService(
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 ) *Service {
 	s := &Service{
-		log:           log.New("authn.service"),
-		cfg:           cfg,
-		clients:       make(map[string]authn.Client),
-		tracer:        tracer,
-		postAuthHooks: []authn.PostAuthHookFn{},
+		log:            log.New("authn.service"),
+		cfg:            cfg,
+		clients:        make(map[string]authn.Client),
+		tracer:         tracer,
+		sessionService: sessionService,
+		postAuthHooks:  []authn.PostAuthHookFn{},
 	}
 
 	s.clients[authn.ClientRender] = clients.ProvideRender(userService, renderService)
@@ -81,9 +85,12 @@ type Service struct {
 	log     log.Logger
 	cfg     *setting.Cfg
 	clients map[string]authn.Client
+
+	tracer         tracing.Tracer
+	sessionService auth.UserTokenService
+
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
 	postAuthHooks []authn.PostAuthHookFn
-	tracer        tracing.Tracer
 }
 
 func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Request) (*authn.Identity, bool, error) {
@@ -115,6 +122,40 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 	}
 
 	return identity, true, nil
+}
+
+func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
+	identity, ok, err := s.Authenticate(ctx, client, r)
+	if !ok {
+		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	namespace, id := identity.NamespacedID()
+
+	// Login is only supported for users
+	if namespace != authn.NamespaceUser {
+		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", namespace)
+	}
+
+	addr := web.RemoteAddr(r.HTTPRequest)
+	ip, err := network.GetIPFromAddress(addr)
+	if err != nil {
+		s.log.Debug("failed to parse ip from address", "addr", addr)
+	}
+
+	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: id}, ip, r.HTTPRequest.UserAgent())
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXME: add login hooks to replace the one used in HookService
+
+	identity.SessionToken = sessionToken
+	return identity, nil
 }
 
 func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn) {
