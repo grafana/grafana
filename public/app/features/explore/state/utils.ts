@@ -7,6 +7,8 @@ import {
   EventBusExtended,
   ExploreUrlState,
   getDefaultTimeRange,
+  hasLogsSampleSupport,
+  hasLogsVolumeSupport,
   HistoryItem,
   LoadingState,
   PanelData,
@@ -17,16 +19,7 @@ import { ExploreItemState, SupplementaryQueries, SupplementaryQueryType } from '
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { SETTINGS_KEYS } from '../utils/logs';
 import { toRawTimeRange } from '../utils/time';
-
-export const SUPPLEMENTARY_QUERY_TYPES: SupplementaryQueryType[] = [SupplementaryQueryType.LogsVolume];
-
-// Used to match supplementaryQueryType to corresponding local storage key
-// TODO: Remove this and unify enum values with SETTINGS_KEYS.enableVolumeHistogram
-const supplementaryQuerySettings: { [key in SupplementaryQueryType]: string } = {
-  [SupplementaryQueryType.LogsVolume]: SETTINGS_KEYS.enableVolumeHistogram,
-};
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -38,21 +31,30 @@ export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
 };
 
+export const SUPPLEMENTARY_QUERY_TYPES: SupplementaryQueryType[] = [
+  SupplementaryQueryType.LogsVolume,
+  SupplementaryQueryType.LogsSample,
+];
+
+export const hasSupplementaryQuerySupport = (datasourceInstance: unknown) =>
+  hasLogsVolumeSupport(datasourceInstance) || hasLogsSampleSupport(datasourceInstance);
+
+const getSupplementaryQuerySettingKey = (type: SupplementaryQueryType) => `grafana.explore.logs.enable${type}`;
+
 export const storeSupplementaryQueryEnabled = (enabled: boolean, type: SupplementaryQueryType): void => {
-  if (supplementaryQuerySettings[type]) {
-    store.set(supplementaryQuerySettings[type], enabled ? 'true' : 'false');
-  }
+  store.set(getSupplementaryQuerySettingKey(type), enabled ? 'true' : 'false');
 };
 
 export const loadSupplementaryQueries = (): SupplementaryQueries => {
   // We default to true for all supp queries
   let supplementaryQueries: SupplementaryQueries = {
     [SupplementaryQueryType.LogsVolume]: { enabled: true },
+    [SupplementaryQueryType.LogsSample]: { enabled: true },
   };
 
   for (const type of SUPPLEMENTARY_QUERY_TYPES) {
     // Only if "false" value in local storage, we disable it
-    if (store.get(supplementaryQuerySettings[type]) === 'false') {
+    if (store.get(getSupplementaryQuerySettingKey(type)) === 'false') {
       supplementaryQueries[type] = { enabled: false };
     }
   }
