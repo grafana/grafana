@@ -349,7 +349,7 @@ func TestAPIEndpoint_CreateOrgs_LegacyAccessControl(t *testing.T) {
 			desc:           "grafana admin can create org",
 			role:           org.RoleViewer,
 			isGrafanaAdmin: true,
-			expectedCode:   http.StatusForbidden,
+			expectedCode:   http.StatusOK,
 		},
 		{
 			desc:            "viewer can create org when AllowUserOrgCreate is set to true",
