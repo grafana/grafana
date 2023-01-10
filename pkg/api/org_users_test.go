@@ -78,7 +78,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 
-		var resp []models.OrgUserDTO
+		var resp []org.OrgUserDTO
 		err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.Len(t, resp, 3)
@@ -169,7 +169,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 			require.Equal(t, http.StatusOK, sc.resp.Code)
 
-			var resp []models.OrgUserDTO
+			var resp []org.OrgUserDTO
 			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 			require.NoError(t, err)
 			assert.Len(t, resp, 2)
@@ -425,7 +425,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 			response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, tc.targetOrg), nil, t)
 			require.Equal(t, tc.expectedCode, response.Code)
 
-			var userList []*models.OrgUserDTO
+			var userList []*org.OrgUserDTO
 			err = json.NewDecoder(response.Body).Decode(&userList)
 			require.NoError(t, err)
 
@@ -533,7 +533,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			require.Equal(t, tc.expectedCode, response.Code)
 
 			if tc.expectedCode != http.StatusForbidden {
-				var userList []*models.OrgUserDTO
+				var userList []*org.OrgUserDTO
 				err := json.NewDecoder(response.Body).Decode(&userList)
 				require.NoError(t, err)
 
