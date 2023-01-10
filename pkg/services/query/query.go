@@ -148,6 +148,8 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 
 func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	ds := parsedReq.parsedQueries[0].datasource
+	xProxyFilter := parsedReq.httpRequest.Header.Get("X-Proxy-Filter")
+
 	if err := s.pluginRequestValidator.Validate(ds.Url, nil); err != nil {
 		return nil, datasources.ErrDataSourceAccessDenied
 	}
@@ -174,6 +176,9 @@ func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, 
 			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), []string{s.cfg.LoginCookieName}),
 		)
 	}
+
+	req.Headers["X-Proxy-Filter"] = xProxyFilter
+	middlewares = append(middlewares, httpclientprovider.ForwardedProxyFilterMiddleware(xProxyFilter))
 
 	if s.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
 		if token := s.oAuthTokenService.GetCurrentOAuthToken(ctx, user); token != nil {
