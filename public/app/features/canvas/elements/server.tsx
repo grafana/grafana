@@ -356,7 +356,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   server: css`
     fill: #dadada;
-    stroke-linecap: square;
+    stroke-linecap: round;
     stroke-miterlimit: 10;
     stroke-width: 10;
     stroke: #8a8a8a;
