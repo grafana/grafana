@@ -118,13 +118,13 @@ To speed up the time it takes to review your plugin:
 
 **Can I distribute my plugin somewhere else than the Grafana Catalog?**
 
-- The official way of distributing Grafana plugins is using the Grafana Catalog. You can install private and development plugins in local Grafana instances as described in [this guide](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-plugin-on-local-grafana)
+- The official way of distributing Grafana plugins is using the Grafana Catalog. You can install private and development plugins in local Grafana instances as described in [this guide](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-plugin-on-local-grafana).
 
 ## Publishing your plugin for the first time
 
 **Do plugin's signatures expire?**
 
-- Currently plugin's signatures don't expire
+- Currently plugin's signatures don't expire.
 
 {{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
 
