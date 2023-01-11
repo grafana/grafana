@@ -146,5 +146,4 @@ func TestManager_saveAlertStates(t *testing.T) {
 			assert.Containsf(t, savedKeys, key, "state %s (%s) was not saved but should be", tr.State.State, tr.StateReason)
 		}
 	})
-
 }
