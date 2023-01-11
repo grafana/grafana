@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useSelector } from 'app/types';
 
@@ -31,7 +31,5 @@ export default function useActions() {
       });
   }, []);
 
-  const actions = useMemo(() => staticActions, [staticActions]);
-
-  return actions;
+  return staticActions;
 }
