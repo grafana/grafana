@@ -1,5 +1,5 @@
-// import { debounce } from 'lodash';
-import React, { useRef } from 'react';
+import { debounce } from 'lodash';
+import React, { useCallback, useMemo, useRef } from 'react';
 
 import { Field } from '../Forms/Field';
 import { InlineToast } from '../InlineToast/InlineToast';
@@ -19,7 +19,7 @@ import { debounce} from 'lodash';
 
 export interface Props extends InputProps {
   //Function to be run onBlur or when finishing writing
-  onFinishChange: (string: string) => Promise<void>;
+  onFinishChange: (inputValue: string | number | readonly string[] | undefined) => Promise<void>;
 }
 
 const SHOW_SUCCESS_DURATION = 2 * 1000;
@@ -37,58 +37,70 @@ export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props) =
     onFinishChange,
     ...restProps
   } = props;
-  const [value, setValue] = React.useState(defaultValue);
   const [isLoading, setIsLoading] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
   const [showError, setShowError] = React.useState(false);
-  //const debouncedValue = useMemo(()=> debounce(onFinishChange, 600), [onFinishChange]);
+  const [showErrorMessage, setShowErrorMessage] = React.useState('Error saving this value');
   const inputRef = useRef<null | HTMLInputElement>(null);
+
   React.useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
-
+    const time = showError ? 0 : SHOW_SUCCESS_DURATION;
     if (showSuccess) {
       timeoutId = setTimeout(() => {
         setShowSuccess(false);
-      }, SHOW_SUCCESS_DURATION);
+      }, time);
     }
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [showSuccess]);
-
-  const saveInputValue = async (event: React.FormEvent<HTMLInputElement>) => {
-    if (value !== event.currentTarget.value) {
-      setIsLoading(true);
-      try {
-        await onFinishChange(event.currentTarget.value);
-        setValue(event.currentTarget.value);
-        setIsLoading(false);
-        setShowError(false);
-      } catch {
-        setIsLoading(false);
+  }, [showSuccess, showError]);
+  const handleChange = useCallback(
+    (nextValue) => {
+      if (nextValue === '') {
         setShowError(true);
+        setShowErrorMessage('Invalid value');
+      } else {
+        console.log(onFinishChange);
+        setIsLoading(true);
+        onFinishChange(nextValue)
+          .then(() => {
+            setIsLoading(false);
+            setShowSuccess(true);
+            setShowError(false);
+          })
+          .catch(() => {
+            setIsLoading(false);
+            setShowError(true);
+            setShowErrorMessage('Error saving this value');
+          });
       }
-    }
-  };
+    },
+    [onFinishChange]
+  );
+
+  const lodashDebounce = useMemo(() => debounce(handleChange, 600, { leading: false }), [handleChange]);
 
   /**
    * use Field around input to pass the error message
    * use InlineToast.tsx to show the save message
    */
   return (
-    <Field label="" invalid={showError} error={showError && 'Error saving this value'}>
+    <Field label="" invalid={showError} error={showError && showErrorMessage}>
       <Input
         {...restProps}
         ref={inputRef}
-        value={value.toString()}
+        defaultValue={defaultValue}
         addonAfter={
-          <InlineToast suffixIcon={'check'} referenceElement={inputRef.current} placement={'right'}>
-            Saved!
-          </InlineToast>
+          showSuccess && (
+            <InlineToast suffixIcon={'check'} referenceElement={inputRef.current} placement={'right'}>
+              Saved!
+            </InlineToast>
+          )
         }
         onChange={(event) => {
-          saveInputValue(event);
+          lodashDebounce(event.currentTarget.value);
         }}
         loading={isLoading}
         data-testid={'autosave-input'}
