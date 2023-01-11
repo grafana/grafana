@@ -317,11 +317,3 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 			})
 	})
 }
-
-func stringsToSuggestData(values []string) []suggestData {
-	suggestDataArray := make([]suggestData, 0)
-	for _, v := range values {
-		suggestDataArray = append(suggestDataArray, suggestData{Text: v, Value: v, Label: v})
-	}
-	return suggestDataArray
-}
