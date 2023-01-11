@@ -13,8 +13,6 @@ import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Tooltip } from '../Tooltip';
 
 import { PanelDescription } from './PanelDescription';
-import { PanelLinks } from './PanelLinks';
-import { PanelNotices } from './PanelNotices';
 import { PanelStatus } from './PanelStatus';
 
 interface Status {
@@ -32,7 +30,6 @@ export interface PanelChromeProps {
   padding?: PanelPadding;
   title?: string;
   description?: string | (() => string);
-  links?: () => Array<LinkModel<PanelModel>>;
   titleItems?: ReactNode[];
   menu?: React.ReactElement;
   /** dragClass, hoverHeader not yet implemented */
@@ -63,7 +60,6 @@ export function PanelChrome({
   padding = 'md',
   title = '',
   description = '',
-  links,
   titleItems = [],
   menu,
   // dragClass,
@@ -85,7 +81,6 @@ export function PanelChrome({
     (title.length > 0 ||
       titleItems.length > 0 ||
       description !== '' ||
-      links !== undefined ||
       loadingState === LoadingState.Streaming ||
       leftItems.length > 0);
 
@@ -133,8 +128,6 @@ export function PanelChrome({
         )}
 
         <PanelDescription description={description} />
-
-        <PanelLinks links={links} />
 
         {titleItems && (
           <div className={styles.titleItems} data-testid="title-items">

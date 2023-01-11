@@ -624,7 +624,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
 
     const titleItems = [
-      <PanelHeaderTitleItems key="title-items" alertState={alertState} data={data} panelId={panel.id} />,
+      <PanelHeaderTitleItems
+        key="title-items"
+        alertState={alertState}
+        data={data}
+        panelId={panel.id}
+        panelLinks={panel.links && panel.links?.length > 0 ? this.onShowPanelLinks : undefined}
+      />,
     ];
     if (config.featureToggles.newPanelChromeUI) {
       return (
@@ -642,7 +648,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
               onClick: (e: React.SyntheticEvent) => this.onOpenErrorInspect(e, InspectTab.Error),
             }}
             description={!!panel.description ? this.onShowPanelDescription : undefined}
-            links={panel.links && panel.links?.length > 0 ? this.onShowPanelLinks : undefined}
             titleItems={titleItems}
             padding={padding}
           >

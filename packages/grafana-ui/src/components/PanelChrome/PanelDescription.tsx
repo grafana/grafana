@@ -32,6 +32,7 @@ export function PanelDescription({ description }: Props) {
 const getStyles = () => {
   return {
     description: css({
+      cursor: 'pointer',
       border: 'none',
 
       code: {
