@@ -274,7 +274,6 @@ require (
 
 require (
 	github.com/dave/dst v0.27.2
-	github.com/parca-dev/parca v0.12.1
 	k8s.io/apimachinery v0.25.3
 )
 
