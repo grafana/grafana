@@ -104,7 +104,27 @@ To speed up the time it takes to review your plugin:
 
 - No. We cannot guarantee specific publishing dates, as plugins are immediately published after a review based on our internal prioritization.
 
+**Can I see metrics of my plugin installs, downloads or usage?**
+
+- No. We don't offer this information. You are also not allowed to include any kind of tracking code inside your plugin.
+
+**How can I update my plugin's catalog page?**
+
+- The plugin's catalog page content is extracted from the plugin README file. If you wish to upadte it you should submit a plugin update with the new content on it.
+
+**Can I unlist my plugin from the Grafana Plugin's Catalog in case of a bug?**
+
+- We can unlist plugins from the Grafana Plugin's Catalog in exceptional cases (e.g. security concerns) but we can't control the Grafana instances where the plugin is installed.
+
+**Can I distribute my plugin somewhere else than the Grafana Catalog?**
+
+- The official way of distributing Grafana plugins is using the Grafana Catalog. You can install private and development plugins in local Grafana instances as described in [this guide](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-plugin-on-local-grafana)
+
 ## Publishing your plugin for the first time
+
+**Do plugin's signatures expire?**
+
+- Currently plugin's signatures don't expire
 
 {{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
 
