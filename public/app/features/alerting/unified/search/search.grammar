@@ -20,18 +20,21 @@ RuleFilter { filter<"r" | "rule"> }
 StateFilter { filter<"s" | "state"> }
 TypeFilter { filter<"t" | "type"> }
 
-filter<type> { @specialize<word, type> colon FilterValue }
+filter<type> { filterToken<type> FilterValue }
+
 FreeFormExpression { word (colon word)* }
 
 @tokens {
   colon { ":" }
 
   allowedInputChar { $[a-zA-Z0-9!@#$%^&*()_+=;,.-] }
+  word { allowedInputChar+ }
 
   filterNoBracketChars { allowedInputChar | ":" }
   filterWithBracketChars { filterNoBracketChars | " " }
 
+  filterToken<type> { type colon }
   FilterValue { filterNoBracketChars+ | ("\"" filterWithBracketChars+ "\"") }
 
-  word { allowedInputChar+ }
+  @precedence { filterToken, word }
 }

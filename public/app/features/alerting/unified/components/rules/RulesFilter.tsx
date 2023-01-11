@@ -165,12 +165,12 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
             />
           </div>
         </Stack>
-        {(filterState.query ||
+        {(filterState.freeFormWords.length ||
           filterState.dataSourceName ||
           filterState.namespace ||
           filterState.ruleType ||
           filterState.ruleState ||
-          filterState.labels ||
+          filterState.labels.length ||
           filterState.groupName ||
           filterState.ruleName) && (
           <div className={styles.flexRow}>

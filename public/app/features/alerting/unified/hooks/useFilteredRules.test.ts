@@ -12,6 +12,7 @@ import {
   mockPromAlertingRule,
   mockRulerGrafanaRule,
 } from '../mocks';
+import { SearchFilterState } from '../search/searchEngine';
 
 import { filterRules } from './useFilteredRules';
 
@@ -31,26 +32,25 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], { queryString: 'cpu' }, ngFilters);
+    const filtered = filterRules([ns], getFilter({ ruleName: 'cpu' }));
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('High CPU usage');
   });
 
-  // it('should filter out rules by evaluation group name', function () {
-  //   const ns = mockCombinedRuleNamespace({
-  //     groups: [
-  //       mockCombinedRuleGroup('Performance group', [mockCombinedRule({ name: 'High CPU usage' })]),
-  //       mockCombinedRuleGroup('Availability group', [mockCombinedRule({ name: 'Memory too low' })]),
-  //     ],
-  //   });
-  //
-  //   const filtered = filterRules([ns], { queryString: 'memory' });
-  //
-  //   expect(filtered[0].groups[0].rules).toHaveLength(1);
-  //   expect(filtered[])
-  //   expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
-  // });
+  it('should filter out rules by evaluation group name', function () {
+    const ns = mockCombinedRuleNamespace({
+      groups: [
+        mockCombinedRuleGroup('Performance group', [mockCombinedRule({ name: 'High CPU usage' })]),
+        mockCombinedRuleGroup('Availability group', [mockCombinedRule({ name: 'Memory too low' })]),
+      ],
+    });
+
+    const filtered = filterRules([ns], getFilter({ groupName: 'availability' }));
+
+    expect(filtered[0].groups).toHaveLength(1);
+    expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
+  });
 
   it('should filter out rules by label filter', function () {
     const rules = [
@@ -62,7 +62,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], { queryString: 'severity=critical' }, ngFilters);
+    const filtered = filterRules([ns], getFilter({ labels: ['severity=critical'] }));
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
@@ -84,7 +84,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], { queryString: 'severity=warning' }, ngFilters);
+    const filtered = filterRules([ns], getFilter({ labels: ['severity=warning'] }));
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('High CPU usage');
@@ -106,7 +106,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], { alertState: PromAlertingRuleState.Firing }, ngFilters);
+    const filtered = filterRules([ns], getFilter({ ruleState: PromAlertingRuleState.Firing }));
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
@@ -132,9 +132,17 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], { dataSource: 'loki' }, ngFilters);
+    const filtered = filterRules([ns], getFilter({ dataSourceName: 'loki' }));
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
   });
 });
+
+function getFilter(filter: Partial<SearchFilterState>): SearchFilterState {
+  return {
+    labels: [],
+    freeFormWords: [],
+    ...filter,
+  };
+}

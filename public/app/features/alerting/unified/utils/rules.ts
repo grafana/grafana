@@ -67,6 +67,10 @@ export function isCloudRuleIdentifier(identifier: RuleIdentifier): identifier is
   return 'rulerRuleHash' in identifier;
 }
 
+export function isPromRuleType(ruleType: string): ruleType is PromRuleType {
+  return Object.values<string>(PromRuleType).includes(ruleType);
+}
+
 export function isPrometheusRuleIdentifier(identifier: RuleIdentifier): identifier is PrometheusRuleIdentifier {
   return 'ruleHash' in identifier;
 }
