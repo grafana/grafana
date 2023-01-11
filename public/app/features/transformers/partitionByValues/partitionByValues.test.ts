@@ -184,4 +184,73 @@ describe('Partition by values transformer', () => {
     expect(partitioned[2].name).toEqual('XYZ region=China status=OK');
     expect(partitioned[3].name).toEqual('XYZ region=China status=FAIL');
   });
+
+  it('should partition by multiple fields naming: {asLabels: true}', () => {
+    const source = [
+      toDataFrame({
+        name: 'XYZ',
+        refId: 'A',
+        fields: [
+          { name: 'model', type: FieldType.string, values: ['E1', 'E2', 'C1', 'E3', 'C2', 'C3'] },
+          { name: 'region', type: FieldType.string, values: ['Europe', 'Europe', 'China', 'Europe', 'China', 'China'] },
+          { name: 'status', type: FieldType.string, values: ['OK', 'FAIL', 'OK', 'FAIL', 'OK', 'FAIL'] },
+        ],
+      }),
+    ];
+
+    const config: PartitionByValuesTransformerOptions = {
+      fields: ['region', 'status'],
+      naming: {
+        asLabels: true,
+      },
+    };
+
+    let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);
+
+    // all frame names are same
+    expect(partitioned[0].name).toEqual('XYZ');
+    expect(partitioned[1].name).toEqual('XYZ');
+    expect(partitioned[2].name).toEqual('XYZ');
+    expect(partitioned[3].name).toEqual('XYZ');
+
+    // all frames contain all fields
+    expect(partitioned[0].fields[0].name).toEqual('model');
+    expect(partitioned[0].fields[1].name).toEqual('region');
+    expect(partitioned[0].fields[2].name).toEqual('status');
+
+    // in each frame, every field has same labels
+    expect(partitioned[0].fields[0].labels).toEqual({ region: 'Europe', status: 'OK' });
+    expect(partitioned[1].fields[0].labels).toEqual({ region: 'Europe', status: 'FAIL' });
+    expect(partitioned[2].fields[0].labels).toEqual({ region: 'China', status: 'OK' });
+    expect(partitioned[3].fields[0].labels).toEqual({ region: 'China', status: 'FAIL' });
+  });
+
+  it('should partition by multiple fields and omit those fields in result', () => {
+    const source = [
+      toDataFrame({
+        name: 'XYZ',
+        refId: 'A',
+        fields: [
+          { name: 'model', type: FieldType.string, values: ['E1', 'E2', 'C1', 'E3', 'C2', 'C3'] },
+          { name: 'region', type: FieldType.string, values: ['Europe', 'Europe', 'China', 'Europe', 'China', 'China'] },
+          { name: 'status', type: FieldType.string, values: ['OK', 'FAIL', 'OK', 'FAIL', 'OK', 'FAIL'] },
+        ],
+      }),
+    ];
+
+    const config: PartitionByValuesTransformerOptions = {
+      fields: ['region', 'status'],
+      naming: {
+        asLabels: true,
+      },
+      omitFields: true,
+    };
+
+    let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);
+
+    // all frames contain only model field
+    expect(partitioned[0].fields.length).toEqual(1);
+    expect(partitioned[0].fields[0].name).toEqual('model');
+    expect(partitioned[0].fields[0].labels).toEqual({ region: 'Europe', status: 'OK' });
+  });
 });
