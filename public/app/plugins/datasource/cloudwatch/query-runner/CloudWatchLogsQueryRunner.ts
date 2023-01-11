@@ -1,4 +1,4 @@
-import { set } from 'lodash';
+import { set, uniq } from 'lodash';
 import {
   catchError,
   concatMap,
@@ -26,7 +26,6 @@ import {
   LoadingState,
   LogRowModel,
   rangeUtil,
-  ScopedVars,
 } from '@grafana/data';
 import { BackendDataSourceResponse, config, FetchError, FetchResponse, toDataQueryResponse } from '@grafana/runtime';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -100,8 +99,8 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         refId: target.refId,
         region: this.templateSrv.replace(this.getActualRegion(target.region)),
         queryString: this.templateSrv.replace(target.expression || ''),
-        logGroups: logGroupArns.map((arn) => ({ arn, name: arn })),
-        logGroupNames,
+        logGroups: uniq(logGroupArns).map((arn) => ({ arn, name: arn })),
+        logGroupNames: uniq(logGroupNames),
       };
     });
 
@@ -112,10 +111,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     return runWithRetry(
       (targets: StartQueryRequest[]) => {
-        return this.makeLogActionRequest('StartQuery', targets, {
-          scopedVars: options.scopedVars,
-          skipCache: true,
-        });
+        return this.makeLogActionRequest('StartQuery', targets);
       },
       startQueryRequests,
       timeoutFunc
@@ -174,7 +170,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     });
 
     const dataFrames = increasingInterval({ startPeriod: 100, endPeriod: 1000, step: 300 }).pipe(
-      concatMap((_) => this.makeLogActionRequest('GetQueryResults', queryParams, { skipCache: true })),
+      concatMap((_) => this.makeLogActionRequest('GetQueryResults', queryParams)),
       repeat(),
       share()
     );
@@ -257,10 +253,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
           region: logQuery.region,
           queryString: '',
           refId: '',
-        })),
-        {
-          skipCache: true,
-        }
+        }))
       ).pipe(
         finalize(() => {
           this.logQueries = {};
@@ -269,16 +262,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     }
   }
 
-  makeLogActionRequest(
-    subtype: LogAction,
-    queryParams: CloudWatchLogsRequest[],
-    options: {
-      scopedVars?: ScopedVars;
-      skipCache?: boolean;
-    } = {
-      skipCache: false,
-    }
-  ): Observable<DataFrame[]> {
+  makeLogActionRequest(subtype: LogAction, queryParams: CloudWatchLogsRequest[]): Observable<DataFrame[]> {
     const range = this.timeSrv.timeRange();
 
     const requestParams = {
@@ -303,11 +287,9 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         | DataQueryError
     ): DataFrame[] => toDataQueryResponse(val).data || [];
     let headers = {};
-    if (options.skipCache) {
-      headers = {
-        'X-Cache-Skip': true,
-      };
-    }
+    headers = {
+      'X-Cache-Skip': true,
+    };
 
     return this.awsRequest(this.dsQueryEndpoint, requestParams, headers).pipe(
       map((response) => resultsToDataFrames({ data: response })),
