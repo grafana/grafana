@@ -30,8 +30,7 @@ describe('createBridgeURL', () => {
 
 describe('<PluginBridge />', () => {
   it('should render notInstalled component', async () => {
-    // @ts-ignore
-    render(<PluginBridge plugin={NON_EXISTING_PLUGIN} notInstalledComponent={<div>plugin not installed</div>} />);
+    render(<PluginBridge plugin={NON_EXISTING_PLUGIN} notInstalledFallback={<div>plugin not installed</div>} />);
     expect(await screen.findByText('plugin not installed')).toBeInTheDocument();
   });
 

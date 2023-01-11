@@ -4,8 +4,6 @@ import { useAsync } from 'react-use';
 import { PluginMeta } from '@grafana/data';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-// import { getPluginSettings } from '../utils/PluginService';
-
 export enum SupportedPlugin {
   Incident = 'grafana-incident-app',
   OnCall = 'grafana-oncall-app',
@@ -17,7 +15,7 @@ export type PluginID = SupportedPlugin | string;
 export interface PluginBridgeProps {
   plugin: PluginID;
   // shows an optional component when the plugin is not installed
-  notInstalledComponent?: ReactElement;
+  notInstalledFallback?: ReactElement;
   // shows an optional component when we're checking if the plugin is installed
   loadingComponent?: ReactElement;
 }
@@ -29,15 +27,7 @@ interface PluginBridgeHookResponse {
   settings?: PluginMeta<{}>;
 }
 
-export interface PluginBridgeProps {
-  plugin: PluginID;
-  // shows an optional component when the plugin is not installed
-  notInstalledComponent?: ReactElement;
-  // shows an optional component when we're checking if the plugin is installed
-  loadingComponent?: ReactElement;
-}
-
-export const PluginBridge: FC<PluginBridgeProps> = ({ children, plugin, loadingComponent, notInstalledComponent }) => {
+export const PluginBridge: FC<PluginBridgeProps> = ({ children, plugin, loadingComponent, notInstalledFallback }) => {
   const { loading, installed } = usePluginBridge(plugin);
 
   if (loading) {
@@ -45,7 +35,7 @@ export const PluginBridge: FC<PluginBridgeProps> = ({ children, plugin, loadingC
   }
 
   if (!installed) {
-    return notInstalledComponent ?? null;
+    return notInstalledFallback ?? null;
   }
 
   return <>{children}</>;
