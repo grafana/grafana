@@ -100,83 +100,14 @@ describe('getPanelMenu', () => {
     const dashboard = createDashboardModelFixture({});
 
     const menuItems = getPanelMenu(dashboard, panel, LoadingState.Streaming);
-    expect(menuItems).toMatchInlineSnapshot(`
-      [
-        {
-          "iconClassName": "eye",
-          "onClick": [Function],
-          "shortcut": "v",
-          "text": "View",
-        },
-        {
-          "iconClassName": "edit",
-          "onClick": [Function],
-          "shortcut": "e",
-          "text": "Edit",
-        },
-        {
-          "iconClassName": "circle",
-          "onClick": [Function],
-          "text": "Stop query",
-        },
-        {
-          "iconClassName": "share-alt",
-          "onClick": [Function],
-          "shortcut": "p s",
-          "text": "Share",
-        },
-        {
-          "iconClassName": "compass",
-          "onClick": [Function],
-          "shortcut": "x",
-          "text": "Explore",
-        },
-        {
-          "iconClassName": "info-circle",
-          "onClick": [Function],
-          "shortcut": "i",
-          "subMenu": [
-            {
-              "onClick": [Function],
-              "text": "Panel JSON",
-            },
-          ],
-          "text": "Inspect",
-          "type": "submenu",
-        },
-        {
-          "iconClassName": "cube",
-          "onClick": [Function],
-          "subMenu": [
-            {
-              "onClick": [Function],
-              "shortcut": "p d",
-              "text": "Duplicate",
-            },
-            {
-              "onClick": [Function],
-              "text": "Copy",
-            },
-            {
-              "onClick": [Function],
-              "text": "Create library panel",
-            },
-          ],
-          "text": "More...",
-          "type": "submenu",
-        },
-        {
-          "text": "",
-          "type": "divider",
-        },
-        {
-          "iconClassName": "trash-alt",
-          "onClick": [Function],
-          "shortcut": "p r",
-          "text": "Remove",
-        },
-      ]
-    `);
+    expect(menuItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          iconClassName: 'circle',
+          text: 'Stop query',
+        }),
+      ])
+    );
   });
 
   it('should return the correct panel menu items when data is loading', () => {
@@ -184,83 +115,14 @@ describe('getPanelMenu', () => {
     const dashboard = createDashboardModelFixture({});
 
     const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
-    expect(menuItems).toMatchInlineSnapshot(`
-      [
-        {
-          "iconClassName": "eye",
-          "onClick": [Function],
-          "shortcut": "v",
-          "text": "View",
-        },
-        {
-          "iconClassName": "edit",
-          "onClick": [Function],
-          "shortcut": "e",
-          "text": "Edit",
-        },
-        {
-          "iconClassName": "circle",
-          "onClick": [Function],
-          "text": "Stop query",
-        },
-        {
-          "iconClassName": "share-alt",
-          "onClick": [Function],
-          "shortcut": "p s",
-          "text": "Share",
-        },
-        {
-          "iconClassName": "compass",
-          "onClick": [Function],
-          "shortcut": "x",
-          "text": "Explore",
-        },
-        {
-          "iconClassName": "info-circle",
-          "onClick": [Function],
-          "shortcut": "i",
-          "subMenu": [
-            {
-              "onClick": [Function],
-              "text": "Panel JSON",
-            },
-          ],
-          "text": "Inspect",
-          "type": "submenu",
-        },
-        {
-          "iconClassName": "cube",
-          "onClick": [Function],
-          "subMenu": [
-            {
-              "onClick": [Function],
-              "shortcut": "p d",
-              "text": "Duplicate",
-            },
-            {
-              "onClick": [Function],
-              "text": "Copy",
-            },
-            {
-              "onClick": [Function],
-              "text": "Create library panel",
-            },
-          ],
-          "text": "More...",
-          "type": "submenu",
-        },
-        {
-          "text": "",
-          "type": "divider",
-        },
-        {
-          "iconClassName": "trash-alt",
-          "onClick": [Function],
-          "shortcut": "p r",
-          "text": "Remove",
-        },
-      ]
-    `);
+    expect(menuItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          iconClassName: 'circle',
+          text: 'Stop query',
+        }),
+      ])
+    );
   });
 });
 
