@@ -103,98 +103,93 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
 
   const searchIcon = <Icon name={'search'} />;
   return (
-    <Stack direction="column" gap={1}>
-      <Stack direction="row" gap={1}>
-        <Field className={styles.dsPickerContainer} label="Search by data source">
-          <DataSourcePicker
-            key={dataSourceKey}
-            alerting
-            noDefault
-            placeholder="All data sources"
-            current={filterState.dataSourceName}
-            onChange={handleDataSourceChange}
-            onClear={clearDataSource}
-          />
-        </Field>
-        <div>
-          <Label>State</Label>
-          <RadioButtonGroup options={stateOptions} value={filterState.ruleState} onChange={handleAlertStateChange} />
-        </div>
-        <div>
-          <Label>Rule type</Label>
-          <RadioButtonGroup options={RuleTypeOptions} value={filterState.ruleType} onChange={handleRuleTypeChange} />
-        </div>
-      </Stack>
+    <div className={styles.container}>
       <Stack direction="column" gap={1}>
         <Stack direction="row" gap={1}>
-          <Field
-            className={styles.searchInput}
-            label={
-              <Label>
-                <Stack gap={0.5}>
-                  <span>Search</span>
-                  <Tooltip
-                    content={
-                      <div>
-                        Filter rules and alerts using label querying, ex:
-                        <code>{`{severity="critical", instance=~"cluster-us-.+"}`}</code>
-                      </div>
-                    }
-                  >
-                    <Icon name="info-circle" size="sm" />
-                  </Tooltip>
-                </Stack>
-              </Label>
-            }
-          >
-            <Input
-              key={queryStringKey}
-              prefix={searchIcon}
-              onChange={handleQueryStringChange}
-              defaultValue={searchQuery}
-              placeholder="Search"
-              data-testid="search-query-input"
+          <Field className={styles.dsPickerContainer} label="Search by data source">
+            <DataSourcePicker
+              key={dataSourceKey}
+              alerting
+              noDefault
+              placeholder="All data sources"
+              current={filterState.dataSourceName}
+              onChange={handleDataSourceChange}
+              onClear={clearDataSource}
             />
           </Field>
           <div>
-            <Label>View as</Label>
-            <RadioButtonGroup
-              options={ViewOptions}
-              value={String(queryParams['view'] ?? ViewOptions[0].value)}
-              onChange={handleViewChange}
-            />
+            <Label>State</Label>
+            <RadioButtonGroup options={stateOptions} value={filterState.ruleState} onChange={handleAlertStateChange} />
+          </div>
+          <div>
+            <Label>Rule type</Label>
+            <RadioButtonGroup options={RuleTypeOptions} value={filterState.ruleType} onChange={handleRuleTypeChange} />
           </div>
         </Stack>
-        {(filterState.freeFormWords.length ||
-          filterState.dataSourceName ||
-          filterState.namespace ||
-          filterState.ruleType ||
-          filterState.ruleState ||
-          filterState.labels.length ||
-          filterState.groupName ||
-          filterState.ruleName) && (
-          <div className={styles.flexRow}>
-            <Button
-              className={styles.clearButton}
-              fullWidth={false}
-              icon="times"
-              variant="secondary"
-              onClick={handleClearFiltersClick}
+        <Stack direction="column" gap={1}>
+          <Stack direction="row" gap={1}>
+            <Field
+              className={styles.searchInput}
+              label={
+                <Label>
+                  <Stack gap={0.5}>
+                    <span>Search</span>
+                    <Tooltip
+                      content={
+                        <div>
+                          Filter rules and alerts using label querying, ex:
+                          <code>{`{severity="critical", instance=~"cluster-us-.+"}`}</code>
+                        </div>
+                      }
+                    >
+                      <Icon name="info-circle" size="sm" />
+                    </Tooltip>
+                  </Stack>
+                </Label>
+              }
             >
-              Clear filters
-            </Button>
-          </div>
-        )}
+              <Input
+                key={queryStringKey}
+                prefix={searchIcon}
+                onChange={handleQueryStringChange}
+                defaultValue={searchQuery}
+                placeholder="Search"
+                data-testid="search-query-input"
+              />
+            </Field>
+            <div>
+              <Label>View as</Label>
+              <RadioButtonGroup
+                options={ViewOptions}
+                value={String(queryParams['view'] ?? ViewOptions[0].value)}
+                onChange={handleViewChange}
+              />
+            </div>
+          </Stack>
+          {(filterState.freeFormWords.length ||
+            filterState.dataSourceName ||
+            filterState.namespace ||
+            filterState.ruleType ||
+            filterState.ruleState ||
+            filterState.labels.length ||
+            filterState.groupName ||
+            filterState.ruleName) && (
+            <div>
+              <Button fullWidth={false} icon="times" variant="secondary" onClick={handleClearFiltersClick}>
+                Clear filters
+              </Button>
+            </div>
+          )}
+        </Stack>
       </Stack>
-    </Stack>
+    </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
-      display: flex;
-      flex-direction: column;
+      margin-bottom: ${theme.spacing(1)};
     `,
     dsPickerContainer: css`
       width: 250px;
@@ -204,19 +199,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     searchInput: css`
       flex: 1;
       margin: 0;
-    `,
-    flexRow: css`
-      display: flex;
-      flex-direction: row;
-      align-items: flex-end;
-      width: 100%;
-      flex-wrap: wrap;
-    `,
-    spaceBetween: css`
-      justify-content: space-between;
-    `,
-    clearButton: css`
-      margin-bottom: ${theme.spacing(1)};
     `,
   };
 };
