@@ -10,6 +10,7 @@ import { ResourceResponse, LogGroupResponse } from '../../types';
 import { LogGroupsSelector } from './LogGroupsSelector';
 
 const defaultProps = {
+  variables: [],
   selectedLogGroups: [],
   accountOptions: [
     {

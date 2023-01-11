@@ -5,7 +5,7 @@ import React from 'react';
 
 import { config } from '@grafana/runtime';
 
-import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
+import { logGroupNamesVariable, setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 
 import { LogGroupsField } from './LogGroupsField';
 
@@ -30,7 +30,7 @@ describe('LogGroupSelection', () => {
     lodash.debounce = originalDebounce;
   });
 
-  it('call describeCrossAccountLogGroups to get associated log group arns and then update props if rendered with legacy log group names', async () => {
+  it('should call describeCrossAccountLogGroups to get associated log group arns and then update props if rendered with legacy log group names', async () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = true;
     defaultProps.datasource.api.describeLogGroups = jest
       .fn()
@@ -43,6 +43,20 @@ describe('LogGroupSelection', () => {
       logGroupNamePrefix: 'loggroupname',
     });
     expect(defaultProps.onChange).toHaveBeenCalledWith([{ arn: 'arn', name: 'loggroupname' }]);
+  });
+
+  it('should remove any variables before calling describeCrossAccountLogGroups', async () => {
+    config.featureToggles.cloudWatchCrossAccountQuerying = true;
+    defaultProps.datasource = setupMockedDataSource({ variables: [logGroupNamesVariable] }).datasource;
+    defaultProps.datasource.api.describeLogGroups = jest.fn().mockResolvedValue([]);
+    render(<LogGroupsField {...defaultProps} legacyLogGroupNames={['loggroupname', logGroupNamesVariable.name]} />);
+
+    await waitFor(async () => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
+    expect(defaultProps.datasource.api.describeLogGroups).toHaveBeenCalledTimes(1);
+    expect(defaultProps.datasource.api.describeLogGroups).toHaveBeenCalledWith({
+      region: defaultProps.region,
+      logGroupNamePrefix: 'loggroupname',
+    });
   });
 
   it('should not call describeCrossAccountLogGroups and update props if rendered with log groups', async () => {
