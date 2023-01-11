@@ -21,26 +21,26 @@ type LDAP struct {
 	service ldapService
 }
 
-func (c *LDAP) AuthenticatePassword(ctx context.Context, orgID int64, username, password string) (*authn.Identity, error) {
+func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
 	info, err := c.service.Login(&models.LoginUserQuery{
 		Username: username,
 		Password: password,
 	})
 
 	if err != nil {
-		if errors.Is(err, multildap.ErrInvalidCredentials) {
-			return nil, errInvalidPassword.Errorf("invalid password: %w", err)
-		}
-
 		// FIXME: disable user in grafana if not found
 		if errors.Is(err, multildap.ErrCouldNotFindUser) {
 			return nil, errIdentityNotFound.Errorf("no user found: %w", err)
+		}
+
+		if errors.Is(err, multildap.ErrInvalidCredentials) {
+			return nil, errInvalidPassword.Errorf("invalid password: %w", err)
 		}
 		return nil, err
 	}
 
 	return &authn.Identity{
-		OrgID:          orgID,
+		OrgID:          r.OrgID,
 		OrgRoles:       info.OrgRoles,
 		Login:          info.Login,
 		Name:           info.Name,

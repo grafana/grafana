@@ -47,7 +47,7 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	for _, pwClient := range c.clients {
-		identity, err := pwClient.AuthenticatePassword(ctx, r.OrgID, username, password)
+		identity, err := pwClient.AuthenticatePassword(ctx, r, username, password)
 		if err != nil {
 			if errors.Is(err, errIdentityNotFound) {
 				// continue to next password client if identity could not be found
