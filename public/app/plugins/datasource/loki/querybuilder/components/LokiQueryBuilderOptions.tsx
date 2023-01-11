@@ -15,9 +15,10 @@ export interface Props {
   onChange: (update: LokiQuery) => void;
   onRunQuery: () => void;
   app?: CoreApp;
+  dsMaxLines: number;
 }
 
-export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange, onRunQuery }) => {
+export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange, onRunQuery, dsMaxLines }) => {
   const onQueryTypeChange = (value: LokiQueryType) => {
     onChange({ ...query, queryType: value });
     onRunQuery();
@@ -50,7 +51,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange
 
   return (
     <EditorRow>
-      <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, queryType, showMaxLines)}>
+      <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, queryType, showMaxLines, dsMaxLines)}>
         <EditorField
           label="Legend"
           tooltip="Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
@@ -71,7 +72,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange
           <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
             <AutoSizeInput
               className="width-4"
-              placeholder="auto"
+              placeholder={dsMaxLines.toString()}
               type="number"
               min={0}
               defaultValue={query.maxLines?.toString() ?? ''}
@@ -93,7 +94,12 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange
   );
 });
 
-function getCollapsedInfo(query: LokiQuery, queryType: LokiQueryType, showMaxLines: boolean): string[] {
+function getCollapsedInfo(
+  query: LokiQuery,
+  queryType: LokiQueryType,
+  showMaxLines: boolean,
+  dsMaxLines: number
+): string[] {
   const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryType);
   const resolutionLabel = RESOLUTION_OPTIONS.find((x) => x.value === (query.resolution ?? 1));
 
@@ -109,8 +115,8 @@ function getCollapsedInfo(query: LokiQuery, queryType: LokiQueryType, showMaxLin
 
   items.push(`Type: ${queryTypeLabel?.label}`);
 
-  if (showMaxLines && query.maxLines) {
-    items.push(`Line limit: ${query.maxLines}`);
+  if (showMaxLines) {
+    items.push(`Line limit: ${query.maxLines || dsMaxLines}`);
   }
 
   return items;

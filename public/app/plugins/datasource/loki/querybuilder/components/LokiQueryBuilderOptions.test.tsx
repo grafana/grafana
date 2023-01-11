@@ -46,6 +46,7 @@ function setup(queryOverrides: Partial<LokiQuery> = {}) {
     },
     onRunQuery: jest.fn(),
     onChange: jest.fn(),
+    dsMaxLines: 20,
   };
 
   const { container } = render(<LokiQueryBuilderOptions {...props} />);
