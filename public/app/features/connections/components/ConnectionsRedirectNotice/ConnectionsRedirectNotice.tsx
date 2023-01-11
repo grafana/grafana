@@ -12,10 +12,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-direction: row;
     padding: 0;
     justify-content: space-between;
+    align-items: center;
   `,
   alertParagraph: css`
     margin: 0 ${theme.spacing(1)} 0 0;
-    line-height: ${theme.spacing(theme.components.height.md)};
+    line-height: ${theme.spacing(theme.components.height.sm)};
     color: ${theme.colors.text.primary};
   `,
 });
@@ -34,14 +35,14 @@ export function ConnectionsRedirectNotice({ destinationPage }: { destinationPage
   const styles = useStyles2(getStyles);
 
   return (
-    <Alert severity="warning" title="Data sources have a new home!">
+    <Alert severity="warning" title="">
       <div className={styles.alertContent}>
         <p className={styles.alertParagraph}>
-          You can discover new data sources or manage existing ones in the new Connections section, accessible from the
-          left-hand navigation, or click the button here.
+          Data sources have a new home! You can discover new data sources or manage existing ones in the new Connections
+          page, accessible from the lefthand nav.
         </p>
-        <LinkButton aria-label="Link to Connections" icon="link" href={destinationLinks[destinationPage]}>
-          Connections
+        <LinkButton aria-label="Link to Connections" icon="adjust-circle" href={destinationLinks[destinationPage]}>
+          See data sources in Connections
         </LinkButton>
       </div>
     </Alert>

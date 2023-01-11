@@ -46,6 +46,7 @@ type NavigationAppConfig struct {
 	SectionID  string
 	SortWeight int64
 	Text       string
+	Icon       string
 }
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, queryLibraryService querylibrary.HTTPService) navtree.Service {
@@ -568,6 +569,19 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
+	// Connect data
+	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
+	if plugins.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
+		children = append(children, &navtree.NavLink{
+			Id:        "connections-connect-data",
+			Text:      "Connect data",
+			SubTitle:  "Browse and create new connections",
+			IsSection: true,
+			Url:       s.cfg.AppSubURL + "/connections/connect-data",
+			Children:  []*navtree.NavLink{},
+		})
+	}
+
 	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
 		// Your connections
 		children = append(children, &navtree.NavLink{
@@ -582,18 +596,6 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 				SubTitle: "View and manage your connected data source connections",
 				Url:      baseUrl + "/your-connections/datasources",
 			}},
-		})
-	}
-
-	// Connect data
-	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
-	if plugins.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
-		children = append(children, &navtree.NavLink{
-			Id:       "connections-connect-data",
-			Text:     "Connect data",
-			SubTitle: "Browse and create new connections",
-			Url:      s.cfg.AppSubURL + "/connections/connect-data",
-			Children: []*navtree.NavLink{},
 		})
 	}
 

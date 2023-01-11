@@ -253,6 +253,7 @@
     "@grafana/lezer-logql": "0.1.1",
     "@grafana/monaco-logql": "^0.0.6",
     "@grafana/runtime": "workspace:*",
+    "@grafana/scenes": "0.0.4",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@jaegertracing/jaeger-ui-components": "workspace:*",
@@ -428,5 +429,10 @@
   "engines": {
     "node": ">= 16"
   },
-  "packageManager": "yarn@3.3.0"
+  "packageManager": "yarn@3.3.0",
+  "dependenciesMeta": {
+    "@grafana/scenes@0.0.3": {
+      "unplugged": true
+    }
+  }
 }
