@@ -1,12 +1,10 @@
 import { Story, Meta } from '@storybook/react';
 import React from 'react';
 
-import { AutoSaveInput } from '@grafana/ui';
-
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-import mdx from './Input.mdx';
-// import parseAccessory } from './storyUtils';
+import { AutoSaveInput } from './AutoSaveInput';
+import mdx from './AutoSaveInput.mdx';
 
 const meta: Meta = {
   title: 'AutoSaveInput',
@@ -17,53 +15,37 @@ const meta: Meta = {
       page: mdx,
     },
     controls: {
-      exclude: ['prefix', 'suffix', 'addonBefore', 'addonAfter'],
+      exclude: ['prefix', 'width', 'loading', 'suffix', 'addonBefore', 'addonAfter'],
     },
   },
+  argTypes: {},
   args: {
-    type: 'text',
-    width: 40,
-    prefixVisible: '',
-    suffixVisible: '',
+    showError: false,
     invalid: false,
-    loading: false,
-    onFinishChange: () => console.log('Done'),
   },
-  // argTypes: {
-  //   prefixVisible: {
-  //     control: {
-  //       type: 'select',
-  //       options: prefixSuffixOpts,
-  //     },
-  //   },
-  //   suffixVisible: {
-  //     control: {
-  //       type: 'select',
-  //       options: prefixSuffixOpts,
-  //     },
-  //   },
-  //   type: {
-  //     control: {
-  //       type: 'select',
-  //       options: ['text', 'number', 'password'],
-  //     },
-  //   },
-  // validation: { name: 'Validation regex (will do a partial match if you do not anchor it)' },
-  //width: { control: { type: 'range', min: 10, max: 200, step: 10 } },
-  // },
-};
-
-export const Simple: Story = (args) => {
-  //  const prefix = parseAccessory(args.prefixVisible);
-  //  const suffix = parseAccessory(args.suffixVisible);
-
-  return <AutoSaveInput onFinishChange={args.onFinishChange} />;
-};
-Simple.args = {
-  disabled: false,
-  before: false,
-  after: false,
-  placeholder: 'Enter your name here...',
 };
 
 export default meta;
+// const isError = meta?.args?.showError;
+const getSuccess = () => {
+  return new Promise<void>((resolve) => {
+    resolve();
+  });
+};
+const getError = () => {
+  return new Promise<void>((reject) => {
+    reject();
+  });
+};
+export const AutoSaveInputError: Story = ({ ...args }) => <AutoSaveInput onFinishChange={getError} {...args} />;
+AutoSaveInputError.args = {
+  showError: true,
+  invalid: true,
+  onFinishChange: getError,
+};
+export const AutoSaveInputSuccess: Story = ({ ...args }) => <AutoSaveInput onFinishChange={getSuccess} {...args} />;
+AutoSaveInputError.args = {
+  showError: false,
+  invalid: false,
+  onFinishChange: getSuccess,
+};
