@@ -63,8 +63,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       &:hover,
       &:focus {
-        background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
-        color: ${theme.colors.text.primary};
         text-decoration: underline;
         z-index: 1;
       }
