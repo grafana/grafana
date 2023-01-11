@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
-import { t } from 'i18next';
 import { debounce } from 'lodash';
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { AsyncSelect, Field, InputControl, Label, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { AsyncSelect, Field, InputControl, Label, useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/core';
 import { DashboardSearchHit } from 'app/features/search/types';
@@ -24,7 +23,7 @@ import { getIntervalForGroup } from './GrafanaEvaluationBehavior';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
-export const MAX_GROUP_RESULTS = 1000;
+export const SLICE_GROUP_RESULTS_TO = 1000;
 
 const useGetGroups = (groupfoldersForGrafana: RulerRulesConfigDTO | null | undefined, folderName: string) => {
   const groupOptions = useMemo(() => {
@@ -139,7 +138,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
     },
     [groupOptions]
   );
-  const sliceResults = (list: Array<SelectableValue<string>>) => list.slice(0, MAX_GROUP_RESULTS);
+  const sliceResults = (list: Array<SelectableValue<string>>) => list.slice(0, SLICE_GROUP_RESULTS_TO);
 
   const getOptions = useCallback(
     async (query: string) => {
@@ -222,11 +221,11 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
               <AsyncSelect
                 disabled={!folder}
                 inputId="group"
-                key={`my_unique_select_key__${folder?.title ?? ''}`}
+                key={`my_unique_select_key__${selectedGroup?.title ?? ''}`}
                 {...field}
                 loadOptions={debouncedSearch}
-                loadingMessage={t('folder-picker.loading', 'Loading folders...')}
-                defaultOptions
+                loadingMessage={'Loading groups...'}
+                defaultOptions={groupOptions}
                 defaultValue={selectedGroup}
                 getOptionLabel={(option: SelectableValue<string>) => `${option.label}`}
                 placeholder={'Evaluation group name'}
@@ -235,7 +234,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
                 }}
                 value={selectedGroup}
                 allowCustomValue
-                formatCreateLabel={(newGroup) => '+ Add new '}
+                formatCreateLabel={(_) => '+ Add new '}
               />
             )
           }
