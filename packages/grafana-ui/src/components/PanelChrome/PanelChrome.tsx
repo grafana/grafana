@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import React, { CSSProperties, ReactNode } from 'react';
 
-import { GrafanaTheme2, LinkModel, PanelModel, QueryResultMetaNotice, LoadingState } from '@grafana/data';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';

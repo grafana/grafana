@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { QueryResultMetaNotice } from '@grafana/data';
-import { Icon, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 interface Props {
   notice: QueryResultMetaNotice;
