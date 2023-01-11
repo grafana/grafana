@@ -17,6 +17,14 @@ const cellDisplayModeOptions = [
   { value: TableCellDisplayMode.Image, label: 'Image' },
 ];
 
+// The props that any cell type editor are expected
+// to handle. In this case the generic type should
+// be a discriminated interface of TableCellOptions
+export interface TableCellEditorProps<T> {
+  cellOptions: T;
+  onChange: (value: T) => void;
+}
+
 // Maps display modes to editor components
 interface ComponentMap {
   [key: string]: Function;

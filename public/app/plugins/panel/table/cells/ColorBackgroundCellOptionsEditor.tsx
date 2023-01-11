@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { TableCellBackgroundDisplayMode, TableColoredBackgroundCellOptions } from '@grafana/schema';
 import { HorizontalGroup, Select, Field } from '@grafana/ui';
 
-import { TableCellEditorProps } from '../models.gen';
+import { TableCellEditorProps } from '../TableCellOptionEditor';
 
 const colorBackgroundOpts: SelectableValue[] = [
   { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },

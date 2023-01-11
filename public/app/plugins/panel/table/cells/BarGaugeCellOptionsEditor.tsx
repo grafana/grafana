@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { BarGaugeDisplayMode, TableBarGaugeCellOptions } from '@grafana/schema';
 import { Field, HorizontalGroup, Select } from '@grafana/ui';
 
-import { TableCellEditorProps } from '../models.gen';
+import { TableCellEditorProps } from '../TableCellOptionEditor';
 
 const barGaugeOpts: SelectableValue[] = [
   { value: BarGaugeDisplayMode.Basic, label: 'Basic' },
