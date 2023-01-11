@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -20,7 +21,7 @@ type SQLStoreMock struct {
 	LastGetAlertsQuery *models.GetAlertsQuery
 
 	ExpectedUser                   *user.User
-	ExpectedTeamsByUser            []*models.TeamDTO
+	ExpectedTeamsByUser            []*team.TeamDTO
 	ExpectedAlert                  *models.Alert
 	ExpectedSystemStats            *models.SystemStats
 	ExpectedDataSourceStats        []*models.DataSourceStats
@@ -75,11 +76,11 @@ func (m *SQLStoreMock) GetUserProfile(ctx context.Context, query *user.GetUserPr
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) CreateTeam(name string, email string, orgID int64) (models.Team, error) {
-	return models.Team{
+func (m *SQLStoreMock) CreateTeam(name string, email string, orgID int64) (team.Team, error) {
+	return team.Team{
 		Name:  name,
 		Email: email,
-		OrgId: orgID,
+		OrgID: orgID,
 	}, nil
 }
 

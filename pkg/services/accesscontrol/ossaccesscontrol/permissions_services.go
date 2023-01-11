@@ -53,9 +53,9 @@ func ProvideTeamPermissions(
 				return err
 			}
 
-			err = teamService.GetTeamById(context.Background(), &models.GetTeamByIdQuery{
-				OrgId: orgID,
-				Id:    id,
+			_, err = teamService.GetTeamByID(context.Background(), &team.GetTeamByIDQuery{
+				OrgID: orgID,
+				ID:    id,
 			})
 			if err != nil {
 				return err

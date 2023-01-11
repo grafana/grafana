@@ -53,6 +53,7 @@ type InstrumentationMiddlewareConfig struct {
 
 func instrument(ctx context.Context, cfg InstrumentationMiddlewareConfig, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
 	start := time.Now()
+	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
 	status := "ok"
 	err := fn()
@@ -71,8 +72,7 @@ func instrument(ctx context.Context, cfg InstrumentationMiddlewareConfig, plugin
 			"pluginId", pluginCtx.PluginID,
 			"endpoint", endpoint,
 			"eventName", "grafana-data-egress",
-			"insight_logs", true,
-			"since_grafana_request_started", log.TimeSinceStart(ctx, time.Now()),
+			"time_before_plugin_request", timeBeforePluginRequest,
 		}
 
 		if pluginCtx.User != nil {
