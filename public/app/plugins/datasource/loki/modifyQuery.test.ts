@@ -152,6 +152,7 @@ describe('removeCommentsFromQuery', () => {
     ${'{job="grafana"}#hello'}                                                        | ${'{job="grafana"}'}
     ${'{job="grafana"} | logfmt #hello'}                                              | ${'{job="grafana"} | logfmt '}
     ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl #hello'} | ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl '}
+    ${`#sum(rate(\n{host="containers"}\n#[1m]))`}                                     | ${`\n{host="containers"}\n`}
   `('strips comments in log query:  {$query}', ({ query, expectedResult }) => {
     expect(removeCommentsFromQuery(query)).toBe(expectedResult);
   });
