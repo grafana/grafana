@@ -19,33 +19,22 @@ const meta: Meta = {
     },
   },
   argTypes: {},
-  args: {
-    showError: false,
-    invalid: false,
-  },
+  args: {},
 };
 
 export default meta;
-// const isError = meta?.args?.showError;
+
 const getSuccess = () => {
   return new Promise<void>((resolve) => {
     resolve();
   });
 };
 const getError = () => {
-  return new Promise<void>((reject) => {
+  return new Promise<void>((resolve, reject) => {
     reject();
   });
 };
-export const AutoSaveInputError: Story = ({ ...args }) => <AutoSaveInput onFinishChange={getError} {...args} />;
-AutoSaveInputError.args = {
-  showError: true,
-  invalid: true,
-  onFinishChange: getError,
-};
-export const AutoSaveInputSuccess: Story = ({ ...args }) => <AutoSaveInput onFinishChange={getSuccess} {...args} />;
-AutoSaveInputError.args = {
-  showError: false,
-  invalid: false,
-  onFinishChange: getSuccess,
-};
+
+export const AutoSaveInputError: Story = () => <AutoSaveInput onFinishChange={getError} />;
+
+export const AutoSaveInputSuccess: Story = () => <AutoSaveInput onFinishChange={getSuccess} />;
