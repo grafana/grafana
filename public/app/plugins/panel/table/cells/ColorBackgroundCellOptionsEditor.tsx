@@ -22,15 +22,7 @@ export const ColorBackgroundCellOptionsEditor = ({
   // When the select changes we build an options
   // object as needed and set the display mode
   const onCellOptionsChange = (v: SelectableValue) => {
-    if (cellOptions === undefined) {
-      cellOptions = {
-        type: TableCellDisplayMode.ColorBackground,
-        mode: v.value,
-      };
-    } else {
-      cellOptions.mode = v.value;
-    }
-
+    cellOptions.mode = v.value;
     onChange(cellOptions);
   };
 

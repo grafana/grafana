@@ -17,15 +17,7 @@ export const BarGaugeCellOptionsEditor = ({
   onChange,
 }: TableCellEditorProps<TableBarGaugeCellOptions>) => {
   const onCellOptionsChange = (v: SelectableValue) => {
-    if (cellOptions === undefined) {
-      cellOptions = {
-        type: TableCellDisplayMode.Gauge,
-        mode: v.value,
-      };
-    } else {
-      cellOptions.mode = v.value;
-    }
-
+    cellOptions.mode = v.value;
     onChange(cellOptions);
   };
 
