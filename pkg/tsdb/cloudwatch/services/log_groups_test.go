@@ -114,7 +114,10 @@ func TestGetLogGroups(t *testing.T) {
 			LogGroups: []*cloudwatchlogs.LogGroup{
 				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:group_a"), LogGroupName: utils.Pointer("group_a")},
 			},
+<<<<<<< HEAD
 			NextToken: aws.String("next_token"),
+=======
+>>>>>>> 31030fe993 (add unit tests)
 		}, nil)
 
 		service := NewLogGroupsService(mockLogsAPI, false)
