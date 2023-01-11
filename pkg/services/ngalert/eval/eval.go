@@ -40,9 +40,13 @@ type ConditionEvaluator interface {
 	Evaluate(ctx context.Context, now time.Time) (Results, error)
 }
 
+type expressionService interface {
+	ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+}
+
 type conditionEvaluator struct {
 	pipeline          expr.DataPipeline
-	expressionService *expr.Service
+	expressionService expressionService
 	condition         models.Condition
 	evalTimeout       time.Duration
 }
@@ -61,7 +65,7 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 	}()
 
 	execCtx := ctx
-	if r.evalTimeout <= 0 {
+	if r.evalTimeout >= 0 {
 		timeoutCtx, cancel := context.WithTimeout(ctx, r.evalTimeout)
 		defer cancel()
 		execCtx = timeoutCtx
