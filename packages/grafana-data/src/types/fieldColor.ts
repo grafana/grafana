@@ -7,6 +7,7 @@ export enum FieldColorModeId {
   PaletteSaturated = 'palette-saturated',
   ContinuousGrYlRd = 'continuous-GrYlRd',
   Fixed = 'fixed',
+  Shades = 'shades',
 }
 
 /**
