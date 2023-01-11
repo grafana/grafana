@@ -55,7 +55,7 @@ export class CloudWatchDatasource
   api: CloudWatchAPI;
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
+    private instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
     readonly templateSrv: TemplateSrv = getTemplateSrv(),
     timeSrv: TimeSrv = getTimeSrv()
   ) {
@@ -70,7 +70,6 @@ export class CloudWatchDatasource
     this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
     this.variables = new CloudWatchVariableSupport(this.api);
     this.annotations = CloudWatchAnnotationSupport;
-    this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups;
   }
 
   filterQuery(query: CloudWatchQuery) {
@@ -159,7 +158,7 @@ export class CloudWatchDatasource
   }
 
   getQueryDisplayText(query: CloudWatchQuery) {
-    if (query.queryMode === 'Logs') {
+    if (isCloudWatchLogsQuery(query)) {
       return query.expression ?? '';
     } else {
       return JSON.stringify(query);
@@ -180,7 +179,7 @@ export class CloudWatchDatasource
 
   getDefaultQuery(_: CoreApp): Partial<CloudWatchQuery> {
     return {
-      ...getDefaultLogsQuery(this.defaultLogGroups),
+      ...getDefaultLogsQuery(this.instanceSettings.jsonData.logGroups, this.instanceSettings.jsonData.defaultLogGroups),
       ...DEFAULT_METRICS_QUERY,
     };
   }

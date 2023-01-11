@@ -23,8 +23,7 @@ import syntax from '../syntax';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
-import { LogGroupSelection } from './LogGroupSelection';
-import QueryHeader from './QueryHeader';
+import { LogGroupsField } from './LogGroups/LogGroupsField';
 
 export interface CloudWatchLogsQueryFieldProps
   extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>,
@@ -46,7 +45,7 @@ const plugins: Array<Plugin<Editor>> = [
   ),
 ];
 export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) => {
-  const { query, datasource, onChange, onRunQuery, ExtraFieldElement, data } = props;
+  const { query, datasource, onChange, ExtraFieldElement, data } = props;
 
   const showError = data?.error?.refId === query.refId;
   const cleanText = datasource.languageProvider.cleanText;
@@ -62,7 +61,8 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
   };
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const { logGroupNames } = query;
+    const { datasource, query } = props;
+    const { logGroups } = query;
 
     if (!datasource.languageProvider) {
       return { suggestions: [] };
@@ -77,7 +77,7 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
       {
         history,
         absoluteRange,
-        logGroupNames,
+        logGroups: logGroups,
         region: query.region,
       }
     );
@@ -85,21 +85,21 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
 
   return (
     <>
-      <QueryHeader
-        query={query}
-        onRunQuery={onRunQuery}
+      <LogGroupsField
+        region={query.region}
         datasource={datasource}
-        onChange={onChange}
-        sqlCodeEditorIsDirty={false}
+        legacyLogGroupNames={query.logGroupNames}
+        logGroups={query.logGroups}
+        onChange={(logGroups) => {
+          onChange({ ...query, logGroups, logGroupNames: undefined });
+        }}
       />
-      <LogGroupSelection datasource={datasource} query={query} onChange={onChange} onRunQuery={onRunQuery} />
       <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
         <div className="gf-form gf-form--grow flex-shrink-1">
           <QueryField
             additionalPlugins={plugins}
             query={query.expression ?? ''}
             onChange={onChangeQuery}
-            onRunQuery={props.onRunQuery}
             onTypeahead={onTypeahead}
             cleanText={cleanText}
             placeholder="Enter a CloudWatch Logs Insights query (run with Shift+Enter)"

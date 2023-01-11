@@ -5,6 +5,21 @@
       "success": "Copied"
     }
   },
+  "command-palette": {
+    "action": {
+      "change-theme": "Change theme...",
+      "dark-theme": "Dark",
+      "light-theme": "Light",
+      "search": "Search"
+    },
+    "section": {
+      "actions": "Actions",
+      "dashboard-search-results": "Dashboards",
+      "pages": "Pages",
+      "preferences": "Preferences",
+      "recent-dashboards": "Recently viewed dashboards"
+    }
+  },
   "common": {
     "locale": {
       "default": "Default"
@@ -80,6 +95,15 @@
       "unmark-favorite": "Unmark as favorite"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "Please contact your administrator to configure data sources.",
+    "explanation": "To visualize your data, you'll need to connect it first.",
+    "new-dashboard": "New dashboard",
+    "preferred": "Connect your preferred data source:",
+    "sampleData": "Or set up a new dashboard with sample data",
+    "viewAll": "View all",
+    "welcome": "Welcome to Grafana dashboards!"
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },
@@ -130,6 +154,9 @@
     "alerting-groups": {
       "subtitle": "See grouped alerts from an Alertmanager instance",
       "title": "Groups"
+    },
+    "alerting-home": {
+      "title": "Home"
     },
     "alerting-legacy": {
       "title": "Alerting (legacy)"
@@ -208,6 +235,7 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Keyboard shortcuts",
     "help/support": "Support",
+    "help/support-bundle": "Support Bundles",
     "home": {
       "title": "Home"
     },
@@ -297,6 +325,10 @@
     "storage": {
       "subtitle": "Manage file storage",
       "title": "Storage"
+    },
+    "support-bundles": {
+      "subtitle": "Download support bundles",
+      "title": "Support bundles"
     },
     "teams": {
       "subtitle": "Groups of users that have common dashboard and permission needs",

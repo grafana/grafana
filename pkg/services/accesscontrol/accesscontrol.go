@@ -192,6 +192,70 @@ func GroupScopesByAction(permissions []Permission) map[string][]string {
 	return m
 }
 
+func Reduce(ps []Permission) map[string][]string {
+	reduced := make(map[string][]string)
+	scopesByAction := make(map[string]map[string]bool)
+	wildcardsByAction := make(map[string]map[string]bool)
+
+	// helpers
+	add := func(scopesByAction map[string]map[string]bool, action, scope string) {
+		if _, ok := scopesByAction[action]; !ok {
+			scopesByAction[action] = map[string]bool{scope: true}
+			return
+		}
+		scopesByAction[action][scope] = true
+	}
+	includes := func(wildcardsSet map[string]bool, scope string) bool {
+		for wildcard := range wildcardsSet {
+			if wildcard == "*" || strings.HasPrefix(scope, wildcard[:len(wildcard)-1]) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Sort permissions (scopeless, wildcard, specific)
+	for i := range ps {
+		if ps[i].Scope == "" {
+			if _, ok := reduced[ps[i].Action]; !ok {
+				reduced[ps[i].Action] = nil
+			}
+			continue
+		}
+		if isWildcard(ps[i].Scope) {
+			add(wildcardsByAction, ps[i].Action, ps[i].Scope)
+			continue
+		}
+		add(scopesByAction, ps[i].Action, ps[i].Scope)
+	}
+
+	// Reduce wildcards
+	for action, wildcards := range wildcardsByAction {
+		for wildcard := range wildcards {
+			if wildcard == "*" {
+				reduced[action] = []string{wildcard}
+				break
+			}
+			if includes(wildcards, wildcard[:len(wildcard)-2]) {
+				continue
+			}
+			reduced[action] = append(reduced[action], wildcard)
+		}
+	}
+
+	// Reduce specific
+	for action, scopes := range scopesByAction {
+		for scope := range scopes {
+			if includes(wildcardsByAction[action], scope) {
+				continue
+			}
+			reduced[action] = append(reduced[action], scope)
+		}
+	}
+
+	return reduced
+}
+
 func ValidateScope(scope string) bool {
 	prefix, last := scope[:len(scope)-1], scope[len(scope)-1]
 	// verify that last char is either ':' or '/' if last character of scope is '*'
