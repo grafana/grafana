@@ -75,6 +75,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: css`
       border-radius: ${theme.shape.borderRadius()};
       border: 1px solid ${theme.components.input.borderColor};
+      width: 100%;
     `,
   };
 };
@@ -177,19 +178,18 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
           // (it will grow taller when necessary)
           // FIXME: maybe move this functionality into CodeEditor, like:
           // <CodeEditor resizingMode="single-line"/>
-          const updateElementHeight = () => {
+          const handleResize = () => {
             const containerDiv = containerRef.current;
             if (containerDiv !== null) {
               const pixelHeight = editor.getContentHeight();
               containerDiv.style.height = `${pixelHeight + EDITOR_HEIGHT_OFFSET}px`;
-              containerDiv.style.width = '100%';
               const pixelWidth = containerDiv.clientWidth;
               editor.layout({ width: pixelWidth, height: pixelHeight });
             }
           };
 
-          editor.onDidContentSizeChange(updateElementHeight);
-          updateElementHeight();
+          editor.onDidContentSizeChange(handleResize);
+          handleResize();
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?
           editor.addCommand(
