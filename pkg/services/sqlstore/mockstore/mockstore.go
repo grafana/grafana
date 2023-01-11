@@ -116,10 +116,6 @@ func (m *SQLStoreMock) Quote(value string) string {
 	return ""
 }
 
-func (m *SQLStoreMock) GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetSqlxSession() *session.SessionDB {
 	return nil
 }
