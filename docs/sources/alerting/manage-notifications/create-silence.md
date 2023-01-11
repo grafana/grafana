@@ -12,7 +12,7 @@ keywords:
   - silence
   - mute
 title: Manage silences
-weight: 450
+weight: 600
 ---
 
 # Manage silences
