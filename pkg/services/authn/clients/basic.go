@@ -34,7 +34,7 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, errDecodingBasicAuthHeader.Errorf("failed to decode basic auth header: %w", err)
 	}
 
-	r.SetMeta(authn.MetaKeyUserName, username)
+	r.SetMeta(authn.MetaKeyUsername, username)
 
 	ok, err := c.loginAttempts.Validate(ctx, username)
 	if err != nil {

@@ -27,11 +27,11 @@ const (
 )
 
 const (
-	MetaKeyUserName   = "username"
+	MetaKeyUsername   = "username"
 	MetaKeyAuthModule = "authModule"
 )
 
-// ClientParams are hints to the auth service about how to handle the identity management
+// ClientParams are hints to the auth serviAuthN: Post login hooksce about how to handle the identity management
 // from the authenticating client.
 type ClientParams struct {
 	// Update the internal representation of the entity from the identity provided
