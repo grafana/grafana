@@ -2,13 +2,17 @@ import React from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
+import {
+  UrlSyncManager,
+  SceneObjectBase,
+  SceneComponentProps,
+  SceneLayout,
+  SceneObject,
+  SceneObjectStatePlain,
+} from '@grafana/scenes';
 import { PageToolbar, ToolbarButton } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-
-import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneComponentProps, SceneLayout, SceneObject, SceneObjectStatePlain } from '../core/types';
-import { UrlSyncManager } from '../services/UrlSyncManager';
 
 interface DashboardSceneState extends SceneObjectStatePlain {
   title: string;
