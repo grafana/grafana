@@ -6,13 +6,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type folderInfo struct {
-	UID       string `json:"uid"`
+	UID  string `json:"uid"`
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+
+	// Build the tree
 	ParentUID string `json:"-"`
-	Name      string `json:"name"`
-	Slug      string `json:"-"`
 
 	// Added after query
 	children []*folderInfo
@@ -23,7 +26,10 @@ type folderInfo struct {
 // This is pretty heavy weight, but it does give us a sorted folder list
 // NOTE: this could be done async with a mutex/lock?  reconciler pattern
 func updateFolderTree(ctx context.Context, tx *session.SessionTx, tenant int64) error {
-	_, _ = tx.Exec(ctx, "DELETE FROM entity_folder WHERE tenant_id=? AND uid=?", tenant)
+	_, err := tx.Exec(ctx, "DELETE FROM entity_folder WHERE tenant_id=?", tenant)
+	if err != nil {
+		return err
+	}
 
 	all := []*folderInfo{}
 	lookup := make(map[string]*folderInfo)
@@ -83,11 +89,12 @@ func addFolderInfo(ctx context.Context, tx *session.SessionTx, tenant int64, tre
 	for _, f := range tree {
 		slugPath += f.Slug + "/"
 	}
-
+	grn := entity.GRN{TenantId: tenant, Kind: models.StandardKindFolder, UID: folder.UID}
 	_, err := tx.Exec(ctx,
 		`INSERT INTO entity_folder `+
-			"(tenant_id, uid, slug_path, tree, depth, detached) "+
+			"(grn, tenant_id, uid, slug_path, tree, depth, detached) "+
 			`VALUES (?, ?, ?, ?, ?, ?)`,
+		grn.ToGRNString(),
 		tenant,
 		folder.UID,
 		slugPath,

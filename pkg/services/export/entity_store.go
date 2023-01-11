@@ -119,6 +119,9 @@ func (e *entityStoreJob) start(ctx context.Context) {
 
 	for _, dash := range folderInfo {
 		folders[dash.ID] = dash.UID
+	}
+
+	for _, dash := range folderInfo {
 		rowUser.OrgID = dash.OrgID
 		rowUser.UserID = dash.UpdatedBy
 		if dash.UpdatedBy < 0 {
@@ -138,6 +141,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 			UpdatedBy:    fmt.Sprintf("user:%d", dash.UpdatedBy),
 			CreatedBy:    fmt.Sprintf("user:%d", dash.CreatedBy),
 			Body:         d,
+			Folder:       folders[dash.FolderID],
 			Comment:      "(exported from SQL)",
 			Origin: &entity.EntityOriginInfo{
 				Source: "export-from-sql",
@@ -333,6 +337,7 @@ type folderInfo struct {
 	Updated   time.Time
 	CreatedBy int64 `db:"created_by"`
 	UpdatedBy int64 `db:"updated_by"`
+	FolderID  int64 `db:"folder_id"`
 }
 
 // TODO, paging etc
@@ -351,7 +356,7 @@ func (e *entityStoreJob) getFolders(ctx context.Context) ([]folderInfo, error) {
 	e.broadcaster(e.status)
 
 	dash := make([]folderInfo, 0)
-	err := e.sess.Select(ctx, &dash, "SELECT id,org_id,uid,title,created,updated,created_by,updated_by FROM dashboard WHERE is_folder=true")
+	err := e.sess.Select(ctx, &dash, "SELECT id,org_id,uid,title,folder_id,created,updated,created_by,updated_by FROM dashboard WHERE is_folder=true")
 	return dash, err
 }
 
