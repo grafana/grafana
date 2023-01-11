@@ -266,10 +266,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	}
 
 	err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-		if err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration)); err != nil {
-			return err
-		}
-		return nil
+		return am.applyAndMarkConfigCallback(ctx, cmd.ResultHash, cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
 	})
 	if err != nil {
 		return err
@@ -296,10 +293,7 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	}
 
 	err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-		if err := am.applyConfig(cfg, rawConfig); err != nil {
-			return err
-		}
-		return nil
+		return am.applyAndMarkConfigCallback(ctx, cmd.ResultHash, cfg, rawConfig)
 	})
 	if err != nil {
 		return err
@@ -321,6 +315,23 @@ func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
 
 	if err = am.applyConfig(cfg, nil); err != nil {
 		return fmt.Errorf("unable to apply configuration: %w", err)
+	}
+	return nil
+}
+
+// applyAndMarkConfigCallback is intended to be used after a configuration is saved.
+// It applies a config and marks it as applied if no errors occur.
+func (am *Alertmanager) applyAndMarkConfigCallback(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
+	if err := am.applyConfig(cfg, rawConfig); err != nil {
+		return err
+	}
+	markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
+		OrgID:             am.orgID,
+		ConfigurationHash: hash,
+	}
+	if err := am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd); err != nil {
+		// In case we fail to mark the config, we just log the error.
+		am.logger.Error("Failed to mark Alertmanager config as applied", "hash", hash, "error", err)
 	}
 	return nil
 }

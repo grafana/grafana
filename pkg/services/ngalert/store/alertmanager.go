@@ -76,6 +76,8 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			OrgID:                     cmd.OrgID,
 			CreatedAt:                 time.Now().Unix(),
 		}
+		cmd.ResultHash = config.ConfigurationHash
+
 		// TODO: If we are more structured around how we seed configurations in the future, this can be a pure update instead of upsert. This should improve perf and code clarity.
 		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 			"alert_configuration",
@@ -128,6 +130,43 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
 			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
+		return nil
+	})
+}
+
+// MarkConfigurationAsApplied sets the `applied_at` field of the last config with the given hash to the current UNIX timestamp.
+func (st *DBstore) MarkConfigurationAsApplied(ctx context.Context, cmd *models.MarkConfigurationAsAppliedCmd) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		// Create a map representing the field to be updated and its new value.
+		update := map[string]interface{}{"applied_at": time.Now().UTC().Unix()}
+		rowsAffected, err := sess.Table("alert_configuration_history").
+			Desc("id").
+			Limit(1).
+			Where("org_id = ? AND configuration_hash = ?", cmd.OrgID, cmd.ConfigurationHash).
+			Cols("applied_at").
+			Update(&update)
+
+		if rowsAffected != 1 {
+			return fmt.Errorf("update statement affected %d rows", rowsAffected)
+		}
+		return err
+	})
+}
+
+// GetAppliedConfigurations returns all configurations that have been marked as applied, ordered newest -> oldest.
+func (st *DBstore) GetAppliedConfigurations(ctx context.Context, query *models.GetAppliedConfigurationsQuery) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		cfgs := []*models.AlertConfiguration{}
+		err := sess.Table("alert_configuration_history").
+			Desc("id").
+			Where("org_id = ? AND applied_at != 0", query.OrgID).
+			Find(&cfgs)
+
+		if err != nil {
+			return err
+		}
+
+		query.Result = cfgs
 		return nil
 	})
 }

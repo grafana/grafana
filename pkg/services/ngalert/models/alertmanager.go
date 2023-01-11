@@ -27,4 +27,17 @@ type SaveAlertmanagerConfigurationCmd struct {
 	ConfigurationVersion      string
 	Default                   bool
 	OrgID                     int64
+	ResultHash                string
+}
+
+// MarkConfigurationAsAppliedCmd is the command for marking a previously saved configuration as successfully applied.
+type MarkConfigurationAsAppliedCmd struct {
+	OrgID             int64
+	ConfigurationHash string
+}
+
+// GetAppliedConfigurationsQuery is the query for getting configurations that have been previously applied with no errors.
+type GetAppliedConfigurationsQuery struct {
+	OrgID  int64
+	Result []*AlertConfiguration
 }
