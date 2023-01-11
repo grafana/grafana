@@ -34,6 +34,40 @@ interface State {
 }
 
 const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
+  // those styles come from ToolbarButton. Unfortunately this is needed because we can not control the variant of the menu-button in a ToolbarButtonRow.
+  const defaultOld = css`
+    color: ${theme.colors.text.secondary};
+    background-color: ${theme.colors.background.primary};
+
+    &:hover {
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.background.secondary};
+    }
+  `;
+
+  const defaultTopNav = css`
+    color: ${theme.colors.text.secondary};
+    background-color: transparent;
+    border-color: transparent;
+
+    &:hover {
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.background.secondary};
+    }
+  `;
+
+  const active = css`
+    color: ${theme.v1.palette.orangeDark};
+    border-color: ${theme.v1.palette.orangeDark};
+    background-color: transparent;
+
+    &:hover {
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
+    }
+  `;
+
+  const defaultToolbarButtonStyle = theme.flags.topnav ? defaultTopNav : defaultOld;
   return {
     noHoverBackground: css`
       label: noHoverBackground;
@@ -96,7 +130,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
         }
       }
       & div:last-child > button {
-        color: ${activeButton ? theme.colors.primary.text : theme.colors.text.secondary};
+        ${activeButton ? active : defaultToolbarButtonStyle};
       }
     `,
     logDetailsStats: css`
@@ -226,14 +260,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
     const toggleFieldButton =
       displayedFields && displayedFields.includes(parsedKey) ? (
-        <ToolbarButton
-          className={styles.showingField}
-          tooltip="Hide this field"
-          iconOnly
-          narrow
-          icon="eye"
-          onClick={this.hideField}
-        />
+        <ToolbarButton variant="active" tooltip="Hide this field" iconOnly narrow icon="eye" onClick={this.hideField} />
       ) : (
         <ToolbarButton
           tooltip="Show this field instead of the message"
@@ -270,7 +297,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               {displayedFields && toggleFieldButton}
               <ToolbarButton
                 iconOnly
-                className={showFieldsStats ? styles.showingField : ''}
+                variant={showFieldsStats ? 'active' : 'default'}
                 narrow
                 icon="signal"
                 tooltip="Ad-hoc statistics"
@@ -311,7 +338,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
                 <ToolbarButton
                   iconOnly
-                  className={showFieldsStats ? styles.showingField : ''}
+                  variant={showFieldsStats ? 'active' : 'default'}
                   narrow
                   icon="signal"
                   tooltip="Hide ad-hoc statistics"
