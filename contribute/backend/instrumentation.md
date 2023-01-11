@@ -154,7 +154,7 @@ A distributed trace is data that tracks an application request as it flows throu
 
 ### Usage
 
-Grafana currently supports two tracing implementations, [OpenTelemetry](https://opentelemetry.io/) and [OpenTracing](https://opentracing.io/). OpenTracing is deprecated, but still supported until we remove it. The two different implementations implements the `Tracer` and `Span` interfaces, defined in the _pkg/infra/tracing_ package, which you can use to create traces and spans. To get a hold of a `Tracer` you would need to get it injected as dependency into your service, see [Services](../../architecture/backend/services.md) for more details.
+Grafana currently supports two tracing implementations, [OpenTelemetry](https://opentelemetry.io/) and [OpenTracing](https://opentracing.io/). OpenTracing is deprecated, but still supported until we remove it. The two different implementations implements the `Tracer` and `Span` interfaces, defined in the _pkg/infra/tracing_ package, which you can use to create traces and spans. To get a hold of a `Tracer` you would need to get it injected as dependency into your service, see [Services](services.md) for more details.
 
 Example:
 
