@@ -35,7 +35,7 @@ describe('histogram frames frames', () => {
           "config": Object {
             "unit": "mph",
           },
-          "name": "BucketMin",
+          "name": "xMin",
           "values": Array [
             1,
             2,
@@ -52,7 +52,7 @@ describe('histogram frames frames', () => {
           "config": Object {
             "unit": "mph",
           },
-          "name": "BucketMax",
+          "name": "xMax",
           "values": Array [
             2,
             3,
@@ -145,7 +145,7 @@ describe('histogram frames frames', () => {
     ).toMatchInlineSnapshot(`
       Array [
         Object {
-          "name": "BucketMin",
+          "name": "xMin",
           "values": Array [
             1,
             2,
@@ -159,7 +159,7 @@ describe('histogram frames frames', () => {
           ],
         },
         Object {
-          "name": "BucketMax",
+          "name": "xMax",
           "values": Array [
             2,
             3,
@@ -173,7 +173,7 @@ describe('histogram frames frames', () => {
           ],
         },
         Object {
-          "name": "Count",
+          "name": "count",
           "values": Array [
             1,
             1,
