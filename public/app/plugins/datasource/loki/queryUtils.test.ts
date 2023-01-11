@@ -7,6 +7,7 @@ import {
   isValidQuery,
   parseToNodeNamesArray,
   getParserFromQuery,
+  obfuscate,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -168,7 +169,7 @@ describe('isValidQuery', () => {
   });
 });
 
-describe('parseToArray', () => {
+describe('parseToNodeNamesArray', () => {
   it('returns on empty query', () => {
     expect(parseToNodeNamesArray('{}')).toEqual(['LogQL', 'Expr', 'LogExpr', 'Selector', '⚠']);
   });
@@ -198,6 +199,17 @@ describe('parseToArray', () => {
       'Eq',
       'String',
     ]);
+  });
+});
+
+describe('obfuscate', () => {
+  it('returns on invalid query', () => {
+    expect(obfuscate('{job="grafana"')).toEqual('{***=*********');
+  });
+  it('returns on valid query', () => {
+    expect(
+      obfuscate('sum(sum_over_time({test="test"} |= `` | logfmt | __error__=`` | unwrap test | __error__=`` [10m]))')
+    ).toEqual('sum(sum_over_time({****=******} |= ** | logfmt | *********=** | unwrap **** | *********=** [10m]))');
   });
 });
 
