@@ -355,20 +355,7 @@ const Policy: FC<PolicyComponentProps> = ({
 
   // if the receiver / contact point has any errors show it on the policy
   const actualContactPoint = contactPoint ?? inheritedProperties?.receiver ?? '';
-  const contactPointErrors = Object.entries(contactPointsState[actualContactPoint]?.notifiers).reduce(
-    (acc: JSX.Element[] = [], [_, notifierStatuses]) => {
-      const notifierErrors = notifierStatuses
-        .filter((status) => status.lastNotifyAttemptError)
-        .map((status) => status.lastNotifyAttemptError);
-
-      if (notifierErrors.length > 0) {
-        acc.push(<Label icon="at" key={uniqueId()} label={'Contact Point'} value={notifierErrors} />);
-      }
-
-      return acc;
-    },
-    []
-  );
+  const contactPointErrors = getContactPointErrors(actualContactPoint, contactPointsState);
 
   contactPointErrors.forEach((error) => {
     errors.push(error);
@@ -1185,4 +1172,21 @@ function createContactPointLink(contactPoint: string, alertManagerSourceName = '
   return `/alerting/notifications/receivers/${encodeURIComponent(contactPoint)}/edit?alertmanager=${encodeURIComponent(
     alertManagerSourceName
   )}`;
+}
+
+function getContactPointErrors(contactPoint: string, contactPointsState: ReceiversState): JSX.Element[] {
+  const notifierStates = Object.entries(contactPointsState[contactPoint]?.notifiers ?? []);
+  const contactPointErrors = notifierStates.reduce((acc: JSX.Element[] = [], [_, notifierStatuses]) => {
+    const notifierErrors = notifierStatuses
+      .filter((status) => status.lastNotifyAttemptError)
+      .map((status) => status.lastNotifyAttemptError);
+
+    if (notifierErrors.length > 0) {
+      acc.push(<Label icon="at" key={uniqueId()} label={'Contact Point'} value={notifierErrors} />);
+    }
+
+    return acc;
+  }, []);
+
+  return contactPointErrors;
 }
