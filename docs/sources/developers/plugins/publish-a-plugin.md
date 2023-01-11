@@ -110,21 +110,21 @@ To speed up the time it takes to review your plugin:
 
 **How can I update my plugin's catalog page?**
 
-- The plugin's catalog page content is extracted from the plugin README file. If you wish to upadte it you should submit a plugin update with the new content on it.
+- The plugin's catalog page content is extracted from the plugin README file. To update the plugin's catalog page, it is necessary to submit an updated plugin with the new content included in the README file.
 
 **Can I unlist my plugin from the Grafana Plugin's Catalog in case of a bug?**
 
-- We can unlist plugins from the Grafana Plugin's Catalog in exceptional cases (e.g. security concerns) but we can't control the Grafana instances where the plugin is installed.
+- In the event of a bug, unlisting the plugin from the Grafana Plugin's Catalog may be possible in exceptional cases, such as security concerns. However, we do not have control over the specific instances where the plugin is installed.
 
 **Can I distribute my plugin somewhere else than the Grafana Catalog?**
 
-- The official way of distributing Grafana plugins is using the Grafana Catalog. You can install private and development plugins in local Grafana instances as described in [this guide](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-plugin-on-local-grafana).
+- The official method for distributing Grafana plugins is through the Grafana Catalog. Alternative methods, such as installing private or development plugins on local Grafana instances, are available as per the guidelines provided in [this guide](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-plugin-on-local-grafana).
 
 ## Publishing your plugin for the first time
 
-**Do plugin's signatures expire?**
+**Do plugin signatures expire?**
 
-- Currently plugin's signatures don't expire.
+- Plugin signatures do not currently expire.
 
 {{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
 
