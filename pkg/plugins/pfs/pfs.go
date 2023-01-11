@@ -57,6 +57,7 @@ func PermittedCUEImports() []string {
 	return []string{
 		"github.com/grafana/thema",
 		"github.com/grafana/grafana/pkg/kindsys",
+		"github.com/grafana/grafana/pkg/plugins/pfs",
 		"github.com/grafana/grafana/packages/grafana-schema/src/schema",
 	}
 }

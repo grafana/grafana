@@ -110,23 +110,25 @@ schemaInterfaces: {
 		group: true
 	}
 
-	Queries: {
-		// The contract for the queries schema interface is itself a pattern:
-		// Each of its top-level fields must be represent a distinct query type for
-		// the datasource plugin. The queryType field acts as a discriminator, and
-		// is constrained to be the same as the name of the top-level field declaring it.
-		interface: [QT=string]: {
-			queryType?: QT
+	// The DataQuery schema interface specifies how (datasource) plugins are expected to define
+	// the shape of their queries.
+	//
+	// It is expected that plugins may support multiple logically distinct query types within
+	// their single DataQuery composable kind. Implementations are generally free to model
+	// this as they please, with understanding that Grafana systems will look to the queryType
+	// field as a discriminator - each distinct value will be assumed, where possible, to
+	// identify a distinct type of query supported by the plugin.
+	DataQuery: {
+		interface: {
+			queryType?: string
+			// TODO make ^^ this required and give it a default
 		}
 
 		pluginTypes: ["datasource"]
-
-		// grouped b/c separate, non-cross-referring elements are actually themselves each impls of the concept
-		// and it avoids us having to put more levels in the slot system (uggghhh)
-		group: true
+		group: false
 	}
 
-	DatasourceCfg: {
+	DataSourceCfg: {
 		interface: {
 			// Normal datasource configuration options.
 			Options: {}
