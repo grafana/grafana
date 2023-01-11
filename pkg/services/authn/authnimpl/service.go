@@ -145,7 +145,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 	defer func() {
 		for _, hook := range s.postLoginHooks {
-			hook(ctx, client, identity, r, err)
+			hook(ctx, identity, r, err)
 		}
 	}()
 
