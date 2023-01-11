@@ -51,6 +51,7 @@ export function RuleFolderPicker(props: RuleFolderPickerProps) {
   return (
     <FolderPicker
       showRoot={false}
+      rootName=""
       allowEmpty={true}
       initialTitle={value?.title}
       initialFolderId={value?.id}
