@@ -161,13 +161,20 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRule
     );
   }
 
-  filteredRules = filteredRules.filter((rule) => {
-    return (
-      (options.stateFilter.firing && rule.rule.state === PromAlertingRuleState.Firing) ||
-      (options.stateFilter.pending && rule.rule.state === PromAlertingRuleState.Pending) ||
-      (options.stateFilter.normal && rule.rule.state === PromAlertingRuleState.Inactive)
-    );
-  });
+  // skip filtering by the alert rule's state if we've selected "nodata" or "error" as a filter condition.
+  // the alert rule state is not reflected if we have any instances matching that state
+  // this means that an instance might be "nodata" or "error" but the alert rule it belongs to will be "normal"
+  const isInstanceStateFilter = options.stateFilter.noData || options.stateFilter.error;
+
+  if (!isInstanceStateFilter) {
+    filteredRules = filteredRules.filter((rule) => {
+      return (
+        (options.stateFilter.firing && rule.rule.state === PromAlertingRuleState.Firing) ||
+        (options.stateFilter.pending && rule.rule.state === PromAlertingRuleState.Pending) ||
+        (options.stateFilter.normal && rule.rule.state === PromAlertingRuleState.Inactive)
+      );
+    });
+  }
 
   if (options.alertInstanceLabelFilter) {
     const replacedLabelFilter = replaceVariables(options.alertInstanceLabelFilter);
