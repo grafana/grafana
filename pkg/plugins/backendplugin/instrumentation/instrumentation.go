@@ -36,7 +36,7 @@ func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *ba
 
 	start := time.Now()
 
-	timeBeforePluginRequest := log.TimeSinceStart(ctx, time.Now())
+	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
 	err := fn()
 	if err != nil {
