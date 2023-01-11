@@ -5109,12 +5109,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:0.0.4":
-  version: 0.0.4
-  resolution: "@grafana/scenes@npm:0.0.4"
-  checksum: adbc69e4033bdd40a5c2fe13ee7af2b787c236e548c389b6820b057f76ae3727fc4f85d2205d6658e008f69f75bbf84c04453fedb29f9979a76517267f1f91ad
+"@grafana/scenes@portal:/Users/torkelodegaard/dev/scenes::locator=grafana%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@grafana/scenes@portal:/Users/torkelodegaard/dev/scenes::locator=grafana%40workspace%3A."
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@grafana/schema@9.4.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
@@ -21990,7 +21989,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.1
     "@grafana/monaco-logql": ^0.0.6
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": 0.0.4
+    "@grafana/scenes": "portal:/Users/torkelodegaard/dev/scenes"
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
