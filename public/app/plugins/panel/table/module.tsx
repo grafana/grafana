@@ -67,9 +67,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           name: 'Cell Type',
           editor: TableCellOptionEditor,
           override: TableCellOptionEditor,
-          defaultValue: {
-            type: TableCellDisplayMode.Auto,
-          },
+          defaultValue: defaultPanelFieldConfig.cellOptions,
           process: identityOverrideProcessor,
           category: cellCategory,
           shouldApply: () => true,
