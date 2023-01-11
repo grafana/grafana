@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { LoadingState } from '@grafana/data';
+
 import { DashboardModel, PanelModel } from '../../state';
 
 import { PanelHeaderMenu } from './PanelHeaderMenu';
@@ -8,13 +10,13 @@ import { PanelHeaderMenuProvider } from './PanelHeaderMenuProvider';
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  isStreaming?: boolean;
+  loadingState?: LoadingState;
   onClose: () => void;
 }
 
-export function PanelHeaderMenuWrapper({ panel, dashboard, isStreaming }: Props) {
+export function PanelHeaderMenuWrapper({ panel, dashboard, loadingState }: Props) {
   return (
-    <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} isStreaming={isStreaming}>
+    <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} loadingState={loadingState}>
       {({ items }) => {
         return <PanelHeaderMenu items={items} />;
       }}

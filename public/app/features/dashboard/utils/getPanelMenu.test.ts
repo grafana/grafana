@@ -1,4 +1,5 @@
 import { PanelMenuItem } from '@grafana/data';
+import { LoadingState } from '@grafana/schema';
 import config from 'app/core/config';
 import * as actions from 'app/features/explore/state/main';
 import { setStore } from 'app/store/store';
@@ -98,7 +99,7 @@ describe('getPanelMenu', () => {
     const panel = new PanelModel({});
     const dashboard = createDashboardModelFixture({});
 
-    const menuItems = getPanelMenu(dashboard, panel, true);
+    const menuItems = getPanelMenu(dashboard, panel, LoadingState.Streaming);
     expect(menuItems).toMatchInlineSnapshot(`
       [
         {
@@ -116,7 +117,91 @@ describe('getPanelMenu', () => {
         {
           "iconClassName": "circle",
           "onClick": [Function],
-          "text": "Stop streaming",
+          "text": "Stop query",
+        },
+        {
+          "iconClassName": "share-alt",
+          "onClick": [Function],
+          "shortcut": "p s",
+          "text": "Share",
+        },
+        {
+          "iconClassName": "compass",
+          "onClick": [Function],
+          "shortcut": "x",
+          "text": "Explore",
+        },
+        {
+          "iconClassName": "info-circle",
+          "onClick": [Function],
+          "shortcut": "i",
+          "subMenu": [
+            {
+              "onClick": [Function],
+              "text": "Panel JSON",
+            },
+          ],
+          "text": "Inspect",
+          "type": "submenu",
+        },
+        {
+          "iconClassName": "cube",
+          "onClick": [Function],
+          "subMenu": [
+            {
+              "onClick": [Function],
+              "shortcut": "p d",
+              "text": "Duplicate",
+            },
+            {
+              "onClick": [Function],
+              "text": "Copy",
+            },
+            {
+              "onClick": [Function],
+              "text": "Create library panel",
+            },
+          ],
+          "text": "More...",
+          "type": "submenu",
+        },
+        {
+          "text": "",
+          "type": "divider",
+        },
+        {
+          "iconClassName": "trash-alt",
+          "onClick": [Function],
+          "shortcut": "p r",
+          "text": "Remove",
+        },
+      ]
+    `);
+  });
+
+  it('should return the correct panel menu items when data is loading', () => {
+    const panel = new PanelModel({});
+    const dashboard = createDashboardModelFixture({});
+
+    const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
+    expect(menuItems).toMatchInlineSnapshot(`
+      [
+        {
+          "iconClassName": "eye",
+          "onClick": [Function],
+          "shortcut": "v",
+          "text": "View",
+        },
+        {
+          "iconClassName": "edit",
+          "onClick": [Function],
+          "shortcut": "e",
+          "text": "Edit",
+        },
+        {
+          "iconClassName": "circle",
+          "onClick": [Function],
+          "text": "Stop query",
         },
         {
           "iconClassName": "share-alt",
@@ -188,7 +273,7 @@ describe('when panel is in view mode', () => {
     const panel = new PanelModel({ isViewing: true });
     const dashboard = createDashboardModelFixture({});
 
-    const menuItems = getPanelMenu(dashboard, panel, false, angularComponent);
+    const menuItems = getPanelMenu(dashboard, panel, undefined, angularComponent);
     expect(menuItems).toMatchInlineSnapshot(`
       [
         {

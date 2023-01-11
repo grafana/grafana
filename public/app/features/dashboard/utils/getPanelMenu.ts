@@ -1,5 +1,6 @@
 import { PanelMenuItem } from '@grafana/data';
 import { AngularComponent, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { LoadingState } from '@grafana/schema';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
@@ -26,7 +27,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
-  isStreaming?: boolean,
+  loadingState?: LoadingState,
   angularComponent?: AngularComponent | null
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
@@ -126,9 +127,12 @@ export function getPanelMenu(
     });
   }
 
-  if (dashboard.canEditPanel(panel) && isStreaming) {
+  if (
+    dashboard.canEditPanel(panel) &&
+    (loadingState === LoadingState.Streaming || loadingState === LoadingState.Loading)
+  ) {
     menu.push({
-      text: 'Stop streaming',
+      text: 'Stop query',
       iconClassName: 'circle',
       onClick: onCancelStreaming,
     });

@@ -1,6 +1,6 @@
 import { ReactElement, useEffect, useState } from 'react';
 
-import { PanelMenuItem } from '@grafana/data';
+import { LoadingState, PanelMenuItem } from '@grafana/data';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { useSelector } from 'app/types';
 
@@ -14,17 +14,17 @@ interface PanelHeaderMenuProviderApi {
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  isStreaming?: boolean;
+  loadingState?: LoadingState;
   children: (props: PanelHeaderMenuProviderApi) => ReactElement;
 }
 
-export function PanelHeaderMenuProvider({ panel, dashboard, isStreaming, children }: Props) {
+export function PanelHeaderMenuProvider({ panel, dashboard, loadingState, children }: Props) {
   const [items, setItems] = useState<PanelMenuItem[]>([]);
   const angularComponent = useSelector((state) => getPanelStateForModel(state, panel)?.angularComponent);
 
   useEffect(() => {
-    setItems(getPanelMenu(dashboard, panel, isStreaming, angularComponent));
-  }, [dashboard, panel, angularComponent, isStreaming, setItems]);
+    setItems(getPanelMenu(dashboard, panel, loadingState, angularComponent));
+  }, [dashboard, panel, angularComponent, loadingState, setItems]);
 
   return children({ items });
 }
