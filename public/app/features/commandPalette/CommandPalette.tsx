@@ -15,7 +15,7 @@ import {
   useKBar,
   ActionImpl,
 } from 'kbar';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -25,6 +25,7 @@ import { t } from 'app/core/internationalization';
 import { ResultItem } from './ResultItem';
 import { getDashboardSearchResultActions } from './actions/dashboardActions';
 import useActions from './actions/useActions';
+import { CommandPaletteAction } from './types';
 
 const debouncedDashboardSearch = debounce(getDashboardSearchResultActions, 200);
 
@@ -35,7 +36,7 @@ export const CommandPalette = () => {
     showing: state.visualState === VisualState.showing,
     searchQuery: state.searchQuery,
   }));
-  const [dashboardResults, setDashboardResults] = useState<ActionImpl[]>([]);
+  const [dashboardResults, setDashboardResults] = useState<CommandPaletteAction[]>([]);
 
   // Hit dashboards API
   useEffect(() => {
@@ -78,19 +79,28 @@ export const CommandPalette = () => {
 };
 
 interface RenderResultsProps {
-  dashboardResults: ActionImpl[];
+  dashboardResults: CommandPaletteAction[];
 }
 
 const RenderResults = ({ dashboardResults }: RenderResultsProps) => {
   const { results, rootActionId } = useMatches();
   const styles = useStyles2(getSearchStyles);
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
-  const dashboards = dashboardResults.length > 0 ? [dashboardsSectionTitle, ...dashboardResults] : [];
+  // because dashboard's aren't registered as actions, we need to manually create ActionImpls
+  // before passing them as items to KBarResults
+  const dashboardResultItems = useMemo(
+    () => dashboardResults.map((dashboard) => new ActionImpl(dashboard, { store: {} })),
+    [dashboardResults]
+  );
+  const items = useMemo(
+    () => (dashboardResultItems.length > 0 ? [...results, dashboardsSectionTitle, ...dashboardResultItems] : results),
+    [results, dashboardsSectionTitle, dashboardResultItems]
+  );
 
   return (
     <div className={styles.resultsContainer}>
       <KBarResults
-        items={[...results, ...dashboards]}
+        items={items}
         onRender={({ item, active }) =>
           typeof item === 'string' ? (
             <div className={styles.sectionHeader}>{item}</div>
