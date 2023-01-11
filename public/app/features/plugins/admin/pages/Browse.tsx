@@ -104,14 +104,16 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
                 content="This filter has been disabled because the Grafana server cannot access grafana.com"
                 placement="top"
               >
-                <Field label="State">
-                  <RadioButtonGroup
-                    disabled={true}
-                    value={filterBy}
-                    onChange={onFilterByChange}
-                    options={filterByOptions}
-                  />
-                </Field>
+                <div>
+                  <Field label="State">
+                    <RadioButtonGroup
+                      disabled={true}
+                      value={filterBy}
+                      onChange={onFilterByChange}
+                      options={filterByOptions}
+                    />
+                  </Field>
+                </div>
               </Tooltip>
             )}
 
