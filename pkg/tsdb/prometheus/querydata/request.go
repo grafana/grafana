@@ -43,7 +43,7 @@ type QueryData struct {
 	URL                string
 	TimeInterval       string
 	enableWideSeries   bool
-	exemplarSampler    exemplar.Sampler
+	exemplarSampler    func() exemplar.Sampler
 }
 
 func New(
@@ -67,10 +67,10 @@ func New(
 	promClient := client.NewClient(httpClient, httpMethod, settings.URL)
 
 	// standard deviation sampler is the default for backwards compatibility
-	exemplarSampler := exemplar.NewStandardDeviationSampler()
+	exemplarSampler := exemplar.NewStandardDeviationSampler
 
 	if features.IsEnabled(featuremgmt.FlagDisablePrometheusExemplarSampling) {
-		exemplarSampler = exemplar.NewNoOpSampler()
+		exemplarSampler = exemplar.NewNoOpSampler
 	}
 
 	return &QueryData{

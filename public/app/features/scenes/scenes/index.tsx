@@ -1,3 +1,5 @@
+import { EmbeddedScene, SceneObjectBase, SceneState } from '@grafana/scenes';
+
 import { Scene } from '../components/Scene';
 
 import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
@@ -14,7 +16,7 @@ import { getVariablesDemo, getVariablesDemoWithAll } from './variablesDemo';
 
 interface SceneDef {
   title: string;
-  getScene: (standalone: boolean) => Scene;
+  getScene: (standalone: boolean) => Scene | EmbeddedScene;
 }
 export function getScenes(): SceneDef[] {
   return [
@@ -34,7 +36,7 @@ export function getScenes(): SceneDef[] {
   ];
 }
 
-const cache: Record<string, { standalone: boolean; scene: Scene }> = {};
+const cache: Record<string, { standalone: boolean; scene: SceneObjectBase<SceneState> }> = {};
 
 export function getSceneByTitle(title: string, standalone = true) {
   if (cache[title]) {

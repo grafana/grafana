@@ -39,17 +39,26 @@ type Manager struct {
 	externalURL   *url.URL
 }
 
-func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, images ImageCapturer, clock clock.Clock, historian Historian) *Manager {
+type ManagerCfg struct {
+	Metrics       *metrics.State
+	ExternalURL   *url.URL
+	InstanceStore InstanceStore
+	Images        ImageCapturer
+	Clock         clock.Clock
+	Historian     Historian
+}
+
+func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
 		cache:         newCache(),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           log.New("ngalert.state.manager"),
-		metrics:       metrics,
-		instanceStore: instanceStore,
-		images:        images,
-		historian:     historian,
-		clock:         clock,
-		externalURL:   externalURL,
+		metrics:       cfg.Metrics,
+		instanceStore: cfg.InstanceStore,
+		images:        cfg.Images,
+		historian:     cfg.Historian,
+		clock:         cfg.Clock,
+		externalURL:   cfg.ExternalURL,
 	}
 }
 
