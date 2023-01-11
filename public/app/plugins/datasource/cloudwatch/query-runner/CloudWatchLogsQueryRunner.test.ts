@@ -1,4 +1,3 @@
-import { waitFor } from '@testing-library/dom';
 import { interval, lastValueFrom, of } from 'rxjs';
 
 import { DataQueryErrorType, FieldType, LogLevel, LogRowModel, MutableDataFrame } from '@grafana/data';
