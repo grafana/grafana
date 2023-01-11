@@ -268,10 +268,19 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 		if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
+			var folderTitle string
+			if !sch.disableGrafanaFolder {
+				title, ok := folderTitles[item.NamespaceUID]
+				if ok {
+					folderTitle = title
+				} else {
+					missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
+				}
+			}
 			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
 				scheduledAt: tick,
 				rule:        item,
-				folderTitle: sch.getFolderTitle(folderTitles, item, missingFolder),
+				folderTitle: folderTitle,
 			}})
 		}
 
@@ -535,17 +544,4 @@ func (sch *schedule) getRuleExtraLabels(rule *ngmodels.AlertRule, folderTitle st
 		extraLabels[ngmodels.FolderTitleLabel] = folderTitle
 	}
 	return extraLabels
-}
-
-func (sch *schedule) getFolderTitle(folderTitles map[string]string, rule *ngmodels.AlertRule, missingFolders map[string][]string) string {
-	if sch.disableGrafanaFolder {
-		return ""
-	}
-
-	title, ok := folderTitles[rule.NamespaceUID]
-	if !ok {
-		missingFolders[rule.NamespaceUID] = append(missingFolders[rule.NamespaceUID], rule.UID)
-		return ""
-	}
-	return title
 }
