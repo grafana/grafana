@@ -151,7 +151,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 {linksAvailable && (
                   <tr>
                     <td colSpan={100} className={style.logDetailsHeading} aria-label="Data Links">
-                      Data Links
+                      Links
                     </td>
                   </tr>
                 )}
