@@ -162,11 +162,19 @@ export function isAsyncRequestMapSliceFulfilled<T>(slice: AsyncRequestMapSlice<T
 }
 
 export function isAsyncRequestStateFulfilled<T>(state: AsyncRequestState<T>): boolean {
-  return state.dispatched && !state.loading && !state.error;
+  return isAsyncRequestStateSettled(state) && !state.error;
+}
+
+export function isAsyncRequestStateSettled<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && !state.loading;
 }
 
 export function isAsyncRequestMapSlicePending<T>(slice: AsyncRequestMapSlice<T>): boolean {
   return Object.values(slice).some(isAsyncRequestStatePending);
+}
+
+export function isAsyncRequestMapSliceSettled<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).every(isAsyncRequestStateSettled);
 }
 
 export function isAsyncRequestStatePending<T>(state?: AsyncRequestState<T>): boolean {
