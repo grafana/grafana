@@ -2,10 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { LinkModel } from '@grafana/data';
-
-import { Dropdown } from '../Dropdown/Dropdown';
-import { Menu } from '../Menu/Menu';
-import { ToolbarButton } from '../ToolbarButton';
+import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 
 interface Props {
   links: (() => LinkModel[]) | undefined;
