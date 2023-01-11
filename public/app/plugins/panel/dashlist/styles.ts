@@ -19,7 +19,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(1)};
 
     &:hover {
-      background: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
       a {
         color: ${theme.colors.text.link};
       }
