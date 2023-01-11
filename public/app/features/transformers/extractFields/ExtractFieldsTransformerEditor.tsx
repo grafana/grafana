@@ -1,45 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-import {
-  DataTransformerID,
-  FieldNamePickerConfigSettings,
-  SelectableValue,
-  StandardEditorsRegistryItem,
-  TransformerRegistryItem,
-  TransformerUIProps,
-} from '@grafana/data';
-import { InlineField, InlineFieldRow, InlineSwitch, Select } from '@grafana/ui';
-import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import { DataTransformerID, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
+import { InlineField, InlineFieldRow, InlineSwitch, Button } from '@grafana/ui';
 
-import { ExtractFieldsOptions, extractFieldsTransformer } from './extractFields';
-import { FieldExtractorID, fieldExtractors } from './fieldExtractors';
+import { Collapsable } from './components/Collapsable';
+import { SourceFieldEditor } from './components/SourceFieldEditor';
+import { extractFieldsTransformer } from './extractFields';
+import { ExtractFieldsOptions, FieldExtractorID, SourceField } from './types';
 
-const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
-  settings: {
-    width: 30,
-    placeholderText: 'Select field',
-  },
-  name: '',
-  id: '',
-  editor: () => null,
-};
-
-export const extractFieldsTransformerEditor: React.FC<TransformerUIProps<ExtractFieldsOptions>> = ({
+export const ExtractFieldsTransformerEditor: React.FC<TransformerUIProps<ExtractFieldsOptions>> = ({
   input,
   options,
   onChange,
 }) => {
-  const onPickSourceField = (source?: string) => {
+  const [sources, setSources] = useState<SourceField[]>(options.sources ?? []);
+
+  const addSourceField = () => {
+    sources.push({ source: '', jsonPaths: [], format: FieldExtractorID.Auto });
+    setSources([...sources]);
     onChange({
       ...options,
-      source,
+      sources,
     });
   };
 
-  const onFormatChange = (format?: SelectableValue<FieldExtractorID>) => {
+  const onSourceFieldChange = (sourceField: SourceField, key: number) => {
+    if (sources) {
+      sources[key] = sourceField;
+      setSources([...sources]);
+      onChange({
+        ...options,
+        sources,
+      });
+    }
+  };
+
+  const removeSourceField = (key: number) => {
+    sources.splice(key, 1);
+    setSources([...sources]);
     onChange({
       ...options,
-      format: format?.value,
+      sources,
     });
   };
 
@@ -50,43 +51,54 @@ export const extractFieldsTransformerEditor: React.FC<TransformerUIProps<Extract
     });
   };
 
-  const format = fieldExtractors.selectOptions(options.format ? [options.format] : undefined);
+  const onToggleKeepTime = () => {
+    onChange({
+      ...options,
+      keepTime: !options.keepTime,
+    });
+  };
 
   return (
     <div>
-      <InlineFieldRow>
-        <InlineField label={'Source'} labelWidth={16}>
-          <FieldNamePicker
-            context={{ data: input }}
-            value={options.source ?? ''}
-            onChange={onPickSourceField}
-            item={fieldNamePickerSettings as any}
-          />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label={'Format'} labelWidth={16}>
-          <Select
-            value={format.current[0] as any}
-            options={format.options as any}
-            onChange={onFormatChange}
-            width={24}
-            placeholder={'Auto'}
-          />
-        </InlineField>
-      </InlineFieldRow>
+      {!!sources.length &&
+        sources.map((source: SourceField, key: number) => (
+          <Collapsable
+            label={source.source && source.source.length ? source.source : 'NewSource'}
+            isOpen={true}
+            key={key}
+            onRemove={() => removeSourceField(key)}
+          >
+            <SourceFieldEditor
+              input={input}
+              options={source}
+              onChange={(sourceField) => onSourceFieldChange(sourceField, key)}
+            />
+          </Collapsable>
+        ))}
+      <InlineField>
+        <Button onClick={addSourceField} size="md" variant={'secondary'} icon={'plus'}>
+          Add Source
+        </Button>
+      </InlineField>
       <InlineFieldRow>
         <InlineField label={'Replace all fields'} labelWidth={16}>
           <InlineSwitch value={options.replace ?? false} onChange={onToggleReplace} />
         </InlineField>
       </InlineFieldRow>
+      {options.replace && (
+        <InlineFieldRow>
+          <InlineField label={'Keep Time'} labelWidth={16}>
+            <InlineSwitch value={options.keepTime ?? false} onChange={onToggleKeepTime} />
+          </InlineField>
+        </InlineFieldRow>
+      )}
     </div>
   );
 };
 
 export const extractFieldsTransformRegistryItem: TransformerRegistryItem<ExtractFieldsOptions> = {
   id: DataTransformerID.extractFields,
-  editor: extractFieldsTransformerEditor,
+  editor: ExtractFieldsTransformerEditor,
   transformation: extractFieldsTransformer,
   name: 'Extract fields',
   description: `Parse fields from content (JSON, labels, etc)`,
