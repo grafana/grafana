@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -27,7 +28,7 @@ type scenarioContext struct {
 	givenUser          *user.SignedInUser
 	givenDashboardID   int64
 	givenPermissions   []*models.DashboardACLInfoDTO
-	givenTeams         []*models.TeamDTO
+	givenTeams         []*team.TeamDTO
 	updatePermissions  []*models.DashboardACL
 	expectedFlags      permissionFlags
 	callerFile         string
@@ -103,11 +104,11 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 	permissions []*models.DashboardACLInfoDTO, fn scenarioFunc) {
 	sc.t.Run(desc, func(t *testing.T) {
 		store := dbtest.NewFakeDB()
-		teams := []*models.TeamDTO{}
+		teams := []*team.TeamDTO{}
 
 		for _, p := range permissions {
 			if p.TeamId > 0 {
-				teams = append(teams, &models.TeamDTO{Id: p.TeamId})
+				teams = append(teams, &team.TeamDTO{ID: p.TeamId})
 			}
 		}
 		teamSvc := &teamtest.FakeService{ExpectedTeamsByUser: teams}
@@ -246,7 +247,7 @@ func (sc *scenarioContext) reportFailure(desc string, expected interface{}, actu
 	}
 
 	for i, t := range sc.givenTeams {
-		buf.WriteString(fmt.Sprintf("\n  Given team (%d): id=%d", i, t.Id))
+		buf.WriteString(fmt.Sprintf("\n  Given team (%d): id=%d", i, t.ID))
 	}
 
 	for i, p := range sc.updatePermissions {

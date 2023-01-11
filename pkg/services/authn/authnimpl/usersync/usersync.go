@@ -25,21 +25,20 @@ type UserSync struct {
 }
 
 // SyncUser syncs a user with the database
-func (s *UserSync) SyncUser(ctx context.Context,
-	clientParams *authn.ClientParams, id *authn.Identity, _ *authn.Request) error {
-	if !clientParams.SyncUser {
+func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+	if !id.ClientParams.SyncUser {
 		s.log.Debug("Not syncing user", "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return nil
 	}
 
 	// Does user exist in the database?
-	usr, errUserInDB := s.UserInDB(ctx, &id.AuthModule, &id.AuthID, id.LookUpParams)
+	usr, errUserInDB := s.UserInDB(ctx, &id.AuthModule, &id.AuthID, id.ClientParams.LookUpParams)
 	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
 		return errUserInDB
 	}
 
 	if errors.Is(errUserInDB, user.ErrUserNotFound) {
-		if !clientParams.AllowSignUp {
+		if !id.ClientParams.AllowSignUp {
 			s.log.Warn("Not allowing login, user not found in internal user database and allow signup = false",
 				"auth_module", id.AuthModule)
 			return login.ErrSignupNotAllowed
@@ -54,7 +53,7 @@ func (s *UserSync) SyncUser(ctx context.Context,
 	}
 
 	// update user
-	if errUpdate := s.updateUserAttributes(ctx, clientParams, usr, id); errUpdate != nil {
+	if errUpdate := s.updateUserAttributes(ctx, usr, id); errUpdate != nil {
 		return errUpdate
 	}
 
@@ -99,7 +98,7 @@ func (s *UserSync) updateAuthInfo(ctx context.Context, id *authn.Identity) error
 	return s.authInfoService.UpdateAuthInfo(ctx, updateCmd)
 }
 
-func (s *UserSync) updateUserAttributes(ctx context.Context, clientParams *authn.ClientParams, usr *user.User, id *authn.Identity) error {
+func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id *authn.Identity) error {
 	// sync user info
 	updateCmd := &user.UpdateUserCommand{
 		UserID: usr.ID,
@@ -131,7 +130,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, clientParams *authn
 		}
 	}
 
-	if usr.IsDisabled && clientParams.EnableDisabledUsers {
+	if usr.IsDisabled && id.ClientParams.EnableDisabledUsers {
 		usr.IsDisabled = false
 		if errDisableUser := s.userService.Disable(ctx,
 			&user.DisableUserCommand{
@@ -245,7 +244,7 @@ func (s *UserSync) LookupByOneOf(ctx context.Context, params *models.UserLookupP
 		}
 	}
 
-	if usr == nil {
+	if usr == nil || usr.ID == 0 { // id check as safeguard against returning empty user
 		return nil, user.ErrUserNotFound
 	}
 

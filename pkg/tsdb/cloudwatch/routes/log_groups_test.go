@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func Test_log_groups_route(t *testing.T) {
+func TestLogGroupsRoute(t *testing.T) {
 	origLogGroupsService := newLogGroupsService
 	t.Cleanup(func() {
 		newLogGroupsService = origLogGroupsService
