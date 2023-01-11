@@ -26,6 +26,7 @@ enum ServerTypes {
   Single = 'Single',
   Stack = 'Stack',
   Database = 'Database',
+  Terminal = 'Terminal',
 }
 
 type Props = CanvasElementProps<ServerConfig, ServerData>;
@@ -247,6 +248,71 @@ const ServerDisplay = ({ data }: Props) => {
             </g>
           </g>
         </>
+      ) : data?.type === ServerTypes.Terminal ? (
+        <>
+          <defs>
+            <clipPath id="serverb">
+              <rect
+                className={styles.pathA}
+                x="77.108"
+                y="24.362"
+                width="115.9"
+                height="197.78"
+                d="M 77.107697,24.361513 H 193.00871 V 222.14392 H 77.107697 Z"
+              />
+              <path
+                className={styles.pathB}
+                d="m26.804 19.62h217.95v206.93h-217.95zm50.304 4.7414v197.78h115.9v-197.78z"
+              />
+            </clipPath>
+          </defs>
+          <g transform="translate(-31.804 -24.362)">
+            <path
+              className={styles.outline}
+              x="36.804028"
+              y="29.620079"
+              width="197.94514"
+              height="186.92975"
+              d="m38.921 29.62h193.71a2.1167 2.1167 45 012.1167 2.1167v182.7a2.1167 2.1167 135 01-2.1167 2.1167h-193.71a2.1167 2.1167 45 01-2.1167-2.1167v-182.7a2.1167 2.1167 135 012.1167-2.1167z"
+              clipPath="url(#serverb)"
+            />
+            <rect x="41.836" y="34.652" width="187.91" height="176.89" style={{ fill: data?.statusColor }} />
+            <g>
+              <path
+                className={styles.server}
+                x="54.86203"
+                y="48.088943"
+                width="159.1676"
+                height="39.961231"
+                d="m56.979 48.089h54.93c1.169 0 2.1167.94768 2.1167 2.1167v145.73c0 1.169-.94768 2.1167-2.1167 2.1167h-54.93c-1.169 0-2.1167-.94768-2.1167-2.1167v-145.73c0-1.169.94768-2.1167 2.1167-2.1167z"
+              />
+              <g transform="matrix(.50833 0 0 1 27.315 0)">
+                <rect x="55.556" y="57.472" width="107.76" height="5.7472" />
+                <rect x="55.558" y="86.141" width="107.76" height="5.7472" />
+                <g className={styles.thinLine}>
+                  <rect x="74.357" y="73.261" width="96.957" height="2.8736" />
+                  <rect x="74.379" y="101.9" width="96.957" height="2.8736" />
+                </g>
+              </g>
+              <circle
+                className={styles.circle}
+                cx="83.858"
+                cy="178.2"
+                r="5.9401"
+                style={{ animation: bulbAnimation, fill: bulbColor }}
+              />
+            </g>
+            <g transform="translate(-1.9978 -7.5028)">
+              <path className={styles.monitor} d="m103.22 75.305h118.87v76.914h-118.87z" />
+              <path
+                className={styles.monitorOutline}
+                d="m103.22 70.305-5 5v76.916l5 5h118.87l5-5v-76.916l-5-5zm5 10h108.87v58.916h-108.87z"
+              />
+            </g>
+            <path d="m135.6 148.14h50.113l4 15.156h-58.113z" />
+            <path className={styles.keyboard} d="m118.23 183.19h88.848l24 19.476h-136.85z" />
+          </g>
+        </>
       ) : null}
     </svg>
   );
@@ -303,6 +369,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
             { value: ServerTypes.Single, label: 'Single' },
             { value: ServerTypes.Stack, label: 'Stack' },
             { value: ServerTypes.Database, label: 'Database' },
+            { value: ServerTypes.Terminal, label: 'Terminal' },
           ],
         },
         defaultValue: ServerTypes.Single,
@@ -384,5 +451,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   thinLine: css`
     stroke-width: 0.7;
+  `,
+  monitor: css`
+    stroke: #8a8a8a;
+    fill: #fff;
+    stroke-linecap: square;
+    stroke-miterlimit: 0;
+    stroke-width: 12;
+  `,
+  monitorOutline: css`
+    stroke: #8a8a8a;
+    stroke-linecap: square;
+    stroke-miterlimit: 0;
+  `,
+  keyboard: css`
+    fill: #dadada;
+    stroke-linecap: round;
+    stroke-miterlimit: 10;
+    stroke-width: 10;
+    stroke: #303030;
   `,
 });
