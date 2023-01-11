@@ -36,7 +36,6 @@ import {
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
-import { getPanelQueryNotices } from 'app/features/dashboard/utils/panelQueryNotices';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
