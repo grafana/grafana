@@ -594,7 +594,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     if (!dashboard.meta.publicDashboardAccessToken) {
       menu = (
         <div data-testid="panel-dropdown">
-          <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} loadingState={data.state} onClose={() => {}} />
+          <PanelHeaderMenuWrapper
+            style={{ top: 0 }}
+            panel={panel}
+            dashboard={dashboard}
+            loadingState={data.state}
+            onClose={() => {}}
+          />
         </div>
       );
     }

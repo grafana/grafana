@@ -12,13 +12,14 @@ interface Props {
   dashboard: DashboardModel;
   loadingState?: LoadingState;
   onClose: () => void;
+  style?: React.CSSProperties;
 }
 
-export function PanelHeaderMenuWrapper({ panel, dashboard, loadingState }: Props) {
+export function PanelHeaderMenuWrapper({ style, panel, dashboard, loadingState }: Props) {
   return (
     <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} loadingState={loadingState}>
       {({ items }) => {
-        return <PanelHeaderMenu items={items} />;
+        return <PanelHeaderMenu style={style} items={items} />;
       }}
     </PanelHeaderMenuProvider>
   );
