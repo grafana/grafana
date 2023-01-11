@@ -120,7 +120,7 @@ export interface CleanSupplementaryQueryDataProvider {
 }
 
 /**
- * Stores available logs volume provider after running the query. Used internally by runQueries().
+ * Stores available supplementary query data provider after running the query. Used internally by runQueries().
  */
 export const storeSupplementaryQueryDataProviderAction = createAction<StoreSupplementaryQueryDataProvider>(
   'explore/storeSupplementaryQueryDataProviderAction'
