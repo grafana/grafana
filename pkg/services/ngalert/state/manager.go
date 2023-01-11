@@ -283,13 +283,20 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		currentState.StateReason = result.State.String()
 	}
 
-	// Set Resolved property so the scheduler knows to send a postable alert to Alertmanager.
+	// Set Resolved property so the scheduler knows to send a postable alert
+	// to Alertmanager.
 	currentState.Resolved = oldState == eval.Alerting && currentState.State == eval.Normal
 
 	if shouldTakeImage(currentState.State, oldState, currentState.Image, currentState.Resolved) {
-		tryToTakeAnImage(ctx, logger, &st.images, alertRule, func(img *ngModels.Image) {
-			currentState.Image = img
-		})
+		image, err := takeImage(ctx, st.images, alertRule)
+		if err != nil {
+			logger.Warn("Failed to take an image",
+				"dashboard", alertRule.GetDashboardUID(),
+				"panel", alertRule.GetPanelID(),
+				"error", err)
+		} else if image != nil {
+			currentState.Image = image
+		}
 	}
 
 	st.cache.set(currentState)
@@ -430,9 +437,15 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 			s.Resolved = true
 			// If there is no resolved image for this rule then take one
 			if resolvedImage == nil {
-				tryToTakeAnImage(ctx, logger, &st.images, alertRule, func(img *ngModels.Image) {
-					resolvedImage = img
-				})
+				image, err := takeImage(ctx, st.images, alertRule)
+				if err != nil {
+					logger.Warn("Failed to take an image",
+						"dashboard", alertRule.GetDashboardUID(),
+						"panel", alertRule.GetPanelID(),
+						"error", err)
+				} else if image != nil {
+					resolvedImage = image
+				}
 			}
 			s.Image = resolvedImage
 		}
@@ -449,13 +462,4 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 
 func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
 	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
-}
-
-func tryToTakeAnImage(ctx context.Context, l log.Logger, c *ImageCapturer, r *ngModels.AlertRule, resolve func(img *ngModels.Image)) {
-	image, err := takeImage(ctx, *c, r)
-	if err != nil {
-		l.Warn("Failed to take an image", "dashboard", r.GetDashboardUID(), "panel", r.GetPanelID(), "error", err)
-	} else if image != nil {
-		resolve(image)
-	}
 }
