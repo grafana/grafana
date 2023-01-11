@@ -14,14 +14,7 @@ import {
   MutableDataFrame,
   RawTimeRange,
 } from '@grafana/data';
-import {
-  ExploreId,
-  ExploreItemState,
-  ExploreState,
-  StoreState,
-  SupplementaryQueryType,
-  ThunkDispatch,
-} from 'app/types';
+import { ExploreId, ExploreItemState, StoreState, SupplementaryQueryType, ThunkDispatch } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { configureStore } from '../../../store/configureStore';
