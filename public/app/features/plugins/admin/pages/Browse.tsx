@@ -82,7 +82,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
             {/* Filter by type */}
             <Field label="Type">
               <Select
-                id="plugin-type-filter"
+                aria-label="Plugin type filter"
                 value={filterByType}
                 onChange={onFilterByTypeChange}
                 width={18}
