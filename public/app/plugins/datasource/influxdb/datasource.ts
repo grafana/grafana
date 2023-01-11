@@ -236,20 +236,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           )
         )
     );
-
-    // const timeFilter = this.getTimeFilter({ rangeRaw: options.range.raw, timezone: options.timezone });
-    // let query = annotation.query.replace('$timeFilter', timeFilter);
-    // query = this.templateSrv.replace(query, undefined, 'regex');
-    //
-    // return lastValueFrom(this._seriesQuery(query, options)).then((data: any) => {
-    //   if (!data || !data.results || !data.results[0]) {
-    //     throw { message: 'No results in response from InfluxDB' };
-    //   }
-    //   return new InfluxSeries({
-    //     series: data.results[0].series,
-    //     annotation: annotation,
-    //   }).getAnnotations();
-    // });
   }
 
   targetContainsTemplate(target: any) {
