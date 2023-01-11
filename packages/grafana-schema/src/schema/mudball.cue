@@ -201,11 +201,16 @@ BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(
 // TODO docs
 FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 
-// TODO docs
+// Internally, this is the "type" of cell that's being displayed
+// in the table such as colored text, JSON, gauge, etc.
+// The color-background-solid, gradient-gauge, and lcd-gauge 
+// modes are deprecated in favor of new cell subOptions
 TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge")
 // : TableCellDisplayMode @cuetsy(kind="enum")
 
-// TODO Docs
+// Display mode to the "Colored Background" display
+// mode for table cells. Either displays a solid color (basic mode)
+// or a gradient.
 TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
 
 
@@ -251,7 +256,8 @@ VizLegendOptions: {
 	calcs:        [...string]
 } @cuetsy(kind="interface")
 
-// TODO docs
+// Enum expressing the possible display modes
+// for the bar gauge component of Grafana UI
 BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")
 
 // Interface for table cell types that have no additional options.
@@ -275,7 +281,8 @@ TableColoredBackgroundCellOptions: {
 // and other potential options for that display. 
 TableCellOptions: TableAutoCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions @cuetsy(kind="type")
 
-// TODO docs
+// Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
+// Generally defines alignment, filtering capabilties, display options, etc.
 TableFieldOptions: {
 	width?:      number
 	minWidth?:   number

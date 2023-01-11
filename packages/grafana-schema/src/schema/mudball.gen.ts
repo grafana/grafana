@@ -389,7 +389,10 @@ export enum BigValueTextMode {
 export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 
 /**
- * TODO docs
+ * Internally, this is the "type" of cell that's being displayed
+ * in the table such as colored text, JSON, gauge, etc.
+ * The color-background-solid, gradient-gauge, and lcd-gauge
+ * modes are deprecated in favor of new cell subOptions
  */
 export enum TableCellDisplayMode {
   Auto = 'auto',
@@ -405,7 +408,9 @@ export enum TableCellDisplayMode {
 }
 
 /**
- * TODO Docs
+ * Display mode to the "Colored Background" display
+ * mode for table cells. Either displays a solid color (basic mode)
+ * or a gradient.
  */
 export enum TableCellBackgroundDisplayMode {
   Basic = 'basic',
@@ -474,7 +479,8 @@ export const defaultVizLegendOptions: Partial<VizLegendOptions> = {
 };
 
 /**
- * TODO docs
+ * Enum expressing the possible display modes
+ * for the bar gauge component of Grafana UI
  */
 export enum BarGaugeDisplayMode {
   Basic = 'basic',
@@ -512,7 +518,8 @@ export interface TableColoredBackgroundCellOptions {
 export type TableCellOptions = (TableAutoCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions);
 
 /**
- * TODO docs
+ * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
+ * Generally defines alignment, filtering capabilties, display options, etc.
  */
 export interface TableFieldOptions {
   align: FieldTextAlignment;
