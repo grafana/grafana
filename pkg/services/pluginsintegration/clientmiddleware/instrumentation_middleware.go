@@ -113,12 +113,21 @@ func (m *InstrumentationMiddleware) CallResource(ctx context.Context, req *backe
 		return m.next.CallResource(ctx, req, sender)
 	}
 
-	err := instrumentCallResourceRequest(ctx, &req.PluginContext, m.cfg, func() (innerErr error) {
+	var innerErr error
+	err := instrumentCallResourceRequest(ctx, &req.PluginContext, m.cfg, func() error {
 		innerErr = m.next.CallResource(ctx, req, sender)
-		return
+		return innerErr
 	})
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	if innerErr != nil {
+		return innerErr
+	}
+
+	return nil
 }
 
 func (m *InstrumentationMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
