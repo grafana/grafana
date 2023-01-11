@@ -370,7 +370,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				stoppedChan <- err
 			}()
 
-			cancel(ErrRuleDeleted)
+			cancel(errRuleDeleted)
 			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
 
@@ -636,7 +636,7 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 			key := rule.GetKey()
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			sch.DeleteAlertRule(key)
-			require.ErrorIs(t, info.ctx.Err(), ErrRuleDeleted)
+			require.ErrorIs(t, info.ctx.Err(), errRuleDeleted)
 			require.False(t, sch.registry.exists(key))
 		})
 	})

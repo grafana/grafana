@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	ErrRuleDeleted = errors.New("rule deleted")
-	ErrRulePaused  = errors.New("rule paused")
+	errRuleDeleted = errors.New("rule deleted")
+	errRulePaused  = errors.New("rule paused")
 )
 
 type alertRuleInfoRegistry struct {

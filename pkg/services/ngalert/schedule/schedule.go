@@ -174,7 +174,7 @@ func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 			continue
 		}
 		// stop rule evaluation
-		ruleInfo.stop(ErrRuleDeleted)
+		ruleInfo.stop(errRuleDeleted)
 	}
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
 	alertRules, _ := sch.schedulableAlertRules.all()
@@ -235,7 +235,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		key := item.GetKey()
 		if item.IsPaused {
 			if ruleInfo, ok := sch.registry.del(key); ok {
-				ruleInfo.stop(ErrRulePaused)
+				ruleInfo.stop(errRulePaused)
 				sch.log.Info("alert rule paused", key.LogContext()...)
 			}
 			delete(registeredDefinitions, key)
@@ -328,8 +328,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, rule *ngmodels.Aler
 
 	clearState := func(ctx context.Context, err error) {
 		// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted/paused
-		isRuleDeleted := errors.Is(err, ErrRuleDeleted)
-		isRulePaused := errors.Is(err, ErrRulePaused)
+		isRuleDeleted := errors.Is(err, errRuleDeleted)
+		isRulePaused := errors.Is(err, errRulePaused)
 		if isRuleDeleted || isRulePaused {
 			var states []*state.State
 			if isRuleDeleted {
@@ -454,7 +454,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, rule *ngmodels.Aler
 			}
 			logger.Info("Clearing the state of the rule because version has changed", "version", currentRuleVersion, "newVersion", lastVersion)
 			// clear the state. So the next evaluation will start from the scratch.
-			clearState(grafanaCtx, ErrRuleDeleted)
+			clearState(grafanaCtx, errRuleDeleted)
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
@@ -478,7 +478,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, rule *ngmodels.Aler
 					if currentRuleVersion != newVersion {
 						if currentRuleVersion > 0 { // do not clean up state if the eval loop has just started.
 							logger.Debug("Got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "newVersion", newVersion)
-							clearState(grafanaCtx, ErrRuleDeleted)
+							clearState(grafanaCtx, errRuleDeleted)
 						}
 						currentRuleVersion = newVersion
 					}
