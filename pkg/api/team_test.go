@@ -21,6 +21,7 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -65,7 +66,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				require.NoError(t, err)
 
 				// Adding the test user to the teams in order for him to list them
-				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team1.Id, false, 0)
+				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team1.ID, false, 0)
 				require.NoError(t, err)
 
 				sc.handlerFunc = hs.SearchTeams
@@ -87,9 +88,9 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				require.NoError(t, err)
 
 				// Adding the test user to the teams in order for him to list them
-				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team1.Id, false, 0)
+				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team1.ID, false, 0)
 				require.NoError(t, err)
-				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team2.Id, false, 0)
+				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team2.ID, false, 0)
 				require.NoError(t, err)
 
 				sc.handlerFunc = hs.SearchTeams
@@ -270,7 +271,7 @@ func TestTeamAPIEndpoint_SearchTeams_RBAC(t *testing.T) {
 func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
-		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &models.TeamDTO{}}
+		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
 	})
 
 	url := fmt.Sprintf(detailTeamURL, 1)
@@ -313,7 +314,7 @@ func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
-		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &models.TeamDTO{}}
+		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
 	})
 
 	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {
@@ -356,7 +357,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
-		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &models.TeamDTO{}}
+		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
 	})
 
 	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {

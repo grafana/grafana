@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -52,7 +53,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		// the SignedInUser is an empty struct therefore
 		// an additional check whether it is an actual user is required
 		if c.SignedInUser.IsRealUser() {
-			if err := addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, c.SignedInUser.UserID, c.OrgID, team.Id, models.PERMISSION_ADMIN.String()); err != nil {
+			if err := addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, c.SignedInUser.UserID, c.OrgID, team.ID, models.PERMISSION_ADMIN.String()); err != nil {
 				c.Logger.Error("Could not add creator to team", "error", err)
 			}
 		} else {
@@ -60,7 +61,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		}
 	}
 	return response.JSON(http.StatusOK, &util.DynMap{
-		"teamId":  team.Id,
+		"teamId":  team.ID,
 		"message": "Team created",
 	})
 }
@@ -77,19 +78,19 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
-	cmd := models.UpdateTeamCommand{}
+	cmd := team.UpdateTeamCommand{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgID
-	cmd.Id, err = strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	cmd.OrgID = c.OrgID
+	cmd.ID, err = strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
 	if hs.AccessControl.IsDisabled() {
-		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgId, cmd.Id, c.SignedInUser); err != nil {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgID, cmd.ID, c.SignedInUser); err != nil {
 			return response.Error(403, "Not allowed to update team", err)
 		}
 	}
@@ -115,20 +116,20 @@ func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) response.Response {
-	orgId := c.OrgID
-	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	orgID := c.OrgID
+	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 	user := c.SignedInUser
 
 	if hs.AccessControl.IsDisabled() {
-		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, user); err != nil {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgID, teamID, user); err != nil {
 			return response.Error(403, "Not allowed to delete team", err)
 		}
 	}
 
-	if err := hs.teamService.DeleteTeam(c.Req.Context(), &models.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
+	if err := hs.teamService.DeleteTeam(c.Req.Context(), &team.DeleteTeamCommand{OrgID: orgID, ID: teamID}); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Failed to delete Team. ID not found", nil)
 		}
@@ -157,43 +158,44 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 	}
 
 	// Using accesscontrol the filtering is done based on user permissions
-	userIdFilter := models.FilterIgnoreUser
+	userIDFilter := models.FilterIgnoreUser
 	if hs.AccessControl.IsDisabled() {
-		userIdFilter = userFilter(c)
+		userIDFilter = userFilter(c)
 	}
 
-	query := models.SearchTeamsQuery{
-		OrgId:        c.OrgID,
+	query := team.SearchTeamsQuery{
+		OrgID:        c.OrgID,
 		Query:        c.Query("query"),
 		Name:         c.Query("name"),
-		UserIdFilter: userIdFilter,
+		UserIDFilter: userIDFilter,
 		Page:         page,
 		Limit:        perPage,
 		SignedInUser: c.SignedInUser,
 		HiddenUsers:  hs.Cfg.HiddenUsers,
 	}
 
-	if err := hs.teamService.SearchTeams(c.Req.Context(), &query); err != nil {
+	queryResult, err := hs.teamService.SearchTeams(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(500, "Failed to search Teams", err)
 	}
 
 	teamIDs := map[string]bool{}
-	for _, team := range query.Result.Teams {
-		team.AvatarUrl = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
-		teamIDs[strconv.FormatInt(team.Id, 10)] = true
+	for _, team := range queryResult.Teams {
+		team.AvatarURL = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
+		teamIDs[strconv.FormatInt(team.ID, 10)] = true
 	}
 
 	metadata := hs.getMultiAccessControlMetadata(c, c.OrgID, "teams:id:", teamIDs)
 	if len(metadata) > 0 {
-		for _, team := range query.Result.Teams {
-			team.AccessControl = metadata[strconv.FormatInt(team.Id, 10)]
+		for _, team := range queryResult.Teams {
+			team.AccessControl = metadata[strconv.FormatInt(team.ID, 10)]
 		}
 	}
 
-	query.Result.Page = page
-	query.Result.PerPage = perPage
+	queryResult.Page = page
+	queryResult.PerPage = perPage
 
-	return response.JSON(http.StatusOK, query.Result)
+	return response.JSON(http.StatusOK, queryResult)
 }
 
 // UserFilter returns the user ID used in a filter when querying a team
@@ -229,15 +231,16 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 		userIdFilter = userFilter(c)
 	}
 
-	query := models.GetTeamByIdQuery{
-		OrgId:        c.OrgID,
-		Id:           teamId,
+	query := team.GetTeamByIDQuery{
+		OrgID:        c.OrgID,
+		ID:           teamId,
 		SignedInUser: c.SignedInUser,
 		HiddenUsers:  hs.Cfg.HiddenUsers,
 		UserIdFilter: userIdFilter,
 	}
 
-	if err := hs.teamService.GetTeamById(c.Req.Context(), &query); err != nil {
+	queryResult, err := hs.teamService.GetTeamByID(c.Req.Context(), &query)
+	if err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", err)
 		}
@@ -246,10 +249,10 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 	}
 
 	// Add accesscontrol metadata
-	query.Result.AccessControl = hs.getAccessControlMetadata(c, c.OrgID, "teams:id:", strconv.FormatInt(query.Result.Id, 10))
+	queryResult.AccessControl = hs.getAccessControlMetadata(c, c.OrgID, "teams:id:", strconv.FormatInt(queryResult.ID, 10))
 
-	query.Result.AvatarUrl = dtos.GetGravatarUrlWithDefault(query.Result.Email, query.Result.Name)
-	return response.JSON(http.StatusOK, &query.Result)
+	queryResult.AvatarURL = dtos.GetGravatarUrlWithDefault(queryResult.Email, queryResult.Name)
+	return response.JSON(http.StatusOK, &queryResult)
 }
 
 // swagger:route GET /teams/{team_id}/preferences teams getTeamPreferences
