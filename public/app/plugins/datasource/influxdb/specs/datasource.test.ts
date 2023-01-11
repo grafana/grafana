@@ -1,8 +1,8 @@
 import { lastValueFrom, of } from 'rxjs';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
-import { ScopedVars } from '@grafana/data/src';
-import { FetchResponse } from '@grafana/runtime';
+import { ScopedVars } from '@grafana/data';
+import { FetchResponse, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
@@ -10,11 +10,6 @@ import InfluxDatasource from '../datasource';
 
 //@ts-ignore
 const templateSrv = new TemplateSrvStub();
-
-jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
-  getBackendSrv: () => backendSrv,
-}));
 
 describe('InfluxDataSource', () => {
   const ctx: any = {
@@ -28,6 +23,7 @@ describe('InfluxDataSource', () => {
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
     ctx.instanceSettings.access = 'proxy';
     ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
+    setBackendSrv(backendSrv);
   });
 
   describe('When issuing metricFindQuery', () => {
