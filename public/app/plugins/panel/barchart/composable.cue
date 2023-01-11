@@ -55,6 +55,9 @@ composableKinds: PanelCfg: {
 							barWidth: float64 & >=0 & <=1 | *0.97
 							// Controls the width of groups. 1 = max with, 0 = min width.
 							groupWidth: float64 & >=0 & <=1 | *0.7
+							// Enables mode which highlights the entire bar area and shows tooltip when cursor
+							// hovers over highlighted area
+							fullHighlight: bool | *false
 						} @cuetsy(kind="interface")
 						PanelFieldConfig: {
 							ui.AxisConfig

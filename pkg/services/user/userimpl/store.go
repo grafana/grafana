@@ -217,7 +217,11 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 		return nil
 	})
 
-	return usr, err
+	if err != nil {
+		return nil, err
+	}
+
+	return usr, nil
 }
 
 func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {

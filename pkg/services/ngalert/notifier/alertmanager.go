@@ -34,6 +34,7 @@ import (
 
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 
+	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -335,11 +336,11 @@ func (am *Alertmanager) getTemplate() (*template.Template, error) {
 	for name := range am.config.TemplateFiles {
 		paths = append(paths, filepath.Join(am.WorkingDirPath(), name))
 	}
-	return am.templateFromPaths(paths...)
+	return am.templateFromPaths(paths)
 }
 
-func (am *Alertmanager) templateFromPaths(paths ...string) (*template.Template, error) {
-	tmpl, err := template.FromGlobs(paths...)
+func (am *Alertmanager) templateFromPaths(paths []string) (*template.Template, error) {
+	tmpl, err := template.FromGlobs(paths)
 	if err != nil {
 		return nil, err
 	}
@@ -395,7 +396,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	}
 
 	// With the templates persisted, create the template list using the paths.
-	tmpl, err := am.templateFromPaths(paths...)
+	tmpl, err := am.templateFromPaths(paths)
 	if err != nil {
 		return err
 	}
@@ -429,7 +430,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, am.timeoutFunc, &nilLimits{}, am.logger, am.dispatcherMetrics)
 
 	// Check which receivers are active and create the receiver stage.
-	var receivers []*notify.Receiver
+	receivers := make([]*notify.Receiver, 0, len(integrationsMap))
 	activeReceivers := am.getActiveReceiversMap(am.route)
 	for name := range integrationsMap {
 		stage := am.createReceiverStage(name, integrationsMap[name], am.waitFunc, am.notificationLog)
@@ -478,7 +479,7 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiR
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
 func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]*notify.Integration, error) {
-	var integrations []*notify.Integration
+	integrations := make([]*notify.Integration, 0, len(receiver.GrafanaManagedReceivers))
 	for i, r := range receiver.GrafanaManagedReceivers {
 		n, err := am.buildReceiverIntegration(r, tmpl)
 		if err != nil {
@@ -557,7 +558,7 @@ func (am *Alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 		}
 
 		for k, v := range a.Labels {
-			if len(v) == 0 || k == ngmodels.NamespaceUIDLabel { // Skip empty and namespace UID labels.
+			if len(v) == 0 || k == alertingModels.NamespaceUIDLabel { // Skip empty and namespace UID labels.
 				continue
 			}
 			alert.Alert.Labels[model.LabelName(k)] = model.LabelValue(v)
