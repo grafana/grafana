@@ -1,10 +1,18 @@
 import { Props, Preview } from '@storybook/addon-docs/blocks';
-import { AutoSaveInput } from './AutoSaveInput';
+import { AutoSaveInputError, AutoSaveInputSuccess } from './AutoSaveInput.story';
 
 # AutoSaveInput
 
 Used for text input that saves automatically its content. For an array of data or tree-structured data, consider using `Select` or `Cascader` respectively.
 
+When the input content has been saved correctly
+
 <Preview>
-  <AutoSaveInput />
+  <AutoSaveInputSuccess />
+</Preview>
+
+When there was a problem saving the input content
+
+<Preview>
+  <AutoSaveInputError args={{ currentErrorMessage: 'This is a custom error message' }} />
 </Preview>

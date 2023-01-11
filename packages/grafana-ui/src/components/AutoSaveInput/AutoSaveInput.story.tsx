@@ -15,11 +15,15 @@ const meta: Meta = {
       page: mdx,
     },
     controls: {
-      exclude: ['prefix', 'width', 'loading', 'suffix', 'addonBefore', 'addonAfter'],
+      exclude: ['prefix', 'width', 'loading', 'suffix', 'addonBefore', 'addonAfter', 'onFinishChange', 'invalid'],
     },
   },
-  argTypes: {},
-  args: {},
+  argTypes: {
+    customErrorMessage: { control: 'text' },
+  },
+  args: {
+    customErrorMessage: 'This is a custom error message',
+  },
 };
 
 export default meta;
@@ -35,6 +39,8 @@ const getError = () => {
   });
 };
 
-export const AutoSaveInputError: Story = () => <AutoSaveInput onFinishChange={getError} />;
+export const AutoSaveInputError: Story = (args) => (
+  <AutoSaveInput onFinishChange={getError} customErrorMessage={args.customErrorMessage} />
+);
 
 export const AutoSaveInputSuccess: Story = () => <AutoSaveInput onFinishChange={getSuccess} />;
