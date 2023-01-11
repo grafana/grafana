@@ -193,7 +193,7 @@ export const logGroupNamesVariable: CustomVariableModel = {
   id: 'groups',
   name: 'groups',
   current: {
-    value: ['templatedGroup-1', 'templatedGroup-2'],
+    value: ['templatedGroup-arn-1', 'templatedGroup-arn-2'],
     text: ['templatedGroup-1', 'templatedGroup-2'],
     selected: true,
   },

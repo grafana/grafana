@@ -39,15 +39,15 @@ import {
   CloudWatchLogsQueryStatus,
   CloudWatchLogsRequest,
   CloudWatchQuery,
-  DescribeLogGroupsRequest,
   GetLogEventsRequest,
-  GetLogGroupFieldsRequest,
   LogAction,
+  QueryParam,
   StartQueryRequest,
 } from '../types';
 import { addDataLinksToLogsResponse } from '../utils/datalinks';
 import { runWithRetry } from '../utils/logsRetry';
 import { increasingInterval } from '../utils/rxjs/increasingInterval';
+import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from '../utils/templateVariableUtils';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
 
@@ -83,18 +83,27 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   ): Observable<DataQueryResponse> => {
     const validLogQueries = logQueries.filter(this.filterQuery);
 
-    const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => ({
-      queryString: target.expression || '',
-      refId: target.refId,
-      logGroupNames: target.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
-      logGroups: target.logGroups || this.instanceSettings.jsonData.logGroups,
-      region: super.replaceVariableAndDisplayWarningIfMulti(
-        this.getActualRegion(target.region),
-        options.scopedVars,
-        true,
-        'region'
-      ),
-    }));
+    const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => {
+      const logGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+        this.templateSrv,
+        (target.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn)
+      );
+
+      // need to support legacy format variables too
+      const logGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+        this.templateSrv,
+        target.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
+        'text'
+      );
+
+      return {
+        refId: target.refId,
+        region: this.templateSrv.replace(this.getActualRegion(target.region)),
+        queryString: this.templateSrv.replace(target.expression || ''),
+        logGroups: logGroupArns.map((arn) => ({ arn, name: arn })),
+        logGroupNames,
+      };
+    });
 
     const startTime = new Date();
     const timeoutFunc = () => {
@@ -104,7 +113,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     return runWithRetry(
       (targets: StartQueryRequest[]) => {
         return this.makeLogActionRequest('StartQuery', targets, {
-          makeReplacements: true,
           scopedVars: options.scopedVars,
           skipCache: true,
         });
@@ -155,16 +163,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
    * Checks progress and polls data of a started logs query with some retry logic.
    * @param queryParams
    */
-  logsQuery(
-    queryParams: Array<{
-      queryId: string;
-      refId: string;
-      limit?: number;
-      region: string;
-      statsGroups?: string[];
-    }>,
-    timeoutFunc: () => boolean
-  ): Observable<DataQueryResponse> {
+  logsQuery(queryParams: QueryParam[], timeoutFunc: () => boolean): Observable<DataQueryResponse> {
     this.logQueries = {};
     queryParams.forEach((param) => {
       this.logQueries[param.refId] = {
@@ -253,9 +252,13 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     if (Object.keys(this.logQueries).length > 0) {
       this.makeLogActionRequest(
         'StopQuery',
-        Object.values(this.logQueries).map((logQuery) => ({ queryId: logQuery.id, region: logQuery.region })),
+        Object.values(this.logQueries).map((logQuery) => ({
+          queryId: logQuery.id,
+          region: logQuery.region,
+          queryString: '',
+          refId: '',
+        })),
         {
-          makeReplacements: false,
           skipCache: true,
         }
       ).pipe(
@@ -271,10 +274,8 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     queryParams: CloudWatchLogsRequest[],
     options: {
       scopedVars?: ScopedVars;
-      makeReplacements?: boolean;
       skipCache?: boolean;
     } = {
-      makeReplacements: true,
       skipCache: false,
     }
   ): Observable<DataFrame[]> {
@@ -294,46 +295,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         ...param,
       })),
     };
-
-    if (options.makeReplacements) {
-      requestParams.queries.forEach((query: CloudWatchLogsRequest) => {
-        const fieldsToReplace: Array<
-          keyof (GetLogEventsRequest & StartQueryRequest & DescribeLogGroupsRequest & GetLogGroupFieldsRequest)
-        > = ['queryString', 'logGroupNames', 'logGroupName', 'logGroupNamePrefix'];
-
-        // eslint-ignore-next-line
-        const anyQuery: any = query;
-        for (const fieldName of fieldsToReplace) {
-          if (query.hasOwnProperty(fieldName)) {
-            if (Array.isArray(anyQuery[fieldName])) {
-              anyQuery[fieldName] = anyQuery[fieldName].flatMap((val: string) => {
-                if (fieldName === 'logGroupNames') {
-                  return this.expandVariableToArray(val, options.scopedVars || {});
-                }
-                return this.replaceVariableAndDisplayWarningIfMulti(val, options.scopedVars, true, fieldName);
-              });
-            } else {
-              anyQuery[fieldName] = this.replaceVariableAndDisplayWarningIfMulti(
-                anyQuery[fieldName],
-                options.scopedVars,
-                true,
-                fieldName
-              );
-            }
-          }
-        }
-
-        if (anyQuery.region) {
-          anyQuery.region = this.replaceVariableAndDisplayWarningIfMulti(
-            anyQuery.region,
-            options.scopedVars,
-            true,
-            'region'
-          );
-          anyQuery.region = this.getActualRegion(anyQuery.region);
-        }
-      });
-    }
 
     const resultsToDataFrames = (
       val:

@@ -18,6 +18,7 @@ func NewLogGroupsService(logsClient models.CloudWatchLogsAPIProvider, isCrossAcc
 }
 
 func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error) {
+	var nextToken *string
 	input := &cloudwatchlogs.DescribeLogGroupsInput{
 		Limit:              aws.Int64(req.Limit),
 		LogGroupNamePrefix: req.LogGroupNamePrefix,
@@ -33,20 +34,29 @@ func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resou
 			input.AccountIdentifiers = []*string{req.AccountId}
 		}
 	}
-	response, err := s.logGroupsAPI.DescribeLogGroups(input)
-	if err != nil || response == nil {
-		return nil, err
-	}
-
 	var result []resources.ResourceResponse[resources.LogGroup]
-	for _, logGroup := range response.LogGroups {
-		result = append(result, resources.ResourceResponse[resources.LogGroup]{
-			Value: resources.LogGroup{
-				Arn:  *logGroup.Arn,
-				Name: *logGroup.LogGroupName,
-			},
-			AccountId: utils.Pointer(getAccountId(*logGroup.Arn)),
-		})
+
+	for {
+		input.NextToken = nextToken
+		response, err := s.logGroupsAPI.DescribeLogGroups(input)
+		if err != nil || response == nil {
+			return nil, err
+		}
+
+		for _, logGroup := range response.LogGroups {
+			result = append(result, resources.ResourceResponse[resources.LogGroup]{
+				Value: resources.LogGroup{
+					Arn:  *logGroup.Arn,
+					Name: *logGroup.LogGroupName,
+				},
+				AccountId: utils.Pointer(getAccountId(*logGroup.Arn)),
+			})
+		}
+
+		if !req.ListAllLogGroups || response.NextToken == nil {
+			break
+		}
+		nextToken = response.NextToken
 	}
 
 	return result, nil

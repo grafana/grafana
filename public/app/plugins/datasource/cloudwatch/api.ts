@@ -69,6 +69,7 @@ export class CloudWatchAPI extends CloudWatchRequest {
       ...params,
       region: this.templateSrv.replace(this.getActualRegion(params.region)),
       accountId: this.templateSrv.replace(params.accountId),
+      listAllLogGroups: params.listAllLogGroups ? 'true' : 'false',
     });
   }
 
@@ -81,13 +82,6 @@ export class CloudWatchAPI extends CloudWatchRequest {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       logGroupName: this.templateSrv.replace(logGroupName, {}),
       logGroupArn: this.templateSrv.replace(arn),
-    });
-  }
-
-  async describeAllLogGroups(params: DescribeLogGroupsRequest) {
-    return this.memoizedGetRequest<SelectableResourceValue[]>('all-log-groups', {
-      ...params,
-      region: this.templateSrv.replace(this.getActualRegion(params.region)),
     });
   }
 

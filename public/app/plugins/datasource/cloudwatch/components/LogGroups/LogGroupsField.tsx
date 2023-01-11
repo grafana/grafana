@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { useAccountOptions } from '../../hooks';
+import { migrateLegacyLogGroupName } from '../../migrations/logQueryMigrations';
 import { DescribeLogGroupsRequest, LogGroup } from '../../types';
 
 import { LogGroupsSelector } from './LogGroupsSelector';
@@ -22,6 +23,11 @@ const rowGap = css`
   gap: 3px;
 `;
 
+export type Test = {
+  variables: string[];
+  values: string[];
+};
+
 export const LogGroupsField = ({
   datasource,
   onChange,
@@ -38,21 +44,7 @@ export const LogGroupsField = ({
     // If log group names are stored in the query model, make a new DescribeLogGroups request for each log group to load the arn. Then update the query model.
     if (datasource && !loadingLogGroupsStarted && !logGroups?.length && legacyLogGroupNames?.length) {
       setLoadingLogGroupsStarted(true);
-      Promise.all(
-        legacyLogGroupNames.map((lg) => datasource.api.describeLogGroups({ region: region, logGroupNamePrefix: lg }))
-      )
-        .then((results) => {
-          const a = results.flatMap((r) =>
-            r.map((lg) => ({
-              arn: lg.value.arn,
-              name: lg.value.name,
-              accountId: lg.accountId,
-            }))
-          );
-
-          onChange(a);
-        })
-        .catch(console.error);
+      migrateLegacyLogGroupName(legacyLogGroupNames, region, datasource.api).then(onChange);
     }
   }, [datasource, legacyLogGroupNames, logGroups, onChange, region, loadingLogGroupsStarted]);
 
@@ -66,6 +58,7 @@ export const LogGroupsField = ({
         accountOptions={accountState.value}
         selectedLogGroups={logGroups}
         onBeforeOpen={onBeforeOpen}
+        variables={datasource?.getVariables()}
       />
       <SelectedLogGroups
         selectedLogGroups={logGroups ?? []}
