@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
@@ -85,6 +86,81 @@ func TestGetLogGroups(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Equal(t, "some error", err.Error())
+	})
+
+	t.Run("Should only call the api once in case ListAllLogGroups is set to false", func(t *testing.T) {
+		mockLogsAPI := &mocks.LogsAPI{}
+		req := resources.LogGroupsRequest{
+			Limit:              2,
+			LogGroupNamePrefix: utils.Pointer("test"),
+			ListAllLogGroups:   false,
+		}
+
+		mockLogsAPI.On("DescribeLogGroups", &cloudwatchlogs.DescribeLogGroupsInput{
+			Limit:              aws.Int64(req.Limit),
+			LogGroupNamePrefix: req.LogGroupNamePrefix,
+		}).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+			LogGroups: []*cloudwatchlogs.LogGroup{
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:group_a"), LogGroupName: utils.Pointer("group_a")},
+			},
+		}, nil)
+
+		service := NewLogGroupsService(mockLogsAPI, false)
+		resp, err := service.GetLogGroups(req)
+
+		assert.NoError(t, err)
+		mockLogsAPI.AssertNumberOfCalls(t, "DescribeLogGroups", 1)
+		assert.Equal(t, []resources.ResourceResponse[resources.LogGroup]{
+			{
+				AccountId: utils.Pointer("111"),
+				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:111:log-group:group_a", Name: "group_a"},
+			},
+		}, resp)
+	})
+
+	t.Run("Should keep on calling the api until NextToken is empty in case ListAllLogGroups is set to true", func(t *testing.T) {
+		mockLogsAPI := &mocks.LogsAPI{}
+		req := resources.LogGroupsRequest{
+			Limit:              2,
+			LogGroupNamePrefix: utils.Pointer("test"),
+			ListAllLogGroups:   true,
+		}
+
+		// first call
+		mockLogsAPI.On("DescribeLogGroups", &cloudwatchlogs.DescribeLogGroupsInput{
+			Limit:              aws.Int64(req.Limit),
+			LogGroupNamePrefix: req.LogGroupNamePrefix,
+		}).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+			LogGroups: []*cloudwatchlogs.LogGroup{
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:111:log-group:group_a"), LogGroupName: utils.Pointer("group_a")},
+			},
+			NextToken: utils.Pointer("token"),
+		}, nil)
+
+		// second call
+		mockLogsAPI.On("DescribeLogGroups", &cloudwatchlogs.DescribeLogGroupsInput{
+			Limit:              aws.Int64(req.Limit),
+			LogGroupNamePrefix: req.LogGroupNamePrefix,
+			NextToken:          utils.Pointer("token"),
+		}).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
+			LogGroups: []*cloudwatchlogs.LogGroup{
+				{Arn: utils.Pointer("arn:aws:logs:us-east-1:222:log-group:group_b"), LogGroupName: utils.Pointer("group_b")},
+			},
+		}, nil)
+		service := NewLogGroupsService(mockLogsAPI, false)
+		resp, err := service.GetLogGroups(req)
+		assert.NoError(t, err)
+		mockLogsAPI.AssertNumberOfCalls(t, "DescribeLogGroups", 2)
+		assert.Equal(t, []resources.ResourceResponse[resources.LogGroup]{
+			{
+				AccountId: utils.Pointer("111"),
+				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:111:log-group:group_a", Name: "group_a"},
+			},
+			{
+				AccountId: utils.Pointer("222"),
+				Value:     resources.LogGroup{Arn: "arn:aws:logs:us-east-1:222:log-group:group_b", Name: "group_b"},
+			},
+		}, resp)
 	})
 }
 
