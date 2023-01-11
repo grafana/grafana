@@ -159,3 +159,45 @@ func TestOAuthLogin_UsePKCE(t *testing.T) {
 		base64.RawURLEncoding.EncodeToString(shasum[:]),
 	)
 }
+
+// func TestOAuthLogin_BuildExternalUserInfo(t *testing.T) {
+// 	t.Helper()
+// 	cfg := setting.NewCfg()
+// 	sec := cfg.Raw.Section("auth.generic_oauth")
+// 	_, err := sec.NewKey("enabled", "true")
+// 	require.NoError(t, err)
+// 	_, err = sec.NewKey("use_pkce", "true")
+// 	require.NoError(t, err)
+// 	authSec := cfg.Raw.Section("auth")
+// 	_, err = authSec.NewKey("oauth_skip_org_role_update_sync", "true")
+// 	require.NoError(t, err)
+// 	cfg.ErrTemplateName = "error-template"
+
+// 	sqlStore := db.InitTestDB(t)
+// 	hs := &HTTPServer{
+// 		Cfg:            cfg,
+// 		License:        &licensing.OSSLicensingService{Cfg: cfg},
+// 		SQLStore:       sqlStore,
+// 		SocialService:  social.ProvideService(cfg, featuremgmt.WithFeatures()),
+// 		HooksService:   hooks.ProvideService(),
+// 		SecretsService: fakes.NewFakeSecretsService(),
+// 	}
+
+// 	// testcases := []struct {
+// 	// name string
+// 	// desc string
+// 	// }{
+// 	// {
+// 	// name: "hej",
+// 	// desc: "hej,",
+// 	// },
+// 	// }
+// 	// basicUser := &social.BasicUserInfo{
+// 	// Id:    "1",
+// 	// Name:  "Eric Leijonmarck",
+// 	// Email: "octocat@github.com",
+// 	// Login: "octocat",
+// 	// Role:  "Admin",
+// 	// }
+// 	// externalUser := hs.buildExternalUserInfo(token, basicUser, name)
+// }

@@ -52,7 +52,7 @@ func TestSocialGrafanaCom_UserInfo(t *testing.T) {
 			},
 		},
 		{
-			Name:         "should  role as userInfo when Skip Org Role Sync Enabled",
+			Name:         "should return role as userInfo when Skip Org Role Sync Enabled",
 			userInfoResp: userResponse,
 			Cfg:          conf{skipOrgRoleSync: false},
 			want: &BasicUserInfo{
