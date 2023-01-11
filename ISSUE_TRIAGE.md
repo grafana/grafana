@@ -194,8 +194,7 @@ If it's not perfectly clear that it's an actual bug, quickly try to reproduce it
 ### Enhancement/feature?
 
 1. Remind the contributor that enhancement/feature request should be created as a GitHub discussion. See [Enhancements requests.](https://github.com/grafana/grafana/blob/main/ISSUE_TRIAGE.md#enhancement-requests)
-2. Label the issue `type/feature-request` and at least one `area/*` or `datasource/*` label. 
-3. Move on to [prioritizing the issue](#4-prioritization-of-issues).
+2. Label the issue `type/feature-request` and at least one `area/*` or `datasource/*` label.
 
 ### Documentation issue?
 
@@ -318,19 +317,6 @@ Even if you don't have the time or knowledge to investigate an issue we highly r
 ## Automation
 
 We have some automation that triggers on comments or labels being added to issues. Many of these automated behaviors are defined in [commands.json](https://github.com/grafana/grafana/blob/main/.github/commands.json). Or in other [GitHub Actions](https://github.com/grafana/grafana/tree/main/.github/workflows)
-
-Comment commands:
-
-* Write the word `/duplicate #<issue number>` to have Grafana label & close issue with an appropriate message.
-* Write the word `/needsMoreInfo`  anywhere in a comment and the bot will add the correct label and standard message.
-
-Label commands:
-
-* Add label `bot/question` the the bot will close with standard question message and add label `type/question`
-* Add label `bot/duplicate` the the bot will close with standard duplicate message and add label `type/duplicate`
-* Add label `bot/needs more info` for bot to request more info (or use comment command mentioned above)
-* Add label `bot/close feature request` for bot to close a feature request with standard message and adds label `not implemented`
-* Add label `bot/no new info` for bot to close an issue where we asked for more info but has not received any updates in at least 14 days.
 
 [Read more on bot actions](https://github.com/grafana/grafana/blob/main/.github/bot.md)
 
