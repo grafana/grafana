@@ -214,7 +214,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					Permission: models.PERMISSION_ADMIN,
 				})
 
-				require.Error(t, err, models.ErrTeamMemberNotFound)
+				require.Error(t, err, team.ErrTeamMemberNotFound)
 			})
 
 			t.Run("Should be able to search for teams", func(t *testing.T) {

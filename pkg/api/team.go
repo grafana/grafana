@@ -25,7 +25,7 @@ import (
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
-	cmd := models.CreateTeamCommand{}
+	cmd := team.CreateTeamCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -34,9 +34,9 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
 
-	team, err := hs.teamService.CreateTeam(cmd.Name, cmd.Email, c.OrgID)
+	t, err := hs.teamService.CreateTeam(cmd.Name, cmd.Email, c.OrgID)
 	if err != nil {
-		if errors.Is(err, models.ErrTeamNameTaken) {
+		if errors.Is(err, team.ErrTeamNameTaken) {
 			return response.Error(409, "Team name taken", err)
 		}
 		return response.Error(500, "Failed to create Team", err)
@@ -53,7 +53,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		// the SignedInUser is an empty struct therefore
 		// an additional check whether it is an actual user is required
 		if c.SignedInUser.IsRealUser() {
-			if err := addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, c.SignedInUser.UserID, c.OrgID, team.ID, models.PERMISSION_ADMIN.String()); err != nil {
+			if err := addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, c.SignedInUser.UserID, c.OrgID, t.ID, models.PERMISSION_ADMIN.String()); err != nil {
 				c.Logger.Error("Could not add creator to team", "error", err)
 			}
 		} else {
@@ -61,7 +61,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		}
 	}
 	return response.JSON(http.StatusOK, &util.DynMap{
-		"teamId":  team.ID,
+		"teamId":  t.ID,
 		"message": "Team created",
 	})
 }
@@ -96,7 +96,7 @@ func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
 	}
 
 	if err := hs.teamService.UpdateTeam(c.Req.Context(), &cmd); err != nil {
-		if errors.Is(err, models.ErrTeamNameTaken) {
+		if errors.Is(err, team.ErrTeamNameTaken) {
 			return response.Error(400, "Team name taken", err)
 		}
 		return response.Error(500, "Failed to update Team", err)
@@ -130,7 +130,7 @@ func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) response.Response {
 	}
 
 	if err := hs.teamService.DeleteTeam(c.Req.Context(), &team.DeleteTeamCommand{OrgID: orgID, ID: teamID}); err != nil {
-		if errors.Is(err, models.ErrTeamNotFound) {
+		if errors.Is(err, team.ErrTeamNotFound) {
 			return response.Error(404, "Failed to delete Team. ID not found", nil)
 		}
 		return response.Error(500, "Failed to delete Team", err)
@@ -158,7 +158,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 	}
 
 	// Using accesscontrol the filtering is done based on user permissions
-	userIDFilter := models.FilterIgnoreUser
+	userIDFilter := team.FilterIgnoreUser
 	if hs.AccessControl.IsDisabled() {
 		userIDFilter = userFilter(c)
 	}
@@ -204,7 +204,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 func userFilter(c *models.ReqContext) int64 {
 	userIdFilter := c.SignedInUser.UserID
 	if c.OrgRole == org.RoleAdmin {
-		userIdFilter = models.FilterIgnoreUser
+		userIdFilter = team.FilterIgnoreUser
 	}
 	return userIdFilter
 }
@@ -226,7 +226,7 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 	}
 
 	// Using accesscontrol the filtering has already been performed at middleware layer
-	userIdFilter := models.FilterIgnoreUser
+	userIdFilter := team.FilterIgnoreUser
 	if hs.AccessControl.IsDisabled() {
 		userIdFilter = userFilter(c)
 	}
@@ -241,7 +241,7 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 
 	queryResult, err := hs.teamService.GetTeamByID(c.Req.Context(), &query)
 	if err != nil {
-		if errors.Is(err, models.ErrTeamNotFound) {
+		if errors.Is(err, team.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", err)
 		}
 
@@ -364,14 +364,14 @@ type SearchTeamsParams struct {
 type CreateTeamParams struct {
 	// in:body
 	// required:true
-	Body models.CreateTeamCommand `json:"body"`
+	Body team.CreateTeamCommand `json:"body"`
 }
 
 // swagger:parameters updateTeam
 type UpdateTeamParams struct {
 	// in:body
 	// required:true
-	Body models.UpdateTeamCommand `json:"body"`
+	Body team.UpdateTeamCommand `json:"body"`
 	// in:path
 	// required:true
 	TeamID string `json:"team_id"`
@@ -381,14 +381,14 @@ type UpdateTeamParams struct {
 type SearchTeamsResponse struct {
 	// The response message
 	// in: body
-	Body models.SearchTeamQueryResult `json:"body"`
+	Body team.SearchTeamQueryResult `json:"body"`
 }
 
 // swagger:response getTeamByIDResponse
 type GetTeamByIDResponse struct {
 	// The response message
 	// in: body
-	Body *models.TeamDTO `json:"body"`
+	Body *team.TeamDTO `json:"body"`
 }
 
 // swagger:response createTeamResponse

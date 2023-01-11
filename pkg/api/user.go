@@ -659,14 +659,14 @@ type GetSignedInUserOrgListResponse struct {
 type GetUserTeamsResponse struct {
 	// The response message
 	// in: body
-	Body []*models.TeamDTO `json:"body"`
+	Body []*team.TeamDTO `json:"body"`
 }
 
 // swagger:response getSignedInUserTeamListResponse
 type GetSignedInUserTeamListResponse struct {
 	// The response message
 	// in: body
-	Body []*models.TeamDTO `json:"body"`
+	Body []*team.TeamDTO `json:"body"`
 }
 
 // swagger:response helpFlagResponse

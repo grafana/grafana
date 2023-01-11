@@ -50,7 +50,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				sc.handlerFunc = hs.SearchTeams
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 				require.Equal(t, http.StatusOK, sc.resp.Code)
-				var resp models.SearchTeamQueryResult
+				var resp team.SearchTeamQueryResult
 				err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 				require.NoError(t, err)
 
@@ -72,7 +72,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				sc.handlerFunc = hs.SearchTeams
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 				require.Equal(t, http.StatusOK, sc.resp.Code)
-				var resp models.SearchTeamQueryResult
+				var resp team.SearchTeamQueryResult
 				err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 				require.NoError(t, err)
 
@@ -96,7 +96,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				sc.handlerFunc = hs.SearchTeams
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 				require.Equal(t, http.StatusOK, sc.resp.Code)
-				var resp models.SearchTeamQueryResult
+				var resp team.SearchTeamQueryResult
 				err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 				require.NoError(t, err)
 
@@ -130,7 +130,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				Logger:       logger,
 			}
 			c.OrgRole = org.RoleEditor
-			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
+			c.Req.Body = mockRequestBody(team.CreateTeamCommand{Name: teamName})
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
 
@@ -147,7 +147,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				Logger:       logger,
 			}
 			c.OrgRole = org.RoleEditor
-			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
+			c.Req.Body = mockRequestBody(team.CreateTeamCommand{Name: teamName})
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
 			assert.Equal(t, 200, r.Status())

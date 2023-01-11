@@ -203,7 +203,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 			params = append(params, user)
 		}
 
-		if query.UserIDFilter == models.FilterIgnoreUser {
+		if query.UserIDFilter == team.FilterIgnoreUser {
 			sql.WriteString(getTeamSelectSQLBase(ss.db, filteredUsers))
 		} else {
 			sql.WriteString(getTeamSelectWithPermissionsSQLBase(ss.db, filteredUsers))
@@ -247,7 +247,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 			return err
 		}
 
-		team := team.Team{}
+		t := team.Team{}
 		countSess := sess.Table("team")
 		countSess.Where("team.org_id=?", query.OrgID)
 
@@ -260,7 +260,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		}
 
 		// If we're not retrieving all results, then only search for teams that this user has access to
-		if query.UserIDFilter != models.FilterIgnoreUser {
+		if query.UserIDFilter != team.FilterIgnoreUser {
 			countSess.
 				Where(`
 			team.id IN (
@@ -276,7 +276,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 			countSess.Where(acFilter.Where, acFilter.Args...)
 		}
 
-		count, err := countSess.Count(&team)
+		count, err := countSess.Count(&t)
 		queryResult.TotalCount = count
 
 		return err
@@ -299,7 +299,7 @@ func (ss *xormStore) GetByID(ctx context.Context, query *team.GetTeamByIDQuery) 
 			params = append(params, user)
 		}
 
-		if query.UserIdFilter != models.FilterIgnoreUser {
+		if query.UserIdFilter != team.FilterIgnoreUser {
 			sql.WriteString(` INNER JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ?`)
 			params = append(params, query.UserIdFilter)
 		}
