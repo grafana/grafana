@@ -9,23 +9,18 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestCreateMiddlewares(t *testing.T) {
 	type args struct {
-		cfg               *setting.Cfg
-		pCfg              *config.Cfg
-		oAuthTokenService oauthtoken.OAuthTokenService
+		cfg  *setting.Cfg
+		pCfg *config.Cfg
 	}
 
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = func(key string) bool {
-		if featuremgmt.FlagDatasourceLogger == key {
-			return true
-		}
-		return false
+		return featuremgmt.FlagDatasourceLogger == key
 	}
 	cfg.SendUserHeader = true
 	pCfg := config.NewCfg(setting.ProvideProvider(cfg), cfg)
