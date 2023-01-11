@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { BarGaugeDisplayMode, TableBarGaugeCellOptions, TableCellDisplayMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, TableBarGaugeCellOptions } from '@grafana/schema';
 import { Field, HorizontalGroup, Select } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../models.gen';
@@ -16,6 +16,7 @@ export const BarGaugeCellOptionsEditor = ({
   cellOptions,
   onChange,
 }: TableCellEditorProps<TableBarGaugeCellOptions>) => {
+  // Set the display mode on change
   const onCellOptionsChange = (v: SelectableValue) => {
     cellOptions.mode = v.value;
     onChange(cellOptions);

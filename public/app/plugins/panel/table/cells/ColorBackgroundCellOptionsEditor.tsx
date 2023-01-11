@@ -1,11 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import {
-  TableCellDisplayMode,
-  TableCellBackgroundDisplayMode,
-  TableColoredBackgroundCellOptions,
-} from '@grafana/schema';
+import { TableCellBackgroundDisplayMode, TableColoredBackgroundCellOptions } from '@grafana/schema';
 import { HorizontalGroup, Select, Field } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../models.gen';
@@ -19,8 +15,7 @@ export const ColorBackgroundCellOptionsEditor = ({
   cellOptions,
   onChange,
 }: TableCellEditorProps<TableColoredBackgroundCellOptions>) => {
-  // When the select changes we build an options
-  // object as needed and set the display mode
+  // Set the display mode on change
   const onCellOptionsChange = (v: SelectableValue) => {
     cellOptions.mode = v.value;
     onChange(cellOptions);
