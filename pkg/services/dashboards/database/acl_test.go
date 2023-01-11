@@ -226,7 +226,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 			require.Nil(t, err)
 			err = updateDashboardACL(t, dashboardStore, savedFolder.Id, models.DashboardACL{
 				OrgID:       1,
-				TeamID:      team1.Id,
+				TeamID:      team1.ID,
 				DashboardID: savedFolder.Id,
 				Permission:  models.PERMISSION_ADMIN,
 			})
@@ -238,7 +238,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 			require.Equal(t, 1, len(q3.Result))
 			require.Equal(t, savedFolder.Id, q3.Result[0].DashboardId)
 			require.Equal(t, models.PERMISSION_ADMIN, q3.Result[0].Permission)
-			require.Equal(t, team1.Id, q3.Result[0].TeamId)
+			require.Equal(t, team1.ID, q3.Result[0].TeamId)
 		})
 	})
 
