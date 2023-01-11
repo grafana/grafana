@@ -326,7 +326,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 					return err
 				}
 			}
-			_, err = doDelete(ctx, tx, oid)
+			_, err = doDelete(ctx, tx, grn)
 			if err != nil {
 				return err
 			}
@@ -377,14 +377,6 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			}
 			if _, err := tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", oid); err != nil {
 				return err
-			}
-			if isFolder {
-				if _, err := tx.Exec(ctx, "DELETE FROM entity_folder WHERE tenant_id=? AND uid=?", grn.TenantId, grn.UID); err != nil {
-					return err
-				}
-				if _, err := tx.Exec(ctx, "DELETE FROM entity_folder_tree WHERE tenant_id=? AND uid=?", grn.TenantId, grn.UID); err != nil {
-					return err
-				}
 			}
 		}
 
@@ -437,44 +429,6 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			}
 		}
 
-		if isFolder {
-			// TODO query upstream on insert
-			upstream := []string{"uidA", "uidB"}
-			slugs := []string{"slugA", "slugB", *summary.slug}
-			tree, err := json.Marshal(upstream)
-			if err != nil {
-				return err
-			}
-
-			_, err = tx.Exec(ctx, `INSERT INTO entity_folder (`+
-				"tenant_id, uid, "+
-				"path, depth, tree) "+
-				`VALUES (?, ?, ?, ?, ?)`,
-				grn.TenantId, grn.UID,
-				strings.Join(slugs, "/"),
-				len(slugs),   // depth 1 is minimum
-				string(tree), // JSON array of parent elements
-			)
-			if err != nil {
-				return err
-			}
-
-			args := []interface{}{}
-			stmt := "INSERT INTO entity_folder_tree (tenant_id, uid, upstream, depth) VALUES "
-			for i, uid := range upstream {
-				if i > 0 {
-					stmt += ", "
-				}
-				stmt += "(?, ?, ?, ?)"
-				args = append(args, grn.TenantId, grn.UID, uid, i+1)
-			}
-
-			_, err = tx.Exec(ctx, stmt, args...)
-			if err != nil {
-				return err
-			}
-		}
-
 		// 5. Add/update the main `entity` table
 		rsp.Entity = versionInfo
 		if isUpdate {
@@ -493,6 +447,10 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				origin.Source, origin.Key, timestamp,
 				oid,
 			)
+
+			if isFolder {
+				updateFolderTree(ctx, tx, grn.TenantId)
+			}
 			return err
 		}
 
@@ -523,6 +481,9 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			summary.labels, summary.fields, summary.errors,
 			origin.Source, origin.Key, origin.Time,
 		)
+		if err == nil && isFolder {
+			updateFolderTree(ctx, tx, grn.TenantId)
+		}
 		return err
 	})
 	rsp.SummaryJson = summary.marshaled
@@ -610,14 +571,15 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 	rsp := &entity.DeleteEntityResponse{}
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		rsp.OK, err = doDelete(ctx, tx, grn.ToGRNString())
+		rsp.OK, err = doDelete(ctx, tx, grn)
 		return err
 	})
 	return rsp, err
 }
 
-func doDelete(ctx context.Context, tx *session.SessionTx, grn string) (bool, error) {
-	results, err := tx.Exec(ctx, "DELETE FROM entity WHERE grn=?", grn)
+func doDelete(ctx context.Context, tx *session.SessionTx, grn *entity.GRN) (bool, error) {
+	str := grn.ToGRNString()
+	results, err := tx.Exec(ctx, "DELETE FROM entity WHERE grn=?", str)
 	if err != nil {
 		return false, err
 	}
@@ -627,9 +589,14 @@ func doDelete(ctx context.Context, tx *session.SessionTx, grn string) (bool, err
 	}
 
 	// TODO: keep history? would need current version bump, and the "write" would have to get from history
-	_, _ = tx.Exec(ctx, "DELETE FROM entity_history WHERE grn=?", grn)
-	_, _ = tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", grn)
-	_, _ = tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", grn)
+	_, _ = tx.Exec(ctx, "DELETE FROM entity_history WHERE grn=?", str)
+	_, _ = tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", str)
+	_, _ = tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", str)
+
+	if grn.Kind == models.StandardKindFolder {
+		updateFolderTree(ctx, tx, grn.TenantId)
+	}
+
 	return rows > 0, err
 }
 
