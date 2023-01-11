@@ -41,7 +41,7 @@ func SplitString(str string) []string {
 		return substrs
 	}
 
-	return strings.Fields(strings.ReplaceAll(str, ",", " "))
+	return strings.Fields(str)
 }
 
 // GetAgeString returns a string representing certain time from years to minutes.
