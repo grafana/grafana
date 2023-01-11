@@ -8,12 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -23,6 +24,11 @@ const (
 	ClientJWT       = "auth.client.jwt"
 	ClientRender    = "auth.client.render"
 	ClientSession   = "auth.client.session"
+)
+
+const (
+	MetaKeyUserName   = "username"
+	MetaKeyAuthModule = "authModule"
 )
 
 // ClientParams are hints to the auth service about how to handle the identity management
@@ -74,6 +80,23 @@ type Request struct {
 	// Resp is the response writer to use for the request
 	// Used to set cookies and headers
 	Resp web.ResponseWriter
+
+	// metadata is additional information about the auth request
+	metadata map[string]string
+}
+
+func (r *Request) SetMeta(k, v string) {
+	if r.metadata == nil {
+		r.metadata = map[string]string{}
+	}
+	r.metadata[k] = v
+}
+
+func (r *Request) GetMeta(k string) string {
+	if r.metadata == nil {
+		r.metadata = map[string]string{}
+	}
+	return r.metadata[k]
 }
 
 const (

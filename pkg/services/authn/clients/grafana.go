@@ -29,6 +29,9 @@ func (c Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, use
 		return nil, err
 	}
 
+	// user was found so set auth module in req metadata
+	r.SetMeta(authn.MetaKeyAuthModule, "grafana")
+
 	if ok := comparePassword(password, usr.Salt, usr.Password); !ok {
 		return nil, errInvalidPassword.Errorf("invalid password")
 	}
