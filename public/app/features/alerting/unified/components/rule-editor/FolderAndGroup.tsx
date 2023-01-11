@@ -163,7 +163,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
     <div className={styles.container}>
       <Field
         label={
-          <Label htmlFor="folder" description={'Select a folder for your rule. Showing first 1k results.'}>
+          <Label htmlFor="folder" description={'Select a folder for your rule.'}>
             <Stack gap={0.5}>
               Folder
               <InfoIcon
