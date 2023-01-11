@@ -16,7 +16,6 @@ import { AccessControlAction, PermissionLevelString } from 'app/types';
 export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 
 export const ADD_NEW_FOLER_OPTION = '+ Add new';
-export const SLICE_RESULTS_TO = 1000;
 
 export interface FolderWarning {
   warningCondition: (value: string) => boolean;
@@ -92,7 +91,7 @@ export function FolderPicker(props: Props) {
     async (query: string) => {
       const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
       const resultsAfterMapAndFilter = mapSearchHitsToOptions(searchHits, filter);
-      const options: Array<SelectableValue<string>> = resultsAfterMapAndFilter.slice(0, SLICE_RESULTS_TO);
+      const options: Array<SelectableValue<string>> = resultsAfterMapAndFilter;
 
       const hasAccess =
         contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
