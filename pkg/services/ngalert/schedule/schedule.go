@@ -242,7 +242,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 			continue
 		}
 
-		ruleInfo, isRoutineNew := sch.registry.getOrCreateInfo(ctx, key)
+		ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key)
 
 		// enforce minimum evaluation interval
 		if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
@@ -250,16 +250,16 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 			item.IntervalSeconds = int64(sch.minRuleInterval.Seconds())
 		}
 
-		isIntervalValid := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) == 0
+		invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
 
-		if isRoutineNew && isIntervalValid {
+		if newRoutine && !invalidInterval {
 			rule := item
 			dispatcherGroup.Go(func() error {
 				return sch.ruleRoutine(ruleInfo.ctx, rule, ruleInfo.evalCh, ruleInfo.updateCh)
 			})
 		}
 
-		if !isIntervalValid {
+		if invalidInterval {
 			// this is expected to be always false
 			// given that we validate interval during alert rule updates
 			sch.log.Warn("Rule has an invalid interval and will be ignored. Interval should be divided exactly by scheduler interval", append(key.LogContext(), "ruleInterval", time.Duration(item.IntervalSeconds)*time.Second, "schedulerInterval", sch.baseInterval)...)
