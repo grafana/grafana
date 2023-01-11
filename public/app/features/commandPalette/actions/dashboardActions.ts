@@ -1,3 +1,5 @@
+import { ActionImpl } from 'kbar';
+
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
@@ -42,7 +44,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
   return recentDashboardActions;
 }
 
-export async function getDashboardSearchResultActions(searchQuery: string): Promise<CommandPaletteAction[]> {
+export async function getDashboardSearchResultActions(searchQuery: string): Promise<ActionImpl[]> {
   // Empty strings should not come through to here
   if (searchQuery.length === 0) {
     return [];
@@ -54,23 +56,21 @@ export async function getDashboardSearchResultActions(searchQuery: string): Prom
     limit: MAX_SEARCH_RESULTS,
   });
 
-  const goToDashboardActions: CommandPaletteAction[] = data.view.map((item) => {
+  const goToDashboardActions: ActionImpl[] = data.view.map((item) => {
     const { url, name } = item; // items are backed by DataFrameView, so must hold the url in a closure
-    return {
-      id: `go/dashboard/${url}`,
-      name: `${name}`,
-      section: t('command-palette.section.dashboard-search-results', 'Dashboards'),
-      priority: SEARCH_RESULTS_PRORITY,
-      perform: () => {
-        locationService.push(locationUtil.stripBaseFromUrl(url));
+    return new ActionImpl(
+      {
+        id: `go/dashboard/${url}`,
+        name: `${name}`,
+        section: t('command-palette.section.dashboard-search-results', 'Dashboards'),
+        priority: SEARCH_RESULTS_PRORITY,
+        perform: () => {
+          locationService.push(locationUtil.stripBaseFromUrl(url));
+        },
       },
-    };
+      { store: {} }
+    );
   });
 
   return goToDashboardActions;
 }
-
-// export default async (parentId: string) => {
-//   const dashboardNav = await getDashboardNav(parentId);
-//   return dashboardNav;
-// };

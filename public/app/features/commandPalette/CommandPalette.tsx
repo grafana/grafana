@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
+import debounce from 'debounce-promise';
 import {
   KBarAnimator,
   KBarPortal,
@@ -12,20 +13,20 @@ import {
   VisualState,
   useRegisterActions,
   useKBar,
+  ActionImpl,
 } from 'kbar';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { ResultItem } from './ResultItem';
+import { getDashboardSearchResultActions } from './actions/dashboardActions';
 import useActions from './actions/useActions';
 
-/**
- * Wrap all the components from KBar here.
- * @constructor
- */
+const debouncedDashboardSearch = debounce(getDashboardSearchResultActions, 200);
 
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
@@ -34,6 +35,16 @@ export const CommandPalette = () => {
     showing: state.visualState === VisualState.showing,
     searchQuery: state.searchQuery,
   }));
+  const [dashboardResults, setDashboardResults] = useState<ActionImpl[]>([]);
+
+  // Hit dashboards API
+  useEffect(() => {
+    if (showing && searchQuery.length > 0) {
+      debouncedDashboardSearch(searchQuery).then((resultActions) => {
+        setDashboardResults(resultActions);
+      });
+    }
+  }, [showing, searchQuery]);
 
   const actions = useActions(searchQuery, showing);
   useRegisterActions(actions, [actions]);
@@ -57,7 +68,7 @@ export const CommandPalette = () => {
           <FocusScope contain autoFocus restoreFocus>
             <div {...overlayProps} {...dialogProps}>
               <KBarSearch className={styles.search} />
-              <RenderResults />
+              <RenderResults dashboardResults={dashboardResults} />
             </div>
           </FocusScope>
         </KBarAnimator>
@@ -66,14 +77,20 @@ export const CommandPalette = () => {
   ) : null;
 };
 
-const RenderResults = () => {
+interface RenderResultsProps {
+  dashboardResults: ActionImpl[];
+}
+
+const RenderResults = ({ dashboardResults }: RenderResultsProps) => {
   const { results, rootActionId } = useMatches();
   const styles = useStyles2(getSearchStyles);
+  const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
+  const dashboards = dashboardResults.length > 0 ? [dashboardsSectionTitle, ...dashboardResults] : [];
 
   return (
     <div className={styles.resultsContainer}>
       <KBarResults
-        items={results}
+        items={[...results, ...dashboards]}
         onRender={({ item, active }) =>
           typeof item === 'string' ? (
             <div className={styles.sectionHeader}>{item}</div>
