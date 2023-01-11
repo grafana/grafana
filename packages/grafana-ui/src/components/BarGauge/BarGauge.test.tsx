@@ -11,7 +11,7 @@ import {
   getDisplayProcessor,
   createTheme,
 } from '@grafana/data';
-import { BarGaugeDisplayMode } from '@grafana/ui';
+import { BarGaugeDisplayMode } from '@grafana/schema';
 
 import {
   BarGauge,

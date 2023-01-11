@@ -72,10 +72,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           },
           process: identityOverrideProcessor,
           category: cellCategory,
-          shouldApply: (f) => true,
-          showIf: (cfg) => {
-            return true;
-          },
+          shouldApply: () => true,
         })
         .addBooleanSwitch({
           path: 'inspect',

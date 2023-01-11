@@ -1378,7 +1378,6 @@ function migrateTableCellConfig(displayMode: TableCellDisplayMode): TableCellOpt
     case 'basic':
     case 'gradient-gauge':
     case 'lcd-gauge':
-      // let newOpts: TableBarGaugeCellOptions | undefined = undefined;
       let gaugeMode = BarGaugeDisplayMode.Basic;
 
       if (displayMode === 'gradient-gauge') {
