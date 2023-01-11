@@ -188,17 +188,32 @@ function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
 
     const haystack = throttledFiltered.map((action) => [action.name, action.keywords, action.subtitle].join(' '));
 
-    const indexes = ufuzzy.filter(haystack, throttledSearch);
-    const info = ufuzzy.info(indexes, haystack, throttledSearch);
-    const order = ufuzzy.sort(info, haystack, throttledSearch);
+    const allMatchedActionIndexes = new Set<number>();
 
-    const matches: Match[] = order.map((actionIndex, orderIndex) => {
-      const score = order.length - orderIndex;
-      const action = throttledFiltered[info.idx[actionIndex]];
-      return { score, action };
-    });
+    const queryTerms = ufuzzy.split(throttledSearch);
+    const searchPermutations = uFuzzy.permute(queryTerms).map((terms) => terms.join(' '));
 
-    return matches;
+    for (const permutedSearchTerm of searchPermutations) {
+      const indexes = ufuzzy.filter(haystack, throttledSearch);
+      const info = ufuzzy.info(indexes, haystack, throttledSearch);
+      const order = ufuzzy.sort(info, haystack, throttledSearch);
+
+      for (let orderIndex = 0; orderIndex < order.length; orderIndex++) {
+        const actionIndex = order[orderIndex];
+
+        if (!allMatches.has(actionIndex) {
+
+        });
+
+        // const score = order.length - orderIndex;
+        // const action = throttledFiltered[info.idx[actionIndex]];
+        // return { score, action };
+
+      }
+
+    }
+
+    return [];
   }, [throttledFiltered, throttledSearch, ufuzzy]);
 }
 
