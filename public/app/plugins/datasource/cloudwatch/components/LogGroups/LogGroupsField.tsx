@@ -24,6 +24,11 @@ const rowGap = css`
   gap: 3px;
 `;
 
+export type Test = {
+  variables: string[];
+  values: string[];
+};
+
 export const LogGroupsField = ({
   datasource,
   onChange,
