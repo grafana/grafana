@@ -1,27 +1,21 @@
-import { Action, Priority } from 'kbar';
-import React from 'react';
-
-import { isIconName, locationUtil, NavModelItem } from '@grafana/data';
+import { locationUtil, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Icon } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
-const SECTION_PAGES = 'Pages';
-const SECTION_ACTIONS = 'Actions';
-const SECTION_PREFERENCES = 'Preferences';
+import { CommandPaletteAction } from '../types';
+import { DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
 
-export interface NavBarActions {
-  url: string;
-  actions: Action[];
-}
+// We reuse this, but translations cannot be in module scope (t must be called after i18n has set up,)
+const getPagesSectionTranslation = () => t('command-palette.section.pages', 'Pages');
 
 // TODO: Clean this once ID is mandatory on nav items
 function idForNavItem(navItem: NavModelItem) {
   return 'navModel.' + navItem.id ?? navItem.url ?? navItem.text ?? navItem.subTitle;
 }
 
-function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Action[] {
-  const navActions: Action[] = [];
+function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): CommandPaletteAction[] {
+  const navActions: CommandPaletteAction[] = [];
 
   for (const navItem of navTree) {
     const { url, text, isCreateAction, children } = navItem;
@@ -31,15 +25,15 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Actio
       continue;
     }
 
-    const action: Action = {
+    const section = isCreateAction ? t('command-palette.section.actions', 'Actions') : getPagesSectionTranslation();
+
+    const action = {
       id: idForNavItem(navItem),
       name: text, // TODO: translate
-      section: isCreateAction ? SECTION_ACTIONS : SECTION_PAGES,
+      section: section,
       perform: url ? () => locationService.push(locationUtil.stripBaseFromUrl(url)) : undefined,
       parent: parent && idForNavItem(parent),
-
-      // Only show icons for top level items
-      icon: !parent && iconForNavItem(navItem),
+      priority: DEFAULT_PRIORITY,
     };
 
     navActions.push(action);
@@ -53,46 +47,40 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Actio
   return navActions;
 }
 
-export default (navBarTree: NavModelItem[]) => {
-  const globalActions: Action[] = [
-    {
-      // TODO: Figure out what section, if any, to put this in
-      id: 'go/dashboard',
-      name: 'Dashboards...',
-      keywords: 'navigate',
-      priority: Priority.NORMAL,
-    },
+export default (navBarTree: NavModelItem[]): CommandPaletteAction[] => {
+  const globalActions: CommandPaletteAction[] = [
     {
       id: 'go/search',
-      name: 'Search',
+      name: t('command-palette.action.search', 'Search'),
       keywords: 'navigate',
-      icon: <Icon name="search" size="md" />,
       perform: () => locationService.push('?search=open'),
-      section: SECTION_PAGES,
+      section: t('command-palette.section.pages', 'Pages'),
       shortcut: ['s', 'o'],
+      priority: DEFAULT_PRIORITY,
     },
     {
       id: 'preferences/theme',
-      name: 'Change theme...',
+      name: t('command-palette.action.change-theme', 'Change theme...'),
       keywords: 'interface color dark light',
-      section: SECTION_PREFERENCES,
+      section: t('command-palette.section.preferences', 'Preferences'),
       shortcut: ['c', 't'],
+      priority: PREFERENCES_PRIORITY,
     },
     {
       id: 'preferences/dark-theme',
-      name: 'Dark',
+      name: t('command-palette.action.dark-theme', 'Dark'),
       keywords: 'dark theme',
-      section: '',
       perform: () => changeTheme('dark'),
       parent: 'preferences/theme',
+      priority: PREFERENCES_PRIORITY,
     },
     {
       id: 'preferences/light-theme',
-      name: 'Light',
+      name: t('command-palette.action.light-theme', 'Light'),
       keywords: 'light theme',
-      section: '',
       perform: () => changeTheme('light'),
       parent: 'preferences/theme',
+      priority: PREFERENCES_PRIORITY,
     },
   ];
 
@@ -100,13 +88,3 @@ export default (navBarTree: NavModelItem[]) => {
 
   return [...globalActions, ...navBarActions];
 };
-
-function iconForNavItem(navItem: NavModelItem) {
-  if (navItem.icon && isIconName(navItem.icon)) {
-    return <Icon name={navItem.icon} size="md" />;
-  } else if (navItem.img) {
-    return <img alt="" src={navItem.img} style={{ width: 16, height: 16 }} />;
-  }
-
-  return undefined;
-}
