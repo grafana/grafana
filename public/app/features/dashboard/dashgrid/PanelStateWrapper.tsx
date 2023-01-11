@@ -643,10 +643,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             }}
             description={!!panel.description ? this.onShowPanelDescription : undefined}
             links={panel.links && panel.links?.length > 0 ? this.onShowPanelLinks : undefined}
-            panelNotices={{
-              getPanelNotices: () => getPanelQueryNotices({ frames: data.series }),
-              onClick: (e: React.SyntheticEvent, tab: string) => this.onOpenInspector(e, tab),
-            }}
             titleItems={titleItems}
             padding={padding}
           >

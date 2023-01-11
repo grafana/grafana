@@ -22,10 +22,6 @@ interface Status {
   onClick?: (e: React.SyntheticEvent) => void;
 }
 
-interface Notices {
-  getPanelNotices: () => QueryResultMetaNotice[];
-  onClick?: (e: React.SyntheticEvent, tab: string) => void;
-}
 /**
  * @internal
  */
@@ -37,7 +33,6 @@ export interface PanelChromeProps {
   title?: string;
   description?: string | (() => string);
   links?: () => Array<LinkModel<PanelModel>>;
-  panelNotices?: Notices;
   titleItems?: ReactNode[];
   menu?: React.ReactElement;
   /** dragClass, hoverHeader not yet implemented */
@@ -69,7 +64,6 @@ export function PanelChrome({
   title = '',
   description = '',
   links,
-  panelNotices,
   titleItems = [],
   menu,
   // dragClass,
@@ -92,7 +86,6 @@ export function PanelChrome({
       titleItems.length > 0 ||
       description !== '' ||
       links !== undefined ||
-      panelNotices !== undefined ||
       loadingState === LoadingState.Streaming ||
       leftItems.length > 0);
 
@@ -138,8 +131,6 @@ export function PanelChrome({
             {title}
           </h6>
         )}
-
-        {panelNotices && <PanelNotices notices={panelNotices.getPanelNotices()} onClick={panelNotices.onClick} />}
 
         <PanelDescription description={description} />
 
