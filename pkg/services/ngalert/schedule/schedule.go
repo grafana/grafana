@@ -253,9 +253,8 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
 
 		if newRoutine && !invalidInterval {
-			rule := item
 			dispatcherGroup.Go(func() error {
-				return sch.ruleRoutine(ruleInfo.ctx, rule, ruleInfo.evalCh, ruleInfo.updateCh)
+				return sch.ruleRoutine(ruleInfo.ctx, key, ruleInfo.evalCh, ruleInfo.updateCh)
 			})
 		}
 
@@ -324,8 +323,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	return readyToRun, registeredDefinitions
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, rule *ngmodels.AlertRule, evalCh <-chan *evaluation, updateCh <-chan ruleVersion) error {
-	key := rule.GetKey()
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersion) error {
 	grafanaCtx = ngmodels.WithRuleKey(grafanaCtx, key)
 	logger := sch.log.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
@@ -341,6 +339,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, rule *ngmodels.Aler
 		isRulePaused := errors.Is(err, errRulePaused)
 		if isRuleDeleted || isRulePaused {
 			var states []*state.State
+			rule := sch.schedulableAlertRules.get(key)
 			if isRuleDeleted {
 				states = sch.stateManager.ResetStateByDeletedRuleUID(ctx, rule)
 			} else if isRulePaused {
@@ -420,7 +419,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, rule *ngmodels.Aler
 			logger.Debug("Skip updating the state because the context has been cancelled")
 			return
 		}
-		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, sch.getRuleExtraLabels(e.rule, e.folderTitle))
+		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, sch.getRuleExtraLabels(e))
 		alerts := FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		span.AddEvents(
 			[]string{"message", "state_transitions", "alerts_to_send"},
@@ -533,15 +532,15 @@ func (sch *schedule) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
 	sch.stopAppliedFunc(alertDefKey)
 }
 
-func (sch *schedule) getRuleExtraLabels(rule *ngmodels.AlertRule, folderTitle string) map[string]string {
+func (sch *schedule) getRuleExtraLabels(evalCtx *evaluation) map[string]string {
 	extraLabels := make(map[string]string, 4)
 
-	extraLabels[alertingModels.NamespaceUIDLabel] = rule.NamespaceUID
-	extraLabels[prometheusModel.AlertNameLabel] = rule.Title
-	extraLabels[alertingModels.RuleUIDLabel] = rule.UID
+	extraLabels[alertingModels.NamespaceUIDLabel] = evalCtx.rule.NamespaceUID
+	extraLabels[prometheusModel.AlertNameLabel] = evalCtx.rule.Title
+	extraLabels[alertingModels.RuleUIDLabel] = evalCtx.rule.UID
 
 	if !sch.disableGrafanaFolder {
-		extraLabels[ngmodels.FolderTitleLabel] = folderTitle
+		extraLabels[ngmodels.FolderTitleLabel] = evalCtx.folderTitle
 	}
 	return extraLabels
 }
