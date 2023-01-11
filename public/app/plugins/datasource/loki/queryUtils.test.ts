@@ -203,13 +203,19 @@ describe('parseToNodeNamesArray', () => {
 });
 
 describe('obfuscate', () => {
-  it('returns on invalid query', () => {
-    expect(obfuscate('{job="grafana"')).toEqual('{***=*********');
+  it('obfuscates on invalid query', () => {
+    expect(obfuscate('{job="grafana"')).toEqual('{@@@=@@@@@@@@@');
   });
-  it('returns on valid query', () => {
+  it('obfuscates on valid query', () => {
     expect(
       obfuscate('sum(sum_over_time({test="test"} |= `` | logfmt | __error__=`` | unwrap test | __error__=`` [10m]))')
-    ).toEqual('sum(sum_over_time({****=******} |= ** | logfmt | *********=** | unwrap **** | *********=** [10m]))');
+    ).toEqual('sum(sum_over_time({@@@@=@@@@@@} |= @@ | logfmt | @@@@@@@@@=@@ | unwrap @@@@ | @@@@@@@@@=@@ [10m]))');
+  });
+  it('obfuscates on arithmetic operation', () => {
+    expect(obfuscate('2 + 3')).toEqual('@ + @');
+  });
+  it('obfuscates a comment', () => {
+    expect(obfuscate('{job="grafana"} # test comment')).toEqual('{@@@=@@@@@@@@@} @@@@@@@@@@@@@@');
   });
 });
 
