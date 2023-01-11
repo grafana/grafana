@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -57,7 +58,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 			t.Run("it generates proper URL", func(t *testing.T) {
 				t.Run("to alert rule", func(t *testing.T) {
 					alertState := randomState(tc.state)
-					alertState.Labels[ngModels.RuleUIDLabel] = alertState.AlertRuleUID
+					alertState.Labels[alertingModels.RuleUIDLabel] = alertState.AlertRuleUID
 					result := stateToPostableAlert(alertState, appURL)
 					u := *appURL
 					u.Path = u.Path + "/alerting/grafana/" + alertState.AlertRuleUID + "/view"
@@ -66,18 +67,18 @@ func Test_stateToPostableAlert(t *testing.T) {
 
 				t.Run("app URL as is if rule UID is not specified", func(t *testing.T) {
 					alertState := randomState(tc.state)
-					alertState.Labels[ngModels.RuleUIDLabel] = ""
+					alertState.Labels[alertingModels.RuleUIDLabel] = ""
 					result := stateToPostableAlert(alertState, appURL)
 					require.Equal(t, appURL.String(), result.Alert.GeneratorURL.String())
 
-					delete(alertState.Labels, ngModels.RuleUIDLabel)
+					delete(alertState.Labels, alertingModels.RuleUIDLabel)
 					result = stateToPostableAlert(alertState, appURL)
 					require.Equal(t, appURL.String(), result.Alert.GeneratorURL.String())
 				})
 
 				t.Run("empty string if app URL is not provided", func(t *testing.T) {
 					alertState := randomState(tc.state)
-					alertState.Labels[ngModels.RuleUIDLabel] = alertState.AlertRuleUID
+					alertState.Labels[alertingModels.RuleUIDLabel] = alertState.AlertRuleUID
 					result := stateToPostableAlert(alertState, nil)
 					require.Equal(t, "", result.Alert.GeneratorURL.String())
 				})

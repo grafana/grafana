@@ -1,14 +1,18 @@
-import { VizPanel } from '../components';
-import { EmbeddedScene, Scene } from '../components/Scene';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
-import { SceneGridLayout } from '../components/layout/SceneGridLayout';
-import { SceneTimeRange } from '../core/SceneTimeRange';
+import {
+  VizPanel,
+  SceneTimePicker,
+  SceneFlexLayout,
+  SceneGridLayout,
+  SceneTimeRange,
+  EmbeddedScene,
+} from '@grafana/scenes';
+
+import { Scene } from '../components/Scene';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getMultipleGridLayoutTest(standalone: boolean): Scene {
+export function getMultipleGridLayoutTest(standalone: boolean): Scene | EmbeddedScene {
   const state = {
     title: 'Multiple grid layouts test',
     body: new SceneFlexLayout({

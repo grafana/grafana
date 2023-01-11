@@ -102,6 +102,7 @@ type UnifiedAlertingReservedLabelSettings struct {
 
 type UnifiedAlertingStateHistorySettings struct {
 	Enabled bool
+	Backend string
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -313,6 +314,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	stateHistory := iniFile.Section("unified_alerting.state_history")
 	uaCfgStateHistory := UnifiedAlertingStateHistorySettings{
 		Enabled: stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
+		Backend: stateHistory.Key("backend").MustString("annotations"),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
 

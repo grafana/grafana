@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -31,17 +32,18 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetPendingOrgInvites(c *models.ReqContext) response.Response {
-	query := models.GetTempUsersQuery{OrgId: c.OrgID, Status: models.TmpUserInvitePending}
+	query := tempuser.GetTempUsersQuery{OrgID: c.OrgID, Status: tempuser.TmpUserInvitePending}
 
-	if err := hs.tempUserService.GetTempUsersQuery(c.Req.Context(), &query); err != nil {
+	queryResult, err := hs.tempUserService.GetTempUsersQuery(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(500, "Failed to get invites from db", err)
 	}
 
-	for _, invite := range query.Result {
-		invite.Url = setting.ToAbsUrl("invite/" + invite.Code)
+	for _, invite := range queryResult {
+		invite.URL = setting.ToAbsUrl("invite/" + invite.Code)
 	}
 
-	return response.JSON(http.StatusOK, query.Result)
+	return response.JSON(http.StatusOK, queryResult)
 }
 
 // swagger:route POST /org/invites org_invites addOrgInvite
@@ -91,12 +93,12 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 		return response.Error(400, "Cannot invite when login is disabled.", nil)
 	}
 
-	cmd := models.CreateTempUserCommand{}
-	cmd.OrgId = c.OrgID
+	cmd := tempuser.CreateTempUserCommand{}
+	cmd.OrgID = c.OrgID
 	cmd.Email = inviteDto.LoginOrEmail
 	cmd.Name = inviteDto.Name
-	cmd.Status = models.TmpUserInvitePending
-	cmd.InvitedByUserId = c.UserID
+	cmd.Status = tempuser.TmpUserInvitePending
+	cmd.InvitedByUserID = c.UserID
 	cmd.Code, err = util.GetRandomString(30)
 	if err != nil {
 		return response.Error(500, "Could not generate random string", err)
@@ -104,7 +106,8 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	cmd.Role = inviteDto.Role
 	cmd.RemoteAddr = c.RemoteAddr()
 
-	if err := hs.tempUserService.CreateTempUser(c.Req.Context(), &cmd); err != nil {
+	cmdResult, err := hs.tempUserService.CreateTempUser(c.Req.Context(), &cmd)
+	if err != nil {
 		return response.Error(500, "Failed to save invite to database", err)
 	}
 
@@ -130,7 +133,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 			return response.Error(500, "Failed to send email invite", err)
 		}
 
-		emailSentCmd := models.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
+		emailSentCmd := tempuser.UpdateTempUserWithEmailSentCommand{Code: cmdResult.Code}
 		if err := hs.tempUserService.UpdateTempUserWithEmailSent(c.Req.Context(), &emailSentCmd); err != nil {
 			return response.Error(500, "Failed to update invite with email sent info", err)
 		}
@@ -145,7 +148,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *user.U
 	// user exists, add org role
 	createOrgUserCmd := org.AddOrgUserCommand{OrgID: c.OrgID, UserID: user.ID, Role: inviteDto.Role}
 	if err := hs.orgService.AddOrgUser(c.Req.Context(), &createOrgUserCmd); err != nil {
-		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
+		if errors.Is(err, org.ErrOrgUserAlreadyAdded) {
 			return response.Error(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
 		}
 		return response.Error(500, "Error while trying to create org user", err)
@@ -184,7 +187,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *user.U
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) RevokeInvite(c *models.ReqContext) response.Response {
-	if ok, rsp := hs.updateTempUserStatus(c.Req.Context(), web.Params(c.Req)[":code"], models.TmpUserRevoked); !ok {
+	if ok, rsp := hs.updateTempUserStatus(c.Req.Context(), web.Params(c.Req)[":code"], tempuser.TmpUserRevoked); !ok {
 		return rsp
 	}
 
@@ -195,16 +198,17 @@ func (hs *HTTPServer) RevokeInvite(c *models.ReqContext) response.Response {
 // A response containing an InviteInfo object is returned if the invite is found.
 // If a (pending) invite is not found, 404 is returned.
 func (hs *HTTPServer) GetInviteInfoByCode(c *models.ReqContext) response.Response {
-	query := models.GetTempUserByCodeQuery{Code: web.Params(c.Req)[":code"]}
-	if err := hs.tempUserService.GetTempUserByCode(c.Req.Context(), &query); err != nil {
-		if errors.Is(err, models.ErrTempUserNotFound) {
+	query := tempuser.GetTempUserByCodeQuery{Code: web.Params(c.Req)[":code"]}
+	queryResult, err := hs.tempUserService.GetTempUserByCode(c.Req.Context(), &query)
+	if err != nil {
+		if errors.Is(err, tempuser.ErrTempUserNotFound) {
 			return response.Error(404, "Invite not found", nil)
 		}
 		return response.Error(500, "Failed to get invite", err)
 	}
 
-	invite := query.Result
-	if invite.Status != models.TmpUserInvitePending {
+	invite := queryResult
+	if invite.Status != tempuser.TmpUserInvitePending {
 		return response.Error(404, "Invite not found", nil)
 	}
 
@@ -230,16 +234,17 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 
 	completeInvite.Username = strings.TrimSpace(completeInvite.Username)
 
-	query := models.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
-	if err := hs.tempUserService.GetTempUserByCode(c.Req.Context(), &query); err != nil {
-		if errors.Is(err, models.ErrTempUserNotFound) {
+	query := tempuser.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
+	queryResult, err := hs.tempUserService.GetTempUserByCode(c.Req.Context(), &query)
+	if err != nil {
+		if errors.Is(err, tempuser.ErrTempUserNotFound) {
 			return response.Error(http.StatusNotFound, "Invite not found", nil)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to get invite", err)
 	}
 
-	invite := query.Result
-	if invite.Status != models.TmpUserInvitePending {
+	invite := queryResult
+	if invite.Status != tempuser.TmpUserInvitePending {
 		return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("Invite cannot be used in status %s", invite.Status), nil)
 	}
 
@@ -293,9 +298,9 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 	})
 }
 
-func (hs *HTTPServer) updateTempUserStatus(ctx context.Context, code string, status models.TempUserStatus) (bool, response.Response) {
+func (hs *HTTPServer) updateTempUserStatus(ctx context.Context, code string, status tempuser.TempUserStatus) (bool, response.Response) {
 	// update temp user status
-	updateTmpUserCmd := models.UpdateTempUserStatusCommand{Code: code, Status: status}
+	updateTmpUserCmd := tempuser.UpdateTempUserStatusCommand{Code: code, Status: status}
 	if err := hs.tempUserService.UpdateTempUserStatus(ctx, &updateTmpUserCmd); err != nil {
 		return false, response.Error(500, "Failed to update invite status", err)
 	}
@@ -303,23 +308,23 @@ func (hs *HTTPServer) updateTempUserStatus(ctx context.Context, code string, sta
 	return true, nil
 }
 
-func (hs *HTTPServer) applyUserInvite(ctx context.Context, usr *user.User, invite *models.TempUserDTO, setActive bool) (bool, response.Response) {
+func (hs *HTTPServer) applyUserInvite(ctx context.Context, usr *user.User, invite *tempuser.TempUserDTO, setActive bool) (bool, response.Response) {
 	// add to org
-	addOrgUserCmd := org.AddOrgUserCommand{OrgID: invite.OrgId, UserID: usr.ID, Role: invite.Role}
+	addOrgUserCmd := org.AddOrgUserCommand{OrgID: invite.OrgID, UserID: usr.ID, Role: invite.Role}
 	if err := hs.orgService.AddOrgUser(ctx, &addOrgUserCmd); err != nil {
-		if !errors.Is(err, models.ErrOrgUserAlreadyAdded) {
+		if !errors.Is(err, org.ErrOrgUserAlreadyAdded) {
 			return false, response.Error(500, "Error while trying to create org user", err)
 		}
 	}
 
 	// update temp user status
-	if ok, rsp := hs.updateTempUserStatus(ctx, invite.Code, models.TmpUserCompleted); !ok {
+	if ok, rsp := hs.updateTempUserStatus(ctx, invite.Code, tempuser.TmpUserCompleted); !ok {
 		return false, rsp
 	}
 
 	if setActive {
 		// set org to active
-		if err := hs.userService.SetUsingOrg(ctx, &user.SetUsingOrgCommand{OrgID: invite.OrgId, UserID: usr.ID}); err != nil {
+		if err := hs.userService.SetUsingOrg(ctx, &user.SetUsingOrgCommand{OrgID: invite.OrgID, UserID: usr.ID}); err != nil {
 			return false, response.Error(500, "Failed to set org as active", err)
 		}
 	}
@@ -345,5 +350,5 @@ type RevokeInviteParams struct {
 type GetPendingOrgInvitesResponse struct {
 	// The response message
 	// in: body
-	Body []*models.TempUserDTO `json:"body"`
+	Body []*tempuser.TempUserDTO `json:"body"`
 }

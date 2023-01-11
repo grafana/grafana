@@ -131,6 +131,11 @@ export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
   logsTimeout?: string;
   // Used to create links if logs contain traceId.
   tracingDatasourceUid?: string;
+
+  logGroups?: LogGroup[];
+  /**
+   * @deprecated use logGroups
+   */
   defaultLogGroups?: string[];
 }
 
@@ -262,34 +267,15 @@ export interface TSDBTimeSeries {
 }
 export type TSDBTimePoint = [number, number];
 
-export interface GetLogGroupFieldsRequest {
-  /**
-   * The name of the log group to search.
-   */
-  logGroupName: string;
-  /**
-   * The time to set as the center of the query. If you specify time, the 8 minutes before and 8 minutes after this time are searched. If you omit time, the past 15 minutes are queried. The time value is specified as epoch time, the number of seconds since January 1, 1970, 00:00:00 UTC.
-   */
-  time?: number;
-  region: string;
-}
-
 export interface LogGroupField {
   /**
    * The name of a log field.
    */
-  name?: string;
+  name: string;
   /**
    * The percentage of log events queried that contained the field.
    */
   percent?: number;
-}
-
-export interface GetLogGroupFieldsResponse {
-  /**
-   * The array of fields found in the query. Each object in the array contains the name of the field, along with the percentage of time it appeared in the log events that were queried.
-   */
-  logGroupFields?: LogGroupField[];
 }
 
 export interface StartQueryRequest {
@@ -416,6 +402,17 @@ export interface MetricResponse {
 export interface ResourceRequest {
   region: string;
   accountId?: string;
+}
+
+export interface GetLogGroupFieldsRequest extends ResourceRequest {
+  /**
+   * The log group identifier
+   */
+  arn?: string;
+  /**
+   * The name of the log group to search.
+   */
+  logGroupName: string;
 }
 
 export interface GetDimensionKeysRequest extends ResourceRequest {

@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen, TimeZone, ValueLinkConfig } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime/src';
 import { Collapse, RadioButtonGroup, Table } from '@grafana/ui';
 import { FilterItem } from '@grafana/ui/src/components/Table/types';
 import { config } from 'app/core/config';
@@ -90,6 +91,15 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
       <div className={spacing}>
         {this.state.resultsStyle === TABLE_RESULTS_STYLE.raw ? 'Raw' : 'Table'}
         <RadioButtonGroup
+          onClick={() => {
+            const props = {
+              state:
+                this.state.resultsStyle === TABLE_RESULTS_STYLE.table
+                  ? TABLE_RESULTS_STYLE.raw
+                  : TABLE_RESULTS_STYLE.table,
+            };
+            reportInteraction('grafana_explore_prometheus_instant_query_ui_toggle_clicked', props);
+          }}
           size="sm"
           options={ALL_GRAPH_STYLE_OPTIONS}
           value={this.state?.resultsStyle}

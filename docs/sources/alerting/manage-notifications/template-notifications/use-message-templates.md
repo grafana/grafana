@@ -7,7 +7,7 @@ keywords:
   - templates
   - use templates
 title: Use message templates
-weight: 400
+weight: 300
 ---
 
 # Use message templates
