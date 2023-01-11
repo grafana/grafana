@@ -21,7 +21,7 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
@@ -32,7 +32,6 @@ import {
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
@@ -138,7 +137,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   async loadDatasource() {
-    const dataSourceSrv = getDatasourceSrv();
+    const dataSourceSrv = getDataSourceSrv();
     let datasource: DataSourceApi;
     const dataSourceIdentifier = this.getQueryDataSourceIdentifier();
 
@@ -232,9 +231,19 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
   }
 
+  waitingForDatasourceToLoad = (): boolean => {
+    // if we not yet have loaded the datasource in state the
+    // ds in props and the ds in state will have different values.
+    return this.props.dataSource.uid !== this.state.datasource?.uid;
+  };
+
   renderPluginEditor = () => {
     const { query, onChange, queries, onRunQuery, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
+
+    if (this.waitingForDatasourceToLoad()) {
+      return null;
+    }
 
     if (datasource?.components?.QueryCtrl) {
       return <div ref={(element) => (this.element = element)} />;
