@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models/errs"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -81,7 +83,7 @@ func TestShortURLService(t *testing.T) {
 
 		shortURL, err := service.GetShortURLByUID(context.Background(), user, "testnotfounduid")
 		require.Error(t, err)
-		require.True(t, models.ErrShortURLNotFound.Is(err))
+		require.True(t, errs.ErrShorturlNotFound.Is(err))
 		require.Nil(t, shortURL)
 	})
 }
