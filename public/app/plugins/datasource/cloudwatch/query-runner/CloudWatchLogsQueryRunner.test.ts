@@ -1,10 +1,18 @@
+import { waitFor } from '@testing-library/dom';
 import { interval, lastValueFrom, of } from 'rxjs';
 
 import { DataQueryErrorType, FieldType, LogLevel, LogRowModel, MutableDataFrame } from '@grafana/data';
 
+import {
+  CloudWatchSettings,
+  limitVariable,
+  logGroupNamesVariable,
+  regionVariable,
+} from '../__mocks__/CloudWatchDataSource';
 import { genMockFrames, setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
+import { LogsRequestMock } from '../__mocks__/Request';
 import { validLogsQuery } from '../__mocks__/queries';
-import { LogAction } from '../types';
+import { CloudWatchLogsQuery, LogAction, StartQueryRequest } from '../types';
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 
 import { LOG_IDENTIFIER_INTERNAL, LOGSTREAM_IDENTIFIER_INTERNAL } from './CloudWatchLogsQueryRunner';
@@ -183,6 +191,69 @@ describe('CloudWatchLogsQueryRunner', () => {
         state: 'Done',
       });
       expect(i).toBe(3);
+    });
+  });
+
+  const legacyLogGroupNamesQuery: CloudWatchLogsQuery = {
+    queryMode: 'Logs',
+    logGroupNames: ['group-A', 'templatedGroup-1', logGroupNamesVariable.name],
+    hide: false,
+    id: '',
+    region: 'us-east-2',
+    refId: 'A',
+    expression: `fields @timestamp, @message | sort @timestamp desc | limit $${limitVariable.name}`,
+  };
+
+  const logGroupNamesQuery: CloudWatchLogsQuery = {
+    queryMode: 'Logs',
+    logGroups: [
+      { arn: 'arn:aws:logs:us-east-2:123456789012:log-group:group-A:*', name: 'group-A' },
+      { arn: logGroupNamesVariable.name, name: logGroupNamesVariable.name },
+    ],
+    hide: false,
+    id: '',
+    region: '$' + regionVariable.name,
+    refId: 'A',
+    expression: `fields @timestamp, @message | sort @timestamp desc | limit 1`,
+  };
+
+  describe('handleLogQueries', () => {
+    it('should map log queries to start query requests correctly', async () => {
+      const { runner } = setupMockedLogsQueryRunner({
+        variables: [logGroupNamesVariable, regionVariable, limitVariable],
+        settings: {
+          ...CloudWatchSettings,
+          jsonData: {
+            ...CloudWatchSettings.jsonData,
+            logsTimeout: '500ms',
+          },
+        },
+      });
+      const spy = jest.spyOn(runner, 'makeLogActionRequest');
+      await lastValueFrom(runner.handleLogQueries([legacyLogGroupNamesQuery, logGroupNamesQuery], LogsRequestMock));
+      const startQueryRequests: StartQueryRequest[] = [
+        {
+          queryString: `fields @timestamp, @message | sort @timestamp desc | limit ${limitVariable.current.value}`,
+          logGroupNames: ['group-A', ...logGroupNamesVariable.current.text],
+          logGroups: [],
+          refId: legacyLogGroupNamesQuery.refId,
+          region: legacyLogGroupNamesQuery.region,
+        },
+        {
+          queryString: logGroupNamesQuery.expression!,
+          logGroupNames: [],
+          logGroups: [
+            {
+              arn: 'arn:aws:logs:us-east-2:123456789012:log-group:group-A:*',
+              name: 'arn:aws:logs:us-east-2:123456789012:log-group:group-A:*',
+            },
+            ...(logGroupNamesVariable.current.value as string[]).map((v) => ({ arn: v, name: v })),
+          ],
+          refId: legacyLogGroupNamesQuery.refId,
+          region: regionVariable.current.value as string,
+        },
+      ];
+      expect(spy).toHaveBeenNthCalledWith(1, 'StartQuery', startQueryRequests);
     });
   });
 });
