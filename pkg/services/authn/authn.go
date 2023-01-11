@@ -204,6 +204,23 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 	return u
 }
 
+func (i *Identity) ExternalUserInfo() models.ExternalUserInfo {
+	_, id := i.NamespacedID()
+	return models.ExternalUserInfo{
+		OAuthToken:     i.OAuthToken,
+		AuthModule:     i.AuthModule,
+		AuthId:         i.AuthID,
+		UserId:         id,
+		Email:          i.Email,
+		Login:          i.Login,
+		Name:           i.Name,
+		Groups:         i.Groups,
+		OrgRoles:       i.OrgRoles,
+		IsGrafanaAdmin: i.IsGrafanaAdmin,
+		IsDisabled:     i.IsDisabled,
+	}
+}
+
 // IdentityFromSignedInUser creates an identity from a SignedInUser.
 func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientParams) *Identity {
 	return &Identity{
