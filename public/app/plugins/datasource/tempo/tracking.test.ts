@@ -19,17 +19,59 @@ jest.mock('@grafana/runtime', () => {
               tempo: [
                 {
                   datasource: { type: 'tempo', uid: 'abc' },
-                  queryType: 'traceql',
+                  queryType: 'nativeSearch',
+                  refId: 'A',
+                },
+                {
+                  datasource: { type: 'tempo', uid: 'abc' },
+                  queryType: 'nativeSearch',
+                  spanName: 'HTTP',
+                  refId: 'A',
+                },
+                {
+                  datasource: { type: 'tempo', uid: 'abc' },
+                  queryType: 'nativeSearch',
+                  spanName: '$var',
                   refId: 'A',
                 },
                 {
                   datasource: { type: 'tempo', uid: 'abc' },
                   queryType: 'search',
+                  linkedQuery: {
+                    expr: '{}',
+                  },
+                  refId: 'A',
+                },
+                {
+                  datasource: { type: 'tempo', uid: 'abc' },
+                  queryType: 'search',
+                  linkedQuery: {
+                    expr: '{$var}',
+                  },
                   refId: 'A',
                 },
                 {
                   datasource: { type: 'tempo', uid: 'abc' },
                   queryType: 'serviceMap',
+                  serviceMapQuery: '{}',
+                  refId: 'A',
+                },
+                {
+                  datasource: { type: 'tempo', uid: 'abc' },
+                  queryType: 'serviceMap',
+                  serviceMapQuery: '{$var}',
+                  refId: 'A',
+                },
+                {
+                  datasource: { type: 'tempo', uid: 'abc' },
+                  queryType: 'traceql',
+                  query: '{}',
+                  refId: 'A',
+                },
+                {
+                  datasource: { type: 'tempo', uid: 'abc' },
+                  queryType: 'traceql',
+                  query: '{$var}',
                   refId: 'A',
                 },
                 {
@@ -37,21 +79,16 @@ jest.mock('@grafana/runtime', () => {
                   queryType: 'upload',
                   refId: 'A',
                 },
-                {
-                  datasource: { type: 'tempo', uid: 'abc' },
-                  queryType: 'nativeSearch',
-                  refId: 'A',
-                },
-                {
-                  datasource: { type: 'tempo', uid: 'abc' },
-                  queryType: 'nativeSearch',
-                  refId: 'A',
-                },
               ],
             },
           })
         );
       }),
+    }),
+    getTemplateSrv: () => ({
+      containsTemplate: (val: string): boolean => {
+        return val != null && val.includes('$');
+      },
     }),
   };
 });
@@ -62,11 +99,15 @@ describe('on dashboard loaded', () => {
       grafana_version: 'v9.4.0',
       dashboard_id: 'dash',
       org_id: 1,
-      traceql_query_count: 1,
-      search_query_count: 1,
-      service_map_query_count: 1,
+      traceql_query_count: 2,
+      search_query_count: 2,
+      service_map_query_count: 2,
       upload_query_count: 1,
-      native_search_query_count: 2,
+      native_search_query_count: 3,
+      traceql_queries_with_template_variables_count: 1,
+      search_queries_with_template_variables_count: 1,
+      service_map_queries_with_template_variables_count: 1,
+      native_search_queries_with_template_variables_count: 1,
     });
   });
 });
