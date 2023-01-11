@@ -58,7 +58,7 @@ class Deferred {
   }
 }
 
-describe('CrossAccountLogsQueryField', () => {
+describe('LogGroupsSelector', () => {
   beforeEach(() => {
     lodash.debounce = jest.fn().mockImplementation((fn) => {
       fn.cancel = () => {};
@@ -153,6 +153,7 @@ describe('CrossAccountLogsQueryField', () => {
     await userEvent.click(screen.getByLabelText('logGroup2'));
     expect(screen.getByLabelText('logGroup2')).toBeChecked();
   });
+
   it('calls onChange with the selected log group when checked and the user clicks the Add button', async () => {
     const onChange = jest.fn();
     render(<LogGroupsSelector {...defaultProps} onChange={onChange} />);
@@ -226,5 +227,71 @@ describe('CrossAccountLogsQueryField', () => {
     await waitFor(() => expect(screen.getByText('0 log groups selected')).toBeInTheDocument());
     await userEvent.click(screen.getByLabelText('logGroup2'));
     await waitFor(() => expect(screen.getByText('1 log group selected')).toBeInTheDocument());
+  });
+
+  it('should not include selected template variables in the counter label', async () => {
+    render(
+      <LogGroupsSelector
+        {...defaultProps}
+        selectedLogGroups={[
+          { name: 'logGroup1', arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup' },
+          { name: '$logGroupVariable', arn: '$logGroupVariable' },
+        ]}
+      />
+    );
+    await userEvent.click(screen.getByText('Select Log Groups'));
+    await waitFor(() => expect(screen.getByText('1 log group selected')).toBeInTheDocument());
+  });
+
+  it('should be possible to select a template variable and add it to selected log groups when the user clicks the Add button', async () => {
+    const onChange = jest.fn();
+    render(
+      <LogGroupsSelector
+        {...defaultProps}
+        selectedLogGroups={[
+          { name: 'logGroup1', arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup' },
+        ]}
+        variables={['$regionVariable', '$logGroupVariable']}
+        onChange={onChange}
+      />
+    );
+    await userEvent.click(screen.getByText('Select Log Groups'));
+    await selectEvent.select(screen.getByLabelText('Template variable'), '$logGroupVariable', {
+      container: document.body,
+    });
+    await userEvent.click(screen.getByText('Add log groups'));
+    expect(onChange).toHaveBeenCalledWith([
+      {
+        arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        name: 'logGroup1',
+      },
+      {
+        arn: '$logGroupVariable',
+        name: '$logGroupVariable',
+      },
+    ]);
+  });
+
+  it('should be possible to remove template variable from selected log groups', async () => {
+    const onChange = jest.fn();
+    render(
+      <LogGroupsSelector
+        {...defaultProps}
+        selectedLogGroups={[
+          { name: 'logGroup1', arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup' },
+        ]}
+        variables={['$regionVariable', '$logGroupVariable']}
+        onChange={onChange}
+      />
+    );
+    await userEvent.click(screen.getByText('Select Log Groups'));
+    await screen.getByRole('button', { name: 'select-clear-value' }).click();
+    await userEvent.click(screen.getByText('Add log groups'));
+    expect(onChange).toHaveBeenCalledWith([
+      {
+        arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        name: 'logGroup1',
+      },
+    ]);
   });
 });

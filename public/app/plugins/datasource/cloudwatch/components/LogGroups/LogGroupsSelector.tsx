@@ -33,7 +33,19 @@ export const LogGroupsSelector = ({
   const [searchAccountId, setSearchAccountId] = useState(ALL_ACCOUNTS_OPTION.value);
   const [isLoading, setIsLoading] = useState(false);
   const styles = useStyles2(getStyles);
+  const selectedLogGroupsCounter = useMemo(
+    () => selectedLogGroups.filter((lg) => !lg.name?.startsWith('$')).length,
+    [selectedLogGroups]
+  );
   const variableOptions = useMemo(() => variables.map((v) => ({ label: v, value: v })), [variables]);
+  const selectedVariable = useMemo(
+    () => selectedLogGroups.find((lg) => lg.name?.startsWith('$'))?.name,
+    [selectedLogGroups]
+  );
+  const currentVariableOption = {
+    label: selectedVariable,
+    value: selectedVariable,
+  };
 
   useEffect(() => {
     setSelectedLogGroups(props.selectedLogGroups ?? []);
@@ -95,12 +107,6 @@ export const LogGroupsSelector = ({
   const handleCancel = () => {
     setSelectedLogGroups(selectedLogGroups);
     toggleModal();
-  };
-
-  const selectedVariable = selectedLogGroups.find((lg) => lg.name?.startsWith('$'))?.name;
-  const currentVariableOption = {
-    label: selectedVariable,
-    value: selectedVariable,
   };
 
   return (
@@ -205,7 +211,7 @@ export const LogGroupsSelector = ({
         </EditorField>
         <Space layout="block" v={2} />
         <Label className={styles.logGroupCountLabel}>
-          {selectedLogGroups.length} log group{selectedLogGroups.length !== 1 && 's'} selected
+          {selectedLogGroupsCounter} log group{selectedLogGroupsCounter !== 1 && 's'} selected
         </Label>
         <Space layout="block" v={1.5} />
         <div>
