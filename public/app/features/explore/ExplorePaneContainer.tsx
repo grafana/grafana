@@ -3,7 +3,7 @@ import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2, EventBus } from '@grafana/data';
+import { EventBusExtended, EventBusSrv, GrafanaTheme2, EventBus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
@@ -37,7 +37,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       flex: 1 1 auto;
       flex-direction: column;
-      overflow: scroll;
+      overflow: hidden;
       min-width: 600px;
       & + & {
         border-left: 1px dotted ${theme.colors.border.medium};
@@ -174,7 +174,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
   const timeZone = getTimeZone(state.user);
   const fiscalYearStartMonth = getFiscalYearStartMonth(state.user);
 
-  const { datasource, queries, range: urlRange, panelsState } = (urlState || {}) as ExploreUrlState;
+  const { datasource, queries, range: urlRange, panelsState } = urlState || {};
   const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
   const initialRange = urlRange
     ? getTimeRangeFromUrlMemoized(urlRange, timeZone, fiscalYearStartMonth)

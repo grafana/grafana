@@ -31,7 +31,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestSendingToExternalAlertmanager(t *testing.T) {
+func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ruleKey := models.GenerateRuleKey(1)
 
 	fakeAM := NewFakeExternalAlertmanager(t)
@@ -97,7 +100,10 @@ func TestSendingToExternalAlertmanager(t *testing.T) {
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey.OrgID, 0, 0)
 }
 
-func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
+func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ruleKey1 := models.GenerateRuleKey(1)
 	ruleKey2 := models.GenerateRuleKey(2)
 

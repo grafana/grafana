@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -89,7 +89,7 @@ func (s *store) SetTeamResourcePermission(
 	hook TeamResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
 	if teamID == 0 {
-		return nil, models.ErrTeamNotFound
+		return nil, team.ErrTeamNotFound
 	}
 
 	var err error

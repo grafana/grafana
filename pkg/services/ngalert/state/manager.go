@@ -39,17 +39,26 @@ type Manager struct {
 	externalURL   *url.URL
 }
 
-func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, images ImageCapturer, clock clock.Clock, historian Historian) *Manager {
+type ManagerCfg struct {
+	Metrics       *metrics.State
+	ExternalURL   *url.URL
+	InstanceStore InstanceStore
+	Images        ImageCapturer
+	Clock         clock.Clock
+	Historian     Historian
+}
+
+func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
 		cache:         newCache(),
 		ResendDelay:   ResendDelay, // TODO: make this configurable
 		log:           log.New("ngalert.state.manager"),
-		metrics:       metrics,
-		instanceStore: instanceStore,
-		images:        images,
-		historian:     historian,
-		clock:         clock,
-		externalURL:   externalURL,
+		metrics:       cfg.Metrics,
+		instanceStore: cfg.InstanceStore,
+		images:        cfg.Images,
+		historian:     cfg.Historian,
+		clock:         cfg.Clock,
+		externalURL:   cfg.ExternalURL,
 	}
 }
 
@@ -167,7 +176,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
-func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
+func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	var states []StateTransition
@@ -181,19 +190,11 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 
 	st.saveAlertStates(ctx, logger, states...)
 
-	st.logStateTransitions(ctx, alertRule, states, staleStates)
-
-	nextStates := make([]*State, 0, len(states))
-	for _, s := range states {
-		nextStates = append(nextStates, s.State)
+	allChanges := append(states, staleStates...)
+	if st.historian != nil {
+		st.historian.RecordStatesAsync(ctx, alertRule, allChanges)
 	}
-	// TODO refactor further. Do not filter because it will be filtered downstream
-	for _, s := range staleStates {
-		if s.PreviousState == eval.Alerting {
-			nextStates = append(nextStates, s.State)
-		}
-	}
-	return nextStates
+	return allChanges
 }
 
 // Set the current state based on evaluation results
@@ -213,17 +214,24 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	oldState := currentState.State
 	oldReason := currentState.StateReason
 
-	logger.Debug("Setting alert state")
+	// Add the instance to the log context to help correlate log lines for a state
+	logger = logger.New("instance", result.Instance)
+
 	switch result.State {
 	case eval.Normal:
-		currentState.resultNormal(alertRule, result)
+		logger.Debug("Setting next state", "handler", "resultNormal")
+		resultNormal(currentState, alertRule, result, logger)
 	case eval.Alerting:
-		currentState.resultAlerting(alertRule, result)
+		logger.Debug("Setting next state", "handler", "resultAlerting")
+		resultAlerting(currentState, alertRule, result, logger)
 	case eval.Error:
-		currentState.resultError(alertRule, result)
+		logger.Debug("Setting next state", "handler", "resultError")
+		resultError(currentState, alertRule, result, logger)
 	case eval.NoData:
-		currentState.resultNoData(alertRule, result)
+		logger.Debug("Setting next state", "handler", "resultNoData")
+		resultNoData(currentState, alertRule, result, logger)
 	case eval.Pending: // we do not emit results with this state
+		logger.Debug("Ignoring set next state as result is pending")
 	}
 
 	// Set reason iff: result is different than state, reason is not Alerting or Normal
@@ -316,26 +324,6 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 	}
 }
 
-func (st *Manager) logStateTransitions(ctx context.Context, alertRule *ngModels.AlertRule, newStates, staleStates []StateTransition) {
-	if st.historian == nil {
-		return
-	}
-	changedStates := make([]StateTransition, 0, len(staleStates))
-	for _, s := range newStates {
-		if s.changed() {
-			changedStates = append(changedStates, s)
-		}
-	}
-
-	// TODO refactor further. Let historian decide what to log. Current logic removes states `Normal (reason-X) -> Normal (reason-Y)`
-	for _, t := range staleStates {
-		if t.PreviousState == eval.Alerting {
-			changedStates = append(changedStates, t)
-		}
-	}
-	st.historian.RecordStates(ctx, alertRule, changedStates)
-}
-
 func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {
 	if st.instanceStore == nil || len(states) == 0 {
 		return
@@ -359,13 +347,18 @@ func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, sta
 	}
 }
 
-// TODO: why wouldn't you allow other types like NoData or Error?
 func translateInstanceState(state ngModels.InstanceStateType) eval.State {
-	switch {
-	case state == ngModels.InstanceStateFiring:
+	switch state {
+	case ngModels.InstanceStateFiring:
 		return eval.Alerting
-	case state == ngModels.InstanceStateNormal:
+	case ngModels.InstanceStateNormal:
 		return eval.Normal
+	case ngModels.InstanceStateError:
+		return eval.Error
+	case ngModels.InstanceStateNoData:
+		return eval.NoData
+	case ngModels.InstanceStatePending:
+		return eval.Pending
 	default:
 		return eval.Error
 	}

@@ -10,6 +10,7 @@ import (
 type AuthInfoService interface {
 	LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*user.User, error)
 	GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error
+	GetUserLabels(ctx context.Context, query models.GetUserLabelsQuery) (map[int64]string, error)
 	GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error
 	SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error
@@ -20,6 +21,7 @@ const (
 	SAMLAuthModule      = "auth.saml"
 	LDAPAuthModule      = "ldap"
 	AuthProxyAuthModule = "authproxy"
+	JWTModule           = "jwt"
 )
 
 func GetAuthProviderLabel(authModule string) string {
@@ -38,7 +40,7 @@ func GetAuthProviderLabel(authModule string) string {
 		return "SAML"
 	case LDAPAuthModule, "": // FIXME: verify this situation doesn't exist anymore
 		return "LDAP"
-	case "jwt":
+	case JWTModule:
 		return "JWT"
 	case AuthProxyAuthModule:
 		return "Auth Proxy"

@@ -5,6 +5,7 @@ import {
 } from '../__mocks__/argResourcePickerResponse';
 import createMockDatasource from '../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
+import { mockGetValidLocations } from '../__mocks__/resourcePickerRows';
 import { AzureGraphResponse } from '../types';
 
 import ResourcePickerData from './resourcePickerData';
@@ -21,9 +22,13 @@ const createResourcePickerData = (responses: AzureGraphResponse[]) => {
     postResource.mockResolvedValueOnce(res);
   });
   resourcePickerData.postResource = postResource;
-
-  return { resourcePickerData, postResource };
+  const logLocationsMap = mockGetValidLocations();
+  const getLogsLocations = jest.spyOn(resourcePickerData, 'getLogsLocations').mockResolvedValue(logLocationsMap);
+  resourcePickerData.logLocationsMap = logLocationsMap;
+  resourcePickerData.logLocations = Array.from(logLocationsMap.values()).map((location) => `"${location.name}"`);
+  return { resourcePickerData, postResource, mockDatasource, getValidLocations: getLogsLocations };
 };
+
 describe('AzureMonitor resourcePickerData', () => {
   describe('getSubscriptions', () => {
     it('makes 1 call to ARG with the correct path and query arguments', async () => {
@@ -373,6 +378,37 @@ describe('AzureMonitor resourcePickerData', () => {
           throw err;
         }
       }
+    });
+  });
+
+  describe('getValidLocations', () => {
+    it('returns a locations map', async () => {
+      const { resourcePickerData, getValidLocations } = createResourcePickerData([createMockARGSubscriptionResponse()]);
+      getValidLocations.mockRestore();
+      const subscriptions = await resourcePickerData.getSubscriptions();
+      const locations = await resourcePickerData.getLogsLocations(subscriptions);
+
+      expect(locations.size).toBe(1);
+      expect(locations.has('northeurope')).toBe(true);
+      expect(locations.get('northeurope')?.name).toBe('northeurope');
+      expect(locations.get('northeurope')?.displayName).toBe('North Europe');
+      expect(locations.get('northeurope')?.supportsLogs).toBe(true);
+    });
+
+    it('returns the raw locations map if provider is undefined', async () => {
+      const { resourcePickerData, mockDatasource, getValidLocations } = createResourcePickerData([
+        createMockARGSubscriptionResponse(),
+      ]);
+      getValidLocations.mockRestore();
+      mockDatasource.azureMonitorDatasource.getProvider = jest.fn().mockResolvedValue(undefined);
+      const subscriptions = await resourcePickerData.getSubscriptions();
+      const locations = await resourcePickerData.getLogsLocations(subscriptions);
+
+      expect(locations.size).toBe(1);
+      expect(locations.has('northeurope')).toBe(true);
+      expect(locations.get('northeurope')?.name).toBe('northeurope');
+      expect(locations.get('northeurope')?.displayName).toBe('North Europe');
+      expect(locations.get('northeurope')?.supportsLogs).toBe(false);
     });
   });
 });

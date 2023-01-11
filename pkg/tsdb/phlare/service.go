@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-// Make sure FireDatasource implements required interfaces. This is important to do
+// Make sure PhlareDatasource implements required interfaces. This is important to do
 // since otherwise we will only get a not implemented error response from plugin in
 // runtime. In this example datasource instance implements backend.QueryDataHandler,
 // backend.CheckHealthHandler, backend.StreamHandler interfaces. Plugin should not

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -94,12 +95,13 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 		features, folderPermissions, dashboardPermissions, ac,
 	)
 
-	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	tracer := tracing.InitializeTracerForTest()
+	bus := bus.ProvideBus(tracer)
 	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardService, dashboardStore, nil, features, folderPermissions, nil)
 
 	ng, err := ngalert.ProvideService(
 		cfg, &FakeFeatures{}, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, quotatest.New(false, nil),
-		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac, annotationstest.NewFakeAnnotationsRepo(),
+		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac, annotationstest.NewFakeAnnotationsRepo(), &plugins.FakePluginStore{}, tracer,
 	)
 	require.NoError(tb, err)
 	return ng, &store.DBstore{

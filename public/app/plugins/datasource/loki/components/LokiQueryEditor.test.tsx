@@ -107,7 +107,7 @@ describe('LokiQueryEditorSelector', () => {
   it('Can enable explain', async () => {
     renderWithMode(QueryEditorMode.Builder);
     expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
-    screen.getByLabelText('Explain').click();
+    screen.getByLabelText('Explain query').click();
     expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
   });
 

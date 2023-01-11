@@ -138,7 +138,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
       })
       .addSliderInput({
         path: 'xTickLabelRotation',
-        name: 'Rotate bar labels',
+        name: 'Rotate X tick labels',
         defaultValue: defaultPanelOptions.xTickLabelRotation,
         settings: {
           min: -90,
@@ -147,18 +147,16 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
           marks: { '-90': '-90°', '-45': '-45°', 0: '0°', 45: '45°', 90: '90°' },
           included: false,
         },
-        showIf: (opts) => {
-          return opts.orientation === VizOrientation.Auto || opts.orientation === VizOrientation.Vertical;
-        },
       })
       .addNumberInput({
         path: 'xTickLabelMaxLength',
-        name: 'Bar label max length',
-        description: 'Bar labels will be truncated to the length provided',
+        name: 'X tick label max length',
+        description: 'X labels will be truncated to the length provided',
         settings: {
           placeholder: 'None',
           min: 0,
         },
+        showIf: (opts) => opts.xTickLabelRotation !== 0,
       })
       .addCustomEditor({
         id: 'xTickLabelSpacing',
@@ -222,6 +220,11 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
           max: 0.5,
           step: 0.05,
         },
+      })
+      .addBooleanSwitch({
+        path: 'fullHighlight',
+        name: 'Highlight full area on hover',
+        defaultValue: defaultPanelOptions.fullHighlight,
       });
 
     builder.addFieldNamePicker({
@@ -230,7 +233,10 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
       description: 'Use the color value for a sibling field to color each bar value.',
     });
 
-    commonOptionsBuilder.addTooltipOptions(builder);
+    if (!context.options?.fullHighlight || context.options?.stacking === StackingMode.None) {
+      commonOptionsBuilder.addTooltipOptions(builder);
+    }
+
     commonOptionsBuilder.addLegendOptions(builder);
     commonOptionsBuilder.addTextSizeOptions(builder, false);
   })

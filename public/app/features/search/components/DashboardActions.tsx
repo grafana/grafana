@@ -18,7 +18,7 @@ export const DashboardActions: FC<Props> = ({ folderUid, canCreateFolders = fals
       url = `dashboards/folder/new/`;
     }
 
-    if ((isTypeNewFolder && config.featureToggles.nestedFolders) || folderUid) {
+    if (folderUid) {
       url += `?folderUid=${folderUid}`;
     }
 

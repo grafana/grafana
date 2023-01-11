@@ -17,17 +17,20 @@ import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, style
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { addQuery } from 'app/core/utils/query';
+import { addQuery, queryIsEmpty } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
-import { QueryGroupOptions } from 'app/types';
+import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
+import { isQueryWithMixedDatasource } from '../../query-library/api/SavedQueriesApi';
+import { getSavedQuerySrv } from '../../query-library/api/SavedQueriesSrv';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
 
 import { GroupActionComponents } from './QueryActionComponent';
 import { QueryEditorRows } from './QueryEditorRows';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
+import { SavedQueryPicker } from './SavedQueryPicker';
 
 interface Props {
   queryRunner: PanelQueryRunner;
@@ -49,6 +52,12 @@ interface State {
   isHelpOpen: boolean;
   defaultDataSource?: DataSourceApi;
   scrollElement?: HTMLDivElement;
+  savedQueryUid?: string | null;
+  initialState: {
+    queries: DataQuery[];
+    dataSource?: QueryGroupDataSource;
+    savedQueryUid?: string | null;
+  };
 }
 
 export class QueryGroup extends PureComponent<Props, State> {
@@ -63,6 +72,11 @@ export class QueryGroup extends PureComponent<Props, State> {
     isAddingMixed: false,
     isHelpOpen: false,
     queries: [],
+    savedQueryUid: null,
+    initialState: {
+      queries: [],
+      savedQueryUid: null,
+    },
     data: {
       state: LoadingState.NotStarted,
       series: [],
@@ -71,7 +85,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    const { queryRunner, options } = this.props;
+    const { options, queryRunner } = this.props;
 
     this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
@@ -82,8 +96,23 @@ export class QueryGroup extends PureComponent<Props, State> {
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
       const defaultDataSource = await this.dataSourceSrv.get();
       const datasource = ds.getRef();
-      const queries = options.queries.map((q) => (q.datasource ? q : { ...q, datasource }));
-      this.setState({ queries, dataSource: ds, dsSettings, defaultDataSource });
+      const queries = options.queries.map((q) => ({
+        ...(queryIsEmpty(q) && ds?.getDefaultQuery?.(CoreApp.PanelEditor)),
+        datasource,
+        ...q,
+      }));
+      this.setState({
+        queries,
+        dataSource: ds,
+        dsSettings,
+        defaultDataSource,
+        savedQueryUid: options.savedQueryUid,
+        initialState: {
+          queries: options.queries.map((q) => ({ ...q })),
+          dataSource: { ...options.dataSource },
+          savedQueryUid: options.savedQueryUid,
+        },
+      });
     } catch (error) {
       console.log('failed to load data source', error);
     }
@@ -111,6 +140,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
     this.onChange({
       queries,
+      savedQueryUid: null,
       dataSource: {
         name: newSettings.name,
         uid: newSettings.uid,
@@ -121,8 +151,72 @@ export class QueryGroup extends PureComponent<Props, State> {
 
     this.setState({
       queries,
+      savedQueryUid: null,
       dataSource: dataSource,
       dsSettings: newSettings,
+    });
+  };
+
+  onChangeSavedQuery = async (savedQueryUid: string | null) => {
+    if (!savedQueryUid?.length) {
+      // leave the queries, remove the link
+      this.onChange({
+        queries: this.state.queries,
+        savedQueryUid: null,
+        dataSource: {
+          name: this.state.dsSettings?.name,
+          uid: this.state.dsSettings?.uid,
+          type: this.state.dsSettings?.meta.id,
+          default: this.state.dsSettings?.isDefault,
+        },
+      });
+
+      this.setState({
+        queries: this.state.queries,
+        savedQueryUid: null,
+        dataSource: this.state.dataSource,
+        dsSettings: this.state.dsSettings,
+      });
+      return;
+    }
+
+    const { dsSettings } = this.state;
+    const currentDS = dsSettings ? await getDataSourceSrv().get(dsSettings.uid) : undefined;
+
+    const resp = await getSavedQuerySrv().getSavedQueries([{ uid: savedQueryUid }]);
+    if (!resp?.length) {
+      throw new Error('TODO error handling');
+    }
+    const savedQuery = resp[0];
+    const isMixedDatasource = isQueryWithMixedDatasource(savedQuery);
+
+    const nextDS = isMixedDatasource
+      ? await getDataSourceSrv().get('-- Mixed --')
+      : await getDataSourceSrv().get(savedQuery.queries[0].datasource?.uid);
+
+    // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
+    const queries = await updateQueries(nextDS, nextDS.uid, savedQuery.queries, currentDS);
+
+    const newDsSettings = await getDataSourceSrv().getInstanceSettings(nextDS.uid);
+    if (!newDsSettings) {
+      throw new Error('TODO error handling');
+    }
+    this.onChange({
+      queries,
+      savedQueryUid: savedQueryUid,
+      dataSource: {
+        name: newDsSettings.name,
+        uid: newDsSettings.uid,
+        type: newDsSettings.meta.id,
+        default: newDsSettings.isDefault,
+      },
+    });
+
+    this.setState({
+      queries,
+      savedQueryUid,
+      dataSource: nextDS,
+      dsSettings: newDsSettings,
     });
   };
 
@@ -220,6 +314,18 @@ export class QueryGroup extends PureComponent<Props, State> {
             </>
           )}
         </div>
+        {config.featureToggles.queryLibrary && (
+          <>
+            <div className={styles.dataSourceRow}>
+              <InlineFormLabel htmlFor="saved-query-picker" width={'auto'}>
+                Saved query
+              </InlineFormLabel>
+              <div className={styles.dataSourceRowItem}>
+                <SavedQueryPicker current={this.state.savedQueryUid} onChange={this.onChangeSavedQuery} />
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -360,7 +466,7 @@ export class QueryGroup extends PureComponent<Props, State> {
               {this.renderAddQueryRow(dsSettings, styles)}
               {isHelpOpen && (
                 <Modal title="Data source help" isOpen={true} onDismiss={this.onCloseHelp}>
-                  <PluginHelp plugin={dsSettings.meta} type="query_help" />
+                  <PluginHelp pluginId={dsSettings.meta.id} />
                 </Modal>
               )}
             </>
