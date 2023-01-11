@@ -129,7 +129,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
           }
         }
       }
-      & div:last-child > button {
+      & div:last-child > button:not(.stats-button) {
         ${activeButton ? active : defaultToolbarButtonStyle};
       }
     `,
@@ -301,6 +301,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                 narrow
                 icon="signal"
                 tooltip="Ad-hoc statistics"
+                className="stats-button"
                 onClick={this.showStats}
               />
             </ToolbarButtonRow>
