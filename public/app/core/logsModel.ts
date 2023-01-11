@@ -777,7 +777,6 @@ export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataS
         observer.complete();
       },
       next: (dataQueryResponse: DataQueryResponse) => {
-        console.log(dataQueryResponse);
         const { error } = dataQueryResponse;
         if (error !== undefined) {
           observer.next({

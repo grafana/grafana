@@ -1,10 +1,10 @@
-import { DefaultTimeZone, toUtc } from '@grafana/data';
+import { DefaultTimeZone, TimeRange, toUtc } from '@grafana/data';
 
 import { ExploreId, SupplementaryQueryType } from '../../../types';
 
 export const createDefaultInitialState = () => {
   const t = toUtc();
-  const testRange = {
+  const testRange: TimeRange = {
     from: t,
     to: t,
     raw: {

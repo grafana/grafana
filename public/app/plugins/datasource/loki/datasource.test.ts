@@ -923,6 +923,40 @@ describe('LokiDatasource', () => {
     });
   });
 
+  describe('logs sample data provider', () => {
+    let ds: LokiDatasource;
+    beforeEach(() => {
+      ds = createLokiDatasource(templateSrvStub);
+    });
+
+    it('creates provider for metrics query', () => {
+      const options = getQueryOptions<LokiQuery>({
+        targets: [{ expr: 'rate({label=value}[5m])', refId: 'A' }],
+      });
+
+      expect(ds.getLogsSampleDataProvider(options)).toBeDefined();
+    });
+
+    it('does not create provider for log query', () => {
+      const options = getQueryOptions<LokiQuery>({
+        targets: [{ expr: '{label=value}', refId: 'A' }],
+      });
+
+      expect(ds.getLogsSampleDataProvider(options)).not.toBeDefined();
+    });
+
+    it('creates provider if at least one query is a metric query', () => {
+      const options = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: 'rate({label=value}[1m])', refId: 'A' },
+          { expr: '{label=value}', refId: 'B' },
+        ],
+      });
+
+      expect(ds.getLogsSampleDataProvider(options)).toBeDefined();
+    });
+  });
+
   describe('importing queries', () => {
     let ds: LokiDatasource;
     beforeEach(() => {
