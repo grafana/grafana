@@ -40,7 +40,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	resp, err := plugin.QueryData(ctx, req)
-
 	if err != nil {
 		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
 			return nil, plugins.ErrMethodNotImplemented.Errorf("%w", backendplugin.ErrMethodNotImplemented)
@@ -126,7 +125,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	}
 
 	resp, err := p.CheckHealth(ctx, req)
-
 	if err != nil {
 		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
 			return nil, err

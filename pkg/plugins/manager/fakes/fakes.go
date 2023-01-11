@@ -15,6 +15,8 @@ import (
 )
 
 type FakePluginClient struct {
+	plugins.Client
+
 	backend.CollectMetricsHandlerFunc
 	backend.CheckHealthHandlerFunc
 	backend.QueryDataHandlerFunc

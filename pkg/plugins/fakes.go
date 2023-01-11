@@ -1,8 +1,12 @@
 package plugins
 
-import "context"
+import (
+	"context"
+)
 
 type FakePluginStore struct {
+	Store
+
 	PluginList []PluginDTO
 }
 
@@ -29,5 +33,6 @@ func (pr FakePluginStore) Plugins(_ context.Context, pluginTypes ...Type) []Plug
 			}
 		}
 	}
+
 	return result
 }
