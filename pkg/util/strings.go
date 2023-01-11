@@ -32,6 +32,14 @@ func SplitString(str string) []string {
 	if len(str) == 0 {
 		return []string{}
 	}
+	if strings.Contains(str, ",") {
+		// Separate by commas
+		substrs := make([]string, 0)
+		for _, s := range strings.Split(str, ",") {
+			substrs = append(substrs, strings.TrimSpace(s))
+		}
+		return substrs
+	}
 
 	return strings.Fields(strings.ReplaceAll(str, ",", " "))
 }
