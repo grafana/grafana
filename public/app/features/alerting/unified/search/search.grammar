@@ -2,26 +2,36 @@
 
 expression { (FilterExpression | FreeFormExpression) expression }
 
-FilterExpression { DataSourceFilter | NameSpaceFilter | LabelFilter | GroupFilter | RuleFilter | StateFilter | TypeFilter }
+FilterExpression {
+ DataSourceFilter |
+ NameSpaceFilter |
+ LabelFilter |
+ GroupFilter |
+ RuleFilter |
+ StateFilter |
+ TypeFilter
+}
 
-DataSourceFilter { DsFilterToken { filterToken<"ds" | "datasource"> } FilterValue }
-NameSpaceFilter { filterToken<"ns" | "namespace"> FilterValue }
-LabelFilter { filterToken<"l" | "label"> FilterValue }
-GroupFilter { filterToken<"g" | "group"> FilterValue }
-RuleFilter { filterToken<"r" | "rule"> FilterValue }
-StateFilter { filterToken<"s" | "state"> FilterValue }
-TypeFilter { filterToken<"t" | "type"> FilterValue }
+DataSourceFilter { filter<"ds" | "datasource"> }
+NameSpaceFilter { filter<"ns" | "namespace"> }
+LabelFilter { filter<"l" | "label"> }
+GroupFilter { filter<"g" | "group"> }
+RuleFilter { filter<"r" | "rule"> }
+StateFilter { filter<"s" | "state"> }
+TypeFilter { filter<"t" | "type"> }
 
-FreeFormExpression { word }
+filter<type> { @specialize<word, type> colon FilterValue }
+FreeFormExpression { word (colon word)* }
 
 @tokens {
-  allowedInputChar { $[a-zA-Z0-9,./?=!@#$%^&*()+-] }
+  colon { ":" }
 
-  FilterValue { $[a-zA-Z0-9_,./?=!@#$%^&*()+-]+ | ("\"" $[a-zA-Z0-9_ ,./?=!@#$%^&*()+-]+ "\"") }
+  allowedInputChar { $[a-zA-Z0-9!@#$%^&*()_+=;,.-] }
+
+  filterNoBracketChars { allowedInputChar | ":" }
+  filterWithBracketChars { filterNoBracketChars | " " }
+
+  FilterValue { filterNoBracketChars+ | ("\"" filterWithBracketChars+ "\"") }
 
   word { allowedInputChar+ }
-
-  filterToken<filterType> { (filterType ":") }
-
-  @precedence { filterToken, word }
 }
