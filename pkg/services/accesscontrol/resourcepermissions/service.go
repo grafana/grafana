@@ -298,7 +298,7 @@ func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
 		return ErrInvalidAssignment
 	}
 
-	if err := s.teamService.GetTeamById(ctx, &models.GetTeamByIdQuery{OrgId: orgID, Id: teamID}); err != nil {
+	if _, err := s.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{OrgID: orgID, ID: teamID}); err != nil {
 		return err
 	}
 	return nil
