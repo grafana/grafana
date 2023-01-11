@@ -12,6 +12,7 @@ import {
   HistoryItem,
   LoadingState,
   PanelData,
+  TimeRange,
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
 import { ExploreItemState, SupplementaryQueries, SupplementaryQueryType } from 'app/types/explore';
@@ -49,7 +50,8 @@ export const loadSupplementaryQueries = (): SupplementaryQueries => {
   // We default to true for all supp queries
   let supplementaryQueries: SupplementaryQueries = {
     [SupplementaryQueryType.LogsVolume]: { enabled: true },
-    [SupplementaryQueryType.LogsSample]: { enabled: true },
+    // This is set to false temporarily, until we have UI to display logs sample and a way how to enable/disable it
+    [SupplementaryQueryType.LogsSample]: { enabled: false },
   };
 
   for (const type of SUPPLEMENTARY_QUERY_TYPES) {
@@ -75,11 +77,11 @@ export const makeExplorePaneState = (): ExploreItemState => ({
     from: null,
     to: null,
     raw: DEFAULT_RANGE,
-  } as any,
+  } as unknown as TimeRange,
   absoluteRange: {
     from: null,
     to: null,
-  } as any,
+  } as unknown as AbsoluteTimeRange,
   scanning: false,
   loading: false,
   queryKeys: [],
