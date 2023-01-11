@@ -1,8 +1,9 @@
 import { extend, groupBy, has, isString, omit, pick, reduce } from 'lodash';
-import { lastValueFrom, Observable, of, throwError } from 'rxjs';
+import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
+  AnnotationEvent,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -10,8 +11,15 @@ import {
   dateMath,
   MetricFindValue,
   ScopedVars,
+  toDataFrame,
 } from '@grafana/data';
-import { DataSourceWithBackend, frameToMetricFindValue, getBackendSrv } from '@grafana/runtime';
+import {
+  BackendDataSourceResponse,
+  DataSourceWithBackend,
+  FetchResponse,
+  frameToMetricFindValue,
+  getBackendSrv,
+} from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { AnnotationEditor } from './components/AnnotationEditor';
@@ -95,6 +103,25 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return super.query(filteredRequest);
     }
 
+    if (filteredRequest.targets.some((target: InfluxQuery) => target.fromAnnotations)) {
+      const streams: Array<Observable<DataQueryResponse>> = [];
+
+      for (const target of filteredRequest.targets) {
+        if (target.query) {
+          streams.push(
+            new Observable((subscriber) => {
+              this.annotationEvents(filteredRequest, target)
+                .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
+                .catch((ex) => subscriber.error(new Error(ex)))
+                .finally(() => subscriber.complete());
+            })
+          );
+        }
+      }
+
+      return merge(...streams);
+    }
+
     return super.query(filteredRequest).pipe(
       map((res) => {
         if (res.error) {
@@ -165,6 +192,64 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     query = this.applyVariables(query, scopedVars, rest);
 
     return query;
+  }
+
+  async annotationEvents(options: DataQueryRequest, annotation: InfluxQuery): Promise<AnnotationEvent[]> {
+    if (this.isFlux) {
+      return Promise.reject({
+        message: 'Flux requires the standard annotation query',
+      });
+    }
+
+    // InfluxQL puts a query string on the annotation
+    if (!annotation.query) {
+      return Promise.reject({
+        message: 'Query missing in annotation definition',
+      });
+    }
+
+    // We want to send our query to the backend as a raw query
+    const target: InfluxQuery = {
+      refId: 'metricFindQuery',
+      datasource: this.getRef(),
+      query: this.templateSrv.replace(annotation.query, undefined, 'regex'),
+      rawQuery: true,
+    };
+
+    return lastValueFrom(
+      getBackendSrv()
+        .fetch<BackendDataSourceResponse>({
+          url: '/api/ds/query',
+          method: 'POST',
+          headers: this.getRequestHeaders(),
+          data: {
+            from: options.range.from.valueOf().toString(),
+            to: options.range.to.valueOf().toString(),
+            queries: [target],
+          },
+          requestId: annotation.name,
+        })
+        .pipe(
+          map(
+            async (res: FetchResponse<BackendDataSourceResponse>) =>
+              await this.responseParser.transformAnnotationResponse(annotation, res, target)
+          )
+        )
+    );
+
+    // const timeFilter = this.getTimeFilter({ rangeRaw: options.range.raw, timezone: options.timezone });
+    // let query = annotation.query.replace('$timeFilter', timeFilter);
+    // query = this.templateSrv.replace(query, undefined, 'regex');
+    //
+    // return lastValueFrom(this._seriesQuery(query, options)).then((data: any) => {
+    //   if (!data || !data.results || !data.results[0]) {
+    //     throw { message: 'No results in response from InfluxDB' };
+    //   }
+    //   return new InfluxSeries({
+    //     series: data.results[0].series,
+    //     annotation: annotation,
+    //   }).getAnnotations();
+    // });
   }
 
   targetContainsTemplate(target: any) {
