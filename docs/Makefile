@@ -1,6 +1,6 @@
 .PHONY: pull docs docs-quick docs-no-pull docs-test docs-local-static
 
-IMAGE = grafana/grafana-docs-dev:latest
+IMAGE = grafana/docs-base:latest
 CONTENT_PATH = /hugo/content/docs/grafana/next
 LOCAL_STATIC_PATH = ../../website/static
 PORT = 3002:3002
