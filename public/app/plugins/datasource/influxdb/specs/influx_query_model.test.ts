@@ -391,7 +391,7 @@ describe('InfluxQuery', () => {
           { key: 'key2', operator: '!=', value: 'value2' },
         ]);
 
-        expect(queryText).toBe('"key1" = \'value1\' AND "key2" != \'value2\'');
+        expect(queryText).toBe('"key1"::tag = \'value1\' AND "key2"::tag != \'value2\'');
       });
     });
   });

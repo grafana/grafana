@@ -25,7 +25,7 @@ function renderTagCondition(tag: { operator: any; value: string; condition: any;
     value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
   }
 
-  return str + '"' + tag.key + '" ' + operator + ' ' + value;
+  return str + '"' + tag.key + '"::tag ' + operator + ' ' + value;
 }
 
 export class InfluxQueryBuilder {

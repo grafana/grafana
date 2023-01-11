@@ -172,7 +172,7 @@ export default class InfluxQueryModel {
       value = this.templateSrv.replace(value, this.scopedVars, 'regex');
     }
 
-    return str + '"' + tag.key + '" ' + operator + ' ' + value;
+    return str + '"' + tag.key + '"::tag ' + operator + ' ' + value;
   }
 
   getMeasurementAndPolicy(interpolate: any) {
