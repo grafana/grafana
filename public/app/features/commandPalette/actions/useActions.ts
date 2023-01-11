@@ -7,7 +7,7 @@ import { CommandPaletteAction } from '../types';
 import { getRecentDashboardActions } from './dashboardActions';
 import getStaticActions from './staticActions';
 
-export default function useActions(searchQuery: string, isShowing: boolean) {
+export default function useActions() {
   const [staticActions, setStaticActions] = useState<CommandPaletteAction[]>([]);
 
   const { navBarTree } = useSelector((state) => {

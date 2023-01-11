@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import debounce from 'debounce-promise';
 import {
   KBarAnimator,
   KBarPortal,
@@ -15,7 +14,7 @@ import {
   useKBar,
   ActionImpl,
 } from 'kbar';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -23,11 +22,9 @@ import { useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { ResultItem } from './ResultItem';
-import { getDashboardSearchResultActions } from './actions/dashboardActions';
 import useActions from './actions/useActions';
+import { useDashboardResults } from './actions/useDashboardResults';
 import { CommandPaletteAction } from './types';
-
-const debouncedDashboardSearch = debounce(getDashboardSearchResultActions, 200);
 
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
@@ -36,19 +33,10 @@ export const CommandPalette = () => {
     showing: state.visualState === VisualState.showing,
     searchQuery: state.searchQuery,
   }));
-  const [dashboardResults, setDashboardResults] = useState<CommandPaletteAction[]>([]);
 
-  // Hit dashboards API
-  useEffect(() => {
-    if (showing && searchQuery.length > 0) {
-      debouncedDashboardSearch(searchQuery).then((resultActions) => {
-        setDashboardResults(resultActions);
-      });
-    }
-  }, [showing, searchQuery]);
-
-  const actions = useActions(searchQuery, showing);
+  const actions = useActions();
   useRegisterActions(actions, [actions]);
+  const dashboardResults = useDashboardResults(searchQuery, showing);
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
@@ -86,8 +74,8 @@ const RenderResults = ({ dashboardResults }: RenderResultsProps) => {
   const { results, rootActionId } = useMatches();
   const styles = useStyles2(getSearchStyles);
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
-  // because dashboard's aren't registered as actions, we need to manually create ActionImpls
-  // before passing them as items to KBarResults
+  // because dashboard search results aren't registered as actions, we need to manually
+  // convert them to ActionImpls before passing them as items to KBarResults
   const dashboardResultItems = useMemo(
     () => dashboardResults.map((dashboard) => new ActionImpl(dashboard, { store: {} })),
     [dashboardResults]
