@@ -2,7 +2,6 @@ import { FooterLink } from '../Footer/Footer';
 
 export interface BrandingSettings {
   footerLinks: FooterLink[] | null;
-  hideFooter: boolean;
   appTitle: string;
   loginSubtitle: string;
   loginTitle: string;
