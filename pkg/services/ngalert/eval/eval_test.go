@@ -555,7 +555,7 @@ func TestEvaluateRaw(t *testing.T) {
 			expressionService: &fakeExpressionService{
 				hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
 					ts := time.Now()
-					for time.Since(ts) <= 1*time.Second {
+					for time.Since(ts) <= 10*time.Second {
 						if ctx.Err() != nil {
 							return nil, ctx.Err()
 						}
