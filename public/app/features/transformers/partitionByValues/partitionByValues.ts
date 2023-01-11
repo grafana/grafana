@@ -17,7 +17,7 @@ export interface FrameNamingOptions {
   /** when true, the frame name is copied unmodified, and discriminator fields' names+values become field labels in new frames */
   asLabels?: boolean;
 
-  /** opts below are used only when asFieldLabels: false */
+  /** opts below are used only when asLabels: false */
 
   /** whether to append to existing frame name, false -> replace */
   append?: boolean; // false
