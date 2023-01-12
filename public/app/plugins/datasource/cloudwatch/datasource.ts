@@ -4,6 +4,7 @@ import { merge, Observable, of } from 'rxjs';
 import {
   CoreApp,
   DataFrame,
+  DataQueryKind,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -21,7 +22,12 @@ import { RowContextOptions } from '../../../features/logs/components/LogRowConte
 import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { CloudWatchAPI } from './api';
 import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
-import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
+import {
+  DEFAULT_ANNOTATIONS_QUERY,
+  DEFAULT_METRICS_QUERY,
+  DEFAULT_VARIABLE_QUERY,
+  getDefaultLogsQuery,
+} from './defaultQueries';
 import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
 import { CloudWatchLanguageProvider } from './language_provider';
 import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
@@ -177,7 +183,13 @@ export class CloudWatchDatasource
     return region;
   }
 
-  getDefaultQuery(_: CoreApp): Partial<CloudWatchQuery> {
+  getDefaultQuery(_: CoreApp, queryKind?: DataQueryKind): Partial<CloudWatchQuery> {
+    if (queryKind === DataQueryKind.ANNOTATIONS) {
+      return DEFAULT_ANNOTATIONS_QUERY;
+    }
+    if (queryKind === DataQueryKind.VARIABLE) {
+      return DEFAULT_VARIABLE_QUERY;
+    }
     return {
       ...getDefaultLogsQuery(this.instanceSettings.jsonData.logGroups, this.instanceSettings.jsonData.defaultLogGroups),
       ...DEFAULT_METRICS_QUERY,

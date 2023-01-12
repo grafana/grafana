@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 import { toArray } from 'rxjs/operators';
 
-import { CoreApp, dateTime, Field } from '@grafana/data';
+import { CoreApp, DataQueryKind, dateTime, Field } from '@grafana/data';
 
 import {
   CloudWatchSettings,
@@ -14,12 +14,13 @@ import { setupForLogs } from './__mocks__/logsTestContext';
 import { validLogsQuery, validMetricSearchBuilderQuery } from './__mocks__/queries';
 import { TimeRangeMock } from './__mocks__/timeRange';
 import {
+  CloudWatchDefaultQuery,
   CloudWatchLogsQuery,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
-  CloudWatchDefaultQuery,
   MetricEditorMode,
   MetricQueryType,
+  VariableQueryType,
 } from './types';
 
 describe('datasource', () => {
@@ -374,6 +375,18 @@ describe('datasource', () => {
         MetricEditorMode.Builder
       );
       expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).matchExact).toEqual(true);
+    });
+    it('should return annotations query if DataQueryKind is annotation', () => {
+      const { datasource } = setupMockedDataSource();
+      expect(datasource.getDefaultQuery(CoreApp.Unknown, DataQueryKind.ANNOTATIONS).queryMode).toEqual('Annotations');
+      expect(datasource.getDefaultQuery(CoreApp.Unknown, DataQueryKind.ANNOTATIONS).region).toEqual('default');
+    });
+    it('should return variable query if DataQueryKind is variable', () => {
+      const { datasource } = setupMockedDataSource();
+      expect(datasource.getDefaultQuery(CoreApp.Unknown, DataQueryKind.VARIABLE).queryType).toEqual(
+        VariableQueryType.Regions
+      );
+      expect(datasource.getDefaultQuery(CoreApp.Unknown, DataQueryKind.VARIABLE).region).toEqual('default');
     });
   });
 });

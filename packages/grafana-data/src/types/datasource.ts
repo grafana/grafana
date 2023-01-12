@@ -357,7 +357,13 @@ abstract class DataSourceApi<
    * Optionally, use this method to set default values for a query
    * @alpha -- experimental
    */
-  getDefaultQuery?(app: CoreApp): Partial<TQuery>;
+  getDefaultQuery?(app: CoreApp, dataQueryKind?: DataQueryKind): Partial<TQuery>;
+}
+
+export enum DataQueryKind {
+  STANDARD = 'standard',
+  VARIABLE = 'variable',
+  ANNOTATIONS = 'annotations',
 }
 
 export interface MetadataInspectorProps<
@@ -485,6 +491,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   targets: TQuery[];
   timezone: string;
   app: CoreApp | string;
+  dataQueryKind?: DataQueryKind;
 
   cacheTimeout?: string | null;
   rangeRaw?: RawTimeRange;

@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   CoreApp,
   DataQuery,
+  DataQueryKind,
   DataQueryRequest,
   DataSourceApi,
   getDefaultTimeRange,
@@ -182,6 +183,7 @@ export class VariableQueryRunner {
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,
+      dataQueryKind: DataQueryKind.VARIABLE,
       requestId: uuidv4(),
       timezone: '',
       range,

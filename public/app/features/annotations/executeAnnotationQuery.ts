@@ -1,7 +1,7 @@
 import { Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { CoreApp, DataQueryRequest, DataSourceApi, rangeUtil, ScopedVars } from '@grafana/data';
+import { CoreApp, DataQueryKind, DataQueryRequest, DataSourceApi, rangeUtil, ScopedVars } from '@grafana/data';
 
 import { runRequest } from '../query/state/runRequest';
 
@@ -23,7 +23,11 @@ export function executeAnnotationQuery(
     ...datasource.annotations,
   };
 
-  const annotation = processor.prepareAnnotation!(savedJsonAnno);
+  const annotationWithDefaults = {
+    ...datasource.getDefaultQuery?.(CoreApp.Dashboard, DataQueryKind.ANNOTATIONS),
+    ...savedJsonAnno,
+  };
+  const annotation = processor.prepareAnnotation!(annotationWithDefaults);
   if (!annotation) {
     return of({});
   }
@@ -53,6 +57,7 @@ export function executeAnnotationQuery(
     scopedVars,
     ...interval,
     app: CoreApp.Dashboard,
+    dataQueryKind: DataQueryKind.ANNOTATIONS,
     publicDashboardAccessToken: options.dashboard.meta.publicDashboardAccessToken,
 
     timezone: options.dashboard.timezone,

@@ -5,7 +5,9 @@ import { lastValueFrom } from 'rxjs';
 import {
   AnnotationEventMappings,
   AnnotationQuery,
+  CoreApp,
   DataQuery,
+  DataQueryKind,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
@@ -186,7 +188,11 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
     }
 
-    const query = annotation.target ?? { refId: 'Anno' };
+    const query = {
+      ...datasource.getDefaultQuery?.(CoreApp.Dashboard, DataQueryKind.ANNOTATIONS),
+      ...(annotation.target ?? { refId: 'Anno' }),
+    };
+
     return (
       <>
         <DataSourcePluginContextProvider instanceSettings={datasourceInstanceSettings}>

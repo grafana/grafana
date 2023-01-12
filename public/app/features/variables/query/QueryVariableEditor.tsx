@@ -1,7 +1,14 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
+import {
+  CoreApp,
+  DataQueryKind,
+  DataSourceInstanceSettings,
+  getDataSourceRef,
+  LoadingState,
+  SelectableValue,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getTemplateSrv } from '@grafana/runtime';
 import { Field } from '@grafana/ui';
@@ -134,8 +141,19 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
       return null;
     }
 
-    const query = variable.query;
     const datasource = extended.dataSource;
+
+    let query;
+
+    if (typeof variable.query === 'string') {
+      query = variable.query ? datasource.getDefaultQuery?.(CoreApp.Dashboard, DataQueryKind.VARIABLE) : '';
+    } else {
+      query = {
+        ...datasource.getDefaultQuery?.(CoreApp.Dashboard, DataQueryKind.VARIABLE),
+        ...variable.query,
+      };
+    }
+
     const VariableQueryEditor = extended.VariableQueryEditor;
 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
