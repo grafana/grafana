@@ -4,6 +4,8 @@
 
 import { ComponentType } from 'react';
 
+export type { QueryEditorMode } from '../../models.gen';
+
 import { DataSourceApi, RegistryItem, SelectableValue } from '@grafana/data';
 
 export interface QueryBuilderLabelFilter {
@@ -94,11 +96,6 @@ export interface QueryBuilderOperationParamEditorProps {
   datasource: DataSourceApi;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
   onRunQuery: () => void;
-}
-
-export enum QueryEditorMode {
-  Code = 'code',
-  Builder = 'builder',
 }
 
 export interface VisualQueryModeller {

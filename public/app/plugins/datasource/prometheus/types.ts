@@ -1,28 +1,9 @@
-import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+import { DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 
 import { PromApplication } from '../../../types/unified-alerting-dto';
 
-import { QueryEditorMode } from './querybuilder/shared/types';
-
-export interface PromQuery extends DataQuery {
-  expr: string;
-  format?: string;
-  instant?: boolean;
-  range?: boolean;
-  exemplar?: boolean;
-  hinting?: boolean;
-  interval?: string;
-  intervalFactor?: number;
-  // Timezone offset to align start & end time on backend
-  utcOffsetSec?: number;
-  legendFormat?: string;
-  valueWithRefId?: boolean;
-  requestId?: string;
-  showingGraph?: boolean;
-  showingTable?: boolean;
-  /** Code, Builder or Explain */
-  editorMode?: QueryEditorMode;
-}
+import { Prometheus as PromQuery } from './models.gen';
+export type { PromQuery };
 
 export interface PromOptions extends DataSourceJsonData {
   timeInterval?: string;
