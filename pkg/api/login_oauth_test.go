@@ -14,13 +14,28 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func setupSocialHTTPServerWithConfig(t *testing.T, cfg *setting.Cfg) *HTTPServer {
+	sqlStore := db.InitTestDB(t)
+
+	return &HTTPServer{
+		Cfg:            cfg,
+		License:        &licensing.OSSLicensingService{Cfg: cfg},
+		SQLStore:       sqlStore,
+		SocialService:  social.ProvideService(cfg, featuremgmt.WithFeatures()),
+		HooksService:   hooks.ProvideService(),
+		SecretsService: fakes.NewFakeSecretsService(),
+	}
+}
 
 func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 	t.Helper()
@@ -29,17 +44,7 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 		cfg = setting.NewCfg()
 	}
 	cfg.ErrTemplateName = "error-template"
-
-	sqlStore := db.InitTestDB(t)
-
-	hs := &HTTPServer{
-		Cfg:            cfg,
-		License:        &licensing.OSSLicensingService{Cfg: cfg},
-		SQLStore:       sqlStore,
-		SocialService:  social.ProvideService(cfg, featuremgmt.WithFeatures()),
-		HooksService:   hooks.ProvideService(),
-		SecretsService: fakes.NewFakeSecretsService(),
-	}
+	hs := setupSocialHTTPServerWithConfig(t, cfg)
 
 	m := web.New()
 	m.Use(getContextHandler(t, cfg).Middleware)
@@ -160,44 +165,55 @@ func TestOAuthLogin_UsePKCE(t *testing.T) {
 	)
 }
 
-// func TestOAuthLogin_BuildExternalUserInfo(t *testing.T) {
-// 	t.Helper()
-// 	cfg := setting.NewCfg()
-// 	sec := cfg.Raw.Section("auth.generic_oauth")
-// 	_, err := sec.NewKey("enabled", "true")
-// 	require.NoError(t, err)
-// 	_, err = sec.NewKey("use_pkce", "true")
-// 	require.NoError(t, err)
-// 	authSec := cfg.Raw.Section("auth")
-// 	_, err = authSec.NewKey("oauth_skip_org_role_update_sync", "true")
-// 	require.NoError(t, err)
-// 	cfg.ErrTemplateName = "error-template"
+func TestOAuthLogin_BuildExternalUserInfo(t *testing.T) {
+	t.Helper()
+	cfg := setting.NewCfg()
+	sec := cfg.Raw.Section("auth.generic_oauth")
+	_, err := sec.NewKey("enabled", "true")
+	require.NoError(t, err)
+	_, err = sec.NewKey("use_pkce", "true")
+	require.NoError(t, err)
+	authSec := cfg.Raw.Section("auth")
+	_, err = authSec.NewKey("oauth_skip_org_role_update_sync", "true")
+	require.NoError(t, err)
+	cfg.ErrTemplateName = "error-template"
 
-// 	sqlStore := db.InitTestDB(t)
-// 	hs := &HTTPServer{
-// 		Cfg:            cfg,
-// 		License:        &licensing.OSSLicensingService{Cfg: cfg},
-// 		SQLStore:       sqlStore,
-// 		SocialService:  social.ProvideService(cfg, featuremgmt.WithFeatures()),
-// 		HooksService:   hooks.ProvideService(),
-// 		SecretsService: fakes.NewFakeSecretsService(),
-// 	}
+	testcases := []struct {
+		name             string
+		cfg              *setting.Cfg
+		basicUser        *social.BasicUserInfo
+		expectedOrgRoles map[int64]org.RoleType
+	}{
+		{
+			name: "should return empty map of org role mapping if the role for the basic info is empty",
+			cfg:  cfg,
+			basicUser: &social.BasicUserInfo{
+				Id:    "1",
+				Name:  "first lastname",
+				Email: "example@github.com",
+				Login: "example",
+				Role:  "",
+			},
+			expectedOrgRoles: map[int64]org.RoleType{},
+		},
+		{
+			name: "should set externalUser org role for basic info role",
+			cfg:  cfg,
+			basicUser: &social.BasicUserInfo{
+				Id:    "1",
+				Name:  "first lastname",
+				Email: "example@github.com",
+				Login: "example",
+				Role:  roletype.RoleAdmin,
+			},
+			expectedOrgRoles: map[int64]org.RoleType{1: roletype.RoleAdmin},
+		},
+	}
+	for _, tc := range testcases {
+		cfg := tc.cfg
+		hs := setupSocialHTTPServerWithConfig(t, cfg)
+		externalUser := hs.buildExternalUserInfo(nil, tc.basicUser, "")
+		require.Equal(t, tc.expectedOrgRoles, externalUser.OrgRoles)
+	}
 
-// 	// testcases := []struct {
-// 	// name string
-// 	// desc string
-// 	// }{
-// 	// {
-// 	// name: "hej",
-// 	// desc: "hej,",
-// 	// },
-// 	// }
-// 	// basicUser := &social.BasicUserInfo{
-// 	// Id:    "1",
-// 	// Name:  "Eric Leijonmarck",
-// 	// Email: "octocat@github.com",
-// 	// Login: "octocat",
-// 	// Role:  "Admin",
-// 	// }
-// 	// externalUser := hs.buildExternalUserInfo(token, basicUser, name)
-// }
+}
