@@ -45,11 +45,11 @@ export const makeExplorePaneState = (): ExploreItemState => ({
     from: null,
     to: null,
     raw: DEFAULT_RANGE,
-  } as unknown as TimeRange,
+  } as any,
   absoluteRange: {
     from: null,
     to: null,
-  } as unknown as AbsoluteTimeRange,
+  } as any,
   scanning: false,
   loading: false,
   queryKeys: [],
