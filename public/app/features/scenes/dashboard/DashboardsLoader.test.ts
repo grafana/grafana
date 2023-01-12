@@ -1,13 +1,311 @@
-import { VariableType } from '@grafana/schema';
+import {
+  CustomVariable,
+  DataSourceVariable,
+  QueryVariable,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneQueryRunner,
+  VizPanel,
+} from '@grafana/scenes';
+import { defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@grafana/schema';
+import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
-import { CustomVariable } from '../variables/variants/CustomVariable';
-import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
-import { QueryVariable } from '../variables/variants/query/QueryVariable';
-
-import { createVariableFromLegacyModel } from './DashboardsLoader';
+import { DashboardScene } from './DashboardScene';
+import {
+  createDashboardSceneFromDashboardModel,
+  createVizPanelFromPanelModel,
+  createSceneVariableFromVariableModel,
+  DashboardLoader,
+} from './DashboardsLoader';
 
 describe('DashboardLoader', () => {
-  describe('variables migration', () => {
+  describe('when fetching/loading a dashboard', () => {
+    beforeEach(() => {
+      new DashboardLoader({});
+    });
+
+    it('should load the dashboard from the cache if it exists', () => {
+      const loader = new DashboardLoader({});
+      const dashboard = new DashboardScene({
+        title: 'cached',
+        uid: 'fake-uid',
+        body: new SceneGridLayout({ children: [] }),
+      });
+      // @ts-expect-error
+      loader.cache['fake-uid'] = dashboard;
+      loader.load('fake-uid');
+      expect(loader.state.dashboard).toBe(dashboard);
+      expect(loader.state.isLoading).toBe(undefined);
+    });
+
+    it('should call dashboard loader server if the dashboard is not cached', async () => {
+      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
+      setDashboardLoaderSrv({
+        loadDashboard: loadDashboardMock,
+      } as unknown as DashboardLoaderSrv);
+
+      const loader = new DashboardLoader({});
+      await loader.load('fake-dash');
+
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+    });
+
+    it("should error when the dashboard doesn't exist", async () => {
+      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: undefined, meta: undefined });
+      setDashboardLoaderSrv({
+        loadDashboard: loadDashboardMock,
+      } as unknown as DashboardLoaderSrv);
+
+      const loader = new DashboardLoader({});
+      await loader.load('fake-dash');
+
+      expect(loader.state.dashboard).toBeUndefined();
+      expect(loader.state.isLoading).toBe(false);
+      // @ts-expect-error - private
+      expect(loader.cache['fake-dash']).toBeUndefined();
+      expect(loader.state.loadError).toBe('Error: Dashboard not found');
+    });
+
+    it('should initialize the dashboard scene with the loaded dashboard', async () => {
+      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
+      setDashboardLoaderSrv({
+        loadDashboard: loadDashboardMock,
+      } as unknown as DashboardLoaderSrv);
+
+      const loader = new DashboardLoader({});
+      await loader.load('fake-dash');
+
+      expect(loader.state.dashboard?.state.uid).toBe('fake-dash');
+      expect(loader.state.loadError).toBe(undefined);
+      expect(loader.state.isLoading).toBe(false);
+      // It updates the cache
+      // @ts-expect-error - private
+      expect(loader.cache['fake-dash']).toBeDefined();
+    });
+
+    it('should use DashboardScene creator to initialize the scene', async () => {
+      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
+      setDashboardLoaderSrv({
+        loadDashboard: loadDashboardMock,
+      } as unknown as DashboardLoaderSrv);
+
+      const loader = new DashboardLoader({});
+      await loader.load('fake-dash');
+      expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
+      // @ts-expect-error - private
+      expect(loader.state.dashboard?.urlSyncManager).toBeDefined();
+      expect(loader.state.isLoading).toBe(false);
+    });
+  });
+
+  describe('when creating dashboard scene', () => {
+    it('should initialize the DashboardScene with the model state', () => {
+      const dash = {
+        ...defaultDashboard,
+        title: 'test',
+        uid: 'test-uid',
+        time: { from: 'now-10h', to: 'now' },
+        templating: {
+          list: [
+            {
+              hide: 2,
+              name: 'constant',
+              skipUrlSync: false,
+              type: 'constant' as VariableType,
+              rootStateKey: 'N4XLmH5Vz',
+              query: 'test',
+              id: 'constant',
+              global: false,
+              index: 3,
+              state: LoadingState.Done,
+              error: null,
+              description: '',
+              datasource: null,
+            },
+          ],
+        },
+      };
+      const oldModel = new DashboardModel(dash);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel);
+
+      expect(scene.state.title).toBe('test');
+      expect(scene.state.uid).toBe('test-uid');
+      expect(scene.state?.$timeRange?.state.value.raw).toEqual(dash.time);
+      expect(scene.state?.$variables?.state.variables).toHaveLength(1);
+      expect(scene.state.subMenu).toBeDefined();
+    });
+  });
+
+  describe('when organizing panels as scene children', () => {
+    it('should create panels within collapsed rows', () => {
+      const panel = createPanelJSONFixture({
+        title: 'test',
+        gridPos: { x: 1, y: 0, w: 12, h: 8 },
+      }) as Panel;
+
+      const row = createPanelJSONFixture({
+        title: 'test',
+        type: 'row',
+        gridPos: { x: 0, y: 0, w: 12, h: 1 },
+        collapsed: true,
+        panels: [panel],
+      }) as unknown as RowPanel;
+
+      const dashboard = {
+        ...defaultDashboard,
+        panels: [row],
+      };
+
+      const oldModel = new DashboardModel(dashboard);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel);
+
+      expect(scene.state.body.state.children).toHaveLength(1);
+      const rowScene = scene.state.body.state.children[0] as SceneGridRow;
+      expect(rowScene).toBeInstanceOf(SceneGridRow);
+      expect(rowScene.state.title).toEqual(row.title);
+      expect(rowScene.state.placement?.y).toEqual(row.gridPos!.y);
+      expect(rowScene.state.isCollapsed).toEqual(row.collapsed);
+      expect(rowScene.state.children).toHaveLength(1);
+      expect(rowScene.state.children[0]).toBeInstanceOf(VizPanel);
+    });
+
+    it('should create panels within expanded row', () => {
+      const panelOutOfRow = createPanelJSONFixture({
+        title: 'Out of a row',
+        gridPos: {
+          h: 8,
+          w: 12,
+          x: 0,
+          y: 0,
+        },
+      });
+      const rowWithPanel = createPanelJSONFixture({
+        title: 'Row with panel',
+        type: 'row',
+        collapsed: false,
+        gridPos: {
+          h: 1,
+          w: 24,
+          x: 0,
+          y: 8,
+        },
+        // This panels array is not used if the row is not collapsed
+        panels: [],
+      });
+      const panelInRow = createPanelJSONFixture({
+        gridPos: {
+          h: 8,
+          w: 12,
+          x: 0,
+          y: 9,
+        },
+        title: 'In row 1',
+      });
+      const emptyRow = createPanelJSONFixture({
+        collapsed: false,
+        gridPos: {
+          h: 1,
+          w: 24,
+          x: 0,
+          y: 17,
+        },
+        // This panels array is not used if the row is not collapsed
+        panels: [],
+        title: 'Empty row',
+        type: 'row',
+      });
+      const dashboard = {
+        ...defaultDashboard,
+        panels: [panelOutOfRow, rowWithPanel, panelInRow, emptyRow],
+      };
+
+      const oldModel = new DashboardModel(dashboard);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel);
+
+      expect(scene.state.body.state.children).toHaveLength(3);
+      expect(scene.state.body).toBeInstanceOf(SceneGridLayout);
+      // Panel out of row
+      expect(scene.state.body.state.children[0]).toBeInstanceOf(VizPanel);
+      const panelOutOfRowVizPanel = scene.state.body.state.children[0] as VizPanel;
+      expect(panelOutOfRowVizPanel.state.title).toBe(panelOutOfRow.title);
+      // Row with panel
+      expect(scene.state.body.state.children[1]).toBeInstanceOf(SceneGridRow);
+      const rowWithPanelsScene = scene.state.body.state.children[1] as SceneGridRow;
+      expect(rowWithPanelsScene.state.title).toBe(rowWithPanel.title);
+      expect(rowWithPanelsScene.state.children).toHaveLength(1);
+      // Panel within row
+      expect(rowWithPanelsScene.state.children[0]).toBeInstanceOf(VizPanel);
+      const panelInRowVizPanel = rowWithPanelsScene.state.children[0] as VizPanel;
+      expect(panelInRowVizPanel.state.title).toBe(panelInRow.title);
+      // Empty row
+      expect(scene.state.body.state.children[2]).toBeInstanceOf(SceneGridRow);
+      const emptyRowScene = scene.state.body.state.children[2] as SceneGridRow;
+      expect(emptyRowScene.state.title).toBe(emptyRow.title);
+      expect(emptyRowScene.state.children).toHaveLength(0);
+    });
+  });
+
+  describe('when creating viz panel objects', () => {
+    it('should initalize the VizPanel scene object state', () => {
+      const panel = {
+        title: 'test',
+        type: 'test-plugin',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        options: {
+          fieldOptions: {
+            defaults: {
+              unit: 'none',
+              decimals: 2,
+            },
+            overrides: [],
+          },
+        },
+        fieldConfig: {
+          defaults: {
+            unit: 'none',
+          },
+        },
+        pluginVersion: '1.0.0',
+        transformations: [
+          {
+            id: 'reduce',
+            options: {
+              reducers: [
+                {
+                  id: 'mean',
+                },
+              ],
+            },
+          },
+        ],
+        targets: [
+          {
+            refId: 'A',
+            queryType: 'randomWalk',
+          },
+        ],
+      };
+      const vizPanelSceneObject = createVizPanelFromPanelModel(new PanelModel(panel));
+
+      expect(vizPanelSceneObject.state.title).toBe('test');
+      expect(vizPanelSceneObject.state.pluginId).toBe('test-plugin');
+      expect(vizPanelSceneObject.state.placement).toEqual({ x: 0, y: 0, width: 12, height: 8 });
+      expect(vizPanelSceneObject.state.options).toEqual(panel.options);
+      expect(vizPanelSceneObject.state.fieldConfig).toEqual(panel.fieldConfig);
+      expect(vizPanelSceneObject.state.pluginVersion).toBe('1.0.0');
+      expect((vizPanelSceneObject.state.$data as SceneQueryRunner)?.state.queries).toEqual(panel.targets);
+      expect((vizPanelSceneObject.state.$data as SceneQueryRunner)?.state.transformations).toEqual(
+        panel.transformations
+      );
+    });
+  });
+
+  describe('when creating variables objects', () => {
     it('should migrate custom variable', () => {
       const variable = {
         current: {
@@ -54,7 +352,7 @@ describe('DashboardLoader', () => {
         allValue: null,
       };
 
-      const migrated = createVariableFromLegacyModel(variable);
+      const migrated = createSceneVariableFromVariableModel(variable);
       const { key, ...rest } = migrated.state;
 
       expect(migrated).toBeInstanceOf(CustomVariable);
@@ -133,7 +431,7 @@ describe('DashboardLoader', () => {
         description: null,
       };
 
-      const migrated = createVariableFromLegacyModel(variable);
+      const migrated = createSceneVariableFromVariableModel(variable);
       const { key, ...rest } = migrated.state;
 
       expect(migrated).toBeInstanceOf(QueryVariable);
@@ -205,7 +503,7 @@ describe('DashboardLoader', () => {
         allValue: 'Custom all',
       };
 
-      const migrated = createVariableFromLegacyModel(variable);
+      const migrated = createSceneVariableFromVariableModel(variable);
       const { key, ...rest } = migrated.state;
 
       expect(migrated).toBeInstanceOf(DataSourceVariable);
@@ -257,7 +555,7 @@ describe('DashboardLoader', () => {
         description: null,
       };
 
-      const migrated = createVariableFromLegacyModel(variable);
+      const migrated = createSceneVariableFromVariableModel(variable);
       const { key, ...rest } = migrated.state;
 
       expect(rest).toEqual({
@@ -277,7 +575,7 @@ describe('DashboardLoader', () => {
         type: type as VariableType,
       };
 
-      expect(() => createVariableFromLegacyModel(variable)).toThrow();
+      expect(() => createSceneVariableFromVariableModel(variable)).toThrow();
     });
   });
 });

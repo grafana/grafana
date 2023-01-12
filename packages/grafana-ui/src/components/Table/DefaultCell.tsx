@@ -3,6 +3,7 @@ import React, { FC, ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { DisplayValue, Field, formattedValueToString } from '@grafana/data';
+import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
 import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
@@ -27,7 +28,6 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
   const showFilters = field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellStyle = getCellStyle(tableStyles, field, displayValue, inspectEnabled);
-
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
 
   return (
@@ -38,7 +38,7 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
             return (
-              <div onClick={api.openMenu} className={cx(tableStyles.cellLink, api.targetClassName)}>
+              <div onClick={api.openMenu} className={getLinkStyle(tableStyles, field, api.targetClassName)}>
                 {value}
               </div>
             );
@@ -57,31 +57,66 @@ function getCellStyle(
   displayValue: DisplayValue,
   disableOverflowOnHover = false
 ) {
-  if (field.config.custom?.displayMode === TableCellDisplayMode.ColorText) {
-    return tableStyles.buildCellContainerStyle(displayValue.color, undefined, !disableOverflowOnHover);
+  // How much to darken elements depends upon if we're in dark mode
+  const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
+
+  // See if we're using deprecated settings
+  const usingDeprecatedSettings = field.config.custom?.displayMode !== undefined;
+
+  // Setup color variables
+  let textColor: string | undefined = undefined;
+  let bgColor: string | undefined = undefined;
+
+  // Set colors using deprecated settings format
+  if (usingDeprecatedSettings) {
+    if (field.config.custom?.displayMode === TableCellDisplayMode.ColorText) {
+      textColor = displayValue.color;
+    } else if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = tinycolor(displayValue.color).toRgbString();
+    } else if (
+      field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground &&
+      field.config.custom?.backgroundDisplayMode === TableCellBackgroundDisplayMode.Gradient
+    ) {
+      const bgColor2 = tinycolor(displayValue.color)
+        .darken(10 * darkeningFactor)
+        .spin(5);
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
+    }
+  }
+  // Set colors using updated sub-options format
+  else {
+    const cellDisplayMode = field.config.custom?.cellOptions?.mode;
+    const cellDisplayType = field.config.custom?.cellOptions?.type;
+
+    if (cellDisplayType === TableCellDisplayMode.ColorText) {
+      textColor = displayValue.color;
+    } else if (cellDisplayMode === TableCellBackgroundDisplayMode.Basic) {
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = tinycolor(displayValue.color).toRgbString();
+    } else if (cellDisplayMode === TableCellBackgroundDisplayMode.Gradient) {
+      const bgColor2 = tinycolor(displayValue.color)
+        .darken(10 * darkeningFactor)
+        .spin(5);
+      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
+      bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
+    }
   }
 
-  if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
-    const bgColor = tinycolor(displayValue.color);
-    const textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
-    return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString(), !disableOverflowOnHover);
-  }
-
-  if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
-    const themeFactor = tableStyles.theme.isDark ? 1 : -0.7;
-    const bgColor2 = tinycolor(displayValue.color)
-      .darken(10 * themeFactor)
-      .spin(5)
-      .toRgbString();
-
-    const textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
-
-    return tableStyles.buildCellContainerStyle(
-      textColor,
-      `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`,
-      !disableOverflowOnHover
-    );
+  // If we have definied colors return those styles
+  // Otherwise we return default styles
+  if (textColor !== undefined || bgColor !== undefined) {
+    return tableStyles.buildCellContainerStyle(textColor, bgColor, !disableOverflowOnHover);
   }
 
   return disableOverflowOnHover ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer;
+}
+
+function getLinkStyle(tableStyles: TableStyles, field: Field, targetClassName: string | undefined) {
+  if (field.config.custom?.displayMode === TableCellDisplayMode.Auto) {
+    return cx(tableStyles.cellLink, targetClassName);
+  }
+
+  return cx(tableStyles.cellLinkForColoredCell, targetClassName);
 }

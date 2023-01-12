@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -289,16 +290,17 @@ func (hs *HTTPServer) GetUserTeams(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) getUserTeamList(c *models.ReqContext, orgID int64, userID int64) response.Response {
-	query := models.GetTeamsByUserQuery{OrgId: orgID, UserId: userID, SignedInUser: c.SignedInUser}
+	query := team.GetTeamsByUserQuery{OrgID: orgID, UserID: userID, SignedInUser: c.SignedInUser}
 
-	if err := hs.teamService.GetTeamsByUser(c.Req.Context(), &query); err != nil {
+	queryResult, err := hs.teamService.GetTeamsByUser(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(500, "Failed to get user teams", err)
 	}
 
-	for _, team := range query.Result {
-		team.AvatarUrl = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
+	for _, team := range queryResult {
+		team.AvatarURL = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
 	}
-	return response.JSON(http.StatusOK, query.Result)
+	return response.JSON(http.StatusOK, queryResult)
 }
 
 // swagger:route GET /users/{user_id}/orgs users getUserOrgList
@@ -643,28 +645,28 @@ type UserResponse struct {
 type GetUserOrgListResponse struct {
 	// The response message
 	// in: body
-	Body []*models.UserOrgDTO `json:"body"`
+	Body []*org.UserOrgDTO `json:"body"`
 }
 
 // swagger:response getSignedInUserOrgListResponse
 type GetSignedInUserOrgListResponse struct {
 	// The response message
 	// in: body
-	Body []*models.UserOrgDTO `json:"body"`
+	Body []*org.UserOrgDTO `json:"body"`
 }
 
 // swagger:response getUserTeamsResponse
 type GetUserTeamsResponse struct {
 	// The response message
 	// in: body
-	Body []*models.TeamDTO `json:"body"`
+	Body []*team.TeamDTO `json:"body"`
 }
 
 // swagger:response getSignedInUserTeamListResponse
 type GetSignedInUserTeamListResponse struct {
 	// The response message
 	// in: body
-	Body []*models.TeamDTO `json:"body"`
+	Body []*team.TeamDTO `json:"body"`
 }
 
 // swagger:response helpFlagResponse

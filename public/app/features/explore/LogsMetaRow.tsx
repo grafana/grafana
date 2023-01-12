@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel } from '@grafana/data';
+import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { downloadLogsModelAsTxt } from '../inspector/utils/download';
@@ -22,7 +23,7 @@ export type Props = {
   meta: LogsMetaItem[];
   dedupStrategy: LogsDedupStrategy;
   dedupCount: number;
-  showDetectedFields: string[];
+  displayedFields: string[];
   hasUnescapedContent: boolean;
   forceEscape: boolean;
   logRows: LogRowModel[];
@@ -35,7 +36,7 @@ export const LogsMetaRow = React.memo(
     meta,
     dedupStrategy,
     dedupCount,
-    showDetectedFields,
+    displayedFields,
     clearDetectedFields,
     hasUnescapedContent,
     forceEscape,
@@ -45,6 +46,11 @@ export const LogsMetaRow = React.memo(
     const style = useStyles2(getStyles);
 
     const downloadLogs = () => {
+      reportInteraction('grafana_logs_download_logs_clicked', {
+        app: CoreApp.Explore,
+        format: 'logs',
+        area: 'logs-meta-row',
+      });
       downloadLogsModelAsTxt({ meta, rows: logRows }, 'Explore');
     };
 
@@ -68,11 +74,11 @@ export const LogsMetaRow = React.memo(
     }
 
     // Add detected fields info
-    if (showDetectedFields?.length > 0) {
+    if (displayedFields?.length > 0) {
       logsMetaItem.push(
         {
           label: 'Showing only detected fields',
-          value: renderMetaItem(showDetectedFields, LogsMetaKind.LabelsMap),
+          value: renderMetaItem(displayedFields, LogsMetaKind.LabelsMap),
         },
         {
           label: '',

@@ -23,7 +23,7 @@ import syntax from '../syntax';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
-import { LogGroupSelection } from './LogGroupSelection';
+import { LogGroupsField } from './LogGroups/LogGroupsField';
 
 export interface CloudWatchLogsQueryFieldProps
   extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>,
@@ -61,7 +61,8 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
   };
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const { logGroupNames } = query;
+    const { datasource, query } = props;
+    const { logGroups } = query;
 
     if (!datasource.languageProvider) {
       return { suggestions: [] };
@@ -76,7 +77,7 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
       {
         history,
         absoluteRange,
-        logGroupNames,
+        logGroups: logGroups,
         region: query.region,
       }
     );
@@ -84,7 +85,15 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
 
   return (
     <>
-      <LogGroupSelection datasource={datasource} query={query} onChange={onChange} />
+      <LogGroupsField
+        region={query.region}
+        datasource={datasource}
+        legacyLogGroupNames={query.logGroupNames}
+        logGroups={query.logGroups}
+        onChange={(logGroups) => {
+          onChange({ ...query, logGroups, logGroupNames: undefined });
+        }}
+      />
       <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
         <div className="gf-form gf-form--grow flex-shrink-1">
           <QueryField

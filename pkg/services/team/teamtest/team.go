@@ -4,12 +4,14 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/team"
 )
 
 type FakeService struct {
-	ExpectedTeam        models.Team
-	ExpectedTeamDTO     *models.TeamDTO
-	ExpectedTeamsByUser []*models.TeamDTO
+	ExpectedTeam        team.Team
+	ExpectedIsMember    bool
+	ExpectedTeamDTO     *team.TeamDTO
+	ExpectedTeamsByUser []*team.TeamDTO
 	ExpectedMembers     []*models.TeamMemberDTO
 	ExpectedError       error
 }
@@ -18,30 +20,28 @@ func NewFakeService() *FakeService {
 	return &FakeService{}
 }
 
-func (s *FakeService) CreateTeam(name, email string, orgID int64) (models.Team, error) {
+func (s *FakeService) CreateTeam(name, email string, orgID int64) (team.Team, error) {
 	return s.ExpectedTeam, s.ExpectedError
 }
 
-func (s *FakeService) UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error {
+func (s *FakeService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
 	return s.ExpectedError
 }
 
-func (s *FakeService) DeleteTeam(ctx context.Context, cmd *models.DeleteTeamCommand) error {
+func (s *FakeService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
 	return s.ExpectedError
 }
 
-func (s *FakeService) SearchTeams(ctx context.Context, query *models.SearchTeamsQuery) error {
-	return s.ExpectedError
+func (s *FakeService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+	return team.SearchTeamQueryResult{}, s.ExpectedError
 }
 
-func (s *FakeService) GetTeamById(ctx context.Context, query *models.GetTeamByIdQuery) error {
-	query.Result = s.ExpectedTeamDTO
-	return s.ExpectedError
+func (s *FakeService) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
+	return s.ExpectedTeamDTO, s.ExpectedError
 }
 
-func (s *FakeService) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
-	query.Result = s.ExpectedTeamsByUser
-	return s.ExpectedError
+func (s *FakeService) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
+	return s.ExpectedTeamsByUser, s.ExpectedError
 }
 
 func (s *FakeService) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
@@ -53,7 +53,7 @@ func (s *FakeService) UpdateTeamMember(ctx context.Context, cmd *models.UpdateTe
 }
 
 func (s *FakeService) IsTeamMember(orgId int64, teamId int64, userId int64) (bool, error) {
-	return false, s.ExpectedError
+	return s.ExpectedIsMember, s.ExpectedError
 }
 
 func (s *FakeService) RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error {
@@ -68,6 +68,6 @@ func (s *FakeService) GetTeamMembers(ctx context.Context, query *models.GetTeamM
 	return s.ExpectedError
 }
 
-func (s *FakeService) IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
-	return s.ExpectedError
+func (s *FakeService) IsAdminOfTeams(ctx context.Context, query *team.IsAdminOfTeamsQuery) (bool, error) {
+	return false, s.ExpectedError
 }
