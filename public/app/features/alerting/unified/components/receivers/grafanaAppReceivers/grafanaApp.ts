@@ -1,5 +1,6 @@
-import { useGetSingleLocalWithoutDetails } from 'app/features/plugins/admin/state/hooks';
-import { CatalogPlugin } from 'app/features/plugins/admin/types';
+import { useAsync } from 'react-use';
+
+import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { useGetOnCallIntegrationsQuery } from '../../../api/onCallApi';
@@ -8,9 +9,13 @@ import { isOnCallReceiver } from './onCall/onCall';
 import { AmRouteReceiver, GrafanaAppReceiverEnum, GRAFANA_APP_PLUGIN_IDS, ReceiverWithTypes } from './types';
 
 export const useGetAppIsInstalledAndEnabled = (grafanaAppType: GrafanaAppReceiverEnum) => {
-  // fetches the plugin settings for this Grafana instance
-  const plugin: CatalogPlugin | undefined = useGetSingleLocalWithoutDetails(GRAFANA_APP_PLUGIN_IDS[grafanaAppType]);
-  return plugin?.isInstalled && !plugin?.isDisabled && plugin?.type === 'app';
+  const {
+    loading,
+    error,
+    value: plugin,
+  } = useAsync(() => getPluginSettings(GRAFANA_APP_PLUGIN_IDS[grafanaAppType], { showErrorAlert: false }));
+  const installed = plugin && !error && !loading;
+  return installed;
 };
 
 export const useGetGrafanaReceiverTypeChecker = () => {
