@@ -376,12 +376,12 @@ describe('datasource', () => {
       );
       expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).matchExact).toEqual(true);
     });
-    it('should return annotations query if DataQueryKind is annotation', () => {
+    it('should return the default annotations query if DataQueryKind is annotation', () => {
       const { datasource } = setupMockedDataSource();
       expect(datasource.getDefaultQuery(CoreApp.Unknown, DataQueryKind.ANNOTATIONS).queryMode).toEqual('Annotations');
       expect(datasource.getDefaultQuery(CoreApp.Unknown, DataQueryKind.ANNOTATIONS).region).toEqual('default');
     });
-    it('should return variable query if DataQueryKind is variable', () => {
+    it('should return the default variable query if DataQueryKind is variable', () => {
       const { datasource } = setupMockedDataSource();
       expect(datasource.getDefaultQuery(CoreApp.Unknown, DataQueryKind.VARIABLE).queryType).toEqual(
         VariableQueryType.Regions
