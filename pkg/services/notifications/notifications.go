@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -134,9 +135,21 @@ func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *models.
 	})
 }
 
-func subjectTemplateFunc(obj map[string]interface{}, value string) string {
+func subjectTemplateFunc(obj map[string]interface{}, data map[string]interface{}, value string) string {
 	obj["value"] = value
-	return ""
+
+	titleTmpl, err := template.New("title").Parse(value)
+	if err != nil {
+		return ""
+	}
+
+	var buf bytes.Buffer
+	err = titleTmpl.ExecuteTemplate(&buf, "title", data)
+	if err != nil {
+		return ""
+	}
+
+	return buf.String()
 }
 
 func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
