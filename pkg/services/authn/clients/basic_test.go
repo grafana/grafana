@@ -15,7 +15,7 @@ func TestBasic_Authenticate(t *testing.T) {
 		desc             string
 		req              *authn.Request
 		blockLogin       bool
-		clients          []authn.PasswordClient
+		client           authn.PasswordClient
 		expectedErr      error
 		expectedIdentity *authn.Identity
 	}
@@ -24,20 +24,19 @@ func TestBasic_Authenticate(t *testing.T) {
 		{
 			desc:             "should success when password client return identity",
 			req:              &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{authorizationHeaderName: {encodeBasicAuth("user", "password")}}}},
-			clients:          []authn.PasswordClient{authntest.FakePasswordClient{ExpectedIdentity: &authn.Identity{ID: "user:1"}}},
+			client:           authntest.FakePasswordClient{ExpectedIdentity: &authn.Identity{ID: "user:1"}},
 			expectedIdentity: &authn.Identity{ID: "user:1"},
 		},
 		{
 			desc:        "should fail when basic auth header could not be decoded",
 			req:         &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{authorizationHeaderName: {}}}},
-			clients:     []authn.PasswordClient{authntest.FakePasswordClient{ExpectedErr: errIdentityNotFound}, authntest.FakePasswordClient{ExpectedErr: errIdentityNotFound}},
 			expectedErr: errDecodingBasicAuthHeader,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvideBasic(&authntest.FakePasswordClient{})
+			c := ProvideBasic(tt.client)
 
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			if tt.expectedErr != nil {
