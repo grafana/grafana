@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import CloudMonitoringDatasource from '../datasource';
 import { getAlignmentPickerData, getMetricType, setMetricType } from '../functions';
@@ -39,12 +40,24 @@ function Editor({
   const [labels, setLabels] = useState<{ [k: string]: any }>({});
   const { projectName, groupBys, crossSeriesReducer } = query;
   const metricType = getMetricType(query);
+  const [timeState, setTime] = useState<{ from: string; to: string } | null>(null);
+  const timeSrv = getTimeSrv();
+
+  const useTime = (time: { from: string; to: string }) => {
+    if (timeState !== null && (timeState.from !== time.from || timeState.to !== time.to)) {
+      setTime({ ...timeSrv.time });
+    } else if (!timeState) {
+      setTime({ ...timeSrv.time });
+    }
+  };
+
+  useTime(timeSrv.time);
 
   useEffect(() => {
     if (projectName && metricType) {
       datasource.getLabels(metricType, refId, projectName).then((labels) => setLabels(labels));
     }
-  }, [datasource, groupBys, metricType, projectName, refId, crossSeriesReducer]);
+  }, [datasource, groupBys, metricType, projectName, refId, crossSeriesReducer, timeState]);
 
   const onMetricTypeChange = useCallback(
     ({ valueType, metricKind, type }: MetricDescriptor) => {
