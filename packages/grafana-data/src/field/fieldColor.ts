@@ -273,12 +273,10 @@ function getShadedColor(field: Field, theme: GrafanaTheme2) {
 
 function colorStringToRgbArray(color: string): number[] {
   if (color[0] !== '#') {
-    //TODO looks like we might get string like "rgb(...)", what do we do?
-    return [0, 0, 0];
+    return [127, 127, 127];
   }
   if (color.length !== 7) {
-    //TODO what now? #123 -> #112233 or #000123 ?
-    return [0, 0, 0];
+    return [127, 127, 127];
   }
   const red: number = parseInt(color.substring(1, 3), 16);
   const green: number = parseInt(color.substring(3, 5), 16);
