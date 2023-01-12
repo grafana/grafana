@@ -83,24 +83,29 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const validLogQueries = logQueries.filter(this.filterQuery);
 
     const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => {
-      const logGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+      const interpolatedLogGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
         this.templateSrv,
         (target.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn)
       );
 
       // need to support legacy format variables too
-      const logGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+      const interpolatedLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
         this.templateSrv,
         target.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
         'text'
       );
 
+      // if a log group template variable expands to log group that has already been selected in the log group picker, we need to remove duplicates.
+      // Otherwise the StartLogQuery API will return a permission error
+      const logGroups = uniq(interpolatedLogGroupArns).map((arn) => ({ arn, name: arn }));
+      const logGroupNames = uniq(interpolatedLogGroupNames);
+
       return {
         refId: target.refId,
         region: this.templateSrv.replace(this.getActualRegion(target.region)),
         queryString: this.templateSrv.replace(target.expression || ''),
-        logGroups: uniq(logGroupArns).map((arn) => ({ arn, name: arn })),
-        logGroupNames: uniq(logGroupNames),
+        logGroups,
+        logGroupNames,
       };
     });
 
