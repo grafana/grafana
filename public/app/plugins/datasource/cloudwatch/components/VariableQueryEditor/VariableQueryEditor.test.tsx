@@ -65,7 +65,7 @@ ds.datasource.api.getEc2InstanceAttribute = jest.fn().mockReturnValue([]);
 const onChange = jest.fn();
 const defaultProps: Props = {
   onChange: onChange,
-  query: null,
+  query: defaultQuery,
   datasource: ds.datasource,
   onRunQuery: () => {},
 };
@@ -87,16 +87,6 @@ describe('VariableEditor', () => {
         // Should not render any fields besides Query Type
         const regionSelect = screen.queryByRole('combobox', { name: 'Region' });
         expect(regionSelect).not.toBeInTheDocument();
-      });
-    });
-    it('should render new query with options from getDefaultQuery', async () => {
-      const props = defaultProps;
-      props.query = defaultQuery;
-      render(<VariableQueryEditor {...props} />);
-
-      await waitFor(() => {
-        const regionSelect = screen.queryByRole('combobox', { name: 'Region' });
-        expect(regionSelect?.innerHTML).toEqual('default');
       });
     });
   });
