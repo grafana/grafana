@@ -162,6 +162,7 @@ export function PanelChrome({
                 title="Menu"
                 icon="ellipsis-v"
                 narrow
+                data-testid="panel-menu-button"
                 className={cx(styles.menuItem, 'menu-icon')}
               />
             </Dropdown>
