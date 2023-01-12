@@ -30,56 +30,69 @@ const filterTermToTypeMap: Record<number, string> = {
 
 export function getSearchFilterFromQuery(query: string): SearchFilterState {
   const parsed = parser.parse(query);
-
   const filterState: SearchFilterState = { labels: [], freeFormWords: [] };
 
   let cursor = parsed.cursor();
   do {
     if (cursor.node.type.id === terms.FilterExpression) {
-      // ds:prom FilterExpression
-      // ds: DataSourceFilter prom FilterValue
-      const valueNode = cursor.node.firstChild?.getChild(terms.FilterValue);
-      const filterValue = valueNode ? trim(query.substring(valueNode.from, valueNode.to), '"') : undefined;
+      const filter = getFilterFromSyntaxNode(query, cursor.node);
 
-      // ds | ns | group | etc...
-      const filterType = cursor.node.firstChild?.type.id;
-
-      if (filterType && filterValue) {
-        switch (filterType) {
+      if (filter.type && filter.value) {
+        switch (filter.type) {
           case terms.DataSourceFilter:
-            filterState.dataSourceName = filterValue;
+            filterState.dataSourceName = filter.value;
             break;
           case terms.NameSpaceFilter:
-            filterState.namespace = filterValue;
+            filterState.namespace = filter.value;
             break;
           case terms.GroupFilter:
-            filterState.groupName = filterValue;
+            filterState.groupName = filter.value;
             break;
           case terms.RuleFilter:
-            filterState.ruleName = filterValue;
+            filterState.ruleName = filter.value;
             break;
           case terms.LabelFilter:
-            filterState.labels.push(filterValue);
+            filterState.labels.push(filter.value);
             break;
           case terms.StateFilter:
-            const state = filterValue.toLowerCase();
+            const state = filter.value.toLowerCase();
             if (isPromAlertingRuleState(state)) {
               filterState.ruleState = state;
             }
             break;
           case terms.TypeFilter:
-            if (isPromRuleType(filterValue)) {
-              filterState.ruleType = filterValue;
+            if (isPromRuleType(filter.value)) {
+              filterState.ruleType = filter.value;
             }
             break;
         }
       }
     } else if (cursor.node.type.id === terms.FreeFormExpression) {
-      filterState.freeFormWords.push(query.slice(cursor.node.from, cursor.node.to).trim());
+      filterState.freeFormWords.push(getNodeContent(query, cursor.node));
     }
   } while (cursor.next());
 
   return filterState;
+}
+
+function getFilterFromSyntaxNode(query: string, filterExpressionNode: SyntaxNode): { type?: number; value?: string } {
+  if (filterExpressionNode.type.id !== terms.FilterExpression) {
+    throw new Error('Invalid node provided. Only FilterExpression nodes are supported');
+  }
+
+  const filterNode = filterExpressionNode.firstChild;
+  if (!filterNode) {
+    return { type: undefined, value: undefined };
+  }
+
+  const filterValueNode = filterNode.getChild(terms.FilterValue);
+  const filterValue = filterValueNode ? trim(getNodeContent(query, filterValueNode), '"') : undefined;
+
+  return { type: filterNode.type.id, value: filterValue };
+}
+
+function getNodeContent(query: string, node: SyntaxNode) {
+  return query.slice(node.from, node.to).trim();
 }
 
 export function applySearchFilterToQuery(query: string, filter: SearchFilterState): string {
@@ -129,6 +142,7 @@ export function applySearchFilterToQuery(query: string, filter: SearchFilterStat
   existingFilterNodes.map((filterNode) => {
     const matchingFilterIdx = filterStateArray.findIndex((f) => f.type === filterNode.type.id);
     const filterValueNode = filterNode.getChild(terms.FilterValue);
+
     if (matchingFilterIdx !== -1 && filterValueNode) {
       const filterToken = query.substring(filterNode.from, filterValueNode.from); // Extract the filter type only
       const filterItem = filterStateArray.splice(matchingFilterIdx, 1)[0];
