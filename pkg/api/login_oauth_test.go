@@ -167,16 +167,17 @@ func TestOAuthLogin_UsePKCE(t *testing.T) {
 
 func TestOAuthLogin_BuildExternalUserInfo(t *testing.T) {
 	t.Helper()
-	cfg := setting.NewCfg()
-	sec := cfg.Raw.Section("auth.generic_oauth")
-	_, err := sec.NewKey("enabled", "true")
+	cfgOAuthSkipRoleSync := setting.NewCfg()
+	authOAuthSec := cfgOAuthSkipRoleSync.Raw.Section("auth")
+	_, err := authOAuthSec.NewKey("oauth_skip_org_role_update_sync", "true")
 	require.NoError(t, err)
-	_, err = sec.NewKey("use_pkce", "true")
+	cfgOAuthSkipRoleSync.ErrTemplateName = "error-template"
+
+	cfgOAuthOrgRoleSync := setting.NewCfg()
+	authOAutoWithoutSec := cfgOAuthOrgRoleSync.Raw.Section("auth")
+	_, err = authOAutoWithoutSec.NewKey("oauth_skip_org_role_update_sync", "false")
 	require.NoError(t, err)
-	authSec := cfg.Raw.Section("auth")
-	_, err = authSec.NewKey("oauth_skip_org_role_update_sync", "true")
-	require.NoError(t, err)
-	cfg.ErrTemplateName = "error-template"
+	cfgOAuthOrgRoleSync.ErrTemplateName = "error-template"
 
 	testcases := []struct {
 		name             string
@@ -186,7 +187,7 @@ func TestOAuthLogin_BuildExternalUserInfo(t *testing.T) {
 	}{
 		{
 			name: "should return empty map of org role mapping if the role for the basic info is empty",
-			cfg:  cfg,
+			cfg:  cfgOAuthOrgRoleSync,
 			basicUser: &social.BasicUserInfo{
 				Id:    "1",
 				Name:  "first lastname",
@@ -197,8 +198,8 @@ func TestOAuthLogin_BuildExternalUserInfo(t *testing.T) {
 			expectedOrgRoles: map[int64]org.RoleType{},
 		},
 		{
-			name: "should set externalUser org role for basic info role",
-			cfg:  cfg,
+			name: "should set internal role if role exists and we are skipping org role sync",
+			cfg:  cfgOAuthSkipRoleSync,
 			basicUser: &social.BasicUserInfo{
 				Id:    "1",
 				Name:  "first lastname",
@@ -208,12 +209,24 @@ func TestOAuthLogin_BuildExternalUserInfo(t *testing.T) {
 			},
 			expectedOrgRoles: map[int64]org.RoleType{1: roletype.RoleAdmin},
 		},
+		{
+			name: "should return empty external role, if the role for the basic info is empty",
+			cfg:  cfgOAuthSkipRoleSync,
+			basicUser: &social.BasicUserInfo{
+				Id:    "1",
+				Name:  "first lastname",
+				Email: "example@github.com",
+				Login: "example",
+				Role:  "",
+			},
+			expectedOrgRoles: map[int64]org.RoleType{},
+		},
 	}
 	for _, tc := range testcases {
+		t.Logf("%s", tc.name)
 		cfg := tc.cfg
 		hs := setupSocialHTTPServerWithConfig(t, cfg)
 		externalUser := hs.buildExternalUserInfo(nil, tc.basicUser, "")
 		require.Equal(t, tc.expectedOrgRoles, externalUser.OrgRoles)
 	}
-
 }
