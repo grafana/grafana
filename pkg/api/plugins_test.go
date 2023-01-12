@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -123,24 +125,31 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		sc := setupHTTPServerWithCfg(t, true, &setting.Cfg{
-			RBACEnabled:                      true,
-			PluginAdminEnabled:               tc.pluginAdminEnabled,
-			PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled})
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, tc.permissions, sc.initCtx.OrgID)
-		sc.hs.pluginInstaller = NewFakePluginInstaller()
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.Cfg = &setting.Cfg{
+				RBACEnabled:                      true,
+				PluginAdminEnabled:               tc.pluginAdminEnabled,
+				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled}
+			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
+			hs.pluginInstaller = NewFakePluginInstaller()
+		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
-			input := strings.NewReader("{ \"version\": \"1.0.2\" }")
-			response := callAPI(sc.server, http.MethodPost, "/api/plugins/test/install", input, t)
-			require.Equal(t, tc.expectedCode, response.Code)
+			input := strings.NewReader(`{"version": "1.0.2"}`)
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/install", input), userWithPermissions(1, tc.permissions))
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 
 		t.Run(testName("Uninstall", tc), func(t *testing.T) {
 			input := strings.NewReader("{ }")
-			response := callAPI(sc.server, http.MethodPost, "/api/plugins/test/uninstall", input, t)
-			require.Equal(t, tc.expectedCode, response.Code)
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/uninstall", input), userWithPermissions(1, tc.permissions))
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
