@@ -1,8 +1,11 @@
-// Re-export TZ from schema
-export { TimeZone, TimeZoneBrowser, TimeZoneUtc, defaultTimeZone as DefaultTimeZone } from '@grafana/schema';
+import {
+  TimeZone as SchemaTimeZone,
+  TimeZoneBrowser as SchemaTimeZoneBrowser,
+  TimeZoneUtc as SchemaTimeZoneUtc,
+  defaultTimeZone,
+} from '@grafana/schema';
 
 import { dateTime, DateTime } from '../datetime/moment_wrapper';
-
 
 export interface RawTimeRange {
   from: DateTime | string;
@@ -39,6 +42,18 @@ export interface TimeOption {
   to: string;
   display: string;
 }
+
+/** @deprecated use TimeZone from schema  */
+export type TimeZone = SchemaTimeZone;
+
+/** @deprecated use TimeZoneBrowser from schema  */
+export type TimeZoneBrowser = SchemaTimeZoneBrowser;
+
+/** @deprecated use TimeZoneUtc from schema  */
+export type TimeZoneUtc = SchemaTimeZoneUtc;
+
+/** @deprecated use defaultTimeZone from schema  */
+export const DefaultTimeZone = defaultTimeZone;
 
 export interface TimeOptions {
   [key: string]: TimeOption[];
