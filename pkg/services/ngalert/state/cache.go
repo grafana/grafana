@@ -215,7 +215,7 @@ func (c *cache) getAll(orgID int64, skipNormalState bool) []*State {
 	defer c.mtxStates.RUnlock()
 	for _, v1 := range c.states[orgID] {
 		for _, v2 := range v1.states {
-			if skipNormalState && IsNormalState(v2) {
+			if skipNormalState && IsNormalStateWithNoReason(v2) {
 				continue
 			}
 			states = append(states, v2)
@@ -237,7 +237,7 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string, skipNormal
 	}
 	result := make([]*State, 0, len(rs.states))
 	for _, state := range rs.states {
-		if skipNormalState && IsNormalState(state) {
+		if skipNormalState && IsNormalStateWithNoReason(state) {
 			continue
 		}
 		result = append(result, state)

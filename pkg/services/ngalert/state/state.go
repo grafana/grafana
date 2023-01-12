@@ -140,8 +140,8 @@ func (a *State) Maintain(interval int64, evaluatedAt time.Time) {
 	a.EndsAt = nextEndsTime(interval, evaluatedAt)
 }
 
-// IsNormalState returns true if the state is Normal and reason is empty
-func IsNormalState(s *State) bool {
+// IsNormalStateWithNoReason returns true if the state is Normal and reason is empty
+func IsNormalStateWithNoReason(s *State) bool {
 	return s.State == eval.Normal && s.StateReason == ""
 }
 
