@@ -21,6 +21,10 @@ describe('Partition by values transformer', () => {
 
     const config: PartitionByValuesTransformerOptions = {
       fields: ['region'],
+      keepFields: true,
+      naming: {
+        asLabels: false,
+      },
     };
 
     let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);
@@ -57,6 +61,10 @@ describe('Partition by values transformer', () => {
 
     const config: PartitionByValuesTransformerOptions = {
       fields: ['region', 'status'],
+      keepFields: true,
+      naming: {
+        asLabels: false,
+      },
     };
 
     let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);
@@ -100,7 +108,7 @@ describe('Partition by values transformer', () => {
     expect(partitioned[3].fields[2].values.toArray()).toEqual(['FAIL']);
   });
 
-  it('should partition by multiple fields with custom frame naming {withFields: true}', () => {
+  it('should partition by multiple fields with custom frame naming {withNames: true}', () => {
     const source = [
       toDataFrame({
         name: 'XYZ',
@@ -115,8 +123,10 @@ describe('Partition by values transformer', () => {
 
     const config: PartitionByValuesTransformerOptions = {
       fields: ['region', 'status'],
+      keepFields: true,
       naming: {
-        withFields: true,
+        asLabels: false,
+        withNames: true,
       },
     };
 
@@ -143,7 +153,9 @@ describe('Partition by values transformer', () => {
 
     const config: PartitionByValuesTransformerOptions = {
       fields: ['region', 'status'],
+      keepFields: true,
       naming: {
+        asLabels: false,
         append: true,
       },
     };
@@ -156,7 +168,7 @@ describe('Partition by values transformer', () => {
     expect(partitioned[3].name).toEqual('XYZ China FAIL');
   });
 
-  it('should partition by multiple fields with custom frame naming {withFields: true, append: true}', () => {
+  it('should partition by multiple fields with custom frame naming {withNames: true, append: true}', () => {
     const source = [
       toDataFrame({
         name: 'XYZ',
@@ -171,8 +183,10 @@ describe('Partition by values transformer', () => {
 
     const config: PartitionByValuesTransformerOptions = {
       fields: ['region', 'status'],
+      keepFields: true,
       naming: {
-        withFields: true,
+        asLabels: false,
+        withNames: true,
         append: true,
       },
     };
@@ -200,6 +214,7 @@ describe('Partition by values transformer', () => {
 
     const config: PartitionByValuesTransformerOptions = {
       fields: ['region', 'status'],
+      keepFields: true,
       naming: {
         asLabels: true,
       },
@@ -240,10 +255,6 @@ describe('Partition by values transformer', () => {
 
     const config: PartitionByValuesTransformerOptions = {
       fields: ['region', 'status'],
-      naming: {
-        asLabels: true,
-      },
-      omitFields: true,
     };
 
     let partitioned = partitionByValuesTransformer.transformer(config, ctx)(source);

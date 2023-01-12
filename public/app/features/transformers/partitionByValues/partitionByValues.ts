@@ -22,7 +22,7 @@ export interface FrameNamingOptions {
   /** whether to append to existing frame name, false -> replace */
   append?: boolean; // false
   /** whether to include discriminator field names, e.g. true -> Region=Europe Profession=Chef, false -> 'Europe Chef'  */
-  withFields?: boolean; // false
+  withNames?: boolean; // false
   /** name/value separator, e.g. '=' in 'Region=Europe' */
   separator1?: string;
   /** name/value pair separator, e.g. ' ' in 'Region=Europe Profession=Chef' */
@@ -30,10 +30,10 @@ export interface FrameNamingOptions {
 }
 
 const defaultFrameNameOptions: FrameNamingOptions = {
-  asLabels: false,
+  asLabels: true,
 
   append: false,
-  withFields: false,
+  withNames: false,
   separator1: '=',
   separator2: ' ',
 };
@@ -43,13 +43,13 @@ export interface PartitionByValuesTransformerOptions {
   fields: string[];
   /** how the split frames' names should be suffixed (ends up as field prefixes) */
   naming?: FrameNamingOptions;
-  /** should the discriminator fields be omited from the output */
-  omitFields?: boolean;
+  /** should the discriminator fields be kept in the output */
+  keepFields?: boolean;
 }
 
 function buildFrameName(opts: FrameNamingOptions, names: string[], values: unknown[]): string {
   return names
-    .map((name, i) => (opts.withFields ? `${name}${opts.separator1}${values[i]}` : values[i]))
+    .map((name, i) => (opts.withNames ? `${name}${opts.separator1}${values[i]}` : values[i]))
     .join(opts.separator2);
 }
 
@@ -121,7 +121,7 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
 
         let filteredFields = frame.fields;
 
-        if (options.omitFields) {
+        if (!options.keepFields) {
           const keyFieldNames = new Set(names);
           filteredFields = frame.fields.filter((field) => !keyFieldNames.has(field.name));
         }
