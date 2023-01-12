@@ -7,13 +7,12 @@ import (
 	"github.com/dave/dst/dstutil"
 	"github.com/grafana/codejen"
 	"github.com/grafana/thema/encoding/gocode"
-	"golang.org/x/tools/go/ast/astutil"
 )
 
 // GoTypesJenny creates a [OneToOne] that produces Go types for the provided
 // [thema.Schema].
 type GoTypesJenny struct {
-	ApplyFuncs []astutil.ApplyFunc
+	ApplyFuncs []dstutil.ApplyFunc
 }
 
 func (j GoTypesJenny) JennyName() string {
