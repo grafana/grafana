@@ -9,21 +9,18 @@ import {
   KBarResults,
   KBarSearch,
   useMatches,
-  Action,
   VisualState,
   useRegisterActions,
   useKBar,
 } from 'kbar';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction, locationService } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { useSelector } from 'app/types';
 
 import { ResultItem } from './ResultItem';
-import getDashboardNavActions from './actions/dashboard.nav.actions';
-import getGlobalActions from './actions/global.static.actions';
+import useActions from './actions/useActions';
 
 /**
  * Wrap all the components from KBar here.
@@ -32,18 +29,14 @@ import getGlobalActions from './actions/global.static.actions';
 
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
-  const [actions, setActions] = useState<Action[]>([]);
-  const [staticActions, setStaticActions] = useState<Action[]>([]);
-  const { query, showing } = useKBar((state) => ({
-    showing: state.visualState === VisualState.showing,
-  }));
-  const isNotLogin = locationService.getLocation().pathname !== '/login';
 
-  const { navBarTree } = useSelector((state) => {
-    return {
-      navBarTree: state.navBarTree,
-    };
-  });
+  const { query, showing, searchQuery } = useKBar((state) => ({
+    showing: state.visualState === VisualState.showing,
+    searchQuery: state.searchQuery,
+  }));
+
+  const actions = useActions(searchQuery, showing);
+  useRegisterActions(actions, [actions]);
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
@@ -52,26 +45,10 @@ export const CommandPalette = () => {
   );
   const { dialogProps } = useDialog({}, ref);
 
+  // Report interaction when opened
   useEffect(() => {
-    if (isNotLogin) {
-      const staticActionsResp = getGlobalActions(navBarTree);
-      setStaticActions(staticActionsResp);
-      setActions([...staticActionsResp]);
-    }
-  }, [isNotLogin, navBarTree]);
-
-  useEffect(() => {
-    if (showing) {
-      reportInteraction('command_palette_opened');
-
-      // Do dashboard search on demand
-      getDashboardNavActions('go/dashboard').then((dashAct) => {
-        setActions([...staticActions, ...dashAct]);
-      });
-    }
-  }, [showing, staticActions]);
-
-  useRegisterActions(actions, [actions]);
+    showing && reportInteraction('command_palette_opened');
+  }, [showing]);
 
   return actions.length > 0 ? (
     <KBarPortal>

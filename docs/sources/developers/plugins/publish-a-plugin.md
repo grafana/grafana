@@ -106,7 +106,7 @@ To speed up the time it takes to review your plugin:
 
 ## Publishing your plugin for the first time
 
-{{< figure src="/static/img/docs/plugins/plugins-submission-create.png" class="docs-image--no-shadow" max-width="650px" >}}
+{{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
 
 1. [Sign in](https://grafana.com/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
@@ -116,6 +116,7 @@ To speed up the time it takes to review your plugin:
      - Select **Single** if your plugin archive contains binaries for multiple architectures.
      - Select **Multiple** if you'd like to submit separate plugin archives for each architecture. This can lead to faster downloads since users can select the specific architecture on which they want to install the plugin.
    - **URL:** A URL that points to a ZIP archive of your packaged plugin.
+   - **Source Code URL:** A URL that points to a public git repository or ZIP archive of your complete plugin source code.
    - **MD5:** The MD5 hash of the plugin specified by the **URL**.
    - The remaining questions help us determine the [signature level](https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/#plugin-signature-levels) for your plugin.
 1. Click **Submit**.
@@ -138,5 +139,6 @@ To submit an **update** for an already published plugin:
      - Select **Single** if your plugin archive contains binaries for multiple architectures.
      - Select **Multiple** if you'd like to submit separate plugin archives for each architecture. This can lead to faster downloads since users can select the specific architecture they want to install the plugin on.
    - **URL:** A URL that points to a ZIP archive of your packaged plugin.
+   - **Source Code URL:** A URL that points to a public git repository or ZIP archive of your complete plugin source code.
    - **MD5:** The MD5 hash of the plugin specified by the **URL**.
 1. Click **Submit**.

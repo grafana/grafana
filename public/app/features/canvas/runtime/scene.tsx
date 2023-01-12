@@ -5,7 +5,7 @@ import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
-import { GrafanaTheme2, PanelData } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
 import { Portal, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -30,6 +30,7 @@ import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/ConnectionAnc
 import { Connections } from 'app/plugins/panel/canvas/Connections';
 import { AnchorPoint, LayerActionID } from 'app/plugins/panel/canvas/types';
 
+import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
@@ -75,6 +76,8 @@ export class Scene {
 
   readonly editModeEnabled = new BehaviorSubject<boolean>(false);
   subscription: Subscription;
+
+  targetsToSelect = new Set<HTMLDivElement>();
 
   constructor(
     cfg: CanvasFrameOptions,
@@ -583,6 +586,16 @@ export class Scene {
     dest.scene.save();
 
     dest.reinitializeMoveable();
+  };
+
+  addToSelection = () => {
+    try {
+      let selection: SelectionParams = { targets: [] };
+      selection.targets = [...this.targetsToSelect];
+      this.select(selection);
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, ['Unable to add to selection']);
+    }
   };
 
   render() {
