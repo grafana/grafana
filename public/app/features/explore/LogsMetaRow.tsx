@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import saveAs from 'file-saver';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, dateTimeFormat } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
