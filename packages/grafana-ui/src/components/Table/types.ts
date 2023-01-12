@@ -14,9 +14,9 @@ export interface TableRow {
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
-export type FilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
-export type FilterItem = { key: string; value: string; operator: FilterOperator };
-export type TableFilterActionCallback = (item: FilterItem) => void;
+export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
+export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
+export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
 export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 

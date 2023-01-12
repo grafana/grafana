@@ -79,7 +79,12 @@ export { PageToolbar } from './PageLayout/PageToolbar';
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
-export { TableCellDisplayMode, type TableSortByFieldState, type TableFooterCalc } from './Table/types';
+export {
+  TableCellDisplayMode,
+  type TableSortByFieldState,
+  type TableFooterCalc,
+  type AdHocFilterItem,
+} from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
