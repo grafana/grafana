@@ -86,7 +86,9 @@ type Alertmanager struct {
 	inhibitor  *inhibit.Inhibitor
 	// wg is for dispatcher, inhibitor, silences and notifications
 	// Across configuration changes dispatcher and inhibitor are completely replaced, however, silences, notification log and alerts remain the same.
-	wg sync.WaitGroup
+	// stopc is used to let silences and notifications know we are done.
+	stopc chan struct{}
+	wg    sync.WaitGroup
 
 	silencer *silence.Silencer
 	silences *silence.Silences
