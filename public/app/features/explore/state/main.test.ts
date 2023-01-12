@@ -9,7 +9,7 @@ import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import { ExploreId, ExploreItemState, ExploreState } from '../../../types';
 
-import { exploreReducer, navigateToExplore, splitCloseAction, splitOpen } from './main';
+import { exploreReducer, navigateToExplore, splitCloseAction } from './main';
 
 const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {
   const url = '/explore';
