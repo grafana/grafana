@@ -75,7 +75,7 @@ export function getSearchFilterFromQuery(query: string): SearchFilterState {
         }
       }
     } else if (cursor.node.type.id === terms.FreeFormExpression) {
-      filterState.freeFormWords.push(query.slice(cursor.node.from, cursor.node.to));
+      filterState.freeFormWords.push(query.slice(cursor.node.from, cursor.node.to).trim());
     }
   } while (cursor.next());
 

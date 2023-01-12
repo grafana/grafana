@@ -12,7 +12,7 @@ import {
   mockPromAlertingRule,
   mockRulerGrafanaRule,
 } from '../mocks';
-import { SearchFilterState } from '../search/searchEngine';
+import { SearchFilterState } from '../search/searchParser';
 
 import { filterRules } from './useFilteredRules';
 
