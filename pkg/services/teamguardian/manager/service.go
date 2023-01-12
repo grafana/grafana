@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -23,7 +24,7 @@ func (s *Service) CanAdmin(ctx context.Context, orgId int64, teamId int64, user 
 	}
 
 	if user.OrgID != orgId {
-		return models.ErrNotAllowedToUpdateTeamInDifferentOrg
+		return team.ErrNotAllowedToUpdateTeamInDifferentOrg
 	}
 
 	cmd := models.GetTeamMembersQuery{
@@ -44,7 +45,7 @@ func (s *Service) CanAdmin(ctx context.Context, orgId int64, teamId int64, user 
 		}
 	}
 
-	return models.ErrNotAllowedToUpdateTeam
+	return team.ErrNotAllowedToUpdateTeam
 }
 
 func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
