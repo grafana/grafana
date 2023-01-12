@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 var (
@@ -18,23 +19,30 @@ var (
 		Namespace: "grafana",
 		Name:      "plugin_request_total",
 		Help:      "The total amount of plugin requests",
-	}, []string{"plugin_id", "endpoint", "status"})
+	}, []string{"plugin_id", "endpoint", "status", "target"})
 
 	pluginRequestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_milliseconds",
 		Help:      "Plugin request duration",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
-	}, []string{"plugin_id", "endpoint"})
+	}, []string{"plugin_id", "endpoint", "target"})
 )
 
 // NewInstrumentationMiddleware creates a new plugins.ClientMiddleware
 // that will instrumentation QueryData, CallResource, CheckHealth and
 // CollectMetrics requests made from a backend plugin.
-func NewInstrumentationMiddleware(cfg InstrumentationMiddlewareConfig) plugins.ClientMiddleware {
+func NewInstrumentationMiddleware(cfg InstrumentationMiddlewareConfig, store plugins.Store) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &InstrumentationMiddleware{
-			cfg:  InstrumentationMiddlewareConfig{LogDatasourceRequests: cfg.LogDatasourceRequests},
+			cfg: InstrumentationMiddlewareConfig{
+				LogDatasourceRequests: cfg.LogDatasourceRequests,
+				PluginTarget: func(ctx context.Context, pluginID string) backendplugin.Target {
+					if p, exists := store.Plugin(ctx, pluginID); exists {
+						return p.Target()
+					}
+					return backendplugin.TargetUnknown
+				}},
 			next: next,
 		}
 	})
@@ -49,6 +57,7 @@ var logger log.Logger = log.New("plugin.instrumentation")
 
 type InstrumentationMiddlewareConfig struct {
 	LogDatasourceRequests bool
+	PluginTarget          func(ctx context.Context, pluginID string) backendplugin.Target
 }
 
 func instrument(ctx context.Context, cfg InstrumentationMiddlewareConfig, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
@@ -62,7 +71,7 @@ func instrument(ctx context.Context, cfg InstrumentationMiddlewareConfig, plugin
 	}
 
 	elapsed := time.Since(start)
-	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint).Observe(float64(elapsed / time.Millisecond))
+	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, string(cfg.PluginTarget(ctx, pluginCtx.PluginID))).Observe(float64(elapsed / time.Millisecond))
 	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status).Inc()
 
 	if cfg.LogDatasourceRequests {

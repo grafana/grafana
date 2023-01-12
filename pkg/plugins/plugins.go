@@ -53,8 +53,9 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
-	logger    log.Logger
-	pluginDir string
+	logger     log.Logger
+	pluginDir  string
+	targetType backendplugin.Target
 
 	Class Class
 
@@ -95,6 +96,10 @@ func (p PluginDTO) IsExternalPlugin() bool {
 
 func (p PluginDTO) IsSecretsManager() bool {
 	return p.JSONData.Type == SecretsManager
+}
+
+func (p PluginDTO) Target() backendplugin.Target {
+	return backendplugin.TargetUnknown
 }
 
 func (p PluginDTO) File(name string) (fs.File, error) {
@@ -267,6 +272,16 @@ func (p *Plugin) Exited() bool {
 	return false
 }
 
+func (p *Plugin) Target() backendplugin.Target {
+	if !p.Backend {
+		return backendplugin.TargetNone
+	}
+	if p.client == nil {
+		return backendplugin.TargetUnknown
+	}
+	return p.client.Target()
+}
+
 func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
@@ -367,6 +382,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 	return PluginDTO{
 		logger:          p.Logger(),
 		pluginDir:       p.PluginDir,
+		targetType:      p.Target(),
 		JSONData:        p.JSONData,
 		Class:           p.Class,
 		IncludedInAppID: p.IncludedInAppID,
