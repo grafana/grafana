@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -134,34 +133,4 @@ func TestCallResource(t *testing.T) {
 		require.Equal(t, 500, resp.StatusCode)
 	})
 
-	t.Run("f", func(t *testing.T) {
-		pctx := backend.PluginContext{
-			OrgID:    1,
-			PluginID: "testdata",
-			User: &backend.User{
-				Login: "",
-				Name:  "",
-				Email: "",
-				Role:  "",
-			},
-			AppInstanceSettings: &backend.AppInstanceSettings{
-				JSONData:                json.RawMessage{},
-				DecryptedSecureJSONData: map[string]string{},
-				Updated:                 time.Time{},
-			},
-			DataSourceInstanceSettings: nil,
-		}
-
-		data := map[string]interface{}{
-			"message": "Hello world from test datasource!",
-			"request": map[string]interface{}{
-				"config": pctx,
-			},
-		}
-		bytes, err := json.Marshal(&data)
-		require.NoError(t, err)
-
-		require.NotEqual(t, "", string(bytes))
-
-	})
 }

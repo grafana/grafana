@@ -91,7 +91,7 @@ func instrument(ctx context.Context, cfg InstrumentationMiddlewareConfig, plugin
 
 		logger.Info("Plugin Request Completed", logParams...)
 	}
-	return nil
+	return err
 }
 
 func (m *InstrumentationMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -113,21 +113,12 @@ func (m *InstrumentationMiddleware) CallResource(ctx context.Context, req *backe
 		return m.next.CallResource(ctx, req, sender)
 	}
 
-	var innerErr error
-	err := instrumentCallResourceRequest(ctx, &req.PluginContext, m.cfg, func() error {
+	err := instrumentCallResourceRequest(ctx, &req.PluginContext, m.cfg, func() (innerErr error) {
 		innerErr = m.next.CallResource(ctx, req, sender)
-		return innerErr
+		return
 	})
 
-	if err != nil {
-		return err
-	}
-
-	if innerErr != nil {
-		return innerErr
-	}
-
-	return nil
+	return err
 }
 
 func (m *InstrumentationMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
