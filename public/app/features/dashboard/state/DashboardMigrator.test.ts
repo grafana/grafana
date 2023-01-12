@@ -2182,16 +2182,114 @@ describe('when migrating table cell display mode to cell options', () => {
   let model: DashboardModel;
 
   beforeEach(() => {
-    model = new DashboardModel({});
+    model = new DashboardModel({
+      panels: [
+        // @ts-expect-error
+        {
+          id: 1,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'color-background',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 2,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'color-background-solid',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 3,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'lcd-gauge',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 4,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'gradient-gauge',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 5,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'basic',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+      ],
+      schemaVersion: 37,
+    });
   });
 
-  it('should migrate color background options to the new option format', () => {
-    console.log(model);
+  it('should migrate gradient color background option to the new option format', () => {
+    const cellOptions = model.panels[0].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'color-background', mode: 'gradient' });
   });
 
-  it('should migrate gauge options to the new option format', () => {});
+  it('should migrate solid color background option to the new option format', () => {
+    const cellOptions = model.panels[1].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'color-background', mode: 'basic' });
+  });
 
-  it('should not add options for cell types without extra options', () => {});
+  it('should migrate LCD gauge option to the new option format', () => {
+    const cellOptions = model.panels[2].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'gauge', mode: 'lcd' });
+  });
+
+  it('should migrate gradient gauge option to the new option format', () => {
+    const cellOptions = model.panels[3].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'gauge', mode: 'gradient' });
+  });
+
+  it('should migrate basic gauge option to the new option format', () => {
+    const cellOptions = model.panels[4].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'gauge', mode: 'basic' });
+  });
+
+  // it('should not add options for cell types without extra options', () => {});
 });
 
 function createRow(options: any, panelDescriptions: any[]) {
