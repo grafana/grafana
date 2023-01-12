@@ -116,7 +116,7 @@ If you use nested groups containing special characters such as quotes or colons,
 
 ```ini
 [auth.generic_oauth]
-groups_attribute_path = reverse("Global:department") 
+groups_attribute_path = reverse("Global:department")
 ```
 
 ## Enable Single Logout
