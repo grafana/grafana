@@ -7,12 +7,13 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func stringPtr(s string) *string {
@@ -87,8 +88,10 @@ func TestAuthenticateJWT(t *testing.T) {
 func TestJWTTest(t *testing.T) {
 	jwtService := &models.FakeJWTService{}
 	jwtHeaderName := "X-Forwarded-User"
-	validFormatToken := "sample.token.valid"
+	validFormatToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"
 	invalidFormatToken := "sampletokeninvalid"
+	missingSubToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjJ9.8nYFUX869Y1mnDDDU4yL11aANgVRuifoxrE8BHZY1iE"
+	emptySubToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJzdWIiOiIiLCJpYXQiOjE1MTYyMzkwMjJ9.tnwtOHK58d47dO4DHW4b9MzeToxa1kGiko5Oo887Rqc"
 
 	type testCase struct {
 		desc          string
@@ -142,6 +145,20 @@ func TestJWTTest(t *testing.T) {
 			cfgHeaderName: jwtHeaderName,
 			urlLogin:      false,
 			token:         validFormatToken,
+			want:          false,
+		},
+		{
+			desc:          "token without a sub claim",
+			reqHeaderName: "Authorization",
+			cfgHeaderName: "Authorization",
+			token:         missingSubToken,
+			want:          false,
+		},
+		{
+			desc:          "token with an empty sub claim",
+			reqHeaderName: "Authorization",
+			cfgHeaderName: "Authorization",
+			token:         emptySubToken,
 			want:          false,
 		},
 	}

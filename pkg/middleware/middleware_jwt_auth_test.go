@@ -55,7 +55,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		cfg.JWTAuthAllowAssignGrafanaAdmin = true
 	}
 
-	token := "some-token"
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ2bGFkaW1pckBleGFtcGxlLmNvbSIsImlhdCI6MTUxNjIzOTAyMiwiZm9vLXVzZXJuYW1lIjoidmxhZGltaXIiLCJuYW1lIjoiVmxhZGltaXIgRXhhbXBsZSIsImZvby1lbWFpbCI6InZsYWRpbWlyQGV4YW1wbGUuY29tIn0.MeNU1pCzRHGdQuu5ppeftxT31_2Le2kM1wd1GK2jExs"
 
 	middlewareScenario(t, "Valid token with valid login claim", func(t *testing.T, sc *scenarioContext) {
 		myUsername := "vladimir"
@@ -85,7 +85,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		myUsername := "vladimir"
 		// We can ignore gosec G101 since this does not contain any credentials.
 		// nolint:gosec
-		myToken := "some.jwt.token"
+		myToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ2bGFkaW1pckBleGFtcGxlLmNvbSIsImlhdCI6MTUxNjIzOTAyMiwiZm9vLXVzZXJuYW1lIjoidmxhZGltaXIiLCJuYW1lIjoiVmxhZGltaXIgRXhhbXBsZSIsImZvby1lbWFpbCI6InZsYWRpbWlyQGV4YW1wbGUuY29tIn0.MeNU1pCzRHGdQuu5ppeftxT31_2Le2kM1wd1GK2jExs"
 		var verifiedToken string
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = myToken
