@@ -6,7 +6,6 @@ import { GrafanaTheme2, isIconName, LoadingState } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
-import { Button } from '../Button';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
 import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
