@@ -52,10 +52,10 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 					SyncTeamMembers:     true,
 					AllowSignUp:         false,
 					EnableDisabledUsers: true,
-				},
-				LookUpParams: models.UserLookupParams{
-					Email: strPtr("test@test.com"),
-					Login: strPtr("test"),
+					LookUpParams: models.UserLookupParams{
+						Email: strPtr("test@test.com"),
+						Login: strPtr("test"),
+					},
 				},
 			},
 		},

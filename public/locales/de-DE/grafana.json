@@ -5,6 +5,21 @@
       "success": "Kopiert"
     }
   },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Standard"
@@ -83,7 +98,6 @@
   "datasource-onboarding": {
     "contact-admin": "Bitte wenden Sie sich an Ihren Administrator, um die Datenquellen zu konfigurieren.",
     "explanation": "Um Ihre Daten zu visualisieren, müssen Sie sie zunächst verknüpfen.",
-    "logo": "Logo für die Datenquelle {{datasourceName}}",
     "new-dashboard": "Neues Dashboard",
     "preferred": "Verbinden Sie Ihre bevorzugte Datenquelle:",
     "sampleData": "Oder erstellen Sie ein neues Dashboard mit Beispieldaten",
