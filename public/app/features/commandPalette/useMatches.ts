@@ -186,36 +186,58 @@ function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
       return throttledFiltered.map((action) => ({ score: 0, action }));
     }
 
-    const haystack = throttledFiltered.map((action) => [action.name, action.keywords, action.subtitle].join(' '));
+    const haystack = throttledFiltered.map((action) =>
+      [action.name, action.keywords, action.subtitle].join(' ').toLowerCase()
+    );
 
-    const allMatchedActionIndexes = new Set<number>();
+    const results: Match[] = [];
 
-    const queryTerms = ufuzzy.split(throttledSearch);
-    const searchPermutations = uFuzzy.permute(queryTerms).map((terms) => terms.join(' '));
+    // If the search term is too long, then just do a simple substring search.
+    // We don't expect users to actually hit this frequently, but want to prevent browser hangs
+    if (throttledSearch.length > FUZZY_SEARCH_LIMIT) {
+      const query = throttledSearch.toLowerCase();
 
-    for (const permutedSearchTerm of searchPermutations) {
-      const indexes = ufuzzy.filter(haystack, throttledSearch);
-      const info = ufuzzy.info(indexes, haystack, throttledSearch);
-      const order = ufuzzy.sort(info, haystack, throttledSearch);
+      for (let haystackIndex = 0; haystackIndex < haystack.length; haystackIndex++) {
+        const haystackItem = haystack[haystackIndex];
 
-      for (let orderIndex = 0; orderIndex < order.length; orderIndex++) {
-        const actionIndex = order[orderIndex];
+        // Use the position of the match as a stand-in for score
+        const substringPosition = haystackItem.toLowerCase().indexOf(query);
 
-        if (!allMatches.has(actionIndex) {
-
-        });
-
-        // const score = order.length - orderIndex;
-        // const action = throttledFiltered[info.idx[actionIndex]];
-        // return { score, action };
-
+        if (substringPosition > -1) {
+          const score = haystack.length - substringPosition;
+          const action = throttledFiltered[haystackIndex];
+          results.push({ score, action });
+        }
       }
+    } else {
+      const allMatchedIndexes = new Set<number>();
 
+      const queryWords = ufuzzy.split(throttledSearch);
+      const queryPermutations = uFuzzy.permute(queryWords).map((terms) => terms.join(' '));
+
+      for (const permutedSearchTerm of queryPermutations) {
+        const indexes = ufuzzy.filter(haystack, permutedSearchTerm);
+        const info = ufuzzy.info(indexes, haystack, permutedSearchTerm);
+        const order = ufuzzy.sort(info, haystack, permutedSearchTerm);
+
+        for (let orderIndex = 0; orderIndex < order.length; orderIndex++) {
+          const actionIndex = order[orderIndex];
+
+          if (!allMatchedIndexes.has(actionIndex)) {
+            allMatchedIndexes.add(actionIndex);
+            const score = order.length - orderIndex;
+            const action = throttledFiltered[info.idx[actionIndex]];
+            results.push({ score, action });
+          }
+        }
+      }
     }
 
-    return [];
+    return results;
   }, [throttledFiltered, throttledSearch, ufuzzy]);
 }
+
+const FUZZY_SEARCH_LIMIT = 25;
 
 function useUfuzzy(): uFuzzy {
   const ref = React.useRef<uFuzzy>();
