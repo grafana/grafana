@@ -23,7 +23,7 @@ Grafana Alertmanager is an internal Alertmanager that is pre-configured and avai
 
 The Grafana Alertmanager can receive alerts from Grafana, but it cannot receive alerts from outside Grafana, for example, from Mimir or Loki.
 
-**Please note that inhibition rules are not supported in the Grafana Alertmanager**
+**Note that inhibition rules are not supported in the Grafana Alertmanager.**
 
 **External Alertmanager**
 
