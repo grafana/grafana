@@ -15,19 +15,21 @@ export default class MySQLQueryModel {
   }
 
   // remove identifier quoting from identifier to use in metadata queries
-  unquoteIdentifier(value: string) {
+  static unquoteIdentifier(value: string) {
     if (value[0] === '"' && value[value.length - 1] === '"') {
       return value.substring(1, value.length - 1).replace(/""/g, '"');
+    } else if (value[0] === '`' && value[value.length - 1] === '`') {
+      return value.substring(1, value.length - 1);
     } else {
       return value;
     }
   }
 
-  quoteIdentifier(value: string) {
+  static quoteIdentifier(value: string) {
     return '"' + value.replace(/"/g, '""') + '"';
   }
 
-  quoteLiteral(value: string) {
+  static quoteLiteral(value: string) {
     return "'" + value.replace(/'/g, "''") + "'";
   }
 

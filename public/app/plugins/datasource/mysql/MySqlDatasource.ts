@@ -1,6 +1,5 @@
-import { DataSourceInstanceSettings, ScopedVars, TimeRange } from '@grafana/data';
+import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
 import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
-import { TemplateSrv } from '@grafana/runtime';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
 import { DB, SQLQuery } from 'app/features/plugins/sql/types';
 import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
@@ -9,7 +8,7 @@ import MySQLQueryModel from './MySqlQueryModel';
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
-import { toRawSql } from './sqlUtil';
+import { escapeValue, toRawSql } from './sqlUtil';
 import { MySQLOptions } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
@@ -19,8 +18,8 @@ export class MySqlDatasource extends SqlDatasource {
     super(instanceSettings);
   }
 
-  getQueryModel(target?: Partial<SQLQuery>, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): MySQLQueryModel {
-    return new MySQLQueryModel(target!, templateSrv, scopedVars);
+  getQueryModel() {
+    return { quoteLiteral: MySQLQueryModel.quoteLiteral };
   }
 
   getSqlLanguageDefinition(db: DB): LanguageDefinition {
@@ -29,10 +28,10 @@ export class MySqlDatasource extends SqlDatasource {
     }
 
     const args = {
-      getMeta: { current: (identifier?: TableIdentifier) => this.fetchMeta(identifier) },
+      getMeta: (identifier?: TableIdentifier) => this.fetchMeta(identifier),
     };
     this.sqlLanguageDefinition = {
-      id: 'sql',
+      id: 'mysql',
       completionProvider: getSqlCompletionProvider(args),
       formatter: formatSQL,
     };
@@ -41,21 +40,21 @@ export class MySqlDatasource extends SqlDatasource {
 
   async fetchDatasets(): Promise<string[]> {
     const datasets = await this.runSql<string[]>(showDatabases(), { refId: 'datasets' });
-    return datasets.map((t) => t[0]);
+    return datasets.map((t) => escapeValue(t[0]));
   }
 
   async fetchTables(dataset?: string): Promise<string[]> {
     const tables = await this.runSql<string[]>(buildTableQuery(dataset), { refId: 'tables' });
-    return tables.map((t) => t[0]);
+    return tables.map((t) => escapeValue(t[0]));
   }
 
   async fetchFields(query: Partial<SQLQuery>) {
     if (!query.dataset || !query.table) {
       return [];
     }
-    const queryString = buildColumnQuery(this.getQueryModel(query), query.table!);
+    const queryString = buildColumnQuery(query.table, query.dataset);
     const frame = await this.runSql<string[]>(queryString, { refId: 'fields' });
-    const fields = frame.map((f) => ({ name: f[0], text: f[0], value: f[0], type: f[1], label: f[0] }));
+    const fields = frame.map((f) => ({ name: f[0], text: f[0], value: escapeValue(f[0]), type: f[1], label: f[0] }));
     return mapFieldsToTypes(fields);
   }
 
@@ -63,17 +62,17 @@ export class MySqlDatasource extends SqlDatasource {
     const defaultDB = this.instanceSettings.jsonData.database;
     if (!identifier?.schema && defaultDB) {
       const tables = await this.fetchTables(defaultDB);
-      return tables.map((t) => ({ name: t, completion: `\`${defaultDB}\`.\`${t}\``, kind: CompletionItemKind.Class }));
+      return tables.map((t) => ({ name: t, completion: `${defaultDB}.${t}`, kind: CompletionItemKind.Class }));
     } else if (!identifier?.schema && !defaultDB) {
       const datasets = await this.fetchDatasets();
-      return datasets.map((d) => ({ name: d, completion: `\`${d}\`.`, kind: CompletionItemKind.Module }));
+      return datasets.map((d) => ({ name: d, completion: `${d}.`, kind: CompletionItemKind.Module }));
     } else {
-      if (!identifier?.table && !defaultDB) {
+      if (!identifier?.table && (!defaultDB || identifier?.schema)) {
         const tables = await this.fetchTables(identifier?.schema);
         return tables.map((t) => ({ name: t, completion: t, kind: CompletionItemKind.Class }));
       } else if (identifier?.table && identifier.schema) {
         const fields = await this.fetchFields({ dataset: identifier.schema, table: identifier.table });
-        return fields.map((t) => ({ name: t.value, completion: t.value, kind: CompletionItemKind.Field }));
+        return fields.map((t) => ({ name: t.name, completion: t.value, kind: CompletionItemKind.Field }));
       } else {
         return [];
       }
