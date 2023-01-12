@@ -43,7 +43,6 @@ const ServerDisplay = ({ data }: Props) => {
         <g transform="translate(-31.804 -24.362)">
           <g>
             <path
-              style={{ stroke: `${data?.statusColor}!important` }}
               className={styles.server}
               x="54.86203"
               y="48.088943"
