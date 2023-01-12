@@ -47,7 +47,7 @@ export const LogGroupsField = ({
     <div className={`gf-form gf-form--grow flex-grow-1 ${rowGap}`}>
       <LogGroupsSelector
         fetchLogGroups={async (params: Partial<DescribeLogGroupsRequest>) =>
-          datasource?.api.describeLogGroups({ region: region, ...params }) ?? []
+          datasource?.api.getLogGroups({ region: region, ...params }) ?? []
         }
         onChange={onChange}
         accountOptions={accountState.value}

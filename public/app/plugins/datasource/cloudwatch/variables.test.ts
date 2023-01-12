@@ -20,7 +20,7 @@ mock.datasource.api.getRegions = jest.fn().mockResolvedValue([{ label: 'a', valu
 mock.datasource.api.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', value: 'b' }]);
 mock.datasource.api.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
 mock.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([{ label: 'd', value: 'd' }]);
-mock.datasource.api.describeLogGroups = jest
+mock.datasource.api.getLogGroups = jest
   .fn()
   .mockResolvedValue([{ value: { arn: 'a', name: 'a' } }, { value: { arn: 'b', name: 'b' } }]);
 mock.datasource.api.getAccounts = jest.fn().mockResolvedValue([]);

@@ -85,7 +85,7 @@ export function setupMockedDataSource({
   datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
   datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
   datasource.api.getAccounts = jest.fn().mockResolvedValue([]);
-  datasource.api.describeLogGroups = jest.fn().mockResolvedValue([]);
+  datasource.api.getLogGroups = jest.fn().mockResolvedValue([]);
   const fetchMock = jest.fn().mockReturnValue(of({}));
   setBackendSrv({
     ...getBackendSrv(),

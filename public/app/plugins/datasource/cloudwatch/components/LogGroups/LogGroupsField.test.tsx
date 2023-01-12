@@ -32,13 +32,13 @@ describe('LogGroupSelection', () => {
 
   it('should call describeCrossAccountLogGroups to get associated log group arns and then update props if rendered with legacy log group names', async () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = true;
-    defaultProps.datasource.api.describeLogGroups = jest
+    defaultProps.datasource.api.getLogGroups = jest
       .fn()
       .mockResolvedValue([{ value: { arn: 'arn', name: 'loggroupname' } }]);
     render(<LogGroupsField {...defaultProps} legacyLogGroupNames={['loggroupname']} />);
 
     await waitFor(async () => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
-    expect(defaultProps.datasource.api.describeLogGroups).toHaveBeenCalledWith({
+    expect(defaultProps.datasource.api.getLogGroups).toHaveBeenCalledWith({
       region: defaultProps.region,
       logGroupNamePrefix: 'loggroupname',
     });
@@ -48,12 +48,12 @@ describe('LogGroupSelection', () => {
   it('should remove any variables before calling describeCrossAccountLogGroups', async () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = true;
     defaultProps.datasource = setupMockedDataSource({ variables: [logGroupNamesVariable] }).datasource;
-    defaultProps.datasource.api.describeLogGroups = jest.fn().mockResolvedValue([]);
+    defaultProps.datasource.api.getLogGroups = jest.fn().mockResolvedValue([]);
     render(<LogGroupsField {...defaultProps} legacyLogGroupNames={['loggroupname', logGroupNamesVariable.name]} />);
 
     await waitFor(async () => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
-    expect(defaultProps.datasource.api.describeLogGroups).toHaveBeenCalledTimes(1);
-    expect(defaultProps.datasource.api.describeLogGroups).toHaveBeenCalledWith({
+    expect(defaultProps.datasource.api.getLogGroups).toHaveBeenCalledTimes(1);
+    expect(defaultProps.datasource.api.getLogGroups).toHaveBeenCalledWith({
       region: defaultProps.region,
       logGroupNamePrefix: 'loggroupname',
     });
@@ -61,12 +61,12 @@ describe('LogGroupSelection', () => {
 
   it('should not call describeCrossAccountLogGroups and update props if rendered with log groups', async () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = true;
-    defaultProps.datasource.api.describeLogGroups = jest
+    defaultProps.datasource.api.getLogGroups = jest
       .fn()
       .mockResolvedValue([{ value: { arn: 'arn', name: 'loggroupname' } }]);
     render(<LogGroupsField {...defaultProps} logGroups={[{ arn: 'arn', name: 'loggroupname' }]} />);
     await waitFor(() => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
-    expect(defaultProps.datasource.api.describeLogGroups).not.toHaveBeenCalled();
+    expect(defaultProps.datasource.api.getLogGroups).not.toHaveBeenCalled();
     expect(defaultProps.onChange).not.toHaveBeenCalled();
   });
 });
