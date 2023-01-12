@@ -58,6 +58,9 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
   const size = config.featureToggles.topnav ? 'sm' : 'md';
 
   const actions = [
+    <Button variant="secondary" key="close" fill="outline" size={size} onClick={onClose}>
+      Close
+    </Button>,
     canSaveAs && (
       <SaveDashboardAsButton
         dashboard={dashboard}
