@@ -35,11 +35,10 @@ function getContentStyle(): CSSProperties {
   };
 }
 
-function renderPanel(name: string, overrides: Partial<PanelChromeProps>) {
+function renderPanel(name: string, overrides?: Partial<PanelChromeProps>) {
   const props: PanelChromeProps = {
     width: 400,
     height: 130,
-    title: 'Default title',
     children: () => undefined,
   };
 
@@ -56,6 +55,37 @@ function renderPanel(name: string, overrides: Partial<PanelChromeProps>) {
   );
 }
 
+const menu = (
+  <Menu>
+    <Menu.Item label="View" icon="eye" />
+    <Menu.Item label="Edit" icon="edit" />
+    <Menu.Item label="Share" icon="share-alt" />
+    <Menu.Item label="Explore" icon="compass" />
+    <Menu.Item
+      label="Inspect"
+      icon="info-circle"
+      childItems={[
+        <Menu.Item key="subitem1" label="Data" />,
+        <Menu.Item key="subitem2" label="Query" />,
+        <Menu.Item key="subitem3" label="Panel JSON" />,
+      ]}
+    />
+    <Menu.Item
+      label="More"
+      icon="cube"
+      childItems={[
+        <Menu.Item key="subitem1" label="Duplicate" />,
+        <Menu.Item key="subitem2" label="Copy" />,
+        <Menu.Item key="subitem3" label="Create library panel" />,
+        <Menu.Item key="subitem4" label="Hide legend" />,
+        <Menu.Item key="subitem5" label="Get help" />,
+      ]}
+    />
+    <Menu.Divider />
+    <Menu.Item label="Remove" icon="trash-alt" />
+  </Menu>
+);
+
 export const Examples = () => {
   const [loading, setLoading] = useState(true);
 
@@ -65,33 +95,81 @@ export const Examples = () => {
     <DashboardStoryCanvas>
       <HorizontalGroup spacing="md" align="flex-start">
         <VerticalGroup spacing="md">
-          {renderPanel('Default panel with error status', {
+          {renderPanel('Error status', {
             title: 'Default title',
             status: {
               message: 'Error text',
               onClick: action('ErrorIndicator: onClick fired'),
             },
           })}
-          {renderPanel('No padding with error state', {
+          {renderPanel('No padding, error loadingState', {
             padding: 'none',
             title: 'Default title',
             loadingState: LoadingState.Error,
           })}
-          {renderPanel('Default panel with streaming state', {
+          {renderPanel('No title, error loadingState', {
+            loadingState: LoadingState.Error,
+          })}
+          {renderPanel('Streaming loadingState', {
             title: 'Default title',
             loadingState: LoadingState.Streaming,
           })}
+
+          {renderPanel('Loading loadingState', {
+            title: 'Default title',
+            loadingState: LoadingState.Loading,
+          })}
         </VerticalGroup>
         <VerticalGroup spacing="md">
-          {renderPanel('No title', { title: '' })}
+          {renderPanel('Default panel: no non-required props')}
+          {renderPanel('No padding, no title', {
+            padding: 'none',
+          })}
           {renderPanel('Very long title', {
             title: 'Very long title that should get ellipsis when there is no more space',
+          })}
+          {renderPanel('No title, streaming loadingState', {
+            loadingState: LoadingState.Streaming,
+          })}
+          {renderPanel('No title, loading loadingState', {
+            loadingState: LoadingState.Loading,
+          })}
+        </VerticalGroup>
+        <VerticalGroup spacing="md">
+          {renderPanel('Error status, menu', {
+            title: 'Default title',
+            menu,
+            status: {
+              message: 'Error text',
+              onClick: action('ErrorIndicator: onClick fired'),
+            },
+          })}
+          {renderPanel('No padding, error loadingState, menu', {
+            padding: 'none',
+            title: 'Default title',
+            menu,
+            loadingState: LoadingState.Error,
+          })}
+          {renderPanel('No title, error loadingState, menu', {
+            menu,
+            loadingState: LoadingState.Error,
+          })}
+          {renderPanel('Streaming loadingState, menu', {
+            title: 'Default title',
+            menu,
+            loadingState: LoadingState.Streaming,
+          })}
+
+          {renderPanel('Loading loadingState, menu', {
+            title: 'Default title',
+            menu,
+            loadingState: LoadingState.Loading,
           })}
         </VerticalGroup>
       </HorizontalGroup>
       <HorizontalGroup spacing="md" align="flex-start">
         <VerticalGroup spacing="md">
-          {renderPanel('Default panel with deprecated error indicator', {
+          {renderPanel('Deprecated error indicator', {
             title: 'Default title',
             leftItems: [
               <PanelChrome.ErrorIndicator
@@ -101,7 +179,7 @@ export const Examples = () => {
               />,
             ],
           })}
-          {renderPanel('No padding with deprecated loading indicator', {
+          {renderPanel('No padding, deprecated loading indicator', {
             padding: 'none',
             title: 'Default title',
             leftItems: [
@@ -109,6 +187,19 @@ export const Examples = () => {
                 loading={loading}
                 onCancel={() => setLoading(false)}
                 key="loading-indicator"
+              />,
+            ],
+          })}
+        </VerticalGroup>
+        <VerticalGroup spacing="md">
+          {renderPanel('Deprecated error indicator, menu', {
+            title: 'Default title',
+            menu,
+            leftItems: [
+              <PanelChrome.ErrorIndicator
+                key="errorIndicator"
+                error="Error text"
+                onClick={action('ErrorIndicator: onClick fired')}
               />,
             ],
           })}
@@ -165,37 +256,6 @@ const titleItems: PanelChromeInfoState[] = [
     tooltip: 'Health of the panel',
   },
 ];
-
-const menu = (
-  <Menu>
-    <Menu.Item label="View" icon="eye" />
-    <Menu.Item label="Edit" icon="edit" />
-    <Menu.Item label="Share" icon="share-alt" />
-    <Menu.Item label="Explore" icon="compass" />
-    <Menu.Item
-      label="Inspect"
-      icon="info-circle"
-      childItems={[
-        <Menu.Item key="subitem1" label="Data" />,
-        <Menu.Item key="subitem2" label="Query" />,
-        <Menu.Item key="subitem3" label="Panel JSON" />,
-      ]}
-    />
-    <Menu.Item
-      label="More"
-      icon="cube"
-      childItems={[
-        <Menu.Item key="subitem1" label="Duplicate" />,
-        <Menu.Item key="subitem2" label="Copy" />,
-        <Menu.Item key="subitem3" label="Create library panel" />,
-        <Menu.Item key="subitem4" label="Hide legend" />,
-        <Menu.Item key="subitem5" label="Get help" />,
-      ]}
-    />
-    <Menu.Divider />
-    <Menu.Item label="Remove" icon="trash-alt" />
-  </Menu>
-);
 
 Basic.argTypes = {
   leftItems: {
