@@ -47,14 +47,14 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 }
 
 func (s *QueryData) processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataResponse {
-	s.exemplarSampler.Reset()
+	sampler := s.exemplarSampler()
 	labelTracker := exemplar.NewLabelTracker()
 
 	// we are moving from a multi-frame response returned
 	// by the converter to a single exemplar frame,
 	// so we need to build a new frame array with the
 	// old exemplar frames filtered out
-	framer := exemplar.NewFramer(s.exemplarSampler, labelTracker)
+	framer := exemplar.NewFramer(sampler, labelTracker)
 
 	for _, frame := range dr.Frames {
 		// we don't need to process non-exemplar frames
@@ -69,7 +69,7 @@ func (s *QueryData) processExemplars(q *models.Query, dr *backend.DataResponse) 
 		framer.SetRefID(frame.RefID)
 
 		step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
-		s.exemplarSampler.SetStep(step)
+		sampler.SetStep(step)
 
 		seriesLabels := getSeriesLabels(frame)
 		labelTracker.Add(seriesLabels)
@@ -83,7 +83,7 @@ func (s *QueryData) processExemplars(q *models.Query, dr *backend.DataResponse) 
 				Timestamp:    row[0].(time.Time),
 				SeriesLabels: seriesLabels,
 			}
-			s.exemplarSampler.Add(ex)
+			sampler.Add(ex)
 		}
 	}
 

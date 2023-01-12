@@ -18,26 +18,37 @@ import (
 
 const (
 	ClientAPIKey    = "auth.client.api-key" // #nosec G101
-	ClientSession   = "auth.client.session"
 	ClientAnonymous = "auth.client.anonymous"
 	ClientBasic     = "auth.client.basic"
+	ClientJWT       = "auth.client.jwt"
 	ClientRender    = "auth.client.render"
+	ClientSession   = "auth.client.session"
 )
 
+// ClientParams are hints to the auth service about how to handle the identity management
+// from the authenticating client.
 type ClientParams struct {
-	SyncUser            bool
-	SyncTeamMembers     bool
-	AllowSignUp         bool
+	// Update the internal representation of the entity from the identity provided
+	SyncUser bool
+	// Add entity to teams
+	SyncTeamMembers bool
+	// Create entity in the DB if it doesn't exist
+	AllowSignUp bool
+	// EnableDisabledUsers is a hint to the auth service that it should reenable disabled users
 	EnableDisabledUsers bool
+	// LookUpParams are the arguments used to look up the entity in the DB.
+	LookUpParams models.UserLookupParams
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
 
 type Service interface {
-	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
-	RegisterPostAuthHook(hook PostAuthHookFn)
 	// Authenticate authenticates a request using the specified client.
 	Authenticate(ctx context.Context, client string, r *Request) (*Identity, bool, error)
+	// Login authenticates a request and creates a session on successful authentication.
+	Login(ctx context.Context, client string, r *Request) (*Identity, error)
+	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
+	RegisterPostAuthHook(hook PostAuthHookFn)
 }
 
 type Client interface {
@@ -96,9 +107,6 @@ type Identity struct {
 	// AuthId is the unique identifier for the entity in the external system.
 	// Empty if the identity is provided by Grafana.
 	AuthID string
-	// LookUpParams are the arguments used to look up the entity in the DB.
-	// Empty if the identity is provided by Grafana. TODO: move to client params
-	LookUpParams models.UserLookupParams
 	// IsDisabled is true if the entity is disabled.
 	IsDisabled bool
 	// HelpFlags1 is the help flags for the entity.

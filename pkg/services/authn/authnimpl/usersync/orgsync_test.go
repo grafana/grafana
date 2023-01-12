@@ -77,13 +77,13 @@ func TestOrgSync_SyncOrgUser(t *testing.T) {
 					Email:          "test",
 					OrgRoles:       map[int64]roletype.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
 					IsGrafanaAdmin: ptrBool(false),
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  ptrString("test"),
-						Login:  nil,
-					},
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  ptrString("test"),
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -95,13 +95,13 @@ func TestOrgSync_SyncOrgUser(t *testing.T) {
 				OrgRoles:       map[int64]roletype.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
 				OrgID:          1, //set using org
 				IsGrafanaAdmin: ptrBool(false),
-				LookUpParams: models.UserLookupParams{
-					UserID: nil,
-					Email:  ptrString("test"),
-					Login:  nil,
-				},
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test"),
+						Login:  nil,
+					},
 				},
 			},
 			wantErr: false,
