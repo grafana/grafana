@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -198,9 +199,9 @@ func resolveReference(ref string, root *simplejson.Json) (*schema, error) {
 	return resolveInSchemaReference(ref[i+1:], root)
 }
 
-func resolveInSchemaReference(path string, root *simplejson.Json) (*schema, error) {
+func resolveInSchemaReference(ref string, root *simplejson.Json) (*schema, error) {
 	// in-schema reference
-	pointer, err := gojsonpointer.NewJsonPointer(path)
+	pointer, err := gojsonpointer.NewJsonPointer(ref)
 	if err != nil {
 		return nil, err
 	}
@@ -219,6 +220,9 @@ func resolveInSchemaReference(path string, root *simplejson.Json) (*schema, erro
 	if err := json.Unmarshal(b, &sch); err != nil {
 		return nil, err
 	}
+
+	// Set the ref name as title
+	sch.Title = path.Base(ref)
 
 	return &sch, nil
 }
@@ -281,7 +285,9 @@ func findDefinitions(s *schema) []*schema {
 	for k, p := range s.Properties {
 		// Use the identifier as the title.
 		if p.Type.HasType(PropertyTypeObject) {
-			p.Title = k
+			if len(p.Title) == 0 {
+				p.Title = k
+			}
 			objs = append(objs, p)
 		}
 
@@ -290,7 +296,9 @@ func findDefinitions(s *schema) []*schema {
 		if p.Type.HasType(PropertyTypeArray) {
 			if p.Items != nil {
 				if p.Items.Type.HasType(PropertyTypeObject) {
-					p.Items.Title = k
+					if len(p.Items.Title) == 0 {
+						p.Items.Title = k
+					}
 					objs = append(objs, p.Items)
 				}
 			}
@@ -323,12 +331,14 @@ func printProperties(w io.Writer, s *schema) {
 		for _, pt := range p.Type {
 			switch pt {
 			case PropertyTypeObject:
-				propType = append(propType, fmt.Sprintf("[object](#%s)", strings.ToLower(k)))
+				name, anchor := propNameAndAnchor(k, p.Title)
+				propType = append(propType, fmt.Sprintf("[%s](#%s)", name, anchor))
 			case PropertyTypeArray:
 				if p.Items != nil {
 					for _, pi := range p.Items.Type {
 						if pi == PropertyTypeObject {
-							propType = append(propType, fmt.Sprintf("[%s](#%s)[]", pi, strings.ToLower(k)))
+							name, anchor := propNameAndAnchor(k, p.Items.Title)
+							propType = append(propType, fmt.Sprintf("[%s](#%s)[]", name, anchor))
 						} else {
 							propType = append(propType, fmt.Sprintf("%s[]", pi))
 						}
@@ -384,6 +394,13 @@ func printProperties(w io.Writer, s *schema) {
 
 	table.AppendBulk(rows)
 	table.Render()
+}
+
+func propNameAndAnchor(prop, title string) (string, string) {
+	if len(title) > 0 {
+		return title, strings.ToLower(title)
+	}
+	return string(PropertyTypeObject), strings.ToLower(prop)
 }
 
 // in returns true if a string slice contains a specific string.

@@ -13,17 +13,17 @@ title: Playlist kind
 
 ## Properties
 
-| Property   | Type               | Required | Description                                                                                        |
-|------------|--------------------|----------|----------------------------------------------------------------------------------------------------|
-| `interval` | string             | **Yes**  | Interval sets the time between switching views in a playlist.                                      |
-|            |                    |          | FIXME: Is this based on a standardized format or what options are available? Can datemath be used? |
-| `name`     | string             | **Yes**  | Name of the playlist.                                                                              |
-| `uid`      | string             | **Yes**  | Unique playlist identifier. Generated on creation, either by the                                   |
-|            |                    |          | creator of the playlist of by the application.                                                     |
-| `items`    | [object](#items)[] | No       | The ordered list of items that the playlist will iterate over.                                     |
-|            |                    |          | FIXME! This should not be optional, but changing it makes the godegen awkward                      |
+| Property   | Type                            | Required | Description                                                                                        |
+|------------|---------------------------------|----------|----------------------------------------------------------------------------------------------------|
+| `interval` | string                          | **Yes**  | Interval sets the time between switching views in a playlist.                                      |
+|            |                                 |          | FIXME: Is this based on a standardized format or what options are available? Can datemath be used? |
+| `name`     | string                          | **Yes**  | Name of the playlist.                                                                              |
+| `uid`      | string                          | **Yes**  | Unique playlist identifier. Generated on creation, either by the                                   |
+|            |                                 |          | creator of the playlist of by the application.                                                     |
+| `items`    | [PlaylistItem](#playlistitem)[] | No       | The ordered list of items that the playlist will iterate over.                                     |
+|            |                                 |          | FIXME! This should not be optional, but changing it makes the godegen awkward                      |
 
-## items
+## PlaylistItem
 
 ### Properties
 
