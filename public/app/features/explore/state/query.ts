@@ -10,7 +10,6 @@ import {
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
-  hasLogsSampleSupport,
   hasLogsVolumeSupport,
   hasQueryExportSupport,
   hasQueryImportSupport,
@@ -43,17 +42,12 @@ import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
+import { storeSupplementaryQueryEnabled, supplementaryQueriesList } from '../utils/supplementaryQueries';
 
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
 import { updateTime } from './time';
-import {
-  createCacheKey,
-  getResultsFromCache,
-  hasSupplementaryQuerySupport,
-  storeSupplementaryQueryEnabled,
-  SUPPLEMENTARY_QUERY_TYPES,
-} from './utils';
+import { createCacheKey, getResultsFromCache } from './utils';
 
 //
 // Actions and Payloads
@@ -257,7 +251,7 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
 
     const supplementaryQueries = getState().explore[exploreId]!.supplementaryQueries;
     // Cancel all data providers
-    for (const type of SUPPLEMENTARY_QUERY_TYPES) {
+    for (const { type } of Object.values(supplementaryQueriesList)) {
       dispatch(cleanSupplementaryQueryDataProviderAction({ exploreId, type }));
 
       // And clear any incomplete data
@@ -605,7 +599,7 @@ export const runQueries = (
         });
 
       if (live) {
-        for (const type of SUPPLEMENTARY_QUERY_TYPES) {
+        for (const { type } of Object.values(supplementaryQueriesList)) {
           dispatch(
             cleanSupplementaryQueryDataProviderAction({
               exploreId,
@@ -614,64 +608,26 @@ export const runQueries = (
           );
           dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
         }
-        // We support multiple supplementary queries, so we check if data source supports at least 1
-        // If it does, we then check for each of them individually and process accordingly
-      } else if (hasSupplementaryQuerySupport(datasourceInstance)) {
-        if (hasLogsVolumeSupport(datasourceInstance)) {
-          // We always prepare provider, even is supplementary query is disabled because when the user
-          // enables the query, we need to load the data, so we need the provider
-          const dataProvider = datasourceInstance.getLogsVolumeDataProvider({
-            ...transaction.request,
-            requestId: transaction.request.requestId + '_log_volume',
-          });
-          handleSupplementaryQuery(
-            dispatch,
-            getState().explore,
-            exploreId,
-            SupplementaryQueryType.LogsVolume,
-            dataProvider
-          );
-        } else {
-          // If data source instance doesn't support this supplementary query, we clean the data provider
-          dispatch(
-            cleanSupplementaryQueryDataProviderAction({
-              exploreId,
-              type: SupplementaryQueryType.LogsVolume,
-            })
-          );
-        }
-
-        if (hasLogsSampleSupport(datasourceInstance)) {
-          // We always prepare provider, even is supplementary query is disabled because when the user
-          // enables the query, we need to load the data, so we need the provider
-          const dataProvider = datasourceInstance.getLogsSampleDataProvider({
-            ...transaction.request,
-            requestId: transaction.request.requestId + '_log_sample',
-          });
-          handleSupplementaryQuery(
-            dispatch,
-            getState().explore,
-            exploreId,
-            SupplementaryQueryType.LogsSample,
-            dataProvider
-          );
-        } else {
-          // If data source instance doesn't support this supplementary query, we clean the data provider
-          dispatch(
-            cleanSupplementaryQueryDataProviderAction({
-              exploreId,
-              type: SupplementaryQueryType.LogsSample,
-            })
-          );
-        }
       } else {
-        for (const type of SUPPLEMENTARY_QUERY_TYPES) {
-          dispatch(
-            cleanSupplementaryQueryDataProviderAction({
-              exploreId,
-              type,
-            })
-          );
+        for (const { type, getProviderFunc, requestId } of Object.values(supplementaryQueriesList)) {
+          const getProvider = getProviderFunc(datasourceInstance);
+          if (getProvider) {
+            // We always prepare provider, even is supplementary query is disabled because when the user
+            // enables the query, we need to load the data, so we need the provider
+            const dataProvider = getProvider({
+              ...transaction.request,
+              requestId: transaction.request.requestId + requestId,
+            });
+            handleSupplementaryQuery(dispatch, getState().explore, exploreId, type, dataProvider);
+          } else {
+            // If data source instance doesn't support this supplementary query, we clean the data provider
+            dispatch(
+              cleanSupplementaryQueryDataProviderAction({
+                exploreId,
+                type,
+              })
+            );
+          }
         }
       }
     }

@@ -7,19 +7,18 @@ import {
   EventBusExtended,
   ExploreUrlState,
   getDefaultTimeRange,
-  hasLogsSampleSupport,
-  hasLogsVolumeSupport,
   HistoryItem,
   LoadingState,
   PanelData,
   TimeRange,
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
-import { ExploreItemState, SupplementaryQueries, SupplementaryQueryType } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 import { toRawTimeRange } from '../utils/time';
 
 export const DEFAULT_RANGE = {
@@ -30,37 +29,6 @@ export const DEFAULT_RANGE = {
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
 export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
-};
-
-export const SUPPLEMENTARY_QUERY_TYPES: SupplementaryQueryType[] = [
-  SupplementaryQueryType.LogsVolume,
-  SupplementaryQueryType.LogsSample,
-];
-
-export const hasSupplementaryQuerySupport = (datasourceInstance: unknown) =>
-  hasLogsVolumeSupport(datasourceInstance) || hasLogsSampleSupport(datasourceInstance);
-
-const getSupplementaryQuerySettingKey = (type: SupplementaryQueryType) => `grafana.explore.logs.enable${type}`;
-
-export const storeSupplementaryQueryEnabled = (enabled: boolean, type: SupplementaryQueryType): void => {
-  store.set(getSupplementaryQuerySettingKey(type), enabled ? 'true' : 'false');
-};
-
-export const loadSupplementaryQueries = (): SupplementaryQueries => {
-  // We default to true for all supp queries
-  let supplementaryQueries: SupplementaryQueries = {
-    [SupplementaryQueryType.LogsVolume]: { enabled: true },
-    // This is set to false temporarily, until we have UI to display logs sample and a way how to enable/disable it
-    [SupplementaryQueryType.LogsSample]: { enabled: false },
-  };
-
-  for (const type of SUPPLEMENTARY_QUERY_TYPES) {
-    // Only if "false" value in local storage, we disable it
-    if (store.get(getSupplementaryQuerySettingKey(type)) === 'false') {
-      supplementaryQueries[type] = { enabled: false };
-    }
-  }
-  return supplementaryQueries;
 };
 
 /**
