@@ -36,7 +36,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 		} else {
 			err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 			if err != nil {
-				return response.Error(404, "Dashboard not found", err)
+				return response.Error(http.StatusNotFound, "Dashboard not found", err)
 			}
 			dashboardID = query.Result.Id
 		}
@@ -45,7 +45,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 	cmd.HomeDashboardID = dashboardID
 
 	if err := hs.preferenceService.Save(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to set home dashboard", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to set home dashboard", err)
 	}
 
 	return response.Success("Home dashboard set")
@@ -68,7 +68,7 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 
 	preference, err := hs.preferenceService.Get(ctx, &prefsQuery)
 	if err != nil {
-		return response.Error(500, "Failed to get preferences", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get preferences", err)
 	}
 
 	var dashboardUID string
@@ -137,7 +137,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 		} else {
 			err := hs.DashboardService.GetDashboard(ctx, &query)
 			if err != nil {
-				return response.Error(404, "Dashboard not found", err)
+				return response.Error(http.StatusNotFound, "Dashboard not found", err)
 			}
 			dashboardID = query.Result.Id
 		}
@@ -158,7 +158,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 	}
 
 	if err := hs.preferenceService.Save(ctx, &saveCmd); err != nil {
-		return response.Error(500, "Failed to save preferences", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save preferences", err)
 	}
 
 	return response.Success("Preferences updated")
@@ -183,7 +183,7 @@ func (hs *HTTPServer) PatchUserPreferences(c *models.ReqContext) response.Respon
 
 func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.PatchPrefsCmd) response.Response {
 	if dtoCmd.Theme != nil && *dtoCmd.Theme != lightTheme && *dtoCmd.Theme != darkTheme && *dtoCmd.Theme != defaultTheme {
-		return response.Error(400, "Invalid theme", nil)
+		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
 	}
 
 	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
@@ -197,7 +197,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		} else {
 			err := hs.DashboardService.GetDashboard(ctx, &query)
 			if err != nil {
-				return response.Error(404, "Dashboard not found", err)
+				return response.Error(http.StatusNotFound, "Dashboard not found", err)
 			}
 			dashboardID = &query.Result.Id
 		}
@@ -218,7 +218,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	}
 
 	if err := hs.preferenceService.Patch(ctx, &patchCmd); err != nil {
-		return response.Error(500, "Failed to save preferences", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save preferences", err)
 	}
 
 	return response.Success("Preferences updated")

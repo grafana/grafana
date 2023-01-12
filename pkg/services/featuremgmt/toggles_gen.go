@@ -294,4 +294,8 @@ const (
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
+
+	// FlagIndividualCookieSettings
+	// Support overriding cookie preferences on an individual level
+	FlagIndividualCookieSettings = "individualCookieSettings"
 )

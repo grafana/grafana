@@ -403,5 +403,10 @@ var (
 			Description: "Rule backtesting API for alerting",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "individualCookieSettings",
+			Description: "Support overriding cookie preferences on an individual level",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

@@ -45,6 +45,16 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		return nil, err
 	}
 
+	gaId := hs.Cfg.GoogleAnalyticsId
+	ga4Id := hs.Cfg.GoogleAnalytics4Id
+	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookieSettings) {
+		if !prefs.Cookies("analytics") {
+			gaId, ga4Id = "", ""
+			settings["googleAnalytics4Id"] = ""
+			settings["googleAnalyticsId"] = ""
+		}
+	}
+
 	// Locale is used for some number and date/time formatting, whereas language is used just for
 	// translating words in the interface
 	acceptLangHeader := c.Req.Header.Get("Accept-Language")
@@ -110,10 +120,10 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		Theme:                               prefs.Theme,
 		AppUrl:                              appURL,
 		AppSubUrl:                           appSubURL,
-		GoogleAnalyticsId:                   setting.GoogleAnalyticsId,
-		GoogleAnalytics4Id:                  setting.GoogleAnalytics4Id,
-		GoogleAnalytics4SendManualPageViews: setting.GoogleAnalytics4SendManualPageViews,
-		GoogleTagManagerId:                  setting.GoogleTagManagerId,
+		GoogleAnalyticsId:                   gaId,
+		GoogleAnalytics4Id:                  ga4Id,
+		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
+		GoogleTagManagerId:                  hs.Cfg.GoogleTagManagerId,
 		BuildVersion:                        setting.BuildVersion,
 		BuildCommit:                         setting.BuildCommit,
 		NewGrafanaVersion:                   hs.grafanaUpdateChecker.LatestVersion(),

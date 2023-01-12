@@ -9,6 +9,9 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -343,22 +346,35 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName s
 	return nil
 }
 
-func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...interface{}) {
-	ctx.Logger.Warn(err.Error(), v...)
-	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
-		hs.log.Error("Failed to set encrypted cookie", "err", err)
-	}
-
-	ctx.Redirect(hs.Cfg.AppSubURL + "/login")
+func (hs *HTTPServer) redirectWithError(c *models.ReqContext, err error, v ...interface{}) {
+	c.Logger.Warn(err.Error(), v...)
+	c.Redirect(hs.redirectURLWithErrorCookie(c, err))
 }
 
-func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
-	ctx.Logger.Error(err.Error(), v...)
-	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
-		hs.log.Error("Failed to set encrypted cookie", "err", err)
+func (hs *HTTPServer) RedirectResponseWithError(c *models.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
+	c.Logger.Error(err.Error(), v...)
+	location := hs.redirectURLWithErrorCookie(c, err)
+	return response.Redirect(location)
+}
+
+func (hs *HTTPServer) redirectURLWithErrorCookie(c *models.ReqContext, err error) string {
+	setCookie := true
+	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookieSettings) {
+		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.OrgID, Teams: c.Teams}
+		prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
+		if err != nil {
+			c.Redirect(hs.Cfg.AppSubURL + "/login")
+		}
+		setCookie = prefs.Cookies("functional")
 	}
 
-	return response.Redirect(hs.Cfg.AppSubURL + "/login")
+	if setCookie {
+		if err := hs.trySetEncryptedCookie(c, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
+			hs.log.Error("Failed to set encrypted cookie", "err", err)
+		}
+	}
+
+	return hs.Cfg.AppSubURL + "/login"
 }
 
 func (hs *HTTPServer) samlEnabled() bool {
