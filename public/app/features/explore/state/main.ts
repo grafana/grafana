@@ -179,6 +179,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       ...targetSplit,
+      syncedTimes: false,
     };
   }
 
