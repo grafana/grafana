@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import React, { CSSProperties, ReactNode, ReactElement } from 'react';
 
-import { GrafanaTheme2, LinkModel, PanelModel, QueryResultMetaNotice, LoadingState } from '@grafana/data';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
@@ -13,8 +13,6 @@ import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Tooltip } from '../Tooltip';
 
 import { PanelDescription } from './PanelDescription';
-import { PanelLinks } from './PanelLinks';
-import { PanelNotices } from './PanelNotices';
 import { PanelStatus } from './PanelStatus';
 
 interface Status {
@@ -22,10 +20,6 @@ interface Status {
   onClick?: (e: React.SyntheticEvent) => void;
 }
 
-interface Notices {
-  getPanelNotices: () => QueryResultMetaNotice[];
-  onClick?: (e: React.SyntheticEvent, tab: string) => void;
-}
 /**
  * @internal
  */
@@ -36,8 +30,6 @@ export interface PanelChromeProps {
   padding?: PanelPadding;
   title?: string;
   description?: string | (() => string);
-  links?: () => Array<LinkModel<PanelModel>>;
-  panelNotices?: Notices;
   titleItems?: ReactNode[];
   menu?: ReactElement | (() => ReactElement);
   /** dragClass, hoverHeader not yet implemented */
@@ -68,8 +60,6 @@ export function PanelChrome({
   padding = 'md',
   title = '',
   description = '',
-  links,
-  panelNotices,
   titleItems = [],
   menu,
   // dragClass,
@@ -91,8 +81,6 @@ export function PanelChrome({
     (title.length > 0 ||
       titleItems.length > 0 ||
       description !== '' ||
-      links !== undefined ||
-      panelNotices !== undefined ||
       loadingState === LoadingState.Streaming ||
       leftItems.length > 0);
 
@@ -139,11 +127,7 @@ export function PanelChrome({
           </h6>
         )}
 
-        {panelNotices && <PanelNotices notices={panelNotices.getPanelNotices()} onClick={panelNotices.onClick} />}
-
         <PanelDescription description={description} />
-
-        <PanelLinks links={links} />
 
         {titleItems && (
           <div className={styles.titleItems} data-testid="title-items">
@@ -154,7 +138,7 @@ export function PanelChrome({
         {showStreaming && (
           <div className={styles.item} style={itemStyles}>
             <Tooltip content="Streaming">
-              <Icon name="circle" type="mono" size="sm" className={styles.streaming} />
+              <Icon name="circle-mono" size="sm" className={styles.streaming} />
             </Tooltip>
           </div>
         )}

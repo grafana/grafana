@@ -1,17 +1,22 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { PanelData, GrafanaTheme2 } from '@grafana/data';
+import { PanelData, GrafanaTheme2, PanelModel, LinkModel } from '@grafana/data';
 import { Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
+
+import { PanelLinks } from '../PanelLinks';
+
+import { PanelHeaderNotices } from './PanelHeaderNotices';
 
 export interface Props {
   alertState?: string;
   data: PanelData;
   panelId: number;
+  panelLinks?: () => Array<LinkModel<PanelModel>>;
 }
 
 export function PanelHeaderTitleItems(props: Props) {
-  const { alertState, data } = props;
+  const { alertState, data, panelId, panelLinks } = props;
   const styles = useStyles2(getStyles);
 
   // panel health
@@ -37,6 +42,8 @@ export function PanelHeaderTitleItems(props: Props) {
 
   return (
     <>
+      {panelLinks && <PanelLinks links={panelLinks} />}
+      {<PanelHeaderNotices panelId={panelId} frames={data.series} />}
       {data.request && data.request.timeInfo && timeshift}
       {alertState && alertStateItem}
     </>

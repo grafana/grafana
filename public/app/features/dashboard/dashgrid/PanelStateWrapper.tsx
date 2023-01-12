@@ -36,7 +36,6 @@ import {
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
-import { getPanelQueryNotices } from 'app/features/dashboard/utils/panelQueryNotices';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
@@ -625,7 +624,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
 
     const titleItems = [
-      <PanelHeaderTitleItems key="title-items" alertState={alertState} data={data} panelId={panel.id} />,
+      <PanelHeaderTitleItems
+        key="title-items"
+        alertState={alertState}
+        data={data}
+        panelId={panel.id}
+        panelLinks={panel.links && panel.links?.length > 0 ? this.onShowPanelLinks : undefined}
+      />,
     ];
 
     let menu;
@@ -659,11 +664,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
               onClick: (e: React.SyntheticEvent) => this.onOpenErrorInspect(e, InspectTab.Error),
             }}
             description={!!panel.description ? this.onShowPanelDescription : undefined}
-            links={panel.links && panel.links?.length > 0 ? this.onShowPanelLinks : undefined}
-            panelNotices={{
-              getPanelNotices: () => getPanelQueryNotices({ frames: data.series }),
-              onClick: (e: React.SyntheticEvent, tab: string) => this.onOpenInspector(e, tab),
-            }}
             titleItems={titleItems}
             menu={menu}
             padding={padding}
