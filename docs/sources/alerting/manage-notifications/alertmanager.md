@@ -4,7 +4,7 @@ aliases:
   - ../metrics/
   - ../unified-alerting/fundamentals/alertmanager/
 title: Alertmanager
-weight: 460
+weight: 100
 ---
 
 # Alertmanager

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -197,11 +198,11 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 
 	teamIDString := strconv.FormatInt(teamId, 10)
 	if _, err := hs.teamPermissionsService.SetUserPermission(c.Req.Context(), orgId, accesscontrol.User{ID: userId}, teamIDString, ""); err != nil {
-		if errors.Is(err, models.ErrTeamNotFound) {
+		if errors.Is(err, team.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
 		}
 
-		if errors.Is(err, models.ErrTeamMemberNotFound) {
+		if errors.Is(err, team.ErrTeamMemberNotFound) {
 			return response.Error(404, "Team member not found", nil)
 		}
 

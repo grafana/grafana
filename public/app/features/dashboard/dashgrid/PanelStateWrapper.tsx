@@ -50,6 +50,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
+import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
 import { PanelHeaderTitleItems } from './PanelHeader/PanelHeaderTitleItems';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
@@ -626,6 +627,22 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const titleItems = [
       <PanelHeaderTitleItems key="title-items" alertState={alertState} data={data} panelId={panel.id} />,
     ];
+
+    let menu;
+    if (!dashboard.meta.publicDashboardAccessToken) {
+      menu = (
+        <div data-testid="panel-dropdown">
+          <PanelHeaderMenuWrapper
+            style={{ top: 0 }}
+            panel={panel}
+            dashboard={dashboard}
+            loadingState={data.state}
+            onClose={() => {}}
+          />
+        </div>
+      );
+    }
+
     if (config.featureToggles.newPanelChromeUI) {
       return (
         <section
@@ -648,6 +665,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
               onClick: (e: React.SyntheticEvent, tab: string) => this.onOpenInspector(e, tab),
             }}
             titleItems={titleItems}
+            menu={menu}
             padding={padding}
           >
             {(innerWidth, innerHeight) => (
