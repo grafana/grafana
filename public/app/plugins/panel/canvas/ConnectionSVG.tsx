@@ -72,11 +72,13 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   };
 
   const selectConnection = (connection: CanvasConnection, source: ElementState) => {
-    setSelectedConnection(connection);
-    setSelectedConnectionSource(source);
+    if (scene.isEditingEnabled) {
+      setSelectedConnection(connection);
+      setSelectedConnectionSource(source);
 
-    document.addEventListener('keyup', onKeyUp);
-    scene.selecto!.rootContainer!.addEventListener('click', clearSelectedConnection);
+      document.addEventListener('keyup', onKeyUp);
+      scene.selecto!.rootContainer!.addEventListener('click', clearSelectedConnection);
+    }
   };
 
   // TODO: memos? in scene?  only update when things actually change?
