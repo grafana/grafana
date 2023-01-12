@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { useAccountOptions } from '../../hooks';
-import { migrateLegacyLogGroupName } from '../../migrations/logQueryMigrations';
 import { DescribeLogGroupsRequest, LogGroup } from '../../types';
 import { isTemplateVariable } from '../../utils/templateVariableUtils';
 
