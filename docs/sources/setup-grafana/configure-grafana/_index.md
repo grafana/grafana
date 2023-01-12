@@ -872,7 +872,7 @@ The table below shows the available OAuth providers and their setting with the d
 | Grafana.com | false | false | will sync with Grafana.Com roles |
 | Grafana.com | true | false | skip org role sync for OAuth providers including Grafana.com users |
 | Grafana.com | false | true | skip org role sync for grafana.com users |
-| Grafana.com | true | true | skip org role sync for grafana.com users in addition all other OAuth providers |
+| Grafana.com | true | true | skip org role sync for Grafana.com users and all other OAuth providers |
 
 ### api_key_max_seconds_to_live
 
