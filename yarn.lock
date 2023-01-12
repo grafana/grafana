@@ -4922,6 +4922,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/e2e-selectors@npm:canary":
+  version: 9.4.0-96092pre
+  resolution: "@grafana/e2e-selectors@npm:9.4.0-96092pre"
+  dependencies:
+    "@grafana/tsconfig": ^1.2.0-rc1
+    tslib: 2.4.1
+    typescript: 4.8.4
+  checksum: f9ba422afbb5745eeabdda904993ed3006b235d3a36604d6fbac73a38179665ac63ec865734c483b260671ed0b15c18d8b189fad0ae81a8486d7673f8e8ff1a9
+  languageName: node
+  linkType: hard
+
 "@grafana/e2e@workspace:*, @grafana/e2e@workspace:packages/grafana-e2e":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e@workspace:packages/grafana-e2e"
@@ -5109,11 +5120,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@portal:/Users/torkelodegaard/dev/scenes::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@grafana/scenes@portal:/Users/torkelodegaard/dev/scenes::locator=grafana%40workspace%3A."
+"@grafana/scenes@npm:latest":
+  version: 0.0.5
+  resolution: "@grafana/scenes@npm:0.0.5"
+  dependencies:
+    "@grafana/e2e-selectors": canary
+    "@grafana/experimental": 1.0.1
+    react-grid-layout: 1.3.4
+    react-use: 17.4.0
+    react-virtualized-auto-sizer: 1.0.7
+    uuid: ^9.0.0
+  checksum: 805f6ef232d7616e6b9e2c4cf5088a6d7b238ce259d7d3eea50f0a5df368b110502617f88f3a0220e95c379a7695eacab58064c0458752e500dce0d402c85f65
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@grafana/schema@9.4.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
@@ -21989,7 +22008,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.1
     "@grafana/monaco-logql": ^0.0.6
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "portal:/Users/torkelodegaard/dev/scenes"
+    "@grafana/scenes": latest
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -38402,7 +38421,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:9.0.0":
+"uuid@npm:9.0.0, uuid@npm:^9.0.0":
   version: 9.0.0
   resolution: "uuid@npm:9.0.0"
   bin:
