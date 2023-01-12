@@ -10,9 +10,7 @@ export const migrateLegacyLogGroupName = (
   const variables = legacyLogGroupNames.filter((lgn) => isTemplateVariable(api.templateSrv, lgn));
   const legacyLogGroupNameValues = legacyLogGroupNames.filter((lgn) => !isTemplateVariable(api.templateSrv, lgn));
 
-  return Promise.all(
-    legacyLogGroupNameValues.map((lg) => api.describeLogGroups({ region: region, logGroupNamePrefix: lg }))
-  )
+  return Promise.all(legacyLogGroupNameValues.map((lg) => api.getLogGroups({ region: region, logGroupNamePrefix: lg })))
     .then((results) => {
       const logGroups = results.flatMap((r) =>
         r.map((lg) => ({
