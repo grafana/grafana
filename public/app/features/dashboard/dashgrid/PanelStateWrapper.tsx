@@ -621,7 +621,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         alertState={alertState}
         data={data}
         panelId={panel.id}
-        panelLinks={panel.links && panel.links?.length > 0 ? this.onShowPanelLinks : undefined}
+        panelLinks={panel.links}
+        onShowPanelLinks={this.onShowPanelLinks}
       />,
     ];
 

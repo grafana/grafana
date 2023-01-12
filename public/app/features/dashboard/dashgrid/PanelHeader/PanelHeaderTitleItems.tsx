@@ -1,7 +1,7 @@
 import { css, cx, keyframes } from '@emotion/css';
 import React from 'react';
 
-import { PanelData, GrafanaTheme2, PanelModel, LinkModel, AlertState } from '@grafana/data';
+import { PanelData, GrafanaTheme2, PanelModel, LinkModel, AlertState, DataLink } from '@grafana/data';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { getFocusStyles, getMouseFocusStyles } from '@grafana/ui/src/themes/mixins';
 
@@ -13,11 +13,12 @@ export interface Props {
   alertState?: string;
   data: PanelData;
   panelId: number;
-  panelLinks?: () => Array<LinkModel<PanelModel>>;
+  onShowPanelLinks?: () => Array<LinkModel<PanelModel>>;
+  panelLinks?: DataLink[];
 }
 
 export function PanelHeaderTitleItems(props: Props) {
-  const { alertState, data, panelId, panelLinks } = props;
+  const { alertState, data, panelId, onShowPanelLinks, panelLinks } = props;
   const styles = useStyles2(getStyles);
 
   // panel health
@@ -38,7 +39,7 @@ export function PanelHeaderTitleItems(props: Props) {
   const timeshift = (
     <>
       <Tooltip
-        content={data.request?.range ? `Timeshift: ${data.request.range.from} to ${data.request.range.to}` : ''}
+        content={data.request?.range ? `Time Range: ${data.request.range.from} to ${data.request.range.to}` : ''}
         tabIndex={0}
       >
         <span className={cx(styles.item, styles.timeshift)}>
@@ -51,7 +52,10 @@ export function PanelHeaderTitleItems(props: Props) {
 
   return (
     <>
-      {panelLinks && <PanelLinks links={panelLinks} />}
+      {panelLinks && panelLinks.length > 0 && onShowPanelLinks && (
+        <PanelLinks onShowPanelLinks={onShowPanelLinks} panelLinks={panelLinks} />
+      )}
+
       {<PanelHeaderNotices panelId={panelId} frames={data.series} />}
       {data.request && data.request.timeInfo && timeshift}
       {alertState && alertStateItem}
