@@ -17,11 +17,7 @@ const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
 
 const esVersions: SelectableValue[] = [
   { label: '7.10+', value: '7.10.0' },
-  {
-    label: '8.0+',
-    value: '8.0.0',
-    description: 'support for Elasticsearch 8 is currently experimental',
-  },
+  { label: '8.0+', value: '8.0.0' },
 ];
 
 type Props = {

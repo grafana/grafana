@@ -16,6 +16,7 @@ export enum CoreApp {
   Unknown = 'unknown',
   PanelEditor = 'panel-editor',
   PanelViewer = 'panel-viewer',
+  Correlations = 'correlations',
 }
 
 export interface AppRootProps<T extends KeyValue = KeyValue> {

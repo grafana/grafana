@@ -5,17 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/alerting/alerting"
+
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	v2 "github.com/prometheus/alertmanager/api/v2"
 	"github.com/prometheus/alertmanager/silence"
-)
-
-var (
-	ErrGetSilencesInternal     = fmt.Errorf("unable to retrieve silence(s) due to an internal error")
-	ErrDeleteSilenceInternal   = fmt.Errorf("unable to delete silence due to an internal error")
-	ErrCreateSilenceBadPayload = fmt.Errorf("unable to create silence")
-	ErrListSilencesBadPayload  = fmt.Errorf("unable to list silences")
-	ErrSilenceNotFound         = silence.ErrNotFound
 )
 
 // ListSilences retrieves a list of stored silences. It supports a set of labels as filters.
@@ -23,13 +17,13 @@ func (am *Alertmanager) ListSilences(filter []string) (apimodels.GettableSilence
 	matchers, err := parseFilter(filter)
 	if err != nil {
 		am.logger.Error("failed to parse matchers", "error", err)
-		return nil, fmt.Errorf("%s: %w", ErrListSilencesBadPayload.Error(), err)
+		return nil, fmt.Errorf("%s: %w", alerting.ErrListSilencesBadPayload.Error(), err)
 	}
 
 	psils, _, err := am.silences.Query()
 	if err != nil {
-		am.logger.Error(ErrGetSilencesInternal.Error(), "error", err)
-		return nil, fmt.Errorf("%s: %w", ErrGetSilencesInternal.Error(), err)
+		am.logger.Error(alerting.ErrGetSilencesInternal.Error(), "error", err)
+		return nil, fmt.Errorf("%s: %w", alerting.ErrGetSilencesInternal.Error(), err)
 	}
 
 	sils := apimodels.GettableSilences{}
@@ -41,7 +35,7 @@ func (am *Alertmanager) ListSilences(filter []string) (apimodels.GettableSilence
 		if err != nil {
 			am.logger.Error("unmarshaling from protobuf failed", "error", err)
 			return apimodels.GettableSilences{}, fmt.Errorf("%s: failed to convert internal silence to API silence: %w",
-				ErrGetSilencesInternal.Error(), err)
+				alerting.ErrGetSilencesInternal.Error(), err)
 		}
 		sils = append(sils, &silence)
 	}
@@ -55,19 +49,19 @@ func (am *Alertmanager) ListSilences(filter []string) (apimodels.GettableSilence
 func (am *Alertmanager) GetSilence(silenceID string) (apimodels.GettableSilence, error) {
 	sils, _, err := am.silences.Query(silence.QIDs(silenceID))
 	if err != nil {
-		return apimodels.GettableSilence{}, fmt.Errorf("%s: %w", ErrGetSilencesInternal.Error(), err)
+		return apimodels.GettableSilence{}, fmt.Errorf("%s: %w", alerting.ErrGetSilencesInternal.Error(), err)
 	}
 
 	if len(sils) == 0 {
 		am.logger.Error("failed to find silence", "error", err, "id", sils)
-		return apimodels.GettableSilence{}, ErrSilenceNotFound
+		return apimodels.GettableSilence{}, alerting.ErrSilenceNotFound
 	}
 
 	sil, err := v2.GettableSilenceFromProto(sils[0])
 	if err != nil {
 		am.logger.Error("unmarshaling from protobuf failed", "error", err)
 		return apimodels.GettableSilence{}, fmt.Errorf("%s: failed to convert internal silence to API silence: %w",
-			ErrGetSilencesInternal.Error(), err)
+			alerting.ErrGetSilencesInternal.Error(), err)
 	}
 
 	return sil, nil
@@ -79,28 +73,28 @@ func (am *Alertmanager) CreateSilence(ps *apimodels.PostableSilence) (string, er
 	if err != nil {
 		am.logger.Error("marshaling to protobuf failed", "error", err)
 		return "", fmt.Errorf("%s: failed to convert API silence to internal silence: %w",
-			ErrCreateSilenceBadPayload.Error(), err)
+			alerting.ErrCreateSilenceBadPayload.Error(), err)
 	}
 
 	if sil.StartsAt.After(sil.EndsAt) || sil.StartsAt.Equal(sil.EndsAt) {
 		msg := "start time must be before end time"
 		am.logger.Error(msg, "error", "starts_at", sil.StartsAt, "ends_at", sil.EndsAt)
-		return "", fmt.Errorf("%s: %w", msg, ErrCreateSilenceBadPayload)
+		return "", fmt.Errorf("%s: %w", msg, alerting.ErrCreateSilenceBadPayload)
 	}
 
 	if sil.EndsAt.Before(time.Now()) {
 		msg := "end time can't be in the past"
 		am.logger.Error(msg, "ends_at", sil.EndsAt)
-		return "", fmt.Errorf("%s: %w", msg, ErrCreateSilenceBadPayload)
+		return "", fmt.Errorf("%s: %w", msg, alerting.ErrCreateSilenceBadPayload)
 	}
 
 	silenceID, err := am.silences.Set(sil)
 	if err != nil {
 		am.logger.Error("msg", "unable to save silence", "error", err)
 		if errors.Is(err, silence.ErrNotFound) {
-			return "", ErrSilenceNotFound
+			return "", alerting.ErrSilenceNotFound
 		}
-		return "", fmt.Errorf("unable to save silence: %s: %w", err.Error(), ErrCreateSilenceBadPayload)
+		return "", fmt.Errorf("unable to save silence: %s: %w", err.Error(), alerting.ErrCreateSilenceBadPayload)
 	}
 
 	return silenceID, nil
@@ -110,9 +104,9 @@ func (am *Alertmanager) CreateSilence(ps *apimodels.PostableSilence) (string, er
 func (am *Alertmanager) DeleteSilence(silenceID string) error {
 	if err := am.silences.Expire(silenceID); err != nil {
 		if errors.Is(err, silence.ErrNotFound) {
-			return ErrSilenceNotFound
+			return alerting.ErrSilenceNotFound
 		}
-		return fmt.Errorf("%s: %w", err.Error(), ErrDeleteSilenceInternal)
+		return fmt.Errorf("%s: %w", err.Error(), alerting.ErrDeleteSilenceInternal)
 	}
 
 	return nil

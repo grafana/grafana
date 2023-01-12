@@ -144,6 +144,43 @@ The following list contains role-based access control actions.
 | `users:read`                         | `global.users:*`                                                                        | Read or search user profiles.                                                                                                                                                                    |
 | `users:write`                        | `global.users:*` <br> `global.users:id:*`                                               | Update a user’s profile.                                                                                                                                                                         |
 
+### Grafana OnCall action definitions (beta)
+
+> **Note:** Available from Grafana 9.4 in early access.
+
+> **Note:** This feature is behind the `accessControlOnCall` feature toggle.
+> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
+
+The following list contains role-based access control actions used by Grafana OnCall application plugin.
+
+| Action                                           | Applicable scope | Description                                       |
+| ------------------------------------------------ | ---------------- | ------------------------------------------------- |
+| `grafana-oncall-app.alert-groups:read`           | n/a              | Read OnCall alert groups.                         |
+| `grafana-oncall-app.alert-groups:write`          | n/a              | Create, edit and delete OnCall alert groups.      |
+| `grafana-oncall-app.integrations:read`           | n/a              | Read OnCall integrations.                         |
+| `grafana-oncall-app.integrations:write`          | n/a              | Create, edit and delete OnCall integrations.      |
+| `grafana-oncall-app.integrations:test`           | n/a              | Test OnCall integrations.                         |
+| `grafana-oncall-app.escalation-chains:read`      | n/a              | Read OnCall escalation chains.                    |
+| `grafana-oncall-app.escalation-chains:write`     | n/a              | Create, edit and delete OnCall escalation chains. |
+| `grafana-oncall-app.schedules:read`              | n/a              | Read OnCall schedules.                            |
+| `grafana-oncall-app.schedules:write`             | n/a              | Create, edit and delete OnCall schedules.         |
+| `grafana-oncall-app.schedules:export`            | n/a              | Export OnCall schedules.                          |
+| `grafana-oncall-app.chatops:read`                | n/a              | Read OnCall ChatOps.                              |
+| `grafana-oncall-app.chatops:write`               | n/a              | Edit OnCall ChatOps.                              |
+| `grafana-oncall-app.chatops:update-settings`     | n/a              | Edit OnCall ChatOps settings.                     |
+| `grafana-oncall-app.maintenance:read`            | n/a              | Read OnCall maintenance.                          |
+| `grafana-oncall-app.maintenance:write`           | n/a              | Edit OnCall maintenance.                          |
+| `grafana-oncall-app.api-keys:read`               | n/a              | Read OnCall API keys.                             |
+| `grafana-oncall-app.api-keys:write`              | n/a              | Create, edit and delete OnCall API keys.          |
+| `grafana-oncall-app.notifications:read`          | n/a              | Receive OnCall notifications.                     |
+| `grafana-oncall-app.notification-settings:read`  | n/a              | Read OnCall notification settings.                |
+| `grafana-oncall-app.notification-settings:write` | n/a              | Edit OnCall notification settings.                |
+| `grafana-oncall-app.user-settings:read`          | n/a              | Read user's own OnCall user settings.             |
+| `grafana-oncall-app.user-settings:write`         | n/a              | Edit user's own OnCall user settings.             |
+| `grafana-oncall-app.user-settings:admin`         | n/a              | Read and edit all users' OnCall user settings.    |
+| `grafana-oncall-app.other-settings:read`         | n/a              | Read OnCall settings.                             |
+| `grafana-oncall-app.other-settings:write`        | n/a              | Edit OnCall settings.                             |
+
 ## Scope definitions
 
 The following list contains role-based access control scopes.
