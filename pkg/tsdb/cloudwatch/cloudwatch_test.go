@@ -278,7 +278,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
-	t.Run("maps log group api response to resource response of describe-log-groups", func(t *testing.T) {
+	t.Run("maps log group api response to resource response of log-groups", func(t *testing.T) {
 		logsApi = mocks.LogsAPI{}
 		logsApi.On("DescribeLogGroups", mock.Anything).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
 			LogGroups: []*cloudwatchlogs.LogGroup{
@@ -287,7 +287,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 		}, nil)
 		req := &backend.CallResourceRequest{
 			Method: "GET",
-			Path:   `/describe-log-groups?logGroupPattern=some-pattern&accountId=some-account-id`,
+			Path:   `/log-groups?logGroupPattern=some-pattern&accountId=some-account-id`,
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
 				PluginID:                   "cloudwatch",
