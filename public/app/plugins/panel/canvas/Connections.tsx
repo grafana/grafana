@@ -133,7 +133,6 @@ export class Connections {
             x: targetX,
             y: targetY,
           },
-          sourceName: this.connectionSource.options.name,
           targetName: targetName,
           color: 'white',
           size: 10,

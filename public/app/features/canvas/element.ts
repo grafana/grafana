@@ -44,10 +44,7 @@ export enum ConnectionPath {
 export interface CanvasConnection {
   source: ConnectionCoordinates;
   target: ConnectionCoordinates;
-  sourceName?: string;
   targetName?: string;
-  color: string;
-  size: number;
   path: ConnectionPath;
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
