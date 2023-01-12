@@ -43,23 +43,25 @@ func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, u
 		return nil, errEmptyPassword.Errorf("no password provided")
 	}
 
+	var clientErr error
 	for _, pwClient := range c.clients {
-		identity, err := pwClient.AuthenticatePassword(ctx, r, username, password)
-		if err != nil {
-			if errors.Is(err, errIdentityNotFound) {
-				// continue to next password client if identity could not be found
-				continue
-			}
-			if errors.Is(err, errInvalidPassword) {
-				// only add login attempt if identity was found but the provided password was invalid
-				_ = c.loginAttempts.Add(ctx, username, web.RemoteAddr(r.HTTPRequest))
-				return nil, err
-			}
-			return nil, errPasswordAuthFailed.Errorf("failed to authenticate identity: %w", err)
+		var identity *authn.Identity
+		identity, clientErr = pwClient.AuthenticatePassword(ctx, r, username, password)
+		// for invalid password or if the identity is not found by a client continue to next one
+		if errors.Is(clientErr, errInvalidPassword) || errors.Is(clientErr, errIdentityNotFound) {
+			continue
+		}
+
+		if clientErr != nil {
+			return nil, errPasswordAuthFailed.Errorf("failed to authenticate identity: %w", clientErr)
 		}
 
 		return identity, nil
 	}
 
-	return nil, errPasswordAuthFailed.Errorf("failed to authenticate identity")
+	if errors.Is(clientErr, errInvalidPassword) {
+		_ = c.loginAttempts.Add(ctx, username, web.RemoteAddr(r.HTTPRequest))
+	}
+
+	return nil, errPasswordAuthFailed.Errorf("failed to authenticate identity: %w", clientErr)
 }
