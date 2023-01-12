@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -399,35 +400,15 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			return err
 		}
 
-		// 2. Add the labels rows
-		for k, v := range summary.model.Labels {
-			_, err = tx.Exec(ctx,
-				`INSERT INTO entity_labels `+
-					"(grn, label, value) "+
-					`VALUES (?, ?, ?)`,
-				oid, k, v,
-			)
-			if err != nil {
-				return err
-			}
+		if createdAt < 1000 {
+			createdAt = updatedAt
 		}
-
-		// 3. Add the references rows
-		for _, ref := range summary.model.References {
-			resolved, err := s.resolver.Resolve(ctx, ref)
-			if err != nil {
-				return err
-			}
-			_, err = tx.Exec(ctx, `INSERT INTO entity_ref (`+
-				"grn, kind, type, uid, "+
-				"resolved_ok, resolved_to, resolved_warning, resolved_time) "+
-				`VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-				oid, ref.Kind, ref.Type, ref.UID,
-				resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
-			)
-			if err != nil {
-				return err
-			}
+		if createdBy == "" {
+			createdBy = updatedBy
+		}
+		insertArgs := []interface{}{
+			versionInfo.Version, updatedAt, createdBy, createdAt, createdBy,
+			r.Folder, origin.Source, origin.Key, origin.Time,
 		}
 
 		// 5. Add/update the main `entity` table
@@ -448,36 +429,31 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				origin.Source, origin.Key, timestamp,
 				oid,
 			)
-			return err
+		} else {
+			_, err = tx.Exec(ctx, "INSERT INTO entity ("+
+				"grn, tenant_id, kind, uid, "+
+				"size, body, etag, "+
+				"name, description, slug, "+
+				"labels, fields, errors, "+
+				"version, updated_at, updated_by, created_at, created_by, "+
+				"folder, origin, origin_key, origin_ts) "+
+				"VALUES (?, ?, ?, ?, "+
+				" ?, ?, ?, "+
+				" ?, ?, ?, "+
+				" ?, ?, ?, "+
+				" ?, ?, ?, ?, ?, "+
+				" ?, ?, ?, ?)",
+				append([]interface{}{
+					oid, grn.TenantId, grn.Kind, grn.UID,
+					versionInfo.Size, body, etag,
+					summary.model.Name, summary.model.Description, summary.model.Slug,
+					summary.labels, summary.fields, summary.errors,
+				}, insertArgs...)...,
+			)
 		}
-
-		if createdAt < 1000 {
-			createdAt = updatedAt
+		if err == nil {
+			return s.writeSearchInfo(ctx, tx, oid, summary.model, grn, insertArgs)
 		}
-		if createdBy == "" {
-			createdBy = updatedBy
-		}
-
-		_, err = tx.Exec(ctx, "INSERT INTO entity ("+
-			"grn, tenant_id, kind, uid, folder, "+
-			"size, body, etag, version, "+
-			"updated_at, updated_by, created_at, created_by, "+
-			"name, description, slug, "+
-			"labels, fields, errors, "+
-			"origin, origin_key, origin_ts) "+
-			"VALUES (?, ?, ?, ?, ?, "+
-			" ?, ?, ?, ?, "+
-			" ?, ?, ?, ?, "+
-			" ?, ?, ?, "+
-			" ?, ?, ?, "+
-			" ?, ?, ?)",
-			oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
-			versionInfo.Size, body, etag, versionInfo.Version,
-			updatedAt, createdBy, createdAt, createdBy,
-			summary.model.Name, summary.model.Description, summary.model.Slug,
-			summary.labels, summary.fields, summary.errors,
-			origin.Source, origin.Key, origin.Time,
-		)
 		return err
 	})
 	rsp.SummaryJson = summary.marshaled
@@ -526,6 +502,85 @@ func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 		err = rows.Close()
 	}
 	return current, err
+}
+
+func (s *sqlEntityServer) writeSearchInfo(
+	ctx context.Context,
+	tx *session.SessionTx,
+	grn string,
+	summary *models.EntitySummary,
+	parent_grn *entity.GRN,
+	insertArgs []interface{},
+) error {
+	// 2. Add the labels rows
+	for k, v := range summary.Labels {
+		_, err := tx.Exec(ctx,
+			`INSERT INTO entity_labels `+
+				"(grn, label, value) "+
+				`VALUES (?, ?, ?)`,
+			grn, k, v,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// 3. Add the references rows
+	for _, ref := range summary.References {
+		resolved, err := s.resolver.Resolve(ctx, ref)
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec(ctx, `INSERT INTO entity_ref (`+
+			"grn, kind, type, uid, "+
+			"resolved_ok, resolved_to, resolved_warning, resolved_time) "+
+			`VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			grn, ref.Kind, ref.Type, ref.UID,
+			resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	if summary.Nested != nil {
+		parent_grn_string := parent_grn.ToGRNString()
+		for _, child := range summary.Nested {
+			grn = (&entity.GRN{
+				TenantId: parent_grn.TenantId,
+				Kind:     child.Kind,
+				UID:      child.UID, // append???
+			}).ToGRNString()
+
+			_, err := tx.Exec(ctx, "INSERT INTO entity ("+
+				"grn, tenant_id, kind, uid, parent_grn, "+
+				"name, description, slug, "+
+				"size, etag, "+
+				"labels, fields, errors, "+
+				"version, updated_at, updated_by, created_at, created_by, "+
+				"folder, origin, origin_key, origin_ts) "+
+				"VALUES (?, ?, ?, ?, ?, "+
+				" ?, ?, ?,"+
+				" ?, ?,"+
+				" ?, ?, ?, "+
+				" ?, ?, ?, ?, ?, "+
+				" ?, ?, ?, ?)",
+				append([]interface{}{
+					grn, parent_grn.TenantId, child.Kind, child.UID, parent_grn_string,
+					child.Name, child.Description, "", // empty slug
+					0, "", // size + etag
+					"{}", "{}", nil, // labels fields errors,
+				}, insertArgs...)...)
+
+			if err != nil {
+				return err
+			}
+
+			s.writeSearchInfo(ctx, tx, grn, child, parent_grn, insertArgs)
+		}
+	}
+
+	return nil
 }
 
 func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntityRequest) (*summarySupport, []byte, error) {
