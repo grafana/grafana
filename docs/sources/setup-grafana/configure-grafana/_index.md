@@ -864,7 +864,7 @@ By default, the users' organization and role is reset on every new login.
 
 To prevent synchronization of organization roles for a specific OAuth integration, you can set the `skip_org_role_sync` option to `true`. Please note that there is also a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
 
-The setting `oauth_skip_org_role_update_sync` is deprecated in favor of provider-specific settings.
+The setting `oauth_skip_org_role_update_sync` will be deprecated in favor of provider-specific settings.
 
 The table below shows the available OAuth providers and their setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
