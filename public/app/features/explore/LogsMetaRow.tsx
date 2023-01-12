@@ -12,7 +12,7 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2, WithContextMenu } from '@grafana/ui';
+import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { downloadLogsModelAsTxt } from '../inspector/utils/download';
 import { LogLabels } from '../logs/components/LogLabels';
@@ -21,30 +21,11 @@ import { logRowsToReadableJson } from '../logs/utils';
 
 import { MetaInfoText, MetaItemProps } from './MetaInfoText';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   metaContainer: css`
     flex: 1;
     display: flex;
     flex-wrap: wrap;
-  `,
-  downloadButtons: css`
-    & > div:nth-child(2) {
-      display: block;
-    }
-    .expanded-buttons {
-      position: absolute;
-      left: 0;
-      z-index: 1000;
-      width: 100%;
-      background: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z3};
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      & > button > div {
-        text-align: start;
-      }
-    }
   `,
 });
 
