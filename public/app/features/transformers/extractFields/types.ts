@@ -8,15 +8,10 @@ export interface JSONPath {
   path: string;
   alias?: string;
 }
-
-export interface SourceField {
+export interface ExtractFieldsOptions {
   source?: string;
   jsonPaths?: JSONPath[];
   format?: FieldExtractorID;
-}
-
-export interface ExtractFieldsOptions {
-  sources?: SourceField[];
   replace?: boolean;
   keepTime?: boolean;
 }

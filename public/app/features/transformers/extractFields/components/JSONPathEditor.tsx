@@ -83,28 +83,26 @@ export function JSONPathEditor({ options, onChange }: Props) {
 
 const getTooltips = () => {
   const mapValidPaths = [
-    { path: '*', description: '=> extract nothing but applies alias' },
-    { path: 'object', describtion: '=> extract fields from object' },
-    { path: 'object.value1', describtion: '=> extract value1' },
-    { path: 'object.value2', describtion: '=> extract value2' },
-    { path: 'object.value2[0]', describtion: '=> extract value2 first element' },
-    { path: 'object.value2[1]', describtion: '=> extract value2 second element' },
+    { path: 'object', description: '=> extract fields from object' },
+    { path: 'object.value1', description: '=> extract value1' },
+    { path: 'object.value2', description: '=> extract value2' },
+    { path: 'object.value2[0]', description: '=> extract value2 first element' },
+    { path: 'object.value2[1]', description: '=> extract value2 second element' },
   ];
 
   return {
     field: (
       <div>
         A valid path of an json object.
-        <br></br>
-        <br></br>
-        <b>JSON Value:</b>
+        <div>
+          <strong>JSON Value:</strong>
+        </div>
         <pre>
           <code>
             {['{', '  "object": {', '    "value1": "hello world"', '    "value2": [1, 2, 3, 4]', '  }', '}'].join('\n')}
           </code>
         </pre>
-        <br></br>
-        <b>Valid Paths:</b>
+        <strong>Valid Paths:</strong>
         {mapValidPaths.map((value, key) => {
           return (
             <p key={key}>

@@ -13,7 +13,7 @@ import {
 import { findField } from 'app/features/dimensions';
 
 import { fieldExtractors } from './fieldExtractors';
-import { ExtractFieldsOptions, FieldExtractorID, JSONPath, SourceField } from './types';
+import { ExtractFieldsOptions, FieldExtractorID, JSONPath } from './types';
 
 export const extractFieldsTransformer: SynchronousDataTransformerInfo<ExtractFieldsOptions> = {
   id: DataTransformerID.extractFields,
@@ -32,88 +32,71 @@ export const extractFieldsTransformer: SynchronousDataTransformerInfo<ExtractFie
 };
 
 function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): DataFrame {
-  if (options.sources?.length === 0) {
+  if (!options.source) {
     return frame;
   }
 
-  const fields: Field[] = [];
-  options.sources?.forEach((field: SourceField) => {
-    if (!field.source) {
-      return frame;
-    }
+  const source = findField(frame, options.source);
 
-    const source = findField(frame, field.source);
+  if (!source) {
+    // this case can happen when there are multiple queries
+    return frame;
+  }
 
-    if (!source) {
-      // this case can happen when there are multiple queries
-      return frame;
-    }
+  const ext = fieldExtractors.getIfExists(options.format ?? FieldExtractorID.Auto);
+  if (!ext) {
+    throw new Error('unkonwn extractor');
+  }
 
-    const ext = fieldExtractors.getIfExists(field.format ?? FieldExtractorID.Auto);
-    if (!ext) {
-      throw new Error('unkonwn extractor');
-    }
+  const count = frame.length;
+  const names: string[] = []; // keep order
+  const values = new Map<string, any[]>();
 
-    const count = frame.length;
-    const names: string[] = []; // keep order
-    const values = new Map<string, any[]>();
+  for (let i = 0; i < count; i++) {
+    let obj = source.values.get(i);
 
-    for (let i = 0; i < count; i++) {
-      let obj = source.values.get(i);
-
-      if (isString(obj)) {
-        try {
-          obj = ext.parse(obj);
-        } catch {
-          obj = {}; // empty
-        }
+    if (isString(obj)) {
+      try {
+        obj = ext.parse(obj);
+      } catch {
+        obj = {}; // empty
       }
+    }
 
-      if (field.format === FieldExtractorID.JSON && field.jsonPaths && field.jsonPaths?.length > 0) {
-        const newObj: { [k: string]: unknown } = {};
-        // filter out empty paths
-        const filteredPaths = field.jsonPaths.filter((path: JSONPath) => path.path);
+    if (options.format === FieldExtractorID.JSON && options.jsonPaths && options.jsonPaths?.length > 0) {
+      const newObj: { [k: string]: unknown } = {};
+      // filter out empty paths
+      const filteredPaths = options.jsonPaths.filter((path: JSONPath) => path.path);
+
+      if (filteredPaths.length > 0) {
         filteredPaths.forEach((path: JSONPath) => {
-          if (path.path === '*' && path.alias) {
-            // Hacky way to alias normal strings via JSON Path *
-            if (Object.keys(obj).length === 0) {
-              obj = source.values.get(i);
-            }
-
-            newObj[path.alias] = obj;
-            return;
-          }
-
           const key = path.alias && path.alias.length > 0 ? path.alias : path.path;
           newObj[key] = get(obj, path.path) ?? 'Not Found';
         });
 
         obj = newObj;
       }
-
-      for (const [key, val] of Object.entries(obj)) {
-        let buffer = values.get(key);
-        if (buffer == null) {
-          buffer = new Array(count);
-          values.set(key, buffer);
-          names.push(key);
-        }
-        buffer[i] = val;
-      }
     }
 
-    const newFields = names.map((name) => {
-      const buffer = values.get(name);
-      return {
-        name,
-        values: new ArrayVector(buffer),
-        type: buffer ? getFieldTypeFromValue(buffer.find((v) => v != null)) : FieldType.other,
-        config: {},
-      } as Field;
-    });
+    for (const [key, val] of Object.entries(obj)) {
+      let buffer = values.get(key);
+      if (buffer == null) {
+        buffer = new Array(count);
+        values.set(key, buffer);
+        names.push(key);
+      }
+      buffer[i] = val;
+    }
+  }
 
-    fields.push(...newFields);
-    return;
+  const fields = names.map((name) => {
+    const buffer = values.get(name);
+    return {
+      name,
+      values: new ArrayVector(buffer),
+      type: buffer ? getFieldTypeFromValue(buffer.find((v) => v != null)) : FieldType.other,
+      config: {},
+    } as Field;
   });
 
   if (options.keepTime) {

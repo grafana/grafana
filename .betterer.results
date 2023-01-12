@@ -4569,7 +4569,7 @@ exports[`better eslint`] = {
     "public/app/features/transformers/editors/SortByTransformerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/transformers/extractFields/components/SourceFieldEditor.tsx:5381": [
+    "public/app/features/transformers/extractFields/ExtractFieldsTransformerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
