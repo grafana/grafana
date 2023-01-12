@@ -11,6 +11,8 @@ import {
   LogsSortOrder,
 } from '@grafana/data';
 
+import { getDataframeFields } from './components/logParser';
+
 // This matches:
 // first a label from start of the string or first white space, then any word chars until "="
 // second either an empty quotes, or anything that starts with quote and ends with unescaped quote,
@@ -265,3 +267,21 @@ export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorM
 
 export const escapeUnescapedString = (string: string) =>
   string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
+
+export function logRowsToReadableJson(logs: LogRowModel[]) {
+  return logs.map((log) => {
+    const fields = getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
+      acc[field.key] = field.value;
+      return acc;
+    }, {});
+
+    return {
+      line: log.entry,
+      timestamp: log.timeEpochMs,
+      fields: {
+        ...fields,
+        ...log.labels,
+      },
+    };
+  });
+}
