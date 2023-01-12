@@ -2259,6 +2259,58 @@ describe('when migrating table cell display mode to cell options', () => {
             overrides: [],
           },
         },
+        // @ts-expect-error
+        {
+          id: 6,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'auto',
+                inspect: false,
+              },
+            },
+            overrides: [
+              {
+                matcher: {
+                  id: 'byName',
+                  options: 'value',
+                },
+                properties: [
+                  {
+                    id: 'custom.displayMode',
+                    value: 'color-background',
+                  },
+                ],
+              },
+              {
+                matcher: {
+                  id: 'byName',
+                  options: 'value2',
+                },
+                properties: [
+                  {
+                    id: 'custom.displayMode',
+                    value: 'lcd-gauge',
+                  },
+                ],
+              },
+              {
+                matcher: {
+                  id: 'byName',
+                  options: 'value3',
+                },
+                properties: [
+                  {
+                    id: 'custom.displayMode',
+                    value: 'gradient-gauge',
+                  },
+                ],
+              },
+            ],
+          },
+        },
       ],
       schemaVersion: 37,
     });
@@ -2289,7 +2341,24 @@ describe('when migrating table cell display mode to cell options', () => {
     expect(cellOptions).toEqual({ type: 'gauge', mode: 'basic' });
   });
 
-  // it('should not add options for cell types without extra options', () => {});
+  it('should migrate from display mode to cell options in field overrides', () => {
+    const fieldConfig = model.panels[5].fieldConfig;
+
+    expect(fieldConfig.overrides[0].properties[0]).toEqual({
+      id: 'custom.cellOptions',
+      value: { type: 'color-background', mode: 'gradient' },
+    });
+
+    expect(fieldConfig.overrides[1].properties[0]).toEqual({
+      id: 'custom.cellOptions',
+      value: { type: 'gauge', mode: 'lcd' },
+    });
+
+    expect(fieldConfig.overrides[2].properties[0]).toEqual({
+      id: 'custom.cellOptions',
+      value: { type: 'gauge', mode: 'gradient' },
+    });
+  });
 });
 
 function createRow(options: any, panelDescriptions: any[]) {
