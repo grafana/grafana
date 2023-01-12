@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -271,19 +270,19 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 			},
 		},
 	}
-	getTeamsByUserQuery := &models.GetTeamsByUserQuery{
-		OrgId:        signedInUser.OrgID,
-		UserId:       signedInUser.UserID,
+	getTeamsByUserQuery := &team.GetTeamsByUserQuery{
+		OrgID:        signedInUser.OrgID,
+		UserID:       signedInUser.UserID,
 		SignedInUser: tempUser,
 	}
-	err = s.teamService.GetTeamsByUser(ctx, getTeamsByUserQuery)
+	getTeamsByUserQueryResult, err := s.teamService.GetTeamsByUser(ctx, getTeamsByUserQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	signedInUser.Teams = make([]int64, len(getTeamsByUserQuery.Result))
-	for i, t := range getTeamsByUserQuery.Result {
-		signedInUser.Teams[i] = t.Id
+	signedInUser.Teams = make([]int64, len(getTeamsByUserQueryResult))
+	for i, t := range getTeamsByUserQueryResult {
+		signedInUser.Teams[i] = t.ID
 	}
 	return signedInUser, err
 }

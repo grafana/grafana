@@ -1,20 +1,23 @@
+import {
+  CustomVariable,
+  DataSourceVariable,
+  QueryVariable,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneQueryRunner,
+  VizPanel,
+} from '@grafana/scenes';
 import { defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@grafana/schema';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
-import { SceneGridLayout, SceneGridRow, VizPanel } from '../components';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
-import { CustomVariable } from '../variables/variants/CustomVariable';
-import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
-import { QueryVariable } from '../variables/variants/query/QueryVariable';
-
 import { DashboardScene } from './DashboardScene';
 import {
   createDashboardSceneFromDashboardModel,
+  createVizPanelFromPanelModel,
   createSceneVariableFromVariableModel,
   DashboardLoader,
-  createVizPanelFromPanelModel,
 } from './DashboardsLoader';
 
 describe('DashboardLoader', () => {

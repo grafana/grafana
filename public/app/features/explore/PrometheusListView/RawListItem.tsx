@@ -3,6 +3,7 @@ import React from 'react';
 import { useCopyToClipboard } from 'react-use';
 
 import { Field, GrafanaTheme2 } from '@grafana/data/';
+import { reportInteraction } from '@grafana/runtime/src';
 import { IconButton, useStyles2 } from '@grafana/ui/';
 
 import { ItemLabels } from './ItemLabels';
@@ -128,7 +129,14 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
       )}
       <div key={listKey} className={styles.rowWrapper}>
         <span className={styles.copyToClipboardWrapper}>
-          <IconButton tooltip="Copy to clipboard" onClick={() => copyToClipboard(stringRep)} name="copy" />
+          <IconButton
+            tooltip="Copy to clipboard"
+            onClick={() => {
+              reportInteraction('grafana_explore_prometheus_instant_query_ui_raw_toggle_expand');
+              copyToClipboard(stringRep);
+            }}
+            name="copy"
+          />
         </span>
         <span role={'cell'} className={styles.rowLabelWrapWrap}>
           <div className={styles.rowLabelWrap}>
