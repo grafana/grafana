@@ -39,24 +39,21 @@ const ServerDisplay = ({ data }: Props) => {
 
   return (
     <svg viewBox="0 0 207.95 197.78">
+      <defs>
+        <clipPath id="serverb">
+          <rect
+            className={styles.pathA}
+            x="77.108"
+            y="24.362"
+            width="115.9"
+            height="197.78"
+            d="M 77.107697,24.361513 H 193.00871 V 222.14392 H 77.107697 Z"
+          />
+          <path className={styles.pathB} d="m26.804 19.62h217.95v206.93h-217.95zm50.304 4.7414v197.78h115.9v-197.78z" />
+        </clipPath>
+      </defs>
       {data?.type === ServerTypes.Stack ? (
         <>
-          <defs>
-            <clipPath id="servera">
-              <rect
-                className={styles.pathA}
-                x="77.108"
-                y="24.362"
-                width="115.9"
-                height="197.78"
-                d="M 77.107697,24.361513 H 193.00871 V 222.14392 H 77.107697 Z"
-              />
-              <path
-                className={styles.pathB}
-                d="m26.804 19.62h217.95v206.93h-217.95zm50.304 4.7414v197.78h115.9v-197.78z"
-              />
-            </clipPath>
-          </defs>
           <g transform="translate(-31.804 -24.362)">
             <path
               className={styles.outline}
@@ -129,22 +126,6 @@ const ServerDisplay = ({ data }: Props) => {
         </>
       ) : data?.type === ServerTypes.Single ? (
         <>
-          <defs>
-            <clipPath id="serverb">
-              <rect
-                className={styles.pathA}
-                x="77.108"
-                y="24.362"
-                width="115.9"
-                height="197.78"
-                d="M 77.107697,24.361513 H 193.00871 V 222.14392 H 77.107697 Z"
-              />
-              <path
-                className={styles.pathB}
-                d="m26.804 19.62h217.95v206.93h-217.95zm50.304 4.7414v197.78h115.9v-197.78z"
-              />
-            </clipPath>
-          </defs>
           <g transform="translate(-31.804 -24.362)">
             <path
               className={styles.outline}
@@ -185,22 +166,6 @@ const ServerDisplay = ({ data }: Props) => {
         </>
       ) : data?.type === ServerTypes.Database ? (
         <>
-          <defs>
-            <clipPath id="serverb">
-              <rect
-                className={styles.pathA}
-                x="77.108"
-                y="24.362"
-                width="115.9"
-                height="197.78"
-                d="M 77.107697,24.361513 H 193.00871 V 222.14392 H 77.107697 Z"
-              />
-              <path
-                className={styles.pathB}
-                d="m26.804 19.62h217.95v206.93h-217.95zm50.304 4.7414v197.78h115.9v-197.78z"
-              />
-            </clipPath>
-          </defs>
           <g transform="translate(-31.804 -24.62)">
             <path
               className={styles.outline}
@@ -249,22 +214,6 @@ const ServerDisplay = ({ data }: Props) => {
         </>
       ) : data?.type === ServerTypes.Terminal ? (
         <>
-          <defs>
-            <clipPath id="serverb">
-              <rect
-                className={styles.pathA}
-                x="77.108"
-                y="24.362"
-                width="115.9"
-                height="197.78"
-                d="M 77.107697,24.361513 H 193.00871 V 222.14392 H 77.107697 Z"
-              />
-              <path
-                className={styles.pathB}
-                d="m26.804 19.62h217.95v206.93h-217.95zm50.304 4.7414v197.78h115.9v-197.78z"
-              />
-            </clipPath>
-          </defs>
           <g transform="translate(-31.804 -24.362)">
             <path
               className={styles.outline}
