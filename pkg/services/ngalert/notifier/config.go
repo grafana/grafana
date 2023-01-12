@@ -103,7 +103,7 @@ type AlertingConfiguration struct {
 
 func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alerting.GrafanaReceiver, tmpl *alerting.Template) (alerting.Notifier, error) {
 	return func(next *alerting.GrafanaReceiver, tmpl *alerting.Template) (alerting.Notifier, error) {
-		//TODO: We shouldn't need to do all of this marshalling - there should be difference between types.
+		//TODO: We shouldn't need to do all of this marshalling - there should be no difference between types.
 		var out api.RawMessage
 		settingsJSON, err := json.Marshal(next.Settings)
 		if err != nil {
