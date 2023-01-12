@@ -3,7 +3,9 @@ import React, { useMemo, useState } from 'react';
 
 import { PluginType } from '@grafana/data';
 import { useStyles2, LoadingPlaceholder } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { useGetAllWithFilters } from 'app/features/plugins/admin/state/hooks';
+import { AccessControlAction } from 'app/types';
 
 import { ROUTES } from '../../constants';
 
@@ -30,6 +32,7 @@ export function ConnectData() {
   const [isNoAccessModalOpen, setIsNoAccessModalOpen] = useState(false);
   const [focusedItem, setFocusedItem] = useState<CardGridItem | null>(null);
   const styles = useStyles2(getStyles);
+  const canCreateDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
 
   const handleSearchChange = (e: React.FormEvent<HTMLInputElement>) => {
     setSearchTerm(e.currentTarget.value.toLowerCase());
@@ -53,10 +56,16 @@ export function ConnectData() {
     [plugins]
   );
 
-  const openModal = (e: React.MouseEvent<HTMLElement>, item: CardGridItem) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const onClickCardGridItem = (e: React.MouseEvent<HTMLElement>, item: CardGridItem) => {
+    if (!canCreateDataSources) {
+      e.preventDefault();
+      e.stopPropagation();
 
+      openModal(item);
+    }
+  };
+
+  const openModal = (item: CardGridItem) => {
     setIsNoAccessModalOpen(true);
     setFocusedItem(item);
   };
@@ -80,7 +89,7 @@ export function ConnectData() {
       ) : !!error ? (
         <p>Error: {error.message}</p>
       ) : (
-        <CardGrid items={cardGridItems} onClickItem={openModal} />
+        <CardGrid items={cardGridItems} onClickItem={onClickCardGridItem} />
       )}
       {showNoResults && <NoResults />}
     </>

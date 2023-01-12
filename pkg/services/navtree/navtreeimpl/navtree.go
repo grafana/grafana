@@ -569,9 +569,8 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
-	// Connect data
-	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
-	if plugins.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
+	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
+		// Connect data
 		children = append(children, &navtree.NavLink{
 			Id:        "connections-connect-data",
 			Text:      "Connect data",
@@ -580,9 +579,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 			Url:       s.cfg.AppSubURL + "/connections/connect-data",
 			Children:  []*navtree.NavLink{},
 		})
-	}
 
-	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
 		// Your connections
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-your-connections",
