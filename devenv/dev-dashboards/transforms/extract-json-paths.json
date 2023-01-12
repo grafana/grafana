@@ -240,7 +240,7 @@
         "y": 9
       },
       "type": "table",
-      "title": "Raw Data",
+      "title": "Raw data",
       "transformations": [],
       "datasource": {
         "type": "testdata",
