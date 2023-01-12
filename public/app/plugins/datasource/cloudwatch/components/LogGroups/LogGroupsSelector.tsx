@@ -151,7 +151,7 @@ export const LogGroupsSelector = ({
               <thead>
                 <tr className={styles.row}>
                   <td className={styles.cell}>Log Group</td>
-                  <td className={styles.cell}>Account name</td>
+                  {accountOptions.length > 0 && <td className={styles.cell}>Account label</td>}
                   <td className={styles.cell}>Account ID</td>
                 </tr>
               </thead>
@@ -184,7 +184,7 @@ export const LogGroupsSelector = ({
                           </label>
                         </div>
                       </td>
-                      <td className={styles.cell}>{row.accountLabel}</td>
+                      {accountOptions.length > 0 && <td className={styles.cell}>{row.accountLabel}</td>}
                       <td className={styles.cell}>{row.accountId}</td>
                     </tr>
                   ))}

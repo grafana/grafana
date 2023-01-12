@@ -294,4 +294,20 @@ describe('LogGroupsSelector', () => {
       },
     ]);
   });
+
+  it('should display account label if account options prop has values', async () => {
+    render(<LogGroupsSelector {...defaultProps} />);
+    await userEvent.click(screen.getByText('Select Log Groups'));
+    expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
+    expect(screen.getByText('Account label')).toBeInTheDocument();
+    waitFor(() => expect(screen.getByText('Account Name 123')).toBeInTheDocument());
+  });
+
+  it('should not display account label if account options prop doesnt has values', async () => {
+    render(<LogGroupsSelector {...defaultProps} accountOptions={[]} />);
+    await userEvent.click(screen.getByText('Select Log Groups'));
+    expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
+    expect(screen.queryByText('Account label')).not.toBeInTheDocument();
+    waitFor(() => expect(screen.queryByText('Account Name 123')).not.toBeInTheDocument());
+  });
 });
