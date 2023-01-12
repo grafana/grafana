@@ -12,7 +12,7 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2, WithContextMenu } from '@grafana/ui';
 
 import { downloadLogsModelAsTxt } from '../inspector/utils/download';
 import { LogLabels } from '../logs/components/LogLabels';
@@ -156,6 +156,12 @@ export const LogsMetaRow = React.memo(
         ),
       });
     }
+    const downloadMenu = (
+      <Menu>
+        <Menu.Item label="txt" onClick={() => downloadLogs(DownloadFormat.Text)} />
+        <Menu.Item label="json" onClick={() => downloadLogs(DownloadFormat.Json)} />
+      </Menu>
+    );
     return (
       <>
         {logsMetaItem && (
@@ -168,26 +174,18 @@ export const LogsMetaRow = React.memo(
                 };
               })}
             />
-
-            <ToolbarButton
-              className={style.downloadButtons}
-              onClick={() => setIsOpen(!isOpen)}
-              isOpen={isOpen}
-              variant="default"
-              icon="download-alt"
-            >
-              Download
-              {isOpen && (
-                <div className="expanded-buttons">
-                  <ToolbarButton onClick={() => downloadLogs(DownloadFormat.Json)} variant="default">
-                    json
-                  </ToolbarButton>
-                  <ToolbarButton onClick={() => downloadLogs(DownloadFormat.Text)} variant="default">
-                    txt
-                  </ToolbarButton>
-                </div>
-              )}
-            </ToolbarButton>
+            <Dropdown overlay={downloadMenu}>
+              <ToolbarButton
+                onClick={() => {
+                  setIsOpen(!isOpen);
+                }}
+                isOpen={isOpen}
+                variant="default"
+                icon="download-alt"
+              >
+                Download
+              </ToolbarButton>
+            </Dropdown>
           </div>
         )}
       </>
