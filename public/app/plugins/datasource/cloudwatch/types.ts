@@ -1,7 +1,6 @@
 import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
 import { DataFrame, DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 
-import { SelectableResourceValue } from './api';
 import {
   QueryEditorArrayExpression,
   QueryEditorFunctionExpression,
@@ -101,8 +100,8 @@ export interface CloudWatchLogsQuery extends DataQuery {
   region: string;
   expression?: string;
   statsGroups?: string[];
-  logGroups?: SelectableResourceValue[];
-  /* not quite deprecated yet, but will be soon */
+  logGroups?: LogGroup[];
+  /* deprecated, use logGroups instead */
   logGroupNames?: string[];
 }
 // We want to allow setting defaults for both Logs and Metrics queries
@@ -132,6 +131,11 @@ export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
   logsTimeout?: string;
   // Used to create links if logs contain traceId.
   tracingDatasourceUid?: string;
+
+  logGroups?: LogGroup[];
+  /**
+   * @deprecated use logGroups
+   */
   defaultLogGroups?: string[];
 }
 
@@ -263,70 +267,15 @@ export interface TSDBTimeSeries {
 }
 export type TSDBTimePoint = [number, number];
 
-export interface LogGroup {
-  /**
-   * The name of the log group.
-   */
-  logGroupName?: string;
-  /**
-   * The creation time of the log group, expressed as the number of milliseconds after Jan 1, 1970 00:00:00 UTC.
-   */
-  creationTime?: number;
-  retentionInDays?: number;
-  /**
-   * The number of metric filters.
-   */
-  metricFilterCount?: number;
-  /**
-   * The Amazon Resource Name (ARN) of the log group.
-   */
-  arn?: string;
-  /**
-   * The number of bytes stored.
-   */
-  storedBytes?: number;
-  /**
-   * The Amazon Resource Name (ARN) of the CMK to use when encrypting log data.
-   */
-  kmsKeyId?: string;
-}
-
-export interface DescribeLogGroupsResponse {
-  /**
-   * The log groups.
-   */
-  logGroups?: LogGroup[];
-  nextToken?: string;
-}
-
-export interface GetLogGroupFieldsRequest {
-  /**
-   * The name of the log group to search.
-   */
-  logGroupName: string;
-  /**
-   * The time to set as the center of the query. If you specify time, the 8 minutes before and 8 minutes after this time are searched. If you omit time, the past 15 minutes are queried. The time value is specified as epoch time, the number of seconds since January 1, 1970, 00:00:00 UTC.
-   */
-  time?: number;
-  region: string;
-}
-
 export interface LogGroupField {
   /**
    * The name of a log field.
    */
-  name?: string;
+  name: string;
   /**
    * The percentage of log events queried that contained the field.
    */
   percent?: number;
-}
-
-export interface GetLogGroupFieldsResponse {
-  /**
-   * The array of fields found in the query. Each object in the array contains the name of the field, along with the percentage of time it appeared in the log events that were queried.
-   */
-  logGroupFields?: LogGroupField[];
 }
 
 export interface StartQueryRequest {
@@ -338,7 +287,7 @@ export interface StartQueryRequest {
    * The list of log groups to be queried. You can include up to 20 log groups. A StartQuery operation must include a logGroupNames or a logGroupName parameter, but not both.
    */
   logGroupNames?: string[] /* not quite deprecated yet, but will be soon */;
-  logGroups?: SelectableResourceValue[];
+  logGroups?: LogGroup[];
   /**
    * The query string to use. For more information, see CloudWatch Logs Insights Query Syntax.
    */
@@ -455,6 +404,17 @@ export interface ResourceRequest {
   accountId?: string;
 }
 
+export interface GetLogGroupFieldsRequest extends ResourceRequest {
+  /**
+   * The log group identifier
+   */
+  arn?: string;
+  /**
+   * The name of the log group to search.
+   */
+  logGroupName: string;
+}
+
 export interface GetDimensionKeysRequest extends ResourceRequest {
   metricName?: string;
   namespace?: string;
@@ -500,4 +460,11 @@ export interface MetricResponse {
 export interface ResourceResponse<T> {
   accountId?: string;
   value: T;
+}
+
+export interface LogGroup {
+  arn: string;
+  name: string;
+  accountId?: string;
+  accountLabel?: string;
 }

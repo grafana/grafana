@@ -1258,6 +1258,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/helper-skip-transparent-expression-wrappers@npm:^7.20.0":
+  version: 7.20.0
+  resolution: "@babel/helper-skip-transparent-expression-wrappers@npm:7.20.0"
+  dependencies:
+    "@babel/types": ^7.20.0
+  checksum: 34da8c832d1c8a546e45d5c1d59755459ffe43629436707079989599b91e8c19e50e73af7a4bd09c95402d389266731b0d9c5f69e372d8ebd3a709c05c80d7dd
+  languageName: node
+  linkType: hard
+
 "@babel/helper-split-export-declaration@npm:^7.15.4":
   version: 7.15.4
   resolution: "@babel/helper-split-export-declaration@npm:7.15.4"
@@ -1850,6 +1859,19 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: f2db40e26172f07c50b635cb61e1f36165de3ba868fcf608d967642f0d044b7c6beb0e7ecf17cbd421144b99e1eae7ad6031ded92925343bb0ed1d08707b514f
+  languageName: node
+  linkType: hard
+
+"@babel/plugin-proposal-optional-chaining@npm:7.20.7":
+  version: 7.20.7
+  resolution: "@babel/plugin-proposal-optional-chaining@npm:7.20.7"
+  dependencies:
+    "@babel/helper-plugin-utils": ^7.20.2
+    "@babel/helper-skip-transparent-expression-wrappers": ^7.20.0
+    "@babel/plugin-syntax-optional-chaining": ^7.8.3
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 274b8932335bd064ca24cf1a4da2b2c20c92726d4bfa8b0cb5023857479b8481feef33505c16650c7b9239334e5c6959babc924816324c4cf223dd91c7ca79bc
   languageName: node
   linkType: hard
 
@@ -3669,6 +3691,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/types@npm:^7.20.0":
+  version: 7.20.7
+  resolution: "@babel/types@npm:7.20.7"
+  dependencies:
+    "@babel/helper-string-parser": ^7.19.4
+    "@babel/helper-validator-identifier": ^7.19.1
+    to-fast-properties: ^2.0.0
+  checksum: b39af241f0b72bba67fd6d0d23914f6faec8c0eba8015c181cbd5ea92e59fc91a52a1ab490d3520c7dbd19ddb9ebb76c476308f6388764f16d8201e37fae6811
+  languageName: node
+  linkType: hard
+
 "@babel/types@npm:^7.20.2, @babel/types@npm:^7.20.5":
   version: 7.20.5
   resolution: "@babel/types@npm:7.20.5"
@@ -4850,6 +4883,7 @@ __metadata:
     react: 17.0.2
     react-dom: 17.0.2
     react-test-renderer: 17.0.2
+    react-use: 17.4.0
     regenerator-runtime: 0.13.10
     rimraf: 3.0.2
     rollup: 2.79.1
@@ -4860,7 +4894,7 @@ __metadata:
     sinon: 14.0.1
     tinycolor2: 1.4.2
     tslib: 2.4.1
-    typescript: 4.9.3
+    typescript: 4.8.4
     uplot: 1.6.23
     xss: 1.0.14
   peerDependencies:
@@ -4884,7 +4918,7 @@ __metadata:
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
     tslib: 2.4.1
-    typescript: 4.9.3
+    typescript: 4.8.4
   languageName: unknown
   linkType: soft
 
@@ -4923,7 +4957,7 @@ __metadata:
     tracelib: 1.0.1
     ts-loader: 8.4.0
     tslib: 2.4.1
-    typescript: 4.9.3
+    typescript: 4.8.4
     uuid: 9.0.0
     webpack: 5.74.0
     yaml: ^2.0.0
@@ -5068,12 +5102,19 @@ __metadata:
     rxjs: 7.5.7
     systemjs: 0.20.19
     tslib: 2.4.1
-    typescript: 4.9.3
+    typescript: 4.8.4
   peerDependencies:
     react: 17.0.2
     react-dom: 17.0.2
   languageName: unknown
   linkType: soft
+
+"@grafana/scenes@npm:0.0.4":
+  version: 0.0.4
+  resolution: "@grafana/scenes@npm:0.0.4"
+  checksum: adbc69e4033bdd40a5c2fe13ee7af2b787c236e548c389b6820b057f76ae3727fc4f85d2205d6658e008f69f75bbf84c04453fedb29f9979a76517267f1f91ad
+  languageName: node
+  linkType: hard
 
 "@grafana/schema@9.4.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
@@ -5091,7 +5132,7 @@ __metadata:
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
     tslib: 2.4.1
-    typescript: 4.9.3
+    typescript: 4.8.4
   languageName: unknown
   linkType: soft
 
@@ -5181,7 +5222,7 @@ __metadata:
     ts-loader: ^9.3.1
     ts-node: ^9.1.0
     tslib: 2.4.0
-    typescript: 4.9.3
+    typescript: 4.8.2
     webpack: ^5.72.0
   bin:
     grafana-toolkit: ./bin/grafana-toolkit.js
@@ -5338,7 +5379,7 @@ __metadata:
     style-loader: 3.3.1
     tinycolor2: 1.4.2
     tslib: 2.4.1
-    typescript: 4.9.3
+    typescript: 4.8.4
     uplot: 1.6.23
     uuid: 9.0.0
     webpack: 5.74.0
@@ -5530,7 +5571,7 @@ __metadata:
     tinycolor2: 1.4.2
     tslib: 2.4.1
     tween-functions: ^1.2.0
-    typescript: 4.9.3
+    typescript: 4.8.4
   languageName: unknown
   linkType: soft
 
@@ -12742,13 +12783,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/event@npm:2.6.0":
-  version: 2.6.0
-  resolution: "@visx/event@npm:2.6.0"
+"@visx/event@npm:2.17.0":
+  version: 2.17.0
+  resolution: "@visx/event@npm:2.17.0"
   dependencies:
     "@types/react": "*"
-    "@visx/point": 2.6.0
-  checksum: a3155bab7d964f592702981a2a6cae3742d9f23732ec64c2c3717c8b17350e22006fb13a96201cbe78bdd35170c8363ab645bf0c4c8f8dee41be64618fd38c47
+    "@visx/point": 2.17.0
+  checksum: 360a9ee2a163c0e0200f98cadcd9f0c98f53725d4be62e49d326aeb8ca7cd837305f28f326f03d9ae49910ca67e1185a97827f0ef76efb0b901fb54c56c97bd3
   languageName: node
   linkType: hard
 
@@ -12777,10 +12818,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/point@npm:2.6.0":
-  version: 2.6.0
-  resolution: "@visx/point@npm:2.6.0"
-  checksum: 56be8e31abaf10a182d328141a0929ea28d2956d4c06469fc51cde3f30f64ae035aaa0771f44010c3484ae63c7cd1bc9b782cde6cfcf9713190c20b301ab181e
+"@visx/point@npm:2.17.0":
+  version: 2.17.0
+  resolution: "@visx/point@npm:2.17.0"
+  checksum: 9cb18e41f1f47e46b85bdbbdd1c930a654ed8b731b3a5da0920e2b3a261d887c066ec97079293d4f5195a1e04d842faa2f2bf0519876cb27ea6ee82fc5ff8855
   languageName: node
   linkType: hard
 
@@ -21920,7 +21961,7 @@ __metadata:
     "@babel/plugin-proposal-class-properties": 7.18.6
     "@babel/plugin-proposal-nullish-coalescing-operator": 7.18.6
     "@babel/plugin-proposal-object-rest-spread": 7.20.2
-    "@babel/plugin-proposal-optional-chaining": 7.18.9
+    "@babel/plugin-proposal-optional-chaining": 7.20.7
     "@babel/plugin-syntax-dynamic-import": 7.8.3
     "@babel/plugin-transform-react-constant-elements": 7.20.2
     "@babel/plugin-transform-runtime": 7.19.6
@@ -21949,6 +21990,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.1
     "@grafana/monaco-logql": ^0.0.6
     "@grafana/runtime": "workspace:*"
+    "@grafana/scenes": 0.0.4
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -22044,7 +22086,7 @@ __metadata:
     "@types/webpack-env": 1.18.0
     "@typescript-eslint/eslint-plugin": 5.42.0
     "@typescript-eslint/parser": 5.42.0
-    "@visx/event": 2.6.0
+    "@visx/event": 2.17.0
     "@visx/gradient": 2.10.0
     "@visx/group": 2.10.0
     "@visx/scale": 2.2.2
@@ -22224,7 +22266,7 @@ __metadata:
     ts-loader: 9.3.1
     ts-node: 10.9.1
     tslib: 2.4.1
-    typescript: 4.9.3
+    typescript: 4.8.4
     uplot: 1.6.23
     uuid: 9.0.0
     vendor: "link:./public/vendor"
@@ -22237,6 +22279,9 @@ __metadata:
     webpack-manifest-plugin: 5.0.0
     webpack-merge: 5.8.0
     whatwg-fetch: 3.6.2
+  dependenciesMeta:
+    "@grafana/scenes@0.0.3":
+      unplugged: true
   languageName: unknown
   linkType: soft
 
@@ -26604,18 +26649,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loader-utils@npm:^2.0.0":
-  version: 2.0.3
-  resolution: "loader-utils@npm:2.0.3"
-  dependencies:
-    big.js: ^5.2.2
-    emojis-list: ^3.0.0
-    json5: ^2.1.2
-  checksum: d055c61ce5927b64cb4af40218606603a7d3a39adb7b6eec116bb31d19203875950e478152dea056de404eced8e87e9bfd336ec636591ded040ea451f63c7d88
-  languageName: node
-  linkType: hard
-
-"loader-utils@npm:^2.0.4":
+"loader-utils@npm:^2.0.0, loader-utils@npm:^2.0.4":
   version: 2.0.4
   resolution: "loader-utils@npm:2.0.4"
   dependencies:
@@ -26627,9 +26661,9 @@ __metadata:
   linkType: hard
 
 "loader-utils@npm:^3.2.0":
-  version: 3.2.0
-  resolution: "loader-utils@npm:3.2.0"
-  checksum: c7b9a8dc4b3bc19e9ef563c48e3a18ea9f8bb2da1ad38a12e4b88358cfba5f148a7baf12d78fe78ffcb718ce1e062ab31fcf5c148459f1247a672a4213471e80
+  version: 3.2.1
+  resolution: "loader-utils@npm:3.2.1"
+  checksum: 4e3ea054cdc8be1ab1f1238f49f42fdf0483039eff920fb1d442039f3f0ad4ebd11fb8e584ccdf2cb7e3c56b3d40c1832416e6408a55651b843da288960cc792
   languageName: node
   linkType: hard
 
@@ -37670,6 +37704,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:4.8.2":
+  version: 4.8.2
+  resolution: "typescript@npm:4.8.2"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 7f5b81d0d558c9067f952c7af52ab7f19c2e70a916817929e4a5b256c93990bf3178eccb1ac8a850bc75df35f6781b6f4cb3370ce20d8b1ded92ed462348f628
+  languageName: node
+  linkType: hard
+
 "typescript@npm:4.8.4, typescript@npm:^3 || ^4":
   version: 4.8.4
   resolution: "typescript@npm:4.8.4"
@@ -37677,16 +37721,6 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 3e4f061658e0c8f36c820802fa809e0fd812b85687a9a2f5430bc3d0368e37d1c9605c3ce9b39df9a05af2ece67b1d844f9f6ea8ff42819f13bcb80f85629af0
-  languageName: node
-  linkType: hard
-
-"typescript@npm:4.9.3":
-  version: 4.9.3
-  resolution: "typescript@npm:4.9.3"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 17b8f816050b412403e38d48eef0e893deb6be522d6dc7caf105e54a72e34daf6835c447735fd2b28b66784e72bfbf87f627abb4818a8e43d1fa8106396128dc
   languageName: node
   linkType: hard
 
@@ -37720,6 +37754,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@patch:typescript@4.8.2#~builtin<compat/typescript>":
+  version: 4.8.2
+  resolution: "typescript@patch:typescript@npm%3A4.8.2#~builtin<compat/typescript>::version=4.8.2&hash=aae4e6"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 5cb0f02f414f5405f4b0e7ee1fd7fa9177b6a8783c9017b6cad85f56ce4c4f93e0e6f2ce37e863cb597d44227cd009474c9fbd85bf7a50004e5557426cb58079
+  languageName: node
+  linkType: hard
+
 "typescript@patch:typescript@4.8.4#~builtin<compat/typescript>, typescript@patch:typescript@^3 || ^4#~builtin<compat/typescript>":
   version: 4.8.4
   resolution: "typescript@patch:typescript@npm%3A4.8.4#~builtin<compat/typescript>::version=4.8.4&hash=0102e9"
@@ -37727,16 +37771,6 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 301459fc3eb3b1a38fe91bf96d98eb55da88a9cb17b4ef80b4d105d620f4d547ba776cc27b44cc2ef58b66eda23fe0a74142feb5e79a6fb99f54fc018a696afa
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@4.9.3#~builtin<compat/typescript>":
-  version: 4.9.3
-  resolution: "typescript@patch:typescript@npm%3A4.9.3#~builtin<compat/typescript>::version=4.9.3&hash=d73830"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 67ca21a387c0572f1c04936e638dde7782c5aa520c3754aadc7cc9b7c915da9ebc3e27c601bfff4ccb7d7264e82dce6d277ada82ec09dc75024349e0ef64926d
   languageName: node
   linkType: hard
 

@@ -56,10 +56,12 @@ function setup(error: DataQueryError) {
     tableFrames: [],
     traceFrames: [],
     nodeGraphFrames: [],
+    rawPrometheusFrames: [],
     flameGraphFrames: [],
     graphResult: null,
     logsResult: null,
     tableResult: null,
+    rawPrometheusResult: null,
   };
   render(
     <Provider store={store}>

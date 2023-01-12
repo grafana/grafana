@@ -82,7 +82,7 @@ func (p *teamPermissionMigrator) mapPermissionToRBAC(permission models.Permissio
 }
 
 func (p *teamPermissionMigrator) getUserRoleByOrgMapping() (map[int64]map[int64]string, error) {
-	var orgUsers []*models.OrgUserDTO
+	var orgUsers []*org.OrgUserDTO
 	if err := p.sess.SQL(`SELECT * FROM org_user`).Cols("org_user.org_id", "org_user.user_id", "org_user.role").Find(&orgUsers); err != nil {
 		return nil, err
 	}
@@ -91,13 +91,13 @@ func (p *teamPermissionMigrator) getUserRoleByOrgMapping() (map[int64]map[int64]
 
 	// Loop through users and organise them by organization ID
 	for _, orgUser := range orgUsers {
-		orgRoles, initialized := userRolesByOrg[orgUser.OrgId]
+		orgRoles, initialized := userRolesByOrg[orgUser.OrgID]
 		if !initialized {
 			orgRoles = map[int64]string{}
 		}
 
-		orgRoles[orgUser.UserId] = orgUser.Role
-		userRolesByOrg[orgUser.OrgId] = orgRoles
+		orgRoles[orgUser.UserID] = orgUser.Role
+		userRolesByOrg[orgUser.OrgID] = orgRoles
 	}
 
 	return userRolesByOrg, nil

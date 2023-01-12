@@ -39,6 +39,8 @@ func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *ba
 
 	start := time.Now()
 
+	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
+
 	err := fn()
 	if err != nil {
 		status = "error"
@@ -55,8 +57,7 @@ func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *ba
 			"pluginId", pluginCtx.PluginID,
 			"endpoint", endpoint,
 			"eventName", "grafana-data-egress",
-			"insight_logs", true,
-			"since_grafana_request_started", log.TimeSinceStart(ctx, time.Now()),
+			"time_before_plugin_request", timeBeforePluginRequest,
 		}
 
 		if pluginCtx.User != nil {

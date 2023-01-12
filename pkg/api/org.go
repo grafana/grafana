@@ -64,16 +64,16 @@ func (hs *HTTPServer) GetOrgByID(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
 	orga, err := hs.orgService.GetByName(c.Req.Context(), &org.GetOrgByNameQuery{Name: web.Params(c.Req)[":name"]})
 	if err != nil {
-		if errors.Is(err, models.ErrOrgNotFound) {
+		if errors.Is(err, org.ErrOrgNotFound) {
 			return response.Error(http.StatusNotFound, "Organization not found", err)
 		}
 
 		return response.Error(http.StatusInternalServerError, "Failed to get organization", err)
 	}
-	result := models.OrgDetailsDTO{
-		Id:   orga.ID,
+	result := org.OrgDetailsDTO{
+		ID:   orga.ID,
 		Name: orga.Name,
-		Address: models.Address{
+		Address: org.Address{
 			Address1: orga.Address1,
 			Address2: orga.Address2,
 			City:     orga.City,
@@ -87,21 +87,21 @@ func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) getOrgHelper(ctx context.Context, orgID int64) response.Response {
-	query := org.GetOrgByIdQuery{ID: orgID}
+	query := org.GetOrgByIDQuery{ID: orgID}
 
 	res, err := hs.orgService.GetByID(ctx, &query)
 	if err != nil {
-		if errors.Is(err, models.ErrOrgNotFound) {
+		if errors.Is(err, org.ErrOrgNotFound) {
 			return response.Error(http.StatusNotFound, "Organization not found", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to get organization", err)
 	}
 
 	orga := res
-	result := models.OrgDetailsDTO{
-		Id:   orga.ID,
+	result := org.OrgDetailsDTO{
+		ID:   orga.ID,
 		Name: orga.Name,
-		Address: models.Address{
+		Address: org.Address{
 			Address1: orga.Address1,
 			Address2: orga.Address2,
 			City:     orga.City,
@@ -139,7 +139,7 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
 	cmd.UserID = c.UserID
 	result, err := hs.orgService.CreateWithMember(c.Req.Context(), &cmd)
 	if err != nil {
-		if errors.Is(err, models.ErrOrgNameTaken) {
+		if errors.Is(err, org.ErrOrgNameTaken) {
 			return response.Error(http.StatusConflict, "Organization name taken", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to create organization", err)
@@ -199,7 +199,7 @@ func (hs *HTTPServer) UpdateOrg(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) updateOrgHelper(ctx context.Context, form dtos.UpdateOrgForm, orgID int64) response.Response {
 	cmd := org.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
 	if err := hs.orgService.UpdateOrg(ctx, &cmd); err != nil {
-		if errors.Is(err, models.ErrOrgNameTaken) {
+		if errors.Is(err, org.ErrOrgNameTaken) {
 			return response.Error(http.StatusBadRequest, "Organization name taken", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to update organization", err)
@@ -293,7 +293,7 @@ func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
 	}
 
 	if err := hs.orgService.Delete(c.Req.Context(), &org.DeleteOrgCommand{ID: orgID}); err != nil {
-		if errors.Is(err, models.ErrOrgNotFound) {
+		if errors.Is(err, org.ErrOrgNotFound) {
 			return response.Error(http.StatusNotFound, "Failed to delete organization. ID not found", nil)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to update organization", err)
@@ -348,7 +348,7 @@ type UpdateCurrentOrgAddressParams struct {
 type UpdateCurrentOrgUserParams struct {
 	// in:body
 	// required:true
-	Body models.UpdateOrgUserCommand `json:"body"`
+	Body org.UpdateOrgUserCommand `json:"body"`
 	// in:path
 	// required:true
 	UserID int64 `json:"user_id"`
@@ -406,7 +406,7 @@ type GetOrgByNameParams struct {
 type CreateOrgParams struct {
 	// in:body
 	// required:true
-	Body models.CreateOrgCommand `json:"body"`
+	Body org.CreateOrgCommand `json:"body"`
 }
 
 // swagger:parameters searchOrgs
@@ -448,26 +448,26 @@ type CreateOrgResponse struct {
 type SearchOrgsResponse struct {
 	// The response message
 	// in: body
-	Body []*models.OrgDTO `json:"body"`
+	Body []*org.OrgDTO `json:"body"`
 }
 
 // swagger:response getCurrentOrgResponse
 type GetCurrentOrgResponse struct {
 	// The response message
 	// in: body
-	Body models.OrgDetailsDTO `json:"body"`
+	Body org.OrgDetailsDTO `json:"body"`
 }
 
 // swagger:response getOrgByIDResponse
 type GetOrgByIDResponse struct {
 	// The response message
 	// in: body
-	Body models.OrgDetailsDTO `json:"body"`
+	Body org.OrgDetailsDTO `json:"body"`
 }
 
 // swagger:response getOrgByNameResponse
 type GetOrgByNameResponse struct {
 	// The response message
 	// in: body
-	Body models.OrgDetailsDTO `json:"body"`
+	Body org.OrgDetailsDTO `json:"body"`
 }

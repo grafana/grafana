@@ -7,9 +7,13 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	prometheusModel "github.com/prometheus/common/model"
+	"go.opentelemetry.io/otel/attribute"
 
+	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -93,6 +97,8 @@ type schedule struct {
 	// current tick depends on its evaluation interval and when it was
 	// last evaluated.
 	schedulableAlertRules alertRulesRegistry
+
+	tracer tracing.Tracer
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -107,6 +113,7 @@ type SchedulerCfg struct {
 	RuleStore            RulesStore
 	Metrics              *metrics.Scheduler
 	AlertSender          AlertsSender
+	Tracer               tracing.Tracer
 }
 
 // NewScheduler returns a new schedule.
@@ -126,6 +133,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		minRuleInterval:       cfg.MinRuleInterval,
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
 		alertsSender:          cfg.AlertSender,
+		tracer:                cfg.Tracer,
 	}
 
 	return &sch
@@ -298,10 +306,11 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	}
 
 	// unregister and stop routines of the deleted alert rules
+	toDelete := make([]ngmodels.AlertRuleKey, 0, len(registeredDefinitions))
 	for key := range registeredDefinitions {
-		sch.DeleteAlertRule(key)
+		toDelete = append(toDelete, key)
 	}
-
+	sch.DeleteAlertRule(toDelete...)
 	return readyToRun, registeredDefinitions
 }
 
@@ -323,7 +332,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		}
 	}
 
-	evaluate := func(ctx context.Context, attempt int64, e *evaluation) {
+	evaluate := func(ctx context.Context, attempt int64, e *evaluation, span tracing.Span) {
 		logger := logger.New("version", e.rule.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
@@ -363,8 +372,28 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			if results == nil {
 				results = append(results, eval.NewResultFromError(err, e.scheduledAt, dur))
 			}
+			if err == nil {
+				for _, result := range results {
+					if result.Error != nil {
+						err = multierror.Append(err, result.Error)
+					}
+				}
+			}
+			span.RecordError(err)
+			span.AddEvents(
+				[]string{"error", "message"},
+				[]tracing.EventValue{
+					{Str: fmt.Sprintf("%v", err)},
+					{Str: "rule evaluation failed"},
+				})
 		} else {
 			logger.Debug("Alert rule evaluated", "results", results, "duration", dur)
+			span.AddEvents(
+				[]string{"message", "results"},
+				[]tracing.EventValue{
+					{Str: "rule evaluated"},
+					{Num: int64(len(results))},
+				})
 		}
 		if ctx.Err() != nil { // check if the context is not cancelled. The evaluation can be a long-running task.
 			logger.Debug("Skip updating the state because the context has been cancelled")
@@ -372,6 +401,13 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		}
 		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, sch.getRuleExtraLabels(e))
 		alerts := FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
+		span.AddEvents(
+			[]string{"message", "state_transitions", "alerts_to_send"},
+			[]tracing.EventValue{
+				{Str: "results processed"},
+				{Num: int64(len(processedStates))},
+				{Num: int64(len(alerts.PostableAlerts))},
+			})
 		if len(alerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, alerts)
 		}
@@ -434,7 +470,16 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						}
 						currentRuleVersion = newVersion
 					}
-					evaluate(grafanaCtx, attempt, ctx)
+					tracingCtx, span := sch.tracer.Start(grafanaCtx, "alert rule execution")
+					defer span.End()
+
+					span.SetAttributes("rule_uid", ctx.rule.UID, attribute.String("rule_uid", ctx.rule.UID))
+					span.SetAttributes("org_id", ctx.rule.OrgID, attribute.Int64("org_id", ctx.rule.OrgID))
+					span.SetAttributes("rule_version", ctx.rule.Version, attribute.Int64("rule_version", ctx.rule.Version))
+					utcTick := ctx.scheduledAt.UTC().Format(time.RFC3339Nano)
+					span.SetAttributes("tick", utcTick, attribute.String("tick", utcTick))
+
+					evaluate(tracingCtx, attempt, ctx, span)
 					return nil
 				})
 				if err != nil {
@@ -473,9 +518,9 @@ func (sch *schedule) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
 func (sch *schedule) getRuleExtraLabels(evalCtx *evaluation) map[string]string {
 	extraLabels := make(map[string]string, 4)
 
-	extraLabels[ngmodels.NamespaceUIDLabel] = evalCtx.rule.NamespaceUID
+	extraLabels[alertingModels.NamespaceUIDLabel] = evalCtx.rule.NamespaceUID
 	extraLabels[prometheusModel.AlertNameLabel] = evalCtx.rule.Title
-	extraLabels[ngmodels.RuleUIDLabel] = evalCtx.rule.UID
+	extraLabels[alertingModels.RuleUIDLabel] = evalCtx.rule.UID
 
 	if !sch.disableGrafanaFolder {
 		extraLabels[ngmodels.FolderTitleLabel] = evalCtx.folderTitle
