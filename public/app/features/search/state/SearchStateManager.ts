@@ -239,7 +239,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   /**
    * Caller should handle debounce
    */
-  onReportSearchUsage() {
+  onReportSearchUsage = () => {
     reportDashboardListViewed(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,
@@ -248,7 +248,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
     });
-  }
+  };
 }
 
 let stateManager: SearchStateManager;

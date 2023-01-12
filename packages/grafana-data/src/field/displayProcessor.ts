@@ -73,7 +73,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   }
 
   const hasCurrencyUnit = unit?.startsWith('currency');
-  const hasBoolUnit = unit === 'bool';
+  const hasBoolUnit = isBooleanUnit(unit);
   const isNumType = field.type === FieldType.number;
   const isLocaleFormat = unit === 'locale';
   const canTrimTrailingDecimalZeros =
@@ -82,7 +82,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
 
-  return (value: any, adjacentDecimals?: DecimalCount) => {
+  return (value: unknown, adjacentDecimals?: DecimalCount) => {
     const { mappings } = config;
     const isStringUnit = unit === 'string';
 
@@ -186,12 +186,12 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   };
 }
 
-function toStringProcessor(value: any): DisplayValue {
+function toStringProcessor(value: unknown): DisplayValue {
   return { text: toString(value), numeric: anyToNumber(value) };
 }
 
 export function getRawDisplayProcessor(): DisplayProcessor {
-  return (value: any) => ({
+  return (value: unknown) => ({
     text: getFieldTypeFromValue(value) === 'other' ? `${JSON.stringify(value, getCircularReplacer())}` : `${value}`,
     numeric: null as unknown as number,
   });

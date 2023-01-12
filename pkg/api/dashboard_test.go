@@ -133,7 +133,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		fakeDash.FolderId = 1
 		fakeDash.HasACL = false
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
-		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersion{}
+		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersionDTO{}
 		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
@@ -241,7 +241,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		fakeDash.FolderId = 1
 		fakeDash.HasACL = true
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
-		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersion{}
+		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersionDTO{}
 		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
@@ -787,7 +787,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 	t.Run("Given two dashboards being compared", func(t *testing.T) {
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
-		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersion{
+		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersionDTO{
 			{
 				DashboardID: 1,
 				Version:     1,
@@ -808,6 +808,13 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			teamSvc := &teamtest.FakeService{}
 			dashSvc := dashboards.NewFakeDashboardService(t)
 			dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil)
+			dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
+				q := args.Get(1).(*models.GetDashboardQuery)
+				q.Result = &models.Dashboard{
+					OrgId: q.OrgId,
+					Id:    q.Id,
+				}
+			}).Return(nil)
 			guardian.InitLegacyGuardian(&sqlmock, dashSvc, teamSvc)
 		}
 
@@ -867,7 +874,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Version: 1,
 		}
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
-		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersion{
+		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersionDTO{
 			{
 				DashboardID: 2,
 				Version:     1,
@@ -901,7 +908,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		}).Return(nil, nil)
 
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
-		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersion{
+		fakeDashboardVersionService.ExpectedDashboardVersions = []*dashver.DashboardVersionDTO{
 			{
 				DashboardID: 2,
 				Version:     1,
@@ -1152,6 +1159,8 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 	role org.RoleType, fn scenarioFunc, sqlmock db.DB, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
+
+		dashSvc := dashboards.NewFakeDashboardService(t)
 		hs := HTTPServer{
 			Cfg:                     cfg,
 			ProvisioningService:     provisioning.NewProvisioningServiceMock(context.Background()),
@@ -1163,6 +1172,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
 			Kinds:                   corekind.NewBase(nil),
+			DashboardService:        dashSvc,
 		}
 
 		sc := setupScenarioContext(t, url)

@@ -203,7 +203,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				Password: testPassword,
 				OrgId:    nonExistingOrgID,
 			}
-			usrSvc := &usertest.FakeUserService{ExpectedError: models.ErrOrgNotFound}
+			usrSvc := &usertest.FakeUserService{ExpectedError: org.ErrOrgNotFound}
 			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, usrSvc, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 400, sc.resp.Code)

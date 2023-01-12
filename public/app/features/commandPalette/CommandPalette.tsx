@@ -1,5 +1,7 @@
 import { css } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
 import {
   KBarAnimator,
   KBarPortal,
@@ -7,22 +9,18 @@ import {
   KBarResults,
   KBarSearch,
   useMatches,
-  Action,
   VisualState,
   useRegisterActions,
   useKBar,
 } from 'kbar';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction, locationService } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useSelector } from 'app/types';
 
 import { ResultItem } from './ResultItem';
-import getDashboardNavActions from './actions/dashboard.nav.actions';
-import getGlobalActions from './actions/global.static.actions';
+import useActions from './actions/useActions';
 
 /**
  * Wrap all the components from KBar here.
@@ -31,59 +29,36 @@ import getGlobalActions from './actions/global.static.actions';
 
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
-  const { keybindings } = useGrafana();
-  const [actions, setActions] = useState<Action[]>([]);
-  const [staticActions, setStaticActions] = useState<Action[]>([]);
-  const { query, showing } = useKBar((state) => ({
+
+  const { query, showing, searchQuery } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
+    searchQuery: state.searchQuery,
   }));
-  const isNotLogin = locationService.getLocation().pathname !== '/login';
 
-  const { navBarTree } = useSelector((state) => {
-    return {
-      navBarTree: state.navBarTree,
-    };
-  });
-
-  useEffect(() => {
-    if (isNotLogin) {
-      const staticActionsResp = getGlobalActions(navBarTree);
-      setStaticActions(staticActionsResp);
-      setActions([...staticActionsResp]);
-    }
-  }, [isNotLogin, navBarTree]);
-
-  useEffect(() => {
-    if (showing) {
-      reportInteraction('command_palette_opened');
-
-      // Do dashboard search on demand
-      getDashboardNavActions('go/dashboard').then((dashAct) => {
-        setActions([...staticActions, ...dashAct]);
-      });
-
-      keybindings.bindGlobal('esc', () => {
-        query.setVisualState(VisualState.animatingOut);
-      });
-    }
-
-    return () => {
-      keybindings.bindGlobal('esc', () => {
-        keybindings.globalEsc();
-      });
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showing]);
-
+  const actions = useActions(searchQuery, showing);
   useRegisterActions(actions, [actions]);
+
+  const ref = useRef<HTMLDivElement>(null);
+  const { overlayProps } = useOverlay(
+    { isOpen: showing, onClose: () => query.setVisualState(VisualState.animatingOut) },
+    ref
+  );
+  const { dialogProps } = useDialog({}, ref);
+
+  // Report interaction when opened
+  useEffect(() => {
+    showing && reportInteraction('command_palette_opened');
+  }, [showing]);
 
   return actions.length > 0 ? (
     <KBarPortal>
       <KBarPositioner className={styles.positioner}>
         <KBarAnimator className={styles.animator}>
-          <FocusScope contain>
-            <KBarSearch className={styles.search} />
-            <RenderResults />
+          <FocusScope contain autoFocus restoreFocus>
+            <div {...overlayProps} {...dialogProps}>
+              <KBarSearch className={styles.search} />
+              <RenderResults />
+            </div>
           </FocusScope>
         </KBarAnimator>
       </KBarPositioner>

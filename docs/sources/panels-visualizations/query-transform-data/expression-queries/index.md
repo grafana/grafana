@@ -15,8 +15,6 @@ Server-side expressions enable you to manipulate data returned from queries with
 
 ## About expressions
 
-> **Note:** This documentation is for a beta feature.
-
 Server-side expressions allow you to manipulate data returned from queries with math and other operations. Expressions create new data and do not manipulate the data returned by data sources, aside from some minor data restructuring to make the data acceptable input for expressions.
 
 ### Using expressions

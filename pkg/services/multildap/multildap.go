@@ -106,6 +106,8 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 		return nil, ErrNoLDAPServers
 	}
 
+	ldapSilentErrors := []error{}
+
 	for index, config := range multiples.configs {
 		server := newLDAP(config)
 
@@ -122,12 +124,9 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 		defer server.Close()
 
 		user, err := server.Login(query)
-		// FIXME
-		if user != nil {
-			return user, nil
-		}
 		if err != nil {
 			if isSilentError(err) {
+				ldapSilentErrors = append(ldapSilentErrors, err)
 				logger.Debug(
 					"unable to login with LDAP - skipping server",
 					"host", config.Host,
@@ -139,10 +138,21 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 
 			return nil, err
 		}
+
+		if user != nil {
+			return user, nil
+		}
 	}
 
-	// Return invalid credentials if we couldn't find the user anywhere
-	return nil, ErrInvalidCredentials
+	// Return ErrInvalidCredentials in case any of the errors was ErrInvalidCredentials (means that the authentication has failed at least once)
+	for _, ldapErr := range ldapSilentErrors {
+		if errors.Is(ldapErr, ErrInvalidCredentials) {
+			return nil, ErrInvalidCredentials
+		}
+	}
+
+	// Return ErrCouldNotFindUser if all of the configured LDAP servers returned with ErrCouldNotFindUser
+	return nil, ErrCouldNotFindUser
 }
 
 // User attempts to find an user by login/username by searching into all of the configured LDAP servers. Then, if the user is found it returns the user alongisde the server it was found.

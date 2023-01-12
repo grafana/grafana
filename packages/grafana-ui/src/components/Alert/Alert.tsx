@@ -54,7 +54,8 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     ref
   ) => {
     const theme = useTheme2();
-    const styles = getStyles(theme, severity, elevated, bottomSpacing, topSpacing);
+    const hasTitle = Boolean(title);
+    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
     const titleId = useId();
 
     return (
@@ -101,6 +102,7 @@ Alert.displayName = 'Alert';
 const getStyles = (
   theme: GrafanaTheme2,
   severity: AlertVariant,
+  hasTitle: boolean,
   elevated?: boolean,
   bottomSpacing?: number,
   topSpacing?: number
@@ -157,7 +159,7 @@ const getStyles = (
     `,
     content: css`
       color: ${theme.colors.text.secondary};
-      padding-top: ${theme.spacing(1)};
+      padding-top: ${hasTitle ? theme.spacing(1) : 0};
       max-height: 50vh;
       overflow-y: auto;
     `,

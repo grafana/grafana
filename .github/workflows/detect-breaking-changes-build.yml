@@ -108,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: ['buildPR', 'buildBase']
     env:
-      GITHUB_STEP_NUMBER: 7
+      GITHUB_STEP_NUMBER: 8
 
     steps:
       - uses: actions/checkout@v3
@@ -134,8 +134,9 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+              const name = 'Detect breaking changes';
               const script = require('./.github/workflows/scripts/pr-get-job-link.js')
-              await script({github, context, core})
+              await script({name, github, context, core})
 
       - name: Detect breaking changes
         id: breaking-changes

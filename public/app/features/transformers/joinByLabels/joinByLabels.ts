@@ -22,7 +22,8 @@ export const joinByLabelsTransformer: SynchronousDataTransformerInfo<JoinByLabel
   description: 'Flatten labeled results into a table joined by labels',
   defaultOptions: {},
 
-  operator: (options) => (source) => source.pipe(map((data) => joinByLabelsTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => joinByLabelsTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: JoinByLabelsTransformOptions) => {
     return (data: DataFrame[]) => {

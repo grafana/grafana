@@ -28,3 +28,7 @@ func (f *TestingApiHandler) handleRouteTestRuleGrafanaConfig(c *models.ReqContex
 func (f *TestingApiHandler) handleRouteEvalQueries(c *models.ReqContext, body apimodels.EvalQueriesPayload) response.Response {
 	return f.svc.RouteEvalQueries(c, body)
 }
+
+func (f *TestingApiHandler) handleBacktestingConfig(ctx *models.ReqContext, conf apimodels.BacktestConfig) response.Response {
+	return f.svc.BacktestAlertRule(ctx, conf)
+}

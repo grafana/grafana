@@ -128,213 +128,117 @@ You can update all plugins using
 grafana-cli plugins update-all
 ```
 
-## Upgrading to v5.0
+## Upgrading to v9.2
 
-The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some external panel plugins might need to be updated to work properly.
+Beginning in v9.2, Grafana has a [supported database versions policy]({{< relref "./installation/#supported-databases" >}}). As of this release, MySQL versions from 5.7, postgres versions from v10, and SQLite 3 are supported databases.
 
-For more details on the new panel positioning system, refer to [panel size position]({{< relref "../dashboards/build-dashboards/view-dashboard-json-model/#panel-size-and-position" >}}).
+## Upgrading to 9.0
 
-## Upgrading to v5.2
+### Role-based access control: changes for general release
 
-One of the database migrations included in this release will update all annotation timestamps from second to millisecond precision. If you have a large amount of annotations the database migration may take a long time to complete which may cause problems if you use systemd to run Grafana.
+Fine-grained access control is now called "Role-based access control (RBAC)". As part of the Grafana 9.0 release, the feature is generally available, and there are several breaking changes:
 
-We've got one report where using systemd, PostgreSQL and a large amount of annotations (table size 1645mb) took 8-20 minutes for the database migration to complete. However, the grafana-server process was killed after 90 seconds by systemd. Any database migration queries in progress when systemd kills the grafana-server process continues to execute in database until finished.
+- Built-in roles are now called basic roles. They now consist of permissions, not roles.
+- The Terraform `builtin_role_assignment` resource is deprecated. Please use [grafana_role](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role) resource instead.
+- Grafana provisioning has a new schema. Please refer to [Provisioning RBAC with Grafana](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/) to learn more about provisioning.
+- Basic roles no longer support permission inheritance. Previously, when permissions of a Viewer basic role were modified, it was propagated to the Editor and Admin basic roles. With the Grafana 9.0 release, this is not the case anymore.
+- Several role-based access control actions have been renamed. All database entries that use legacy action names will be migrated to use the new names, but provisioning files and scripts will have to be updated by the user. This change also means that if Grafana is downgraded from 9.0 to a lower version, some role-based access control permissions will not be resolved correctly.
 
-If you're using systemd and have a large amount of annotations consider temporary adjusting the systemd `TimeoutStartSec` setting to something high like `30m` before upgrading.
+### Loki: logs data format changed
 
-## Upgrading to v6.0
+In the Loki data source, the data format used to represent Loki logs-data has been changed to a more efficient format. (NOTE: this change applies to logs data only, it does not apply to numeric data)
+The logs are represented by a single dataframe with a "labels" field added, instead of separate dataframes for every label combination. Displaying logs data in explore, or in a dashboard using the logs panel will continue to work without changes. But, when displaying logs data in other dashboard panels, for example in a table visualization, changes will be visible, and configurations might need to be adjusted. For example, if the "Labels to fields" transformation was used, it has to be replaced with an “Extract fields” transformation, where the “labels” field is chosen as the source.
 
-If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
-For more information about the new setting, refer to [disable sanitize html]({{< relref "configure-grafana/#disable-sanitize-html" >}}).
+### Loki: NaN values representation changed in numeric data
 
-### Authentication and security
+In the Loki data source, when grafana receives numeric data from Loki, it may contain NaN (not a number) values. For consistency and performance reasons we changed how we represent such values in Grafana. In previous versions, the behavior was different between alerting queries and other queries (like dashboard queries or explore queries). Alerting queries kept NaN values unchanged, but other queries converted these values to “null”. Starting with grafana 9.0.0, we will always keep these values unchanged. In other words, queries in dashboards and explore will behave the same as alerting queries in this regard.
 
-If you are using Grafana's builtin, LDAP (without Auth Proxy) or OAuth authentication all users will be required to login upon the next visit after the upgrade.
+### Elasticsearch: Support for versions after their end of life was removed
 
-If you have `cookie_secure` set to `true` in the `session` section you probably want to change the `cookie_secure` to `true` in the `security` section as well. Ending up with a configuration like this:
+Support for Elasticsearch versions that are after their end of life ( based on https://www.elastic.co/support/eol ) was removed. This means that versions older than Elasticsearch 7.10.0 will not be supported in Grafana 9.0.0.
 
-```ini
-[session]
-cookie_secure = true
+### Elasticsearch: Support for browser access mode removed
 
-[security]
-cookie_secure = true
-```
+In the Elasticsearch data source, browser access mode was deprecated in grafana 7.4.0 and removed in 9.0.0. If you used this mode, please switch to server access mode on the data source configuration page.
 
-The `login_remember_days`, `login_maximum_inactive_lifetime_days`, `login_maximum_lifetime_days`, `cookie_username` and `cookie_remember_name` settings in the `security` section are no longer being used so they're safe to remove.
+### Prometheus: NaN values representation changed in numeric data
 
-If you have `login_maximum_lifetime_days` or `login_maximum_inactive_lifetime_days` configured, you need to change it to `login_maximum_lifetime_duration` or `login_maximum_inactive_lifetime_duration` and append `d` to the configuration value to retain the previous behavior.
+In the Prometheus data source, when grafana receives numeric data from Prometheus, it may contain NaN (not a number) values. For consistency and performance reasons we changed how we represent such values in Grafana. In previous versions, the behavior was different between alerting queries and other queries (like dashboard queries or explore queries). Alerting queries kept NaN values unchanged, but other queries converted these values to “null”. Starting with grafana 9.0.0, we will always keep NaN values unchanged for all queries.
 
-If you have `login_remember_days` configured to 0 (zero) you should change your configuration to this to accomplish similar behavior, i.e. a logged in user will maximum be logged in for 1 day until being forced to login again:
+<!-- ### InfluxDB: Support for browser access mode removed (should this stay??)
 
-```ini
-[auth]
-login_maximum_inactive_lifetime_duration = 1d
-login_maximum_lifetime_duration = 1d
-```
+In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to [switch to server access mode]({{< relref "../datasources/influxdb/##influxql-classic-influxdb-query" >}}) on the data source configuration page or you can do this via provisioning. -->
 
-The default cookie name for storing the auth token is `grafana_session`. you can configure this with `login_cookie_name` in `[auth]` settings.
+### Transformations: Allow more complex regex expressions in rename by regex
 
-## Upgrading to v6.2
+The rename by regex transformation has been improved to allow global patterns of the form `/<stringToReplace>/g`. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes (`/`), for example, `(.*)` would become `/(.*)/`. ([Github Issue #48179](https://github.com/grafana/grafana/pull/48179))
 
-### Ensure encryption of data source secrets
+### Clock Panel
 
-Data sources store passwords and basic auth passwords in secureJsonData encrypted (AES-256 in CFB mode) by default. Existing data source
-will keep working with unencrypted passwords. If you want to migrate to encrypted storage for your existing data sources
-you can do that by:
+We have updated [clock panel](https://grafana.com/grafana/plugins/grafana-clock-panel/) to version `2.0.0` to make it compatible with Grafana 9. The previous version `1.3.1` will cause the Grafana 9 to [crash](https://github.com/grafana/clock-panel/issues/106) when being used in a dashboard, we encourage you to update the panel before migrating to Grafana 9.
 
-- For data sources created through UI, you need to go to data source config, re-enter the password or basic auth
-  password and save the data source.
-- For data sources created by provisioning, you need to update your config file and use secureJsonData.password or
-  secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning/" >}}) for example of current
-  configuration.
+### Polystat Panel
 
-### Embedding Grafana
+We have updated [polystat panel](https://grafana.com/grafana/plugins/grafana-polystat-panel/) to version `1.2.10` to make it compatible with Grafana 9. The previous versions `1.2.8` and below will render empty in Grafana 9. We encourage you to update the panel before or immediately after migrating to Grafana 9.
 
-If you're embedding Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>` on a different website it will no longer work due to a new setting
-that per default instructs the browser to not allow Grafana to be embedded. For more information about embedding Grafana, refer to [configuration embedding]({{< relref "configure-grafana/#allow-embedding" >}}) about
-this new setting.
+### Envelope encryption enabled by default
 
-### Session storage is no longer used
+Since v8.3 a new kind of encryption called "envelope encryption" was added, for those secrets stored in the Grafana
+database (data source credentials, alerting notification channel credentials, oauth tokens, etc), behind a feature
+toggle named `envelopeEncryption`.
 
-In 6.2 we completely removed the backend session storage since we replaced the previous login session implementation with an auth token.
-If you are using Auth proxy with LDAP, a shared cached is used in Grafana, so you might want to configure [remote_cache] instead. If not,
-Grafana will fall back to using the database as a shared cache.
+In v9.0, `envelopeEncryption` feature toggle has been replaced in favor of `disableEnvelopeEncryption` and envelope encryption is
+the encryption mechanism used by default.
 
-### Upgrading Elasticsearch to v7.0+
+Therefore, any secret created or updated in Grafana v9.0 won't be decryptable by any previous Grafana version unless the
+feature toggle `envelopeEncryption` is enabled in the previous version (only available since v8.3).
+This needs to be considered in high availability setups, progressive rollouts or in case of need to roll back to a previous Grafana version for any reason.
 
-The semantics of `max concurrent shard requests` changed in Elasticsearch v7.0. See its [release notes](https://www.elastic.co/guide/en/elasticsearch/reference/7.0/breaking-changes-7.0.html#semantics-changed-max-concurrent-shared-requests) for reference.
+The recommendation here is to enable `envelopeEncryption` for older versions, or alternatively enable `disableEnvelopeEncryption`
+before upgrading to v9.0. However, the latter is probably going to be removed in one of the next releases, so we hugely
+encourage to move on with envelope encryption.
 
-If you upgrade Elasticsearch to v7.0+ you should make sure to update the data source configuration in Grafana so that version
-is `7.0+` and `max concurrent shard requests` properly configured. 256 was the default in pre v7.0 versions. In v7.0 and above 5 is the default.
+Find [here]({{< relref "../setup-grafana/configure-security/configure-database-encryption/" >}}) more details and some
+possible workarounds in case you end up in an undesired situation.
 
-## Upgrading to v6.4
+### A note on Grafana Enterprise licensing
 
-### Annotations database migration
+When we release Grafana 9.0 on June 14th, Grafana will no longer enforce viewers and editor-admins differently. That means that regardless of whether your Grafana Enterprise license is tiered or combined, instead of seeing this on the Stats & Licensing page:
 
-One of the database migrations included in this release will merge multiple rows used to represent an annotation range into a single row. If you have a large number of region annotations the database migration may take a long time to complete. See [Upgrading to v5.2](#upgrading-to-v5-2) for tips on how to manage this process.
+{{< figure src="/static/img/docs/enterprise/separate-licenses.png" max-width="500px" caption="Separate license" >}}
 
-### Docker
+You will see this:
 
-Grafana’s docker image is now based on [Alpine](http://alpinelinux.org) instead of [Ubuntu](https://ubuntu.com/).
+{{< figure src="/static/img/docs/enterprise/combined-licenses.png" max-width="500px" caption="Combined license" >}}
 
-### Plugins that need updating
+It also means that Grafana will count all users the same, regardless of their role, including org roles (Viewer, Editor, Admin) and fine-grained roles (Dashboard Editor, Reports Editor, etc.). You won’t see a separate warning banner or see users locked out if you hit your limit of viewers or editor-admins, only your total combined limit of active users.
 
-- [Splunk](https://grafana.com/grafana/plugins/grafana-splunk-datasource)
+For example, if you have a license for 10 active admins and 100 active viewers in your Grafana Enterprise license, then starting in v9.0 you will have a limit of 110 active users, and it doesn’t matter what roles those users have, they will all be counted and enforced the same.
 
-## Upgrading to v6.5
+This is a more permissive policy than before.
 
-Pre Grafana 6.5.0, the CloudWatch datasource used the GetMetricStatistics API for all queries that did not have an ´id´ and did not have an ´expression´ defined in the query editor. The GetMetricStatistics API has a limit of 400 transactions per second (TPS). In this release, all queries use the GetMetricData API which has a limit of 50 TPS and 100 metrics per transaction. We expect this transition to be smooth for most of our users, but in case you do face throttling issues we suggest you increase the TPS quota. To do that, please visit the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/home?r#!/services/monitoring/quotas/L-5E141212). For more details around CloudWatch API limits, [see CloudWatch docs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_limits.html).
+## Upgrading to 8.5
 
-Each request to the GetMetricData API can include 100 queries. This means that each panel in Grafana will only issue one GetMetricData request, regardless of the number of query rows that are present in the panel. Consequently as it is no longer possible to set `HighRes` on a per query level anymore, this switch is now removed from the query editor. High resolution can still be achieved by choosing a smaller minimum period in the query editor.
+The concept of a `default` data source existed in Grafana since the beginning. However, the meaning and behavior were not clear. The default data source was not just the starting data source for new panels but it was also saved using a special value (null). This made it possible to change the default data source to another and have that change impact all dashboards that used the default data source.
 
-The handling of multi-valued template variables in dimension values has been changed in Grafana 6.5. When a multi template variable is being used, Grafana will generate a search expression. In the GetMetricData API, expressions are limited to 1024 characters, so it might be the case that this limit is reached when a multi-valued template variable that has a lot of values is being used. If this is the case, we suggest you start using `*` wildcard as dimension value instead of a multi-valued template variable.
+This behavior was not very intuitive and creates issues for users who want to change the default without it impacting existing dashboards.
+That is why we are changing the behavior in 8.5. From now on, the `default` data source will not be a persisted property but just the starting data source for new panels and queries.
+Existing dashboards that still have panels with a `datasource` set to null will be migrated when the dashboard opens. The migration will set the data source property to the **current** default data source.
 
-## Upgrading to v6.6
+## Upgrading to 8.3
 
-The Generic OAuth setting `send_client_credentials_via_post`, used for supporting non-compliant providers, has been removed. From now on, Grafana will automatically detect if credentials should be sent as part of the URL or request body for a specific provider. The result will be remembered and used for additional OAuth requests for that provider.
+In 8.3, Grafana dashboards now reference data sources using an object with `uid` and `type` properties instead of the data source name property. A schema migration is applied when existing dashboards open. If you provision dashboards to multiple Grafana instances, then we recommend that you also provision data sources. You can specify the `uid` to be the same for data sources across your instances.
+If you need to find the `uid` for a data source created in the UI, check the URL of the data source settings page. The URL follows the pattern ` /data source/edit/${uid}`, meaning the last part is the `uid`.
 
-### Important changes regarding SameSite cookie attribute
+## Upgrading to v8.1
 
-Chrome 80 treats cookies as `SameSite=Lax` by default if no `SameSite` attribute is specified, see https://www.chromestatus.com/feature/5088147346030592.
+### Use of unencrypted passwords for data sources no longer supported
 
-Due to this change in Chrome, the `[security]` setting `cookie_samesite` configured to `none` now renders cookies with `SameSite=None` attribute compared to before where no `SameSite` attribute was added to cookies. To get the old behavior, use value `disabled` instead of `none`, see [cookie_samesite in Configuration]({{< relref "configure-grafana/#cookie-samesite" >}}) for more information.
+As of Grafana v8.1, we no longer support unencrypted storage of passwords and basic auth passwords.
 
-> **Note:** There is currently a bug affecting Mac OSX and iOS that causes `SameSite=None` cookies to be treated as `SameSite=Strict` and therefore not sent with cross-site requests, see https://bugs.webkit.org/show_bug.cgi?id=198181 for details. Until this is fixed, `SameSite=None` might not work properly on Safari.
+> **Note:** Since Grafana v6.2, new or updated data sources store passwords and basic auth passwords encrypted. See [upgrade note]({{< relref "#ensure-encryption-of-data-source-secrets" >}}) for more information. However, unencrypted passwords and basic auth passwords were also allowed.
 
-This version of Chrome also rejects insecure `SameSite=None` cookies. See https://www.chromestatus.com/feature/5633521622188032 for more information. Make sure that you
-change the `[security]` setting `cookie_secure` to `true` and use HTTPS when `cookie_samesite` is configured to `none`, otherwise authentication in Grafana won't work properly.
-
-## Upgrading to v7.0
-
-### PhantomJS removed
-
-PhantomJS was deprecated in Grafana v6.4 and starting from Grafana v7.0.0, all PhantomJS support has been removed. This means that Grafana no longer ships with a built-in image renderer, and we advise you to install the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
-
-### Dashboard minimum refresh interval enforced
-
-A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds. For more information about this setting, refer to [minimum refresh interval]({{< relref "configure-grafana/#min-refresh-interval" >}}).
-
-### Backend plugins
-
-Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with. All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. For more information about this setting, refer to [allow loading unsigned plugins]({{< relref "../administration/#allow_loading_unsigned_plugins" >}}).
-
-### Cookie path
-
-Starting from Grafana v7.0.0, the cookie path does not include the trailing slash if Grafana is served from a subpath in order to align with [RFC 6265](https://tools.ietf.org/html/rfc6265#section-5.1.4). However, stale session cookies (set before the upgrade) can result in unsuccessful logins because they can not be deleted during the standard login phase due to the changed cookie path. Therefore users experiencing login problems are advised to manually delete old session cookies, or administrators can fix this for all users by changing the [`login_cookie_name`]({{< relref "../administration/#login-cookie-name" >}}), so the old cookie would get ignored.
-
-## Upgrading to v7.2
-
-### Ensure encryption of existing alert notification channel secrets
-
-Before Grafana v7.2 alert notification channels did not store sensitive settings/secrets such as API tokens and password encrypted in the database. In Grafana v7.2, creating a new alert notification channel will store sensitive settings encrypted in the database.
-
-The following alert notifiers have been updated to support storing their sensitive settings encrypted:
-
-- Slack (URL and Token)
-- Pagerduty (Integration Key)
-- Webhook (Password)
-- Prometheus Alertmanager (Basic Auth Password)
-- Opsgenie (API Key)
-- Sensu (Password)
-- Telegram (BOT API Token)
-- LINE (token)
-- Pushover (API Token, User key)
-- Threema Gateway (API Secret)
-
-For existing alert notification channels, there is no automatic migration of storing sensitive settings encrypted, and they will continue to work as before. Migration must be done manually. Opening a configured alert notification channel in the UI and saving it will store sensitive settings encrypted and at the same time reset the historic unencrypted setting of that alert notification channel in the database.
-
-> Please note that when migrating a notification channel and later downgrading Grafana to an earlier version, the notification channel will not be able to read stored sensitive settings and, as a result, not function as expected.
-
-For provisioning of alert notification channels, refer to [Alert notification channels]({{< relref "../administration/provisioning/#alert-notification-channels" >}}).
-
-## Upgrading to v7.3
-
-### AWS CloudWatch data source
-
-The AWS CloudWatch data source's authentication scheme has changed in Grafana 7.3. Most importantly the authentication method _ARN_ has been removed, and a new one has been added: _AWS SDK Default_. Existing data source configurations using the former will fallback to the latter. Assuming an IAM role will still work though, and the old _ARN_ method would use the default AWS SDK authentication method under the hood anyway.
-
-Since _ARN_ has been removed as an authentication method, we have instead made it into an option for providing the ARN of an IAM role to assume. This works independently of the authentication method you choose.
-
-The new authentication method, _AWS SDK Default_, uses the default AWS Go SDK credential chain, which at the time of writing looks for credentials in the following order:
-
-1. Environment variables.
-1. Shared credentials file.
-1. If your application uses an ECS task definition or RunTask API operation, IAM role for tasks.
-1. If your application is running on an Amazon EC2 instance, IAM role for Amazon EC2.
-
-The other authentication methods, _Access and secret key_ and _Credentials file_, have changed in regards to fallbacks. If these methods fail, they no longer fallback to other methods. e.g. environment variables. If you want fallbacks, you should use _AWS SDK Default_ instead.
-
-For more information and details, please refer to [Using AWS CloudWatch in Grafana]({{< relref "../datasources/aws-cloudwatch/aws-authentication/" >}}).
-
-### User invites database migration
-
-The database table _temp_user_, that tracks user invites, is subject to a database migration that changes the data type of the _created_ and _updated_ columns:
-
-| Database | Old data type | New data type |
-| -------- | ------------- | ------------- |
-| Sqlite   | DATETIME      | INTEGER       |
-| MySQL    | DATETIME      | INT           |
-| Postgres | TIMESTAMP     | INTEGER       |
-
-> Please note that if downgrading Grafana to an earlier version, you have to manually change the data type of the _created_ and _updated_ columns back to _old data type_ , otherwise the user invite feature doesn't function as expected.
-
-### Snapshots database migration
-
-The database table _dashboard_snapshot_, that stores dashboard snapshots, adds a new column _dashboard_encrypted_ for storing an encrypted snapshot.
-NOTE: Only snapshots created on Grafana 7.3 or later will use this column to store snapshot data as encrypted. Snapshots created before this version will be unaffected and remain unencrypted.
-
-### Use of the root group in the Docker images
-
-The Grafana Docker images use the `root` group instead of the `grafana` group. This change can cause builds to break for users who extend the Grafana Docker image. Learn more about this change in the [Docker migration instructions]({{< relref "installation/docker/#migrate-to-v73-or-later" >}})
-
-## Upgrading to v7.5
-
-### VictorOps Alert Notifier
-
-The VictorOps alert notifier now accepts a `severity` tag, in a similar vein to the PagerDuty alert notifier. The possible values are outlined in the [VictorOps docs](https://help.victorops.com/knowledge-base/incident-fields-glossary/).
-
-For example, if you want an alert to be `INFO`-level in VictorOps, create a tag `severity=info` (case-insensitive) in your alert.
+To migrate to encrypted storage, follow the instructions from the [v6.2 upgrade notes]({{< relref "#ensure-encryption-of-data-source-secrets" >}}). You can also use a `grafana-cli` command to migrate all of your data sources to use encrypted storage of secrets. See [migrate data and encrypt passwords]({{< relref "../cli/#migrate-data-and-encrypt-passwords" >}}) for further instructions.
 
 ## Upgrading to v8.0
 
@@ -380,30 +284,3 @@ There are two possible workarounds to resolve this problem:
 2. Use the [Standard field definitions' display name]({{< relref "../panels-visualizations/configure-standard-options/#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
 
 For more information, refer to the our relational databases documentation of [Postgres]({{< relref "../datasources/postgres/#time-series-queries" >}}), [MySQL]({{< relref "../datasources/mysql/#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../datasources/mssql/#time-series-queries" >}}).
-
-## Upgrading to v8.1
-
-### Use of unencrypted passwords for data sources no longer supported
-
-As of Grafana v8.1, we no longer support unencrypted storage of passwords and basic auth passwords.
-
-> **Note:** Since Grafana v6.2, new or updated data sources store passwords and basic auth passwords encrypted. See [upgrade note]({{< relref "#ensure-encryption-of-data-source-secrets" >}}) for more information. However, unencrypted passwords and basic auth passwords were also allowed.
-
-To migrate to encrypted storage, follow the instructions from the [v6.2 upgrade notes]({{< relref "#ensure-encryption-of-data-source-secrets" >}}). You can also use a `grafana-cli` command to migrate all of your data sources to use encrypted storage of secrets. See [migrate data and encrypt passwords]({{< relref "../cli/#migrate-data-and-encrypt-passwords" >}}) for further instructions.
-
-## Upgrading to 8.3
-
-In 8.3, Grafana dashboards now reference data sources using an object with `uid` and `type` properties instead of the data source name property. A schema migration is applied when existing dashboards open. If you provision dashboards to multiple Grafana instances, then we recommend that you also provision data sources. You can specify the `uid` to be the same for data sources across your instances.
-If you need to find the `uid` for a data source created in the UI, check the URL of the data source settings page. The URL follows the pattern ` /data source/edit/${uid}`, meaning the last part is the `uid`.
-
-## Upgrading to 8.5
-
-The concept of a `default` data source existed in Grafana since the beginning. However, the meaning and behavior were not clear. The default data source was not just the starting data source for new panels but it was also saved using a special value (null). This made it possible to change the default data source to another and have that change impact all dashboards that used the default data source.
-
-This behavior was not very intuitive and creates issues for users who want to change the default without it impacting existing dashboards.
-That is why we are changing the behavior in 8.5. From now on, the `default` data source will not be a persisted property but just the starting data source for new panels and queries.
-Existing dashboards that still have panels with a `datasource` set to null will be migrated when the dashboard opens. The migration will set the data source property to the **current** default data source.
-
-## Upgrading to v9.2
-
-Beginning in v9.2, Grafana has a [supported database versions policy]({{< relref "./installation/#supported-databases" >}}). As of this release, MySQL versions from 5.7, postgres versions from v10, and SQLite 3 are supported databases.
