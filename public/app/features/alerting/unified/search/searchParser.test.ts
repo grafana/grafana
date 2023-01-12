@@ -1,9 +1,9 @@
 import { PromAlertingRuleState, PromRuleType } from '../../../../types/unified-alerting-dto';
 
-import { getSearchFilterFromQuery } from './searchParser';
+import { applySearchFilterToQuery, getSearchFilterFromQuery, SearchFilterState } from './searchParser';
 
-describe('Alert rules searchParser', function () {
-  describe('getSearchFilterFromQuery', function () {
+describe('Alert rules searchParser', () => {
+  describe('getSearchFilterFromQuery', () => {
     it.each(['ds:prometheus', 'datasource:prometheus'])('should parse data source filter from %s', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.dataSourceName).toBe('prometheus');
@@ -74,5 +74,82 @@ describe('Alert rules searchParser', function () {
       expect(filter.groupName).toContain('$20.00%$');
       expect(filter.ruleName).toContain('cpu!! & memory.,?');
     });
+
+    it('should parse non-filter terms with colon as free form words', () => {
+      const query = 'cpu:high-utilization memory:overload';
+      const filter = getSearchFilterFromQuery(query);
+
+      expect(filter.freeFormWords).toContain('cpu:high-utilization');
+      expect(filter.freeFormWords).toContain('memory:overload');
+    });
+
+    it('should parse mixed free form words and filters', () => {
+      const query = 'ds:prometheus utilization l:team cpu';
+      const filter = getSearchFilterFromQuery(query);
+
+      expect(filter.dataSourceName).toBe('prometheus');
+      expect(filter.labels).toContain('team');
+      expect(filter.freeFormWords).toContain('utilization');
+      expect(filter.freeFormWords).toContain('cpu');
+    });
+  });
+
+  describe('applySearchFilterToQuery', () => {
+    it('should apply filters to an empty query', () => {
+      const filter = getFilter({
+        freeFormWords: ['cpu', 'eighty'],
+        dataSourceName: 'Mimir Dev',
+        namespace: '/etc/prometheus',
+        labels: ['team', 'region=apac'],
+        groupName: 'cpu-usage',
+        ruleName: 'cpu > 80%',
+        ruleType: PromRuleType.Alerting,
+        ruleState: PromAlertingRuleState.Firing,
+      });
+
+      const query = applySearchFilterToQuery('', filter);
+
+      expect(query).toBe(
+        'ds:"Mimir Dev" ns:/etc/prometheus g:cpu-usage r:"cpu > 80%" s:firing t:alerting l:team l:region=apac cpu eighty'
+      );
+    });
+
+    it('should update filters in existing query', () => {
+      const filter = getFilter({
+        dataSourceName: 'Mimir Dev',
+        namespace: '/etc/prometheus',
+        labels: ['team', 'region=apac'],
+        groupName: 'cpu-usage',
+        ruleName: 'cpu > 80%',
+      });
+
+      const baseQuery = 'ds:prometheus ns:mimir-global g:memory r:"mem > 90% l:severity"';
+      const query = applySearchFilterToQuery(baseQuery, filter);
+
+      expect(query).toBe('ds:"Mimir Dev" ns:/etc/prometheus g:cpu-usage r:"cpu > 80%" l:team l:region=apac');
+    });
+
+    it('should preserve the order of parameters when updating', () => {
+      const filter = getFilter({
+        dataSourceName: 'Mimir Dev',
+        namespace: '/etc/prometheus',
+        labels: ['region=emea'],
+        groupName: 'cpu-usage',
+        ruleName: 'cpu > 80%',
+      });
+
+      const baseQuery = 'l:region=apac r:"mem > 90%" g:memory ns:mimir-global ds:prometheus';
+      const query = applySearchFilterToQuery(baseQuery, filter);
+
+      expect(query).toBe('l:region=emea r:"cpu > 80%" g:cpu-usage ns:/etc/prometheus ds:"Mimir Dev"');
+    });
   });
 });
+
+function getFilter(filter: Partial<SearchFilterState>): SearchFilterState {
+  return {
+    freeFormWords: [],
+    labels: [],
+    ...filter,
+  };
+}

@@ -88,9 +88,6 @@ export function applySearchFilterToQuery(query: string, filter: SearchFilterStat
   let cursor = parsed.cursor();
 
   const filterStateArray: Array<{ type: number; value: string }> = [];
-  if (filter.freeFormWords) {
-    filterStateArray.push(...filter.freeFormWords.map((word) => ({ type: terms.FreeFormExpression, value: word })));
-  }
   if (filter.dataSourceName) {
     filterStateArray.push({ type: terms.DataSourceFilter, value: filter.dataSourceName });
   }
@@ -111,6 +108,9 @@ export function applySearchFilterToQuery(query: string, filter: SearchFilterStat
   }
   if (filter.labels) {
     filterStateArray.push(...filter.labels.map((l) => ({ type: terms.LabelFilter, value: l })));
+  }
+  if (filter.freeFormWords) {
+    filterStateArray.push(...filter.freeFormWords.map((word) => ({ type: terms.FreeFormExpression, value: word })));
   }
 
   const existingTreeFilters: SyntaxNode[] = [];
@@ -140,7 +140,11 @@ export function applySearchFilterToQuery(query: string, filter: SearchFilterStat
   });
 
   filterStateArray.forEach((fs) => {
-    newQueryExpressions.push(`${filterTermToTypeMap[fs.type]}:${getSafeFilterValue(fs.value)}`);
+    if (fs.type === terms.FreeFormExpression) {
+      newQueryExpressions.push(fs.value);
+    } else {
+      newQueryExpressions.push(`${filterTermToTypeMap[fs.type]}:${getSafeFilterValue(fs.value)}`);
+    }
   });
 
   return newQueryExpressions.join(' ');
