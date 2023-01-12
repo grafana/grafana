@@ -5109,6 +5109,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/scenes@npm:0.0.4":
+  version: 0.0.4
+  resolution: "@grafana/scenes@npm:0.0.4"
+  checksum: adbc69e4033bdd40a5c2fe13ee7af2b787c236e548c389b6820b057f76ae3727fc4f85d2205d6658e008f69f75bbf84c04453fedb29f9979a76517267f1f91ad
+  languageName: node
+  linkType: hard
+
 "@grafana/schema@9.4.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
@@ -21983,6 +21990,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.1
     "@grafana/monaco-logql": ^0.0.6
     "@grafana/runtime": "workspace:*"
+    "@grafana/scenes": 0.0.4
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -22271,6 +22279,9 @@ __metadata:
     webpack-manifest-plugin: 5.0.0
     webpack-merge: 5.8.0
     whatwg-fetch: 3.6.2
+  dependenciesMeta:
+    "@grafana/scenes@0.0.3":
+      unplugged: true
   languageName: unknown
   linkType: soft
 
@@ -26638,18 +26649,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"loader-utils@npm:^2.0.0":
-  version: 2.0.3
-  resolution: "loader-utils@npm:2.0.3"
-  dependencies:
-    big.js: ^5.2.2
-    emojis-list: ^3.0.0
-    json5: ^2.1.2
-  checksum: d055c61ce5927b64cb4af40218606603a7d3a39adb7b6eec116bb31d19203875950e478152dea056de404eced8e87e9bfd336ec636591ded040ea451f63c7d88
-  languageName: node
-  linkType: hard
-
-"loader-utils@npm:^2.0.4":
+"loader-utils@npm:^2.0.0, loader-utils@npm:^2.0.4":
   version: 2.0.4
   resolution: "loader-utils@npm:2.0.4"
   dependencies:
@@ -26661,9 +26661,9 @@ __metadata:
   linkType: hard
 
 "loader-utils@npm:^3.2.0":
-  version: 3.2.0
-  resolution: "loader-utils@npm:3.2.0"
-  checksum: c7b9a8dc4b3bc19e9ef563c48e3a18ea9f8bb2da1ad38a12e4b88358cfba5f148a7baf12d78fe78ffcb718ce1e062ab31fcf5c148459f1247a672a4213471e80
+  version: 3.2.1
+  resolution: "loader-utils@npm:3.2.1"
+  checksum: 4e3ea054cdc8be1ab1f1238f49f42fdf0483039eff920fb1d442039f3f0ad4ebd11fb8e584ccdf2cb7e3c56b3d40c1832416e6408a55651b843da288960cc792
   languageName: node
   linkType: hard
 
