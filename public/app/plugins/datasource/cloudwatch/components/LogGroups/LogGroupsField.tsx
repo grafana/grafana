@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { useAccountOptions } from '../../hooks';
-import { migrateLegacyLogGroupName } from '../../migrations/logQueryMigrations';
 import { DescribeLogGroupsRequest, LogGroup } from '../../types';
+import { isTemplateVariable } from '../../utils/templateVariableUtils';
 
 import { LogGroupsSelector } from './LogGroupsSelector';
 import { SelectedLogGroups } from './SelectedLogGroups';
@@ -39,7 +39,30 @@ export const LogGroupsField = ({
     // If log group names are stored in the query model, make a new DescribeLogGroups request for each log group to load the arn. Then update the query model.
     if (datasource && !loadingLogGroupsStarted && !logGroups?.length && legacyLogGroupNames?.length) {
       setLoadingLogGroupsStarted(true);
-      migrateLegacyLogGroupName(legacyLogGroupNames, region, datasource.api).then(onChange);
+
+      // there's no need to migrate variables, they will be taken care of in the logs query runner
+      const variables = legacyLogGroupNames.filter((lgn) => isTemplateVariable(datasource.api.templateSrv, lgn));
+      const legacyLogGroupNameValues = legacyLogGroupNames.filter(
+        (lgn) => !isTemplateVariable(datasource.api.templateSrv, lgn)
+      );
+
+      Promise.all(
+        legacyLogGroupNameValues.map((lg) => datasource.api.getLogGroups({ region: region, logGroupNamePrefix: lg }))
+      )
+        .then((results) => {
+          const logGroups = results.flatMap((r) =>
+            r.map((lg) => ({
+              arn: lg.value.arn,
+              name: lg.value.name,
+              accountId: lg.accountId,
+            }))
+          );
+
+          onChange([...logGroups, ...variables.map((v) => ({ name: v, arn: v }))]);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
     }
   }, [datasource, legacyLogGroupNames, logGroups, onChange, region, loadingLogGroupsStarted]);
 
