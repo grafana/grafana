@@ -1,6 +1,5 @@
 import { PanelData, LoadingState, DataSourceApi, CoreApp, urlUtil } from '@grafana/data';
 import { reportMetaAnalytics, MetaAnalyticsEventName, DataRequestEventPayload } from '@grafana/runtime';
-import { getConfig } from 'app/core/config';
 
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 
@@ -32,8 +31,8 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       duration: data.request.endTime! - data.request.startTime,
     };
 
-    if (data.request.app === CoreApp.Explore) {
-      enrichWithExploreInfo(eventData, data);
+    if (data.request.app === CoreApp.Explore || data.request.app === CoreApp.Correlations) {
+      enrichWithInfo(eventData, data);
     } else {
       enrichWithDashboardInfo(eventData, data);
     }
@@ -50,7 +49,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
     done = true;
   };
 
-  function enrichWithExploreInfo(eventData: DataRequestEventPayload, data: PanelData) {
+  function enrichWithInfo(eventData: DataRequestEventPayload, data: PanelData) {
     const totalQueries = Object.keys(data.series).length;
     eventData.totalQueries = totalQueries;
   }
@@ -77,10 +76,6 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       eventData.dashboardName = dashboard.title;
       eventData.dashboardUid = dashboard.uid;
       eventData.folderName = dashboard.meta.folderTitle;
-
-      if (getConfig().isPublicDashboardView) {
-        eventData.publicDashboardUid = dashboard.meta.publicDashboardUid;
-      }
     }
 
     if (data.error) {

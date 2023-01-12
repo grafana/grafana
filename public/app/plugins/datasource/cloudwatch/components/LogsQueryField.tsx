@@ -61,7 +61,8 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
   };
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const { logGroupNames } = query;
+    const { datasource, query } = props;
+    const { logGroups } = query;
 
     if (!datasource.languageProvider) {
       return { suggestions: [] };
@@ -76,7 +77,7 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
       {
         history,
         absoluteRange,
-        logGroupNames,
+        logGroups: logGroups,
         region: query.region,
       }
     );
