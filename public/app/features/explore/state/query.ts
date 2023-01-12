@@ -609,15 +609,14 @@ export const runQueries = (
           dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
         }
       } else {
-        for (const { type, getProviderFunc, requestId } of supplementaryQueriesList) {
-          const getProvider = getProviderFunc(datasourceInstance);
-          if (getProvider) {
-            // We always prepare provider, even is supplementary query is disabled because when the user
-            // enables the query, we need to load the data, so we need the provider
-            const dataProvider = getProvider({
-              ...transaction.request,
-              requestId: transaction.request.requestId + requestId,
-            });
+        for (const { type, getProvider, requestId } of supplementaryQueriesList) {
+          // We always prepare provider, even is supplementary query is disabled because when the user
+          // enables the query, we need to load the data, so we need the provider
+          const dataProvider = getProvider(datasourceInstance, {
+            ...transaction.request,
+            requestId: transaction.request.requestId + requestId,
+          });
+          if (dataProvider) {
             handleSupplementaryQuery(dispatch, getState().explore, exploreId, type, dataProvider);
           } else {
             // If data source instance doesn't support this supplementary query, we clean the data provider

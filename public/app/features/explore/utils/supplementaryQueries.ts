@@ -11,34 +11,35 @@ import store from 'app/core/store';
 import { SupplementaryQueries, SupplementaryQueryType } from 'app/types';
 
 export const supplementaryQueriesList: Array<{
-  getProviderFunc: (
-    datasource: unknown
-  ) => ((request: DataQueryRequest<DataQuery>) => Observable<DataQueryResponse> | undefined) | undefined;
+  getProvider: (
+    datasource: unknown,
+    request: DataQueryRequest<DataQuery>
+  ) => (Observable<DataQueryResponse> | undefined) | undefined;
   requestId: string;
   type: SupplementaryQueryType;
 }> = [
   {
     type: SupplementaryQueryType.LogsVolume,
-    getProviderFunc: getLogsVolumeDataProvider,
+    getProvider: getLogsVolumeDataProvider,
     requestId: '_log_volume',
   },
   {
     type: SupplementaryQueryType.LogsSample,
-    getProviderFunc: getLogsSamplesDataProvider,
+    getProvider: getLogsSamplesDataProvider,
     requestId: '_log_sample',
   },
 ];
 
-export function getLogsSamplesDataProvider(datasource: unknown) {
+export function getLogsSamplesDataProvider(datasource: unknown, request: DataQueryRequest<DataQuery>) {
   if (hasLogsSampleSupport(datasource)) {
-    return datasource.getLogsSampleDataProvider;
+    return datasource.getLogsSampleDataProvider(request);
   }
   return undefined;
 }
 
-export function getLogsVolumeDataProvider(datasource: unknown) {
+export function getLogsVolumeDataProvider(datasource: unknown, request: DataQueryRequest<DataQuery>) {
   if (hasLogsVolumeSupport(datasource)) {
-    return datasource.getLogsVolumeDataProvider;
+    return datasource.getLogsVolumeDataProvider(request);
   }
   return undefined;
 }
