@@ -13,7 +13,7 @@ export interface Props extends Themeable2 {
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
 }
 
-class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
+class UnThemedLogRowMessageDisplayedFields extends PureComponent<Props> {
   render() {
     const { row, showDetectedFields, getFieldLinks, wrapLogMessage } = this.props;
     const fields = getAllFields(row, getFieldLinks);
@@ -30,8 +30,12 @@ class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
           return key === parsedKey;
         });
 
-        if (field) {
+        if (field !== undefined && field !== null) {
           return `${parsedKey}=${field.value}`;
+        }
+
+        if (row.labels[parsedKey] !== undefined && row.labels[parsedKey] !== null) {
+          return `${parsedKey}=${row.labels[parsedKey]}`;
         }
 
         return null;
@@ -43,5 +47,5 @@ class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
   }
 }
 
-export const LogRowMessageDetectedFields = withTheme2(UnThemedLogRowMessageDetectedFields);
-LogRowMessageDetectedFields.displayName = 'LogRowMessageDetectedFields';
+export const LogRowMessageDisplayedFields = withTheme2(UnThemedLogRowMessageDisplayedFields);
+LogRowMessageDisplayedFields.displayName = 'LogRowMessageDisplayedFields';
