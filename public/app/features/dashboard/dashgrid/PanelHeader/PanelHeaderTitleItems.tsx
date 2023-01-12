@@ -1,8 +1,9 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { PanelData, GrafanaTheme2, PanelModel, LinkModel } from '@grafana/data';
-import { Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { getFocusStyles, getMouseFocusStyles } from '@grafana/ui/src/themes/mixins';
 
 import { PanelLinks } from '../PanelLinks';
 
@@ -21,22 +22,24 @@ export function PanelHeaderTitleItems(props: Props) {
 
   // panel health
   const alertStateItem = (
-    <ToolbarButton
-      icon={<Icon name={alertState === 'alerting' ? 'heart-break' : 'heart'} className="panel-alert-icon" />}
-      tooltip={`alerting is ${alertState}`}
-      className={styles.item}
-    />
+    <Tooltip content={`alerting is ${alertState}`} tabIndex={0}>
+      <span className={styles.item}>
+        <Icon name={alertState === 'alerting' ? 'heart-break' : 'heart'} className="panel-alert-icon" />
+      </span>
+    </Tooltip>
   );
 
   const timeshift = (
     <>
-      <ToolbarButton
-        tooltip={data.request?.range ? `Timeshift: ${data.request.range.from} to ${data.request.range.to}` : ''}
-        className={styles.timeshift}
-        icon="clock-nine"
+      <Tooltip
+        content={data.request?.range ? `Timeshift: ${data.request.range.from} to ${data.request.range.to}` : ''}
+        tabIndex={0}
       >
-        {data.request?.timeInfo}
-      </ToolbarButton>
+        <span className={cx(styles.item, styles.timeshift)}>
+          <Icon name="clock-nine" />
+          {data.request?.timeInfo}
+        </span>
+      </Tooltip>
     </>
   );
 
@@ -52,11 +55,30 @@ export function PanelHeaderTitleItems(props: Props) {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   item: css({
+    color: `${theme.colors.text.secondary}`,
+    backgroundColor: `${theme.colors.background.primary}`,
+    cursor: 'auto',
     border: 'none',
+    padding: `${theme.spacing(0, 1)}`,
+    height: ` ${theme.spacing(theme.components.height.md)}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    '&:focus, &:focus-visible': {
+      ...getFocusStyles(theme),
+      zIndex: 1,
+    },
+    '&: focus:not(:focus-visible)': getMouseFocusStyles(theme),
+
+    '&:hover ': {
+      boxShadow: `${theme.shadows.z1}`,
+      color: `${theme.colors.text.primary}`,
+      background: `${theme.colors.background.secondary}`,
+    },
   }),
 
   timeshift: css({
-    border: 'none',
     color: theme.colors.text.link,
 
     '&:hover': {

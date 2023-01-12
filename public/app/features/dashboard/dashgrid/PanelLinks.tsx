@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { LinkModel } from '@grafana/data';
-import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 interface Props {
   links: (() => LinkModel[]) | undefined;
 }
 
 export function PanelLinks({ links }: Props) {
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
 
   const getLinksContent = (): JSX.Element => {
     const panelLinks = links && links();
@@ -29,10 +29,11 @@ export function PanelLinks({ links }: Props) {
   ) : null;
 }
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     item: css({
       border: 'none',
+      borderRadius: theme.shape.borderRadius(0),
     }),
   };
 };
