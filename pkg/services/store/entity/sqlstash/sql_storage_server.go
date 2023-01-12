@@ -594,7 +594,7 @@ func doDelete(ctx context.Context, tx *session.SessionTx, grn *entity.GRN) (bool
 	_, _ = tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", str)
 
 	if grn.Kind == models.StandardKindFolder {
-		updateFolderTree(ctx, tx, grn.TenantId)
+		err = updateFolderTree(ctx, tx, grn.TenantId)
 	}
 
 	return rows > 0, err
