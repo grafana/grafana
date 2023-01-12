@@ -116,6 +116,7 @@ type schema struct {
 	Items       *schema            `json:"items,omitempty"`
 	Definitions map[string]*schema `json:"definitions,omitempty"`
 	Enum        []Any              `json:"enum"`
+	Default     any                `json:"default"`
 }
 
 func jsonToMarkdown(jsonData []byte, tpl string, kindName string) ([]byte, error) {
@@ -245,6 +246,9 @@ func (s schema) Markdown(level int) string {
 
 	if s.Description != "" {
 		fmt.Fprintln(&buf, s.Description)
+		if s.Default != nil {
+			fmt.Fprintf(&buf, "The default value is: `%v`.", s.Default)
+		}
 		fmt.Fprintln(&buf)
 	}
 
@@ -376,6 +380,10 @@ func printProperties(w io.Writer, s *schema) {
 				vals = append(vals, e.String())
 			}
 			desc += " Possible values are: `" + strings.Join(vals, "`, `") + "`."
+		}
+
+		if p.Default != nil {
+			desc += fmt.Sprintf(" Default: `%v`.", p.Default)
 		}
 
 		rows = append(rows, []string{fmt.Sprintf("`%s`", k), propTypeStr, required, strings.TrimSpace(desc)})

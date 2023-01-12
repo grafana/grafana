@@ -1,5 +1,5 @@
 ---
-draft: true
+draft: false
 keywords:
   - grafana
   - schema
@@ -15,15 +15,15 @@ title: Dashboard kind
 
 | Property               | Type                              | Required | Description                                                                                                              |
 |------------------------|-----------------------------------|----------|--------------------------------------------------------------------------------------------------------------------------|
-| `editable`             | boolean                           | **Yes**  | Whether a dashboard is editable or not.                                                                                  |
+| `editable`             | boolean                           | **Yes**  | Whether a dashboard is editable or not. Default: `true`.                                                                 |
 | `graphTooltip`         | integer                           | **Yes**  | 0 for no shared crosshair or tooltip (default).                                                                          |
 |                        |                                   |          | 1 for shared crosshair.                                                                                                  |
-|                        |                                   |          | 2 for shared crosshair AND shared tooltip. Possible values are: `0`, `1`, `2`.                                           |
-| `revision`             | integer                           | **Yes**  | Version of the current dashboard data                                                                                    |
+|                        |                                   |          | 2 for shared crosshair AND shared tooltip. Possible values are: `0`, `1`, `2`. Default: `0`.                             |
+| `revision`             | integer                           | **Yes**  | Version of the current dashboard data Default: `-1`.                                                                     |
 | `schemaVersion`        | integer                           | **Yes**  | Version of the JSON schema, incremented each time a Grafana update brings                                                |
 |                        |                                   |          | changes to said schema.                                                                                                  |
-|                        |                                   |          | TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion                           |
-| `style`                | string                            | **Yes**  | Theme of dashboard. Possible values are: `dark`, `light`.                                                                |
+|                        |                                   |          | TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion Default: `36`.            |
+| `style`                | string                            | **Yes**  | Theme of dashboard. Possible values are: `dark`, `light`. Default: `dark`.                                               |
 | `annotations`          | [object](#annotations)            | No       | TODO docs                                                                                                                |
 | `description`          | string                            | No       | Description of dashboard.                                                                                                |
 | `fiscalYearStartMonth` | integer                           | No       | TODO docs                                                                                                                |
@@ -40,7 +40,7 @@ title: Dashboard kind
 | `time`                 | [object](#time)                   | No       | Time range for dashboard, e.g. last 6 hours, last 7 days, etc                                                            |
 | `timepicker`           | [object](#timepicker)             | No       | TODO docs                                                                                                                |
 |                        |                                   |          | TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes |
-| `timezone`             | string                            | No       | Timezone of dashboard, Possible values are: `browser`, `utc`, ``.                                                        |
+| `timezone`             | string                            | No       | Timezone of dashboard, Possible values are: `browser`, `utc`, ``. Default: `browser`.                                    |
 | `title`                | string                            | No       | Title of dashboard.                                                                                                      |
 | `uid`                  | string                            | No       | Unique dashboard identifier that can be generated by anyone. string (8-40)                                               |
 | `version`              | integer                           | No       | Version of the dashboard, incremented each time the dashboard is updated.                                                |
@@ -55,12 +55,12 @@ TODO docs
 
 | Property      | Type     | Required | Description                                          |
 |---------------|----------|----------|------------------------------------------------------|
-| `asDropdown`  | boolean  | **Yes**  |                                                      |
+| `asDropdown`  | boolean  | **Yes**  | Default: `false`.                                    |
 | `icon`        | string   | **Yes**  |                                                      |
-| `includeVars` | boolean  | **Yes**  |                                                      |
-| `keepTime`    | boolean  | **Yes**  |                                                      |
+| `includeVars` | boolean  | **Yes**  | Default: `false`.                                    |
+| `keepTime`    | boolean  | **Yes**  | Default: `false`.                                    |
 | `tags`        | string[] | **Yes**  |                                                      |
-| `targetBlank` | boolean  | **Yes**  |                                                      |
+| `targetBlank` | boolean  | **Yes**  | Default: `false`.                                    |
 | `title`       | string   | **Yes**  |                                                      |
 | `tooltip`     | string   | **Yes**  |                                                      |
 | `type`        | string   | **Yes**  | TODO docs Possible values are: `link`, `dashboards`. |
@@ -103,18 +103,18 @@ FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 
 #### Properties
 
-| Property     | Type                                  | Required | Description                       |
-|--------------|---------------------------------------|----------|-----------------------------------|
-| `builtIn`    | integer                               | **Yes**  |                                   |
-| `datasource` | [object](#datasource)                 | **Yes**  | Datasource to use for annotation. |
-| `enable`     | boolean                               | **Yes**  | Whether annotation is enabled.    |
-| `showIn`     | integer                               | **Yes**  |                                   |
-| `type`       | string                                | **Yes**  |                                   |
-| `hide`       | boolean                               | No       | Whether to hide annotation.       |
-| `iconColor`  | string                                | No       | Annotation icon color.            |
-| `name`       | string                                | No       | Name of annotation.               |
-| `rawQuery`   | string                                | No       | Query for annotation data.        |
-| `target`     | [AnnotationTarget](#annotationtarget) | No       | TODO docs                         |
+| Property     | Type                                  | Required | Description                                     |
+|--------------|---------------------------------------|----------|-------------------------------------------------|
+| `builtIn`    | integer                               | **Yes**  | Default: `0`.                                   |
+| `datasource` | [object](#datasource)                 | **Yes**  | Datasource to use for annotation.               |
+| `enable`     | boolean                               | **Yes**  | Whether annotation is enabled. Default: `true`. |
+| `showIn`     | integer                               | **Yes**  | Default: `0`.                                   |
+| `type`       | string                                | **Yes**  | Default: `dashboard`.                           |
+| `hide`       | boolean                               | No       | Whether to hide annotation. Default: `false`.   |
+| `iconColor`  | string                                | No       | Annotation icon color.                          |
+| `name`       | string                                | No       | Name of annotation.                             |
+| `rawQuery`   | string                                | No       | Query for annotation data.                      |
+| `target`     | [AnnotationTarget](#annotationtarget) | No       | TODO docs                                       |
 
 #### AnnotationTarget
 
@@ -166,12 +166,12 @@ TODO there appear to be a lot of different kinds of [template] vars here? if so 
 
 | Property       | Type                            | Required | Description                                                                                                                                                                     |
 |----------------|---------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `global`       | boolean                         | **Yes**  |                                                                                                                                                                                 |
+| `global`       | boolean                         | **Yes**  | Default: `false`.                                                                                                                                                               |
 | `hide`         | integer                         | **Yes**  | Possible values are: `0`, `1`, `2`.                                                                                                                                             |
-| `id`           | string                          | **Yes**  |                                                                                                                                                                                 |
-| `index`        | integer                         | **Yes**  |                                                                                                                                                                                 |
+| `id`           | string                          | **Yes**  | Default: `00000000-0000-0000-0000-000000000000`.                                                                                                                                |
+| `index`        | integer                         | **Yes**  | Default: `-1`.                                                                                                                                                                  |
 | `name`         | string                          | **Yes**  |                                                                                                                                                                                 |
-| `skipUrlSync`  | boolean                         | **Yes**  |                                                                                                                                                                                 |
+| `skipUrlSync`  | boolean                         | **Yes**  | Default: `false`.                                                                                                                                                               |
 | `state`        | string                          | **Yes**  | Possible values are: `NotStarted`, `Loading`, `Streaming`, `Done`, `Error`.                                                                                                     |
 | `type`         | string                          | **Yes**  | FROM: packages/grafana-data/src/types/templateVars.ts                                                                                                                           |
 |                |                                 |          | TODO docs                                                                                                                                                                       |
@@ -205,10 +205,10 @@ Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 
 ### Properties
 
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `from`   | string | **Yes**  |             |
-| `to`     | string | **Yes**  |             |
+| Property | Type   | Required | Description        |
+|----------|--------|----------|--------------------|
+| `from`   | string | **Yes**  | Default: `now-6h`. |
+| `to`     | string | **Yes**  | Default: `now`.    |
 
 ## timepicker
 
@@ -217,12 +217,12 @@ TODO this appears to be spread all over in the frontend. Concepts will likely ne
 
 ### Properties
 
-| Property            | Type     | Required | Description                             |
-|---------------------|----------|----------|-----------------------------------------|
-| `collapse`          | boolean  | **Yes**  | Whether timepicker is collapsed or not. |
-| `enable`            | boolean  | **Yes**  | Whether timepicker is enabled or not.   |
-| `hidden`            | boolean  | **Yes**  | Whether timepicker is visible or not.   |
-| `refresh_intervals` | string[] | **Yes**  | Selectable intervals for auto-refresh.  |
-| `time_options`      | string[] | **Yes**  | TODO docs                               |
+| Property            | Type     | Required | Description                                                                            |
+|---------------------|----------|----------|----------------------------------------------------------------------------------------|
+| `collapse`          | boolean  | **Yes**  | Whether timepicker is collapsed or not. Default: `false`.                              |
+| `enable`            | boolean  | **Yes**  | Whether timepicker is enabled or not. Default: `true`.                                 |
+| `hidden`            | boolean  | **Yes**  | Whether timepicker is visible or not. Default: `false`.                                |
+| `refresh_intervals` | string[] | **Yes**  | Selectable intervals for auto-refresh. Default: `[5s 10s 30s 1m 5m 15m 30m 1h 2h 1d]`. |
+| `time_options`      | string[] | **Yes**  | TODO docs Default: `[5m 15m 1h 6h 12h 24h 2d 7d 30d]`.                                 |
 
 
