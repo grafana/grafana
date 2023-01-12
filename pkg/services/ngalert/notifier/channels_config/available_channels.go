@@ -189,6 +189,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "The password to use when making a call to the Kafka REST Proxy",
 					PropertyName: "password",
 					Required:     false,
+					Secure:       true,
 				},
 				{
 					Label:        "API version",
