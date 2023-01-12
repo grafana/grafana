@@ -157,7 +157,7 @@ export const LogsMetaRow = React.memo(
       });
     }
     const downloadMenu = (
-      <Menu>
+      <Menu onClose={() => setIsOpen(false)}>
         <Menu.Item label="txt" onClick={() => downloadLogs(DownloadFormat.Text)} />
         <Menu.Item label="json" onClick={() => downloadLogs(DownloadFormat.Json)} />
       </Menu>
