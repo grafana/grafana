@@ -83,13 +83,6 @@ describe('QueryEditorField', () => {
   });
 
   describe('Query validation', () => {
-    beforeEach(() => {
-      // Request errors cause the query runner to print to console,
-      // this means the test would fail because of the fail on log rules.
-      // We mock console.error to avoid this.
-      jest.spyOn(console, 'error').mockImplementation();
-    });
-
     it('should result in succeeded validation if LoadingState.Done and data is available', async () => {
       const dsApi = initiateDsApi();
 
