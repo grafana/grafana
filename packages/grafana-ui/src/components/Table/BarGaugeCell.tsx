@@ -2,8 +2,9 @@ import { isFunction } from 'lodash';
 import React, { FC } from 'react';
 
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
+import { BarGaugeDisplayMode } from '@grafana/schema';
 
-import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
+import { BarGauge } from '../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
 
 import { TableCellProps, TableCellDisplayMode } from './types';
@@ -34,12 +35,32 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   }
 
   const displayValue = field.display!(cell.value);
-  let barGaugeMode = BarGaugeDisplayMode.Gradient;
 
-  if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.LcdGauge) {
-    barGaugeMode = BarGaugeDisplayMode.Lcd;
-  } else if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.BasicGauge) {
-    barGaugeMode = BarGaugeDisplayMode.Basic;
+  // Set default display mode
+  let barGaugeMode: BarGaugeDisplayMode = BarGaugeDisplayMode.Gradient;
+
+  // Support deprecated settings
+  const usingDeprecatedSettings = field.config.custom.displayMode !== undefined;
+
+  // If we're using the old settings format we read the displayMode directly from
+  // the cell options
+  if (usingDeprecatedSettings) {
+    if (
+      (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
+      (field.config.custom && field.config.custom.cellOptions.displayMode === BarGaugeDisplayMode.Lcd)
+    ) {
+      barGaugeMode = BarGaugeDisplayMode.Lcd;
+    } else if (
+      (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
+      (field.config.custom && field.config.custom.cellOptions.displayMode === BarGaugeDisplayMode.Basic)
+    ) {
+      barGaugeMode = BarGaugeDisplayMode.Basic;
+    }
+  }
+  // Otherwise in the case of sub-options we read specifically from the sub-options
+  // object in order to get the display mode
+  else {
+    barGaugeMode = field.config.custom.cellOptions.mode;
   }
 
   const getLinks = () => {
