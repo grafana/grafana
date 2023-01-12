@@ -6,6 +6,7 @@ import { GrafanaTheme2, isIconName, LoadingState } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
+import { Button } from '../Button';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
 import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
@@ -89,10 +90,12 @@ export function PanelChrome({
   const headerStyles: CSSProperties = {
     height: headerHeight,
   };
+
   const itemStyles: CSSProperties = {
     minHeight: headerHeight,
     minWidth: headerHeight,
   };
+
   const containerStyles: CSSProperties = { width, height };
 
   const isUsingDeprecatedLeftItems = isEmpty(status) && !loadingState;
@@ -153,14 +156,14 @@ export function PanelChrome({
         <div className={styles.rightAligned}>
           {menu && (
             <Dropdown overlay={menu} placement="bottom">
-              <div className={cx(styles.item, styles.menuItem, 'menu-icon')} data-testid="menu-icon" style={itemStyles}>
-                <IconButton
-                  ariaLabel={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
-                  tooltip="Menu"
-                  name="ellipsis-v"
-                  size="sm"
-                />
-              </div>
+              <Button
+                aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
+                tooltip="Menu"
+                icon="ellipsis-v"
+                fill="text"
+                variant="secondary"
+                className={cx(styles.menuItem, 'menu-icon')}
+              />
             </Dropdown>
           )}
 
@@ -252,7 +255,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      padding: `0 ${theme.spacing(padding)}`,
+      padding: theme.spacing(0, 0, 0, 1),
     }),
     streaming: css({
       marginRight: 0,
