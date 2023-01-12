@@ -9,6 +9,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, useDispatch } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
@@ -18,7 +19,8 @@ import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
 import { createExploreLink, makeRuleBasedSilenceLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { DeclareIncident } from '../bridges/DeclareIncidentButton';
 
 interface Props {
   rule: CombinedRule;
@@ -74,6 +76,8 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   const rulesSourceName = getRulesSourceName(rulesSource);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
+  const isFiringRule = isAlertingRule(rule.promRule) && rule.promRule.state === PromAlertingRuleState.Firing;
+
   const { isEditable, isRemovable } = useIsRuleEditable(rulesSourceName, rulerRule);
 
   const returnTo = location.pathname + location.search;
@@ -82,8 +86,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   if (isCloudRulesSource(rulesSource) && hasExplorePermission && !isFederated) {
     buttons.push(
       <LinkButton
-        className={style.button}
-        size="xs"
+        size="sm"
         key="explore"
         variant="primary"
         icon="chart-line"
@@ -97,8 +100,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   if (rule.annotations[Annotation.runbookURL]) {
     buttons.push(
       <LinkButton
-        className={style.button}
-        size="xs"
+        size="sm"
         key="runbook"
         variant="primary"
         icon="book"
@@ -114,8 +116,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
     if (dashboardUID) {
       buttons.push(
         <LinkButton
-          className={style.button}
-          size="xs"
+          size="sm"
           key="dashboard"
           variant="primary"
           icon="apps"
@@ -129,8 +130,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
       if (panelId) {
         buttons.push(
           <LinkButton
-            className={style.button}
-            size="xs"
+            size="sm"
             key="panel"
             variant="primary"
             icon="apps"
@@ -147,8 +147,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   if (alertmanagerSourceName && contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor)) {
     buttons.push(
       <LinkButton
-        className={style.button}
-        size="xs"
+        size="sm"
         key="silence"
         icon="bell-slash"
         target="__blank"
@@ -162,10 +161,18 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   if (alertId) {
     buttons.push(
       <Fragment key="history">
-        <Button className={style.button} size="xs" icon="history" onClick={() => showStateHistoryModal()}>
+        <Button size="sm" icon="history" onClick={() => showStateHistoryModal()}>
           Show state history
         </Button>
         {StateHistoryModal}
+      </Fragment>
+    );
+  }
+
+  if (isFiringRule) {
+    buttons.push(
+      <Fragment key="declare-incident">
+        <DeclareIncident title={rule.name} />
       </Fragment>
     );
   }
@@ -188,7 +195,6 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
           onClipboardError={(copiedText) => {
             notifyApp.error('Error while copying URL', copiedText);
           }}
-          className={style.button}
           size="sm"
           getText={buildShareUrl}
         >
@@ -197,7 +203,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
       );
 
       rightButtons.push(
-        <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
+        <LinkButton size="sm" key="edit" variant="secondary" icon="pen" href={editURL}>
           Edit
         </LinkButton>
       );
@@ -206,8 +212,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
     if (isRemovable && rulerRule && !isFederated && !isProvisioned) {
       rightButtons.push(
         <Button
-          className={style.button}
-          size="xs"
+          size="sm"
           type="button"
           key="delete"
           variant="secondary"
@@ -252,9 +257,5 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: space-between;
     flex-wrap: wrap;
     border-bottom: solid 1px ${theme.colors.border.medium};
-  `,
-  button: css`
-    height: 24px;
-    font-size: ${theme.typography.size.sm};
   `,
 });
