@@ -60,6 +60,7 @@ export interface BarsOptions {
   xSpacing?: number;
   xTimeAuto?: boolean;
   negY?: boolean[];
+  fullHighlight?: boolean;
 }
 
 /**
@@ -315,6 +316,17 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       }
 
       let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
+
+      if (opts.fullHighlight) {
+        if (opts.xOri === ScaleOrientation.Horizontal) {
+          barRect.y = 0;
+          barRect.h = u.bbox.height;
+        } else {
+          barRect.x = 0;
+          barRect.w = u.bbox.width;
+        }
+      }
+
       qt.add(barRect);
 
       if (showValue !== VisibilityMode.Never) {
@@ -429,6 +441,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     u.root.querySelectorAll('.u-cursor-pt').forEach((el) => {
       if (el instanceof HTMLElement) {
         el.style.borderRadius = '0';
+        if (opts.fullHighlight) {
+          el.style.zIndex = '-1';
+        }
       }
     });
   };

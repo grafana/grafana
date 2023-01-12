@@ -94,7 +94,8 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
     newElement.updateData(rootLayer.scene.context);
     rootLayer.elements.push(newElement);
     rootLayer.scene.save();
-
     rootLayer.reinitializeMoveable();
+
+    setTimeout(() => doSelect(rootLayer.scene, newElement));
   }
 }

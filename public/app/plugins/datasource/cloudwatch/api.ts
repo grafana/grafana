@@ -17,6 +17,8 @@ import {
   Account,
   ResourceRequest,
   ResourceResponse,
+  GetLogGroupFieldsRequest,
+  LogGroupField,
 } from './types';
 
 export interface SelectableResourceValue extends SelectableValue<string> {
@@ -67,6 +69,18 @@ export class CloudWatchAPI extends CloudWatchRequest {
       ...params,
       region: this.templateSrv.replace(this.getActualRegion(params.region)),
       accountId: this.templateSrv.replace(params.accountId),
+    });
+  }
+
+  async getLogGroupFields({
+    region,
+    arn,
+    logGroupName,
+  }: GetLogGroupFieldsRequest): Promise<Array<ResourceResponse<LogGroupField>>> {
+    return this.memoizedGetRequest<Array<ResourceResponse<LogGroupField>>>('log-group-fields', {
+      region: this.templateSrv.replace(this.getActualRegion(region)),
+      logGroupName: this.templateSrv.replace(logGroupName, {}),
+      logGroupArn: this.templateSrv.replace(arn),
     });
   }
 

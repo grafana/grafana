@@ -20,6 +20,7 @@ import {
   measureText,
   PlotLegend,
   Portal,
+  StackingMode,
   TooltipDisplayMode,
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
@@ -168,6 +169,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       const disp = getFieldDisplayName(field, alignedFrame);
       seriesIdx = info.aligned.fields.findIndex((f) => disp === getFieldDisplayName(f, info.aligned));
     }
+    const tooltipMode =
+      options.fullHighlight && options.stacking !== StackingMode.None ? TooltipDisplayMode.Multi : options.tooltip.mode;
 
     return (
       <>
@@ -195,7 +198,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
           rowIndex={datapointIdx}
           columnIndex={seriesIdx}
           sortOrder={options.tooltip.sort}
-          mode={options.tooltip.mode}
+          mode={tooltipMode}
         />
       </>
     );
@@ -280,6 +283,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       text,
       xTickLabelRotation,
       xTickLabelSpacing,
+      fullHighlight,
     } = options;
 
     return preparePlotConfigBuilder({
@@ -305,6 +309,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       getColor,
       fillOpacity,
       allFrames: info.viz,
+      fullHighlight,
     });
   };
 

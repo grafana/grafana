@@ -10,7 +10,7 @@
     restart: unless-stopped
 
   oauthkeycloak:
-    image: quay.io/keycloak/keycloak:19.0
+    image: quay.io/keycloak/keycloak:20.0
     container_name: oauthkeycloak
     command: --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true start-dev
     environment:

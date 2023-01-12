@@ -1,5 +1,6 @@
 import { PanelMenuItem } from '@grafana/data';
 import { AngularComponent, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { LoadingState } from '@grafana/schema';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
@@ -26,6 +27,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
+  loadingState?: LoadingState,
   angularComponent?: AngularComponent | null
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
@@ -98,6 +100,12 @@ export function getPanelMenu(
     event.preventDefault();
     toggleLegend(panel);
   };
+
+  const onCancelStreaming = (event: React.MouseEvent) => {
+    event.preventDefault();
+    panel.getQueryRunner().cancelQuery();
+  };
+
   const menu: PanelMenuItem[] = [];
 
   if (!panel.isEditing) {
@@ -116,6 +124,17 @@ export function getPanelMenu(
       iconClassName: 'edit',
       onClick: onEditPanel,
       shortcut: 'e',
+    });
+  }
+
+  if (
+    dashboard.canEditPanel(panel) &&
+    (loadingState === LoadingState.Streaming || loadingState === LoadingState.Loading)
+  ) {
+    menu.push({
+      text: 'Stop query',
+      iconClassName: 'circle',
+      onClick: onCancelStreaming,
     });
   }
 

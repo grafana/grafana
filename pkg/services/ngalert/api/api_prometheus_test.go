@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -525,9 +526,9 @@ func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAl
 
 	fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1, func(s *state.State) *state.State {
 		s.Labels = data.Labels{
-			"job":                      "prometheus",
-			ngmodels.NamespaceUIDLabel: "test_namespace_uid",
-			ngmodels.RuleUIDLabel:      "test_alert_rule_uid_0",
+			"job":                            "prometheus",
+			alertingModels.NamespaceUIDLabel: "test_namespace_uid",
+			alertingModels.RuleUIDLabel:      "test_alert_rule_uid_0",
 		}
 		s.Annotations = data.Labels{"severity": "critical"}
 		return s
@@ -548,7 +549,7 @@ func asFixture() func(r *ngmodels.AlertRule) {
 		r.UID = "RuleUID"
 		r.Labels = map[string]string{
 			"__a_private_label_on_the_rule__": "a_value",
-			ngmodels.RuleUIDLabel:             "RuleUID",
+			alertingModels.RuleUIDLabel:       "RuleUID",
 		}
 		r.Annotations = nil
 		r.IntervalSeconds = 60

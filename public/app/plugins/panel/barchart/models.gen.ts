@@ -26,6 +26,10 @@ export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithToolti
    */
   colorByField?: string;
   /**
+   * Enables mode which highlights the entire bar area and shows tooltip when cursor hovers over highlighted area
+   */
+  fullHighlight: boolean;
+  /**
    * Controls the width of groups. 1 = max with, 0 = min width.
    */
   groupWidth: number;
@@ -63,6 +67,7 @@ export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithToolti
 export const defaultPanelOptions: Partial<PanelOptions> = {
   barRadius: 0,
   barWidth: 0.97,
+  fullHighlight: false,
   groupWidth: 0.7,
   orientation: ui.VizOrientation.Auto,
   showValue: ui.VisibilityMode.Auto,
