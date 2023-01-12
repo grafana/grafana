@@ -51,7 +51,6 @@ export const LogsMetaRow = React.memo(
     logRows,
   }: Props) => {
     const style = useStyles2(getStyles);
-    const [isOpen, setIsOpen] = useState(false);
 
     const downloadLogs = (format: DownloadFormat) => {
       reportInteraction('grafana_logs_download_logs_clicked', {
@@ -130,7 +129,7 @@ export const LogsMetaRow = React.memo(
       });
     }
     const downloadMenu = (
-      <Menu onClose={() => setIsOpen(false)}>
+      <Menu>
         <Menu.Item label="txt" onClick={() => downloadLogs(DownloadFormat.Text)} />
         <Menu.Item label="json" onClick={() => downloadLogs(DownloadFormat.Json)} />
       </Menu>
@@ -148,14 +147,7 @@ export const LogsMetaRow = React.memo(
               })}
             />
             <Dropdown overlay={downloadMenu}>
-              <ToolbarButton
-                onClick={() => {
-                  setIsOpen(!isOpen);
-                }}
-                isOpen={isOpen}
-                variant="default"
-                icon="download-alt"
-              >
+              <ToolbarButton isOpen={false} variant="default" icon="download-alt">
                 Download
               </ToolbarButton>
             </Dropdown>
