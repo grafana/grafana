@@ -30,6 +30,8 @@ We've improved the design and functionality of email templates to make template 
 
 {{< figure src="/static/img/docs/alerting/alert-templates-whats-new-v9.3.png" max-width="750px" caption="Email template redesign" >}}
 
-## Log details
+## Log details redesign
 
-The details section of a logline have been updated. Previously some of the interactions, such as filtering, showing statistics or toggling the visibility were split across "Labels" and "Detected fields". With these changes those two sections were unified into one and the interactions are shared across all fields.
+The details section of a logline has been updated. Previously some of the interactions, such as filtering, showing statistics or toggling the visibility were split across "Labels" and "Detected fields". With the recent changes those two sections were unified into one and the interactions are available for all fields.
+
+{{< figure src="/static/img/logs/log-details-whats-new-9-4.png" max-width="750px" caption="Log details redesign with interactions" >}}
