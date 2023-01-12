@@ -134,14 +134,7 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
                 <Label>
                   <Stack gap={0.5}>
                     <span>Search</span>
-                    <Tooltip
-                      content={
-                        <div>
-                          Filter rules and alerts using label querying, ex:
-                          <code>{`{severity="critical", instance=~"cluster-us-.+"}`}</code>
-                        </div>
-                      }
-                    >
+                    <Tooltip content={<SearchQueryHelp />}>
                       <Icon name="info-circle" size="sm" />
                     </Tooltip>
                   </Stack>
@@ -202,5 +195,57 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
+
+function SearchQueryHelp() {
+  const styles = useStyles2(helpStyles);
+
+  return (
+    <div>
+      <div>
+        Search syntax allows to query alert rules by the parameters defined below.
+        <br />
+        Each filter has short and long version for convenience
+      </div>
+      <hr />
+      <div className={styles.grid}>
+        <div>Filter type</div>
+        <div>Short version</div>
+        <div>Long version</div>
+        <HelpRow title="Datasource" short="ds:mimir" long="datasource:mimir" />
+        <HelpRow title="Folder/Namespace" short="ns:global" long="namespace:global" />
+        <HelpRow title="Group" short="g:cpu-usage" long="group:cpu-usage" />
+        <HelpRow title="Rule" short='r:"cpu 80%"' long='rule:"cpu 80%"' />
+        <HelpRow title="Labels" short="l:team=A" long="label:team=A" />
+        <HelpRow title="State" short="s:firing" long="state:firing" />
+        <HelpRow title="Type" short="t:alerting" long="type:alerting" />
+      </div>
+    </div>
+  );
+}
+
+function HelpRow({ title, short, long }: { title: string; short: string; long: string }) {
+  const styles = useStyles2(helpStyles);
+
+  return (
+    <>
+      <div>{title}</div>
+      <code className={styles.code}>{short}</code>
+      <code className={styles.code}>{long}</code>
+    </>
+  );
+}
+
+const helpStyles = (theme: GrafanaTheme2) => ({
+  grid: css`
+    display: grid;
+    grid-template-columns: max-content auto max-content;
+    gap: ${theme.spacing(1)};
+    align-items: center;
+  `,
+  code: css`
+    display: block;
+    text-align: center;
+  `,
+});
 
 export default RulesFilter;

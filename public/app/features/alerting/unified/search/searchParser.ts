@@ -113,20 +113,20 @@ export function applySearchFilterToQuery(query: string, filter: SearchFilterStat
     filterStateArray.push(...filter.freeFormWords.map((word) => ({ type: terms.FreeFormExpression, value: word })));
   }
 
-  const existingTreeFilters: SyntaxNode[] = [];
+  const existingFilterNodes: SyntaxNode[] = [];
 
   do {
     if (cursor.node.type.id === terms.FilterExpression && cursor.node.firstChild) {
-      existingTreeFilters.push(cursor.node.firstChild);
+      existingFilterNodes.push(cursor.node.firstChild);
     }
     if (cursor.node.type.id === terms.FreeFormExpression) {
-      existingTreeFilters.push(cursor.node);
+      existingFilterNodes.push(cursor.node);
     }
   } while (cursor.next());
 
   let newQueryExpressions: string[] = [];
 
-  existingTreeFilters.map((filterNode) => {
+  existingFilterNodes.map((filterNode) => {
     const matchingFilterIdx = filterStateArray.findIndex((f) => f.type === filterNode.type.id);
     const filterValueNode = filterNode.getChild(terms.FilterValue);
     if (matchingFilterIdx !== -1 && filterValueNode) {
