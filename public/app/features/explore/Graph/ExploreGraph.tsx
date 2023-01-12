@@ -49,7 +49,6 @@ interface Props {
   loadingState: LoadingState;
   annotations?: DataFrame[];
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
-  tooltipDisplayMode?: TooltipDisplayMode;
   splitOpenFn: SplitOpen;
   onChangeTime: (timeRange: AbsoluteTimeRange) => void;
   graphStyle: ExploreGraphStyle;
@@ -69,7 +68,6 @@ export function ExploreGraph({
   onHiddenSeriesChanged,
   splitOpenFn,
   graphStyle,
-  tooltipDisplayMode = TooltipDisplayMode.Multi,
   anchorToZero = false,
   eventBus,
 }: Props) {
@@ -149,18 +147,15 @@ export function ExploreGraph({
     },
   };
 
-  const panelOptions: TimeSeriesOptions = useMemo(
-    () => ({
-      tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
-      legend: {
-        displayMode: LegendDisplayMode.List,
-        showLegend: true,
-        placement: 'bottom',
-        calcs: [],
-      },
-    }),
-    [tooltipDisplayMode]
-  );
+  const panelOptions: TimeSeriesOptions = {
+    tooltip: { mode: TooltipDisplayMode.Multi, sort: SortOrder.None },
+    legend: {
+      displayMode: LegendDisplayMode.List,
+      showLegend: true,
+      placement: 'bottom',
+      calcs: [],
+    },
+  };
 
   return (
     <PanelContextProvider value={panelContext}>
