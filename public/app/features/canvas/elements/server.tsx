@@ -308,7 +308,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
   registerOptionsUI: (builder) => {
     const category = ['Server'];
     builder
-      .addRadio({
+      .addSelect({
         category,
         path: 'config.type',
         name: 'Type',
