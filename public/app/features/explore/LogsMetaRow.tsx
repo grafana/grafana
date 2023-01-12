@@ -2,15 +2,7 @@ import { css } from '@emotion/css';
 import saveAs from 'file-saver';
 import React, { useState } from 'react';
 
-import {
-  LogsDedupStrategy,
-  LogsMetaItem,
-  LogsMetaKind,
-  LogRowModel,
-  CoreApp,
-  dateTimeFormat,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, dateTimeFormat } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
