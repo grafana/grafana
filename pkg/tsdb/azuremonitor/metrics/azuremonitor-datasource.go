@@ -110,16 +110,23 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 		filterInBody := true
 		if azJSONModel.Region != "" {
 			params.Add("region", azJSONModel.Region)
-		} else {
-			// Deprecated, if no region is specified, only one resource group and name is supported
+		}
+		if ((azJSONModel.ResourceGroup != "" || azJSONModel.ResourceName != "") && len(azJSONModel.Resources) == 0) || len(azJSONModel.Resources) == 1 {
+			// Deprecated, Resources should be used instead
+			resourceGroup := azJSONModel.ResourceGroup
+			resourceName := azJSONModel.ResourceName
+			if len(azJSONModel.Resources) == 1 {
+				resourceGroup = azJSONModel.Resources[0].ResourceGroup
+				resourceName = azJSONModel.Resources[0].ResourceName
+			}
 			ub := urlBuilder{
 				ResourceURI: azJSONModel.ResourceURI,
 				// Alternative, used to reconstruct resource URI if it's not present
 				DefaultSubscription: dsInfo.Settings.SubscriptionId,
 				Subscription:        queryJSONModel.Subscription,
-				ResourceGroup:       azJSONModel.ResourceGroup,
+				ResourceGroup:       resourceGroup,
 				MetricNamespace:     azJSONModel.MetricNamespace,
-				ResourceName:        azJSONModel.ResourceName,
+				ResourceName:        resourceName,
 			}
 			azureURL = ub.BuildMetricsURL()
 			// POST requests are only supported at the subscription level
@@ -148,15 +155,17 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 		}
 
 		resourceIDs := []string{}
-		for _, r := range azJSONModel.Resources {
-			ub := urlBuilder{
-				DefaultSubscription: dsInfo.Settings.SubscriptionId,
-				Subscription:        queryJSONModel.Subscription,
-				ResourceGroup:       r.ResourceGroup,
-				MetricNamespace:     azJSONModel.MetricNamespace,
-				ResourceName:        r.ResourceName,
+		if len(azJSONModel.Resources) > 1 {
+			for _, r := range azJSONModel.Resources {
+				ub := urlBuilder{
+					DefaultSubscription: dsInfo.Settings.SubscriptionId,
+					Subscription:        queryJSONModel.Subscription,
+					ResourceGroup:       r.ResourceGroup,
+					MetricNamespace:     azJSONModel.MetricNamespace,
+					ResourceName:        r.ResourceName,
+				}
+				resourceIDs = append(resourceIDs, fmt.Sprintf("Microsoft.ResourceId eq '%s'", ub.buildResourceURI()))
 			}
-			resourceIDs = append(resourceIDs, fmt.Sprintf("Microsoft.ResourceId eq '%s'", ub.buildResourceURI()))
 		}
 		filterString := strings.Join(resourceIDs, " or ")
 
