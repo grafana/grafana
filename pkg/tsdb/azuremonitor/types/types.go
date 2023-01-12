@@ -180,12 +180,14 @@ func (a AzureMonitorDimensionFilter) ConstructFiltersString() string {
 // LogJSONQuery is the frontend JSON query model for an Azure Log Analytics query.
 type LogJSONQuery struct {
 	AzureLogAnalytics struct {
-		Query        string `json:"query"`
-		ResultFormat string `json:"resultFormat"`
-		Resource     string `json:"resource"`
+		Query        string   `json:"query"`
+		ResultFormat string   `json:"resultFormat"`
+		Resources    []string `json:"resources"`
 
 		// Deprecated: Queries should be migrated to use Resource instead
 		Workspace string `json:"workspace"`
+		// Deprecated: Use Resources instead
+		Resource string `json:"resource"`
 	} `json:"azureLogAnalytics"`
 }
 
