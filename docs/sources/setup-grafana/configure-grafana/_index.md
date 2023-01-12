@@ -869,7 +869,7 @@ The setting `oauth_skip_org_role_update_sync` will be deprecated in favor of pro
 The table below shows the available OAuth providers and their setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
 | --- | --- | --- | --- |
-| Grafana.com | false | false | will sync with Grafana.Com roles |
+| Grafana.com | false | false | will sync with Grafana.com roles |
 | Grafana.com | true | false | skip org role sync for OAuth providers including Grafana.com users |
 | Grafana.com | false | true | skip org role sync for grafana.com users |
 | Grafana.com | true | true | skip org role sync for Grafana.com users and all other OAuth providers |
