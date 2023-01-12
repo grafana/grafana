@@ -22,6 +22,39 @@ interface ConnectionInfo {
 export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   const styles = useStyles2(getStyles);
 
+  let selectedConnection: CanvasConnection | undefined = undefined;
+  const onKeyUp = (e: KeyboardEvent) => {
+    if (e.keyCode === 8) {
+      if (selectedConnection) {
+        const sourceElement = scene.byName.get(selectedConnection?.sourceName ?? '');
+
+        if (sourceElement) {
+          sourceElement.options.connections = sourceElement!.options.connections?.filter(
+            (connection) => connection !== selectedConnection
+          );
+          sourceElement.onChange(sourceElement.options);
+        }
+
+        selectedConnection = undefined;
+      }
+    }
+
+    window.document.removeEventListener('keyup', onKeyUp);
+    scene.selecto!.rootContainer!.removeEventListener('click', clearSelectedConnection);
+  };
+
+  const clearSelectedConnection = (event: MouseEvent) => {
+    // TODO: Handle case where clicking on connections
+    selectedConnection = undefined;
+  };
+
+  const selectConnection = (connection: CanvasConnection) => {
+    selectedConnection = connection;
+
+    window.document.addEventListener('keyup', onKeyUp);
+    scene.selecto!.rootContainer!.addEventListener('click', clearSelectedConnection);
+  };
+
   // TODO: memos? in scene?  only update when things actually change?
   // Flat list of all connections
   const findConnections = () => {
@@ -82,29 +115,35 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
         y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
       }
 
+      // TODO: Handle showing visual feedback when selected
       return (
         <svg className={styles.connection} key={idx}>
-          <defs>
-            <marker
-              id="head"
-              markerWidth="10"
-              markerHeight="7"
-              refX="10"
-              refY="3.5"
-              orient="auto"
+          <g onClick={() => selectConnection(info)}>
+            <defs>
+              <marker
+                id="head"
+                markerWidth="10"
+                markerHeight="7"
+                refX="10"
+                refY="3.5"
+                orient="auto"
+                stroke="rgb(255,255,255)"
+                pointerEvents="auto"
+              >
+                <polygon points="0 0, 10 3.5, 0 7" fill="rgb(255,255,255)" />
+              </marker>
+            </defs>
+            <line
               stroke="rgb(255,255,255)"
-            >
-              <polygon points="0 0, 10 3.5, 0 7" fill="rgb(255,255,255)" />
-            </marker>
-          </defs>
-          <line
-            style={{ stroke: 'rgb(255,255,255)', strokeWidth: 2 }}
-            markerEnd="url(#head)"
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-          />
+              pointerEvents="auto"
+              strokeWidth={2}
+              markerEnd="url(#head)"
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+            />
+          </g>
         </svg>
       );
     });
@@ -126,7 +165,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
             <polygon points="0 0, 10 3.5, 0 7" fill="rgb(255,255,255)" />
           </marker>
         </defs>
-        <line ref={setLineRef} style={{ stroke: 'rgb(255,255,255)', strokeWidth: 2 }} markerEnd="url(#editorHead)" />
+        <line ref={setLineRef} stroke="rgb(255,255,255)" strokeWidth={2} markerEnd="url(#editorHead)" />
       </svg>
       {renderConnections()}
     </>
