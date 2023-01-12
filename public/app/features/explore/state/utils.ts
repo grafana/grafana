@@ -10,7 +10,6 @@ import {
   HistoryItem,
   LoadingState,
   PanelData,
-  TimeRange,
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
