@@ -1,7 +1,6 @@
 package kind
 
 import "strings"
-import "regexp"
 
 name:     "Dashboard"
 maturity: "merged"
