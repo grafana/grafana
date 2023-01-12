@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/pfs/corelist"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 )
 
@@ -144,8 +145,9 @@ func buildKindStateReport() *KindStateReport {
 			if ck, has := pp.ComposableKinds[si.Name()]; has {
 				r.add(ck.Props(), "composable")
 			} else if may := si.Should(string(pp.Properties.Type)); may {
-				n := fmt.Sprintf("%s-%s", strings.Title(pp.Properties.Id), si.Name())
+				n := plugindef.DerivePascalName(pp.Properties) + si.Name()
 				props := kindsys.ComposableProperties{
+					SchemaInterface: si.Name(),
 					CommonProperties: kindsys.CommonProperties{
 						Name:              n,
 						PluralName:        n + "s",

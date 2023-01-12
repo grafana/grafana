@@ -138,26 +138,14 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 
 	// Pass the raw bytes into the muxer, get the populated PluginDef type out that we want.
 	// TODO stop ignoring second return. (for now, lacunas are a WIP and can't occur until there's >1 schema in the plugindef lineage)
-	codec := vmux.NewJSONCodec("plugin.json")
-	d, _ := codec.Decode(ctx, b)
-	pinst, err := lin.TypedSchema().ValidateTyped(d)
-	// pinst, _, err := vmux.NewTypedMux(lin.TypedSchema(), codec)(b)
+	pinst, _, err := vmux.NewTypedMux(lin.TypedSchema(), vmux.NewJSONCodec("plugin.json"))(b)
 	if err != nil {
 		return ParsedPlugin{}, errors.Wrap(errors.Promote(err, ""), ErrInvalidRootFile)
 	}
 	pp.Properties = *(pinst.ValueP())
 	// FIXME remove this once it's being correctly populated coming out of lineage
 	if pp.Properties.PascalName == "" {
-		pp.Properties.PascalName = strings.Title(strings.Map(func(r rune) rune {
-			switch {
-			case r >= 'a' && r <= 'z':
-				return r
-			case r >= 'A' && r <= 'Z':
-				return r
-			default:
-				return -1
-			}
-		}, strings.Title(pp.Properties.Name)))
+		pp.Properties.PascalName = plugindef.DerivePascalName(pp.Properties)
 	}
 
 	if cuefiles, err := fs.Glob(fsys, "*.cue"); err != nil {
