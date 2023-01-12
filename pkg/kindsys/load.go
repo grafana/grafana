@@ -12,19 +12,10 @@ import (
 	"github.com/grafana/thema"
 )
 
-// DeclParentPath is the path, relative to the repository root, where
-// each child directory is expected to contain directories with .cue files,
-// declaring one kind.
-var DeclParentPath = "kinds"
-
-// CoreStructuredDeclParentPath is the path, relative to the repository root, where
+// CoreDeclParentPath is the path, relative to the repository root, where
 // each child directory is expected to contain .cue files declaring one
-// CoreStructured kind.
-var CoreStructuredDeclParentPath = filepath.Join(DeclParentPath, "structured")
-
-// RawDeclParentPath is the path, relative to the repository root, where each child
-// directory is expected to contain .cue files declaring one Raw kind.
-var RawDeclParentPath = filepath.Join(DeclParentPath, "raw")
+// Core kind.
+var CoreDeclParentPath = "kinds"
 
 // GoCoreKindParentPath is the path, relative to the repository root, to the directory
 // containing one directory per kind, full of generated Go kind output: types and bindings.
@@ -69,11 +60,11 @@ func doLoadFrameworkCUE(ctx *cue.Context) (cue.Value, error) {
 //
 // For low-level use in constructing other types and APIs, while still letting
 // us declare all the frameworky CUE bits in a single package. Other Go types
-// make the constructs in this value easy to use.
+// make the constructs in the returned cue.Value easy to use.
 //
-// All calling code within grafana/grafana is expected to use Grafana's
-// singleton [cue.Context], returned from [cuectx.GrafanaCUEContext]. If nil
-// is passed, the singleton will be used.
+// Calling this with a nil [cue.Context] (the singleton returned from
+// [cuectx.GrafanaCUEContext] is used) will memoize certain CUE operations.
+// Prefer passing nil unless a different cue.Context is specifically required.
 func CUEFramework(ctx *cue.Context) cue.Value {
 	if ctx == nil || ctx == cuectx.GrafanaCUEContext() {
 		// Ensure framework is loaded, even if this func is called
@@ -86,9 +77,9 @@ func CUEFramework(ctx *cue.Context) cue.Value {
 	return v
 }
 
-// ToKindMeta takes a cue.Value expected to represent a kind of the category
+// ToKindProps takes a cue.Value expected to represent a kind of the category
 // specified by the type parameter and populates the Go type from the cue.Value.
-func ToKindMeta[T KindProperties](v cue.Value) (T, error) {
+func ToKindProps[T KindProperties](v cue.Value) (T, error) {
 	props := new(T)
 	if !v.Exists() {
 		return *props, ErrValueNotExist
@@ -99,14 +90,12 @@ func ToKindMeta[T KindProperties](v cue.Value) (T, error) {
 
 	anyprops := any(*props).(SomeKindProperties)
 	switch anyprops.(type) {
-	case RawProperties:
-		kdef = fw.LookupPath(cue.MakePath(cue.Def("Raw")))
-	case CoreStructuredProperties:
-		kdef = fw.LookupPath(cue.MakePath(cue.Def("CoreStructured")))
-	case CustomStructuredProperties:
-		kdef = fw.LookupPath(cue.MakePath(cue.Def("CustomStructured")))
+	case CoreProperties:
+		kdef = fw.LookupPath(cue.MakePath(cue.Str("Core")))
+	case CustomProperties:
+		kdef = fw.LookupPath(cue.MakePath(cue.Str("Custom")))
 	case ComposableProperties:
-		kdef = fw.LookupPath(cue.MakePath(cue.Def("Composable")))
+		kdef = fw.LookupPath(cue.MakePath(cue.Str("Composable")))
 	default:
 		// unreachable so long as all the possibilities in KindProperties have switch branches
 		panic("unreachable")
@@ -136,45 +125,37 @@ type SomeDecl struct {
 	Properties SomeKindProperties
 }
 
-// BindKindLineage binds the lineage for the kind declaration. nil, nil is returned
-// for raw kinds.
+// BindKindLineage binds the lineage for the kind declaration.
 //
 // For kinds with a corresponding Go type, it is left to the caller to associate
-// that Go type with the lineage returned from this function by a call to [thema.BindType].
-func (decl *SomeDecl) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
+// that Go type with the lineage returned from this function by a call to
+// [thema.BindType].
+func (decl SomeDecl) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
 	if rt == nil {
 		rt = cuectx.GrafanaThemaRuntime()
 	}
 	switch decl.Properties.(type) {
-	case RawProperties:
-		return nil, nil
-	case CoreStructuredProperties, CustomStructuredProperties, ComposableProperties:
+	case CoreProperties, CustomProperties, ComposableProperties:
 		return thema.BindLineage(decl.V.LookupPath(cue.MakePath(cue.Str("lineage"))), rt, opts...)
 	default:
 		panic("unreachable")
 	}
 }
 
-// IsRaw indicates whether the represented kind is a raw kind.
-func (decl *SomeDecl) IsRaw() bool {
-	_, is := decl.Properties.(RawProperties)
+// IsCore indicates whether the represented kind is a core kind.
+func (decl SomeDecl) IsCore() bool {
+	_, is := decl.Properties.(CoreProperties)
 	return is
 }
 
-// IsCoreStructured indicates whether the represented kind is a core structured kind.
-func (decl *SomeDecl) IsCoreStructured() bool {
-	_, is := decl.Properties.(CoreStructuredProperties)
-	return is
-}
-
-// IsCustomStructured indicates whether the represented kind is a custom structured kind.
-func (decl *SomeDecl) IsCustomStructured() bool {
-	_, is := decl.Properties.(CustomStructuredProperties)
+// IsCustom indicates whether the represented kind is a custom kind.
+func (decl SomeDecl) IsCustom() bool {
+	_, is := decl.Properties.(CustomProperties)
 	return is
 }
 
 // IsComposable indicates whether the represented kind is a composable kind.
-func (decl *SomeDecl) IsComposable() bool {
+func (decl SomeDecl) IsComposable() bool {
 	_, is := decl.Properties.(ComposableProperties)
 	return is
 }
@@ -191,8 +172,8 @@ type Decl[T KindProperties] struct {
 }
 
 // Some converts the typed Decl to the equivalent typeless SomeDecl.
-func (decl *Decl[T]) Some() *SomeDecl {
-	return &SomeDecl{
+func (decl Decl[T]) Some() SomeDecl {
+	return SomeDecl{
 		V:          decl.V,
 		Properties: any(decl.Properties).(SomeKindProperties),
 	}
@@ -204,7 +185,7 @@ func (decl *Decl[T]) Some() *SomeDecl {
 //
 // declpath is the path to the directory containing the core kind declaration,
 // relative to the grafana/grafana root. For example, dashboards are in
-// "kinds/structured/dashboard".
+// "kinds/dashboard".
 //
 // The .cue file bytes containing the core kind declaration will be retrieved
 // from the central embedded FS, [grafana.CueSchemaFS]. If desired (e.g. for
@@ -215,17 +196,20 @@ func (decl *Decl[T]) Some() *SomeDecl {
 // This is a low-level function, primarily intended for use in code generation.
 // For representations of core kinds that are useful in Go programs at runtime,
 // see ["github.com/grafana/grafana/pkg/registry/corekind"].
-func LoadCoreKind[T RawProperties | CoreStructuredProperties](declpath string, ctx *cue.Context, overlay fs.FS) (*Decl[T], error) {
+func LoadCoreKind(declpath string, ctx *cue.Context, overlay fs.FS) (Decl[CoreProperties], error) {
+	none := Decl[CoreProperties]{}
 	vk, err := cuectx.BuildGrafanaInstance(ctx, declpath, "kind", overlay)
 	if err != nil {
-		return nil, err
+		return none, err
 	}
-	decl := &Decl[T]{
-		V: vk,
-	}
-	decl.Properties, err = ToKindMeta[T](vk)
+
+	props, err := ToKindProps[CoreProperties](vk)
 	if err != nil {
-		return nil, err
+		return none, err
 	}
-	return decl, nil
+
+	return Decl[CoreProperties]{
+		V:          vk,
+		Properties: props,
+	}, nil
 }

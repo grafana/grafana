@@ -65,8 +65,6 @@ export interface TimePickerCalendarProps {
   isReversed?: boolean;
 }
 
-const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
-
 function TimePickerCalendar(props: TimePickerCalendarProps) {
   const theme = useTheme2();
   const { modalBackdrop } = getModalStyles(theme);
@@ -95,7 +93,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   if (isFullscreen) {
     return (
       <FocusScope contain restoreFocus autoFocus>
-        <section className={styles.container} onClick={stopPropagation} ref={ref} {...overlayProps} {...dialogProps}>
+        <section className={styles.container} ref={ref} {...overlayProps} {...dialogProps}>
           <Header {...props} />
           <Body {...props} />
         </section>
@@ -105,9 +103,9 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
 
   return (
     <OverlayContainer>
-      <div className={modalBackdrop} onClick={stopPropagation} />
+      <div className={modalBackdrop} />
       <FocusScope contain autoFocus restoreFocus>
-        <section className={styles.modal} onClick={stopPropagation} ref={ref} {...overlayProps} {...dialogProps}>
+        <section className={styles.modal} ref={ref} {...overlayProps} {...dialogProps}>
           <div className={styles.content} aria-label={selectors.components.TimePicker.calendar.label}>
             <Header {...props} />
             <Body {...props} />

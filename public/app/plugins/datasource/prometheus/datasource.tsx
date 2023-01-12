@@ -60,7 +60,6 @@ import {
   PromOptions,
   PromQuery,
   PromQueryRequest,
-  PromQueryType,
   PromScalarData,
   PromVectorData,
 } from './types';
@@ -408,22 +407,42 @@ export class PrometheusDatasource
   }
 
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
+    const processedTargets: PromQuery[] = [];
     const processedTarget = {
       ...target,
-      queryType: PromQueryType.timeSeriesQuery,
       exemplar: this.shouldRunExemplarQuery(target, request),
       requestId: request.panelId + target.refId,
       // We need to pass utcOffsetSec to backend to calculate aligned range
       utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
     };
-    return processedTarget;
+    if (target.instant && target.range) {
+      // We have query type "Both" selected
+      // We should send separate queries with different refId
+      processedTargets.push(
+        {
+          ...processedTarget,
+          refId: processedTarget.refId,
+          instant: false,
+        },
+        {
+          ...processedTarget,
+          refId: processedTarget.refId + '-Instant',
+          range: false,
+        }
+      );
+    } else {
+      processedTargets.push(processedTarget);
+    }
+
+    return processedTargets;
   }
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
+
       return super
-        .query({ ...request, targets })
+        .query({ ...request, targets: targets.flat() })
         .pipe(
           map((response) =>
             transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
@@ -763,7 +782,6 @@ export class PrometheusDatasource
       instant: false,
       exemplar: false,
       interval: step,
-      queryType: PromQueryType.timeSeriesQuery,
       refId: 'X',
       datasource: this.getRef(),
     };

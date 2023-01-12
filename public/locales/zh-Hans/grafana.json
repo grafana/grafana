@@ -5,6 +5,21 @@
       "success": ""
     }
   },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "默认"
@@ -80,6 +95,15 @@
       "unmark-favorite": "取消标记为收藏"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "",
+    "explanation": "",
+    "new-dashboard": "",
+    "preferred": "",
+    "sampleData": "",
+    "viewAll": "",
+    "welcome": ""
+  },
   "folder-picker": {
     "loading": "正在加载文件夹..."
   },
@@ -130,6 +154,9 @@
     "alerting-groups": {
       "subtitle": "查看来自 Alertmanager（警报管理器）实例的分组警报",
       "title": "组"
+    },
+    "alerting-home": {
+      "title": ""
     },
     "alerting-legacy": {
       "title": "警报（遗留）"
@@ -197,8 +224,8 @@
       "title": "组织"
     },
     "global-users": {
-      "subtitle": "在整个 Grafana 服务器上管理和创建用户",
-      "title": "",
+      "subtitle": "",
+      "title": "用户",
       "titleBeforeTopnav": "用户"
     },
     "help": {
@@ -208,6 +235,7 @@
     "help/documentation": "文档",
     "help/keyboard-shortcuts": "快捷键",
     "help/support": "支持",
+    "help/support-bundle": "",
     "home": {
       "title": "首页"
     },
@@ -297,6 +325,10 @@
     "storage": {
       "subtitle": "管理文件存储",
       "title": "存储"
+    },
+    "support-bundles": {
+      "subtitle": "",
+      "title": ""
     },
     "teams": {
       "subtitle": "具有共同仪表板和权限需求的用户组",

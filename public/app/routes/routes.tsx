@@ -75,20 +75,27 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/dashboard/:type/:slug',
-      pageClass: 'page-dashboard',
-      routeName: DashboardRoutes.Normal,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
-      ),
-    },
-    {
       path: '/dashboard/new',
       roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.New,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardPage')
+      ),
+    },
+    {
+      path: '/dashboard/new-with-ds/:datasourceUid',
+      roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.DashboardsCreate]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardWithDS')
+      ),
+    },
+    {
+      path: '/dashboard/:type/:slug',
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Normal,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
       ),
     },
     {
@@ -216,7 +223,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         ),
       component: SafeDynamicImport(() =>
         config.exploreEnabled
-          ? import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')
+          ? import(/* webpackChunkName: "explore" */ 'app/features/explore/EmptyStateWrapper')
           : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
       ),
     },
@@ -367,6 +374,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/admin/storage/export',
+      roles: () => ['Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ExportPage" */ 'app/features/storage/ExportPage')
+      ),
+    },
+    {
       path: '/admin/storage/:path*',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
@@ -507,6 +521,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getBrowseStorageRoutes(),
     ...getDynamicDashboardRoutes(),
     ...getPluginCatalogRoutes(),
+    ...getSupportBundleRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
     ...getProfileRoutes(),
@@ -540,6 +555,28 @@ export function getBrowseStorageRoutes(cfg = config): RouteDescriptor[] {
       path: '/g/:slug*',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "StorageFolderPage" */ '../features/storage/StorageFolderPage')
+      ),
+    },
+  ];
+}
+
+export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
+  if (!cfg.featureToggles.supportBundles) {
+    return [];
+  }
+
+  return [
+    {
+      path: '/admin/support-bundles',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SupportBundles" */ 'app/features/support-bundles/SupportBundles')
+      ),
+    },
+    {
+      path: '/admin/support-bundles/create',
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "ServiceAccountCreatePage" */ 'app/features/support-bundles/SupportBundlesCreate')
       ),
     },
   ];

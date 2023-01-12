@@ -30,9 +30,6 @@ func (j *lmox) JennyName() string {
 }
 
 func (j *lmox) Generate(decl *DeclForGen) (codejen.Files, error) {
-	if decl.IsRaw() {
-		return nil, nil
-	}
 	comm := decl.Properties.Common()
 	sfg := SchemaForGen{
 		Name:    comm.Name,
@@ -59,7 +56,7 @@ func (j *lmox) Generate(decl *DeclForGen) (codejen.Files, error) {
 	}
 
 	var fl codejen.Files
-	for sch := decl.Lineage().First(); sch != nil; sch.Successor() {
+	for sch := decl.Lineage().First(); sch != nil; sch = sch.Successor() {
 		sfg.Schema = sch.LatestInMajor()
 		files, err := do(sfg, fmt.Sprintf("v%v", sch.Version()[0]))
 		if err != nil {

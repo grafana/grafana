@@ -1,9 +1,10 @@
 import { lastValueFrom } from 'rxjs';
 import { toArray } from 'rxjs/operators';
 
-import { dateTime, Field } from '@grafana/data';
+import { CoreApp, dateTime, Field } from '@grafana/data';
 
 import {
+  CloudWatchSettings,
   fieldsVariable,
   logGroupNamesVariable,
   regionVariable,
@@ -12,7 +13,14 @@ import {
 import { setupForLogs } from './__mocks__/logsTestContext';
 import { validLogsQuery, validMetricSearchBuilderQuery } from './__mocks__/queries';
 import { TimeRangeMock } from './__mocks__/timeRange';
-import { CloudWatchLogsQuery, CloudWatchMetricsQuery, CloudWatchQuery } from './types';
+import {
+  CloudWatchLogsQuery,
+  CloudWatchMetricsQuery,
+  CloudWatchQuery,
+  CloudWatchDefaultQuery,
+  MetricEditorMode,
+  MetricQueryType,
+} from './types';
 
 describe('datasource', () => {
   beforeEach(() => {
@@ -336,6 +344,36 @@ describe('datasource', () => {
 
       expect(templateService.getVariableName).toHaveBeenCalledWith(`$${variableName}`);
       expect(templateService.getVariableName).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('when setting default query', () => {
+    it('should set default query to be a Metrics query', () => {
+      const { datasource } = setupMockedDataSource();
+      expect(datasource.getDefaultQuery(CoreApp.PanelEditor).queryMode).toEqual('Metrics');
+    });
+    it('should set default log groups in default query', () => {
+      const { datasource } = setupMockedDataSource({
+        customInstanceSettings: {
+          ...CloudWatchSettings,
+          jsonData: { ...CloudWatchSettings.jsonData, defaultLogGroups: ['testLogGroup'] },
+        },
+      });
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).logGroupNames).toEqual([
+        'testLogGroup',
+      ]);
+    });
+    it('should set default values from metrics query', () => {
+      const { datasource } = setupMockedDataSource();
+      expect(datasource.getDefaultQuery(CoreApp.PanelEditor).region).toEqual('default');
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).statistic).toEqual('Average');
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).metricQueryType).toEqual(
+        MetricQueryType.Search
+      );
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).metricEditorMode).toEqual(
+        MetricEditorMode.Builder
+      );
+      expect((datasource.getDefaultQuery(CoreApp.PanelEditor) as CloudWatchDefaultQuery).matchExact).toEqual(true);
     });
   });
 });

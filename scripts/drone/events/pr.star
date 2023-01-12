@@ -111,6 +111,7 @@ def pr_pipelines():
                     'go.mod',
                     'public/app/plugins/**/plugin.json',
                     'devenv/**',
+                    '.bingo/**',
                 ]
             ),
             ver_mode,

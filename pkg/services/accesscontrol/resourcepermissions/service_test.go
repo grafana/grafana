@@ -107,7 +107,7 @@ func TestService_SetTeamPermission(t *testing.T) {
 				}
 			}
 
-			_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, "1", "")
+			_, err = service.SetTeamPermission(context.Background(), team.OrgID, team.ID, "1", "")
 			require.NoError(t, err)
 			assert.Equal(t, tt.callHook, hookCalled)
 		})
