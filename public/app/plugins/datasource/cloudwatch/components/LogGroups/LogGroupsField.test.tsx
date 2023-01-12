@@ -6,6 +6,7 @@ import React from 'react';
 import { config } from '@grafana/runtime';
 
 import { logGroupNamesVariable, setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
+import { CloudWatchLogsQuery } from '../../types';
 
 import { LogGroupsField } from './LogGroupsField';
 
