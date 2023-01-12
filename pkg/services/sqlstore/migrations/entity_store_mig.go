@@ -33,6 +33,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "folder", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "parent_grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
 			{Name: "slug", Type: migrator.DB_NVarchar, Length: 189, Nullable: false}, // from title
 
 			// The raw entity body (any byte array)
@@ -63,6 +64,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 			{Cols: []string{"kind"}},
 			{Cols: []string{"folder"}},
 			{Cols: []string{"uid"}},
+			{Cols: []string{"parent_grn"}},
 
 			{Cols: []string{"tenant_id", "kind", "uid"}, Type: migrator.UniqueIndex},
 			// {Cols: []string{"tenant_id", "folder", "slug"}, Type: migrator.UniqueIndex},
@@ -154,7 +156,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v8)" // change this when we want to wipe and reset the object tables
+	suffix := " (v77)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("EntityStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'EntityStore init%';
 	`)))

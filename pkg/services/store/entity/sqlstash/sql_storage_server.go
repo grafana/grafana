@@ -376,6 +376,9 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			if _, err := tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", oid); err != nil {
 				return err
 			}
+			if _, err := tx.Exec(ctx, "DELETE FROM entity WHERE parent_grn=?", oid); err != nil {
+				return err
+			}
 		}
 
 		// 1. Add the `entity_history` values
@@ -582,6 +585,7 @@ func doDelete(ctx context.Context, tx *session.SessionTx, grn string) (bool, err
 	_, _ = tx.Exec(ctx, "DELETE FROM entity_history WHERE grn=?", grn)
 	_, _ = tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", grn)
 	_, _ = tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", grn)
+	_, _ = tx.Exec(ctx, "DELETE FROM entity WHERE parent_grn=?", grn)
 	return rows > 0, err
 }
 
