@@ -7,7 +7,9 @@ import (
 // GrafanaPlugin specifies what plugins may declare in .cue files in a
 // `grafanaplugin` CUE package in the plugin root directory (adjacent to plugin.json).
 GrafanaPlugin: P={
-	// id and pascalName are injected from plugin.json
+	// id and pascalName are injected from plugin.json. Plugin authors can write
+	// values for them in .cue files, but the only valid values will be the ones
+	// given in plugin.json.
 	id: string
 	pascalName: string
 
