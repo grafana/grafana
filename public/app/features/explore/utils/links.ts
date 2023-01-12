@@ -72,9 +72,11 @@ export const getFieldLinksForExplore = (options: {
     text: 'Raw value',
   };
 
+  let fieldDisplayValuesProxy;
+
   // If we have a dataFrame we can allow referencing other columns and their values in the interpolation.
   if (dataFrame) {
-    const fieldDisplayValuesProxy = getFieldDisplayValuesProxy({
+    fieldDisplayValuesProxy = getFieldDisplayValuesProxy({
       frame: dataFrame,
       rowIndex,
     });
@@ -87,34 +89,20 @@ export const getFieldLinksForExplore = (options: {
       },
       text: 'Data',
     };
-
-    // only correlations add the fieldName to the internal object, get those fieldNames and add special variables for correlations
-    const correlationLinks = field.config.links
-      ?.map((link) => {
-        return link.internal?.fieldName;
-      })
-      .filter((link) => link !== undefined)
-      .flat();
-
-    if (correlationLinks) {
-      if (correlationLinks.length === 1 && correlationLinks[0]) {
-        scopedVars['__targetField'] = {
-          value: fieldDisplayValuesProxy[correlationLinks[0]],
-          text: fieldDisplayValuesProxy[correlationLinks[0]],
-        };
-      }
-      correlationLinks.forEach((correlationFieldName) => {
-        if (correlationFieldName) {
-          scopedVars[correlationFieldName] = {
-            value: fieldDisplayValuesProxy[correlationFieldName],
-            text: fieldDisplayValuesProxy[correlationFieldName],
-          };
-        }
-      });
-    }
   }
 
   if (field.config.links) {
+    if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[field.name] !== undefined) {
+      scopedVars['__targetField'] = {
+        value: fieldDisplayValuesProxy[field.name],
+        text: fieldDisplayValuesProxy[field.name],
+      };
+      scopedVars[field.name] = {
+        value: fieldDisplayValuesProxy[field.name],
+        text: fieldDisplayValuesProxy[field.name],
+      };
+    }
+
     const links = field.config.links.filter((link) => {
       return DATA_LINK_FILTERS.every((filter) => filter(link, scopedVars));
     });

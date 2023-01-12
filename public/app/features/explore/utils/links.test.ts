@@ -133,7 +133,7 @@ describe('getFieldLinksForExplore', () => {
     expect(links).toHaveLength(0);
   });
 
-  it('returns internal links when target contains defined template variables', () => {
+  it('returns internal links when target contains __data template variables', () => {
     const { field, range, dataFrame } = setup({
       title: '',
       url: '',
@@ -145,6 +145,52 @@ describe('getFieldLinksForExplore', () => {
     });
     const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
     expect(links).toHaveLength(1);
+    expect(links[0].href).toBe(
+      '/explore?left=%7B%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%2C%22datasource%22%3A%22uid_1%22%2C%22queries%22%3A%5B%7B%22query%22%3A%22query_1-foo%22%7D%5D%2C%22panelsState%22%3A%7B%7D%7D'
+    );
+  });
+
+  it('returns internal links when target contains targetField template variable', () => {
+    const { field, range, dataFrame } = setup({
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'query_1-${__targetField}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+      },
+    });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
+    expect(links).toHaveLength(1);
+    expect(links[0].href).toBe(
+      '/explore?left=%7B%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%2C%22datasource%22%3A%22uid_1%22%2C%22queries%22%3A%5B%7B%22query%22%3A%22query_1-foo%22%7D%5D%2C%22panelsState%22%3A%7B%7D%7D'
+    );
+  });
+
+  it('returns internal links when target contains field name template variable', () => {
+    // field cannot be hyphenated, change field name to non-hyphenated
+    const noHyphenLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'query_1-${fluxDimensions}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+      },
+    };
+    const { field, range, dataFrame } = setup(noHyphenLink, true, {
+      name: 'fluxDimensions',
+      type: FieldType.string,
+      values: new ArrayVector([ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value]),
+      config: {
+        links: [noHyphenLink],
+      },
+    });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
+    expect(links).toHaveLength(1);
+    expect(links[0].href).toBe(
+      '/explore?left=%7B%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%2C%22datasource%22%3A%22uid_1%22%2C%22queries%22%3A%5B%7B%22query%22%3A%22query_1-foo%22%7D%5D%2C%22panelsState%22%3A%7B%7D%7D'
+    );
   });
 
   it('returns no internal links when target contains empty template variables', () => {
@@ -165,7 +211,7 @@ describe('getFieldLinksForExplore', () => {
 const ROW_WITH_TEXT_VALUE = { value: 'foo', index: 0 };
 const ROW_WITH_NULL_VALUE = { value: null, index: 1 };
 
-function setup(link: DataLink, hasAccess = true) {
+function setup(link: DataLink, hasAccess = true, fieldOverride?: Field<string | null>) {
   setLinkSrv({
     getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: any): LinkModel<any> {
       return {
@@ -197,7 +243,7 @@ function setup(link: DataLink, hasAccess = true) {
   };
 
   const dataFrame: DataFrame = toDataFrame({
-    fields: [field],
+    fields: [fieldOverride || field],
   });
 
   const range: TimeRange = {
@@ -209,5 +255,5 @@ function setup(link: DataLink, hasAccess = true) {
     },
   };
 
-  return { range, field, dataFrame };
+  return { range, field: fieldOverride || field, dataFrame };
 }
