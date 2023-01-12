@@ -77,6 +77,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           name: 'Cell value inspect',
           description: 'Enable cell value inspection in a modal window',
           defaultValue: false,
+          category: cellCategory,
           showIf: (cfg) => {
             return (
               cfg.cellOptions.type === TableCellDisplayMode.Auto ||
