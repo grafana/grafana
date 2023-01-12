@@ -62,7 +62,7 @@ const ServerDisplay = ({ data }: Props) => {
               width="197.94514"
               height="186.92975"
               d="m38.921 29.62h193.71a2.1167 2.1167 45 012.1167 2.1167v182.7a2.1167 2.1167 135 01-2.1167 2.1167h-193.71a2.1167 2.1167 45 01-2.1167-2.1167v-182.7a2.1167 2.1167 135 012.1167-2.1167z"
-              clipPath="url(#servera)"
+              clipPath="url(#serverb)"
             />
             <rect x="41.836" y="34.652" width="187.91" height="176.89" style={{ fill: data?.statusColor }} />
             <g>
