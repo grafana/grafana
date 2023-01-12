@@ -100,6 +100,8 @@ export class Connections {
         const sourceVerticalCenter = sourceRect.top - parentRect.top - parentBorderWidth + sourceRect.height / 2;
         const sourceHorizontalCenter = sourceRect.left - parentRect.left - parentBorderWidth + sourceRect.width / 2;
 
+        // Convert from DOM coords to connection coords
+        // TODO: Break this out into util function and add tests
         const sourceX = (connectionLineX1 - sourceHorizontalCenter) / (sourceRect.width / 2);
         const sourceY = (sourceVerticalCenter - connectionLineY1) / (sourceRect.height / 2);
 

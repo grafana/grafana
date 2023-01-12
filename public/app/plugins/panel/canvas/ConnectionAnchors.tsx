@@ -32,10 +32,6 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
     }
   };
 
-  const onMouseEnterHighlightElement = () => {
-    // TODO: Implement drawing a connection here (or in scene selecto implementation)
-  };
-
   const onMouseLeaveHighlightElement = () => {
     if (highlightEllipseRef.current) {
       highlightEllipseRef.current.style.display = 'none';
@@ -96,7 +92,6 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
         id={CONNECTION_ANCHOR_DIV_ID}
         ref={highlightEllipseRef}
         className={styles.highlightElement}
-        onMouseEnter={onMouseEnterHighlightElement}
         onMouseLeave={onMouseLeaveHighlightElement}
       />
       {generateAnchors()}

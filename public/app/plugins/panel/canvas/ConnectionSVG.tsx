@@ -58,7 +58,6 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   };
 
   const clearSelectedConnection = (event: MouseEvent) => {
-    // TODO: Handle case where clicking on connections
     const eventTarget = event.target;
 
     const shouldResetSelectedConnection = !(
@@ -119,6 +118,8 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const sourceHorizontalCenter = sourceRect.left - parentRect.left - parentBorderWidth + sourceRect.width / 2;
       const sourceVerticalCenter = sourceRect.top - parentRect.top - parentBorderWidth + sourceRect.height / 2;
 
+      // Convert from connection coords to DOM coords
+      // TODO: Break this out into util function and add tests
       const x1 = sourceHorizontalCenter + (info.source.x * sourceRect.width) / 2;
       const y1 = sourceVerticalCenter - (info.source.y * sourceRect.height) / 2;
 
@@ -156,7 +157,6 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
                 refY="3.5"
                 orient="auto"
                 stroke="rgb(255,255,255)"
-                pointerEvents="auto"
               >
                 <polygon points="0 0, 10 3.5, 0 7" fill="rgb(255,255,255)" />
               </marker>
