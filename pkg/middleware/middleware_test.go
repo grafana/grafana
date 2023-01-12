@@ -236,9 +236,9 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "Valid Basic Auth header with JWT enabled and empty 'sub' claim", func(t *testing.T, sc *scenarioContext) {
 		const password = "MyPass"
-		const salt = "salt"
 		const orgID int64 = 2
 		const userID int64 = 12
+		// #nosec G101 -- This is dummy/test token
 		const emptySubToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJzdWIiOiIiLCJpYXQiOjE1MTYyMzkwMjJ9.tnwtOHK58d47dO4DHW4b9MzeToxa1kGiko5Oo887Rqc"
 
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
@@ -258,9 +258,9 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "Valid Basic Auth header with JWT enabled and missing 'sub' claim", func(t *testing.T, sc *scenarioContext) {
 		const password = "MyPass"
-		const salt = "salt"
 		const orgID int64 = 2
 		const userID int64 = 12
+		// #nosec G101 -- This is dummy/test token
 		const missingSubToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjJ9.8nYFUX869Y1mnDDDU4yL11aANgVRuifoxrE8BHZY1iE"
 
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}

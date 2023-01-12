@@ -223,9 +223,3 @@ func searchClaimsForStringAttr(attributePath string, claims map[string]interface
 
 	return "", nil
 }
-
-func looksLikeJWT(token string) bool {
-	// A JWT must have 3 parts separated by `.`.
-	parts := strings.Split(token, ".")
-	return len(parts) == 3
-}

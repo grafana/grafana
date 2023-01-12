@@ -88,9 +88,12 @@ func TestAuthenticateJWT(t *testing.T) {
 func TestJWTTest(t *testing.T) {
 	jwtService := &models.FakeJWTService{}
 	jwtHeaderName := "X-Forwarded-User"
+	// #nosec G101 -- This is dummy/test token
 	validFormatToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"
 	invalidFormatToken := "sampletokeninvalid"
+	// #nosec G101 -- This is dummy/test token
 	missingSubToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjJ9.8nYFUX869Y1mnDDDU4yL11aANgVRuifoxrE8BHZY1iE"
+	// #nosec G101 -- This is dummy/test token
 	emptySubToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJzdWIiOiIiLCJpYXQiOjE1MTYyMzkwMjJ9.tnwtOHK58d47dO4DHW4b9MzeToxa1kGiko5Oo887Rqc"
 
 	type testCase struct {
