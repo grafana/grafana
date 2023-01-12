@@ -84,7 +84,7 @@ export class CloudWatchAPI extends CloudWatchRequest {
       logGroupArn: this.templateSrv.replace(arn),
     });
   }
-  
+
   getMetrics({ region, namespace, accountId }: GetMetricsRequest): Promise<Array<SelectableValue<string>>> {
     if (!namespace) {
       return Promise.resolve([]);
