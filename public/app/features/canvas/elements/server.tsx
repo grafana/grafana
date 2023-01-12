@@ -32,40 +32,18 @@ enum ServerTypes {
 type Props = CanvasElementProps<ServerConfig, ServerData>;
 
 const ServerDisplay = ({ data }: Props) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles(data));
 
   const bulbColor = data?.bulbColor;
   const bulbAnimation = `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`;
 
   return (
     <svg viewBox="0 0 207.95 197.78">
-      <defs>
-        <clipPath id="serverb">
-          <rect
-            className={styles.pathA}
-            x="77.108"
-            y="24.362"
-            width="115.9"
-            height="197.78"
-            d="M 77.107697,24.361513 H 193.00871 V 222.14392 H 77.107697 Z"
-          />
-          <path className={styles.pathB} d="m26.804 19.62h217.95v206.93h-217.95zm50.304 4.7414v197.78h115.9v-197.78z" />
-        </clipPath>
-      </defs>
       {data?.type === ServerTypes.Stack ? (
         <g transform="translate(-31.804 -24.362)">
-          <path
-            className={styles.outline}
-            x="36.804028"
-            y="29.620079"
-            width="197.94514"
-            height="186.92975"
-            d="m38.921 29.62h193.71a2.1167 2.1167 45 012.1167 2.1167v182.7a2.1167 2.1167 135 01-2.1167 2.1167h-193.71a2.1167 2.1167 45 01-2.1167-2.1167v-182.7a2.1167 2.1167 135 012.1167-2.1167z"
-            clipPath="url(#serverb)"
-          />
-          <rect x="41.836" y="34.652" width="187.91" height="176.89" style={{ fill: data?.statusColor }} />
           <g>
             <path
+              style={{ stroke: `${data?.statusColor}!important` }}
               className={styles.server}
               x="54.86203"
               y="48.088943"
@@ -124,16 +102,6 @@ const ServerDisplay = ({ data }: Props) => {
         </g>
       ) : data?.type === ServerTypes.Single ? (
         <g transform="translate(-31.804 -24.362)">
-          <path
-            className={styles.outline}
-            x="36.804028"
-            y="29.620079"
-            width="197.94514"
-            height="186.92975"
-            d="m38.921 29.62h193.71a2.1167 2.1167 45 012.1167 2.1167v182.7a2.1167 2.1167 135 01-2.1167 2.1167h-193.71a2.1167 2.1167 45 01-2.1167-2.1167v-182.7a2.1167 2.1167 135 012.1167-2.1167z"
-            clipPath="url(#serverb)"
-          />
-          <rect x="41.836" y="34.652" width="187.91" height="176.89" style={{ fill: data?.statusColor }} />
           <g>
             <path
               className={styles.server}
@@ -162,16 +130,6 @@ const ServerDisplay = ({ data }: Props) => {
         </g>
       ) : data?.type === ServerTypes.Database ? (
         <g transform="translate(-31.804 -24.62)">
-          <path
-            className={styles.outline}
-            x="36.804028"
-            y="29.620079"
-            width="197.94514"
-            height="186.92975"
-            d="m38.921 29.62h193.71a2.1167 2.1167 45 012.1167 2.1167v182.7a2.1167 2.1167 135 01-2.1167 2.1167h-193.71a2.1167 2.1167 45 01-2.1167-2.1167v-182.7a2.1167 2.1167 135 012.1167-2.1167z"
-            clipPath="url(#serverb)"
-          />
-          <rect x="41.836" y="34.652" width="187.91" height="176.89" style={{ fill: data?.statusColor }} />
           <g className={styles.server} transform="translate(0 -3.0868)">
             <ellipse cx="134.44" cy="68.233" rx="78.553" ry="22.49" />
             <path
@@ -208,16 +166,6 @@ const ServerDisplay = ({ data }: Props) => {
         </g>
       ) : data?.type === ServerTypes.Terminal ? (
         <g transform="translate(-31.804 -24.362)">
-          <path
-            className={styles.outline}
-            x="36.804028"
-            y="29.620079"
-            width="197.94514"
-            height="186.92975"
-            d="m38.921 29.62h193.71a2.1167 2.1167 45 012.1167 2.1167v182.7a2.1167 2.1167 135 01-2.1167 2.1167h-193.71a2.1167 2.1167 45 01-2.1167-2.1167v-182.7a2.1167 2.1167 135 012.1167-2.1167z"
-            clipPath="url(#serverb)"
-          />
-          <rect x="41.836" y="34.652" width="187.91" height="176.89" style={{ fill: data?.statusColor }} />
           <g>
             <path
               className={styles.server}
@@ -283,13 +231,16 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
       top: options?.placement?.top,
       left: options?.placement?.left,
     },
+    config: {
+      type: ServerTypes.Single,
+    },
   }),
 
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: ServerConfig) => {
     const data: ServerData = {
       blinkRate: cfg?.blinkRate ? ctx.getScalar(cfg.blinkRate).value() : 0,
-      statusColor: cfg?.statusColor ? ctx.getColor(cfg.statusColor).value() : 'transparent',
+      statusColor: cfg?.statusColor ? ctx.getColor(cfg.statusColor).value() : '#8a8a8a',
       bulbColor: cfg?.bulbColor ? ctx.getColor(cfg.bulbColor).value() : 'green',
       type: cfg?.type ?? ServerTypes.Single,
     };
@@ -322,7 +273,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {
-          fixed: 'transparent',
+          fixed: '#8a8a8a',
         },
       })
       .addCustomEditor({
@@ -347,7 +298,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
   },
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (data: ServerData | undefined) => (theme: GrafanaTheme2) => ({
   bulb: css`
     @keyframes blink {
       0% {
@@ -366,7 +317,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     stroke-linecap: round;
     stroke-miterlimit: 10;
     stroke-width: 10;
-    stroke: #8a8a8a;
+    stroke: ${data?.statusColor ?? '#8a8a8a'};
   `,
   circle: css`
     fill: #00ff1b;
@@ -393,11 +344,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     stroke-width: 0.7;
   `,
   monitor: css`
-    stroke: #8a8a8a;
+    stroke: ${data?.statusColor ?? '#8a8a8a'};
     fill: #fff;
     stroke-linecap: square;
     stroke-miterlimit: 0;
-    stroke-width: 12;
+    stroke-width: 14;
   `,
   monitorOutline: css`
     stroke: #8a8a8a;
@@ -409,6 +360,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     stroke-linecap: round;
     stroke-miterlimit: 10;
     stroke-width: 10;
-    stroke: #303030;
+    stroke: ${data?.statusColor ?? '#8a8a8a'};
   `,
 });
