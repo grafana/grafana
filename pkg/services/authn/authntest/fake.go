@@ -33,6 +33,6 @@ type FakePasswordClient struct {
 	ExpectedIdentity *authn.Identity
 }
 
-func (f FakePasswordClient) AuthenticatePassword(ctx context.Context, orgID int64, username, password string) (*authn.Identity, error) {
+func (f FakePasswordClient) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
 	return f.ExpectedIdentity, f.ExpectedErr
 }
