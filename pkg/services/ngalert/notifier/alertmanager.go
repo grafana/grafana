@@ -18,8 +18,6 @@ import (
 	"github.com/grafana/alerting/alerting"
 	"github.com/grafana/alerting/alerting/notifier/channels"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/alertmanager/cluster"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/inhibit"
 	"github.com/prometheus/alertmanager/nflog"
@@ -31,7 +29,6 @@ import (
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
 	alertingModels "github.com/grafana/alerting/alerting/models"
@@ -82,12 +79,6 @@ func init() {
 	}
 }
 
-type ClusterPeer interface {
-	AddState(string, cluster.State, prometheus.Registerer) cluster.ClusterChannel
-	Position() int
-	WaitReady(context.Context) error
-}
-
 type AlertingStore interface {
 	store.AlertingStore
 	store.ImageStore
@@ -106,7 +97,7 @@ type Alertmanager struct {
 	marker          types.Marker
 	alerts          *mem.Alerts
 	route           *dispatch.Route
-	peer            ClusterPeer
+	peer            alerting.ClusterPeer
 	peerTimeout     time.Duration
 
 	dispatcher *dispatch.Dispatcher
@@ -163,7 +154,7 @@ func (m maintenanceOptions) MaintenanceFunc(state alerting.State) (int64, error)
 }
 
 func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
-	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, ns notifications.Service, m *metrics.Alertmanager) (*Alertmanager, error) {
+	peer alerting.ClusterPeer, decryptFn channels.GetDecryptedValueFn, ns notifications.Service, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:            cfg,
 		stopc:               make(chan struct{}),
