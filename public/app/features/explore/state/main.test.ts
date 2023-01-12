@@ -184,7 +184,6 @@ describe('Explore reducer', () => {
           .givenReducer(exploreReducer, initialState)
           .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.right }))
           .thenStateShouldEqual({
-            evenSplitPanes: true,
             left: itemMock,
             right: undefined,
             syncedTimes: false,
