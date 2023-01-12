@@ -102,21 +102,8 @@ func ToKindProps[T KindProperties](v cue.Value) (T, error) {
 	}
 
 	item := v.Unify(kdef)
-	var cerr errors.Error
-	v.Walk(func(v cue.Value) bool {
-		if lab, has := v.Label(); has {
-			if lab == "lineage" {
-				return false
-			}
-			if err := v.Err(); err != nil {
-				cerr = errors.Append(cerr, errors.Promote(err, ""))
-			}
-		}
-		return true
-	}, nil)
-	if cerr != nil {
-		// FIXME ewrap makes errors.Details() not work to get detailed CUE errors out
-		return *props, ewrap(cerr, ErrValueNotAKind)
+	if item.Err() != nil {
+		return *props, errors.Wrap(errors.Promote(ErrValueNotAKind, ""), item.Err())
 	}
 
 	if err := item.Decode(props); err != nil {

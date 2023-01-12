@@ -1,9 +1,5 @@
 package kindsys
 
-import (
-//	"github.com/grafana/thema"
-)
-
 // Composable is a category of kind that provides schema elements for
 // composition into Core and Custom kinds. Grafana plugins
 // provide composable kinds; for example, a datasource plugin provides one to

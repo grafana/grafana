@@ -29,7 +29,4 @@ func TestSchemaInterfacesAreLoaded(t *testing.T) {
 		t.Fatalf("kindsys cue-declared schema interfaces differ from ComposableKinds go struct:\n%s", diff)
 	}
 
-	if len(all) == 0 {
-		t.Fatal("no schema interfaces loaded from cue")
-	}
 }

@@ -21,17 +21,16 @@ var ErrComposableNotExpected = errors.New("plugin type should not produce compos
 // type. (For example, a datasource plugin lacks a queries composable kind)
 var ErrExpectedComposable = errors.New("plugin type should produce composable kind for schema interface")
 
-// ErrInvalidCUE indicates that a plugin's model.cue file contained invalid CUE.
-var ErrInvalidCUE = errors.New("CUE syntax error")
+// ErrInvalidGrafanaPluginInstance indicates a plugin's set of .cue
+// grafanaplugin package files are invalid with respect to the GrafanaPlugin
+// spec.
+var ErrInvalidGrafanaPluginInstance = errors.New("grafanaplugin cue instance is invalid")
 
 // ErrInvalidLineage indicates that the plugin contains an invalid lineage
 // declaration, according to Thema's validation rules in
 // ["github.com/grafana/thema".BindLineage].
 var ErrInvalidLineage = errors.New("invalid lineage")
 
-// ErrLineageNameMismatch indicates a plugin slot lineage name did not match the id of the plugin.
-var ErrLineageNameMismatch = errors.New("lineage name not the same as plugin id")
-
-// ErrDisallowedCUEImport indicates that a plugin's models.cue file CUEImports a
-// CUE package that is not on the whitelist for safe CUEImports.
+// ErrDisallowedCUEImport indicates that a plugin's grafanaplugin cue package
+// contains that are not on the allowlist.
 var ErrDisallowedCUEImport = errors.New("CUE import is not allowed")

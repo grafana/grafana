@@ -14,6 +14,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/parser"
+	"cuelang.org/go/cue/token"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
@@ -91,15 +92,23 @@ func init() {
 	})
 }
 
-// ParsePluginFS takes an fs.FS and checks that it represents exactly one valid
-// plugin fs tree, with the fs.FS root as the root of the tree.
+// ParsePluginFS takes a virtual filesystem and checks that it contains a valid
+// set of files that statically define a Grafana plugin.
 //
-// It does not descend into subdirectories to search for additional plugin.json
-// or .cue files.
+// The fsys must contain a plugin.json at the root, which must be valid
+// according to the [plugindef] schema. If any .cue files exist in the
+// grafanaplugin package, these will also be loaded and validated according to
+// the [GrafanaPlugin] specification. This includes the validation of any custom
+// or composable kinds and their contained lineages, via [thema.BindLineage].
+//
+// This function parses exactly one plugin. It does not descend into
+// subdirectories to search for additional plugin.json or .cue files.
 //
 // Calling this with a nil [thema.Runtime] (the singleton returned from
 // [cuectx.GrafanaThemaRuntime] is used) will memoize certain CUE operations.
 // Prefer passing nil unless a different thema.Runtime is specifically required.
+//
+// [GrafanaPlugin]: https://github.com/grafana/grafana/blob/main/pkg/plugins/pfs/grafanaplugin.cue
 func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 	if fsys == nil {
 		return ParsedPlugin{}, ErrEmptyFS
@@ -130,12 +139,26 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 	// Pass the raw bytes into the muxer, get the populated PluginDef type out that we want.
 	// TODO stop ignoring second return. (for now, lacunas are a WIP and can't occur until there's >1 schema in the plugindef lineage)
 	codec := vmux.NewJSONCodec("plugin.json")
-	pinst, _, err := vmux.NewTypedMux(lin.TypedSchema(), codec)(b)
+	d, _ := codec.Decode(ctx, b)
+	pinst, err := lin.TypedSchema().ValidateTyped(d)
+	// pinst, _, err := vmux.NewTypedMux(lin.TypedSchema(), codec)(b)
 	if err != nil {
-		// TODO more nuanced error handling by class of Thema failure
-		return ParsedPlugin{}, ewrap(err, ErrInvalidRootFile)
+		return ParsedPlugin{}, errors.Wrap(errors.Promote(err, ""), ErrInvalidRootFile)
 	}
 	pp.Properties = *(pinst.ValueP())
+	// FIXME remove this once it's being correctly populated coming out of lineage
+	if pp.Properties.PascalName == "" {
+		pp.Properties.PascalName = strings.Title(strings.Map(func(r rune) rune {
+			switch {
+			case r >= 'a' && r <= 'z':
+				return r
+			case r >= 'A' && r <= 'Z':
+				return r
+			default:
+				return -1
+			}
+		}, strings.Title(pp.Properties.Name)))
+	}
 
 	if cuefiles, err := fs.Glob(fsys, "*.cue"); err != nil {
 		return ParsedPlugin{}, fmt.Errorf("error globbing for cue files in fsys: %w", err)
@@ -144,7 +167,6 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 	}
 
 	gpv := loadGP(rt.Context())
-	pinst.Underlying()
 
 	fsys, err = ensureCueMod(fsys, pp.Properties)
 	if err != nil {
@@ -156,16 +178,21 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 		if err == nil {
 			err = bi.Err
 		}
-		return ParsedPlugin{}, fmt.Errorf("%s did not load: %w", pp.Properties.Id, err)
+		return ParsedPlugin{}, errors.Wrap(errors.Newf(token.NoPos, "%s did not load", pp.Properties.Id), err)
 	}
-	b, _ = codec.Encode(pinst.Underlying()) // nolint:errcheck
-	f, _ := parser.ParseFile("plugin.json", b)
+
+	f, _ := parser.ParseFile("plugin.json", fmt.Sprintf(`{
+		"id": %q,
+		"pascalName": %q
+	}`, pp.Properties.Id, pp.Properties.PascalName))
 
 	for _, f := range bi.Files {
 		for _, im := range f.Imports {
 			ip := strings.Trim(im.Path.Value, "\"")
 			if !importAllowed(ip) {
-				return ParsedPlugin{}, ewrap(errors.Newf(im.Pos(), "import of %q in grafanaplugin cue package not allowed, plugins may only import from:\n%s\n", ip, allowedImportsStr), ErrDisallowedCUEImport)
+				return ParsedPlugin{}, errors.Wrap(errors.Newf(im.Pos(),
+					"import of %q in grafanaplugin cue package not allowed, plugins may only import from:\n%s\n", ip, allowedImportsStr),
+					ErrDisallowedCUEImport)
 			}
 			pp.CUEImports = append(pp.CUEImports, im)
 		}
@@ -190,20 +217,8 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 	bi.Files = append(bi.Files, f)
 
 	gpi := ctx.BuildInstance(bi).Unify(gpv)
-	var cerr errors.Error
-	gpi.Walk(func(v cue.Value) bool {
-		if lab, has := v.Label(); has {
-			if lab == "lineage" {
-				return false
-			}
-			if err := v.Err(); err != nil {
-				cerr = errors.Append(cerr, errors.Promote(err, ""))
-			}
-		}
-		return true
-	}, nil)
-	if cerr != nil {
-		return ParsedPlugin{}, fmt.Errorf("%s not an instance of grafanaplugin: %w", pp.Properties.Id, cerr)
+	if gpi.Err() != nil {
+		return ParsedPlugin{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, pp.Properties.Id), gpi.Err())
 	}
 
 	for _, si := range allsi {
@@ -244,24 +259,4 @@ func ensureCueMod(fsys fs.FS, pdef plugindef.PluginDef) (fs.FS, error) {
 	}
 
 	return fsys, nil
-}
-
-func ewrap(actual, is error) error {
-	return &errPassthrough{
-		actual: actual,
-		is:     is,
-	}
-}
-
-type errPassthrough struct {
-	actual error
-	is     error
-}
-
-func (e *errPassthrough) Is(err error) bool {
-	return errors.Is(err, e.actual) || errors.Is(err, e.is)
-}
-
-func (e *errPassthrough) Error() string {
-	return e.actual.Error()
 }

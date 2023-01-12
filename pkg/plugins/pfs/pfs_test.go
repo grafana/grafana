@@ -121,11 +121,8 @@ func TestParseTreeTestdata(t *testing.T) {
 			err:  ErrInvalidLineage,
 			skip: "TODO implement BindOption in thema, SatisfiesJoinSchema, then use it here",
 		},
-		"name-id-mismatch": {
-			err: ErrLineageNameMismatch,
-		},
-		"mismatch": {
-			err: ErrLineageNameMismatch,
+		"name-mismatch-panel": {
+			err: ErrInvalidGrafanaPluginInstance,
 		},
 		"disallowed-cue-import": {
 			err: ErrDisallowedCUEImport,
@@ -172,6 +169,7 @@ func TestParseTreeTestdata(t *testing.T) {
 				require.NoError(t, err, "unexpected error while parsing plugin tree")
 			} else {
 				require.Error(t, err)
+				t.Logf("%T %s", err, err)
 				require.ErrorIs(t, err, tst.err, "unexpected error type while parsing plugin tree")
 				return
 			}

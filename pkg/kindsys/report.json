@@ -48,6 +48,18 @@
         0
       ]
     },
+    "annotationslistpanelcfg": {
+      "name": "AnnotationsListPanelCfg",
+      "pluralName": "AnnotationsListPanelCfgs",
+      "machineName": "annotationslistpanelcfg",
+      "pluralMachineName": "annotationslistpanelcfgs",
+      "lineageIsGroup": true,
+      "maturity": "experimental",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
     "apikey": {
       "name": "APIKey",
       "pluralName": "APIKeys",
@@ -55,6 +67,30 @@
       "pluralMachineName": "apikeys",
       "lineageIsGroup": false,
       "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    "barchartpanelcfg": {
+      "name": "BarChartPanelCfg",
+      "pluralName": "BarChartPanelCfgs",
+      "machineName": "barchartpanelcfg",
+      "pluralMachineName": "barchartpanelcfgs",
+      "lineageIsGroup": true,
+      "maturity": "experimental",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    "bargaugepanelcfg": {
+      "name": "BarGaugePanelCfg",
+      "pluralName": "BarGaugePanelCfgs",
+      "machineName": "bargaugepanelcfg",
+      "pluralMachineName": "bargaugepanelcfgs",
+      "lineageIsGroup": true,
+      "maturity": "experimental",
       "currentVersion": [
         0,
         0
@@ -115,6 +151,18 @@
       "pluralMachineName": "dashboard_datasourcecfgs",
       "lineageIsGroup": true,
       "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    "dashboardlistpanelcfg": {
+      "name": "DashboardListPanelCfg",
+      "pluralName": "DashboardListPanelCfgs",
+      "machineName": "dashboardlistpanelcfg",
+      "pluralMachineName": "dashboardlistpanelcfgs",
+      "lineageIsGroup": true,
+      "maturity": "experimental",
       "currentVersion": [
         0,
         0
@@ -187,6 +235,18 @@
       "pluralMachineName": "folders",
       "lineageIsGroup": false,
       "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    "gaugepanelcfg": {
+      "name": "GaugePanelCfg",
+      "pluralName": "GaugePanelCfgs",
+      "machineName": "gaugepanelcfg",
+      "pluralMachineName": "gaugepanelcfgs",
+      "lineageIsGroup": true,
+      "maturity": "experimental",
       "currentVersion": [
         0,
         0
@@ -295,6 +355,18 @@
       "pluralMachineName": "graphite_datasourcecfgs",
       "lineageIsGroup": true,
       "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    "histogrampanelcfg": {
+      "name": "HistogramPanelCfg",
+      "pluralName": "HistogramPanelCfgs",
+      "machineName": "histogrampanelcfg",
+      "pluralMachineName": "histogrampanelcfgs",
+      "lineageIsGroup": true,
+      "maturity": "experimental",
       "currentVersion": [
         0,
         0
@@ -432,6 +504,18 @@
         0
       ]
     },
+    "newspanelcfg": {
+      "name": "NewsPanelCfg",
+      "pluralName": "NewsPanelCfgs",
+      "machineName": "newspanelcfg",
+      "pluralMachineName": "newspanelcfgs",
+      "lineageIsGroup": true,
+      "maturity": "experimental",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
     "nodegraph_panelcfg": {
       "name": "NodeGraph-PanelCfg",
       "pluralName": "NodeGraph-PanelCfgs",
@@ -439,126 +523,6 @@
       "pluralMachineName": "nodegraph_panelcfgs",
       "lineageIsGroup": true,
       "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "panelcfg_annolist": {
-      "name": "PanelCfg-annolist",
-      "pluralName": "PanelCfg-annolists",
-      "machineName": "panelcfg_annolist",
-      "pluralMachineName": "panelcfg_annolists",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "panelcfg_barchart": {
-      "name": "PanelCfg-barchart",
-      "pluralName": "PanelCfg-barcharts",
-      "machineName": "panelcfg_barchart",
-      "pluralMachineName": "panelcfg_barcharts",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "panelcfg_bargauge": {
-      "name": "PanelCfg-bargauge",
-      "pluralName": "PanelCfg-bargauges",
-      "machineName": "panelcfg_bargauge",
-      "pluralMachineName": "panelcfg_bargauges",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "panelcfg_dashlist": {
-      "name": "PanelCfg-dashlist",
-      "pluralName": "PanelCfg-dashlists",
-      "machineName": "panelcfg_dashlist",
-      "pluralMachineName": "panelcfg_dashlists",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "panelcfg_gauge": {
-      "name": "PanelCfg-gauge",
-      "pluralName": "PanelCfg-gauges",
-      "machineName": "panelcfg_gauge",
-      "pluralMachineName": "panelcfg_gauges",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "panelcfg_histogram": {
-      "name": "PanelCfg-histogram",
-      "pluralName": "PanelCfg-histograms",
-      "machineName": "panelcfg_histogram",
-      "pluralMachineName": "panelcfg_histograms",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "panelcfg_news": {
-      "name": "PanelCfg-news",
-      "pluralName": "PanelCfg-newss",
-      "machineName": "panelcfg_news",
-      "pluralMachineName": "panelcfg_newss",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "panelcfg_piechart": {
-      "name": "PanelCfg-piechart",
-      "pluralName": "PanelCfg-piecharts",
-      "machineName": "panelcfg_piechart",
-      "pluralMachineName": "panelcfg_piecharts",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "panelcfg_stat": {
-      "name": "PanelCfg-stat",
-      "pluralName": "PanelCfg-stats",
-      "machineName": "panelcfg_stat",
-      "pluralMachineName": "panelcfg_stats",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "panelcfg_text": {
-      "name": "PanelCfg-text",
-      "pluralName": "PanelCfg-texts",
-      "machineName": "panelcfg_text",
-      "pluralMachineName": "panelcfg_texts",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
       "currentVersion": [
         0,
         0
@@ -607,6 +571,18 @@
       "pluralMachineName": "phlare_datasourcecfgs",
       "lineageIsGroup": true,
       "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    "piechartpanelcfg": {
+      "name": "PieChartPanelCfg",
+      "pluralName": "PieChartPanelCfgs",
+      "machineName": "piechartpanelcfg",
+      "pluralMachineName": "piechartpanelcfgs",
+      "lineageIsGroup": true,
+      "maturity": "experimental",
       "currentVersion": [
         0,
         0
@@ -732,6 +708,18 @@
         0
       ]
     },
+    "statpanelcfg": {
+      "name": "StatPanelCfg",
+      "pluralName": "StatPanelCfgs",
+      "machineName": "statpanelcfg",
+      "pluralMachineName": "statpanelcfgs",
+      "lineageIsGroup": true,
+      "maturity": "experimental",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
     "table_old_panelcfg": {
       "name": "Table-Old-PanelCfg",
       "pluralName": "Table-Old-PanelCfgs",
@@ -799,6 +787,18 @@
       "pluralMachineName": "testdata_datasourcecfgs",
       "lineageIsGroup": true,
       "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    "textpanelcfg": {
+      "name": "TextPanelCfg",
+      "pluralName": "TextPanelCfgs",
+      "machineName": "textpanelcfg",
+      "pluralMachineName": "textpanelcfgs",
+      "lineageIsGroup": true,
+      "maturity": "experimental",
       "currentVersion": [
         0,
         0
@@ -898,14 +898,19 @@
           "alertlist_panelcfg",
           "alertmanager_dataquery",
           "alertmanager_datasourcecfg",
+          "annotationslistpanelcfg",
+          "barchartpanelcfg",
+          "bargaugepanelcfg",
           "cloudwatch_dataquery",
           "cloudwatch_datasourcecfg",
           "dashboard_dataquery",
           "dashboard_datasourcecfg",
+          "dashboardlistpanelcfg",
           "debug_panelcfg",
           "elasticsearch_dataquery",
           "elasticsearch_datasourcecfg",
           "flamegraph_panelcfg",
+          "gaugepanelcfg",
           "geomap_panelcfg",
           "gettingstarted_panelcfg",
           "grafana_azure_monitor_datasource_dataquery",
@@ -915,6 +920,7 @@
           "graph_panelcfg",
           "graphite_dataquery",
           "graphite_datasourcecfg",
+          "histogrampanelcfg",
           "icon_panelcfg",
           "jaeger_dataquery",
           "jaeger_datasourcecfg",
@@ -926,32 +932,26 @@
           "mssql_datasourcecfg",
           "mysql_dataquery",
           "mysql_datasourcecfg",
+          "newspanelcfg",
           "nodegraph_panelcfg",
-          "panelcfg_annolist",
-          "panelcfg_barchart",
-          "panelcfg_bargauge",
-          "panelcfg_dashlist",
-          "panelcfg_gauge",
-          "panelcfg_histogram",
-          "panelcfg_news",
-          "panelcfg_piechart",
-          "panelcfg_stat",
-          "panelcfg_text",
           "parca_dataquery",
           "parca_datasourcecfg",
           "phlare_dataquery",
           "phlare_datasourcecfg",
+          "piechartpanelcfg",
           "postgres_dataquery",
           "postgres_datasourcecfg",
           "prometheus_dataquery",
           "prometheus_datasourcecfg",
           "stackdriver_dataquery",
           "stackdriver_datasourcecfg",
+          "statpanelcfg",
           "table_old_panelcfg",
           "tempo_dataquery",
           "tempo_datasourcecfg",
           "testdata_dataquery",
           "testdata_datasourcecfg",
+          "textpanelcfg",
           "traces_panelcfg",
           "welcome_panelcfg",
           "xychart_panelcfg",
@@ -982,16 +982,16 @@
       "experimental": {
         "name": "experimental",
         "items": [
-          "panelcfg_annolist",
-          "panelcfg_barchart",
-          "panelcfg_bargauge",
-          "panelcfg_dashlist",
-          "panelcfg_gauge",
-          "panelcfg_histogram",
-          "panelcfg_news",
-          "panelcfg_piechart",
-          "panelcfg_stat",
-          "panelcfg_text"
+          "annotationslistpanelcfg",
+          "barchartpanelcfg",
+          "bargaugepanelcfg",
+          "dashboardlistpanelcfg",
+          "gaugepanelcfg",
+          "histogrampanelcfg",
+          "newspanelcfg",
+          "piechartpanelcfg",
+          "statpanelcfg",
+          "textpanelcfg"
         ],
         "count": 10
       },
