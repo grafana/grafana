@@ -179,9 +179,8 @@ const FlameGraph = ({
           newMin = levels[levelIndex][barIndex].start / totalTicks;
           newMax = (levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks;
         } else {
-          // Drag
-          // We're not clicking on a specific node, so make sure that the levelIndex is the top level
-          levelIndex = 0;
+          // We're not clicking on a specific node, so retain the existing topLevelIndex
+          levelIndex = topLevelIndex;
           // A non-click selection highlights an area from where the mouse was clicked down, to where it was released.
           newMin = Math.min(selectionRef.current.startX, e.offsetX) / graphRef.current!.clientWidth;
           newMax = Math.max(selectionRef.current.startX, e.offsetX) / graphRef.current!.clientWidth;
