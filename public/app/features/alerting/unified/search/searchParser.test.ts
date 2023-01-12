@@ -1,6 +1,7 @@
 import { PromAlertingRuleState, PromRuleType } from '../../../../types/unified-alerting-dto';
+import { getFilter } from '../utils/search';
 
-import { applySearchFilterToQuery, getSearchFilterFromQuery, SearchFilterState } from './searchParser';
+import { applySearchFilterToQuery, getSearchFilterFromQuery } from './searchParser';
 
 describe('Alert rules searchParser', () => {
   describe('getSearchFilterFromQuery', () => {
@@ -145,11 +146,3 @@ describe('Alert rules searchParser', () => {
     });
   });
 });
-
-function getFilter(filter: Partial<SearchFilterState>): SearchFilterState {
-  return {
-    freeFormWords: [],
-    labels: [],
-    ...filter,
-  };
-}

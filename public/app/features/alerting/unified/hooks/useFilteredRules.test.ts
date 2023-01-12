@@ -12,7 +12,7 @@ import {
   mockPromAlertingRule,
   mockRulerGrafanaRule,
 } from '../mocks';
-import { SearchFilterState } from '../search/searchParser';
+import { getFilter } from '../utils/search';
 
 import { filterRules } from './useFilteredRules';
 
@@ -138,11 +138,3 @@ describe('filterRules', function () {
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
   });
 });
-
-function getFilter(filter: Partial<SearchFilterState>): SearchFilterState {
-  return {
-    labels: [],
-    freeFormWords: [],
-    ...filter,
-  };
-}
