@@ -72,17 +72,16 @@ Dropdown.displayName = 'Dropdown';
 
 const getStyles = (duration: number) => {
   return {
-    appear: css`
-      opacity: 0;
-      position: relative;
-      transform: scaleY(0.5);
-      transform-origin: top;
-    `,
-    appearActive: css`
-      opacity: 1;
-      transform: scaleY(1);
-      transition: transform ${duration}ms cubic-bezier(0.2, 0, 0.2, 1),
-        opacity ${duration}ms cubic-bezier(0.2, 0, 0.2, 1);
-    `,
+    appear: css({
+      opacity: '0',
+      position: 'relative',
+      transform: 'scaleY(0.5)',
+      transformOrigin: 'top',
+    }),
+    appearActive: css({
+      opacity: '1',
+      transform: 'scaleY(1)',
+      transition: `transform ${duration}ms cubic-bezier(0.2, 0, 0.2, 1), opacity ${duration}ms cubic-bezier(0.2, 0, 0.2, 1)`,
+    }),
   };
 };
