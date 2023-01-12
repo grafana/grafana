@@ -22297,9 +22297,6 @@ __metadata:
     webpack-manifest-plugin: 5.0.0
     webpack-merge: 5.8.0
     whatwg-fetch: 3.6.2
-  dependenciesMeta:
-    "@grafana/scenes@0.0.3":
-      unplugged: true
   languageName: unknown
   linkType: soft
 
