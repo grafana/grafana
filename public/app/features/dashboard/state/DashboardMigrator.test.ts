@@ -2308,7 +2308,38 @@ describe('when migrating table cell display mode to cell options', () => {
                   },
                 ],
               },
+              {
+                matcher: {
+                  id: 'byName',
+                  options: 'value4',
+                },
+                properties: [
+                  {
+                    id: 'custom.align',
+                    value: 'left',
+                  },
+                  {
+                    id: 'custom.displayMode',
+                    value: 'gradient-gauge',
+                  },
+                ],
+              },
             ],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 7,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'auto',
+                inspect: false,
+              },
+            },
+            overrides: [],
           },
         },
       ],
@@ -2358,6 +2389,16 @@ describe('when migrating table cell display mode to cell options', () => {
       id: 'custom.cellOptions',
       value: { type: 'gauge', mode: 'gradient' },
     });
+  });
+
+  it('should migrate from display mode to cell options in field overrides with other overrides present', () => {
+    const override = model.panels[5].fieldConfig.overrides[3];
+    expect(override.properties[1]).toEqual({ id: 'custom.cellOptions', value: { type: 'gauge', mode: 'gradient' } });
+  });
+
+  it('should migrate cell display modes without options', () => {
+    const fieldConfig = model.panels[6].fieldConfig;
+    expect(fieldConfig.defaults.custom.cellOptions).toEqual({ type: 'auto' });
   });
 });
 
