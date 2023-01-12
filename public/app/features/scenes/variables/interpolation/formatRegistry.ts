@@ -268,6 +268,9 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
           case 'iso':
             return dateTime(nrValue).toISOString();
           default:
+            if ((args || []).length > 1) {
+              return dateTime(nrValue).format(args.join(':'));
+            }
             return dateTime(nrValue).format(arg);
         }
       },
