@@ -1,7 +1,7 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import React from 'react';
 
-import { PanelData, GrafanaTheme2, PanelModel, LinkModel } from '@grafana/data';
+import { PanelData, GrafanaTheme2, PanelModel, LinkModel, AlertState } from '@grafana/data';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { getFocusStyles, getMouseFocusStyles } from '@grafana/ui/src/themes/mixins';
 
@@ -23,7 +23,13 @@ export function PanelHeaderTitleItems(props: Props) {
   // panel health
   const alertStateItem = (
     <Tooltip content={`alerting is ${alertState}`} tabIndex={0}>
-      <span className={styles.item}>
+      <span
+        className={cx(styles.item, {
+          [styles.ok]: alertState === AlertState.OK,
+          [styles.pending]: alertState === AlertState.Pending,
+          [styles.alerting]: alertState === AlertState.Alerting,
+        })}
+      >
         <Icon name={alertState === 'alerting' ? 'heart-break' : 'heart'} className="panel-alert-icon" />
       </span>
     </Tooltip>
@@ -53,36 +59,52 @@ export function PanelHeaderTitleItems(props: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  item: css({
-    color: `${theme.colors.text.secondary}`,
-    backgroundColor: `${theme.colors.background.primary}`,
-    cursor: 'auto',
-    border: 'none',
-    padding: `${theme.spacing(0, 1)}`,
-    height: ` ${theme.spacing(theme.components.height.md)}`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-
-    '&:focus, &:focus-visible': {
-      ...getFocusStyles(theme),
-      zIndex: 1,
+const getStyles = (theme: GrafanaTheme2) => {
+  const alertingPanel = keyframes({
+    '100%': {
+      transform: 'scale(1.2)',
     },
-    '&: focus:not(:focus-visible)': getMouseFocusStyles(theme),
+  });
 
-    '&:hover ': {
-      boxShadow: `${theme.shadows.z1}`,
-      color: `${theme.colors.text.primary}`,
-      background: `${theme.colors.background.secondary}`,
-    },
-  }),
+  return {
+    item: css({
+      label: 'panel-header-item',
+      backgroundColor: `${theme.colors.background.primary}`,
+      cursor: 'auto',
+      border: 'none',
+      padding: `${theme.spacing(0, 1)}`,
+      height: `${theme.spacing(theme.components.height.md)}`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
 
-  timeshift: css({
-    color: theme.colors.text.link,
+      '&:focus, &:focus-visible': {
+        ...getFocusStyles(theme),
+        zIndex: 1,
+      },
+      '&: focus:not(:focus-visible)': getMouseFocusStyles(theme),
 
-    '&:hover': {
-      color: theme.colors.emphasize(theme.colors.text.link, 0.03),
-    },
-  }),
-});
+      '&:hover ': {
+        boxShadow: `${theme.shadows.z1}`,
+        background: `${theme.colors.background.secondary}`,
+      },
+    }),
+    ok: css({
+      color: theme.colors.success.text,
+    }),
+    pending: css({
+      color: theme.colors.warning.text,
+    }),
+    alerting: css({
+      color: theme.colors.error.text,
+      animation: `${alertingPanel} 1s cubic-bezier(1, 0.1, 0.73, 1) 0s infinite alternate`,
+    }),
+    timeshift: css({
+      color: theme.colors.text.link,
+
+      '&:hover': {
+        color: theme.colors.emphasize(theme.colors.text.link, 0.03),
+      },
+    }),
+  };
+};
