@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"reflect"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -290,39 +289,6 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(pluginCtx backend.Plugin
 	return &resp, nil
 }
 
-func (e *cloudWatchExecutor) handleGetLogGroups(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
-	region := parameters.Get("region")
-	limit := parameters.Get("limit")
-	logGroupNamePrefix := parameters.Get("logGroupNamePrefix")
-
-	logsClient, err := e.getCWLogsClient(pluginCtx, region)
-	if err != nil {
-		return nil, err
-	}
-
-	logGroupLimit := defaultLogGroupLimit
-	intLimit, err := strconv.ParseInt(limit, 10, 64)
-	if err == nil && intLimit > 0 {
-		logGroupLimit = intLimit
-	}
-
-	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
-	input := &cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(logGroupLimit)}
-	if len(logGroupNamePrefix) > 0 {
-		input.LogGroupNamePrefix = aws.String(logGroupNamePrefix)
-	}
-	response, err = logsClient.DescribeLogGroups(input)
-	if err != nil || response == nil {
-		return nil, err
-	}
-	result := make([]suggestData, 0)
-	for _, logGroup := range response.LogGroups {
-		logGroupName := *logGroup.LogGroupName
-		result = append(result, suggestData{Text: logGroupName, Value: logGroupName, Label: logGroupName})
-	}
-
-	return result, nil
-}
 func (e *cloudWatchExecutor) handleGetAllLogGroups(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	var nextToken *string
 

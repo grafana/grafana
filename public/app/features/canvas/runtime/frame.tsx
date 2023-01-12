@@ -212,6 +212,10 @@ export class FrameState extends ElementState {
         this.scene.byName.set(copy.options.name, copy);
         this.scene.save();
         this.reinitializeMoveable();
+
+        setTimeout(() => {
+          this.scene.targetsToSelect.add(copy.div!);
+        });
         break;
       case LayerActionID.MoveTop:
       case LayerActionID.MoveBottom:
