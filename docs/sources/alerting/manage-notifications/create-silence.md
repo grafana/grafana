@@ -19,7 +19,7 @@ weight: 600
 
 Silences stop notifications from getting created and last for only a specified window of time.
 
-**Please note that inhibition rules are not supported in the Grafana Alertmanager**
+**Note that inhibition rules are not supported in the Grafana Alertmanager.**
 
 ## Add silences
 
