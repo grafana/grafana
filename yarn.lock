@@ -6255,6 +6255,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@leeoniya/ufuzzy@npm:0.9.1":
+  version: 0.9.1
+  resolution: "@leeoniya/ufuzzy@npm:0.9.1"
+  checksum: 27750dff2e754ec3729937abce7c36b87917325e934cef7b1bb54a2310fd1e497dcb725397abee8c714f24a84da155120177a93da8f9706eefe32a8a1bb66945
+  languageName: node
+  linkType: hard
+
 "@leichtgewicht/ip-codec@npm:^2.0.1":
   version: 2.0.3
   resolution: "@leichtgewicht/ip-codec@npm:2.0.3"
@@ -22004,7 +22011,7 @@ __metadata:
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 5.3.6
-    "@leeoniya/ufuzzy": 0.9.0
+    "@leeoniya/ufuzzy": 0.9.1
     "@lezer/common": 1.0.1
     "@lezer/highlight": 1.1.2
     "@lezer/lr": 1.2.3
