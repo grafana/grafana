@@ -68,11 +68,11 @@ Choose how Grafana should align cell contents:
 - Center
 - Right
 
-## Cell display mode
+## Cell type
 
-By default, Grafana automatically chooses display settings. You can override the settings by choosing one of the following options to change all fields.
+By default, Grafana automatically chooses display settings. You can override the settings by choosing one of the following options to set the default for all fields. Additional configuration is available for some cell types.
 
-> **Note:** If you set these in the Field tab, then the display modes will apply to all fields, including the time field. Many options will work best if you set them in the Override tab.
+> **Note:** If you set these in the Field tab, then the type will apply to all fields, including the time field. Many options will work best if you set them in the Override tab so that they can be restricted to one or more fields.
 
 ### Color text
 
@@ -86,13 +86,23 @@ If thresholds are set, then the field background is displayed in the appropriate
 
 {{< figure src="/static/img/docs/tables/color-background.png" max-width="500px" caption="Color background" class="docs-image--no-shadow" >}}
 
-### Gradient gauge
+### Gauge
+
+Cells can be displayed as a graphical gauge, with several different presentation types.
+
+#### Basic
+
+The basic mode will show a simple gauge with the threshold levels defining the color of gauge.
+
+{{< figure src="/static/img/docs/tables/basic-gauge.png" max-width="500px" caption="Gradient gauge" class="docs-image--no-shadow" >}}
+
+#### Gradient
 
 The threshold levels define a gradient.
 
 {{< figure src="/static/img/docs/tables/gradient-gauge.png" max-width="500px" caption="Gradient gauge" class="docs-image--no-shadow" >}}
 
-### LCD gauge
+#### LCD
 
 The gauge is split up in small cells that are lit or unlit.
 
