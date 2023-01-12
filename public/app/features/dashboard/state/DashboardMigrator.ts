@@ -26,7 +26,8 @@ import {
 import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
-import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
+import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellOptions } from '@grafana/schema';
+import { AxisPlacement, GraphFieldConfig, TableCellDisplayMode } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { config } from 'app/core/config';
 import {
@@ -77,7 +78,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 37;
+    this.dashboard.schemaVersion = 38;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -807,6 +808,39 @@ export class DashboardMigrator {
       });
     }
 
+    // Update old table cell display configuration to the new
+    // format which uses an object for configuration
+    if (oldVersion < 38) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.type === 'table' && panel.fieldConfig !== undefined) {
+          const displayMode = panel.fieldConfig.defaults?.custom?.displayMode;
+
+          // Update field configuration
+          if (displayMode !== undefined) {
+            // Migrate any options for the panel
+            panel.fieldConfig.defaults.custom.cellOptions = migrateTableCellConfig(displayMode);
+
+            // Delete the legacy field
+            delete panel.fieldConfig.defaults.custom.displayMode;
+          }
+
+          // Update any overrides referencing the cell display mode
+          for (let i = 0; i < panel.fieldConfig.overrides.length; i++) {
+            for (let j = 0; j < panel.fieldConfig.overrides[i].properties.length; j++) {
+              let overrideDisplayMode = panel.fieldConfig.overrides[i].properties[j].value;
+
+              if (panel.fieldConfig.overrides[i].properties[j].id === 'custom.displayMode') {
+                panel.fieldConfig.overrides[i].properties[j].id = 'custom.cellOptions';
+                panel.fieldConfig.overrides[i].properties[j].value = migrateTableCellConfig(overrideDisplayMode);
+              }
+            }
+          }
+        }
+
+        return panel;
+      });
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -1329,4 +1363,51 @@ function ensureXAxisVisibility(panel: PanelModel) {
   }
 
   return panel;
+}
+
+/**
+ * Migrates table cell display mode to new object format.
+ *
+ * @param displayMode The display mode of the cell
+ * @returns TableCellOptions object in the correct format
+ * relative to the old display mode.
+ */
+function migrateTableCellConfig(displayMode: TableCellDisplayMode): TableCellOptions {
+  switch (displayMode) {
+    // In the case of the gauge we move to a different option
+    case 'basic':
+    case 'gradient-gauge':
+    case 'lcd-gauge':
+      let gaugeMode = BarGaugeDisplayMode.Basic;
+
+      if (displayMode === 'gradient-gauge') {
+        gaugeMode = BarGaugeDisplayMode.Gradient;
+      } else if (displayMode === 'lcd-gauge') {
+        gaugeMode = BarGaugeDisplayMode.Lcd;
+      }
+
+      return {
+        type: TableCellDisplayMode.Gauge,
+        mode: gaugeMode,
+      };
+    // Also true in the case of the color background
+    case 'color-background':
+    case 'color-background-solid':
+      let mode = TableCellBackgroundDisplayMode.Basic;
+
+      // Set the new mode field, somewhat confusingly the
+      // color-background mode is for gradient display
+      if (displayMode === 'color-background') {
+        mode = TableCellBackgroundDisplayMode.Gradient;
+      }
+
+      return {
+        type: TableCellDisplayMode.ColorBackground,
+        mode: mode,
+      };
+    default:
+      return {
+        type: displayMode,
+      };
+  }
 }

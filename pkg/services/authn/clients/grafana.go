@@ -20,7 +20,7 @@ type Grafana struct {
 	userService user.Service
 }
 
-func (c Grafana) AuthenticatePassword(ctx context.Context, orgID int64, username, password string) (*authn.Identity, error) {
+func (c Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
 	usr, err := c.userService.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: username})
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
@@ -29,11 +29,14 @@ func (c Grafana) AuthenticatePassword(ctx context.Context, orgID int64, username
 		return nil, err
 	}
 
+	// user was found so set auth module in req metadata
+	r.SetMeta(authn.MetaKeyAuthModule, "grafana")
+
 	if ok := comparePassword(password, usr.Salt, usr.Password); !ok {
 		return nil, errInvalidPassword.Errorf("invalid password")
 	}
 
-	signedInUser, err := c.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{OrgID: orgID, UserID: usr.ID})
+	signedInUser, err := c.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{OrgID: r.OrgID, UserID: usr.ID})
 	if err != nil {
 		return nil, err
 	}
