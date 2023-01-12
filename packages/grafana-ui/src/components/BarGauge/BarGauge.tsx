@@ -49,6 +49,7 @@ export interface Props extends Themeable2 {
   className?: string;
   showUnfilled?: boolean;
   alignmentFactors?: DisplayValueAlignmentFactors;
+  valueMode?: 'color' | 'text' | 'hidden';
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -111,17 +112,19 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderBasicAndGradientBars(): ReactNode {
-    const { value, showUnfilled } = this.props;
+    const { value, showUnfilled, valueMode: valueDisplayMode } = this.props;
 
     const styles = getBasicAndGradientStyles(this.props);
 
     return (
       <div style={styles.wrapper}>
-        <FormattedValueDisplay
-          data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
-          value={value}
-          style={styles.value}
-        />
+        {valueDisplayMode !== 'hidden' && (
+          <FormattedValueDisplay
+            data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
+            value={value}
+            style={styles.value}
+          />
+        )}
         {showUnfilled && <div style={styles.emptyBar} />}
         <div style={styles.bar} />
       </div>
@@ -129,7 +132,17 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { display, field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, text } = this.props;
+    const {
+      display,
+      field,
+      value,
+      itemSpacing,
+      alignmentFactors,
+      orientation,
+      lcdCellWidth,
+      text,
+      valueMode: valueDisplayMode,
+    } = this.props;
     const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
       calculateBarAndValueDimensions(this.props);
     const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
@@ -192,11 +205,13 @@ export class BarGauge extends PureComponent<Props> {
     return (
       <div style={containerStyles}>
         {cells}
-        <FormattedValueDisplay
-          data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
-          value={value}
-          style={valueStyles}
-        />
+        {valueDisplayMode !== 'hidden' && (
+          <FormattedValueDisplay
+            data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
+            value={value}
+            style={valueStyles}
+          />
+        )}
       </div>
     );
   }
@@ -338,7 +353,7 @@ interface BarAndValueDimensions {
  * Only exported for unit tests
  **/
 export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
-  const { height, width, orientation, text, alignmentFactors } = props;
+  const { height, width, orientation, text, alignmentFactors, valueMode } = props;
   const titleDim = calculateTitleDimensions(props);
   const value = alignmentFactors ?? props.value;
   const valueString = formattedValueToString(value);
@@ -363,6 +378,12 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
     }
 
     valueWidth = width;
+
+    if (valueMode === 'hidden') {
+      valueHeight = 0;
+      valueWidth = 0;
+    }
+
     maxBarHeight = height - (titleDim.height + valueHeight);
     maxBarWidth = width;
     wrapperWidth = width;
@@ -370,6 +391,11 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
   } else {
     valueHeight = height - titleDim.height;
     valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), realValueWidth);
+
+    if (valueMode === 'hidden') {
+      valueHeight = 0;
+      valueWidth = 0;
+    }
 
     maxBarHeight = height - titleDim.height;
     maxBarWidth = width - valueWidth - titleDim.width;
@@ -599,6 +625,10 @@ export function getBarGradient(props: Props, maxSize: number): string {
  * Only exported to for unit test
  */
 export function getValueColor(props: Props): string {
+  if (props.valueMode === 'text') {
+    return props.theme.colors.text.primary;
+  }
+
   const { value } = props;
   if (value.color) {
     return value.color;

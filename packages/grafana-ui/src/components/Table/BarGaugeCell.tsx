@@ -91,6 +91,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
         itemSpacing={1}
         lcdCellWidth={8}
         displayMode={barGaugeMode}
+        valueMode={'text'}
       />
     );
   };
@@ -102,21 +103,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
           {(api) => renderComponent(api)}
         </DataLinksContextMenu>
       )}
-      {!hasLinks && (
-        <BarGauge
-          width={innerWidth}
-          height={tableStyles.cellHeightInner}
-          field={config}
-          display={field.display}
-          text={{ valueSize: 14 }}
-          value={displayValue}
-          orientation={VizOrientation.Horizontal}
-          theme={tableStyles.theme}
-          itemSpacing={1}
-          lcdCellWidth={8}
-          displayMode={barGaugeMode}
-        />
-      )}
+      {!hasLinks && renderComponent({})}
     </div>
   );
 };
