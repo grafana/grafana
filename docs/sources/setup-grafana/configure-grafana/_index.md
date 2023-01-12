@@ -870,7 +870,7 @@ The table below shows the available OAuth providers and their setting with the d
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
 | --- | --- | --- | --- |
 | Grafana.com | false | false | will sync with Grafana.Com roles |
-| Grafana.com | true | false | skip org role sync for OAuth providers including grafana.com users |
+| Grafana.com | true | false | skip org role sync for OAuth providers including Grafana.com users |
 | Grafana.com | false | true | skip org role sync for grafana.com users |
 | Grafana.com | true | true | skip org role sync for grafana.com users in addition all other OAuth providers |
 
