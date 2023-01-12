@@ -18,7 +18,6 @@ func NewLogGroupsService(logsClient models.CloudWatchLogsAPIProvider, isCrossAcc
 }
 
 func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resources.ResourceResponse[resources.LogGroup], error) {
-	var nextToken *string
 	input := &cloudwatchlogs.DescribeLogGroupsInput{
 		Limit:              aws.Int64(req.Limit),
 		LogGroupNamePrefix: req.LogGroupNamePrefix,
@@ -37,7 +36,6 @@ func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resou
 	var result []resources.ResourceResponse[resources.LogGroup]
 
 	for {
-		input.NextToken = nextToken
 		response, err := s.logGroupsAPI.DescribeLogGroups(input)
 		if err != nil || response == nil {
 			return nil, err
@@ -56,7 +54,7 @@ func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resou
 		if !req.ListAllLogGroups || response.NextToken == nil {
 			break
 		}
-		nextToken = response.NextToken
+		input.NextToken = response.NextToken
 	}
 
 	return result, nil

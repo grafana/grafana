@@ -291,12 +291,10 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         | FetchResponse<BackendDataSourceResponse | undefined>
         | DataQueryError
     ): DataFrame[] => toDataQueryResponse(val).data || [];
-    let headers = {};
-    headers = {
-      'X-Cache-Skip': true,
-    };
 
-    return this.awsRequest(this.dsQueryEndpoint, requestParams, headers).pipe(
+    return this.awsRequest(this.dsQueryEndpoint, requestParams, {
+      'X-Cache-Skip': 'true',
+    }).pipe(
       map((response) => resultsToDataFrames({ data: response })),
       catchError((err: FetchError) => {
         if (config.featureToggles.datasourceQueryMultiStatus && err.status === 207) {
