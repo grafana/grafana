@@ -35,8 +35,8 @@
     "LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
-    "bundle": "rollup -c rollup.config.ts",
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.mjs",
+    "bundle": "rollup -c rollup.config.mjs",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "open": "cypress open",
     "start": "cypress run --browser=chrome",

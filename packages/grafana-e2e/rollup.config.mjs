@@ -4,7 +4,7 @@ import dts from 'rollup-plugin-dts';
 import esbuild from 'rollup-plugin-esbuild';
 import { externals } from 'rollup-plugin-node-externals';
 
-const pkg = require('./package.json');
+import pkg from './package.json' assert { type: 'json' };
 
 export default [
   {
