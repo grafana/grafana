@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/loginattempt/loginattempttest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,36 +28,16 @@ func TestBasic_Authenticate(t *testing.T) {
 			expectedIdentity: &authn.Identity{ID: "user:1"},
 		},
 		{
-			desc:             "should success when found in second client",
-			req:              &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{authorizationHeaderName: {encodeBasicAuth("user", "password")}}}},
-			clients:          []authn.PasswordClient{authntest.FakePasswordClient{ExpectedErr: errIdentityNotFound}, authntest.FakePasswordClient{ExpectedIdentity: &authn.Identity{ID: "user:2"}}},
-			expectedIdentity: &authn.Identity{ID: "user:2"},
-		},
-		{
-			desc:        "should fail for empty password",
-			req:         &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{authorizationHeaderName: {encodeBasicAuth("user", "")}}}},
-			expectedErr: errBasicAuthCredentials,
-		},
-		{
-			desc:        "should if login is blocked by to many attempts",
-			req:         &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{authorizationHeaderName: {encodeBasicAuth("user", "")}}}},
-			blockLogin:  true,
-			expectedErr: errBasicAuthCredentials,
-		},
-		{
-			desc:        "should fail when not found in any clients",
-			req:         &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{authorizationHeaderName: {encodeBasicAuth("user", "password")}}}},
+			desc:        "should fail when basic auth header could not be decoded",
+			req:         &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{authorizationHeaderName: {}}}},
 			clients:     []authn.PasswordClient{authntest.FakePasswordClient{ExpectedErr: errIdentityNotFound}, authntest.FakePasswordClient{ExpectedErr: errIdentityNotFound}},
-			expectedErr: errBasicAuthCredentials,
+			expectedErr: errDecodingBasicAuthHeader,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvideBasic(
-				loginattempttest.FakeLoginAttemptService{ExpectedValid: !tt.blockLogin},
-				tt.clients...,
-			)
+			c := ProvideBasic(&authntest.FakePasswordClient{})
 
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			if tt.expectedErr != nil {
@@ -93,18 +72,6 @@ func TestBasic_Test(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc: "should fail when no password client is configured",
-			req: &authn.Request{
-				HTTPRequest: &http.Request{
-					Header: map[string][]string{
-						authorizationHeaderName: {encodeBasicAuth("user", "password")},
-					},
-				},
-			},
-			noClients: true,
-			expected:  false,
-		},
-		{
 			desc: "should fail when no http request is passed",
 			req:  &authn.Request{},
 		},
@@ -124,10 +91,7 @@ func TestBasic_Test(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := ProvideBasic(loginattempttest.FakeLoginAttemptService{}, authntest.FakePasswordClient{})
-			if tt.noClients {
-				c.clients = nil
-			}
+			c := ProvideBasic(authntest.FakePasswordClient{})
 			assert.Equal(t, tt.expected, c.Test(context.Background(), tt.req))
 		})
 	}
