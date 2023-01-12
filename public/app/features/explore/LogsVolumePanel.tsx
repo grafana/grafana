@@ -11,7 +11,7 @@ import {
   TimeZone,
   EventBus,
 } from '@grafana/data';
-import { Alert, Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, Button, Collapse, InlineField, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { ExploreGraph } from './Graph/ExploreGraph';
 
@@ -130,7 +130,6 @@ export function LogsVolumePanel(props: Props) {
           onChangeTime={onUpdateTimeRange}
           timeZone={timeZone}
           splitOpenFn={splitOpen}
-          tooltipDisplayMode={TooltipDisplayMode.Multi}
           onHiddenSeriesChanged={onHiddenSeriesChanged}
           anchorToZero
           eventBus={props.eventBus}

@@ -69,7 +69,7 @@ export function ExploreGraph({
   onHiddenSeriesChanged,
   splitOpenFn,
   graphStyle,
-  tooltipDisplayMode = TooltipDisplayMode.Single,
+  tooltipDisplayMode = TooltipDisplayMode.Multi,
   anchorToZero = false,
   eventBus,
 }: Props) {
