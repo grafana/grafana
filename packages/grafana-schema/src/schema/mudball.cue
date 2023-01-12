@@ -201,8 +201,18 @@ BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(
 // TODO docs
 FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 
-// TODO docs
-TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image")
+// Internally, this is the "type" of cell that's being displayed
+// in the table such as colored text, JSON, gauge, etc.
+// The color-background-solid, gradient-gauge, and lcd-gauge 
+// modes are deprecated in favor of new cell subOptions
+TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge")
+// : TableCellDisplayMode @cuetsy(kind="enum")
+
+// Display mode to the "Colored Background" display
+// mode for table cells. Either displays a solid color (basic mode)
+// or a gradient.
+TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
+
 
 // TODO docs
 VizTextDisplayOptions: {
@@ -246,15 +256,40 @@ VizLegendOptions: {
 	calcs:        [...string]
 } @cuetsy(kind="interface")
 
-// TODO docs
+// Enum expressing the possible display modes
+// for the bar gauge component of Grafana UI
 BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")
 
-// TODO docs
+// Interface for table cell types that have no additional options.
+TableAutoCellOptions: {
+	type: TableCellDisplayMode
+} @cuetsy(kind="interface")
+
+// Allows for the table cell gauge display type to set the gauge mode.
+TableBarGaugeCellOptions: {
+	type: TableCellDisplayMode & "gauge"
+	mode: BarGaugeDisplayMode
+} @cuetsy(kind="interface")
+
+// Allows for the background display mode to be set for the color background cell.
+TableColoredBackgroundCellOptions: {
+	type: TableCellDisplayMode & "color-background"
+	mode: TableCellBackgroundDisplayMode
+} @cuetsy(kind="interface")
+
+// Table cell options. Each cell has a display mode
+// and other potential options for that display. 
+TableCellOptions: TableAutoCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions @cuetsy(kind="type")
+
+// Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
+// Generally defines alignment, filtering capabilties, display options, etc.
 TableFieldOptions: {
 	width?:      number
 	minWidth?:   number
 	align: FieldTextAlignment | *"auto"
-	displayMode: TableCellDisplayMode | *"auto"
+	// This field is deprecated in favor of using cellOptions
+	displayMode?: TableCellDisplayMode
+	cellOptions: TableCellOptions
 	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false
 	filterable?: bool
