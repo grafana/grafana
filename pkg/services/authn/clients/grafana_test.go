@@ -61,7 +61,7 @@ func TestGrafana_AuthenticatePassword(t *testing.T) {
 			}
 
 			c := ProvideGrafana(userService)
-			identity, err := c.AuthenticatePassword(context.Background(), 1, tt.username, tt.password)
+			identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, tt.username, tt.password)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)
 		})

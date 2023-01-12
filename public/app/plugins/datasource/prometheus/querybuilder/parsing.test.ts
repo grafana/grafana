@@ -54,17 +54,7 @@ describe('buildVisualQueryFromString', () => {
         'avg(rate(access_evaluation_duration_count{instance="host.docker.internal:3000"}[$__rate_interval]))'
       )
     ).toEqual({
-      // after upgrading @prometheus-io/lezer-promql, strings containing global grafana variables such as $__rate_interval (https://grafana.com/docs/grafana/latest/variables/variable-types/global-variables/)
-      // started returning error nodes upon parse, but the resultant tree was otherwise the same.
-      // My assumption is that the newer version of lezer is more verbose in returning error nodes, and there should be no functional change to the parsed trees.
-      errors: [
-        {
-          from: 107,
-          parentType: 'MatrixSelector',
-          text: '',
-          to: 107,
-        },
-      ],
+      errors: [],
       query: {
         metric: 'access_evaluation_duration_count',
         labels: [
@@ -172,14 +162,7 @@ describe('buildVisualQueryFromString', () => {
     expect(
       buildVisualQueryFromString('histogram_quantile(0.99, rate(counters_logins{app="backend"}[$__rate_interval]))')
     ).toEqual({
-      errors: [
-        {
-          from: 88,
-          parentType: 'MatrixSelector',
-          text: '',
-          to: 88,
-        },
-      ],
+      errors: [],
       query: {
         metric: 'counters_logins',
         labels: [{ label: 'app', op: '=', value: 'backend' }],
@@ -203,14 +186,7 @@ describe('buildVisualQueryFromString', () => {
         'label_replace(avg_over_time(http_requests_total{instance="foo"}[$__interval]), "instance", "$1", "", "(.*)")'
       )
     ).toEqual({
-      errors: [
-        {
-          from: 86,
-          parentType: 'MatrixSelector',
-          text: '',
-          to: 86,
-        },
-      ],
+      errors: [],
       query: {
         metric: 'http_requests_total',
         labels: [{ label: 'instance', op: '=', value: 'foo' }],
@@ -230,14 +206,7 @@ describe('buildVisualQueryFromString', () => {
 
   it('parses binary operation with scalar', () => {
     expect(buildVisualQueryFromString('avg_over_time(http_requests_total{instance="foo"}[$__interval]) / 2')).toEqual({
-      errors: [
-        {
-          from: 72,
-          parentType: 'MatrixSelector',
-          text: '',
-          to: 72,
-        },
-      ],
+      errors: [],
       query: {
         metric: 'http_requests_total',
         labels: [{ label: 'instance', op: '=', value: 'foo' }],
@@ -259,14 +228,7 @@ describe('buildVisualQueryFromString', () => {
     expect(
       buildVisualQueryFromString('avg_over_time(http_requests_total{instance="foo"}[$__interval]) / sum(logins_count)')
     ).toEqual({
-      errors: [
-        {
-          from: 72,
-          parentType: 'MatrixSelector',
-          text: '',
-          to: 72,
-        },
-      ],
+      errors: [],
       query: {
         metric: 'http_requests_total',
         labels: [{ label: 'instance', op: '=', value: 'foo' }],

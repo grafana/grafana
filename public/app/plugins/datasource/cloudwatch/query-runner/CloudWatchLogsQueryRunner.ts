@@ -42,7 +42,6 @@ import {
   DescribeLogGroupsRequest,
   GetLogEventsRequest,
   GetLogGroupFieldsRequest,
-  GetLogGroupFieldsResponse,
   LogAction,
   StartQueryRequest,
 } from '../types';
@@ -414,18 +413,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       data: dataFrames,
     };
   };
-
-  async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
-    const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogGroupFields', [params]));
-
-    const fieldNames = dataFrames[0].fields[0].values.toArray();
-    const fieldPercentages = dataFrames[0].fields[1].values.toArray();
-    const getLogGroupFieldsResponse = {
-      logGroupFields: fieldNames.map((val, i) => ({ name: val, percent: fieldPercentages[i] })) ?? [],
-    };
-
-    return getLogGroupFieldsResponse;
-  }
 
   private filterQuery(query: CloudWatchLogsQuery) {
     const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length;

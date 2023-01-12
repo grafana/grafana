@@ -9,10 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/secrets"
-
+	"github.com/grafana/alerting/alerting"
 	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,7 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,7 +41,7 @@ type MultiOrgAlertmanager struct {
 	logger   log.Logger
 
 	// clusterPeer represents the clustering peers of Alertmanagers between Grafana instances.
-	peer         ClusterPeer
+	peer         alerting.ClusterPeer
 	settleCancel context.CancelFunc
 
 	configStore AlertingStore

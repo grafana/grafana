@@ -47,7 +47,7 @@ type dashboardGuardianImpl struct {
 	dashId           int64
 	orgId            int64
 	acl              []*models.DashboardACLInfoDTO
-	teams            []*models.TeamDTO
+	teams            []*team.TeamDTO
 	log              log.Logger
 	ctx              context.Context
 	store            db.DB
@@ -244,7 +244,7 @@ func (g *dashboardGuardianImpl) checkACL(permission models.PermissionType, acl [
 	// evaluate team rules
 	for _, p := range acl {
 		for _, ug := range teams {
-			if ug.Id == p.TeamId && p.Permission >= permission {
+			if ug.ID == p.TeamId && p.Permission >= permission {
 				return true, nil
 			}
 		}
@@ -349,16 +349,16 @@ func (g *dashboardGuardianImpl) GetACLWithoutDuplicates() ([]*models.DashboardAC
 	return result, nil
 }
 
-func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
+func (g *dashboardGuardianImpl) getTeams() ([]*team.TeamDTO, error) {
 	if g.teams != nil {
 		return g.teams, nil
 	}
 
-	query := models.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserID, SignedInUser: g.user}
-	err := g.teamService.GetTeamsByUser(g.ctx, &query)
+	query := team.GetTeamsByUserQuery{OrgID: g.orgId, UserID: g.user.UserID, SignedInUser: g.user}
+	queryResult, err := g.teamService.GetTeamsByUser(g.ctx, &query)
 
-	g.teams = query.Result
-	return query.Result, err
+	g.teams = queryResult
+	return queryResult, err
 }
 
 func (g *dashboardGuardianImpl) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardACL, error) {

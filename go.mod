@@ -59,7 +59,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/grafana/alerting v0.0.0-20230110121647-3477ffe85c4d
+	github.com/grafana/alerting v0.0.0-20230112102204-5545cdf0edc9
 	github.com/grafana/cuetsy v0.1.5
 	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.5.1
