@@ -194,23 +194,6 @@ export const LogGroupsSelector = ({
           </div>
         </div>
         <Space layout="block" v={2} />
-        <EditorField label="Template variable" width={26}>
-          <Select
-            isClearable
-            aria-label="Template variable"
-            value={currentVariableOption}
-            allowCustomValue
-            options={variableOptions}
-            onChange={(option) => {
-              const newValues = selectedLogGroups.filter((lg) => !lg.name?.startsWith('$'));
-              if (option?.label) {
-                newValues.push({ name: option.label, arn: option.label });
-              }
-              setSelectedLogGroups(newValues);
-            }}
-          />
-        </EditorField>
-        <Space layout="block" v={2} />
         <Label className={styles.logGroupCountLabel}>
           {selectedLogGroupsCounter} log group{selectedLogGroupsCounter !== 1 && 's'} selected
         </Label>
