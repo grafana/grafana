@@ -11,6 +11,7 @@ import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
 import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
+import { ToolbarButton } from '../ToolbarButton';
 import { PopoverContent, Tooltip } from '../Tooltip';
 
 import { PanelStatus } from './PanelStatus';
@@ -156,12 +157,11 @@ export function PanelChrome({
         <div className={styles.rightAligned}>
           {menu && (
             <Dropdown overlay={menu} placement="bottom">
-              <Button
+              <ToolbarButton
                 aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
-                tooltip="Menu"
+                title="Menu"
                 icon="ellipsis-v"
-                fill="text"
-                variant="secondary"
+                narrow
                 className={cx(styles.menuItem, 'menu-icon')}
               />
             </Dropdown>
@@ -215,7 +215,7 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { padding, background, borderColor } = theme.components.panel;
+  const { background, borderColor } = theme.components.panel;
 
   return {
     container: css({
@@ -283,6 +283,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     menuItem: css({
       visibility: 'hidden',
+      border: 'none',
     }),
     errorContainer: css({
       label: 'error-container',
