@@ -243,25 +243,27 @@ function getFixedColor(field: Field, theme: GrafanaTheme2) {
   };
 }
 
-const fractions: number[] = [ 0.9, 0.8, 0.7, 0.6, 0.5, 0.4 ]
-const black: number[] = [0,0,0]
-const white: number[] = [255,255,255]
+const fractions: number[] = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4];
+const black: number[] = [0, 0, 0];
+const white: number[] = [255, 255, 255];
 
 function getShadedColor(field: Field, theme: GrafanaTheme2) {
   return () => {
-    const baseColorString: string = theme.visualization.getColorByName(field.config.color?.fixedColor ?? FALLBACK_COLOR);
+    const baseColorString: string = theme.visualization.getColorByName(
+      field.config.color?.fixedColor ?? FALLBACK_COLOR
+    );
     const baseColor = colorStringToRgbArray(baseColorString);
 
     const colors: string[] = [
-      baseColorString // start with base color
-    ]
+      baseColorString, // start with base color
+    ];
 
     for (const fraction of fractions) {
       // push alternating darker and brighter shades
       colors.push(
         rgbArrayToColorString(interpolateColorComponents(baseColor, black, fraction)),
         rgbArrayToColorString(interpolateColorComponents(baseColor, white, fraction))
-      )
+      );
     }
 
     const seriesIndex = field.state?.seriesIndex ?? 0;
@@ -272,30 +274,30 @@ function getShadedColor(field: Field, theme: GrafanaTheme2) {
 function colorStringToRgbArray(color: string): number[] {
   if (color[0] !== '#') {
     //TODO looks like we might get string like "rgb(...)", what do we do?
-    return [0,0,0]
+    return [0, 0, 0];
   }
   if (color.length !== 7) {
     //TODO what now? #123 -> #112233 or #000123 ?
-    return [0,0,0]
+    return [0, 0, 0];
   }
   const red: number = parseInt(color.substring(1, 3), 16);
   const green: number = parseInt(color.substring(3, 5), 16);
   const blue: number = parseInt(color.substring(5, 7), 16);
 
-  return [red, green, blue]
+  return [red, green, blue];
 }
 
 function rgbArrayToColorString(rgb: number[]): string {
-  return '#' + toTwoDigitHex(rgb[0])  + toTwoDigitHex(rgb[1])  + toTwoDigitHex(rgb[2]);
+  return '#' + toTwoDigitHex(rgb[0]) + toTwoDigitHex(rgb[1]) + toTwoDigitHex(rgb[2]);
 }
 
 function toTwoDigitHex(n: number): string {
-  const s = n.toString(16)
+  const s = n.toString(16);
 
   if (s.length < 2) {
-    return '0'+s
+    return '0' + s;
   } else {
-    return s
+    return s;
   }
 }
 
@@ -304,14 +306,12 @@ function interpolateColorComponents(left: number[], right: number[], leftFractio
 
   const newColor: number[] = [];
   for (let i = 0; i < 3; i++) {
-    newColor.push(normalizeToUInt8(
-      (left[i] * leftFraction) + (right[i] * rightFraction)
-    ));
+    newColor.push(normalizeToUInt8(left[i] * leftFraction + right[i] * rightFraction));
   }
 
-  return newColor
+  return newColor;
 }
 
 function normalizeToUInt8(n: number): number {
-  return Math.max(0, Math.min(Math.round(n), 255))
+  return Math.max(0, Math.min(Math.round(n), 255));
 }

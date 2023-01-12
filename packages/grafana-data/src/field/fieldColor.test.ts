@@ -12,7 +12,7 @@ function getTestField(mode: string, fixedColor?: string): Field {
     config: {
       color: {
         mode: mode,
-        fixedColor: fixedColor
+        fixedColor: fixedColor,
       },
     },
     state: {},
