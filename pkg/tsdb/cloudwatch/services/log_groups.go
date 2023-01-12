@@ -33,7 +33,7 @@ func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resou
 			input.AccountIdentifiers = []*string{req.AccountId}
 		}
 	}
-	var result []resources.ResourceResponse[resources.LogGroup]
+	result := []resources.ResourceResponse[resources.LogGroup]{}
 
 	for {
 		response, err := s.logGroupsAPI.DescribeLogGroups(input)

@@ -45,6 +45,17 @@ func TestGetLogGroups(t *testing.T) {
 		}, resp)
 	})
 
+	t.Run("Should return an empty error if api doesn't return any data", func(t *testing.T) {
+		mockLogsAPI := &mocks.LogsAPI{}
+		mockLogsAPI.On("DescribeLogGroups", mock.Anything).Return(&cloudwatchlogs.DescribeLogGroupsOutput{}, nil)
+		service := NewLogGroupsService(mockLogsAPI, false)
+
+		resp, err := service.GetLogGroups(resources.LogGroupsRequest{})
+
+		assert.NoError(t, err)
+		assert.Equal(t, []resources.ResourceResponse[resources.LogGroup]{}, resp)
+	})
+
 	t.Run("Should only use LogGroupNamePrefix even if LogGroupNamePattern passed in resource call", func(t *testing.T) {
 		// TODO: use LogGroupNamePattern when we have accounted for its behavior, still a little unexpected at the moment
 		mockLogsAPI := &mocks.LogsAPI{}
