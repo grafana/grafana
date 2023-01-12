@@ -38,8 +38,3 @@ export const defaultPanelFieldConfig: TableFieldOptions = {
   },
   inspect: false,
 };
-
-export interface TableCellEditorProps<T> {
-  cellOptions: T;
-  onChange: (value: T) => void;
-}
