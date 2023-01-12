@@ -9,7 +9,7 @@ import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
 import { Portal, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { CanvasFrameOptions, ConnectionPath, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
+import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
   DimensionContext,
@@ -26,8 +26,8 @@ import {
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
-import { ConnectionAnchors, CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/ConnectionAnchors';
-import { ConnectionSVG } from 'app/plugins/panel/canvas/ConnectionSVG';
+import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/ConnectionAnchors';
+import { Connections } from 'app/plugins/panel/canvas/Connections';
 import { AnchorPoint, LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
@@ -60,12 +60,7 @@ export class Scene {
   selecto?: Selecto;
   moveable?: Moveable;
   div?: HTMLDivElement;
-  connectionAnchorDiv?: HTMLDivElement;
-  connectionSVG?: SVGElement;
-  connectionLine?: SVGLineElement;
-  connectionSource?: ElementState;
-  connectionTarget?: ElementState;
-  isDrawingConnection?: boolean;
+  connections: Connections;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
@@ -98,6 +93,7 @@ export class Scene {
     });
 
     this.panel = panel;
+    this.connections = new Connections(this);
   }
 
   getNextElementName = (isFrame = false) => {
@@ -304,18 +300,6 @@ export class Scene {
     this.div = sceneContainer;
   };
 
-  setConnectionAnchorRef = (anchorElement: HTMLDivElement) => {
-    this.connectionAnchorDiv = anchorElement;
-  };
-
-  setConnectionSVGRef = (connectionSVG: SVGSVGElement) => {
-    this.connectionSVG = connectionSVG;
-  };
-
-  setConnectionLineRef = (connectionLine: SVGLineElement) => {
-    this.connectionLine = connectionLine;
-  };
-
   select = (selection: SelectionParams) => {
     if (this.selecto) {
       this.selecto.setSelectedTargets(selection.targets);
@@ -323,8 +307,8 @@ export class Scene {
       this.editModeEnabled.next(false);
 
       // Hide connection anchors on programmatic select
-      if (this.connectionAnchorDiv) {
-        this.connectionAnchorDiv.style.display = 'none';
+      if (this.connections.connectionAnchorDiv) {
+        this.connections.connectionAnchorDiv.style.display = 'none';
       }
     }
   };
@@ -481,93 +465,6 @@ export class Scene {
         }
       });
 
-    const connectionListener = (event: MouseEvent) => {
-      event.preventDefault();
-
-      if (!(this.connectionLine && this.div && this.div.parentElement)) {
-        return;
-      }
-
-      const parentBoundingRect = this.div.parentElement.getBoundingClientRect();
-      const x = event.pageX - parentBoundingRect.x;
-      const y = event.pageY - parentBoundingRect.y;
-
-      this.connectionLine.setAttribute('x2', `${x}`);
-      this.connectionLine.setAttribute('y2', `${y}`);
-
-      if (!event.buttons) {
-        if (this.connectionSource && this.connectionSource.div && this.connectionSource.div.parentElement) {
-          const connectionLineX1 = this.connectionLine.x1.baseVal.value;
-          const connectionLineY1 = this.connectionLine.y1.baseVal.value;
-
-          const sourceRect = this.connectionSource.div.getBoundingClientRect();
-          const parentRect = this.connectionSource.div.parentElement.getBoundingClientRect();
-          const parentBorderWidth = parseFloat(getComputedStyle(this.connectionSource.div.parentElement).borderWidth);
-
-          const sourceVerticalCenter = sourceRect.top - parentRect.top - parentBorderWidth + sourceRect.height / 2;
-          const sourceHorizontalCenter = sourceRect.left - parentRect.left - parentBorderWidth + sourceRect.width / 2;
-
-          const sourceX = (connectionLineX1 - sourceHorizontalCenter) / (sourceRect.width / 2);
-          const sourceY = (sourceVerticalCenter - connectionLineY1) / (sourceRect.height / 2);
-
-          let targetX;
-          let targetY;
-          let targetName;
-
-          if (this.connectionTarget && this.connectionTarget.div) {
-            const targetRect = this.connectionTarget.div.getBoundingClientRect();
-
-            const targetVerticalCenter = targetRect.top - parentRect.top - parentBorderWidth + targetRect.height / 2;
-            const targetHorizontalCenter = targetRect.left - parentRect.left - parentBorderWidth + targetRect.width / 2;
-
-            targetX = (x - targetHorizontalCenter) / (targetRect.width / 2);
-            targetY = (targetVerticalCenter - y) / (targetRect.height / 2);
-            targetName = this.connectionTarget.options.name;
-          } else {
-            const parentVerticalCenter = parentRect.height / 2;
-            const parentHorizontalCenter = parentRect.width / 2;
-
-            targetX = (x - parentHorizontalCenter) / (parentRect.width / 2);
-            targetY = (parentVerticalCenter - y) / (parentRect.height / 2);
-          }
-
-          const connection = {
-            source: {
-              x: sourceX,
-              y: sourceY,
-            },
-            target: {
-              x: targetX,
-              y: targetY,
-            },
-            targetName: targetName,
-            color: 'white',
-            size: 10,
-            path: ConnectionPath.Straight,
-          };
-
-          const { options } = this.connectionSource;
-          if (!options.connections) {
-            options.connections = [];
-          }
-          this.connectionSource.options.connections = [...options.connections, connection];
-
-          this.connectionSource.onChange(this.connectionSource.options);
-        }
-
-        if (this.connectionSVG) {
-          this.connectionSVG.style.display = 'none';
-        }
-
-        if (this.selecto && this.selecto.rootContainer) {
-          this.selecto.rootContainer.style.cursor = 'default';
-          this.selecto.rootContainer.removeEventListener('mousemove', connectionListener);
-        }
-
-        this.isDrawingConnection = false;
-      }
-    };
-
     let targets: Array<HTMLElement | SVGElement> = [];
     this.selecto!.on('dragStart', (event) => {
       const selectedTarget = event.inputEvent.target;
@@ -575,7 +472,7 @@ export class Scene {
       // If selected target is a connection control, eject to handle connection event
       if (selectedTarget.id === CONNECTION_ANCHOR_DIV_ID) {
         this.selecto!.rootContainer!.style.cursor = 'crosshair';
-        if (this.connectionSVG && this.connectionLine && this.div && this.div.parentElement) {
+        if (this.connections.connectionSVG && this.connections.connectionLine && this.div && this.div.parentElement) {
           const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
           const parentBoundingRect = this.div.parentElement.getBoundingClientRect();
 
@@ -587,16 +484,16 @@ export class Scene {
           const mouseX = event.inputEvent.clientX - parentBoundingRect.x;
           const mouseY = event.inputEvent.clientY - parentBoundingRect.y;
 
-          this.connectionLine.setAttribute('x1', `${x}`);
-          this.connectionLine.setAttribute('y1', `${y}`);
-          this.connectionLine.setAttribute('x2', `${mouseX}`);
-          this.connectionLine.setAttribute('y2', `${mouseY}`);
-          this.connectionSVG.style.display = 'block';
+          this.connections.connectionLine.setAttribute('x1', `${x}`);
+          this.connections.connectionLine.setAttribute('y1', `${y}`);
+          this.connections.connectionLine.setAttribute('x2', `${mouseX}`);
+          this.connections.connectionLine.setAttribute('y2', `${mouseY}`);
+          this.connections.connectionSVG.style.display = 'block';
 
-          this.isDrawingConnection = true;
+          this.connections.isDrawingConnection = true;
         }
 
-        this.selecto?.rootContainer?.addEventListener('mousemove', connectionListener);
+        this.selecto?.rootContainer?.addEventListener('mousemove', this.connections.connectionListener);
         event.stop();
         return;
       }
@@ -628,8 +525,8 @@ export class Scene {
         this.editModeEnabled.next(false);
 
         // Hide connection anchors on select
-        if (this.connectionAnchorDiv) {
-          this.connectionAnchorDiv.style.display = 'none';
+        if (this.connections.connectionAnchorDiv) {
+          this.connections.connectionAnchorDiv.style.display = 'none';
         }
       })
       .on('selectEnd', (event) => {
@@ -710,52 +607,12 @@ export class Scene {
     dest.reinitializeMoveable();
   };
 
-  handleMouseEnter = (event: React.MouseEvent) => {
-    if (!(event.target instanceof HTMLElement) || !this.isEditingEnabled) {
-      return;
-    }
-
-    const element = event.target.parentElement?.parentElement;
-    if (!element) {
-      console.log('no element');
-      return;
-    }
-
-    if (this.isDrawingConnection) {
-      this.connectionTarget = this.findElementByTarget(element);
-    } else {
-      this.connectionSource = this.findElementByTarget(element);
-      if (!this.connectionSource) {
-        console.log('no connection source');
-        return;
-      }
-    }
-
-    const elementBoundingRect = element!.getBoundingClientRect();
-    const parentBoundingRect = this.div?.getBoundingClientRect();
-    let parentBorderWidth = parseFloat(getComputedStyle(this.div!).borderWidth);
-
-    const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0) - parentBorderWidth;
-    const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0) - parentBorderWidth;
-
-    this.connectionAnchorDiv!.style.display = 'block';
-    this.connectionAnchorDiv!.style.top = `${relativeTop}px`;
-    this.connectionAnchorDiv!.style.left = `${relativeLeft}px`;
-    this.connectionAnchorDiv!.style.height = `${elementBoundingRect.height}px`;
-    this.connectionAnchorDiv!.style.width = `${elementBoundingRect.width}px`;
-  };
-
-  handleMouseLeave = (event: React.MouseEvent | React.FocusEvent) => {
-    this.connectionAnchorDiv!.style.display = 'none';
-  };
-
   render() {
     const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
 
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
-        <ConnectionAnchors setRef={this.setConnectionAnchorRef} handleMouseLeave={this.handleMouseLeave} />
-        <ConnectionSVG setSVGRef={this.setConnectionSVGRef} setLineRef={this.setConnectionLineRef} scene={this} />
+        {this.connections.render()}
         {this.root.render()}
         {canShowContextMenu && (
           <Portal>
