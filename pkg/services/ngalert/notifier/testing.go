@@ -62,8 +62,7 @@ func (f *fakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, 
 }
 
 func (f *fakeConfigStore) SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	f.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error { return nil })
-	return nil
+	return f.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error { return nil })
 }
 
 func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {

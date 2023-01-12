@@ -335,11 +335,11 @@ func TestMarkConfigurationAsApplied(t *testing.T) {
 		err = store.MarkConfigurationAsApplied(ctx, &cmd)
 		require.NoError(tt, err)
 
-		// Config should now be saved and marked as sucessfully applied.
+		// Config should now be saved and marked as successfully applied.
 		appliedCfgsQuery := models.GetAppliedConfigurationsQuery{
 			OrgID: orgID,
 		}
-		store.GetAppliedConfigurations(ctx, &appliedCfgsQuery)
+		err = store.GetAppliedConfigurations(ctx, &appliedCfgsQuery)
 		require.NoError(tt, err)
 
 		require.Len(tt, appliedCfgsQuery.Result, 1)
