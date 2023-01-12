@@ -38,9 +38,10 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 
 	if renderUsr.UserID <= 0 {
 		return &authn.Identity{
-			ID:       authn.NamespacedID(authn.NamespaceUser, 0),
-			OrgID:    renderUsr.OrgID,
-			OrgRoles: map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
+			ID:           authn.NamespacedID(authn.NamespaceUser, 0),
+			OrgID:        renderUsr.OrgID,
+			OrgRoles:     map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
+			ClientParams: authn.ClientParams{},
 		}, nil
 	}
 
@@ -48,11 +49,7 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	if err != nil {
 		return nil, err
 	}
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr), nil
-}
-
-func (c *Render) ClientParams() *authn.ClientParams {
-	return &authn.ClientParams{}
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{}), nil
 }
 
 func (c *Render) Test(ctx context.Context, r *authn.Request) bool {

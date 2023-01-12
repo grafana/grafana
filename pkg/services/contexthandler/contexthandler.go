@@ -77,7 +77,7 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 type ContextHandler struct {
 	Cfg               *setting.Cfg
 	AuthTokenService  auth.UserTokenService
-	JWTAuthService    models.JWTService
+	JWTAuthService    auth.JWTVerifierService
 	RemoteCache       *remotecache.RemoteCache
 	RenderService     rendering.Service
 	SQLStore          db.DB
@@ -489,8 +489,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 				reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 			}
 
-			writeErr(reqContext, err)
-			return true
+			reqContext.LookupTokenErr = err
+			return false
 		}
 
 		reqContext.IsSignedIn = true

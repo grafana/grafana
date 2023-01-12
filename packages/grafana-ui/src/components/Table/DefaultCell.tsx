@@ -28,7 +28,6 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
   const showFilters = field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellStyle = getCellStyle(tableStyles, field, displayValue, inspectEnabled);
-
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
 
   return (
@@ -39,7 +38,7 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
             return (
-              <div onClick={api.openMenu} className={cx(tableStyles.cellLink, api.targetClassName)}>
+              <div onClick={api.openMenu} className={getLinkStyle(tableStyles, field, api.targetClassName)}>
                 {value}
               </div>
             );
@@ -112,4 +111,12 @@ function getCellStyle(
   }
 
   return disableOverflowOnHover ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer;
+}
+
+function getLinkStyle(tableStyles: TableStyles, field: Field, targetClassName: string | undefined) {
+  if (field.config.custom?.displayMode === TableCellDisplayMode.Auto) {
+    return cx(tableStyles.cellLink, targetClassName);
+  }
+
+  return cx(tableStyles.cellLinkForColoredCell, targetClassName);
 }

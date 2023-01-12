@@ -40,7 +40,7 @@ func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 		}
 	}
 
-	slotname := decl.Slot.Name()
+	slotname := decl.SchemaInterface.Name()
 	v := decl.Lineage.Latest().Version()
 
 	tsf.Nodes = append(tsf.Nodes, tsast.Raw{

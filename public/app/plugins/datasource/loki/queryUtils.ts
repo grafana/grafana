@@ -236,3 +236,35 @@ export function getLogQueryFromMetricsQuery(query: string): string {
 
   return selector + pipelineExpr;
 }
+
+export function isQueryWithLabelFilter(query: string): boolean {
+  const tree = parser.parse(query);
+  let hasLabelFilter = false;
+
+  tree.iterate({
+    enter: ({ type, node }): false | void => {
+      if (type.id === LabelFilter) {
+        hasLabelFilter = true;
+        return;
+      }
+    },
+  });
+
+  return hasLabelFilter;
+}
+
+export function isQueryWithLineFilter(query: string): boolean {
+  const tree = parser.parse(query);
+  let queryWithLineFilter = false;
+
+  tree.iterate({
+    enter: ({ type }): false | void => {
+      if (type.id === LineFilter) {
+        queryWithLineFilter = true;
+        return;
+      }
+    },
+  });
+
+  return queryWithLineFilter;
+}

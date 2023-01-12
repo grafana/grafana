@@ -85,9 +85,8 @@ func TestUserSync_SyncUser(t *testing.T) {
 		log             log.Logger
 	}
 	type args struct {
-		ctx          context.Context
-		clientParams *authn.ClientParams
-		id           *authn.Identity
+		ctx context.Context
+		id  *authn.Identity
 	}
 	tests := []struct {
 		name    string
@@ -106,20 +105,17 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            false,
-					AllowSignUp:         false,
-					EnableDisabledUsers: false,
-				},
 				id: &authn.Identity{
 					ID:    "",
 					Login: "test",
 					Name:  "test",
 					Email: "test",
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  ptrString("test"),
-						Login:  nil,
+					ClientParams: authn.ClientParams{
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  ptrString("test"),
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -129,10 +125,12 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Login: "test",
 				Name:  "test",
 				Email: "test",
-				LookUpParams: models.UserLookupParams{
-					UserID: nil,
-					Email:  ptrString("test"),
-					Login:  nil,
+				ClientParams: authn.ClientParams{
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test"),
+						Login:  nil,
+					},
 				},
 			},
 		},
@@ -146,20 +144,18 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         false,
-					EnableDisabledUsers: false,
-				},
 				id: &authn.Identity{
 					ID:    "",
 					Login: "test",
 					Name:  "test",
 					Email: "test",
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  ptrString("test"),
-						Login:  nil,
+					ClientParams: authn.ClientParams{
+						SyncUser: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  ptrString("test"),
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -170,10 +166,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Name:           "test",
 				Email:          "test",
 				IsGrafanaAdmin: ptrBool(false),
-				LookUpParams: models.UserLookupParams{
-					UserID: nil,
-					Email:  ptrString("test"),
-					Login:  nil,
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test"),
+						Login:  nil,
+					},
 				},
 			},
 		},
@@ -187,20 +186,18 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         false,
-					EnableDisabledUsers: false,
-				},
 				id: &authn.Identity{
 					ID:    "",
 					Login: "test",
 					Name:  "test",
 					Email: "test",
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  nil,
-						Login:  ptrString("test"),
+					ClientParams: authn.ClientParams{
+						SyncUser: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  nil,
+							Login:  ptrString("test"),
+						},
 					},
 				},
 			},
@@ -211,10 +208,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Name:           "test",
 				Email:          "test",
 				IsGrafanaAdmin: ptrBool(false),
-				LookUpParams: models.UserLookupParams{
-					UserID: nil,
-					Email:  nil,
-					Login:  ptrString("test"),
+				ClientParams: authn.ClientParams{
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  nil,
+						Login:  ptrString("test"),
+					},
+					SyncUser: true,
 				},
 			},
 		},
@@ -228,20 +228,18 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         false,
-					EnableDisabledUsers: false,
-				},
 				id: &authn.Identity{
 					ID:    "",
 					Login: "test",
 					Name:  "test",
 					Email: "test",
-					LookUpParams: models.UserLookupParams{
-						UserID: ptrInt64(1),
-						Email:  nil,
-						Login:  nil,
+					ClientParams: authn.ClientParams{
+						SyncUser: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: ptrInt64(1),
+							Email:  nil,
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -252,10 +250,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Name:           "test",
 				Email:          "test",
 				IsGrafanaAdmin: ptrBool(false),
-				LookUpParams: models.UserLookupParams{
-					UserID: ptrInt64(1),
-					Email:  nil,
-					Login:  nil,
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+					LookUpParams: models.UserLookupParams{
+						UserID: ptrInt64(1),
+						Email:  nil,
+						Login:  nil,
+					},
 				},
 			},
 		},
@@ -269,20 +270,19 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         false,
-					EnableDisabledUsers: false,
-				},
+
 				id: &authn.Identity{
 					ID:    "",
 					Login: "test",
 					Name:  "test",
 					Email: "test",
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  nil,
-						Login:  nil,
+					ClientParams: authn.ClientParams{
+						SyncUser: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  nil,
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -293,10 +293,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Name:           "test",
 				Email:          "test",
 				IsGrafanaAdmin: ptrBool(false),
-				LookUpParams: models.UserLookupParams{
-					UserID: nil,
-					Email:  nil,
-					Login:  nil,
+				ClientParams: authn.ClientParams{
+					SyncUser: true,
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  nil,
+						Login:  nil,
+					},
 				},
 			},
 		},
@@ -310,11 +313,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         false,
-					EnableDisabledUsers: false,
-				},
 				id: &authn.Identity{
 					ID:         "",
 					Login:      "test",
@@ -322,10 +320,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email:      "test",
 					AuthModule: "oauth",
 					AuthID:     "2032",
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  nil,
-						Login:  nil,
+					ClientParams: authn.ClientParams{
+						SyncUser: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  nil,
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -341,11 +342,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         true,
-					EnableDisabledUsers: true,
-				},
 				id: &authn.Identity{
 					ID:             "",
 					Login:          "test_create",
@@ -354,10 +350,15 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email:          "test_create",
 					AuthModule:     "oauth",
 					AuthID:         "2032",
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  ptrString("test_create"),
-						Login:  nil,
+					ClientParams: authn.ClientParams{
+						SyncUser:            true,
+						AllowSignUp:         true,
+						EnableDisabledUsers: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  ptrString("test_create"),
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -370,10 +371,15 @@ func TestUserSync_SyncUser(t *testing.T) {
 				AuthModule:     "oauth",
 				AuthID:         "2032",
 				IsGrafanaAdmin: ptrBool(true),
-				LookUpParams: models.UserLookupParams{
-					UserID: nil,
-					Email:  ptrString("test_create"),
-					Login:  nil,
+				ClientParams: authn.ClientParams{
+					SyncUser:            true,
+					AllowSignUp:         true,
+					EnableDisabledUsers: true,
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test_create"),
+						Login:  nil,
+					},
 				},
 			},
 		},
@@ -387,11 +393,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				clientParams: &authn.ClientParams{
-					SyncUser:            true,
-					AllowSignUp:         false,
-					EnableDisabledUsers: true,
-				},
 				id: &authn.Identity{
 					ID:             "",
 					Login:          "test_mod",
@@ -399,10 +400,14 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email:          "test_mod",
 					IsDisabled:     false,
 					IsGrafanaAdmin: ptrBool(true),
-					LookUpParams: models.UserLookupParams{
-						UserID: ptrInt64(3),
-						Email:  nil,
-						Login:  nil,
+					ClientParams: authn.ClientParams{
+						SyncUser:            true,
+						EnableDisabledUsers: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: ptrInt64(3),
+							Email:  nil,
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -414,10 +419,14 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Email:          "test_mod",
 				IsDisabled:     false,
 				IsGrafanaAdmin: ptrBool(true),
-				LookUpParams: models.UserLookupParams{
-					UserID: ptrInt64(3),
-					Email:  nil,
-					Login:  nil,
+				ClientParams: authn.ClientParams{
+					SyncUser:            true,
+					EnableDisabledUsers: true,
+					LookUpParams: models.UserLookupParams{
+						UserID: ptrInt64(3),
+						Email:  nil,
+						Login:  nil,
+					},
 				},
 			},
 		},
@@ -430,7 +439,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 				quotaService:    tt.fields.quotaService,
 				log:             tt.fields.log,
 			}
-			err := s.SyncUser(tt.args.ctx, tt.args.clientParams, tt.args.id, nil)
+			err := s.SyncUser(tt.args.ctx, tt.args.id, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return

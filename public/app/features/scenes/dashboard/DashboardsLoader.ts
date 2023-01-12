@@ -5,22 +5,27 @@ import {
   QueryVariableModel,
   VariableModel,
 } from '@grafana/data';
+import {
+  VizPanel,
+  SceneTimePicker,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneTimeRange,
+  SceneObject,
+  SceneQueryRunner,
+  SceneSubMenu,
+  SceneVariableSet,
+  VariableValueSelectors,
+  SceneVariable,
+  CustomVariable,
+  DataSourceVariable,
+  QueryVariable,
+  ConstantVariable,
+} from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
-
-import { VizPanel, SceneTimePicker, SceneGridLayout, SceneGridRow, SceneSubMenu } from '../components';
-import { SceneTimeRange } from '../core/SceneTimeRange';
-import { SceneObject } from '../core/types';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
-import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
-import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
-import { SceneVariable } from '../variables/types';
-import { ConstantVariable } from '../variables/variants/ConstantVariable';
-import { CustomVariable } from '../variables/variants/CustomVariable';
-import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
-import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
 import { DashboardScene } from './DashboardScene';
 

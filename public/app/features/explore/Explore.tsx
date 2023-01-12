@@ -79,9 +79,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(2)};
       padding-top: 0;
     `,
-    exploreContainerTopnav: css`
-      padding-top: ${theme.spacing(2)};
-    `,
   };
 };
 
@@ -409,7 +406,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showTrace,
       showNodeGraph,
       showFlameGraph,
-      splitted,
       timeZone,
       isFromCompactUrl,
     } = this.props;
@@ -441,11 +437,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         {isFromCompactUrl ? this.renderCompactUrlWarning() : null}
         {datasourceMissing ? this.renderEmptyState(styles.exploreContainer) : null}
         {datasourceInstance && (
-          <div
-            className={cx(styles.exploreContainer, {
-              [styles.exploreContainerTopnav]: Boolean(config.featureToggles.topnav && !splitted),
-            })}
-          >
+          <div className={styles.exploreContainer}>
             <PanelContainer className={styles.queryContainer}>
               <QueryRows exploreId={exploreId} />
               <SecondaryActions
