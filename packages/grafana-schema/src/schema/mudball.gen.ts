@@ -389,7 +389,10 @@ export enum BigValueTextMode {
 export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 
 /**
- * TODO docs
+ * Internally, this is the "type" of cell that's being displayed
+ * in the table such as colored text, JSON, gauge, etc.
+ * The color-background-solid, gradient-gauge, and lcd-gauge
+ * modes are deprecated in favor of new cell subOptions
  */
 export enum TableCellDisplayMode {
   Auto = 'auto',
@@ -397,10 +400,21 @@ export enum TableCellDisplayMode {
   ColorBackground = 'color-background',
   ColorBackgroundSolid = 'color-background-solid',
   ColorText = 'color-text',
+  Gauge = 'gauge',
   GradientGauge = 'gradient-gauge',
   Image = 'image',
   JSONView = 'json-view',
   LcdGauge = 'lcd-gauge',
+}
+
+/**
+ * Display mode to the "Colored Background" display
+ * mode for table cells. Either displays a solid color (basic mode)
+ * or a gradient.
+ */
+export enum TableCellBackgroundDisplayMode {
+  Basic = 'basic',
+  Gradient = 'gradient',
 }
 
 /**
@@ -465,7 +479,8 @@ export const defaultVizLegendOptions: Partial<VizLegendOptions> = {
 };
 
 /**
- * TODO docs
+ * Enum expressing the possible display modes
+ * for the bar gauge component of Grafana UI
  */
 export enum BarGaugeDisplayMode {
   Basic = 'basic',
@@ -474,11 +489,45 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
- * TODO docs
+ * Interface for table cell types that have no additional options.
+ */
+export interface TableAutoCellOptions {
+  type: TableCellDisplayMode;
+}
+
+/**
+ * Allows for the table cell gauge display type to set the gauge mode.
+ */
+export interface TableBarGaugeCellOptions {
+  mode: BarGaugeDisplayMode;
+  type: TableCellDisplayMode.Gauge;
+}
+
+/**
+ * Allows for the background display mode to be set for the color background cell.
+ */
+export interface TableColoredBackgroundCellOptions {
+  mode: TableCellBackgroundDisplayMode;
+  type: TableCellDisplayMode.ColorBackground;
+}
+
+/**
+ * Table cell options. Each cell has a display mode
+ * and other potential options for that display.
+ */
+export type TableCellOptions = (TableAutoCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions);
+
+/**
+ * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
+ * Generally defines alignment, filtering capabilties, display options, etc.
  */
 export interface TableFieldOptions {
   align: FieldTextAlignment;
-  displayMode: TableCellDisplayMode;
+  cellOptions: TableCellOptions;
+  /**
+   * This field is deprecated in favor of using cellOptions
+   */
+  displayMode?: TableCellDisplayMode;
   filterable?: boolean;
   hidden?: boolean;
   inspect: boolean;
@@ -488,7 +537,6 @@ export interface TableFieldOptions {
 
 export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
   align: 'auto',
-  displayMode: TableCellDisplayMode.Auto,
   inspect: false,
 };
 
