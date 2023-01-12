@@ -1,9 +1,10 @@
-package models
+package team
 
 import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -19,8 +20,8 @@ var (
 
 // Team model
 type Team struct {
-	Id    int64  `json:"id"`
-	OrgId int64  `json:"orgId"`
+	ID    int64  `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID int64  `json:"orgId" xorm:"org_id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
 
@@ -34,29 +35,26 @@ type Team struct {
 type CreateTeamCommand struct {
 	Name  string `json:"name" binding:"Required"`
 	Email string `json:"email"`
-	OrgId int64  `json:"-"`
-
-	Result Team `json:"-"`
+	OrgID int64  `json:"-"`
 }
 
 type UpdateTeamCommand struct {
-	Id    int64
+	ID    int64
 	Name  string
 	Email string
-	OrgId int64 `json:"-"`
+	OrgID int64 `json:"-"`
 }
 
 type DeleteTeamCommand struct {
-	OrgId int64
-	Id    int64
+	OrgID int64
+	ID    int64
 }
 
-type GetTeamByIdQuery struct {
-	OrgId        int64
-	Id           int64
+type GetTeamByIDQuery struct {
+	OrgID        int64
+	ID           int64
 	SignedInUser *user.SignedInUser
 	HiddenUsers  map[string]struct{}
-	Result       *TeamDTO
 	UserIdFilter int64
 }
 
@@ -64,9 +62,8 @@ type GetTeamByIdQuery struct {
 const FilterIgnoreUser int64 = 0
 
 type GetTeamsByUserQuery struct {
-	OrgId        int64
-	UserId       int64      `json:"userId"`
-	Result       []*TeamDTO `json:"teams"`
+	OrgID        int64
+	UserID       int64 `json:"userId"`
 	SignedInUser *user.SignedInUser
 }
 
@@ -75,23 +72,21 @@ type SearchTeamsQuery struct {
 	Name         string
 	Limit        int
 	Page         int
-	OrgId        int64
-	UserIdFilter int64
+	OrgID        int64 `xorm:"org_id"`
+	UserIDFilter int64 `xorm:"user_id_filter"`
 	SignedInUser *user.SignedInUser
 	HiddenUsers  map[string]struct{}
-
-	Result SearchTeamQueryResult
 }
 
 type TeamDTO struct {
-	Id            int64           `json:"id"`
-	OrgId         int64           `json:"orgId"`
-	Name          string          `json:"name"`
-	Email         string          `json:"email"`
-	AvatarUrl     string          `json:"avatarUrl"`
-	MemberCount   int64           `json:"memberCount"`
-	Permission    PermissionType  `json:"permission"`
-	AccessControl map[string]bool `json:"accessControl"`
+	ID            int64                 `json:"id" xorm:"id"`
+	OrgID         int64                 `json:"orgId" xorm:"org_id"`
+	Name          string                `json:"name"`
+	Email         string                `json:"email"`
+	AvatarURL     string                `json:"avatarUrl"`
+	MemberCount   int64                 `json:"memberCount"`
+	Permission    models.PermissionType `json:"permission"`
+	AccessControl map[string]bool       `json:"accessControl"`
 }
 
 type SearchTeamQueryResult struct {
@@ -103,5 +98,4 @@ type SearchTeamQueryResult struct {
 
 type IsAdminOfTeamsQuery struct {
 	SignedInUser *user.SignedInUser
-	Result       bool
 }

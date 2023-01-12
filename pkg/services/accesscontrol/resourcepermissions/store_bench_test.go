@@ -153,7 +153,7 @@ func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]in
 		teamEmail := fmt.Sprintf("%s@example.org", teamName)
 		team, err := teamSvc.CreateTeam(teamName, teamEmail, 1)
 		require.NoError(b, err)
-		teamId := team.Id
+		teamId := team.ID
 		teamIds = append(teamIds, teamId)
 
 		// Create team users

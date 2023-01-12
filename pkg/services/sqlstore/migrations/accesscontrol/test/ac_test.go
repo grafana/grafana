@@ -16,6 +16,7 @@ import (
 	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -315,16 +316,16 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 	require.Equal(t, int64(5), orgUsersCount, "needed 5 users for this test to run")
 
 	// Setup teams (and members)
-	teams := []models.Team{
+	teams := []team.Team{
 		{
-			OrgId:   1,
+			OrgID:   1,
 			Name:    "teamOrg1",
 			Email:   "teamorg1@example.org",
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   2,
+			OrgID:   2,
 			Name:    "teamOrg2",
 			Email:   "teamorg2@example.org",
 			Created: now,
