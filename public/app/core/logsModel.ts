@@ -15,7 +15,6 @@ import {
   FieldColorModeId,
   FieldConfig,
   FieldType,
-  FieldWithIndex,
   findCommonLabels,
   findUniqueLabels,
   Labels,
@@ -39,6 +38,7 @@ import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
+import { parseLogsFrame, LogsFrame } from '../features/logs/logsFrame';
 import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from '../features/logs/utils';
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -308,40 +308,8 @@ function separateLogsAndMetrics(dataFrames: DataFrame[]) {
 
 interface LogFields {
   series: DataFrame;
-
-  timeField: FieldWithIndex;
-  stringField: FieldWithIndex;
-  labelsField?: FieldWithIndex;
-  timeNanosecondField?: FieldWithIndex;
-  logLevelField?: FieldWithIndex;
-  idField?: FieldWithIndex;
-}
-
-function getAllLabels(fields: LogFields): Labels[] {
-  // there are two types of dataframes we handle:
-  // 1. labels are in a separate field (more efficient when labels change by every log-row)
-  // 2. labels are in in the string-field's `.labels` attribute
-
-  const { stringField, labelsField } = fields;
-
-  if (labelsField !== undefined) {
-    return labelsField.values.toArray();
-  } else {
-    return [stringField.labels ?? {}];
-  }
-}
-
-function getLabelsForFrameRow(fields: LogFields, index: number): Labels {
-  // there are two types of dataframes we handle.
-  // either labels-on-the-string-field, or labels-in-the-labels-field
-
-  const { stringField, labelsField } = fields;
-
-  if (labelsField !== undefined) {
-    return labelsField.values.get(index);
-  } else {
-    return stringField.labels ?? {};
-  }
+  parsedFrame: LogsFrame;
+  allRowlabels: Labels[];
 }
 
 /**
@@ -352,8 +320,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
   if (logSeries.length === 0) {
     return undefined;
   }
-  const allLabels: Labels[][] = [];
-
   // Find the fields we care about and collect all labels
   let allSeries: LogFields[] = [];
 
@@ -363,44 +329,32 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
   if (seriesWithFields.length) {
     seriesWithFields.forEach((series) => {
-      const fieldCache = new FieldCache(series);
-      const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
-      const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
-      // NOTE: this is experimental, please do not use in your code.
-      // we will get this custom-frame-type into the "real" frame-type list soon,
-      // but the name might change, so please do not use it until then.
-      const labelsField =
-        series.meta?.custom?.frameType === 'LabeledTimeValues' ? fieldCache.getFieldByName('labels') : undefined;
+      const parsedFrame = parseLogsFrame(series);
 
-      if (stringField !== undefined && timeField !== undefined) {
+      if (parsedFrame != null) {
         const info = {
           series,
-          timeField,
-          labelsField,
-          timeNanosecondField: fieldCache.getFieldByName('tsNs'),
-          stringField,
-          logLevelField: fieldCache.getFieldByName('level'),
-          idField: getIdField(fieldCache),
+          parsedFrame,
+          // we extract the labels separately here, because we need them to calculate
+          // the common&unique-labels later
+          allRowlabels: parsedFrame.getLabels(),
         };
 
         allSeries.push(info);
-
-        const labels = getAllLabels(info);
-        if (labels.length > 0) {
-          allLabels.push(labels);
-        }
       }
     });
   }
 
-  const flatAllLabels = allLabels.flat();
+  const flatAllLabels = allSeries.map((frame) => frame.allRowlabels).flat();
   const commonLabels = flatAllLabels.length > 0 ? findCommonLabels(flatAllLabels) : {};
 
   const rows: LogRowModel[] = [];
   let hasUniqueLabels = false;
 
   for (const info of allSeries) {
-    const { timeField, timeNanosecondField, stringField, logLevelField, idField, series } = info;
+    const { series, parsedFrame, allRowlabels } = info;
+
+    const { timeField, timeNanosecondField, lineField: stringField, logLevelField, idField } = parsedFrame;
 
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
@@ -420,7 +374,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
       const entry = hasAnsi ? ansicolor.strip(message) : message;
 
-      const labels = getLabelsForFrameRow(info, j);
+      const labels = allRowlabels[j];
       const uniqueLabels = findUniqueLabels(labels, commonLabels);
       if (Object.keys(uniqueLabels).length > 0) {
         hasUniqueLabels = true;
@@ -530,17 +484,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
     meta,
     rows,
   };
-}
-
-function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
-  const idFieldNames = ['id'];
-  for (const fieldName of idFieldNames) {
-    const idField = fieldCache.getFieldByName(fieldName);
-    if (idField) {
-      return idField;
-    }
-  }
-  return undefined;
 }
 
 // Used to add additional information to Line limit meta info
