@@ -193,7 +193,15 @@ export const LogGroupsSelector = ({
           </div>
         </div>
         <Space layout="block" v={2} />
-        <EditorField label="Template variable" width={26}>
+        <Label className={styles.logGroupCountLabel}>
+          {selectedLogGroupsCounter} log group{selectedLogGroupsCounter !== 1 && 's'} selected
+        </Label>
+        <Space layout="block" v={1} />
+        <EditorField
+          label="Template variable"
+          width={26}
+          tooltip="Optionally you can specify a single or multi-valued template variable. Select a variable separately or in conjunction with log groups."
+        >
           <Select
             isClearable
             aria-label="Template variable"
