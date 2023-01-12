@@ -471,29 +471,7 @@ export class Scene {
 
       // If selected target is a connection control, eject to handle connection event
       if (selectedTarget.id === CONNECTION_ANCHOR_DIV_ID) {
-        this.selecto!.rootContainer!.style.cursor = 'crosshair';
-        if (this.connections.connectionSVG && this.connections.connectionLine && this.div && this.div.parentElement) {
-          const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
-          const parentBoundingRect = this.div.parentElement.getBoundingClientRect();
-
-          // TODO: Make this not as magic numbery -> related to the height / width of highlight ellipse
-          const connectionAnchorHighlightOffset = 8;
-          const x = connectionStartTargetBox.x - parentBoundingRect.x + connectionAnchorHighlightOffset;
-          const y = connectionStartTargetBox.y - parentBoundingRect.y + connectionAnchorHighlightOffset;
-
-          const mouseX = event.inputEvent.clientX - parentBoundingRect.x;
-          const mouseY = event.inputEvent.clientY - parentBoundingRect.y;
-
-          this.connections.connectionLine.setAttribute('x1', `${x}`);
-          this.connections.connectionLine.setAttribute('y1', `${y}`);
-          this.connections.connectionLine.setAttribute('x2', `${mouseX}`);
-          this.connections.connectionLine.setAttribute('y2', `${mouseY}`);
-          this.connections.connectionSVG.style.display = 'block';
-
-          this.connections.isDrawingConnection = true;
-        }
-
-        this.selecto?.rootContainer?.addEventListener('mousemove', this.connections.connectionListener);
+        this.connections.handleConnectionDragStart(selectedTarget, event.inputEvent.clientX, event.inputEvent.clientY);
         event.stop();
         return;
       }
