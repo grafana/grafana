@@ -65,7 +65,7 @@ func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 		// user
 		user, err := usrSvc.CreateUserForTests(context.Background(), &userCmd)
 		require.NoError(t, err)
-		err = teamSvc.AddTeamMember(user.ID, testOrgID, team.Id, false, 1)
+		err = teamSvc.AddTeamMember(user.ID, testOrgID, team.ID, false, 1)
 		require.NoError(t, err)
 	}
 }

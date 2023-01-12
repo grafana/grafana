@@ -1,6 +1,6 @@
 import { interval, lastValueFrom, of } from 'rxjs';
 
-import { dataFrameToJSON, DataQueryErrorType, FieldType, LogLevel, LogRowModel, MutableDataFrame } from '@grafana/data';
+import { DataQueryErrorType, FieldType, LogLevel, LogRowModel, MutableDataFrame } from '@grafana/data';
 
 import { genMockFrames, setupMockedLogsQueryRunner } from '../__mocks__/LogsQueryRunner';
 import { validLogsQuery } from '../__mocks__/queries';
@@ -48,34 +48,6 @@ describe('CloudWatchLogsQueryRunner', () => {
       await runner.getLogRowContext(row, { direction: 'FORWARD' }, { ...validLogsQuery, region: 'eu-east' });
       expect(fetchMock.mock.calls[1][0].data.queries[0].startTime).toBe(4);
       expect(fetchMock.mock.calls[1][0].data.queries[0].region).toBe('eu-east');
-    });
-  });
-
-  describe('getLogGroupFields', () => {
-    it('passes region correctly', async () => {
-      const { runner, fetchMock } = setupMockedLogsQueryRunner();
-      fetchMock.mockReturnValueOnce(
-        of({
-          data: {
-            results: {
-              A: {
-                frames: [
-                  dataFrameToJSON(
-                    new MutableDataFrame({
-                      fields: [
-                        { name: 'key', values: [] },
-                        { name: 'val', values: [] },
-                      ],
-                    })
-                  ),
-                ],
-              },
-            },
-          },
-        })
-      );
-      await runner.getLogGroupFields({ region: 'us-west-1', logGroupName: 'test' });
-      expect(fetchMock.mock.calls[0][0].data.queries[0].region).toBe('us-west-1');
     });
   });
 

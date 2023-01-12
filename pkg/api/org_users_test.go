@@ -244,7 +244,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_TeamAdmin(t *testing.T) {
 	// Setup store teams
 	team1, err := sc.teamService.CreateTeam("testteam1", "testteam1@example.org", testOrgID)
 	require.NoError(t, err)
-	err = sc.teamService.AddTeamMember(testUserID, testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
+	err = sc.teamService.AddTeamMember(testUserID, testOrgID, team1.ID, false, models.PERMISSION_ADMIN)
 	require.NoError(t, err)
 
 	response := callAPI(sc.server, http.MethodGet, "/api/org/users/lookup", nil, t)
