@@ -251,7 +251,7 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
 
     const supplementaryQueries = getState().explore[exploreId]!.supplementaryQueries;
     // Cancel all data providers
-    for (const { type } of Object.values(supplementaryQueriesList)) {
+    for (const { type } of supplementaryQueriesList) {
       dispatch(cleanSupplementaryQueryDataProviderAction({ exploreId, type }));
 
       // And clear any incomplete data
@@ -599,7 +599,7 @@ export const runQueries = (
         });
 
       if (live) {
-        for (const { type } of Object.values(supplementaryQueriesList)) {
+        for (const { type } of supplementaryQueriesList) {
           dispatch(
             cleanSupplementaryQueryDataProviderAction({
               exploreId,
@@ -609,7 +609,7 @@ export const runQueries = (
           dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
         }
       } else {
-        for (const { type, getProviderFunc, requestId } of Object.values(supplementaryQueriesList)) {
+        for (const { type, getProviderFunc, requestId } of supplementaryQueriesList) {
           const getProvider = getProviderFunc(datasourceInstance);
           if (getProvider) {
             // We always prepare provider, even is supplementary query is disabled because when the user
