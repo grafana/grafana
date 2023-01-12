@@ -29,3 +29,7 @@ Description. Include an overview of the feature and problem it solves, and where
 We've improved the design and functionality of email templates to make template creation much easier and more customizable. The email template framework utilizes MJML to define and compile the final email HTML output. Sprig functions in the email templates provide more customizable template functions.
 
 {{< figure src="/static/img/docs/alerting/alert-templates-whats-new-v9.3.png" max-width="750px" caption="Email template redesign" >}}
+
+## Log details
+
+The details section of a logline have been updated. Previously some of the interactions, such as filtering, showing statistics or toggling the visibility were split across "Labels" and "Detected fields". With these changes those two sections were unified into one and the interactions are shared across all fields.
