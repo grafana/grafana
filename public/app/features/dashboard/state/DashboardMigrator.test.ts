@@ -2178,6 +2178,22 @@ describe('when generating the legend for a panel', () => {
   });
 });
 
+describe('when migrating table cell display mode to cell options', () => {
+  let model: DashboardModel;
+
+  beforeEach(() => {
+    model = new DashboardModel({});
+  });
+
+  it('should migrate color background options to the new option format', () => {
+    console.log(model);
+  });
+
+  it('should migrate gauge options to the new option format', () => {});
+
+  it('should not add options for cell types without extra options', () => {});
+});
+
 function createRow(options: any, panelDescriptions: any[]) {
   const PANEL_HEIGHT_STEP = GRID_CELL_HEIGHT + GRID_CELL_VMARGIN;
   const { collapse, showTitle, title, repeat, repeatIteration } = options;
