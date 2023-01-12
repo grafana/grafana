@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -22,36 +22,49 @@ interface ConnectionInfo {
 export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   const styles = useStyles2(getStyles);
 
-  let selectedConnection: CanvasConnection | undefined = undefined;
+  const CONNECTION_LINE_ID = 'connectionLineId';
+
+  const [selectedConnection, setSelectedConnection] = useState<CanvasConnection | undefined>(undefined);
+
+  // Need to use ref to ensure state is not stale in event handler
+  const selectedConnectionRef = useRef(selectedConnection);
+  useEffect(() => {
+    selectedConnectionRef.current = selectedConnection;
+  });
+
   const onKeyUp = (e: KeyboardEvent) => {
     if (e.keyCode === 8) {
-      if (selectedConnection) {
-        const sourceElement = scene.byName.get(selectedConnection?.sourceName ?? '');
+      if (selectedConnectionRef.current) {
+        const sourceElement = scene.byName.get(selectedConnectionRef.current.sourceName ?? '');
 
         if (sourceElement) {
           sourceElement.options.connections = sourceElement!.options.connections?.filter(
-            (connection) => connection !== selectedConnection
+            (connection) => connection !== selectedConnectionRef.current
           );
           sourceElement.onChange(sourceElement.options);
         }
 
-        selectedConnection = undefined;
+        setSelectedConnection(undefined);
       }
     }
 
-    window.document.removeEventListener('keyup', onKeyUp);
+    document.removeEventListener('keyup', onKeyUp);
     scene.selecto!.rootContainer!.removeEventListener('click', clearSelectedConnection);
   };
 
   const clearSelectedConnection = (event: MouseEvent) => {
     // TODO: Handle case where clicking on connections
-    selectedConnection = undefined;
+    const eventTarget = event.target;
+
+    if (!(eventTarget instanceof SVGLineElement && eventTarget.id === CONNECTION_LINE_ID)) {
+      setSelectedConnection(undefined);
+    }
   };
 
   const selectConnection = (connection: CanvasConnection) => {
-    selectedConnection = connection;
+    setSelectedConnection(connection);
 
-    window.document.addEventListener('keyup', onKeyUp);
+    document.addEventListener('keyup', onKeyUp);
     scene.selecto!.rootContainer!.addEventListener('click', clearSelectedConnection);
   };
 
@@ -115,7 +128,9 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
         y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
       }
 
-      // TODO: Handle showing visual feedback when selected
+      const isSelected = selectedConnection === info;
+      const selectedStyles = { stroke: '#44aaff', strokeWidth: 3 };
+
       return (
         <svg className={styles.connection} key={idx}>
           <g onClick={() => selectConnection(info)}>
@@ -134,6 +149,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
               </marker>
             </defs>
             <line
+              id={CONNECTION_LINE_ID}
               stroke="rgb(255,255,255)"
               pointerEvents="auto"
               strokeWidth={2}
@@ -142,6 +158,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
               y1={y1}
               x2={x2}
               y2={y2}
+              style={isSelected ? selectedStyles : {}}
             />
           </g>
         </svg>
