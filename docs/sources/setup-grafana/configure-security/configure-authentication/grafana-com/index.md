@@ -10,11 +10,11 @@ weight: 500
 
 To enable GrafanaCom as your authentication provider, you configure it to generate a client ID and a secret key.
 
-## Create Grafana Com OAuth keys
+## Create GrafanaCom OAuth keys
 
-To use Grafana Com authentication:
+To use GrafanaCom authentication:
 
-1. Log in to [Grafana Com](https://grafana.com).
+1. Log in to [GrafanaCom](https://grafana.com).
 1. To create an OAuth client, locate your organization and click **OAuth Clients**.
 1. Click **Add OAuth Client Application**.
 1. Add the name and URL of your running Grafana instance.
