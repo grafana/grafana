@@ -780,7 +780,3 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 func (s *sqlEntityServer) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
 	return fmt.Errorf("unimplemented")
 }
-
-func (s *sqlEntityServer) WatchQuery(*entity.EntityWatchQueryRequest, entity.EntityStore_WatchQueryServer) error {
-	return fmt.Errorf("unimplemented")
-}

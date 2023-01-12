@@ -367,40 +367,26 @@ message EntityWatchRequest {
   // Timestamp of last changes. Empty will default to  
   int64 since = 1; 
   
-  // Watch a sppecific GRN
+  // Watch sppecific entities
   repeated GRN GRN = 2;
 
-  // Return the full body in each payload
-  bool with_body = 3;
-
-  // Return the full body in each payload
-  bool with_labels = 4;
-
-  // Return the full body in each payload
-  bool with_fields = 5;
-}
-
-message EntityWatchQueryRequest {
-  // Timestamp of last changes. Empty will default to  
-  int64 since = 1; 
-  
   // limit to a specific kind (empty is all)
-  repeated string kind = 2;
+  repeated string kind = 3;
 
   // Limit results to items in a specific folder
-  string folder = 3;
+  string folder = 4;
 
   // Must match all labels
-  map<string,string> labels = 4;
+  map<string,string> labels = 5;
 
   // Return the full body in each payload
-  bool with_body = 5;
+  bool with_body = 6;
 
   // Return the full body in each payload
-  bool with_labels = 6;
+  bool with_labels = 7;
 
   // Return the full body in each payload
-  bool with_fields = 7;
+  bool with_fields = 8;
 }
 
 message EntityWatchResponse {
@@ -435,7 +421,6 @@ service EntityStore {
   rpc History(EntityHistoryRequest) returns (EntityHistoryResponse);
   rpc Search(EntitySearchRequest) returns (EntitySearchResponse);
   rpc Watch(EntityWatchRequest) returns (stream EntityWatchResponse);
-  rpc WatchQuery(EntityWatchQueryRequest) returns (stream EntityWatchResponse);
   
   // TEMPORARY... while we split this into a new service (see below)
   rpc AdminWrite(AdminWriteEntityRequest) returns (WriteEntityResponse);

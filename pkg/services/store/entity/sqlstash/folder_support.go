@@ -73,10 +73,16 @@ func updateFolderTree(ctx context.Context, tx *session.SessionTx, tenant int64) 
 	}
 
 	for _, folder := range root.children {
-		addFolderInfo(ctx, tx, tenant, []*folderInfo{folder}, false)
+		err = addFolderInfo(ctx, tx, tenant, []*folderInfo{folder}, false)
+		if err != nil {
+			return err
+		}
 	}
 	for _, folder := range lost {
-		addFolderInfo(ctx, tx, tenant, []*folderInfo{folder}, true)
+		err = addFolderInfo(ctx, tx, tenant, []*folderInfo{folder}, true)
+		if err != nil {
+			return err
+		}
 	}
 	return err
 }

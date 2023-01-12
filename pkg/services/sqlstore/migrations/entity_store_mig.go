@@ -76,10 +76,10 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false, IsPrimaryKey: true},
 			{Name: "tenant_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
-			{Name: "slug_path", Type: migrator.DB_Text, Nullable: false}, // /slug/slug/slug/
-			{Name: "tree", Type: migrator.DB_Text, Nullable: false},      // JSON []{uid, title}
-			{Name: "depth", Type: migrator.DB_Int, Nullable: false},      // starts at 1
-			{Name: "detached", Type: migrator.DB_Bool, Nullable: false},  // a parent folder was not found
+			getLatinPathColumn("slug_path"),                             ///slug/slug/slug/
+			{Name: "tree", Type: migrator.DB_Text, Nullable: false},     // JSON []{uid, title}
+			{Name: "depth", Type: migrator.DB_Int, Nullable: false},     // starts at 1
+			{Name: "detached", Type: migrator.DB_Bool, Nullable: false}, // a parent folder was not found
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"tenant_id", "uid"}, Type: migrator.UniqueIndex},
