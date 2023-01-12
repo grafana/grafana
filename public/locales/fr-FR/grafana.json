@@ -542,7 +542,7 @@
       "name-label": "Nom",
       "username-label": "Nom d’utilisateur"
     },
-    "title": "Modifier le profil"
+    "title": "Profil"
   },
   "user-session": {
     "browser-column": "Navigateur et système d'exploitation",
