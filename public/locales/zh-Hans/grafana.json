@@ -5,6 +5,21 @@
       "success": ""
     }
   },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "默认"
@@ -83,7 +98,6 @@
   "datasource-onboarding": {
     "contact-admin": "",
     "explanation": "",
-    "logo": "",
     "new-dashboard": "",
     "preferred": "",
     "sampleData": "",

@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { SceneEditor, SceneObject } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
-
-import { SceneEditor, SceneObject } from '../core/types';
 
 export function SceneComponentEditWrapper({
   model,

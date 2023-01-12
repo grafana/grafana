@@ -158,6 +158,7 @@ export const PromSettings = (props: Props) => {
                   placeholder="15s"
                   onChange={onChangeHandler('timeInterval', options, onOptionsChange)}
                   validationEvents={promSettingsValidationEvents}
+                  disabled={options.readOnly}
                 />
               }
               tooltip="Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s."
@@ -178,6 +179,7 @@ export const PromSettings = (props: Props) => {
                   spellCheck={false}
                   placeholder="60s"
                   validationEvents={promSettingsValidationEvents}
+                  disabled={options.readOnly}
                 />
               }
               tooltip="Set the Prometheus query timeout."
@@ -198,6 +200,7 @@ export const PromSettings = (props: Props) => {
             value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
             onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
             className="width-6"
+            disabled={options.readOnly}
           />
         </div>
       </div>
@@ -242,6 +245,7 @@ export const PromSettings = (props: Props) => {
                     }
                   )}
                   width={20}
+                  disabled={options.readOnly}
                 />
               }
               tooltip="Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing this field will save your current settings, and attempt to detect the version."
@@ -263,6 +267,7 @@ export const PromSettings = (props: Props) => {
                     )}
                     onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
                     width={20}
+                    disabled={options.readOnly}
                   />
                 }
                 tooltip={`Use this to set the version of your ${options.jsonData.prometheusType} instance if it is not automatically configured.`}
@@ -279,6 +284,7 @@ export const PromSettings = (props: Props) => {
             labelWidth={28}
             label="Disable metrics lookup"
             tooltip="Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances."
+            disabled={options.readOnly}
           >
             <InlineSwitch
               value={options.jsonData.disableMetricsLookup ?? false}
@@ -299,6 +305,7 @@ export const PromSettings = (props: Props) => {
                   onChange={onChangeHandler('customQueryParameters', options, onOptionsChange)}
                   spellCheck={false}
                   placeholder="Example: max_source_resolution=5m&timeout=10"
+                  disabled={options.readOnly}
                 />
               }
             />
@@ -314,6 +321,7 @@ export const PromSettings = (props: Props) => {
             exemplarOptions
           )
         }
+        disabled={options.readOnly}
       />
     </>
   );

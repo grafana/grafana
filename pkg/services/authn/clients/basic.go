@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var (
@@ -33,6 +34,8 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, errDecodingBasicAuthHeader.Errorf("failed to decode basic auth header: %w", err)
 	}
 
+	r.SetMeta(authn.MetaKeyUsername, username)
+
 	ok, err := c.loginAttempts.Validate(ctx, username)
 	if err != nil {
 		return nil, err
@@ -46,7 +49,7 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	for _, pwClient := range c.clients {
-		identity, err := pwClient.AuthenticatePassword(ctx, r.OrgID, username, password)
+		identity, err := pwClient.AuthenticatePassword(ctx, r, username, password)
 		if err != nil {
 			if errors.Is(err, errIdentityNotFound) {
 				// continue to next password client if identity could not be found
@@ -54,7 +57,7 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 			}
 			if errors.Is(err, errInvalidPassword) {
 				// only add login attempt if identity was found but the provided password was invalid
-				_ = c.loginAttempts.Add(ctx, username, r.HTTPRequest.RemoteAddr)
+				_ = c.loginAttempts.Add(ctx, username, web.RemoteAddr(r.HTTPRequest))
 			}
 			return nil, errBasicAuthCredentials.Errorf("failed to authenticate identity: %w", err)
 		}
