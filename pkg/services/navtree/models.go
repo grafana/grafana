@@ -41,9 +41,6 @@ const (
 	NavIDDashboardsBrowse   = "dashboards/browse"
 	NavIDCfg                = "cfg" // NavIDCfg is the id for org configuration navigation node
 	NavIDAdmin              = "admin"
-	NavIDAdminGeneral       = "admin/general"
-	NavIDAdminPlugins       = "admin/plugins"
-	NavIDAdminAccess        = "admin/access"
 	NavIDAlertsAndIncidents = "alerts-and-incidents"
 	NavIDAlerting           = "alerting"
 	NavIDMonitoring         = "monitoring"
