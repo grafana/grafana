@@ -114,11 +114,10 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(logger log.Logger, queries []
 		}
 
 		resources := []string{}
-		if azureLogAnalyticsTarget.Resource != "" {
-			resources = []string{azureLogAnalyticsTarget.Resource}
-		}
 		if len(azureLogAnalyticsTarget.Resources) > 0 {
 			resources = azureLogAnalyticsTarget.Resources
+		} else if azureLogAnalyticsTarget.Resource != "" {
+			resources = []string{azureLogAnalyticsTarget.Resource}
 		}
 		azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, &AzureLogAnalyticsQuery{
 			RefID:        query.RefID,
