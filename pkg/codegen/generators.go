@@ -17,7 +17,7 @@ type ManyToMany codejen.ManyToMany[*DeclForGen]
 
 // ForGen is a codejen input transformer that converts a pure kindsys.SomeDecl into
 // a DeclForGen by binding its contained lineage.
-func ForGen(rt *thema.Runtime, decl *kindsys.SomeDecl) (*DeclForGen, error) {
+func ForGen(rt *thema.Runtime, decl kindsys.SomeDecl) (*DeclForGen, error) {
 	lin, err := decl.BindKindLineage(rt)
 	if err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func ForGen(rt *thema.Runtime, decl *kindsys.SomeDecl) (*DeclForGen, error) {
 // DeclForGen wraps [kindsys.SomeDecl] to provide trivial caching of
 // the lineage declared by the kind (nil for raw kinds).
 type DeclForGen struct {
-	*kindsys.SomeDecl
+	kindsys.SomeDecl
 	lin thema.Lineage
 }
 

@@ -57,6 +57,9 @@ type Interface interface {
 	// a Decl() method through which these same properties are accessible.
 	Props() SomeKindProperties
 
+	// TODO docs
+	Lineage() thema.Lineage
+
 	// TODO remove, unnecessary with Props()
 	Name() string
 
@@ -71,18 +74,19 @@ type Core interface {
 	Interface
 
 	// TODO docs
-	Lineage() thema.Lineage
-
-	// TODO docs
-	Decl() *Decl[CoreProperties] // TODO figure out how to reconcile this interface with CustomProperties
+	Decl() Decl[CoreProperties]
 }
 
-// type Composable interface {
-// 	Interface
-//
-// 	// TODO docs
-// 	Lineage() thema.Lineage
-//
-// 	// TODO docs
-// 	Properties() CoreProperties // TODO figure out how to reconcile this interface with CustomProperties
-// }
+type Custom interface {
+	Interface
+
+	// TODO docs
+	Decl() Decl[CustomProperties]
+}
+
+type Composable interface {
+	Interface
+
+	// TODO docs
+	Decl() Decl[ComposableProperties]
+}

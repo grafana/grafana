@@ -38,7 +38,6 @@ type (
 	}
 	tvars_kind_registry struct {
 		// Header tvars_autogen_header
-		NumStructured     int
 		PackageName       string
 		KindPackagePrefix string
 		Kinds             []*DeclForGen

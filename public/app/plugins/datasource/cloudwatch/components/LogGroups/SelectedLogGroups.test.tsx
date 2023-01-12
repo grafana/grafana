@@ -2,9 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { LogGroup } from '../types';
+import { LogGroup } from '../../types';
 
-import { SelectedLogsGroups } from './SelectedLogsGroups';
+import { SelectedLogGroups } from './SelectedLogGroups';
 
 const selectedLogGroups: LogGroup[] = [
   {
@@ -27,11 +27,11 @@ describe('SelectedLogsGroups', () => {
   });
   describe("'Show more' button", () => {
     it('should not be displayed in case 0 logs have been selected', async () => {
-      render(<SelectedLogsGroups {...defaultProps} selectedLogGroups={[]} />);
+      render(<SelectedLogGroups {...defaultProps} selectedLogGroups={[]} />);
       await waitFor(() => expect(screen.queryByText('Show all')).not.toBeInTheDocument());
     });
     it('should not be displayed in case logs group have been selected but theyre less than 10', async () => {
-      render(<SelectedLogsGroups {...defaultProps} />);
+      render(<SelectedLogGroups {...defaultProps} />);
       await waitFor(() => expect(screen.queryByText('Show all')).not.toBeInTheDocument());
     });
     it('should be displayed in case more than 10 log groups have been selected', async () => {
@@ -39,14 +39,14 @@ describe('SelectedLogsGroups', () => {
         arn: `logGroup${i}`,
         name: `logGroup${i}`,
       }));
-      render(<SelectedLogsGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
+      render(<SelectedLogGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
       await waitFor(() => expect(screen.getByText('Show all')).toBeInTheDocument());
     });
   });
 
   describe("'Clear selection' button", () => {
     it('should not be displayed in case 0 logs have been selected', async () => {
-      render(<SelectedLogsGroups {...defaultProps} selectedLogGroups={[]} />);
+      render(<SelectedLogGroups {...defaultProps} selectedLogGroups={[]} />);
       await waitFor(() => expect(screen.queryByText('Clear selection')).not.toBeInTheDocument());
     });
     it('should be displayed in case at least one log group have been selected', async () => {
@@ -54,7 +54,7 @@ describe('SelectedLogsGroups', () => {
         arn: `logGroup${i}`,
         name: `logGroup${i}`,
       }));
-      render(<SelectedLogsGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
+      render(<SelectedLogGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
       await waitFor(() => expect(screen.getByText('Clear selection')).toBeInTheDocument());
     });
 
@@ -63,7 +63,7 @@ describe('SelectedLogsGroups', () => {
         arn: `logGroup${i}`,
         name: `logGroup${i}`,
       }));
-      render(<SelectedLogsGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
+      render(<SelectedLogGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
       await waitFor(() => userEvent.click(screen.getByText('Clear selection')));
       await waitFor(() =>
         expect(screen.getByText('Are you sure you want to clear all log groups?')).toBeInTheDocument()
@@ -75,7 +75,7 @@ describe('SelectedLogsGroups', () => {
 
   describe("'Clear selection' button", () => {
     it('should not be displayed in case 0 logs have been selected', async () => {
-      render(<SelectedLogsGroups {...defaultProps} selectedLogGroups={[]} />);
+      render(<SelectedLogGroups {...defaultProps} selectedLogGroups={[]} />);
       await waitFor(() => expect(screen.queryByText('Clear selection')).not.toBeInTheDocument());
     });
     it('should be displayed in case at least one log group have been selected', async () => {
@@ -83,7 +83,7 @@ describe('SelectedLogsGroups', () => {
         arn: `logGroup${i}`,
         name: `logGroup${i}`,
       }));
-      render(<SelectedLogsGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
+      render(<SelectedLogGroups {...defaultProps} selectedLogGroups={selectedLogGroups} />);
       await waitFor(() => expect(screen.getByText('Clear selection')).toBeInTheDocument());
     });
   });

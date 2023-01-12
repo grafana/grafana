@@ -38,7 +38,7 @@ describe('<DataSourcesList>', () => {
 
     expect(await screen.findAllByRole('listitem')).toHaveLength(3);
     expect(await screen.findAllByRole('heading')).toHaveLength(3);
-    expect(await screen.findAllByRole('link', { name: 'Build a Dashboard' })).toHaveLength(3);
+    expect(await screen.findAllByRole('link', { name: /Build a dashboard/i })).toHaveLength(3);
     expect(await screen.findAllByRole('link', { name: 'Explore' })).toHaveLength(3);
   });
 
