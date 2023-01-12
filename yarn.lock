@@ -4923,13 +4923,13 @@ __metadata:
   linkType: soft
 
 "@grafana/e2e-selectors@npm:canary":
-  version: 9.4.0-96092pre
-  resolution: "@grafana/e2e-selectors@npm:9.4.0-96092pre"
+  version: 9.4.0-96193pre
+  resolution: "@grafana/e2e-selectors@npm:9.4.0-96193pre"
   dependencies:
     "@grafana/tsconfig": ^1.2.0-rc1
     tslib: 2.4.1
     typescript: 4.8.4
-  checksum: f9ba422afbb5745eeabdda904993ed3006b235d3a36604d6fbac73a38179665ac63ec865734c483b260671ed0b15c18d8b189fad0ae81a8486d7673f8e8ff1a9
+  checksum: 1ce663607c0c816ec02cad33d80c38731c4dfafdc7d1693baa989b8eff6588e3cc1d8a031c4f30f888bbd8aa8768cce7c5dd4cb2455306040f39dcac933ceae4
   languageName: node
   linkType: hard
 
