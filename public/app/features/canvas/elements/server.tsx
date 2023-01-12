@@ -185,7 +185,6 @@ const ServerDisplay = ({ data }: Props) => {
         </>
       ) : data?.type === ServerTypes.Database ? (
         <>
-          {' '}
           <defs>
             <clipPath id="serverb">
               <rect
@@ -327,7 +326,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
 
   defaultSize: {
     width: 100,
-    height: 155,
+    height: 100,
   },
 
   getNewOptions: (options) => ({
@@ -339,7 +338,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
     },
     placement: {
       width: options?.placement?.width ?? 100,
-      height: options?.placement?.height ?? 155,
+      height: options?.placement?.height ?? 100,
       top: options?.placement?.top,
       left: options?.placement?.left,
     },
@@ -400,7 +399,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
         category,
         id: 'blinkRate',
         path: 'config.blinkRate',
-        name: 'Blink Rate [hz] (0 = off)',
+        name: 'Blink rate [hz] (0 = off)',
         editor: ScalarDimensionEditor,
         settings: { min: 0, max: 100 },
       });
