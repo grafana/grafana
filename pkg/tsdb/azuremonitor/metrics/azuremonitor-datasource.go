@@ -112,7 +112,7 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 			params.Add("region", azJSONModel.Region)
 		}
 		resourceIDs := []string{}
-		if isSingleR, resourceGroup, resourceName := isSingleResource(queryJSONModel); isSingleR {
+		if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel); hasOne {
 			ub := urlBuilder{
 				ResourceURI: azJSONModel.ResourceURI,
 				// Alternative, used to reconstruct resource URI if it's not present
@@ -597,7 +597,7 @@ func extractResourceIDFromMetricsURL(url string) string {
 	return strings.Split(url, "/providers/microsoft.insights/metrics")[0]
 }
 
-func isSingleResource(query types.AzureMonitorJSONQuery) (bool, string, string) {
+func hasOneResource(query types.AzureMonitorJSONQuery) (bool, string, string) {
 	azJSONModel := query.AzureMonitor
 	if len(azJSONModel.Resources) > 1 {
 		return false, "", ""
