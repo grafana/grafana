@@ -99,7 +99,7 @@ func addFolderInfo(ctx context.Context, tx *session.SessionTx, tenant int64, tre
 	_, err := tx.Exec(ctx,
 		`INSERT INTO entity_folder `+
 			"(grn, tenant_id, uid, slug_path, tree, depth, detached) "+
-			`VALUES (?, ?, ?, ?, ?, ?)`,
+			`VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		grn.ToGRNString(),
 		tenant,
 		folder.UID,

@@ -448,8 +448,8 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				oid,
 			)
 
-			if isFolder {
-				updateFolderTree(ctx, tx, grn.TenantId)
+			if isFolder && err == nil {
+				err = updateFolderTree(ctx, tx, grn.TenantId)
 			}
 			return err
 		}
@@ -481,8 +481,8 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			summary.labels, summary.fields, summary.errors,
 			origin.Source, origin.Key, origin.Time,
 		)
-		if err == nil && isFolder {
-			updateFolderTree(ctx, tx, grn.TenantId)
+		if isFolder && err == nil {
+			err = updateFolderTree(ctx, tx, grn.TenantId)
 		}
 		return err
 	})
