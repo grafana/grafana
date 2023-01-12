@@ -111,14 +111,8 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 		if azJSONModel.Region != "" {
 			params.Add("region", azJSONModel.Region)
 		}
-		if ((azJSONModel.ResourceGroup != "" || azJSONModel.ResourceName != "") && len(azJSONModel.Resources) == 0) || len(azJSONModel.Resources) == 1 {
-			// Deprecated, Resources should be used instead
-			resourceGroup := azJSONModel.ResourceGroup
-			resourceName := azJSONModel.ResourceName
-			if len(azJSONModel.Resources) == 1 {
-				resourceGroup = azJSONModel.Resources[0].ResourceGroup
-				resourceName = azJSONModel.Resources[0].ResourceName
-			}
+		resourceIDs := []string{}
+		if isSingleR, resourceGroup, resourceName := isSingleResource(queryJSONModel); isSingleR {
 			ub := urlBuilder{
 				ResourceURI: azJSONModel.ResourceURI,
 				// Alternative, used to reconstruct resource URI if it's not present
@@ -131,6 +125,17 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 			azureURL = ub.BuildMetricsURL()
 			// POST requests are only supported at the subscription level
 			filterInBody = false
+		} else {
+			for _, r := range azJSONModel.Resources {
+				ub := urlBuilder{
+					DefaultSubscription: dsInfo.Settings.SubscriptionId,
+					Subscription:        queryJSONModel.Subscription,
+					ResourceGroup:       r.ResourceGroup,
+					MetricNamespace:     azJSONModel.MetricNamespace,
+					ResourceName:        r.ResourceName,
+				}
+				resourceIDs = append(resourceIDs, fmt.Sprintf("Microsoft.ResourceId eq '%s'", ub.buildResourceURI()))
+			}
 		}
 
 		// old model
@@ -154,19 +159,6 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 			}
 		}
 
-		resourceIDs := []string{}
-		if len(azJSONModel.Resources) > 1 {
-			for _, r := range azJSONModel.Resources {
-				ub := urlBuilder{
-					DefaultSubscription: dsInfo.Settings.SubscriptionId,
-					Subscription:        queryJSONModel.Subscription,
-					ResourceGroup:       r.ResourceGroup,
-					MetricNamespace:     azJSONModel.MetricNamespace,
-					ResourceName:        r.ResourceName,
-				}
-				resourceIDs = append(resourceIDs, fmt.Sprintf("Microsoft.ResourceId eq '%s'", ub.buildResourceURI()))
-			}
-		}
 		filterString := strings.Join(resourceIDs, " or ")
 
 		if dimSB.String() != "" {
@@ -603,4 +595,19 @@ func extractResourceNameFromMetricsURL(url string) string {
 
 func extractResourceIDFromMetricsURL(url string) string {
 	return strings.Split(url, "/providers/microsoft.insights/metrics")[0]
+}
+
+func isSingleResource(query types.AzureMonitorJSONQuery) (bool, string, string) {
+	azJSONModel := query.AzureMonitor
+	if len(azJSONModel.Resources) > 1 {
+		return false, "", ""
+	}
+	if len(azJSONModel.Resources) == 1 {
+		return true, azJSONModel.Resources[0].ResourceGroup, azJSONModel.Resources[0].ResourceName
+	}
+	if azJSONModel.ResourceGroup != "" || azJSONModel.ResourceName != "" {
+		// Deprecated, Resources should be used instead
+		return true, azJSONModel.ResourceGroup, azJSONModel.ResourceName
+	}
+	return false, "", ""
 }
