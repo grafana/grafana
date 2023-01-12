@@ -272,10 +272,6 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "Includes a region and a filter in the body with multiple resources" {
-				// break
-				fmt.Println("break")
-			}
 			for k, v := range commonAzureModelProps {
 				tt.azureMonitorVariedProperties[k] = v
 			}
