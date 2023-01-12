@@ -501,8 +501,18 @@ export interface VizTooltipOptions {
 }
 
 /**
- * Specific a specific timezone from https://en.wikipedia.org/wiki/Tz_database
+ * Use UTC/GMT timezone
  */
-export type TimeZone = ('utc' | string);
+export type TimeZoneUtc = 'utc';
+
+/**
+ * Use the timezone defined by end user web browser
+ */
+export type TimeZoneBrowser = 'browser';
+
+/**
+ * A specific timezone from https://en.wikipedia.org/wiki/Tz_database
+ */
+export type TimeZone = (TimeZoneUtc | TimeZoneBrowser | string);
 
 export const defaultTimeZone: TimeZone = 'browser';
