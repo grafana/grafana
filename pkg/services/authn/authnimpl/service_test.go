@@ -126,7 +126,7 @@ func TestService_AuthenticateOrgID(t *testing.T) {
 				svc.clients["fake"] = authntest.MockClient{
 					AuthenticateFunc: func(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 						calledWith = r.OrgID
-						return nil, nil
+						return &authn.Identity{}, nil
 					},
 					TestFunc: func(ctx context.Context, r *authn.Request) bool {
 						return true
