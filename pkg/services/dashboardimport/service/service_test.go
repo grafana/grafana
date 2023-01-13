@@ -31,12 +31,12 @@ func TestImportDashboardService(t *testing.T) {
 				importDashboardArg = dto
 				return &models.Dashboard{
 					Id:       4,
-					Uid:      dto.Dashboard.Uid,
+					Uid:      dto.Dashboard.UID,
 					Slug:     dto.Dashboard.Slug,
 					OrgId:    3,
 					Version:  dto.Dashboard.Version,
 					PluginId: "prometheus",
-					FolderId: dto.Dashboard.FolderId,
+					FolderId: dto.Dashboard.FolderID,
 					Title:    dto.Dashboard.Title,
 					Data:     dto.Dashboard.Data,
 				}, nil

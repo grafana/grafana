@@ -106,17 +106,17 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		req.FolderUid = folder.UID
 	}
 
-	saveCmd := models.SaveDashboardCommand{
+	saveCmd := dashboards.SaveDashboardCommand{
 		Dashboard: generatedDash,
-		OrgId:     req.User.OrgID,
-		UserId:    req.User.UserID,
+		OrgID:     req.User.OrgID,
+		UserID:    req.User.UserID,
 		Overwrite: req.Overwrite,
-		PluginId:  req.PluginId,
-		FolderId:  req.FolderId,
+		PluginID:  req.PluginId,
+		FolderID:  req.FolderId,
 	}
 
 	dto := &dashboards.SaveDashboardDTO{
-		OrgID:     saveCmd.OrgId,
+		OrgID:     saveCmd.OrgID,
 		Dashboard: saveCmd.GetDashboardModel(),
 		Overwrite: saveCmd.Overwrite,
 		User:      req.User,
@@ -138,18 +138,18 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	}
 
 	return &dashboardimport.ImportDashboardResponse{
-		UID:              savedDashboard.Uid,
+		UID:              savedDashboard.UID,
 		PluginId:         req.PluginId,
 		Title:            savedDashboard.Title,
 		Path:             req.Path,
 		Revision:         savedDashboard.Data.Get("revision").MustInt64(1),
-		FolderId:         savedDashboard.FolderId,
+		FolderId:         savedDashboard.FolderID,
 		FolderUID:        req.FolderUid,
 		ImportedUri:      "db/" + savedDashboard.Slug,
-		ImportedUrl:      savedDashboard.GetUrl(),
+		ImportedUrl:      savedDashboard.GetURL(),
 		ImportedRevision: savedDashboard.Data.Get("revision").MustInt64(1),
 		Imported:         true,
-		DashboardId:      savedDashboard.Id,
+		DashboardId:      savedDashboard.ID,
 		Slug:             savedDashboard.Slug,
 	}, nil
 }
