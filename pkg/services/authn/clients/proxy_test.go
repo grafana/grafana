@@ -59,7 +59,7 @@ func TestProxy_Test(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AuthProxyHeaderName = "Proxy-Header"
 
-			c := ProvideProxy(cfg)
+			c, _ := ProvideProxy(cfg)
 			assert.Equal(t, tt.expectedOK, c.Test(context.Background(), tt.req))
 		})
 	}
