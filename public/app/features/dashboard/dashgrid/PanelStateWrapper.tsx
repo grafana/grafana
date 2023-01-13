@@ -46,6 +46,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
+import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 
@@ -589,6 +590,21 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const title = panel.getDisplayTitle();
     const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
 
+    let menu;
+    if (!dashboard.meta.publicDashboardAccessToken) {
+      menu = (
+        <div data-testid="panel-dropdown">
+          <PanelHeaderMenuWrapper
+            style={{ top: 0 }}
+            panel={panel}
+            dashboard={dashboard}
+            loadingState={data.state}
+            onClose={() => {}}
+          />
+        </div>
+      );
+    }
+
     if (config.featureToggles.newPanelChromeUI) {
       return (
         <PanelChrome
@@ -596,6 +612,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           height={height}
           padding={padding}
           title={title}
+          menu={menu}
           loadingState={data.state}
           status={{
             message: errorMessage,
