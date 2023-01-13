@@ -66,15 +66,16 @@ func ProvideService(
 
 	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
-	if !s.cfg.DisableLogin {
-		grafana := clients.ProvideGrafana(cfg, userService)
-		proxyClients = append(proxyClients, grafana)
-		passwordClients = append(passwordClients, grafana)
-	}
 	if s.cfg.LDAPEnabled {
 		ldap := clients.ProvideLDAP(cfg)
 		proxyClients = append(proxyClients, ldap)
 		passwordClients = append(passwordClients, ldap)
+	}
+
+	if !s.cfg.DisableLogin {
+		grafana := clients.ProvideGrafana(cfg, userService)
+		proxyClients = append(proxyClients, grafana)
+		passwordClients = append(passwordClients, grafana)
 	}
 
 	// if we have password clients configure check if basic auth or form auth is enabled
