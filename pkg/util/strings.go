@@ -1,9 +1,9 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
-	"regexp"
 	"strings"
 	"time"
 	"unicode"
@@ -34,16 +34,12 @@ func SplitString(str string) []string {
 		return []string{}
 	}
 
-	if strings.Contains(str, `"`) {
-		// Support specifying values with spaces by using quotes
-		pattern := regexp.MustCompile(`"([^"]+)"`)
-		substrs := pattern.FindAllString(str, -1)
-		if substrs == nil {
+	// JSON list syntax support
+	if strings.Index(str, "[") == 0 {
+		var res []string
+		err := json.Unmarshal([]byte(str), &res)
+		if err != nil {
 			return []string{}
-		}
-		res := make([]string, 0)
-		for _, s := range substrs {
-			res = append(res, strings.Trim(s, `"`))
 		}
 		return res
 	}
