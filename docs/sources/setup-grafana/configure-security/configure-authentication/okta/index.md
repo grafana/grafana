@@ -81,7 +81,7 @@ The `allowed_domains` option limits access to the users belonging to the specifi
 allowed_domains = mycompany.com mycompany.org
 ```
 
-In order to put values containig spaces in the list, use JSON syntax:
+In order to put values containing spaces in the list, use JSON syntax:
 
 ```ini
 allowed_groups = ["Admins", "Software Engineers"]
