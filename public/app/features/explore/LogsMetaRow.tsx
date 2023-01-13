@@ -77,7 +77,7 @@ export const LogsMetaRow = React.memo(
     if (displayedFields?.length > 0) {
       logsMetaItem.push(
         {
-          label: 'Showing only detected fields',
+          label: 'Showing only selected fields',
           value: renderMetaItem(displayedFields, LogsMetaKind.LabelsMap),
         },
         {
