@@ -1,6 +1,6 @@
 import { DataFrame, FieldType, Labels } from '@grafana/data';
 
-import { getParser, LogsParsers } from '../../../features/logs/utils';
+import { isLogLineJSON, isLogLineLogfmt } from './lineParser';
 
 export function dataFrameHasLokiError(frame: DataFrame): boolean {
   const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values.toArray() ?? [];
@@ -24,11 +24,10 @@ export function extractLogParserFromDataFrame(frame: DataFrame): { hasLogfmt: bo
   let hasLogfmt = false;
 
   logLines.forEach((line) => {
-    const parser = getParser(line);
-    if (parser === LogsParsers.JSON) {
+    if (isLogLineJSON(line)) {
       hasJSON = true;
     }
-    if (parser === LogsParsers.logfmt) {
+    if (isLogLineLogfmt(line)) {
       hasLogfmt = true;
     }
   });
