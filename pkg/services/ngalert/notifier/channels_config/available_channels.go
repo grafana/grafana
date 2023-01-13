@@ -216,7 +216,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "v3 APIs require a clusterID to be specified.",
 					Placeholder:  "lkc-abcde",
 					PropertyName: "kafkaClusterId",
-					Required:     false,
+					Required:     true,
 					ShowWhen: ShowWhen{
 						Field: "apiVersion",
 						Is:    "v3",
