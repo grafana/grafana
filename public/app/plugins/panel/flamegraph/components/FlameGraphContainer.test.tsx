@@ -29,7 +29,7 @@ describe('FlameGraphContainer', () => {
       },
     };
 
-    return <FlameGraphContainer data={flameGraphData} app={CoreApp.Explore} />;
+    return <FlameGraphContainer data={flameGraphData} app={CoreApp.Dashboard} />;
   };
 
   it('should render without error', async () => {
