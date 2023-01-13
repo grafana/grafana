@@ -175,9 +175,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 			{Cols: []string{"kind"}},
 			{Cols: []string{"folder"}},
 			{Cols: []string{"uid"}},
-
 			{Cols: []string{"tenant_id", "kind", "uid"}, Type: migrator.UniqueIndex},
-			// {Cols: []string{"tenant_id", "folder", "slug"}, Type: migrator.UniqueIndex},
 		},
 	})
 

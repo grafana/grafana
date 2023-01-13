@@ -425,30 +425,26 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			if createdBy == "" {
 				createdBy = updatedBy
 			}
-			insertArgs := []interface{}{
-				versionInfo.Version, updatedAt, createdBy, createdAt, createdBy,
-				r.Folder, origin.Source, origin.Key, origin.Time,
-			}
 
 			_, err = tx.Exec(ctx, "INSERT INTO entity ("+
-				"grn, tenant_id, kind, uid, "+
-				"size, body, etag, "+
+				"grn, tenant_id, kind, uid, folder, "+
+				"size, body, etag, version, "+
+				"updated_at, updated_by, created_at, created_by, "+
 				"name, description, slug, "+
 				"labels, fields, errors, "+
-				"version, updated_at, updated_by, created_at, created_by, "+
-				"folder, origin, origin_key, origin_ts) "+
-				"VALUES (?, ?, ?, ?, "+
+				"origin, origin_key, origin_ts) "+
+				"VALUES (?, ?, ?, ?, ?, "+
+				" ?, ?, ?, ?, "+
+				" ?, ?, ?, ?, "+
 				" ?, ?, ?, "+
 				" ?, ?, ?, "+
-				" ?, ?, ?, "+
-				" ?, ?, ?, ?, ?, "+
-				" ?, ?, ?, ?)",
-				append([]interface{}{
-					oid, grn.TenantId, grn.Kind, grn.UID,
-					versionInfo.Size, body, etag,
-					summary.model.Name, summary.model.Description, summary.model.Slug,
-					summary.labels, summary.fields, summary.errors,
-				}, insertArgs...)...,
+				" ?, ?, ?)",
+				oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
+				versionInfo.Size, body, etag, versionInfo.Version,
+				updatedAt, createdBy, createdAt, createdBy,
+				summary.model.Name, summary.model.Description, summary.model.Slug,
+				summary.labels, summary.fields, summary.errors,
+				origin.Source, origin.Key, origin.Time,
 			)
 		}
 		if err == nil && models.StandardKindFolder == r.GRN.Kind {
@@ -521,7 +517,7 @@ func (s *sqlEntityServer) writeSearchInfo(
 		parent_grn_string = &t
 	}
 
-	// 2. Add the labels rows
+	// Add the labels rows
 	for k, v := range summary.model.Labels {
 		_, err := tx.Exec(ctx,
 			`INSERT INTO entity_labels `+
@@ -534,7 +530,7 @@ func (s *sqlEntityServer) writeSearchInfo(
 		}
 	}
 
-	// 3. Add the references rows
+	// Resolve references
 	for _, ref := range summary.model.References {
 		resolved, err := s.resolver.Resolve(ctx, ref)
 		if err != nil {
@@ -552,6 +548,7 @@ func (s *sqlEntityServer) writeSearchInfo(
 		}
 	}
 
+	// Recursive updates
 	if summary.model.Nested != nil {
 		if parent_grn_string == nil {
 			t := parent_grn.ToGRNString()
