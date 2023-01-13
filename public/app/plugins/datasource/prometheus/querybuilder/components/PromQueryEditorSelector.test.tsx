@@ -3,6 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { cloneDeep, defaultsDeep } from 'lodash';
 import React from 'react';
 
+import { CoreApp } from '@grafana/data';
+
+import { PromQueryEditorProps } from '../../components/types';
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
@@ -79,9 +82,24 @@ describe('PromQueryEditorSelector', () => {
     expectCodeEditor();
   });
 
-  it('shows builder when builder mode is set', async () => {
+  it('shows builder when builder mode is set', () => {
     renderWithMode(QueryEditorMode.Builder);
     expectBuilder();
+  });
+
+  it('shows Run Queries button in Dashboards', () => {
+    renderWithProps({}, { app: CoreApp.Dashboard });
+    expectRunQueriesButton();
+  });
+
+  it('hides Run Queries button in Explore', () => {
+    renderWithProps({}, { app: CoreApp.Explore });
+    expectNoRunQueriesButton();
+  });
+
+  it('hides Run Queries button in Correlations Page', () => {
+    renderWithProps({}, { app: CoreApp.Correlations });
+    expectNoRunQueriesButton();
   });
 
   it('changes to builder mode', async () => {
@@ -150,23 +168,30 @@ function renderWithMode(mode: QueryEditorMode) {
   return renderWithProps({ editorMode: mode } as any);
 }
 
-function renderWithProps(overrides?: Partial<PromQuery>) {
+function renderWithProps(overrides?: Partial<PromQuery>, componentProps: Partial<PromQueryEditorProps> = {}) {
   const query = defaultsDeep(overrides ?? {}, cloneDeep(defaultQuery));
   const onChange = jest.fn();
 
-  const stuff = render(<PromQueryEditorSelector {...defaultProps} query={query} onChange={onChange} />);
+  const allProps = { ...defaultProps, ...componentProps };
+  const stuff = render(<PromQueryEditorSelector {...allProps} query={query} onChange={onChange} />);
   return { onChange, ...stuff };
 }
 
 function expectCodeEditor() {
-  // Metric browser shows this until metrics are loaded.
-  expect(screen.getByText('Loading metrics...')).toBeInTheDocument();
+  expect(screen.getByText('MonacoQueryFieldWrapper')).toBeInTheDocument();
 }
 
 function expectBuilder() {
   expect(screen.getByText('Metric')).toBeInTheDocument();
 }
 
+function expectRunQueriesButton() {
+  expect(screen.getByRole('button', { name: /run queries/i })).toBeInTheDocument();
+}
+
+function expectNoRunQueriesButton() {
+  expect(screen.queryByRole('button', { name: /run queries/i })).not.toBeInTheDocument();
+}
 async function switchToMode(mode: QueryEditorMode) {
   const label = {
     [QueryEditorMode.Code]: /Code/,

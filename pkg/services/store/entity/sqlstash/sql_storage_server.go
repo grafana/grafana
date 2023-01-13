@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -46,7 +47,7 @@ type sqlEntityServer struct {
 
 func getReadSelect(r *entity.ReadEntityRequest) string {
 	fields := []string{
-		"tenant_id", "kind", "uid", // The PK
+		"tenant_id", "kind", "uid", "folder", // GRN + folder
 		"version", "size", "etag", "errors", // errors are always returned
 		"created_at", "created_by",
 		"updated_at", "updated_by",
@@ -56,7 +57,7 @@ func getReadSelect(r *entity.ReadEntityRequest) string {
 		fields = append(fields, `body`)
 	}
 	if r.WithSummary {
-		fields = append(fields, "name", "slug", "folder", "description", "labels", "fields")
+		fields = append(fields, "name", "slug", "description", "labels", "fields")
 	}
 	return "SELECT " + strings.Join(fields, ",") + " FROM entity WHERE "
 }
@@ -69,7 +70,7 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 
 	summaryjson := &summarySupport{}
 	args := []interface{}{
-		&raw.GRN.TenantId, &raw.GRN.Kind, &raw.GRN.UID,
+		&raw.GRN.TenantId, &raw.GRN.Kind, &raw.GRN.UID, &raw.Folder,
 		&raw.Version, &raw.Size, &raw.ETag, &summaryjson.errors,
 		&raw.CreatedAt, &raw.CreatedBy,
 		&raw.UpdatedAt, &raw.UpdatedBy,
@@ -79,7 +80,7 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 		args = append(args, &raw.Body)
 	}
 	if r.WithSummary {
-		args = append(args, &summaryjson.name, &summaryjson.slug, &summaryjson.folder, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
+		args = append(args, &summaryjson.name, &summaryjson.slug, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
 	}
 
 	err := rows.Scan(args...)
@@ -303,6 +304,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		return nil, err
 	}
 
+	isFolder := models.StandardKindFolder == r.GRN.Kind
 	etag := createContentsHash(body)
 	rsp := &entity.WriteEntityResponse{
 		GRN:    grn,
@@ -324,7 +326,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 					return err
 				}
 			}
-			_, err = doDelete(ctx, tx, oid)
+			_, err = doDelete(ctx, tx, grn)
 			if err != nil {
 				return err
 			}
@@ -445,6 +447,10 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				origin.Source, origin.Key, timestamp,
 				oid,
 			)
+
+			if isFolder && err == nil {
+				err = updateFolderTree(ctx, tx, grn.TenantId)
+			}
 			return err
 		}
 
@@ -475,6 +481,9 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			summary.labels, summary.fields, summary.errors,
 			origin.Source, origin.Key, origin.Time,
 		)
+		if isFolder && err == nil {
+			err = updateFolderTree(ctx, tx, grn.TenantId)
+		}
 		return err
 	})
 	rsp.SummaryJson = summary.marshaled
@@ -537,11 +546,6 @@ func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntit
 		return nil, nil, err
 	}
 
-	summaryjson, err := newSummarySupport(summary)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	// Update a summary based on the name (unless the root suggested one)
 	if summary.Slug == "" {
 		t := summary.Name
@@ -549,6 +553,11 @@ func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntit
 			t = r.GRN.UID
 		}
 		summary.Slug = slugify.Slugify(t)
+	}
+
+	summaryjson, err := newSummarySupport(summary)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return summaryjson, body, nil
@@ -562,14 +571,15 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 	rsp := &entity.DeleteEntityResponse{}
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		rsp.OK, err = doDelete(ctx, tx, grn.ToGRNString())
+		rsp.OK, err = doDelete(ctx, tx, grn)
 		return err
 	})
 	return rsp, err
 }
 
-func doDelete(ctx context.Context, tx *session.SessionTx, grn string) (bool, error) {
-	results, err := tx.Exec(ctx, "DELETE FROM entity WHERE grn=?", grn)
+func doDelete(ctx context.Context, tx *session.SessionTx, grn *entity.GRN) (bool, error) {
+	str := grn.ToGRNString()
+	results, err := tx.Exec(ctx, "DELETE FROM entity WHERE grn=?", str)
 	if err != nil {
 		return false, err
 	}
@@ -579,9 +589,14 @@ func doDelete(ctx context.Context, tx *session.SessionTx, grn string) (bool, err
 	}
 
 	// TODO: keep history? would need current version bump, and the "write" would have to get from history
-	_, _ = tx.Exec(ctx, "DELETE FROM entity_history WHERE grn=?", grn)
-	_, _ = tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", grn)
-	_, _ = tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", grn)
+	_, _ = tx.Exec(ctx, "DELETE FROM entity_history WHERE grn=?", str)
+	_, _ = tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", str)
+	_, _ = tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", str)
+
+	if grn.Kind == models.StandardKindFolder {
+		err = updateFolderTree(ctx, tx, grn.TenantId)
+	}
+
 	return rows > 0, err
 }
 
@@ -760,4 +775,8 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 
 	return rsp, err
+}
+
+func (s *sqlEntityServer) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
+	return fmt.Errorf("unimplemented")
 }

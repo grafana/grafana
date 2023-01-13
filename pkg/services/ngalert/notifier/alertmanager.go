@@ -15,9 +15,9 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/grafana/alerting/alerting"
 	"github.com/grafana/alerting/alerting/notifier/channels"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/inhibit"
@@ -26,13 +26,11 @@ import (
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/provider/mem"
 	"github.com/prometheus/alertmanager/silence"
+	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
-
-	pb "github.com/prometheus/alertmanager/silence/silencepb"
 
 	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -51,8 +49,8 @@ const (
 	silencesFilename        = "silences"
 
 	workingDir = "alerting"
-	// maintenanceNotificationAndSilences how often should we flush and gargabe collect notifications and silences
-	maintenanceNotificationAndSilences = 15 * time.Minute
+	// maintenanceNotificationAndSilences how often should we flush and gargabe collect notifications
+	notificationLogMaintenanceInterval = 15 * time.Minute
 	// defaultResolveTimeout is the default timeout used for resolving an alert
 	// if the end time is not specified.
 	defaultResolveTimeout = 5 * time.Minute
@@ -82,12 +80,6 @@ func init() {
 	}
 }
 
-type ClusterPeer interface {
-	AddState(string, cluster.State, prometheus.Registerer) cluster.ClusterChannel
-	Position() int
-	WaitReady(context.Context) error
-}
-
 type AlertingStore interface {
 	store.AlertingStore
 	store.ImageStore
@@ -106,7 +98,7 @@ type Alertmanager struct {
 	marker          types.Marker
 	alerts          *mem.Alerts
 	route           *dispatch.Route
-	peer            ClusterPeer
+	peer            alerting.ClusterPeer
 	peerTimeout     time.Duration
 
 	dispatcher *dispatch.Dispatcher
@@ -137,8 +129,33 @@ type Alertmanager struct {
 	decryptFn channels.GetDecryptedValueFn
 }
 
+// maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
+// It implements the alerting.MaintenanceOptions interface.
+type maintenanceOptions struct {
+	filepath             string
+	retention            time.Duration
+	maintenanceFrequency time.Duration
+	maintenanceFunc      func(alerting.State) (int64, error)
+}
+
+func (m maintenanceOptions) Filepath() string {
+	return m.filepath
+}
+
+func (m maintenanceOptions) Retention() time.Duration {
+	return m.retention
+}
+
+func (m maintenanceOptions) MaintenanceFrequency() time.Duration {
+	return m.maintenanceFrequency
+}
+
+func (m maintenanceOptions) MaintenanceFunc(state alerting.State) (int64, error) {
+	return m.maintenanceFunc(state)
+}
+
 func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
-	peer ClusterPeer, decryptFn channels.GetDecryptedValueFn, ns notifications.Service, m *metrics.Alertmanager) (*Alertmanager, error) {
+	peer alerting.ClusterPeer, decryptFn channels.GetDecryptedValueFn, ns notifications.Service, m *metrics.Alertmanager) (*Alertmanager, error) {
 	am := &Alertmanager{
 		Settings:            cfg,
 		stopc:               make(chan struct{}),
@@ -166,13 +183,31 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		return nil, err
 	}
 
-	// Initialize the notification log
+	silencesOptions := maintenanceOptions{
+		filepath:             silencesFilePath,
+		retention:            retentionNotificationsAndSilences,
+		maintenanceFrequency: silenceMaintenanceInterval,
+		maintenanceFunc: func(state alerting.State) (int64, error) {
+			return am.fileStore.Persist(ctx, silencesFilename, state)
+		},
+	}
+
+	nflogOptions := maintenanceOptions{
+		filepath:             nflogFilepath,
+		retention:            retentionNotificationsAndSilences,
+		maintenanceFrequency: notificationLogMaintenanceInterval,
+		maintenanceFunc: func(state alerting.State) (int64, error) {
+			return am.fileStore.Persist(ctx, notificationLogFilename, state)
+		},
+	}
+
+	// Initialize the notification log.
 	am.wg.Add(1)
 	am.notificationLog, err = nflog.New(
-		nflog.WithRetention(retentionNotificationsAndSilences),
-		nflog.WithSnapshot(nflogFilepath),
-		nflog.WithMaintenance(maintenanceNotificationAndSilences, am.stopc, am.wg.Done, func() (int64, error) {
-			return am.fileStore.Persist(ctx, notificationLogFilename, am.notificationLog)
+		nflog.WithRetention(nflogOptions.Retention()),
+		nflog.WithSnapshot(nflogOptions.Filepath()),
+		nflog.WithMaintenance(nflogOptions.MaintenanceFrequency(), am.stopc, am.wg.Done, func() (int64, error) {
+			return nflogOptions.MaintenanceFunc(am.notificationLog)
 		}),
 	)
 	if err != nil {
@@ -184,8 +219,8 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	// Initialize silences
 	am.silences, err = silence.New(silence.Options{
 		Metrics:      m.Registerer,
-		SnapshotFile: silencesFilePath,
-		Retention:    retentionNotificationsAndSilences,
+		SnapshotFile: silencesOptions.Filepath(),
+		Retention:    silencesOptions.Retention(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the silencing component of alerting: %w", err)
@@ -196,16 +231,19 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 
 	am.wg.Add(1)
 	go func() {
-		am.silences.Maintenance(silenceMaintenanceInterval, silencesFilePath, am.stopc, func() (int64, error) {
-			// Delete silences older than the retention period.
-			if _, err := am.silences.GC(); err != nil {
-				am.logger.Error("silence garbage collection", "error", err)
-				// Don't return here - we need to snapshot our state first.
-			}
-
-			// Snapshot our silences to the Grafana KV store
-			return am.fileStore.Persist(ctx, silencesFilename, am.silences)
-		})
+		am.silences.Maintenance(
+			silencesOptions.MaintenanceFrequency(),
+			silencesOptions.Filepath(),
+			am.stopc,
+			func() (int64, error) {
+				// Delete silences older than the retention period.
+				if _, err := am.silences.GC(); err != nil {
+					am.logger.Error("silence garbage collection", "error", err)
+					// Don't return here - we need to snapshot our state first.
+				}
+				return silencesOptions.maintenanceFunc(am.silences)
+			},
+		)
 		am.wg.Done()
 	}()
 
