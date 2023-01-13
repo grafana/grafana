@@ -229,6 +229,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 			state.SetError(result.Error, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
 
 			if result.Error != nil {
+				state.Annotations["Error"] = result.Error.Error()
 				// If the evaluation failed because a query returned an error then add the Ref ID and
 				// Datasource UID as labels
 				var queryError expr.QueryError
@@ -240,7 +241,6 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 							break
 						}
 					}
-					state.Annotations["Error"] = queryError.Error()
 				}
 			}
 		}
