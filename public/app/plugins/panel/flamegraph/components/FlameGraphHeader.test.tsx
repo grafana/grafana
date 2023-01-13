@@ -9,27 +9,27 @@ import FlameGraphHeader from './FlameGraphHeader';
 import { SelectedView } from './types';
 
 describe('FlameGraphHeader', () => {
-  const FlameGraphHeaderWithProps = () => {
+  const FlameGraphHeaderWithProps = ({ app }: { app: CoreApp }) => {
     const [search, setSearch] = useState('');
-    const [selectedView, setSelectedView] = useState(SelectedView.Both);
 
     return (
       <FlameGraphHeader
-        app={CoreApp.Explore}
+        app={app}
         search={search}
         setSearch={setSearch}
         setTopLevelIndex={jest.fn()}
         setRangeMin={jest.fn()}
         setRangeMax={jest.fn()}
-        selectedView={selectedView}
-        setSelectedView={setSelectedView}
+        selectedView={SelectedView.Both}
+        setSelectedView={jest.fn()}
         containerWidth={1600}
       />
     );
   };
 
   it('reset button should remove search text', async () => {
-    render(<FlameGraphHeaderWithProps />);
+    render(<FlameGraphHeaderWithProps app={CoreApp.Unknown} />);
+    expect(screen.getByPlaceholderText('Search..')).toBeInTheDocument();
     await userEvent.type(screen.getByPlaceholderText('Search..'), 'abc');
     expect(screen.getByDisplayValue('abc')).toBeInTheDocument();
     screen.getByRole('button', { name: /Reset/i }).click();

@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2, CoreApp } from '@grafana/data';
-import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Input, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
+import FlameGraphTour from './FlameGraphTour';
 import { SelectedView } from './types';
 
 type Props = {
@@ -32,7 +33,7 @@ const FlameGraphHeader = ({
   containerWidth,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, app));
-
+  const [showTour, setShowTour] = useState(false);
   let viewOptions: Array<{ value: SelectedView; label: string; description: string }> = [
     { value: SelectedView.TopTable, label: 'Top Table', description: 'Only show top table' },
     { value: SelectedView.FlameGraph, label: 'Flame Graph', description: 'Only show flame graph' },
@@ -74,6 +75,22 @@ const FlameGraphHeader = ({
       </div>
 
       <div className={styles.rightContainer}>
+        {app === CoreApp.Explore && (
+          <>
+            <FlameGraphTour
+              selectedView={selectedView}
+              setSelectedView={setSelectedView}
+              showTour={showTour}
+              setShowTour={setShowTour}
+            />
+            <ToolbarButton
+              tooltip="Show tour"
+              icon="question-circle"
+              onClick={() => setShowTour(!showTour)}
+              className={styles.tourButton}
+            />
+          </>
+        )}
         <RadioButtonGroup<SelectedView>
           options={viewOptions}
           value={selectedView}
@@ -98,13 +115,17 @@ const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
   `,
   inputContainer: css`
     float: left;
-    margin-right: 20px;
+    margin-right: 10px;
   `,
   leftContainer: css`
     float: left;
   `,
   rightContainer: css`
     float: right;
+  `,
+  tourButton: css`
+    float: left;
+    margin-right: 10px;
   `,
 });
 
