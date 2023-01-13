@@ -109,7 +109,14 @@ This will add the `groups` claim to the id_token. You can then use the `groups` 
 
 ```ini
 [auth.generic_oauth]
-group_attribute_path = groups
+groups_attribute_path = groups
+```
+
+If you use nested groups containing special characters such as quotes or colons, the JMESPath parser can perform a harmless reverse function so Grafana can properly evaluate nested groups. The following example shows a parent group named `Global` with nested group `department` that contains a list of groups:
+
+```ini
+[auth.generic_oauth]
+groups_attribute_path = reverse("Global:department")
 ```
 
 ## Enable Single Logout

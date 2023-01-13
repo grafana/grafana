@@ -69,17 +69,21 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 		},
 	})
 
-	// when saving a folder, keep a path version cached
+	// when saving a folder, keep a path version cached (all info is derived from entity table)
 	tables = append(tables, migrator.Table{
 		Name: "entity_folder",
 		Columns: []*migrator.Column{
-			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
-			getLatinPathColumn("path"), // slug/slug/slug/...
-			{Name: "depth", Type: migrator.DB_Int, Nullable: false},
-			{Name: "tree", Type: migrator.DB_Text, Nullable: false}, // JSON array from root
+			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false, IsPrimaryKey: true},
+			{Name: "tenant_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			getLatinPathColumn("slug_path"),                             ///slug/slug/slug/
+			{Name: "tree", Type: migrator.DB_Text, Nullable: false},     // JSON []{uid, title}
+			{Name: "depth", Type: migrator.DB_Int, Nullable: false},     // starts at 1
+			{Name: "detached", Type: migrator.DB_Bool, Nullable: false}, // a parent folder was not found
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"path"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"tenant_id", "uid"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"tenant_id", "slug_path"}, Type: migrator.UniqueIndex},
 		},
 	})
 
@@ -154,7 +158,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v8)" // change this when we want to wipe and reset the object tables
+	suffix := " (v12)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("EntityStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'EntityStore init%';
 	`)))
@@ -177,5 +181,5 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("EntityStore init: set path collation in entity tables"+suffix, migrator.NewRawSQLMigration("").
 		// MySQL `utf8mb4_unicode_ci` collation is set in `mysql_dialect.go`
 		// SQLite uses a `BINARY` collation by default
-		Postgres("ALTER TABLE entity_folder ALTER COLUMN path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values
+		Postgres("ALTER TABLE entity_folder ALTER COLUMN slug_path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values
 }
