@@ -6,4 +6,4 @@ weight: 200
 
 # Grafana schema
 
-[Core kinds]({{< relref "core/_index.md" >}})
+{{< section >}}
