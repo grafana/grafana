@@ -106,97 +106,28 @@ func makeDataQuery() *backend.DataQuery {
 	}
 }
 
-// This is where the tests for the datasource backend live.
-func Test_profileToDataFrame(t *testing.T) {
-	// resp := &connect.Response[googlev1.Profile]{
-	// 	Msg: &googlev1.Profile{
-	// 		// Flamegraph: &querierv1.FlameGraph{
-	// 		// 	Names: []string{"func1", "func2", "func3"},
-	// 		// 	Levels: []*querierv1.Level{
-	// 		// 		{Values: []int64{0, 20, 1, 2}},
-	// 		// 		{Values: []int64{0, 10, 3, 1, 4, 5, 5, 2}},
-	// 		// 	},
-	// 		// 	Total:   987,
-	// 		// 	MaxSelf: 123,
-	// 		// },
-	// 	},
-	// }
-	// frame := responseToDataFrames(resp, "memory:alloc_objects:count:space:bytes")
-	// require.Equal(t, 4, len(frame.Fields))
-	// require.Equal(t, data.NewField("level", nil, []int64{0, 1, 1}), frame.Fields[0])
-	// require.Equal(t, data.NewField("value", nil, []int64{20, 10, 5}).SetConfig(&data.FieldConfig{Unit: "short"}), frame.Fields[1])
-	// require.Equal(t, data.NewField("self", nil, []int64{1, 3, 5}).SetConfig(&data.FieldConfig{Unit: "short"}), frame.Fields[2])
-	// require.Equal(t, data.NewField("label", nil, []string{"func1", "func2", "func3"}), frame.Fields[3])
-}
-
-// This is where the tests for the datasource backend live.
-func Test_levelsToTree(t *testing.T) {
-	// t.Run("simple", func(t *testing.T) {
-	// 	levels := []*querierv1.Level{
-	// 		{Values: []int64{0, 100, 0, 0}},
-	// 		{Values: []int64{0, 40, 0, 1, 0, 30, 0, 2}},
-	// 		{Values: []int64{0, 15, 0, 3}},
-	// 	}
-
-	// 	tree := levelsToTree(levels, []string{"root", "func1", "func2", "func1:func3"})
-	// 	require.Equal(t, &ProfileTree{
-	// 		Start: 0, Value: 100, Level: 0, FunctionName: "root", Nodes: []*ProfileTree{
-	// 			{
-	// 				Start: 0, Value: 40, Level: 1, FunctionName: "func1", Nodes: []*ProfileTree{
-	// 					{Start: 0, Value: 15, Level: 2, FunctionName: "func1:func3"},
-	// 				},
-	// 			},
-	// 			{Start: 40, Value: 30, Level: 1, FunctionName: "func2"},
-	// 		},
-	// 	}, tree)
-	// })
-
-	// t.Run("medium", func(t *testing.T) {
-	// 	levels := []*querierv1.Level{
-	// 		{Values: []int64{0, 100, 0, 0}},
-	// 		{Values: []int64{0, 40, 0, 1, 0, 30, 0, 2, 0, 30, 0, 3}},
-	// 		{Values: []int64{0, 20, 0, 4, 50, 10, 0, 5}},
-	// 	}
-
-	// 	tree := levelsToTree(levels, []string{"root", "func1", "func2", "func3", "func1:func4", "func3:func5"})
-	// 	require.Equal(t, &ProfileTree{
-	// 		Start: 0, Value: 100, Level: 0, FunctionName: "root", Nodes: []*ProfileTree{
-	// 			{
-	// 				Start: 0, Value: 40, Level: 1, FunctionName: "func1", Nodes: []*ProfileTree{
-	// 					{Start: 0, Value: 20, Level: 2, FunctionName: "func1:func4"},
-	// 				},
-	// 			},
-	// 			{Start: 40, Value: 30, Level: 1, FunctionName: "func2"},
-	// 			{
-	// 				Start: 70, Value: 30, Level: 1, FunctionName: "func3", Nodes: []*ProfileTree{
-	// 					{Start: 70, Value: 10, Level: 2, FunctionName: "func3:func5"},
-	// 				},
-	// 			},
-	// 		},
-	// 	}, tree)
-	// })
-}
-
 func Test_treeToNestedDataFrame(t *testing.T) {
-	// tree := &ProfileTree{
-	// 	Start: 0, Value: 100, Level: 0, Self: 1, FunctionName: "root", Nodes: []*ProfileTree{
-	// 		{
-	// 			Start: 10, Value: 40, Level: 1, Self: 2, FunctionName: "func1",
-	// 		},
-	// 		{Start: 60, Value: 30, Level: 1, Self: 3, FunctionName: "func2", Nodes: []*ProfileTree{
-	// 			{Start: 61, Value: 15, Level: 2, Self: 4, FunctionName: "func1:func3"},
-	// 		}},
-	// 	},
-	// }
+	tree := &ProfileTree{
+		Value: 100, Level: 0, Self: 1, Function: &Function{FunctionName: "root"}, Nodes: []*ProfileTree{
+			{
+				Value: 40, Level: 1, Self: 2, Function: &Function{FunctionName: "func1", FileName: "1", Line: 1},
+			},
+			{Value: 30, Level: 1, Self: 3, Function: &Function{FunctionName: "func2", FileName: "2", Line: 2}, Nodes: []*ProfileTree{
+				{Value: 15, Level: 2, Self: 4, Function: &Function{FunctionName: "func1:func3", FileName: "3", Line: 3}},
+			}},
+		},
+	}
 
-	// frame := treeToNestedSetDataFrame(tree, "memory:alloc_objects:count:space:bytes")
-	// require.Equal(t,
-	// 	[]*data.Field{
-	// 		data.NewField("level", nil, []int64{0, 1, 1, 2}),
-	// 		data.NewField("value", nil, []int64{100, 40, 30, 15}).SetConfig(&data.FieldConfig{Unit: "short"}),
-	// 		data.NewField("self", nil, []int64{1, 2, 3, 4}).SetConfig(&data.FieldConfig{Unit: "short"}),
-	// 		data.NewField("label", nil, []string{"root", "func1", "func2", "func1:func3"}),
-	// 	}, frame.Fields)
+	frame := treeToNestedSetDataFrame(tree, "memory:alloc_objects:count:space:bytes")
+	require.Equal(t,
+		[]*data.Field{
+			data.NewField("level", nil, []int64{0, 1, 1, 2}),
+			data.NewField("value", nil, []int64{100, 40, 30, 15}).SetConfig(&data.FieldConfig{Unit: "short"}),
+			data.NewField("self", nil, []int64{1, 2, 3, 4}).SetConfig(&data.FieldConfig{Unit: "short"}),
+			data.NewField("label", nil, []string{"root", "func1", "func2", "func1:func3"}),
+			data.NewField("line", nil, []int64{0, 1, 2, 3}),
+			data.NewField("fileName", nil, []string{"", "1", "2", "3"}),
+		}, frame.Fields)
 }
 
 var fooProfile = &googlev1.Profile{
@@ -313,7 +244,7 @@ func Test_treeFromSample(t *testing.T) {
 	}
 }
 
-func Test_String(t *testing.T) {
+func Test_TreeString(t *testing.T) {
 	t.Log(treeFromSample(fooProfile, &googlev1.Sample{LocationId: []uint64{3, 2, 1}, Value: []int64{10}}))
 }
 
@@ -612,6 +543,30 @@ func (f *FakeClient) SelectSeries(ctx context.Context, req *connect.Request[quer
 	}, nil
 }
 
-func (f *FakeClient) SelectMergeProfile(context.Context, *connect.Request[querierv1.SelectMergeProfileRequest]) (*connect.Response[googlev1.Profile], error) {
-	panic("implement me")
+func (f *FakeClient) SelectMergeProfile(ctx context.Context, c *connect.Request[querierv1.SelectMergeProfileRequest]) (*connect.Response[googlev1.Profile], error) {
+	f.Req = c
+	p := &googlev1.Profile{
+		SampleType: []*googlev1.ValueType{
+			{Type: 1, Unit: 2},
+		},
+		Sample: []*googlev1.Sample{
+			{
+				Value: []int64{1},
+				LocationId: []uint64{
+					1, 2,
+				},
+			},
+		},
+		Mapping: []*googlev1.Mapping{{Id: 1}},
+		Location: []*googlev1.Location{
+			{Id: 1, MappingId: 1, Line: []*googlev1.Line{{FunctionId: 1}}},
+			{Id: 2, MappingId: 1, Line: []*googlev1.Line{{FunctionId: 2}}},
+		},
+		Function: []*googlev1.Function{
+			{Id: 1, Name: 3},
+			{Id: 2, Name: 4},
+		},
+		StringTable: []string{"", "cpu", "nanoseconds", "foo", "bar"},
+	}
+	return connect.NewResponse(p), nil
 }

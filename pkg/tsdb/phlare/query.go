@@ -132,22 +132,6 @@ func responseToDataFrames(resp *connect.Response[googlev1.Profile], profileTypeI
 	return treeToNestedSetDataFrame(tree, profileTypeID)
 }
 
-// START_OFFSET is offset of the bar relative to previous sibling
-const START_OFFSET = 0
-
-// VALUE_OFFSET is value or width of the bar
-const VALUE_OFFSET = 1
-
-// SELF_OFFSET is self value of the bar
-const SELF_OFFSET = 2
-
-// NAME_OFFSET is index into the names array
-const NAME_OFFSET = 3
-
-// ITEM_OFFSET Next bar. Each bar of the profile is represented by 4 number in a flat array.
-const ITEM_OFFSET = 4
-
-// todo rename to node
 type ProfileTree struct {
 	Level      int
 	Value      int64
@@ -223,7 +207,7 @@ func (pt *ProfileTree) merge(src *ProfileTree) {
 	}
 	if found == nil {
 		if parent == nil {
-			pt.Nodes = append(pt.Nodes, src)
+			// Nothing in common can't be merged.
 			return
 		}
 		src.Parent = parent
@@ -315,7 +299,6 @@ func profileAsTree(profile *googlev1.Profile) *ProfileTree {
 	for _, sample := range profile.Sample[1:] {
 		n.merge(treeFromSample(profile, sample))
 	}
-	// todo start and offset
 	return n
 }
 
@@ -348,6 +331,8 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 		levelField.Append(int64(tree.Level))
 		valueField.Append(tree.Value)
 		selfField.Append(tree.Self)
+		// todo: inline functions
+		// tree.Inlined
 		labelField.Append(tree.Function.FunctionName)
 		lineNumberField.Append(tree.Function.Line)
 		fileNameField.Append(tree.Function.FileName)
