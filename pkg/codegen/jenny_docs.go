@@ -102,7 +102,7 @@ type templateData struct {
 }
 
 // -------------------- JSON to Markdown conversion --------------------
-// Copied from https://github.com/marcusolsson/json-schema-docs and sliggtly changed to fit the DocsJenny
+// Copied from https://github.com/marcusolsson/json-schema-docs and slightly changed to fit the DocsJenny
 
 type schema struct {
 	ID          string             `json:"$id,omitempty"`
