@@ -12,10 +12,10 @@ func parseQuery(tsdbQuery []backend.DataQuery) ([]*Query, error) {
 		if err != nil {
 			return nil, err
 		}
-		timeField, err := model.Get("timeField").String()
-		if err != nil {
-			return nil, err
-		}
+
+		// we had a string-field named `timeField` in the past. we do not use it anymore.
+		// please do not create a new field with that name, to avoid potential problems with old, persisted queries.
+
 		rawQuery := model.Get("query").MustString()
 		bucketAggs, err := parseBucketAggs(model)
 		if err != nil {
@@ -30,7 +30,6 @@ func parseQuery(tsdbQuery []backend.DataQuery) ([]*Query, error) {
 		interval := q.Interval
 
 		queries = append(queries, &Query{
-			TimeField:     timeField,
 			RawQuery:      rawQuery,
 			BucketAggs:    bucketAggs,
 			Metrics:       metrics,
