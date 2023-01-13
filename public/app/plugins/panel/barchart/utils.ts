@@ -398,7 +398,6 @@ export function prepareBarChartDisplayValues(
   let stringField: Field | undefined = undefined;
   let timeField: Field | undefined = undefined;
   let fields: Field[] = [];
-  let legendFields: Field[] = [];
   for (const field of frame.fields) {
     if (field === xField) {
       continue;
@@ -450,7 +449,6 @@ export function prepareBarChartDisplayValues(
         }
 
         fields.push(copy);
-        legendFields.push(field);
       }
     }
   }
@@ -492,9 +490,29 @@ export function prepareBarChartDisplayValues(
     );
   }
 
+  let legendFields: Field[] = fields;
+  if (options.stacking === StackingMode.Percent) {
+    legendFields = fields.map((field) => {
+      const alignedFrameField = frame.fields.find((f) => f.name === field.name)!;
+
+      const copy = {
+        ...field,
+        config: {
+          ...alignedFrameField.config,
+        },
+        values: field.values,
+      };
+
+      copy.display = getDisplayProcessor({ field: copy, theme });
+
+      return copy;
+    });
+
+    legendFields.unshift(firstField);
+  }
+
   // String field is first
   fields.unshift(firstField);
-  legendFields.unshift(firstField);
 
   return {
     aligned: frame,
