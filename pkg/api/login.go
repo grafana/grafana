@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	loginService "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -167,6 +169,30 @@ func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
+	if hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req, Resp: c.Resp})
+		if err != nil {
+			return response.Err(err)
+		}
+
+		cookies.WriteSessionCookie(c, hs.Cfg, identity.SessionToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
+		result := map[string]interface{}{
+			"message": "Logged in",
+		}
+
+		if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
+			if err := hs.ValidateRedirectTo(redirectTo); err == nil {
+				result["redirectUrl"] = redirectTo
+			} else {
+				c.Logger.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
+			}
+			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
+		}
+
+		metrics.MApiLoginPost.Inc()
+		return response.JSON(http.StatusOK, result)
+	}
+
 	cmd := dtos.LoginCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad login data", err)
