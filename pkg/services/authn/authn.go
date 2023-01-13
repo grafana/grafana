@@ -25,6 +25,7 @@ const (
 	ClientRender    = "auth.client.render"
 	ClientSession   = "auth.client.session"
 	ClientForm      = "auth.client.form"
+	ClientProxy     = "auth.client.proxy"
 )
 
 const (
