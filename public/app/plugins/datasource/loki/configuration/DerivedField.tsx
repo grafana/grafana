@@ -93,9 +93,6 @@ export const DerivedField = (props: Props) => {
             event.preventDefault();
             onDelete();
           }}
-          className={css`
-            margin-left: 8px;
-          `}
         />
       </div>
 
