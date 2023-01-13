@@ -10,6 +10,12 @@ export interface BarChartDisplayValues {
    */
   viz: [DataFrame];
 
+  /**
+   * The fields we can display, first field is X axis.
+   * Contains same data as viz, but without possible modifications (e.g: unit override)
+   */
+  legend: DataFrame;
+
   /** Potentialy color by a field value */
   colorByField?: Field;
 }

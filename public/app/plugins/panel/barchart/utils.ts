@@ -398,6 +398,7 @@ export function prepareBarChartDisplayValues(
   let stringField: Field | undefined = undefined;
   let timeField: Field | undefined = undefined;
   let fields: Field[] = [];
+  let legendFields: Field[] = [];
   for (const field of frame.fields) {
     if (field === xField) {
       continue;
@@ -449,6 +450,7 @@ export function prepareBarChartDisplayValues(
         }
 
         fields.push(copy);
+        legendFields.push(field);
       }
     }
   }
@@ -492,6 +494,7 @@ export function prepareBarChartDisplayValues(
 
   // String field is first
   fields.unshift(firstField);
+  legendFields.unshift(firstField);
 
   return {
     aligned: frame,
@@ -502,6 +505,10 @@ export function prepareBarChartDisplayValues(
         fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
       },
     ],
+    legend: {
+      fields: legendFields,
+      length: firstField.values.length,
+    },
   };
 }
 
