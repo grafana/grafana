@@ -4,10 +4,10 @@ describe('api', () => {
   describe('describeLogGroup', () => {
     it('replaces region correctly in the query', async () => {
       const { api, resourceRequestMock } = setupMockedAPI();
-      await api.describeLogGroups({ region: 'default' });
+      await api.getLogGroups({ region: 'default' });
       expect(resourceRequestMock.mock.calls[0][1].region).toBe('us-west-1');
 
-      await api.describeLogGroups({ region: 'eu-east' });
+      await api.getLogGroups({ region: 'eu-east' });
       expect(resourceRequestMock.mock.calls[1][1].region).toBe('eu-east');
     });
 
@@ -49,7 +49,7 @@ describe('api', () => {
         },
       ];
 
-      const logGroups = await api.describeLogGroups({ region: 'default' });
+      const logGroups = await api.getLogGroups({ region: 'default' });
 
       expect(logGroups).toEqual(expectedLogGroups);
     });
