@@ -119,5 +119,4 @@ export interface AzureMetricResource {
   resourceGroup?: string;
   resourceName?: string;
   metricNamespace?: string;
-  region?: string;
 }
