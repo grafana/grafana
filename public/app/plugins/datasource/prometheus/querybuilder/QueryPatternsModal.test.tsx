@@ -97,7 +97,7 @@ describe('QueryPatternsModal', () => {
     const firstUseQueryButton = screen.getAllByRole('button', { name: 'use this query button' })[0];
     await userEvent.click(firstUseQueryButton);
 
-    expect(screen.getByText(/apply this to your current query or create a new query/)).toBeInTheDocument();
+    expect(screen.getByText(/you can either apply this query pattern or create a new query/)).toBeInTheDocument();
   });
 
   it('can use create new query when selecting pattern if there is already existing query', async () => {
@@ -124,7 +124,7 @@ describe('QueryPatternsModal', () => {
     const useQueryButton = screen.getAllByRole('button', { name: 'use this query button' })[0];
     await userEvent.click(useQueryButton);
     expect(screen.queryByRole('button', { name: 'Create new query' })).not.toBeInTheDocument();
-    expect(screen.getByText(/this will be applied to your current query/)).toBeInTheDocument();
+    expect(screen.getByText(/this query pattern will be applied to your current query/)).toBeInTheDocument();
   });
 
   it('applies binary query patterns to query', async () => {
