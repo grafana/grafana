@@ -172,6 +172,10 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 	if hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
 		identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req, Resp: c.Resp})
 		if err != nil {
+			tokenErr := &auth.CreateTokenErr{}
+			if errors.As(err, &tokenErr) {
+				return response.Error(tokenErr.StatusCode, tokenErr.ExternalErr, tokenErr.InternalErr)
+			}
 			return response.Err(err)
 		}
 
