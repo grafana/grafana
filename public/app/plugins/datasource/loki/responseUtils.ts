@@ -57,6 +57,8 @@ export function extractUnwrapLabelKeysFromDataFrame(frame: DataFrame): string[] 
     return [];
   }
 
+  // We do this only for first label object, because we want to consider only labels that are present in all log lines
+  // possibleUnwrapLabels are labels with 1. number value OR 2. value that is valid go duration OR 3. bytes string value
   const possibleUnwrapLabels = Object.keys(labelsArray[0]).filter((key) => {
     const value = labelsArray[0][key];
     if (!value) {
@@ -65,7 +67,8 @@ export function extractUnwrapLabelKeysFromDataFrame(frame: DataFrame): string[] 
     return !isNaN(Number(value)) || isValidGoDuration(value) || isBytesString(value);
   });
 
-  return possibleUnwrapLabels;
+  // Add only labels that are present in every line to unwrapLabels
+  return possibleUnwrapLabels.filter((label) => labelsArray.every((obj) => obj[label]));
 }
 
 export function extractHasErrorLabelFromDataFrame(frame: DataFrame): boolean {
