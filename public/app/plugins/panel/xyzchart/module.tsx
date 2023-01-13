@@ -1,6 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
 
-
 import { ScatterPlotPanel } from './ScatterPlotPanel';
 import { XYZDimsEditor } from './XYZDimsEditor';
 import { defaultScatterConfig, ScatterPlotOptions } from './models.gen';

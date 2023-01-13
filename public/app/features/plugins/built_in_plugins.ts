@@ -70,6 +70,7 @@ import * as timeseriesPanel from 'app/plugins/panel/timeseries/module';
 import * as tracesPanel from 'app/plugins/panel/traces/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 import * as xyChartPanel from 'app/plugins/panel/xychart/module';
+import * as xyzChartPanel from 'app/plugins/panel/xyzchart/module';
 
 // Async loaded panels
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
@@ -113,6 +114,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/candlestick/module': candlestickPanel,
   'app/plugins/panel/graph/module': graphPanel,
   'app/plugins/panel/xychart/module': xyChartPanel,
+  'app/plugins/panel/xyzchart/module': xyzChartPanel,
   'app/plugins/panel/geomap/module': geomapPanel,
   'app/plugins/panel/canvas/module': canvasPanel,
   'app/plugins/panel/icon/module': iconPanel,
