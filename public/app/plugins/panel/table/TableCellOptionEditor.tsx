@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import { merge } from 'lodash';
 import React, { ReactNode, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { TableCellOptions } from '@grafana/schema';
-import { Field, HorizontalGroup, Select, TableCellDisplayMode } from '@grafana/ui';
+import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
@@ -57,6 +58,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   const cellType = value.type;
   let editor: ReactNode | null = null;
   let [settingCache, setSettingCache] = useState<SettingMap>({});
+  const styles = useStyles2(getStyles);
 
   // Update display mode on change
   const onCellTypeChange = (v: SelectableValue<TableCellDisplayMode>) => {
@@ -64,6 +66,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       // Set the new type of cell starting
       // with default settings
       value = {
+        //@ts-ignore
         type: v.value,
       };
 
@@ -96,11 +99,17 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
 
   // Setup and inject editor
   return (
-    <>
+    <div className={styles.fixBottomMargin}>
       <Field>
         <Select options={cellDisplayModeOptions} value={cellType} onChange={onCellTypeChange} />
       </Field>
-      <HorizontalGroup>{editor}</HorizontalGroup>
-    </>
+      {editor}
+    </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  fixBottomMargin: css({
+    marginBottom: theme.spacing(-2),
+  }),
+});

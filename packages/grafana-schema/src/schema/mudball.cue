@@ -206,7 +206,6 @@ FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 // The color-background-solid, gradient-gauge, and lcd-gauge 
 // modes are deprecated in favor of new cell subOptions
 TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge")
-// : TableCellDisplayMode @cuetsy(kind="enum")
 
 // Display mode to the "Colored Background" display
 // mode for table cells. Either displays a solid color (basic mode)
@@ -260,18 +259,37 @@ VizLegendOptions: {
 // for the bar gauge component of Grafana UI
 BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")
 
-// Interface for table cell types that have no additional options.
+// Allows for the table cell gauge display type to set the gauge mode.
+BarGaugeValueMode: "color" | "text" | "hidden" @cuetsy(kind="enum")
+
+// Auto mode table cell options
 TableAutoCellOptions: {
-	type: TableCellDisplayMode
+	type: TableCellDisplayMode & "auto"
 } @cuetsy(kind="interface")
 
-// Allows for the table cell gauge display type to set the gauge mode.
+// Colored text cell options 
+TableColorTextCellOptions: {
+	type: TableCellDisplayMode & "color-text"
+} @cuetsy(kind="interface")
+
+// Json view cell options 
+TableJsonViewCellOptions: {
+	type: TableCellDisplayMode & "json-view"
+} @cuetsy(kind="interface")
+
+// Json view cell options 
+TableImageCellOptions: {
+	type: TableCellDisplayMode & "image"
+} @cuetsy(kind="interface")
+
+// Gauge cell options
 TableBarGaugeCellOptions: {
 	type: TableCellDisplayMode & "gauge"
 	mode: BarGaugeDisplayMode
+	valueMode?: BarGaugeValueMode
 } @cuetsy(kind="interface")
 
-// Allows for the background display mode to be set for the color background cell.
+// Colored background cell options
 TableColoredBackgroundCellOptions: {
 	type: TableCellDisplayMode & "color-background"
 	mode: TableCellBackgroundDisplayMode
@@ -279,7 +297,7 @@ TableColoredBackgroundCellOptions: {
 
 // Table cell options. Each cell has a display mode
 // and other potential options for that display. 
-TableCellOptions: TableAutoCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions @cuetsy(kind="type")
+TableCellOptions: TableAutoCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions @cuetsy(kind="type")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
 // Generally defines alignment, filtering capabilties, display options, etc.
@@ -300,3 +318,4 @@ VizTooltipOptions: {
 	mode: TooltipDisplayMode
 	sort: SortOrder
 } @cuetsy(kind="interface")
+

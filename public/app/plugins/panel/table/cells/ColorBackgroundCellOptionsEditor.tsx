@@ -2,7 +2,7 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { TableCellBackgroundDisplayMode, TableColoredBackgroundCellOptions } from '@grafana/schema';
-import { HorizontalGroup, Select, Field } from '@grafana/ui';
+import { Select, Field } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
@@ -22,10 +22,8 @@ export const ColorBackgroundCellOptionsEditor = ({
   };
 
   return (
-    <HorizontalGroup>
-      <Field label="Background display mode">
-        <Select value={cellOptions?.mode} onChange={onCellOptionsChange} options={colorBackgroundOpts} />
-      </Field>
-    </HorizontalGroup>
+    <Field label="Background display mode">
+      <Select value={cellOptions?.mode} onChange={onCellOptionsChange} options={colorBackgroundOpts} />
+    </Field>
   );
 };

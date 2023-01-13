@@ -489,22 +489,53 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
- * Interface for table cell types that have no additional options.
+ * Allows for the table cell gauge display type to set the gauge mode.
  */
-export interface TableAutoCellOptions {
-  type: TableCellDisplayMode;
+export enum BarGaugeValueMode {
+  Color = 'color',
+  Hidden = 'hidden',
+  Text = 'text',
 }
 
 /**
- * Allows for the table cell gauge display type to set the gauge mode.
+ * Auto mode table cell options
+ */
+export interface TableAutoCellOptions {
+  type: TableCellDisplayMode.Auto;
+}
+
+/**
+ * Colored text cell options
+ */
+export interface TableColorTextCellOptions {
+  type: TableCellDisplayMode.ColorText;
+}
+
+/**
+ * Json view cell options
+ */
+export interface TableJsonViewCellOptions {
+  type: TableCellDisplayMode.JSONView;
+}
+
+/**
+ * Json view cell options
+ */
+export interface TableImageCellOptions {
+  type: TableCellDisplayMode.Image;
+}
+
+/**
+ * Gauge cell options
  */
 export interface TableBarGaugeCellOptions {
   mode: BarGaugeDisplayMode;
   type: TableCellDisplayMode.Gauge;
+  valueMode?: BarGaugeValueMode;
 }
 
 /**
- * Allows for the background display mode to be set for the color background cell.
+ * Colored background cell options
  */
 export interface TableColoredBackgroundCellOptions {
   mode: TableCellBackgroundDisplayMode;
@@ -515,7 +546,7 @@ export interface TableColoredBackgroundCellOptions {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

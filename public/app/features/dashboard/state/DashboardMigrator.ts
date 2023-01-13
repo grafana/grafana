@@ -1407,6 +1407,7 @@ function migrateTableCellConfig(displayMode: TableCellDisplayMode): TableCellOpt
       };
     default:
       return {
+        // @ts-ignore
         type: displayMode,
       };
   }

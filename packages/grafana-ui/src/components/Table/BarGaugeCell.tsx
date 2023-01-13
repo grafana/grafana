@@ -2,7 +2,7 @@ import { isFunction } from 'lodash';
 import React, { FC } from 'react';
 
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
-import { BarGaugeDisplayMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeValueMode, TableFieldOptions } from '@grafana/schema';
 
 import { BarGauge } from '../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
@@ -35,32 +35,26 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   }
 
   const displayValue = field.display!(cell.value);
+  const customFieldOptions: TableFieldOptions = field.config.custom;
+  const cellOptions = customFieldOptions.cellOptions;
 
   // Set default display mode
   let barGaugeMode: BarGaugeDisplayMode = BarGaugeDisplayMode.Gradient;
+  let valueMode = BarGaugeValueMode.Color;
 
-  // Support deprecated settings
-  const usingDeprecatedSettings = field.config.custom.displayMode !== undefined;
-
-  // If we're using the old settings format we read the displayMode directly from
-  // the cell options
-  if (usingDeprecatedSettings) {
-    if (
-      (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
-      (field.config.custom && field.config.custom.cellOptions.displayMode === BarGaugeDisplayMode.Lcd)
-    ) {
+  // If we're using the old settings format check for old values from displayMode
+  if (customFieldOptions.displayMode) {
+    if ((customFieldOptions.displayMode as string) === BarGaugeDisplayMode.Lcd) {
       barGaugeMode = BarGaugeDisplayMode.Lcd;
-    } else if (
-      (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
-      (field.config.custom && field.config.custom.cellOptions.displayMode === BarGaugeDisplayMode.Basic)
-    ) {
+    } else if ((customFieldOptions.displayMode as string) === BarGaugeDisplayMode.Basic) {
       barGaugeMode = BarGaugeDisplayMode.Basic;
     }
   }
   // Otherwise in the case of sub-options we read specifically from the sub-options
   // object in order to get the display mode
-  else {
-    barGaugeMode = field.config.custom.cellOptions.mode;
+  else if (cellOptions.type === TableCellDisplayMode.Gauge) {
+    barGaugeMode = cellOptions.mode;
+    valueMode = cellOptions.valueMode ?? BarGaugeValueMode.Color;
   }
 
   const getLinks = () => {
@@ -91,7 +85,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
         itemSpacing={1}
         lcdCellWidth={8}
         displayMode={barGaugeMode}
-        valueMode={'text'}
+        valueMode={valueMode}
       />
     );
   };
