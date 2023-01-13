@@ -533,7 +533,7 @@
       "name-label": "Name",
       "username-label": "Username"
     },
-    "title": "Edit profile"
+    "title": "Profile"
   },
   "user-session": {
     "browser-column": "Browser & OS",
