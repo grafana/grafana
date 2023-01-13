@@ -72,12 +72,12 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing DeleteLibraryElementsInFolder",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.Id)
+			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
 			err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
@@ -145,12 +145,12 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing GetLibraryPanelConnections",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.Id)
+			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
 			var expected = func(res LibraryElementConnectionsResponse) LibraryElementConnectionsResponse {
@@ -160,8 +160,8 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 							ID:            sc.initialResult.Result.ID,
 							Kind:          sc.initialResult.Result.Kind,
 							ElementID:     1,
-							ConnectionID:  dashInDB.Id,
-							ConnectionUID: dashInDB.Uid,
+							ConnectionID:  dashInDB.ID,
+							ConnectionUID: dashInDB.UID,
 							Created:       res.Result[0].Created,
 							CreatedBy: LibraryElementDTOMetaUser{
 								ID:        1,
@@ -269,8 +269,8 @@ type folderACLItem struct {
 	permission models.PermissionType
 }
 
-func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash *models.Dashboard, folderID int64) *models.Dashboard {
-	dash.FolderId = folderID
+func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash *dashboards.Dashboard, folderID int64) *dashboards.Dashboard {
+	dash.FolderID = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   "",
