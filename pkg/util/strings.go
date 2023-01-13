@@ -35,7 +35,7 @@ func SplitString(str string) []string {
 	}
 
 	// JSON list syntax support
-	if strings.Index(str, "[") == 0 {
+	if strings.Index(strings.TrimSpace(str), "[") == 0 {
 		var res []string
 		err := json.Unmarshal([]byte(str), &res)
 		if err != nil {
