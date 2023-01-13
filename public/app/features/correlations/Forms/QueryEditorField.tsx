@@ -130,6 +130,7 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
           return (
             <>
               <QueryEditor
+                app={CoreApp.Correlations}
                 onRunQuery={() => handleValidation(value)}
                 onChange={(value) => {
                   setIsValidQuery(undefined);
