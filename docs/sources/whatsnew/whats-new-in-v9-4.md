@@ -29,3 +29,9 @@ Description. Include an overview of the feature and problem it solves, and where
 We've improved the design and functionality of email templates to make template creation much easier and more customizable. The email template framework utilizes MJML to define and compile the final email HTML output. Sprig functions in the email templates provide more customizable template functions.
 
 {{< figure src="/static/img/docs/alerting/alert-templates-whats-new-v9.3.png" max-width="750px" caption="Email template redesign" >}}
+
+## Service account expiration dates
+
+We have included a new configuration option, disabled by default. This will allow us to require an expiration date limit for all newly created service account tokens.
+
+This will not affect existing tokens, however newly created tokens will require an expiration date that doesn't exceed the configuration option `token_expiration_day_limit`.
