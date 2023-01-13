@@ -11,9 +11,7 @@ import (
 	"strings"
 
 	"github.com/dave/dst/decorator"
-
 	"github.com/dave/dst/dstutil"
-
 	"golang.org/x/tools/imports"
 )
 
