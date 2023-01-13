@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "testCache": {
+    "no enzyme tests": {
+      "public/app/features/data-connections/DataConnectionsPage.test.tsx": "3c989542e9d82642d4c62c87b0fb5da2944a9f7e515b3dd0e477d73b0efedb02700b05f64e3ac46e",
+      "public/app/features/datasources/DataSourcesList.test.tsx": "3c989542e9d82642d4c62c87b0fb5da2944a9f7ef09b772431f1a5f640f22a13d773f6ccae5bf3b8"
+    },
+    "better eslint": {
+      "public/app/features/data-connections/DataConnectionsPage.test.tsx": "3c989542e9d82642d4c62c87b0fb5da2944a9f7e515b3dd0e477d73b0efedb02700b05f64e3ac46e",
+      "public/app/features/data-connections/__mocks__/store.navIndex.mock.ts": "3c989542e9d82642d4c62c87b0fb5da2944a9f7e4546a29ec7c41880cbee22e6c9c96d2d82dfbf75",
+      "public/app/features/datasources/DataSourcesList.test.tsx": "3c989542e9d82642d4c62c87b0fb5da2944a9f7ef09b772431f1a5f640f22a13d773f6ccae5bf3b8",
+      "public/app/features/datasources/DataSourcesList.tsx": "3c989542e9d82642d4c62c87b0fb5da2944a9f7edbdf297119402addf008847aa7a8d2c4f4e50295",
+      "public/app/features/datasources/DataSourcesListPageContent.tsx": "3c989542e9d82642d4c62c87b0fb5da2944a9f7eaebe1de2c332999d0eb70f34aea3855dcf80c32f"
+    }
+  }
+}
