@@ -154,8 +154,8 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: "entity_nested",
 		Columns: []*migrator.Column{
-			{Name: "parent_grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
 			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false, IsPrimaryKey: true},
+			{Name: "parent_grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
 
 			// The entity identifier
 			{Name: "tenant_id", Type: migrator.DB_BigInt, Nullable: false},
