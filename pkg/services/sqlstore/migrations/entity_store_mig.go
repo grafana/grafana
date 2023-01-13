@@ -158,7 +158,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v11)" // change this when we want to wipe and reset the object tables
+	suffix := " (v12)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("EntityStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'EntityStore init%';
 	`)))
@@ -181,5 +181,5 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("EntityStore init: set path collation in entity tables"+suffix, migrator.NewRawSQLMigration("").
 		// MySQL `utf8mb4_unicode_ci` collation is set in `mysql_dialect.go`
 		// SQLite uses a `BINARY` collation by default
-		Postgres("ALTER TABLE entity_folder ALTER COLUMN path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values
+		Postgres("ALTER TABLE entity_folder ALTER COLUMN slug_path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values
 }
