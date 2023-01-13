@@ -85,7 +85,12 @@ func ProvideService(
 	}
 
 	if s.cfg.AuthProxyEnabled {
-		s.clients[authn.ClientProxy] = clients.ProvideProxy(cfg)
+		proxy, err := clients.ProvideProxy(cfg)
+		if err != nil {
+			s.log.Error("failed to configure auth proxy", "err", err)
+		} else {
+			s.clients[authn.ClientProxy] = proxy
+		}
 	}
 
 	if s.cfg.JWTAuthEnabled {
