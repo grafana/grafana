@@ -142,8 +142,8 @@ export const PromSettings = (props: Props) => {
   // This update call is typed as void, but it returns a response which we need
   const onUpdate = useUpdateDatasource();
 
-  // We are explicitly adding httpMethod so, it is correctly displayed in dropdown. This way, it is more predictable
-  // for users.
+  // We are explicitly adding httpMethod so, it is correctly displayed in dropdown.
+  // This way, it is more predictable for users.
   if (!options.jsonData.httpMethod) {
     options.jsonData.httpMethod = 'POST';
   }
