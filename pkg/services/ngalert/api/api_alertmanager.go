@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/alerting/alerting"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -76,11 +77,11 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSile
 
 	silenceID, err := am.CreateSilence(&postableSilence)
 	if err != nil {
-		if errors.Is(err, notifier.ErrSilenceNotFound) {
+		if errors.Is(err, alerting.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
 
-		if errors.Is(err, notifier.ErrCreateSilenceBadPayload) {
+		if errors.Is(err, alerting.ErrCreateSilenceBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 
@@ -112,7 +113,7 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext, silenceID st
 	}
 
 	if err := am.DeleteSilence(silenceID); err != nil {
-		if errors.Is(err, notifier.ErrSilenceNotFound) {
+		if errors.Is(err, alerting.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -145,7 +146,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.
 		c.Query("receiver"),
 	)
 	if err != nil {
-		if errors.Is(err, notifier.ErrGetAlertGroupsBadPayload) {
+		if errors.Is(err, alerting.ErrGetAlertGroupsBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
@@ -169,10 +170,10 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Respo
 		c.Query("receiver"),
 	)
 	if err != nil {
-		if errors.Is(err, notifier.ErrGetAlertsBadPayload) {
+		if errors.Is(err, alerting.ErrGetAlertsBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
-		if errors.Is(err, notifier.ErrGetAlertsUnavailable) {
+		if errors.Is(err, alerting.ErrGetAlertsUnavailable) {
 			return ErrResp(http.StatusServiceUnavailable, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
@@ -190,7 +191,7 @@ func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext, silenceID strin
 
 	gettableSilence, err := am.GetSilence(silenceID)
 	if err != nil {
-		if errors.Is(err, notifier.ErrSilenceNotFound) {
+		if errors.Is(err, alerting.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
@@ -207,7 +208,7 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 
 	gettableSilences, err := am.ListSilences(c.QueryStrings("filter"))
 	if err != nil {
-		if errors.Is(err, notifier.ErrListSilencesBadPayload) {
+		if errors.Is(err, alerting.ErrListSilencesBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error

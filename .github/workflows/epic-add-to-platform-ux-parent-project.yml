@@ -7,7 +7,7 @@ on:
       - 'type/epic'
       
 env:
-  GITHUB_TOKEN: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GH_BOT_PROJECTS_ACCESS_TOKEN }}
   ORGANIZATION: ${{ github.repository_owner }}
   REPO: ${{ github.event.repository.name }}
   PARENT_PROJECT: 304

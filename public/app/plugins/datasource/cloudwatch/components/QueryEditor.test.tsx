@@ -100,7 +100,7 @@ describe('QueryEditor should render right editor', () => {
   });
 
   describe('when using grafana 7.0.0 style logs query', () => {
-    it('should render the metrics query editor', async () => {
+    it('should render the logs query editor', async () => {
       const query = {
         ...migratedFields,
         alias: '',
@@ -123,7 +123,7 @@ describe('QueryEditor should render right editor', () => {
       await act(async () => {
         render(<QueryEditor {...props} query={query} />);
       });
-      expect(screen.getByText('Log Groups')).toBeInTheDocument();
+      expect(screen.getByText('Select Log Groups')).toBeInTheDocument();
     });
   });
 

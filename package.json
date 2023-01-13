@@ -173,7 +173,7 @@
     "cypress": "9.5.1",
     "enzyme": "3.11.0",
     "enzyme-to-json": "3.6.2",
-    "eslint": "8.30.0",
+    "eslint": "8.31.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jest": "27.1.3",
@@ -253,6 +253,7 @@
     "@grafana/lezer-logql": "0.1.1",
     "@grafana/monaco-logql": "^0.0.6",
     "@grafana/runtime": "workspace:*",
+    "@grafana/scenes": "0.0.4",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@jaegertracing/jaeger-ui-components": "workspace:*",
@@ -428,5 +429,10 @@
   "engines": {
     "node": ">= 16"
   },
-  "packageManager": "yarn@3.3.0"
+  "packageManager": "yarn@3.3.0",
+  "dependenciesMeta": {
+    "@grafana/scenes@0.0.3": {
+      "unplugged": true
+    }
+  }
 }
