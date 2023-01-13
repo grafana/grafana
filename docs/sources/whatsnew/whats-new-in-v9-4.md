@@ -35,3 +35,9 @@ We've improved the design and functionality of email templates to make template 
 The details section of a log line has been updated. Previously some of the interactions, such as filtering, showing statistics or toggling the visibility were split across "Labels" and "Detected fields". With the recent changes those two sections were unified into one and the interactions are available for all fields.
 
 {{< figure src="/static/img/logs/log-details-whats-new-9-4.png" max-width="750px" caption="Log details redesign with interactions" >}}
+
+## Service account expiration dates
+
+We have included a new configuration option, disabled by default. This will allow us to require an expiration date limit for all newly created service account tokens.
+
+This will not affect existing tokens, however newly created tokens will require an expiration date that doesn't exceed the configuration option `token_expiration_day_limit`.
