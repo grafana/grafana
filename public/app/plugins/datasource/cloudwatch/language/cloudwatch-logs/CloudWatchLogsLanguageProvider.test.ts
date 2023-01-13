@@ -3,9 +3,9 @@ import { Value } from 'slate';
 
 import { TypeaheadOutput } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../datasource';
-import { ResourceResponse } from '../resources/types';
-import { LogGroupField } from '../types';
+import { CloudWatchDatasource } from '../../datasource';
+import { ResourceResponse } from '../../resources/types';
+import { LogGroupField } from '../../types';
 
 import { CloudWatchLogsLanguageProvider } from './CloudWatchLogsLanguageProvider';
 import {

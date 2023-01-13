@@ -1,9 +1,9 @@
 import { CompletionItemPriority } from '@grafana/experimental';
 import { Monaco, monacoTypes } from '@grafana/ui';
 
-import { afterLabelValue, insideLabelValue } from '../__mocks__/dynamic-label-test-data';
-import MonacoMock from '../__mocks__/monarch/Monaco';
-import TextModel from '../__mocks__/monarch/TextModel';
+import { afterLabelValue, insideLabelValue } from '../../__mocks__/dynamic-label-test-data';
+import MonacoMock from '../../__mocks__/monarch/Monaco';
+import TextModel from '../../__mocks__/monarch/TextModel';
 
 import { DynamicLabelsCompletionItemProvider } from './CompletionItemProvider';
 import cloudWatchDynamicLabelsLanguageDefinition from './definition';

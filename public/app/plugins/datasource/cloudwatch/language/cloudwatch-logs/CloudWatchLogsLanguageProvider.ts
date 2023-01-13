@@ -5,9 +5,9 @@ import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data'
 import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
-import { CloudWatchDatasource } from '../datasource';
-import { CloudWatchQuery, LogGroup, TSDBResponse } from '../types';
-import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from '../utils/templateVariableUtils';
+import { CloudWatchDatasource } from '../../datasource';
+import { CloudWatchQuery, LogGroup, TSDBResponse } from '../../types';
+import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from '../../utils/templateVariableUtils';
 
 import syntax, {
   AGGREGATION_FUNCTIONS_STATS,

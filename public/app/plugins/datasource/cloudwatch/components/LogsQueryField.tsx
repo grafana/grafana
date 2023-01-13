@@ -17,8 +17,8 @@ import { ExploreId } from 'app/types';
 
 // Utils & Services
 // dom also includes Element polyfills
-import syntax from '../cloudwatch-logs/syntax';
 import { CloudWatchDatasource } from '../datasource';
+import syntax from '../language/cloudwatch-logs/syntax';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
