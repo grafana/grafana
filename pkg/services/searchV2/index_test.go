@@ -429,8 +429,8 @@ var dashboardsWithFolders = []dashboard{
 		summary: &models.EntitySummary{
 			Name: "Dashboard in folder 1",
 			Nested: []*models.EntitySummary{
-				newNestedPanel(1, "Panel 1"),
-				newNestedPanel(2, "Panel 2"),
+				newNestedPanel(1, 2, "Panel 1"),
+				newNestedPanel(2, 2, "Panel 2"),
 			},
 		},
 	},
@@ -441,17 +441,26 @@ var dashboardsWithFolders = []dashboard{
 		summary: &models.EntitySummary{
 			Name: "Dashboard in folder 2",
 			Nested: []*models.EntitySummary{
-				newNestedPanel(3, "Panel 3"),
+				newNestedPanel(3, 3, "Panel 3"),
 			},
 		},
 	},
 	{
-		id:  4,
-		uid: "4",
+		id:       0,
+		uid:      "general",
+		isFolder: true,
+		summary: &models.EntitySummary{
+			Name: "General",
+		},
+	},
+	{
+		id:       4,
+		uid:      "4",
+		folderID: 0,
 		summary: &models.EntitySummary{
 			Name: "One more dash",
 			Nested: []*models.EntitySummary{
-				newNestedPanel(4, "Panel 4"),
+				newNestedPanel(4, 4, "Panel 4"),
 			},
 		},
 	},
@@ -503,22 +512,31 @@ func TestDashboardIndex_Folders(t *testing.T) {
 
 var dashboardsWithPanels = []dashboard{
 	{
-		id:  1,
-		uid: "1",
+		id:       0,
+		uid:      "general",
+		isFolder: true,
+		summary: &models.EntitySummary{
+			Name: "General",
+		},
+	},
+	{
+		id:       1,
+		uid:      "1",
+		folderID: 0,
 		summary: &models.EntitySummary{
 			Name: "My Dash",
 			Nested: []*models.EntitySummary{
-				newNestedPanel(1, "Panel 1"),
-				newNestedPanel(2, "Panel 2"),
+				newNestedPanel(1, 1, "Panel 1"),
+				newNestedPanel(2, 1, "Panel 2"),
 			},
 		},
 	},
 }
 
-func newNestedPanel(id int64, name string) *models.EntitySummary {
+func newNestedPanel(id, dashId int64, name string) *models.EntitySummary {
 	summary := &models.EntitySummary{
 		Kind: "panel",
-		UID:  fmt.Sprintf("???#%d", id),
+		UID:  fmt.Sprintf("%d#%d", dashId, id),
 	}
 	summary.Name = name
 	return summary
