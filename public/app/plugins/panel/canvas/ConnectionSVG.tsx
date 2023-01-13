@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -40,7 +40,8 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   });
 
   const onKeyUp = (e: KeyboardEvent) => {
-    if (e.keyCode === 8) {
+    // Backspace (8) or delete (46)
+    if (e.keyCode === 8 || e.keyCode === 46) {
       if (selectedConnectionRef.current && selectedConnectionSourceRef.current) {
         selectedConnectionSourceRef.current.options.connections =
           selectedConnectionSourceRef.current.options.connections?.filter(
@@ -51,6 +52,9 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
         setSelectedConnection(undefined);
         setSelectedConnectionSource(undefined);
       }
+    } else {
+      // Prevent removing event listener if key is not delete
+      return;
     }
 
     document.removeEventListener('keyup', onKeyUp);
@@ -80,9 +84,8 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
     }
   };
 
-  // TODO: memos? in scene?  only update when things actually change?
   // Flat list of all connections
-  const findConnections = () => {
+  const findConnections = useCallback(() => {
     const connections: ConnectionInfo[] = [];
     for (let v of scene.byName.values()) {
       if (v.options.connections) {
@@ -99,7 +102,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       }
     }
     return connections;
-  };
+  }, [scene.byName]);
 
   // Figure out target and then target's relative coordinates drawing (if no target do parent)
   const renderConnections = () => {
