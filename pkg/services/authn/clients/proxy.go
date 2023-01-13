@@ -33,15 +33,15 @@ type Proxy struct {
 	acceptedIPs []*net.IPNet
 }
 
-func (p *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	if !p.isAllowedIP(r) {
+func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	if !c.isAllowedIP(r) {
 		return nil, errNotAcceptedIP.Errorf("request ip is not in the configured accept list")
 	}
 
-	username := p.getHeader(r)
+	username := c.getHeader(r)
 
 	var clientErr error
-	for _, proxyClient := range p.clients {
+	for _, proxyClient := range c.clients {
 		var identity *authn.Identity
 		identity, clientErr = proxyClient.AuthenticateProxy(ctx, r, username)
 		if identity != nil {
@@ -52,8 +52,8 @@ func (p *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	return nil, clientErr
 }
 
-func (p *Proxy) Test(ctx context.Context, r *authn.Request) bool {
-	return len(p.getHeader(r)) != 0
+func (c *Proxy) Test(ctx context.Context, r *authn.Request) bool {
+	return len(c.getHeader(r)) != 0
 }
 
 func (p *Proxy) getHeader(r *authn.Request) string {
