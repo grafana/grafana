@@ -1,9 +1,10 @@
 ---
-draft: true
 title: Grafana schema
 weight: 200
+_build:
+  list: false
 ---
 
 # Grafana schema
 
-[Core kinds]({{< relref "core/_index.md" >}})
+{{< section >}}
