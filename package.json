@@ -395,7 +395,7 @@
     "test": "link:./public/test",
     "tether-drop": "https://github.com/torkelo/drop",
     "three": "^0.138.3",
-    "three-stdlib": "^2.21.5",
+    "three-stdlib": "^2.8.8",
     "tinycolor2": "1.4.2",
     "tslib": "2.4.1",
     "uplot": "1.6.23",

@@ -22529,7 +22529,7 @@ __metadata:
     testing-library-selector: 0.2.1
     tether-drop: "https://github.com/torkelo/drop"
     three: ^0.138.3
-    three-stdlib: ^2.21.5
+    three-stdlib: ^2.8.8
     tinycolor2: 1.4.2
     ts-jest: 29.0.3
     ts-loader: 9.3.1
@@ -37331,7 +37331,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"three-stdlib@npm:^2.21.5, three-stdlib@npm:^2.8.9":
+"three-stdlib@npm:^2.8.8, three-stdlib@npm:^2.8.9":
   version: 2.21.5
   resolution: "three-stdlib@npm:2.21.5"
   dependencies:
