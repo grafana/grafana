@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, TimeOption } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
@@ -40,14 +40,12 @@ function Editor({
   const [labels, setLabels] = useState<{ [k: string]: any }>({});
   const { projectName, groupBys, crossSeriesReducer } = query;
   const metricType = getMetricType(query);
-  const [timeState, setTime] = useState<{ from: string; to: string } | null>(null);
   const timeSrv = getTimeSrv();
+  const [timeState, setTime] = useState<Partial<TimeOption>>({ ...timeSrv.time });
 
   const useTime = (time: { from: string; to: string }) => {
     if (timeState !== null && (timeState.from !== time.from || timeState.to !== time.to)) {
-      setTime({ ...timeSrv.time });
-    } else if (!timeState) {
-      setTime({ ...timeSrv.time });
+      setTime({ ...time });
     }
   };
 
