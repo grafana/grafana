@@ -22,8 +22,8 @@ import { useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { ResultItem } from './ResultItem';
+import { useDashboardResults } from './actions/dashboardActions';
 import useActions from './actions/useActions';
-import { useDashboardResults } from './actions/useDashboardResults';
 import { CommandPaletteAction } from './types';
 
 export const CommandPalette = () => {
