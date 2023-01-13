@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/org"
 
 	"golang.org/x/oauth2"
@@ -71,31 +72,21 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, ErrEmailNotFound
 	}
 
+	// setting the role, grafanaAdmin to empty to reflect that we are not syncronizing with the external provider
+	var role roletype.RoleType
+	var grafanaAdmin bool
+	if !s.skipOrgRoleSync {
+		role, grafanaAdmin = s.extractRoleAndAdmin(&claims)
+	}
+	if s.roleAttributeStrict && !role.IsValid() {
+		return nil, &InvalidBasicRoleError{idP: "Azure", assignedRole: string(role)}
+	}
+	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
+
 	groups, err := s.extractGroups(client, claims, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
-
-	// setting the role, grafanaAdmin to empty to reflect that we are not syncronizing with the external provider
-	if !s.skipOrgRoleSync {
-		return &BasicUserInfo{
-			Id:             claims.ID,
-			Name:           claims.Name,
-			Email:          email,
-			Login:          email,
-			Role:           "",
-			IsGrafanaAdmin: nil,
-			Groups:         groups,
-		}, nil
-	}
-
-	role, grafanaAdmin := s.extractRoleAndAdmin(&claims)
-	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, &InvalidBasicRoleError{idP: "Azure", assignedRole: string(role)}
-	}
-
-	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
-
 	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
 	if !s.IsGroupMember(groups) {
 		return nil, errMissingGroupMembership
