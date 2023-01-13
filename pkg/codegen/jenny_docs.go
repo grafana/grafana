@@ -386,7 +386,7 @@ func printProperties(w io.Writer, s *schema) {
 			desc += fmt.Sprintf(" Default: `%v`.", p.Default)
 		}
 
-		rows = append(rows, []string{fmt.Sprintf("`%s`", k), propTypeStr, required, strings.TrimSpace(desc)})
+		rows = append(rows, []string{fmt.Sprintf("`%s`", k), propTypeStr, required, formatForTable(desc)})
 	}
 
 	// Sort by the required column, then by the name column.
@@ -419,6 +419,15 @@ func in(strs []string, str string) bool {
 		}
 	}
 	return false
+}
+
+// formatForTable returns string usable in a Markdown table.
+// It trims white spaces, replaces new lines and pipe characters.
+func formatForTable(in string) string {
+	s := strings.TrimSpace(in)
+	s = strings.ReplaceAll(s, "\n", "<br/>")
+	s = strings.ReplaceAll(s, "|", "&#124;")
+	return s
 }
 
 type PropertyTypes []PropertyType
