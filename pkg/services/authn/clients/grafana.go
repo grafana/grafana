@@ -56,7 +56,7 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 		identity.Login = username
 		identity.Email = username
 	default:
-		return nil, errors.New("some error")
+		return nil, errInvalidProxyHeader.Errorf("invalid auth proxy header property, expected username or email but got: %s", c.cfg.AuthProxyHeaderProperty)
 	}
 
 	if headerName := c.cfg.AuthProxyHeaders[proxyFieldName]; headerName != "" {
