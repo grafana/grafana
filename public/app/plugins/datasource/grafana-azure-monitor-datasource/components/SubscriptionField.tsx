@@ -36,9 +36,8 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
       if (query.queryType === AzureQueryType.AzureMonitor) {
         newQuery.azureMonitor = {
           ...newQuery.azureMonitor,
-          resourceGroup: undefined,
+          resources: undefined,
           metricNamespace: undefined,
-          resourceName: undefined,
           metricName: undefined,
           aggregation: undefined,
           timeGrain: '',
