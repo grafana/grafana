@@ -58,7 +58,7 @@ The **Trace to logs** setting configures the [trace to logs feature]({{< relref 
 **To configure trace to logs:**
 
 1. Select the target data source.
-2. Select which tags to use in the logs query. The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear.
+1. Select which tags to use in the logs query. The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear.
 
    - **Single tag**
      - Configuring `job` as a tag and clicking on a span link will take you to your configured logs datasource with the query `{job='value from clicked span'}`.
@@ -67,6 +67,8 @@ The **Trace to logs** setting configures the [trace to logs feature]({{< relref 
    - **Mapped tags**
      - For a mapped tag `service.name` with value `service`, clicking on a span link will take you to your configured logs datasource with the query `{service='value from clicked span'}` instead of `{service.name='value from clicked span'}`.
      - This is useful for instances where your tracing datasource tags and your logs datasource tags don't match one-to-one.
+
+The following table describes the ways in which you can configure your trace to logs settings:
 
 | Setting name              | Description                                                                                                                                                                                     |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
