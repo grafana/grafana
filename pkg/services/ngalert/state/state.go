@@ -168,7 +168,9 @@ func (a *State) resultError(alertRule *models.AlertRule, result eval.Result) {
 	case models.AlertingErrState:
 		execErrState = eval.Alerting
 	case models.ErrorErrState:
-		a.Annotations["Error"] = a.Error.Error()
+		if a.Error != nil {
+			a.Annotations["Error"] = a.Error.Error()
+		}
 		// If the evaluation failed because a query returned an error then
 		// update the state with the Datasource UID as a label and the error
 		// message as an annotation so other code can use this metadata to
