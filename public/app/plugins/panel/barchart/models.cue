@@ -30,22 +30,22 @@ Panel: thema.#Lineage & {
 						ui.OptionsWithLegend
 						ui.OptionsWithTooltip
 						ui.OptionsWithTextFormatting
-						// TODO docs
+						// Manually select which field from the dataset to represent the x field.
 						xField?: string
-						// TODO docs
+						// Use the color value for a sibling field to color each bar value.
 						colorByField?: string
-						// TODO docs
+						// Controls the orientation of the bar chart, either vertical or horizontal.
 						orientation: ui.VizOrientation | *"auto"
-						// TODO docs
+						// Controls the radius of each bar.
 						barRadius?: float64 & >= 0 & <= 0.5 | *0
-						// TODO docs
+						// Controls the rotation of the x axis labels.
 						xTickLabelRotation: int32 & >= -90 & <= 90 | *0
-						// TODO docs
+						// Sets the max length that a label can have before it is truncated.
 						xTickLabelMaxLength: int32 & >= 0
-						// TODO docs
+						// Controls the spacing between x axis labels.
 						// negative values indicate backwards skipping behavior
 						xTickLabelSpacing?: int32 | *0
-						// TODO docs
+						// Controls whether bars are stacked or not, either normally or in percent mode.
 						stacking:   ui.StackingMode | *"none"
 						// This controls whether values are shown on top or to the left of bars.
 						showValue:  ui.VisibilityMode | *"auto"

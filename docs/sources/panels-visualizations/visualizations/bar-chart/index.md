@@ -49,13 +49,17 @@ Use these options to refine your visualization.
 - **Horizontal** - Will make the X axis the category axis.
 - **Vertical** - Will make the Y axis the category axis.
 
-### Rotate bar labels
+### Rotate X tick labels
 
 When the graph is in vertical orientation you can use this setting to rotate the labels under the bars. Useful if the labels are long and overlap.
 
-### Bar label max length
+### X tick label max length
 
 Sets the max length of the bar label. Labels longer than the max length will be truncated and `...` will be appended to the end.
+
+### Bar labels minimum spacing
+
+Sets the minimum spacing between bar labels.
 
 ### Show values
 
@@ -65,6 +69,14 @@ This controls whether values are shown on top or to the left of bars.
 - **Always** Always show values.
 - **Never** Never show values.
 
+### Stacking
+
+Controls if bars are stacked and how they are stacked.
+
+- **Off** Bars will not be stacked.
+- **Normal** Bars will be stacked on top of each other.
+- **Percent** Bars will be stacked on top of each other and the height of each bar will be the percentage of the total height of the stack.
+
 ### Group width
 
 Controls the width of groups. 1 = max with, 0 = min width.
@@ -72,6 +84,18 @@ Controls the width of groups. 1 = max with, 0 = min width.
 ### Bar width
 
 Controls the width of bars. 1 = Max width, 0 = Min width.
+
+### Bar radius
+
+Controls the radius of the bars. 0.5 = Max radius, 0 = Min radius.
+
+### Highlight full area on cover
+
+Controls if the full surrounding area of the bar is highlighted when hovering over the bar.
+
+### Color by field
+
+Controls whether the bars are colored by a sibling field.
 
 ### Line width
 
