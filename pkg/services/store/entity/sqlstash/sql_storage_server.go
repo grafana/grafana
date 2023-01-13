@@ -47,7 +47,7 @@ type sqlEntityServer struct {
 
 func getReadSelect(r *entity.ReadEntityRequest) string {
 	fields := []string{
-		"tenant_id", "kind", "uid", // The PK
+		"tenant_id", "kind", "uid", "folder", // GRN + folder
 		"version", "size", "etag", "errors", // errors are always returned
 		"created_at", "created_by",
 		"updated_at", "updated_by",
@@ -57,7 +57,7 @@ func getReadSelect(r *entity.ReadEntityRequest) string {
 		fields = append(fields, `body`)
 	}
 	if r.WithSummary {
-		fields = append(fields, "name", "slug", "folder", "description", "labels", "fields")
+		fields = append(fields, "name", "slug", "description", "labels", "fields")
 	}
 	return "SELECT " + strings.Join(fields, ",") + " FROM entity WHERE "
 }
@@ -70,7 +70,7 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 
 	summaryjson := &summarySupport{}
 	args := []interface{}{
-		&raw.GRN.TenantId, &raw.GRN.Kind, &raw.GRN.UID,
+		&raw.GRN.TenantId, &raw.GRN.Kind, &raw.GRN.UID, &raw.Folder,
 		&raw.Version, &raw.Size, &raw.ETag, &summaryjson.errors,
 		&raw.CreatedAt, &raw.CreatedBy,
 		&raw.UpdatedAt, &raw.UpdatedBy,
@@ -80,7 +80,7 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 		args = append(args, &raw.Body)
 	}
 	if r.WithSummary {
-		args = append(args, &summaryjson.name, &summaryjson.slug, &summaryjson.folder, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
+		args = append(args, &summaryjson.name, &summaryjson.slug, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
 	}
 
 	err := rows.Scan(args...)
@@ -325,7 +325,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 					return err
 				}
 			}
-			_, err = doDelete(ctx, tx, oid)
+			_, err = doDelete(ctx, tx, grn)
 			if err != nil {
 				return err
 			}
@@ -450,6 +450,9 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 					summary.labels, summary.fields, summary.errors,
 				}, insertArgs...)...,
 			)
+		}
+		if err == nil && models.StandardKindFolder == r.GRN.Kind {
+			err = updateFolderTree(ctx, tx, grn.TenantId)
 		}
 		if err == nil {
 			return s.writeSearchInfo(ctx, tx, oid, summary.model, grn, insertArgs)
@@ -595,11 +598,6 @@ func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntit
 		return nil, nil, err
 	}
 
-	summaryjson, err := newSummarySupport(summary)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	// Update a summary based on the name (unless the root suggested one)
 	if summary.Slug == "" {
 		t := summary.Name
@@ -607,6 +605,11 @@ func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntit
 			t = r.GRN.UID
 		}
 		summary.Slug = slugify.Slugify(t)
+	}
+
+	summaryjson, err := newSummarySupport(summary)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return summaryjson, body, nil
@@ -620,14 +623,15 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 	rsp := &entity.DeleteEntityResponse{}
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		rsp.OK, err = doDelete(ctx, tx, grn.ToGRNString())
+		rsp.OK, err = doDelete(ctx, tx, grn)
 		return err
 	})
 	return rsp, err
 }
 
-func doDelete(ctx context.Context, tx *session.SessionTx, grn string) (bool, error) {
-	results, err := tx.Exec(ctx, "DELETE FROM entity WHERE grn=?", grn)
+func doDelete(ctx context.Context, tx *session.SessionTx, grn *entity.GRN) (bool, error) {
+	str := grn.ToGRNString()
+	results, err := tx.Exec(ctx, "DELETE FROM entity WHERE grn=?", str)
 	if err != nil {
 		return false, err
 	}
@@ -641,6 +645,10 @@ func doDelete(ctx context.Context, tx *session.SessionTx, grn string) (bool, err
 	_, _ = tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", grn)
 	_, _ = tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", grn)
 	_, _ = tx.Exec(ctx, "DELETE FROM entity WHERE parent_grn=?", grn)
+
+	if grn.Kind == models.StandardKindFolder {
+		err = updateFolderTree(ctx, tx, grn.TenantId)
+	}
 	return rows > 0, err
 }
 
@@ -819,4 +827,8 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 
 	return rsp, err
+}
+
+func (s *sqlEntityServer) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
+	return fmt.Errorf("unimplemented")
 }
