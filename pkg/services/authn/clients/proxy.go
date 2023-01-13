@@ -14,7 +14,8 @@ import (
 )
 
 var (
-	errNotAcceptedIP = errutil.NewBase(errutil.StatusValidationFailed, "auth-proxy.invalid-ip")
+	errNotAcceptedIP      = errutil.NewBase(errutil.StatusValidationFailed, "auth-proxy.invalid-ip")
+	errInvalidProxyHeader = errutil.NewBase(errutil.StatusInternal, "auth-proxy.invalid-proxy-header")
 )
 
 var _ authn.Client = new(Proxy)
@@ -38,7 +39,9 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, errNotAcceptedIP.Errorf("request ip is not in the configured accept list")
 	}
 
-	username := c.getHeader(r)
+	username := getProxyHeader(r, c.cfg.AuthProxyHeaderName, c.cfg.AuthProxyHeadersEncoded)
+
+	// FIXME: add cache to prevent sync on every request
 
 	var clientErr error
 	for _, proxyClient := range c.clients {
@@ -53,22 +56,11 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 }
 
 func (c *Proxy) Test(ctx context.Context, r *authn.Request) bool {
-	return len(c.getHeader(r)) != 0
+	return len(getProxyHeader(r, c.cfg.AuthProxyHeaderName, c.cfg.AuthProxyHeadersEncoded)) != 0
 }
 
-func (p *Proxy) getHeader(r *authn.Request) string {
-	if r.HTTPRequest == nil {
-		return ""
-	}
-	v := r.HTTPRequest.Header.Get(p.cfg.AuthProxyHeaderName)
-	if p.cfg.AuthProxyHeadersEncoded {
-		v = util.DecodeQuotedPrintable(v)
-	}
-	return v
-}
-
-func (p *Proxy) isAllowedIP(r *authn.Request) bool {
-	if len(p.acceptedIPs) == 0 {
+func (c *Proxy) isAllowedIP(r *authn.Request) bool {
+	if len(c.acceptedIPs) == 0 {
 		return true
 	}
 
@@ -78,7 +70,7 @@ func (p *Proxy) isAllowedIP(r *authn.Request) bool {
 	}
 
 	ip := net.ParseIP(host)
-	for _, v := range p.acceptedIPs {
+	for _, v := range c.acceptedIPs {
 		if v.Contains(ip) {
 			return true
 		}
@@ -112,4 +104,15 @@ func coerceProxyAddress(proxyAddr string) (*net.IPNet, error) {
 		return nil, fmt.Errorf("could not parse the network: %w", err)
 	}
 	return network, nil
+}
+
+func getProxyHeader(r *authn.Request, headerName string, decoded bool) string {
+	if r.HTTPRequest == nil {
+		return ""
+	}
+	v := r.HTTPRequest.Header.Get(headerName)
+	if decoded {
+		v = util.DecodeQuotedPrintable(v)
+	}
+	return v
 }

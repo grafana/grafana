@@ -64,12 +64,17 @@ func ProvideService(
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
 	}
 
+	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
 	if !s.cfg.DisableLogin {
-		passwordClients = append(passwordClients, clients.ProvideGrafana(userService))
+		grafana := clients.ProvideGrafana(cfg, userService)
+		proxyClients = append(proxyClients, grafana)
+		passwordClients = append(passwordClients, grafana)
 	}
 	if s.cfg.LDAPEnabled {
-		passwordClients = append(passwordClients, clients.ProvideLDAP(cfg))
+		ldap := clients.ProvideLDAP(cfg)
+		proxyClients = append(proxyClients, ldap)
+		passwordClients = append(passwordClients, ldap)
 	}
 
 	// if we have password clients configure check if basic auth or form auth is enabled
@@ -84,8 +89,8 @@ func ProvideService(
 		}
 	}
 
-	if s.cfg.AuthProxyEnabled {
-		proxy, err := clients.ProvideProxy(cfg)
+	if s.cfg.AuthProxyEnabled && len(proxyClients) > 0 {
+		proxy, err := clients.ProvideProxy(cfg, proxyClients...)
 		if err != nil {
 			s.log.Error("failed to configure auth proxy", "err", err)
 		} else {

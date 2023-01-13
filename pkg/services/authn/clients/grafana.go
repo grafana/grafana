@@ -4,23 +4,102 @@ import (
 	"context"
 	"crypto/subtle"
 	"errors"
+	"net/mail"
 
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	proxyFieldName   = "Name"
+	proxyFieldEmail  = "Email"
+	proxyFieldLogin  = "Login"
+	proxyFieldRole   = "Role"
+	proxyFieldGroups = "Groups"
+)
+
+var _ authn.ProxyClient = new(Grafana)
 var _ authn.PasswordClient = new(Grafana)
 
-func ProvideGrafana(userService user.Service) *Grafana {
-	return &Grafana{userService}
+func ProvideGrafana(cfg *setting.Cfg, userService user.Service) *Grafana {
+	return &Grafana{cfg, userService}
 }
 
 type Grafana struct {
+	cfg         *setting.Cfg
 	userService user.Service
 }
 
-func (c Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
+func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, username string) (*authn.Identity, error) {
+	identity := &authn.Identity{
+		AuthModule: login.AuthProxyAuthModule,
+		AuthID:     username,
+		ClientParams: authn.ClientParams{
+			SyncUser:        true,
+			SyncTeamMembers: true,
+			AllowSignUp:     c.cfg.AuthProxyAutoSignUp,
+		},
+	}
+
+	switch c.cfg.AuthProxyHeaderProperty {
+	case "username":
+		identity.Login = username
+		addr, err := mail.ParseAddress(username)
+		if err == nil {
+			identity.Email = addr.Address
+		}
+	case "email":
+		identity.Login = username
+		identity.Email = username
+	default:
+		return nil, errors.New("some error")
+	}
+
+	if headerName := c.cfg.AuthProxyHeaders[proxyFieldName]; headerName != "" {
+		if name := getProxyHeader(r, headerName, c.cfg.AuthProxyHeadersEncoded); name != "" {
+			identity.Name = name
+		}
+	}
+
+	if headerName := c.cfg.AuthProxyHeaders[proxyFieldEmail]; headerName != "" {
+		if email := getProxyHeader(r, headerName, c.cfg.AuthProxyHeadersEncoded); email != "" {
+			identity.Email = email
+		}
+	}
+
+	if headerName := c.cfg.AuthProxyHeaders[proxyFieldLogin]; headerName != "" {
+		if loginName := getProxyHeader(r, headerName, c.cfg.AuthProxyHeadersEncoded); loginName != "" {
+			identity.Login = loginName
+		}
+	}
+
+	if headerName := c.cfg.AuthProxyHeaders[proxyFieldRole]; headerName != "" {
+		role := org.RoleType(getProxyHeader(r, headerName, c.cfg.AuthProxyHeadersEncoded))
+		if role.IsValid() {
+			orgID := int64(1)
+			if c.cfg.AutoAssignOrg && c.cfg.AutoAssignOrgId > 0 {
+				orgID = int64(c.cfg.AutoAssignOrgId)
+			}
+			identity.OrgID = orgID
+			identity.OrgRoles[orgID] = role
+		}
+	}
+
+	if headerName := c.cfg.AuthProxyHeaders[proxyFieldGroups]; headerName != "" {
+		identity.Groups = util.SplitString(getProxyHeader(r, headerName, c.cfg.AuthProxyHeadersEncoded))
+	}
+
+	identity.ClientParams.LookUpParams.Email = &identity.Email
+	identity.ClientParams.LookUpParams.Login = &identity.Login
+
+	return identity, nil
+}
+
+func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
 	usr, err := c.userService.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: username})
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
