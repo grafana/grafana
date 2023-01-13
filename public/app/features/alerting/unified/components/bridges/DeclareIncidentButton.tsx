@@ -2,7 +2,9 @@ import React, { FC } from 'react';
 
 import { Button, LinkButton, Tooltip } from '@grafana/ui';
 
-import { createBridgeURL, usePluginBridge, SupportedPlugin } from '../PluginBridge';
+import { usePluginBridge } from '../../hooks/usePluginBridge';
+import { SupportedPlugin } from '../../types/pluginBridges';
+import { createBridgeURL } from '../PluginBridge';
 
 interface Props {
   title?: string;
