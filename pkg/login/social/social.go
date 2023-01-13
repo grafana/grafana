@@ -261,7 +261,7 @@ type SocialBase struct {
 	roleAttributePath   string
 	roleAttributeStrict bool
 	autoAssignOrgRole   string
-	skipOrgRoleSyncBase bool
+	skipOrgRoleSync     bool
 	features            featuremgmt.FeatureManager
 }
 
@@ -296,7 +296,7 @@ func newSocialBase(name string,
 	config *oauth2.Config,
 	info *OAuthInfo,
 	autoAssignOrgRole string,
-	skipOrgRoleSyncBase bool,
+	skipOrgRoleSync bool,
 	features featuremgmt.FeatureManager,
 ) *SocialBase {
 	logger := log.New("oauth." + name)
@@ -310,7 +310,7 @@ func newSocialBase(name string,
 		autoAssignOrgRole:       autoAssignOrgRole,
 		roleAttributePath:       info.RoleAttributePath,
 		roleAttributeStrict:     info.RoleAttributeStrict,
-		skipOrgRoleSyncBase:     skipOrgRoleSyncBase,
+		skipOrgRoleSync:         skipOrgRoleSync,
 		features:                features,
 	}
 }
@@ -352,7 +352,7 @@ func (s *SocialBase) defaultRole(legacy bool) org.RoleType {
 		return org.RoleType(s.autoAssignOrgRole)
 	}
 
-	if legacy && !s.skipOrgRoleSyncBase {
+	if legacy && !s.skipOrgRoleSync {
 		s.log.Warn("No valid role found. Skipping role sync. " +
 			"In Grafana 10, this will result in the user being assigned the default role and overriding manual assignment. " +
 			"If role sync is not desired, set oauth_skip_org_role_update_sync to true")

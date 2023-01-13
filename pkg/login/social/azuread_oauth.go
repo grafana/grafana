@@ -93,6 +93,10 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		isGrafanaAdmin = &grafanaAdmin
 	}
 
+	// setting the role to empty to reflect that we are not syncronizing with the external provider
+	if s.skipOrgRoleSync {
+		role = ""
+	}
 	return &BasicUserInfo{
 		Id:             claims.ID,
 		Name:           claims.Name,
@@ -133,15 +137,6 @@ func (claims *azureClaims) extractEmail() string {
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
 func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool) {
 	if len(claims.Roles) == 0 {
-		return s.defaultRole(false), false
-	}
-
-	// TODO: to be removed in favor or explicit auth provider configuration
-	if s.skipOrgRoleSyncBase {
-		return s.defaultRole(false), false
-	}
-	// skip org role mapping for azuread setting here
-	if s.skipOrgRoleSync {
 		return s.defaultRole(false), false
 	}
 
