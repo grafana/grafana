@@ -128,15 +128,6 @@
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
     },
-    "admin-access": {
-      "title": "Usuarios y acceso"
-    },
-    "admin-general": {
-      "title": "General"
-    },
-    "admin-plugins": {
-      "title": "Complementos y datos"
-    },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
       "title": "Alertas"
@@ -542,7 +533,7 @@
       "name-label": "Nombre",
       "username-label": "Nombre de usuario"
     },
-    "title": "Editar perfil"
+    "title": "Perfil"
   },
   "user-session": {
     "browser-column": "Navegador y sistema operativo",

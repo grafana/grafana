@@ -23,7 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
+)
+
+var (
+	errDisabledIdentity = errutil.NewBase(errutil.StatusUnauthorized, "identity.disabled")
 )
 
 // make sure service implements authn.Service interface
@@ -127,6 +132,10 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "id", identity)
 			return nil, false, err
 		}
+	}
+
+	if identity.IsDisabled {
+		return nil, true, errDisabledIdentity.Errorf("identity is disabled")
 	}
 
 	return identity, true, nil
