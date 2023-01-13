@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/overview/
-  - /docs/grafana/latest/auth/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/
+  - ../../auth/
+  - ../../auth/overview/
 description: Learn about all the ways in which you can configure Grafana to authenticate
   users.
 title: Configure authentication

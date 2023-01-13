@@ -664,7 +664,7 @@ func TestCloudMonitoring(t *testing.T) {
 					"projectName":      "test-proj",
 					"alignmentPeriod":  "stackdriver-auto",
 					"perSeriesAligner": "ALIGN_NEXT_OLDER",
-					"aliasBy":          "",
+					"aliasBy":          "test-alias",
 					"selectorName":     "select_slo_health",
 					"serviceId":        "test-service",
 					"sloId":            "test-slo"
@@ -676,14 +676,14 @@ func TestCloudMonitoring(t *testing.T) {
 
 			qes, err := service.buildQueryExecutors(slog, req)
 			require.NoError(t, err)
-			queries := getCloudMonitoringListFromInterface(t, qes)
+			queries := getCloudMonitoringSLOFromInterface(t, qes)
 
 			assert.Equal(t, 1, len(queries))
 			assert.Equal(t, "A", queries[0].refID)
 			assert.Equal(t, "2018-03-15T13:00:00Z", queries[0].params["interval.startTime"][0])
 			assert.Equal(t, "2018-03-15T13:34:00Z", queries[0].params["interval.endTime"][0])
 			assert.Equal(t, `+60s`, queries[0].params["aggregation.alignmentPeriod"][0])
-			assert.Equal(t, "", queries[0].aliasBy)
+			assert.Equal(t, "test-alias", queries[0].aliasBy)
 			assert.Equal(t, "ALIGN_MEAN", queries[0].params["aggregation.perSeriesAligner"][0])
 			assert.Equal(t, `aggregation.alignmentPeriod=%2B60s&aggregation.perSeriesAligner=ALIGN_MEAN&filter=select_slo_health%28%22projects%2Ftest-proj%2Fservices%2Ftest-service%2FserviceLevelObjectives%2Ftest-slo%22%29&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z`, queries[0].params.Encode())
 			assert.Equal(t, 5, len(queries[0].params))
@@ -706,7 +706,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 			qes, err = service.buildQueryExecutors(slog, req)
 			require.NoError(t, err)
-			qqueries := getCloudMonitoringListFromInterface(t, qes)
+			qqueries := getCloudMonitoringSLOFromInterface(t, qes)
 			assert.Equal(t, "ALIGN_NEXT_OLDER", qqueries[0].params["aggregation.perSeriesAligner"][0])
 
 			dl := qqueries[0].buildDeepLink()
@@ -731,7 +731,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 			qes, err = service.buildQueryExecutors(slog, req)
 			require.NoError(t, err)
-			qqqueries := getCloudMonitoringListFromInterface(t, qes)
+			qqqueries := getCloudMonitoringSLOFromInterface(t, qes)
 			assert.Equal(t, `aggregation.alignmentPeriod=%2B60s&aggregation.perSeriesAligner=ALIGN_NEXT_OLDER&filter=select_slo_burn_rate%28%22projects%2Ftest-proj%2Fservices%2Ftest-service%2FserviceLevelObjectives%2Ftest-slo%22%2C+%221h%22%29&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z`, qqqueries[0].params.Encode())
 		})
 	})
@@ -795,31 +795,6 @@ func TestCloudMonitoring(t *testing.T) {
 		t.Run("and no wildcard is used", func(t *testing.T) {
 			value := interpolateFilterWildcards("us-central1-a}")
 			assert.Equal(t, `us-central1-a}`, value)
-		})
-	})
-
-	t.Run("when building filter string", func(t *testing.T) {
-		t.Run("and there's no regex operator", func(t *testing.T) {
-			t.Run("and there are wildcards in a filter value", func(t *testing.T) {
-				filterParts := []string{"metric.type", "=", "somemetrictype", "AND", "zone", "=", "*-central1*"}
-				value := buildFilterString(filterParts)
-				assert.Equal(t, `metric.type="somemetrictype" zone=has_substring("-central1")`, value)
-			})
-
-			t.Run("and there are no wildcards in any filter value", func(t *testing.T) {
-				filterParts := []string{"metric.type", "=", "somemetrictype", "AND", "zone", "!=", "us-central1-a"}
-				value := buildFilterString(filterParts)
-				assert.Equal(t, `metric.type="somemetrictype" zone!="us-central1-a"`, value)
-			})
-		})
-
-		t.Run("and there is a regex operator", func(t *testing.T) {
-			filterParts := []string{"metric.type", "=", "somemetrictype", "AND", "zone", "=~", "us-central1-a~"}
-			value := buildFilterString(filterParts)
-			assert.NotContains(t, value, `=~`)
-			assert.Contains(t, value, `zone=`)
-
-			assert.Contains(t, value, `zone=monitoring.regex.full_match("us-central1-a~")`)
 		})
 	})
 
@@ -1011,6 +986,18 @@ func getCloudMonitoringListFromInterface(t *testing.T, qes []cloudMonitoringQuer
 	return queries
 }
 
+func getCloudMonitoringSLOFromInterface(t *testing.T, qes []cloudMonitoringQueryExecutor) []*cloudMonitoringSLO {
+	t.Helper()
+
+	queries := make([]*cloudMonitoringSLO, 0)
+	for _, qi := range qes {
+		q, ok := qi.(*cloudMonitoringSLO)
+		require.Truef(t, ok, "Received wrong type %T", qi)
+		queries = append(queries, q)
+	}
+	return queries
+}
+
 func getCloudMonitoringQueryFromInterface(t *testing.T, qes []cloudMonitoringQueryExecutor) []*cloudMonitoringTimeSeriesQuery {
 	t.Helper()
 
@@ -1116,7 +1103,7 @@ func baseTimeSeriesList() *backend.QueryDataRequest {
 					From: fromStart,
 					To:   fromStart.Add(34 * time.Minute),
 				},
-				QueryType: "metrics",
+				QueryType: timeSeriesListQueryType,
 				JSON: json.RawMessage(`{
 					"timeSeriesList": {
 						"filters": ["metric.type=\"a/metric/type\""],
@@ -1140,7 +1127,7 @@ func baseTimeSeriesQuery() *backend.QueryDataRequest {
 					From: fromStart,
 					To:   fromStart.Add(34 * time.Minute),
 				},
-				QueryType: "metrics",
+				QueryType: timeSeriesQueryQueryType,
 				JSON: json.RawMessage(`{
 					"queryType": "metrics",
 					"timeSeriesQuery": {

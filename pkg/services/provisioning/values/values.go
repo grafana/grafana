@@ -210,8 +210,8 @@ func (val *JSONSliceValue) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	for _, v := range unmarshaled {
 		i := make(map[string]interface{})
 		r := make(map[string]interface{})
-		for key, val := range v.(map[interface{}]interface{}) {
-			i[key.(string)], r[key.(string)], err = transformInterface(val)
+		for key, val := range v.(map[string]interface{}) {
+			i[key], r[key], err = transformInterface(val)
 			if err != nil {
 				return err
 			}
@@ -245,7 +245,7 @@ func transformInterface(i interface{}) (interface{}, interface{}, error) {
 	case reflect.Slice:
 		return transformSlice(i.([]interface{}))
 	case reflect.Map:
-		return transformMap(i.(map[interface{}]interface{}))
+		return transformMap(i.(map[string]interface{}))
 	case reflect.String:
 		return interpolateValue(i.(string))
 	default:
@@ -268,17 +268,14 @@ func transformSlice(i []interface{}) (interface{}, interface{}, error) {
 	return transformedSlice, rawSlice, nil
 }
 
-func transformMap(i map[interface{}]interface{}) (interface{}, interface{}, error) {
+func transformMap(i map[string]interface{}) (interface{}, interface{}, error) {
 	transformed := make(map[string]interface{})
 	raw := make(map[string]interface{})
 	for key, val := range i {
-		stringKey, ok := key.(string)
-		if ok {
-			var err error
-			transformed[stringKey], raw[stringKey], err = transformInterface(val)
-			if err != nil {
-				return nil, nil, err
-			}
+		var err error
+		transformed[key], raw[key], err = transformInterface(val)
+		if err != nil {
+			return nil, nil, err
 		}
 	}
 	return transformed, raw, nil

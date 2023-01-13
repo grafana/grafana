@@ -1,8 +1,6 @@
 ---
 _build:
   list: false
-aliases:
-  - /docs/grafana/latest/release-notes/release-notes-8-0-6/
 title: Release notes for Grafana 8.0.6
 ---
 

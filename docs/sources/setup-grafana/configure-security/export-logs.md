@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/usage-insights/export-logs/
+  - ../../enterprise/usage-insights/export-logs/
 description: Export logs of usage insights
 keywords:
   - grafana
@@ -44,6 +44,7 @@ Logs of usage insights contain the following fields, where the fields followed b
 | `panelName` | string | Name of the panel of the query. |
 | `error` | string | Error returned by the query. |
 | `duration` | number | Duration of the query. |
+| `source` | string | Source of the query. For example, `dashboard` or `explore`. |
 | `orgId`\* | number | ID of the user’s organization. |
 | `orgName`\* | string | Name of the user’s organization. |
 | `timestamp`\* | string | The date and time that the request was made, in Coordinated Universal Time (UTC) in [RFC3339](https://tools.ietf.org/html/rfc3339#section-5.6) format. |

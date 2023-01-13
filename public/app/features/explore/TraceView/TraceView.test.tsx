@@ -157,7 +157,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
       spanID: '1ed38015486087ca',
       flags: 1,
       operationName: 'HTTP POST - api_prom_push',
-      references: [] as any,
+      references: [],
       startTime: 1585244579835187,
       duration: 1098,
       tags: [
@@ -191,7 +191,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
         },
       ],
       processID: '1ed38015486087ca',
-      warnings: null as any,
+      warnings: null,
     },
     {
       traceID: '1ed38015486087ca',
@@ -223,9 +223,9 @@ const response: TraceData & { spans: TraceSpanData[] } = {
         { key: 'component', type: 'string', value: 'gRPC' },
         { key: 'internal.span.format', type: 'string', value: 'proto' },
       ],
-      logs: [] as any,
+      logs: [],
       processID: '35118c298fc91f68',
-      warnings: null as any,
+      warnings: null,
     },
   ],
   processes: {
@@ -257,7 +257,7 @@ const response: TraceData & { spans: TraceSpanData[] } = {
       ],
     },
   },
-  warnings: null as any,
+  warnings: null,
 };
 
 export const frameOld = new MutableDataFrame({

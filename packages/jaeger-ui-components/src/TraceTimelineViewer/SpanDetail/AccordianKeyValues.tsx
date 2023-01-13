@@ -86,7 +86,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-type AccordianKeyValuesProps = {
+export type AccordianKeyValuesProps = {
   className?: string | TNil;
   data: TraceKeyValuePair[];
   highContrast?: boolean;

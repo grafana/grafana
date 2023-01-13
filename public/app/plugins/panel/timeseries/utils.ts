@@ -142,20 +142,16 @@ export function regenerateLinksSupplier(
   timeZone: string
 ): DataFrame {
   alignedDataFrame.fields.forEach((field) => {
-    const frameIndex = field.state?.origin?.frameIndex;
-
-    if (frameIndex === undefined) {
+    if (field.state?.origin?.frameIndex === undefined || frames[field.state?.origin?.frameIndex] === undefined) {
       return;
     }
-
-    const frame = frames[frameIndex];
-    const tempFields: Field[] = [];
 
     /* check if field has sortedVector values
       if it does, sort all string fields in the original frame by the order array already used for the field
       otherwise just attach the fields to the temporary frame used to get the links
     */
-    for (const frameField of frame.fields) {
+    const tempFields: Field[] = [];
+    for (const frameField of frames[field.state?.origin?.frameIndex].fields) {
       if (frameField.type === FieldType.string) {
         if (field.values instanceof SortedVector) {
           const copiedField = { ...frameField };

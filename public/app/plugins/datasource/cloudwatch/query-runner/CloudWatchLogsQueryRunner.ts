@@ -1,20 +1,19 @@
 import { set } from 'lodash';
 import {
-  Observable,
-  of,
-  mergeMap,
-  map,
-  from,
+  catchError,
   concatMap,
   finalize,
+  from,
+  lastValueFrom,
+  map,
+  mergeMap,
+  Observable,
   repeat,
   scan,
   share,
   takeWhile,
   tap,
   zip,
-  catchError,
-  lastValueFrom,
 } from 'rxjs';
 
 import {
@@ -43,7 +42,6 @@ import {
   DescribeLogGroupsRequest,
   GetLogEventsRequest,
   GetLogGroupFieldsRequest,
-  GetLogGroupFieldsResponse,
   LogAction,
   StartQueryRequest,
 } from '../types';
@@ -59,7 +57,6 @@ export const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 // This class handles execution of CloudWatch logs query data queries
 export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   logsTimeout: string;
-  defaultLogGroups: string[];
   logQueries: Record<string, { id: string; region: string; statsQuery: boolean }> = {};
   tracingDataSourceUid?: string;
 
@@ -72,7 +69,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
     this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
-    this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups || [];
   }
 
   /**
@@ -85,11 +81,13 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
+    const validLogQueries = logQueries.filter(this.filterQuery);
+
+    const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => ({
       queryString: target.expression || '',
       refId: target.refId,
-      logGroupNames: target.logGroupNames || this.defaultLogGroups,
-      logGroups: target.logGroups || [], //todo handle defaults
+      logGroupNames: target.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
+      logGroups: target.logGroups || this.instanceSettings.jsonData.logGroups,
       region: super.replaceVariableAndDisplayWarningIfMulti(
         this.getActualRegion(target.region),
         options.scopedVars,
@@ -97,16 +95,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         'region'
       ),
     }));
-
-    const hasQueryWithMissingLogGroupSelection = queryParams.some((qp) => {
-      const missingLogGroupNames = qp.logGroupNames.length === 0;
-      const missingLogGroups = qp.logGroups.length === 0;
-      return missingLogGroupNames && missingLogGroups;
-    });
-
-    if (hasQueryWithMissingLogGroupSelection) {
-      return of({ data: [], error: { message: 'Log group is required' } });
-    }
 
     const startTime = new Date();
     const timeoutFunc = () => {
@@ -121,7 +109,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
           skipCache: true,
         });
       },
-      queryParams,
+      startQueryRequests,
       timeoutFunc
     ).pipe(
       mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
@@ -426,16 +414,16 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     };
   };
 
-  async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
-    const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogGroupFields', [params]));
+  private filterQuery(query: CloudWatchLogsQuery) {
+    const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length;
+    const hasMissingLogGroups = !query.logGroups?.length;
+    const hasMissingQueryString = !query.expression?.length;
 
-    const fieldNames = dataFrames[0].fields[0].values.toArray();
-    const fieldPercentages = dataFrames[0].fields[1].values.toArray();
-    const getLogGroupFieldsResponse = {
-      logGroupFields: fieldNames.map((val, i) => ({ name: val, percent: fieldPercentages[i] })) ?? [],
-    };
+    if ((hasMissingLogGroups && hasMissingLegacyLogGroupNames) || hasMissingQueryString) {
+      return false;
+    }
 
-    return getLogGroupFieldsResponse;
+    return true;
   }
 }
 

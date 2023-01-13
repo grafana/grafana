@@ -8,11 +8,13 @@ import { Provider } from 'react-redux';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { setBackendSrv } from '@grafana/runtime';
+import { defaultDashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardDTO } from '../../../../../types';
 import { DashboardSearchItem, DashboardSearchItemType } from '../../../../search/types';
 import { mockStore } from '../../mocks';
+import { mockSearchApiResponse } from '../../mocks/grafanaApi';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
 import { getDefaultFormValues } from '../../utils/rule-form';
@@ -83,7 +85,7 @@ describe('AnnotationsField', function () {
 
   describe('Dashboard and panel picker', function () {
     it('should display dashboard and panel selector when select button clicked', async function () {
-      mockSearchResponse([]);
+      mockSearchApiResponse(server, []);
 
       const user = userEvent.setup();
 
@@ -96,7 +98,7 @@ describe('AnnotationsField', function () {
     });
 
     it('should enable Confirm button only when dashboard and panel selected', async function () {
-      mockSearchResponse([
+      mockSearchApiResponse(server, [
         mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
       ]);
 
@@ -126,7 +128,7 @@ describe('AnnotationsField', function () {
     });
 
     it('should add selected dashboard and panel as annotations', async function () {
-      mockSearchResponse([
+      mockSearchApiResponse(server, [
         mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
       ]);
 
@@ -170,7 +172,7 @@ describe('AnnotationsField', function () {
     // this test _should_ work in theory but something is stopping the 'onClick' function on the dashboard item
     // to trigger "handleDashboardChange" – skipping it for now but has been manually tested.
     it.skip('should update existing dashboard and panel identifies', async function () {
-      mockSearchResponse([
+      mockSearchApiResponse(server, [
         mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
         mockDashboardSearchItem({
           title: 'My other dashboard',
@@ -236,10 +238,6 @@ describe('AnnotationsField', function () {
   });
 });
 
-function mockSearchResponse(searchResult: DashboardSearchItem[]) {
-  server.use(rest.get('/api/search', (req, res, ctx) => res(ctx.json<DashboardSearchItem[]>(searchResult))));
-}
-
 function mockGetDashboardResponse(dashboard: DashboardDTO) {
   server.use(
     rest.get(`/api/dashboards/uid/${dashboard.dashboard.uid}`, (req, res, ctx) =>
@@ -262,15 +260,12 @@ function mockDashboardSearchItem(searchItem: Partial<DashboardSearchItem>) {
   };
 }
 
-function mockDashboardDto(dashboard: Partial<DashboardDTO['dashboard']>) {
+function mockDashboardDto(dashboard: Partial<DashboardDTO['dashboard']>): DashboardDTO {
   return {
     dashboard: {
-      title: '',
-      uid: '',
-      templating: { list: [] },
-      panels: [],
+      ...defaultDashboard,
       ...dashboard,
-    },
+    } as DashboardDTO['dashboard'],
     meta: {},
   };
 }

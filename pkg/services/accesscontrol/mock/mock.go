@@ -28,6 +28,8 @@ type Calls struct {
 	RegisterFixedRoles             []interface{}
 	RegisterAttributeScopeResolver []interface{}
 	DeleteUserPermissions          []interface{}
+	SearchUsersPermissions         []interface{}
+	SearchUserPermissions          []interface{}
 }
 
 type Mock struct {
@@ -52,6 +54,8 @@ type Mock struct {
 	RegisterFixedRolesFunc             func() error
 	RegisterScopeAttributeResolverFunc func(string, accesscontrol.ScopeAttributeResolver)
 	DeleteUserPermissionsFunc          func(context.Context, int64) error
+	SearchUsersPermissionsFunc         func(context.Context, *user.SignedInUser, int64, accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
+	SearchUserPermissionsFunc          func(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error)
 
 	scopeResolvers accesscontrol.Resolvers
 }
@@ -211,4 +215,23 @@ func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) e
 		return m.DeleteUserPermissionsFunc(ctx, userID)
 	}
 	return nil
+}
+
+// SearchUsersPermissions returns all users' permissions filtered by an action prefix
+func (m *Mock) SearchUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	m.Calls.SearchUsersPermissions = append(m.Calls.SearchUsersPermissions, []interface{}{ctx, user, orgID, options})
+	// Use override if provided
+	if m.SearchUsersPermissionsFunc != nil {
+		return m.SearchUsersPermissionsFunc(ctx, user, orgID, options)
+	}
+	return nil, nil
+}
+
+func (m *Mock) SearchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+	m.Calls.SearchUserPermissions = append(m.Calls.SearchUserPermissions, []interface{}{ctx, orgID, searchOptions})
+	// Use override if provided
+	if m.SearchUserPermissionsFunc != nil {
+		return m.SearchUserPermissionsFunc(ctx, orgID, searchOptions)
+	}
+	return nil, nil
 }

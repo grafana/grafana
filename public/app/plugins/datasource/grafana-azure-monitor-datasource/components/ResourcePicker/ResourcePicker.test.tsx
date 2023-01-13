@@ -1,5 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { omit } from 'lodash';
 import React from 'react';
 
 import createMockDatasource from '../../__mocks__/datasource';
@@ -23,23 +24,26 @@ const singleResourceSelectionURI =
   '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-server';
 
 const noop: any = () => {};
-function createMockResourcePickerData() {
+function createMockResourcePickerData(preserveImplementation?: string[]) {
   const mockDatasource = createMockDatasource();
   const mockResourcePicker = new ResourcePickerData(
     createMockInstanceSetttings(),
     mockDatasource.azureMonitorDatasource
   );
 
-  mockResourcePicker.getSubscriptions = jest.fn().mockResolvedValue(createMockSubscriptions());
-  mockResourcePicker.getResourceGroupsBySubscriptionId = jest
-    .fn()
-    .mockResolvedValue(createMockResourceGroupsBySubscription());
-  mockResourcePicker.getResourcesForResourceGroup = jest.fn().mockResolvedValue(mockResourcesByResourceGroup());
-  mockResourcePicker.getResourceURIFromWorkspace = jest.fn().mockReturnValue('');
-  mockResourcePicker.getResourceURIDisplayProperties = jest.fn().mockResolvedValue({});
-  mockResourcePicker.search = jest.fn().mockResolvedValue(mockSearchResults());
+  const mockFunctions = omit(
+    {
+      getSubscriptions: jest.fn().mockResolvedValue(createMockSubscriptions()),
+      getResourceGroupsBySubscriptionId: jest.fn().mockResolvedValue(createMockResourceGroupsBySubscription()),
+      getResourcesForResourceGroup: jest.fn().mockResolvedValue(mockResourcesByResourceGroup()),
+      getResourceURIFromWorkspace: jest.fn().mockReturnValue(''),
+      getResourceURIDisplayProperties: jest.fn().mockResolvedValue({}),
+      search: jest.fn().mockResolvedValue(mockSearchResults()),
+    },
+    preserveImplementation || []
+  );
 
-  return mockResourcePicker;
+  return Object.assign(mockResourcePicker, mockFunctions);
 }
 
 const queryType: ResourcePickerQueryType = 'logs';
@@ -282,6 +286,25 @@ describe('AzureMonitor ResourcePicker', () => {
 
     const subscriptionCheckboxAfterClear = await screen.findByLabelText('Primary Subscription');
     expect(subscriptionCheckboxAfterClear).toBeInTheDocument();
+  });
+
+  it('should throw an error if no namespaces are found', async () => {
+    const resourcePickerData = createMockResourcePickerData(['getResourceGroupsBySubscriptionId']);
+    render(
+      <ResourcePicker
+        {...defaultProps}
+        queryType={'metrics'}
+        resourcePickerData={resourcePickerData}
+        resource={noResourceURI}
+      />
+    );
+    const subscriptionExpand = await screen.findByLabelText('Expand Primary Subscription');
+    await subscriptionExpand.click();
+    const error = await screen.findByRole('alert');
+    expect(error).toHaveTextContent('An error occurred while requesting resources from Azure Monitor');
+    expect(error).toHaveTextContent(
+      'Unable to resolve a list of valid metric namespaces. Validate the datasource configuration is correct and required permissions have been granted for all subscriptions. Grafana requires at least the Reader role to be assigned.'
+    );
   });
 
   describe('when rendering resource picker without any selectable entry types', () => {
