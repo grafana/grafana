@@ -172,7 +172,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   if (isFiringRule) {
     buttons.push(
       <Fragment key="declare-incident">
-        <DeclareIncident title={rule.name} />
+        <DeclareIncident title={rule.name} url={buildShareUrl()} />
       </Fragment>
     );
   }

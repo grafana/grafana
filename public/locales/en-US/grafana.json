@@ -128,15 +128,6 @@
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
     },
-    "admin-access": {
-      "title": "Users and access"
-    },
-    "admin-general": {
-      "title": "General"
-    },
-    "admin-plugins": {
-      "title": "Plugins and data"
-    },
     "alerting": {
       "subtitle": "Learn about problems in your systems moments after they occur",
       "title": "Alerting"
@@ -542,7 +533,7 @@
       "name-label": "Name",
       "username-label": "Username"
     },
-    "title": "Edit profile"
+    "title": "Profile"
   },
   "user-session": {
     "browser-column": "Browser & OS",
