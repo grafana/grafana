@@ -212,19 +212,6 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 
 func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) *navtree.NavLink {
 	homeUrl := s.cfg.AppSubURL + "/"
-	homePage := s.cfg.HomePage
-
-	if prefs.HomeDashboardID == 0 && len(homePage) > 0 {
-		homeUrl = homePage
-	}
-
-	if prefs.HomeDashboardID != 0 {
-		slugQuery := models.GetDashboardRefByIdQuery{Id: prefs.HomeDashboardID}
-		err := s.dashboardService.GetDashboardUIDById(c.Req.Context(), &slugQuery)
-		if err == nil {
-			homeUrl = models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
-		}
-	}
 
 	homeNode := &navtree.NavLink{
 		Text:       "Home",
