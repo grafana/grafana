@@ -6,7 +6,7 @@ type FieldDef = {
   key: string;
   value: string;
   links?: Array<LinkModel<Field>>;
-  fieldIndex?: number;
+  fieldIndex: number;
 };
 
 /**
