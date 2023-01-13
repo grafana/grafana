@@ -18,10 +18,9 @@ import (
 )
 
 var (
-	ErrAPIKeyInvalid          = errutil.NewBase(errutil.StatusUnauthorized, "api-key.invalid", errutil.WithPublicMessage("Invalid API key"))
-	ErrAPIKeyExpired          = errutil.NewBase(errutil.StatusUnauthorized, "api-key.expired", errutil.WithPublicMessage("Expired API key"))
-	ErrAPIKeyRevoked          = errutil.NewBase(errutil.StatusUnauthorized, "api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
-	ErrServiceAccountDisabled = errutil.NewBase(errutil.StatusUnauthorized, "service-account.disabled", errutil.WithPublicMessage("Disabled service account"))
+	errAPIKeyInvalid = errutil.NewBase(errutil.StatusUnauthorized, "api-key.invalid", errutil.WithPublicMessage("Invalid API key"))
+	errAPIKeyExpired = errutil.NewBase(errutil.StatusUnauthorized, "api-key.expired", errutil.WithPublicMessage("Expired API key"))
+	errAPIKeyRevoked = errutil.NewBase(errutil.StatusUnauthorized, "api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
 )
 
 var _ authn.Client = new(APIKey)
@@ -44,17 +43,17 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
 	if err != nil {
 		if errors.Is(err, apikeygen.ErrInvalidApiKey) {
-			return nil, ErrAPIKeyInvalid.Errorf("API key is invalid")
+			return nil, errAPIKeyInvalid.Errorf("API key is invalid")
 		}
 		return nil, err
 	}
 
 	if apiKey.Expires != nil && *apiKey.Expires <= time.Now().Unix() {
-		return nil, ErrAPIKeyExpired.Errorf("API key has expired")
+		return nil, errAPIKeyExpired.Errorf("API key has expired")
 	}
 
 	if apiKey.IsRevoked != nil && *apiKey.IsRevoked {
-		return nil, ErrAPIKeyRevoked.Errorf("Api key is revoked")
+		return nil, errAPIKeyRevoked.Errorf("Api key is revoked")
 	}
 
 	go func(id int64) {
@@ -84,10 +83,6 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 
 	if err != nil {
 		return nil, err
-	}
-
-	if usr.IsDisabled {
-		return nil, ErrServiceAccountDisabled.Errorf("Disabled service account")
 	}
 
 	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceServiceAccount, usr.UserID), usr, authn.ClientParams{}), nil

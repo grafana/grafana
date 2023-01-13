@@ -195,6 +195,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       largerExploreId: undefined,
       maxedExploreId: undefined,
       evenSplitPanes: true,
+      syncedTimes: false,
     };
   }
 

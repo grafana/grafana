@@ -128,15 +128,6 @@
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
     },
-    "admin-access": {
-      "title": "Users and access"
-    },
-    "admin-general": {
-      "title": "General"
-    },
-    "admin-plugins": {
-      "title": "Plugins and data"
-    },
     "alerting": {
       "subtitle": "Learn about problems in your systems moments after they occur",
       "title": "Alerting"
@@ -262,6 +253,9 @@
       "subtitle": "Monitoring and infrastructure apps",
       "title": "Monitoring"
     },
+    "new": {
+      "title": "New"
+    },
     "new-dashboard": {
       "title": "New dashboard"
     },
@@ -356,13 +350,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "Copy",
+      "create-library-panel": "Create library panel",
+      "duplicate": "Duplicate",
+      "edit": "Edit",
+      "explore": "Explore",
+      "get-help": "Get help",
       "hide-legend": "Hide legend",
       "inspect": "Inspect",
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
+      "query": "Query",
+      "remove": "Remove",
       "share": "Share",
       "show-legend": "Show legend",
+      "unlink-library-panel": "Unlink library panel",
       "view": "View"
     }
   },
@@ -381,6 +384,14 @@
     },
     "select-button": {
       "auto-refresh": "Set auto refresh interval"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "Import",
+      "new": "New",
+      "new-dashboard": "New Dashboard",
+      "new-folder": "New Folder"
     }
   },
   "share-modal": {
@@ -542,7 +553,7 @@
       "name-label": "Name",
       "username-label": "Username"
     },
-    "title": "Edit profile"
+    "title": "Profile"
   },
   "user-session": {
     "browser-column": "Browser & OS",
