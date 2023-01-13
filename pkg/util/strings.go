@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"strings"
 	"time"
 	"unicode"
@@ -32,16 +33,29 @@ func SplitString(str string) []string {
 	if len(str) == 0 {
 		return []string{}
 	}
-	if strings.Contains(str, ",") {
-		// Separate by commas
-		substrs := make([]string, 0)
-		for _, s := range strings.Split(str, ",") {
-			substrs = append(substrs, strings.TrimSpace(s))
+
+	return strings.Fields(strings.ReplaceAll(str, ",", " "))
+}
+
+// SplitConfigString splits a string in configuration option
+func SplitConfigString(str string) []string {
+	if len(str) == 0 {
+		return []string{}
+	}
+	if strings.Contains(str, `"`) {
+		pattern := regexp.MustCompile(`"([^"]+)"`)
+		substrs := pattern.FindAllString(str, -1)
+		if substrs == nil {
+			return []string{}
 		}
-		return substrs
+		res := make([]string, 0)
+		for _, s := range substrs {
+			res = append(res, strings.Trim(s, `"`))
+		}
+		return res
 	}
 
-	return strings.Fields(str)
+	return strings.Fields(strings.ReplaceAll(str, ",", " "))
 }
 
 // GetAgeString returns a string representing certain time from years to minutes.

@@ -51,11 +51,26 @@ func TestSplitString(t *testing.T) {
 		"test1 test2 test3":   {"test1", "test2", "test3"},
 		"test1,test2,test3":   {"test1", "test2", "test3"},
 		"test1, test2, test3": {"test1", "test2", "test3"},
-		"test1 , test2 test3": {"test1", "test2 test3"},
-		"foo, bar baz":        {"foo", "bar baz"},
+		"test1 , test2 test3": {"test1", "test2", "test3"},
 	}
 	for input, expected := range tests {
 		assert.EqualValues(t, expected, SplitString(input))
+	}
+}
+
+func TestSplitConfigString(t *testing.T) {
+	tests := map[string][]string{
+		"":                    {},
+		"test":                {"test"},
+		"test1 test2 test3":   {"test1", "test2", "test3"},
+		"test1,test2,test3":   {"test1", "test2", "test3"},
+		"test1, test2, test3": {"test1", "test2", "test3"},
+		"test1 , test2 test3": {"test1", "test2", "test3"},
+		"foo, bar baz":        {"foo", "bar", "baz"},
+		`"foo", "bar baz"`:    {"foo", "bar baz"},
+	}
+	for input, expected := range tests {
+		assert.EqualValues(t, expected, SplitConfigString(input))
 	}
 }
 
