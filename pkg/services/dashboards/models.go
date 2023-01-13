@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,20 +22,20 @@ const (
 
 // Dashboard model
 type Dashboard struct {
-	ID       int64
-	UID      string
+	ID       int64  `xorm:"pk autoincr 'id'"`
+	UID      string `xorm:"uid"`
 	Slug     string
-	OrgID    int64
-	GnetID   int64
+	OrgID    int64 `xorm:"org_id"`
+	GnetID   int64 `xorm:"gnet_id"`
 	Version  int
-	PluginID string
+	PluginID string `xorm:"plugin_id"`
 
 	Created time.Time
 	Updated time.Time
 
 	UpdatedBy int64
 	CreatedBy int64
-	FolderID  int64
+	FolderID  int64 `xorm:"folder_id"`
 	IsFolder  bool
 	HasACL    bool `xorm:"has_acl"`
 
@@ -42,7 +43,7 @@ type Dashboard struct {
 	Data  *simplejson.Json
 }
 
-func (d *Dashboard) SetId(id int64) {
+func (d *Dashboard) SetID(id int64) {
 	d.ID = id
 	d.Data.Set("id", id)
 }
@@ -185,14 +186,14 @@ type ValidateDashboardBeforeSaveResult struct {
 
 type SaveDashboardCommand struct {
 	Dashboard    *simplejson.Json `json:"dashboard" binding:"Required"`
-	UserID       int64            `json:"userId"`
+	UserID       int64            `json:"userId" xorm:"user_id"`
 	Overwrite    bool             `json:"overwrite"`
 	Message      string           `json:"message"`
-	OrgID        int64            `json:"-"`
+	OrgID        int64            `json:"-" xorm:"org_id"`
 	RestoredFrom int              `json:"-"`
-	PluginID     string           `json:"-"`
-	FolderID     int64            `json:"folderId"`
-	FolderUID    string           `json:"folderUid"`
+	PluginID     string           `json:"-" xorm:"plugin_id"`
+	FolderID     int64            `json:"folderId" xorm:"folder_id"`
+	FolderUID    string           `json:"folderUid" xorm:"folder_uid"`
 	IsFolder     bool             `json:"isFolder"`
 
 	UpdatedAt time.Time
@@ -211,10 +212,10 @@ type TrimDashboardCommand struct {
 }
 
 type DashboardProvisioning struct {
-	ID          int64
-	DashboardID int64
+	ID          int64 `xorm:"pk autoincr 'id'"`
+	DashboardID int64 `xorm:"dashboard_id"`
 	Name        string
-	ExternalID  string
+	ExternalID  string `xorm:"external_id"`
 	CheckSum    string
 	Updated     int64
 }
@@ -277,11 +278,11 @@ type GetDashboardsBySlugQuery struct {
 }
 
 type DashboardRef struct {
-	UID  string
+	UID  string `xorm:"uid"`
 	Slug string
 }
 
-type GetDashboardRefByIdQuery struct {
+type GetDashboardRefByIDQuery struct {
 	ID     int64
 	Result *DashboardRef
 }
@@ -292,7 +293,7 @@ type SaveDashboardDTO struct {
 	User      *user.SignedInUser
 	Message   string
 	Overwrite bool
-	Dashboard *models.Dashboard
+	Dashboard *Dashboard
 }
 
 type DashboardSearchProjection struct {
@@ -325,4 +326,19 @@ type CountDashboardsInFolderQuery struct {
 type CountDashboardsInFolderRequest struct {
 	FolderID int64
 	OrgID    int64
+}
+
+func FromDashboard(dash *Dashboard) *folder.Folder {
+	return &folder.Folder{
+		ID:        dash.ID,
+		UID:       dash.UID,
+		Title:     dash.Title,
+		HasACL:    dash.HasACL,
+		Url:       models.GetFolderUrl(dash.UID, dash.Slug),
+		Version:   dash.Version,
+		Created:   dash.Created,
+		CreatedBy: dash.CreatedBy,
+		Updated:   dash.Updated,
+		UpdatedBy: dash.UpdatedBy,
+	}
 }
