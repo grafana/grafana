@@ -34,15 +34,8 @@ func SplitString(str string) []string {
 		return []string{}
 	}
 
-	return strings.Fields(strings.ReplaceAll(str, ",", " "))
-}
-
-// SplitConfigString splits a string in configuration option
-func SplitConfigString(str string) []string {
-	if len(str) == 0 {
-		return []string{}
-	}
 	if strings.Contains(str, `"`) {
+		// Support specifying values with spaces by using quotes
 		pattern := regexp.MustCompile(`"([^"]+)"`)
 		substrs := pattern.FindAllString(str, -1)
 		if substrs == nil {
