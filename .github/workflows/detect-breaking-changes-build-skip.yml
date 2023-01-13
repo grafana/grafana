@@ -1,0 +1,34 @@
+# Workflow for skipping the Levitate detection
+# (This is needed because workflows that are skipped due to path filtering will show up as pending in Github.
+# As this has the same name as the one in detect-breaking-changes-build.yml it will take over in these cases and succeed quickly.)
+
+name: Levitate / Detect breaking changes
+
+on:
+  pull_request:
+    paths-ignore:
+      - "packages/**"
+    branches:
+      - 'main'
+
+jobs:
+  detect:
+    name: Detect breaking changes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Skipping
+        run: echo "No modifications in the public API (packages/), skipping."
+
+        # Build and persist output as a JSON (we need to tell the report workflow that the check has been skipped)
+      - name: Persisting the check output
+        run: |
+          mkdir -p ./levitate
+          echo "{ \"shouldSkip\": true }" > ./levitate/result.json
+
+      # Upload artifact (so it can be used in the more privileged "report" workflow)
+      - name: Upload check output as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: levitate
+          path: levitate/
