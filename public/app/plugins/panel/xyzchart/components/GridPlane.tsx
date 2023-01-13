@@ -6,7 +6,7 @@ import { Direction, GridPlaneProps, LineGeometry } from '../types';
 
 import { Axis } from './Axis';
 
-export const GridPlane: React.FC<GridPlaneProps> = ({ direction, intervalLabels }) => {
+export const GridPlane = ({ direction, intervalLabels }: GridPlaneProps) => {
   const ref = useRef<any>(null);
 
 

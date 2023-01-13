@@ -11,7 +11,7 @@ interface HUDProps {
   zValue: string;
 }
 
-export const HUD: React.FC<HUDProps> = ({ pointPos, xValue, yValue, zValue }) => {
+export const HUD = ({ pointPos, xValue, yValue, zValue }: HUDProps) => {
   const options: ScatterPlotOptions = useContext(OptionsContext);
   const styles = getStyles(options);
 

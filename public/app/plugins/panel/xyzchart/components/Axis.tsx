@@ -11,7 +11,7 @@ import { Direction, GridPlaneProps, PointGeometry, LineGeometry } from '../types
 
 import { Label } from './Label';
 
-export const Axis: React.FC<GridPlaneProps> = ({ direction, intervalLabels }) => {
+export const Axis = ({ direction, intervalLabels }: GridPlaneProps) => {
   const options: ScatterPlotOptions = useContext(OptionsContext);
 
   const { axisPoints, intervalGeometries, intervalLabelPos, labelRotation, color } = useMemo(() => {

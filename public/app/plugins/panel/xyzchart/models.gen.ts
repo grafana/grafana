@@ -14,6 +14,7 @@ export interface XYZDimensionConfig {
 export interface ScatterPlotOptions {
   pointColor: string;
   pointSize: number;
+  //TODO i think these should be taken from the theme
   themeColor?: string;
   hudBgColor?: string;
 

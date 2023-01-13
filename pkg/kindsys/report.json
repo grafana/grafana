@@ -864,6 +864,18 @@
         0
       ]
     },
+    "xyzchart_panel": {
+      "name": "Xyzchart-Panel",
+      "pluralName": "Xyzchart-Panels",
+      "machineName": "xyzchart_panel",
+      "pluralMachineName": "xyzchart_panels",
+      "lineageIsGroup": true,
+      "maturity": "planned",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
     "zipkin_dsoptions": {
       "name": "Zipkin-DSOptions",
       "pluralName": "Zipkin-DSOptionss",
@@ -955,10 +967,11 @@
           "traces_panel",
           "welcome_panel",
           "xychart_panel",
+          "xyzchart_panel",
           "zipkin_dsoptions",
           "zipkin_query"
         ],
-        "count": 63
+        "count": 64
       },
       "core": {
         "name": "core",
@@ -1070,10 +1083,11 @@
           "user",
           "welcome_panel",
           "xychart_panel",
+          "xyzchart_panel",
           "zipkin_dsoptions",
           "zipkin_query"
         ],
-        "count": 61
+        "count": 62
       },
       "stable": {
         "name": "stable",

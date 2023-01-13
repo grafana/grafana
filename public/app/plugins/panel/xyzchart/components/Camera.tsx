@@ -5,7 +5,7 @@ import { OrbitControls, MapControls } from 'three-stdlib';
 
 import { SCENE_SCALE } from '../consts';
 
-export const Camera: React.FC = () => {
+export const Camera = () => {
   const { camera, gl } = useThree();
   const sceneScale = SCENE_SCALE;
   let cameraPos: Vector3;

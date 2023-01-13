@@ -4,7 +4,7 @@ import { Direction, GridVolumeProps } from '../types';
 
 import { GridPlane } from './GridPlane';
 
-export const GridVolume: React.FC<GridVolumeProps> = ({ intervalLabels }) => {
+export const GridVolume = ({ intervalLabels }: GridVolumeProps)  => {
     return (
         <group>
             <GridPlane direction={Direction.Up} intervalLabels={intervalLabels.yLabels} />

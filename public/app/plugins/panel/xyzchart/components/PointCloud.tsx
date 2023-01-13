@@ -18,7 +18,7 @@ interface Props {
   frames: DataFrame[];
 }
 
-export const PointCloud: React.FC<Props> = ({ points, lights, frames }) => {
+export const PointCloud = ({ points, lights, frames }: Props) => {
   const colorAttrRef: any = useRef(null);
   const pointsRef: any = useRef(null);
   const posRef: any = useRef(null);

@@ -76,5 +76,6 @@ func coreTreeList(rt *thema.Runtime) pfs.TreeList {
 		makeTreeOrPanic("public/app/plugins/panel/traces", "traces", rt),
 		makeTreeOrPanic("public/app/plugins/panel/welcome", "welcome", rt),
 		makeTreeOrPanic("public/app/plugins/panel/xychart", "xychart", rt),
+		makeTreeOrPanic("public/app/plugins/panel/xyzchart", "xyzchart", rt),
 	}
 }

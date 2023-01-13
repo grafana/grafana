@@ -9,7 +9,7 @@ import { preparePlotByDims, preparePlotByExplicitSeries } from './utils';
 
 interface Props extends PanelProps<ScatterPlotOptions> {}
 
-export const ScatterPlotPanel: React.FC<Props> = (props) => {
+export const ScatterPlotPanel = (props: Props) => {
   const theme = useTheme2();
   const frames = useMemo(() => {
     if (props.options.seriesMapping === 'manual') {

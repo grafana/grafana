@@ -18,7 +18,7 @@ interface Props {
   options: ScatterPlotOptions;
 }
 
-export const PlotCanvas: React.FC<Props> = ({ frames, options }) => {
+export const PlotCanvas = ({ frames, options }: Props) => {
   let ambLightRef: RefObject<AmbientLight> = createRef();
   let pntLightRef: RefObject<PointLight> = createRef();
   const [pointData, setPointData] = useState(prepData(frames, options.pointColor ?? '#ff0000'));
