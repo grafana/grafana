@@ -163,6 +163,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Kafka REST Proxy",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
+					Description:  "Hint: If you are directly using v3 APIs hosted on a Confluent Kafka Server, you must append /kafka to the URL here. Example: https://localhost:8082/kafka",
 					Placeholder:  "http://localhost:8082",
 					PropertyName: "kafkaRestProxy",
 					Required:     true,
