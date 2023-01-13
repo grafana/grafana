@@ -285,14 +285,14 @@ TableImageCellOptions: {
 // Gauge cell options
 TableBarGaugeCellOptions: {
 	type: TableCellDisplayMode & "gauge"
-	mode: BarGaugeDisplayMode
+	mode?: BarGaugeDisplayMode
 	valueMode?: BarGaugeValueMode
 } @cuetsy(kind="interface")
 
 // Colored background cell options
 TableColoredBackgroundCellOptions: {
 	type: TableCellDisplayMode & "color-background"
-	mode: TableCellBackgroundDisplayMode
+	mode?: TableCellBackgroundDisplayMode
 } @cuetsy(kind="interface")
 
 // Table cell options. Each cell has a display mode

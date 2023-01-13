@@ -529,7 +529,7 @@ export interface TableImageCellOptions {
  * Gauge cell options
  */
 export interface TableBarGaugeCellOptions {
-  mode: BarGaugeDisplayMode;
+  mode?: BarGaugeDisplayMode;
   type: TableCellDisplayMode.Gauge;
   valueMode?: BarGaugeValueMode;
 }
@@ -538,7 +538,7 @@ export interface TableBarGaugeCellOptions {
  * Colored background cell options
  */
 export interface TableColoredBackgroundCellOptions {
-  mode: TableCellBackgroundDisplayMode;
+  mode?: TableCellBackgroundDisplayMode;
   type: TableCellDisplayMode.ColorBackground;
 }
 

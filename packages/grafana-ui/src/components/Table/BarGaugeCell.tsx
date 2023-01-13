@@ -44,14 +44,13 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
 
   // If we're using the old settings format check for old values from displayMode
   if (customFieldOptions.displayMode) {
-    if ((customFieldOptions.displayMode as string) === BarGaugeDisplayMode.Lcd) {
+    if (customFieldOptions.displayMode === TableCellDisplayMode.LcdGauge) {
       barGaugeMode = BarGaugeDisplayMode.Lcd;
-    } else if ((customFieldOptions.displayMode as string) === BarGaugeDisplayMode.Basic) {
+    } else if (customFieldOptions.displayMode === TableCellDisplayMode.BasicGauge) {
       barGaugeMode = BarGaugeDisplayMode.Basic;
     }
   }
-  // Otherwise in the case of sub-options we read specifically from the sub-options
-  // object in order to get the display mode
+  // Otherwise we check cell type
   else if (cellOptions.type === TableCellDisplayMode.Gauge) {
     barGaugeMode = cellOptions.mode;
     valueMode = cellOptions.valueMode ?? BarGaugeValueMode.Color;
