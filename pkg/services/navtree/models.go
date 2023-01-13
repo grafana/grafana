@@ -195,15 +195,15 @@ func ApplyAdminIA(root *NavTreeRoot) {
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("server-settings"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("global-orgs"))
 
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("upgrading"))
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("licensing"))
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("recordedQueries")) // enterprise only
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("correlations"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("plugin-page-grafana-cloud-link-app"))
 
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("ldap"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("standalone-plugin-page-/a/grafana-auth-app")) // Cloud Access Policies
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("storage"))
-		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("upgrading"))
-		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("licensing"))
-		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("recordedQueries")) // enterprise only
 
 		if len(adminNodeLinks) > 0 {
 			orgAdminNode.Children = adminNodeLinks
