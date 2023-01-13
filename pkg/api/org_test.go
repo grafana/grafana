@@ -585,7 +585,7 @@ func TestAPIEndpoint_GetOrg_RBAC(t *testing.T) {
 
 	tests := []testCase{
 		{
-			desc:         "should be able to fetch org as with correct permissions",
+			desc:         "should be able to fetch org with correct permissions",
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsRead}},
 			expectedCode: http.StatusOK,
 		},
