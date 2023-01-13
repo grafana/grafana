@@ -253,6 +253,9 @@
       "subtitle": "Mőŉįŧőřįŉģ äŉđ įŉƒřäşŧřūčŧūřę äppş",
       "title": "Mőŉįŧőřįŉģ"
     },
+    "new": {
+      "title": "Ńęŵ"
+    },
     "new-dashboard": {
       "title": "Ńęŵ đäşĥþőäřđ"
     },
@@ -347,13 +350,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "Cőpy",
+      "create-library-panel": "Cřęäŧę ľįþřäřy päŉęľ",
+      "duplicate": "Đūpľįčäŧę",
+      "edit": "Ēđįŧ",
+      "explore": "Ēχpľőřę",
+      "get-help": "Ğęŧ ĥęľp",
       "hide-legend": "Ħįđę ľęģęŉđ",
       "inspect": "Ĩŉşpęčŧ",
       "inspect-data": "Đäŧä",
       "inspect-json": "Päŉęľ ĴŜØŃ",
       "more": "Mőřę...",
+      "query": "Qūęřy",
+      "remove": "Ŗęmővę",
       "share": "Ŝĥäřę",
       "show-legend": "Ŝĥőŵ ľęģęŉđ",
+      "unlink-library-panel": "Ůŉľįŉĸ ľįþřäřy päŉęľ",
       "view": "Vįęŵ"
     }
   },
@@ -372,6 +384,14 @@
     },
     "select-button": {
       "auto-refresh": "Ŝęŧ äūŧő řęƒřęşĥ įŉŧęřväľ"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "Ĩmpőřŧ",
+      "new": "Ńęŵ",
+      "new-dashboard": "Ńęŵ Đäşĥþőäřđ",
+      "new-folder": "Ńęŵ Főľđęř"
     }
   },
   "share-modal": {
