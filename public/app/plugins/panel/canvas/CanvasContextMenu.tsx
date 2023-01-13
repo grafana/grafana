@@ -215,6 +215,11 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
         currentLayer.doAction(actionType, currentSelectedElement);
       });
     });
+
+    setTimeout(() => {
+      scene.addToSelection();
+      scene.targetsToSelect.clear();
+    });
   };
 
   if (isMenuVisible) {

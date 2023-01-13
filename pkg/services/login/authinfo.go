@@ -21,6 +21,7 @@ const (
 	SAMLAuthModule      = "auth.saml"
 	LDAPAuthModule      = "ldap"
 	AuthProxyAuthModule = "authproxy"
+	JWTModule           = "jwt"
 )
 
 func GetAuthProviderLabel(authModule string) string {
@@ -39,7 +40,7 @@ func GetAuthProviderLabel(authModule string) string {
 		return "SAML"
 	case LDAPAuthModule, "": // FIXME: verify this situation doesn't exist anymore
 		return "LDAP"
-	case "jwt":
+	case JWTModule:
 		return "JWT"
 	case AuthProxyAuthModule:
 		return "Auth Proxy"
