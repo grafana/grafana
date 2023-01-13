@@ -253,6 +253,9 @@
       "subtitle": "Überwachungs- und Infrastruktur-Apps",
       "title": "Überwachung"
     },
+    "new": {
+      "title": ""
+    },
     "new-dashboard": {
       "title": "Neues Dashboard"
     },
@@ -347,13 +350,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "Legende ausblenden",
       "inspect": "Überprüfen",
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
+      "query": "",
+      "remove": "",
       "share": "Teilen",
       "show-legend": "Legende anzeigen",
+      "unlink-library-panel": "",
       "view": "Anzeigen"
     }
   },
@@ -372,6 +384,14 @@
     },
     "select-button": {
       "auto-refresh": "Automatisches Aktualisierungsintervall festlegen"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
     }
   },
   "share-modal": {
@@ -533,7 +553,7 @@
       "name-label": "Name",
       "username-label": "Benutzername"
     },
-    "title": "Profil bearbeiten"
+    "title": "Profil"
   },
   "user-session": {
     "browser-column": "Browser & Betriebssystem",

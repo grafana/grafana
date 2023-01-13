@@ -130,11 +130,11 @@ describe('UserProfileEditPage', () => {
   });
 
   describe('when user has loaded', () => {
-    it('should show edit profile form', async () => {
+    it('should show profile form', async () => {
       await getTestContext();
 
       const { name, email, username, saveProfile } = getSelectors();
-      expect(screen.getByText(/edit profile/i)).toBeInTheDocument();
+      expect(screen.getByText(/profile/i)).toBeInTheDocument();
       expect(name()).toBeInTheDocument();
       expect(name()).toHaveValue('Test User');
       expect(email()).toBeInTheDocument();
