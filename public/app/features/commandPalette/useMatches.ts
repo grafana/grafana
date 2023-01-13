@@ -213,7 +213,8 @@ function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
       const allMatchedIndexes = new Set<number>();
 
       const queryWords = ufuzzy.split(throttledSearch);
-      const queryPermutations = uFuzzy.permute(queryWords).map((terms) => terms.join(' '));
+      const queryPermutations =
+        queryWords.length < 5 ? uFuzzy.permute(queryWords).map((terms) => terms.join(' ')) : [throttledSearch];
 
       for (const permutedSearchTerm of queryPermutations) {
         const indexes = ufuzzy.filter(haystack, permutedSearchTerm);
