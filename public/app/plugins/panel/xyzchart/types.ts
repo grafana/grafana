@@ -1,7 +1,6 @@
 import { extend, ReactThreeFiber, Euler } from '@react-three/fiber';
 import { Line } from 'three';
 
-
 // <line /> is being reserved by dom, so we need to alias it
 extend({ Line_: Line });
 
@@ -26,6 +25,10 @@ export type PointGeometry = [number, number, number];
  */
 export type LineGeometry = [PointGeometry, PointGeometry];
 
+export interface ColorMap {
+  [key: string]: string;
+}
+
 export interface LabelProps {
   position: PointGeometry;
   text: string;
@@ -40,7 +43,7 @@ export interface GridVolumeProps {
 
 export interface GridPlaneProps {
   direction: Direction;
-  intervalLabels: any[];
+  intervalLabels: string[];
 }
 
 export enum Direction {

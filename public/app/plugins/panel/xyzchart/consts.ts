@@ -1,17 +1,19 @@
-//Axis constants
+import { ColorMap } from './types';
+
+// Axis constants
 export const INTERVAL_INDEX_LENGTH = 0.2;
 export const LABEL_DISTANCE_FROM_GRID = 2;
 
-//Scene constants
+// Scene constants
 export const LABEL_INTERVAL = 5;
 export const SCENE_SCALE = 100;
 export const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 
-//Colors
+// Colors
 export const BLACK = '#000000';
-export const WHITE = '#ffffff';
-export const AXIS_COLOR = '#808080';
-export const COLOR_PICKER_OPTIONS: any = {
+export const WHITE = 0xffffff;
+export const AXIS_COLOR = 0x808080;
+export const COLOR_PICKER_OPTIONS: ColorMap = {
   ['super-light-red']: '#FFA6B0',
   ['light-red']: '#FF7383',
   ['red']: '#F2495C',
@@ -43,11 +45,3 @@ export const COLOR_PICKER_OPTIONS: any = {
   ['semi-dark-purple']: '#A352CC',
   ['dark-purple']: '#8F3BB8',
 };
-
-//SkyBox
-export const SKYBOXES = [
-  { label: 'Grafana', value: 'grafana' },
-  { label: 'Hackathon', value: 'hackathon' },
-  { label: 'Universe', value: 'universe' },
-];
-export const DEFAULT_SKYBOX = 'grafana';

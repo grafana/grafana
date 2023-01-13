@@ -69,6 +69,22 @@ export function rgbToHex(color: string) {
 }
 
 /**
+ * Convert's a color string (i.e. #FFF, #00FF00, rgb(255, 255, 0)
+ * into a hexadecimal integer (i.e. respectively 0xFFFFFF, 0x00FF00, 0xFFFF00).
+ *
+ * @param string A string representation of a color as supported by tinycolor.
+ * @returns A hexadecimal number representing the same color.
+ */
+export function colorStringToHexInt(color: string | undefined): number | undefined {
+  if (color === undefined) {
+    return undefined;
+  }
+
+  const c = tinycolor(color);
+  return parseInt(c.toHex(), 16);
+}
+
+/**
  * Converts a color to hex6 format if there is no alpha, hex8 if there is.
  * @param color - Hex, RGB, HSL color
  * @returns A hex color string, i.e. #ff0000 or #ff0000ff

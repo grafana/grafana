@@ -2,22 +2,24 @@ import { Line } from '@react-three/drei';
 import { Euler } from '@react-three/fiber';
 import React, { useContext, useMemo } from 'react';
 
+import { colorManipulator } from '@grafana/data';
+
 import { INTERVAL_INDEX_LENGTH, LABEL_DISTANCE_FROM_GRID, LABEL_INTERVAL, SCENE_SCALE, WHITE } from '../consts';
 import { ScatterPlotOptions } from '../models.gen';
 import OptionsContext from '../optionsContext';
-import { Direction, GridPlaneProps, AxisData, PointGeometry, LineGeometry } from '../types';
+import { Direction, GridPlaneProps, PointGeometry, LineGeometry } from '../types';
 
 import { Label } from './Label';
 
 export const Axis: React.FC<GridPlaneProps> = ({ direction, intervalLabels }) => {
   const options: ScatterPlotOptions = useContext(OptionsContext);
 
-  const getAxisData = (direction: Direction): AxisData => {
+  const { axisPoints, intervalGeometries, intervalLabelPos, labelRotation, color } = useMemo(() => {
     let startVec: PointGeometry, endVec: PointGeometry;
     let labelRotation: Euler = [0, 0, 0];
     const intervalGeometries: LineGeometry[] = [];
     const intervalLabelPos: PointGeometry[] = [];
-    const color = options.themeColor ?? WHITE;
+    const color = colorManipulator.colorStringToHexInt(options.themeColor) ?? WHITE;
 
     // Set start and end vectors
     switch (direction) {
@@ -73,21 +75,11 @@ export const Axis: React.FC<GridPlaneProps> = ({ direction, intervalLabels }) =>
           intervalLabelPos.push([i, 0, SCENE_SCALE + LABEL_DISTANCE_FROM_GRID]);
           labelRotation = [-Math.PI / 2, 0, Math.PI / 2];
           break;
-      }        
+      }
     }
 
-    const axisPoints = [startVec, endVec];
-
-    return { axisPoints, intervalGeometries, intervalLabelPos, labelRotation, color };
-  };
-
-  const { 
-    axisPoints, 
-    intervalGeometries, 
-    intervalLabelPos, 
-    labelRotation, 
-    color 
-  } = useMemo(() => getAxisData(direction), [direction]);
+    return { axisPoints: [startVec, endVec], intervalGeometries, intervalLabelPos, labelRotation, color };
+  }, [direction, options.themeColor]);
 
   return (
     <group key={'axis_' + direction}>
@@ -95,12 +87,12 @@ export const Axis: React.FC<GridPlaneProps> = ({ direction, intervalLabels }) =>
       {intervalGeometries.map((points, index) => {
         return (
           <group key={index}>
-            <Line points={points as Array<[number, number, number]>} color={color} lineWidth={2.5} dashed={false} />
+            <Line points={points} color={color} lineWidth={2.5} dashed={false} />
             <Label
-              direction={ direction }
-              position={ intervalLabelPos[index] }
-              text={ intervalLabels[index] }
-              rotation={ labelRotation }
+              direction={direction}
+              position={intervalLabelPos[index]}
+              text={intervalLabels[index]}
+              rotation={labelRotation}
             />
           </group>
         );
