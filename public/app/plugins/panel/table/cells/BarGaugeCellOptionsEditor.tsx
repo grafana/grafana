@@ -3,7 +3,7 @@ import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableBarGaugeCellOptions } from '@grafana/schema';
-import { Field, Select } from '@grafana/ui';
+import { Field, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
@@ -16,8 +16,8 @@ export function BarGaugeCellOptionsEditor({ cellOptions, onChange }: Props) {
     onChange(cellOptions);
   };
 
-  const onValueModeChange = (v: SelectableValue) => {
-    cellOptions.valueMode = v.value;
+  const onValueModeChange = (v: BarGaugeValueMode) => {
+    cellOptions.valueMode = v;
     onChange(cellOptions);
   };
 
@@ -26,8 +26,8 @@ export function BarGaugeCellOptionsEditor({ cellOptions, onChange }: Props) {
       <Field label="Gauge display mode">
         <Select value={cellOptions?.mode} onChange={onCellOptionsChange} options={barGaugeOpts} />
       </Field>
-      <Field label="Value display mode">
-        <Select value={cellOptions?.valueMode} onChange={onValueModeChange} options={valueModes} />
+      <Field label="Value display">
+        <RadioButtonGroup value={cellOptions?.valueMode} onChange={onValueModeChange} options={valueModes} />
       </Field>
     </Stack>
   );
@@ -40,7 +40,7 @@ const barGaugeOpts: SelectableValue[] = [
 ];
 
 const valueModes: SelectableValue[] = [
-  { value: BarGaugeValueMode.Color, label: 'Color value' },
+  { value: BarGaugeValueMode.Color, label: 'Value color' },
   { value: BarGaugeValueMode.Text, label: 'Text color' },
-  { value: BarGaugeValueMode.Hidden, label: 'Hide value' },
+  { value: BarGaugeValueMode.Hidden, label: 'Hidden' },
 ];

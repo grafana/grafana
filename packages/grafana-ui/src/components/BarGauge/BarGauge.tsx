@@ -20,7 +20,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BarGaugeDisplayMode, VizTextDisplayOptions } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeValueMode, VizTextDisplayOptions } from '@grafana/schema';
 
 import { Themeable2 } from '../../types';
 import { calculateFontSize, measureText } from '../../utils/measureText';
@@ -49,7 +49,7 @@ export interface Props extends Themeable2 {
   className?: string;
   showUnfilled?: boolean;
   alignmentFactors?: DisplayValueAlignmentFactors;
-  valueMode?: 'color' | 'text' | 'hidden';
+  valueMode?: BarGaugeValueMode;
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -154,7 +154,7 @@ export class BarGauge extends PureComponent<Props> {
     const cellSpacing = itemSpacing!;
     const cellCount = Math.floor(maxSize / lcdCellWidth!);
     const cellSize = Math.floor((maxSize - cellSpacing * cellCount) / cellCount);
-    const valueColor = getValueColor(this.props);
+    const valueColor = getTextValueColor(this.props);
 
     const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
     const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation, text);
@@ -379,7 +379,7 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
 
     valueWidth = width;
 
-    if (valueMode === 'hidden') {
+    if (valueMode === BarGaugeValueMode.Hidden) {
       valueHeight = 0;
       valueWidth = 0;
     }
@@ -392,7 +392,7 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
     valueHeight = height - titleDim.height;
     valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), realValueWidth);
 
-    if (valueMode === 'hidden') {
+    if (valueMode === BarGaugeValueMode.Hidden) {
       valueHeight = 0;
       valueWidth = 0;
     }
@@ -473,10 +473,11 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
   const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
   const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
-  const valueColor = getValueColor(props);
+  const textColor = getTextValueColor(props);
+  const barColor = value.color ?? FALLBACK_COLOR;
 
   const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
-  const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation, text);
+  const valueStyles = getValueStyles(valueToBaseSizeOn, textColor, valueWidth, valueHeight, orientation, text);
 
   const isBasic = displayMode === 'basic';
   const wrapperStyles: CSSProperties = {
@@ -517,8 +518,8 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     if (isBasic) {
       // Basic styles
-      barStyles.background = `${tinycolor(valueColor).setAlpha(0.35).toRgbString()}`;
-      barStyles.borderTop = `2px solid ${valueColor}`;
+      barStyles.background = `${tinycolor(barColor).setAlpha(0.35).toRgbString()}`;
+      barStyles.borderTop = `2px solid ${barColor}`;
     } else {
       // Gradient styles
       barStyles.background = getBarGradient(props, maxBarHeight);
@@ -543,8 +544,8 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     if (isBasic) {
       // Basic styles
-      barStyles.background = `${tinycolor(valueColor).setAlpha(0.35).toRgbString()}`;
-      barStyles.borderRight = `2px solid ${valueColor}`;
+      barStyles.background = `${tinycolor(barColor).setAlpha(0.35).toRgbString()}`;
+      barStyles.borderRight = `2px solid ${barColor}`;
     } else {
       // Gradient styles
       barStyles.background = getBarGradient(props, maxBarWidth);
@@ -624,7 +625,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
 /**
  * Only exported to for unit test
  */
-export function getValueColor(props: Props): string {
+export function getTextValueColor(props: Props): string {
   if (props.valueMode === 'text') {
     return props.theme.colors.text.primary;
   }

@@ -28,6 +28,7 @@ Panel: thema.#Lineage & {
 					PanelOptions: {
 						ui.SingleStatBaseOptions
 						displayMode:  ui.BarGaugeDisplayMode | *"gradient"
+						valueMode: ui.BarGaugeValueMode | *"color"
 						showUnfilled: bool | *true
 						minVizWidth:  uint32 | *0
 						minVizHeight: uint32 | *10
