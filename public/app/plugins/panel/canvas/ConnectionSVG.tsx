@@ -147,6 +147,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
 
       const isSelected = selectedConnection === info;
       const selectedStyles = { stroke: '#44aaff', strokeWidth: 3 };
+      const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
 
       return (
         <svg className={styles.connection} key={idx}>
@@ -165,6 +166,17 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
               </marker>
             </defs>
             <line
+              id={`${CONNECTION_LINE_ID}_transparent`}
+              cursor={connectionCursorStyle}
+              stroke="transparent"
+              pointerEvents="auto"
+              strokeWidth={15}
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+            />
+            <line
               id={CONNECTION_LINE_ID}
               stroke="rgb(255,255,255)"
               pointerEvents="auto"
@@ -175,6 +187,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
               x2={x2}
               y2={y2}
               style={isSelected ? selectedStyles : {}}
+              cursor={connectionCursorStyle}
             />
           </g>
         </svg>
