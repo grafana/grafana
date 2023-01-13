@@ -24,7 +24,7 @@ import {
   TraceTimelineViewer,
   TTraceTimeline,
 } from '@jaegertracing/jaeger-ui-components';
-import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
+import { getTraceToLogsOptions, TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -121,7 +121,7 @@ export function TraceView(props: Props) {
   );
 
   const instanceSettings = getDatasourceSrv().getInstanceSettings(datasource?.name);
-  const traceToLogsOptions = (instanceSettings?.jsonData as TraceToLogsData)?.tracesToLogs;
+  const traceToLogsOptions = getTraceToLogsOptions(instanceSettings?.jsonData as TraceToLogsData);
   const traceToMetricsOptions = (instanceSettings?.jsonData as TraceToMetricsData)?.tracesToMetrics;
   const spanBarOptions: SpanBarOptionsData | undefined = instanceSettings?.jsonData;
 

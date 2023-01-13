@@ -19,7 +19,7 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 import { SpanLinkFunc, TraceSpan } from '@jaegertracing/jaeger-ui-components';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
+import { TraceToLogsOptionsV2 } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
@@ -40,7 +40,7 @@ export function createSpanLinkFactory({
   createFocusSpanLink,
 }: {
   splitOpenFn: SplitOpen;
-  traceToLogsOptions?: TraceToLogsOptions;
+  traceToLogsOptions?: TraceToLogsOptionsV2;
   traceToMetricsOptions?: TraceToMetricsOptions;
   dataFrame?: DataFrame;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
@@ -82,7 +82,7 @@ export function createSpanLinkFactory({
 
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
-  traceToLogsOptions?: TraceToLogsOptions,
+  traceToLogsOptions?: TraceToLogsOptionsV2,
   traceToMetricsOptions?: TraceToMetricsOptions,
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>
 ) {
@@ -237,26 +237,14 @@ function legacyCreateSpanLinkFactory(
 /**
  * Default keys to use when there are no configured tags.
  */
-const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'];
-function getLinkForLoki(span: TraceSpan, options: TraceToLogsOptions, dataSourceSettings: DataSourceInstanceSettings) {
-  const { tags: keys, filterByTraceID, filterBySpanID, mapTagNamesEnabled, mappedTags } = options;
-
-  // In order, try to use mapped tags -> tags -> default tags
-  const keysToCheck = mapTagNamesEnabled && mappedTags?.length ? mappedTags : keys?.length ? keys : defaultKeys;
-  // Build tag portion of query
-  const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
-    if (mapTagNamesEnabled) {
-      const keyValue = (keysToCheck as KeyValue[]).find((keyValue: KeyValue) => keyValue.key === tag.key);
-      if (keyValue) {
-        acc.push(`${keyValue.value ? keyValue.value : keyValue.key}="${tag.value}"`);
-      }
-    } else {
-      if ((keysToCheck as string[]).includes(tag.key)) {
-        acc.push(`${tag.key}="${tag.value}"`);
-      }
-    }
-    return acc;
-  }, [] as string[]);
+const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'].map((k) => ({ key: k }));
+function getLinkForLoki(
+  span: TraceSpan,
+  options: TraceToLogsOptionsV2,
+  dataSourceSettings: DataSourceInstanceSettings
+) {
+  const { filterByTraceID, filterBySpanID } = options;
+  const tags = getTags(span, options.tags || defaultKeys);
 
   // If no tags found, return undefined to prevent an invalid Loki query
   if (!tags.length) {
@@ -298,25 +286,11 @@ interface ElasticsearchOrOpensearchQuery extends DataQuery {
 
 function getLinkForElasticsearchOrOpensearch(
   span: TraceSpan,
-  options: TraceToLogsOptions,
+  options: TraceToLogsOptionsV2,
   dataSourceSettings: DataSourceInstanceSettings
 ) {
-  const { tags: keys, filterByTraceID, filterBySpanID, mapTagNamesEnabled, mappedTags } = options;
-  const tags = [...span.process.tags, ...span.tags].reduce((acc: string[], tag) => {
-    if (mapTagNamesEnabled && mappedTags?.length) {
-      const keysToCheck = mappedTags;
-      const keyValue = keysToCheck.find((keyValue) => keyValue.key === tag.key);
-      if (keyValue) {
-        acc.push(`${keyValue.value ? keyValue.value : keyValue.key}:"${tag.value}"`);
-      }
-    } else {
-      const keysToCheck = keys?.length ? keys : defaultKeys;
-      if (keysToCheck.includes(tag.key)) {
-        acc.push(`${tag.key}:"${tag.value}"`);
-      }
-    }
-    return acc;
-  }, []);
+  const { filterByTraceID, filterBySpanID } = options;
+  const tags = getTags(span, options.tags || [], { labelValueSign: ':' });
 
   let query = '';
   if (tags.length > 0) {
@@ -353,27 +327,11 @@ function getLinkForElasticsearchOrOpensearch(
 
 function getLinkForSplunk(
   span: TraceSpan,
-  options: TraceToLogsOptions,
+  options: TraceToLogsOptionsV2,
   dataSourceSettings: DataSourceInstanceSettings
 ) {
-  const { tags: keys, filterByTraceID, filterBySpanID, mapTagNamesEnabled, mappedTags } = options;
-
-  // In order, try to use mapped tags -> tags -> default tags
-  const keysToCheck = mapTagNamesEnabled && mappedTags?.length ? mappedTags : keys?.length ? keys : defaultKeys;
-  // Build tag portion of query
-  const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
-    if (mapTagNamesEnabled) {
-      const keyValue = (keysToCheck as KeyValue[]).find((keyValue: KeyValue) => keyValue.key === tag.key);
-      if (keyValue) {
-        acc.push(`${keyValue.value ? keyValue.value : keyValue.key}="${tag.value}"`);
-      }
-    } else {
-      if ((keysToCheck as string[]).includes(tag.key)) {
-        acc.push(`${tag.key}="${tag.value}"`);
-      }
-    }
-    return acc;
-  }, [] as string[]);
+  const { filterByTraceID, filterBySpanID } = options;
+  const tags = getTags(span, options.tags || defaultKeys);
 
   let query = '';
   if (tags.length > 0) {
@@ -400,6 +358,24 @@ function getLinkForSplunk(
   } as DataLink<DataQuery>;
 
   return dataLink;
+}
+
+function getTags(
+  span: TraceSpan,
+  tags: Array<KeyValue<string>>,
+  { labelValueSign = '=' }: { labelValueSign?: string } = {}
+) {
+  // In order, try to use mapped tags -> tags -> default tags
+  // Build tag portion of query
+  return [...span.process.tags, ...span.tags]
+    .map((tag) => {
+      const keyValue = tags.find((keyValue: KeyValue) => keyValue.key === tag.key);
+      if (keyValue) {
+        return `${keyValue.value ? keyValue.value : keyValue.key}${labelValueSign}"${tag.value}"`;
+      }
+      return undefined;
+    })
+    .filter((v) => Boolean(v));
 }
 
 /**

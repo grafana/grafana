@@ -11,7 +11,7 @@ import {
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 
-import KeyValueInput from '../TraceToLogs/KeyValueInput';
+import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
 
 export interface TraceToMetricsOptions {
   datasourceUid?: string;
@@ -79,8 +79,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
 
       <InlineFieldRow>
         <InlineField tooltip="Tags that will be used in the metrics query." label="Tags" labelWidth={26}>
-          <KeyValueInput
-            keyPlaceholder="Tag"
+          <TagMappingInput
             values={options.jsonData.tracesToMetrics?.tags ?? []}
             onChange={(v) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
