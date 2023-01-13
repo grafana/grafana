@@ -88,26 +88,26 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				err = teamSvc.AddTeamMember(userIds[1], testOrgID, team1.ID, true, 0)
 				require.NoError(t, err)
 
-				q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.ID, SignedInUser: testUser}
-				err = teamSvc.GetTeamMembers(context.Background(), q1)
+				q1 := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
+				q1Result, err := teamSvc.GetTeamMembers(context.Background(), q1)
 				require.NoError(t, err)
-				require.Equal(t, 2, len(q1.Result))
-				require.Equal(t, q1.Result[0].TeamId, team1.ID)
-				require.Equal(t, q1.Result[0].Login, "loginuser0")
-				require.Equal(t, q1.Result[0].OrgId, testOrgID)
-				require.Equal(t, q1.Result[1].TeamId, team1.ID)
-				require.Equal(t, q1.Result[1].Login, "loginuser1")
-				require.Equal(t, q1.Result[1].OrgId, testOrgID)
-				require.Equal(t, q1.Result[1].External, true)
+				require.Equal(t, 2, len(q1Result))
+				require.Equal(t, q1Result[0].TeamID, team1.ID)
+				require.Equal(t, q1Result[0].Login, "loginuser0")
+				require.Equal(t, q1Result[0].OrgID, testOrgID)
+				require.Equal(t, q1Result[1].TeamID, team1.ID)
+				require.Equal(t, q1Result[1].Login, "loginuser1")
+				require.Equal(t, q1Result[1].OrgID, testOrgID)
+				require.Equal(t, q1Result[1].External, true)
 
-				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.ID, External: true, SignedInUser: testUser}
-				err = teamSvc.GetTeamMembers(context.Background(), q2)
+				q2 := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, External: true, SignedInUser: testUser}
+				q2Result, err := teamSvc.GetTeamMembers(context.Background(), q2)
 				require.NoError(t, err)
-				require.Equal(t, len(q2.Result), 1)
-				require.Equal(t, q2.Result[0].TeamId, team1.ID)
-				require.Equal(t, q2.Result[0].Login, "loginuser1")
-				require.Equal(t, q2.Result[0].OrgId, testOrgID)
-				require.Equal(t, q2.Result[0].External, true)
+				require.Equal(t, len(q2Result), 1)
+				require.Equal(t, q2Result[0].TeamID, team1.ID)
+				require.Equal(t, q2Result[0].Login, "loginuser1")
+				require.Equal(t, q2Result[0].OrgID, testOrgID)
+				require.Equal(t, q2Result[0].External, true)
 
 				queryResult, err = teamSvc.SearchTeams(context.Background(), query)
 				require.NoError(t, err)
@@ -139,78 +139,77 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				err = teamSvc.AddTeamMember(userId, testOrgID, team1.ID, true, 0)
 				require.NoError(t, err)
 
-				memberQuery := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.ID, External: true, SignedInUser: testUser}
-				err = teamSvc.GetTeamMembers(context.Background(), memberQuery)
+				memberQuery := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, External: true, SignedInUser: testUser}
+				memberQueryResult, err := teamSvc.GetTeamMembers(context.Background(), memberQuery)
 				require.NoError(t, err)
-				require.Equal(t, len(memberQuery.Result), 1)
-				require.Equal(t, memberQuery.Result[0].TeamId, team1.ID)
-				require.Equal(t, memberQuery.Result[0].Login, "loginuser1")
-				require.Equal(t, memberQuery.Result[0].OrgId, testOrgID)
-				require.Equal(t, memberQuery.Result[0].External, true)
+				require.Equal(t, len(memberQueryResult), 1)
+				require.Equal(t, memberQueryResult[0].TeamID, team1.ID)
+				require.Equal(t, memberQueryResult[0].Login, "loginuser1")
+				require.Equal(t, memberQueryResult[0].OrgID, testOrgID)
+				require.Equal(t, memberQueryResult[0].External, true)
 			})
 
 			t.Run("Should be able to update users in a team", func(t *testing.T) {
 				userId := userIds[0]
-				team := team1
-				err = teamSvc.AddTeamMember(userId, testOrgID, team.ID, false, 0)
+
+				err = teamSvc.AddTeamMember(userId, testOrgID, team1.ID, false, 0)
 				require.NoError(t, err)
 
-				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.ID, SignedInUser: testUser}
-				err = teamSvc.GetTeamMembers(context.Background(), qBeforeUpdate)
+				qBeforeUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
+				qBeforeUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qBeforeUpdate)
 				require.NoError(t, err)
-				require.EqualValues(t, qBeforeUpdate.Result[0].Permission, 0)
+				require.EqualValues(t, qBeforeUpdateResult[0].Permission, 0)
 
-				err = teamSvc.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-					UserId:     userId,
-					OrgId:      testOrgID,
-					TeamId:     team.ID,
+				err = teamSvc.UpdateTeamMember(context.Background(), &team.UpdateTeamMemberCommand{
+					UserID:     userId,
+					OrgID:      testOrgID,
+					TeamID:     team1.ID,
 					Permission: models.PERMISSION_ADMIN,
 				})
 
 				require.NoError(t, err)
 
-				qAfterUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.ID, SignedInUser: testUser}
-				err = teamSvc.GetTeamMembers(context.Background(), qAfterUpdate)
+				qAfterUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
+				qAfterUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qAfterUpdate)
 				require.NoError(t, err)
-				require.Equal(t, qAfterUpdate.Result[0].Permission, models.PERMISSION_ADMIN)
+				require.Equal(t, qAfterUpdateResult[0].Permission, models.PERMISSION_ADMIN)
 			})
 
 			t.Run("Should default to member permission level when updating a user with invalid permission level", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
 				setup()
 				userID := userIds[0]
-				team := team1
-				err = teamSvc.AddTeamMember(userID, testOrgID, team.ID, false, 0)
+				err = teamSvc.AddTeamMember(userID, testOrgID, team1.ID, false, 0)
 				require.NoError(t, err)
 
-				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.ID, SignedInUser: testUser}
-				err = teamSvc.GetTeamMembers(context.Background(), qBeforeUpdate)
+				qBeforeUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
+				qBeforeUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qBeforeUpdate)
 				require.NoError(t, err)
-				require.EqualValues(t, qBeforeUpdate.Result[0].Permission, 0)
+				require.EqualValues(t, qBeforeUpdateResult[0].Permission, 0)
 
 				invalidPermissionLevel := models.PERMISSION_EDIT
-				err = teamSvc.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-					UserId:     userID,
-					OrgId:      testOrgID,
-					TeamId:     team.ID,
+				err = teamSvc.UpdateTeamMember(context.Background(), &team.UpdateTeamMemberCommand{
+					UserID:     userID,
+					OrgID:      testOrgID,
+					TeamID:     team1.ID,
 					Permission: invalidPermissionLevel,
 				})
 
 				require.NoError(t, err)
 
-				qAfterUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.ID, SignedInUser: testUser}
-				err = teamSvc.GetTeamMembers(context.Background(), qAfterUpdate)
+				qAfterUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
+				qAfterUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qAfterUpdate)
 				require.NoError(t, err)
-				require.EqualValues(t, qAfterUpdate.Result[0].Permission, 0)
+				require.EqualValues(t, qAfterUpdateResult[0].Permission, 0)
 			})
 
 			t.Run("Shouldn't be able to update a user not in the team.", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
 				setup()
-				err = teamSvc.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-					UserId:     1,
-					OrgId:      testOrgID,
-					TeamId:     team1.ID,
+				err = teamSvc.UpdateTeamMember(context.Background(), &team.UpdateTeamMemberCommand{
+					UserID:     1,
+					OrgID:      testOrgID,
+					TeamID:     team1.ID,
 					Permission: models.PERMISSION_ADMIN,
 				})
 
@@ -257,13 +256,13 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				err = teamSvc.AddTeamMember(userIds[0], testOrgID, team1.ID, false, 0)
 				require.NoError(t, err)
 
-				err = teamSvc.RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.ID, UserId: userIds[0]})
+				err = teamSvc.RemoveTeamMember(context.Background(), &team.RemoveTeamMemberCommand{OrgID: testOrgID, TeamID: team1.ID, UserID: userIds[0]})
 				require.NoError(t, err)
 
-				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.ID, SignedInUser: testUser}
-				err = teamSvc.GetTeamMembers(context.Background(), q2)
+				q2 := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
+				q2Result, err := teamSvc.GetTeamMembers(context.Background(), q2)
 				require.NoError(t, err)
-				require.Equal(t, len(q2.Result), 0)
+				require.Equal(t, len(q2Result), 0)
 			})
 
 			t.Run("Should have empty teams", func(t *testing.T) {
@@ -271,12 +270,12 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 
 				t.Run("A user should be able to remove the admin permission for the last admin", func(t *testing.T) {
-					err = teamSvc.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{OrgId: testOrgID, TeamId: team1.ID, UserId: userIds[0], Permission: 0})
+					err = teamSvc.UpdateTeamMember(context.Background(), &team.UpdateTeamMemberCommand{OrgID: testOrgID, TeamID: team1.ID, UserID: userIds[0], Permission: 0})
 					require.NoError(t, err)
 				})
 
 				t.Run("A user should be able to remove the last member", func(t *testing.T) {
-					err = teamSvc.RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.ID, UserId: userIds[0]})
+					err = teamSvc.RemoveTeamMember(context.Background(), &team.RemoveTeamMemberCommand{OrgID: testOrgID, TeamID: team1.ID, UserID: userIds[0]})
 					require.NoError(t, err)
 				})
 
@@ -289,7 +288,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 					err = teamSvc.AddTeamMember(userIds[1], testOrgID, team1.ID, false, models.PERMISSION_ADMIN)
 					require.NoError(t, err)
-					err = teamSvc.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{OrgId: testOrgID, TeamId: team1.ID, UserId: userIds[0], Permission: 0})
+					err = teamSvc.UpdateTeamMember(context.Background(), &team.UpdateTeamMemberCommand{OrgID: testOrgID, TeamID: team1.ID, UserID: userIds[0], Permission: 0})
 					require.NoError(t, err)
 				})
 			})
@@ -407,15 +406,15 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				err = teamSvc.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
 				require.NoError(t, err)
 
-				teamMembersQuery := &models.GetTeamMembersQuery{
-					OrgId:        testOrgID,
+				teamMembersQuery := &team.GetTeamMembersQuery{
+					OrgID:        testOrgID,
 					SignedInUser: testUser,
-					TeamId:       groupId,
+					TeamID:       groupId,
 				}
-				err = teamSvc.GetTeamMembers(context.Background(), teamMembersQuery)
+				teamMembersQueryResult, err := teamSvc.GetTeamMembers(context.Background(), teamMembersQuery)
 				require.NoError(t, err)
 				// should not receive service account from query
-				require.Equal(t, len(teamMembersQuery.Result), 1)
+				require.Equal(t, len(teamMembersQueryResult), 1)
 			})
 		})
 	})
@@ -545,15 +544,15 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	type getTeamMembersTestCase struct {
 		desc             string
-		query            *models.GetTeamMembersQuery
+		query            *team.GetTeamMembersQuery
 		expectedNumUsers int
 	}
 
 	tests := []getTeamMembersTestCase{
 		{
 			desc: "should return all team members",
-			query: &models.GetTeamMembersQuery{
-				OrgId: testOrgID,
+			query: &team.GetTeamMembersQuery{
+				OrgID: testOrgID,
 				SignedInUser: &user.SignedInUser{
 					OrgID:       testOrgID,
 					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
@@ -563,8 +562,8 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		},
 		{
 			desc: "should return no team members",
-			query: &models.GetTeamMembersQuery{
-				OrgId: testOrgID,
+			query: &team.GetTeamMembersQuery{
+				OrgID: testOrgID,
 				SignedInUser: &user.SignedInUser{
 					OrgID:       testOrgID,
 					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {""}}},
@@ -575,8 +574,8 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		{
 
 			desc: "should return some team members",
-			query: &models.GetTeamMembersQuery{
-				OrgId: testOrgID,
+			query: &team.GetTeamMembersQuery{
+				OrgID: testOrgID,
 				SignedInUser: &user.SignedInUser{
 					OrgID: testOrgID,
 					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {
@@ -591,15 +590,15 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			err := teamSvc.GetTeamMembers(context.Background(), tt.query)
+			queryResult, err := teamSvc.GetTeamMembers(context.Background(), tt.query)
 			require.NoError(t, err)
-			assert.Len(t, tt.query.Result, tt.expectedNumUsers)
+			assert.Len(t, queryResult, tt.expectedNumUsers)
 
 			if !hasWildcardScope(tt.query.SignedInUser, ac.ActionOrgUsersRead) {
-				for _, member := range tt.query.Result {
+				for _, member := range queryResult {
 					assert.Contains(t,
 						tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgID][ac.ActionOrgUsersRead],
-						ac.Scope("users", "id", fmt.Sprintf("%d", member.UserId)),
+						ac.Scope("users", "id", fmt.Sprintf("%d", member.UserID)),
 					)
 				}
 			}
