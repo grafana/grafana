@@ -60,6 +60,8 @@ export function DashboardSearchModal({ isOpen }: Props) {
                   tabIndex={0}
                   spellCheck={false}
                   className={styles.input}
+                  // eslint-disable-next-line jsx-a11y/no-autofocus
+                  autoFocus
                 />
               </div>
 
