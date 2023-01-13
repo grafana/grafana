@@ -62,10 +62,12 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       return [];
     }
   }
-  async handleLogGroupsQuery({ region, logGroupPrefix }: VariableQuery) {
+
+  async handleLogGroupsQuery({ region, logGroupPrefix, accountId }: VariableQuery) {
     const interpolatedPrefix = this.resources.templateSrv.replace(logGroupPrefix);
     return this.resources
       .getLogGroups({
+        accountId,
         region,
         logGroupNamePrefix: interpolatedPrefix,
         listAllLogGroups: true,
