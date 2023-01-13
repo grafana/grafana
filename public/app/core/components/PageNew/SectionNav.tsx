@@ -96,16 +96,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     collapseIcon: css({
-      border: `1px solid ${theme.colors.border.weak}`,
       left: '50%',
-      transform: 'translate(-50%, 50%) rotate(90deg)',
+      margin: theme.spacing(1, 0),
+      translate: '-50%',
+      transform: 'rotate(90deg)',
       top: theme.spacing(0),
 
       [theme.breakpoints.up('md')]: {
-        transform: 'translateX(50%)',
-        top: theme.spacing(8),
-        left: theme.spacing(1),
-        right: theme.spacing(-1),
+        left: 0,
+        margin: theme.spacing(0, 0, 0, 1),
+        top: theme.spacing(2),
+        translate: 'none',
+        transform: 'none',
       },
     }),
   };
