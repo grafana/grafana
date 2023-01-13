@@ -79,7 +79,7 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			c := &LDAP{cfg: setting.NewCfg(), service: fakeLDAPService{ExpectedInfo: tt.expectedInfo, ExpectedErr: tt.expectedLDAPErr}}
 
-			identity, err := c.AuthenticatePassword(context.Background(), 1, tt.username, tt.password)
+			identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, tt.username, tt.password)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)
 		})

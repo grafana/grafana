@@ -6,12 +6,17 @@ import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
 
 export interface Props {
   items: PanelMenuItem[];
+  style?: React.CSSProperties;
 }
 
 export class PanelHeaderMenu extends PureComponent<Props> {
   renderItems = (menu: PanelMenuItem[], isSubMenu = false) => {
     return (
-      <ul className="dropdown-menu dropdown-menu--menu panel-menu" role={isSubMenu ? '' : 'menu'}>
+      <ul
+        className="dropdown-menu dropdown-menu--menu panel-menu"
+        style={this.props.style}
+        role={isSubMenu ? '' : 'menu'}
+      >
         {menu.map((menuItem, idx: number) => {
           return (
             <PanelHeaderMenuItem

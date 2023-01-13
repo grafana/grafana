@@ -15,7 +15,7 @@ import {
   STRING_FUNCTIONS,
   FIELD_AND_FILTER_FUNCTIONS,
 } from './syntax';
-import { GetLogGroupFieldsResponse } from './types';
+import { LogGroupField, ResourceResponse } from './types';
 
 const fields = ['field1', '@message'];
 
@@ -109,9 +109,9 @@ async function runSuggestionTest(query: string, expectedItems: string[][]) {
 
 function makeDatasource(): CloudWatchDatasource {
   return {
-    logsQueryRunner: {
-      getLogGroupFields(): Promise<GetLogGroupFieldsResponse> {
-        return Promise.resolve({ logGroupFields: [{ name: 'field1' }, { name: '@message' }] });
+    api: {
+      getLogGroupFields(): Promise<Array<ResourceResponse<LogGroupField>>> {
+        return Promise.resolve([{ value: { name: 'field1' } }, { value: { name: '@message' } }]);
       },
     },
   } as any;
@@ -131,7 +131,7 @@ function getProvideCompletionItems(query: string): Promise<TypeaheadOutput> {
     {
       value,
     } as any,
-    { logGroupNames: ['logGroup1'], region: 'custom' }
+    { logGroups: [{ name: 'logGroup1', arn: 'logGroup1' }], region: 'custom' }
   );
 }
 
