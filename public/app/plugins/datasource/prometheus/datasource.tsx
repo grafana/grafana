@@ -51,6 +51,7 @@ import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
+import { trackQuery } from './tracking';
 import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
@@ -440,14 +441,15 @@ export class PrometheusDatasource
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
-
-      return super
-        .query({ ...request, targets: targets.flat() })
-        .pipe(
-          map((response) =>
-            transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
-          )
-        );
+      const startTime = new Date();
+      return super.query({ ...request, targets: targets.flat() }).pipe(
+        map((response) =>
+          transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
+        ),
+        tap((response: DataQueryResponse) => {
+          trackQuery(response, request, startTime);
+        })
+      );
       // Run queries trough browser/proxy
     } else {
       const start = this.getPrometheusTime(request.range.from, false);
@@ -607,6 +609,7 @@ export class PrometheusDatasource
         ...this.getRangeScopedVars(options.range),
       });
     }
+
     query.step = interval;
 
     let expr = target.expr;
@@ -776,6 +779,7 @@ export class PrometheusDatasource
     }
 
     const step = options.annotation.step || ANNOTATION_QUERY_STEP_DEFAULT;
+    // const maxDataPoints = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
     const queryModel = {
       expr,
       range: true,
@@ -784,6 +788,7 @@ export class PrometheusDatasource
       interval: step,
       refId: 'X',
       datasource: this.getRef(),
+      // maxDataPoints: maxDataPoints
     };
 
     return await lastValueFrom(
