@@ -1,5 +1,4 @@
 ---
-draft: true
 title: Core kinds
 weight: 200
 ---
