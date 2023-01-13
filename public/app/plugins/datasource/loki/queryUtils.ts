@@ -117,7 +117,7 @@ export function obfuscate(query: string): string {
     enter: ({ name, from, to }): false | void => {
       const queryPart = query.substring(from, to);
       if (tagsToObscure.includes(name) && !partsToKeep.includes(queryPart)) {
-        obfuscatedQuery = obfuscatedQuery.replace(queryPart, '@');
+        obfuscatedQuery = obfuscatedQuery.replace(queryPart, name);
       }
     },
   });
