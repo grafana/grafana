@@ -3,8 +3,6 @@ import { Labels, LogLevel, LogsModel, LogRowModel, LogsSortOrder, MutableDataFra
 import {
   getLogLevel,
   calculateLogsLabelStats,
-  getParser,
-  LogsParsers,
   calculateStats,
   getLogLevelFromKey,
   sortLogsResult,
@@ -106,27 +104,6 @@ describe('calculateLogsLabelStats()', () => {
   });
 });
 
-describe('LogsParsers', () => {
-  describe('logfmt', () => {
-    const parser = LogsParsers.logfmt;
-
-    test('should detect format', () => {
-      expect(parser.test('foo')).toBeFalsy();
-      expect(parser.test('foo=bar')).toBeTruthy();
-    });
-  });
-
-  describe('JSON', () => {
-    const parser = LogsParsers.JSON;
-
-    test('should detect format', () => {
-      expect(parser.test('foo')).toBeFalsy();
-      expect(parser.test('"foo"')).toBeFalsy();
-      expect(parser.test('{"foo":"bar"}')).toBeTruthy();
-    });
-  });
-});
-
 describe('calculateStats()', () => {
   test('should return no stats for empty array', () => {
     expect(calculateStats([])).toEqual([]);
@@ -146,25 +123,6 @@ describe('calculateStats()', () => {
         proportion: 1 / 3,
       },
     ]);
-  });
-});
-
-describe('getParser()', () => {
-  test('should return no parser on empty line', () => {
-    expect(getParser('')).toBeUndefined();
-  });
-
-  test('should return no parser on unknown line pattern', () => {
-    expect(getParser('To Be or not to be')).toBeUndefined();
-  });
-
-  test('should return logfmt parser on key value patterns', () => {
-    expect(getParser('foo=bar baz="41 + 1')).toEqual(LogsParsers.logfmt);
-  });
-
-  test('should return JSON parser on JSON log lines', () => {
-    // TODO implement other JSON value types than string
-    expect(getParser('{"foo": "bar", "baz": "41 + 1"}')).toEqual(LogsParsers.JSON);
   });
 });
 
