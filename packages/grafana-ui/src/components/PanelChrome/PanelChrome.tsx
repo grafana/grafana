@@ -10,6 +10,7 @@ import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
 import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
+import { ToolbarButton } from '../ToolbarButton';
 import { PopoverContent, Tooltip } from '../Tooltip';
 
 import { PanelStatus } from './PanelStatus';
@@ -40,7 +41,7 @@ export interface PanelChromeProps {
   padding?: PanelPadding;
   title?: string;
   titleItems?: PanelChromeInfoState[];
-  menu?: ReactElement;
+  menu?: ReactElement | (() => ReactElement);
   /** dragClass, hoverHeader not yet implemented */
   // dragClass?: string;
   hoverHeader?: boolean;
@@ -89,10 +90,12 @@ export function PanelChrome({
   const headerStyles: CSSProperties = {
     height: headerHeight,
   };
+
   const itemStyles: CSSProperties = {
     minHeight: headerHeight,
     minWidth: headerHeight,
   };
+
   const containerStyles: CSSProperties = { width, height };
 
   const isUsingDeprecatedLeftItems = isEmpty(status) && !loadingState;
@@ -100,15 +103,15 @@ export function PanelChrome({
   const showStreaming = loadingState === LoadingState.Streaming && !isUsingDeprecatedLeftItems;
 
   const renderStatus = () => {
-    if (isUsingDeprecatedLeftItems) {
-      return <div className={cx(styles.rightAligned, styles.items)}>{itemsRenderer(leftItems, (item) => item)}</div>;
-    } else {
-      const showError = loadingState === LoadingState.Error || status?.message;
-      return showError ? (
+    const showError = loadingState === LoadingState.Error || status?.message;
+    if (!isUsingDeprecatedLeftItems && showError) {
+      return (
         <div className={styles.errorContainer}>
           <PanelStatus message={status?.message} onClick={status?.onClick} />
         </div>
-      ) : null;
+      );
+    } else {
+      return null;
     }
   };
   return (
@@ -150,18 +153,22 @@ export function PanelChrome({
           </div>
         )}
 
-        {menu && (
-          <Dropdown overlay={menu} placement="bottom">
-            <div className={cx(styles.item, styles.menuItem, 'menu-icon')} data-testid="menu-icon" style={itemStyles}>
-              <IconButton
-                ariaLabel={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
-                tooltip="Menu"
-                name="ellipsis-v"
-                size="sm"
+        <div className={styles.rightAligned}>
+          {menu && (
+            <Dropdown overlay={menu} placement="bottom">
+              <ToolbarButton
+                aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
+                title="Menu"
+                icon="ellipsis-v"
+                narrow
+                data-testid="panel-menu-button"
+                className={cx(styles.menuItem, 'menu-icon')}
               />
-            </div>
-          </Dropdown>
-        )}
+            </Dropdown>
+          )}
+
+          {isUsingDeprecatedLeftItems && <div className={styles.items}>{itemsRenderer(leftItems, (item) => item)}</div>}
+        </div>
 
         {renderStatus()}
       </div>
@@ -208,7 +215,7 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { padding, background, borderColor } = theme.components.panel;
+  const { background, borderColor } = theme.components.panel;
 
   return {
     container: css({
@@ -248,7 +255,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      padding: `0 ${theme.spacing(padding)}`,
+      padding: theme.spacing(0, 0, 0, 1),
     }),
     streaming: css({
       marginRight: 0,
@@ -276,6 +283,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     menuItem: css({
       visibility: 'hidden',
+      border: 'none',
     }),
     errorContainer: css({
       label: 'error-container',
@@ -286,7 +294,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
     }),
     rightAligned: css({
+      label: 'right-aligned-container',
       marginLeft: 'auto',
+      display: 'flex',
+      alignItems: 'center',
     }),
   };
 };

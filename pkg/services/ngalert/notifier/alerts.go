@@ -6,19 +6,14 @@ import (
 	"sort"
 	"time"
 
+	"github.com/grafana/alerting/alerting"
+
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	v2 "github.com/prometheus/alertmanager/api/v2"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/types"
 	prometheus_model "github.com/prometheus/common/model"
-)
-
-var (
-	ErrGetAlertsInternal        = fmt.Errorf("unable to retrieve alerts(s) due to an internal error")
-	ErrGetAlertsUnavailable     = fmt.Errorf("unable to retrieve alerts(s) as alertmanager is not initialised yet")
-	ErrGetAlertsBadPayload      = fmt.Errorf("unable to retrieve alerts")
-	ErrGetAlertGroupsBadPayload = fmt.Errorf("unable to retrieve alerts groups")
 )
 
 func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []string, receivers string) (apimodels.GettableAlerts, error) {
@@ -29,19 +24,19 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 	)
 
 	if !am.Ready() {
-		return res, ErrGetAlertsUnavailable
+		return res, alerting.ErrGetAlertsUnavailable
 	}
 
 	matchers, err := parseFilter(filter)
 	if err != nil {
 		am.logger.Error("failed to parse matchers", "error", err)
-		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsBadPayload)
+		return nil, fmt.Errorf("%s: %w", err.Error(), alerting.ErrGetAlertsBadPayload)
 	}
 
 	receiverFilter, err := parseReceivers(receivers)
 	if err != nil {
 		am.logger.Error("failed to parse receiver regex", "error", err)
-		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsBadPayload)
+		return nil, fmt.Errorf("%s: %w", err.Error(), alerting.ErrGetAlertsBadPayload)
 	}
 
 	alerts := am.alerts.GetPending()
@@ -78,7 +73,7 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 
 	if err != nil {
 		am.logger.Error("failed to iterate through the alerts", "error", err)
-		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertsInternal)
+		return nil, fmt.Errorf("%s: %w", err.Error(), alerting.ErrGetAlertsInternal)
 	}
 	sort.Slice(res, func(i, j int) bool {
 		return *res[i].Fingerprint < *res[j].Fingerprint
@@ -91,13 +86,13 @@ func (am *Alertmanager) GetAlertGroups(active, silenced, inhibited bool, filter 
 	matchers, err := parseFilter(filter)
 	if err != nil {
 		am.logger.Error("msg", "failed to parse matchers", "error", err)
-		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertGroupsBadPayload)
+		return nil, fmt.Errorf("%s: %w", err.Error(), alerting.ErrGetAlertGroupsBadPayload)
 	}
 
 	receiverFilter, err := parseReceivers(receivers)
 	if err != nil {
 		am.logger.Error("msg", "failed to compile receiver regex", "error", err)
-		return nil, fmt.Errorf("%s: %w", err.Error(), ErrGetAlertGroupsBadPayload)
+		return nil, fmt.Errorf("%s: %w", err.Error(), alerting.ErrGetAlertGroupsBadPayload)
 	}
 
 	rf := func(receiverFilter *regexp.Regexp) func(r *dispatch.Route) bool {
