@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { logInfo } from '@grafana/runtime';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state';
+import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { LogMessages } from '../../Analytics';
 
@@ -40,7 +41,7 @@ describe('Analytics', () => {
     const panel = new PanelModel({
       id: 123,
     });
-    const dashboard = new DashboardModel({
+    const dashboard = createDashboardModelFixture({
       id: 1,
     });
     render(<NewRuleFromPanelButton panel={panel} dashboard={dashboard} />);

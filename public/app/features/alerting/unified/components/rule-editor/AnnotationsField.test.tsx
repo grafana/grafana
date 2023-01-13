@@ -8,6 +8,7 @@ import { Provider } from 'react-redux';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { setBackendSrv } from '@grafana/runtime';
+import { defaultDashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardDTO } from '../../../../../types';
@@ -259,15 +260,12 @@ function mockDashboardSearchItem(searchItem: Partial<DashboardSearchItem>) {
   };
 }
 
-function mockDashboardDto(dashboard: Partial<DashboardDTO['dashboard']>) {
+function mockDashboardDto(dashboard: Partial<DashboardDTO['dashboard']>): DashboardDTO {
   return {
     dashboard: {
-      title: '',
-      uid: '',
-      templating: { list: [] },
-      panels: [],
+      ...defaultDashboard,
       ...dashboard,
-    },
+    } as DashboardDTO['dashboard'],
     meta: {},
   };
 }

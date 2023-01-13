@@ -20,6 +20,8 @@ describe('Logs', () => {
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
         onSetLogsVolumeEnabled={() => null}
+        onClickFilterLabel={() => null}
+        onClickFilterOutLabel={() => null}
         logsVolumeData={undefined}
         loadLogsVolumeData={() => undefined}
         logRows={rows}

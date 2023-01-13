@@ -32,7 +32,7 @@ func NewClient(d doer, method, baseUrl string) *Client {
 	return &Client{doer: d, method: method, baseUrl: baseUrl}
 }
 
-func (c *Client) QueryRange(ctx context.Context, q *models.Query, headers http.Header) (*http.Response, error) {
+func (c *Client) QueryRange(ctx context.Context, q *models.Query) (*http.Response, error) {
 	tr := q.TimeRange()
 	qv := map[string]string{
 		"query": q.Expr,
@@ -41,7 +41,7 @@ func (c *Client) QueryRange(ctx context.Context, q *models.Query, headers http.H
 		"step":  strconv.FormatFloat(tr.Step.Seconds(), 'f', -1, 64),
 	}
 
-	req, err := c.createQueryRequest(ctx, "api/v1/query_range", qv, headers)
+	req, err := c.createQueryRequest(ctx, "api/v1/query_range", qv)
 	if err != nil {
 		return nil, err
 	}
@@ -49,14 +49,15 @@ func (c *Client) QueryRange(ctx context.Context, q *models.Query, headers http.H
 	return c.doer.Do(req)
 }
 
-func (c *Client) QueryInstant(ctx context.Context, q *models.Query, headers http.Header) (*http.Response, error) {
-	qv := map[string]string{"query": q.Expr}
-	tr := q.TimeRange()
-	if !tr.End.IsZero() {
-		qv["time"] = formatTime(tr.End)
-	}
-
-	req, err := c.createQueryRequest(ctx, "api/v1/query", qv, headers)
+func (c *Client) QueryInstant(ctx context.Context, q *models.Query) (*http.Response, error) {
+	// We do not need a time range here.
+	// Instant query evaluates at a single point in time.
+	// Using q.TimeRange is aligning the query range to step.
+	// Which causes a misleading time point.
+	// Instead of aligning we use time point directly.
+	// https://prometheus.io/docs/prometheus/latest/querying/api/#instant-queries
+	qv := map[string]string{"query": q.Expr, "time": formatTime(q.End)}
+	req, err := c.createQueryRequest(ctx, "api/v1/query", qv)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +65,7 @@ func (c *Client) QueryInstant(ctx context.Context, q *models.Query, headers http
 	return c.doer.Do(req)
 }
 
-func (c *Client) QueryExemplars(ctx context.Context, q *models.Query, headers http.Header) (*http.Response, error) {
+func (c *Client) QueryExemplars(ctx context.Context, q *models.Query) (*http.Response, error) {
 	tr := q.TimeRange()
 	qv := map[string]string{
 		"query": q.Expr,
@@ -72,7 +73,7 @@ func (c *Client) QueryExemplars(ctx context.Context, q *models.Query, headers ht
 		"end":   formatTime(tr.End),
 	}
 
-	req, err := c.createQueryRequest(ctx, "api/v1/query_exemplars", qv, headers)
+	req, err := c.createQueryRequest(ctx, "api/v1/query_exemplars", qv)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,7 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 
 	// We use method from the request, as for resources front end may do a fallback to GET if POST does not work
 	// nad we want to respect that.
-	httpRequest, err := createRequest(ctx, req.Method, u, bytes.NewReader(req.Body), req.Headers)
+	httpRequest, err := createRequest(ctx, req.Method, u, bytes.NewReader(req.Body))
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +104,7 @@ func (c *Client) QueryResource(ctx context.Context, req *backend.CallResourceReq
 	return c.doer.Do(httpRequest)
 }
 
-func (c *Client) createQueryRequest(ctx context.Context, endpoint string, qv map[string]string, headers http.Header) (*http.Request, error) {
+func (c *Client) createQueryRequest(ctx context.Context, endpoint string, qv map[string]string) (*http.Request, error) {
 	if strings.ToUpper(c.method) == http.MethodPost {
 		u, err := c.createUrl(endpoint, nil)
 		if err != nil {
@@ -115,7 +116,7 @@ func (c *Client) createQueryRequest(ctx context.Context, endpoint string, qv map
 			v.Set(key, val)
 		}
 
-		return createRequest(ctx, c.method, u, strings.NewReader(v.Encode()), headers)
+		return createRequest(ctx, c.method, u, strings.NewReader(v.Encode()))
 	}
 
 	u, err := c.createUrl(endpoint, qv)
@@ -123,7 +124,7 @@ func (c *Client) createQueryRequest(ctx context.Context, endpoint string, qv map
 		return nil, err
 	}
 
-	return createRequest(ctx, c.method, u, http.NoBody, headers)
+	return createRequest(ctx, c.method, u, http.NoBody)
 }
 
 func (c *Client) createUrl(endpoint string, qs map[string]string) (*url.URL, error) {
@@ -148,15 +149,12 @@ func (c *Client) createUrl(endpoint string, qs map[string]string) (*url.URL, err
 	return finalUrl, nil
 }
 
-func createRequest(ctx context.Context, method string, u *url.URL, bodyReader io.Reader, header http.Header) (*http.Request, error) {
+func createRequest(ctx context.Context, method string, u *url.URL, bodyReader io.Reader) (*http.Request, error) {
 	request, err := http.NewRequestWithContext(ctx, method, u.String(), bodyReader)
 	if err != nil {
 		return nil, err
 	}
-	// request.Header is created empty from NewRequestWithContext so we can just replace it
-	if header != nil {
-		request.Header = header
-	}
+
 	if strings.ToUpper(method) == http.MethodPost {
 		// This may not be true but right now we don't have more information here and seems like we send just this type
 		// of encoding right now if it is a POST

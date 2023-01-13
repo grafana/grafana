@@ -33,6 +33,14 @@ jest.mock('../../influxQLMetadataQuery', () => {
   };
 });
 
+jest.mock('@grafana/runtime', () => {
+  return {
+    getTemplateSrv: jest.fn().mockReturnValueOnce({
+      getVariables: jest.fn().mockReturnValueOnce([]),
+    }),
+  };
+});
+
 beforeEach(() => {
   (mockedMeta.getTagKeysForMeasurementAndTags as jest.Mock).mockClear();
 });

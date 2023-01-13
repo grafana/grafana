@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/grafana/codejen"
+
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/pfs/corelist"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -39,7 +40,7 @@ func main() {
 
 // static list of planned core kinds so that we can inject ones that
 // haven't been started on yet as "planned"
-var plannedCoreKinds = []string {
+var plannedCoreKinds = []string{
 	"Dashboard",
 	"Playlist",
 	"Team",
@@ -54,31 +55,71 @@ var plannedCoreKinds = []string {
 }
 
 type KindStateReport struct {
-	Core       []kindsys.CoreStructuredProperties `json:"core"`
-	Raw        []kindsys.RawProperties            `json:"raw"`
-	Composable []kindsys.ComposableProperties     `json:"composable"`
+	Kinds      map[string]kindsys.SomeKindProperties `json:"kinds"`
+	Dimensions map[string]Dimension                  `json:"dimensions"`
 }
 
-func emptyKindStateReport() KindStateReport {
-	return KindStateReport{
-		Core:       make([]kindsys.CoreStructuredProperties, 0),
-		Raw:        make([]kindsys.RawProperties, 0),
-		Composable: make([]kindsys.ComposableProperties, 0),
+func (r *KindStateReport) add(k kindsys.SomeKindProperties, category string) {
+	kName := k.Common().MachineName
+
+	r.Kinds[kName] = k
+	r.Dimensions["maturity"][k.Common().Maturity.String()].add(kName)
+	r.Dimensions["category"][category].add(kName)
+}
+
+type Dimension map[string]*DimensionValue
+
+type DimensionValue struct {
+	Name  string   `json:"name"`
+	Items []string `json:"items"`
+	Count int      `json:"count"`
+}
+
+func (dv *DimensionValue) add(s string) {
+	dv.Count++
+	dv.Items = append(dv.Items, s)
+}
+
+// emptyKindStateReport is used to ensure certain
+// dimension values are present (even if empty) in
+// the final report.
+func emptyKindStateReport() *KindStateReport {
+	return &KindStateReport{
+		Kinds: make(map[string]kindsys.SomeKindProperties),
+		Dimensions: map[string]Dimension{
+			"maturity": {
+				"planned":      emptyDimensionValue("planned"),
+				"merged":       emptyDimensionValue("merged"),
+				"experimental": emptyDimensionValue("experimental"),
+				"stable":       emptyDimensionValue("stable"),
+				"mature":       emptyDimensionValue("mature"),
+			},
+			"category": {
+				"core":       emptyDimensionValue("core"),
+				"composable": emptyDimensionValue("composable"),
+			},
+		},
 	}
 }
 
-func buildKindStateReport() KindStateReport {
+func emptyDimensionValue(name string) *DimensionValue {
+	return &DimensionValue{
+		Name:  name,
+		Items: make([]string, 0),
+		Count: 0,
+	}
+}
+
+func buildKindStateReport() *KindStateReport {
 	r := emptyKindStateReport()
 	b := corekind.NewBase(nil)
 
 	seen := make(map[string]bool)
 	for _, k := range b.All() {
 		seen[k.Props().Common().Name] = true
-		switch props := k.Props().(type) {
-		case kindsys.CoreStructuredProperties:
-			r.Core = append(r.Core, props)
-		case kindsys.RawProperties:
-			r.Raw = append(r.Raw, props)
+		switch k.Props().(type) {
+		case kindsys.CoreProperties:
+			r.add(k.Props(), "core")
 		}
 	}
 
@@ -86,49 +127,49 @@ func buildKindStateReport() KindStateReport {
 		if seen[kn] {
 			continue
 		}
-		r.Core = append(r.Core, kindsys.CoreStructuredProperties{
+
+		r.add(kindsys.CoreProperties{
 			CommonProperties: kindsys.CommonProperties{
-				Name: kn,
-				PluralName: kn + "s",
-				MachineName: machinize(kn),
+				Name:              kn,
+				PluralName:        kn + "s",
+				MachineName:       machinize(kn),
 				PluralMachineName: machinize(kn) + "s",
-				Maturity: "planned",
+				Maturity:          "planned",
 			},
-		})
+		}, "core")
 	}
 
-	all := kindsys.AllSlots(nil)
+	all := kindsys.SchemaInterfaces(nil)
 	// TODO this is all hacks until #59001, which will unite plugins with kindsys
 	for _, tree := range corelist.New(nil) {
 		rp := tree.RootPlugin()
-		for _, slot := range all {
-			if may, _ := slot.ForPluginType(string(rp.Meta().Type)); may {
-				n := fmt.Sprintf("%s-%s", strings.Title(rp.Meta().Id), slot.Name())
+		for _, si := range all {
+			if si.Should(string(rp.Meta().Type)) {
+				n := fmt.Sprintf("%s-%s", strings.Title(rp.Meta().Id), si.Name())
 				props := kindsys.ComposableProperties{
 					CommonProperties: kindsys.CommonProperties{
 						Name:              n,
 						PluralName:        n + "s",
 						MachineName:       machinize(n),
 						PluralMachineName: machinize(n) + "s",
-						LineageIsGroup:    slot.IsGroup(),
+						LineageIsGroup:    si.IsGroup(),
 						Maturity:          "planned",
 					},
 				}
-				if ck, has := rp.SlotImplementations()[slot.Name()]; has {
+				if ck, has := rp.SlotImplementations()[si.Name()]; has {
 					props.CommonProperties.Maturity = "merged"
 					props.CurrentVersion = ck.Latest().Version()
 				}
-				r.Composable = append(r.Composable, props)
+				r.add(props, "composable")
 			}
 		}
 	}
 
-	sort.Slice(r.Core, func(i, j int) bool {
-		return r.Core[i].Common().Name < r.Core[j].Common().Name
-	})
-	sort.Slice(r.Composable, func(i, j int) bool {
-		return r.Composable[i].Common().Name < r.Composable[j].Common().Name
-	})
+	for _, d := range r.Dimensions {
+		for _, dv := range d {
+			sort.Strings(dv.Items)
+		}
+	}
 
 	return r
 }

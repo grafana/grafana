@@ -17,27 +17,27 @@ func ProvideService(db db.DB, cfg *setting.Cfg) team.Service {
 	return &Service{store: &xormStore{db: db, cfg: cfg}}
 }
 
-func (s *Service) CreateTeam(name, email string, orgID int64) (models.Team, error) {
+func (s *Service) CreateTeam(name, email string, orgID int64) (team.Team, error) {
 	return s.store.Create(name, email, orgID)
 }
 
-func (s *Service) UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error {
+func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
 	return s.store.Update(ctx, cmd)
 }
 
-func (s *Service) DeleteTeam(ctx context.Context, cmd *models.DeleteTeamCommand) error {
+func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
 	return s.store.Delete(ctx, cmd)
 }
 
-func (s *Service) SearchTeams(ctx context.Context, query *models.SearchTeamsQuery) error {
+func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
 	return s.store.Search(ctx, query)
 }
 
-func (s *Service) GetTeamById(ctx context.Context, query *models.GetTeamByIdQuery) error {
-	return s.store.GetById(ctx, query)
+func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
+	return s.store.GetByID(ctx, query)
 }
 
-func (s *Service) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
+func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
 	return s.store.GetByUser(ctx, query)
 }
 
@@ -65,6 +65,6 @@ func (s *Service) GetTeamMembers(ctx context.Context, query *models.GetTeamMembe
 	return s.store.GetMembers(ctx, query)
 }
 
-func (s *Service) IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
+func (s *Service) IsAdminOfTeams(ctx context.Context, query *team.IsAdminOfTeamsQuery) (bool, error) {
 	return s.store.IsAdmin(ctx, query)
 }
