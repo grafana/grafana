@@ -77,27 +77,27 @@ describe('QueryPatternsModal', () => {
   });
 
   it('uses pattern if there is no existing query', async () => {
-    render(<QueryPatternsModal {...defaultProps} query={{ expr: '{job="grafana"}', refId: 'A' }} />);
+    render(<QueryPatternsModal {...defaultProps} query={{ expr: '', refId: 'A' }} />);
     await userEvent.click(screen.getByText('Rate query starters'));
     expect(screen.getByText(queryPatterns.rateQueryPatterns[0].name)).toBeInTheDocument();
     const firstUseQueryButton = screen.getAllByRole('button', { name: 'use this query button' })[0];
     await userEvent.click(firstUseQueryButton);
     await waitFor(() => {
       expect(defaultProps.onChange).toHaveBeenCalledWith({
-        expr: 'sum(rate({job="grafana"}[$__rate_interval]))',
+        expr: 'sum(rate([$__rate_interval]))',
         refId: 'A',
       });
     });
   });
 
-  it('gives warning when selecting pattern if there is already existing query', async () => {
+  it('gives warning when selecting pattern if there are already existing query', async () => {
     render(<QueryPatternsModal {...defaultProps} />);
     await userEvent.click(screen.getByText('Rate query starters'));
     expect(screen.getByText(queryPatterns.rateQueryPatterns[0].name)).toBeInTheDocument();
     const firstUseQueryButton = screen.getAllByRole('button', { name: 'use this query button' })[0];
     await userEvent.click(firstUseQueryButton);
 
-    expect(screen.getByText(/replace your current query or create a new query/)).toBeInTheDocument();
+    expect(screen.getByText(/apply this to your current query or create a new query/)).toBeInTheDocument();
   });
 
   it('can use create new query when selecting pattern if there is already existing query', async () => {
@@ -124,18 +124,18 @@ describe('QueryPatternsModal', () => {
     const useQueryButton = screen.getAllByRole('button', { name: 'use this query button' })[0];
     await userEvent.click(useQueryButton);
     expect(screen.queryByRole('button', { name: 'Create new query' })).not.toBeInTheDocument();
-    expect(screen.getByText(/your current query will be replaced/)).toBeInTheDocument();
+    expect(screen.getByText(/this will be applied to your current query/)).toBeInTheDocument();
   });
 
   it('applies binary query patterns to query', async () => {
-    render(<QueryPatternsModal {...defaultProps} query={{ expr: '{job="grafana"}', refId: 'A' }} />);
+    render(<QueryPatternsModal {...defaultProps} query={{ expr: '', refId: 'A' }} />);
     await userEvent.click(screen.getByText('Binary query starters'));
     expect(screen.getByText(queryPatterns.binaryQueryPatterns[0].name)).toBeInTheDocument();
     const firstUseQueryButton = screen.getAllByRole('button', { name: 'use this query button' })[0];
     await userEvent.click(firstUseQueryButton);
     await waitFor(() => {
       expect(defaultProps.onChange).toHaveBeenCalledWith({
-        expr: 'sum(rate({job="grafana"}[$__rate_interval])) / sum(rate([$__rate_interval]))',
+        expr: 'sum(rate([$__rate_interval])) / sum(rate([$__rate_interval]))',
         refId: 'A',
       });
     });

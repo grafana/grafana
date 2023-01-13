@@ -13,7 +13,7 @@ import { PromQueryPattern } from './types';
 type Props = {
   pattern: PromQueryPattern;
   hasNewQueryOption: boolean;
-  hasPreviousQuery: boolean;
+  hasPreviousQuery: boolean | string;
   selectedPatternName: string | null;
   setSelectedPatternName: (name: string | null) => void;
   onPatternSelect: (pattern: PromQueryPattern, selectAsNewQuery?: boolean) => void;
@@ -48,7 +48,7 @@ export const QueryPattern = (props: Props) => {
             aria-label="use this query button"
             onClick={() => {
               if (hasPreviousQuery) {
-                // If user has previous query, we need to confirm that they want to replace it
+                // If user has previous query, we need to confirm that they want to apply this query pattern
                 setSelectedPatternName(pattern.name);
               } else {
                 onPatternSelect(pattern);
@@ -62,8 +62,8 @@ export const QueryPattern = (props: Props) => {
             <div className={styles.spacing}>
               {`If you would like to use this query, ${
                 hasNewQueryOption
-                  ? 'you can either replace your current query or create a new query'
-                  : 'your current query will be replaced'
+                  ? 'you can either apply this query pattern or create a new query'
+                  : 'this query pattern will be applied to your current query'
               }.`}
             </div>
             <Button size="sm" aria-label="back button" fill="outline" onClick={() => setSelectedPatternName(null)}>
@@ -71,12 +71,12 @@ export const QueryPattern = (props: Props) => {
             </Button>
             <Button
               size="sm"
-              aria-label="replace query starter button"
+              aria-label="apply query starter button"
               onClick={() => {
                 onPatternSelect(pattern);
               }}
             >
-              Replace query
+              Apply query
             </Button>
             {hasNewQueryOption && (
               <Button

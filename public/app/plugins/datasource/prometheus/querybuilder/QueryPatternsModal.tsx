@@ -31,10 +31,16 @@ export const QueryPatternsModal = (props: Props) => {
 
   const styles = useStyles2(getStyles);
   const hasNewQueryOption = !!onAddQuery;
-  const hasPreviousQuery = useMemo(
-    () => buildVisualQueryFromString(query.expr).query.operations.length > 0,
-    [query.expr]
-  );
+  const hasPreviousQuery = useMemo(() => {
+    const visualQuery = buildVisualQueryFromString(query.expr);
+    // has anything entered in the query, metric, labels, operations, or binary queries
+    const hasOperations = visualQuery.query.operations.length > 0,
+      hasMetric = visualQuery.query.metric,
+      hasLabels = visualQuery.query.labels.length > 0,
+      hasBinaryQueries = visualQuery.query.binaryQueries ? visualQuery.query.binaryQueries.length > 0 : false;
+
+    return hasOperations || hasMetric || hasLabels || hasBinaryQueries;
+  }, [query.expr]);
 
   const onPatternSelect = (pattern: PromQueryPattern, selectAsNewQuery = false) => {
     const visualQuery = buildVisualQueryFromString(selectAsNewQuery ? '' : query.expr);
