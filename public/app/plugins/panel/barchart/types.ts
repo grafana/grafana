@@ -12,7 +12,7 @@ export interface BarChartDisplayValues {
 
   /**
    * The fields we can display, first field is X axis.
-   * Contains same data as viz, but without possible modifications (e.g: unit override)
+   * Contains same data as viz, but without config modifications (e.g: unit override)
    */
   legend: DataFrame;
 
