@@ -33,7 +33,6 @@ const props = {
   query: q,
   disableExpressions: false,
   onChange: jest.fn(),
-  onRunQuery: jest.fn(),
 };
 
 describe('Dimensions', () => {

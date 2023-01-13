@@ -184,7 +184,7 @@ export const initialExploreState: ExploreState = {
  */
 export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
   if (splitCloseAction.match(action)) {
-    const { itemId } = action.payload as SplitCloseActionPayload;
+    const { itemId } = action.payload;
     const targetSplit = {
       left: itemId === ExploreId.left ? state.right! : state.left,
       right: undefined,
@@ -195,6 +195,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       largerExploreId: undefined,
       maxedExploreId: undefined,
       evenSplitPanes: true,
+      syncedTimes: false,
     };
   }
 
@@ -289,7 +290,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     if (exploreId !== undefined) {
       // @ts-ignore
       const explorePaneState = state[exploreId];
-      return { ...state, [exploreId]: paneReducer(explorePaneState, action as any) };
+      return { ...state, [exploreId]: paneReducer(explorePaneState, action) };
     }
   }
 

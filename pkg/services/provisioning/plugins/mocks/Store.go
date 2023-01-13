@@ -6,6 +6,7 @@ import (
 	context "context"
 
 	models "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -15,11 +16,11 @@ type Store struct {
 }
 
 // GetOrgByNameHandler provides a mock function with given fields: ctx, query
-func (_m *Store) GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error {
+func (_m *Store) GetOrgByNameHandler(ctx context.Context, query *org.GetOrgByNameQuery) error {
 	ret := _m.Called(ctx, query)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.GetOrgByNameQuery) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *org.GetOrgByNameQuery) error); ok {
 		r0 = rf(ctx, query)
 	} else {
 		r0 = ret.Error(0)

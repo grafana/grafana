@@ -76,7 +76,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "loginuser",
 			IsAdmin: true,
 		}
-		user, err := userSvc.CreateUserForTests(context.Background(), &createUserCmd)
+		usr, err := userSvc.CreateUserForTests(context.Background(), &createUserCmd)
 		require.NoError(t, err)
 
 		sc.handlerFunc = hs.GetUserByID
@@ -92,7 +92,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		login := "loginuser"
 		query := &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test", UserLookupParams: models.UserLookupParams{Login: &login}}
 		cmd := &models.UpdateAuthInfoCommand{
-			UserId:     user.ID,
+			UserId:     usr.ID,
 			AuthId:     query.AuthId,
 			AuthModule: query.AuthModule,
 			OAuthToken: token,
@@ -100,14 +100,14 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		err = srv.UpdateAuthInfo(context.Background(), cmd)
 		require.NoError(t, err)
 		avatarUrl := dtos.GetGravatarUrl("@test.com")
-		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": fmt.Sprintf("%v", user.ID)}).exec()
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": fmt.Sprintf("%v", usr.ID)}).exec()
 
-		expected := models.UserProfileDTO{
-			Id:             1,
+		expected := user.UserProfileDTO{
+			ID:             1,
 			Email:          "user@test.com",
 			Name:           "user",
 			Login:          "loginuser",
-			OrgId:          1,
+			OrgID:          1,
 			IsGrafanaAdmin: true,
 			AuthLabels:     []string{},
 			CreatedAt:      fakeNow,
@@ -115,7 +115,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			AvatarUrl:      avatarUrl,
 		}
 
-		var resp models.UserProfileDTO
+		var resp user.UserProfileDTO
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
@@ -147,7 +147,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		hs.userService = userMock
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "admin@test.com"}).exec()
 
-		var resp models.UserProfileDTO
+		var resp user.UserProfileDTO
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)

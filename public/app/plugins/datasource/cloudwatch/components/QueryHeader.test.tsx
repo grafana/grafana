@@ -6,7 +6,6 @@ import { config } from '@grafana/runtime';
 
 import { setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
 import { validLogsQuery, validMetricSearchBuilderQuery } from '../__mocks__/queries';
-import { CloudWatchLogsQuery, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../types';
 
 import QueryHeader from './QueryHeader';
 
@@ -19,74 +18,6 @@ ds.datasource.api.getRegions = jest.fn().mockResolvedValue([]);
 describe('QueryHeader', () => {
   afterEach(() => {
     config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
-  });
-  it('should display metric options for metrics', async () => {
-    const query: CloudWatchMetricsQuery = {
-      queryMode: 'Metrics',
-      id: '',
-      region: 'us-east-2',
-      namespace: '',
-      period: '',
-      alias: '',
-      metricName: '',
-      dimensions: {},
-      matchExact: true,
-      statistic: '',
-      expression: '',
-      refId: '',
-    };
-    const onChange = jest.fn();
-    const onRunQuery = jest.fn();
-    query.metricEditorMode = MetricEditorMode.Code;
-    query.metricQueryType = MetricQueryType.Query;
-
-    render(
-      <QueryHeader
-        sqlCodeEditorIsDirty={true}
-        datasource={ds.datasource}
-        query={query}
-        onChange={onChange}
-        onRunQuery={onRunQuery}
-      />
-    );
-
-    const builderElement = screen.getByLabelText('Builder');
-    expect(builderElement).toBeInTheDocument();
-    await act(async () => {
-      await builderElement.click();
-    });
-
-    const modalTitleElem = screen.getByText('Are you sure?');
-    expect(modalTitleElem).toBeInTheDocument();
-    expect(onChange).not.toHaveBeenCalled();
-  });
-
-  it('should not display metric options for logs', async () => {
-    const onChange = jest.fn();
-    const onRunQuery = jest.fn();
-    const query: CloudWatchLogsQuery = {
-      queryType: 'Metrics',
-      id: '',
-      region: 'us-east-2',
-      expression: '',
-      refId: '',
-      queryMode: 'Logs',
-    };
-
-    render(
-      <QueryHeader
-        sqlCodeEditorIsDirty={true}
-        datasource={ds.datasource}
-        query={query}
-        onChange={onChange}
-        onRunQuery={onRunQuery}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.queryByLabelText('Builder')).toBeNull();
-      expect(screen.queryByLabelText('Code')).toBeNull();
-    });
   });
 
   describe('when changing region', () => {
@@ -101,11 +32,11 @@ describe('QueryHeader', () => {
       datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(false);
       render(
         <QueryHeader
-          sqlCodeEditorIsDirty={true}
           datasource={datasource}
           query={{ ...validMetricSearchBuilderQuery, region: 'us-east-1', accountId: 'all' }}
           onChange={onChange}
           onRunQuery={jest.fn()}
+          dataIsStale={false}
         />
       );
       await waitFor(() => expect(screen.queryByText('us-east-1')).toBeInTheDocument());
@@ -126,11 +57,11 @@ describe('QueryHeader', () => {
 
       render(
         <QueryHeader
-          sqlCodeEditorIsDirty={true}
           datasource={datasource}
           query={{ ...validMetricSearchBuilderQuery, region: 'us-east-1', accountId: '123' }}
           onChange={onChange}
           onRunQuery={jest.fn()}
+          dataIsStale={false}
         />
       );
       await waitFor(() => expect(screen.queryByText('us-east-1')).toBeInTheDocument());
@@ -151,7 +82,7 @@ describe('QueryHeader', () => {
 
       render(
         <QueryHeader
-          sqlCodeEditorIsDirty={true}
+          dataIsStale={false}
           datasource={datasource}
           query={{ ...validLogsQuery, region: 'us-east-1' }}
           onChange={onChange}
@@ -172,7 +103,7 @@ describe('QueryHeader', () => {
 
       render(
         <QueryHeader
-          sqlCodeEditorIsDirty={true}
+          dataIsStale={false}
           datasource={datasource}
           query={{ ...validLogsQuery, region: 'us-east-1' }}
           onChange={onChange}

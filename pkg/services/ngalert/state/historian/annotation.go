@@ -4,11 +4,8 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
-
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,15 +16,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
-// AnnotationStateHistorian is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
-type AnnotationStateHistorian struct {
+// AnnotationBackend is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
+type AnnotationBackend struct {
 	annotations annotations.Repository
 	dashboards  *dashboardResolver
 	log         log.Logger
 }
 
-func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashboards.DashboardService) *AnnotationStateHistorian {
-	return &AnnotationStateHistorian{
+func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboards.DashboardService) *AnnotationBackend {
+	return &AnnotationBackend{
 		annotations: annotations,
 		dashboards:  newDashboardResolver(dashboards, defaultDashboardCacheExpiry),
 		log:         log.New("ngalert.state.historian"),
@@ -35,7 +32,7 @@ func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashb
 }
 
 // RecordStates writes a number of state transitions for a given rule to state history.
-func (h *AnnotationStateHistorian) RecordStatesAsync(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) {
+func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) {
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
 	annotations := h.buildAnnotations(rule, states, logger)
@@ -43,10 +40,10 @@ func (h *AnnotationStateHistorian) RecordStatesAsync(ctx context.Context, rule *
 	go h.recordAnnotationsSync(ctx, panel, annotations, logger)
 }
 
-func (h *AnnotationStateHistorian) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
+func (h *AnnotationBackend) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
-		if !shouldAnnotate(state) {
+		if !shouldRecord(state) {
 			continue
 		}
 		logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())
@@ -68,33 +65,7 @@ func (h *AnnotationStateHistorian) buildAnnotations(rule *ngmodels.AlertRule, st
 	return items
 }
 
-// panelKey uniquely identifies a panel.
-type panelKey struct {
-	orgID   int64
-	dashUID string
-	panelID int64
-}
-
-// panelKey attempts to get the key of the panel attached to the given rule. Returns nil if the rule is not attached to a panel.
-func parsePanelKey(rule *ngmodels.AlertRule, logger log.Logger) *panelKey {
-	dashUID, ok := rule.Annotations[ngmodels.DashboardUIDAnnotation]
-	if ok {
-		panelAnno := rule.Annotations[ngmodels.PanelIDAnnotation]
-		panelID, err := strconv.ParseInt(panelAnno, 10, 64)
-		if err != nil {
-			logger.Error("Error parsing panelUID for alert annotation", "actual", panelAnno, "error", err)
-			return nil
-		}
-		return &panelKey{
-			orgID:   rule.OrgID,
-			dashUID: dashUID,
-			panelID: panelID,
-		}
-	}
-	return nil
-}
-
-func (h *AnnotationStateHistorian) recordAnnotationsSync(ctx context.Context, panel *panelKey, annotations []annotations.Item, logger log.Logger) {
+func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *panelKey, annotations []annotations.Item, logger log.Logger) {
 	if panel != nil {
 		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
 		if err != nil {
@@ -102,9 +73,9 @@ func (h *AnnotationStateHistorian) recordAnnotationsSync(ctx context.Context, pa
 			return
 		}
 
-		for _, i := range annotations {
-			i.DashboardId = dashID
-			i.PanelId = panel.panelID
+		for i := range annotations {
+			annotations[i].DashboardId = dashID
+			annotations[i].PanelId = panel.panelID
 		}
 	}
 
@@ -147,22 +118,4 @@ func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.St
 
 	labels := removePrivateLabels(currentState.Labels)
 	return fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), value), jsonData
-}
-
-func removePrivateLabels(labels data.Labels) data.Labels {
-	result := make(data.Labels)
-	for k, v := range labels {
-		if !strings.HasPrefix(k, "__") && !strings.HasSuffix(k, "__") {
-			result[k] = v
-		}
-	}
-	return result
-}
-
-func shouldAnnotate(transition state.StateTransition) bool {
-	// Do not log not transitioned states normal states if it was marked as stale
-	if !transition.Changed() || transition.StateReason == ngmodels.StateReasonMissingSeries && transition.PreviousState == eval.Normal && transition.State.State == eval.Normal {
-		return false
-	}
-	return true
 }

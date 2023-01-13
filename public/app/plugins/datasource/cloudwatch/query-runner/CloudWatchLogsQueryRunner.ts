@@ -42,7 +42,6 @@ import {
   DescribeLogGroupsRequest,
   GetLogEventsRequest,
   GetLogGroupFieldsRequest,
-  GetLogGroupFieldsResponse,
   LogAction,
   StartQueryRequest,
 } from '../types';
@@ -58,7 +57,6 @@ export const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 // This class handles execution of CloudWatch logs query data queries
 export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   logsTimeout: string;
-  defaultLogGroups: string[];
   logQueries: Record<string, { id: string; region: string; statsQuery: boolean }> = {};
   tracingDataSourceUid?: string;
 
@@ -71,7 +69,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
     this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
-    this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups || [];
   }
 
   /**
@@ -89,8 +86,8 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => ({
       queryString: target.expression || '',
       refId: target.refId,
-      logGroupNames: target.logGroupNames || this.defaultLogGroups,
-      logGroups: target.logGroups || [], //todo handle defaults
+      logGroupNames: target.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
+      logGroups: target.logGroups || this.instanceSettings.jsonData.logGroups,
       region: super.replaceVariableAndDisplayWarningIfMulti(
         this.getActualRegion(target.region),
         options.scopedVars,
@@ -416,18 +413,6 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       data: dataFrames,
     };
   };
-
-  async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
-    const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogGroupFields', [params]));
-
-    const fieldNames = dataFrames[0].fields[0].values.toArray();
-    const fieldPercentages = dataFrames[0].fields[1].values.toArray();
-    const getLogGroupFieldsResponse = {
-      logGroupFields: fieldNames.map((val, i) => ({ name: val, percent: fieldPercentages[i] })) ?? [],
-    };
-
-    return getLogGroupFieldsResponse;
-  }
 
   private filterQuery(query: CloudWatchLogsQuery) {
     const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length;

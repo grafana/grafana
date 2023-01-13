@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/events"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -72,9 +71,9 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		Login:      args.Login,
 		IsAdmin:    args.IsAdmin,
 		OrgID:      orgID,
-		Created:    TimeNow(),
-		Updated:    TimeNow(),
-		LastSeenAt: TimeNow().AddDate(-10, 0, 0),
+		Created:    time.Now(),
+		Updated:    time.Now(),
+		LastSeenAt: time.Now().AddDate(-10, 0, 0),
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -110,12 +109,12 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		Email:     usr.Email,
 	})
 
-	orgUser := models.OrgUser{
-		OrgId:   orgID,
-		UserId:  usr.ID,
+	orgUser := org.OrgUser{
+		OrgID:   orgID,
+		UserID:  usr.ID,
 		Role:    org.RoleAdmin,
-		Created: TimeNow(),
-		Updated: TimeNow(),
+		Created: time.Now(),
+		Updated: time.Now(),
 	}
 
 	if ss.Cfg.AutoAssignOrg && !usr.IsAdmin {
@@ -133,42 +132,27 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 	return usr, nil
 }
 
-func UserDeletions() []string {
-	deletes := []string{
-		"DELETE FROM star WHERE user_id = ?",
-		"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
-		"DELETE FROM org_user WHERE user_id = ?",
-		"DELETE FROM dashboard_acl WHERE user_id = ?",
-		"DELETE FROM preferences WHERE user_id = ?",
-		"DELETE FROM team_member WHERE user_id = ?",
-		"DELETE FROM user_auth WHERE user_id = ?",
-		"DELETE FROM user_auth_token WHERE user_id = ?",
-		"DELETE FROM quota WHERE user_id = ?",
-	}
-	return deletes
-}
-
 func verifyExistingOrg(sess *DBSession, orgId int64) error {
-	var org models.Org
-	has, err := sess.Where("id=?", orgId).Get(&org)
+	var orga org.Org
+	has, err := sess.Where("id=?", orgId).Get(&orga)
 	if err != nil {
 		return err
 	}
 	if !has {
-		return models.ErrOrgNotFound
+		return org.ErrOrgNotFound
 	}
 	return nil
 }
 
 func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
-	var org models.Org
+	var org org.Org
 	if ss.Cfg.AutoAssignOrg {
 		has, err := sess.Where("id=?", ss.Cfg.AutoAssignOrgId).Get(&org)
 		if err != nil {
 			return 0, err
 		}
 		if has {
-			return org.Id, nil
+			return org.ID, nil
 		}
 
 		if ss.Cfg.AutoAssignOrgId != 1 {
@@ -179,7 +163,7 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 		}
 
 		org.Name = mainOrgName
-		org.Id = int64(ss.Cfg.AutoAssignOrgId)
+		org.ID = int64(ss.Cfg.AutoAssignOrgId)
 	} else {
 		org.Name = orgName
 	}
@@ -187,8 +171,8 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 	org.Created = time.Now()
 	org.Updated = time.Now()
 
-	if org.Id != 0 {
-		if _, err := sess.InsertId(&org); err != nil {
+	if org.ID != 0 {
+		if _, err := sess.InsertId(&org, ss.Dialect); err != nil {
 			return 0, err
 		}
 	} else {
@@ -199,9 +183,9 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 
 	sess.publishAfterCommit(&events.OrgCreated{
 		Timestamp: org.Created,
-		Id:        org.Id,
+		Id:        org.ID,
 		Name:      org.Name,
 	})
 
-	return org.Id, nil
+	return org.ID, nil
 }

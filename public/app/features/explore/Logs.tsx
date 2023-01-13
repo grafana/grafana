@@ -71,11 +71,11 @@ interface Props extends Themeable2 {
   logsVolumeData: DataQueryResponse | undefined;
   scrollElement?: HTMLDivElement;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
-  loadLogsVolumeData: (exploreId: ExploreId) => void;
+  loadLogsVolumeData: () => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
-  onClickFilterLabel?: (key: string, value: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickFilterLabel: (key: string, value: string) => void;
+  onClickFilterOutLabel: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
@@ -94,7 +94,7 @@ interface State {
   hiddenLogLevels: LogLevel[];
   logsSortOrder: LogsSortOrder | null;
   isFlipping: boolean;
-  showDetectedFields: string[];
+  displayedFields: string[];
   forceEscape: boolean;
 }
 
@@ -123,7 +123,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     hiddenLogLevels: [],
     logsSortOrder: store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending,
     isFlipping: false,
-    showDetectedFields: [],
+    displayedFields: [],
     forceEscape: false,
   };
 
@@ -255,24 +255,24 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  showDetectedField = (key: string) => {
-    const index = this.state.showDetectedFields.indexOf(key);
+  showField = (key: string) => {
+    const index = this.state.displayedFields.indexOf(key);
 
     if (index === -1) {
       this.setState((state) => {
         return {
-          showDetectedFields: state.showDetectedFields.concat(key),
+          displayedFields: state.displayedFields.concat(key),
         };
       });
     }
   };
 
-  hideDetectedField = (key: string) => {
-    const index = this.state.showDetectedFields.indexOf(key);
+  hideField = (key: string) => {
+    const index = this.state.displayedFields.indexOf(key);
     if (index > -1) {
       this.setState((state) => {
         return {
-          showDetectedFields: state.showDetectedFields.filter((k) => key !== k),
+          displayedFields: state.displayedFields.filter((k) => key !== k),
         };
       });
     }
@@ -281,7 +281,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   clearDetectedFields = () => {
     this.setState((state) => {
       return {
-        showDetectedFields: [],
+        displayedFields: [],
       };
     });
   };
@@ -355,7 +355,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       hiddenLogLevels,
       logsSortOrder,
       isFlipping,
-      showDetectedFields,
+      displayedFields,
       forceEscape,
     } = this.state;
 
@@ -389,7 +389,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               onUpdateTimeRange={onChangeTime}
               timeZone={timeZone}
               splitOpen={splitOpen}
-              onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
+              onLoadLogsVolume={loadLogsVolumeData}
               onHiddenSeriesChanged={this.onToggleLogLevel}
               eventBus={this.logsVolumeEventBus}
             />
@@ -477,7 +477,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             dedupCount={dedupCount}
             hasUnescapedContent={hasUnescapedContent}
             forceEscape={forceEscape}
-            showDetectedFields={showDetectedFields}
+            displayedFields={displayedFields}
             onEscapeNewlines={this.onEscapeNewlines}
             clearDetectedFields={this.clearDetectedFields}
           />
@@ -500,9 +500,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 timeZone={timeZone}
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
-                showDetectedFields={showDetectedFields}
-                onClickShowDetectedField={this.showDetectedField}
-                onClickHideDetectedField={this.hideDetectedField}
+                displayedFields={displayedFields}
+                onClickShowField={this.showField}
+                onClickHideField={this.hideField}
                 app={CoreApp.Explore}
                 scrollElement={scrollElement}
                 onLogRowHover={this.onLogRowHover}
