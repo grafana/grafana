@@ -3,7 +3,6 @@ import { Labels, LogLevel, LogsModel, LogRowModel, LogsSortOrder, MutableDataFra
 import {
   getLogLevel,
   calculateLogsLabelStats,
-  calculateFieldStats,
   getParser,
   LogsParsers,
   calculateStats,
@@ -115,49 +114,6 @@ describe('LogsParsers', () => {
       expect(parser.test('foo')).toBeFalsy();
       expect(parser.test('foo=bar')).toBeTruthy();
     });
-
-    test('should return detected fields', () => {
-      expect(
-        parser.getFields(
-          'foo=bar baz="42 + 1" msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1" time(ms)=50 label{foo}=bar'
-        )
-      ).toEqual([
-        'foo=bar',
-        'baz="42 + 1"',
-        'msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1"',
-        'time(ms)=50',
-        'label{foo}=bar',
-      ]);
-    });
-
-    test('should return label for field', () => {
-      expect(parser.getLabelFromField('foo=bar')).toBe('foo');
-      expect(parser.getLabelFromField('time(ms)=50')).toBe('time(ms)');
-    });
-
-    test('should return value for field', () => {
-      expect(parser.getValueFromField('foo=bar')).toBe('bar');
-      expect(parser.getValueFromField('time(ms)=50')).toBe('50');
-      expect(
-        parser.getValueFromField(
-          'msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1"'
-        )
-      ).toBe('"[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1"');
-    });
-
-    test('should build a valid value matcher', () => {
-      const matcher = parser.buildMatcher('foo');
-      const match = 'foo=bar'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match![1]).toBe('bar');
-    });
-
-    test('should build a valid complex value matcher', () => {
-      const matcher = parser.buildMatcher('time(ms)');
-      const match = 'time(ms)=50'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match![1]).toBe('50');
-    });
   });
 
   describe('JSON', () => {
@@ -168,83 +124,6 @@ describe('LogsParsers', () => {
       expect(parser.test('"foo"')).toBeFalsy();
       expect(parser.test('{"foo":"bar"}')).toBeTruthy();
     });
-
-    test('should return detected fields', () => {
-      expect(parser.getFields('{ "foo" : "bar", "baz" : 42 }')).toEqual(['"foo":"bar"', '"baz":42']);
-    });
-
-    test('should return detected fields for nested quotes', () => {
-      expect(parser.getFields(`{"foo":"bar: '[value=\\"42\\"]'"}`)).toEqual([`"foo":"bar: '[value=\\"42\\"]'"`]);
-    });
-
-    test('should return label for field', () => {
-      expect(parser.getLabelFromField('"foo" : "bar"')).toBe('foo');
-      expect(parser.getLabelFromField('"docker.memory.fail.count":0')).toBe('docker.memory.fail.count');
-    });
-
-    test('should return value for field', () => {
-      expect(parser.getValueFromField('"foo" : "bar"')).toBe('"bar"');
-      expect(parser.getValueFromField('"foo" : 42')).toBe('42');
-      expect(parser.getValueFromField('"foo" : 42.1')).toBe('42.1');
-    });
-
-    test('should build a valid value matcher for strings', () => {
-      const matcher = parser.buildMatcher('foo');
-      const match = '{"foo":"bar"}'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match![1]).toBe('bar');
-    });
-
-    test('should build a valid value matcher for integers', () => {
-      const matcher = parser.buildMatcher('foo');
-      const match = '{"foo":42.1}'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match![1]).toBe('42.1');
-    });
-  });
-});
-
-describe('calculateFieldStats()', () => {
-  test('should return no stats for empty rows', () => {
-    expect(calculateFieldStats([], /foo=(.*)/)).toEqual([]);
-  });
-
-  test('should return no stats if extractor does not match', () => {
-    const rows = [
-      {
-        entry: 'foo=bar',
-      },
-    ] as LogRowModel[];
-
-    expect(calculateFieldStats(rows, /baz=(.*)/)).toEqual([]);
-  });
-
-  test('should return stats for found field', () => {
-    const rows = [
-      {
-        entry: 'foo="42 + 1"',
-      },
-      {
-        entry: 'foo=503 baz=foo',
-      },
-      {
-        entry: 'foo="42 + 1"',
-      },
-      {
-        entry: 't=2018-12-05T07:44:59+0000 foo=503',
-      },
-    ] as LogRowModel[];
-
-    expect(calculateFieldStats(rows, /foo=("[^"]*"|\S+)/)).toMatchObject([
-      {
-        value: '"42 + 1"',
-        count: 2,
-      },
-      {
-        value: '503',
-        count: 2,
-      },
-    ]);
   });
 });
 

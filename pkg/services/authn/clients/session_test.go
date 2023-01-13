@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -104,7 +103,6 @@ func TestSession_Authenticate(t *testing.T) {
 				Email:          "sample_user@samples.iwz",
 				OrgID:          1,
 				OrgRoles:       map[int64]roletype.RoleType{1: roletype.RoleEditor},
-				LookUpParams:   models.UserLookupParams{},
 				IsGrafanaAdmin: boolPtr(false),
 			},
 			wantErr: false,

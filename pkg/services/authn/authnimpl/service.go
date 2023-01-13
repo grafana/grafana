@@ -5,7 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -20,7 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"go.opentelemetry.io/otel/attribute"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/web"
+)
+
+var (
+	errDisabledIdentity = errutil.NewBase(errutil.StatusUnauthorized, "identity.disabled")
 )
 
 // make sure service implements authn.Service interface
@@ -31,15 +39,17 @@ func ProvideService(
 	orgService org.Service, sessionService auth.UserTokenService,
 	accessControlService accesscontrol.Service,
 	apikeyService apikey.Service, userService user.Service,
+	jwtService auth.JWTVerifierService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 ) *Service {
 	s := &Service{
-		log:           log.New("authn.service"),
-		cfg:           cfg,
-		clients:       make(map[string]authn.Client),
-		tracer:        tracer,
-		postAuthHooks: []authn.PostAuthHookFn{},
+		log:            log.New("authn.service"),
+		cfg:            cfg,
+		clients:        make(map[string]authn.Client),
+		tracer:         tracer,
+		sessionService: sessionService,
+		postAuthHooks:  []authn.PostAuthHookFn{},
 	}
 
 	s.clients[authn.ClientRender] = clients.ProvideRender(userService, renderService)
@@ -53,9 +63,23 @@ func ProvideService(
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
 	}
 
-	// FIXME (kalleep): handle cfg.DisableLogin as well?
-	if s.cfg.BasicAuthEnabled && !s.cfg.DisableLogin {
-		s.clients[authn.ClientBasic] = clients.ProvideBasic(userService, loginAttempts)
+	var passwordClients []authn.PasswordClient
+
+	if !s.cfg.DisableLogin {
+		passwordClients = append(passwordClients, clients.ProvideGrafana(userService))
+	}
+
+	if s.cfg.LDAPEnabled {
+		passwordClients = append(passwordClients, clients.ProvideLDAP(cfg))
+	}
+
+	// only configure basic auth client if it is enabled, and we have at least one password client enabled
+	if s.cfg.BasicAuthEnabled && len(passwordClients) > 0 {
+		s.clients[authn.ClientBasic] = clients.ProvideBasic(loginAttempts, passwordClients...)
+	}
+
+	if s.cfg.JWTAuthEnabled {
+		s.clients[authn.ClientJWT] = clients.ProvideJWT(jwtService, cfg)
 	}
 
 	// FIXME (jguer): move to User package
@@ -71,9 +95,14 @@ type Service struct {
 	log     log.Logger
 	cfg     *setting.Cfg
 	clients map[string]authn.Client
+
+	tracer         tracing.Tracer
+	sessionService auth.UserTokenService
+
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
 	postAuthHooks []authn.PostAuthHookFn
-	tracer        tracing.Tracer
+	// postLoginHooks are called after a login request is performed, both for failing and successful requests.
+	postLoginHooks []authn.PostLoginHookFn
 }
 
 func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Request) (*authn.Identity, bool, error) {
@@ -100,8 +129,13 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 
 	for _, hook := range s.postAuthHooks {
 		if err := hook(ctx, identity, r); err != nil {
+			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "id", identity)
 			return nil, false, err
 		}
+	}
+
+	if identity.IsDisabled {
+		return nil, true, errDisabledIdentity.Errorf("identity is disabled")
 	}
 
 	return identity, true, nil
@@ -109,6 +143,49 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 
 func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn) {
 	s.postAuthHooks = append(s.postAuthHooks, hook)
+}
+
+func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (identity *authn.Identity, err error) {
+	var ok bool
+	identity, ok, err = s.Authenticate(ctx, client, r)
+	if !ok {
+		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
+	}
+
+	defer func() {
+		for _, hook := range s.postLoginHooks {
+			hook(ctx, identity, r, err)
+		}
+	}()
+
+	if err != nil {
+		return nil, err
+	}
+
+	namespace, id := identity.NamespacedID()
+
+	// Login is only supported for users
+	if namespace != authn.NamespaceUser || id <= 0 {
+		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", namespace)
+	}
+
+	addr := web.RemoteAddr(r.HTTPRequest)
+	ip, err := network.GetIPFromAddress(addr)
+	if err != nil {
+		s.log.Debug("failed to parse ip from address", "addr", addr)
+	}
+
+	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: id}, ip, r.HTTPRequest.UserAgent())
+	if err != nil {
+		return nil, err
+	}
+
+	identity.SessionToken = sessionToken
+	return identity, nil
+}
+
+func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn) {
+	s.postLoginHooks = append(s.postLoginHooks, hook)
 }
 
 func orgIDFromRequest(r *authn.Request) int64 {

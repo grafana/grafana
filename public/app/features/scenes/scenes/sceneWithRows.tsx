@@ -1,14 +1,18 @@
-import { VizPanel } from '../components';
-import { NestedScene } from '../components/NestedScene';
-import { EmbeddedScene, Scene } from '../components/Scene';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
-import { SceneTimeRange } from '../core/SceneTimeRange';
+import {
+  VizPanel,
+  NestedScene,
+  SceneTimePicker,
+  SceneFlexLayout,
+  SceneTimeRange,
+  EmbeddedScene,
+} from '@grafana/scenes';
+
+import { Scene } from '../components/Scene';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getSceneWithRows(standalone: boolean): Scene {
+export function getSceneWithRows(standalone: boolean): Scene | EmbeddedScene {
   const state = {
     title: 'Scene with rows',
     body: new SceneFlexLayout({

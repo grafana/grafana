@@ -1,5 +1,6 @@
+import { SceneFlexLayout } from '@grafana/scenes';
+
 import { Scene } from './Scene';
-import { SceneFlexLayout } from './layout/SceneFlexLayout';
 
 describe('Scene', () => {
   it('Simple scene', () => {

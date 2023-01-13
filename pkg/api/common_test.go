@@ -323,7 +323,7 @@ func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []accessc
 }
 
 func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
-	return &user.SignedInUser{OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
+	return &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
 
 // setInitCtxSignedInUser sets a copy of the user in initCtx
@@ -564,7 +564,7 @@ func setUp(confs ...setUpConf) *HTTPServer {
 			aclMockResp = c.aclMockResp
 		}
 	}
-	store.ExpectedTeamsByUser = []*models.TeamDTO{}
+	store.ExpectedTeamsByUser = []*team.TeamDTO{}
 	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
 	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
