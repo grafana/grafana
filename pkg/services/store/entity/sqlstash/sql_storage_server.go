@@ -451,7 +451,9 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			err = updateFolderTree(ctx, tx, grn.TenantId)
 		}
 		if err == nil {
-			return s.writeSearchInfo(ctx, tx, oid, summary, grn, r.Folder)
+			summary.folder = r.Folder
+			summary.parent_grn = grn
+			return s.writeSearchInfo(ctx, tx, oid, summary)
 		}
 		return err
 	})
@@ -508,14 +510,8 @@ func (s *sqlEntityServer) writeSearchInfo(
 	tx *session.SessionTx,
 	grn string,
 	summary *summarySupport,
-	parent_grn *entity.GRN,
-	folder string,
 ) error {
-	var parent_grn_string *string
-	if summary.isNested {
-		t := parent_grn.ToGRNString()
-		parent_grn_string = &t
-	}
+	parent_grn := summary.getParentGRN()
 
 	// Add the labels rows
 	for k, v := range summary.model.Labels {
@@ -523,7 +519,7 @@ func (s *sqlEntityServer) writeSearchInfo(
 			`INSERT INTO entity_labels `+
 				"(grn, label, value, parent_grn) "+
 				`VALUES (?, ?, ?, ?)`,
-			grn, k, v, parent_grn_string,
+			grn, k, v, parent_grn,
 		)
 		if err != nil {
 			return err
@@ -540,7 +536,7 @@ func (s *sqlEntityServer) writeSearchInfo(
 			"grn, parent_grn, kind, type, uid, "+
 			"resolved_ok, resolved_to, resolved_warning, resolved_time) "+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			grn, parent_grn_string, ref.Kind, ref.Type, ref.UID,
+			grn, parent_grn, ref.Kind, ref.Type, ref.UID,
 			resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
 		)
 		if err != nil {
@@ -550,14 +546,9 @@ func (s *sqlEntityServer) writeSearchInfo(
 
 	// Recursive updates
 	if summary.model.Nested != nil {
-		if parent_grn_string == nil {
-			t := parent_grn.ToGRNString()
-			parent_grn_string = &t
-		}
-
 		for _, childModel := range summary.model.Nested {
 			grn = (&entity.GRN{
-				TenantId: parent_grn.TenantId,
+				TenantId: summary.parent_grn.TenantId,
 				Kind:     childModel.Kind,
 				UID:      childModel.UID, // append???
 			}).ToGRNString()
@@ -567,6 +558,8 @@ func (s *sqlEntityServer) writeSearchInfo(
 				return err
 			}
 			child.isNested = true
+			child.folder = summary.folder
+			child.parent_grn = summary.parent_grn
 
 			_, err = tx.Exec(ctx, "INSERT INTO entity_nested ("+
 				"parent_grn, grn, "+
@@ -577,8 +570,8 @@ func (s *sqlEntityServer) writeSearchInfo(
 				" ?, ?, ?, ?,"+
 				" ?, ?,"+
 				" ?, ?, ?)",
-				*parent_grn_string, grn,
-				parent_grn.TenantId, childModel.Kind, childModel.UID, parent_grn_string,
+				*parent_grn, grn,
+				summary.parent_grn.TenantId, childModel.Kind, childModel.UID, summary.folder,
 				child.name, child.description,
 				child.labels, child.fields, child.errors,
 			)
@@ -587,7 +580,7 @@ func (s *sqlEntityServer) writeSearchInfo(
 				return err
 			}
 
-			s.writeSearchInfo(ctx, tx, grn, child, parent_grn, folder)
+			s.writeSearchInfo(ctx, tx, grn, child)
 		}
 	}
 
