@@ -32,6 +32,6 @@ We've improved the design and functionality of email templates to make template 
 
 ## Service account expiration dates
 
-We have included a new configuration feature, disabled by default. This will allow us to require an expiration date limit for all newly created service account tokens.
+We have included a new configuration option, disabled by default. This will allow us to require an expiration date limit for all newly created service account tokens.
 
 This will not affect existing tokens, however newly created tokens will require an expiration date that doesn't exceed the configuration option `token_expiration_day_limit`.
