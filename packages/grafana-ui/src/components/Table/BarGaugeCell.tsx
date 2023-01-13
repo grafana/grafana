@@ -52,7 +52,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   }
   // Otherwise we check cell type
   else if (cellOptions.type === TableCellDisplayMode.Gauge) {
-    barGaugeMode = cellOptions.mode;
+    barGaugeMode = cellOptions.mode ?? BarGaugeDisplayMode.Gradient;
     valueMode = cellOptions.valueMode ?? BarGaugeValueMode.Color;
   }
 
