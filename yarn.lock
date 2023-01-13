@@ -4939,7 +4939,7 @@ __metadata:
     "@types/uuid": 8.3.4
     babel-loader: 9.1.0
     blink-diff: 1.0.13
-    chrome-remote-interface: 0.31.3
+    chrome-remote-interface: 0.32.0
     commander: 8.3.0
     cypress: 9.5.1
     cypress-file-upload: 5.0.8
@@ -15776,15 +15776,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chrome-remote-interface@npm:0.31.3":
-  version: 0.31.3
-  resolution: "chrome-remote-interface@npm:0.31.3"
+"chrome-remote-interface@npm:0.32.0":
+  version: 0.32.0
+  resolution: "chrome-remote-interface@npm:0.32.0"
   dependencies:
     commander: 2.11.x
     ws: ^7.2.0
   bin:
     chrome-remote-interface: bin/client.js
-  checksum: 460db5d5aa3f8a8889780c2efe24a5516afacb8983e3ec090853fd9f4a6c1878b7470c7306724b01af596394f53c2bea8ed8176d88d6feee36d67f628fe4fff6
+  checksum: 9be5e5bce0856d3fe4e32339857514d16ca4831310de4475a8e62f604fa346d939d82058aa06411ba61d2ee3cee8d0288599221908d82cd6e548ad09dd215794
   languageName: node
   linkType: hard
 
