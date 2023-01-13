@@ -8,7 +8,6 @@ import {
   KBarPositioner,
   KBarResults,
   KBarSearch,
-  useMatches,
   VisualState,
   useRegisterActions,
   useKBar,
@@ -25,6 +24,7 @@ import { ResultItem } from './ResultItem';
 import { useDashboardResults } from './actions/dashboardActions';
 import useActions from './actions/useActions';
 import { CommandPaletteAction } from './types';
+import { useMatches } from './useMatches';
 
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
