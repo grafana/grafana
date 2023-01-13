@@ -146,7 +146,9 @@ describe('getFieldLinksForExplore', () => {
     const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
     expect(links).toHaveLength(1);
     expect(links[0].href).toBe(
-      '/explore?left=%7B%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%2C%22datasource%22%3A%22uid_1%22%2C%22queries%22%3A%5B%7B%22query%22%3A%22query_1-foo%22%7D%5D%2C%22panelsState%22%3A%7B%7D%7D'
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}],"panelsState":{}}'
+      )}`
     );
   });
 
@@ -163,7 +165,9 @@ describe('getFieldLinksForExplore', () => {
     const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
     expect(links).toHaveLength(1);
     expect(links[0].href).toBe(
-      '/explore?left=%7B%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%2C%22datasource%22%3A%22uid_1%22%2C%22queries%22%3A%5B%7B%22query%22%3A%22query_1-foo%22%7D%5D%2C%22panelsState%22%3A%7B%7D%7D'
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}],"panelsState":{}}'
+      )}`
     );
   });
 
@@ -189,7 +193,51 @@ describe('getFieldLinksForExplore', () => {
     const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
     expect(links).toHaveLength(1);
     expect(links[0].href).toBe(
-      '/explore?left=%7B%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%2C%22datasource%22%3A%22uid_1%22%2C%22queries%22%3A%5B%7B%22query%22%3A%22query_1-foo%22%7D%5D%2C%22panelsState%22%3A%7B%7D%7D'
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}],"panelsState":{}}'
+      )}`
+    );
+  });
+
+  it('returns internal links when target contains other field name template variables', () => {
+    // field cannot be hyphenated, change field name to non-hyphenated
+    const noHyphenLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'query_1-${fluxDimensions}-${fluxDimension2}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+      },
+    };
+    const { field, range, dataFrame } = setup(
+      noHyphenLink,
+      true,
+      {
+        name: 'fluxDimensions',
+        type: FieldType.string,
+        values: new ArrayVector([ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value]),
+        config: {
+          links: [noHyphenLink],
+        },
+      },
+      [
+        {
+          name: 'fluxDimension2',
+          type: FieldType.string,
+          values: new ArrayVector(['foo2', ROW_WITH_NULL_VALUE.value]),
+          config: {
+            links: [noHyphenLink],
+          },
+        },
+      ]
+    );
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
+    expect(links).toHaveLength(1);
+    expect(links[0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo-foo2"}],"panelsState":{}}'
+      )}`
     );
   });
 
@@ -211,7 +259,12 @@ describe('getFieldLinksForExplore', () => {
 const ROW_WITH_TEXT_VALUE = { value: 'foo', index: 0 };
 const ROW_WITH_NULL_VALUE = { value: null, index: 1 };
 
-function setup(link: DataLink, hasAccess = true, fieldOverride?: Field<string | null>) {
+function setup(
+  link: DataLink,
+  hasAccess = true,
+  fieldOverride?: Field<string | null>,
+  dataFrameOtherFieldOverride?: Field[]
+) {
   setLinkSrv({
     getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: any): LinkModel<any> {
       return {
@@ -242,8 +295,14 @@ function setup(link: DataLink, hasAccess = true, fieldOverride?: Field<string | 
     },
   };
 
+  let fieldsArr = [fieldOverride || field];
+
+  if (dataFrameOtherFieldOverride) {
+    fieldsArr = [...fieldsArr, ...dataFrameOtherFieldOverride];
+  }
+
   const dataFrame: DataFrame = toDataFrame({
-    fields: [fieldOverride || field],
+    fields: fieldsArr,
   });
 
   const range: TimeRange = {

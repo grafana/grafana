@@ -11,6 +11,7 @@ import {
   getFieldDisplayValuesProxy,
   SplitOpen,
   DataLink,
+  DisplayValue,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -72,7 +73,7 @@ export const getFieldLinksForExplore = (options: {
     text: 'Raw value',
   };
 
-  let fieldDisplayValuesProxy;
+  let fieldDisplayValuesProxy: Record<string, DisplayValue> | undefined = undefined;
 
   // If we have a dataFrame we can allow referencing other columns and their values in the interpolation.
   if (dataFrame) {
@@ -89,20 +90,22 @@ export const getFieldLinksForExplore = (options: {
       },
       text: 'Data',
     };
+
+    dataFrame.fields.forEach((f) => {
+      if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[f.name]) {
+        scopedVars[f.name] = {
+          value: fieldDisplayValuesProxy[f.name],
+        };
+      }
+    });
+
+    // add this for convenience
+    scopedVars['__targetField'] = {
+      value: fieldDisplayValuesProxy[field.name],
+    };
   }
 
   if (field.config.links) {
-    if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[field.name] !== undefined) {
-      scopedVars['__targetField'] = {
-        value: fieldDisplayValuesProxy[field.name],
-        text: fieldDisplayValuesProxy[field.name],
-      };
-      scopedVars[field.name] = {
-        value: fieldDisplayValuesProxy[field.name],
-        text: fieldDisplayValuesProxy[field.name],
-      };
-    }
-
     const links = field.config.links.filter((link) => {
       return DATA_LINK_FILTERS.every((filter) => filter(link, scopedVars));
     });
