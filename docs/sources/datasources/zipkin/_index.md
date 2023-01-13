@@ -63,7 +63,7 @@ The **Trace to logs** setting configures the [trace to logs feature]({{< relref 
      - For a mapped tag `service.name` with value `service`, clicking on a span link will take you to your configured logs datasource with the query `{service='value from clicked span'}` instead of `{service.name='value from clicked span'}`.
      - This is useful for instances where your tracing datasource tags and your logs datasource tags don't match one-to-one.
 
-The following table describes the ways in which you can add tags:
+The following table describes the ways in which you can configure your trace to logs settings:
 
 | Name                      | Description                                                                                                                                                                        |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
