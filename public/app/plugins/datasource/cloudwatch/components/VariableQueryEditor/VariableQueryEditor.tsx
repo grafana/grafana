@@ -6,9 +6,10 @@ import { InlineField } from '@grafana/ui';
 
 import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
-import { useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../hooks';
+import { useAccountOptions, useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../hooks';
 import { migrateVariableQuery } from '../../migrations/variableQueryMigrations';
 import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
+import { Account, ALL_ACCOUNTS_OPTION } from '../Account';
 
 import { MultiFilter } from './MultiFilter';
 import { VariableQueryField } from './VariableQueryField';
@@ -41,11 +42,13 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const metrics = useMetrics(datasource, { region, namespace });
   const dimensionKeys = useDimensionKeys(datasource, { region, namespace, metricName });
   const keysForDimensionFilter = useDimensionKeys(datasource, { region, namespace, metricName, dimensionFilters });
+  const accountState = useAccountOptions(datasource.api, query.region);
 
   const onRegionChange = async (region: string) => {
     const validatedQuery = await sanitizeQuery({
       ...parsedQuery,
       region,
+      accountId: undefined,
     });
     onQueryChange(validatedQuery);
   };
@@ -106,7 +109,9 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       <VariableQueryField
         value={parsedQuery.queryType}
         options={queryTypes}
-        onChange={(value: VariableQueryType) => onQueryChange({ ...parsedQuery, queryType: value })}
+        onChange={(value: VariableQueryType) =>
+          onQueryChange({ ...parsedQuery, queryType: value, accountId: undefined })
+        }
         label="Query type"
         inputId={`variable-query-type-${query.refId}`}
       />
@@ -234,11 +239,22 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         </>
       )}
       {parsedQuery.queryType === VariableQueryType.LogGroups && (
-        <VariableTextField
-          value={query.logGroupPrefix ?? ''}
-          onBlur={(value: string) => onQueryChange({ ...parsedQuery, logGroupPrefix: value })}
-          label="Log group prefix"
-        />
+        <>
+          {accountState.value?.length && config.featureToggles.cloudWatchCrossAccountQuerying && (
+            <VariableQueryField
+              label="Account"
+              value={query.accountId ?? null}
+              onChange={(accountId?: string) => onQueryChange({ ...parsedQuery, accountId })}
+              options={accountState?.value.length ? [ALL_ACCOUNTS_OPTION, ...accountState?.value] : []}
+              allowCustomValue={false}
+            />
+          )}
+          <VariableTextField
+            value={query.logGroupPrefix ?? ''}
+            onBlur={(value: string) => onQueryChange({ ...parsedQuery, logGroupPrefix: value })}
+            label="Log group prefix"
+          />
+        </>
       )}
     </>
   );
