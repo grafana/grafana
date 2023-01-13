@@ -12,6 +12,9 @@ pull:
 docs: pull
 	$(PODMAN) run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) /bin/bash -c "make server"
 
+docs-preview: pull
+	$(PODMAN) run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) /bin/bash -c "make server BUILD_DRAFTS=true"
+
 docs-quick: pull
 	$(PODMAN) run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) /bin/bash -c "make server-quick"
 
