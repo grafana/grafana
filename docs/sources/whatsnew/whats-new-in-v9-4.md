@@ -41,3 +41,9 @@ The details section of a log line has been updated. Previously some of the inter
 We have included a new configuration option, disabled by default. This will allow us to require an expiration date limit for all newly created service account tokens.
 
 This will not affect existing tokens, however newly created tokens will require an expiration date that doesn't exceed the configuration option `token_expiration_day_limit`.
+
+## GrafanaCom Skip org role sync
+
+Grafana integrates with different auth providers and have a demand for specific providers to skip syncronization for their organization roles. This option is now available for user who want to be able to manage their org roles from Grafana itself.
+
+This option to skip syncronization from grafanacom is available in the auth provider section under `skip_org_role_sync`.
