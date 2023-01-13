@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var _ authn.ProxyClient = new(LDAP)
 var _ authn.PasswordClient = new(LDAP)
 
 func ProvideLDAP(cfg *setting.Cfg) *LDAP {
@@ -19,6 +20,19 @@ func ProvideLDAP(cfg *setting.Cfg) *LDAP {
 type LDAP struct {
 	cfg     *setting.Cfg
 	service ldapService
+}
+
+func (c *LDAP) AuthenticateProxy(ctx context.Context, r *authn.Request, username string) (*authn.Identity, error) {
+	info, err := c.service.User(username)
+	if errors.Is(err, multildap.ErrDidNotFindUser) {
+		return nil, errIdentityNotFound.Errorf("no user found: %w", err)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return identityFromLDAPInfo(r.OrgID, info, c.cfg.LDAPAllowSignup), nil
 }
 
 func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
@@ -43,31 +57,12 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 		return nil, err
 	}
 
-	return &authn.Identity{
-		OrgID:          r.OrgID,
-		OrgRoles:       info.OrgRoles,
-		Login:          info.Login,
-		Name:           info.Name,
-		Email:          info.Email,
-		IsGrafanaAdmin: info.IsGrafanaAdmin,
-		AuthModule:     info.AuthModule,
-		AuthID:         info.AuthId,
-		Groups:         info.Groups,
-		ClientParams: authn.ClientParams{
-			SyncUser:            true,
-			SyncTeamMembers:     true,
-			AllowSignUp:         c.cfg.LDAPAllowSignup,
-			EnableDisabledUsers: true,
-			LookUpParams: models.UserLookupParams{
-				Login: &info.Login,
-				Email: &info.Email,
-			},
-		},
-	}, nil
+	return identityFromLDAPInfo(r.OrgID, info, c.cfg.LDAPAllowSignup), nil
 }
 
 type ldapService interface {
 	Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error)
+	User(username string) (*models.ExternalUserInfo, error)
 }
 
 // FIXME: remove the implementation if we convert ldap to an actual service
@@ -82,4 +77,38 @@ func (s *ldapServiceImpl) Login(query *models.LoginUserQuery) (*models.ExternalU
 	}
 
 	return multildap.New(cfg.Servers).Login(query)
+}
+
+func (s *ldapServiceImpl) User(username string) (*models.ExternalUserInfo, error) {
+	cfg, err := multildap.GetConfig(s.cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	user, _, err := multildap.New(cfg.Servers).User(username)
+	return user, err
+}
+
+func identityFromLDAPInfo(orgID int64, info *models.ExternalUserInfo, allowSignup bool) *authn.Identity {
+	return &authn.Identity{
+		OrgID:          orgID,
+		OrgRoles:       info.OrgRoles,
+		Login:          info.Login,
+		Name:           info.Name,
+		Email:          info.Email,
+		IsGrafanaAdmin: info.IsGrafanaAdmin,
+		AuthModule:     info.AuthModule,
+		AuthID:         info.AuthId,
+		Groups:         info.Groups,
+		ClientParams: authn.ClientParams{
+			SyncUser:            true,
+			SyncTeamMembers:     true,
+			AllowSignUp:         allowSignup,
+			EnableDisabledUsers: true,
+			LookUpParams: models.UserLookupParams{
+				Login: &info.Login,
+				Email: &info.Email,
+			},
+		},
+	}
 }
