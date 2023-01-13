@@ -204,18 +204,25 @@ describe('parseToNodeNamesArray', () => {
 
 describe('obfuscate', () => {
   it('obfuscates on invalid query', () => {
-    expect(obfuscate('{job="grafana"')).toEqual('{@@@=@@@@@@@@@');
+    expect(obfuscate('{job="grafana"')).toEqual('{@=@');
   });
   it('obfuscates on valid query', () => {
     expect(
       obfuscate('sum(sum_over_time({test="test"} |= `` | logfmt | __error__=`` | unwrap test | __error__=`` [10m]))')
-    ).toEqual('sum(sum_over_time({@@@@=@@@@@@} |= @@ | logfmt | @@@@@@@@@=@@ | unwrap @@@@ | @@@@@@@@@=@@ [10m]))');
+    ).toEqual('sum(sum_over_time({@=@} |= @ | logfmt | __error__=@ | unwrap @ | __error__=@ [10m]))');
   });
   it('obfuscates on arithmetic operation', () => {
     expect(obfuscate('2 + 3')).toEqual('@ + @');
   });
   it('obfuscates a comment', () => {
-    expect(obfuscate('{job="grafana"} # test comment')).toEqual('{@@@=@@@@@@@@@} @@@@@@@@@@@@@@');
+    expect(obfuscate('{job="grafana"} # test comment')).toEqual('{@=@} @');
+  });
+  it('does not obfuscate interval variables', () => {
+    expect(
+      obfuscate(
+        'sum(quantile_over_time(0.5, {label="$var"} | logfmt | __error__=`` | unwrap latency | __error__=`` [$__interval]))'
+      )
+    ).toEqual('sum(quantile_over_time(@, {@=@} | logfmt | __error__=@ | unwrap @ | __error__=@ [$__interval]))');
   });
 });
 

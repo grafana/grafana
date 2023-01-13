@@ -109,13 +109,15 @@ export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
 }
 
 const tagsToObscure = ['String', 'Identifier', 'LineComment', 'Number'];
+const partsToKeep = ['__error__', '__interval', '__interval_ms'];
 export function obfuscate(query: string): string {
   let obfuscatedQuery: string = query;
   const tree = parser.parse(query);
   tree.iterate({
     enter: ({ name, from, to }): false | void => {
-      if (tagsToObscure.includes(name)) {
-        obfuscatedQuery = obfuscatedQuery.substring(0, from) + '@'.repeat(to - from) + obfuscatedQuery.substring(to);
+      const queryPart = query.substring(from, to);
+      if (tagsToObscure.includes(name) && !partsToKeep.includes(queryPart)) {
+        obfuscatedQuery = obfuscatedQuery.replace(queryPart, '@');
       }
     },
   });
