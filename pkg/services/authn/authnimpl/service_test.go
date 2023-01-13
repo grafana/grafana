@@ -22,17 +22,22 @@ import (
 
 func TestService_Authenticate(t *testing.T) {
 	type TestCase struct {
-		desc        string
-		clientName  string
-		expectedOK  bool
-		expectedErr error
+		desc           string
+		clientName     string
+		clientErr      error
+		clientIdentity *authn.Identity
+		expectedOK     bool
+		expectedErr    error
 	}
+
+	var clientErr = errors.New("some err")
 
 	tests := []TestCase{
 		{
-			desc:       "should succeed with authentication for configured client",
-			clientName: "fake",
-			expectedOK: true,
+			desc:           "should succeed with authentication for configured client",
+			clientIdentity: &authn.Identity{},
+			clientName:     "fake",
+			expectedOK:     true,
 		},
 		{
 			desc:       "should return false when client is not configured",
@@ -43,7 +48,15 @@ func TestService_Authenticate(t *testing.T) {
 			desc:        "should return true and error when client could be used but failed to authenticate",
 			clientName:  "fake",
 			expectedOK:  true,
-			expectedErr: errors.New("some error"),
+			clientErr:   clientErr,
+			expectedErr: clientErr,
+		},
+		{
+			desc:           "should return error if identity is disabled",
+			clientName:     "fake",
+			clientIdentity: &authn.Identity{IsDisabled: true},
+			expectedOK:     true,
+			expectedErr:    errDisabledIdentity,
 		},
 	}
 
@@ -51,16 +64,15 @@ func TestService_Authenticate(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			svc := setupTests(t, func(svc *Service) {
 				svc.clients["fake"] = &authntest.FakeClient{
-					ExpectedErr:  tt.expectedErr,
-					ExpectedTest: tt.expectedOK,
+					ExpectedIdentity: tt.clientIdentity,
+					ExpectedErr:      tt.clientErr,
+					ExpectedTest:     tt.expectedOK,
 				}
 			})
 
 			_, ok, err := svc.Authenticate(context.Background(), tt.clientName, &authn.Request{})
 			assert.Equal(t, tt.expectedOK, ok)
-			if tt.expectedErr != nil {
-				assert.Error(t, err)
-			}
+			assert.ErrorIs(t, err, tt.expectedErr)
 		})
 	}
 }
@@ -114,7 +126,7 @@ func TestService_AuthenticateOrgID(t *testing.T) {
 				svc.clients["fake"] = authntest.MockClient{
 					AuthenticateFunc: func(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 						calledWith = r.OrgID
-						return nil, nil
+						return &authn.Identity{}, nil
 					},
 					TestFunc: func(ctx context.Context, r *authn.Request) bool {
 						return true

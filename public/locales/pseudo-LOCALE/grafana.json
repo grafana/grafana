@@ -128,15 +128,6 @@
       "subtitle": "Mäŉäģę şęřvęř-ŵįđę şęŧŧįŉģş äŉđ äččęşş ŧő řęşőūřčęş şūčĥ äş őřģäŉįžäŧįőŉş, ūşęřş, äŉđ ľįčęŉşęş",
       "title": "Ŝęřvęř äđmįŉ"
     },
-    "admin-access": {
-      "title": "Ůşęřş äŉđ äččęşş"
-    },
-    "admin-general": {
-      "title": "Ğęŉęřäľ"
-    },
-    "admin-plugins": {
-      "title": "Pľūģįŉş äŉđ đäŧä"
-    },
     "alerting": {
       "subtitle": "Ŀęäřŉ äþőūŧ přőþľęmş įŉ yőūř şyşŧęmş mőmęŉŧş äƒŧęř ŧĥęy őččūř",
       "title": "Åľęřŧįŉģ"
@@ -542,7 +533,7 @@
       "name-label": "Ńämę",
       "username-label": "Ůşęřŉämę"
     },
-    "title": "Ēđįŧ přőƒįľę"
+    "title": "Přőƒįľę"
   },
   "user-session": {
     "browser-column": "ßřőŵşęř & ØŜ",

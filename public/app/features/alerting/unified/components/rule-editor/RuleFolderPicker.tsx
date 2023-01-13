@@ -16,7 +16,6 @@ export interface Folder {
 
 export interface RuleFolderPickerProps extends Omit<FolderPickerProps, 'initialTitle' | 'initialFolderId'> {
   value?: Folder;
-  dissalowSlashes: boolean;
 }
 
 const SlashesWarning = () => {
