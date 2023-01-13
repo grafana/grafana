@@ -16,17 +16,17 @@ interface ServerConfig {
   blinkRate?: ScalarDimensionConfig;
   statusColor?: ColorDimensionConfig;
   bulbColor?: ColorDimensionConfig;
-  type: ServerTypes;
+  type: ServerType;
 }
 
 export interface ServerData {
   blinkRate?: number;
   statusColor?: string;
   bulbColor?: string;
-  type: ServerTypes;
+  type: ServerType;
 }
 
-enum ServerTypes {
+enum ServerType {
   Single = 'Single',
   Stack = 'Stack',
   Database = 'Database',
@@ -36,19 +36,19 @@ enum ServerTypes {
 type Props = CanvasElementProps<ServerConfig, ServerData>;
 
 const ServerDisplay = ({ data }: Props) => {
-  return (
+  return data ? (
     <svg viewBox="0 0 207.95 197.78">
-      {data?.type === ServerTypes.Single ? (
+      {data.type === ServerType.Single ? (
         <ServerSingle {...data} />
-      ) : data?.type === ServerTypes.Stack ? (
+      ) : data.type === ServerType.Stack ? (
         <ServerStack {...data} />
-      ) : data?.type === ServerTypes.Database ? (
+      ) : data.type === ServerType.Database ? (
         <ServerDatabase {...data} />
-      ) : data?.type === ServerTypes.Terminal ? (
+      ) : data.type === ServerType.Terminal ? (
         <ServerTerminal {...data} />
       ) : null}
     </svg>
-  );
+  ) : null;
 };
 
 export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
@@ -77,7 +77,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
       left: options?.placement?.left,
     },
     config: {
-      type: ServerTypes.Single,
+      type: ServerType.Single,
     },
   }),
 
@@ -87,7 +87,7 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
       blinkRate: cfg?.blinkRate ? ctx.getScalar(cfg.blinkRate).value() : 0,
       statusColor: cfg?.statusColor ? ctx.getColor(cfg.statusColor).value() : '#8a8a8a',
       bulbColor: cfg?.bulbColor ? ctx.getColor(cfg.bulbColor).value() : 'green',
-      type: cfg?.type ?? ServerTypes.Single,
+      type: cfg.type,
     };
 
     return data;
@@ -102,13 +102,13 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
         name: 'Type',
         settings: {
           options: [
-            { value: ServerTypes.Single, label: 'Single' },
-            { value: ServerTypes.Stack, label: 'Stack' },
-            { value: ServerTypes.Database, label: 'Database' },
-            { value: ServerTypes.Terminal, label: 'Terminal' },
+            { value: ServerType.Single, label: ServerType.Single },
+            { value: ServerType.Stack, label: ServerType.Stack },
+            { value: ServerType.Database, label: ServerType.Database },
+            { value: ServerType.Terminal, label: ServerType.Terminal },
           ],
         },
-        defaultValue: ServerTypes.Single,
+        defaultValue: ServerType.Single,
       })
       .addCustomEditor({
         category,
