@@ -53,6 +53,7 @@ export interface AzureMetricQuery {
   /** used as the value for the metricNamespace param when different from the resource namespace */
   customNamespace?: string;
   metricName?: string;
+  region?: string;
   timeGrain?: string;
   aggregation?: string;
   dimensionFilters?: AzureMetricDimension[];
@@ -110,4 +111,5 @@ export interface AzureMetricResource {
   resourceGroup?: string;
   resourceName?: string;
   metricNamespace?: string;
+  region?: string;
 }

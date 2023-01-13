@@ -34,7 +34,7 @@ function parseNamespaceAndName(metricNamespaceAndName?: string) {
   return { metricNamespace: namespaceArray.join('/'), resourceName: resourceNameArray.join('/') };
 }
 
-export function parseResourceURI(resourceURI: string) {
+export function parseResourceURI(resourceURI: string): AzureMetricResource {
   const matches = RESOURCE_URI_REGEX.exec(resourceURI);
   const groups: RegexGroups = matches?.groups ?? {};
   const { subscription, resourceGroup, metricNamespaceAndResource } = groups;
@@ -43,9 +43,13 @@ export function parseResourceURI(resourceURI: string) {
   return { subscription, resourceGroup, metricNamespace, resourceName };
 }
 
-export function parseResourceDetails(resource: string | AzureMetricResource) {
+export function parseResourceDetails(resource: string | AzureMetricResource, location?: string) {
   if (typeof resource === 'string') {
-    return parseResourceURI(resource);
+    const res = parseResourceURI(resource);
+    if (location) {
+      res.region = location;
+    }
+    return res;
   }
   return resource;
 }
@@ -148,6 +152,7 @@ export function setResource(query: AzureMonitorQuery, resource?: string | AzureM
       resourceGroup: resource?.resourceGroup,
       metricNamespace: resource?.metricNamespace?.toLocaleLowerCase(),
       resourceName: resource?.resourceName,
+      region: resource?.region,
       metricName: undefined,
       aggregation: undefined,
       timeGrain: '',

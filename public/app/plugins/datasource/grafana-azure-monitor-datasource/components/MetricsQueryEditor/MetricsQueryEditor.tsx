@@ -42,6 +42,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
     resourceGroup: query.azureMonitor?.resourceGroup,
     metricNamespace: query.azureMonitor?.metricNamespace,
     resourceName: query.azureMonitor?.resourceName,
+    region: query.azureMonitor?.region,
   };
   return (
     <span data-testid="azure-monitor-metrics-query-editor-with-experimental-ui">
