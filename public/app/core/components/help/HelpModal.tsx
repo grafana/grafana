@@ -6,12 +6,11 @@ import { Modal, useStyles2 } from '@grafana/ui';
 
 const shortcuts = {
   Global: [
+    { keys: ['mod+k'], description: 'Search Grafana' },
     { keys: ['g', 'h'], description: 'Go to Home Dashboard' },
     { keys: ['g', 'p'], description: 'Go to Profile' },
-    { keys: ['s', 'o'], description: 'Open search' },
     { keys: ['esc'], description: 'Exit edit/setting views' },
     { keys: ['h'], description: 'Show all keyboard shortcuts' },
-    { keys: ['mod+k'], description: 'Open command palette' },
     { keys: ['c', 't'], description: 'Change theme' },
   ],
   Dashboard: [

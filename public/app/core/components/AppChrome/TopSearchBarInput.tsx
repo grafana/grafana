@@ -1,7 +1,7 @@
 import { useKBar } from 'kbar';
 import React, { useState } from 'react';
 
-import { FilterInput, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { FilterInput, Icon, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { t } from 'app/core/internationalization';
 
@@ -37,8 +37,13 @@ export function TopSearchBarInput() {
     <FilterInput
       onClick={onOpenSearch}
       placeholder={t('nav.search.placeholder', 'Search Grafana')}
-      value={''}
+      value={'variables'}
       onChange={onSearchChange}
+      suffix={
+        <span>
+          <Icon name="keyboard" /> ctrl + k
+        </span>
+      } // TODO: show cmd on windows, spacing between icon and text
     />
   );
 }

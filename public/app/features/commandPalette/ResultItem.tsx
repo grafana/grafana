@@ -116,7 +116,7 @@ const getResultItemStyles = (theme: GrafanaTheme2, isActive: boolean) => {
       fontSize: theme.typography.fontSize,
     }),
     breadcrumbAncestor: css({
-      opacity: 0.5,
+      color: theme.colors.text.secondary,
       marginRight: theme.spacing(1),
     }),
     subtitleText: css({

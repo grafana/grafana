@@ -56,7 +56,8 @@ export const CommandPalette = () => {
         <KBarAnimator className={styles.animator}>
           <FocusScope contain autoFocus restoreFocus>
             <div {...overlayProps} {...dialogProps}>
-              <KBarSearch className={styles.search} />
+              {/* TODO: make placeholder actually work */}
+              <KBarSearch className={styles.search} placeholder="Search Grafana" />
               <RenderResults dashboardResults={dashboardResults} />
             </div>
           </FocusScope>
@@ -70,6 +71,7 @@ interface RenderResultsProps {
   dashboardResults: CommandPaletteAction[];
 }
 
+// TODO: don't show recent dashboards when we have search results
 const RenderResults = ({ dashboardResults }: RenderResultsProps) => {
   const { results, rootActionId } = useMatches();
   const styles = useStyles2(getSearchStyles);
@@ -134,13 +136,18 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     border: 'none',
     background: theme.colors.background.canvas,
     color: theme.colors.text.primary,
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    borderBottom: `1px solid ${theme.colors.border.medium}`,
   }),
   sectionHeader: css({
     padding: theme.spacing(1, 2),
-    fontSize: theme.typography.h6.fontSize,
-    fontWeight: theme.typography.body.fontWeight,
+    fontWeight: 500, // TODO: token lol
     color: theme.colors.text.secondary,
+
+    // '&:not(:first-child)': {
+    // TODO: don't apply to the first section
+    paddingTop: theme.spacing(2),
+    borderTop: `1px solid ${theme.colors.border.medium}`,
+    // },
   }),
   resultsContainer: css({
     padding: theme.spacing(2, 0),
