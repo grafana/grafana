@@ -21,6 +21,8 @@ export interface Props extends InputProps {
   //Function to be run onBlur or when finishing writing
   onFinishChange: (inputValue: string | number | readonly string[] | undefined) => Promise<void>;
   customErrorMessage?: string;
+  label: string;
+  required: boolean;
 }
 
 const SHOW_SUCCESS_DURATION = 2 * 1000;
@@ -37,6 +39,8 @@ export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props) =
     loading,
     onFinishChange,
     customErrorMessage,
+    label,
+    required,
     ...restProps
   } = props;
   const [isLoading, setIsLoading] = React.useState(false);
@@ -61,7 +65,7 @@ export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props) =
 
   const handleChange = useCallback(
     (nextValue) => {
-      if (nextValue === '') {
+      if (nextValue === '' && required) {
         setShowError(true);
         setShowErrorMessage('Invalid value');
       } else {
@@ -80,7 +84,7 @@ export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props) =
           });
       }
     },
-    [customErrorMessage, onFinishChange]
+    [customErrorMessage, onFinishChange, required]
   );
 
   const lodashDebounce = useMemo(() => debounce(handleChange, 600, { leading: false }), [handleChange]);
@@ -90,7 +94,7 @@ export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props) =
    * use InlineToast.tsx to show the save message
    */
   return (
-    <Field label="" invalid={showError} error={showError && showErrorMessage}>
+    <Field required={required} label={label} invalid={showError} error={showError && showErrorMessage}>
       <Input
         {...restProps}
         ref={inputRef}
