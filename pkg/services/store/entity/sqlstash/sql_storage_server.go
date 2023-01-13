@@ -371,13 +371,13 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 
 		if isUpdate {
 			// Clear the labels+refs
-			if _, err := tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", oid); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=? OR parent_grn=?", oid, oid); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", oid); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=? OR parent_grn=?", oid, oid); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(ctx, "DELETE FROM entity WHERE parent_grn=?", oid); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM entity_nested WHERE parent_grn=?", oid); err != nil {
 				return err
 			}
 		}
@@ -400,17 +400,6 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			return err
 		}
 
-		if createdAt < 1000 {
-			createdAt = updatedAt
-		}
-		if createdBy == "" {
-			createdBy = updatedBy
-		}
-		insertArgs := []interface{}{
-			versionInfo.Version, updatedAt, createdBy, createdAt, createdBy,
-			r.Folder, origin.Source, origin.Key, origin.Time,
-		}
-
 		// 5. Add/update the main `entity` table
 		rsp.Entity = versionInfo
 		if isUpdate {
@@ -430,6 +419,17 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				oid,
 			)
 		} else {
+			if createdAt < 1000 {
+				createdAt = updatedAt
+			}
+			if createdBy == "" {
+				createdBy = updatedBy
+			}
+			insertArgs := []interface{}{
+				versionInfo.Version, updatedAt, createdBy, createdAt, createdBy,
+				r.Folder, origin.Source, origin.Key, origin.Time,
+			}
+
 			_, err = tx.Exec(ctx, "INSERT INTO entity ("+
 				"grn, tenant_id, kind, uid, "+
 				"size, body, etag, "+
@@ -455,7 +455,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			err = updateFolderTree(ctx, tx, grn.TenantId)
 		}
 		if err == nil {
-			return s.writeSearchInfo(ctx, tx, oid, summary.model, grn, insertArgs)
+			return s.writeSearchInfo(ctx, tx, oid, summary, grn, r.Folder)
 		}
 		return err
 	})
@@ -511,17 +511,23 @@ func (s *sqlEntityServer) writeSearchInfo(
 	ctx context.Context,
 	tx *session.SessionTx,
 	grn string,
-	summary *models.EntitySummary,
+	summary *summarySupport,
 	parent_grn *entity.GRN,
-	insertArgs []interface{},
+	folder string,
 ) error {
+	var parent_grn_string *string
+	if summary.isNested {
+		t := parent_grn.ToGRNString()
+		parent_grn_string = &t
+	}
+
 	// 2. Add the labels rows
-	for k, v := range summary.Labels {
+	for k, v := range summary.model.Labels {
 		_, err := tx.Exec(ctx,
 			`INSERT INTO entity_labels `+
-				"(grn, label, value) "+
-				`VALUES (?, ?, ?)`,
-			grn, k, v,
+				"(grn, label, value, parent_grn) "+
+				`VALUES (?, ?, ?, ?)`,
+			grn, k, v, parent_grn_string,
 		)
 		if err != nil {
 			return err
@@ -529,16 +535,16 @@ func (s *sqlEntityServer) writeSearchInfo(
 	}
 
 	// 3. Add the references rows
-	for _, ref := range summary.References {
+	for _, ref := range summary.model.References {
 		resolved, err := s.resolver.Resolve(ctx, ref)
 		if err != nil {
 			return err
 		}
 		_, err = tx.Exec(ctx, `INSERT INTO entity_ref (`+
-			"grn, kind, type, uid, "+
+			"grn, parent_grn, kind, type, uid, "+
 			"resolved_ok, resolved_to, resolved_warning, resolved_time) "+
-			`VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-			grn, ref.Kind, ref.Type, ref.UID,
+			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			grn, parent_grn_string, ref.Kind, ref.Type, ref.UID,
 			resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
 		)
 		if err != nil {
@@ -546,40 +552,45 @@ func (s *sqlEntityServer) writeSearchInfo(
 		}
 	}
 
-	if summary.Nested != nil {
-		parent_grn_string := parent_grn.ToGRNString()
-		for _, child := range summary.Nested {
+	if summary.model.Nested != nil {
+		if parent_grn_string == nil {
+			t := parent_grn.ToGRNString()
+			parent_grn_string = &t
+		}
+
+		for _, childModel := range summary.model.Nested {
 			grn = (&entity.GRN{
 				TenantId: parent_grn.TenantId,
-				Kind:     child.Kind,
-				UID:      child.UID, // append???
+				Kind:     childModel.Kind,
+				UID:      childModel.UID, // append???
 			}).ToGRNString()
 
-			_, err := tx.Exec(ctx, "INSERT INTO entity ("+
-				"grn, tenant_id, kind, uid, parent_grn, "+
-				"name, description, slug, "+
-				"size, etag, "+
-				"labels, fields, errors, "+
-				"version, updated_at, updated_by, created_at, created_by, "+
-				"folder, origin, origin_key, origin_ts) "+
-				"VALUES (?, ?, ?, ?, ?, "+
-				" ?, ?, ?,"+
+			child, err := newSummarySupport(childModel)
+			if err != nil {
+				return err
+			}
+			child.isNested = true
+
+			_, err = tx.Exec(ctx, "INSERT INTO entity_nested ("+
+				"parent_grn, grn, "+
+				"tenant_id, kind, uid, folder, "+
+				"name, description, "+
+				"labels, fields, errors) "+
+				"VALUES (?, ?,"+
+				" ?, ?, ?, ?,"+
 				" ?, ?,"+
-				" ?, ?, ?, "+
-				" ?, ?, ?, ?, ?, "+
-				" ?, ?, ?, ?)",
-				append([]interface{}{
-					grn, parent_grn.TenantId, child.Kind, child.UID, parent_grn_string,
-					child.Name, child.Description, "", // empty slug
-					0, "", // size + etag
-					"{}", "{}", nil, // labels fields errors,
-				}, insertArgs...)...)
+				" ?, ?, ?)",
+				*parent_grn_string, grn,
+				parent_grn.TenantId, childModel.Kind, childModel.UID, parent_grn_string,
+				child.name, child.description,
+				child.labels, child.fields, child.errors,
+			)
 
 			if err != nil {
 				return err
 			}
 
-			s.writeSearchInfo(ctx, tx, grn, child, parent_grn, insertArgs)
+			s.writeSearchInfo(ctx, tx, grn, child, parent_grn, folder)
 		}
 	}
 

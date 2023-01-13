@@ -15,6 +15,7 @@ type summarySupport struct {
 	fields      *string
 	errors      *string // should not allow saving with this!
 	marshaled   []byte
+	isNested    bool // set when this is for a nested item
 }
 
 func newSummarySupport(summary *models.EntitySummary) (*summarySupport, error) {
