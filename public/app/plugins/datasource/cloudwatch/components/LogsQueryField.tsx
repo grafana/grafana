@@ -17,9 +17,8 @@ import { ExploreId } from 'app/types';
 
 // Utils & Services
 // dom also includes Element polyfills
+import syntax from '../cloudwatch-logs/syntax';
 import { CloudWatchDatasource } from '../datasource';
-import { CloudWatchLanguageProvider } from '../language_provider';
-import syntax from '../syntax';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
@@ -68,11 +67,10 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
       return { suggestions: [] };
     }
 
-    const cloudwatchLanguageProvider = datasource.languageProvider as CloudWatchLanguageProvider;
     const { history, absoluteRange } = props;
     const { prefix, text, value, wrapperClasses, labelKey, editor } = typeahead;
 
-    return await cloudwatchLanguageProvider.provideCompletionItems(
+    return await datasource.languageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey, editor },
       {
         history,

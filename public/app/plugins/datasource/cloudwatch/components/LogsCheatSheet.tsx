@@ -6,7 +6,7 @@ import React, { PureComponent } from 'react';
 import { QueryEditorHelpProps } from '@grafana/data';
 import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
 
-import tokenizer from '../syntax';
+import tokenizer from '../cloudwatch-logs/syntax';
 import { CloudWatchQuery } from '../types';
 
 interface QueryExample {

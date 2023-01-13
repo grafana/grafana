@@ -19,10 +19,10 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
+import { CloudWatchLogsLanguageProvider } from './cloudwatch-logs/CloudWatchLogsLanguageProvider';
 import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
 import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
 import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
-import { CloudWatchLanguageProvider } from './language_provider';
 import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
 import { CloudWatchAnnotationQueryRunner } from './query-runner/CloudWatchAnnotationQueryRunner';
 import { CloudWatchLogsQueryRunner } from './query-runner/CloudWatchLogsQueryRunner';
@@ -42,7 +42,7 @@ export class CloudWatchDatasource
   implements DataSourceWithLogsContextSupport<CloudWatchLogsQuery>
 {
   defaultRegion?: string;
-  languageProvider: CloudWatchLanguageProvider;
+  languageProvider: CloudWatchLogsLanguageProvider;
   sqlCompletionItemProvider: SQLCompletionItemProvider;
   metricMathCompletionItemProvider: MetricMathCompletionItemProvider;
   defaultLogGroups?: string[];
@@ -62,7 +62,7 @@ export class CloudWatchDatasource
     super(instanceSettings);
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.resources = new ResourcesAPI(instanceSettings, templateSrv);
-    this.languageProvider = new CloudWatchLanguageProvider(this);
+    this.languageProvider = new CloudWatchLogsLanguageProvider(this);
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this.resources, this.templateSrv);
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.resources, this.templateSrv);
     this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv);

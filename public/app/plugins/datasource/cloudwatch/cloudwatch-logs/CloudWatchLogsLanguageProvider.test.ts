@@ -3,9 +3,11 @@ import { Value } from 'slate';
 
 import { TypeaheadOutput } from '@grafana/ui';
 
-import { CloudWatchDatasource } from './datasource';
-import { CloudWatchLanguageProvider } from './language_provider';
-import { ResourceResponse } from './resources/types';
+import { CloudWatchDatasource } from '../datasource';
+import { ResourceResponse } from '../resources/types';
+import { LogGroupField } from '../types';
+
+import { CloudWatchLogsLanguageProvider } from './CloudWatchLogsLanguageProvider';
 import {
   AGGREGATION_FUNCTIONS_STATS,
   BOOLEAN_FUNCTIONS,
@@ -16,11 +18,10 @@ import {
   STRING_FUNCTIONS,
   FIELD_AND_FILTER_FUNCTIONS,
 } from './syntax';
-import { LogGroupField } from './types';
 
 const fields = ['field1', '@message'];
 
-describe('CloudWatchLanguageProvider', () => {
+describe('CloudWatchLogsLanguageProvider', () => {
   it('should suggest ', async () => {
     await runSuggestionTest('stats count(\\)', [fields]);
     // Make sure having a field prefix does not brake anything
@@ -115,6 +116,7 @@ function makeDatasource(): CloudWatchDatasource {
         return Promise.resolve([{ value: { name: 'field1' } }, { value: { name: '@message' } }]);
       },
     },
+    /* eslint-disable @typescript-eslint/no-explicit-any */
   } as any;
 }
 
@@ -122,7 +124,7 @@ function makeDatasource(): CloudWatchDatasource {
  * Get suggestion items based on query. Use `\\` to mark position of the cursor.
  */
 function getProvideCompletionItems(query: string): Promise<TypeaheadOutput> {
-  const provider = new CloudWatchLanguageProvider(makeDatasource());
+  const provider = new CloudWatchLogsLanguageProvider(makeDatasource());
   const cursorOffset = query.indexOf('\\');
   const queryWithoutCursor = query.replace('\\', '');
   let tokens: Token[] = Prism.tokenize(queryWithoutCursor, provider.getSyntax()) as any;
@@ -131,6 +133,7 @@ function getProvideCompletionItems(query: string): Promise<TypeaheadOutput> {
   return provider.provideCompletionItems(
     {
       value,
+      /* eslint-disable @typescript-eslint/no-explicit-any */
     } as any,
     { logGroups: [{ name: 'logGroup1', arn: 'logGroup1' }], region: 'custom' }
   );
@@ -145,12 +148,14 @@ class ValueMock {
       start: {
         offset: cursorOffset,
       },
+      /* eslint-disable @typescript-eslint/no-explicit-any */
     } as any;
 
     this.data = {
       get() {
         return tokens;
       },
+      /* eslint-disable @typescript-eslint/no-explicit-any */
     } as any;
   }
 }
@@ -160,9 +165,11 @@ class ValueMock {
  * @param tokens
  */
 function addTokenMetadata(tokens: Array<string | Token>): Token[] {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   let prev = undefined as any;
   let offset = 0;
   return tokens.reduce((acc, token) => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     let newToken: any;
     if (typeof token === 'string') {
       newToken = {
