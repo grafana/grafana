@@ -41,13 +41,14 @@ describe('Connections', () => {
     (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
   });
 
-  test('shows a landing page by default', async () => {
+  test('shows the "Connect data" page by default', async () => {
     renderPage();
 
-    expect(await screen.findByRole('link', { name: 'Your connections' })).toBeVisible();
-    expect(await screen.findByText('Manage your existing connections')).toBeVisible();
+    // Data sources group
+    expect(await screen.findByText('Data sources')).toBeVisible();
 
-    expect(await screen.findByRole('link', { name: 'Connect data' })).toBeVisible();
+    // Heading
+    expect(await screen.findByText('Connect data')).toBeVisible();
     expect(await screen.findByText('Browse and create new connections')).toBeVisible();
   });
 

@@ -76,14 +76,7 @@ export interface CloudWatchMathExpressionQuery extends DataQuery {
   expression: string;
 }
 
-export type LogAction =
-  | 'DescribeLogGroups'
-  | 'DescribeAllLogGroups'
-  | 'GetQueryResults'
-  | 'GetLogGroupFields'
-  | 'GetLogEvents'
-  | 'StartQuery'
-  | 'StopQuery';
+export type LogAction = 'GetQueryResults' | 'GetLogEvents' | 'StartQuery' | 'StopQuery';
 
 export enum CloudWatchLogsQueryStatus {
   Scheduled = 'Scheduled',
@@ -144,46 +137,7 @@ export interface CloudWatchSecureJsonData extends AwsAuthDataSourceSecureJsonDat
   secretKey?: string;
 }
 
-export interface GetQueryResultsRequest {
-  /**
-   * The ID number of the query.
-   */
-  queryId: string;
-}
-
-export interface ResultField {
-  /**
-   * The log event field.
-   */
-  field?: string;
-  /**
-   * The value of this field.
-   */
-  value?: string;
-}
-
-export interface QueryStatistics {
-  /**
-   * The number of log events that matched the query string.
-   */
-  recordsMatched?: number;
-  /**
-   * The total number of log events scanned during the query.
-   */
-  recordsScanned?: number;
-  /**
-   * The total number of bytes in the log events scanned during the query.
-   */
-  bytesScanned?: number;
-}
-
-export type QueryStatus = 'Scheduled' | 'Running' | 'Complete' | 'Failed' | 'Cancelled' | string;
-
-export type CloudWatchLogsRequest =
-  | GetLogEventsRequest
-  | StartQueryRequest
-  | DescribeLogGroupsRequest
-  | GetLogGroupFieldsRequest;
+export type CloudWatchLogsRequest = GetLogEventsRequest | StartQueryRequest | QueryParam;
 
 export interface GetLogEventsRequest {
   /**
@@ -217,20 +171,6 @@ export interface GetLogEventsRequest {
   region?: string;
 }
 
-export interface GetQueryResultsResponse {
-  /**
-   * The log events that matched the query criteria during the most recent time it ran. The results value is an array of arrays. Each log event is one object in the top-level array. Each of these log event objects is an array of field/value pairs.
-   */
-  results?: ResultField[][];
-  /**
-   * Includes the number of log events scanned by the query, the number of log events that matched the query criteria, and the total number of bytes in the log events that were scanned.
-   */
-  statistics?: QueryStatistics;
-  /**
-   * The status of the most recent running of the query. Possible values are Cancelled, Complete, Failed, Running, Scheduled, Timeout, and Unknown. Queries time out after 15 minutes of execution. To avoid having your queries time out, reduce the time range being searched, or partition your query into a number of queries.
-   */
-  status?: QueryStatus;
-}
 export interface TSDBResponse<T = any> {
   results: Record<string, TSDBQueryResult<T>>;
   message?: string;
@@ -299,11 +239,13 @@ export interface StartQueryRequest {
   refId: string;
   region: string;
 }
-export interface StartQueryResponse {
-  /**
-   * The unique ID of the query.
-   */
-  queryId?: string;
+
+export interface QueryParam {
+  queryId: string;
+  refId: string;
+  limit?: number;
+  region: string;
+  statsGroups?: string[];
 }
 
 export interface MetricRequest {
@@ -435,9 +377,8 @@ export interface GetMetricsRequest extends ResourceRequest {
 export interface DescribeLogGroupsRequest extends ResourceRequest {
   logGroupNamePrefix?: string;
   logGroupPattern?: string;
-  // used by legacy requests, in the future deprecate these fields
-  refId?: string;
   limit?: number;
+  listAllLogGroups?: boolean;
 }
 
 export interface Account {
