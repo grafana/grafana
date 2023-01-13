@@ -79,25 +79,21 @@ func TestRefIdMatching(t *testing.T) {
 	query := []byte(`
 			[
 				{
-					"timeField": "t",
 					"refId": "COUNT_GROUPBY_DATE_HISTOGRAM",
 					"metrics": [{ "type": "count", "id": "c_1" }],
 					"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "c_2" }]
 				},
 				{
-					"timeField": "t",
 					"refId": "COUNT_GROUPBY_HISTOGRAM",
 					"metrics": [{ "type": "count", "id": "h_3" }],
 					"bucketAggs": [{ "type": "histogram", "field": "bytes", "id": "h_4" }]
 				},
 				{
-					"timeField": "t",
 					"refId": "RAW_DOC",
 					"metrics": [{ "type": "raw_document", "id": "r_5" }],
 					"bucketAggs": []
 				},
 				{
-					"timeField": "t",
 					"refId": "PERCENTILE",
 					"metrics": [
 					{
@@ -109,7 +105,6 @@ func TestRefIdMatching(t *testing.T) {
 					"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "p_3" }]
 				},
 				{
-					"timeField": "t",
 					"refId": "EXTENDEDSTATS",
 					"metrics": [
 					{
@@ -124,7 +119,6 @@ func TestRefIdMatching(t *testing.T) {
 					]
 				},
 				{
-					"timeField": "t",
 					"refId": "D",
 					"metrics": [{ "type": "raw_data", "id": "6" }],
 					"bucketAggs": []
@@ -268,7 +262,6 @@ func TestSimpleQueryReturns1Frame(t *testing.T) {
 		[
 			{
 				"refId": "A",
-				"timeField": "t",
 				"metrics": [{ "type": "count", "id": "1" }],
 				"bucketAggs": [
 				{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
@@ -313,7 +306,6 @@ func TestSimpleQueryCountAndAvg(t *testing.T) {
 	[
 		{
 			"refId": "A",
-			"timeField": "t",
 			"metrics": [
 			{ "type": "count", "id": "1" },
 			{ "type": "avg", "field": "value", "id": "2" }
@@ -369,7 +361,6 @@ func TestSimpleGroupBy1Metric2Frames(t *testing.T) {
 	[
 		{
 			"refId": "A",
-			"timeField": "t",
 			"metrics": [{ "type": "count", "id": "1" }],
 			"bucketAggs": [
 			{ "type": "terms", "field": "host", "id": "2" },
@@ -431,7 +422,6 @@ func TestSimpleGroupBy2Metrics4Frames(t *testing.T) {
 	[
 		{
 		  "refId": "A",
-		  "timeField": "t",
 		  "metrics": [
 			{ "type": "count", "id": "1" },
 			{ "type": "avg", "field": "@value", "id": "4" }
@@ -497,7 +487,6 @@ func TestPercentiles2Frames(t *testing.T) {
 	[
 		{
 			"refId": "A",
-			"timeField": "t",
 			"metrics": [
 			{
 				"type": "percentiles",
@@ -559,7 +548,6 @@ func TestExtendedStats4Frames(t *testing.T) {
 	[
 		{
 			"refId": "A",
-			"timeField": "t",
 			"metrics": [
 			{
 				"type": "extended_stats",
@@ -642,7 +630,6 @@ func TestTopMetrics2Frames(t *testing.T) {
 	[
 		{
 			"refId": "A",
-			"timeField": "t",
 			"metrics": [
 			{
 				"type": "top_metrics",
@@ -733,7 +720,6 @@ func TestSingleGroupWithAliasPattern3Frames(t *testing.T) {
 	[
 		{
 		  "refId": "A",
-		  "timeField": "t",
 		  "metrics": [{ "type": "count", "id": "1" }],
 		  "alias": "{{term @host}} {{metric}} and {{not_exist}} {{@host}}",
 		  "bucketAggs": [
@@ -807,7 +793,6 @@ func TestHistogramSimple(t *testing.T) {
 	[
 		{
 			"refId": "A",
-			"timeField": "t",
 			"metrics": [{ "type": "count", "id": "1" }],
 			"bucketAggs": [{ "type": "histogram", "field": "bytes", "id": "3" }]
 		}
@@ -864,7 +849,6 @@ func TestHistogramWith2FiltersAgg(t *testing.T) {
 	[
 		{
 		  "refId": "A",
-		  "timeField": "t",
 		  "metrics": [{ "type": "count", "id": "1" }],
 		  "bucketAggs": [
 			{
@@ -930,7 +914,6 @@ func TestTrimEdges(t *testing.T) {
 	[
 		{
 		  "refId": "A",
-		  "timeField": "t",
 		  "metrics": [
 			{ "type": "avg", "id": "1", "field": "@value" },
 			{ "type": "count", "id": "3" }
@@ -981,7 +964,6 @@ func TestTermsAggWithoutDateHistogram(t *testing.T) {
 	[
 		{
 		  "refId": "A",
-		  "timeField": "t",
 		  "metrics": [
 			{ "type": "avg", "id": "1", "field": "@value" },
 			{ "type": "count", "id": "3" }
@@ -1038,7 +1020,6 @@ func TestPercentilesWithoutDateHistogram(t *testing.T) {
 	[
 		{
 		  "refId": "A",
-		  "timeField": "t",
 		  "metrics": [
 			{
 			  "type": "percentiles",
@@ -1110,7 +1091,6 @@ func TestMultipleMetricsOfTheSameType(t *testing.T) {
 	[
 		{
 		  "refId": "A",
-		  "timeField": "t",
 		  "metrics": [
 			{ "type": "avg", "id": "1", "field": "test" },
 			{ "type": "avg", "id": "2", "field": "test2" }
@@ -1161,7 +1141,6 @@ func TestRawDocumentQuery(t *testing.T) {
 	[
 		{
 		  "refId": "A",
-		  "timeField": "t",
 		  "metrics": [{ "type": "raw_document", "id": "1" }],
 		  "bucketAggs": []
 		}
@@ -1222,7 +1201,6 @@ func TestBucketScript(t *testing.T) {
 	[
 		{
 		  "refId": "A",
-		  "timeField": "t",
 		  "metrics": [
 			{ "id": "1", "type": "sum", "field": "@value" },
 			{ "id": "3", "type": "max", "field": "@value" },
@@ -1297,7 +1275,6 @@ func TestTwoBucketScripts(t *testing.T) {
 	[
 		{
 		  "refId": "A",
-		  "timeField": "t",
 		  "metrics": [
 			{ "id": "1", "type": "sum", "field": "@value" },
 			{ "id": "3", "type": "max", "field": "@value" },
@@ -1384,7 +1361,6 @@ func TestRawData(t *testing.T) {
 	[
 		{
 			"refId": "A",
-			"timeField": "t",
 			"metrics": [{ "type": "raw_data", "id": "1" }],
 			"bucketAggs": []
 		}
@@ -1441,8 +1417,7 @@ func TestLogsAndCount(t *testing.T) {
 			}
 		  ],
 		  "key": "Q-1561369883389-0.7611823271062786-0",
-		  "query": "hello AND message",
-		  "timeField": "@timestamp"
+		  "query": "hello AND message"
 		}
 	]
 `)
@@ -1652,8 +1627,7 @@ func TestLogsEmptyResponse(t *testing.T) {
 			}
 		  ],
 		  "key": "Q-1561369883389-0.7611823271062786-0",
-		  "query": "hello AND message",
-		  "timeField": "@timestamp"
+		  "query": "hello AND message"
 		}
 	]
 	`)

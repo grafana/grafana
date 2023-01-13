@@ -23,7 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
+)
+
+var (
+	errDisabledIdentity = errutil.NewBase(errutil.StatusUnauthorized, "identity.disabled")
 )
 
 // make sure service implements authn.Service interface
@@ -96,6 +101,8 @@ type Service struct {
 
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
 	postAuthHooks []authn.PostAuthHookFn
+	// postLoginHooks are called after a login request is performed, both for failing and successful requests.
+	postLoginHooks []authn.PostLoginHookFn
 }
 
 func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Request) (*authn.Identity, bool, error) {
@@ -127,14 +134,29 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 		}
 	}
 
+	if identity.IsDisabled {
+		return nil, true, errDisabledIdentity.Errorf("identity is disabled")
+	}
+
 	return identity, true, nil
 }
 
-func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
-	identity, ok, err := s.Authenticate(ctx, client, r)
+func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn) {
+	s.postAuthHooks = append(s.postAuthHooks, hook)
+}
+
+func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (identity *authn.Identity, err error) {
+	var ok bool
+	identity, ok, err = s.Authenticate(ctx, client, r)
 	if !ok {
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
+
+	defer func() {
+		for _, hook := range s.postLoginHooks {
+			hook(ctx, identity, r, err)
+		}
+	}()
 
 	if err != nil {
 		return nil, err
@@ -143,7 +165,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (*
 	namespace, id := identity.NamespacedID()
 
 	// Login is only supported for users
-	if namespace != authn.NamespaceUser {
+	if namespace != authn.NamespaceUser || id <= 0 {
 		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", namespace)
 	}
 
@@ -158,14 +180,12 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (*
 		return nil, err
 	}
 
-	// FIXME: add login hooks to replace the one used in HookService
-
 	identity.SessionToken = sessionToken
 	return identity, nil
 }
 
-func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn) {
-	s.postAuthHooks = append(s.postAuthHooks, hook)
+func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn) {
+	s.postLoginHooks = append(s.postLoginHooks, hook)
 }
 
 func orgIDFromRequest(r *authn.Request) int64 {

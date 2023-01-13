@@ -128,15 +128,6 @@
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
     },
-    "admin-access": {
-      "title": "Utilisateurs et droits d'accès"
-    },
-    "admin-general": {
-      "title": "Général"
-    },
-    "admin-plugins": {
-      "title": "Modules complémentaires et données"
-    },
     "alerting": {
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
       "title": "Alertes"
@@ -542,7 +533,7 @@
       "name-label": "Nom",
       "username-label": "Nom d’utilisateur"
     },
-    "title": "Modifier le profil"
+    "title": "Profil"
   },
   "user-session": {
     "browser-column": "Navigateur et système d'exploitation",
