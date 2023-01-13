@@ -5,7 +5,8 @@ import { EditorField, Space } from '@grafana/experimental';
 import { Button, Checkbox, Icon, Label, LoadingPlaceholder, Modal, Select, useStyles2 } from '@grafana/ui';
 
 import Search from '../../Search';
-import { DescribeLogGroupsRequest, LogGroup, LogGroupResponse, ResourceResponse } from '../../types';
+import { DescribeLogGroupsRequest, ResourceResponse, LogGroupResponse } from '../../resources/types';
+import { LogGroup } from '../../types';
 import { Account, ALL_ACCOUNTS_OPTION } from '../Account';
 import getStyles from '../styles';
 
@@ -192,31 +193,6 @@ export const LogGroupsSelector = ({
             </table>
           </div>
         </div>
-        <Space layout="block" v={2} />
-        <Label className={styles.logGroupCountLabel}>
-          {selectedLogGroupsCounter} log group{selectedLogGroupsCounter !== 1 && 's'} selected
-        </Label>
-        <Space layout="block" v={1} />
-        <EditorField
-          label="Template variable"
-          width={26}
-          tooltip="Optionally you can specify a single or multi-valued template variable. Select a variable separately or in conjunction with log groups."
-        >
-          <Select
-            isClearable
-            aria-label="Template variable"
-            value={currentVariableOption}
-            allowCustomValue
-            options={variableOptions}
-            onChange={(option) => {
-              const newValues = selectedLogGroups.filter((lg) => !lg.name?.startsWith('$'));
-              if (option?.label) {
-                newValues.push({ name: option.label, arn: option.label });
-              }
-              setSelectedLogGroups(newValues);
-            }}
-          />
-        </EditorField>
         <Space layout="block" v={2} />
         <Label className={styles.logGroupCountLabel}>
           {selectedLogGroupsCounter} log group{selectedLogGroupsCounter !== 1 && 's'} selected
