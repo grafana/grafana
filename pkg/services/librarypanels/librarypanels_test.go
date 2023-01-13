@@ -689,7 +689,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   "",
-		OrgId:     user.OrgID,
+		OrgID:     user.OrgID,
 		User:      user,
 		Overwrite: false,
 	}

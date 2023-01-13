@@ -114,7 +114,7 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 		dash.Dashboard = models.NewDashboardFolder(folderName)
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
-		dash.OrgId = orgID
+		dash.OrgID = orgID
 		dash.Dashboard.SetUid(util.GenerateShortUID())
 		dbDash, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, dash)
 		if err != nil {

@@ -84,7 +84,7 @@ func TestImportDashboardService(t *testing.T) {
 		require.Equal(t, "UDdpyzz7z", resp.UID)
 
 		require.NotNil(t, importDashboardArg)
-		require.Equal(t, int64(3), importDashboardArg.OrgId)
+		require.Equal(t, int64(3), importDashboardArg.OrgID)
 		require.Equal(t, int64(2), importDashboardArg.User.UserID)
 		require.Equal(t, "prometheus", importDashboardArg.Dashboard.PluginId)
 		require.Equal(t, int64(5), importDashboardArg.Dashboard.FolderId)
@@ -148,7 +148,7 @@ func TestImportDashboardService(t *testing.T) {
 		require.Equal(t, "UDdpyzz7z", resp.UID)
 
 		require.NotNil(t, importDashboardArg)
-		require.Equal(t, int64(3), importDashboardArg.OrgId)
+		require.Equal(t, int64(3), importDashboardArg.OrgID)
 		require.Equal(t, int64(2), importDashboardArg.User.UserID)
 		require.Equal(t, "", importDashboardArg.Dashboard.PluginId)
 		require.Equal(t, int64(5), importDashboardArg.Dashboard.FolderId)

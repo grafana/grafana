@@ -80,7 +80,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
-	dash.OrgId = dto.OrgId
+	dash.OrgId = dto.OrgID
 	dash.Title = strings.TrimSpace(dash.Title)
 	dash.Data.Set("title", dash.Title)
 	dash.SetUid(strings.TrimSpace(dash.Uid))
@@ -121,7 +121,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	if isParentFolderChanged {
 		// Check that the user is allowed to add a dashboard to the folder
-		guardian, err := guardian.NewByDashboard(ctx, dash, dto.OrgId, dto.User)
+		guardian, err := guardian.NewByDashboard(ctx, dash, dto.OrgID, dto.User)
 		if err != nil {
 			return nil, err
 		}
@@ -168,7 +168,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	cmd := &models.SaveDashboardCommand{
 		Dashboard: dash.Data,
 		Message:   dto.Message,
-		OrgId:     dto.OrgId,
+		OrgId:     dto.OrgID,
 		Overwrite: dto.Overwrite,
 		UserId:    dto.User.UserID,
 		FolderId:  dash.FolderId,
@@ -246,7 +246,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
 	}
 
-	dto.User = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgId, org.RoleAdmin, provisionerPermissions)
+	dto.User = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
 
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, setting.IsLegacyAlertingEnabled(), false)
 	if err != nil {
@@ -263,7 +263,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 	dashAlertInfo := alerting.DashAlertInfo{
 		User:  dto.User,
 		Dash:  dash,
-		OrgID: dto.OrgId,
+		OrgID: dto.OrgID,
 	}
 
 	// extract/save legacy alerts only if legacy alerting is enabled
@@ -289,7 +289,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 }
 
 func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
-	dto.User = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgId, org.RoleAdmin, provisionerPermissions)
+	dto.User = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgID, org.RoleAdmin, provisionerPermissions)
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {
 		return nil, err
@@ -303,7 +303,7 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 	dashAlertInfo := alerting.DashAlertInfo{
 		User:  dto.User,
 		Dash:  dash,
-		OrgID: dto.OrgId,
+		OrgID: dto.OrgID,
 	}
 
 	// extract/save legacy alerts only if legacy alerting is enabled
@@ -350,7 +350,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 	dashAlertInfo := alerting.DashAlertInfo{
 		User:  dto.User,
 		Dash:  dash,
-		OrgID: dto.OrgId,
+		OrgID: dto.OrgID,
 	}
 
 	// extract/save legacy alerts only if legacy alerting is enabled
@@ -507,12 +507,12 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 			svc = dr.folderPermissions
 		}
 
-		_, err := svc.SetPermissions(ctx, dto.OrgId, dash.Uid, permissions...)
+		_, err := svc.SetPermissions(ctx, dto.OrgID, dash.Uid, permissions...)
 		if err != nil {
 			return err
 		}
 	} else if dr.cfg.EditorsCanAdmin && !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
-		if err := dr.MakeUserAdmin(ctx, dto.OrgId, dto.User.UserID, dash.Id, !inFolder); err != nil {
+		if err := dr.MakeUserAdmin(ctx, dto.OrgID, dto.User.UserID, dash.Id, !inFolder); err != nil {
 			return err
 		}
 	}

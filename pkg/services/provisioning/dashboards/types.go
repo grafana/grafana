@@ -62,7 +62,7 @@ func createDashboardJSON(data *simplejson.Json, lastModified time.Time, cfg *con
 	dash.Dashboard = models.NewDashboardFromJson(data)
 	dash.UpdatedAt = lastModified
 	dash.Overwrite = true
-	dash.OrgId = cfg.OrgID
+	dash.OrgID = cfg.OrgID
 	dash.Dashboard.OrgId = cfg.OrgID
 	dash.Dashboard.FolderId = folderID
 

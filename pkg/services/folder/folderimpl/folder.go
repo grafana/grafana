@@ -317,7 +317,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
-		OrgId:     cmd.OrgID,
+		OrgID:     cmd.OrgID,
 		User:      user,
 	}
 
@@ -461,7 +461,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
-		OrgId:     cmd.OrgID,
+		OrgID:     cmd.OrgID,
 		User:      cmd.SignedInUser,
 		Overwrite: cmd.Overwrite,
 	}

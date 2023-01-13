@@ -930,7 +930,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	}
 
 	dto := dashboards.SaveDashboardDTO{
-		OrgId:     orgID,
+		OrgID:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &user.SignedInUser{
 			UserID:  1,
@@ -970,7 +970,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *mo
 	}
 
 	dto := dashboards.SaveDashboardDTO{
-		OrgId:     orgID,
+		OrgID:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &user.SignedInUser{
 			UserID:  1,
@@ -1003,7 +1003,7 @@ func toSaveDashboardDto(cmd models.SaveDashboardCommand) dashboards.SaveDashboar
 	return dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
-		OrgId:     cmd.OrgId,
+		OrgID:     cmd.OrgId,
 		User:      &user.SignedInUser{UserID: cmd.UserId},
 		Overwrite: cmd.Overwrite,
 	}

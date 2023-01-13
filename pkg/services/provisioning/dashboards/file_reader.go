@@ -313,7 +313,7 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 		dash.Dashboard = models.NewDashboardFolder(folderName)
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
-		dash.OrgId = cfg.OrgID
+		dash.OrgID = cfg.OrgID
 		// set dashboard folderUid if given
 		if cfg.FolderUID == accesscontrol.GeneralFolderUID {
 			return 0, dashboards.ErrFolderInvalidUID

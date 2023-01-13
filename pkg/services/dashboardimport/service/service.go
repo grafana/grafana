@@ -116,7 +116,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	}
 
 	dto := &dashboards.SaveDashboardDTO{
-		OrgId:     saveCmd.OrgId,
+		OrgID:     saveCmd.OrgId,
 		Dashboard: saveCmd.GetDashboardModel(),
 		Overwrite: saveCmd.Overwrite,
 		User:      req.User,
