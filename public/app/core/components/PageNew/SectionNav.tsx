@@ -110,18 +110,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     collapseIcon: css({
-      left: '50%',
+      alignSelf: 'center',
       margin: theme.spacing(1, 0),
+      position: 'relative',
       top: theme.spacing(0),
       transform: 'rotate(90deg)',
       transition: theme.transitions.create('opacity'),
-      translate: '-50%',
 
       [theme.breakpoints.up('md')]: {
+        alignSelf: 'flex-start',
         left: 0,
         margin: theme.spacing(0, 0, 0, 1),
         top: theme.spacing(2),
-        translate: 'none',
         transform: 'none',
       },
 
