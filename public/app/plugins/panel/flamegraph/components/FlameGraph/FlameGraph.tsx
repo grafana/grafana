@@ -137,6 +137,21 @@ const FlameGraph = ({
       const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
       render(pixelsPerTick);
 
+
+      graphRef.current!.onmouseover = () => {
+        if (selectionRef.current) {
+          // Remove the global mouseup handler if it was set
+          window.removeEventListener('mouseup', mouseUpFromLastPosition, true)
+        }
+      }
+
+      graphRef.current!.onmouseout = () => {
+        if (selectionRef.current) {
+          // Handle mouseUp when the mouse is no longer within the canvas' bounding box.
+          window.addEventListener('mouseup', mouseUpFromLastPosition, true)
+        }
+      }
+
       // Track the users starting position to detect if they're doing a mouse drag, or a mouse click
       graphRef.current!.onmousedown = (e) => {
         const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(e.offsetX, e.offsetY, pixelsPerTick);
@@ -150,17 +165,36 @@ const FlameGraph = ({
         });
       };
 
+      graphRef.current!.onmouseup = (e) => {
+        // use the current mouse position
+        handleMouseUp(e.offsetX);
+      }
+
+      function mouseUpFromLastPosition() {
+        // reuse the last known X position
+        handleMouseUp(selectionRef.current!.endX);
+      }
+
       // Check the mouse's new position and figure out if it was a short drag or a real drag.
       // Short drags are considered a click, which allows the user to zoom into the flamegraph on the node they clicked on.
       // Long drags are considered a selection zoom, which allows the user to zoom into an area on the graph.
-      graphRef.current!.onmouseup = (e) => {
+      function handleMouseUp(mouseX?: number) {
+          // Remove the global mouseup handler if it was set
+        window.removeEventListener('mouseup', mouseUpFromLastPosition, true)
+
         if (!selectionRef.current) {
+          return;
+        }
+
+        // Clear the selection on mouseUp if there's no mouseX for some reason.
+        if (!mouseX) {
+          setSelection(undefined);
           return;
         }
 
         // Using the Y position from the mouse down event so that it's based on where the click started
         let { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
-          e.offsetX,
+          mouseX,
           selectionRef.current.startY,
           pixelsPerTick
         );
@@ -170,7 +204,7 @@ const FlameGraph = ({
 
         // 1% of the current width is the number of pixels the mouse can move before it's considered a non-click.
         const delta = 0.01 * graphRef.current!.clientWidth;
-        const diff = Math.abs(e.offsetX - selectionRef.current.startX);
+        const diff = Math.abs(mouseX - selectionRef.current.startX);
         let newMin;
         let newMax;
         if (diff < delta) {
@@ -182,8 +216,8 @@ const FlameGraph = ({
           // We're not clicking on a specific node, so retain the existing topLevelIndex
           levelIndex = topLevelIndex;
           // A non-click selection highlights an area from where the mouse was clicked down, to where it was released.
-          newMin = Math.min(selectionRef.current.startX, e.offsetX) / graphRef.current!.clientWidth;
-          newMax = Math.max(selectionRef.current.startX, e.offsetX) / graphRef.current!.clientWidth;
+          newMin = Math.min(selectionRef.current.startX, mouseX) / graphRef.current!.clientWidth;
+          newMax = Math.max(selectionRef.current.startX, mouseX) / graphRef.current!.clientWidth;
           // Scale the new min and max based on the previous values to account for the current zoom.
           newMin = (rangeMax - rangeMin) * newMin + rangeMin;
           newMax = (rangeMax - rangeMin) * newMax + rangeMin;
