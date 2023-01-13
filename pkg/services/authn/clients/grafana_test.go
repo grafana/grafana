@@ -2,15 +2,136 @@ package clients
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestGrafana_AuthenticateProxy(t *testing.T) {
+	type testCase struct {
+		desc             string
+		req              *authn.Request
+		username         string
+		proxyProperty    string
+		proxyHeaders     map[string]string
+		expectedErr      error
+		expectedIdentity *authn.Identity
+	}
+
+	tests := []testCase{
+		{
+			desc:     "expect valid identity",
+			username: "test",
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{
+						"Username": {"user"},
+						"X-Name":   {"name"},
+						"X-Role":   {"Viewer"},
+						"X-Group":  {"grp1,grp2"},
+						"X-Email":  {"email@email.com"},
+					},
+				},
+			},
+			proxyProperty: "username",
+			proxyHeaders: map[string]string{
+				proxyFieldName:   "X-Name",
+				proxyFieldRole:   "X-Role",
+				proxyFieldGroups: "X-Group",
+				proxyFieldEmail:  "X-Email",
+			},
+			expectedIdentity: &authn.Identity{
+				OrgID:      1,
+				OrgRoles:   map[int64]org.RoleType{1: org.RoleViewer},
+				Login:      "test",
+				Name:       "name",
+				Email:      "email@email.com",
+				AuthModule: "authproxy",
+				AuthID:     "test",
+				Groups:     []string{"grp1", "grp2"},
+				ClientParams: authn.ClientParams{
+					SyncUser:        true,
+					SyncTeamMembers: true,
+					AllowSignUp:     true,
+					LookUpParams: models.UserLookupParams{
+						Email: strPtr("email@email.com"),
+						Login: strPtr("test"),
+					},
+				},
+			},
+		},
+		{
+			desc:     "should set email as both email and login when configured proxy auth header property is email",
+			username: "test@test.com",
+			req: &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{
+				"Email": {"test@test.com"},
+			}}},
+			expectedIdentity: &authn.Identity{
+				Login:      "test@test.com",
+				Email:      "test@test.com",
+				AuthModule: "authproxy",
+				AuthID:     "test@test.com",
+				ClientParams: authn.ClientParams{
+					SyncUser:        true,
+					SyncTeamMembers: true,
+					AllowSignUp:     true,
+					LookUpParams: models.UserLookupParams{
+						Email: strPtr("test@test.com"),
+						Login: strPtr("test@test.com"),
+					},
+				},
+			},
+			proxyProperty: "email",
+		},
+		{
+			desc:          "should return error on invalid auth proxy header property",
+			req:           &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{}}},
+			proxyProperty: "other",
+			expectedErr:   errInvalidProxyHeader,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AuthProxyAutoSignUp = true
+			cfg.AuthProxyHeaders = tt.proxyHeaders
+			cfg.AuthProxyHeaderProperty = tt.proxyProperty
+			c := ProvideGrafana(cfg, usertest.NewUserServiceFake())
+
+			identity, err := c.AuthenticateProxy(context.Background(), tt.req, tt.username)
+			assert.ErrorIs(t, err, tt.expectedErr)
+			if tt.expectedIdentity != nil {
+				assert.Equal(t, tt.expectedIdentity.OrgID, identity.OrgID)
+				assert.Equal(t, tt.expectedIdentity.Login, identity.Login)
+				assert.Equal(t, tt.expectedIdentity.Name, identity.Name)
+				assert.Equal(t, tt.expectedIdentity.Email, identity.Email)
+				assert.Equal(t, tt.expectedIdentity.AuthID, identity.AuthID)
+				assert.Equal(t, tt.expectedIdentity.AuthModule, identity.AuthModule)
+				assert.Equal(t, tt.expectedIdentity.Groups, identity.Groups)
+
+				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)
+				assert.Equal(t, tt.expectedIdentity.ClientParams.AllowSignUp, identity.ClientParams.AllowSignUp)
+				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncTeamMembers, identity.ClientParams.SyncTeamMembers)
+				assert.Equal(t, tt.expectedIdentity.ClientParams.EnableDisabledUsers, identity.ClientParams.EnableDisabledUsers)
+
+				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Email, identity.ClientParams.LookUpParams.Email)
+				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Login, identity.ClientParams.LookUpParams.Login)
+				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.UserID, identity.ClientParams.LookUpParams.UserID)
+			} else {
+				assert.Nil(t, tt.expectedIdentity)
+			}
+		})
+	}
+}
 
 func TestGrafana_AuthenticatePassword(t *testing.T) {
 	type testCase struct {
@@ -60,7 +181,7 @@ func TestGrafana_AuthenticatePassword(t *testing.T) {
 				userService.ExpectedError = user.ErrUserNotFound
 			}
 
-			c := ProvideGrafana(userService)
+			c := ProvideGrafana(setting.NewCfg(), userService)
 			identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, tt.username, tt.password)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)

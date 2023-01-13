@@ -85,7 +85,7 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 				orgID = int64(c.cfg.AutoAssignOrgId)
 			}
 			identity.OrgID = orgID
-			identity.OrgRoles[orgID] = role
+			identity.OrgRoles = map[int64]org.RoleType{orgID: role}
 		}
 	}
 
