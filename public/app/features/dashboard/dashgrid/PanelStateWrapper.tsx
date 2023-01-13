@@ -646,6 +646,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         <PanelChrome
           width={width}
           height={height}
+          transparent={transparent}
           title={title}
           loadingState={data.state}
           status={{
