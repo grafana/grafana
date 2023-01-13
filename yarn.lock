@@ -4939,7 +4939,7 @@ __metadata:
     "@types/uuid": 8.3.4
     babel-loader: 9.1.0
     blink-diff: 1.0.13
-    chrome-remote-interface: 0.31.3
+    chrome-remote-interface: 0.32.0
     commander: 8.3.0
     cypress: 9.5.1
     cypress-file-upload: 5.0.8
@@ -5316,7 +5316,7 @@ __metadata:
     calculate-size: 1.1.1
     classnames: 2.3.2
     common-tags: 1.8.2
-    core-js: 3.26.0
+    core-js: 3.27.1
     css-loader: 6.7.1
     csstype: 3.1.1
     d3: 5.15.0
@@ -15776,15 +15776,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chrome-remote-interface@npm:0.31.3":
-  version: 0.31.3
-  resolution: "chrome-remote-interface@npm:0.31.3"
+"chrome-remote-interface@npm:0.32.0":
+  version: 0.32.0
+  resolution: "chrome-remote-interface@npm:0.32.0"
   dependencies:
     commander: 2.11.x
     ws: ^7.2.0
   bin:
     chrome-remote-interface: bin/client.js
-  checksum: 460db5d5aa3f8a8889780c2efe24a5516afacb8983e3ec090853fd9f4a6c1878b7470c7306724b01af596394f53c2bea8ed8176d88d6feee36d67f628fe4fff6
+  checksum: 9be5e5bce0856d3fe4e32339857514d16ca4831310de4475a8e62f604fa346d939d82058aa06411ba61d2ee3cee8d0288599221908d82cd6e548ad09dd215794
   languageName: node
   linkType: hard
 
@@ -16672,10 +16672,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:3.26.0, core-js@npm:^3.0.4":
-  version: 3.26.0
-  resolution: "core-js@npm:3.26.0"
-  checksum: 0149eb9d3909fde9c17626af3a6e625c326e8598d0bb5e6c5b48a18e5fcd4eaf48d4964d873667d8148542ff590fb98eb3f93618da114ca54999d6bc0349734b
+"core-js@npm:3.27.1":
+  version: 3.27.1
+  resolution: "core-js@npm:3.27.1"
+  checksum: d50b5f88aea4302512ad9446c18e90f4d35dea1e6d8d3f87337690677061565ff11a670f1e0c87de57aa6074375fbb25ed5784076c040d3c4de8b4bce7d2ebeb
   languageName: node
   linkType: hard
 
@@ -16683,6 +16683,13 @@ __metadata:
   version: 2.6.12
   resolution: "core-js@npm:2.6.12"
   checksum: 44fa9934a85f8c78d61e0c8b7b22436330471ffe59ec5076fe7f324d6e8cf7f824b14b1c81ca73608b13bdb0fef035bd820989bf059767ad6fa13123bb8bd016
+  languageName: node
+  linkType: hard
+
+"core-js@npm:^3.0.4":
+  version: 3.26.0
+  resolution: "core-js@npm:3.26.0"
+  checksum: 0149eb9d3909fde9c17626af3a6e625c326e8598d0bb5e6c5b48a18e5fcd4eaf48d4964d873667d8148542ff590fb98eb3f93618da114ca54999d6bc0349734b
   languageName: node
   linkType: hard
 
@@ -22114,7 +22121,7 @@ __metadata:
     comlink: 4.3.1
     common-tags: 1.8.2
     copy-webpack-plugin: 9.0.1
-    core-js: 3.26.0
+    core-js: 3.27.1
     css-loader: 6.7.1
     css-minimizer-webpack-plugin: 4.2.2
     cypress: 9.5.1
