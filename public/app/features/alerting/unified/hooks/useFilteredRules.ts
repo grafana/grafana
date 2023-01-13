@@ -19,6 +19,7 @@ export function useRulesFilter() {
   const searchQuery = queryParams.get('search') ?? '';
 
   const filterState = getSearchFilterFromQuery(searchQuery);
+  const hasActiveFilters = Object.values(filterState).some((fs) => (Array.isArray(fs) ? fs.length > 0 : !!fs));
 
   const updateFilters = useCallback(
     (newFilter: SearchFilterState) => {
@@ -68,11 +69,10 @@ export function useRulesFilter() {
     }
   }, [queryParams, updateFilters, filterState, updateQueryParams]);
 
-  return { filterState, searchQuery, setSearchQuery, updateFilters };
+  return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters };
 }
 
-export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
-  const { filterState } = useRulesFilter();
+export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: SearchFilterState) => {
   return useMemo(() => filterRules(namespaces, filterState), [namespaces, filterState]);
 };
 

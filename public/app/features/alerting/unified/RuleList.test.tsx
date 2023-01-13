@@ -493,10 +493,10 @@ describe('RuleList', () => {
     expect(groups).toHaveLength(2);
 
     const filterInput = ui.rulesFilterInput.get();
-    await userEvent.type(filterInput, '{{foo="bar"}');
+    await userEvent.type(filterInput, 'l:foo=bar');
 
     // Input is debounced so wait for it to be visible
-    await waitFor(() => expect(filterInput).toHaveValue('{foo="bar"}'));
+    await waitFor(() => expect(filterInput).toHaveValue('l:foo=bar'));
     // Group doesn't contain matching labels
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
 
@@ -512,17 +512,17 @@ describe('RuleList', () => {
 
     // Check for different label matchers
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, '{{foo!="bar",foo!="baz"}');
+    await userEvent.type(filterInput, 'l:foo!=bar l:foo!=baz');
     // Group doesn't contain matching labels
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
 
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, '{{foo=~"b.+"}');
+    await userEvent.type(filterInput, 'l:"foo=~b.+"');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(2));
 
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, '{{region="US"}');
+    await userEvent.type(filterInput, 'l:region=US');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
   });

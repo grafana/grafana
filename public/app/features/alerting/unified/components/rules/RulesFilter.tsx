@@ -53,7 +53,7 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
   const dataSourceKey = `dataSource-${filterKey}`;
   const queryStringKey = `queryString-${filterKey}`;
 
-  const { filterState, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
+  const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
 
   const styles = useStyles2(getStyles);
   const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
@@ -159,14 +159,7 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
               />
             </div>
           </Stack>
-          {(filterState.freeFormWords.length ||
-            filterState.dataSourceName ||
-            filterState.namespace ||
-            filterState.ruleType ||
-            filterState.ruleState ||
-            filterState.labels.length ||
-            filterState.groupName ||
-            filterState.ruleName) && (
+          {hasActiveFilters && (
             <div>
               <Button fullWidth={false} icon="times" variant="secondary" onClick={handleClearFiltersClick}>
                 Clear filters

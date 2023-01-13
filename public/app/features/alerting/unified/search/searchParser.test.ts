@@ -93,6 +93,15 @@ describe('Alert rules searchParser', () => {
       expect(filter.freeFormWords).toContain('utilization');
       expect(filter.freeFormWords).toContain('cpu');
     });
+
+    it('should parse labels containing matchers', () => {
+      const query = 'l:region!=US l:"team=~fe.*devs" l:cluster!~ba.+';
+      const filter = getSearchFilterFromQuery(query);
+
+      expect(filter.labels).toContain('region!=US');
+      expect(filter.labels).toContain('team=~fe.*devs');
+      expect(filter.labels).toContain('cluster!~ba.+');
+    });
   });
 
   describe('applySearchFilterToQuery', () => {
