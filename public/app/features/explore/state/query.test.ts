@@ -34,7 +34,7 @@ import {
   scanStartAction,
   scanStopAction,
   storeLogsVolumeDataProviderAction,
-  setLogsVolumeEnabled,
+  setLogsVolumeEnabled, addQueryRow,
 } from './query';
 import { makeExplorePaneState } from './utils';
 
@@ -59,6 +59,17 @@ const datasources: DataSourceApi[] = [
   } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
 ];
 
+const datasourcesMixed: DataSourceApi[] = [
+  {
+    name: 'testDs3',
+    type: 'mixed', //TODO: ????
+    uid: 'ds3',
+    getRef: () => {
+      return { type: 'mixed', uid: 'ds3' };
+    },
+  } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+];
+
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
   getTimeSrv: () => ({
@@ -66,6 +77,11 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
     timeRange: jest.fn().mockReturnValue({}),
   }),
 }));
+
+// TODO: need to be used in line 98, occasionally change for my tests
+const featToggles = {
+      exploreMixedDatasource: false,
+    }
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -77,6 +93,10 @@ jest.mock('@grafana/runtime', () => ({
       get: (uid?: string) => datasources.find((ds) => ds.uid === uid) || datasources[0],
     };
   },
+  config: {
+    featureToggles: {
+      exploreMixedDatasource: false,
+    },}
 }));
 
 function setupQueryResponse(state: StoreState) {
@@ -253,7 +273,7 @@ describe('reducer', () => {
   });
 
   describe('query rows', () => {
-    it('should add query row: no query row yet and rootDatasource is not mixed', () => {
+    it('should add query row when no query row yet (addQueryRowAction)', () => {
       reducerTester<ExploreItemState>()
         .givenReducer(queryReducer, {
           queries: [],
@@ -270,25 +290,54 @@ describe('reducer', () => {
           queryKeys: ['mockKey-0'],
         } as unknown as ExploreItemState);
     });
-    it('should add query row: one query row and rootDatasource is not mixed', () => {
+    it('should add query row when there is already one query row (addQueryRowAction)', () => {
       reducerTester<ExploreItemState>()
         .givenReducer(queryReducer, {
-          queries: [{ refId: 'A', key: 'initialRow' }],
+          queries: [{ refId: 'A', key: 'initialRow', datasource: {type: 'loki'}}],
         } as unknown as ExploreItemState)
         .whenActionIsDispatched(
           addQueryRowAction({
             exploreId: ExploreId.left,
-            query: { refId: 'B', key: 'mockKey' },
+            query: { refId: 'B', key: 'mockKey', datasource: {type: 'loki'} },
             index: 0,
           })
         )
         .thenStateShouldEqual({
           queries: [
-            { refId: 'A', key: 'initialRow' },
-            { refId: 'B', key: 'mockKey' },
+            { refId: 'A', key: 'initialRow', datasource: {type: 'loki'} },
+            { refId: 'B', key: 'mockKey', datasource: {type: 'loki'} },
           ],
           queryKeys: ['initialRow-0', 'mockKey-1'],
         } as unknown as ExploreItemState);
+    });
+    it('should add query row', async () => {
+      let dispatch: ThunkDispatch,
+      getState: () => StoreState
+
+      const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...(defaultInitialState as any),
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            // TODO: use my new const here
+            // datasourceInstance: {
+            //   query: jest.fn(),
+            //   getRef: jest.fn(),
+            //   meta: {
+            //     id: 'someId',
+            //   },
+            // },
+          },
+        },
+      });
+
+      dispatch = store.dispatch;
+      getState = store.getState;
+
+      setupQueryResponse(getState());
+
+      await dispatch(addQueryRow(ExploreId.left, 1))
+
     });
   });
 
@@ -427,6 +476,29 @@ describe('reducer', () => {
 
       setupQueryResponse(getState());
     });
+
+//     jest.mock('@grafana/runtime/src/config', () => ({
+//   config: {
+//     buildInfo: {
+//       edition: 'Enterprise',
+//       version: '9.0.0',
+//       commit: 'abc123',
+//       env: 'dev',
+//       latestVersion: '',
+//       hasUpdate: false,
+//       hideVersion: false,
+//     },
+//     licenseInfo: {
+//       enabledFeatures: { 'reports.email': true },
+//     },
+//     featureToggles: {
+//       accesscontrol: true,
+//     },
+//     bootData: { navTree: [], user: {} },
+//     rendererAvailable: true,
+//   },
+// }));
+
 
     it('should cancel any unfinished logs volume queries when a new query is run', async () => {
       await dispatch(runQueries(ExploreId.left));
