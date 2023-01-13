@@ -10,12 +10,15 @@ import (
 )
 
 type sqlStoreTest struct {
-	name          string
-	dbType        string
-	dbHost        string
-	dbURL         string
-	connStrValues []string
-	err           error
+	name                  string
+	dbType                string
+	dbHost                string
+	dbURL                 string
+	dbUser                string
+	dbPwd                 string
+	connStrValues         []string
+	connStrExcludedValues []string
+	err                   error
 }
 
 var sqlStoreTestCases = []sqlStoreTest{
@@ -36,6 +39,23 @@ var sqlStoreTestCases = []sqlStoreTest{
 		dbType:        "postgres",
 		dbHost:        "1.2.3.4",
 		connStrValues: []string{"host=1.2.3.4", "port=5432"},
+	},
+	{
+		name:          "Postgres username and password",
+		dbType:        "postgres",
+		dbHost:        "1.2.3.4",
+		dbUser:        "grafana",
+		dbPwd:         "password",
+		connStrValues: []string{"host=1.2.3.4", "port=5432", "user=grafana", "password=password"},
+	},
+	{
+		name:                  "Postgres username no password",
+		dbType:                "postgres",
+		dbHost:                "1.2.3.4",
+		dbUser:                "grafana",
+		dbPwd:                 "",
+		connStrValues:         []string{"host=1.2.3.4", "port=5432", "user=grafana"},
+		connStrExcludedValues: []string{"password"},
 	},
 	{
 		name:          "MySQL IPv4 (Default Port)",
@@ -87,18 +107,22 @@ func TestIntegrationSQLConnectionString(t *testing.T) {
 	for _, testCase := range sqlStoreTestCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			sqlstore := &SQLStore{}
-			sqlstore.Cfg = makeSQLStoreTestConfig(t, testCase.dbType, testCase.dbHost, testCase.dbURL)
+			sqlstore.Cfg = makeSQLStoreTestConfig(t, testCase.dbType, testCase.dbHost, testCase.dbUser, testCase.dbPwd, testCase.dbURL)
 			connStr, err := sqlstore.buildConnectionString()
 			require.Equal(t, testCase.err, err)
 
 			for _, connSubStr := range testCase.connStrValues {
 				require.Contains(t, connStr, connSubStr)
 			}
+
+			for _, connExcludedSubStr := range testCase.connStrExcludedValues {
+				require.NotContains(t, connStr, connExcludedSubStr)
+			}
 		})
 	}
 }
 
-func makeSQLStoreTestConfig(t *testing.T, dbType, host, dbURL string) *setting.Cfg {
+func makeSQLStoreTestConfig(t *testing.T, dbType, host, user, password, dbURL string) *setting.Cfg {
 	t.Helper()
 
 	cfg := setting.NewCfg()
@@ -111,11 +135,11 @@ func makeSQLStoreTestConfig(t *testing.T, dbType, host, dbURL string) *setting.C
 	require.NoError(t, err)
 	_, err = sec.NewKey("url", dbURL)
 	require.NoError(t, err)
-	_, err = sec.NewKey("user", "user")
+	_, err = sec.NewKey("user", user)
 	require.NoError(t, err)
 	_, err = sec.NewKey("name", "test_db")
 	require.NoError(t, err)
-	_, err = sec.NewKey("password", "pass")
+	_, err = sec.NewKey("password", password)
 	require.NoError(t, err)
 
 	cfg.IsFeatureToggleEnabled = func(key string) bool { return true }

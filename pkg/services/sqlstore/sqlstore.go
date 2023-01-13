@@ -313,15 +313,15 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			return "", fmt.Errorf("invalid host specifier '%s': %w", ss.dbCfg.Host, err)
 		}
 
-		if ss.dbCfg.Pwd == "" {
-			ss.dbCfg.Pwd = "''"
-		}
 		if ss.dbCfg.User == "" {
 			ss.dbCfg.User = "''"
 		}
-		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s",
-			ss.dbCfg.User, ss.dbCfg.Pwd, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath,
+		cnnstr = fmt.Sprintf("user=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s",
+			ss.dbCfg.User, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath,
 			ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath)
+		if ss.dbCfg.Pwd != "" {
+			cnnstr += fmt.Sprintf(" password=%s", ss.dbCfg.Pwd)
+		}
 
 		cnnstr += ss.buildExtraConnectionString(' ')
 	case migrator.SQLite:
