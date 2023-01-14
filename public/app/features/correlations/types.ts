@@ -8,6 +8,7 @@ type CorrelationConfigType = 'query';
 export interface CorrelationConfig {
   field: string;
   target: object;
+  source: object;
   type: CorrelationConfigType;
 }
 

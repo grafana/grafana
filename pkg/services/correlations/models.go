@@ -18,6 +18,12 @@ var (
 
 type CorrelationConfigType string
 
+type Source struct {
+	TransformationField string `json:"transformationfield"`
+	TransformationType  string `json:"transformationtype"`
+	Transformation      string `json:"transformation,omitempty"`
+}
+
 const (
 	ConfigTypeQuery CorrelationConfigType = "query"
 )
@@ -42,21 +48,33 @@ type CorrelationConfig struct {
 	// required:true
 	// example: { "expr": "job=app" }
 	Target map[string]interface{} `json:"target" binding:"Required"`
+	/*
+		UPDATE correlation
+		SET config='{"type":"query","field":"name","source":[{"transformationfield":"msg","transformationtype":"regex","transformation":"\\(?:msg\\)="}],"target":{"editorMode":"code","format":"table","rawQuery":true,"rawSql":"SELECT * FROM superhero WHERE name=${__data.fields.name}","refId":"A","sql":{"columns":[{"parameters":[],"type":"function"}],"groupBy":[{"property":{"type":"string"},"type":"groupBy"}],"limit":50}}}'
+		WHERE id = 425
+	*/
+	Source []Source `json:"source"`
 }
 
 func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 	target := c.Target
+	source := c.Source
 	if target == nil {
 		target = map[string]interface{}{}
+	}
+	if source == nil {
+		source = nil
 	}
 	return json.Marshal(struct {
 		Type   CorrelationConfigType  `json:"type"`
 		Field  string                 `json:"field"`
 		Target map[string]interface{} `json:"target"`
+		Source []Source               `json:"source"`
 	}{
 		Type:   ConfigTypeQuery,
 		Field:  c.Field,
 		Target: target,
+		Source: source,
 	})
 }
 
@@ -151,6 +169,9 @@ type CorrelationConfigUpdateDTO struct {
 	// Target data query
 	// example: { "expr": "job=app" }
 	Target *map[string]interface{} `json:"target"`
+	// Source data transformation
+	// example: TODO
+	Source *Source `json:"source"`
 }
 
 func (c CorrelationConfigUpdateDTO) Validate() error {
