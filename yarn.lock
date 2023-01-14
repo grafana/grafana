@@ -7107,12 +7107,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/lr@npm:1.2.3":
-  version: 1.2.3
-  resolution: "@lezer/lr@npm:1.2.3"
+"@lezer/lr@npm:1.3.1":
+  version: 1.3.1
+  resolution: "@lezer/lr@npm:1.3.1"
   dependencies:
     "@lezer/common": ^1.0.0
-  checksum: 118db077d32f6eb9d6b219c766d7e5715c6c004d89d76ed0137ea2a364aeca67f21dc5924ea67a649b5de1d13bfbb85571923b38536e6995820eb0a5c8844594
+  checksum: 01b421b9724d43a00a97639344cd89c539e9740b7bedc8270882192e4205f68679e5b7c6837dde7756970a418bd4e710e4a778ab7c6713a2331bea3049232ca8
   languageName: node
   linkType: hard
 
@@ -22043,7 +22043,7 @@ __metadata:
     "@leeoniya/ufuzzy": 0.9.1
     "@lezer/common": 1.0.1
     "@lezer/highlight": 1.1.2
-    "@lezer/lr": 1.2.3
+    "@lezer/lr": 1.3.1
     "@opentelemetry/api": 1.3.0
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.8.0
