@@ -15,6 +15,7 @@ import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { TimeSeriesOptions } from './types';
 import { getTimezones, prepareGraphableFields, regenerateLinksSupplier } from './utils';
+import { ExemplarsPlugin2 } from './plugins/ExemplarsPlugin2';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -39,6 +40,11 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
+
+  let matchByLabel = 'pod';
+  let exemplarsFrame = data.annotations?.find((f) => f.name === 'exemplar');
+  let annotations = data.annotations?.filter((f) => f !== exemplarsFrame);
+  const seriesLabels = useMemo(() => !frames ? [] : frames.map((fr) => fr.fields[1].labels?.[matchByLabel] ?? ''), [frames, matchByLabel]);
 
   if (!frames) {
     return (
@@ -88,9 +94,9 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
               />
             )}
             {/* Renders annotation markers*/}
-            {data.annotations && (
-              <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
-            )}
+            {annotations?.length ? (
+              <AnnotationsPlugin annotations={annotations} config={config} timeZone={timeZone} />
+            ) : null}
             {/* Enables annotations creation*/}
             {enableAnnotationCreation ? (
               <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
@@ -132,13 +138,19 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                 defaultItems={[]}
               />
             )}
-            {data.annotations && (
-              <ExemplarsPlugin
-                visibleSeries={getVisibleLabels(config, frames)}
+            {exemplarsFrame && (
+              // <ExemplarsPlugin
+              //   visibleSeries={getVisibleLabels(config, frames)}
+              //   config={config}
+              //   exemplars={data.annotations}
+              //   timeZone={timeZone}
+              //   getFieldLinks={getFieldLinks}
+              // />
+              <ExemplarsPlugin2
                 config={config}
-                exemplars={data.annotations}
-                timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
+                exemplars={exemplarsFrame}
+                matchByField={matchByLabel}
+                seriesLabels={seriesLabels}
               />
             )}
 
