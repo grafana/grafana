@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -29,16 +28,16 @@ func NewPermissionChecker(sqlStore db.DB, features featuremgmt.FeatureToggles,
 	return &PermissionChecker{sqlStore: sqlStore, features: features, accessControl: accessControl, annotationsRepo: annotationsRepo}
 }
 
-func (c *PermissionChecker) getDashboardByUid(ctx context.Context, orgID int64, uid string) (*models.Dashboard, error) {
-	query := models.GetDashboardQuery{Uid: uid, OrgId: orgID}
+func (c *PermissionChecker) getDashboardByUid(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, error) {
+	query := dashboards.GetDashboardQuery{UID: uid, OrgID: orgID}
 	if err := c.dashboardService.GetDashboard(ctx, &query); err != nil {
 		return nil, err
 	}
 	return query.Result, nil
 }
 
-func (c *PermissionChecker) getDashboardById(ctx context.Context, orgID int64, id int64) (*models.Dashboard, error) {
-	query := models.GetDashboardQuery{Id: id, OrgId: orgID}
+func (c *PermissionChecker) getDashboardById(ctx context.Context, orgID int64, id int64) (*dashboards.Dashboard, error) {
+	query := dashboards.GetDashboardQuery{ID: id, OrgID: orgID}
 	if err := c.dashboardService.GetDashboard(ctx, &query); err != nil {
 		return nil, err
 	}
