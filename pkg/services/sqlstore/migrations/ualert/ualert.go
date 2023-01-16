@@ -927,13 +927,3 @@ func (s *uidSet) generateUid() (string, error) {
 
 	return "", errors.New("failed to generate UID")
 }
-
-func AddForErrorColumnMigration(mg *migrator.Migrator) {
-	if !mg.Cfg.UnifiedAlerting.IsEnabled() {
-		return
-	}
-	mg.AddMigration(
-		"add for error column to alert_rule table",
-		migrator.NewRawSQLMigration("ALTER TABLE alert_rule ADD COLUMN for_error INTEGER DEFAULT 0;"),
-	)
-}
