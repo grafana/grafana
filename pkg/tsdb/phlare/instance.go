@@ -1,9 +1,15 @@
 package phlare
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +21,7 @@ import (
 	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
 	"github.com/grafana/phlare/api/gen/proto/go/querier/v1/querierv1connect"
 	typesv1 "github.com/grafana/phlare/api/gen/proto/go/types/v1"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -55,6 +62,9 @@ func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallRe
 	}
 	if req.Path == "series" {
 		return d.callSeries(ctx, req, sender)
+	}
+	if req.Path == "downloadPprof" {
+		return d.callDownloadPprof(ctx, req, sender)
 	}
 	return sender.Send(&backend.CallResourceResponse{
 		Status: 404,
@@ -124,6 +134,74 @@ func (d *PhlareDatasource) callLabelNames(ctx context.Context, req *backend.Call
 	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (d *PhlareDatasource) callDownloadPprof(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		return err
+	}
+	q := u.Query()
+	profileTypeId := q.Get("profileTypeId")
+	if profileTypeId == "" {
+		return errors.New("profileTypeId is required")
+	}
+	labelSelector := q.Get("labelSelector")
+	if labelSelector == "" {
+		return errors.New("labelSelector is required")
+	}
+	startTime, endTime := q.Get("start"), q.Get("end")
+	if startTime == "" || endTime == "" {
+		return errors.New("start and end are required")
+	}
+	start, err := strconv.ParseInt(startTime, 10, 64)
+	if err != nil {
+		return fmt.Errorf("start is not a valid timestamp: %w", err)
+	}
+	end, err := strconv.ParseInt(endTime, 10, 64)
+	if err != nil {
+		return fmt.Errorf("end is not a valid timestamp: %w", err)
+	}
+	resp, err := d.client.SelectMergeProfile(ctx, connect.NewRequest(&querierv1.SelectMergeProfileRequest{
+		ProfileTypeID: profileTypeId,
+		LabelSelector: labelSelector,
+		Start:         start,
+		End:           end,
+	}))
+	if err != nil {
+		return fmt.Errorf("datasource error: %w", err)
+	}
+	data, err := proto.Marshal(resp.Msg)
+	if err != nil {
+		return fmt.Errorf("error marshalling response to proto: %w", err)
+	}
+	var (
+		buf = bytes.NewBuffer(make([]byte, 0, len(data)))
+		gw  = gzip.NewWriter(buf)
+	)
+
+	_, err = gw.Write(data)
+	if err != nil {
+		return err
+	}
+	err = gw.Close()
+	if err != nil {
+		return fmt.Errorf("error closing pprof gzip writer: %w", err)
+	}
+	err = sender.Send(&backend.CallResourceResponse{
+		Body: buf.Bytes(),
+		Headers: map[string][]string{
+			"Content-Encoding":       {"gzip"},
+			"Content-Type":           {"application/octet-stream"},
+			"Content-Disposition":    {"attachment; filename=profile.pb.gz"},
+			"X-Content-Type-Options": {"nosniff"},
+		},
+		Status: http.StatusOK,
+	})
+	if err != nil {
+		return fmt.Errorf("error sending resource response: %w", err)
 	}
 	return nil
 }

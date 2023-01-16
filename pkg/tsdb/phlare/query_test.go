@@ -543,30 +543,31 @@ func (f *FakeClient) SelectSeries(ctx context.Context, req *connect.Request[quer
 	}, nil
 }
 
-func (f *FakeClient) SelectMergeProfile(ctx context.Context, c *connect.Request[querierv1.SelectMergeProfileRequest]) (*connect.Response[googlev1.Profile], error) {
-	f.Req = c
-	p := &googlev1.Profile{
-		SampleType: []*googlev1.ValueType{
-			{Type: 1, Unit: 2},
-		},
-		Sample: []*googlev1.Sample{
-			{
-				Value: []int64{1},
-				LocationId: []uint64{
-					1, 2,
-				},
+var fakeProfile = &googlev1.Profile{
+	SampleType: []*googlev1.ValueType{
+		{Type: 1, Unit: 2},
+	},
+	Sample: []*googlev1.Sample{
+		{
+			Value: []int64{1},
+			LocationId: []uint64{
+				1, 2,
 			},
 		},
-		Mapping: []*googlev1.Mapping{{Id: 1}},
-		Location: []*googlev1.Location{
-			{Id: 1, MappingId: 1, Line: []*googlev1.Line{{FunctionId: 1}}},
-			{Id: 2, MappingId: 1, Line: []*googlev1.Line{{FunctionId: 2}}},
-		},
-		Function: []*googlev1.Function{
-			{Id: 1, Name: 3},
-			{Id: 2, Name: 4},
-		},
-		StringTable: []string{"", "cpu", "nanoseconds", "foo", "bar"},
-	}
-	return connect.NewResponse(p), nil
+	},
+	Mapping: []*googlev1.Mapping{{Id: 1}},
+	Location: []*googlev1.Location{
+		{Id: 1, MappingId: 1, Line: []*googlev1.Line{{FunctionId: 1}}},
+		{Id: 2, MappingId: 1, Line: []*googlev1.Line{{FunctionId: 2}}},
+	},
+	Function: []*googlev1.Function{
+		{Id: 1, Name: 3},
+		{Id: 2, Name: 4},
+	},
+	StringTable: []string{"", "cpu", "nanoseconds", "foo", "bar"},
+}
+
+func (f *FakeClient) SelectMergeProfile(ctx context.Context, c *connect.Request[querierv1.SelectMergeProfileRequest]) (*connect.Response[googlev1.Profile], error) {
+	f.Req = c
+	return connect.NewResponse(fakeProfile), nil
 }
