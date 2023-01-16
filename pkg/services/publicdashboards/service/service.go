@@ -75,15 +75,25 @@ func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId i
 	return dash, nil
 }
 
-// FindPublicDashboardAndDashboardByAccessToken Gets public dashboard and a dashboard by access token
-func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
+// FindByAccessToken Gets public dashboard by access token
+func (pd *PublicDashboardServiceImpl) FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error) {
 	pubdash, err := pd.store.FindByAccessToken(ctx, accessToken)
 	if err != nil {
-		return nil, nil, ErrInternalServerError.Errorf("FindPublicDashboardAndDashboardByAccessToken: failed to find a public dashboard: %w", err)
+		return nil, ErrInternalServerError.Errorf("FindByAccessToken: failed to find a public dashboard: %w", err)
 	}
 
 	if pubdash == nil {
-		return nil, nil, ErrPublicDashboardNotFound.Errorf("FindPublicDashboardAndDashboardByAccessToken: Public dashboard not found accessToken: %s", accessToken)
+		return nil, ErrPublicDashboardNotFound.Errorf("FindByAccessToken: Public dashboard not found accessToken: %s", accessToken)
+	}
+
+	return pubdash, nil
+}
+
+// FindPublicDashboardAndDashboardByAccessToken Gets public dashboard and a dashboard by access token
+func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
+	pubdash, err := pd.FindByAccessToken(ctx, accessToken)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	if !pubdash.IsEnabled {
@@ -168,9 +178,11 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 		},
 	}
 
-	_, err = pd.store.Create(ctx, cmd)
+	affectedRows, err := pd.store.Create(ctx, cmd)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Create: failed to create the public dashboard: %w", err)
+		return nil, ErrInternalServerError.Errorf("Create: failed to create the public dashboard with Uid %s: %w", uid, err)
+	} else if affectedRows == 0 {
+		return nil, ErrInternalServerError.Errorf("Create: failed to create a database entry for public dashboard with Uid %s. 0 rows changed, no error reported.", uid)
 	}
 
 	//Get latest public dashboard to return
@@ -218,12 +230,13 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 	// set values to update
 	cmd := SavePublicDashboardCommand{
 		PublicDashboard: PublicDashboard{
-			Uid:                existingPubdash.Uid,
-			IsEnabled:          dto.PublicDashboard.IsEnabled,
-			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
-			TimeSettings:       dto.PublicDashboard.TimeSettings,
-			UpdatedBy:          dto.UserId,
-			UpdatedAt:          time.Now(),
+			Uid:                  existingPubdash.Uid,
+			IsEnabled:            dto.PublicDashboard.IsEnabled,
+			AnnotationsEnabled:   dto.PublicDashboard.AnnotationsEnabled,
+			TimeSelectionEnabled: dto.PublicDashboard.TimeSelectionEnabled,
+			TimeSettings:         dto.PublicDashboard.TimeSettings,
+			UpdatedBy:            dto.UserId,
+			UpdatedAt:            time.Now(),
 		},
 	}
 

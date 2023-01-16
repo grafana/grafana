@@ -72,7 +72,7 @@ export const getStyles = () => {
   };
 };
 
-type ScrubberProps = {
+export type ScrubberProps = {
   isDragging: boolean;
   position: number;
   onMouseDown: (evt: React.MouseEvent<any>) => void;

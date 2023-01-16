@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/legacy/apps/
-  - /docs/grafana/latest/plugins/developing/apps/
+  - ../../../plugins/developing/apps/
 keywords:
   - grafana
   - plugins
@@ -14,8 +13,6 @@ title: Legacy app plugins
 App plugins are Grafana plugins that can bundle data source and panel plugins within one package. They also enable the plugin author to create custom pages within Grafana. The custom pages enable the plugin author to include things like documentation, sign-up forms, or to control other services with HTTP requests.
 
 Data source and panel plugins will show up like normal plugins. The app pages will be available in the main menu.
-
-{{< figure class="float-right"  src="/static/img/docs/v3/app-in-main-menu.png" caption="App in Main Menu" >}}
 
 ## Enabling app plugins
 

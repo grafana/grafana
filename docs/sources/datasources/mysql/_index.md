@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/datasources/mysql/
-  - /docs/grafana/latest/datasources/mysql/
-  - /docs/grafana/latest/data-sources/mysql/
+  - ../data-sources/mysql/
+  - ../features/datasources/mysql/
 description: Guide for using MySQL in Grafana
 keywords:
   - grafana
@@ -92,9 +91,9 @@ datasources:
   - name: MySQL
     type: mysql
     url: localhost:3306
-    database: grafana
     user: grafana
     jsonData:
+      database: grafana
       maxOpenConns: 0 # Grafana v5.4+
       maxIdleConns: 2 # Grafana v5.4+
       connMaxLifetime: 14400 # Grafana v5.4+

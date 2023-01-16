@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
@@ -81,11 +82,67 @@ func (a *State) GetAlertInstanceKey() (models.AlertInstanceKey, error) {
 	return models.AlertInstanceKey{RuleOrgID: a.OrgID, RuleUID: a.AlertRuleUID, LabelsHash: labelsHash}, nil
 }
 
+// SetAlerting sets the state to Alerting. It changes both the start and end time.
+func (a *State) SetAlerting(reason string, startsAt, endsAt time.Time) {
+	a.State = eval.Alerting
+	a.StateReason = reason
+	a.StartsAt = startsAt
+	a.EndsAt = endsAt
+	a.Error = nil
+}
+
+// SetPending the state to Pending. It changes both the start and end time.
+func (a *State) SetPending(reason string, startsAt, endsAt time.Time) {
+	a.State = eval.Pending
+	a.StateReason = reason
+	a.StartsAt = startsAt
+	a.EndsAt = endsAt
+	a.Error = nil
+}
+
+// SetNoData sets the state to NoData. It changes both the start and end time.
+func (a *State) SetNoData(reason string, startsAt, endsAt time.Time) {
+	a.State = eval.NoData
+	a.StateReason = reason
+	a.StartsAt = startsAt
+	a.EndsAt = endsAt
+	a.Error = nil
+}
+
+// SetError sets the state to Error. It changes both the start and end time.
+func (a *State) SetError(err error, startsAt, endsAt time.Time) {
+	a.State = eval.Error
+	a.StateReason = models.StateReasonError
+	a.StartsAt = startsAt
+	a.EndsAt = endsAt
+	a.Error = err
+}
+
+// SetNormal sets the state to Normal. It changes both the start and end time.
+func (a *State) SetNormal(reason string, startsAt, endsAt time.Time) {
+	a.State = eval.Normal
+	a.StateReason = reason
+	a.StartsAt = startsAt
+	a.EndsAt = endsAt
+	a.Error = nil
+}
+
+// Resolve sets the State to Normal. It updates the StateReason, the end time, and sets Resolved to true.
 func (a *State) Resolve(reason string, endsAt time.Time) {
 	a.State = eval.Normal
 	a.StateReason = reason
-	a.EndsAt = endsAt
 	a.Resolved = true
+	a.EndsAt = endsAt
+}
+
+// Maintain updates the end time using the most recent evaluation.
+func (a *State) Maintain(interval int64, evaluatedAt time.Time) {
+	a.EndsAt = nextEndsTime(interval, evaluatedAt)
+}
+
+// IsNormalStateWithNoReason returns true if the state is Normal and reason is empty
+func IsNormalStateWithNoReason(s *State) bool {
+	return s.State == eval.Normal && s.StateReason == ""
 }
 
 // StateTransition describes the transition from one state to another.
@@ -103,7 +160,7 @@ func (c StateTransition) PreviousFormatted() string {
 	return FormatStateAndReason(c.PreviousState, c.PreviousStateReason)
 }
 
-func (c StateTransition) changed() bool {
+func (c StateTransition) Changed() bool {
 	return c.PreviousState != c.State.State || c.PreviousStateReason != c.State.StateReason
 }
 
@@ -127,113 +184,96 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 	return result
 }
 
-func (a *State) resultNormal(_ *models.AlertRule, result eval.Result) {
-	a.Error = nil // should be nil since state is not error
-	if a.State != eval.Normal {
-		a.EndsAt = result.EvaluatedAt
-		a.StartsAt = result.EvaluatedAt
+func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger log.Logger) {
+	if state.State == eval.Normal {
+		logger.Debug("Keeping state", "state", state.State)
+	} else {
+		logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Normal)
+		// Normal states have the same start and end timestamps
+		state.SetNormal("", result.EvaluatedAt, result.EvaluatedAt)
 	}
-	a.State = eval.Normal
 }
 
-func (a *State) resultAlerting(alertRule *models.AlertRule, result eval.Result) {
-	a.Error = result.Error // should be nil since the state is not an error
-
-	switch a.State {
+func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
+	switch state.State {
 	case eval.Alerting:
-		a.setEndsAt(alertRule, result)
+		logger.Debug("Keeping state", "state", state.State)
+		state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
 	case eval.Pending:
-		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
-			a.State = eval.Alerting
-			a.StartsAt = result.EvaluatedAt
-			a.setEndsAt(alertRule, result)
+		// If the previous state is Pending then check if the For duration has been observed
+		if result.EvaluatedAt.Sub(state.StartsAt) >= rule.For {
+			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting)
+			state.SetAlerting("", result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
 		}
 	default:
-		a.StartsAt = result.EvaluatedAt
-		a.setEndsAt(alertRule, result)
-		if !(alertRule.For > 0) {
-			// If For is 0, immediately set Alerting
-			a.State = eval.Alerting
+		if rule.For > 0 {
+			// If the alert rule has a For duration that should be observed then the state should be set to Pending
+			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending)
+			state.SetPending("", result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
 		} else {
-			a.State = eval.Pending
+			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting)
+			state.SetAlerting("", result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
 		}
 	}
 }
-
-func (a *State) resultError(alertRule *models.AlertRule, result eval.Result) {
-	a.Error = result.Error
-
-	execErrState := eval.Error
-	switch alertRule.ExecErrState {
+func resultError(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
+	switch rule.ExecErrState {
 	case models.AlertingErrState:
-		execErrState = eval.Alerting
+		logger.Debug("Execution error state is Alerting", "handler", "resultAlerting", "previous_handler", "resultError")
+		resultAlerting(state, rule, result, logger)
+		// This is a special case where Alerting and Pending should also have an error and reason
+		state.Error = result.Error
+		state.StateReason = "error"
 	case models.ErrorErrState:
-		// If the evaluation failed because a query returned an error then
-		// update the state with the Datasource UID as a label and the error
-		// message as an annotation so other code can use this metadata to
-		// add context to alerts
-		var queryError expr.QueryError
-		if errors.As(a.Error, &queryError) {
-			for _, next := range alertRule.Data {
-				if next.RefID == queryError.RefID {
-					a.Labels["ref_id"] = next.RefID
-					a.Labels["datasource_uid"] = next.DatasourceUID
-					break
+		if state.State == eval.Error {
+			logger.Debug("Keeping state", "state", state.State)
+			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+		} else {
+			// This is the first occurrence of an error
+			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error)
+			state.SetError(result.Error, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+
+			if result.Error != nil {
+				state.Annotations["Error"] = result.Error.Error()
+				// If the evaluation failed because a query returned an error then add the Ref ID and
+				// Datasource UID as labels
+				var queryError expr.QueryError
+				if errors.As(state.Error, &queryError) {
+					for _, next := range rule.Data {
+						if next.RefID == queryError.RefID {
+							state.Labels["ref_id"] = next.RefID
+							state.Labels["datasource_uid"] = next.DatasourceUID
+							break
+						}
+					}
 				}
 			}
-			a.Annotations["Error"] = queryError.Error()
 		}
-		execErrState = eval.Error
 	case models.OkErrState:
-		a.resultNormal(alertRule, result)
-		return
+		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", "resultError")
+		resultNormal(state, rule, result, logger)
 	default:
-		a.Error = fmt.Errorf("cannot map error to a state because option [%s] is not supported. evaluation error: %w", alertRule.ExecErrState, a.Error)
-	}
-
-	switch a.State {
-	case eval.Alerting, eval.Error:
-		// We must set the state here as the state can change both from Alerting
-		// to Error and from Error to Alerting. This can happen when the datasource
-		// is unavailable or queries against the datasource returns errors, and is
-		// then resolved as soon as the datasource is available and queries return
-		// without error
-		a.State = execErrState
-		a.setEndsAt(alertRule, result)
-	case eval.Pending:
-		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
-			a.State = execErrState
-			a.StartsAt = result.EvaluatedAt
-			a.setEndsAt(alertRule, result)
-		}
-	default:
-		// For is observed when Alerting is chosen for the alert state
-		// if execution error or timeout.
-		if execErrState == eval.Alerting && alertRule.For > 0 {
-			a.State = eval.Pending
-		} else {
-			a.State = execErrState
-		}
-		a.StartsAt = result.EvaluatedAt
-		a.setEndsAt(alertRule, result)
+		err := fmt.Errorf("unsupported execution error state: %s", rule.ExecErrState)
+		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+		state.Annotations["Error"] = err.Error()
 	}
 }
 
-func (a *State) resultNoData(alertRule *models.AlertRule, result eval.Result) {
-	a.Error = result.Error
+func resultNoData(state *State, rule *models.AlertRule, result eval.Result, _ log.Logger) {
+	state.Error = result.Error
 
-	if a.StartsAt.IsZero() {
-		a.StartsAt = result.EvaluatedAt
+	if state.StartsAt.IsZero() {
+		state.StartsAt = result.EvaluatedAt
 	}
-	a.setEndsAt(alertRule, result)
+	state.EndsAt = nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
 
-	switch alertRule.NoDataState {
+	switch rule.NoDataState {
 	case models.Alerting:
-		a.State = eval.Alerting
+		state.State = eval.Alerting
 	case models.NoData:
-		a.State = eval.NoData
+		state.State = eval.NoData
 	case models.OK:
-		a.State = eval.Normal
+		state.State = eval.Normal
 	}
 }
 
@@ -278,17 +318,13 @@ func (a *State) TrimResults(alertRule *models.AlertRule) {
 	a.Results = newResults
 }
 
-// setEndsAt sets the ending timestamp of the alert.
-// The internal Alertmanager will use this time to know when it should automatically resolve the alert
-// in case it hasn't received additional alerts. Under regular operations the scheduler will continue to send the
-// alert with an updated EndsAt, if the alert is resolved then a last alert is sent with EndsAt = last evaluation time.
-func (a *State) setEndsAt(alertRule *models.AlertRule, result eval.Result) {
+func nextEndsTime(interval int64, evaluatedAt time.Time) time.Time {
 	ends := ResendDelay
-	if alertRule.IntervalSeconds > int64(ResendDelay.Seconds()) {
-		ends = time.Second * time.Duration(alertRule.IntervalSeconds)
+	intv := time.Second * time.Duration(interval)
+	if intv > ResendDelay {
+		ends = intv
 	}
-
-	a.EndsAt = result.EvaluatedAt.Add(ends * 3)
+	return evaluatedAt.Add(3 * ends)
 }
 
 func (a *State) GetLabels(opts ...models.LabelOption) map[string]string {

@@ -347,10 +347,10 @@ type queryResult struct {
 	Result interface{} `json:"result"`
 }
 
-func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.Frames, error) {
+func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr interface{}, headers map[string]string) (data.Frames, error) {
 	req := backend.QueryDataRequest{
 		Queries: []backend.DataQuery{query},
-		Headers: map[string]string{},
+		Headers: headers,
 	}
 
 	promRes, err := toAPIResponse(qr)
@@ -365,6 +365,10 @@ func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.F
 	}
 
 	return res.Responses[req.Queries[0].RefID].Frames, nil
+}
+
+func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.Frames, error) {
+	return executeWithHeaders(tctx, query, qr, map[string]string{})
 }
 
 type apiResponse struct {
@@ -447,6 +451,7 @@ func (f *fakeFeatureToggles) IsEnabled(feature string) bool {
 type fakeHttpClientProvider struct {
 	httpclient.Provider
 	opts sdkhttpclient.Options
+	req  *http.Request
 	res  *http.Response
 }
 
@@ -470,5 +475,6 @@ func (p *fakeHttpClientProvider) setResponse(res *http.Response) {
 }
 
 func (p *fakeHttpClientProvider) RoundTrip(req *http.Request) (*http.Response, error) {
+	p.req = req
 	return p.res, nil
 }

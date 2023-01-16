@@ -5,6 +5,21 @@
       "success": "Copied"
     }
   },
+  "command-palette": {
+    "action": {
+      "change-theme": "Change theme...",
+      "dark-theme": "Dark",
+      "light-theme": "Light",
+      "search": "Search"
+    },
+    "section": {
+      "actions": "Actions",
+      "dashboard-search-results": "Dashboards",
+      "pages": "Pages",
+      "preferences": "Preferences",
+      "recent-dashboards": "Recently viewed dashboards"
+    }
+  },
   "common": {
     "locale": {
       "default": "Default"
@@ -80,6 +95,15 @@
       "unmark-favorite": "Unmark as favorite"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "Please contact your administrator to configure data sources.",
+    "explanation": "To visualize your data, you'll need to connect it first.",
+    "new-dashboard": "New dashboard",
+    "preferred": "Connect your preferred data source:",
+    "sampleData": "Or set up a new dashboard with sample data",
+    "viewAll": "View all",
+    "welcome": "Welcome to Grafana dashboards!"
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },
@@ -104,15 +128,6 @@
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
     },
-    "admin-access": {
-      "title": "Users and access"
-    },
-    "admin-general": {
-      "title": "General"
-    },
-    "admin-plugins": {
-      "title": "Plugins and data"
-    },
     "alerting": {
       "subtitle": "Learn about problems in your systems moments after they occur",
       "title": "Alerting"
@@ -130,6 +145,9 @@
     "alerting-groups": {
       "subtitle": "See grouped alerts from an Alertmanager instance",
       "title": "Groups"
+    },
+    "alerting-home": {
+      "title": "Home"
     },
     "alerting-legacy": {
       "title": "Alerting (legacy)"
@@ -197,8 +215,8 @@
       "title": "Organizations"
     },
     "global-users": {
-      "subtitle": "Manage and create users across the whole Grafana server",
-      "title": "Users (All orgs)",
+      "subtitle": "Manage users in Grafana",
+      "title": "Users",
       "titleBeforeTopnav": "Users"
     },
     "help": {
@@ -208,6 +226,7 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Keyboard shortcuts",
     "help/support": "Support",
+    "help/support-bundle": "Support Bundles",
     "home": {
       "title": "Home"
     },
@@ -233,6 +252,9 @@
     "monitoring": {
       "subtitle": "Monitoring and infrastructure apps",
       "title": "Monitoring"
+    },
+    "new": {
+      "title": "New"
     },
     "new-dashboard": {
       "title": "New dashboard"
@@ -298,6 +320,10 @@
       "subtitle": "Manage file storage",
       "title": "Storage"
     },
+    "support-bundles": {
+      "subtitle": "Download support bundles",
+      "title": "Support bundles"
+    },
     "teams": {
       "subtitle": "Groups of users that have common dashboard and permission needs",
       "title": "Teams"
@@ -324,13 +350,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "Copy",
+      "create-library-panel": "Create library panel",
+      "duplicate": "Duplicate",
+      "edit": "Edit",
+      "explore": "Explore",
+      "get-help": "Get help",
       "hide-legend": "Hide legend",
       "inspect": "Inspect",
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
+      "query": "Query",
+      "remove": "Remove",
       "share": "Share",
       "show-legend": "Show legend",
+      "unlink-library-panel": "Unlink library panel",
       "view": "View"
     }
   },
@@ -349,6 +384,14 @@
     },
     "select-button": {
       "auto-refresh": "Set auto refresh interval"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "Import",
+      "new": "New",
+      "new-dashboard": "New Dashboard",
+      "new-folder": "New Folder"
     }
   },
   "share-modal": {
@@ -510,7 +553,7 @@
       "name-label": "Name",
       "username-label": "Username"
     },
-    "title": "Edit profile"
+    "title": "Profile"
   },
   "user-session": {
     "browser-column": "Browser & OS",

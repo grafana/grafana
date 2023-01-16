@@ -25,10 +25,10 @@ func New(cfg *setting.Cfg, validator models.PluginRequestValidator, tracer traci
 	middlewares := []sdkhttpclient.Middleware{
 		TracingMiddleware(logger, tracer),
 		DataSourceMetricsMiddleware(),
+		sdkhttpclient.ContextualMiddleware(),
 		SetUserAgentMiddleware(userAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
-		sdkhttpclient.ContextualMiddleware(),
 		ResponseLimitMiddleware(cfg.ResponseLimit),
 		RedirectLimitMiddleware(validator),
 	}

@@ -5,26 +5,21 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"golang.org/x/sync/errgroup"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
 
 const (
@@ -41,7 +36,6 @@ func ProvideService(
 	pluginRequestValidator models.PluginRequestValidator,
 	dataSourceService datasources.DataSourceService,
 	pluginClient plugins.Client,
-	oAuthTokenService oauthtoken.OAuthTokenService,
 ) *Service {
 	g := &Service{
 		cfg:                    cfg,
@@ -50,7 +44,6 @@ func ProvideService(
 		pluginRequestValidator: pluginRequestValidator,
 		dataSourceService:      dataSourceService,
 		pluginClient:           pluginClient,
-		oAuthTokenService:      oAuthTokenService,
 		log:                    log.New("query_data"),
 	}
 	g.log.Info("Query Service initialization")
@@ -64,7 +57,6 @@ type Service struct {
 	pluginRequestValidator models.PluginRequestValidator
 	dataSourceService      datasources.DataSourceService
 	pluginClient           plugins.Client
-	oAuthTokenService      oauthtoken.OAuthTokenService
 	log                    log.Logger
 }
 
@@ -175,9 +167,6 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 		exprReq.OrgId = user.OrgID
 	}
 
-	disallowedCookies := []string{s.cfg.LoginCookieName}
-	queryEnrichers := parsedReq.createDataSourceQueryEnrichers(ctx, user, s.oAuthTokenService, disallowedCookies)
-
 	for _, pq := range parsedReq.getFlattenedQueries() {
 		if pq.datasource == nil {
 			return nil, ErrMissingDataSourceInfo.Build(errutil.TemplateData{
@@ -198,7 +187,6 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 				From: pq.query.TimeRange.From,
 				To:   pq.query.TimeRange.To,
 			},
-			QueryEnricher: queryEnrichers[pq.datasource.Uid],
 		})
 	}
 
@@ -240,38 +228,9 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 		Queries: []backend.DataQuery{},
 	}
 
-	disallowedCookies := []string{s.cfg.LoginCookieName}
-	middlewares := []httpclient.Middleware{}
-	if parsedReq.httpRequest != nil {
-		middlewares = append(middlewares,
-			httpclientprovider.ForwardedCookiesMiddleware(parsedReq.httpRequest.Cookies(), ds.AllowedCookies(), disallowedCookies),
-		)
-	}
-
-	if s.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
-		if token := s.oAuthTokenService.GetCurrentOAuthToken(ctx, user); token != nil {
-			req.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
-
-			idToken, ok := token.Extra("id_token").(string)
-			if ok && idToken != "" {
-				req.Headers["X-ID-Token"] = idToken
-			}
-			middlewares = append(middlewares, httpclientprovider.ForwardedOAuthIdentityMiddleware(token))
-		}
-	}
-
-	if parsedReq.httpRequest != nil {
-		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies(), disallowedCookies)
-		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
-			req.Headers["Cookie"] = cookieStr
-		}
-	}
-
 	for _, q := range queries {
 		req.Queries = append(req.Queries, q.query)
 	}
-
-	ctx = httpclient.WithContextualMiddleware(ctx, middlewares...)
 
 	return s.pluginClient.QueryData(ctx, req)
 }
@@ -335,11 +294,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		})
 	}
 
-	if reqDTO.HTTPRequest != nil {
-		req.httpRequest = reqDTO.HTTPRequest
-	}
-
-	_ = req.validateRequest()
+	_ = req.validateRequest(ctx)
 	return req, nil // TODO req.validateRequest()
 }
 

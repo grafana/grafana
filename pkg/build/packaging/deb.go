@@ -8,10 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/fsutil"
 	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/urfave/cli/v2"
 )
 
 func writeAptlyConf(dbDir, repoDir string) error {
@@ -166,7 +167,7 @@ func UpdateDebRepo(cfg PublishConfig, workDir string) error {
 		cmd := exec.Command("aptly", "publish", "update", "-batch", passArg, "-force-overwrite", tp,
 			"filesystem:repo:grafana")
 		if output, err := cmd.CombinedOutput(); err != nil {
-			return cli.NewExitError(fmt.Sprintf("failed to update Debian %q repository: %s", tp, output), 1)
+			return cli.Exit(fmt.Sprintf("failed to update Debian %q repository: %s", tp, output), 1)
 		}
 	}
 
@@ -179,7 +180,7 @@ func UpdateDebRepo(cfg PublishConfig, workDir string) error {
 		//nolint:gosec
 		cmd = exec.Command("gsutil", "-m", "rsync", "-r", "-d", dbDir, u)
 		if output, err := cmd.CombinedOutput(); err != nil {
-			return cli.NewExitError(fmt.Sprintf("failed to upload Debian repo database to GCS: %s", output), 1)
+			return cli.Exit(fmt.Sprintf("failed to upload Debian repo database to GCS: %s", output), 1)
 		}
 	}
 
@@ -193,14 +194,14 @@ func UpdateDebRepo(cfg PublishConfig, workDir string) error {
 		//nolint:gosec
 		cmd = exec.Command("gsutil", "-m", "rsync", "-r", "-d", grafDir, u)
 		if output, err := cmd.CombinedOutput(); err != nil {
-			return cli.NewExitError(fmt.Sprintf("failed to upload Debian repo resources to GCS: %s", output), 1)
+			return cli.Exit(fmt.Sprintf("failed to upload Debian repo resources to GCS: %s", output), 1)
 		}
 		allRepoResources := fmt.Sprintf("%s/**/*", u)
 		log.Printf("Setting cache ttl for Debian repo resources on GCS (%s)...\n", allRepoResources)
 		//nolint:gosec
 		cmd = exec.Command("gsutil", "-m", "setmeta", "-h", CacheSettings+cfg.TTL, allRepoResources)
 		if output, err := cmd.CombinedOutput(); err != nil {
-			return cli.NewExitError(fmt.Sprintf("failed to set cache ttl for Debian repo resources on GCS: %s", output), 1)
+			return cli.Exit(fmt.Sprintf("failed to set cache ttl for Debian repo resources on GCS: %s", output), 1)
 		}
 	}
 
@@ -238,7 +239,7 @@ func addPkgsToRepo(cfg PublishConfig, workDir, tmpDir, repoName string) error {
 	//nolint:gosec
 	cmd := exec.Command("aptly", "repo", "add", "-force-replace", repoName, tmpDir)
 	if output, err := cmd.CombinedOutput(); err != nil {
-		return cli.NewExitError(fmt.Sprintf("failed to add packages to local Debian repository: %s", output), 1)
+		return cli.Exit(fmt.Sprintf("failed to add packages to local Debian repository: %s", output), 1)
 	}
 
 	return nil

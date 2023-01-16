@@ -6,6 +6,7 @@ import { appEvents } from '../../../core/core';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { DashboardState } from '../../../types';
 import { DashboardModel } from '../../dashboard/state';
+import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 import { TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
@@ -226,5 +227,5 @@ describe('when onTimeRangeUpdated is dispatched', () => {
 });
 
 function getDashboardModel(): DashboardModel {
-  return new DashboardModel({ schemaVersion: 9999 }); // ignore any schema migrations
+  return createDashboardModelFixture({ schemaVersion: 9999 }); // ignore any schema migrations
 }

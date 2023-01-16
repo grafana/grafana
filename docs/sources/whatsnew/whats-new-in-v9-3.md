@@ -1,8 +1,6 @@
 ---
-_build:
-  list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v9-3/
+  - ../guides/whats-new-in-v9-3/
 description: Feature and improvement highlights for Grafana v9.3
 keywords:
   - grafana
@@ -223,15 +221,9 @@ Finally, we have fixed several access control related bugs to ensure a smoother 
 
 All of these new alerting features are generally available in all editions of Grafana.
 
-### Email templating
-
-We've improved the design and functionality of email templates to make template creation much easier and more customizable. The email template framework utilizes MJML to define and compile the final email HTML output. Sprig functions in the email templates provide more customizable template functions.
-
-{{< figure src="/static/img/docs/alerting/alert-templates-whats-new-v9.3.png" max-width="750px" caption="Email template redesign" >}}
-
 ### Support for Webex Teams
 
-You can now use Cisco Webex Teams as a contact point, to send alerts to a Webex Teams channel.
+You can now use Cisco Webex Teams as a contact point, to send alerts to a Webex Teams space.
 
 ### Edit alert rules created using the provisioning API
 

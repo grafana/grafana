@@ -2,6 +2,7 @@ import { cloneDeep, find, isEmpty } from 'lodash';
 import { merge, Observable, of } from 'rxjs';
 
 import {
+  CoreApp,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
@@ -20,6 +21,7 @@ import { RowContextOptions } from '../../../features/logs/components/LogRowConte
 import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { CloudWatchAPI } from './api';
 import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
+import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
 import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
 import { CloudWatchLanguageProvider } from './language_provider';
 import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
@@ -43,6 +45,7 @@ export class CloudWatchDatasource
   languageProvider: CloudWatchLanguageProvider;
   sqlCompletionItemProvider: SQLCompletionItemProvider;
   metricMathCompletionItemProvider: MetricMathCompletionItemProvider;
+  defaultLogGroups?: string[];
 
   type = 'cloudwatch';
 
@@ -52,7 +55,7 @@ export class CloudWatchDatasource
   api: CloudWatchAPI;
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
+    private instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
     readonly templateSrv: TemplateSrv = getTemplateSrv(),
     timeSrv: TimeSrv = getTimeSrv()
   ) {
@@ -155,7 +158,7 @@ export class CloudWatchDatasource
   }
 
   getQueryDisplayText(query: CloudWatchQuery) {
-    if (query.queryMode === 'Logs') {
+    if (isCloudWatchLogsQuery(query)) {
       return query.expression ?? '';
     } else {
       return JSON.stringify(query);
@@ -172,5 +175,12 @@ export class CloudWatchDatasource
       return this.defaultRegion ?? '';
     }
     return region;
+  }
+
+  getDefaultQuery(_: CoreApp): Partial<CloudWatchQuery> {
+    return {
+      ...getDefaultLogsQuery(this.instanceSettings.jsonData.logGroups, this.instanceSettings.jsonData.defaultLogGroups),
+      ...DEFAULT_METRICS_QUERY,
+    };
   }
 }

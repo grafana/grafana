@@ -311,3 +311,22 @@ func (a apiClient) GetAllRulesGroupInFolder(t *testing.T, folder string) apimode
 	require.NoError(t, json.Unmarshal(b, &result))
 	return result
 }
+
+func (a apiClient) SubmitRuleForBacktesting(t *testing.T, config apimodels.BacktestConfig) (int, string) {
+	t.Helper()
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(config)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("%s/api/v1/rule/backtest", a.url)
+	// nolint:gosec
+	resp, err := http.Post(u, "application/json", &buf)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	return resp.StatusCode, string(b)
+}

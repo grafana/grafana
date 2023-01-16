@@ -49,7 +49,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 		}
 	}
 
-	dc.logger.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgID)
+	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgID)
 
 	query := &datasources.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgID}
 	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
@@ -90,7 +90,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 		}
 	}
 
-	dc.logger.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgID)
+	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgID)
 	query := &datasources.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgID}
 	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
 	err := ss.GetDataSource(ctx, query)

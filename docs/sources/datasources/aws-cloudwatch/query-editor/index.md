@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/aws-cloudwatch/
-  - /docs/grafana/latest/datasources/cloudwatch/
-  - /docs/grafana/latest/data-sources/aws-cloudwatch/query-editor/
+  - ../../data-sources/aws-cloudwatch/query-editor/
+  - ../cloudwatch/
+  - ./
 description: Guide for using the AWS CloudWatch data source's query editor
 keywords:
   - grafana
@@ -91,6 +91,10 @@ For details on the available functions, refer to [AWS Metric Math](https://docs.
 For example, to apply arithmetic operations to a metric, apply a unique string id to the raw metric, then use this id and apply arithmetic operations to it in the Expression field of the new metric.
 
 > **Note:** If you use the expression field to reference another query, like `queryA * 2`, you can't create an alert rule based on that query.
+
+##### Period macro
+
+If you're using a CloudWatch [`SEARCH`](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) expression, you may want to use the `$__period_auto` macro rather than specifying a period explicitly. The `$__period_auto` macro will resolve to a [CloudWatch period](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html) that is suitable for the chosen time range.
 
 #### Deep-link Grafana panels to the CloudWatch console
 
@@ -220,7 +224,7 @@ The CloudWatch plugin provides the ability to monitor and troubleshoot applicati
 
 > **Note:** This feature is currently behind the `cloudWatchCrossAccountQuerying` feature toggle.
 
-> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
+> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
 > Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 ### Getting started
