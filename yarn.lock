@@ -4922,6 +4922,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/e2e-selectors@npm:canary":
+  version: 9.4.0-96193pre
+  resolution: "@grafana/e2e-selectors@npm:9.4.0-96193pre"
+  dependencies:
+    "@grafana/tsconfig": ^1.2.0-rc1
+    tslib: 2.4.1
+    typescript: 4.8.4
+  checksum: 1ce663607c0c816ec02cad33d80c38731c4dfafdc7d1693baa989b8eff6588e3cc1d8a031c4f30f888bbd8aa8768cce7c5dd4cb2455306040f39dcac933ceae4
+  languageName: node
+  linkType: hard
+
 "@grafana/e2e@workspace:*, @grafana/e2e@workspace:packages/grafana-e2e":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e@workspace:packages/grafana-e2e"
@@ -5109,10 +5120,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:0.0.4":
-  version: 0.0.4
-  resolution: "@grafana/scenes@npm:0.0.4"
-  checksum: adbc69e4033bdd40a5c2fe13ee7af2b787c236e548c389b6820b057f76ae3727fc4f85d2205d6658e008f69f75bbf84c04453fedb29f9979a76517267f1f91ad
+"@grafana/scenes@npm:latest":
+  version: 0.0.5
+  resolution: "@grafana/scenes@npm:0.0.5"
+  dependencies:
+    "@grafana/e2e-selectors": canary
+    "@grafana/experimental": 1.0.1
+    react-grid-layout: 1.3.4
+    react-use: 17.4.0
+    react-virtualized-auto-sizer: 1.0.7
+    uuid: ^9.0.0
+  checksum: 7388aaccb0788801f94734126d1abab71df3f81131eec41c967b0c462223a13fcfbc5a65ce7a45bf6761032d8efd1330cb85ac8e86136cba9e4dd244f41b1054
   languageName: node
   linkType: hard
 
@@ -22015,7 +22033,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.1
     "@grafana/monaco-logql": ^0.0.6
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": 0.0.4
+    "@grafana/scenes": latest
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -22304,9 +22322,6 @@ __metadata:
     webpack-manifest-plugin: 5.0.0
     webpack-merge: 5.8.0
     whatwg-fetch: 3.6.2
-  dependenciesMeta:
-    "@grafana/scenes@0.0.3":
-      unplugged: true
   languageName: unknown
   linkType: soft
 
@@ -38417,7 +38432,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:9.0.0":
+"uuid@npm:9.0.0, uuid@npm:^9.0.0":
   version: 9.0.0
   resolution: "uuid@npm:9.0.0"
   bin:
