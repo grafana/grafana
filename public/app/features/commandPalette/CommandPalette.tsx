@@ -107,7 +107,6 @@ const RenderResults = ({ dashboardResults }: RenderResultsProps) => {
             <ResultItem action={item} active={active} currentRootActionId={rootActionId!} />
           );
 
-        // R
         return isLastItem ? <div className={styles.lastItem}>{renderedItem}</div> : renderedItem;
       }}
     />
@@ -150,9 +149,8 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     borderBottom: `1px solid ${theme.colors.border.medium}`,
   }),
 
-  // We can't use margin because the virtual list measures that incorrectly
-  // so to have padding before and after border, we have outer + inner elements
-  // to split the padding over.
+  // Virtual list measures margin incorrectly, so we need to split padding before/after border
+  // over and inner and outer element
   sectionHeader: css({
     paddingTop: theme.spacing(2),
     fontSize: theme.typography.h6.fontSize,
@@ -170,6 +168,7 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     paddingTop: 0,
   }),
 
+  // Last item gets extra padding so it's not clipped by the rounded corners on the container
   lastItem: css({
     paddingBottom: theme.spacing(1),
   }),
