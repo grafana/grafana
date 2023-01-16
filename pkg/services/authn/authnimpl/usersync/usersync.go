@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -42,6 +43,20 @@ func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Re
 			s.log.Warn("Not allowing login, user not found in internal user database and allow signup = false",
 				"auth_module", id.AuthModule)
 			return login.ErrSignupNotAllowed
+		}
+
+		// quota check (FIXME: (jguer) this should be done in the user service)
+		// we may insert in both user and org_user tables
+		// therefore we need to query check quota for both user and org services
+		for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
+			limitReached, errLimit := s.quotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
+			if errLimit != nil {
+				s.log.Warn("error getting user quota.", "error", errLimit)
+				return login.ErrGettingUserQuota
+			}
+			if limitReached {
+				return login.ErrUsersQuotaReached
+			}
 		}
 
 		// create user

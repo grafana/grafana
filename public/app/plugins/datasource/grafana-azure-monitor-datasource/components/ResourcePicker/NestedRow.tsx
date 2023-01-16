@@ -76,7 +76,7 @@ const NestedRow: React.FC<NestedRowProps> = ({
 
         <td className={styles.cell}>{row.typeLabel}</td>
 
-        <td className={styles.cell}>{row.location ?? '-'}</td>
+        <td className={styles.cell}>{row.locationDisplayName ?? '-'}</td>
       </tr>
 
       {isOpen &&

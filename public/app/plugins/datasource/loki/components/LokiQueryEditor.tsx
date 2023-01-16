@@ -138,7 +138,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
         </Stack>
         <QueryHeaderSwitch label="Explain query" value={explain} onChange={onExplainChange} />
         <FlexItem grow={1} />
-        {app !== CoreApp.Explore && (
+        {app !== CoreApp.Explore && app !== CoreApp.Correlations && (
           <Button
             variant={dataIsStale ? 'primary' : 'secondary'}
             size="sm"

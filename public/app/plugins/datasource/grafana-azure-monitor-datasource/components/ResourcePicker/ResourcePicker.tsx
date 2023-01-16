@@ -113,7 +113,7 @@ const ResourcePicker = ({
   const handleSelectionChanged = useCallback(
     (row: ResourceRow, isSelected: boolean) => {
       isSelected
-        ? setInternalSelected(resourceIsString ? row.uri : parseResourceDetails(row.uri))
+        ? setInternalSelected(resourceIsString ? row.uri : parseResourceDetails(row.uri, row.location))
         : setInternalSelected(resourceIsString ? '' : {});
     },
     [resourceIsString]

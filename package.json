@@ -173,8 +173,8 @@
     "cypress": "9.5.1",
     "enzyme": "3.11.0",
     "enzyme-to-json": "3.6.2",
-    "eslint": "8.30.0",
-    "eslint-config-prettier": "8.5.0",
+    "eslint": "8.31.0",
+    "eslint-config-prettier": "8.6.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jest": "27.1.3",
     "eslint-plugin-jsdoc": "39.6.2",
@@ -253,12 +253,12 @@
     "@grafana/lezer-logql": "0.1.1",
     "@grafana/monaco-logql": "^0.0.6",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "0.0.4",
+    "@grafana/scenes": "latest",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@jaegertracing/jaeger-ui-components": "workspace:*",
     "@kusto/monaco-kusto": "5.3.6",
-    "@leeoniya/ufuzzy": "0.9.0",
+    "@leeoniya/ufuzzy": "0.9.1",
     "@lezer/common": "1.0.1",
     "@lezer/highlight": "1.1.2",
     "@lezer/lr": "1.2.3",
@@ -303,7 +303,7 @@
     "classnames": "2.3.2",
     "comlink": "4.3.1",
     "common-tags": "1.8.2",
-    "core-js": "3.26.0",
+    "core-js": "3.27.1",
     "d3": "5.15.0",
     "d3-force": "^2.1.1",
     "d3-scale-chromatic": "1.5.0",
@@ -429,10 +429,5 @@
   "engines": {
     "node": ">= 16"
   },
-  "packageManager": "yarn@3.3.0",
-  "dependenciesMeta": {
-    "@grafana/scenes@0.0.3": {
-      "unplugged": true
-    }
-  }
+  "packageManager": "yarn@3.3.0"
 }
