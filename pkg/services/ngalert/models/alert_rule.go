@@ -463,9 +463,6 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
 	}
-	if !ruleToPatch.IsPaused {
-		ruleToPatch.IsPaused = existingRule.IsPaused
-	}
 }
 
 func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error {
