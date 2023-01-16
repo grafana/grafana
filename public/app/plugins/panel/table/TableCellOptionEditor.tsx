@@ -64,6 +64,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       // Set the new type of cell starting
       // with default settings
       value = {
+        // @ts-ignore
         type: v.value,
       };
 
