@@ -14,30 +14,44 @@ export interface Props {
 
 export function QueryOptionGroup({ title, children, collapsedInfo }: Props) {
   const [isOpen, toggleOpen] = useToggle(false);
-  const styles = useStyles2(getStyles);
+
+  // this will determine the color of the query size indicator
+  // 0/1 is a temporary placeholder until we have a discussion about the threshold
+  const querySizeInBytes = 0;
+
+  const styles = useStyles2(getStyles(querySizeInBytes));
 
   return (
-    <Stack gap={0} direction="column">
-      <div className={styles.header} onClick={toggleOpen} title="Click to edit options">
-        <div className={styles.toggle}>
-          <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
-        </div>
-        <h6 className={styles.title}>{title}</h6>
-        {!isOpen && (
-          <div className={styles.description}>
-            {collapsedInfo.map((x, i) => (
-              <span key={i}>{x}</span>
-            ))}
+    <div className={styles.wrapper}>
+      <Stack gap={0} direction="column">
+        <div className={styles.header} onClick={toggleOpen} title="Click to edit options">
+          <div className={styles.toggle}>
+            <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
           </div>
-        )}
-      </div>
-      {isOpen && <div className={styles.body}>{children}</div>}
-    </Stack>
+          <h6 className={styles.title}>{title}</h6>
+          {!isOpen && (
+            <div className={styles.description}>
+              {collapsedInfo.map((x, i) => (
+                <span key={i}>{x}</span>
+              ))}
+            </div>
+          )}
+        </div>
+        {isOpen && <div className={styles.body}>{children}</div>}
+      </Stack>
+      {/* this message will only display after the api request to get the query size */}
+      <p className={styles.sizeIndicator}>This query will process approximately X units.</p>
+    </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (querySizeInBytes: number) => (theme: GrafanaTheme2) => {
   return {
+    wrapper: css({
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'space-between',
+    }),
     switchLabel: css({
       color: theme.colors.text.secondary,
       cursor: 'pointer',
@@ -78,6 +92,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     toggle: css({
       color: theme.colors.text.secondary,
       marginRight: `${theme.spacing(1)}`,
+    }),
+    sizeIndicator: css({
+      margin: '0px',
+      // we need to have a discussion here to decide on a byte threshold before we change the color
+      color: querySizeInBytes > 0 ? '#FF5286' : '#6CCF8E',
     }),
   };
 };
