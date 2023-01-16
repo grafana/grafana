@@ -22,15 +22,15 @@ func (s *Service) registerAPIEndpoints(routeRegister routing.RouteRegister) {
 	authorize := ac.Middleware(s.accessControl)
 
 	routeRegister.Group(rootUrl, func(subrouter routing.RouteRegister) {
-		subrouter.Get("/", authorize(middleware.ReqGrafanaAdmin,
+		subrouter.Get("/", authorize(middleware.ReqOrgAdmin,
 			ac.EvalPermission(ActionRead)), routing.Wrap(s.handleList))
-		subrouter.Post("/", authorize(middleware.ReqGrafanaAdmin,
+		subrouter.Post("/", authorize(middleware.ReqOrgAdmin,
 			ac.EvalPermission(ActionCreate)), routing.Wrap(s.handleCreate))
-		subrouter.Get("/:uid", authorize(middleware.ReqGrafanaAdmin,
+		subrouter.Get("/:uid", authorize(middleware.ReqOrgAdmin,
 			ac.EvalPermission(ActionRead)), s.handleDownload)
-		subrouter.Delete("/:uid", authorize(middleware.ReqGrafanaAdmin,
+		subrouter.Delete("/:uid", authorize(middleware.ReqOrgAdmin,
 			ac.EvalPermission(ActionDelete)), s.handleRemove)
-		subrouter.Get("/collectors", authorize(middleware.ReqGrafanaAdmin,
+		subrouter.Get("/collectors", authorize(middleware.ReqOrgAdmin,
 			ac.EvalPermission(ActionCreate)), routing.Wrap(s.handleGetCollectors))
 	})
 }
