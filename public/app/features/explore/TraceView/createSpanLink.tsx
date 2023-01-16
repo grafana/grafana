@@ -13,12 +13,13 @@ import {
   LinkModel,
   mapInternalLinkToExplore,
   rangeUtil,
+  ScopedVars,
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
-import { SpanLinkFunc, TraceSpan } from '@jaegertracing/jaeger-ui-components';
+import { SpanLinkFunc, Trace, TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsOptionsV2 } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -38,19 +39,33 @@ export function createSpanLinkFactory({
   traceToMetricsOptions,
   dataFrame,
   createFocusSpanLink,
+  trace,
 }: {
   splitOpenFn: SplitOpen;
   traceToLogsOptions?: TraceToLogsOptionsV2;
   traceToMetricsOptions?: TraceToMetricsOptions;
   dataFrame?: DataFrame;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
+  trace: Trace;
 }): SpanLinkFunc | undefined {
+  let scopedVars = scopedVarsFromTrace(trace);
+
   if (!dataFrame || dataFrame.fields.length === 1 || !dataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
     // if the dataframe contains just a single blob of data (legacy format) or does not have any links configured,
     // let's try to use the old legacy path.
-    return legacyCreateSpanLinkFactory(splitOpenFn, traceToLogsOptions, traceToMetricsOptions, createFocusSpanLink);
+    return legacyCreateSpanLinkFactory(
+      splitOpenFn,
+      traceToLogsOptions,
+      traceToMetricsOptions,
+      createFocusSpanLink,
+      scopedVars
+    );
   } else {
     return function SpanLink(span: TraceSpan): SpanLinks | undefined {
+      scopedVars = {
+        ...scopedVars,
+        ...scopedVarsFromSpan(span),
+      };
       // We should be here only if there are some links in the dataframe
       const field = dataFrame.fields.find((f) => Boolean(f.config.links?.length))!;
       try {
@@ -60,6 +75,7 @@ export function createSpanLinkFactory({
           splitOpenFn,
           range: getTimeRangeFromSpan(span),
           dataFrame,
+          vars: scopedVars,
         });
 
         return {
@@ -84,7 +100,8 @@ function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
   traceToLogsOptions?: TraceToLogsOptionsV2,
   traceToMetricsOptions?: TraceToMetricsOptions,
-  createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>
+  createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>,
+  scopedVars?: ScopedVars
 ) {
   let logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
   if (traceToLogsOptions?.datasourceUid) {
@@ -98,35 +115,55 @@ function legacyCreateSpanLinkFactory(
   }
 
   return function SpanLink(span: TraceSpan): SpanLinks {
+    scopedVars = {
+      ...scopedVars,
+      ...scopedVarsFromSpan(span),
+    };
     const links: SpanLinks = { traceLinks: [] };
     // This is reusing existing code from derived fields which may not be ideal match so some data is a bit faked at
     // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
     // it manually here instead of leaving it for the data source to supply the config.
-    let dataLink: DataLink | undefined;
 
+    let queryData: { query: DataQuery; tags: string } = { query: { refId: '' }, tags: '' };
     // Get logs link
     if (logsDataSourceSettings && traceToLogsOptions) {
       switch (logsDataSourceSettings?.type) {
         case 'loki':
-          dataLink = getLinkForLoki(span, traceToLogsOptions, logsDataSourceSettings);
+          queryData = getQueryForLoki(span, traceToLogsOptions);
           break;
         case 'grafana-splunk-datasource':
-          dataLink = getLinkForSplunk(span, traceToLogsOptions, logsDataSourceSettings);
+          queryData = getQueryForSplunk(span, traceToLogsOptions);
           break;
         case 'elasticsearch':
-          dataLink = getLinkForElasticsearchOrOpensearch(span, traceToLogsOptions, logsDataSourceSettings);
-          break;
         case 'grafana-opensearch-datasource':
-          dataLink = getLinkForElasticsearchOrOpensearch(span, traceToLogsOptions, logsDataSourceSettings);
+          queryData = getQueryForElasticsearchOrOpensearch(span, traceToLogsOptions);
           break;
       }
 
-      if (dataLink) {
+      if (queryData.tags || traceToLogsOptions.customQuery) {
+        const dataLink: DataLink = {
+          title: logsDataSourceSettings.name,
+          url: '',
+          internal: {
+            datasourceUid: logsDataSourceSettings.uid,
+            datasourceName: logsDataSourceSettings.name,
+            query: traceToLogsOptions.customQuery ? traceToLogsOptions.query : queryData.query,
+          },
+        };
+
+        scopedVars = {
+          ...scopedVars,
+          __tags: {
+            text: 'Tags',
+            value: queryData.tags,
+          },
+        };
+
         const link = mapInternalLinkToExplore({
           link: dataLink,
           internalLink: dataLink.internal!,
-          scopedVars: {},
+          scopedVars: scopedVars,
           range: getTimeRangeFromSpan(
             span,
             {
@@ -238,40 +275,30 @@ function legacyCreateSpanLinkFactory(
  * Default keys to use when there are no configured tags.
  */
 const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'].map((k) => ({ key: k }));
-function getLinkForLoki(
-  span: TraceSpan,
-  options: TraceToLogsOptionsV2,
-  dataSourceSettings: DataSourceInstanceSettings
-) {
-  const { filterByTraceID, filterBySpanID } = options;
-  const tags = getTags(span, options.tags || defaultKeys);
 
-  // If no tags found, return undefined to prevent an invalid Loki query
-  if (!tags.length) {
-    return undefined;
+function getQueryForLoki(span: TraceSpan, options: TraceToLogsOptionsV2): { query: LokiQuery; tags: string } {
+  const { filterByTraceID, filterBySpanID } = options;
+  const tags = getTags(span, options.tags || defaultKeys).join(', ');
+
+  if (!tags) {
+    return { query: { expr: '', refId: '' }, tags };
   }
-  let expr = `{${tags.join(', ')}}`;
+
+  let expr = `{$__tags}`;
   if (filterByTraceID && span.traceID) {
-    expr += ` |="${span.traceID}"`;
+    expr += ` |="$__span.traceId"`;
   }
   if (filterBySpanID && span.spanID) {
-    expr += ` |="${span.spanID}"`;
+    expr += ` |="$__span.id"`;
   }
 
-  const dataLink: DataLink<LokiQuery> = {
-    title: dataSourceSettings.name,
-    url: '',
-    internal: {
-      datasourceUid: dataSourceSettings.uid,
-      datasourceName: dataSourceSettings.name,
-      query: {
-        expr: expr,
-        refId: '',
-      },
+  return {
+    query: {
+      expr: expr,
+      refId: '',
     },
+    tags,
   };
-
-  return dataLink;
 }
 
 // we do not have access to the dataquery type for opensearch,
@@ -284,80 +311,61 @@ interface ElasticsearchOrOpensearchQuery extends DataQuery {
   }>;
 }
 
-function getLinkForElasticsearchOrOpensearch(
+function getQueryForElasticsearchOrOpensearch(
   span: TraceSpan,
-  options: TraceToLogsOptionsV2,
-  dataSourceSettings: DataSourceInstanceSettings
-) {
+  options: TraceToLogsOptionsV2
+): { query: ElasticsearchOrOpensearchQuery; tags: string } {
   const { filterByTraceID, filterBySpanID } = options;
-  const tags = getTags(span, options.tags || [], { labelValueSign: ':' });
+  const tags = getTags(span, options.tags || [], { labelValueSign: ':' }).join(' AND ');
 
   let query = '';
   if (tags.length > 0) {
-    query += `${tags.join(' AND ')}`;
+    query += `$__tags`;
   }
   if (filterByTraceID && span.traceID) {
-    query = `"${span.traceID}" AND ` + query;
+    query = `"$__span.traceId" AND ` + query;
   }
   if (filterBySpanID && span.spanID) {
-    query = `"${span.spanID}" AND ` + query;
+    query = `"$__span.id" AND ` + query;
   }
 
-  const dataLink: DataLink<ElasticsearchOrOpensearchQuery> = {
-    title: dataSourceSettings.name,
-    url: '',
-    internal: {
-      datasourceUid: dataSourceSettings.uid,
-      datasourceName: dataSourceSettings.name,
-      query: {
-        query: query,
-        refId: '',
-        metrics: [
-          {
-            id: '1',
-            type: 'logs',
-          },
-        ],
-      },
+  return {
+    query: {
+      query: query,
+      refId: '',
+      metrics: [
+        {
+          id: '1',
+          type: 'logs',
+        },
+      ],
     },
+    tags,
   };
-
-  return dataLink;
 }
 
-function getLinkForSplunk(
-  span: TraceSpan,
-  options: TraceToLogsOptionsV2,
-  dataSourceSettings: DataSourceInstanceSettings
-) {
+function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2) {
   const { filterByTraceID, filterBySpanID } = options;
-  const tags = getTags(span, options.tags || defaultKeys);
+  const tags = getTags(span, options.tags || defaultKeys).join(' ');
 
   let query = '';
-  if (tags.length > 0) {
-    query += `${tags.join(' ')}`;
+  if (tags) {
+    query += `$__tags`;
   }
   if (filterByTraceID && span.traceID) {
-    query += ` "${span.traceID}"`;
+    query += ` "$__span.traceId"`;
   }
   if (filterBySpanID && span.spanID) {
-    query += ` "${span.spanID}"`;
+    query += ` "$__span.id"`;
   }
 
-  const dataLink: DataLink<DataQuery> = {
-    title: dataSourceSettings.name,
-    url: '',
-    internal: {
-      datasourceUid: dataSourceSettings.uid,
-      datasourceName: dataSourceSettings.name,
-      query: {
-        query: query,
-        refId: '',
-      },
+  return {
+    query: {
+      query: query,
+      refId: '',
     },
-  } as DataLink<DataQuery>;
-
-  return dataLink;
+    tags,
+  };
 }
 
 function getTags(
@@ -435,4 +443,54 @@ function buildMetricsQuery(query: TraceToMetricQuery, tags: Array<KeyValue<strin
   }
 
   return expr;
+}
+
+function scopedVarsFromTrace(trace: Trace): ScopedVars {
+  return {
+    __trace: {
+      text: 'Trace',
+      value: {
+        duration: {
+          value: trace.duration,
+        },
+        name: {
+          value: trace.traceName,
+        },
+        id: {
+          value: trace.traceID,
+        },
+      },
+    },
+  };
+}
+
+function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
+  const tags: ScopedVars = {};
+  for (const tag of span.tags) {
+    tags[tag.key] = {
+      text: tag.key,
+      value: tag.value,
+    };
+  }
+  return {
+    __span: {
+      text: 'Span',
+      value: {
+        id: {
+          value: span.spanID,
+        },
+        duration: {
+          value: span.duration,
+        },
+        name: {
+          value: span.operationName,
+        },
+        tags: {
+          value: {
+            ...tags,
+          },
+        },
+      },
+    },
+  };
 }

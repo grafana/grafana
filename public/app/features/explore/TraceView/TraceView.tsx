@@ -133,8 +133,9 @@ export function TraceView(props: Props) {
         traceToMetricsOptions,
         dataFrame: props.dataFrames[0],
         createFocusSpanLink,
+        trace: traceProp,
       }),
-    [props.splitOpenFn, traceToLogsOptions, traceToMetricsOptions, props.dataFrames, createFocusSpanLink]
+    [props.splitOpenFn, traceToLogsOptions, traceToMetricsOptions, props.dataFrames, createFocusSpanLink, traceProp]
   );
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
   const timeZone = useSelector((state) => getTimeZone(state.user));

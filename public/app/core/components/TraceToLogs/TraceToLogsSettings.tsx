@@ -7,10 +7,9 @@ import {
   DataSourcePluginOptionsEditorProps,
   GrafanaTheme2,
   KeyValue,
-  updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, Input, useStyles2, InlineSwitch, RadioButtonGroup } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, useStyles2, InlineSwitch } from '@grafana/ui';
 
 import { TagMappingInput } from './TagMappingInput';
 
@@ -35,7 +34,7 @@ export interface TraceToLogsOptionsV2 {
   filterByTraceID?: boolean;
   filterBySpanID?: boolean;
   query?: string;
-  type: 'builder' | 'code';
+  customQuery: boolean;
 }
 
 export interface TraceToLogsData extends DataSourceJsonData {
@@ -52,7 +51,7 @@ export function getTraceToLogsOptions(data: TraceToLogsData): TraceToLogsOptions
   }
 
   const traceToLogs: TraceToLogsOptionsV2 = {
-    type: 'builder',
+    customQuery: false,
   };
   traceToLogs.datasourceUid = data.tracesToLogs.datasourceUid;
   traceToLogs.tags = data.tracesToLogs.mapTagNamesEnabled
@@ -77,22 +76,26 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
   ];
 
   const traceToLogs = useMemo(
-    (): TraceToLogsOptionsV2 => getTraceToLogsOptions(options.jsonData) || { type: 'builder' },
+    (): TraceToLogsOptionsV2 => getTraceToLogsOptions(options.jsonData) || { customQuery: false },
     [options.jsonData]
   );
-  const { query, tags, type } = traceToLogs;
+  const { query = '', tags, customQuery } = traceToLogs;
 
   const updateTracesToLogs = useCallback(
     (value: Partial<TraceToLogsOptionsV2>) => {
-      updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogsV2', {
-        ...traceToLogs,
-        ...value,
+      // Cannot use updateDatasourcePluginJsonDataOption here as we need to update 2 keys, and they would overwrite each
+      // other as updateDatasourcePluginJsonDataOption isn't synchronized
+      onOptionsChange({
+        ...options,
+        jsonData: {
+          ...options.jsonData,
+          tracesToLogsV2: {
+            ...traceToLogs,
+            ...value,
+          },
+          tracesToLogs: undefined,
+        },
       });
-
-      // Remove the old version of the config if still present
-      if (options.jsonData.tracesToLogs) {
-        updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', undefined);
-      }
     },
     [onOptionsChange, options, traceToLogs]
   );
@@ -110,7 +113,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           <DataSourcePicker
             inputId="trace-to-logs-data-source-picker"
             filter={(ds) => supportedDataSourceTypes.includes(ds.type)}
-            current={options.jsonData.tracesToLogs?.datasourceUid}
+            current={traceToLogs.datasourceUid}
             noDefault={true}
             width={40}
             onChange={(ds: DataSourceInstanceSettings) =>
@@ -133,57 +136,59 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         onChange={(val) => updateTracesToLogs({ spanEndTimeShift: val })}
       />
 
-      <RadioButtonGroup<Required<TraceToLogsOptionsV2['type']>>
-        size={'sm'}
-        options={[
-          { label: 'Builder', value: 'builder' },
-          { label: 'Code', value: 'code' },
-        ]}
-        value={type}
-        onChange={(val) => updateTracesToLogs({ type: val })}
+      <InlineFieldRow>
+        <InlineField
+          tooltip="Tags that will be used in the Loki query. Default tags: 'cluster', 'hostname', 'namespace', 'pod'"
+          label="Tags"
+          labelWidth={26}
+        >
+          <TagMappingInput values={tags ?? []} onChange={(v) => updateTracesToLogs({ tags: v })} />
+        </InlineField>
+      </InlineFieldRow>
+
+      <IdFilter
+        type={'trace'}
+        id={'filterByTraceID'}
+        value={Boolean(traceToLogs.filterByTraceID)}
+        onChange={(val) => updateTracesToLogs({ filterByTraceID: val })}
+      />
+      <IdFilter
+        type={'span'}
+        id={'filterBySpanID'}
+        value={Boolean(traceToLogs.filterBySpanID)}
+        onChange={(val) => updateTracesToLogs({ filterBySpanID: val })}
       />
 
-      {type === 'builder' ? (
-        <>
-          <InlineFieldRow>
-            <InlineField
-              tooltip="Tags that will be used in the Loki query. Default tags: 'cluster', 'hostname', 'namespace', 'pod'"
-              label="Tags"
-              labelWidth={26}
-            >
-              <TagMappingInput values={tags ?? []} onChange={(v) => updateTracesToLogs({ tags: v })} />
-            </InlineField>
-          </InlineFieldRow>
-
-          <IdFilter
-            type={'trace'}
-            id={'filterByTraceID'}
-            value={Boolean(traceToLogs.filterByTraceID)}
-            onChange={(val) => updateTracesToLogs({ filterByTraceID: val })}
-          />
-          <IdFilter
-            type={'span'}
-            id={'filterBySpanID'}
-            value={Boolean(traceToLogs.filterBySpanID)}
-            onChange={(val) => updateTracesToLogs({ filterBySpanID: val })}
-          />
-        </>
-      ) : (
+      <InlineFieldRow>
         <InlineField
-          label="Query"
-          labelWidth={10}
-          tooltip="The query that will run when navigating from a trace to logs data source. Interpolate tags using the `$__tags` keyword."
-          grow
+          tooltip="Use custom query with possibility to interpolate variables from the trace or span."
+          label="Use custom query"
+          labelWidth={26}
         >
-          <Input
-            label="Query"
-            type="text"
-            allowFullScreen
-            value={query}
-            onChange={(e) => updateTracesToLogs({ query: e.currentTarget.value })}
+          <InlineSwitch
+            value={customQuery}
+            onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
+              updateTracesToLogs({ customQuery: event.currentTarget.checked })
+            }
           />
         </InlineField>
-      )}
+      </InlineFieldRow>
+
+      <InlineField
+        disabled={!customQuery}
+        label="Query"
+        labelWidth={26}
+        tooltip="The query that will run when navigating from a trace to logs data source. Interpolate tags using the `$__tags` keyword."
+        grow
+      >
+        <Input
+          label="Query"
+          type="text"
+          allowFullScreen
+          value={customQuery ? query : '$__tags'}
+          onChange={customQuery ? (e) => updateTracesToLogs({ query: e.currentTarget.value }) : () => {}}
+        />
+      </InlineField>
     </div>
   );
 }
