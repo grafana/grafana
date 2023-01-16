@@ -10,9 +10,10 @@ export interface Props {
   title: string;
   collapsedInfo: string[];
   children: React.ReactNode;
+  datasource?: any;
 }
 
-export function QueryOptionGroup({ title, children, collapsedInfo }: Props) {
+export function QueryOptionGroup({ title, children, collapsedInfo, datasource }: Props) {
   const [isOpen, toggleOpen] = useToggle(false);
 
   // this will determine the color of the query size indicator
@@ -39,8 +40,10 @@ export function QueryOptionGroup({ title, children, collapsedInfo }: Props) {
         </div>
         {isOpen && <div className={styles.body}>{children}</div>}
       </Stack>
-      {/* this message will only display after the api request to get the query size */}
-      <p className={styles.sizeIndicator}>This query will process approximately X units.</p>
+      {datasource?.type === 'loki' && (
+        // this message will only display after the api request to get the query size
+        <p className={styles.sizeIndicator}>This query will process approximately X units.</p>
+      )}
     </div>
   );
 }

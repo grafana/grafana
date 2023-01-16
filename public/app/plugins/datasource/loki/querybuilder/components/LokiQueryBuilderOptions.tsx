@@ -7,6 +7,7 @@ import { RadioButtonGroup, Select, AutoSizeInput } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
+import { LokiDatasource } from '../../datasource';
 import { isLogsQuery } from '../../queryUtils';
 import { LokiQuery, LokiQueryType } from '../../types';
 
@@ -14,10 +15,11 @@ export interface Props {
   query: LokiQuery;
   onChange: (update: LokiQuery) => void;
   onRunQuery: () => void;
+  datasource: LokiDatasource;
   app?: CoreApp;
 }
 
-export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange, onRunQuery }) => {
+export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange, onRunQuery, datasource }) => {
   const onQueryTypeChange = (value: LokiQueryType) => {
     onChange({ ...query, queryType: value });
     onRunQuery();
@@ -50,7 +52,11 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange
 
   return (
     <EditorRow>
-      <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, queryType, showMaxLines)}>
+      <QueryOptionGroup
+        title="Options"
+        collapsedInfo={getCollapsedInfo(query, queryType, showMaxLines)}
+        datasource={datasource}
+      >
         <EditorField
           label="Legend"
           tooltip="Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
