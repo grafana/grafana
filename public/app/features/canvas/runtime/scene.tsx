@@ -5,7 +5,7 @@ import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
-import { GrafanaTheme2, PanelData } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
 import { Portal, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -26,8 +26,11 @@ import {
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
+import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/ConnectionAnchors';
+import { Connections } from 'app/plugins/panel/canvas/Connections';
 import { AnchorPoint, LayerActionID } from 'app/plugins/panel/canvas/types';
 
+import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
@@ -58,6 +61,7 @@ export class Scene {
   selecto?: Selecto;
   moveable?: Moveable;
   div?: HTMLDivElement;
+  connections: Connections;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
@@ -72,6 +76,8 @@ export class Scene {
 
   readonly editModeEnabled = new BehaviorSubject<boolean>(false);
   subscription: Subscription;
+
+  targetsToSelect = new Set<HTMLDivElement>();
 
   constructor(
     cfg: CanvasFrameOptions,
@@ -90,6 +96,7 @@ export class Scene {
     });
 
     this.panel = panel;
+    this.connections = new Connections(this);
   }
 
   getNextElementName = (isFrame = false) => {
@@ -301,6 +308,11 @@ export class Scene {
       this.selecto.setSelectedTargets(selection.targets);
       this.updateSelection(selection);
       this.editModeEnabled.next(false);
+
+      // Hide connection anchors on programmatic select
+      if (this.connections.connectionAnchorDiv) {
+        this.connections.connectionAnchorDiv.style.display = 'none';
+      }
     }
   };
 
@@ -460,6 +472,13 @@ export class Scene {
     this.selecto!.on('dragStart', (event) => {
       const selectedTarget = event.inputEvent.target;
 
+      // If selected target is a connection control, eject to handle connection event
+      if (selectedTarget.id === CONNECTION_ANCHOR_DIV_ID) {
+        this.connections.handleConnectionDragStart(selectedTarget, event.inputEvent.clientX, event.inputEvent.clientY);
+        event.stop();
+        return;
+      }
+
       const isTargetMoveableElement =
         this.moveable!.isMoveableElement(selectedTarget) ||
         targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
@@ -485,6 +504,11 @@ export class Scene {
     })
       .on('select', () => {
         this.editModeEnabled.next(false);
+
+        // Hide connection anchors on select
+        if (this.connections.connectionAnchorDiv) {
+          this.connections.connectionAnchorDiv.style.display = 'none';
+        }
       })
       .on('selectEnd', (event) => {
         targets = event.selected;
@@ -564,11 +588,22 @@ export class Scene {
     dest.reinitializeMoveable();
   };
 
+  addToSelection = () => {
+    try {
+      let selection: SelectionParams = { targets: [] };
+      selection.targets = [...this.targetsToSelect];
+      this.select(selection);
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, ['Unable to add to selection']);
+    }
+  };
+
   render() {
     const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
 
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
+        {this.connections.render()}
         {this.root.render()}
         {canShowContextMenu && (
           <Portal>

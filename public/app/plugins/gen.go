@@ -85,7 +85,7 @@ func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneTo
 		return corecodegen.SchemaForGen{
 			Name:    pd.PluginMeta.Name,
 			Schema:  pd.Lineage.Latest(),
-			IsGroup: pd.Slot.IsGroup(),
+			IsGroup: pd.SchemaInterface.IsGroup(),
 		}
 	})
 }

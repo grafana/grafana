@@ -1,13 +1,18 @@
-import { VizPanel, SceneGridRow } from '../components';
-import { EmbeddedScene, Scene } from '../components/Scene';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneGridLayout } from '../components/layout/SceneGridLayout';
-import { SceneTimeRange } from '../core/SceneTimeRange';
+import {
+  VizPanel,
+  SceneGridRow,
+  SceneTimePicker,
+  SceneGridLayout,
+  SceneTimeRange,
+  EmbeddedScene,
+} from '@grafana/scenes';
+
+import { Scene } from '../components/Scene';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getGridWithMultipleTimeRanges(standalone: boolean): Scene {
+export function getGridWithMultipleTimeRanges(standalone: boolean): Scene | EmbeddedScene {
   const globalTimeRange = new SceneTimeRange();
   const row1TimeRange = new SceneTimeRange({
     from: 'now-1y',

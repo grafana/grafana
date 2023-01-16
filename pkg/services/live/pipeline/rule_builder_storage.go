@@ -309,7 +309,7 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 		return nil, err
 	}
 
-	var rules []*LiveChannelRule
+	rules := make([]*LiveChannelRule, 0, len(channelRules))
 
 	for _, ruleConfig := range channelRules {
 		rule := &LiveChannelRule{

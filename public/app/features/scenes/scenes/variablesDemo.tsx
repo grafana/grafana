@@ -1,19 +1,23 @@
-import { VizPanel } from '../components';
-import { Scene, EmbeddedScene } from '../components/Scene';
-import { SceneCanvasText } from '../components/SceneCanvasText';
-import { SceneSubMenu } from '../components/SceneSubMenu';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
-import { SceneTimeRange } from '../core/SceneTimeRange';
-import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
-import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
-import { CustomVariable } from '../variables/variants/CustomVariable';
-import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
-import { TestVariable } from '../variables/variants/TestVariable';
+import {
+  VizPanel,
+  SceneCanvasText,
+  SceneSubMenu,
+  SceneTimePicker,
+  SceneFlexLayout,
+  SceneTimeRange,
+  VariableValueSelectors,
+  SceneVariableSet,
+  CustomVariable,
+  DataSourceVariable,
+  TestVariable,
+  EmbeddedScene,
+} from '@grafana/scenes';
+
+import { Scene } from '../components/Scene';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getVariablesDemo(standalone: boolean): Scene {
+export function getVariablesDemo(standalone: boolean): Scene | EmbeddedScene {
   const state = {
     title: 'Variables',
     $variables: new SceneVariableSet({

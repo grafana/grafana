@@ -5,8 +5,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -78,7 +78,7 @@ type Service interface {
 	GetBatch(ctx context.Context, user *user.SignedInUser, uids []string) ([]*Query, error)
 	Update(ctx context.Context, user *user.SignedInUser, query *Query) error
 	Delete(ctx context.Context, user *user.SignedInUser, uid string) error
-	UpdateDashboardQueries(ctx context.Context, user *user.SignedInUser, dash *models.Dashboard) error
+	UpdateDashboardQueries(ctx context.Context, user *user.SignedInUser, dash *dashboards.Dashboard) error
 	registry.CanBeDisabled
 }
 
