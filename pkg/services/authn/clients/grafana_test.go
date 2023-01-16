@@ -21,32 +21,22 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 		req              *authn.Request
 		username         string
 		proxyProperty    string
-		proxyHeaders     map[string]string
+		additional       map[string]string
 		expectedErr      error
 		expectedIdentity *authn.Identity
 	}
 
 	tests := []testCase{
 		{
-			desc:     "expect valid identity",
-			username: "test",
-			req: &authn.Request{
-				HTTPRequest: &http.Request{
-					Header: map[string][]string{
-						"Username": {"user"},
-						"X-Name":   {"name"},
-						"X-Role":   {"Viewer"},
-						"X-Group":  {"grp1,grp2"},
-						"X-Email":  {"email@email.com"},
-					},
-				},
-			},
+			desc:          "expect valid identity",
+			username:      "test",
+			req:           &authn.Request{HTTPRequest: &http.Request{}},
 			proxyProperty: "username",
-			proxyHeaders: map[string]string{
-				proxyFieldName:   "X-Name",
-				proxyFieldRole:   "X-Role",
-				proxyFieldGroups: "X-Group",
-				proxyFieldEmail:  "X-Email",
+			additional: map[string]string{
+				proxyFieldName:   "name",
+				proxyFieldRole:   "Viewer",
+				proxyFieldGroups: "grp1,grp2",
+				proxyFieldEmail:  "email@email.com",
 			},
 			expectedIdentity: &authn.Identity{
 				OrgID:      1,
@@ -69,11 +59,10 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 			},
 		},
 		{
-			desc:     "should set email as both email and login when configured proxy auth header property is email",
-			username: "test@test.com",
-			req: &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{
-				"Email": {"test@test.com"},
-			}}},
+			desc:       "should set email as both email and login when configured proxy auth header property is email",
+			username:   "test@test.com",
+			req:        &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{}}},
+			additional: map[string]string{},
 			expectedIdentity: &authn.Identity{
 				Login:      "test@test.com",
 				Email:      "test@test.com",
@@ -103,11 +92,10 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AuthProxyAutoSignUp = true
-			cfg.AuthProxyHeaders = tt.proxyHeaders
 			cfg.AuthProxyHeaderProperty = tt.proxyProperty
 			c := ProvideGrafana(cfg, usertest.NewUserServiceFake())
 
-			identity, err := c.AuthenticateProxy(context.Background(), tt.req, tt.username)
+			identity, err := c.AuthenticateProxy(context.Background(), tt.req, tt.username, tt.additional)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			if tt.expectedIdentity != nil {
 				assert.Equal(t, tt.expectedIdentity.OrgID, identity.OrgID)

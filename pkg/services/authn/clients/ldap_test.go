@@ -69,7 +69,7 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			c := &LDAP{cfg: setting.NewCfg(), service: fakeLDAPService{ExpectedInfo: tt.expectedLDAPInfo, ExpectedErr: tt.expectedLDAPErr}}
-			identity, err := c.AuthenticateProxy(context.Background(), &authn.Request{OrgID: 1}, tt.username)
+			identity, err := c.AuthenticateProxy(context.Background(), &authn.Request{OrgID: 1}, tt.username, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)
 		})

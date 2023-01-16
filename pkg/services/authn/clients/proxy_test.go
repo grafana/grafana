@@ -11,7 +11,21 @@ import (
 )
 
 func TestProxy_Authenticate(t *testing.T) {
+	type testCase struct {
+		desc string
+	}
 
+	tests := []testCase{
+		{
+			desc: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+
+		})
+	}
 }
 
 func TestProxy_Test(t *testing.T) {
@@ -59,7 +73,7 @@ func TestProxy_Test(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AuthProxyHeaderName = "Proxy-Header"
 
-			c, _ := ProvideProxy(cfg)
+			c, _ := ProvideProxy(cfg, nil)
 			assert.Equal(t, tt.expectedOK, c.Test(context.Background(), tt.req))
 		})
 	}

@@ -14,14 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const (
-	proxyFieldName   = "Name"
-	proxyFieldEmail  = "Email"
-	proxyFieldLogin  = "Login"
-	proxyFieldRole   = "Role"
-	proxyFieldGroups = "Groups"
-)
-
 var _ authn.ProxyClient = new(Grafana)
 var _ authn.PasswordClient = new(Grafana)
 
@@ -34,7 +26,7 @@ type Grafana struct {
 	userService user.Service
 }
 
-func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, username string) (*authn.Identity, error) {
+func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, username string, additional map[string]string) (*authn.Identity, error) {
 	identity := &authn.Identity{
 		AuthModule: login.AuthProxyAuthModule,
 		AuthID:     username,
@@ -59,26 +51,20 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 		return nil, errInvalidProxyHeader.Errorf("invalid auth proxy header property, expected username or email but got: %s", c.cfg.AuthProxyHeaderProperty)
 	}
 
-	if headerName := c.cfg.AuthProxyHeaders[proxyFieldName]; headerName != "" {
-		if name := getProxyHeader(r, headerName, c.cfg.AuthProxyHeadersEncoded); name != "" {
-			identity.Name = name
-		}
+	if v, ok := additional[proxyFieldName]; ok {
+		identity.Name = v
 	}
 
-	if headerName := c.cfg.AuthProxyHeaders[proxyFieldEmail]; headerName != "" {
-		if email := getProxyHeader(r, headerName, c.cfg.AuthProxyHeadersEncoded); email != "" {
-			identity.Email = email
-		}
+	if v, ok := additional[proxyFieldEmail]; ok {
+		identity.Email = v
 	}
 
-	if headerName := c.cfg.AuthProxyHeaders[proxyFieldLogin]; headerName != "" {
-		if loginName := getProxyHeader(r, headerName, c.cfg.AuthProxyHeadersEncoded); loginName != "" {
-			identity.Login = loginName
-		}
+	if v, ok := additional[proxyFieldLogin]; ok {
+		identity.Login = v
 	}
 
-	if headerName := c.cfg.AuthProxyHeaders[proxyFieldRole]; headerName != "" {
-		role := org.RoleType(getProxyHeader(r, headerName, c.cfg.AuthProxyHeadersEncoded))
+	if v, ok := additional[proxyFieldRole]; ok {
+		role := org.RoleType(v)
 		if role.IsValid() {
 			orgID := int64(1)
 			if c.cfg.AutoAssignOrg && c.cfg.AutoAssignOrgId > 0 {
@@ -89,8 +75,8 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 		}
 	}
 
-	if headerName := c.cfg.AuthProxyHeaders[proxyFieldGroups]; headerName != "" {
-		identity.Groups = util.SplitString(getProxyHeader(r, headerName, c.cfg.AuthProxyHeadersEncoded))
+	if v, ok := additional[proxyFieldGroups]; ok {
+		identity.Groups = util.SplitString(v)
 	}
 
 	identity.ClientParams.LookUpParams.Email = &identity.Email

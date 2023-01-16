@@ -74,7 +74,7 @@ type PasswordClient interface {
 }
 
 type ProxyClient interface {
-	AuthenticateProxy(ctx context.Context, r *Request, username string) (*Identity, error)
+	AuthenticateProxy(ctx context.Context, r *Request, username string, additional map[string]string) (*Identity, error)
 }
 
 type Request struct {

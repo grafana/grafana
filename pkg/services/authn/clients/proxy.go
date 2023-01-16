@@ -7,11 +7,23 @@ import (
 	"path"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
+
+const (
+	proxyFieldName      = "Name"
+	proxyFieldEmail     = "Email"
+	proxyFieldLogin     = "Login"
+	proxyFieldRole      = "Role"
+	proxyFieldGroups    = "Groups"
+	proxyCacheKeyPrefix = "auth-proxy-sync-ttl:%s"
+)
+
+var proxyFileds = [...]string{proxyFieldName, proxyFieldEmail, proxyFieldLogin, proxyFieldRole, proxyFieldGroups}
 
 var (
 	errNotAcceptedIP      = errutil.NewBase(errutil.StatusValidationFailed, "auth-proxy.invalid-ip")
@@ -20,16 +32,17 @@ var (
 
 var _ authn.Client = new(Proxy)
 
-func ProvideProxy(cfg *setting.Cfg, clients ...authn.ProxyClient) (*Proxy, error) {
+func ProvideProxy(cfg *setting.Cfg, cache *remotecache.RemoteCache, clients ...authn.ProxyClient) (*Proxy, error) {
 	list, err := parseAcceptList(cfg.AuthProxyWhitelist)
 	if err != nil {
 		return nil, err
 	}
-	return &Proxy{cfg, clients, list}, nil
+	return &Proxy{cfg, cache, clients, list}, nil
 }
 
 type Proxy struct {
 	cfg         *setting.Cfg
+	cache       *remotecache.RemoteCache
 	clients     []authn.ProxyClient
 	acceptedIPs []*net.IPNet
 }
@@ -40,13 +53,14 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	username := getProxyHeader(r, c.cfg.AuthProxyHeaderName, c.cfg.AuthProxyHeadersEncoded)
+	additional := getAdditionalProxyHeaders(r, c.cfg)
 
 	// FIXME: add cache to prevent sync on every request
 
 	var clientErr error
 	for _, proxyClient := range c.clients {
 		var identity *authn.Identity
-		identity, clientErr = proxyClient.AuthenticateProxy(ctx, r, username)
+		identity, clientErr = proxyClient.AuthenticateProxy(ctx, r, username, additional)
 		if identity != nil {
 			return identity, nil
 		}
@@ -106,13 +120,30 @@ func coerceProxyAddress(proxyAddr string) (*net.IPNet, error) {
 	return network, nil
 }
 
-func getProxyHeader(r *authn.Request, headerName string, decoded bool) string {
+func getProxyHeader(r *authn.Request, headerName string, encoded bool) string {
 	if r.HTTPRequest == nil {
 		return ""
 	}
 	v := r.HTTPRequest.Header.Get(headerName)
-	if decoded {
+	if encoded {
 		v = util.DecodeQuotedPrintable(v)
 	}
 	return v
+}
+
+func getAdditionalProxyHeaders(r *authn.Request, cfg *setting.Cfg) map[string]string {
+	additional := make(map[string]string, len(proxyFileds))
+	for _, k := range proxyFileds {
+		if v := getProxyHeader(r, cfg.AuthProxyHeaders[k], cfg.AuthProxyHeadersEncoded); v != "" {
+			additional[k] = v
+		}
+	}
+	return additional
+}
+
+func getCacheKey(username string) (string, error) {
+	var b strings.Builder
+	b.WriteString(username)
+
+	return "", nil
 }
