@@ -849,7 +849,7 @@ Administrators can increase this if they experience OAuth login state mismatch e
 
 ### oauth_skip_org_role_update_sync
 
-> **Note**: This option will soon be a legacy option in favor of OAuth provider specific `skip_org_role_sync` settings. Read further down for each specific provider setting
+> **Note**: This option will soon be a legacy option in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
 
 Skip forced assignment of OrgID `1` or `auto_assign_org_id` for external logins. Default is `false`.
 Use this setting to allow users with external login to be manually assigned to multiple organizations.
