@@ -53,6 +53,13 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     []
   );
 
+  useEffect(() => {
+    console.log('AppRootPage mount');
+    return () => {
+      console.log('AppRootPage unmount');
+    };
+  }, []);
+
   if (!plugin || pluginId !== plugin.meta.id) {
     return <Page navModel={navModel}>{loading && <PageLoader />}</Page>;
   }
