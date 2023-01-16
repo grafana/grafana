@@ -116,7 +116,11 @@ function getCollapsedInfo(
   items.push(`Type: ${queryTypeLabel?.label}`);
 
   if (showMaxLines) {
-    items.push(`Line limit: ${query.maxLines || maxLines}`);
+    if (query.maxLines! >= 0) {
+      items.push(`Line limit: ${query.maxLines}`);
+    } else {
+      items.push(`Line limit: ${maxLines}`);
+    }
   }
 
   return items;
