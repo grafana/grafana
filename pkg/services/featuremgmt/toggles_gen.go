@@ -298,4 +298,8 @@ const (
 	// FlagIndividualCookiePreferences
 	// Support overriding cookie preferences on an individual level
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
+
+	// FlagAlertingNoNormalState
+	// Stop maintaining state of alerts that are not firing
+	FlagAlertingNoNormalState = "alertingNoNormalState"
 )

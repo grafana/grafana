@@ -89,4 +89,5 @@ export interface FeatureToggles {
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
   individualCookiePreferences?: boolean;
+  alertingNoNormalState?: boolean;
 }

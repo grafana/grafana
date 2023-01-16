@@ -408,5 +408,11 @@ var (
 			Description: "Support overriding cookie preferences on an individual level",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:            "alertingNoNormalState",
+			Description:     "Stop maintaining state of alerts that are not firing",
+			State:           FeatureStateBeta,
+			RequiresRestart: false,
+		},
 	}
 )

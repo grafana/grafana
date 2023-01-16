@@ -1,10 +1,14 @@
 package notifier
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/grafana/alerting/alerting"
+	"github.com/grafana/alerting/alerting/notifier/channels"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -83,4 +87,73 @@ func Load(rawConfig []byte) (*api.PostableUserConfig, error) {
 	}
 
 	return cfg, nil
+}
+
+// AlertingConfiguration provides configuration for an Alertmanager.
+// It implements the alerting.Configuration interface.
+type AlertingConfiguration struct {
+	AlertmanagerConfig    api.PostableApiAlertingConfig
+	RawAlertmanagerConfig []byte
+
+	AlertmanagerTemplates *alerting.Template
+
+	IntegrationsFunc         func(receivers []*api.PostableApiReceiver, templates *alerting.Template) (map[string][]*alerting.Integration, error)
+	ReceiverIntegrationsFunc func(r *api.PostableGrafanaReceiver, tmpl *alerting.Template) (channels.NotificationChannel, error)
+}
+
+func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alerting.GrafanaReceiver, tmpl *alerting.Template) (alerting.Notifier, error) {
+	return func(next *alerting.GrafanaReceiver, tmpl *alerting.Template) (alerting.Notifier, error) {
+		//TODO: We shouldn't need to do all of this marshalling - there should be no difference between types.
+		var out api.RawMessage
+		settingsJSON, err := json.Marshal(next.Settings)
+		if err != nil {
+			return nil, fmt.Errorf("unable to marshal settings to JSON: %v", err)
+		}
+
+		err = out.UnmarshalJSON(settingsJSON)
+		if err != nil {
+			return nil, fmt.Errorf("unable to marshal JSON to RawMessage: %v", err)
+		}
+		gr := &api.PostableGrafanaReceiver{
+			UID:                   next.UID,
+			Name:                  next.Name,
+			Type:                  next.Type,
+			DisableResolveMessage: next.DisableResolveMessage,
+			Settings:              out,
+			SecureSettings:        next.SecureSettings,
+		}
+		return a.ReceiverIntegrationsFunc(gr, tmpl)
+	}
+}
+
+func (a AlertingConfiguration) DispatcherLimits() alerting.DispatcherLimits {
+	return &nilLimits{}
+}
+
+func (a AlertingConfiguration) InhibitRules() []*alerting.InhibitRule {
+	return a.AlertmanagerConfig.InhibitRules
+}
+
+func (a AlertingConfiguration) MuteTimeIntervals() []alerting.MuteTimeInterval {
+	return a.AlertmanagerConfig.MuteTimeIntervals
+}
+
+func (a AlertingConfiguration) ReceiverIntegrations() (map[string][]*alerting.Integration, error) {
+	return a.IntegrationsFunc(a.AlertmanagerConfig.Receivers, a.AlertmanagerTemplates)
+}
+
+func (a AlertingConfiguration) RoutingTree() *alerting.Route {
+	return a.AlertmanagerConfig.Route.AsAMRoute()
+}
+
+func (a AlertingConfiguration) Templates() *alerting.Template {
+	return a.AlertmanagerTemplates
+}
+
+func (a AlertingConfiguration) Hash() [16]byte {
+	return md5.Sum(a.RawAlertmanagerConfig)
+}
+
+func (a AlertingConfiguration) Raw() []byte {
+	return a.RawAlertmanagerConfig
 }

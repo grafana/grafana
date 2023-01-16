@@ -89,8 +89,8 @@ it('renders panel with a header if prop menu', () => {
 it('renders panel with a show-on-hover menu icon if prop menu', () => {
   setup({ menu: <div> Menu </div> });
 
-  expect(screen.getByTestId('menu-icon')).toBeInTheDocument();
-  expect(screen.getByTestId('menu-icon')).not.toBeVisible();
+  expect(screen.getByTestId('panel-menu-button')).toBeInTheDocument();
+  expect(screen.getByTestId('panel-menu-button')).not.toBeVisible();
 });
 
 it.skip('renders states in the panel header if any given', () => {});

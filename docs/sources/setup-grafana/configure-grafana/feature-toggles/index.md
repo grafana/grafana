@@ -45,6 +45,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `autoMigrateGraphPanels`          | Replace the angular graph panel with timeseries                                 |
 | `datasourceLogger`                | Logs all datasource requests                                                    |
 | `accessControlOnCall`             | Access control primitives for OnCall                                            |
+| `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                            |
 
 ## Alpha feature toggles
 
