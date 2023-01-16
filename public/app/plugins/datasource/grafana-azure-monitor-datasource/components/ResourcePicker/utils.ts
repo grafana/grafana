@@ -139,7 +139,7 @@ export function setResource(query: AzureMonitorQuery, resource?: string | AzureM
       ...query,
       azureLogAnalytics: {
         ...query.azureLogAnalytics,
-        resource,
+        resources: [resource],
       },
     };
   }

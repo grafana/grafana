@@ -32,6 +32,11 @@ export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuer
     workingQuery = migrateResourceGroupAndName(workingQuery);
   }
 
+  if (workingQuery.azureLogAnalytics?.resource) {
+    workingQuery = migrateLogsResource(workingQuery);
+  }
+
+>>>>>>> 021eda7aad2e4d29d6c15ff1df578af9dfb394fc
   return workingQuery;
 }
 
@@ -168,6 +173,18 @@ function migrateResourceGroupAndName(query: AzureMonitorQuery): AzureMonitorQuer
 
     delete workingQuery.azureMonitor.resourceGroup;
     delete workingQuery.azureMonitor.resourceName;
+  }
+
+  return workingQuery;
+}
+
+function migrateLogsResource(query: AzureMonitorQuery): AzureMonitorQuery {
+  let workingQuery = query;
+
+  if (workingQuery.azureLogAnalytics && workingQuery.azureLogAnalytics.resource) {
+    workingQuery.azureLogAnalytics.resources = [workingQuery.azureLogAnalytics.resource];
+
+    delete workingQuery.azureLogAnalytics.resource;
   }
 
   return workingQuery;
