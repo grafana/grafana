@@ -37,7 +37,7 @@ func postprocessGoFile(cfg genGoFile) ([]byte, error) {
 
 		err = format.Node(buf, fset, gf)
 		if err != nil {
-			return nil, fmt.Errorf("error formatting Go DST: %w", err)
+			return nil, fmt.Errorf("error formatting Go AST: %w", err)
 		}
 	} else {
 		buf = bytes.NewBuffer(cfg.in)
