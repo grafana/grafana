@@ -35,6 +35,7 @@ var client = &http.Client{
 // 401: unauthorisedError
 func GetSharingOptions(c *models.ReqContext) {
 	c.JSON(http.StatusOK, util.DynMap{
+		"snapshotEnabled":      setting.SnapshotEnabled,
 		"externalSnapshotURL":  setting.ExternalSnapshotUrl,
 		"externalSnapshotName": setting.ExternalSnapshotName,
 		"externalEnabled":      setting.ExternalEnabled,
@@ -84,7 +85,7 @@ func createExternalDashboardSnapshot(cmd dashboardsnapshots.CreateDashboardSnaps
 	return &createSnapshotResponse, nil
 }
 
-func createOriginalDashboardURL(appURL string, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) (string, error) {
+func createOriginalDashboardURL(cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) (string, error) {
 	dashUID := cmd.Dashboard.Get("uid").MustString("")
 	if ok := util.IsValidShortUID(dashUID); !ok {
 		return "", fmt.Errorf("invalid dashboard UID")
@@ -105,6 +106,11 @@ func createOriginalDashboardURL(appURL string, cmd *dashboardsnapshots.CreateDas
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Response {
+	if !setting.SnapshotEnabled {
+		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
+		return nil
+	}
+
 	cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -114,10 +120,10 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 	}
 
 	var snapshotUrl string
-	cmd.ExternalURL = ""
-	cmd.OrgID = c.OrgID
-	cmd.UserID = c.UserID
-	originalDashboardURL, err := createOriginalDashboardURL(hs.Cfg.AppURL, &cmd)
+	cmd.ExternalUrl = ""
+	cmd.OrgId = c.OrgID
+	cmd.UserId = c.UserID
+	originalDashboardURL, err := createOriginalDashboardURL(&cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Invalid app URL", err)
 	}
@@ -195,6 +201,11 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboardSnapshot(c *models.ReqContext) response.Response {
+	if !setting.SnapshotEnabled {
+		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
+		return nil
+	}
+
 	key := web.Params(c.Req)[":key"]
 	if len(key) == 0 {
 		return response.Error(http.StatusBadRequest, "Empty snapshot key", nil)
@@ -274,6 +285,11 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response {
+	if !setting.SnapshotEnabled {
+		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
+		return nil
+	}
+
 	key := web.Params(c.Req)[":deleteKey"]
 	if len(key) == 0 {
 		return response.Error(404, "Snapshot not found", nil)
@@ -314,6 +330,11 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) r
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
+	if !setting.SnapshotEnabled {
+		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
+		return nil
+	}
+
 	key := web.Params(c.Req)[":key"]
 	if len(key) == 0 {
 		return response.Error(http.StatusNotFound, "Snapshot not found", nil)
@@ -379,6 +400,11 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 // 200: searchDashboardSnapshotsResponse
 // 500: internalServerError
 func (hs *HTTPServer) SearchDashboardSnapshots(c *models.ReqContext) response.Response {
+	if !setting.SnapshotEnabled {
+		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
+		return nil
+	}
+
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
 

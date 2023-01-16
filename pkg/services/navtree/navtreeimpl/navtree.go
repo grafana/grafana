@@ -376,13 +376,15 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 	})
 
 	if c.IsSignedIn {
-		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text:     "Snapshots",
-			SubTitle: "Interactive, publically available, point-in-time representations of dashboards",
-			Id:       "dashboards/snapshots",
-			Url:      s.cfg.AppSubURL + "/dashboard/snapshots",
-			Icon:     "camera",
-		})
+		if setting.SnapshotEnabled {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text:     "Snapshots",
+				SubTitle: "Interactive, publically available, point-in-time representations of dashboards",
+				Id:       "dashboards/snapshots",
+				Url:      s.cfg.AppSubURL + "/dashboard/snapshots",
+				Icon:     "camera",
+			})
+		}
 
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 			Text:     "Library panels",

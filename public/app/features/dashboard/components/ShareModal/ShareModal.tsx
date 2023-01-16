@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { reportInteraction } from '@grafana/runtime/src';
+import { getBackendSrv, reportInteraction } from '@grafana/runtime/src';
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
@@ -27,22 +27,13 @@ export function addPanelShareTab(tab: ShareModalTabModel) {
   customPanelTabs.push(tab);
 }
 
-function getInitialState(props: Props): State {
-  const { tabs, activeTab } = getTabs(props);
-
-  return {
-    tabs,
-    activeTab,
-  };
-}
-
-function getTabs(props: Props) {
+function getTabs(props: Props, snapshotEnabled: boolean) {
   const { panel, activeTab } = props;
 
   const linkLabel = t('share-modal.tab-title.link', 'Link');
   const tabs: ShareModalTabModel[] = [{ label: linkLabel, value: 'link', component: ShareLink }];
 
-  if (contextSrv.isSignedIn) {
+  if (contextSrv.isSignedIn && snapshotEnabled) {
     const snapshotLabel = t('share-modal.tab-title.snapshot', 'Snapshot');
     tabs.push({ label: snapshotLabel, value: 'snapshot', component: ShareSnapshot });
   }
@@ -78,23 +69,46 @@ interface Props {
   dashboard: DashboardModel;
   panel?: PanelModel;
   activeTab?: string;
-
   onDismiss(): void;
 }
 
 interface State {
   tabs: ShareModalTabModel[];
   activeTab: string;
+  snapshotEnabled: boolean;
 }
+
+function getInitialState(props: Props, snapshotEnabled: boolean): State {
+  const { tabs, activeTab } = getTabs(props, snapshotEnabled);
+
+  return {
+    tabs,
+    activeTab,
+    snapshotEnabled,
+  };
+}
+
+// default state of snapshot tab, in case the call to get the config has a delay
+const DEFAULT_SNAPSHOT_ENABLED = true;
 
 export class ShareModal extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = getInitialState(props);
+    // this is used to about null problems on the state, it will be called again on "componentDidMount"
+    this.state = getInitialState(props, DEFAULT_SNAPSHOT_ENABLED);
   }
 
-  componentDidMount() {
+  async getSnapshotEnabledOption(): Promise<boolean> {
+    const shareOptions = await getBackendSrv().get('/api/snapshot/shared-options');
+    return shareOptions['snapshotEnabled'];
+  }
+
+  async componentDidMount() {
     reportInteraction('grafana_dashboards_share_modal_viewed');
+
+    const snapshotEnabled = await this.getSnapshotEnabledOption();
+
+    this.setState(getInitialState(this.props, snapshotEnabled));
   }
 
   onSelectTab = (t: any) => {
@@ -102,7 +116,7 @@ export class ShareModal extends React.Component<Props, State> {
   };
 
   getTabs() {
-    return getTabs(this.props).tabs;
+    return getTabs(this.props, this.state.snapshotEnabled).tabs;
   }
 
   getActiveTab() {
