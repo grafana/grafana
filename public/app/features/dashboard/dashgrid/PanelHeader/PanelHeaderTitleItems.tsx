@@ -1,4 +1,4 @@
-import { css, cx, keyframes } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { PanelData, GrafanaTheme2, PanelModel, LinkModel, AlertState, DataLink } from '@grafana/data';
@@ -64,12 +64,6 @@ export function PanelHeaderTitleItems(props: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const alertingPanel = keyframes({
-    '100%': {
-      transform: 'scale(1.2)',
-    },
-  });
-
   return {
     item: css({
       label: 'panel-header-item',
