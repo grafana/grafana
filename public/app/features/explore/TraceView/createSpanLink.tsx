@@ -96,6 +96,11 @@ export function createSpanLinkFactory({
   }
 }
 
+/**
+ * Default keys to use when there are no configured tags.
+ */
+const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'].map((k) => ({ key: k }));
+
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
   traceToLogsOptions?: TraceToLogsOptionsV2,
@@ -125,30 +130,35 @@ function legacyCreateSpanLinkFactory(
     // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
     // it manually here instead of leaving it for the data source to supply the config.
 
-    let queryData: { query: DataQuery; tags: string } = { query: { refId: '' }, tags: '' };
+    let query: DataQuery | undefined;
+    let tags = '';
     // Get logs link
     if (logsDataSourceSettings && traceToLogsOptions) {
+      const customQuery = traceToLogsOptions.customQuery ? traceToLogsOptions.query : undefined;
       switch (logsDataSourceSettings?.type) {
         case 'loki':
-          queryData = getQueryForLoki(span, traceToLogsOptions);
+          tags = getTags(span, traceToLogsOptions.tags || defaultKeys).join(', ');
+          query = getQueryForLoki(span, traceToLogsOptions, tags, customQuery);
           break;
         case 'grafana-splunk-datasource':
-          queryData = getQueryForSplunk(span, traceToLogsOptions);
+          tags = getTags(span, traceToLogsOptions.tags || defaultKeys).join(' ');
+          query = getQueryForSplunk(span, traceToLogsOptions, tags, customQuery);
           break;
         case 'elasticsearch':
         case 'grafana-opensearch-datasource':
-          queryData = getQueryForElasticsearchOrOpensearch(span, traceToLogsOptions);
+          tags = getTags(span, traceToLogsOptions.tags || [], { labelValueSign: ':' }).join(' AND ');
+          query = getQueryForElasticsearchOrOpensearch(span, traceToLogsOptions, tags, customQuery);
           break;
       }
 
-      if (queryData.tags || traceToLogsOptions.customQuery) {
+      if (query) {
         const dataLink: DataLink = {
           title: logsDataSourceSettings.name,
           url: '',
           internal: {
             datasourceUid: logsDataSourceSettings.uid,
             datasourceName: logsDataSourceSettings.name,
-            query: traceToLogsOptions.customQuery ? traceToLogsOptions.query : queryData.query,
+            query,
           },
         };
 
@@ -156,7 +166,7 @@ function legacyCreateSpanLinkFactory(
           ...scopedVars,
           __tags: {
             text: 'Tags',
-            value: queryData.tags,
+            value: tags,
           },
         };
 
@@ -271,17 +281,20 @@ function legacyCreateSpanLinkFactory(
   };
 }
 
-/**
- * Default keys to use when there are no configured tags.
- */
-const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'].map((k) => ({ key: k }));
-
-function getQueryForLoki(span: TraceSpan, options: TraceToLogsOptionsV2): { query: LokiQuery; tags: string } {
+function getQueryForLoki(
+  span: TraceSpan,
+  options: TraceToLogsOptionsV2,
+  tags: string,
+  customQuery?: string
+): LokiQuery | undefined {
   const { filterByTraceID, filterBySpanID } = options;
-  const tags = getTags(span, options.tags || defaultKeys).join(', ');
+
+  if (customQuery) {
+    return { expr: customQuery, refId: '' };
+  }
 
   if (!tags) {
-    return { query: { expr: '', refId: '' }, tags };
+    return undefined;
   }
 
   let expr = `{$__tags}`;
@@ -293,11 +306,8 @@ function getQueryForLoki(span: TraceSpan, options: TraceToLogsOptionsV2): { quer
   }
 
   return {
-    query: {
-      expr: expr,
-      refId: '',
-    },
-    tags,
+    expr: expr,
+    refId: '',
   };
 }
 
@@ -313,13 +323,21 @@ interface ElasticsearchOrOpensearchQuery extends DataQuery {
 
 function getQueryForElasticsearchOrOpensearch(
   span: TraceSpan,
-  options: TraceToLogsOptionsV2
-): { query: ElasticsearchOrOpensearchQuery; tags: string } {
+  options: TraceToLogsOptionsV2,
+  tags: string,
+  customQuery?: string
+): ElasticsearchOrOpensearchQuery {
   const { filterByTraceID, filterBySpanID } = options;
-  const tags = getTags(span, options.tags || [], { labelValueSign: ':' }).join(' AND ');
+  if (customQuery) {
+    return {
+      query: customQuery,
+      refId: '',
+      metrics: [{ id: '1', type: 'logs' }],
+    };
+  }
 
   let query = '';
-  if (tags.length > 0) {
+  if (tags) {
     query += `$__tags`;
   }
   if (filterByTraceID && span.traceID) {
@@ -330,23 +348,18 @@ function getQueryForElasticsearchOrOpensearch(
   }
 
   return {
-    query: {
-      query: query,
-      refId: '',
-      metrics: [
-        {
-          id: '1',
-          type: 'logs',
-        },
-      ],
-    },
-    tags,
+    query: query,
+    refId: '',
+    metrics: [{ id: '1', type: 'logs' }],
   };
 }
 
-function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2) {
+function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags: string, customQuery?: string) {
   const { filterByTraceID, filterBySpanID } = options;
-  const tags = getTags(span, options.tags || defaultKeys).join(' ');
+
+  if (customQuery) {
+    return { query: customQuery, refId: '' };
+  }
 
   let query = '';
   if (tags) {
@@ -360,11 +373,8 @@ function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2) {
   }
 
   return {
-    query: {
-      query: query,
-      refId: '',
-    },
-    tags,
+    query: query,
+    refId: '',
   };
 }
 
@@ -450,15 +460,9 @@ function scopedVarsFromTrace(trace: Trace): ScopedVars {
     __trace: {
       text: 'Trace',
       value: {
-        duration: {
-          value: trace.duration,
-        },
-        name: {
-          value: trace.traceName,
-        },
-        id: {
-          value: trace.traceID,
-        },
+        duration: trace.duration,
+        name: trace.traceName,
+        id: trace.traceID,
       },
     },
   };
@@ -467,29 +471,16 @@ function scopedVarsFromTrace(trace: Trace): ScopedVars {
 function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
   const tags: ScopedVars = {};
   for (const tag of span.tags) {
-    tags[tag.key] = {
-      text: tag.key,
-      value: tag.value,
-    };
+    tags[tag.key] = tag.value;
   }
   return {
     __span: {
       text: 'Span',
       value: {
-        id: {
-          value: span.spanID,
-        },
-        duration: {
-          value: span.duration,
-        },
-        name: {
-          value: span.operationName,
-        },
-        tags: {
-          value: {
-            ...tags,
-          },
-        },
+        id: span.spanID,
+        duration: span.duration,
+        name: span.operationName,
+        tags: tags,
       },
     },
   };

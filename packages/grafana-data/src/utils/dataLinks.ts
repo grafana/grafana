@@ -136,13 +136,13 @@ function interpolateObjectRecursive<T extends Object>(
   for (const k of Object.keys(obj)) {
     // Honestly not sure how to type this to make TS happy.
     // @ts-ignore
-    if (typeof obj[k] === 'object' && obj[k] !== null) {
-      // @ts-ignore
-      obj[k] = interpolateObjectRecursive(obj[k], scopedVars, replaceVariables);
-      // @ts-ignore
-    } else if (typeof obj[k] === 'string') {
+    if (typeof obj[k] === 'string') {
       // @ts-ignore
       obj[k] = replaceVariables(obj[k], scopedVars);
+      // @ts-ignore
+    } else if (typeof obj[k] === 'object' && obj[k] !== null) {
+      // @ts-ignore
+      obj[k] = interpolateObjectRecursive(obj[k], scopedVars, replaceVariables);
     }
   }
   return obj;
