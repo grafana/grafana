@@ -1,8 +1,7 @@
 import { DataFrame, FieldType, isValidGoDuration, Labels } from '@grafana/data';
 
-import { isLogLineJSON, isLogLineLogfmt } from './lineParser';
-
 import { isBytesString } from './languageUtils';
+import { isLogLineJSON, isLogLineLogfmt } from './lineParser';
 
 export function dataFrameHasLokiError(frame: DataFrame): boolean {
   const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values.toArray() ?? [];
