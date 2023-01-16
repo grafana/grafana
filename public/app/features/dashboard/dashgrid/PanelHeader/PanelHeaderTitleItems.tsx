@@ -101,7 +101,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     alerting: css({
       color: theme.colors.error.text,
-      animation: `${alertingPanel} 1s cubic-bezier(1, 0.1, 0.73, 1) 0s infinite alternate`,
     }),
     timeshift: css({
       color: theme.colors.text.link,
