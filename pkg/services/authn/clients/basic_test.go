@@ -14,7 +14,6 @@ func TestBasic_Authenticate(t *testing.T) {
 	type TestCase struct {
 		desc             string
 		req              *authn.Request
-		blockLogin       bool
 		client           authn.PasswordClient
 		expectedErr      error
 		expectedIdentity *authn.Identity
@@ -52,10 +51,9 @@ func TestBasic_Authenticate(t *testing.T) {
 
 func TestBasic_Test(t *testing.T) {
 	type TestCase struct {
-		desc      string
-		req       *authn.Request
-		noClients bool
-		expected  bool
+		desc     string
+		req      *authn.Request
+		expected bool
 	}
 
 	tests := []TestCase{
