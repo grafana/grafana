@@ -82,7 +82,6 @@ func ProvideService(
 		if !setting.DisableLoginForm {
 			s.clients[authn.ClientForm] = clients.ProvideForm(passwordClient)
 		}
-
 	}
 
 	if s.cfg.JWTAuthEnabled {
