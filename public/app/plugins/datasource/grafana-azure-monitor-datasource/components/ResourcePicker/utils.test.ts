@@ -186,8 +186,12 @@ describe('AzureMonitor ResourcePicker utils', () => {
           metricName: undefined,
           metricNamespace: 'microsoft.storage/storageaccounts',
           region: 'westus',
-          resourceGroup: 'rg',
-          resourceName: 'testacct',
+          resources: [
+            {
+              resourceGroup: 'rg',
+              resourceName: 'testacct',
+            },
+          ],
         },
       });
     });
