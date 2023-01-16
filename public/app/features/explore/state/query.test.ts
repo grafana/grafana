@@ -60,15 +60,13 @@ const datasources: DataSourceApi[] = [
   } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
 ];
 
-const datasourceLoki: DataSourceApi = {
-  name: 'testDs3',
-  type: 'loki',
-  uid: 'ds3',
-  getRef: () => {
-    return { type: 'loki', uid: 'ds3' };
-  },
-  query: jest.fn(),
-} as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+// TODO: Remove????
+// const datasource2: DataSourceApi = {
+//   name: 'testDs3',
+//   type: 'postgres',
+//   uid: 'ds3',
+//   query: jest.fn(),
+// } as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
@@ -315,14 +313,21 @@ describe('reducer', () => {
     });
     describe('addQueryRow with mixed datasources disabled', () => {
       it('should add query row', async () => {
+        const exploreId = ExploreId.left;
         let dispatch: ThunkDispatch, getState: () => StoreState;
 
         const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
           ...(defaultInitialState as any),
           explore: {
-            [ExploreId.left]: {
-              ...defaultInitialState.explore[ExploreId.left],
-              datasourceInstance: datasourceLoki,
+            [exploreId]: {
+              ...defaultInitialState.explore[exploreId],
+              // datasourceInstance: datasource2, TODO: remove???
+              queries: [
+                {
+                  datasource: { type: 'postgres', uid: 'ds1' },
+                  refId: 'C',
+                },
+              ],
             },
           },
         });
@@ -332,9 +337,10 @@ describe('reducer', () => {
 
         setupQueryResponse(getState());
 
-        await dispatch(addQueryRow(ExploreId.left, 1));
+        await dispatch(addQueryRow(exploreId, 1));
 
-        // expect(getState().explore[ExploreId.left].queries).;
+        expect(getState().explore[exploreId].queries).toHaveLength(2);
+        expect(getState().explore[exploreId].queryKeys).toEqual(["ds1-0", "ds1-1"]);
       });
     });
   });
