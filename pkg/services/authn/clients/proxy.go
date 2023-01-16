@@ -24,7 +24,8 @@ const (
 var proxyFields = [...]string{proxyFieldName, proxyFieldEmail, proxyFieldLogin, proxyFieldRole, proxyFieldGroups}
 
 var (
-	errNotAcceptedIP      = errutil.NewBase(errutil.StatusValidationFailed, "auth-proxy.invalid-ip")
+	errNotAcceptedIP      = errutil.NewBase(errutil.StatusUnauthorized, "auth-proxy.invalid-ip")
+	errEmptyProxyHeader   = errutil.NewBase(errutil.StatusUnauthorized, "auth-proxy.empty-header")
 	errInvalidProxyHeader = errutil.NewBase(errutil.StatusInternal, "auth-proxy.invalid-proxy-header")
 )
 
@@ -50,6 +51,10 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	username := getProxyHeader(r, c.cfg.AuthProxyHeaderName, c.cfg.AuthProxyHeadersEncoded)
+	if len(username) == 0 {
+		return nil, errEmptyProxyHeader.Errorf("no username provided in auth proxy header")
+	}
+
 	additional := getAdditionalProxyHeaders(r, c.cfg)
 
 	// FIXME: add cache to prevent sync on every request
@@ -91,6 +96,9 @@ func (c *Proxy) isAllowedIP(r *authn.Request) bool {
 }
 
 func parseAcceptList(s string) ([]*net.IPNet, error) {
+	if len(strings.TrimSpace(s)) == 0 {
+		return nil, nil
+	}
 	addresses := strings.Split(s, ",")
 	list := make([]*net.IPNet, 0, len(addresses))
 	for _, addr := range addresses {
