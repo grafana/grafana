@@ -714,6 +714,28 @@ func (h *ContextHandler) handleError(ctx *models.ReqContext, err error, statusCo
 }
 
 func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext, orgID int64) bool {
+	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientProxy, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
+		if !ok {
+			return false
+		}
+
+		if err != nil {
+			writeErr(reqContext, err)
+		}
+
+		ctx := WithAuthHTTPHeader(reqContext.Req.Context(), h.Cfg.AuthProxyHeaderName)
+		for _, header := range h.Cfg.AuthProxyHeaders {
+			if header != "" {
+				ctx = WithAuthHTTPHeader(ctx, header)
+			}
+		}
+
+		*reqContext.Req = *reqContext.Req.WithContext(ctx)
+		reqContext.IsSignedIn = true
+		reqContext.SignedInUser = identity.SignedInUser()
+		return true
+	}
 	username := reqContext.Req.Header.Get(h.Cfg.AuthProxyHeaderName)
 
 	logger := log.New("auth.proxy")
