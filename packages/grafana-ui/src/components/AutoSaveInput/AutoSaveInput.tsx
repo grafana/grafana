@@ -20,18 +20,14 @@ export interface Props extends FieldProps {
   //Function to be run onBlur or when finishing writing
   onFinishChange: (inputValue: string | number | readonly string[] | undefined) => Promise<void>;
   saveErrorMessage?: string;
-  label: string;
-  required: boolean;
 }
 
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 
 export const AutoSaveInput = React.forwardRef<FieldProps, Props>((props) => {
   const {
-    className,
     invalid,
     loading,
-    disabled,
     onFinishChange,
     saveErrorMessage = 'Error saving this value',
     error,
@@ -85,24 +81,26 @@ export const AutoSaveInput = React.forwardRef<FieldProps, Props>((props) => {
    * use InlineToast.tsx to show the save message
    */
   return (
-    <Field {...restProps} invalid={invalid || showError} error={error || (showError && saveErrorMessage)}>
-      <>
+    <>
+      <Field
+        {...restProps}
+        loading={loading || isLoading}
+        invalid={invalid || showError}
+        error={error || (showError && saveErrorMessage)}
+      >
         {React.cloneElement(children, {
           ref: inputRef,
           onChange: (event: React.FormEvent<HTMLInputElement>) => {
             lodashDebounce(event.currentTarget.value);
           },
-          loading: isLoading,
-          disabled: disabled,
-          invalid: invalid || showError,
         })}
-        {showSuccess && (
-          <InlineToast suffixIcon={'check'} referenceElement={inputRef.current} placement={'right'}>
-            Saved!
-          </InlineToast>
-        )}
-      </>
-    </Field>
+      </Field>
+      {showSuccess && (
+        <InlineToast suffixIcon={'check'} referenceElement={inputRef.current} placement={'right'}>
+          Saved!
+        </InlineToast>
+      )}
+    </>
   );
 });
 

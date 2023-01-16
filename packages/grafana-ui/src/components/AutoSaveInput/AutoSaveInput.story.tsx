@@ -20,14 +20,14 @@ const meta: Meta = {
     },
   },
   argTypes: {
-    customErrorMessage: { control: 'text' },
+    saveErrorMessage: { control: 'text' },
     label: { control: 'text' },
     required: {
       control: { type: 'select', options: [true, false] },
     },
   },
   args: {
-    customErrorMessage: 'This is a custom error message',
+    saveErrorMessage: 'This is a custom error message',
     label: 'Custom label',
     required: false,
   },
@@ -47,12 +47,7 @@ const getError = () => {
 };
 
 export const AutoSaveInputError: Story = (args) => (
-  <AutoSaveInput
-    onFinishChange={getError}
-    saveErrorMessage={args.customErrorMessage}
-    label={args.label}
-    required={args.required}
-  >
+  <AutoSaveInput onFinishChange={getError} {...args}>
     <Input />
   </AutoSaveInput>
 );
@@ -62,7 +57,7 @@ AutoSaveInputError.args = {
 };
 
 export const AutoSaveInputSuccess: Story = (args) => (
-  <AutoSaveInput onFinishChange={getSuccess} label={args.label} required={args.required}>
+  <AutoSaveInput onFinishChange={getSuccess} {...args}>
     <Input />
   </AutoSaveInput>
 );
