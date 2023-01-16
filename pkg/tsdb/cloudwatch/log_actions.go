@@ -112,8 +112,6 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logger log.Lo
 
 	var data *data.Frame = nil
 	switch logsQuery.SubType {
-	case "GetLogGroupFields":
-		data, err = e.handleGetLogGroupFields(ctx, logsClient, logsQuery, query.RefID)
 	case "StartQuery":
 		data, err = e.handleStartQuery(ctx, logger, logsClient, logsQuery, query.TimeRange, query.RefID)
 	case "StopQuery":
@@ -316,37 +314,6 @@ func (e *cloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClie
 	}
 
 	dataFrame.Name = refID
-	dataFrame.RefID = refID
-
-	return dataFrame, nil
-}
-
-func (e *cloudWatchExecutor) handleGetLogGroupFields(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	logsQuery models.LogsQuery, refID string) (*data.Frame, error) {
-	queryInput := &cloudwatchlogs.GetLogGroupFieldsInput{
-		LogGroupName: aws.String(logsQuery.LogGroupName),
-		Time:         aws.Int64(logsQuery.Time),
-	}
-
-	getLogGroupFieldsOutput, err := logsClient.GetLogGroupFieldsWithContext(ctx, queryInput)
-	if err != nil {
-		return nil, err
-	}
-
-	fieldNames := make([]*string, 0)
-	fieldPercentages := make([]*int64, 0)
-
-	for _, logGroupField := range getLogGroupFieldsOutput.LogGroupFields {
-		fieldNames = append(fieldNames, logGroupField.Name)
-		fieldPercentages = append(fieldPercentages, logGroupField.Percent)
-	}
-
-	dataFrame := data.NewFrame(
-		refID,
-		data.NewField("name", nil, fieldNames),
-		data.NewField("percent", nil, fieldPercentages),
-	)
-
 	dataFrame.RefID = refID
 
 	return dataFrame, nil

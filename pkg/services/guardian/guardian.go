@@ -47,7 +47,7 @@ type dashboardGuardianImpl struct {
 	dashId           int64
 	orgId            int64
 	acl              []*models.DashboardACLInfoDTO
-	teams            []*models.TeamDTO
+	teams            []*team.TeamDTO
 	log              log.Logger
 	ctx              context.Context
 	store            db.DB
@@ -69,16 +69,16 @@ var NewByUID = func(ctx context.Context, dashUID string, orgId int64, user *user
 
 // NewByDashboard factory for creating a new dashboard guardian instance
 // When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
-var NewByDashboard = func(ctx context.Context, dash *models.Dashboard, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+var NewByDashboard = func(ctx context.Context, dash *dashboards.Dashboard, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
 	panic("no guardian factory implementation provided")
 }
 
 // newDashboardGuardian creates a dashboard guardian by the provided dashId.
 func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	if dashId != 0 {
-		q := &models.GetDashboardQuery{
-			Id:    dashId,
-			OrgId: orgId,
+		q := &dashboards.GetDashboardQuery{
+			ID:    dashId,
+			OrgID: orgId,
 		}
 
 		if err := dashSvc.GetDashboard(ctx, q); err != nil {
@@ -105,9 +105,9 @@ func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *
 func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	dashID := int64(0)
 	if dashUID != "" {
-		q := &models.GetDashboardQuery{
-			Uid:   dashUID,
-			OrgId: orgId,
+		q := &dashboards.GetDashboardQuery{
+			UID:   dashUID,
+			OrgID: orgId,
 		}
 
 		if err := dashSvc.GetDashboard(ctx, q); err != nil {
@@ -116,7 +116,7 @@ func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64,
 			}
 			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
 		}
-		dashID = q.Result.Id
+		dashID = q.Result.ID
 	}
 
 	return &dashboardGuardianImpl{
@@ -134,10 +134,10 @@ func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64,
 // newDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboard.
 // This constructor should be preferred over the other two if the dashboard in available
 // since it avoids querying the database for fetching the dashboard.
-func newDashboardGuardianByDashboard(ctx context.Context, dash *models.Dashboard, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+func newDashboardGuardianByDashboard(ctx context.Context, dash *dashboards.Dashboard, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	return &dashboardGuardianImpl{
 		user:             user,
-		dashId:           dash.Id,
+		dashId:           dash.ID,
 		orgId:            orgId,
 		log:              log.New("dashboard.permissions"),
 		ctx:              ctx,
@@ -244,7 +244,7 @@ func (g *dashboardGuardianImpl) checkACL(permission models.PermissionType, acl [
 	// evaluate team rules
 	for _, p := range acl {
 		for _, ug := range teams {
-			if ug.Id == p.TeamId && p.Permission >= permission {
+			if ug.ID == p.TeamId && p.Permission >= permission {
 				return true, nil
 			}
 		}
@@ -349,16 +349,16 @@ func (g *dashboardGuardianImpl) GetACLWithoutDuplicates() ([]*models.DashboardAC
 	return result, nil
 }
 
-func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
+func (g *dashboardGuardianImpl) getTeams() ([]*team.TeamDTO, error) {
 	if g.teams != nil {
 		return g.teams, nil
 	}
 
-	query := models.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserID, SignedInUser: g.user}
-	err := g.teamService.GetTeamsByUser(g.ctx, &query)
+	query := team.GetTeamsByUserQuery{OrgID: g.orgId, UserID: g.user.UserID, SignedInUser: g.user}
+	queryResult, err := g.teamService.GetTeamsByUser(g.ctx, &query)
 
-	g.teams = query.Result
-	return query.Result, err
+	g.teams = queryResult
+	return queryResult, err
 }
 
 func (g *dashboardGuardianImpl) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardACL, error) {
@@ -470,10 +470,10 @@ func MockDashboardGuardian(mock *FakeDashboardGuardian) {
 		return mock, nil
 	}
 
-	NewByDashboard = func(_ context.Context, dash *models.Dashboard, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+	NewByDashboard = func(_ context.Context, dash *dashboards.Dashboard, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
 		mock.OrgId = orgId
-		mock.DashUID = dash.Uid
-		mock.DashID = dash.Id
+		mock.DashUID = dash.UID
+		mock.DashID = dash.ID
 		mock.User = user
 		return mock, nil
 	}

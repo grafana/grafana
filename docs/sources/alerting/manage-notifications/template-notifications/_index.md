@@ -6,7 +6,7 @@ keywords:
   - notifications
   - templates
 title: Customize notifications
-weight: 100
+weight: 400
 ---
 
 # Customize notifications
