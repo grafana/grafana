@@ -14,7 +14,7 @@ func TestPNGSummary(t *testing.T) {
 	img, err := base64.StdEncoding.DecodeString(gopher)
 	require.NoError(t, err)
 
-	summary, out, err := GetObjectSummaryBuilder()(context.Background(), "hello.png", img)
+	summary, out, err := GetEntitySummaryBuilder()(context.Background(), "hello.png", img)
 	require.NoError(t, err)
 	require.Equal(t, img, out) // same image
 

@@ -1,4 +1,13 @@
-import { render, waitFor, screen, fireEvent, waitForElementToBeRemoved, within, Matcher } from '@testing-library/react';
+import {
+  render,
+  waitFor,
+  screen,
+  fireEvent,
+  waitForElementToBeRemoved,
+  within,
+  Matcher,
+  getByRole,
+} from '@testing-library/react';
 import { merge, uniqueId } from 'lodash';
 import React from 'react';
 import { DeepPartial } from 'react-hook-form';
@@ -295,7 +304,7 @@ describe('CorrelationsPage', () => {
       expect(screen.getByRole('button', { name: /add$/i })).toBeInTheDocument();
     });
 
-    it('correctly adds correlations', async () => {
+    it('correctly adds first correlation', async () => {
       const CTAButton = screen.getByRole('button', { name: /add correlation/i });
       expect(CTAButton).toBeInTheDocument();
 
@@ -411,7 +420,7 @@ describe('CorrelationsPage', () => {
     });
 
     it('correctly sorts by source', async () => {
-      const sourceHeader = getHeaderByName('Source');
+      const sourceHeader = getByRole(getHeaderByName('Source'), 'button');
       fireEvent.click(sourceHeader);
       let cells = queryCellsByColumnName('Source');
       cells.forEach((cell, i, allCells) => {
@@ -431,7 +440,7 @@ describe('CorrelationsPage', () => {
       });
     });
 
-    it('correctly adds correlations', async () => {
+    it('correctly adds new correlation', async () => {
       const addNewButton = screen.getByRole('button', { name: /add new/i });
       expect(addNewButton).toBeInTheDocument();
       fireEvent.click(addNewButton);

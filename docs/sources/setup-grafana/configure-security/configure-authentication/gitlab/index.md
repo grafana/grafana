@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/gitlab/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/gitlab/
+  - ../../../auth/gitlab/
 description: Grafana OAuthentication Guide
 keywords:
   - grafana
@@ -109,6 +108,12 @@ the group `foo`, set
 
 ```ini
 allowed_groups = example, foo/bar
+```
+
+To put values containing spaces in the list, use the following JSON syntax:
+
+```ini
+allowed_groups = ["Admins", "Software Engineers"]
 ```
 
 Note that in GitLab, the group or subgroup name doesn't always match its

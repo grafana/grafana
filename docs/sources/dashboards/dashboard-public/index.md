@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/dashboard-manage/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/dashboard-public/
+  - ../features/dashboard/dashboards/
+  - dashboard-manage/
 title: Public dashboards
 weight: 8
 ---
@@ -31,6 +30,12 @@ Add the `publicDashboards` feature toggle to your `custom.ini` file.
 ```
 [feature_toggles]
 publicDashboards = true
+```
+
+If you are using Docker, use an environment variable to enable public dashboards:
+
+```
+--env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
 ```
 
 > **Note:** For Grafana Cloud, you will need to contact support to have the feature enabled.

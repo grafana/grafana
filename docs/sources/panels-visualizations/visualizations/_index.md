@@ -1,12 +1,11 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/
-  - /docs/grafana/latest/visualizations/
-  - /docs/grafana/latest/panels-visualizations/visualizations/
-  - /docs/grafana/latest/features/panels/graph/
-  - /docs/grafana/latest/panels/visualizations/graph-panel/
-  - /docs/grafana/latest/reference/graph/
-  - /docs/grafana/latest/visualizations/graph-panel/
+  - ../features/panels/graph/
+  - ../panels/visualizations/
+  - ../panels/visualizations/graph-panel/
+  - ../reference/graph/
+  - ../visualizations/
+  - ../visualizations/graph-panel/
 title: Visualizations
 weight: 75
 ---

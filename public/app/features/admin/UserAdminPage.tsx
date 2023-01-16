@@ -39,7 +39,7 @@ interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   error?: UserAdminError;
 }
 
-const SyncedOAuthLabels: string[] = ['GitHub', 'GitLab', 'AzureAD', 'OAuth'];
+const SyncedOAuthLabels: string[] = ['GitHub', 'GitLab', 'OAuth'];
 
 export class UserAdminPage extends PureComponent<Props> {
   async componentDidMount() {
@@ -112,12 +112,27 @@ export class UserAdminPage extends PureComponent<Props> {
       user?.isExternal && user?.authLabels?.some((r) => SyncedOAuthLabels.includes(r));
     const isSAMLUser = user?.isExternal && user?.authLabels?.includes('SAML');
     const isGoogleUser = user?.isExternal && user?.authLabels?.includes('Google');
+    const isAuthProxyUser = user?.isExternal && user?.authLabels?.includes('Auth Proxy');
+    const isAzureADUser = user?.isExternal && user?.authLabels?.includes('AzureAD');
+    const isGrafanaComUser = user?.isExternal && user?.authLabels?.includes('grafana.com');
     const isUserSynced =
       !config.auth.DisableSyncLock &&
-      ((user?.isExternal && !(isGoogleUser || isOAuthUserWithSkippableSync || isSAMLUser || isLDAPUser)) ||
+      ((user?.isExternal &&
+        !(
+          isAuthProxyUser ||
+          isGoogleUser ||
+          isOAuthUserWithSkippableSync ||
+          isSAMLUser ||
+          isLDAPUser ||
+          isAzureADUser ||
+          isGrafanaComUser
+        )) ||
         (!config.auth.OAuthSkipOrgRoleUpdateSync && isOAuthUserWithSkippableSync) ||
         (!config.auth.SAMLSkipOrgRoleSync && isSAMLUser) ||
-        (!config.auth.LDAPSkipOrgRoleSync && isLDAPUser));
+        (!config.auth.LDAPSkipOrgRoleSync && isLDAPUser) ||
+        // both OAuthSkipOrgRoleUpdateSync and specific provider settings needs to be false for a user to be synced
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GrafanaComSkipOrgRoleSync && isGrafanaComUser) ||
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.AzureADSkipOrgRoleSync && isAzureADUser));
 
     const pageNav: NavModelItem = {
       text: user?.login ?? '',

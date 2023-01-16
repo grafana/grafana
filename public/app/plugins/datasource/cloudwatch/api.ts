@@ -17,6 +17,8 @@ import {
   Account,
   ResourceRequest,
   ResourceResponse,
+  GetLogGroupFieldsRequest,
+  LogGroupField,
 } from './types';
 
 export interface SelectableResourceValue extends SelectableValue<string> {
@@ -62,37 +64,30 @@ export class CloudWatchAPI extends CloudWatchRequest {
     );
   }
 
-  async describeLogGroups(params: DescribeLogGroupsRequest) {
-    return this.memoizedGetRequest<SelectableResourceValue[]>('log-groups', {
-      ...params,
-      region: this.templateSrv.replace(this.getActualRegion(params.region)),
-    });
-  }
-
-  async describeCrossAccountLogGroups(params: DescribeLogGroupsRequest): Promise<SelectableResourceValue[]> {
-    return this.memoizedGetRequest<Array<ResourceResponse<LogGroupResponse>>>('describe-log-groups', {
+  getLogGroups(params: DescribeLogGroupsRequest): Promise<Array<ResourceResponse<LogGroupResponse>>> {
+    return this.memoizedGetRequest<Array<ResourceResponse<LogGroupResponse>>>('log-groups', {
       ...params,
       region: this.templateSrv.replace(this.getActualRegion(params.region)),
       accountId: this.templateSrv.replace(params.accountId),
-    }).then((resourceResponse) =>
-      resourceResponse.map((resource) => ({
-        label: resource.value.name,
-        value: resource.value.arn,
-        text: resource.accountId || '',
-      }))
-    );
-  }
-
-  async describeAllLogGroups(params: DescribeLogGroupsRequest) {
-    return this.memoizedGetRequest<SelectableResourceValue[]>('all-log-groups', {
-      ...params,
-      region: this.templateSrv.replace(this.getActualRegion(params.region)),
+      listAllLogGroups: params.listAllLogGroups ? 'true' : 'false',
     });
   }
 
-  async getMetrics({ region, namespace, accountId }: GetMetricsRequest): Promise<Array<SelectableValue<string>>> {
+  getLogGroupFields({
+    region,
+    arn,
+    logGroupName,
+  }: GetLogGroupFieldsRequest): Promise<Array<ResourceResponse<LogGroupField>>> {
+    return this.memoizedGetRequest<Array<ResourceResponse<LogGroupField>>>('log-group-fields', {
+      region: this.templateSrv.replace(this.getActualRegion(region)),
+      logGroupName: this.templateSrv.replace(logGroupName, {}),
+      logGroupArn: this.templateSrv.replace(arn),
+    });
+  }
+
+  getMetrics({ region, namespace, accountId }: GetMetricsRequest): Promise<Array<SelectableValue<string>>> {
     if (!namespace) {
-      return [];
+      return Promise.resolve([]);
     }
 
     return this.memoizedGetRequest<Array<ResourceResponse<MetricResponse>>>('metrics', {
@@ -102,17 +97,14 @@ export class CloudWatchAPI extends CloudWatchRequest {
     }).then((metrics) => metrics.map((m) => ({ label: m.value.name, value: m.value.name })));
   }
 
-  async getAllMetrics({
-    region,
-    accountId,
-  }: GetMetricsRequest): Promise<Array<{ metricName?: string; namespace: string }>> {
+  getAllMetrics({ region, accountId }: GetMetricsRequest): Promise<Array<{ metricName?: string; namespace: string }>> {
     return this.memoizedGetRequest<Array<ResourceResponse<MetricResponse>>>('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       accountId: this.templateSrv.replace(accountId),
     }).then((metrics) => metrics.map((m) => ({ metricName: m.value.name, namespace: m.value.namespace })));
   }
 
-  async getDimensionKeys({
+  getDimensionKeys({
     region,
     namespace = '',
     dimensionFilters = {},
@@ -128,7 +120,7 @@ export class CloudWatchAPI extends CloudWatchRequest {
     }).then((r) => r.map((r) => ({ label: r.value, value: r.value })));
   }
 
-  async getDimensionValues({
+  getDimensionValues({
     dimensionKey,
     region,
     namespace,
@@ -137,10 +129,10 @@ export class CloudWatchAPI extends CloudWatchRequest {
     accountId,
   }: GetDimensionValuesRequest) {
     if (!namespace || !metricName) {
-      return [];
+      return Promise.resolve([]);
     }
 
-    const values = await this.memoizedGetRequest<Array<ResourceResponse<string>>>('dimension-values', {
+    return this.memoizedGetRequest<Array<ResourceResponse<string>>>('dimension-values', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       metricName: this.templateSrv.replace(metricName.trim()),
@@ -148,7 +140,6 @@ export class CloudWatchAPI extends CloudWatchRequest {
       dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
       accountId: this.templateSrv.replace(accountId),
     }).then((r) => r.map((r) => ({ label: r.value, value: r.value })));
-    return values;
   }
 
   getEbsVolumeIds(region: string, instanceId: string) {

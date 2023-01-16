@@ -14,6 +14,7 @@ import {
   TimeRange,
   ScopedVars,
   toDataFrame,
+  MutableDataFrame,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
@@ -69,6 +70,9 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
           break;
         case 'flame_graph':
           streams.push(this.flameGraphQuery());
+          break;
+        case 'trace':
+          streams.push(this.trace(target, options));
           break;
         case 'raw_frame':
           streams.push(this.rawFrameQuery(target, options));
@@ -222,6 +226,44 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
 
   flameGraphQuery(): Observable<DataQueryResponse> {
     return of({ data: [flameGraphData] }).pipe(delay(100));
+  }
+
+  trace(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+    const frame = new MutableDataFrame({
+      meta: {
+        preferredVisualisationType: 'trace',
+      },
+      fields: [
+        { name: 'traceID' },
+        { name: 'spanID' },
+        { name: 'parentSpanID' },
+        { name: 'operationName' },
+        { name: 'serviceName' },
+        { name: 'serviceTags' },
+        { name: 'startTime' },
+        { name: 'duration' },
+        { name: 'logs' },
+        { name: 'references' },
+        { name: 'tags' },
+      ],
+    });
+    const numberOfSpans = options.targets[0].spanCount || 10;
+    const spanIdPrefix = '75c665dfb68';
+    const start = Date.now() - 1000 * 60 * 30;
+
+    for (let i = 0; i < numberOfSpans; i++) {
+      frame.add({
+        traceID: spanIdPrefix + '10000',
+        spanID: spanIdPrefix + (10000 + i),
+        parentSpanID: i === 0 ? '' : spanIdPrefix + 10000,
+        operationName: `Operation ${i}`,
+        serviceName: `Service ${i}`,
+        startTime: start + i * 100,
+        duration: 300,
+      });
+    }
+
+    return of({ data: [frame] }).pipe(delay(100));
   }
 
   rawFrameQuery(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {

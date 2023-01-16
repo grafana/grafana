@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/activate-aws-marketplace-license/activate-license-on-eks/
-  - /docs/grafana/latest/enterprise/license/activate-aws-marketplace-license/activate-license-on-eks/
-  - /docs/grafana/latest/administration/enterprise-licensing/activate-aws-marketplace-license/activate-license-on-eks/
+  - ../../../enterprise/activate-aws-marketplace-license/activate-license-on-eks/
+  - ../../../enterprise/license/activate-aws-marketplace-license/activate-license-on-eks/
 description: Activate a Grafana Enterprise license from AWS Marketplace on EKS
 keywords:
   - grafana

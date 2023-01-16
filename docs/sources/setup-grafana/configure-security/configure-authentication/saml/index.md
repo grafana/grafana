@@ -1,14 +1,13 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/saml/
-  - /docs/grafana/latest/enterprise/configure-saml/
-  - /docs/grafana/latest/enterprise/saml/
-  - /docs/grafana/latest/enterprise/saml/about-saml/
-  - /docs/grafana/latest/enterprise/saml/configure-saml/
-  - /docs/grafana/latest/enterprise/saml/enable-saml/
-  - /docs/grafana/latest/enterprise/saml/set-up-saml-with-okta/
-  - /docs/grafana/latest/enterprise/saml/troubleshoot-saml/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml/
+  - ../../../auth/saml/
+  - ../../../enterprise/configure-saml/
+  - ../../../enterprise/saml/
+  - ../../../enterprise/saml/about-saml/
+  - ../../../enterprise/saml/configure-saml/
+  - ../../../enterprise/saml/enable-saml/
+  - ../../../enterprise/saml/set-up-saml-with-okta/
+  - ../../../enterprise/saml/troubleshoot-saml/
 description: Learn how to configure SAML authentication in Grafana.
 menuTitle: Configure SAML authentication
 title: Configure SAML authentication in Grafana
@@ -21,7 +20,7 @@ SAML authentication integration allows your Grafana users to log in by using an 
 
 The SAML single sign-on (SSO) standard is varied and flexible. Our implementation contains a subset of features needed to provide a smooth authentication experience into Grafana.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
 ## Supported SAML
 
@@ -278,6 +277,40 @@ By default, new Grafana users using SAML authentication will have an account cre
 
 To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration/#assertion-attribute-groups" >}}) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
 
+> **Note:** Teamsync allows you sync users from SAML to Grafana teams. It does not automatically create teams in Grafana. You need to create teams in Grafana before you can use this feature.
+
+Given the following partial SAML assertion:
+
+```xml
+<saml2:Attribute
+    Name="groups"
+    NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified">
+    <saml2:AttributeValue
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:type="xs:string">admins_group
+    </saml2:AttributeValue>
+    <saml2:AttributeValue
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:type="xs:string">division_1
+    </saml2:AttributeValue>
+</saml2:Attribute>
+```
+
+The configuration would look like this:
+
+```ini
+[auth.saml]
+# ...
+assertion_attribute_groups = groups
+```
+
+The following `External Group ID`s would be valid for input in the desired team's _External group sync_ tab:
+
+- `admins_group`
+- `division_1`
+
 [Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
 
 ### Configure role sync
@@ -356,6 +389,12 @@ You can use `*` as the Grafana organization in the mapping if you want all users
 > **Note:** Available in Grafana version 7.0 and later.
 
 With the [`allowed_organizations`]({{< relref "../../../configure-grafana/enterprise-configuration/#allowed-organizations" >}}) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
+
+To put values containing spaces in the list, use the following JSON syntax:
+
+```ini
+allowed_organizations = ["org 1", "second org"]
+```
 
 ### Example SAML configuration
 

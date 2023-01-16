@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/marketplacecatalog"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/urfave/cli/v2"
 )
 
@@ -240,7 +241,7 @@ func (s *AwsMarketplacePublishingService) ReleaseToProduct(ctx context.Context, 
 }
 
 func getPublishAwsMarketplaceFlags(ctx *cli.Context) (*publishAwsMarketplaceFlags, error) {
-	metadata, err := GenerateMetadata(ctx)
+	metadata, err := config.GenerateMetadata(ctx)
 	if err != nil {
 		return nil, err
 	}

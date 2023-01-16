@@ -1,9 +1,8 @@
 import React from 'react';
 import { valid } from 'semver';
 
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { DataSourceSettings, SelectableValue, isTruthy } from '@grafana/data';
 import { FieldSet, InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
-import { isTruthy } from 'app/core/utils/types';
 
 import { ElasticsearchOptions, Interval } from '../types';
 
@@ -18,11 +17,7 @@ const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
 
 const esVersions: SelectableValue[] = [
   { label: '7.10+', value: '7.10.0' },
-  {
-    label: '8.0+',
-    value: '8.0.0',
-    description: 'support for Elasticsearch 8 is currently experimental',
-  },
+  { label: '8.x', value: '8.0.0' },
 ];
 
 type Props = {

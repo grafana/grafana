@@ -42,12 +42,11 @@ type baseNode struct {
 }
 
 type rawNode struct {
-	RefID         string `json:"refId"`
-	Query         map[string]interface{}
-	QueryType     string
-	TimeRange     TimeRange
-	DataSource    *datasources.DataSource
-	QueryEnricher QueryDataRequestEnricher
+	RefID      string `json:"refId"`
+	Query      map[string]interface{}
+	QueryType  string
+	TimeRange  TimeRange
+	DataSource *datasources.DataSource
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -140,9 +139,8 @@ const (
 // DSNode is a DPNode that holds a datasource request.
 type DSNode struct {
 	baseNode
-	query         json.RawMessage
-	datasource    *datasources.DataSource
-	queryEnricher QueryDataRequestEnricher
+	query      json.RawMessage
+	datasource *datasources.DataSource
 
 	orgID      int64
 	queryType  string
@@ -171,15 +169,14 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 			id:    dp.NewNode().ID(),
 			refID: rn.RefID,
 		},
-		orgID:         req.OrgId,
-		query:         json.RawMessage(encodedQuery),
-		queryType:     rn.QueryType,
-		intervalMS:    defaultIntervalMS,
-		maxDP:         defaultMaxDP,
-		timeRange:     rn.TimeRange,
-		request:       *req,
-		datasource:    rn.DataSource,
-		queryEnricher: rn.QueryEnricher,
+		orgID:      req.OrgId,
+		query:      json.RawMessage(encodedQuery),
+		queryType:  rn.QueryType,
+		intervalMS: defaultIntervalMS,
+		maxDP:      defaultMaxDP,
+		timeRange:  rn.TimeRange,
+		request:    *req,
+		datasource: rn.DataSource,
 	}
 
 	var floatIntervalMS float64
@@ -230,10 +227,6 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 			},
 		},
 		Headers: dn.request.Headers,
-	}
-
-	if dn.queryEnricher != nil {
-		ctx = dn.queryEnricher(ctx, req)
 	}
 
 	resp, err := s.dataService.QueryData(ctx, req)

@@ -30,3 +30,9 @@ theme.dark.generated.json
 public/api-spec.json
 public/api-merged.json
 public/openapi3.json
+
+# Generated Kinds report
+kinds/report.json
+
+# Generated schema docs
+docs/sources/developers/kinds/

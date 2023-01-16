@@ -24,6 +24,7 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { InlineToast } from './InlineToast/InlineToast';
 
 export { LoadingPlaceholder, type LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
+export { LoadingBar, type LoadingBarProps } from './LoadingBar/LoadingBar';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { ColorPickerInput } from './ColorPicker/ColorPickerInput';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
@@ -42,6 +43,7 @@ export {
 } from './DateTimePickers/DatePickerWithInput/DatePickerWithInput';
 export { DateTimePicker } from './DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './List/List';
+export { InteractiveTable } from './InteractiveTable/InteractiveTable';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
 export { Tag, type OnTagClick } from './Tags/Tag';
@@ -100,7 +102,7 @@ export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
-export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
+export { BarGauge } from './BarGauge/BarGauge';
 export {
   VizTooltip,
   VizTooltipContainer,
@@ -259,7 +261,7 @@ export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
 export * from './uPlot/config';
-export { ScaleDistribution } from '@grafana/schema';
+export { ScaleDistribution, BarGaugeDisplayMode } from '@grafana/schema';
 export { UPlotConfigBuilder } from './uPlot/config/UPlotConfigBuilder';
 export { UPLOT_AXIS_FONT_SIZE } from './uPlot/config/UPlotAxisBuilder';
 export { UPlotChart } from './uPlot/Plot';

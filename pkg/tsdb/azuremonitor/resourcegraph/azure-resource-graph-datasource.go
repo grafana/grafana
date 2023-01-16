@@ -193,6 +193,10 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
+	if frame == nil {
+		// empty response
+		return dataResponse
+	}
 
 	azurePortalUrl, err := GetAzurePortalUrl(dsInfo.Cloud)
 	if err != nil {
@@ -274,8 +278,6 @@ func GetAzurePortalUrl(azureCloud string) (string, error) {
 		return "https://portal.azure.cn", nil
 	case azsettings.AzureUSGovernment:
 		return "https://portal.azure.us", nil
-	case azsettings.AzureGermany:
-		return "https://portal.microsoftazure.de", nil
 	default:
 		return "", fmt.Errorf("the cloud is not supported")
 	}

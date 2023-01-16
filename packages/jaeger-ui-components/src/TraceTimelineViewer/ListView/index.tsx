@@ -27,7 +27,7 @@ type TWrapperProps = {
 /**
  * @typedef
  */
-type TListViewProps = {
+export type TListViewProps = {
   /**
    * Number of elements in the list.
    */

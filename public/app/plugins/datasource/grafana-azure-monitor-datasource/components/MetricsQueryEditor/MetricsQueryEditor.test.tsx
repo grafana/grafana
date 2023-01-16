@@ -10,6 +10,7 @@ import createMockQuery from '../../__mocks__/query';
 import {
   createMockResourceGroupsBySubscription,
   createMockSubscriptions,
+  mockGetValidLocations,
   mockResourcesByResourceGroup,
 } from '../../__mocks__/resourcePickerRows';
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
@@ -44,7 +45,7 @@ export function createMockResourcePickerData() {
   mockResourcePicker.getResourcesForResourceGroup = jest.fn().mockResolvedValue(mockResourcesByResourceGroup());
   mockResourcePicker.getResourceURIFromWorkspace = jest.fn().mockReturnValue('');
   mockResourcePicker.getResourceURIDisplayProperties = jest.fn().mockResolvedValue({});
-
+  mockResourcePicker.getLogsLocations = jest.fn().mockResolvedValue(mockGetValidLocations());
   return mockResourcePicker;
 }
 
@@ -80,8 +81,7 @@ describe('MetricsQueryEditor', () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const query = createMockQuery();
     delete query?.subscription;
-    delete query?.azureMonitor?.resourceGroup;
-    delete query?.azureMonitor?.resourceName;
+    delete query?.azureMonitor?.resources;
     delete query?.azureMonitor?.metricNamespace;
     const onChange = jest.fn();
 
@@ -124,8 +124,12 @@ describe('MetricsQueryEditor', () => {
         subscription: 'def-456',
         azureMonitor: expect.objectContaining({
           metricNamespace: 'microsoft.compute/virtualmachines',
-          resourceGroup: 'dev-3',
-          resourceName: 'web-server',
+          resources: [
+            {
+              resourceGroup: 'dev-3',
+              resourceName: 'web-server',
+            },
+          ],
         }),
       })
     );

@@ -3,7 +3,6 @@ package dtos
 import (
 	"crypto/md5"
 	"fmt"
-	"net/http"
 	"regexp"
 	"strings"
 
@@ -73,8 +72,6 @@ type MetricRequest struct {
 	Debug bool `json:"debug"`
 
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
-
-	HTTPRequest *http.Request `json:"-"`
 }
 
 func (mr *MetricRequest) GetUniqueDatasourceTypes() []string {
@@ -98,11 +95,10 @@ func (mr *MetricRequest) GetUniqueDatasourceTypes() []string {
 
 func (mr *MetricRequest) CloneWithQueries(queries []*simplejson.Json) MetricRequest {
 	return MetricRequest{
-		From:        mr.From,
-		To:          mr.To,
-		Queries:     queries,
-		Debug:       mr.Debug,
-		HTTPRequest: mr.HTTPRequest,
+		From:    mr.From,
+		To:      mr.To,
+		Queries: queries,
+		Debug:   mr.Debug,
 	}
 }
 

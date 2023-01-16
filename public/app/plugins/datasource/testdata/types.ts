@@ -27,6 +27,7 @@ export interface TestDataQuery extends DataQuery {
   seriesCount?: number;
   usa?: USAQuery;
   errorType?: 'server_panic' | 'frontend_exception' | 'frontend_observable';
+  spanCount?: number;
 }
 
 export interface NodesQuery {

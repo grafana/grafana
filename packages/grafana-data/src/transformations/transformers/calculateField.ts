@@ -72,11 +72,15 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  operator: (options, replace) => (outerSource) => {
+  operator: (options, ctx) => (outerSource) => {
     const operator =
-      options && options.timeSeries !== false ? ensureColumnsTransformer.operator(null) : noopTransformer.operator({});
+      options && options.timeSeries !== false
+        ? ensureColumnsTransformer.operator(null, ctx)
+        : noopTransformer.operator({}, ctx);
 
-    options.alias = replace ? replace(options.alias) : options.alias;
+    if (options.alias != null) {
+      options.alias = ctx.interpolate(options.alias);
+    }
 
     return outerSource.pipe(
       operator,
@@ -87,13 +91,12 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
         if (mode === CalculateFieldMode.ReduceRow) {
           creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
         } else if (mode === CalculateFieldMode.BinaryOperation) {
-          const binaryOptions = replace
-            ? {
-                ...options.binary,
-                left: replace ? replace(options.binary?.left) : options.binary?.left,
-                right: replace ? replace(options.binary?.right) : options.binary?.right,
-              }
-            : options.binary;
+          const binaryOptions = {
+            ...options.binary,
+            left: ctx.interpolate(options.binary?.left!),
+            right: ctx.interpolate(options.binary?.right!),
+          };
+
           creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
         }
 

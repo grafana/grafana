@@ -89,7 +89,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-type ViewingLayerProps = {
+export type ViewingLayerProps = {
   height: number;
   numTicks: number;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
@@ -364,7 +364,14 @@ export class UnthemedViewingLayer extends React.PureComponent<ViewingLayerProps,
           onMouseMove={this._draggerReframe.handleMouseMove}
         >
           {leftInactive > 0 && (
-            <rect x={0} y={0} height="100%" width={`${leftInactive}%`} className={styles.ViewingLayerInactive} />
+            <rect
+              x={0}
+              y={0}
+              height="100%"
+              width={`${leftInactive}%`}
+              className={styles.ViewingLayerInactive}
+              data-testid="left-ViewingLayerInactive"
+            />
           )}
           {rightInactive > 0 && (
             <rect
@@ -373,6 +380,7 @@ export class UnthemedViewingLayer extends React.PureComponent<ViewingLayerProps,
               height="100%"
               width={`${rightInactive}%`}
               className={styles.ViewingLayerInactive}
+              data-testid="right-ViewingLayerInactive"
             />
           )}
           <GraphTicks numTicks={numTicks} />
@@ -384,6 +392,7 @@ export class UnthemedViewingLayer extends React.PureComponent<ViewingLayerProps,
               x2={cursorPosition}
               y2={height - 2}
               strokeWidth="1"
+              data-testid="ViewingLayerCursorGuide"
             />
           )}
           {shiftStart != null && this._getMarkers(viewStart, shiftStart)}

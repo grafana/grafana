@@ -213,7 +213,7 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields): EdgeDatum[] {
       secondaryStat: edgeFields.secondaryStat
         ? statToString(edgeFields.secondaryStat.config, edgeFields.secondaryStat.values.get(index))
         : '',
-    } as EdgeDatum;
+    };
   });
 }
 

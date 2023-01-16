@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/textproto"
 	"regexp"
 	"strings"
 	"sync"
@@ -96,52 +95,12 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
-// in the CallResource API, request-headers are in a map where the value is an array-of-strings,
-// so we need a helper function that can extract a single string-value from an array-of-strings.
-// i only deal with two cases:
-// - zero-length array
-// - first-item of the array
-// i do not handle the case where there are multiple items in the array, i do not know
-// if that can even happen ever, for the headers that we are interested in.
-func arrayHeaderFirstValue(values []string) string {
-	if len(values) == 0 {
-		return ""
-	}
-
-	// NOTE: we assume there never is a second item in the http-header-values-array
-	return values[0]
-}
-
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
 		return err
 	}
 	return callResource(ctx, req, sender, dsInfo, logger.FromContext(ctx))
-}
-
-func getHeadersForCallResource(headers map[string][]string) map[string]string {
-	data := make(map[string]string)
-
-	for k, values := range headers {
-		k = textproto.CanonicalMIMEHeaderKey(k)
-		firstValue := arrayHeaderFirstValue(values)
-
-		if firstValue == "" {
-			continue
-		}
-		switch k {
-		case "Authorization":
-			data["Authorization"] = firstValue
-		case "X-Id-Token":
-			data["X-ID-Token"] = firstValue
-		case "Cookie":
-			data["Cookie"] = firstValue
-		case "Accept-Encoding":
-			data["Accept-Encoding"] = firstValue
-		}
-	}
-	return data
 }
 
 func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger) error {
@@ -158,7 +117,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	}
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, getHeadersForCallResource(req.Headers))
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog)
 	encodedBytes, err := api.RawQuery(ctx, lokiURL)
 
 	if err != nil {
@@ -191,7 +150,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, logger.FromContext(ctx), req.Headers)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, logger.FromContext(ctx))
 
 	queries, err := parseQuery(req)
 	if err != nil {
