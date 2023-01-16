@@ -10,12 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/errutil"
-)
-
-var (
-	errSyncOrgInternal = errutil.NewBase(errutil.StatusInternal,
-		"org.sync.internal", errutil.WithPublicMessage("Org sync failed"))
 )
 
 func ProvideOrgSync(userService user.Service, orgService org.Service, accessControl accesscontrol.Service) *OrgSync {
