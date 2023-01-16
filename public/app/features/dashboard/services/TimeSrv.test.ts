@@ -20,6 +20,7 @@ describe('timeSrv', () => {
   beforeEach(() => {
     _dashboard = {
       time: { from: 'now-6h', to: 'now' },
+      timepicker: { hidden: false, collapse: false, enable: true, refresh_intervals: [], time_options: [] },
       getTimezone: jest.fn(() => 'browser'),
       refresh: false,
       timeRangeUpdated: jest.fn(() => {}),
