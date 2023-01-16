@@ -10,13 +10,12 @@ import {
   CustomVariable,
   DataSourceVariable,
   QueryVariable,
-  EmbeddedScene,
 } from '@grafana/scenes';
 
-import { Scene } from '../components/Scene';
+import { DashboardScene } from '../dashboard/DashboardScene';
 
-export function getQueryVariableDemo(standalone: boolean): Scene | EmbeddedScene {
-  const state = {
+export function getQueryVariableDemo(): DashboardScene {
+  return new DashboardScene({
     title: 'Query variable',
     $variables: new SceneVariableSet({
       variables: [
@@ -68,7 +67,5 @@ export function getQueryVariableDemo(standalone: boolean): Scene | EmbeddedScene
     subMenu: new SceneSubMenu({
       children: [new VariableValueSelectors({})],
     }),
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+  });
 }

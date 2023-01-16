@@ -2,10 +2,22 @@ import React from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneObjectBase, SceneComponentProps, SceneState, UrlSyncManager } from '@grafana/scenes';
+import { SceneObjectBase, SceneComponentProps, UrlSyncManager } from '@grafana/scenes';
 import { PageToolbar, ToolbarButton } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
+
+export interface SceneState extends SceneObjectStatePlain {
+  title: string;
+  /**
+   * The main content of the scene (usually a SceneFlexLayout)
+   */
+  body: SceneObject;
+  /**
+   * Top row of variables, filters, time pickers and custom actions.
+   */
+  controls?: SceneObject[];
+}
 
 export class Scene extends SceneObjectBase<SceneState> {
   public static Component = SceneRenderer;

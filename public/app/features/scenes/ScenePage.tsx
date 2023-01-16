@@ -8,7 +8,7 @@ import { getSceneByTitle } from './scenes';
 export interface Props extends GrafanaRouteComponentProps<{ name: string }> {}
 
 export const ScenePage = (props: Props) => {
-  const scene = getSceneByTitle(props.match.params.name, true);
+  const scene = getSceneByTitle(props.match.params.name);
 
   if (!scene) {
     return <h2>Scene not found</h2>;

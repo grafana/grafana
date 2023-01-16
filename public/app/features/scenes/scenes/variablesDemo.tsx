@@ -10,15 +10,14 @@ import {
   CustomVariable,
   DataSourceVariable,
   TestVariable,
-  EmbeddedScene,
 } from '@grafana/scenes';
 
-import { Scene } from '../components/Scene';
+import { DashboardScene } from '../dashboard/DashboardScene';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getVariablesDemo(standalone: boolean): Scene | EmbeddedScene {
-  const state = {
+export function getVariablesDemo(): DashboardScene {
+  return new DashboardScene({
     title: 'Variables',
     $variables: new SceneVariableSet({
       variables: [
@@ -85,13 +84,11 @@ export function getVariablesDemo(standalone: boolean): Scene | EmbeddedScene {
     subMenu: new SceneSubMenu({
       children: [new VariableValueSelectors({})],
     }),
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+  });
 }
 
-export function getVariablesDemoWithAll(): Scene {
-  const scene = new Scene({
+export function getVariablesDemoWithAll(): DashboardScene {
+  return new DashboardScene({
     title: 'Variables with All values',
     $variables: new SceneVariableSet({
       variables: [
@@ -157,6 +154,4 @@ export function getVariablesDemoWithAll(): Scene {
       children: [new VariableValueSelectors({})],
     }),
   });
-
-  return scene;
 }

@@ -26,16 +26,8 @@ export const SceneListPage = ({}: Props) => {
           <h5>Test scenes</h5>
           <Stack direction="column" gap={0}>
             {scenes.map((scene) => (
-              <Card key={scene.title}>
+              <Card key={scene.title} href={`/scenes/${scene.title}`}>
                 <Card.Heading>{scene.title}</Card.Heading>
-                <Card.Actions>
-                  <LinkButton size="sm" href={`/scenes/${scene.title}`}>
-                    Open as standalone scene
-                  </LinkButton>
-                  <LinkButton size="sm" variant="secondary" href={`/scenes/embedded/${scene.title}`}>
-                    Open as embedded scene
-                  </LinkButton>
-                </Card.Actions>
               </Card>
             ))}
           </Stack>

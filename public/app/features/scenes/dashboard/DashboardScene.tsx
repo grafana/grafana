@@ -16,7 +16,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 interface DashboardSceneState extends SceneObjectStatePlain {
   title: string;
-  uid: string;
+  uid?: string;
   body: SceneLayout;
   actions?: SceneObject[];
   subMenu?: SceneObject;
