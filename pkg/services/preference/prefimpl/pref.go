@@ -200,6 +200,9 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 			return err
 		}
 
+		if preference.JSONData == nil {
+			preference.JSONData = &pref.PreferenceJSONData{}
+		}
 		preference.JSONData.CookiePreferences = cookies
 	}
 
