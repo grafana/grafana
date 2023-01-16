@@ -78,6 +78,7 @@ const getResultItemStyles = (theme: GrafanaTheme2, isActive: boolean) => {
       alightItems: 'center',
       justifyContent: 'space-between',
       cursor: 'pointer',
+      position: 'relative',
       '&:before': {
         display: isActive ? 'block' : 'none',
         content: '" "',
