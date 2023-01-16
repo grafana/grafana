@@ -34,7 +34,8 @@ import {
   scanStartAction,
   scanStopAction,
   storeLogsVolumeDataProviderAction,
-  setLogsVolumeEnabled, addQueryRow,
+  setLogsVolumeEnabled,
+  addQueryRow,
 } from './query';
 import { makeExplorePaneState } from './utils';
 
@@ -59,16 +60,15 @@ const datasources: DataSourceApi[] = [
   } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
 ];
 
-const datasourcesMixed: DataSourceApi[] = [
-  {
-    name: 'testDs3',
-    type: 'mixed', //TODO: ????
-    uid: 'ds3',
-    getRef: () => {
-      return { type: 'mixed', uid: 'ds3' };
-    },
-  } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
-];
+const datasourceLoki: DataSourceApi = {
+  name: 'testDs3',
+  type: 'loki',
+  uid: 'ds3',
+  getRef: () => {
+    return { type: 'loki', uid: 'ds3' };
+  },
+  query: jest.fn(),
+} as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
@@ -80,8 +80,8 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
 
 // TODO: need to be used in line 98, occasionally change for my tests
 const featToggles = {
-      exploreMixedDatasource: false,
-    }
+  exploreMixedDatasource: false,
+};
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -96,7 +96,8 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     featureToggles: {
       exploreMixedDatasource: false,
-    },}
+    },
+  },
 }));
 
 function setupQueryResponse(state: StoreState) {
@@ -273,71 +274,68 @@ describe('reducer', () => {
   });
 
   describe('query rows', () => {
-    it('should add query row when no query row yet (addQueryRowAction)', () => {
-      reducerTester<ExploreItemState>()
-        .givenReducer(queryReducer, {
-          queries: [],
-        } as unknown as ExploreItemState)
-        .whenActionIsDispatched(
-          addQueryRowAction({
-            exploreId: ExploreId.left,
-            query: { refId: 'A', key: 'mockKey' },
-            index: 0,
-          })
-        )
-        .thenStateShouldEqual({
-          queries: [{ refId: 'A', key: 'mockKey' }],
-          queryKeys: ['mockKey-0'],
-        } as unknown as ExploreItemState);
-    });
-    it('should add query row when there is already one query row (addQueryRowAction)', () => {
-      reducerTester<ExploreItemState>()
-        .givenReducer(queryReducer, {
-          queries: [{ refId: 'A', key: 'initialRow', datasource: {type: 'loki'}}],
-        } as unknown as ExploreItemState)
-        .whenActionIsDispatched(
-          addQueryRowAction({
-            exploreId: ExploreId.left,
-            query: { refId: 'B', key: 'mockKey', datasource: {type: 'loki'} },
-            index: 0,
-          })
-        )
-        .thenStateShouldEqual({
-          queries: [
-            { refId: 'A', key: 'initialRow', datasource: {type: 'loki'} },
-            { refId: 'B', key: 'mockKey', datasource: {type: 'loki'} },
-          ],
-          queryKeys: ['initialRow-0', 'mockKey-1'],
-        } as unknown as ExploreItemState);
-    });
-    it('should add query row', async () => {
-      let dispatch: ThunkDispatch,
-      getState: () => StoreState
-
-      const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
-        ...(defaultInitialState as any),
-        explore: {
-          [ExploreId.left]: {
-            ...defaultInitialState.explore[ExploreId.left],
-            // TODO: use my new const here
-            // datasourceInstance: {
-            //   query: jest.fn(),
-            //   getRef: jest.fn(),
-            //   meta: {
-            //     id: 'someId',
-            //   },
-            // },
-          },
-        },
+    describe('addQueryRowAction', () => {
+      it('should add query row when no query row yet (addQueryRowAction)', () => {
+        reducerTester<ExploreItemState>()
+          .givenReducer(queryReducer, {
+            queries: [],
+          } as unknown as ExploreItemState)
+          .whenActionIsDispatched(
+            addQueryRowAction({
+              exploreId: ExploreId.left,
+              query: { refId: 'A', key: 'mockKey' },
+              index: 0,
+            })
+          )
+          .thenStateShouldEqual({
+            queries: [{ refId: 'A', key: 'mockKey' }],
+            queryKeys: ['mockKey-0'],
+          } as unknown as ExploreItemState);
       });
+      it('should add query row when there is already one query row (addQueryRowAction)', () => {
+        reducerTester<ExploreItemState>()
+          .givenReducer(queryReducer, {
+            queries: [{ refId: 'A', key: 'initialRow', datasource: { type: 'loki' } }],
+          } as unknown as ExploreItemState)
+          .whenActionIsDispatched(
+            addQueryRowAction({
+              exploreId: ExploreId.left,
+              query: { refId: 'B', key: 'mockKey', datasource: { type: 'loki' } },
+              index: 0,
+            })
+          )
+          .thenStateShouldEqual({
+            queries: [
+              { refId: 'A', key: 'initialRow', datasource: { type: 'loki' } },
+              { refId: 'B', key: 'mockKey', datasource: { type: 'loki' } },
+            ],
+            queryKeys: ['initialRow-0', 'mockKey-1'],
+          } as unknown as ExploreItemState);
+      });
+    });
+    describe('addQueryRow with mixed datasources disabled', () => {
+      it('should add query row', async () => {
+        let dispatch: ThunkDispatch, getState: () => StoreState;
 
-      dispatch = store.dispatch;
-      getState = store.getState;
+        const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+          ...(defaultInitialState as any),
+          explore: {
+            [ExploreId.left]: {
+              ...defaultInitialState.explore[ExploreId.left],
+              datasourceInstance: datasourceLoki,
+            },
+          },
+        });
 
-      setupQueryResponse(getState());
+        dispatch = store.dispatch;
+        getState = store.getState;
 
-      await dispatch(addQueryRow(ExploreId.left, 1))
+        setupQueryResponse(getState());
 
+        await dispatch(addQueryRow(ExploreId.left, 1));
+
+        // expect(getState().explore[ExploreId.left].queries).;
+      });
     });
   });
 
@@ -477,28 +475,27 @@ describe('reducer', () => {
       setupQueryResponse(getState());
     });
 
-//     jest.mock('@grafana/runtime/src/config', () => ({
-//   config: {
-//     buildInfo: {
-//       edition: 'Enterprise',
-//       version: '9.0.0',
-//       commit: 'abc123',
-//       env: 'dev',
-//       latestVersion: '',
-//       hasUpdate: false,
-//       hideVersion: false,
-//     },
-//     licenseInfo: {
-//       enabledFeatures: { 'reports.email': true },
-//     },
-//     featureToggles: {
-//       accesscontrol: true,
-//     },
-//     bootData: { navTree: [], user: {} },
-//     rendererAvailable: true,
-//   },
-// }));
-
+    //     jest.mock('@grafana/runtime/src/config', () => ({
+    //   config: {
+    //     buildInfo: {
+    //       edition: 'Enterprise',
+    //       version: '9.0.0',
+    //       commit: 'abc123',
+    //       env: 'dev',
+    //       latestVersion: '',
+    //       hasUpdate: false,
+    //       hideVersion: false,
+    //     },
+    //     licenseInfo: {
+    //       enabledFeatures: { 'reports.email': true },
+    //     },
+    //     featureToggles: {
+    //       accesscontrol: true,
+    //     },
+    //     bootData: { navTree: [], user: {} },
+    //     rendererAvailable: true,
+    //   },
+    // }));
 
     it('should cancel any unfinished logs volume queries when a new query is run', async () => {
       await dispatch(runQueries(ExploreId.left));

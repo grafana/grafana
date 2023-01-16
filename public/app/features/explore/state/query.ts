@@ -217,13 +217,6 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
         datasourceOverride = rootDatasource;
       }
     }
-    //
-    // if (queries.length > 0) {
-    //   const rootDatasource = getState().explore[exploreId]!.datasourceInstance;
-    //   if (!rootDatasource?.meta.mixed) {
-    //     datasourceOverride = rootDatasource;
-    //   }
-    // }
 
     const query = await generateEmptyQuery(queries, index, datasourceOverride?.getRef());
 
