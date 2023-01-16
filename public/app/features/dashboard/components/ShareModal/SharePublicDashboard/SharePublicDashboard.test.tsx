@@ -340,8 +340,9 @@ describe('SharePublic - Already persisted', () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
-    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
-    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeChecked();
+    const enableTimeRangeSwitch = screen.getByTestId(selectors.EnableTimeRangeSwitch);
+    expect(enableTimeRangeSwitch).toBeEnabled();
+    expect(enableTimeRangeSwitch).toBeChecked();
   });
 
   it('when modal is opened, then time range switch is enabled and not checked when its not checked in the db', async () => {
@@ -360,8 +361,9 @@ describe('SharePublic - Already persisted', () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
-    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
-    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).not.toBeChecked();
+    const enableTimeRangeSwitch = screen.getByTestId(selectors.EnableTimeRangeSwitch);
+    expect(enableTimeRangeSwitch).toBeEnabled();
+    expect(enableTimeRangeSwitch).not.toBeChecked();
   });
   it('when fetch is done, then loader spinner is gone, inputs are disabled and save button is enabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
