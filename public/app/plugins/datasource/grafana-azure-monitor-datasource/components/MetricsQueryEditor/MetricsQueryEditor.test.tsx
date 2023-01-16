@@ -81,8 +81,7 @@ describe('MetricsQueryEditor', () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const query = createMockQuery();
     delete query?.subscription;
-    delete query?.azureMonitor?.resourceGroup;
-    delete query?.azureMonitor?.resourceName;
+    delete query?.azureMonitor?.resources;
     delete query?.azureMonitor?.metricNamespace;
     const onChange = jest.fn();
 
@@ -125,8 +124,12 @@ describe('MetricsQueryEditor', () => {
         subscription: 'def-456',
         azureMonitor: expect.objectContaining({
           metricNamespace: 'microsoft.compute/virtualmachines',
-          resourceGroup: 'dev-3',
-          resourceName: 'web-server',
+          resources: [
+            {
+              resourceGroup: 'dev-3',
+              resourceName: 'web-server',
+            },
+          ],
         }),
       })
     );

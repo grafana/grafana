@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngalerttests "github.com/grafana/grafana/pkg/services/ngalert/tests"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -478,7 +477,7 @@ func setupEnv(t *testing.T, sqlStore *sqlstore.SQLStore, b bus.Bus, quotaService
 	require.NoError(t, err)
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	_, err = ngalert.ProvideService(
-		sqlStore.Cfg, &ngalerttests.FakeFeatures{}, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, quotaService,
+		sqlStore.Cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, quotaService,
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{}, annotationstest.NewFakeAnnotationsRepo(), &plugins.FakePluginStore{}, tracer,
 	)
 	require.NoError(t, err)
