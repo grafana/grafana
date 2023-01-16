@@ -132,7 +132,7 @@ export function PanelChrome({
         <PanelDescription description={description} />
 
         {titleItems && (
-          <div className={styles.titleItems} data-testid="title-items">
+          <div className={styles.titleItems} data-testid="title-items-container">
             {titleItems.map((item) => item)}
           </div>
         )}
