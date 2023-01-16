@@ -43,12 +43,12 @@ describe('AzureMonitorDatasource', () => {
       },
       {
         description: 'filter query with no resourceGroup',
-        query: createMockQuery({ azureMonitor: { resourceGroup: undefined } }),
+        query: createMockQuery({ azureMonitor: { resources: [{ resourceGroup: undefined }] } }),
         filtered: false,
       },
       {
         description: 'filter query with no resourceName',
-        query: createMockQuery({ azureMonitor: { resourceName: undefined } }),
+        query: createMockQuery({ azureMonitor: { resources: [{ resourceName: undefined }] } }),
         filtered: false,
       },
       {
@@ -117,9 +117,8 @@ describe('AzureMonitorDatasource', () => {
       expect(templatedQuery).toMatchObject({
         subscription,
         azureMonitor: {
-          resourceGroup,
           metricNamespace,
-          resourceName,
+          resources: [{ resourceGroup, resourceName }],
         },
       });
     });
@@ -346,8 +345,8 @@ describe('AzureMonitorDatasource', () => {
 
     it('should return a query with any template variables replaced', () => {
       const templateableProps = [
-        'resourceGroup',
-        'resourceName',
+        'resources[0].resourceGroup',
+        'resources[0].resourceName',
         'metricNamespace',
         'timeGrain',
         'aggregation',
