@@ -167,7 +167,7 @@ WORKFLOW.md @torkelo
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
 /devenv/dev-dashboards/ @grafana/dashboards-squad
 /devenv/docker/blocks/alert_webhook_listener/ @grafana/alerting-squad-backend
-/devenv/docker/blocks/clickhouse/ @grafana/enterprise-plugins
+/devenv/docker/blocks/clickhouse/ @grafana/partner-plugins
 /devenv/docker/blocks/collectd/ @grafana/observability-metrics
 /devenv/docker/blocks/grafana/ @grafana/grafana-as-code
 /devenv/docker/blocks/graphite/ @grafana/observability-metrics
@@ -228,10 +228,10 @@ WORKFLOW.md @torkelo
 /Makefile @grafana/grafana-release-eng
 /scripts/build/ @grafana/grafana-release-eng
 
-# Cloud Datasources backend code
+# OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/aws-plugins
-/pkg/tsdb/azuremonitor/ @grafana/cloud-provider-plugins
-/pkg/tsdb/cloudmonitoring/ @grafana/cloud-provider-plugins
+/pkg/tsdb/azuremonitor/ @grafana/partner-plugins
+/pkg/tsdb/cloudmonitoring/ @grafana/partner-plugins
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/observability-metrics
@@ -293,7 +293,7 @@ WORKFLOW.md @torkelo
 /public/locales/ @grafana/user-essentials
 /public/app/core/internationalization/ @grafana/user-essentials
 /e2e/ @grafana/user-essentials
-/e2e/cloud-plugins-suite/ @grafana/cloud-provider-plugins
+/e2e/cloud-plugins-suite/ @grafana/partner-plugins
 /packages/ @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
 /packages/grafana-e2e-selectors/ @grafana/user-essentials
 /packages/grafana-e2e/ @grafana/user-essentials
@@ -487,7 +487,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/elasticsearch/ @grafana/observability-logs
 /public/app/plugins/datasource/grafana/ @grafana/user-essentials
 /public/app/plugins/datasource/testdata/ @grafana/backend-platform
-/public/app/plugins/datasource/grafana-azure-monitor-datasource/ @grafana/cloud-provider-plugins
+/public/app/plugins/datasource/grafana-azure-monitor-datasource/ @grafana/partner-plugins
 /public/app/plugins/datasource/graphite/ @grafana/observability-metrics
 /public/app/plugins/datasource/influxdb/ @grafana/observability-metrics
 /public/app/plugins/datasource/jaeger/ @grafana/observability-traces-and-profiling
@@ -498,7 +498,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/opentsdb/ @grafana/backend-platform
 /public/app/plugins/datasource/postgres/ @grafana/grafana-bi-squad
 /public/app/plugins/datasource/prometheus/ @grafana/observability-metrics
-/public/app/plugins/datasource/cloud-monitoring/ @grafana/cloud-provider-plugins
+/public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-plugins
 /public/app/plugins/datasource/zipkin/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/tempo/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/phlare/ @grafana/observability-traces-and-profiling
@@ -565,7 +565,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/backport.yml @grafana/grafana-release-eng
 /.github/workflows/bump-version.yml @grafana/grafana-release-eng
 /.github/workflows/close-milestone.yml @grafana/grafana-release-eng
-/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/cloud-provider-plugins
+/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-plugins
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
