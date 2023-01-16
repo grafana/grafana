@@ -69,6 +69,7 @@ interface Props {
   dashboard: DashboardModel;
   panel?: PanelModel;
   activeTab?: string;
+
   onDismiss(): void;
 }
 
