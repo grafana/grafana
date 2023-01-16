@@ -80,3 +80,29 @@ func TestProcessNotifierError(t *testing.T) {
 		require.Equal(t, err, processNotifierError(r, err))
 	})
 }
+
+// TODO: Copied from Alerting, needs to be made public.
+func processNotifierError(config *definitions.PostableGrafanaReceiver, err error) error {
+	if err == nil {
+		return nil
+	}
+
+	var urlError *url.Error
+	if errors.As(err, &urlError) {
+		if urlError.Timeout() {
+			return ReceiverTimeoutError{
+				Receiver: config,
+				Err:      err,
+			}
+		}
+	}
+
+	if errors.Is(err, context.DeadlineExceeded) {
+		return ReceiverTimeoutError{
+			Receiver: config,
+			Err:      err,
+		}
+	}
+
+	return err
+}

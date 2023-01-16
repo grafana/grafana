@@ -28,6 +28,10 @@ export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuer
     workingQuery = migrateDimensionToResourceObj(workingQuery);
   }
 
+  if (workingQuery.azureMonitor?.resourceGroup || workingQuery.azureMonitor?.resourceName) {
+    workingQuery = migrateResourceGroupAndName(workingQuery);
+  }
+
   return workingQuery;
 }
 
@@ -144,13 +148,27 @@ function migrateDimensionToResourceObj(query: AzureMonitorQuery): AzureMonitorQu
       subscription: details?.subscription,
       azureMonitor: {
         ...query.azureMonitor,
-        resourceGroup: details?.resourceGroup,
+        resources: [{ resourceGroup: details?.resourceGroup, resourceName: details?.resourceName }],
         metricNamespace: details?.metricNamespace,
-        resourceName: details?.resourceName,
         resourceUri: isWellFormedUri ? undefined : query.azureMonitor.resourceUri,
       },
     };
   }
 
   return query;
+}
+
+function migrateResourceGroupAndName(query: AzureMonitorQuery): AzureMonitorQuery {
+  let workingQuery = query;
+
+  if (workingQuery.azureMonitor) {
+    workingQuery.azureMonitor.resources = [
+      { resourceGroup: workingQuery.azureMonitor.resourceGroup, resourceName: workingQuery.azureMonitor.resourceName },
+    ];
+
+    delete workingQuery.azureMonitor.resourceGroup;
+    delete workingQuery.azureMonitor.resourceName;
+  }
+
+  return workingQuery;
 }

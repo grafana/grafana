@@ -288,7 +288,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body api
 
 	result, err := am.TestReceivers(ctx, body)
 	if err != nil {
-		if errors.Is(err, notifier.ErrNoReceivers) {
+		if errors.Is(err, alerting.ErrNoReceivers) {
 			return response.Error(http.StatusBadRequest, "", err)
 		}
 		return response.Error(http.StatusInternalServerError, "", err)
@@ -362,7 +362,7 @@ func statusForTestReceivers(v []notifier.TestReceiverResult) int {
 			if next.Error != nil {
 				var (
 					invalidReceiverErr notifier.InvalidReceiverError
-					receiverTimeoutErr notifier.ReceiverTimeoutError
+					receiverTimeoutErr alerting.ReceiverTimeoutError
 				)
 				if errors.As(next.Error, &invalidReceiverErr) {
 					numBadRequests += 1

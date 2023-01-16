@@ -59,7 +59,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/grafana/alerting v0.0.0-20230113002715-e287d43f4b57
+	github.com/grafana/alerting v0.0.0-20230113220341-b9b3de89bca2
 	github.com/grafana/cuetsy v0.1.5
 	github.com/grafana/grafana-aws-sdk v0.11.0
 	github.com/grafana/grafana-azure-sdk-go v1.5.1
@@ -274,6 +274,7 @@ require (
 
 require (
 	github.com/dave/dst v0.27.2
+	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 	github.com/parca-dev/parca v0.12.1
 	k8s.io/apimachinery v0.25.3
 )
