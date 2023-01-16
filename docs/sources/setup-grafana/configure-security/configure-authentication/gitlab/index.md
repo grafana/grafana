@@ -110,7 +110,7 @@ the group `foo`, set
 allowed_groups = example, foo/bar
 ```
 
-In order to put values containing spaces in the list, use JSON syntax:
+To put values containing spaces in the list, use the following JSON syntax:
 
 ```ini
 allowed_groups = ["Admins", "Software Engineers"]

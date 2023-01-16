@@ -390,7 +390,7 @@ You can use `*` as the Grafana organization in the mapping if you want all users
 
 With the [`allowed_organizations`]({{< relref "../../../configure-grafana/enterprise-configuration/#allowed-organizations" >}}) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
 
-In order to put values containing spaces in the list, use JSON syntax:
+To put values containing spaces in the list, use the following JSON syntax:
 
 ```ini
 allowed_organizations = ["org 1", "second org"]
