@@ -7,7 +7,7 @@ This Docker block is an updated version from [OpenLDAP](../openldap/) block. Thi
 First build and deploy the `openldap` container.
 
 ```bash
-make devenv sources=auth/openldap-mac
+make devenv sources=auth/openldap
 ```
 
 ### Exposed ports

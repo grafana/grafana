@@ -8,8 +8,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, useTheme2 } from '../../themes';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
-import { IconButton } from '../IconButton/IconButton';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
+import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip';
 
 import { PanelDescription } from './PanelDescription';
@@ -92,10 +92,12 @@ export function PanelChrome({
   const headerStyles: CSSProperties = {
     height: headerHeight,
   };
+
   const itemStyles: CSSProperties = {
     minHeight: headerHeight,
     minWidth: headerHeight,
   };
+
   const containerStyles: CSSProperties = { width, height };
 
   const isUsingDeprecatedLeftItems = isEmpty(status) && !loadingState;
@@ -152,14 +154,14 @@ export function PanelChrome({
         <div className={styles.rightAligned}>
           {menu && (
             <Dropdown overlay={menu} placement="bottom">
-              <div className={cx(styles.item, styles.menuItem, 'menu-icon')} data-testid="menu-icon" style={itemStyles}>
-                <IconButton
-                  ariaLabel={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
-                  tooltip="Menu"
-                  name="ellipsis-v"
-                  size="sm"
-                />
-              </div>
+              <ToolbarButton
+                aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
+                title="Menu"
+                icon="ellipsis-v"
+                narrow
+                data-testid="panel-menu-button"
+                className={cx(styles.menuItem, 'menu-icon')}
+              />
             </Dropdown>
           )}
 
@@ -210,7 +212,7 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { padding, background, borderColor } = theme.components.panel;
+  const { background, borderColor } = theme.components.panel;
 
   return {
     container: css({
@@ -255,7 +257,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      padding: `0 ${theme.spacing(padding)}`,
+      padding: theme.spacing(0, 0, 0, 1),
     }),
     streaming: css({
       marginRight: 0,
@@ -283,6 +285,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     menuItem: css({
       visibility: 'hidden',
+      border: 'none',
     }),
     errorContainer: css({
       label: 'error-container',

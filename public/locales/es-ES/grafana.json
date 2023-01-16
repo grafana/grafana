@@ -128,15 +128,6 @@
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
     },
-    "admin-access": {
-      "title": "Usuarios y acceso"
-    },
-    "admin-general": {
-      "title": "General"
-    },
-    "admin-plugins": {
-      "title": "Complementos y datos"
-    },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
       "title": "Alertas"
@@ -262,6 +253,9 @@
       "subtitle": "Aplicaciones de supervisión e infraestructura",
       "title": "Seguimiento"
     },
+    "new": {
+      "title": ""
+    },
     "new-dashboard": {
       "title": "Nuevo panel de control"
     },
@@ -356,13 +350,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "Ocultar leyenda",
       "inspect": "Inspeccionar",
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
+      "query": "",
+      "remove": "",
       "share": "Compartir",
       "show-legend": "Mostrar leyenda",
+      "unlink-library-panel": "",
       "view": "Vista"
     }
   },
@@ -381,6 +384,14 @@
     },
     "select-button": {
       "auto-refresh": "Establecer intervalo de actualización automática"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
     }
   },
   "share-modal": {
@@ -542,7 +553,7 @@
       "name-label": "Nombre",
       "username-label": "Nombre de usuario"
     },
-    "title": "Editar perfil"
+    "title": "Perfil"
   },
   "user-session": {
     "browser-column": "Navegador y sistema operativo",
