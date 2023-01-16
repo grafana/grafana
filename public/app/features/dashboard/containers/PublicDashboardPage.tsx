@@ -73,10 +73,11 @@ const PublicDashboardPage = (props: Props) => {
       const prevUrlParams = prevProps?.queryParams;
       const urlParams = props.queryParams;
 
-      if (
+      const updateTimeRangeFromUrl =
         (urlParams?.from !== prevUrlParams?.from || urlParams?.to !== prevUrlParams?.to) &&
-        !dashboard?.timepicker.hidden
-      ) {
+        !dashboard?.timepicker.hidden;
+
+      if (updateTimeRangeFromUrl) {
         getTimeSrv().updateTimeRangeFromUrl();
       }
 
