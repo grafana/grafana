@@ -924,7 +924,7 @@ describe('AzureMonitorDatasource', () => {
 
           const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
           query.queryType = AzureQueryType.AzureMonitor;
-          query.azureLogAnalytics = { resource: `$${singleVariable.name}` };
+          query.azureLogAnalytics = { resources: [`$${singleVariable.name}`] };
           expect(ds.targetContainsTemplate(query)).toEqual(false);
         });
       });

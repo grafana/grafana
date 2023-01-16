@@ -166,7 +166,7 @@ describe('AzureMonitor ResourcePicker utils', () => {
   describe('setResource', () => {
     it('updates a resource with a resource URI for Log Analytics', () => {
       expect(setResource(createMockQuery(), '/subscription/sub')).toMatchObject({
-        azureLogAnalytics: { resource: '/subscription/sub' },
+        azureLogAnalytics: { resources: ['/subscription/sub'] },
       });
     });
 
