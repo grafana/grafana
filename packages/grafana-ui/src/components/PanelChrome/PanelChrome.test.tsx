@@ -1,6 +1,8 @@
 import { screen, render } from '@testing-library/react';
 import React from 'react';
 
+import { LoadingState } from '@grafana/data';
+
 import { PanelChrome, PanelChromeProps } from './PanelChrome';
 
 const setup = (propOverrides?: Partial<PanelChromeProps>) => {
@@ -93,8 +95,26 @@ it('renders panel with a show-on-hover menu icon if prop menu', () => {
   expect(screen.getByTestId('panel-menu-button')).not.toBeVisible();
 });
 
-it.skip('renders states in the panel header if any given', () => {});
+it('renders error status in the panel header if any given', () => {
+  setup({ status: { message: 'Error test' } });
 
-it.skip('renders leftItems in the panel header if any given when no states prop is given', () => {});
+  expect(screen.getByTestId('panel-status-wrapper')).toBeInTheDocument();
+});
 
-it.skip('renders states in the panel header if both leftItems and states are given', () => {});
+it('renders error status in the panel header if loadingState is error', () => {
+  setup({ loadingState: LoadingState.Error });
+
+  expect(screen.getByTestId('panel-status-wrapper')).toBeInTheDocument();
+});
+
+it('renders loading indicator in the panel header if loadingState is loading', () => {
+  setup({ loadingState: LoadingState.Loading });
+
+  expect(screen.getByTestId('panel-loading-wrapper')).toBeInTheDocument();
+});
+
+it('renders streaming indicator in the panel header if loadingState is streaming', () => {
+  setup({ loadingState: LoadingState.Streaming });
+
+  expect(screen.getByTestId('panel-streaming-wrapper')).toBeInTheDocument();
+});

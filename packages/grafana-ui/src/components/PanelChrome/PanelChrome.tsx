@@ -106,7 +106,7 @@ export function PanelChrome({
     const showError = loadingState === LoadingState.Error || status?.message;
     if (!isUsingDeprecatedLeftItems && showError) {
       return (
-        <div className={styles.errorContainer}>
+        <div className={styles.errorContainer} data-testid="panel-status-wrapper">
           <PanelStatus message={status?.message} onClick={status?.onClick} />
         </div>
       );
@@ -118,7 +118,7 @@ export function PanelChrome({
   const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
   return (
     <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
-      <div className={styles.loadingBarContainer}>
+      <div className={styles.loadingBarContainer} data-testid="panel-loading-wrapper">
         {showLoading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
       </div>
 
@@ -138,7 +138,7 @@ export function PanelChrome({
         )}
 
         {showStreaming && (
-          <div className={styles.item} style={itemStyles}>
+          <div className={styles.item} style={itemStyles} data-testid="panel-streaming-wrapper">
             <Tooltip content="Streaming">
               <Icon name="circle-mono" size="sm" className={styles.streaming} />
             </Tooltip>
