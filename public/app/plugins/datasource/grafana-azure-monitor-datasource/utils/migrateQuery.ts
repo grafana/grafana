@@ -36,7 +36,6 @@ export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuer
     workingQuery = migrateLogsResource(workingQuery);
   }
 
->>>>>>> 021eda7aad2e4d29d6c15ff1df578af9dfb394fc
   return workingQuery;
 }
 

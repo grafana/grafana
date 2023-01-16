@@ -9,11 +9,7 @@ import {
   TypedVariableModel,
 } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
-<<<<<<< HEAD
-import { SceneObjectBase, sceneGraph, FormatRegistryID, formatRegistry, CustomFormatterFn } from '@grafana/scenes';
-=======
 import { sceneGraph, FormatRegistryID, formatRegistry, CustomFormatterFn } from '@grafana/scenes';
->>>>>>> 021eda7aad2e4d29d6c15ff1df578af9dfb394fc
 
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
