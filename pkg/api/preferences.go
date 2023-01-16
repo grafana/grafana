@@ -145,16 +145,17 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 	dtoCmd.HomeDashboardID = dashboardID
 
 	saveCmd := pref.SavePreferenceCommand{
-		UserID:          userID,
-		OrgID:           orgID,
-		TeamID:          teamId,
-		Theme:           dtoCmd.Theme,
-		Language:        dtoCmd.Language,
-		Timezone:        dtoCmd.Timezone,
-		WeekStart:       dtoCmd.WeekStart,
-		HomeDashboardID: dtoCmd.HomeDashboardID,
-		QueryHistory:    dtoCmd.QueryHistory,
-		Navbar:          dtoCmd.Navbar,
+		UserID:            userID,
+		OrgID:             orgID,
+		TeamID:            teamId,
+		Theme:             dtoCmd.Theme,
+		Language:          dtoCmd.Language,
+		Timezone:          dtoCmd.Timezone,
+		WeekStart:         dtoCmd.WeekStart,
+		HomeDashboardID:   dtoCmd.HomeDashboardID,
+		QueryHistory:      dtoCmd.QueryHistory,
+		Navbar:            dtoCmd.Navbar,
+		CookiePreferences: dtoCmd.Cookies,
 	}
 
 	if err := hs.preferenceService.Save(ctx, &saveCmd); err != nil {
@@ -205,16 +206,17 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	dtoCmd.HomeDashboardID = dashboardID
 
 	patchCmd := pref.PatchPreferenceCommand{
-		UserID:          userID,
-		OrgID:           orgID,
-		TeamID:          teamId,
-		Theme:           dtoCmd.Theme,
-		Timezone:        dtoCmd.Timezone,
-		WeekStart:       dtoCmd.WeekStart,
-		HomeDashboardID: dtoCmd.HomeDashboardID,
-		Language:        dtoCmd.Language,
-		Navbar:          dtoCmd.Navbar,
-		QueryHistory:    dtoCmd.QueryHistory,
+		UserID:            userID,
+		OrgID:             orgID,
+		TeamID:            teamId,
+		Theme:             dtoCmd.Theme,
+		Timezone:          dtoCmd.Timezone,
+		WeekStart:         dtoCmd.WeekStart,
+		HomeDashboardID:   dtoCmd.HomeDashboardID,
+		Language:          dtoCmd.Language,
+		Navbar:            dtoCmd.Navbar,
+		QueryHistory:      dtoCmd.QueryHistory,
+		CookiePreferences: dtoCmd.Cookies,
 	}
 
 	if err := hs.preferenceService.Patch(ctx, &patchCmd); err != nil {
