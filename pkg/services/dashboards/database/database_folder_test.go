@@ -27,7 +27,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 	}
 	t.Run("Testing DB", func(t *testing.T) {
 		var sqlStore *sqlstore.SQLStore
-		var folder, dashInRoot, childDash *models.Dashboard
+		var folder, dashInRoot, childDash *dashboards.Dashboard
 		var currentUser user.User
 		var dashboardStore *DashboardStore
 
@@ -40,8 +40,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			require.NoError(t, err)
 			folder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod", "webapp")
-			childDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, folder.Id, false, "prod", "webapp")
-			insertTestDashboard(t, dashboardStore, "test dash 45", 1, folder.Id, false, "prod")
+			childDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, folder.ID, false, "prod", "webapp")
+			insertTestDashboard(t, dashboardStore, "test dash 45", 1, folder.ID, false, "prod")
 			currentUser = createUser(t, sqlStore, "viewer", "Viewer", false)
 		}
 
@@ -53,20 +53,20 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					query := &models.FindPersistedDashboardsQuery{
 						SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 						OrgId:        1,
-						DashboardIds: []int64{folder.Id, dashInRoot.Id},
+						DashboardIds: []int64{folder.ID, dashInRoot.ID},
 					}
 					err := testSearchDashboards(dashboardStore, query)
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 2)
-					require.Equal(t, query.Result[0].ID, folder.Id)
-					require.Equal(t, query.Result[1].ID, dashInRoot.Id)
+					require.Equal(t, query.Result[0].ID, folder.ID)
+					require.Equal(t, query.Result[1].ID, dashInRoot.ID)
 				})
 			})
 
 			t.Run("and acl is set for dashboard folder", func(t *testing.T) {
 				var otherUser int64 = 999
-				err := updateDashboardACL(t, dashboardStore, folder.Id, models.DashboardACL{
-					DashboardID: folder.Id,
+				err := updateDashboardACL(t, dashboardStore, folder.ID, models.DashboardACL{
+					DashboardID: folder.ID,
 					OrgID:       1,
 					UserID:      otherUser,
 					Permission:  models.PERMISSION_EDIT,
@@ -76,18 +76,18 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				t.Run("should not return folder", func(t *testing.T) {
 					query := &models.FindPersistedDashboardsQuery{
 						SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
-						OrgId:        1, DashboardIds: []int64{folder.Id, dashInRoot.Id},
+						OrgId:        1, DashboardIds: []int64{folder.ID, dashInRoot.ID},
 					}
 					err := testSearchDashboards(dashboardStore, query)
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 1)
-					require.Equal(t, query.Result[0].ID, dashInRoot.Id)
+					require.Equal(t, query.Result[0].ID, dashInRoot.ID)
 				})
 
 				t.Run("when the user is given permission", func(t *testing.T) {
-					err := updateDashboardACL(t, dashboardStore, folder.Id, models.DashboardACL{
-						DashboardID: folder.Id, OrgID: 1, UserID: currentUser.ID, Permission: models.PERMISSION_EDIT,
+					err := updateDashboardACL(t, dashboardStore, folder.ID, models.DashboardACL{
+						DashboardID: folder.ID, OrgID: 1, UserID: currentUser.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
 
@@ -95,13 +95,13 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 						query := &models.FindPersistedDashboardsQuery{
 							SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 							OrgId:        1,
-							DashboardIds: []int64{folder.Id, dashInRoot.Id},
+							DashboardIds: []int64{folder.ID, dashInRoot.ID},
 						}
 						err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 2)
-						require.Equal(t, query.Result[0].ID, folder.Id)
-						require.Equal(t, query.Result[1].ID, dashInRoot.Id)
+						require.Equal(t, query.Result[0].ID, folder.ID)
+						require.Equal(t, query.Result[1].ID, dashInRoot.ID)
 					})
 				})
 
@@ -114,49 +114,49 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 								OrgRole: org.RoleAdmin,
 							},
 							OrgId:        1,
-							DashboardIds: []int64{folder.Id, dashInRoot.Id},
+							DashboardIds: []int64{folder.ID, dashInRoot.ID},
 						}
 						err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 2)
-						require.Equal(t, query.Result[0].ID, folder.Id)
-						require.Equal(t, query.Result[1].ID, dashInRoot.Id)
+						require.Equal(t, query.Result[0].ID, folder.ID)
+						require.Equal(t, query.Result[1].ID, dashInRoot.ID)
 					})
 				})
 			})
 
 			t.Run("and acl is set for dashboard child and folder has all permissions removed", func(t *testing.T) {
 				var otherUser int64 = 999
-				err := updateDashboardACL(t, dashboardStore, folder.Id)
+				err := updateDashboardACL(t, dashboardStore, folder.ID)
 				require.NoError(t, err)
-				err = updateDashboardACL(t, dashboardStore, childDash.Id, models.DashboardACL{
-					DashboardID: folder.Id, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
+				err = updateDashboardACL(t, dashboardStore, childDash.ID, models.DashboardACL{
+					DashboardID: folder.ID, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
 				})
 				require.NoError(t, err)
 
 				t.Run("should not return folder or child", func(t *testing.T) {
 					query := &models.FindPersistedDashboardsQuery{
-						SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id},
+						SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer}, OrgId: 1, DashboardIds: []int64{folder.ID, childDash.ID, dashInRoot.ID},
 					}
 					err := testSearchDashboards(dashboardStore, query)
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 1)
-					require.Equal(t, query.Result[0].ID, dashInRoot.Id)
+					require.Equal(t, query.Result[0].ID, dashInRoot.ID)
 				})
 
 				t.Run("when the user is given permission to child", func(t *testing.T) {
-					err := updateDashboardACL(t, dashboardStore, childDash.Id, models.DashboardACL{
-						DashboardID: childDash.Id, OrgID: 1, UserID: currentUser.ID, Permission: models.PERMISSION_EDIT,
+					err := updateDashboardACL(t, dashboardStore, childDash.ID, models.DashboardACL{
+						DashboardID: childDash.ID, OrgID: 1, UserID: currentUser.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
 
 					t.Run("should be able to search for child dashboard but not folder", func(t *testing.T) {
-						query := &models.FindPersistedDashboardsQuery{SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
+						query := &models.FindPersistedDashboardsQuery{SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer}, OrgId: 1, DashboardIds: []int64{folder.ID, childDash.ID, dashInRoot.ID}}
 						err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 2)
-						require.Equal(t, query.Result[0].ID, childDash.Id)
-						require.Equal(t, query.Result[1].ID, dashInRoot.Id)
+						require.Equal(t, query.Result[0].ID, childDash.ID)
+						require.Equal(t, query.Result[1].ID, dashInRoot.ID)
 					})
 				})
 
@@ -169,14 +169,14 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 								OrgRole: org.RoleAdmin,
 							},
 							OrgId:        1,
-							DashboardIds: []int64{folder.Id, dashInRoot.Id, childDash.Id},
+							DashboardIds: []int64{folder.ID, dashInRoot.ID, childDash.ID},
 						}
 						err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 3)
-						require.Equal(t, query.Result[0].ID, folder.Id)
-						require.Equal(t, query.Result[1].ID, childDash.Id)
-						require.Equal(t, query.Result[2].ID, dashInRoot.Id)
+						require.Equal(t, query.Result[0].ID, folder.ID)
+						require.Equal(t, query.Result[1].ID, childDash.ID)
+						require.Equal(t, query.Result[2].ID, dashInRoot.ID)
 					})
 				})
 			})
@@ -184,7 +184,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 		t.Run("Given two dashboard folders with one dashboard each and one dashboard in the root folder", func(t *testing.T) {
 			var sqlStore *sqlstore.SQLStore
-			var folder1, folder2, dashInRoot, childDash1, childDash2 *models.Dashboard
+			var folder1, folder2, dashInRoot, childDash1, childDash2 *dashboards.Dashboard
 			var currentUser user.User
 			var rootFolderId int64 = 0
 
@@ -196,8 +196,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod")
 				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, true, "prod")
 				dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod")
-				childDash1 = insertTestDashboard(t, dashboardStore, "child dash 1", 1, folder1.Id, false, "prod")
-				childDash2 = insertTestDashboard(t, dashboardStore, "child dash 2", 1, folder2.Id, false, "prod")
+				childDash1 = insertTestDashboard(t, dashboardStore, "child dash 1", 1, folder1.ID, false, "prod")
+				childDash2 = insertTestDashboard(t, dashboardStore, "child dash 2", 1, folder2.ID, false, "prod")
 
 				currentUser = createUser(t, sqlStore, "viewer", "Viewer", false)
 			}
@@ -207,7 +207,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				t.Run("should return dashboards in root and expanded folder", func(t *testing.T) {
 					query := &models.FindPersistedDashboardsQuery{
 						FolderIds: []int64{
-							rootFolderId, folder1.Id}, SignedInUser: &user.SignedInUser{UserID: currentUser.ID,
+							rootFolderId, folder1.ID}, SignedInUser: &user.SignedInUser{UserID: currentUser.ID,
 							OrgID: 1, OrgRole: org.RoleViewer,
 						},
 						OrgId: 1,
@@ -215,76 +215,76 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					err := testSearchDashboards(dashboardStore, query)
 					require.NoError(t, err)
 					require.Equal(t, len(query.Result), 4)
-					require.Equal(t, query.Result[0].ID, folder1.Id)
-					require.Equal(t, query.Result[1].ID, folder2.Id)
-					require.Equal(t, query.Result[2].ID, childDash1.Id)
-					require.Equal(t, query.Result[3].ID, dashInRoot.Id)
+					require.Equal(t, query.Result[0].ID, folder1.ID)
+					require.Equal(t, query.Result[1].ID, folder2.ID)
+					require.Equal(t, query.Result[2].ID, childDash1.ID)
+					require.Equal(t, query.Result[3].ID, dashInRoot.ID)
 				})
 			})
 
 			t.Run("and acl is set for one dashboard folder", func(t *testing.T) {
 				const otherUser int64 = 999
-				err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
-					DashboardID: folder1.Id, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
+				err := updateDashboardACL(t, dashboardStore, folder1.ID, models.DashboardACL{
+					DashboardID: folder1.ID, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
 				})
 				require.NoError(t, err)
 
 				t.Run("and a dashboard is moved from folder without acl to the folder with an acl", func(t *testing.T) {
-					moveDashboard(t, dashboardStore, 1, childDash2.Data, folder1.Id)
+					moveDashboard(t, dashboardStore, 1, childDash2.Data, folder1.ID)
 
 					t.Run("should not return folder with acl or its children", func(t *testing.T) {
 						query := &models.FindPersistedDashboardsQuery{
 							SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 							OrgId:        1,
-							DashboardIds: []int64{folder1.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
+							DashboardIds: []int64{folder1.ID, childDash1.ID, childDash2.ID, dashInRoot.ID},
 						}
 						err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 1)
-						require.Equal(t, query.Result[0].ID, dashInRoot.Id)
+						require.Equal(t, query.Result[0].ID, dashInRoot.ID)
 					})
 				})
 				t.Run("and a dashboard is moved from folder with acl to the folder without an acl", func(t *testing.T) {
 					setup2()
-					moveDashboard(t, dashboardStore, 1, childDash1.Data, folder2.Id)
+					moveDashboard(t, dashboardStore, 1, childDash1.Data, folder2.ID)
 
 					t.Run("should return folder without acl and its children", func(t *testing.T) {
 						query := &models.FindPersistedDashboardsQuery{
 							SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 							OrgId:        1,
-							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
+							DashboardIds: []int64{folder2.ID, childDash1.ID, childDash2.ID, dashInRoot.ID},
 						}
 						err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 4)
-						require.Equal(t, query.Result[0].ID, folder2.Id)
-						require.Equal(t, query.Result[1].ID, childDash1.Id)
-						require.Equal(t, query.Result[2].ID, childDash2.Id)
-						require.Equal(t, query.Result[3].ID, dashInRoot.Id)
+						require.Equal(t, query.Result[0].ID, folder2.ID)
+						require.Equal(t, query.Result[1].ID, childDash1.ID)
+						require.Equal(t, query.Result[2].ID, childDash2.ID)
+						require.Equal(t, query.Result[3].ID, dashInRoot.ID)
 					})
 				})
 
 				t.Run("and a dashboard with an acl is moved to the folder without an acl", func(t *testing.T) {
-					err := updateDashboardACL(t, dashboardStore, childDash1.Id, models.DashboardACL{
-						DashboardID: childDash1.Id, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
+					err := updateDashboardACL(t, dashboardStore, childDash1.ID, models.DashboardACL{
+						DashboardID: childDash1.ID, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
 
-					moveDashboard(t, dashboardStore, 1, childDash1.Data, folder2.Id)
+					moveDashboard(t, dashboardStore, 1, childDash1.Data, folder2.ID)
 
 					t.Run("should return folder without acl but not the dashboard with acl", func(t *testing.T) {
 						query := &models.FindPersistedDashboardsQuery{
 							SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 							OrgId:        1,
-							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
+							DashboardIds: []int64{folder2.ID, childDash1.ID, childDash2.ID, dashInRoot.ID},
 						}
 						err = testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 4)
-						require.Equal(t, query.Result[0].ID, folder2.Id)
-						require.Equal(t, query.Result[1].ID, childDash1.Id)
-						require.Equal(t, query.Result[2].ID, childDash2.Id)
-						require.Equal(t, query.Result[3].ID, dashInRoot.Id)
+						require.Equal(t, query.Result[0].ID, folder2.ID)
+						require.Equal(t, query.Result[1].ID, childDash1.ID)
+						require.Equal(t, query.Result[2].ID, childDash2.ID)
+						require.Equal(t, query.Result[3].ID, dashInRoot.ID)
 					})
 				})
 			})
@@ -292,7 +292,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 		t.Run("Given two dashboard folders", func(t *testing.T) {
 			var sqlStore *sqlstore.SQLStore
-			var folder1, folder2 *models.Dashboard
+			var folder1, folder2 *dashboards.Dashboard
 			var adminUser, editorUser, viewerUser user.User
 
 			setup3 := func() {
@@ -323,8 +323,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 2)
-					require.Equal(t, query.Result[0].ID, folder1.Id)
-					require.Equal(t, query.Result[1].ID, folder2.Id)
+					require.Equal(t, query.Result[0].ID, folder1.ID)
+					require.Equal(t, query.Result[1].ID, folder2.ID)
 				})
 
 				t.Run("should have edit permission in folders", func(t *testing.T) {
@@ -358,13 +358,13 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 2)
-					require.Equal(t, query.Result[0].ID, folder1.Id)
-					require.Equal(t, query.Result[1].ID, folder2.Id)
+					require.Equal(t, query.Result[0].ID, folder1.ID)
+					require.Equal(t, query.Result[1].ID, folder2.ID)
 				})
 
 				t.Run("Should have write access to one dashboard folder if default role changed to view for one folder", func(t *testing.T) {
-					err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
-						DashboardID: folder1.Id, OrgID: 1, UserID: editorUser.ID, Permission: models.PERMISSION_VIEW,
+					err := updateDashboardACL(t, dashboardStore, folder1.ID, models.DashboardACL{
+						DashboardID: folder1.ID, OrgID: 1, UserID: editorUser.ID, Permission: models.PERMISSION_VIEW,
 					})
 					require.NoError(t, err)
 
@@ -372,7 +372,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 1)
-					require.Equal(t, query.Result[0].ID, folder2.Id)
+					require.Equal(t, query.Result[0].ID, folder2.ID)
 				})
 
 				t.Run("should have edit permission in folders", func(t *testing.T) {
@@ -409,8 +409,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("Should be able to get one dashboard folder if default role changed to edit for one folder", func(t *testing.T) {
-					err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
-						DashboardID: folder1.Id, OrgID: 1, UserID: viewerUser.ID, Permission: models.PERMISSION_EDIT,
+					err := updateDashboardACL(t, dashboardStore, folder1.ID, models.DashboardACL{
+						DashboardID: folder1.ID, OrgID: 1, UserID: viewerUser.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
 
@@ -418,7 +418,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					require.NoError(t, err)
 
 					require.Equal(t, len(query.Result), 1)
-					require.Equal(t, query.Result[0].ID, folder1.Id)
+					require.Equal(t, query.Result[0].ID, folder1.ID)
 				})
 
 				t.Run("should not have edit permission in folders", func(t *testing.T) {
@@ -442,8 +442,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("and admin permission is given for user with org role viewer in one dashboard folder", func(t *testing.T) {
-					err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
-						DashboardID: folder1.Id, OrgID: 1, UserID: viewerUser.ID, Permission: models.PERMISSION_ADMIN,
+					err := updateDashboardACL(t, dashboardStore, folder1.ID, models.DashboardACL{
+						DashboardID: folder1.ID, OrgID: 1, UserID: viewerUser.ID, Permission: models.PERMISSION_ADMIN,
 					})
 					require.NoError(t, err)
 
@@ -458,8 +458,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				t.Run("and edit permission is given for user with org role viewer in one dashboard folder", func(t *testing.T) {
-					err := updateDashboardACL(t, dashboardStore, folder1.Id, models.DashboardACL{
-						DashboardID: folder1.Id, OrgID: 1, UserID: viewerUser.ID, Permission: models.PERMISSION_EDIT,
+					err := updateDashboardACL(t, dashboardStore, folder1.ID, models.DashboardACL{
+						DashboardID: folder1.ID, OrgID: 1, UserID: viewerUser.ID, Permission: models.PERMISSION_EDIT,
 					})
 					require.NoError(t, err)
 
@@ -479,19 +479,19 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			var orgId int64 = 1
 			title := "Very Unique Name"
 			var sqlStore *sqlstore.SQLStore
-			var folder1, folder2 *models.Dashboard
+			var folder1, folder2 *dashboards.Dashboard
 			sqlStore = db.InitTestDB(t)
 			quotaService := quotatest.New(false, nil)
 			dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 			require.NoError(t, err)
 			folder2 = insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
-			_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.Id, false, "prod")
+			_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.ID, false, "prod")
 			folder1 = insertTestDashboard(t, dashboardStore, title, orgId, 0, true, "prod")
 
 			t.Run("GetFolderByTitle should find the folder", func(t *testing.T) {
 				result, err := dashboardStore.GetFolderByTitle(context.Background(), orgId, title)
 				require.NoError(t, err)
-				require.Equal(t, folder1.Id, result.ID)
+				require.Equal(t, folder1.ID, result.ID)
 			})
 		})
 
@@ -502,20 +502,20 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 			require.NoError(t, err)
 			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
-			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.Id, false, "prod")
+			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, false, "prod")
 
 			t.Run("should return folder by UID", func(t *testing.T) {
-				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId, folder.Uid)
-				require.Equal(t, folder.Id, d.ID)
+				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId, folder.UID)
+				require.Equal(t, folder.ID, d.ID)
 				require.NoError(t, err)
 			})
 			t.Run("should not find dashboard", func(t *testing.T) {
-				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId, dash.Uid)
+				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId, dash.UID)
 				require.Nil(t, d)
 				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			})
 			t.Run("should search in organization", func(t *testing.T) {
-				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId+1, folder.Uid)
+				d, err := dashboardStore.GetFolderByUID(context.Background(), orgId+1, folder.UID)
 				require.Nil(t, d)
 				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			})
@@ -528,20 +528,20 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			dashboardStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 			require.NoError(t, err)
 			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
-			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.Id, false, "prod")
+			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, false, "prod")
 
 			t.Run("should return folder by ID", func(t *testing.T) {
-				d, err := dashboardStore.GetFolderByID(context.Background(), orgId, folder.Id)
-				require.Equal(t, folder.Id, d.ID)
+				d, err := dashboardStore.GetFolderByID(context.Background(), orgId, folder.ID)
+				require.Equal(t, folder.ID, d.ID)
 				require.NoError(t, err)
 			})
 			t.Run("should not find dashboard", func(t *testing.T) {
-				d, err := dashboardStore.GetFolderByID(context.Background(), orgId, dash.Id)
+				d, err := dashboardStore.GetFolderByID(context.Background(), orgId, dash.ID)
 				require.Nil(t, d)
 				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			})
 			t.Run("should search in organization", func(t *testing.T) {
-				d, err := dashboardStore.GetFolderByID(context.Background(), orgId+1, folder.Id)
+				d, err := dashboardStore.GetFolderByID(context.Background(), orgId+1, folder.ID)
 				require.Nil(t, d)
 				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			})
@@ -550,12 +550,12 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 }
 
 func moveDashboard(t *testing.T, dashboardStore *DashboardStore, orgId int64, dashboard *simplejson.Json,
-	newFolderId int64) *models.Dashboard {
+	newFolderId int64) *dashboards.Dashboard {
 	t.Helper()
 
-	cmd := models.SaveDashboardCommand{
-		OrgId:     orgId,
-		FolderId:  newFolderId,
+	cmd := dashboards.SaveDashboardCommand{
+		OrgID:     orgId,
+		FolderID:  newFolderId,
 		Dashboard: dashboard,
 		Overwrite: true,
 	}
