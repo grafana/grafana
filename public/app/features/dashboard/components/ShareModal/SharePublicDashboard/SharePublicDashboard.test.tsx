@@ -208,7 +208,6 @@ describe('SharePublic', () => {
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
     expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
   });
-  // test checking if current version of dashboard in state is persisted to db
 });
 
 describe('SharePublic - New config setup', () => {
