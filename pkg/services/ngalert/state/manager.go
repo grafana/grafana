@@ -37,19 +37,33 @@ type Manager struct {
 	images        ImageCapturer
 	historian     Historian
 	externalURL   *url.URL
+
+	doNotSaveNormalState bool
 }
 
-func NewManager(metrics *metrics.State, externalURL *url.URL, instanceStore InstanceStore, images ImageCapturer, clock clock.Clock, historian Historian) *Manager {
+type ManagerCfg struct {
+	Metrics       *metrics.State
+	ExternalURL   *url.URL
+	InstanceStore InstanceStore
+	Images        ImageCapturer
+	Clock         clock.Clock
+	Historian     Historian
+	// DoNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods
+	DoNotSaveNormalState bool
+}
+
+func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
-		cache:         newCache(),
-		ResendDelay:   ResendDelay, // TODO: make this configurable
-		log:           log.New("ngalert.state.manager"),
-		metrics:       metrics,
-		instanceStore: instanceStore,
-		images:        images,
-		historian:     historian,
-		clock:         clock,
-		externalURL:   externalURL,
+		cache:                newCache(),
+		ResendDelay:          ResendDelay, // TODO: make this configurable
+		log:                  log.New("ngalert.state.manager"),
+		metrics:              cfg.Metrics,
+		instanceStore:        cfg.InstanceStore,
+		images:               cfg.Images,
+		historian:            cfg.Historian,
+		clock:                cfg.Clock,
+		externalURL:          cfg.ExternalURL,
+		doNotSaveNormalState: cfg.DoNotSaveNormalState,
 	}
 }
 
@@ -262,11 +276,11 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {
-	return st.cache.getAll(orgID)
+	allStates := st.cache.getAll(orgID, st.doNotSaveNormalState)
+	return allStates
 }
-
 func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
-	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
+	return st.cache.getStatesForRuleUID(orgID, alertRuleUID, st.doNotSaveNormalState)
 }
 
 func (st *Manager) Put(states []*State) {
@@ -285,9 +299,14 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 	instances := make([]ngModels.AlertInstance, 0, len(states))
 
 	for _, s := range states {
+		// Do not save normal state to database and remove transition to Normal state but keep mapped states
+		if st.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
+			continue
+		}
+
 		key, err := s.GetAlertInstanceKey()
 		if err != nil {
-			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err)
+			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
 			continue
 		}
 		fields := ngModels.AlertInstance{
@@ -300,6 +319,10 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			CurrentStateEnd:   s.EndsAt,
 		}
 		instances = append(instances, fields)
+	}
+
+	if len(instances) == 0 {
+		return
 	}
 
 	if err := st.instanceStore.SaveAlertInstances(ctx, instances...); err != nil {
@@ -338,13 +361,18 @@ func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, sta
 	}
 }
 
-// TODO: why wouldn't you allow other types like NoData or Error?
 func translateInstanceState(state ngModels.InstanceStateType) eval.State {
-	switch {
-	case state == ngModels.InstanceStateFiring:
+	switch state {
+	case ngModels.InstanceStateFiring:
 		return eval.Alerting
-	case state == ngModels.InstanceStateNormal:
+	case ngModels.InstanceStateNormal:
 		return eval.Normal
+	case ngModels.InstanceStateError:
+		return eval.Error
+	case ngModels.InstanceStateNoData:
+		return eval.NoData
+	case ngModels.InstanceStatePending:
+		return eval.Pending
 	default:
 		return eval.Error
 	}

@@ -51,6 +51,7 @@ import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
+import { trackQuery } from './tracking';
 import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
@@ -60,7 +61,6 @@ import {
   PromOptions,
   PromQuery,
   PromQueryRequest,
-  PromQueryType,
   PromScalarData,
   PromVectorData,
 } from './types';
@@ -408,27 +408,48 @@ export class PrometheusDatasource
   }
 
   processTargetV2(target: PromQuery, request: DataQueryRequest<PromQuery>) {
+    const processedTargets: PromQuery[] = [];
     const processedTarget = {
       ...target,
-      queryType: PromQueryType.timeSeriesQuery,
       exemplar: this.shouldRunExemplarQuery(target, request),
       requestId: request.panelId + target.refId,
       // We need to pass utcOffsetSec to backend to calculate aligned range
       utcOffsetSec: this.timeSrv.timeRange().to.utcOffset() * 60,
     };
-    return processedTarget;
+    if (target.instant && target.range) {
+      // We have query type "Both" selected
+      // We should send separate queries with different refId
+      processedTargets.push(
+        {
+          ...processedTarget,
+          refId: processedTarget.refId,
+          instant: false,
+        },
+        {
+          ...processedTarget,
+          refId: processedTarget.refId + '-Instant',
+          range: false,
+        }
+      );
+    } else {
+      processedTargets.push(processedTarget);
+    }
+
+    return processedTargets;
   }
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
-      return super
-        .query({ ...request, targets })
-        .pipe(
-          map((response) =>
-            transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
-          )
-        );
+      const startTime = new Date();
+      return super.query({ ...request, targets: targets.flat() }).pipe(
+        map((response) =>
+          transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
+        ),
+        tap((response: DataQueryResponse) => {
+          trackQuery(response, request, startTime);
+        })
+      );
       // Run queries trough browser/proxy
     } else {
       const start = this.getPrometheusTime(request.range.from, false);
@@ -588,6 +609,7 @@ export class PrometheusDatasource
         ...this.getRangeScopedVars(options.range),
       });
     }
+
     query.step = interval;
 
     let expr = target.expr;
@@ -763,7 +785,6 @@ export class PrometheusDatasource
       instant: false,
       exemplar: false,
       interval: step,
-      queryType: PromQueryType.timeSeriesQuery,
       refId: 'X',
       datasource: this.getRef(),
     };

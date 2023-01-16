@@ -1,6 +1,8 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] 
+//  Frame[0] {
+//      "type": "timeseries-multi"
+//  }
 //  Name: 
 //  Dimensions: 2 Fields by 4 Rows
 //  +-------------------------------+--------------------+
@@ -16,7 +18,9 @@
 //  
 //  
 //  
-//  Frame[1] 
+//  Frame[1] {
+//      "type": "timeseries-multi"
+//  }
 //  Name: 
 //  Dimensions: 2 Fields by 4 Rows
 //  +-------------------------------+--------------------+
@@ -32,7 +36,9 @@
 //  
 //  
 //  
-//  Frame[2] 
+//  Frame[2] {
+//      "type": "timeseries-multi"
+//  }
 //  Name: 
 //  Dimensions: 2 Fields by 4 Rows
 //  +-------------------------------+--------------------+
@@ -53,15 +59,15 @@
   "frames": [
     {
       "schema": {
+        "meta": {
+          "type": "timeseries-multi"
+        },
         "fields": [
           {
             "name": "time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
-            },
-            "config": {
-              "displayNameFromDS": "val3"
             }
           },
           {
@@ -99,15 +105,15 @@
     },
     {
       "schema": {
+        "meta": {
+          "type": "timeseries-multi"
+        },
         "fields": [
           {
             "name": "time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
-            },
-            "config": {
-              "displayNameFromDS": "val2"
             }
           },
           {
@@ -145,15 +151,15 @@
     },
     {
       "schema": {
+        "meta": {
+          "type": "timeseries-multi"
+        },
         "fields": [
           {
             "name": "time",
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
-            },
-            "config": {
-              "displayNameFromDS": "val1"
             }
           },
           {

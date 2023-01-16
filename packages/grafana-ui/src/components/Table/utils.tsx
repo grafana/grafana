@@ -1,7 +1,6 @@
 import { Property } from 'csstype';
 import { clone } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React from 'react';
 import { Row } from 'react-table';
 
 import {
@@ -65,35 +64,29 @@ export function getColumns(
   data: DataFrame,
   availableWidth: number,
   columnMinWidth: number,
-  expandedIndexes: Set<number>,
-  setExpandedIndexes: (indexes: Set<number>) => void,
   expander: boolean,
   footerValues?: FooterItem[],
   isCountRowsSet?: boolean
 ): GrafanaTableColumn[] {
-  const columns: GrafanaTableColumn[] = expander
-    ? [
-        {
-          // Make an expander cell
-          Header: () => null, // No header
-          id: 'expander', // It needs an ID
-          Cell: ({ row }) => {
-            return <RowExpander row={row} expandedIndexes={expandedIndexes} setExpandedIndexes={setExpandedIndexes} />;
-          },
-          width: EXPANDER_WIDTH,
-          minWidth: EXPANDER_WIDTH,
-          filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
-            return [];
-          },
-          justifyContent: 'left',
-          field: data.fields[0],
-          sortType: 'basic',
-        },
-      ]
-    : [];
+  const columns: GrafanaTableColumn[] = [];
   let fieldCountWithoutWidth = 0;
 
   if (expander) {
+    columns.push({
+      // Make an expander cell
+      Header: () => null, // No header
+      id: 'expander', // It needs an ID
+      Cell: RowExpander,
+      width: EXPANDER_WIDTH,
+      minWidth: EXPANDER_WIDTH,
+      filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
+        return [];
+      },
+      justifyContent: 'left',
+      field: data.fields[0],
+      sortType: 'basic',
+    });
+
     availableWidth -= EXPANDER_WIDTH;
   }
 
@@ -121,7 +114,7 @@ export function getColumns(
       }
     };
 
-    const Cell = getCellComponent(fieldTableOptions.displayMode, field);
+    const Cell = getCellComponent(fieldTableOptions.cellOptions?.type, field);
     columns.push({
       Cell,
       id: fieldIndex.toString(),
@@ -170,9 +163,7 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return DefaultCell;
     case TableCellDisplayMode.Image:
       return ImageCell;
-    case TableCellDisplayMode.LcdGauge:
-    case TableCellDisplayMode.BasicGauge:
-    case TableCellDisplayMode.GradientGauge:
+    case TableCellDisplayMode.Gauge:
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;

@@ -142,8 +142,11 @@ func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 		return false
 	}
 	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
-	if len(oauthInfos) != 1 {
+	if len(oauthInfos) > 1 {
 		c.Logger.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
+		return false
+	} else if len(oauthInfos) == 0 {
+		c.Logger.Warn("Skipping OAuth auto login because no OAuth providers are configured")
 		return false
 	}
 	for key := range oauthInfos {
@@ -195,7 +198,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		ReqContext: c,
 		Username:   cmd.User,
 		Password:   cmd.Password,
-		IpAddress:  c.Req.RemoteAddr,
+		IpAddress:  c.RemoteAddr(),
 		Cfg:        hs.Cfg,
 	}
 

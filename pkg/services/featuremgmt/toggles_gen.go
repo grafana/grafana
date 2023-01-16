@@ -15,10 +15,6 @@ const (
 	// Use big transactions for alerting database writes
 	FlagAlertingBigTransactions = "alertingBigTransactions"
 
-	// FlagPromQueryBuilder
-	// Show Prometheus query builder
-	FlagPromQueryBuilder = "promQueryBuilder"
-
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
@@ -79,6 +75,10 @@ const (
 	// Enables public access to dashboards
 	FlagPublicDashboards = "publicDashboards"
 
+	// FlagPublicDashboardsEmailSharing
+	// Allows public dashboard sharing to be restricted to only allowed emails
+	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
+
 	// FlagLokiLive
 	// Support WebSocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
@@ -114,6 +114,14 @@ const (
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
+
+	// FlagK8s
+	// Explore native k8s integrations
+	FlagK8s = "k8s"
+
+	// FlagSupportBundles
+	// Support bundles for troubleshooting
+	FlagSupportBundles = "supportBundles"
 
 	// FlagDashboardsFromStorage
 	// Load dashboards from the generic storage interface
@@ -207,10 +215,6 @@ const (
 	// SQL-based entity store (requires storage flag also)
 	FlagEntityStore = "entityStore"
 
-	// FlagTraceqlEditor
-	// Show the TraceQL editor in the explore page
-	FlagTraceqlEditor = "traceqlEditor"
-
 	// FlagFlameGraph
 	// Show the flame graph
 	FlagFlameGraph = "flameGraph"
@@ -282,4 +286,16 @@ const (
 	// FlagSessionRemoteCache
 	// Enable using remote cache for user sessions
 	FlagSessionRemoteCache = "sessionRemoteCache"
+
+	// FlagDisablePrometheusExemplarSampling
+	// Disable Prometheus examplar sampling
+	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
+
+	// FlagAlertingBacktesting
+	// Rule backtesting API for alerting
+	FlagAlertingBacktesting = "alertingBacktesting"
+
+	// FlagAlertingNoNormalState
+	// Stop maintaining state of alerts that are not firing
+	FlagAlertingNoNormalState = "alertingNoNormalState"
 )

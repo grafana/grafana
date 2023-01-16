@@ -1,3 +1,5 @@
+import { EmbeddedScene, SceneObjectBase, SceneState } from '@grafana/scenes';
+
 import { Scene } from '../components/Scene';
 
 import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
@@ -9,11 +11,12 @@ import { getGridWithRowLayoutTest } from './gridWithRow';
 import { getNestedScene } from './nested';
 import { getQueryVariableDemo } from './queryVariableDemo';
 import { getSceneWithRows } from './sceneWithRows';
+import { getTransformationsDemo } from './transformations';
 import { getVariablesDemo, getVariablesDemoWithAll } from './variablesDemo';
 
 interface SceneDef {
   title: string;
-  getScene: (standalone: boolean) => Scene;
+  getScene: (standalone: boolean) => Scene | EmbeddedScene;
 }
 export function getScenes(): SceneDef[] {
   return [
@@ -29,10 +32,11 @@ export function getScenes(): SceneDef[] {
     { title: 'Variables', getScene: getVariablesDemo },
     { title: 'Variables with All values', getScene: getVariablesDemoWithAll },
     { title: 'Query variable', getScene: getQueryVariableDemo },
+    { title: 'Transformations demo', getScene: getTransformationsDemo },
   ];
 }
 
-const cache: Record<string, { standalone: boolean; scene: Scene }> = {};
+const cache: Record<string, { standalone: boolean; scene: SceneObjectBase<SceneState> }> = {};
 
 export function getSceneByTitle(title: string, standalone = true) {
   if (cache[title]) {

@@ -3,7 +3,7 @@ package channels_config
 import (
 	"os"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/alerting/alerting/notifier/channels"
 )
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
@@ -163,6 +163,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Kafka REST Proxy",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
+					Description:  "Hint: If you are directly using v3 APIs hosted on a Confluent Kafka Server, you must append /kafka to the URL here. Example: https://localhost:8082/kafka",
 					Placeholder:  "http://localhost:8082",
 					PropertyName: "kafkaRestProxy",
 					Required:     true,
@@ -174,6 +175,53 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "topic1",
 					PropertyName: "kafkaTopic",
 					Required:     true,
+				},
+				{
+					Label:        "Username",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "username",
+					Required:     false,
+				},
+				{
+					Label:        "Password",
+					Element:      ElementTypeInput,
+					InputType:    InputTypePassword,
+					Description:  "The password to use when making a call to the Kafka REST Proxy",
+					PropertyName: "password",
+					Required:     false,
+					Secure:       true,
+				},
+				{
+					Label:        "API version",
+					Element:      ElementTypeSelect,
+					InputType:    InputTypeText,
+					Description:  "The API version to use when contacting the Kafka REST Server. By default v2 will be used.",
+					PropertyName: "apiVersion",
+					Required:     false,
+					SelectOptions: []SelectOption{
+						{
+							Value: "v2",
+							Label: "v2",
+						},
+						{
+							Value: "v3",
+							Label: "v3",
+						},
+					},
+				},
+				{
+					Label:        "Cluster ID",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "v3 APIs require a clusterID to be specified.",
+					Placeholder:  "lkc-abcde",
+					PropertyName: "kafkaClusterId",
+					Required:     true,
+					ShowWhen: ShowWhen{
+						Field: "apiVersion",
+						Is:    "v3",
+					},
 				},
 				{
 					Label:        "Description",
@@ -681,6 +729,36 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeTextArea,
 					Placeholder:  channels.DefaultMessageEmbed,
 					PropertyName: "message",
+				},
+				{
+					Label:   "Parse Mode",
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
+						{
+							Value: "None",
+							Label: "None",
+						},
+						{
+							Value: "HTML",
+							Label: "HTML",
+						},
+						{
+							Value: "Markdown",
+							Label: "Markdown",
+						},
+						{
+							Value: "MarkdownV2",
+							Label: "Markdown V2",
+						},
+					},
+					Description:  `Mode for parsing entities in the message text. Default is 'HTML'`,
+					PropertyName: "parse_mode",
+				},
+				{
+					Label:        "Disable Notification",
+					Description:  "Sends the message silently. Users will receive a notification with no sound.",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "disable_notification",
 				},
 			},
 		},

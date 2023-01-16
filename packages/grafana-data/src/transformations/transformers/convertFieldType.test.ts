@@ -121,6 +121,26 @@ it('can convert strings with commas to numbers', () => {
   });
 });
 
+it('converts booleans to numbers', () => {
+  const options = { targetField: 'booleans', destinationType: FieldType.number };
+
+  const stringyNumbers = {
+    name: 'booleans',
+    type: FieldType.boolean,
+    values: new ArrayVector([true, false]),
+    config: {},
+  };
+
+  const numbers = convertFieldType(stringyNumbers, options);
+
+  expect(numbers).toEqual({
+    name: 'booleans',
+    type: FieldType.number,
+    values: new ArrayVector([1, 0]),
+    config: {},
+  });
+});
+
 describe('field convert types transformer', () => {
   beforeAll(() => {
     mockTransformationsRegistry([convertFieldTypeTransformer]);
