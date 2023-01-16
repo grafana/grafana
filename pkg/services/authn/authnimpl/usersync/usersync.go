@@ -12,23 +12,37 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func ProvideUserSync(userService user.Service, authInfoService login.AuthInfoService, quotaService quota.Service) *UserSync {
-	return &UserSync{userService, authInfoService, quotaService, log.New("user.sync")}
+var (
+	errUserProtection = errutil.NewBase(errutil.StatusForbidden,
+		"user.sync.protected role", errutil.WithPublicMessage("Unable to sync due to protected role"))
+)
+
+func ProvideUserSync(userService user.Service,
+	userProtectionService login.UserProtectionService,
+	authInfoService login.AuthInfoService, quotaService quota.Service) *UserSync {
+	return &UserSync{
+		userService:           userService,
+		authInfoService:       authInfoService,
+		userProtectionService: userProtectionService,
+		quotaService:          quotaService,
+		log:                   log.New("user.sync"),
+	}
 }
 
 type UserSync struct {
-	userService     user.Service
-	authInfoService login.AuthInfoService
-	quotaService    quota.Service
-	log             log.Logger
+	userService           user.Service
+	authInfoService       login.AuthInfoService
+	userProtectionService login.UserProtectionService
+	quotaService          quota.Service
+	log                   log.Logger
 }
 
 // SyncUser syncs a user with the database
 func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
 	if !id.ClientParams.SyncUser {
-		s.log.Debug("Not syncing user", "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return nil
 	}
 
@@ -65,6 +79,10 @@ func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Re
 		if errCreate != nil {
 			return errCreate
 		}
+	}
+
+	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthModule); errProtection != nil {
+		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
 	}
 
 	// update user
