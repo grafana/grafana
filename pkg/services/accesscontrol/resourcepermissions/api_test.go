@@ -512,7 +512,7 @@ func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, se
 	teamSvc := teamimpl.ProvideService(sql, sql.Cfg)
 	team, err := teamSvc.CreateTeam("test", "test@test.com", 1)
 	require.NoError(t, err)
-	_, err = service.SetTeamPermission(context.Background(), team.OrgId, team.Id, resourceID, "Edit")
+	_, err = service.SetTeamPermission(context.Background(), team.OrgID, team.ID, resourceID, "Edit")
 	require.NoError(t, err)
 	// seed user 1 with "View" permission on dashboard 1
 	orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))

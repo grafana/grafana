@@ -14,6 +14,7 @@ import {
   DataSourceApi,
   DataSourceJsonData,
   DataSourceRef,
+  DataTransformContext,
   DataTransformerConfig,
   getDefaultTimeRange,
   LoadingState,
@@ -25,7 +26,7 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
@@ -187,14 +188,11 @@ export class PanelQueryRunner {
             return of(data);
           }
 
-          const replace = (option: string): string => {
-            return getTemplateSrv().replace(option, data?.request?.scopedVars);
+          const ctx: DataTransformContext = {
+            interpolate: (v: string) => getTemplateSrv().replace(v, data?.request?.scopedVars),
           };
-          transformations.forEach((transform: any) => {
-            transform.replace = replace;
-          });
 
-          return transformDataFrame(transformations, data.series).pipe(map((series) => ({ ...data, series })));
+          return transformDataFrame(transformations, data.series, ctx).pipe(map((series) => ({ ...data, series })));
         })
       );
   };
@@ -239,10 +237,8 @@ export class PanelQueryRunner {
       scopedVars: scopedVars || {},
       cacheTimeout,
       startTime: Date.now(),
+      rangeRaw: timeRange.raw,
     };
-
-    // Add deprecated property
-    (request as any).rangeRaw = timeRange.raw;
 
     try {
       const ds = await getDataSource(datasource, request.scopedVars, publicDashboardAccessToken);
@@ -276,7 +272,15 @@ export class PanelQueryRunner {
 
       this.pipeToSubject(runRequest(ds, request), panelId);
     } catch (err) {
-      console.error('PanelQueryRunner Error', err);
+      this.pipeToSubject(
+        of({
+          state: LoadingState.Error,
+          error: toDataQueryError(err),
+          series: [],
+          timeRange: request.range,
+        }),
+        panelId
+      );
     }
   }
 

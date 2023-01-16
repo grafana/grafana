@@ -1,89 +1,64 @@
 import { css } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
 import {
   KBarAnimator,
   KBarPortal,
   KBarPositioner,
   KBarResults,
   KBarSearch,
-  useMatches,
-  Action,
   VisualState,
   useRegisterActions,
   useKBar,
+  ActionImpl,
 } from 'kbar';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction, locationService } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useSelector } from 'app/types';
+import { t } from 'app/core/internationalization';
 
 import { ResultItem } from './ResultItem';
-import getDashboardNavActions from './actions/dashboard.nav.actions';
-import getGlobalActions from './actions/global.static.actions';
-
-/**
- * Wrap all the components from KBar here.
- * @constructor
- */
+import { useDashboardResults } from './actions/dashboardActions';
+import useActions from './actions/useActions';
+import { CommandPaletteAction } from './types';
+import { useMatches } from './useMatches';
 
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
-  const { keybindings } = useGrafana();
-  const [actions, setActions] = useState<Action[]>([]);
-  const [staticActions, setStaticActions] = useState<Action[]>([]);
-  const { query, showing } = useKBar((state) => ({
+
+  const { query, showing, searchQuery } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
+    searchQuery: state.searchQuery,
   }));
-  const isNotLogin = locationService.getLocation().pathname !== '/login';
 
-  const { navBarTree } = useSelector((state) => {
-    return {
-      navBarTree: state.navBarTree,
-    };
-  });
-
-  useEffect(() => {
-    if (isNotLogin) {
-      const staticActionsResp = getGlobalActions(navBarTree);
-      setStaticActions(staticActionsResp);
-      setActions([...staticActionsResp]);
-    }
-  }, [isNotLogin, navBarTree]);
-
-  useEffect(() => {
-    if (showing) {
-      reportInteraction('command_palette_opened');
-
-      // Do dashboard search on demand
-      getDashboardNavActions('go/dashboard').then((dashAct) => {
-        setActions([...staticActions, ...dashAct]);
-      });
-
-      keybindings.bindGlobal('esc', () => {
-        query.setVisualState(VisualState.animatingOut);
-      });
-    }
-
-    return () => {
-      keybindings.bindGlobal('esc', () => {
-        keybindings.globalEsc();
-      });
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showing]);
-
+  const actions = useActions();
   useRegisterActions(actions, [actions]);
+  const dashboardResults = useDashboardResults(searchQuery, showing);
+
+  const ref = useRef<HTMLDivElement>(null);
+  const { overlayProps } = useOverlay(
+    { isOpen: showing, onClose: () => query.setVisualState(VisualState.animatingOut) },
+    ref
+  );
+  const { dialogProps } = useDialog({}, ref);
+
+  // Report interaction when opened
+  useEffect(() => {
+    showing && reportInteraction('command_palette_opened');
+  }, [showing]);
 
   return actions.length > 0 ? (
     <KBarPortal>
       <KBarPositioner className={styles.positioner}>
         <KBarAnimator className={styles.animator}>
-          <FocusScope contain>
-            <KBarSearch className={styles.search} />
-            <RenderResults />
+          <FocusScope contain autoFocus restoreFocus>
+            <div {...overlayProps} {...dialogProps}>
+              <KBarSearch className={styles.search} />
+              <RenderResults dashboardResults={dashboardResults} />
+            </div>
           </FocusScope>
         </KBarAnimator>
       </KBarPositioner>
@@ -91,14 +66,29 @@ export const CommandPalette = () => {
   ) : null;
 };
 
-const RenderResults = () => {
+interface RenderResultsProps {
+  dashboardResults: CommandPaletteAction[];
+}
+
+const RenderResults = ({ dashboardResults }: RenderResultsProps) => {
   const { results, rootActionId } = useMatches();
   const styles = useStyles2(getSearchStyles);
+  const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
+  // because dashboard search results aren't registered as actions, we need to manually
+  // convert them to ActionImpls before passing them as items to KBarResults
+  const dashboardResultItems = useMemo(
+    () => dashboardResults.map((dashboard) => new ActionImpl(dashboard, { store: {} })),
+    [dashboardResults]
+  );
+  const items = useMemo(
+    () => (dashboardResultItems.length > 0 ? [...results, dashboardsSectionTitle, ...dashboardResultItems] : results),
+    [results, dashboardsSectionTitle, dashboardResultItems]
+  );
 
   return (
     <div className={styles.resultsContainer}>
       <KBarResults
-        items={results}
+        items={items}
         onRender={({ item, active }) =>
           typeof item === 'string' ? (
             <div className={styles.sectionHeader}>{item}</div>

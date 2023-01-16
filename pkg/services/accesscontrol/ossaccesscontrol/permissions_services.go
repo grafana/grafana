@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -52,9 +53,9 @@ func ProvideTeamPermissions(
 				return err
 			}
 
-			err = teamService.GetTeamById(context.Background(), &models.GetTeamByIdQuery{
-				OrgId: orgID,
-				Id:    id,
+			_, err = teamService.GetTeamByID(context.Background(), &team.GetTeamByIDQuery{
+				OrgID: orgID,
+				ID:    id,
 			})
 			if err != nil {
 				return err
@@ -85,10 +86,10 @@ func ProvideTeamPermissions(
 			case "Admin":
 				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, models.PERMISSION_ADMIN)
 			case "":
-				return teamimpl.RemoveTeamMemberHook(session, &models.RemoveTeamMemberCommand{
-					OrgId:  orgID,
-					UserId: user.ID,
-					TeamId: teamId,
+				return teamimpl.RemoveTeamMemberHook(session, &team.RemoveTeamMemberCommand{
+					OrgID:  orgID,
+					UserID: user.ID,
+					TeamID: teamId,
 				})
 			default:
 				return fmt.Errorf("invalid team permission type %s", permission)
@@ -283,7 +284,7 @@ type ServiceAccountPermissionsService struct {
 
 func ProvideServiceAccountPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
-	license models.Licensing, serviceAccountStore serviceaccounts.Store, service accesscontrol.Service,
+	license models.Licensing, serviceAccountRetrieverService *retriever.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*ServiceAccountPermissionsService, error) {
 	options := resourcepermissions.Options{
@@ -294,7 +295,7 @@ func ProvideServiceAccountPermissions(
 			if err != nil {
 				return err
 			}
-			_, err = serviceAccountStore.RetrieveServiceAccount(ctx, orgID, id)
+			_, err = serviceAccountRetrieverService.RetrieveServiceAccount(ctx, orgID, id)
 			return err
 		},
 		Assignments: resourcepermissions.Assignments{

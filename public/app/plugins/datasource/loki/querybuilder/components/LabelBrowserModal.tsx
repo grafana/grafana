@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 
-import { CoreApp } from '@grafana/data';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { LoadingPlaceholder, Modal } from '@grafana/ui';
+import { LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
 import { LokiLabelBrowser } from '../../components/LokiLabelBrowser';
@@ -24,6 +25,8 @@ export const LabelBrowserModal = (props: Props) => {
   const [labelsLoaded, setLabelsLoaded] = useState(false);
   const [hasLogLabels, setHasLogLabels] = useState(false);
   const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
+
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     if (!isOpen) {
@@ -57,7 +60,7 @@ export const LabelBrowserModal = (props: Props) => {
   };
 
   return (
-    <Modal isOpen={isOpen} title="Label browser" onDismiss={reportInteractionAndClose}>
+    <Modal isOpen={isOpen} title="Label browser" onDismiss={reportInteractionAndClose} className={styles.modal}>
       {!labelsLoaded && <LoadingPlaceholder text="Loading labels..." />}
       {labelsLoaded && !hasLogLabels && <p>No labels found.</p>}
       {labelsLoaded && hasLogLabels && (
@@ -78,4 +81,15 @@ export const LabelBrowserModal = (props: Props) => {
       )}
     </Modal>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    modal: css`
+      width: 85vw;
+      ${theme.breakpoints.down('md')} {
+        width: 100%;
+      }
+    `,
+  };
 };

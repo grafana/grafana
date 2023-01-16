@@ -5,7 +5,6 @@ import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import {
   AlignmentTypes,
   CloudMonitoringQuery,
-  EditorMode,
   LegacyCloudMonitoringAnnotationQuery,
   MetricKind,
   QueryType,
@@ -15,16 +14,11 @@ const query: CloudMonitoringQuery = {
   refId: 'query',
   queryType: QueryType.ANNOTATION,
   intervalMs: 0,
-  metricQuery: {
-    editorMode: EditorMode.Visual,
+  timeSeriesList: {
     projectName: 'project-name',
-    metricType: '',
     filters: [],
-    metricKind: MetricKind.GAUGE,
-    valueType: '',
     title: '',
     text: '',
-    query: '',
     crossSeriesReducer: 'REDUCE_NONE',
     perSeriesAligner: AlignmentTypes.ALIGN_NONE,
   },
@@ -71,15 +65,11 @@ describe('CloudMonitoringAnnotationSupport', () => {
         name: 'Anno',
         target: {
           intervalMs: 0,
-          metricQuery: {
+          timeSeriesList: {
             crossSeriesReducer: 'REDUCE_NONE',
-            editorMode: 'visual',
             filters: ['filter1', 'filter2'],
-            metricKind: 'CUMULATIVE',
-            metricType: 'metric-type',
             perSeriesAligner: 'ALIGN_NONE',
             projectName: 'project-name',
-            query: '',
             text: 'text',
             title: 'title',
           },
@@ -92,10 +82,10 @@ describe('CloudMonitoringAnnotationSupport', () => {
   });
 
   describe('prepareQuery', () => {
-    it('should ensure queryType is set to "metrics"', () => {
+    it('should ensure queryType is set to "annotation"', () => {
       const queryWithoutMetricsQueryType = { ...annotationQuery, queryType: 'blah' };
       expect(annotationSupport.prepareQuery?.(queryWithoutMetricsQueryType)).toEqual(
-        expect.objectContaining({ queryType: 'metrics' })
+        expect.objectContaining({ queryType: QueryType.ANNOTATION })
       );
     });
     it('should ensure type is set "annotationQuery"', () => {

@@ -35,6 +35,7 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	AddAlertImageMigrations(mg)
 
 	AddAlertmanagerConfigHistoryMigrations(mg)
+	ExtractAlertmanagerConfigurationHistoryMigration(mg)
 }
 
 // AddAlertDefinitionMigrations should not be modified.

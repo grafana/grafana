@@ -1,5 +1,5 @@
-import { CoreApp, DashboardLoadedEvent, DataQueryResponse } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { CoreApp, DashboardLoadedEvent, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 import { variableRegex } from 'app/features/variables/utils';
 
 import { REF_ID_STARTER_LOG_VOLUME } from './datasource';
@@ -110,7 +110,12 @@ const shouldNotReportBasedOnRefId = (refId: string): boolean => {
   return false;
 };
 
-export function trackQuery(response: DataQueryResponse, queries: ElasticsearchQuery[], app: string): void {
+export function trackQuery(
+  response: DataQueryResponse,
+  request: DataQueryRequest<ElasticsearchQuery> & { targets: ElasticsearchQuery[] },
+  startTime: Date
+): void {
+  const { targets: queries, app } = request;
   if (app === CoreApp.Dashboard || app === CoreApp.PanelViewer) {
     return;
   }
@@ -121,6 +126,7 @@ export function trackQuery(response: DataQueryResponse, queries: ElasticsearchQu
     }
     reportInteraction('grafana_elasticsearch_query_executed', {
       app,
+      grafana_version: config.buildInfo.version,
       with_lucene_query: query.query ? true : false,
       query_type: getQueryType(query),
       line_limit: getLineLimit(query),
@@ -128,6 +134,9 @@ export function trackQuery(response: DataQueryResponse, queries: ElasticsearchQu
       has_error: response.error !== undefined,
       has_data: response.data.some((frame) => frame.length > 0),
       simultaneously_sent_query_count: queries.length,
+      time_range_from: request?.range?.from?.toISOString(),
+      time_range_to: request?.range?.to?.toISOString(),
+      time_taken: Date.now() - startTime.getTime(),
     });
   }
 }
