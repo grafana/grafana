@@ -2,7 +2,6 @@ package codegen
 
 import (
 	"bytes"
-	"go/format"
 	"go/parser"
 	"go/token"
 	"testing"
@@ -285,7 +284,7 @@ type Thing struct {
 			drop := PrefixDropper("Foo")
 			dstutil.Apply(inf, drop, nil)
 			buf := new(bytes.Buffer)
-			err = format.Node(buf, fset, inf)
+			err = decorator.Fprint(buf, inf)
 			if err != nil {
 				t.Fatal(err)
 			}
