@@ -28,7 +28,6 @@ export interface PanelChromeProps {
   height: number;
   children: (innerWidth: number, innerHeight: number) => ReactNode;
   padding?: PanelPadding;
-  transparent?: boolean;
   title?: string;
   description?: string | (() => string);
   titleItems?: ReactNode[];
@@ -59,7 +58,6 @@ export function PanelChrome({
   height,
   children,
   padding = 'md',
-  transparent = false,
   title = '',
   description = '',
   titleItems = [],
@@ -119,11 +117,7 @@ export function PanelChrome({
 
   const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
   return (
-    <div
-      className={cx(styles.container, { [styles.transparent]: transparent })}
-      style={containerStyles}
-      aria-label={ariaLabel}
-    >
+    <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
       <div className={styles.loadingBarContainer}>
         {showLoading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
       </div>
@@ -236,11 +230,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:focus-visible': {
         outline: `1px solid ${theme.colors.action.focus}`,
       },
-    }),
-    transparent: css({
-      backgroundColor: 'transparent',
-      border: '1px solid transparent',
-      boxShadow: 'none',
     }),
     loadingBarContainer: css({
       position: 'absolute',
