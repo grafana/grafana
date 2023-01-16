@@ -168,6 +168,9 @@ func (a *State) resultError(alertRule *models.AlertRule, result eval.Result) {
 	case models.AlertingErrState:
 		execErrState = eval.Alerting
 	case models.ErrorErrState:
+		if a.Error != nil {
+			a.Annotations["Error"] = a.Error.Error()
+		}
 		// If the evaluation failed because a query returned an error then
 		// update the state with the Datasource UID as a label and the error
 		// message as an annotation so other code can use this metadata to
@@ -181,7 +184,6 @@ func (a *State) resultError(alertRule *models.AlertRule, result eval.Result) {
 					break
 				}
 			}
-			a.Annotations["Error"] = queryError.Error()
 		}
 		execErrState = eval.Error
 	case models.OkErrState:
