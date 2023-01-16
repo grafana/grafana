@@ -8,45 +8,45 @@ keywords:
   - create templates
   - edit templates
   - delete templates
-title: Create message templates
+title: Create notification templates
 weight: 200
 ---
 
-# Create message templates
+# Create notification templates
 
-Create reusable message templates to send to your contact points.
+Create reusable notification templates to send to your contact points.
 
-You can add one or more templates to your message template.
+You can add one or more templates to your notification template.
 
-Your message template name must be unique. You cannot have two templates with the same name in the same message template or in different message templates. Avoid defining templates with the same name as default templates, such as: `__subject`, `__text_values_list`, `__text_alert_list`, `default.title` and `default.message`.
+Your notification template name must be unique. You cannot have two templates with the same name in the same notification template or in different notification templates. Avoid defining templates with the same name as default templates, such as: `__subject`, `__text_values_list`, `__text_alert_list`, `default.title` and `default.message`.
 
-In the Contact points tab, you can see a list of your message templates.
+In the Contact points tab, you can see a list of your notification templates.
 
 To create a template, complete the following steps.
 
 1. Click New template.
 
-2. Choose a name for the message template.
+2. Choose a name for the notification template.
 
 3. Write the content of the template in the content field.
 
-{{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-message-template-email-subject-9-3.png" caption="New message template email.subject" >}}
+{{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-message-template-email-subject-9-3.png" caption="New notification template email.subject" >}}
 
 5. Click Save.
 
 `{{ define "email.subject" }}` and `{{ end }}` is automatically added to the start and end of the content:
 
-{{< figure max-width="940px" src="/static/img/docs/alerting/unified/edit-message-template-email-subject-9-3.png" caption="Edit message template email.subject" >}}
+{{< figure max-width="940px" src="/static/img/docs/alerting/unified/edit-message-template-email-subject-9-3.png" caption="Edit notification template email.subject" >}}
 
-To create a message template that contains more than one template:
+To create a notification template that contains more than one template:
 
 1. Click New Template.
 
-2. Enter a name for the message template.
+2. Enter a name for the notification template.
 
 3. Write each template in the Content field, including `{{ define "name-of-template" }}` and `{{ end }}` at the start and end of each template.
 
-{{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-message-template-email-9-3.png" caption="New message template" >}}
+{{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-message-template-email-9-3.png" caption="New notification template" >}}
 
 5. Click Save.
 
@@ -89,7 +89,7 @@ Resolved alerts:
 - alertname=Test 3 grafana_folder=GrafanaCloud has value(s) B=0
 ```
 
-1. Create a message template called `email` with two templates in the content: `email.message_alert` and `email.message`.
+1. Create a notification template called `email` with two templates in the content: `email.message_alert` and `email.message`.
 
    The `email.message_alert` template is used to print the labels and values for each firing and resolved alert while the `email.message` template contains the structure of the email.
 
@@ -224,7 +224,7 @@ Annotations:
 
 ## Template both email and Slack with shared templates
 
-Instead of creating separate message templates for email and Slack, you can share the same template.
+Instead of creating separate notification templates for email and Slack, you can share the same template.
 
 For example, if you want to send an email with this subject and Slack message with this title:
 
