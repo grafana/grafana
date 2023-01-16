@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
@@ -27,14 +28,14 @@ const (
 )
 
 type Service struct {
-	cfg            *setting.Cfg
-	store          bundleStore
-	pluginStore    plugins.Store
-	pluginSettings pluginsettings.Service
-	accessControl  ac.AccessControl
-	features       *featuremgmt.FeatureManager
-
-	log log.Logger
+	cfg               *setting.Cfg
+	store             bundleStore
+	pluginStore       plugins.Store
+	pluginSettings    pluginsettings.Service
+	accessControl     ac.AccessControl
+	features          *featuremgmt.FeatureManager
+	encryptionService encryption.Internal
+	log               log.Logger
 
 	collectors map[string]supportbundles.Collector
 }
@@ -50,16 +51,18 @@ func ProvideService(cfg *setting.Cfg,
 	pluginStore plugins.Store,
 	pluginSettings pluginsettings.Service,
 	features *featuremgmt.FeatureManager,
+	encryptionService encryption.Internal,
 	usageStats usagestats.Service) (*Service, error) {
 	s := &Service{
-		cfg:            cfg,
-		store:          newStore(kvStore),
-		pluginStore:    pluginStore,
-		pluginSettings: pluginSettings,
-		accessControl:  accessControl,
-		features:       features,
-		log:            log.New("supportbundle.service"),
-		collectors:     make(map[string]supportbundles.Collector),
+		cfg:               cfg,
+		store:             newStore(kvStore),
+		pluginStore:       pluginStore,
+		pluginSettings:    pluginSettings,
+		accessControl:     accessControl,
+		features:          features,
+		encryptionService: encryptionService,
+		log:               log.New("supportbundle.service"),
+		collectors:        make(map[string]supportbundles.Collector),
 	}
 
 	if !features.IsEnabled(featuremgmt.FlagSupportBundles) {

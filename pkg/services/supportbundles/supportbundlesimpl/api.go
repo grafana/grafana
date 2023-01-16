@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -96,7 +97,8 @@ func (s *Service) handleDownload(ctx *models.ReqContext) {
 	}
 
 	ctx.Resp.Header().Set("Content-Type", "application/tar+gzip")
-	ctx.Resp.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%d.tar.gz", bundle.CreatedAt))
+	fileName := filepath.Base(bundle.FilePath)
+	ctx.Resp.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
 	http.ServeFile(ctx.Resp, ctx.Req, bundle.FilePath)
 }
 

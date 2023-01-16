@@ -101,9 +101,18 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 
 	finalFilePath := filepath.Join(sbDir, fmt.Sprintf("%s.tar.gz", uid))
 
+	// optional encrypt
+	var errEncrypt error
+	buf, errEncrypt = s.encrypt(ctx, buf)
+	if errEncrypt != nil {
+		return "", errEncrypt
+	}
+
+	finalFilePath += ".enc"
+
 	// Ignore gosec G304 as this function is only used internally.
 	//nolint:gosec
-	fileToWrite, err := os.OpenFile(finalFilePath, os.O_CREATE|os.O_RDWR, 0600)
+	fileToWrite, err := os.OpenFile(finalFilePath, os.O_CREATE|os.O_RDWR, 0o600)
 	if err != nil {
 		return "", err
 	}
@@ -111,7 +120,24 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 		return "", err
 	}
 
+	if errC := fileToWrite.Close(); errC != nil {
+		return "", errC
+	}
 	return finalFilePath, nil
+}
+
+func (s *Service) encrypt(ctx context.Context, buf bytes.Buffer) (bytes.Buffer, error) {
+	encryptedPayload, err := s.encryptionService.Encrypt(ctx, buf.Bytes(), s.cfg.SecretKey)
+	if err != nil {
+		return bytes.Buffer{}, err
+	}
+
+	var encryptedBuf bytes.Buffer
+	if _, err := encryptedBuf.Write(encryptedPayload); err != nil {
+		return bytes.Buffer{}, err
+	}
+
+	return encryptedBuf, nil
 }
 
 func compress(src string, buf io.Writer) error {
