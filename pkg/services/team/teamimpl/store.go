@@ -23,11 +23,11 @@ type store interface {
 	GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error)
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
 	AddMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error
-	UpdateMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error
+	UpdateMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error
 	IsMember(orgId int64, teamId int64, userId int64) (bool, error)
-	RemoveMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error
-	GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error)
-	GetMembers(ctx context.Context, query *models.GetTeamMembersQuery) error
+	RemoveMember(ctx context.Context, cmd *team.RemoveTeamMemberCommand) error
+	GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error)
+	GetMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error)
 	IsAdmin(ctx context.Context, query *team.IsAdminOfTeamsQuery) (bool, error)
 }
 
@@ -363,16 +363,16 @@ func (ss *xormStore) AddMember(userID, orgID, teamID int64, isExternal bool, per
 		if isMember, err := isTeamMember(sess, orgID, teamID, userID); err != nil {
 			return err
 		} else if isMember {
-			return models.ErrTeamMemberAlreadyAdded
+			return team.ErrTeamMemberAlreadyAdded
 		}
 
 		return addTeamMember(sess, orgID, teamID, userID, isExternal, permission)
 	})
 }
 
-func getTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (models.TeamMember, error) {
+func getTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (team.TeamMember, error) {
 	rawSQL := `SELECT * FROM team_member WHERE org_id=? and team_id=? and user_id=?`
-	var member models.TeamMember
+	var member team.TeamMember
 	exists, err := sess.SQL(rawSQL, orgId, teamId, userId).Get(&member)
 
 	if err != nil {
@@ -386,9 +386,9 @@ func getTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (m
 }
 
 // UpdateTeamMember updates a team member
-func (ss *xormStore) UpdateMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error {
+func (ss *xormStore) UpdateMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		return updateTeamMember(sess, cmd.OrgId, cmd.TeamId, cmd.UserId, cmd.Permission)
+		return updateTeamMember(sess, cmd.OrgID, cmd.TeamID, cmd.UserID, cmd.Permission)
 	})
 }
 
@@ -436,10 +436,10 @@ func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal boo
 		return err
 	}
 
-	entity := models.TeamMember{
-		OrgId:      orgID,
-		TeamId:     teamID,
-		UserId:     userID,
+	entity := team.TeamMember{
+		OrgID:      orgID,
+		TeamID:     teamID,
+		UserID:     userID,
 		External:   isExternal,
 		Created:    time.Now(),
 		Updated:    time.Now(),
@@ -466,7 +466,7 @@ func updateTeamMember(sess *db.Session, orgID, teamID, userID int64, permission 
 }
 
 // RemoveTeamMember removes a member from a team
-func (ss *xormStore) RemoveMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error {
+func (ss *xormStore) RemoveMember(ctx context.Context, cmd *team.RemoveTeamMemberCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		return removeTeamMember(sess, cmd)
 	})
@@ -474,17 +474,17 @@ func (ss *xormStore) RemoveMember(ctx context.Context, cmd *models.RemoveTeamMem
 
 // RemoveTeamMemberHook is called from team resource permission service
 // it removes a member from a team within the given transaction session
-func RemoveTeamMemberHook(sess *db.Session, cmd *models.RemoveTeamMemberCommand) error {
+func RemoveTeamMemberHook(sess *db.Session, cmd *team.RemoveTeamMemberCommand) error {
 	return removeTeamMember(sess, cmd)
 }
 
-func removeTeamMember(sess *db.Session, cmd *models.RemoveTeamMemberCommand) error {
-	if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
+func removeTeamMember(sess *db.Session, cmd *team.RemoveTeamMemberCommand) error {
+	if _, err := teamExists(cmd.OrgID, cmd.TeamID, sess); err != nil {
 		return err
 	}
 
 	var rawSQL = "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"
-	res, err := sess.Exec(rawSQL, cmd.OrgId, cmd.TeamId, cmd.UserId)
+	res, err := sess.Exec(rawSQL, cmd.OrgID, cmd.TeamID, cmd.UserID)
 	if err != nil {
 		return err
 	}
@@ -499,19 +499,18 @@ func removeTeamMember(sess *db.Session, cmd *models.RemoveTeamMemberCommand) err
 // GetUserTeamMemberships return a list of memberships to teams granted to a user
 // If external is specified, only memberships provided by an external auth provider will be listed
 // This function doesn't perform any accesscontrol filtering.
-func (ss *xormStore) GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error) {
-	query := &models.GetTeamMembersQuery{
-		OrgId:    orgID,
-		UserId:   userID,
+func (ss *xormStore) GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error) {
+	query := &team.GetTeamMembersQuery{
+		OrgID:    orgID,
+		UserID:   userID,
 		External: external,
-		Result:   []*models.TeamMemberDTO{},
 	}
-	err := ss.getTeamMembers(ctx, query, nil)
-	return query.Result, err
+	queryResult, err := ss.getTeamMembers(ctx, query, nil)
+	return queryResult, err
 }
 
 // GetTeamMembers return a list of members for the specified team filtered based on the user's permissions
-func (ss *xormStore) GetMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
+func (ss *xormStore) GetMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
 	acFilter := &ac.SQLFilter{}
 	var err error
 
@@ -522,7 +521,7 @@ func (ss *xormStore) GetMembers(ctx context.Context, query *models.GetTeamMember
 		sqlID := fmt.Sprintf("%s.%s", ss.db.GetDialect().Quote("user"), ss.db.GetDialect().Quote("id"))
 		*acFilter, err = ac.Filter(query.SignedInUser, sqlID, "users:id:", ac.ActionOrgUsersRead)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -530,9 +529,9 @@ func (ss *xormStore) GetMembers(ctx context.Context, query *models.GetTeamMember
 }
 
 // getTeamMembers return a list of members for the specified team
-func (ss *xormStore) getTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery, acUserFilter *ac.SQLFilter) error {
-	return ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
-		query.Result = make([]*models.TeamMemberDTO, 0)
+func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery, acUserFilter *ac.SQLFilter) ([]*team.TeamMemberDTO, error) {
+	queryResult := make([]*team.TeamMemberDTO, 0)
+	err := ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
 		sess := dbSess.Table("team_member")
 		sess.Join("INNER", ss.db.GetDialect().Quote("user"),
 			fmt.Sprintf("team_member.user_id=%s.%s", ss.db.GetDialect().Quote("user"), ss.db.GetDialect().Quote("id")),
@@ -553,14 +552,14 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *models.GetTeamMe
 		authJoinCondition = "user_auth.id=" + authJoinCondition + ss.db.GetDialect().Limit(1) + ")"
 		sess.Join("LEFT", "user_auth", authJoinCondition)
 
-		if query.OrgId != 0 {
-			sess.Where("team_member.org_id=?", query.OrgId)
+		if query.OrgID != 0 {
+			sess.Where("team_member.org_id=?", query.OrgID)
 		}
-		if query.TeamId != 0 {
-			sess.Where("team_member.team_id=?", query.TeamId)
+		if query.TeamID != 0 {
+			sess.Where("team_member.team_id=?", query.TeamID)
 		}
-		if query.UserId != 0 {
-			sess.Where("team_member.user_id=?", query.UserId)
+		if query.UserID != 0 {
+			sess.Where("team_member.user_id=?", query.UserID)
 		}
 		if query.External {
 			sess.Where("team_member.external=?", ss.db.GetDialect().BooleanStr(true))
@@ -578,9 +577,13 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *models.GetTeamMe
 		)
 		sess.Asc("user.login", "user.email")
 
-		err := sess.Find(&query.Result)
+		err := sess.Find(&queryResult)
 		return err
 	})
+	if err != nil {
+		return nil, err
+	}
+	return queryResult, nil
 }
 
 func (ss *xormStore) IsAdmin(ctx context.Context, query *team.IsAdminOfTeamsQuery) (bool, error) {

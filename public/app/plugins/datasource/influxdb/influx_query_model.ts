@@ -15,8 +15,6 @@ export default class InfluxQueryModel {
   scopedVars: any;
   refId?: string;
 
-  static $inject = ['target', 'templateSrv', 'scopedVars'];
-
   constructor(target: InfluxQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.target = target;
     this.templateSrv = templateSrv;
