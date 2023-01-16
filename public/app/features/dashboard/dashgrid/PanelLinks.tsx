@@ -50,7 +50,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     menuTrigger: css({
       border: 'none',
-      borderRadius: theme.shape.borderRadius(0),
+      borderRadius: `${theme.shape.borderRadius()}`,
       cursor: 'context-menu',
     }),
     singleLink: css({

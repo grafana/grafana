@@ -23,7 +23,7 @@ export function PanelHeaderTitleItems(props: Props) {
 
   // panel health
   const alertStateItem = (
-    <Tooltip content={`alerting is ${alertState}`} tabIndex={0}>
+    <Tooltip content={`alerting is ${alertState}`}>
       <span
         className={cx(styles.item, {
           [styles.ok]: alertState === AlertState.OK,
@@ -40,7 +40,6 @@ export function PanelHeaderTitleItems(props: Props) {
     <>
       <Tooltip
         content={data.request?.range ? `Time Range: ${data.request.range.from} to ${data.request.range.to}` : ''}
-        tabIndex={0}
       >
         <span className={cx(styles.item, styles.timeshift)}>
           <Icon name="clock-nine" />
@@ -70,6 +69,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: `${theme.colors.background.primary}`,
       cursor: 'auto',
       border: 'none',
+      borderRadius: `${theme.shape.borderRadius()}`,
       padding: `${theme.spacing(0, 1)}`,
       height: `${theme.spacing(theme.components.height.md)}`,
       display: 'flex',

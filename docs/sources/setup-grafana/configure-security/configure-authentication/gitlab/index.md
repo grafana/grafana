@@ -110,6 +110,12 @@ the group `foo`, set
 allowed_groups = example, foo/bar
 ```
 
+To put values containing spaces in the list, use the following JSON syntax:
+
+```ini
+allowed_groups = ["Admins", "Software Engineers"]
+```
+
 Note that in GitLab, the group or subgroup name doesn't always match its
 display name, especially if the display name contains spaces or special
 characters. Make sure you always use the group or subgroup name as it appears

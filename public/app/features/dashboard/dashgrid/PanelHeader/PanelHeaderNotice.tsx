@@ -37,7 +37,7 @@ export const PanelHeaderNotice: FC<Props> = ({ notice, onClick }) => {
   }
 
   return (
-    <Tooltip key={notice.severity} content={notice.text} tabIndex={0}>
+    <Tooltip key={notice.severity} content={notice.text}>
       <span className={styles.iconTooltip}>
         <Icon name={iconName} size="lg" />
       </span>
@@ -48,13 +48,14 @@ export const PanelHeaderNotice: FC<Props> = ({ notice, onClick }) => {
 const getStyles = (theme: GrafanaTheme2) => ({
   notice: css({
     border: 'none',
-    borderRadius: theme.shape.borderRadius(0),
+    borderRadius: theme.shape.borderRadius(),
   }),
   iconTooltip: css({
     color: `${theme.colors.text.secondary}`,
     backgroundColor: `${theme.colors.background.primary}`,
     cursor: 'auto',
     border: 'none',
+    borderRadius: `${theme.shape.borderRadius()}`,
     padding: `${theme.spacing(0, 1)}`,
     height: ` ${theme.spacing(theme.components.height.md)}`,
     display: 'flex',

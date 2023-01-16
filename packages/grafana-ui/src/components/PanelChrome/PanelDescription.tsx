@@ -28,7 +28,7 @@ export function PanelDescription({ description }: Props) {
   };
 
   return description !== '' ? (
-    <Tooltip interactive content={getDescriptionContent} tabIndex={0}>
+    <Tooltip interactive content={getDescriptionContent}>
       <span className={styles.description}>
         <Icon name="info-circle" size="lg" aria-label="description" />
       </span>
@@ -43,6 +43,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: `${theme.colors.background.primary}`,
       cursor: 'auto',
       border: 'none',
+      borderRadius: `${theme.shape.borderRadius()}`,
       padding: `${theme.spacing(0, 1)}`,
       height: ` ${theme.spacing(theme.components.height.md)}`,
       display: 'flex',

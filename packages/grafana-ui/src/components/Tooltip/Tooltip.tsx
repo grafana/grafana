@@ -22,64 +22,62 @@ export interface TooltipProps {
   interactive?: boolean;
 }
 
-export const Tooltip = React.memo(
-  ({ children, theme, interactive, show, placement, content, tabIndex }: TooltipProps) => {
-    const [controlledVisible, setControlledVisible] = React.useState(show);
+export const Tooltip = React.memo(({ children, theme, interactive, show, placement, content }: TooltipProps) => {
+  const [controlledVisible, setControlledVisible] = React.useState(show);
 
-    useEffect(() => {
-      if (controlledVisible !== false) {
-        const handleKeyDown = (enterKey: KeyboardEvent) => {
-          if (enterKey.key === 'Escape') {
-            setControlledVisible(false);
-          }
-        };
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-          document.removeEventListener('keydown', handleKeyDown);
-        };
-      } else {
-        return;
-      }
-    }, [controlledVisible]);
+  useEffect(() => {
+    if (controlledVisible !== false) {
+      const handleKeyDown = (enterKey: KeyboardEvent) => {
+        if (enterKey.key === 'Escape') {
+          setControlledVisible(false);
+        }
+      };
+      document.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    } else {
+      return;
+    }
+  }, [controlledVisible]);
 
-    const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
-      visible: controlledVisible,
-      placement: placement,
-      interactive: interactive,
-      delayHide: interactive ? 100 : 0,
-      delayShow: 150,
-      offset: [0, 8],
-      trigger: ['hover', 'focus'],
-      onVisibleChange: setControlledVisible,
-    });
+  const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
+    visible: controlledVisible,
+    placement: placement,
+    interactive: interactive,
+    delayHide: interactive ? 100 : 0,
+    delayShow: 150,
+    offset: [0, 8],
+    trigger: ['hover', 'focus'],
+    onVisibleChange: setControlledVisible,
+  });
 
-    const styles = useStyles2(getStyles);
-    const containerStyle = styles[theme ?? 'info'];
+  const styles = useStyles2(getStyles);
+  const containerStyle = styles[theme ?? 'info'];
 
-    return (
-      <>
-        {React.cloneElement(children, {
-          ref: setTriggerRef,
-          tabIndex: tabIndex,
-        })}
-        {visible && (
-          <Portal>
-            <div ref={setTooltipRef} {...getTooltipProps({ className: containerStyle })}>
-              <div {...getArrowProps({ className: 'tooltip-arrow' })} />
-              {typeof content === 'string' && content}
-              {React.isValidElement(content) && React.cloneElement(content)}
-              {typeof content === 'function' &&
-                update &&
-                content({
-                  updatePopperPosition: update,
-                })}
-            </div>
-          </Portal>
-        )}
-      </>
-    );
-  }
-);
+  return (
+    <>
+      {React.cloneElement(children, {
+        ref: setTriggerRef,
+        tabIndex: 0, // tooltip should be keyboard focusable
+      })}
+      {visible && (
+        <Portal>
+          <div ref={setTooltipRef} {...getTooltipProps({ className: containerStyle })}>
+            <div {...getArrowProps({ className: 'tooltip-arrow' })} />
+            {typeof content === 'string' && content}
+            {React.isValidElement(content) && React.cloneElement(content)}
+            {typeof content === 'function' &&
+              update &&
+              content({
+                updatePopperPosition: update,
+              })}
+          </div>
+        </Portal>
+      )}
+    </>
+  );
+});
 
 Tooltip.displayName = 'Tooltip';
 
