@@ -217,7 +217,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 
 		meta.ProvisionedExternalId, err = filepath.Rel(
 			hs.ProvisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
-			provisioningData.ExternalId,
+			provisioningData.ExternalID,
 		)
 		if err != nil {
 			// Not sure when this could happen so not sure how to better handle this. Right now ProvisionedExternalId
@@ -429,7 +429,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd dashboards.SaveDas
 		}
 	}
 
-	var provisioningData *models.DashboardProvisioning
+	var provisioningData *dashboards.DashboardProvisioning
 	if dash.ID != 0 {
 		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(c.Req.Context(), dash.ID)
 		if err != nil {
@@ -1018,7 +1018,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboardTags(c *models.ReqContext) {
-	query := models.GetDashboardTagsQuery{OrgId: c.OrgID}
+	query := dashboards.GetDashboardTagsQuery{OrgID: c.OrgID}
 	err := hs.DashboardService.GetDashboardTags(c.Req.Context(), &query)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get tags from database", err)

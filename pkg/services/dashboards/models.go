@@ -259,9 +259,9 @@ type GetDashboardsQuery struct {
 	Result        []*Dashboard
 }
 
-type GetDashboardsByPluginIdQuery struct {
+type GetDashboardsByPluginIDQuery struct {
 	OrgID    int64
-	PluginId string
+	PluginID string
 	Result   []*Dashboard
 }
 

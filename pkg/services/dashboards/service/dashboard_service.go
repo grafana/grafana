@@ -64,15 +64,15 @@ func ProvideDashboardService(
 	}
 }
 
-func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context, name string) ([]*models.DashboardProvisioning, error) {
+func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context, name string) ([]*dashboards.DashboardProvisioning, error) {
 	return dr.dashboardStore.GetProvisionedDashboardData(ctx, name)
 }
 
-func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*models.DashboardProvisioning, error) {
+func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*dashboards.DashboardProvisioning, error) {
 	return dr.dashboardStore.GetProvisionedDataByDashboardID(ctx, dashboardID)
 }
 
-func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
+func (dr *DashboardServiceImpl) GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*dashboards.DashboardProvisioning, error) {
 	return dr.dashboardStore.GetProvisionedDataByDashboardUID(ctx, orgID, dashboardUID)
 }
 
@@ -187,7 +187,7 @@ func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int6
 	return dr.dashboardStore.UpdateDashboardACL(ctx, uid, items)
 }
 
-func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *dashboards.DeleteOrphanedProvisionedDashboardsCommand) error {
 	return dr.dashboardStore.DeleteOrphanedProvisionedDashboards(ctx, cmd)
 }
 
@@ -445,7 +445,7 @@ func (dr *DashboardServiceImpl) deleteDashboard(ctx context.Context, dashboardId
 			return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
 		}
 	}
-	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
+	cmd := &dashboards.DeleteDashboardCommand{OrgID: orgId, ID: dashboardId}
 	return dr.dashboardStore.DeleteDashboard(ctx, cmd)
 }
 
@@ -481,7 +481,7 @@ func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashbo
 	return dr.dashboardStore.UnprovisionDashboard(ctx, dashboardId)
 }
 
-func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
+func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, query *dashboards.GetDashboardsByPluginIDQuery) error {
 	return dr.dashboardStore.GetDashboardsByPluginID(ctx, query)
 }
 
@@ -609,7 +609,7 @@ func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, 
 	return dr.dashboardStore.HasEditPermissionInFolders(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
+func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *dashboards.GetDashboardTagsQuery) error {
 	return dr.dashboardStore.GetDashboardTags(ctx, query)
 }
 
