@@ -1,5 +1,6 @@
-import { DataFrame, FieldType, Labels } from '@grafana/data';
+import { DataFrame, FieldType, isValidGoDuration, Labels } from '@grafana/data';
 
+import { isBytesString } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt } from './lineParser';
 
 export function dataFrameHasLokiError(frame: DataFrame): boolean {
@@ -44,6 +45,28 @@ export function extractLabelKeysFromDataFrame(frame: DataFrame): string[] {
   }
 
   return Object.keys(labelsArray[0]);
+}
+
+export function extractUnwrapLabelKeysFromDataFrame(frame: DataFrame): string[] {
+  const labelsArray: Array<{ [key: string]: string }> | undefined =
+    frame?.fields?.find((field) => field.name === 'labels')?.values.toArray() ?? [];
+
+  if (!labelsArray?.length) {
+    return [];
+  }
+
+  // We do this only for first label object, because we want to consider only labels that are present in all log lines
+  // possibleUnwrapLabels are labels with 1. number value OR 2. value that is valid go duration OR 3. bytes string value
+  const possibleUnwrapLabels = Object.keys(labelsArray[0]).filter((key) => {
+    const value = labelsArray[0][key];
+    if (!value) {
+      return false;
+    }
+    return !isNaN(Number(value)) || isValidGoDuration(value) || isBytesString(value);
+  });
+
+  // Add only labels that are present in every line to unwrapLabels
+  return possibleUnwrapLabels.filter((label) => labelsArray.every((obj) => obj[label]));
 }
 
 export function extractHasErrorLabelFromDataFrame(frame: DataFrame): boolean {

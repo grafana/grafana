@@ -333,7 +333,7 @@ func (d *DashboardStore) Count(ctx context.Context, scopeParams *quota.ScopePara
 		u.Set(tag, r.Count)
 	}
 
-	if scopeParams.OrgID != 0 {
+	if scopeParams != nil && scopeParams.OrgID != 0 {
 		if err := d.store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM dashboard WHERE org_id=? AND is_folder=%s", d.store.GetDialect().BooleanStr(false))
 			if _, err := sess.SQL(rawSQL, scopeParams.OrgID).Get(&r); err != nil {
