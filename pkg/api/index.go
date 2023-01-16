@@ -45,11 +45,11 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		return nil, err
 	}
 
-	gaId := hs.Cfg.GoogleAnalyticsId
-	ga4Id := hs.Cfg.GoogleAnalytics4Id
-	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookieSettings) {
+	gaID := hs.Cfg.GoogleAnalyticsID
+	ga4ID := hs.Cfg.GoogleAnalytics4ID
+	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
 		if !prefs.Cookies("analytics") {
-			gaId, ga4Id = "", ""
+			gaID, ga4ID = "", ""
 			settings["googleAnalytics4Id"] = ""
 			settings["googleAnalyticsId"] = ""
 		}
@@ -120,10 +120,10 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		Theme:                               prefs.Theme,
 		AppUrl:                              appURL,
 		AppSubUrl:                           appSubURL,
-		GoogleAnalyticsId:                   gaId,
-		GoogleAnalytics4Id:                  ga4Id,
+		GoogleAnalyticsId:                   gaID,
+		GoogleAnalytics4Id:                  ga4ID,
 		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
-		GoogleTagManagerId:                  hs.Cfg.GoogleTagManagerId,
+		GoogleTagManagerId:                  hs.Cfg.GoogleTagManagerID,
 		BuildVersion:                        setting.BuildVersion,
 		BuildCommit:                         setting.BuildCommit,
 		NewGrafanaVersion:                   hs.grafanaUpdateChecker.LatestVersion(),

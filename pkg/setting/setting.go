@@ -413,14 +413,14 @@ type Cfg struct {
 	FeedbackLinksEnabled                bool
 
 	// Frontend analytics
-	GoogleAnalyticsId                   string
-	GoogleAnalytics4Id                  string
+	GoogleAnalyticsID                   string
+	GoogleAnalytics4ID                  string
 	GoogleAnalytics4SendManualPageViews bool
-	GoogleTagManagerId                  string
-	RudderstackDataPlaneUrl             string
+	GoogleTagManagerID                  string
+	RudderstackDataPlaneURL             string
 	RudderstackWriteKey                 string
-	RudderstackSdkUrl                   string
-	RudderstackConfigUrl                string
+	RudderstackSDKURL                   string
+	RudderstackConfigURL                string
 
 	// LDAP
 	LDAPEnabled         bool
@@ -1012,14 +1012,14 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
 	cfg.CheckForPluginUpdates = analytics.Key("check_for_plugin_updates").MustBool(true)
 
-	cfg.GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
-	cfg.GoogleAnalytics4Id = analytics.Key("google_analytics_4_id").String()
+	cfg.GoogleAnalyticsID = analytics.Key("google_analytics_ua_id").String()
+	cfg.GoogleAnalytics4ID = analytics.Key("google_analytics_4_id").String()
 	cfg.GoogleAnalytics4SendManualPageViews = analytics.Key("google_analytics_4_send_manual_page_views").MustBool(false)
-	cfg.GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
+	cfg.GoogleTagManagerID = analytics.Key("google_tag_manager_id").String()
 	cfg.RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
-	cfg.RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
-	cfg.RudderstackSdkUrl = analytics.Key("rudderstack_sdk_url").String()
-	cfg.RudderstackConfigUrl = analytics.Key("rudderstack_config_url").String()
+	cfg.RudderstackDataPlaneURL = analytics.Key("rudderstack_data_plane_url").String()
+	cfg.RudderstackSDKURL = analytics.Key("rudderstack_sdk_url").String()
+	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")

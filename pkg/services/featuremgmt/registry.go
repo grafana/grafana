@@ -404,7 +404,7 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "individualCookieSettings",
+			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences on an individual level",
 			State:       FeatureStateAlpha,
 		},
