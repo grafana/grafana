@@ -8,12 +8,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+func ProvideOrgSync(userService user.Service, orgService org.Service, accessControl accesscontrol.Service) *OrgSync {
+	return &OrgSync{userService, orgService, accessControl, log.New("org.sync")}
+}
 
 type OrgSync struct {
 	userService   user.Service
@@ -23,8 +26,8 @@ type OrgSync struct {
 	log log.Logger
 }
 
-func (s *OrgSync) SyncOrgUser(ctx context.Context, clientParams *authn.ClientParams, id *authn.Identity) error {
-	if !clientParams.SyncUser {
+func (s *OrgSync) SyncOrgUser(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+	if !id.ClientParams.SyncUser {
 		s.log.Debug("Not syncing org user", "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return nil
 	}
@@ -77,7 +80,7 @@ func (s *OrgSync) SyncOrgUser(ctx context.Context, clientParams *authn.ClientPar
 		// add role
 		cmd := &org.AddOrgUserCommand{UserID: userID, Role: orgRole, OrgID: orgId}
 		err := s.orgService.AddOrgUser(ctx, cmd)
-		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
+		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
 			return err
 		}
 	}
@@ -88,7 +91,7 @@ func (s *OrgSync) SyncOrgUser(ctx context.Context, clientParams *authn.ClientPar
 			"userId", userID, "orgId", orgId)
 		cmd := &org.RemoveOrgUserCommand{OrgID: orgId, UserID: userID}
 		if err := s.orgService.RemoveOrgUser(ctx, cmd); err != nil {
-			if errors.Is(err, models.ErrLastOrgAdmin) {
+			if errors.Is(err, org.ErrLastOrgAdmin) {
 				logger.Error(err.Error(), "userId", cmd.UserID, "orgId", cmd.OrgID)
 				continue
 			}

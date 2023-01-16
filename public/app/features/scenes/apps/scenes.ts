@@ -1,16 +1,21 @@
 import { FieldColorModeId, getFrameDisplayName } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import {
+  SceneFlexLayout,
+  SceneByFrameRepeater,
+  SceneSubMenu,
+  SceneTimePicker,
+  VizPanel,
+  EmbeddedScene,
+  SceneDataNode,
+  SceneTimeRange,
+  VariableValueSelectors,
+  SceneQueryRunner,
+  SceneVariableSet,
+  QueryVariable,
+  SceneSubMenuSpacer,
+} from '@grafana/scenes';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
-
-import { SceneFlexLayout, ScenePanelRepeater, SceneSubMenu, SceneTimePicker, VizPanel } from '../components';
-import { EmbeddedScene } from '../components/Scene';
-import { SceneSubMenuSpacer } from '../components/SceneSubMenu';
-import { SceneDataNode } from '../core/SceneDataNode';
-import { SceneTimeRange } from '../core/SceneTimeRange';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
-import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
-import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
-import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
 import { SceneRadioToggle } from './SceneRadioToggle';
 import { SceneSearchBox, SceneSearchFilterDataNode } from './SceneSearchBox';
@@ -116,9 +121,9 @@ export function getHttpHandlerListScene(): EmbeddedScene {
     searchBox,
   });
 
-  const graphsScene = new ScenePanelRepeater({
+  const graphsScene = new SceneByFrameRepeater({
     $data: reqDurationWithSearchFilter,
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'column',
       children: [],
     }),
@@ -136,10 +141,10 @@ export function getHttpHandlerListScene(): EmbeddedScene {
         children: [
           new VizPanel({
             pluginId: 'timeseries',
-            titleLink: {
-              path: `/scenes/grafana-monitoring/handlers/${encodeURIComponent(frame.fields[1].labels.handler)}`,
-              queryKeys: ['from', 'to', 'var-instance'],
-            },
+            // titleLink: {
+            //   path: `/scenes/grafana-monitoring/handlers/${encodeURIComponent(frame.fields[1].labels.handler)}`,
+            //   queryKeys: ['from', 'to', 'var-instance'],
+            // },
             title: getFrameDisplayName(frame),
             options: {
               legend: { displayMode: 'hidden' },

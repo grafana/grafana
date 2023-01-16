@@ -1,11 +1,11 @@
 import { each, map } from 'lodash';
 
 import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { config } from 'app/core/config';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
-import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { VariableHide } from '../../variables/types';
@@ -64,10 +64,10 @@ describe('DashboardModel', () => {
           { type: 'annotations', enable: true, annotations: [{ name: 'old' }] },
         ],
         panels: [
-          // @ts-expect-error
           {
             type: 'graph',
-            legend: true,
+            legend: { show: true },
+            // @ts-expect-error
             aliasYAxis: { test: 2 },
             y_formats: ['kbyte', 'ms'],
             grid: {
@@ -197,7 +197,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(37);
+      expect(model.schemaVersion).toBe(38);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -2175,6 +2175,230 @@ describe('when generating the legend for a panel', () => {
     expect(model.panels[0].options.legend.placement).toEqual('bottom');
     expect(model.panels[1].options.legend.placement).toEqual('right');
     expect(model.panels[2].options.legend.placement).toEqual('bottom');
+  });
+});
+
+describe('when migrating table cell display mode to cell options', () => {
+  let model: DashboardModel;
+
+  beforeEach(() => {
+    model = new DashboardModel({
+      panels: [
+        // @ts-expect-error
+        {
+          id: 1,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'color-background',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 2,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'color-background-solid',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 3,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'lcd-gauge',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 4,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'gradient-gauge',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 5,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'basic',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 6,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'auto',
+                inspect: false,
+              },
+            },
+            overrides: [
+              {
+                matcher: {
+                  id: 'byName',
+                  options: 'value',
+                },
+                properties: [
+                  {
+                    id: 'custom.displayMode',
+                    value: 'color-background',
+                  },
+                ],
+              },
+              {
+                matcher: {
+                  id: 'byName',
+                  options: 'value2',
+                },
+                properties: [
+                  {
+                    id: 'custom.displayMode',
+                    value: 'lcd-gauge',
+                  },
+                ],
+              },
+              {
+                matcher: {
+                  id: 'byName',
+                  options: 'value3',
+                },
+                properties: [
+                  {
+                    id: 'custom.displayMode',
+                    value: 'gradient-gauge',
+                  },
+                ],
+              },
+              {
+                matcher: {
+                  id: 'byName',
+                  options: 'value4',
+                },
+                properties: [
+                  {
+                    id: 'custom.align',
+                    value: 'left',
+                  },
+                  {
+                    id: 'custom.displayMode',
+                    value: 'gradient-gauge',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 7,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'auto',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+      ],
+      schemaVersion: 37,
+    });
+  });
+
+  it('should migrate gradient color background option to the new option format', () => {
+    const cellOptions = model.panels[0].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'color-background', mode: 'gradient' });
+  });
+
+  it('should migrate solid color background option to the new option format', () => {
+    const cellOptions = model.panels[1].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'color-background', mode: 'basic' });
+  });
+
+  it('should migrate LCD gauge option to the new option format', () => {
+    const cellOptions = model.panels[2].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'gauge', mode: 'lcd' });
+  });
+
+  it('should migrate gradient gauge option to the new option format', () => {
+    const cellOptions = model.panels[3].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'gauge', mode: 'gradient' });
+  });
+
+  it('should migrate basic gauge option to the new option format', () => {
+    const cellOptions = model.panels[4].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'gauge', mode: 'basic' });
+  });
+
+  it('should migrate from display mode to cell options in field overrides', () => {
+    const fieldConfig = model.panels[5].fieldConfig;
+
+    expect(fieldConfig.overrides[0].properties[0]).toEqual({
+      id: 'custom.cellOptions',
+      value: { type: 'color-background', mode: 'gradient' },
+    });
+
+    expect(fieldConfig.overrides[1].properties[0]).toEqual({
+      id: 'custom.cellOptions',
+      value: { type: 'gauge', mode: 'lcd' },
+    });
+
+    expect(fieldConfig.overrides[2].properties[0]).toEqual({
+      id: 'custom.cellOptions',
+      value: { type: 'gauge', mode: 'gradient' },
+    });
+  });
+
+  it('should migrate from display mode to cell options in field overrides with other overrides present', () => {
+    const override = model.panels[5].fieldConfig.overrides[3];
+    expect(override.properties[1]).toEqual({ id: 'custom.cellOptions', value: { type: 'gauge', mode: 'gradient' } });
+  });
+
+  it('should migrate cell display modes without options', () => {
+    const fieldConfig = model.panels[6].fieldConfig;
+    expect(fieldConfig.defaults.custom.cellOptions).toEqual({ type: 'auto' });
   });
 });
 

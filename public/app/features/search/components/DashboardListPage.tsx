@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 import { useAsync } from 'react-use';
 
 import { locationUtil, NavModelItem } from '@grafana/data';
@@ -19,7 +19,7 @@ export interface DashboardListPageRouteParams {
 
 interface Props extends GrafanaRouteComponentProps<DashboardListPageRouteParams> {}
 
-export const DashboardListPage: FC<Props> = memo(({ match, location }) => {
+export const DashboardListPage = memo(({ match, location }: Props) => {
   const { loading, value } = useAsync<() => Promise<{ folder?: FolderDTO; pageNav?: NavModelItem }>>(() => {
     const uid = match.params.uid;
     const url = location.pathname;

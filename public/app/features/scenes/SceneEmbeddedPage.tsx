@@ -9,7 +9,7 @@ import { getSceneByTitle } from './scenes';
 
 export interface Props extends GrafanaRouteComponentProps<{ name: string }> {}
 
-export function SceneEmbeddedPage(props: Props) {
+export const SceneEmbeddedPage = (props: Props) => {
   const scene = getSceneByTitle(props.match.params.name, false);
 
   if (!scene) {
@@ -26,6 +26,6 @@ export function SceneEmbeddedPage(props: Props) {
       </Page.Contents>
     </Page>
   );
-}
+};
 
 export default SceneEmbeddedPage;

@@ -19,10 +19,14 @@ import {
   FilterByValueTransformerOptions,
   FilterByValueType,
 } from '@grafana/data/src/transformations/transformers/filterByValue';
+import {
+  SceneComponentProps,
+  SceneDataState,
+  SceneObject,
+  SceneObjectStatePlain,
+  SceneObjectBase,
+} from '@grafana/scenes';
 import { Input } from '@grafana/ui';
-
-import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneComponentProps, SceneDataState, SceneObject, SceneObjectStatePlain } from '../core/types';
 
 export interface SceneSearchBoxState extends SceneObjectStatePlain {
   value: string;

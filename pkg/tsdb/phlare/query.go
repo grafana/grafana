@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
-	querierv1 "github.com/grafana/grafana/pkg/tsdb/phlare/gen/querier/v1"
+	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
 )
 
 type queryModel struct {

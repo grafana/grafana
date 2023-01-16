@@ -2,11 +2,10 @@ import React from 'react';
 import { Route, Switch, useRouteMatch } from 'react-router-dom';
 
 import { NavModelItem } from '@grafana/data';
+import { SceneComponentProps, SceneObject, SceneObjectBase, SceneObjectStatePlain } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { getLinkUrlWithAppUrlState, useAppQueryParams } from '../../apps/utils';
-import { SceneObjectBase } from '../../core/SceneObjectBase';
-import { SceneComponentProps, SceneObject, SceneObjectStatePlain } from '../../core/types';
 
 export interface SceneAppState extends SceneObjectStatePlain {
   routes: SceneAppRoute[];

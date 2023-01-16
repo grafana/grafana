@@ -13,7 +13,7 @@ import { getScenes } from './scenes';
 
 export interface Props {}
 
-export function SceneListPage({}: Props) {
+export const SceneListPage = ({}: Props) => {
   const scenes = getScenes();
   const results = useAsync(() => {
     return getGrafanaSearcher().starred({ starred: true });
@@ -55,6 +55,6 @@ export function SceneListPage({}: Props) {
       </Page.Contents>
     </Page>
   );
-}
+};
 
 export default SceneListPage;

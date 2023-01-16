@@ -11,7 +11,7 @@ import {
   REF_ID_STARTER_LOG_VOLUME,
 } from './datasource';
 import pluginJson from './plugin.json';
-import { getNormalizedLokiQuery, isLogsQuery, parseToNodeNamesArray } from './queryUtils';
+import { getNormalizedLokiQuery, isLogsQuery, obfuscate, parseToNodeNamesArray } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
 type LokiOnDashboardLoadedTrackingEvent = {
@@ -113,7 +113,7 @@ const isQueryWithChangedResolution = (query: LokiQuery): boolean => {
 };
 
 const isQueryWithChangedLineLimit = (query: LokiQuery): boolean => {
-  return query.maxLines !== null || query.maxLines !== undefined;
+  return query.maxLines !== null && query.maxLines !== undefined;
 };
 
 const isQueryWithChangedLegend = (query: LokiQuery): boolean => {
@@ -167,6 +167,7 @@ export function trackQuery(
       legend: query.legendFormat,
       line_limit: query.maxLines,
       parsed_query: parseToNodeNamesArray(query.expr).join(','),
+      obfuscated_query: obfuscate(query.expr),
       query_type: isLogsQuery(query.expr) ? 'logs' : 'metric',
       query_vector_type: query.queryType,
       resolution: query.resolution,

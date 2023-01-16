@@ -121,7 +121,7 @@ func (f *FakeOrgStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQu
 	return f.ExpectedOrgUsers, f.ExpectedError
 }
 
-func (f *FakeOrgStore) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
+func (f *FakeOrgStore) GetByID(ctx context.Context, query *org.GetOrgByIDQuery) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }
 

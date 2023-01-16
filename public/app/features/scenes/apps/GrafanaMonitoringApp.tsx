@@ -3,9 +3,8 @@ import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 
 import { NavModelItem } from '@grafana/data';
+import { EmbeddedScene } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
-
-import { EmbeddedScene } from '../components/Scene';
 
 import { HttpHandlerDetailsPage } from './HttpHandlerDetailsPage';
 import { getOverviewScene, getHttpHandlerListScene, getOverviewLogsScene } from './scenes';

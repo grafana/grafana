@@ -7,7 +7,7 @@ import { getSceneByTitle } from './scenes';
 
 export interface Props extends GrafanaRouteComponentProps<{ name: string }> {}
 
-export function ScenePage(props: Props) {
+export const ScenePage = (props: Props) => {
   const scene = getSceneByTitle(props.match.params.name, true);
 
   if (!scene) {
@@ -15,6 +15,6 @@ export function ScenePage(props: Props) {
   }
 
   return <scene.Component model={scene} />;
-}
+};
 
 export default ScenePage;

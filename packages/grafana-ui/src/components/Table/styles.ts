@@ -16,6 +16,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     const cellActionsOverflow: CSSObject = {
       margin: theme.spacing(0, -0.5, 0, 0.5),
     };
+
     const cellActionsNoOverflow: CSSObject = {
       position: 'absolute',
       top: 0,
@@ -168,11 +169,20 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       text-overflow: ellipsis;
       user-select: text;
       white-space: nowrap;
-      font-weight: ${theme.typography.fontWeightMedium};
       color: ${theme.colors.text.link};
+      font-weight: ${theme.typography.fontWeightMedium};
       &:hover {
         text-decoration: underline;
       }
+    `,
+    cellLinkForColoredCell: css`
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: text;
+      white-space: nowrap;
+      font-weight: ${theme.typography.fontWeightMedium};
+      text-decoration: underline;
     `,
     imageCellLink: css`
       cursor: pointer;
