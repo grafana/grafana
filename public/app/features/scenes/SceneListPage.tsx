@@ -3,7 +3,7 @@ import React from 'react';
 import { useAsync } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
-import { Card, LinkButton } from '@grafana/ui';
+import { Card } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 // Types

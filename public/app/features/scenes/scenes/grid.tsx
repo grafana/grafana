@@ -1,13 +1,5 @@
-import {
-  VizPanel,
-  SceneTimePicker,
-  SceneFlexLayout,
-  SceneGridLayout,
-  SceneTimeRange,
-  EmbeddedScene,
-} from '@grafana/scenes';
+import { VizPanel, SceneTimePicker, SceneFlexLayout, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 
-import { Scene } from '../components/Scene';
 import { DashboardScene } from '../dashboard/DashboardScene';
 import { SceneEditManager } from '../editor/SceneEditManager';
 

@@ -6,7 +6,6 @@ import {
   UrlSyncManager,
   SceneObjectBase,
   SceneComponentProps,
-  SceneLayout,
   SceneObject,
   SceneObjectStatePlain,
 } from '@grafana/scenes';
@@ -17,7 +16,7 @@ import { Page } from 'app/core/components/Page/Page';
 interface DashboardSceneState extends SceneObjectStatePlain {
   title: string;
   uid?: string;
-  body: SceneLayout;
+  body: SceneObject;
   actions?: SceneObject[];
   subMenu?: SceneObject;
 }

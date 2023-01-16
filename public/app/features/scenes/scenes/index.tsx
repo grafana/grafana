@@ -1,4 +1,4 @@
-import { SceneObject } from '@grafana/scenes';
+import { DashboardScene } from '../dashboard/DashboardScene';
 
 import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
 import { getGridLayoutTest } from './grid';
@@ -14,7 +14,7 @@ import { getVariablesDemo, getVariablesDemoWithAll } from './variablesDemo';
 
 interface SceneDef {
   title: string;
-  getScene: () => SceneObject;
+  getScene: () => DashboardScene;
 }
 export function getScenes(): SceneDef[] {
   return [
@@ -34,7 +34,7 @@ export function getScenes(): SceneDef[] {
   ];
 }
 
-const cache: Record<string, SceneObject> = {};
+const cache: Record<string, DashboardScene> = {};
 
 export function getSceneByTitle(title: string) {
   if (cache[title]) {
