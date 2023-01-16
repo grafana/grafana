@@ -92,12 +92,16 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       </button>
     );
 
-    return tooltip ? (
-      <Tooltip content={tooltip} placement="bottom">
-        {body}
-      </Tooltip>
-    ) : (
-      body
+    return (
+      <div data-testid="ToolbarButton">
+        {tooltip ? (
+          <Tooltip content={tooltip} placement="bottom">
+            {body}
+          </Tooltip>
+        ) : (
+          body
+        )}
+      </div>
     );
   }
 );
