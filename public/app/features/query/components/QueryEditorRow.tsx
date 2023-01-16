@@ -10,13 +10,13 @@ import {
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourcePluginContextProvider,
   EventBusExtended,
   EventBusSrv,
   HistoryItem,
   LoadingState,
   PanelData,
   PanelEvents,
-  DataSourcePluginContextProvider,
   QueryResultMetaNotice,
   TimeRange,
   toLegacyResponseData,
@@ -565,7 +565,9 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 
   // Only say this is an error if the error links to the query
   let state = data.state;
+  // @Ida this is an error connected to the previous query, not the new one! so this should not change the current status
   const error = data.error && data.error.refId === refId ? data.error : undefined;
+  // if (state !== LoadingState.Loading && error) {
   if (error) {
     state = LoadingState.Error;
   } else if (!error && data.state === LoadingState.Error) {
