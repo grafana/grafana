@@ -54,17 +54,17 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 		}
 
 		for slotName, lin := range slots {
-			slot, err := kindsys.FindSlot(slotName)
+			slot, err := kindsys.FindSchemaInterface(slotName)
 			if err != nil {
 				log.Println(fmt.Errorf("parsing plugin failed for %s: %s", dir, err))
 				continue
 			}
 			decls = append(decls, &PluginDecl{
-				Slot:       slot,
-				Lineage:    lin,
-				Imports:    p.CUEImports(),
-				PluginMeta: p.Meta(),
-				PluginPath: path,
+				SchemaInterface: &slot,
+				Lineage:         lin,
+				Imports:         p.CUEImports(),
+				PluginMeta:      p.Meta(),
+				PluginPath:      path,
 			})
 		}
 	}

@@ -119,20 +119,20 @@ export const useIsMonitoringAccount = (api: CloudWatchAPI, region: string) => {
 };
 
 export const useAccountOptions = (
-  api: Pick<CloudWatchAPI, 'getAccounts' | 'templateSrv' | 'getVariables'>,
+  api: Pick<CloudWatchAPI, 'getAccounts' | 'templateSrv' | 'getVariables'> | undefined,
   region: string
 ) => {
   // we call this before the use effect to ensure dependency array below
   // receives the interpolated value so that the effect is triggered when a variable is changed
   if (region) {
-    region = api.templateSrv.replace(region, {});
+    region = api?.templateSrv.replace(region, {}) ?? '';
   }
 
   const fetchAccountOptions = async () => {
     if (!config.featureToggles.cloudWatchCrossAccountQuerying) {
       return Promise.resolve([]);
     }
-    const accounts = await api.getAccounts({ region });
+    const accounts = (await api?.getAccounts({ region })) ?? [];
     if (accounts.length === 0) {
       return [];
     }
@@ -143,7 +143,7 @@ export const useAccountOptions = (
       description: a.id,
     }));
 
-    const variableOptions = api.getVariables().map(toOption);
+    const variableOptions = api?.getVariables().map(toOption) || [];
 
     const variableOptionGroup: SelectableValue<string> = {
       label: 'Template Variables',

@@ -77,7 +77,7 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 type ContextHandler struct {
 	Cfg               *setting.Cfg
 	AuthTokenService  auth.UserTokenService
-	JWTAuthService    models.JWTService
+	JWTAuthService    auth.JWTVerifierService
 	RemoteCache       *remotecache.RemoteCache
 	RenderService     rendering.Service
 	SQLStore          db.DB
@@ -350,11 +350,17 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
-	// update api_key last used date
-	if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(reqContext.Req.Context(), apikey.Id); err != nil {
-		reqContext.JsonApiErr(http.StatusInternalServerError, InvalidAPIKey, errKey)
-		return true
-	}
+	// non-blocking update api_key last used date
+	go func(id int64) {
+		defer func() {
+			if err := recover(); err != nil {
+				reqContext.Logger.Error("api key authentication panic", "err", err)
+			}
+		}()
+		if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
+			reqContext.Logger.Warn("failed to update last use date for api key", "id", id)
+		}
+	}(apikey.Id)
 
 	if apikey.ServiceAccountId == nil || *apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
 		// Use the old APIkey method.  This provides backwards compatibility.
@@ -476,6 +482,29 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 }
 
 func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, orgID int64) bool {
+	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(),
+			authn.ClientSession, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
+		if !ok {
+			return false
+		}
+
+		if err != nil {
+			if errors.Is(err, auth.ErrUserTokenNotFound) || errors.Is(err, auth.ErrInvalidSessionToken) {
+				// Burn the cookie in case of invalid, expired or missing token
+				reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
+			}
+
+			reqContext.LookupTokenErr = err
+			return false
+		}
+
+		reqContext.IsSignedIn = true
+		reqContext.SignedInUser = identity.SignedInUser()
+		reqContext.UserToken = identity.SessionToken
+		return true
+	}
+
 	if h.Cfg.LoginCookieName == "" {
 		return false
 	}
@@ -586,6 +615,8 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext) w
 			reqContext.Logger.Debug("Failed to get client IP address", "addr", addr, "err", err)
 			ip = nil
 		}
+
+		// FIXME (jguer): rotation should return a new token instead of modifying the existing one.
 		rotated, err := h.AuthTokenService.TryRotateToken(ctx, reqContext.UserToken, ip, reqContext.Req.UserAgent())
 		if err != nil {
 			reqContext.Logger.Error("Failed to rotate token", "error", err)
@@ -599,6 +630,24 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext) w
 }
 
 func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext) bool {
+	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientRender, &authn.Request{HTTPRequest: reqContext.Req})
+		if !ok {
+			return false
+		}
+
+		if err != nil {
+			writeErr(reqContext, err)
+			return true
+		}
+
+		reqContext.IsSignedIn = true
+		reqContext.IsRenderCall = true
+		reqContext.LastSeenAt = time.Now()
+		reqContext.SignedInUser = identity.SignedInUser()
+		return true
+	}
+
 	key := reqContext.GetCookie("renderKey")
 	if key == "" {
 		return false

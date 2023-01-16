@@ -101,6 +101,13 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "publicDashboardsEmailSharing",
+			Description:     "Allows public dashboard sharing to be restricted to only allowed emails",
+			State:           FeatureStateAlpha,
+			RequiresLicense: true,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "lokiLive",
 			Description: "Support WebSocket streaming for loki (early prototype)",
 			State:       FeatureStateAlpha,
@@ -346,10 +353,9 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "accessControlOnCall",
-			Description:     "Access control primitives for OnCall",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			Name:        "accessControlOnCall",
+			Description: "Access control primitives for OnCall",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "nestedFolders",
@@ -396,6 +402,12 @@ var (
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "alertingNoNormalState",
+			Description:     "Stop maintaining state of alerts that are not firing",
+			State:           FeatureStateBeta,
+			RequiresRestart: false,
 		},
 	}
 )

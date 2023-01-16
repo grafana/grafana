@@ -53,9 +53,9 @@ func ProvideTeamPermissions(
 				return err
 			}
 
-			err = teamService.GetTeamById(context.Background(), &models.GetTeamByIdQuery{
-				OrgId: orgID,
-				Id:    id,
+			_, err = teamService.GetTeamByID(context.Background(), &team.GetTeamByIDQuery{
+				OrgID: orgID,
+				ID:    id,
 			})
 			if err != nil {
 				return err
@@ -86,10 +86,10 @@ func ProvideTeamPermissions(
 			case "Admin":
 				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, models.PERMISSION_ADMIN)
 			case "":
-				return teamimpl.RemoveTeamMemberHook(session, &models.RemoveTeamMemberCommand{
-					OrgId:  orgID,
-					UserId: user.ID,
-					TeamId: teamId,
+				return teamimpl.RemoveTeamMemberHook(session, &team.RemoveTeamMemberCommand{
+					OrgID:  orgID,
+					UserID: user.ID,
+					TeamID: teamId,
 				})
 			default:
 				return fmt.Errorf("invalid team permission type %s", permission)

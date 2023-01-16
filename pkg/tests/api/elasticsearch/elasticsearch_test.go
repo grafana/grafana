@@ -77,6 +77,11 @@ func TestIntegrationElasticsearch(t *testing.T) {
 			"rawQuery":  "*",
 			"type":      "",
 			"timeField": "@timestamp",
+			"metrics": []interface{}{
+				map[string]interface{}{
+					"type": "logs",
+				},
+			},
 		})
 		buf1 := &bytes.Buffer{}
 		err = json.NewEncoder(buf1).Encode(dtos.MetricRequest{
