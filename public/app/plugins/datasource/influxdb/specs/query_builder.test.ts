@@ -29,7 +29,7 @@ describe('InfluxQueryBuilder', () => {
         tags: [{ key: 'host', value: 'se1' }],
       });
       const query = builder.buildExploreQuery('TAG_KEYS');
-      expect(query).toBe('SHOW TAG KEYS WHERE "host" = \'se1\'');
+      expect(query).toBe('SHOW TAG KEYS WHERE "host"::tag = \'se1\'');
     });
 
     it('should ignore condition if operator is a value operator', () => {
@@ -71,7 +71,9 @@ describe('InfluxQueryBuilder', () => {
         tags: [{ key: 'app', value: 'email' }],
       });
       const query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'something');
-      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /(?i)something/ WHERE "app" = \'email\' LIMIT 100');
+      expect(query).toBe(
+        'SHOW MEASUREMENTS WITH MEASUREMENT =~ /(?i)something/ WHERE "app"::tag = \'email\' LIMIT 100'
+      );
     });
 
     it('should have where condition in measurement query for query with tags', () => {
@@ -80,7 +82,7 @@ describe('InfluxQueryBuilder', () => {
         tags: [{ key: 'app', value: 'email' }],
       });
       const query = builder.buildExploreQuery('MEASUREMENTS');
-      expect(query).toBe('SHOW MEASUREMENTS WHERE "app" = \'email\' LIMIT 100');
+      expect(query).toBe('SHOW MEASUREMENTS WHERE "app"::tag = \'email\' LIMIT 100');
     });
 
     it('should have where tag name IN filter in tag values query for query with one tag', () => {
@@ -101,7 +103,7 @@ describe('InfluxQueryBuilder', () => {
         ],
       });
       const query = builder.buildExploreQuery('TAG_VALUES', 'app');
-      expect(query).toBe('SHOW TAG VALUES FROM "cpu" WITH KEY = "app" WHERE "host" = \'server1\'');
+      expect(query).toBe('SHOW TAG VALUES FROM "cpu" WITH KEY = "app" WHERE "host"::tag = \'server1\'');
     });
 
     it('should select from policy correctly if policy is specified', () => {
@@ -114,7 +116,7 @@ describe('InfluxQueryBuilder', () => {
         ],
       });
       const query = builder.buildExploreQuery('TAG_VALUES', 'app');
-      expect(query).toBe('SHOW TAG VALUES FROM "one_week"."cpu" WITH KEY = "app" WHERE "host" = \'server1\'');
+      expect(query).toBe('SHOW TAG VALUES FROM "one_week"."cpu" WITH KEY = "app" WHERE "host"::tag = \'server1\'');
     });
 
     it('should not include policy when policy is default', () => {
@@ -133,7 +135,7 @@ describe('InfluxQueryBuilder', () => {
         tags: [{ key: 'host', value: '/server.*/' }],
       });
       const query = builder.buildExploreQuery('TAG_VALUES', 'app');
-      expect(query).toBe('SHOW TAG VALUES FROM "cpu" WITH KEY = "app" WHERE "host" =~ /server.*/');
+      expect(query).toBe('SHOW TAG VALUES FROM "cpu" WITH KEY = "app" WHERE "host"::tag =~ /server.*/');
     });
 
     it('should build show field query', () => {
@@ -166,7 +168,7 @@ describe('InfluxQueryBuilder', () => {
         undefined
       );
       const query = builder.buildExploreQuery('MEASUREMENTS');
-      expect(query).toBe(`SHOW MEASUREMENTS WHERE "app" == '42' LIMIT 100`);
+      expect(query).toBe(`SHOW MEASUREMENTS WHERE "app"::tag == '42' LIMIT 100`);
     });
 
     it('should handle tag-value=number-ish getting tag-keys', () => {
@@ -175,7 +177,7 @@ describe('InfluxQueryBuilder', () => {
         undefined
       );
       const query = builder.buildExploreQuery('TAG_KEYS');
-      expect(query).toBe(`SHOW TAG KEYS WHERE "app" == '42'`);
+      expect(query).toBe(`SHOW TAG KEYS WHERE "app"::tag == '42'`);
     });
 
     it('should handle tag-value-contains-backslash-character getting tag-keys', () => {
@@ -184,7 +186,7 @@ describe('InfluxQueryBuilder', () => {
         undefined
       );
       const query = builder.buildExploreQuery('TAG_KEYS');
-      expect(query).toBe(`SHOW TAG KEYS WHERE "app" == 'lab\\\\el'`);
+      expect(query).toBe(`SHOW TAG KEYS WHERE "app"::tag == 'lab\\\\el'`);
     });
 
     it('should handle tag-value-contains-single-quote-character getting tag-keys', () => {
@@ -193,7 +195,7 @@ describe('InfluxQueryBuilder', () => {
         undefined
       );
       const query = builder.buildExploreQuery('TAG_KEYS');
-      expect(query).toBe(`SHOW TAG KEYS WHERE "app" == 'lab\\'el'`);
+      expect(query).toBe(`SHOW TAG KEYS WHERE "app"::tag == 'lab\\'el'`);
     });
 
     it('should handle tag-value=emptry-string when getting measurements', () => {
@@ -202,7 +204,7 @@ describe('InfluxQueryBuilder', () => {
         undefined
       );
       const query = builder.buildExploreQuery('MEASUREMENTS');
-      expect(query).toBe(`SHOW MEASUREMENTS WHERE "app" == '' LIMIT 100`);
+      expect(query).toBe(`SHOW MEASUREMENTS WHERE "app"::tag == '' LIMIT 100`);
     });
 
     it('should handle tag-value=emptry-string when getting tag-keys', () => {
@@ -211,7 +213,7 @@ describe('InfluxQueryBuilder', () => {
         undefined
       );
       const query = builder.buildExploreQuery('TAG_KEYS');
-      expect(query).toBe(`SHOW TAG KEYS WHERE "app" == ''`);
+      expect(query).toBe(`SHOW TAG KEYS WHERE "app"::tag == ''`);
     });
   });
 });

@@ -147,7 +147,7 @@ describe('InfluxDB query utils', () => {
           groupBy: [],
         })
       ).toBe(
-        `SELECT "value" FROM "measurement" WHERE ("cpu" = 'cpu0' AND "cpu" != 'cpu0' AND "cpu" <> 'cpu0' AND "cpu" < cpu0 AND "cpu" > cpu0 AND "cpu" =~ /cpu0/ AND "cpu" !~ /cpu0/) AND $timeFilter`
+        `SELECT "value" FROM "measurement" WHERE ("cpu"::tag = 'cpu0' AND "cpu"::tag != 'cpu0' AND "cpu"::tag <> 'cpu0' AND "cpu"::tag < cpu0 AND "cpu"::tag > cpu0 AND "cpu"::tag =~ /cpu0/ AND "cpu"::tag !~ /cpu0/) AND $timeFilter`
       );
     });
     it('should handle a complex query', () => {
@@ -229,7 +229,7 @@ describe('InfluxDB query utils', () => {
           tz: 'UTC',
         })
       ).toBe(
-        `SELECT holt_winters_with_fit(mean("usage_idle"), 30, 5), median("usage_guest") FROM "cpu" WHERE ("cpu" = 'cpu2' OR "cpu" = 'cpu3' AND "cpu" = 'cpu1') AND $timeFilter GROUP BY time($__interval), "cpu", "host" fill(none) ORDER BY time DESC LIMIT 12 SLIMIT 23 tz('UTC')`
+        `SELECT holt_winters_with_fit(mean("usage_idle"), 30, 5), median("usage_guest") FROM "cpu" WHERE ("cpu"::tag = 'cpu2' OR "cpu"::tag = 'cpu3' AND "cpu"::tag = 'cpu1') AND $timeFilter GROUP BY time($__interval), "cpu", "host" fill(none) ORDER BY time DESC LIMIT 12 SLIMIT 23 tz('UTC')`
       );
     });
   });
