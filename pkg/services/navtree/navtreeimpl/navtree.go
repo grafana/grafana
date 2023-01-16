@@ -219,10 +219,10 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 	}
 
 	if prefs.HomeDashboardID != 0 {
-		slugQuery := models.GetDashboardRefByIdQuery{Id: prefs.HomeDashboardID}
-		err := s.dashboardService.GetDashboardUIDById(c.Req.Context(), &slugQuery)
+		slugQuery := dashboards.GetDashboardRefByIDQuery{ID: prefs.HomeDashboardID}
+		err := s.dashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
 		if err == nil {
-			homeUrl = models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
+			homeUrl = models.GetDashboardUrl(slugQuery.Result.UID, slugQuery.Result.Slug)
 		}
 	}
 
@@ -331,7 +331,7 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 		return nil, err
 	}
 
-	starredDashboards := []*models.Dashboard{}
+	starredDashboards := []*dashboards.Dashboard{}
 	starredDashboardsCounter := 0
 	for dashboardId := range starredDashboardResult.UserStars {
 		// Set a loose limit to the first 50 starred dashboards found
@@ -339,9 +339,9 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 			break
 		}
 		starredDashboardsCounter++
-		query := &models.GetDashboardQuery{
-			Id:    dashboardId,
-			OrgId: c.OrgID,
+		query := &dashboards.GetDashboardQuery{
+			ID:    dashboardId,
+			OrgID: c.OrgID,
 		}
 		err := s.dashboardService.GetDashboard(c.Req.Context(), query)
 		if err == nil {
@@ -355,9 +355,9 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 		})
 		for _, starredItem := range starredDashboards {
 			starredItemsChildNavs = append(starredItemsChildNavs, &navtree.NavLink{
-				Id:   "starred/" + starredItem.Uid,
+				Id:   "starred/" + starredItem.UID,
 				Text: starredItem.Title,
-				Url:  starredItem.GetUrl(),
+				Url:  starredItem.GetURL(),
 			})
 		}
 	}
