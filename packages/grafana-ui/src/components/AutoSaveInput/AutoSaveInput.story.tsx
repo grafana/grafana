@@ -2,6 +2,7 @@ import { Story, Meta } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { Input } from '../Input/Input';
 
 import { AutoSaveInput } from './AutoSaveInput';
 import mdx from './AutoSaveInput.mdx';
@@ -36,7 +37,7 @@ export default meta;
 
 const getSuccess = () => {
   return new Promise<void>((resolve) => {
-    resolve();
+    setTimeout(resolve, 1000);
   });
 };
 const getError = () => {
@@ -48,10 +49,12 @@ const getError = () => {
 export const AutoSaveInputError: Story = (args) => (
   <AutoSaveInput
     onFinishChange={getError}
-    customErrorMessage={args.customErrorMessage}
+    saveErrorMessage={args.customErrorMessage}
     label={args.label}
     required={args.required}
-  />
+  >
+    <Input />
+  </AutoSaveInput>
 );
 AutoSaveInputError.args = {
   label: 'With error',
@@ -59,7 +62,9 @@ AutoSaveInputError.args = {
 };
 
 export const AutoSaveInputSuccess: Story = (args) => (
-  <AutoSaveInput onFinishChange={getSuccess} label={args.label} required={args.required} />
+  <AutoSaveInput onFinishChange={getSuccess} label={args.label} required={args.required}>
+    <Input />
+  </AutoSaveInput>
 );
 AutoSaveInputSuccess.args = {
   label: 'With success',

@@ -1,9 +1,8 @@
 import { debounce } from 'lodash';
 import React, { useCallback, useMemo, useRef } from 'react';
 
-import { Field } from '../Forms/Field';
+import { Field, FieldProps } from '../Forms/Field';
 import { InlineToast } from '../InlineToast/InlineToast';
-import { Input, Props as InputProps } from '../Input/Input';
 
 /**
 1.- Use the Input component as a base
@@ -17,36 +16,31 @@ or
 import { debounce} from 'lodash';
  */
 
-export interface Props extends InputProps {
+export interface Props extends FieldProps {
   //Function to be run onBlur or when finishing writing
   onFinishChange: (inputValue: string | number | readonly string[] | undefined) => Promise<void>;
-  customErrorMessage?: string;
+  saveErrorMessage?: string;
   label: string;
   required: boolean;
 }
 
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 
-export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props) => {
+export const AutoSaveInput = React.forwardRef<FieldProps, Props>((props) => {
   const {
-    defaultValue = '',
     className,
-    addonAfter,
-    addonBefore,
-    prefix,
-    suffix,
     invalid,
     loading,
+    disabled,
     onFinishChange,
-    customErrorMessage,
-    label,
-    required,
+    saveErrorMessage = 'Error saving this value',
+    error,
+    children,
     ...restProps
   } = props;
   const [isLoading, setIsLoading] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
-  const [showError, setShowError] = React.useState(false);
-  const [showErrorMessage, setShowErrorMessage] = React.useState(customErrorMessage || 'Error saving this value');
+  const [showError, setShowError] = React.useState(invalid);
   const inputRef = useRef<null | HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -65,26 +59,23 @@ export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props) =
 
   const handleChange = useCallback(
     (nextValue) => {
-      if (nextValue === '' && required) {
-        setShowError(true);
-        setShowErrorMessage('Invalid value');
-      } else {
-        console.log(onFinishChange);
-        setIsLoading(true);
-        onFinishChange(nextValue)
-          .then(() => {
-            setIsLoading(false);
-            setShowSuccess(true);
-            setShowError(false);
-          })
-          .catch(() => {
-            setIsLoading(false);
-            setShowError(true);
-            setShowErrorMessage(customErrorMessage || 'Error saving this value');
-          });
+      if (invalid) {
+        return;
       }
+      console.log(onFinishChange);
+      setIsLoading(true);
+      onFinishChange(nextValue)
+        .then(() => {
+          setIsLoading(false);
+          setShowSuccess(true);
+          setShowError(false);
+        })
+        .catch(() => {
+          setIsLoading(false);
+          setShowError(true);
+        });
     },
-    [customErrorMessage, onFinishChange, required]
+    [onFinishChange, invalid]
   );
 
   const lodashDebounce = useMemo(() => debounce(handleChange, 600, { leading: false }), [handleChange]);
@@ -94,24 +85,23 @@ export const AutoSaveInput = React.forwardRef<HTMLInputElement, Props>((props) =
    * use InlineToast.tsx to show the save message
    */
   return (
-    <Field required={required} label={label} invalid={showError} error={showError && showErrorMessage}>
-      <Input
-        {...restProps}
-        ref={inputRef}
-        defaultValue={defaultValue}
-        addonAfter={
-          showSuccess && (
-            <InlineToast suffixIcon={'check'} referenceElement={inputRef.current} placement={'right'}>
-              Saved!
-            </InlineToast>
-          )
-        }
-        onChange={(event) => {
-          lodashDebounce(event.currentTarget.value);
-        }}
-        loading={isLoading}
-        data-testid={'autosave-input'}
-      />
+    <Field {...restProps} invalid={invalid || showError} error={error || (showError && saveErrorMessage)}>
+      <>
+        {React.cloneElement(children, {
+          ref: inputRef,
+          onChange: (event: React.FormEvent<HTMLInputElement>) => {
+            lodashDebounce(event.currentTarget.value);
+          },
+          loading: isLoading,
+          disabled: disabled,
+          invalid: invalid || showError,
+        })}
+        {showSuccess && (
+          <InlineToast suffixIcon={'check'} referenceElement={inputRef.current} placement={'right'}>
+            Saved!
+          </InlineToast>
+        )}
+      </>
     </Field>
   );
 });
