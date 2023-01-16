@@ -14,11 +14,11 @@ export interface Props {
   query: LokiQuery;
   onChange: (update: LokiQuery) => void;
   onRunQuery: () => void;
+  maxLines: number;
   app?: CoreApp;
-  dsMaxLines: number;
 }
 
-export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange, onRunQuery, dsMaxLines }) => {
+export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange, onRunQuery, maxLines }) => {
   const onQueryTypeChange = (value: LokiQueryType) => {
     onChange({ ...query, queryType: value });
     onRunQuery();
@@ -51,7 +51,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange
 
   return (
     <EditorRow>
-      <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, queryType, showMaxLines, dsMaxLines)}>
+      <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, queryType, showMaxLines, maxLines)}>
         <EditorField
           label="Legend"
           tooltip="Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
@@ -72,7 +72,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange
           <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
             <AutoSizeInput
               className="width-4"
-              placeholder={dsMaxLines.toString()}
+              placeholder={maxLines.toString()}
               type="number"
               min={0}
               defaultValue={query.maxLines?.toString() ?? ''}
@@ -98,7 +98,7 @@ function getCollapsedInfo(
   query: LokiQuery,
   queryType: LokiQueryType,
   showMaxLines: boolean,
-  dsMaxLines: number
+  maxLines: number
 ): string[] {
   const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryType);
   const resolutionLabel = RESOLUTION_OPTIONS.find((x) => x.value === (query.resolution ?? 1));
@@ -116,7 +116,7 @@ function getCollapsedInfo(
   items.push(`Type: ${queryTypeLabel?.label}`);
 
   if (showMaxLines) {
-    items.push(`Line limit: ${query.maxLines || dsMaxLines}`);
+    items.push(`Line limit: ${query.maxLines || maxLines}`);
   }
 
   return items;
