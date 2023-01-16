@@ -352,8 +352,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 
 	// update api_key last used date
 	if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(reqContext.Req.Context(), apikey.Id); err != nil {
-		ErrUpdateOfApiKeyExpiry := errutil.NewBase(errutil.StatusInternal, "contexthandler.contexthandler", errutil.WithPublicMessage("Update of API Key expiry"))
-		reqContext.JsonApiErr(http.StatusInternalServerError, "Update API key expiry", ErrUpdateOfApiKeyExpiry)
+		reqContext.JsonApiErr(http.StatusInternalServerError, "Update API key expiry", err)
 		return true
 	}
 
