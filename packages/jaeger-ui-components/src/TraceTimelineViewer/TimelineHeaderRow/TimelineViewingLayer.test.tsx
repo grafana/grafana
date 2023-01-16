@@ -15,12 +15,15 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import TimelineViewingLayer from './TimelineViewingLayer';
+import { ViewRangeTime } from '../types';
+
+import TimelineViewingLayer, { TimelineViewingLayerProps } from './TimelineViewingLayer';
 
 describe('<TimelineViewingLayer>', () => {
   const viewStart = 0.25;
   const viewEnd = 0.9;
-  const props = {
+
+  let props: TimelineViewingLayerProps = {
     boundsInvalidator: Math.random(),
     updateNextViewRangeTime: jest.fn(),
     updateViewRangeTime: jest.fn(),
@@ -29,17 +32,49 @@ describe('<TimelineViewingLayer>', () => {
     },
   };
 
-  beforeEach(() => {
-    render(<TimelineViewingLayer {...props} />);
-  });
-
   it('renders without exploding', () => {
+    render(<TimelineViewingLayer {...props} />);
     expect(screen.getByTestId('TimelineViewingLayer')).toBeTruthy();
   });
 
   describe('render()', () => {
     it('renders nothing without a nextViewRangeTime', () => {
+      render(<TimelineViewingLayer {...props} />);
       expect(screen.queryByTestId('TimelineViewingLayer--cursorGuide')).not.toBeInTheDocument();
     });
+  });
+
+  it('renders the cursor when it is the only non-current value set', () => {
+    const cursor = viewStart + 0.5 * (viewEnd - viewStart);
+    const baseViewRangeTime = { ...props.viewRangeTime, cursor };
+    props = { ...props, viewRangeTime: baseViewRangeTime };
+    render(<TimelineViewingLayer {...props} />);
+    expect(screen.queryByTestId('TimelineViewingLayer--cursorGuide')).toBeInTheDocument();
+  });
+
+  it('does not render the cursor when shiftStart, shiftEnd, or reframe are present', () => {
+    const cursor = viewStart + 0.5 * (viewEnd - viewStart);
+    const baseViewRangeTime = { ...props.viewRangeTime, cursor };
+
+    let viewRangeTime: ViewRangeTime = {
+      ...baseViewRangeTime,
+      shiftStart: cursor,
+      shiftEnd: cursor,
+      reframe: { anchor: cursor, shift: cursor },
+    };
+
+    props = { ...props, viewRangeTime };
+    render(<TimelineViewingLayer {...props} />);
+    expect(screen.queryByTestId('TimelineViewingLayer--cursorGuide')).not.toBeInTheDocument();
+
+    viewRangeTime = { ...baseViewRangeTime, shiftEnd: cursor };
+    props = { ...props, viewRangeTime };
+    render(<TimelineViewingLayer {...props} />);
+    expect(screen.queryByTestId('TimelineViewingLayer--cursorGuide')).not.toBeInTheDocument();
+
+    viewRangeTime = { ...baseViewRangeTime, reframe: { anchor: cursor, shift: cursor } };
+    props = { ...props, viewRangeTime };
+    render(<TimelineViewingLayer {...props} />);
+    expect(screen.queryByTestId('TimelineViewingLayer--cursorGuide')).not.toBeInTheDocument();
   });
 });
