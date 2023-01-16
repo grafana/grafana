@@ -69,6 +69,7 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *Soc
 	for _, name := range allOauthes {
 		sec := cfg.Raw.Section("auth." + name)
 
+		// TODO: add setting for skip_org_role_sync here
 		info := &OAuthInfo{
 			ClientId:                sec.Key("client_id").String(),
 			ClientSecret:            sec.Key("client_secret").String(),
