@@ -77,7 +77,7 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 type ContextHandler struct {
 	Cfg               *setting.Cfg
 	AuthTokenService  auth.UserTokenService
-	JWTAuthService    models.JWTService
+	JWTAuthService    auth.JWTVerifierService
 	RemoteCache       *remotecache.RemoteCache
 	RenderService     rendering.Service
 	SQLStore          db.DB
@@ -350,11 +350,17 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
-	// update api_key last used date
-	if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(reqContext.Req.Context(), apikey.Id); err != nil {
-		reqContext.JsonApiErr(http.StatusInternalServerError, InvalidAPIKey, errKey)
-		return true
-	}
+	// non-blocking update api_key last used date
+	go func(id int64) {
+		defer func() {
+			if err := recover(); err != nil {
+				reqContext.Logger.Error("api key authentication panic", "err", err)
+			}
+		}()
+		if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
+			reqContext.Logger.Warn("failed to update last use date for api key", "id", id)
+		}
+	}(apikey.Id)
 
 	if apikey.ServiceAccountId == nil || *apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
 		// Use the old APIkey method.  This provides backwards compatibility.
@@ -489,8 +495,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 				reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 			}
 
-			writeErr(reqContext, err)
-			return true
+			reqContext.LookupTokenErr = err
+			return false
 		}
 
 		reqContext.IsSignedIn = true

@@ -5,6 +5,21 @@
       "success": "Copié"
     }
   },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Par défaut"
@@ -21,7 +36,7 @@
       "query-tab": "Requête",
       "stats-tab": "Statistiques",
       "subtitle": "{{queryCount}} requêtes avec un délai total de requête de {{formatted}}",
-      "title": "Inspecter : {{panelTitle}}"
+      "title": "Inspecter\u00a0: {{panelTitle}}"
     },
     "inspect-data": {
       "data-options": "Options de données",
@@ -51,7 +66,7 @@
       "panel-json-description": "Le modèle enregistré dans le tableau de bord JSON qui configure comment tout fonctionne.",
       "panel-json-label": "Panneau JSON",
       "select-source": "Sélectionner la source",
-      "unknown": "Objet inconnu : {{show}}"
+      "unknown": "Objet inconnu\u00a0: {{show}}"
     },
     "inspect-meta": {
       "no-inspector": "Pas d'inspecteur de métadonnées"
@@ -83,9 +98,8 @@
   "datasource-onboarding": {
     "contact-admin": "Veuillez contacter votre administrateur pour configurer les sources de données.",
     "explanation": "Pour visualiser vos données, vous devrez d’abord les connecter.",
-    "logo": "Logo pour la source de données {{datasourceName}}",
     "new-dashboard": "Nouveau tableau de bord",
-    "preferred": "Connectez votre source de données préférée :",
+    "preferred": "Connectez votre source de données préférée\u00a0:",
     "sampleData": "Ou établissez un nouveau tableau de bord avec des exemples de données",
     "viewAll": "Afficher tout",
     "welcome": "Bienvenue aux tableaux de bord Grafana !"
@@ -105,7 +119,7 @@
   },
   "library-panels": {
     "save": {
-      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque : \"{{errorMsg}}\"",
+      "error": "Erreur lors de l'enregistrement du panneau de bibliothèque\u00a0: \"{{errorMsg}}\"",
       "success": "Panneau de bibliothèque enregistré"
     }
   },
@@ -113,15 +127,6 @@
     "admin": {
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
-    },
-    "admin-access": {
-      "title": "Utilisateurs et droits d'accès"
-    },
-    "admin-general": {
-      "title": "Général"
-    },
-    "admin-plugins": {
-      "title": "Modules complémentaires et données"
     },
     "alerting": {
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
@@ -248,6 +253,9 @@
       "subtitle": "Applications de suivi et d'infrastructure",
       "title": "Suivi"
     },
+    "new": {
+      "title": ""
+    },
     "new-dashboard": {
       "title": "Nouveau tableau de bord"
     },
@@ -342,13 +350,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "Masquer la légende",
       "inspect": "Inspecter",
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
+      "query": "",
+      "remove": "",
       "share": "Partager",
       "show-legend": "Afficher la légende",
+      "unlink-library-panel": "",
       "view": "Afficher"
     }
   },
@@ -367,6 +384,14 @@
     },
     "select-button": {
       "auto-refresh": "Définir l'intervalle d'actualisation automatique"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
     }
   },
   "share-modal": {
@@ -421,7 +446,7 @@
       "info-text-1": "Un instantané est un moyen instantané de partager publiquement un tableau de bord interactif. Lors de la création, nous supprimons les données sensibles telles que les requêtes (métrique, modèle et annotation) et les liens du panneau, pour ne laisser que les métriques visibles et les noms de séries intégrés dans votre tableau de bord.",
       "info-text-2": "N'oubliez pas que votre instantané <1>peut être consulté par une personne</1> qui dispose du lien et qui peut accéder à l'URL. Partagez judicieusement.",
       "local-button": "Instantané local",
-      "mistake-message": "Avez-vous commis une erreur ? ",
+      "mistake-message": "Avez-vous commis une erreur\u00a0? ",
       "name": "Nom de l'instantané",
       "timeout": "Délai d’expiration (secondes)",
       "timeout-description": "Vous devrez peut-être configurer la valeur du délai d'expiration si la collecte des métriques de votre tableau de bord prend beaucoup de temps.",
@@ -528,7 +553,7 @@
       "name-label": "Nom",
       "username-label": "Nom d’utilisateur"
     },
-    "title": "Modifier le profil"
+    "title": "Profil"
   },
   "user-session": {
     "browser-column": "Navigateur et système d'exploitation",

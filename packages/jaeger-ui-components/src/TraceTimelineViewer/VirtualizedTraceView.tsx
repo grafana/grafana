@@ -115,6 +115,7 @@ type TVirtualizedTraceViewOwnProps = {
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
+  datasourceType: string;
 };
 
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
@@ -396,6 +397,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       focusedSpanId,
       focusedSpanIdForSearch,
       theme,
+      datasourceType,
     } = this.props;
     // to avert flow error
     if (!trace) {
@@ -461,6 +463,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           addHoverIndentGuideId={addHoverIndentGuideId}
           removeHoverIndentGuideId={removeHoverIndentGuideId}
           createSpanLink={createSpanLink}
+          datasourceType={datasourceType}
         />
       </div>
     );
@@ -492,6 +495,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       createFocusSpanLink,
       topOfViewRefType,
       theme,
+      datasourceType,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
@@ -525,6 +529,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           focusedSpanId={focusedSpanId}
           createFocusSpanLink={createFocusSpanLink}
           topOfViewRefType={topOfViewRefType}
+          datasourceType={datasourceType}
         />
       </div>
     );

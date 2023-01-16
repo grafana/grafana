@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -29,6 +29,8 @@ func ptrInt64(i int64) *int64 {
 }
 
 func TestUserSync_SyncUser(t *testing.T) {
+	userProtection := &authinfoservice.OSSUserProtectionImpl{}
+
 	authFakeNil := &logintest.AuthInfoServiceFake{
 		ExpectedUser:  nil,
 		ExpectedError: user.ErrUserNotFound,
@@ -82,7 +84,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 		userService     user.Service
 		authInfoService login.AuthInfoService
 		quotaService    quota.Service
-		log             log.Logger
 	}
 	type args struct {
 		ctx context.Context
@@ -101,7 +102,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 				userService:     userService,
 				authInfoService: authFakeNil,
 				quotaService:    &quotatest.FakeQuotaService{},
-				log:             log.NewNopLogger(),
 			},
 			args: args{
 				ctx: context.Background(),
@@ -110,12 +110,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Login: "test",
 					Name:  "test",
 					Email: "test",
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  ptrString("test"),
-						Login:  nil,
+					ClientParams: authn.ClientParams{
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  ptrString("test"),
+							Login:  nil,
+						},
 					},
-					ClientParams: authn.ClientParams{},
 				},
 			},
 			wantErr: false,
@@ -124,12 +125,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Login: "test",
 				Name:  "test",
 				Email: "test",
-				LookUpParams: models.UserLookupParams{
-					UserID: nil,
-					Email:  ptrString("test"),
-					Login:  nil,
+				ClientParams: authn.ClientParams{
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test"),
+						Login:  nil,
+					},
 				},
-				ClientParams: authn.ClientParams{},
 			},
 		},
 		{
@@ -138,7 +140,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 				userService:     userService,
 				authInfoService: authFakeNil,
 				quotaService:    &quotatest.FakeQuotaService{},
-				log:             log.NewNopLogger(),
 			},
 			args: args{
 				ctx: context.Background(),
@@ -147,13 +148,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Login: "test",
 					Name:  "test",
 					Email: "test",
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  ptrString("test"),
-						Login:  nil,
-					},
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  ptrString("test"),
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -164,13 +165,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Name:           "test",
 				Email:          "test",
 				IsGrafanaAdmin: ptrBool(false),
-				LookUpParams: models.UserLookupParams{
-					UserID: nil,
-					Email:  ptrString("test"),
-					Login:  nil,
-				},
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test"),
+						Login:  nil,
+					},
 				},
 			},
 		},
@@ -180,7 +181,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 				userService:     userService,
 				authInfoService: authFakeNil,
 				quotaService:    &quotatest.FakeQuotaService{},
-				log:             log.NewNopLogger(),
 			},
 			args: args{
 				ctx: context.Background(),
@@ -189,13 +189,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Login: "test",
 					Name:  "test",
 					Email: "test",
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  nil,
-						Login:  ptrString("test"),
-					},
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  nil,
+							Login:  ptrString("test"),
+						},
 					},
 				},
 			},
@@ -206,12 +206,12 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Name:           "test",
 				Email:          "test",
 				IsGrafanaAdmin: ptrBool(false),
-				LookUpParams: models.UserLookupParams{
-					UserID: nil,
-					Email:  nil,
-					Login:  ptrString("test"),
-				},
 				ClientParams: authn.ClientParams{
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  nil,
+						Login:  ptrString("test"),
+					},
 					SyncUser: true,
 				},
 			},
@@ -222,7 +222,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 				userService:     userService,
 				authInfoService: authFakeNil,
 				quotaService:    &quotatest.FakeQuotaService{},
-				log:             log.NewNopLogger(),
 			},
 			args: args{
 				ctx: context.Background(),
@@ -231,13 +230,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Login: "test",
 					Name:  "test",
 					Email: "test",
-					LookUpParams: models.UserLookupParams{
-						UserID: ptrInt64(1),
-						Email:  nil,
-						Login:  nil,
-					},
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: ptrInt64(1),
+							Email:  nil,
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -248,13 +247,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Name:           "test",
 				Email:          "test",
 				IsGrafanaAdmin: ptrBool(false),
-				LookUpParams: models.UserLookupParams{
-					UserID: ptrInt64(1),
-					Email:  nil,
-					Login:  nil,
-				},
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
+					LookUpParams: models.UserLookupParams{
+						UserID: ptrInt64(1),
+						Email:  nil,
+						Login:  nil,
+					},
 				},
 			},
 		},
@@ -264,7 +263,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 				userService:     userService,
 				authInfoService: authFakeUserID,
 				quotaService:    &quotatest.FakeQuotaService{},
-				log:             log.NewNopLogger(),
 			},
 			args: args{
 				ctx: context.Background(),
@@ -274,13 +272,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Login: "test",
 					Name:  "test",
 					Email: "test",
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  nil,
-						Login:  nil,
-					},
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  nil,
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -291,13 +289,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Name:           "test",
 				Email:          "test",
 				IsGrafanaAdmin: ptrBool(false),
-				LookUpParams: models.UserLookupParams{
-					UserID: nil,
-					Email:  nil,
-					Login:  nil,
-				},
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  nil,
+						Login:  nil,
+					},
 				},
 			},
 		},
@@ -307,7 +305,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 				userService:     userService,
 				authInfoService: authFakeNil,
 				quotaService:    &quotatest.FakeQuotaService{},
-				log:             log.NewNopLogger(),
 			},
 			args: args{
 				ctx: context.Background(),
@@ -318,13 +315,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email:      "test",
 					AuthModule: "oauth",
 					AuthID:     "2032",
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  nil,
-						Login:  nil,
-					},
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  nil,
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -336,7 +333,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 				userService:     userServiceNil,
 				authInfoService: authFakeNil,
 				quotaService:    &quotatest.FakeQuotaService{},
-				log:             log.NewNopLogger(),
 			},
 			args: args{
 				ctx: context.Background(),
@@ -348,15 +344,15 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email:          "test_create",
 					AuthModule:     "oauth",
 					AuthID:         "2032",
-					LookUpParams: models.UserLookupParams{
-						UserID: nil,
-						Email:  ptrString("test_create"),
-						Login:  nil,
-					},
 					ClientParams: authn.ClientParams{
 						SyncUser:            true,
 						AllowSignUp:         true,
 						EnableDisabledUsers: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: nil,
+							Email:  ptrString("test_create"),
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -369,15 +365,15 @@ func TestUserSync_SyncUser(t *testing.T) {
 				AuthModule:     "oauth",
 				AuthID:         "2032",
 				IsGrafanaAdmin: ptrBool(true),
-				LookUpParams: models.UserLookupParams{
-					UserID: nil,
-					Email:  ptrString("test_create"),
-					Login:  nil,
-				},
 				ClientParams: authn.ClientParams{
 					SyncUser:            true,
 					AllowSignUp:         true,
 					EnableDisabledUsers: true,
+					LookUpParams: models.UserLookupParams{
+						UserID: nil,
+						Email:  ptrString("test_create"),
+						Login:  nil,
+					},
 				},
 			},
 		},
@@ -387,7 +383,6 @@ func TestUserSync_SyncUser(t *testing.T) {
 				userService:     userServiceMod,
 				authInfoService: authFakeNil,
 				quotaService:    &quotatest.FakeQuotaService{},
-				log:             log.NewNopLogger(),
 			},
 			args: args{
 				ctx: context.Background(),
@@ -398,14 +393,14 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email:          "test_mod",
 					IsDisabled:     false,
 					IsGrafanaAdmin: ptrBool(true),
-					LookUpParams: models.UserLookupParams{
-						UserID: ptrInt64(3),
-						Email:  nil,
-						Login:  nil,
-					},
 					ClientParams: authn.ClientParams{
 						SyncUser:            true,
 						EnableDisabledUsers: true,
+						LookUpParams: models.UserLookupParams{
+							UserID: ptrInt64(3),
+							Email:  nil,
+							Login:  nil,
+						},
 					},
 				},
 			},
@@ -417,26 +412,21 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Email:          "test_mod",
 				IsDisabled:     false,
 				IsGrafanaAdmin: ptrBool(true),
-				LookUpParams: models.UserLookupParams{
-					UserID: ptrInt64(3),
-					Email:  nil,
-					Login:  nil,
-				},
 				ClientParams: authn.ClientParams{
 					SyncUser:            true,
 					EnableDisabledUsers: true,
+					LookUpParams: models.UserLookupParams{
+						UserID: ptrInt64(3),
+						Email:  nil,
+						Login:  nil,
+					},
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &UserSync{
-				userService:     tt.fields.userService,
-				authInfoService: tt.fields.authInfoService,
-				quotaService:    tt.fields.quotaService,
-				log:             tt.fields.log,
-			}
+			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService)
 			err := s.SyncUser(tt.args.ctx, tt.args.id, nil)
 			if tt.wantErr {
 				require.Error(t, err)

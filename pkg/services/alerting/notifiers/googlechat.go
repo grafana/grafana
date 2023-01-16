@@ -144,6 +144,7 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	// add a text paragraph widget for the fields
+	//nolint:prealloc // break block
 	var fields []textParagraphWidget
 	fieldLimitCount := 4
 	for index, evt := range evalContext.EvalMatches {

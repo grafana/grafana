@@ -43,7 +43,7 @@ type QueryData struct {
 	URL                string
 	TimeInterval       string
 	enableWideSeries   bool
-	exemplarSampler    exemplar.Sampler
+	exemplarSampler    func() exemplar.Sampler
 }
 
 func New(
@@ -67,10 +67,10 @@ func New(
 	promClient := client.NewClient(httpClient, httpMethod, settings.URL)
 
 	// standard deviation sampler is the default for backwards compatibility
-	exemplarSampler := exemplar.NewStandardDeviationSampler()
+	exemplarSampler := exemplar.NewStandardDeviationSampler
 
 	if features.IsEnabled(featuremgmt.FlagDisablePrometheusExemplarSampling) {
-		exemplarSampler = exemplar.NewNoOpSampler()
+		exemplarSampler = exemplar.NewNoOpSampler
 	}
 
 	return &QueryData{
@@ -154,34 +154,32 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 			// continue with other results processing
 			logger.Error("Exemplar query failed", "query", q.Expr, "err", err)
 		}
-		if res != nil {
-			response.Frames = append(response.Frames, res.Frames...)
-		}
+		response.Frames = append(response.Frames, res.Frames...)
 	}
 
 	return response, nil
 }
 
-func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (backend.DataResponse, error) {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
-		return nil, err
+		return backend.DataResponse{}, err
 	}
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (backend.DataResponse, error) {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
-		return nil, err
+		return backend.DataResponse{}, err
 	}
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (backend.DataResponse, error) {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
-		return nil, err
+		return backend.DataResponse{}, err
 	}
 	return s.parseResponse(ctx, q, res)
 }

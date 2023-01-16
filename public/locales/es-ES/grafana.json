@@ -5,6 +5,21 @@
       "success": "Copiado"
     }
   },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Por defecto"
@@ -83,7 +98,6 @@
   "datasource-onboarding": {
     "contact-admin": "Póngase en contacto con su administrador para configurar las fuentes de datos.",
     "explanation": "Para visualizar sus datos, primero tendrá que conectar una fuente.",
-    "logo": "Logo para la fuente de datos {{datasourceName}}",
     "new-dashboard": "Nuevo panel de control",
     "preferred": "Conecte su fuente de datos preferida:",
     "sampleData": "O configure un nuevo panel de control con datos de muestra",
@@ -113,15 +127,6 @@
     "admin": {
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
-    },
-    "admin-access": {
-      "title": "Usuarios y acceso"
-    },
-    "admin-general": {
-      "title": "General"
-    },
-    "admin-plugins": {
-      "title": "Complementos y datos"
     },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
@@ -248,6 +253,9 @@
       "subtitle": "Aplicaciones de supervisión e infraestructura",
       "title": "Seguimiento"
     },
+    "new": {
+      "title": ""
+    },
     "new-dashboard": {
       "title": "Nuevo panel de control"
     },
@@ -342,13 +350,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "Ocultar leyenda",
       "inspect": "Inspeccionar",
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
+      "query": "",
+      "remove": "",
       "share": "Compartir",
       "show-legend": "Mostrar leyenda",
+      "unlink-library-panel": "",
       "view": "Vista"
     }
   },
@@ -367,6 +384,14 @@
     },
     "select-button": {
       "auto-refresh": "Establecer intervalo de actualización automática"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
     }
   },
   "share-modal": {
@@ -528,7 +553,7 @@
       "name-label": "Nombre",
       "username-label": "Nombre de usuario"
     },
-    "title": "Editar perfil"
+    "title": "Perfil"
   },
   "user-session": {
     "browser-column": "Navegador y sistema operativo",
