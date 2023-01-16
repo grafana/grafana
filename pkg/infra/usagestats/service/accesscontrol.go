@@ -11,7 +11,7 @@ const (
 var (
 	usagestatsReaderRole = accesscontrol.RoleDTO{
 		Name:        "fixed:usagestats:reader",
-		DisplayName: "Support bundle reader",
+		DisplayName: "Usage stats report reader",
 		Description: "View usage statistics report",
 		Group:       "Statistics",
 		Permissions: []accesscontrol.Permission{
