@@ -57,12 +57,21 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUser
 	})
 	mailTemplates.Funcs(sprig.FuncMap())
 
+	// Parse invalid templates using 'or' logic. Return an error only if no paths are valid.
+	invalidTemplates := make([]string, 0)
 	for _, pattern := range ns.Cfg.Smtp.TemplatesPatterns {
 		templatePattern := filepath.Join(ns.Cfg.StaticRootPath, pattern)
 		_, err := mailTemplates.ParseGlob(templatePattern)
 		if err != nil {
-			return nil, err
+			invalidTemplates = append(invalidTemplates, templatePattern)
 		}
+	}
+	if len(invalidTemplates) > 0 {
+		is := strings.Join(invalidTemplates, ", ")
+		if len(invalidTemplates) == len(ns.Cfg.Smtp.TemplatesPatterns) {
+			return nil, fmt.Errorf("provided html/template filepaths matched no files: %s", is)
+		}
+		ns.log.Warn("some provided html/template filepaths matched no files: %s", is)
 	}
 
 	if !util.IsEmail(ns.Cfg.Smtp.FromAddress) {

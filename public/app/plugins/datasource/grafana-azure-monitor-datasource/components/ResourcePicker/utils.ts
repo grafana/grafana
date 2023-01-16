@@ -145,9 +145,8 @@ export function setResource(query: AzureMonitorQuery, resource?: string | AzureM
     subscription: resource?.subscription,
     azureMonitor: {
       ...query.azureMonitor,
-      resourceGroup: resource?.resourceGroup,
       metricNamespace: resource?.metricNamespace?.toLocaleLowerCase(),
-      resourceName: resource?.resourceName,
+      resources: [{ resourceGroup: resource?.resourceGroup, resourceName: resource?.resourceName }],
       metricName: undefined,
       aggregation: undefined,
       timeGrain: '',

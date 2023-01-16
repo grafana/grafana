@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -15,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
-	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -90,7 +91,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				Key:     hash,
 				Expires: intPtr(0),
 			},
-			expectedErr: ErrAPIKeyExpired,
+			expectedErr: errAPIKeyExpired,
 		},
 		{
 			desc: "should fail for revoked api key",
@@ -99,17 +100,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				Key:       hash,
 				IsRevoked: &revoked,
 			},
-			expectedErr: ErrAPIKeyRevoked,
-		},
-		{
-			desc: "should fail if service account is disabled",
-			req:  &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{"Authorization": {"Bearer " + secret}}}},
-			expectedKey: &apikey.APIKey{
-				Key:              hash,
-				ServiceAccountId: intPtr(1),
-			},
-			expectedUser: &user.SignedInUser{IsDisabled: true},
-			expectedErr:  ErrServiceAccountDisabled,
+			expectedErr: errAPIKeyRevoked,
 		},
 	}
 
