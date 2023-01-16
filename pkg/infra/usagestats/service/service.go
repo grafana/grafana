@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -18,6 +20,7 @@ type UsageStats struct {
 	kvStore       *kvstore.NamespacedKVStore
 	RouteRegister routing.RouteRegister
 	pluginStore   plugins.Store
+	accesscontrol accesscontrol.AccessControl
 
 	log    log.Logger
 	tracer tracing.Tracer
@@ -26,7 +29,13 @@ type UsageStats struct {
 	sendReportCallbacks []usagestats.SendReportCallbackFunc
 }
 
-func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store, kvStore kvstore.KVStore, routeRegister routing.RouteRegister, tracer tracing.Tracer) *UsageStats {
+func ProvideService(cfg *setting.Cfg,
+	pluginStore plugins.Store,
+	kvStore kvstore.KVStore,
+	routeRegister routing.RouteRegister,
+	tracer tracing.Tracer,
+	accesscontrol ac.AccessControl,
+	accesscontrolService ac.Service) (*UsageStats, error) {
 	s := &UsageStats{
 		Cfg:           cfg,
 		RouteRegister: routeRegister,
@@ -34,11 +43,18 @@ func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store, kvStore kvstore
 		kvStore:       kvstore.WithNamespace(kvStore, 0, "infra.usagestats"),
 		log:           log.New("infra.usagestats"),
 		tracer:        tracer,
+		accesscontrol: accesscontrol,
+	}
+
+	if !accesscontrol.IsDisabled() {
+		if err := declareFixedRoles(accesscontrolService); err != nil {
+			return nil, err
+		}
 	}
 
 	s.registerAPIEndpoints()
 
-	return s
+	return s, nil
 }
 
 func (uss *UsageStats) Run(ctx context.Context) error {
