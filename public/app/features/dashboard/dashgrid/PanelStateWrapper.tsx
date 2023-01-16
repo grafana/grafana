@@ -11,17 +11,19 @@ import {
   EventFilterOptions,
   FieldConfigSource,
   getDefaultTimeRange,
+  LinkModel,
   LoadingState,
   PanelData,
   PanelPlugin,
   PanelPluginMeta,
   PluginContextProvider,
+  renderMarkdown,
   TimeRange,
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { getTemplateSrv, config, locationService, RefreshEvent } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
 import {
   ErrorBoundary,
@@ -35,6 +37,7 @@ import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
+import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { RenderEvent } from 'app/types/events';
 
@@ -47,6 +50,7 @@ import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
+import { PanelHeaderTitleItems } from './PanelHeader/PanelHeaderTitleItems';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 
@@ -567,6 +571,27 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return !panel.hasTitle();
   }
 
+  onShowPanelDescription = () => {
+    const { panel } = this.props;
+    const descriptionMarkdown = getTemplateSrv().replace(panel.description, panel.scopedVars);
+    const interpolatedDescription = renderMarkdown(descriptionMarkdown);
+    return interpolatedDescription;
+  };
+
+  onShowPanelLinks = (): LinkModel[] => {
+    const { panel } = this.props;
+    const linkSupplier = getPanelLinksSupplier(panel);
+    if (linkSupplier) {
+      const panelLinks = linkSupplier && linkSupplier.getLinks(panel.replaceVariables);
+      return panelLinks;
+    }
+    return [];
+  };
+
+  onOpenInspector = (e: React.SyntheticEvent, tab: string) => {
+    e.stopPropagation();
+    locationService.partial({ inspect: this.props.panel.id, inspectTab: tab });
+  };
   onOpenErrorInspect(e: React.SyntheticEvent, tab: string) {
     e.stopPropagation();
     locationService.partial({ inspect: this.props.panel.id, inspectTab: tab });
@@ -590,6 +615,17 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const title = panel.getDisplayTitle();
     const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
 
+    const titleItems = [
+      <PanelHeaderTitleItems
+        key="title-items"
+        alertState={alertState}
+        data={data}
+        panelId={panel.id}
+        panelLinks={panel.links}
+        onShowPanelLinks={this.onShowPanelLinks}
+      />,
+    ];
+
     let menu;
     if (!dashboard.meta.publicDashboardAccessToken) {
       menu = (
@@ -610,14 +646,16 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         <PanelChrome
           width={width}
           height={height}
-          padding={padding}
           title={title}
-          menu={menu}
           loadingState={data.state}
           status={{
             message: errorMessage,
             onClick: (e: React.SyntheticEvent) => this.onOpenErrorInspect(e, InspectTab.Error),
           }}
+          description={!!panel.description ? this.onShowPanelDescription : undefined}
+          titleItems={titleItems}
+          menu={menu}
+          padding={padding}
         >
           {(innerWidth, innerHeight) => (
             <>

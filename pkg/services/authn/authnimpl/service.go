@@ -23,7 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
+)
+
+var (
+	errDisabledIdentity = errutil.NewBase(errutil.StatusUnauthorized, "identity.disabled")
 )
 
 // make sure service implements authn.Service interface
@@ -35,6 +40,7 @@ func ProvideService(
 	accessControlService accesscontrol.Service,
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService,
+	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 ) *Service {
@@ -78,7 +84,7 @@ func ProvideService(
 	}
 
 	// FIXME (jguer): move to User package
-	userSyncService := sync.ProvideUserSync(userService, authInfoService, quotaService)
+	userSyncService := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService)
 	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
 	s.RegisterPostAuthHook(userSyncService.SyncUser)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgUser)
@@ -127,6 +133,10 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "id", identity)
 			return nil, false, err
 		}
+	}
+
+	if identity.IsDisabled {
+		return nil, true, errDisabledIdentity.Errorf("identity is disabled")
 	}
 
 	return identity, true, nil
