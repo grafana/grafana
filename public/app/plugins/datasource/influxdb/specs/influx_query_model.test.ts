@@ -80,7 +80,7 @@ describe('InfluxQuery', () => {
       const queryText = query.render();
 
       expect(queryText).toBe(
-        'SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server\\\\1\') AND $timeFilter' +
+        'SELECT mean("value") FROM "cpu" WHERE ("hostname"::tag = \'server\\\\1\') AND $timeFilter' +
           ' GROUP BY time($__interval)'
       );
     });
@@ -99,7 +99,7 @@ describe('InfluxQuery', () => {
 
       const queryText = query.render();
       expect(queryText).toBe(
-        'SELECT mean("value") FROM "cpu" WHERE ("app" =~ /e.*/) AND $timeFilter GROUP BY time($__interval)'
+        'SELECT mean("value") FROM "cpu" WHERE ("app"::tag =~ /e.*/) AND $timeFilter GROUP BY time($__interval)'
       );
     });
   });
@@ -122,7 +122,7 @@ describe('InfluxQuery', () => {
 
       const queryText = query.render();
       expect(queryText).toBe(
-        'SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' AND "app" = \'email\') AND ' +
+        'SELECT mean("value") FROM "cpu" WHERE ("hostname"::tag = \'server1\' AND "app"::tag = \'email\') AND ' +
           '$timeFilter GROUP BY time($__interval)'
       );
     });
@@ -146,7 +146,7 @@ describe('InfluxQuery', () => {
 
       const queryText = query.render();
       expect(queryText).toBe(
-        'SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' OR "hostname" = \'server2\') AND ' +
+        'SELECT mean("value") FROM "cpu" WHERE ("hostname"::tag = \'server1\' OR "hostname"::tag = \'server2\') AND ' +
           '$timeFilter GROUP BY time($__interval)'
       );
     });
@@ -170,7 +170,7 @@ describe('InfluxQuery', () => {
 
       const queryText = query.render();
       expect(queryText).toBe(
-        'SELECT mean("value") FROM "cpu" WHERE ("name" = \'Let\\\'s encrypt.\' OR "hostname" = \'server2\') AND ' +
+        'SELECT mean("value") FROM "cpu" WHERE ("name"::tag = \'Let\\\'s encrypt.\' OR "hostname"::tag = \'server2\') AND ' +
           '$timeFilter GROUP BY time($__interval)'
       );
     });
@@ -190,7 +190,7 @@ describe('InfluxQuery', () => {
       );
 
       const queryText = query.render();
-      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE ("value" > 5) AND $timeFilter');
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE ("value"::tag > 5) AND $timeFilter');
     });
   });
 
