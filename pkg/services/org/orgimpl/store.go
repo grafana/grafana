@@ -81,7 +81,7 @@ func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
 		}
 		if org.ID != 0 {
 			// it sets the setval in the sequence
-			if err := ss.dialect.PostInsertId("org", sess.Session); err != nil {
+			if err := ss.dialect.PostInsertId("org", sess.SessionInterface); err != nil {
 				return err
 			}
 		}

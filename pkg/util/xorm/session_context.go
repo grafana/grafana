@@ -7,7 +7,7 @@ package xorm
 import "context"
 
 // Context sets the context on this session
-func (session *Session) Context(ctx context.Context) *Session {
+func (session *Session) Context(ctx context.Context) SessionInterface {
 	session.ctx = ctx
 	return session
 }

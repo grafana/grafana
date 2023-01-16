@@ -56,7 +56,7 @@ func (session *Session) Iterate(bean interface{}, fun IterFunc) error {
 }
 
 // BufferSize sets the buffersize for iterate
-func (session *Session) BufferSize(size int) *Session {
+func (session *Session) BufferSize(size int) SessionInterface {
 	session.statement.bufferSize = size
 	return session
 }

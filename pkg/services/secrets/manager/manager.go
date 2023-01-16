@@ -19,9 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
-	"xorm.io/xorm"
 )
 
 const (
@@ -155,7 +155,7 @@ func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secret
 	return s.EncryptWithDBSession(ctx, payload, opt, nil)
 }
 
-func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess *xorm.Session) ([]byte, error) {
+func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byte, opt secrets.EncryptionOptions, sess xorm.SessionInterface) ([]byte, error) {
 	// Use legacy encryption service if featuremgmt.FlagDisableEnvelopeEncryption toggle is on
 	if s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
 		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
@@ -203,7 +203,7 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 // currentDataKey looks up for current data key in cache or database by name, and decrypts it.
 // If there's no current data key in cache nor in database it generates a new random data key,
 // and stores it into both the in-memory cache and database (encrypted by the encryption provider).
-func (s *SecretsService) currentDataKey(ctx context.Context, label string, scope string, sess *xorm.Session) (string, []byte, error) {
+func (s *SecretsService) currentDataKey(ctx context.Context, label string, scope string, sess xorm.SessionInterface) (string, []byte, error) {
 	// We want only one request fetching current data key at time to
 	// avoid the creation of multiple ones in case there's no one existing.
 	s.mtx.Lock()
@@ -267,7 +267,7 @@ func (s *SecretsService) dataKeyByLabel(ctx context.Context, label string) (stri
 }
 
 // newDataKey creates a new random data key, encrypts it and stores it into the database and cache.
-func (s *SecretsService) newDataKey(ctx context.Context, label string, scope string, sess *xorm.Session) (string, []byte, error) {
+func (s *SecretsService) newDataKey(ctx context.Context, label string, scope string, sess xorm.SessionInterface) (string, []byte, error) {
 	// 1. Create new data key.
 	dataKey, err := newRandomDataKey()
 	if err != nil {
@@ -391,7 +391,7 @@ func (s *SecretsService) EncryptJsonData(ctx context.Context, kv map[string]stri
 	return s.EncryptJsonDataWithDBSession(ctx, kv, opt, nil)
 }
 
-func (s *SecretsService) EncryptJsonDataWithDBSession(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions, sess *xorm.Session) (map[string][]byte, error) {
+func (s *SecretsService) EncryptJsonDataWithDBSession(ctx context.Context, kv map[string]string, opt secrets.EncryptionOptions, sess xorm.SessionInterface) (map[string][]byte, error) {
 	encrypted := make(map[string][]byte)
 	for key, value := range kv {
 		encryptedData, err := s.EncryptWithDBSession(ctx, []byte(value), opt, sess)

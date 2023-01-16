@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 const (
@@ -27,7 +27,7 @@ type Migration interface {
 
 type CodeMigration interface {
 	Migration
-	Exec(sess *xorm.Session, migrator *Migrator) error
+	Exec(sess xorm.SessionInterface, migrator *Migrator) error
 }
 
 type SQLType string

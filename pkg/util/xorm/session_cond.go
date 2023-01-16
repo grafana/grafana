@@ -10,31 +10,31 @@ import "xorm.io/builder"
 // and cannot use Where, Id, In and etc. Methods to describe, you can use SQL.
 //
 // Deprecated: use SQL instead.
-func (session *Session) Sql(query string, args ...interface{}) *Session {
+func (session *Session) Sql(query string, args ...interface{}) SessionInterface {
 	return session.SQL(query, args...)
 }
 
 // SQL provides raw sql input parameter. When you have a complex SQL statement
 // and cannot use Where, Id, In and etc. Methods to describe, you can use SQL.
-func (session *Session) SQL(query interface{}, args ...interface{}) *Session {
+func (session *Session) SQL(query interface{}, args ...interface{}) SessionInterface {
 	session.statement.SQL(query, args...)
 	return session
 }
 
 // Where provides custom query condition.
-func (session *Session) Where(query interface{}, args ...interface{}) *Session {
+func (session *Session) Where(query interface{}, args ...interface{}) SessionInterface {
 	session.statement.Where(query, args...)
 	return session
 }
 
 // And provides custom query condition.
-func (session *Session) And(query interface{}, args ...interface{}) *Session {
+func (session *Session) And(query interface{}, args ...interface{}) SessionInterface {
 	session.statement.And(query, args...)
 	return session
 }
 
 // Or provides custom query condition.
-func (session *Session) Or(query interface{}, args ...interface{}) *Session {
+func (session *Session) Or(query interface{}, args ...interface{}) SessionInterface {
 	session.statement.Or(query, args...)
 	return session
 }
@@ -42,24 +42,24 @@ func (session *Session) Or(query interface{}, args ...interface{}) *Session {
 // Id provides converting id as a query condition
 //
 // Deprecated: use ID instead
-func (session *Session) Id(id interface{}) *Session {
+func (session *Session) Id(id interface{}) SessionInterface {
 	return session.ID(id)
 }
 
 // ID provides converting id as a query condition
-func (session *Session) ID(id interface{}) *Session {
+func (session *Session) ID(id interface{}) SessionInterface {
 	session.statement.ID(id)
 	return session
 }
 
 // In provides a query string like "id in (1, 2, 3)"
-func (session *Session) In(column string, args ...interface{}) *Session {
+func (session *Session) In(column string, args ...interface{}) SessionInterface {
 	session.statement.In(column, args...)
 	return session
 }
 
 // NotIn provides a query string like "id in (1, 2, 3)"
-func (session *Session) NotIn(column string, args ...interface{}) *Session {
+func (session *Session) NotIn(column string, args ...interface{}) SessionInterface {
 	session.statement.NotIn(column, args...)
 	return session
 }

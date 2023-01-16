@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 type FakeSecretsStore struct {
@@ -47,7 +47,7 @@ func (f FakeSecretsStore) CreateDataKey(_ context.Context, dataKey *secrets.Data
 	return nil
 }
 
-func (f FakeSecretsStore) CreateDataKeyWithDBSession(_ context.Context, dataKey *secrets.DataKey, _ *xorm.Session) error {
+func (f FakeSecretsStore) CreateDataKeyWithDBSession(_ context.Context, dataKey *secrets.DataKey, _ xorm.SessionInterface) error {
 	f.store[dataKey.Id] = dataKey
 	return nil
 }

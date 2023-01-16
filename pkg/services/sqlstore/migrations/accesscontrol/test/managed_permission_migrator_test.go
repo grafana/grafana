@@ -11,8 +11,8 @@ import (
 	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
 )
 
 type inheritanceTestCase struct {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/pkg/errors"
-	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -26,7 +26,7 @@ var timeNow = time.Now
 
 func (ss *sqlStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuery) error {
 	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
-		var sess *xorm.Session
+		var sess xorm.SessionInterface
 
 		if query.IncludeExpired {
 			sess = dbSession.Limit(100, 0).

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -84,11 +84,11 @@ func (ss *SecretsStoreImpl) GetAllDataKeys(ctx context.Context) ([]*secrets.Data
 
 func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey *secrets.DataKey) error {
 	return ss.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return ss.CreateDataKeyWithDBSession(ctx, dataKey, sess.Session)
+		return ss.CreateDataKeyWithDBSession(ctx, dataKey, sess.SessionInterface)
 	})
 }
 
-func (ss *SecretsStoreImpl) CreateDataKeyWithDBSession(_ context.Context, dataKey *secrets.DataKey, sess *xorm.Session) error {
+func (ss *SecretsStoreImpl) CreateDataKeyWithDBSession(_ context.Context, dataKey *secrets.DataKey, sess xorm.SessionInterface) error {
 	if !dataKey.Active {
 		return fmt.Errorf("cannot insert deactivated data keys")
 	}

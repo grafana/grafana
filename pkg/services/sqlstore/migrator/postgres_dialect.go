@@ -10,7 +10,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/lib/pq"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 type PostgresDialect struct {
@@ -214,7 +214,7 @@ func (db *PostgresDialect) IsDeadlock(err error) bool {
 	return db.isThisError(err, "40P01")
 }
 
-func (db *PostgresDialect) PostInsertId(table string, sess *xorm.Session) error {
+func (db *PostgresDialect) PostInsertId(table string, sess xorm.SessionInterface) error {
 	if table != "org" {
 		return nil
 	}

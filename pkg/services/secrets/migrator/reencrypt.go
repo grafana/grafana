@@ -39,7 +39,7 @@ func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secrets
 				return err
 			}
 
-			encrypted, err := secretsSrv.EncryptWithDBSession(ctx, decrypted, secrets.WithoutScope(), sess.Session)
+			encrypted, err := secretsSrv.EncryptWithDBSession(ctx, decrypted, secrets.WithoutScope(), sess.SessionInterface)
 			if err != nil {
 				logger.Warn("Could not encrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
 				return err
@@ -101,7 +101,7 @@ func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSer
 				return err
 			}
 
-			encrypted, err := secretsSrv.EncryptWithDBSession(ctx, decrypted, secrets.WithoutScope(), sess.Session)
+			encrypted, err := secretsSrv.EncryptWithDBSession(ctx, decrypted, secrets.WithoutScope(), sess.SessionInterface)
 			if err != nil {
 				logger.Warn("Could not encrypt secret while re-encrypting it", "table", s.tableName, "id", row.Id, "error", err)
 				return err
@@ -170,7 +170,7 @@ func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSe
 				Updated        string
 			}{Updated: nowInUTC()}
 
-			toUpdate.SecureJsonData, err = secretsSrv.EncryptJsonDataWithDBSession(ctx, decrypted, secrets.WithoutScope(), sess.Session)
+			toUpdate.SecureJsonData, err = secretsSrv.EncryptJsonDataWithDBSession(ctx, decrypted, secrets.WithoutScope(), sess.SessionInterface)
 			if err != nil {
 				logger.Warn("Could not re-encrypt secrets", "table", s.tableName, "id", row.Id, "error", err)
 				return err
@@ -239,7 +239,7 @@ func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secre
 							return err
 						}
 
-						reencrypted, err := secretsSrv.EncryptWithDBSession(ctx, decrypted, secrets.WithoutScope(), sess.Session)
+						reencrypted, err := secretsSrv.EncryptWithDBSession(ctx, decrypted, secrets.WithoutScope(), sess.SessionInterface)
 						if err != nil {
 							logger.Warn("Could not re-encrypt alert_configuration secret", "id", result.Id, "key", k, "error", err)
 							return err

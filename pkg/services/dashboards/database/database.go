@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -968,7 +968,7 @@ func (d *DashboardStore) GetDashboards(ctx context.Context, query *models.GetDas
 		}
 
 		var dashboards = make([]*models.Dashboard, 0)
-		var session *xorm.Session
+		var session xorm.SessionInterface
 		if len(query.DashboardIds) > 0 {
 			session = sess.In("id", query.DashboardIds)
 		} else {

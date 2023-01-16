@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -33,7 +33,7 @@ func (p *teamPermissionMigrator) SQL(dialect migrator.Dialect) string {
 	return "code migration"
 }
 
-func (p *teamPermissionMigrator) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+func (p *teamPermissionMigrator) Exec(sess xorm.SessionInterface, migrator *migrator.Migrator) error {
 	p.sess = sess
 	p.dialect = migrator.Dialect
 	return p.migrateMemberships()

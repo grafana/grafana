@@ -47,7 +47,7 @@ type Engine struct {
 }
 
 // BufferSize sets buffer size for iterate
-func (engine *Engine) BufferSize(size int) *Session {
+func (engine *Engine) BufferSize(size int) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.BufferSize(size)
@@ -247,7 +247,7 @@ func (engine *Engine) NoCache() *Session {
 }
 
 // NoCascade If you do not want to auto cascade load object
-func (engine *Engine) NoCascade() *Session {
+func (engine *Engine) NoCascade() SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.NoCascade()
@@ -302,7 +302,7 @@ func (engine *Engine) logSQL(sqlStr string, sqlArgs ...interface{}) {
 // and cannot use Where, Id, In and etc. Methods to describe, you can use SQL.
 //
 // Deprecated: use SQL instead.
-func (engine *Engine) Sql(querystring string, args ...interface{}) *Session {
+func (engine *Engine) Sql(querystring string, args ...interface{}) SessionInterface {
 	return engine.SQL(querystring, args...)
 }
 
@@ -312,7 +312,7 @@ func (engine *Engine) Sql(querystring string, args ...interface{}) *Session {
 //	engine.SQL("select * from user").Find(&users)
 //
 // This    code will execute "select * from user" and set the records to users
-func (engine *Engine) SQL(query interface{}, args ...interface{}) *Session {
+func (engine *Engine) SQL(query interface{}, args ...interface{}) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.SQL(query, args...)
@@ -328,7 +328,7 @@ func (engine *Engine) NoAutoTime() *Session {
 }
 
 // NoAutoCondition disable auto generate Where condition from bean or not
-func (engine *Engine) NoAutoCondition(no ...bool) *Session {
+func (engine *Engine) NoAutoCondition(no ...bool) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.NoAutoCondition(no...)
@@ -383,21 +383,21 @@ func (engine *Engine) Cascade(trueOrFalse ...bool) *Session {
 }
 
 // Where method provide a condition query
-func (engine *Engine) Where(query interface{}, args ...interface{}) *Session {
+func (engine *Engine) Where(query interface{}, args ...interface{}) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Where(query, args...)
 }
 
 // Id will be deprecated, please use ID instead
-func (engine *Engine) Id(id interface{}) *Session {
+func (engine *Engine) Id(id interface{}) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Id(id)
 }
 
 // ID method provoide a condition as (id) = ?
-func (engine *Engine) ID(id interface{}) *Session {
+func (engine *Engine) ID(id interface{}) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.ID(id)
@@ -434,35 +434,35 @@ func (engine *Engine) StoreEngine(storeEngine string) *Session {
 // Distinct use for distinct columns. Caution: when you are using cache,
 // distinct will not be cached because cache system need id,
 // but distinct will not provide id
-func (engine *Engine) Distinct(columns ...string) *Session {
+func (engine *Engine) Distinct(columns ...string) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Distinct(columns...)
 }
 
 // Select customerize your select columns or contents
-func (engine *Engine) Select(str string) *Session {
+func (engine *Engine) Select(str string) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Select(str)
 }
 
 // Cols only use the parameters as select or update columns
-func (engine *Engine) Cols(columns ...string) *Session {
+func (engine *Engine) Cols(columns ...string) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Cols(columns...)
 }
 
 // AllCols indicates that all columns should be use
-func (engine *Engine) AllCols() *Session {
+func (engine *Engine) AllCols() SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.AllCols()
 }
 
 // MustCols specify some columns must use even if they are empty
-func (engine *Engine) MustCols(columns ...string) *Session {
+func (engine *Engine) MustCols(columns ...string) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.MustCols(columns...)
@@ -473,84 +473,84 @@ func (engine *Engine) MustCols(columns ...string) *Session {
 // to tell system to do not ignore them.
 // If no parameters, it will use all the bool field of struct, or
 // it will use parameters's columns
-func (engine *Engine) UseBool(columns ...string) *Session {
+func (engine *Engine) UseBool(columns ...string) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.UseBool(columns...)
 }
 
 // Omit only not use the parameters as select or update columns
-func (engine *Engine) Omit(columns ...string) *Session {
+func (engine *Engine) Omit(columns ...string) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Omit(columns...)
 }
 
 // Nullable set null when column is zero-value and nullable for update
-func (engine *Engine) Nullable(columns ...string) *Session {
+func (engine *Engine) Nullable(columns ...string) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Nullable(columns...)
 }
 
 // In will generate "column IN (?, ?)"
-func (engine *Engine) In(column string, args ...interface{}) *Session {
+func (engine *Engine) In(column string, args ...interface{}) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.In(column, args...)
 }
 
 // NotIn will generate "column NOT IN (?, ?)"
-func (engine *Engine) NotIn(column string, args ...interface{}) *Session {
+func (engine *Engine) NotIn(column string, args ...interface{}) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.NotIn(column, args...)
 }
 
 // Incr provides a update string like "column = column + ?"
-func (engine *Engine) Incr(column string, arg ...interface{}) *Session {
+func (engine *Engine) Incr(column string, arg ...interface{}) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Incr(column, arg...)
 }
 
 // Decr provides a update string like "column = column - ?"
-func (engine *Engine) Decr(column string, arg ...interface{}) *Session {
+func (engine *Engine) Decr(column string, arg ...interface{}) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Decr(column, arg...)
 }
 
 // SetExpr provides a update string like "column = {expression}"
-func (engine *Engine) SetExpr(column string, expression interface{}) *Session {
+func (engine *Engine) SetExpr(column string, expression interface{}) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.SetExpr(column, expression)
 }
 
 // Table temporarily change the Get, Find, Update's table
-func (engine *Engine) Table(tableNameOrBean interface{}) *Session {
+func (engine *Engine) Table(tableNameOrBean interface{}) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Table(tableNameOrBean)
 }
 
 // Alias set the table alias
-func (engine *Engine) Alias(alias string) *Session {
+func (engine *Engine) Alias(alias string) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Alias(alias)
 }
 
 // Limit will generate "LIMIT start, limit"
-func (engine *Engine) Limit(limit int, start ...int) *Session {
+func (engine *Engine) Limit(limit int, start ...int) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Limit(limit, start...)
 }
 
 // Desc will generate "ORDER BY column1 DESC, column2 DESC"
-func (engine *Engine) Desc(colNames ...string) *Session {
+func (engine *Engine) Desc(colNames ...string) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Desc(colNames...)
@@ -561,14 +561,14 @@ func (engine *Engine) Desc(colNames ...string) *Session {
 //
 //	engine.Desc("name").Asc("age").Find(&users)
 //	// SELECT * FROM user ORDER BY name DESC, age ASC
-func (engine *Engine) Asc(colNames ...string) *Session {
+func (engine *Engine) Asc(colNames ...string) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Asc(colNames...)
 }
 
 // OrderBy will generate "ORDER BY order"
-func (engine *Engine) OrderBy(order string) *Session {
+func (engine *Engine) OrderBy(order string) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.OrderBy(order)
@@ -582,14 +582,14 @@ func (engine *Engine) Prepare() *Session {
 }
 
 // Join the join_operator should be one of INNER, LEFT OUTER, CROSS etc - this will be prepended to JOIN
-func (engine *Engine) Join(joinOperator string, tablename interface{}, condition string, args ...interface{}) *Session {
+func (engine *Engine) Join(joinOperator string, tablename interface{}, condition string, args ...interface{}) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Join(joinOperator, tablename, condition, args...)
 }
 
 // GroupBy generate group by statement
-func (engine *Engine) GroupBy(keys string) *Session {
+func (engine *Engine) GroupBy(keys string) SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.GroupBy(keys)
@@ -1327,7 +1327,7 @@ func (engine *Engine) SetSchema(schema string) {
 }
 
 // Unscoped always disable struct tag "deleted"
-func (engine *Engine) Unscoped() *Session {
+func (engine *Engine) Unscoped() SessionInterface {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Unscoped()

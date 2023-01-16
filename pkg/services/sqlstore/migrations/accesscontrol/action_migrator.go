@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 const ActionMigrationID = "RBAC action name migrator"
@@ -17,7 +17,7 @@ func AddActionNameMigrator(mg *migrator.Migrator) {
 }
 
 type actionNameMigrator struct {
-	sess     *xorm.Session
+	sess     xorm.SessionInterface
 	migrator *migrator.Migrator
 	migrator.MigrationBase
 }
@@ -28,7 +28,7 @@ func (m *actionNameMigrator) SQL(migrator.Dialect) string {
 	return CodeMigrationSQL
 }
 
-func (m *actionNameMigrator) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+func (m *actionNameMigrator) Exec(sess xorm.SessionInterface, migrator *migrator.Migrator) error {
 	m.sess = sess
 	m.migrator = migrator
 	return m.migrateActionNames()

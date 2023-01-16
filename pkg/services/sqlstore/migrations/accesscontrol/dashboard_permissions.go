@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -72,7 +72,7 @@ type dashboard struct {
 	HasAcl   bool `xorm:"has_acl"`
 }
 
-func (m dashboardPermissionsMigrator) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+func (m dashboardPermissionsMigrator) Exec(sess xorm.SessionInterface, migrator *migrator.Migrator) error {
 	m.sess = sess
 	m.dialect = migrator.Dialect
 
@@ -268,14 +268,14 @@ func (d *dashboardUidPermissionMigrator) SQL(dialect migrator.Dialect) string {
 	return "code migration"
 }
 
-func (d *dashboardUidPermissionMigrator) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+func (d *dashboardUidPermissionMigrator) Exec(sess xorm.SessionInterface, migrator *migrator.Migrator) error {
 	if err := d.migrateWildcards(sess); err != nil {
 		return err
 	}
 	return d.migrateIdScopes(sess)
 }
 
-func (d *dashboardUidPermissionMigrator) migrateWildcards(sess *xorm.Session) error {
+func (d *dashboardUidPermissionMigrator) migrateWildcards(sess xorm.SessionInterface) error {
 	if _, err := sess.Exec("DELETE FROM permission WHERE action = 'dashboards:create' AND scope LIKE 'dashboards%'"); err != nil {
 		return err
 	}
@@ -288,7 +288,7 @@ func (d *dashboardUidPermissionMigrator) migrateWildcards(sess *xorm.Session) er
 	return nil
 }
 
-func (d *dashboardUidPermissionMigrator) migrateIdScopes(sess *xorm.Session) error {
+func (d *dashboardUidPermissionMigrator) migrateIdScopes(sess xorm.SessionInterface) error {
 	type dashboard struct {
 		ID       int64  `xorm:"id"`
 		UID      string `xorm:"uid"`
@@ -326,7 +326,7 @@ func (m *managedFolderCreateAction) SQL(dialect migrator.Dialect) string {
 	return CodeMigrationSQL
 }
 
-func (m *managedFolderCreateAction) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+func (m *managedFolderCreateAction) Exec(sess xorm.SessionInterface, migrator *migrator.Migrator) error {
 	if _, err := sess.Exec("DELETE FROM permission WHERE action = 'folders:create' AND scope LIKE 'folders:uid:%'"); err != nil {
 		return err
 	}

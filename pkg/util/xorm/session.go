@@ -133,56 +133,56 @@ func (session *Session) After(closures func(interface{})) *Session {
 }
 
 // Table can input a string or pointer to struct for special a table to operate.
-func (session *Session) Table(tableNameOrBean interface{}) *Session {
+func (session *Session) Table(tableNameOrBean interface{}) SessionInterface {
 	session.statement.Table(tableNameOrBean)
 	return session
 }
 
 // Alias set the table alias
-func (session *Session) Alias(alias string) *Session {
+func (session *Session) Alias(alias string) SessionInterface {
 	session.statement.Alias(alias)
 	return session
 }
 
 // NoCascade indicate that no cascade load child object
-func (session *Session) NoCascade() *Session {
+func (session *Session) NoCascade() SessionInterface {
 	session.statement.UseCascade = false
 	return session
 }
 
 // ForUpdate Set Read/Write locking for UPDATE
-func (session *Session) ForUpdate() *Session {
+func (session *Session) ForUpdate() SessionInterface {
 	session.statement.IsForUpdate = true
 	return session
 }
 
 // NoAutoCondition disable generate SQL condition from beans
-func (session *Session) NoAutoCondition(no ...bool) *Session {
+func (session *Session) NoAutoCondition(no ...bool) SessionInterface {
 	session.statement.NoAutoCondition(no...)
 	return session
 }
 
 // Limit provide limit and offset query condition
-func (session *Session) Limit(limit int, start ...int) *Session {
+func (session *Session) Limit(limit int, start ...int) SessionInterface {
 	session.statement.Limit(limit, start...)
 	return session
 }
 
 // OrderBy provide order by query condition, the input parameter is the content
 // after order by on a sql statement.
-func (session *Session) OrderBy(order string) *Session {
+func (session *Session) OrderBy(order string) SessionInterface {
 	session.statement.OrderBy(order)
 	return session
 }
 
 // Desc provide desc order by query condition, the input parameters are columns.
-func (session *Session) Desc(colNames ...string) *Session {
+func (session *Session) Desc(colNames ...string) SessionInterface {
 	session.statement.Desc(colNames...)
 	return session
 }
 
 // Asc provide asc order by query condition, the input parameters are columns.
-func (session *Session) Asc(colNames ...string) *Session {
+func (session *Session) Asc(colNames ...string) SessionInterface {
 	session.statement.Asc(colNames...)
 	return session
 }
@@ -208,7 +208,7 @@ func (session *Session) Cascade(trueOrFalse ...bool) *Session {
 }
 
 // MustLogSQL means record SQL or not and don't follow engine's setting
-func (session *Session) MustLogSQL(log ...bool) *Session {
+func (session *Session) MustLogSQL(log ...bool) SessionInterface {
 	if len(log) > 0 {
 		session.showSQL = log[0]
 	} else {
@@ -225,13 +225,13 @@ func (session *Session) NoCache() *Session {
 }
 
 // Join join_operator should be one of INNER, LEFT OUTER, CROSS etc - this will be prepended to JOIN
-func (session *Session) Join(joinOperator string, tablename interface{}, condition string, args ...interface{}) *Session {
+func (session *Session) Join(joinOperator string, tablename interface{}, condition string, args ...interface{}) SessionInterface {
 	session.statement.Join(joinOperator, tablename, condition, args...)
 	return session
 }
 
 // GroupBy Generate Group By statement
-func (session *Session) GroupBy(keys string) *Session {
+func (session *Session) GroupBy(keys string) SessionInterface {
 	session.statement.GroupBy(keys)
 	return session
 }
@@ -839,7 +839,7 @@ func (session *Session) LastSQL() (string, []interface{}) {
 }
 
 // Unscoped always disable struct tag "deleted"
-func (session *Session) Unscoped() *Session {
+func (session *Session) Unscoped() SessionInterface {
 	session.statement.Unscoped()
 	return session
 }

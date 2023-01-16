@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"

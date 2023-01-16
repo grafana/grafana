@@ -16,9 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/util/xorm"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"xorm.io/xorm"
 )
 
 const ManagedPermissionsMigrationID = "managed permissions migration"

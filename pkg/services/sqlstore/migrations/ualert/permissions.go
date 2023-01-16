@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -48,7 +48,7 @@ type dashboardACL struct {
 func (p dashboardACL) TableName() string { return "dashboard_acl" }
 
 type folderHelper struct {
-	sess *xorm.Session
+	sess xorm.SessionInterface
 	mg   *migrator.Migrator
 }
 
@@ -243,7 +243,6 @@ func (m *folderHelper) setACL(orgID int64, dashboardID int64, items []*dashboard
 		item.DashboardID = dashboardID
 		item.Created = time.Now()
 		item.Updated = time.Now()
-
 		m.sess.Nullable("user_id", "team_id")
 		if _, err := m.sess.Insert(item); err != nil {
 			return err

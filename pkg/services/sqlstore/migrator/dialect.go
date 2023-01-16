@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 var (
@@ -58,8 +58,8 @@ type Dialect interface {
 	Limit(limit int64) string
 	LimitOffset(limit int64, offset int64) string
 
-	PreInsertId(table string, sess *xorm.Session) error
-	PostInsertId(table string, sess *xorm.Session) error
+	PreInsertId(table string, sess xorm.SessionInterface) error
+	PostInsertId(table string, sess xorm.SessionInterface) error
 
 	CleanDB() error
 	TruncateDBTables() error
@@ -73,7 +73,7 @@ type Dialect interface {
 }
 
 type LockCfg struct {
-	Session *xorm.Session
+	Session xorm.SessionInterface
 	Timeout int
 }
 
@@ -294,11 +294,11 @@ func (b *BaseDialect) LimitOffset(limit int64, offset int64) string {
 	return fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
 }
 
-func (b *BaseDialect) PreInsertId(table string, sess *xorm.Session) error {
+func (b *BaseDialect) PreInsertId(table string, sess xorm.SessionInterface) error {
 	return nil
 }
 
-func (b *BaseDialect) PostInsertId(table string, sess *xorm.Session) error {
+func (b *BaseDialect) PostInsertId(table string, sess xorm.SessionInterface) error {
 	return nil
 }
 

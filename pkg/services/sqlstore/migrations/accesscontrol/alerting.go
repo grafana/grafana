@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -15,7 +15,7 @@ func AddAlertingPermissionsMigrator(mg *migrator.Migrator) {
 }
 
 type alertingMigrator struct {
-	sess     *xorm.Session
+	sess     xorm.SessionInterface
 	migrator *migrator.Migrator
 	migrator.MigrationBase
 }
@@ -26,7 +26,7 @@ func (m *alertingMigrator) SQL(migrator.Dialect) string {
 	return "code migration"
 }
 
-func (m *alertingMigrator) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+func (m *alertingMigrator) Exec(sess xorm.SessionInterface, migrator *migrator.Migrator) error {
 	m.sess = sess
 	m.migrator = migrator
 	return m.migrateNotificationActions()

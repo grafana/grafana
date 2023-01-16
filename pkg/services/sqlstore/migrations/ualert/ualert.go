@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/util/xorm"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
-	"xorm.io/xorm"
 
 	"github.com/grafana/alerting/alerting/notifier/channels"
 
@@ -411,7 +411,7 @@ func (m *migration) insertRules(mg *migrator.Migrator, rulesPerOrg map[int64]map
 		for rule := range rules {
 			var err error
 			if strings.HasPrefix(mg.Dialect.DriverName(), migrator.Postgres) {
-				err = mg.InTransaction(func(sess *xorm.Session) error {
+				err = mg.InTransaction(func(sess xorm.SessionInterface) error {
 					_, err := sess.Insert(rule)
 					return err
 				})
@@ -616,7 +616,7 @@ type upgradeNgAlerting struct {
 
 var _ migrator.CodeMigration = &upgradeNgAlerting{}
 
-func (u *upgradeNgAlerting) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+func (u *upgradeNgAlerting) Exec(sess xorm.SessionInterface, migrator *migrator.Migrator) error {
 	firstOrgId, err := u.updateAlertConfigurations(sess, migrator)
 	if err != nil {
 		return err
@@ -625,7 +625,7 @@ func (u *upgradeNgAlerting) Exec(sess *xorm.Session, migrator *migrator.Migrator
 	return nil
 }
 
-func (u *upgradeNgAlerting) updateAlertConfigurations(sess *xorm.Session, migrator *migrator.Migrator) (int64, error) {
+func (u *upgradeNgAlerting) updateAlertConfigurations(sess xorm.SessionInterface, migrator *migrator.Migrator) (int64, error) {
 	// if there are records with org_id == 0 then the feature flag was enabled before 8.2 that introduced org separation.
 	// if feature is enabled in 8.2 the migration "AddDashAlertMigration", which is effectively different from what was run in 8.1.x and earlier versions,
 	// will handle organizations correctly, and, therefore, nothing needs to be fixed
@@ -763,7 +763,7 @@ type createDefaultFoldersForAlertingMigration struct {
 	migrator.MigrationBase
 }
 
-func (c createDefaultFoldersForAlertingMigration) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+func (c createDefaultFoldersForAlertingMigration) Exec(sess xorm.SessionInterface, migrator *migrator.Migrator) error {
 	helper := folderHelper{
 		sess: sess,
 		mg:   migrator,
@@ -822,7 +822,7 @@ func (c updateRulesOrderInGroup) SQL(migrator.Dialect) string {
 	return codeMigration
 }
 
-func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+func (c updateRulesOrderInGroup) Exec(sess xorm.SessionInterface, migrator *migrator.Migrator) error {
 	var rows []*alertRule
 	if err := sess.Table(alertRule{}).Asc("id").Find(&rows); err != nil {
 		return fmt.Errorf("failed to read the list of alert rules: %w", err)
@@ -960,7 +960,7 @@ func (c extractAlertmanagerConfigurationHistory) SQL(migrator.Dialect) string {
 	return codeMigration
 }
 
-func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+func (c extractAlertmanagerConfigurationHistory) Exec(sess xorm.SessionInterface, migrator *migrator.Migrator) error {
 	var orgs []int64
 	if err := sess.Table("alert_configuration").Distinct("org_id").Find(&orgs); err != nil {
 		return fmt.Errorf("failed to retrieve the organizations with alerting configurations: %w", err)

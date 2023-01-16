@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -323,7 +324,12 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 	if err != nil {
 		return nil, nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		err := rows.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	cols := make(map[string]*core.Column)
 	colSeq := make([]string, 0)
@@ -574,7 +580,7 @@ func (p *mymysqlDriver) Parse(driverName, dataSourceName string) (*core.Uri, err
 		// Parse protocol part of URI
 		p := strings.SplitN(pd[0], ":", 2)
 		if len(p) != 2 {
-			return nil, errors.New("Wrong protocol part of URI")
+			return nil, errors.New("wrong protocol part of URI")
 		}
 		db.Proto = p[0]
 		options := strings.Split(p[1], ",")
@@ -606,7 +612,7 @@ func (p *mymysqlDriver) Parse(driverName, dataSourceName string) (*core.Uri, err
 	// Parse database part of URI
 	dup := strings.SplitN(pd[0], "/", 3)
 	if len(dup) != 3 {
-		return nil, errors.New("Wrong database part of URI")
+		return nil, errors.New("wrong database part of URI")
 	}
 	db.DbName = dup[0]
 	db.User = dup[1]

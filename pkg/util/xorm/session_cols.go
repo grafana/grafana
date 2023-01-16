@@ -77,43 +77,43 @@ func col2NewCols(columns ...string) []string {
 }
 
 // Incr provides a query string like "count = count + 1"
-func (session *Session) Incr(column string, arg ...interface{}) *Session {
+func (session *Session) Incr(column string, arg ...interface{}) SessionInterface {
 	session.statement.Incr(column, arg...)
 	return session
 }
 
 // Decr provides a query string like "count = count - 1"
-func (session *Session) Decr(column string, arg ...interface{}) *Session {
+func (session *Session) Decr(column string, arg ...interface{}) SessionInterface {
 	session.statement.Decr(column, arg...)
 	return session
 }
 
 // SetExpr provides a query string like "column = {expression}"
-func (session *Session) SetExpr(column string, expression interface{}) *Session {
+func (session *Session) SetExpr(column string, expression interface{}) SessionInterface {
 	session.statement.SetExpr(column, expression)
 	return session
 }
 
 // Select provides some columns to special
-func (session *Session) Select(str string) *Session {
+func (session *Session) Select(str string) SessionInterface {
 	session.statement.Select(str)
 	return session
 }
 
 // Cols provides some columns to special
-func (session *Session) Cols(columns ...string) *Session {
+func (session *Session) Cols(columns ...string) SessionInterface {
 	session.statement.Cols(columns...)
 	return session
 }
 
 // AllCols ask all columns
-func (session *Session) AllCols() *Session {
+func (session *Session) AllCols() SessionInterface {
 	session.statement.AllCols()
 	return session
 }
 
 // MustCols specify some columns must use even if they are empty
-func (session *Session) MustCols(columns ...string) *Session {
+func (session *Session) MustCols(columns ...string) SessionInterface {
 	session.statement.MustCols(columns...)
 	return session
 }
@@ -123,7 +123,7 @@ func (session *Session) MustCols(columns ...string) *Session {
 // to tell system to do not ignore them.
 // If no parameters, it will use all the bool field of struct, or
 // it will use parameters's columns
-func (session *Session) UseBool(columns ...string) *Session {
+func (session *Session) UseBool(columns ...string) SessionInterface {
 	session.statement.UseBool(columns...)
 	return session
 }
@@ -131,19 +131,19 @@ func (session *Session) UseBool(columns ...string) *Session {
 // Distinct use for distinct columns. Caution: when you are using cache,
 // distinct will not be cached because cache system need id,
 // but distinct will not provide id
-func (session *Session) Distinct(columns ...string) *Session {
+func (session *Session) Distinct(columns ...string) SessionInterface {
 	session.statement.Distinct(columns...)
 	return session
 }
 
 // Omit Only not use the parameters as select or update columns
-func (session *Session) Omit(columns ...string) *Session {
+func (session *Session) Omit(columns ...string) SessionInterface {
 	session.statement.Omit(columns...)
 	return session
 }
 
 // Nullable Set null when column is zero-value and nullable for update
-func (session *Session) Nullable(columns ...string) *Session {
+func (session *Session) Nullable(columns ...string) SessionInterface {
 	session.statement.Nullable(columns...)
 	return session
 }

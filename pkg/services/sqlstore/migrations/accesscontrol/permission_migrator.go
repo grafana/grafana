@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -17,7 +17,7 @@ var (
 )
 
 type permissionMigrator struct {
-	sess    *xorm.Session
+	sess    xorm.SessionInterface
 	dialect migrator.Dialect
 	migrator.MigrationBase
 }

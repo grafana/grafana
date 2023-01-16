@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/events"
@@ -75,7 +75,7 @@ func (ss *SqlStore) getDataSource(ctx context.Context, query *datasources.GetDat
 }
 
 func (ss *SqlStore) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
-	var sess *xorm.Session
+	var sess xorm.SessionInterface
 	return ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
 		if query.DataSourceLimit <= 0 {
 			sess = dbSess.Where("org_id=?", query.OrgId).Asc("name")
@@ -344,7 +344,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		// secure json data to the unified secrets table.
 		sess.MustCols("secure_json_data")
 
-		var updateSession *xorm.Session
+		var updateSession xorm.SessionInterface
 		if cmd.Version != 0 {
 			// the reason we allow cmd.version > db.version is make it possible for people to force
 			// updates to datasources using the datasource.yaml file without knowing exactly what version

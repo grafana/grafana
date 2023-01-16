@@ -5,13 +5,14 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/grafana/grafana/pkg/util/xorm"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/atomic"
-	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	gxorm "github.com/grafana/grafana/pkg/util/xorm"
 )
 
 var (
@@ -105,7 +106,7 @@ func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int)
 		return mg.run()
 	}
 
-	return mg.InTransaction(func(sess *xorm.Session) error {
+	return mg.InTransaction(func(sess xorm.SessionInterface) error {
 		mg.Logger.Info("Locking database")
 		if err := casRestoreOnErr(&mg.isLocked, false, true, ErrMigratorIsLocked, mg.Dialect.Lock, LockCfg{Session: sess, Timeout: lockAttemptTimeout}); err != nil {
 			mg.Logger.Error("Failed to lock database", "error", err)
@@ -153,7 +154,7 @@ func (mg *Migrator) run() (err error) {
 			Timestamp:   time.Now(),
 		}
 
-		err := mg.InTransaction(func(sess *xorm.Session) error {
+		err := mg.InTransaction(func(sess xorm.SessionInterface) error {
 			err := mg.exec(m, sess)
 			if err != nil {
 				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
@@ -185,7 +186,7 @@ func (mg *Migrator) run() (err error) {
 	return mg.DBEngine.Sync2()
 }
 
-func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
+func (mg *Migrator) exec(m Migration, sess xorm.SessionInterface) error {
 	mg.Logger.Info("Executing migration", "id", m.Id())
 
 	condition := m.GetCondition()
@@ -225,10 +226,14 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 	return nil
 }
 
-type dbTransactionFunc func(sess *xorm.Session) error
+type dbTransactionFunc func(sess xorm.SessionInterface) error
+
+func (mg *Migrator) GetNewSession() gxorm.SessionInterface {
+	return mg.DBEngine.NewSession()
+}
 
 func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
-	sess := mg.DBEngine.NewSession()
+	sess := mg.GetNewSession()
 	defer sess.Close()
 
 	if err := sess.Begin(); err != nil {

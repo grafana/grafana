@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/grafana/grafana/pkg/util/xorm"
 	"go.opentelemetry.io/otel/attribute"
-	"xorm.io/xorm"
 
 	"github.com/mattn/go-sqlite3"
 
@@ -23,7 +23,7 @@ var sessionLogger = log.New("sqlstore.session")
 var ErrMaximumRetriesReached = errutil.NewBase(errutil.StatusInternal, "sqlstore.max-retries-reached")
 
 type DBSession struct {
-	*xorm.Session
+	xorm.SessionInterface
 	transactionOpen bool
 	events          []interface{}
 }
@@ -46,14 +46,14 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 	if ok {
 		ctxLogger := sessionLogger.FromContext(ctx)
 		ctxLogger.Debug("reusing existing session", "transaction", sess.transactionOpen)
-		sess.Session = sess.Session.Context(ctx)
+		sess.SessionInterface = sess.SessionInterface.Context(ctx)
 		return sess, false, nil, nil
 	}
 
 	tctx, span := tracer.Start(ctx, "open session")
 	span.SetAttributes("transaction", beginTran, attribute.Key("transaction").Bool(beginTran))
 
-	newSess := &DBSession{Session: engine.NewSession(), transactionOpen: beginTran}
+	newSess := &DBSession{SessionInterface: engine.NewSession(), transactionOpen: beginTran}
 
 	if beginTran {
 		err := newSess.Begin()
@@ -61,7 +61,7 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 			return nil, false, span, err
 		}
 	}
-	newSess.Session = newSess.Session.Context(tctx)
+	newSess.SessionInterface = newSess.SessionInterface.Context(tctx)
 
 	return newSess, true, span, nil
 }
@@ -77,7 +77,7 @@ func (ss *SQLStore) WithDbSession(ctx context.Context, callback DBTransactionFun
 // WithNewDbSession calls the callback with a new session that is closed upon completion.
 // In case of sqlite3.ErrLocked or sqlite3.ErrBusy failure it will be retried at most five times before giving up.
 func (ss *SQLStore) WithNewDbSession(ctx context.Context, callback DBTransactionFunc) error {
-	sess := &DBSession{Session: ss.engine.NewSession(), transactionOpen: false}
+	sess := &DBSession{SessionInterface: ss.engine.NewSession(), transactionOpen: false}
 	defer sess.Close()
 	retry := 0
 	return retryer.Retry(ss.retryOnLocks(ctx, callback, sess, retry), ss.dbCfg.QueryRetries, time.Millisecond*time.Duration(10), time.Second)
@@ -130,14 +130,14 @@ func (ss *SQLStore) withDbSession(ctx context.Context, engine *xorm.Engine, call
 func (sess *DBSession) InsertId(bean interface{}, dialect migrator.Dialect) (int64, error) {
 	table := sess.DB().Mapper.Obj2Table(getTypeName(bean))
 
-	if err := dialect.PreInsertId(table, sess.Session); err != nil {
+	if err := dialect.PreInsertId(table, sess.SessionInterface); err != nil {
 		return 0, err
 	}
-	id, err := sess.Session.InsertOne(bean)
+	id, err := sess.SessionInterface.InsertOne(bean)
 	if err != nil {
 		return 0, err
 	}
-	if err := dialect.PostInsertId(table, sess.Session); err != nil {
+	if err := dialect.PostInsertId(table, sess.SessionInterface); err != nil {
 		return 0, err
 	}
 
