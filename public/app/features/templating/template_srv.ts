@@ -276,11 +276,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
-<<<<<<< HEAD
-    if (scopedVars && scopedVars.__sceneObject && scopedVars.__sceneObject.value instanceof SceneObjectBase) {
-=======
     if (scopedVars && scopedVars.__sceneObject) {
->>>>>>> 021eda7aad2e4d29d6c15ff1df578af9dfb394fc
       return sceneGraph.interpolate(
         scopedVars.__sceneObject.value,
         target,
