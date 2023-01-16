@@ -1,5 +1,4 @@
 ---
-draft: true
 keywords:
   - grafana
   - schema
