@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -44,7 +43,6 @@ func ProvideService(
 	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
-	remoteCache *remotecache.RemoteCache,
 ) *Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -93,7 +91,7 @@ func ProvideService(
 	}
 
 	if s.cfg.AuthProxyEnabled && len(proxyClients) > 0 {
-		proxy, err := clients.ProvideProxy(cfg, remoteCache, proxyClients...)
+		proxy, err := clients.ProvideProxy(cfg, proxyClients...)
 		if err != nil {
 			s.log.Error("failed to configure auth proxy", "err", err)
 		} else {

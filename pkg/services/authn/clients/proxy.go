@@ -7,7 +7,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -15,15 +14,14 @@ import (
 )
 
 const (
-	proxyFieldName      = "Name"
-	proxyFieldEmail     = "Email"
-	proxyFieldLogin     = "Login"
-	proxyFieldRole      = "Role"
-	proxyFieldGroups    = "Groups"
-	proxyCacheKeyPrefix = "auth-proxy-sync-ttl:%s"
+	proxyFieldName   = "Name"
+	proxyFieldEmail  = "Email"
+	proxyFieldLogin  = "Login"
+	proxyFieldRole   = "Role"
+	proxyFieldGroups = "Groups"
 )
 
-var proxyFileds = [...]string{proxyFieldName, proxyFieldEmail, proxyFieldLogin, proxyFieldRole, proxyFieldGroups}
+var proxyFields = [...]string{proxyFieldName, proxyFieldEmail, proxyFieldLogin, proxyFieldRole, proxyFieldGroups}
 
 var (
 	errNotAcceptedIP      = errutil.NewBase(errutil.StatusValidationFailed, "auth-proxy.invalid-ip")
@@ -32,17 +30,16 @@ var (
 
 var _ authn.Client = new(Proxy)
 
-func ProvideProxy(cfg *setting.Cfg, cache *remotecache.RemoteCache, clients ...authn.ProxyClient) (*Proxy, error) {
+func ProvideProxy(cfg *setting.Cfg, clients ...authn.ProxyClient) (*Proxy, error) {
 	list, err := parseAcceptList(cfg.AuthProxyWhitelist)
 	if err != nil {
 		return nil, err
 	}
-	return &Proxy{cfg, cache, clients, list}, nil
+	return &Proxy{cfg, clients, list}, nil
 }
 
 type Proxy struct {
 	cfg         *setting.Cfg
-	cache       *remotecache.RemoteCache
 	clients     []authn.ProxyClient
 	acceptedIPs []*net.IPNet
 }
@@ -132,18 +129,11 @@ func getProxyHeader(r *authn.Request, headerName string, encoded bool) string {
 }
 
 func getAdditionalProxyHeaders(r *authn.Request, cfg *setting.Cfg) map[string]string {
-	additional := make(map[string]string, len(proxyFileds))
-	for _, k := range proxyFileds {
+	additional := make(map[string]string, len(proxyFields))
+	for _, k := range proxyFields {
 		if v := getProxyHeader(r, cfg.AuthProxyHeaders[k], cfg.AuthProxyHeadersEncoded); v != "" {
 			additional[k] = v
 		}
 	}
 	return additional
-}
-
-func getCacheKey(username string) (string, error) {
-	var b strings.Builder
-	b.WriteString(username)
-
-	return "", nil
 }
