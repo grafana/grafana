@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { GrafanaTheme2, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
 import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import CloudMonitoringDatasource from '../datasource';
 import { getAlignmentPickerData, getMetricType, setMetricType } from '../functions';
@@ -46,8 +45,7 @@ export function Editor({
   const [metrics, setMetrics] = useState<Array<SelectableValue<string>>>([]);
   const [services, setServices] = useState<Array<SelectableValue<string>>>([]);
   const [service, setService] = useState<string>('');
-  const [timeSrv, _setTimeSrv] = useState<TimeSrv>(datasource.timeSrv);
-  const [timeRange, setTimeRange] = useState<TimeRange>({ ...timeSrv.timeRange() });
+  const [timeRange, setTimeRange] = useState<TimeRange>({ ...datasource.timeSrv.timeRange() });
 
   const useTime = (time: TimeRange) => {
     if (timeRange !== null && (timeRange.raw.from !== time.raw.from || timeRange.raw.to !== time.raw.to)) {
@@ -55,7 +53,7 @@ export function Editor({
     }
   };
 
-  useTime(timeSrv.timeRange());
+  useTime(datasource.timeSrv.timeRange());
 
   const theme = useTheme2();
   const selectStyles = getSelectStyles(theme);
@@ -136,7 +134,7 @@ export function Editor({
         description: m.description,
       }));
     // On service change reset all query values except the project name
-    Object.assign(query, { ...defaultTimeSeriesList(datasource), projectName: query.projectName });
+    query.filters = [];
 
     if (metrics.length > 0 && !metrics.some((m) => m.value === templateSrv.replace(metricType))) {
       onMetricTypeChange(metrics[0]);
