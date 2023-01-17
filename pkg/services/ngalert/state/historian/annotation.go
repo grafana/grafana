@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
@@ -49,7 +48,7 @@ func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule *ngmodel
 	go h.recordAnnotationsSync(ctx, panel, annotations, logger)
 }
 
-func (h *AnnotationBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
+func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error) {
 	logger := h.log.FromContext(ctx)
 	if query.RuleUID == "" {
 		return nil, fmt.Errorf("ruleUID is required to query annotations")
