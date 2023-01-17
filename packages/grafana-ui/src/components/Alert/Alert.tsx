@@ -66,12 +66,12 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
     return (
       <div
-        {...restProps}
         ref={ref}
         className={cx(styles.alert, className)}
         data-testid={selectors.components.Alert.alertV2(severity)}
         role={role}
         aria-label={ariaLabel}
+        {...restProps}
       >
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity)} />
