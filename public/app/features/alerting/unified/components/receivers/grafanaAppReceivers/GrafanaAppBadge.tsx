@@ -4,9 +4,11 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { HorizontalGroup, useStyles2 } from '@grafana/ui';
 
-import { GRAFANA_APP_RECEIVERS_SOURCE_IMAGE, GrafanaAppReceiverEnum } from './types';
+import { SupportedPlugin } from '../../../types/pluginBridges';
 
-export const GrafanaAppBadge = ({ grafanaAppType }: { grafanaAppType: GrafanaAppReceiverEnum }) => {
+import { GRAFANA_APP_RECEIVERS_SOURCE_IMAGE } from './types';
+
+export const GrafanaAppBadge = ({ grafanaAppType }: { grafanaAppType: SupportedPlugin }) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.wrapper}>

@@ -3,10 +3,8 @@ package usersync
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -28,26 +26,27 @@ type OrgSync struct {
 
 func (s *OrgSync) SyncOrgUser(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
 	if !id.ClientParams.SyncUser {
-		s.log.Debug("Not syncing org user", "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return nil
 	}
 
 	namespace, userID := id.NamespacedID()
-	if namespace != "user" && userID <= 0 {
-		return fmt.Errorf("invalid namespace %q for user ID %q", namespace, userID)
+	if namespace != "user" || userID <= 0 {
+		s.log.Warn("invalid namespace %q for user ID %q", namespace, userID)
+		return nil
 	}
 
-	s.log.Debug("Syncing organization roles", "id", userID, "extOrgRoles", id.OrgRoles)
+	s.log.Debug("syncing organization roles", "id", userID, "extOrgRoles", id.OrgRoles)
 	// don't sync org roles if none is specified
 	if len(id.OrgRoles) == 0 {
-		s.log.Debug("Not syncing organization roles since external user doesn't have any")
+		s.log.Debug("not syncing organization roles since external user doesn't have any")
 		return nil
 	}
 
 	orgsQuery := &org.GetUserOrgListQuery{UserID: userID}
 	result, err := s.orgService.GetUserOrgList(ctx, orgsQuery)
 	if err != nil {
-		return err
+		s.log.Error("failed to get user's organizations", "userId", userID, "error", err)
+		return nil
 	}
 
 	handledOrgIds := map[int64]bool{}
@@ -64,7 +63,8 @@ func (s *OrgSync) SyncOrgUser(ctx context.Context, id *authn.Identity, _ *authn.
 			// update role
 			cmd := &org.UpdateOrgUserCommand{OrgID: orga.OrgID, UserID: userID, Role: extRole}
 			if err := s.orgService.UpdateOrgUser(ctx, cmd); err != nil {
-				return err
+				s.log.Error("failed to update active org user", "userId", userID, "error", err)
+				return nil
 			}
 		}
 	}
@@ -81,7 +81,8 @@ func (s *OrgSync) SyncOrgUser(ctx context.Context, id *authn.Identity, _ *authn.
 		cmd := &org.AddOrgUserCommand{UserID: userID, Role: orgRole, OrgID: orgId}
 		err := s.orgService.AddOrgUser(ctx, cmd)
 		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
-			return err
+			s.log.Error("failed to update active org user", "userId", userID, "error", err)
+			return nil
 		}
 	}
 
@@ -92,16 +93,17 @@ func (s *OrgSync) SyncOrgUser(ctx context.Context, id *authn.Identity, _ *authn.
 		cmd := &org.RemoveOrgUserCommand{OrgID: orgId, UserID: userID}
 		if err := s.orgService.RemoveOrgUser(ctx, cmd); err != nil {
 			if errors.Is(err, org.ErrLastOrgAdmin) {
-				logger.Error(err.Error(), "userId", cmd.UserID, "orgId", cmd.OrgID)
+				s.log.Error(err.Error(), "userId", cmd.UserID, "orgId", cmd.OrgID)
 				continue
 			}
 
-			return err
+			s.log.Error("failed to delete user org membership", "userId", userID, "error", err)
+			return nil
 		}
 
 		if err := s.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserID); err != nil {
-			logger.Error("failed to delete permissions for user", "error", err, "userID", cmd.UserID, "orgID", orgId)
-			return err
+			s.log.Error("failed to delete permissions for user", "error", err, "userID", cmd.UserID, "orgID", orgId)
+			return nil
 		}
 	}
 

@@ -89,7 +89,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			for _, id := range tt.teamPermissions {
-				_, err := permissionStore.SetTeamResourcePermission(context.Background(), tt.orgID, team.Id, rs.SetResourcePermissionCommand{
+				_, err := permissionStore.SetTeamResourcePermission(context.Background(), tt.orgID, team.ID, rs.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
@@ -117,7 +117,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			userID := user.ID
-			teamIDs := []int64{team.Id}
+			teamIDs := []int64{team.ID}
 			if tt.anonymousUser {
 				userID = 0
 				teamIDs = []int64{}
@@ -217,7 +217,7 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 }
 
-func createUserAndTeam(t *testing.T, userSrv user.Service, teamSvc team.Service, orgID int64) (*user.User, models.Team) {
+func createUserAndTeam(t *testing.T, userSrv user.Service, teamSvc team.Service, orgID int64) (*user.User, team.Team) {
 	t.Helper()
 
 	user, err := userSrv.Create(context.Background(), &user.CreateUserCommand{
@@ -229,7 +229,7 @@ func createUserAndTeam(t *testing.T, userSrv user.Service, teamSvc team.Service,
 	team, err := teamSvc.CreateTeam("team", "", orgID)
 	require.NoError(t, err)
 
-	err = teamSvc.AddTeamMember(user.ID, orgID, team.Id, false, models.PERMISSION_VIEW)
+	err = teamSvc.AddTeamMember(user.ID, orgID, team.ID, false, models.PERMISSION_VIEW)
 	require.NoError(t, err)
 
 	return user, team
@@ -276,14 +276,14 @@ func createUsersAndTeams(t *testing.T, svcs helperServices, orgID int64, users [
 		team, err := svcs.teamSvc.CreateTeam(fmt.Sprintf("team%v", i+1), "", orgID)
 		require.NoError(t, err)
 
-		err = svcs.teamSvc.AddTeamMember(user.ID, orgID, team.Id, false, models.PERMISSION_VIEW)
+		err = svcs.teamSvc.AddTeamMember(user.ID, orgID, team.ID, false, models.PERMISSION_VIEW)
 		require.NoError(t, err)
 
 		err = svcs.orgSvc.UpdateOrgUser(context.Background(),
 			&org.UpdateOrgUserCommand{Role: users[i].orgRole, OrgID: orgID, UserID: user.ID})
 		require.NoError(t, err)
 
-		res = append(res, dbUser{userID: user.ID, teamID: team.Id})
+		res = append(res, dbUser{userID: user.ID, teamID: team.ID})
 	}
 
 	return res
