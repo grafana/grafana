@@ -25,6 +25,7 @@ declare -A env=(
 )
 
 testFilesForSingleSuite="*.spec.ts"
+testFilesForEnterpriseSuite="enterprise/*-suite/*.spec.ts"
 
 declare -A cypressConfig=(
   [integrationFolder]=../../e2e
@@ -63,6 +64,21 @@ case "$1" in
         cypressConfig[integrationFolder]=../../e2e/benchmarks/"${args[1]}"
         cypressConfig[screenshotsFolder]=../../e2e/benchmarks/"${args[1]}"/screenshots
         cypressConfig[testFiles]=$testFilesForSingleSuite
+        ;;
+    "enterprise")
+        echo "Enterprise"
+        case "$2" in
+            "debug")
+                echo -e "Debug mode"
+                env[SLOWMO]=1
+                PARAMS="--no-exit"
+                ;;
+            "dev")
+                echo "Dev mode"
+                CMD="open"
+                ;;
+        esac
+        cypressConfig[testFiles]=$testFilesForEnterpriseSuite
         ;;
     "")
         ;;
