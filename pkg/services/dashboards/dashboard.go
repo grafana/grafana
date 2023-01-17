@@ -12,19 +12,19 @@ import (
 //
 //go:generate mockery --name DashboardService --structname FakeDashboardService --inpackage --filename dashboard_service_mock.go
 type DashboardService interface {
-	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error)
+	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
 	FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
-	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) error
+	GetDashboard(ctx context.Context, query *GetDashboardQuery) error
 	GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error
-	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
+	GetDashboards(ctx context.Context, query *GetDashboardsQuery) error
 	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
-	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
+	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) error
 	HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error
 	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
-	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*models.Dashboard, error)
+	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*Dashboard, error)
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
-	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
+	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*Dashboard, error)
 	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardACL) error
 	DeleteACLByUser(ctx context.Context, userID int64) error
@@ -45,8 +45,8 @@ type DashboardProvisioningService interface {
 	GetProvisionedDashboardData(ctx context.Context, name string) ([]*models.DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*models.DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
-	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*models.Dashboard, error)
-	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
+	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*Dashboard, error)
+	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *DashboardProvisioning) (*Dashboard, error)
 	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
 }
 
@@ -57,10 +57,10 @@ type Store interface {
 	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
 	FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
-	GetDashboard(ctx context.Context, query *models.GetDashboardQuery) (*models.Dashboard, error)
+	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 	GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error
-	GetDashboardUIDById(ctx context.Context, query *models.GetDashboardRefByIdQuery) error
-	GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error
+	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) error
+	GetDashboards(ctx context.Context, query *GetDashboardsQuery) error
 	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
 	GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
 	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
@@ -71,12 +71,12 @@ type Store interface {
 	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
 	// SaveAlerts saves dashboard alerts.
 	SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error
-	SaveDashboard(ctx context.Context, cmd models.SaveDashboardCommand) (*models.Dashboard, error)
-	SaveProvisionedDashboard(ctx context.Context, cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
+	SaveDashboard(ctx context.Context, cmd SaveDashboardCommand) (*Dashboard, error)
+	SaveProvisionedDashboard(ctx context.Context, cmd SaveDashboardCommand, provisioning *DashboardProvisioning) (*Dashboard, error)
 	UnprovisionDashboard(ctx context.Context, id int64) error
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardACL) error
 	// ValidateDashboardBeforeSave validates a dashboard before save.
-	ValidateDashboardBeforeSave(ctx context.Context, dashboard *models.Dashboard, overwrite bool) (bool, error)
+	ValidateDashboardBeforeSave(ctx context.Context, dashboard *Dashboard, overwrite bool) (bool, error)
 	DeleteACLByUser(context.Context, int64) error
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)

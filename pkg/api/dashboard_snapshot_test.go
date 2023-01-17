@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 )
 
@@ -33,7 +34,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 	}
 
 	sqlmock := mockstore.NewSQLStoreMock()
-	sqlmock.ExpectedTeamsByUser = []*models.TeamDTO{}
+	sqlmock.ExpectedTeamsByUser = []*team.TeamDTO{}
 	jsonModel, err := simplejson.NewJson([]byte(`{"id":100}`))
 	require.NoError(t, err)
 
@@ -73,11 +74,11 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 				teamSvc := &teamtest.FakeService{}
 				dashSvc := dashboards.NewFakeDashboardService(t)
-				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					q := args.Get(1).(*models.GetDashboardQuery)
-					q.Result = &models.Dashboard{
-						Id:  q.Id,
-						Uid: q.Uid,
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*dashboards.GetDashboardQuery)
+					q.Result = &dashboards.Dashboard{
+						ID:  q.ID,
+						UID: q.UID,
 					}
 				}).Return(nil).Maybe()
 				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil).Maybe()
@@ -135,11 +136,11 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 					externalRequest = req
 				})
 				dashSvc := dashboards.NewFakeDashboardService(t)
-				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					q := args.Get(1).(*models.GetDashboardQuery)
-					q.Result = &models.Dashboard{
-						Id:    q.Id,
-						OrgId: q.OrgId,
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*dashboards.GetDashboardQuery)
+					q.Result = &dashboards.Dashboard{
+						ID:    q.ID,
+						OrgID: q.OrgID,
 					}
 				}).Return(nil).Maybe()
 				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
@@ -257,7 +258,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 func TestGetDashboardSnapshotNotFound(t *testing.T) {
 	sqlmock := mockstore.NewSQLStoreMock()
-	sqlmock.ExpectedTeamsByUser = []*models.TeamDTO{}
+	sqlmock.ExpectedTeamsByUser = []*team.TeamDTO{}
 
 	setUpSnapshotTest := func(t *testing.T) dashboardsnapshots.Service {
 		t.Helper()
@@ -307,7 +308,7 @@ func TestGetDashboardSnapshotNotFound(t *testing.T) {
 
 func TestGetDashboardSnapshotFailure(t *testing.T) {
 	sqlmock := mockstore.NewSQLStoreMock()
-	sqlmock.ExpectedTeamsByUser = []*models.TeamDTO{}
+	sqlmock.ExpectedTeamsByUser = []*team.TeamDTO{}
 
 	setUpSnapshotTest := func(t *testing.T) dashboardsnapshots.Service {
 		t.Helper()

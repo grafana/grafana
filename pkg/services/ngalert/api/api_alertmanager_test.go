@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/alerting/alerting"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
@@ -127,7 +128,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  notifier.ReceiverTimeoutError{},
+				Error:  alerting.ReceiverTimeoutError{},
 			}},
 		}, {
 			Name: "test2",
@@ -135,7 +136,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  notifier.ReceiverTimeoutError{},
+				Error:  alerting.ReceiverTimeoutError{},
 			}},
 		}}))
 	})

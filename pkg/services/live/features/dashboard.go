@@ -29,13 +29,13 @@ const (
 
 // DashboardEvent events related to dashboards
 type dashboardEvent struct {
-	UID       string               `json:"uid"`
-	Action    actionType           `json:"action"` // saved, editing, deleted
-	User      *user.UserDisplayDTO `json:"user,omitempty"`
-	SessionID string               `json:"sessionId,omitempty"`
-	Message   string               `json:"message,omitempty"`
-	Dashboard *models.Dashboard    `json:"dashboard,omitempty"`
-	Error     string               `json:"error,omitempty"`
+	UID       string                `json:"uid"`
+	Action    actionType            `json:"action"` // saved, editing, deleted
+	User      *user.UserDisplayDTO  `json:"user,omitempty"`
+	SessionID string                `json:"sessionId,omitempty"`
+	Message   string                `json:"message,omitempty"`
+	Dashboard *dashboards.Dashboard `json:"dashboard,omitempty"`
+	Error     string                `json:"error,omitempty"`
 }
 
 // DashboardHandler manages all the `grafana/dashboard/*` channels
@@ -66,7 +66,7 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *user.SignedInU
 
 	// make sure can view this dashboard
 	if len(parts) == 2 && parts[0] == "uid" {
-		query := models.GetDashboardQuery{Uid: parts[1], OrgId: user.OrgID}
+		query := dashboards.GetDashboardQuery{UID: parts[1], OrgID: user.OrgID}
 		if err := h.DashboardService.GetDashboard(ctx, &query); err != nil {
 			logger.Error("Error getting dashboard", "query", query, "error", err)
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
@@ -116,7 +116,7 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *user.SignedInUse
 			// just ignore the event
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("ignore???")
 		}
-		query := models.GetDashboardQuery{Uid: parts[1], OrgId: user.OrgID}
+		query := dashboards.GetDashboardQuery{UID: parts[1], OrgID: user.OrgID}
 		if err := h.DashboardService.GetDashboard(ctx, &query); err != nil {
 			logger.Error("Unknown dashboard", "query", query)
 			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
@@ -171,13 +171,13 @@ func (h *DashboardHandler) publish(orgID int64, event dashboardEvent) error {
 }
 
 // DashboardSaved will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardSaved(orgID int64, user *user.UserDisplayDTO, message string, dashboard *models.Dashboard, err error) error {
+func (h *DashboardHandler) DashboardSaved(orgID int64, user *user.UserDisplayDTO, message string, dashboard *dashboards.Dashboard, err error) error {
 	if err != nil && !h.HasGitOpsObserver(orgID) {
 		return nil // only broadcast if it was OK
 	}
 
 	msg := dashboardEvent{
-		UID:       dashboard.Uid,
+		UID:       dashboard.UID,
 		Action:    ActionSaved,
 		User:      user,
 		Message:   message,

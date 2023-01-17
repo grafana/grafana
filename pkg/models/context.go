@@ -1,6 +1,7 @@
 package models
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -60,16 +61,21 @@ func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
 
 	if err != nil {
 		resp["traceID"] = traceID
-		ctx.Logger.Error(message, "error", err, "traceID", traceID)
+		if status == http.StatusInternalServerError {
+			ctx.Logger.Error(message, "error", err, "traceID", traceID)
+		} else {
+			ctx.Logger.Warn(message, "error", err, "traceID", traceID)
+		}
+
 		if setting.Env != setting.Prod {
 			resp["error"] = err.Error()
 		}
 	}
 
 	switch status {
-	case 404:
+	case http.StatusNotFound:
 		resp["message"] = "Not Found"
-	case 500:
+	case http.StatusInternalServerError:
 		resp["message"] = "Internal Server Error"
 	}
 
