@@ -132,11 +132,6 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query models.Histor
 	return frame, nil
 }
 
-func ruleUIDToID(uid string) int64 {
-	// TODO
-	return 0
-}
-
 func (h *AnnotationBackend) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
