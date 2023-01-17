@@ -27,7 +27,6 @@ import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
 
 import { Matchers } from './Matchers';
-import { useAlertGroupsModal } from './Modals';
 
 type TimingOptions = {
   group_wait?: string;
@@ -61,6 +60,7 @@ interface PolicyComponentProps {
   onEditPolicy: (route: RouteWithID, isDefault?: boolean) => void;
   onAddPolicy: (route: RouteWithID) => void;
   onDeletePolicy: (route: RouteWithID) => void;
+  onShowAlertInstances: (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => void;
 }
 
 const Policy: FC<PolicyComponentProps> = ({
@@ -83,6 +83,7 @@ const Policy: FC<PolicyComponentProps> = ({
   onEditPolicy,
   onAddPolicy,
   onDeletePolicy,
+  onShowAlertInstances,
 }) => {
   const styles = useStyles2(getStyles);
   const isDefaultPolicy = isDefault !== undefined;
@@ -126,8 +127,6 @@ const Policy: FC<PolicyComponentProps> = ({
 
   // sum all alert instances for all groups we're handling
   const numberOfAlertInstances = sumBy(matchingAlertGroups, (group) => group.alerts.length);
-
-  const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal(matchers ?? []);
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -236,7 +235,7 @@ const Policy: FC<PolicyComponentProps> = ({
               <MetaText
                 icon="layers-alt"
                 onClick={() => {
-                  showAlertGroupsModal(matchingAlertGroups);
+                  onShowAlertInstances(matchingAlertGroups, matchers);
                 }}
               >
                 <Strong>{numberOfAlertInstances}</Strong>
@@ -376,6 +375,7 @@ const Policy: FC<PolicyComponentProps> = ({
               onAddPolicy={onAddPolicy}
               onEditPolicy={onEditPolicy}
               onDeletePolicy={onDeletePolicy}
+              onShowAlertInstances={onShowAlertInstances}
               alertManagerSourceName={alertManagerSourceName}
               alertGroups={alertGroups}
             />
@@ -389,7 +389,6 @@ const Policy: FC<PolicyComponentProps> = ({
           isDefaultPolicy={isDefaultPolicy}
         />
       </div>
-      {alertInstancesModal}
     </Stack>
   );
 };

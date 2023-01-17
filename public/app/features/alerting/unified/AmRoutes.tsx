@@ -26,7 +26,12 @@ import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { Spacer } from './components/Spacer';
 import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
-import { useAddPolicyModal, useEditPolicyModal, useDeletePolicyModal } from './components/notification-policies/Modals';
+import {
+  useAddPolicyModal,
+  useEditPolicyModal,
+  useDeletePolicyModal,
+  useAlertGroupsModal,
+} from './components/notification-policies/Modals';
 import { Policy } from './components/notification-policies/Policy';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
@@ -157,6 +162,7 @@ const AmRoutes = () => {
     updatingTree
   );
   const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete, updatingTree);
+  const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal();
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
@@ -257,11 +263,13 @@ const AmRoutes = () => {
                     onAddPolicy={openAddModal}
                     onEditPolicy={openEditModal}
                     onDeletePolicy={openDeleteModal}
+                    onShowAlertInstances={showAlertGroupsModal}
                   />
                 )}
                 {addModal}
                 {editModal}
                 {deleteModal}
+                {alertInstancesModal}
               </>
             )}
             {muteTimingsTabActive && <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} />}

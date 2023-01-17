@@ -193,17 +193,24 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
   return [modalElement, handleShow, handleDismiss];
 };
 
-const useAlertGroupsModal = (matchers: ObjectMatcher[]): ModalHook<AlertmanagerGroup[]> => {
+const useAlertGroupsModal = (): [
+  JSX.Element,
+  (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => void,
+  () => void
+] => {
   const [showModal, setShowModal] = useState(false);
   const [alertGroups, setAlertGroups] = useState<AlertmanagerGroup[]>([]);
+  const [matchers, setMatchers] = useState<ObjectMatcher[]>([]);
 
   const handleDismiss = useCallback(() => {
     setShowModal(false);
     setAlertGroups([]);
+    setMatchers([]);
   }, []);
 
-  const handleShow = useCallback((alertGroups) => {
+  const handleShow = useCallback((alertGroups, matchers) => {
     setAlertGroups(alertGroups);
+    setMatchers(matchers);
     setShowModal(true);
   }, []);
 
