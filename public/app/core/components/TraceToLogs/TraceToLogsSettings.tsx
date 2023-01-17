@@ -138,7 +138,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
       <InlineFieldRow>
         <InlineField
-          tooltip="Tags that will be used in the Loki query. Default tags: 'cluster', 'hostname', 'namespace', 'pod'"
+          tooltip="Tags that will be used in the query. Default tags: 'cluster', 'hostname', 'namespace', 'pod'"
           label="Tags"
           labelWidth={26}
         >
@@ -147,12 +147,14 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       </InlineFieldRow>
 
       <IdFilter
+        disabled={customQuery}
         type={'trace'}
         id={'filterByTraceID'}
         value={Boolean(traceToLogs.filterByTraceID)}
         onChange={(val) => updateTracesToLogs({ filterByTraceID: val })}
       />
       <IdFilter
+        disabled={customQuery}
         type={'span'}
         id={'filterBySpanID'}
         value={Boolean(traceToLogs.filterBySpanID)}
@@ -174,21 +176,22 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         </InlineField>
       </InlineFieldRow>
 
-      <InlineField
-        disabled={!customQuery}
-        label="Query"
-        labelWidth={26}
-        tooltip="The query that will run when navigating from a trace to logs data source. Interpolate tags using the `$__tags` keyword."
-        grow
-      >
-        <Input
+      {customQuery && (
+        <InlineField
           label="Query"
-          type="text"
-          allowFullScreen
-          value={customQuery ? query : '$__tags'}
-          onChange={customQuery ? (e) => updateTracesToLogs({ query: e.currentTarget.value }) : () => {}}
-        />
-      </InlineField>
+          labelWidth={26}
+          tooltip="The query that will run when navigating from a trace to logs data source. Interpolate tags using the `$__tags` keyword."
+          grow
+        >
+          <Input
+            label="Query"
+            type="text"
+            allowFullScreen
+            value={query}
+            onChange={(e) => updateTracesToLogs({ query: e.currentTarget.value })}
+          />
+        </InlineField>
+      )}
     </div>
   );
 }
@@ -198,15 +201,17 @@ interface IdFilterProps {
   id: string;
   value: boolean;
   onChange: (val: boolean) => void;
+  disabled: boolean;
 }
 function IdFilter(props: IdFilterProps) {
   return (
     <InlineFieldRow>
       <InlineField
+        disabled={props.disabled}
         label={`Filter by ${props.type} ID`}
         labelWidth={26}
         grow
-        tooltip={`Filters logs by Span ID. Appends '|=<${props.type} id>' to the query.`}
+        tooltip={`Filters logs by ${props.type} ID`}
       >
         <InlineSwitch
           id={props.id}
