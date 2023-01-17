@@ -3,10 +3,7 @@ aliases:
   - ../contact-points/create-contact-point/
   - ../contact-points/delete-contact-point/
   - ../contact-points/edit-contact-point/
-  - ../contact-points/message-templating/
   - ../contact-points/test-contact-point/
-  - ../message-templating/
-  - ../unified-alerting/message-templating/
 keywords:
   - grafana
   - alerting
@@ -14,7 +11,7 @@ keywords:
   - contact point
   - templating
 title: Manage contact points
-weight: 100
+weight: 200
 ---
 
 # Manage contact points

@@ -30,9 +30,9 @@ export interface FeatureToggles {
   panelTitleSearch?: boolean;
   tempoApmTable?: boolean;
   prometheusAzureOverrideAudience?: boolean;
-  influxdbBackendMigration?: boolean;
   showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
+  publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;
   lokiDataframeApi?: boolean;
   lokiMonacoEditor?: boolean;
@@ -43,6 +43,7 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
+  supportBundles?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
@@ -86,4 +87,5 @@ export interface FeatureToggles {
   sessionRemoteCache?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
+  alertingNoNormalState?: boolean;
 }

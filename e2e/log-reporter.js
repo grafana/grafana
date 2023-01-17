@@ -3,24 +3,24 @@
 const Mocha = require('mocha');
 const { EVENT_TEST_END, EVENT_RUN_END, EVENT_TEST_FAIL, EVENT_TEST_PASS } = Mocha.Runner.constants;
 
-class LogReporter extends Mocha.reporters.Base {
+class LogReporter extends Mocha.reporters.Spec {
   constructor(runner, options = {}) {
     super(runner, options);
 
-    this.tests = [];
-    this.failures = [];
-    this.passes = [];
+    this._testsResults = [];
+    this._testFailures = [];
+    this._testPasses = [];
 
     runner.on(EVENT_TEST_END, (test) => {
-      this.tests.push(cleanTest(test));
+      this._testsResults.push(test);
     });
 
     runner.on(EVENT_TEST_PASS, (test) => {
-      this.passes.push(cleanTest(test));
+      this._testPasses.push(test);
     });
 
     runner.on(EVENT_TEST_FAIL, (test) => {
-      this.failures.push(cleanTest(test));
+      this._testFailures.push(test);
     });
 
     runner.once(EVENT_RUN_END, () => {
@@ -39,13 +39,13 @@ class LogReporter extends Mocha.reporters.Base {
     };
 
     // Example
-    // CypressStats suites=1 tests=2 passes=1 pending=0 failures=1
+    // CypressStats suites=1 tests=2 testPasses=1 pending=0 failures=1
     // start=1668783563731 end=1668783645198 duration=81467
     console.log(`CypressStats ${objToLogAttributes(stats)}`);
   }
 
   reportResults() {
-    this.tests.map((test) => {
+    this._testsResults.map(cleanTest).map((test) => {
       // Example
       // CypressTestResult title="Login scenario, create test data source, dashboard, panel, and export scenario"
       // suite="Smoke tests" file=../../e2e/smoke-tests-suite/1-smoketests.spec.ts duration=68694
@@ -55,7 +55,7 @@ class LogReporter extends Mocha.reporters.Base {
   }
 
   reportErrors() {
-    this.failures.forEach((failure) => {
+    this._testFailures.map(cleanTest).forEach((failure) => {
       const suite = failure.suite;
       const test = failure.title;
       const error = failure.err;

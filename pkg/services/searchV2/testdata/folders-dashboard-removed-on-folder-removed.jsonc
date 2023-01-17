@@ -3,7 +3,14 @@
 //  Frame[0] {
 //      "type": "search-results",
 //      "custom": {
-//          "count": 1
+//          "count": 1,
+//          "locationInfo": {
+//              "general": {
+//                  "name": "General",
+//                  "kind": "folder",
+//                  "url": "/dashboards/f/general/"
+//              }
+//          }
 //      }
 //  }
 //  Name: Query results
@@ -13,7 +20,7 @@
 //  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        |
 //  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string |
 //  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
-//  | dashboard      | 4              | One more dash  |                  | /pfix/d/4/     | null                     | []                      |                |
+//  | dashboard      | 4              | One more dash  |                  | /pfix/d/4/     | null                     | []                      | general        |
 //  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
 //  
 //  
@@ -27,7 +34,14 @@
         "meta": {
           "type": "search-results",
           "custom": {
-            "count": 1
+            "count": 1,
+            "locationInfo": {
+              "general": {
+                "name": "General",
+                "kind": "folder",
+                "url": "/dashboards/f/general/"
+              }
+            }
           }
         },
         "fields": [
@@ -122,7 +136,7 @@
             []
           ],
           [
-            ""
+            "general"
           ]
         ]
       }

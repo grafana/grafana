@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -15,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
-	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -75,11 +76,12 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				Name:             "test",
 			},
 			expectedIdentity: &authn.Identity{
-				ID:       "service-account:1",
-				OrgID:    1,
-				OrgCount: 1,
-				Name:     "test",
-				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				ID:             "service-account:1",
+				OrgID:          1,
+				OrgCount:       1,
+				Name:           "test",
+				OrgRoles:       map[int64]org.RoleType{1: org.RoleViewer},
+				IsGrafanaAdmin: boolPtr(false),
 			},
 		},
 		{
@@ -89,7 +91,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				Key:     hash,
 				Expires: intPtr(0),
 			},
-			expectedErr: ErrAPIKeyExpired,
+			expectedErr: errAPIKeyExpired,
 		},
 		{
 			desc: "should fail for revoked api key",
@@ -98,17 +100,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				Key:       hash,
 				IsRevoked: &revoked,
 			},
-			expectedErr: ErrAPIKeyRevoked,
-		},
-		{
-			desc: "should fail if service account is disabled",
-			req:  &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{"Authorization": {"Bearer " + secret}}}},
-			expectedKey: &apikey.APIKey{
-				Key:              hash,
-				ServiceAccountId: intPtr(1),
-			},
-			expectedUser: &user.SignedInUser{IsDisabled: true},
-			expectedErr:  ErrServiceAccountDisabled,
+			expectedErr: errAPIKeyRevoked,
 		},
 	}
 
@@ -126,7 +118,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				assert.ErrorIs(t, err, tt.expectedErr)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, *tt.expectedIdentity, *identity)
+				assert.EqualValues(t, *tt.expectedIdentity, *identity)
 			}
 		})
 	}
@@ -191,6 +183,10 @@ func TestAPIKey_Test(t *testing.T) {
 
 func intPtr(n int64) *int64 {
 	return &n
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }
 
 func genApiKey(legacy bool) (string, string) {

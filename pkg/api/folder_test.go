@@ -90,8 +90,9 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Given a correct request for updating a folder", func(t *testing.T) {
-		cmd := models.UpdateFolderCommand{
-			Title: "Folder upd",
+		title := "Folder upd"
+		cmd := folder.UpdateFolderCommand{
+			NewTitle: &title,
 		}
 
 		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder upd"}
@@ -125,8 +126,9 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
-		cmd := models.UpdateFolderCommand{
-			Title: "Folder upd",
+		title := "Folder upd"
+		cmd := folder.UpdateFolderCommand{
+			NewTitle: &title,
 		}
 
 		for _, tc := range testCases {
@@ -240,11 +242,11 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
 			q.Result = aclMockResp
 		}).Return(nil)
-		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*models.GetDashboardQuery)
-			q.Result = &models.Dashboard{
-				Id:  q.Id,
-				Uid: q.Uid,
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*dashboards.GetDashboardQuery)
+			q.Result = &dashboards.Dashboard{
+				ID:  q.ID,
+				UID: q.UID,
 			}
 		}).Return(nil)
 		store := mockstore.NewSQLStoreMock()
@@ -278,7 +280,7 @@ func callUpdateFolder(sc *scenarioContext) {
 }
 
 func updateFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService folder.Service,
-	cmd models.UpdateFolderCommand, fn scenarioFunc) {
+	cmd folder.UpdateFolderCommand, fn scenarioFunc) {
 	setUpRBACGuardian(t)
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{

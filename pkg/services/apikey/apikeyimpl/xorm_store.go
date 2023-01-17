@@ -200,7 +200,7 @@ func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 		u.Set(tag, r.Count)
 	}
 
-	if scopeParams.OrgID != 0 {
+	if scopeParams != nil && scopeParams.OrgID != 0 {
 		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			rawSQL := "SELECT COUNT(*) AS count FROM api_key WHERE org_id = ?"
 			if _, err := sess.SQL(rawSQL, scopeParams.OrgID).Get(&r); err != nil {

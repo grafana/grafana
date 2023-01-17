@@ -303,6 +303,7 @@ type Cfg struct {
 	SigV4AuthEnabled             bool
 	SigV4VerboseLogging          bool
 	AzureAuthEnabled             bool
+	AzureSkipOrgRoleSync         bool
 	BasicAuthEnabled             bool
 	AdminUser                    string
 	AdminPassword                string
@@ -422,6 +423,9 @@ type Cfg struct {
 	ApplicationInsightsEndpointUrl      string
 	FeedbackLinksEnabled                bool
 
+	// AzureAD
+	AzureADSkipOrgRoleSync bool
+
 	// LDAP
 	LDAPEnabled         bool
 	LDAPSkipOrgRoleSync bool
@@ -462,6 +466,10 @@ type Cfg struct {
 	// in case API is not publicly accessible.
 	// Defaults to GrafanaComURL setting + "/api" if unset.
 	GrafanaComAPIURL string
+	// GrafanaComSkipOrgRoleSync can be set for
+	// letting users set org roles from within Grafana and
+	// skip the org roles coming from GrafanaCom
+	GrafanaComSkipOrgRoleSync bool
 
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]interface{}
@@ -1350,6 +1358,15 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	return nil
 }
+func readAuthAzureADSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.azuread")
+	cfg.AzureADSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
+func readAuthGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.grafana_com")
+	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
 
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
@@ -1397,6 +1414,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// Azure Auth
 	AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
 	cfg.AzureAuthEnabled = AzureAuthEnabled
+	readAuthAzureADSettings(iniFile, cfg)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -1453,6 +1471,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
+	readAuthGrafanaComSettings(iniFile, cfg)
 	return nil
 }
 

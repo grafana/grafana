@@ -91,33 +91,34 @@ func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
 }
 
 func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
-	if cmd.Folder == nil {
-		return nil, folder.ErrBadRequest.Errorf("invalid update command: missing folder")
-	}
+	updated := time.Now()
+	uid := cmd.UID
 
-	cmd.Folder.Updated = time.Now()
-	existingUID := cmd.Folder.UID
+	var foldr *folder.Folder
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
 		sql.Write([]byte("UPDATE folder SET "))
 		columnsToUpdate := []string{"updated = ?"}
-		args := []interface{}{cmd.Folder.Updated}
+		args := []interface{}{updated}
 		if cmd.NewDescription != nil {
 			columnsToUpdate = append(columnsToUpdate, "description = ?")
-			cmd.Folder.Description = *cmd.NewDescription
-			args = append(args, cmd.Folder.Description)
+			args = append(args, *cmd.NewDescription)
 		}
 
 		if cmd.NewTitle != nil {
 			columnsToUpdate = append(columnsToUpdate, "title = ?")
-			cmd.Folder.Title = *cmd.NewTitle
-			args = append(args, cmd.Folder.Title)
+			args = append(args, *cmd.NewTitle)
 		}
 
 		if cmd.NewUID != nil {
 			columnsToUpdate = append(columnsToUpdate, "uid = ?")
-			cmd.Folder.UID = *cmd.NewUID
-			args = append(args, cmd.Folder.UID)
+			uid = *cmd.NewUID
+			args = append(args, *cmd.NewUID)
+		}
+
+		if cmd.NewParentUID != nil {
+			columnsToUpdate = append(columnsToUpdate, "parent_uid = ?")
+			args = append(args, *cmd.NewParentUID)
 		}
 
 		if len(columnsToUpdate) == 0 {
@@ -126,7 +127,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 
 		sql.Write([]byte(strings.Join(columnsToUpdate, ", ")))
 		sql.Write([]byte(" WHERE uid = ? AND org_id = ?"))
-		args = append(args, existingUID, cmd.Folder.OrgID)
+		args = append(args, cmd.UID, cmd.OrgID)
 
 		args = append([]interface{}{sql.String()}, args...)
 
@@ -142,10 +143,18 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		if affected == 0 {
 			return folder.ErrInternal.Errorf("no folders are updated")
 		}
+
+		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
+			UID:   &uid,
+			OrgID: cmd.OrgID,
+		})
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 
-	return cmd.Folder, err
+	return foldr, err
 }
 
 func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
@@ -154,12 +163,12 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		exists := false
 		var err error
 		switch {
+		case q.UID != nil:
+			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", q.UID, q.OrgID).Get(foldr)
 		case q.ID != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
 		case q.Title != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE title = ? AND org_id = ?", q.Title, q.OrgID).Get(foldr)
-		case q.UID != nil:
-			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", q.UID, q.OrgID).Get(foldr)
 		default:
 			return folder.ErrBadRequest.Errorf("one of ID, UID, or Title must be included in the command")
 		}

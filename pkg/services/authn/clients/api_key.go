@@ -3,7 +3,6 @@ package clients
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -18,16 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-const (
-	basicPrefix  = "Basic "
-	bearerPrefix = "Bearer "
-)
-
 var (
-	ErrAPIKeyInvalid          = errutil.NewBase(errutil.StatusUnauthorized, "api-key.invalid", errutil.WithPublicMessage("Invalid API key"))
-	ErrAPIKeyExpired          = errutil.NewBase(errutil.StatusUnauthorized, "api-key.expired", errutil.WithPublicMessage("Expired API key"))
-	ErrAPIKeyRevoked          = errutil.NewBase(errutil.StatusUnauthorized, "api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
-	ErrServiceAccountDisabled = errutil.NewBase(errutil.StatusUnauthorized, "service-account.disabled", errutil.WithPublicMessage("Disabled service account"))
+	errAPIKeyInvalid = errutil.NewBase(errutil.StatusUnauthorized, "api-key.invalid", errutil.WithPublicMessage("Invalid API key"))
+	errAPIKeyExpired = errutil.NewBase(errutil.StatusUnauthorized, "api-key.expired", errutil.WithPublicMessage("Expired API key"))
+	errAPIKeyRevoked = errutil.NewBase(errutil.StatusUnauthorized, "api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
 )
 
 var _ authn.Client = new(APIKey)
@@ -50,34 +43,23 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
 	if err != nil {
 		if errors.Is(err, apikeygen.ErrInvalidApiKey) {
-			return nil, ErrAPIKeyInvalid.Errorf("API key is invalid")
+			return nil, errAPIKeyInvalid.Errorf("API key is invalid")
 		}
 		return nil, err
 	}
 
 	if apiKey.Expires != nil && *apiKey.Expires <= time.Now().Unix() {
-		return nil, ErrAPIKeyExpired.Errorf("API key has expired")
+		return nil, errAPIKeyExpired.Errorf("API key has expired")
 	}
 
 	if apiKey.IsRevoked != nil && *apiKey.IsRevoked {
-		return nil, ErrAPIKeyRevoked.Errorf("Api key is revoked")
+		return nil, errAPIKeyRevoked.Errorf("Api key is revoked")
 	}
-
-	go func(id int64) {
-		defer func() {
-			if err := recover(); err != nil {
-				s.log.Error("api key authentication panic", "err", err)
-			}
-		}()
-		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
-			s.log.Warn("failed to update last use date for api key", "id", id)
-		}
-	}(apiKey.Id)
 
 	// if the api key don't belong to a service account construct the identity and return it
 	if apiKey.ServiceAccountId == nil || *apiKey.ServiceAccountId < 1 {
 		return &authn.Identity{
-			ID:       fmt.Sprintf("%s%d", authn.APIKeyIDPrefix, apiKey.Id),
+			ID:       authn.NamespacedID(authn.NamespaceAPIKey, apiKey.Id),
 			OrgID:    apiKey.OrgId,
 			OrgRoles: map[int64]org.RoleType{apiKey.OrgId: apiKey.Role},
 		}, nil
@@ -92,11 +74,7 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		return nil, err
 	}
 
-	if usr.IsDisabled {
-		return nil, ErrServiceAccountDisabled.Errorf("Disabled service account")
-	}
-
-	return authn.IdentityFromSignedInUser(fmt.Sprintf("%s%d", authn.ServiceAccountIDPrefix, *apiKey.ServiceAccountId), usr), nil
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceServiceAccount, usr.UserID), usr, authn.ClientParams{}), nil
 }
 
 func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {
