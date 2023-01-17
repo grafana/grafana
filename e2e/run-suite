@@ -25,7 +25,7 @@ declare -A env=(
 )
 
 testFilesForSingleSuite="*.spec.ts"
-testFilesForEnterpriseSuite="enterprise/*-suite/*.spec.ts"
+testFilesForEnterpriseSuite="extensions/*-suite/*.spec.ts"
 
 declare -A cypressConfig=(
   [integrationFolder]=../../e2e
