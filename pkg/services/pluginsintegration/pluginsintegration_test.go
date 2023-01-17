@@ -49,7 +49,7 @@ func TestCreateMiddlewares(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			got := CreateMiddlewares(tc.args.cfg, tc.args.pCfg, nil)
+			got := CreateMiddlewares(tc.args.cfg, tc.args.pCfg, nil, nil)
 			require.Len(t, got, 7)
 			for i, m := range got {
 				c := m.CreateClientMiddleware(&fakes.FakePluginClient{})
