@@ -22,6 +22,7 @@ import {
 import { PanelRenderer } from '@grafana/runtime';
 import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import {
+  Button,
   Icon,
   PanelContext,
   PanelContextProvider,
@@ -119,10 +120,12 @@ export function ExploreGraph({
     });
   }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig]);
 
+  const seriesToShow = showAllTimeSeries ? dataWithConfig : dataWithConfig.slice(0, MAX_NUMBER_OF_TIME_SERIES);
+
   // We need to increment structureRev when the number of series changes.
   // the function passed to useMemo runs during rendering, so when we get a different
   // amount of data, structureRev is incremented before we render it
-  useMemo(inc, [dataWithConfig.length, styledFieldConfig, inc]);
+  useMemo(inc, [dataWithConfig.length, styledFieldConfig, seriesToShow.length, inc]);
 
   useEffect(() => {
     if (onHiddenSeriesChanged) {
@@ -136,8 +139,6 @@ export function ExploreGraph({
       onHiddenSeriesChanged(hiddenFrames);
     }
   }, [dataWithConfig, onHiddenSeriesChanged]);
-
-  const seriesToShow = showAllTimeSeries ? dataWithConfig : dataWithConfig.slice(0, MAX_NUMBER_OF_TIME_SERIES);
 
   const panelContext: PanelContext = {
     eventBus,
@@ -166,13 +167,15 @@ export function ExploreGraph({
       {dataWithConfig.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
         <div className={cx([style.timeSeriesDisclaimer])}>
           <Icon className={style.disclaimerIcon} name="exclamation-triangle" />
-          {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
-          <span
-            className={cx([style.showAllTimeSeries])}
-            onClick={() => {
-              setShowAllTimeSeries(true);
-            }}
-          >{`Show all ${dataWithConfig.length}`}</span>
+          Showing only {MAX_NUMBER_OF_TIME_SERIES} time series.
+          <Button
+            variant="primary"
+            fill="text"
+            onClick={() => setShowAllTimeSeries(true)}
+            className={style.showAllButton}
+          >
+            Show all {dataWithConfig.length}
+          </Button>
         </div>
       )}
       <PanelRenderer
@@ -192,7 +195,6 @@ export function ExploreGraph({
 const getStyles = (theme: GrafanaTheme2) => ({
   timeSeriesDisclaimer: css`
     label: time-series-disclaimer;
-    width: 300px;
     margin: ${theme.spacing(1)} auto;
     padding: 10px 0;
     border-radius: ${theme.spacing(2)};
@@ -204,9 +206,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.warning.main};
     margin-right: ${theme.spacing(0.5)};
   `,
-  showAllTimeSeries: css`
-    label: show-all-time-series;
-    cursor: pointer;
-    color: ${theme.colors.text.link};
+  showAllButton: css`
+    margin-left: ${theme.spacing(0.5)};
   `,
 });

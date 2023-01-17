@@ -168,6 +168,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		rs.renderCSVAction = rs.renderCSVViaPlugin
 		rs.sanitizeSVGAction = rs.sanitizeSVGViaPlugin
 		<-ctx.Done()
+
 		return nil
 	}
 

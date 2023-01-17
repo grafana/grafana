@@ -44,26 +44,6 @@ describe('QuickAdd', () => {
     expect(screen.getByRole('button', { name: 'New' })).toBeInTheDocument();
   });
 
-  it('renders the `New` text on a larger viewport', () => {
-    (window.matchMedia as jest.Mock).mockImplementation(() => ({
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      matches: () => false,
-    }));
-    setup();
-    expect(screen.getByText('New')).toBeInTheDocument();
-  });
-
-  it('does not render the text on a smaller viewport', () => {
-    (window.matchMedia as jest.Mock).mockImplementation(() => ({
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      matches: () => true,
-    }));
-    setup();
-    expect(screen.queryByText('New')).not.toBeInTheDocument();
-  });
-
   it('shows isCreateAction options when clicked', async () => {
     setup();
     await userEvent.click(screen.getByRole('button', { name: 'New' }));

@@ -17,6 +17,11 @@ func ValidatePluginPermissions(pluginID string, permissions []ac.Permission) err
 			return &ac.ErrorActionPrefixMissing{Action: permissions[i].Action,
 				Prefixes: []string{plugins.ActionAppAccess, pluginID + ":", pluginID + "."}}
 		}
+		if strings.HasPrefix(permissions[i].Action, plugins.ActionAppAccess) &&
+			permissions[i].Scope != plugins.ScopeProvider.GetResourceScope(pluginID) {
+			return &ac.ErrorScopeTarget{Action: permissions[i].Action, Scope: permissions[i].Scope,
+				ExpectedScope: plugins.ScopeProvider.GetResourceScope(pluginID)}
+		}
 	}
 
 	return nil

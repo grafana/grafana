@@ -1,5 +1,5 @@
-import { lastValueFrom, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { lastValueFrom } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import {
   DataFrame,
@@ -19,14 +19,16 @@ import {
   getTemplateSrv,
   TemplateSrv,
 } from '@grafana/runtime';
-import { toDataQueryResponse, toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
+import { toDataQueryResponse } from '@grafana/runtime/src/utils/queryResponse';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { VariableWithMultiSupport } from '../../../variables/types';
 import { getSearchFilterScopedVar, SearchFilterOptions } from '../../../variables/utils';
 import { ResponseParser } from '../ResponseParser';
+import { SqlQueryEditor } from '../components/QueryEditor';
 import { MACRO_NAMES } from '../constants';
 import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
+import migrateAnnotation from '../utils/migration';
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
   id: number;
@@ -34,7 +36,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   name: string;
   interval: string;
   db: DB;
-  annotations = {};
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<SQLOptions>,
@@ -47,6 +48,10 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
     this.db = this.getDB();
+    this.annotations = {
+      prepareAnnotation: migrateAnnotation,
+      QueryEditor: SqlQueryEditor,
+    };
   }
 
   abstract getDB(dsID?: number): DB;
@@ -160,45 +165,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
           map((res: FetchResponse<BackendDataSourceResponse>) => {
             const rsp = toDataQueryResponse(res, queries);
             return rsp.data[0];
-          })
-        )
-    );
-  }
-
-  testDatasource(): Promise<{ status: string; message: string }> {
-    const refId = 'A';
-    return lastValueFrom(
-      getBackendSrv()
-        .fetch<BackendDataSourceResponse>({
-          url: '/api/ds/query',
-          method: 'POST',
-          headers: this.getRequestHeaders(),
-          data: {
-            from: '5m',
-            to: 'now',
-            queries: [
-              {
-                refId: refId,
-                intervalMs: 1,
-                maxDataPoints: 1,
-                datasource: this.getRef(),
-                datasourceId: this.id,
-                rawSql: 'SELECT 1',
-                format: 'table',
-              },
-            ],
-          },
-        })
-        .pipe(
-          map((r) => {
-            const error = r.data.results[refId].error;
-            if (error) {
-              return { status: 'error', message: error };
-            }
-            return { status: 'success', message: 'Database Connection OK' };
-          }),
-          catchError((err) => {
-            return of(toTestingStatus(err));
           })
         )
     );

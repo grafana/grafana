@@ -3,11 +3,11 @@ package dashboards
 import (
 	"context"
 	"io"
+	"io/fs"
 	"testing"
 	"testing/fstest"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -116,6 +116,30 @@ func TestDashboardFileStore(t *testing.T) {
 		})
 
 		t.Run("With filesystem", func(t *testing.T) {
+			origOpenDashboardFile := openDashboardFile
+			mapFs := fstest.MapFS{
+				"dashboards/dash1.json": {
+					Data: []byte("dash1"),
+				},
+				"dashboards/dash2.json": {
+					Data: []byte("dash2"),
+				},
+				"dashboards/dash3.json": {
+					Data: []byte("dash3"),
+				},
+				"dash2.json": {
+					Data: []byte("dash2"),
+				},
+			}
+			openDashboardFile = func(p plugins.PluginDTO, name string) (fs.File, error) {
+				f, err := mapFs.Open(name)
+				require.NoError(t, err)
+				return f, nil
+			}
+			t.Cleanup(func() {
+				openDashboardFile = origOpenDashboardFile
+			})
+
 			t.Run("Should return file not found error when trying to get non-existing plugin dashboard file content", func(t *testing.T) {
 				res, err := m.GetPluginDashboardFileContents(context.Background(), &GetPluginDashboardFileContentsArgs{
 					PluginID:      "pluginWithDashboards",
@@ -193,22 +217,6 @@ func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 				{
 					Type: "dashboard",
 					Path: "dashboards/dash2.json",
-				},
-			},
-		},
-		FS: &fakes.FakePluginFiles{
-			FS: fstest.MapFS{
-				"dashboards/dash1.json": {
-					Data: []byte("dash1"),
-				},
-				"dashboards/dash2.json": {
-					Data: []byte("dash2"),
-				},
-				"dashboards/dash3.json": {
-					Data: []byte("dash3"),
-				},
-				"dash2.json": {
-					Data: []byte("dash2"),
 				},
 			},
 		},

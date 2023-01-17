@@ -23,8 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -125,24 +125,31 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		sc := setupHTTPServerWithCfg(t, true, &setting.Cfg{
-			RBACEnabled:                      true,
-			PluginAdminEnabled:               tc.pluginAdminEnabled,
-			PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled})
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, tc.permissions, sc.initCtx.OrgID)
-		sc.hs.pluginInstaller = NewFakePluginInstaller()
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.Cfg = &setting.Cfg{
+				RBACEnabled:                      true,
+				PluginAdminEnabled:               tc.pluginAdminEnabled,
+				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled}
+			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
+			hs.pluginInstaller = NewFakePluginInstaller()
+		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
-			input := strings.NewReader("{ \"version\": \"1.0.2\" }")
-			response := callAPI(sc.server, http.MethodPost, "/api/plugins/test/install", input, t)
-			assert.Equal(t, tc.expectedCode, response.Code)
+			input := strings.NewReader(`{"version": "1.0.2"}`)
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/install", input), userWithPermissions(1, tc.permissions))
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 
 		t.Run(testName("Uninstall", tc), func(t *testing.T) {
 			input := strings.NewReader("{ }")
-			response := callAPI(sc.server, http.MethodPost, "/api/plugins/test/uninstall", input, t)
-			assert.Equal(t, tc.expectedCode, response.Code)
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/uninstall", input), userWithPermissions(1, tc.permissions))
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
@@ -156,31 +163,29 @@ func Test_GetPluginAssets(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := os.RemoveAll(tmpFile.Name())
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		err = os.RemoveAll(tmpFileInParentDir.Name())
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 	expectedBody := "Plugin test"
 	_, err = tmpFile.WriteString(expectedBody)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	requestedFile := filepath.Clean(tmpFile.Name())
 
-	t.Run("Given a request for an existing plugin file that is listed as a signature covered file", func(t *testing.T) {
+	t.Run("Given a request for an existing plugin file", func(t *testing.T) {
 		p := createPluginDTO(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewLocalFS(map[string]struct{}{requestedFile: {}}, filepath.Dir(requestedFile)))
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p},
 		}
-		l := &logtest.Fake{}
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
-		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service,
 			func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				require.Equal(t, 200, sc.resp.Code)
-				assert.Equal(t, expectedBody, sc.resp.Body.String())
-				assert.Zero(t, l.WarnLogs.Calls)
+				require.Equal(t, expectedBody, sc.resp.Body.String())
 			})
 	})
 
@@ -189,10 +194,9 @@ func Test_GetPluginAssets(t *testing.T) {
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p},
 		}
-		l := &logtest.Fake{}
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, tmpFileInParentDir.Name())
-		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service,
 			func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
@@ -225,11 +229,10 @@ func Test_GetPluginAssets(t *testing.T) {
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p},
 		}
-		l := &logtest.Fake{}
 
 		requestedFile := "nonExistent"
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
-		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service,
 			func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
@@ -237,8 +240,7 @@ func Test_GetPluginAssets(t *testing.T) {
 				err := json.NewDecoder(sc.resp.Body).Decode(&respJson)
 				require.NoError(t, err)
 				require.Equal(t, 404, sc.resp.Code)
-				assert.Equal(t, "Plugin file not found", respJson["message"])
-				assert.Zero(t, l.WarnLogs.Calls)
+				require.Equal(t, "Plugin file not found", respJson["message"])
 			})
 	})
 
@@ -250,16 +252,38 @@ func Test_GetPluginAssets(t *testing.T) {
 
 		requestedFile := "nonExistent"
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
-		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service,
 			func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				var respJson map[string]interface{}
 				err := json.NewDecoder(sc.resp.Body).Decode(&respJson)
 				require.NoError(t, err)
-				assert.Equal(t, 404, sc.resp.Code)
-				assert.Equal(t, "Plugin not found", respJson["message"])
-				assert.Zero(t, l.WarnLogs.Calls)
+				require.Equal(t, 404, sc.resp.Code)
+				require.Equal(t, "Plugin not found", respJson["message"])
+				require.Zero(t, l.WarnLogs.Calls)
+			})
+	})
+
+	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{
+				{
+					JSONData: plugins.JSONData{ID: pluginID},
+					Class:    plugins.Core,
+				},
+			},
+		}
+		l := &logtest.Fake{}
+
+		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service,
+			func(sc *scenarioContext) {
+				callGetPluginAsset(sc)
+
+				require.Equal(t, 200, sc.resp.Code)
+				require.Equal(t, expectedBody, sc.resp.Body.String())
+				require.Zero(t, l.WarnLogs.Calls)
 			})
 	})
 }
@@ -271,11 +295,6 @@ func TestMakePluginResourceRequest(t *testing.T) {
 		pluginClient: &fakePluginClient{},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-
-	const customHeader = "X-CUSTOM"
-	req.Header.Set(customHeader, "val")
-	ctx := contexthandler.WithAuthHTTPHeader(req.Context(), customHeader)
-	req = req.WithContext(ctx)
 
 	resp := httptest.NewRecorder()
 	pCtx := backend.PluginContext{}
@@ -290,7 +309,6 @@ func TestMakePluginResourceRequest(t *testing.T) {
 
 	require.Equal(t, resp.Header().Get("Content-Type"), "application/json")
 	require.Equal(t, "sandbox", resp.Header().Get("Content-Security-Policy"))
-	require.Empty(t, req.Header.Get(customHeader))
 }
 
 func TestMakePluginResourceRequestSetCookieNotPresent(t *testing.T) {
@@ -312,7 +330,7 @@ func TestMakePluginResourceRequestSetCookieNotPresent(t *testing.T) {
 			break
 		}
 	}
-	assert.Empty(t, resp.Header().Values("Set-Cookie"), "Set-Cookie header should not be present")
+	require.Empty(t, resp.Header().Values("Set-Cookie"), "Set-Cookie header should not be present")
 }
 
 func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
@@ -346,8 +364,8 @@ func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
 					break
 				}
 			}
-			assert.Len(t, resp.Header().Values("Content-Type"), 1, "should have 1 Content-Type header")
-			assert.Len(t, resp.Header().Values("x-another"), 1, "should have 1 X-Another header")
+			require.Len(t, resp.Header().Values("Content-Type"), 1, "should have 1 Content-Type header")
+			require.Len(t, resp.Header().Values("x-another"), 1, "should have 1 X-Another header")
 		})
 	}
 }
@@ -381,12 +399,11 @@ func callGetPluginAsset(sc *scenarioContext) {
 }
 
 func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string, pluginStore plugins.Store,
-	logger log.Logger, fn scenarioFunc) {
+	fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := HTTPServer{
 			Cfg:         setting.NewCfg(),
 			pluginStore: pluginStore,
-			log:         logger,
 		}
 
 		sc := setupScenarioContext(t, url)

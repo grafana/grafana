@@ -2,8 +2,8 @@ package kindsys
 
 import "github.com/grafana/thema"
 
-// CommonMeta contains the kind metadata common to all categories of kinds.
-type CommonMeta struct {
+// CommonProperties contains the metadata common to all categories of kinds.
+type CommonProperties struct {
 	Name              string   `json:"name"`
 	PluralName        string   `json:"pluralName"`
 	MachineName       string   `json:"machineName"`
@@ -12,63 +12,62 @@ type CommonMeta struct {
 	Maturity          Maturity `json:"maturity"`
 }
 
-// TODO generate from type.cue
-type RawMeta struct {
-	CommonMeta
-	Extensions []string `json:"extensions"`
-}
-
-func (m RawMeta) _private() {}
-func (m RawMeta) Common() CommonMeta {
-	return m.CommonMeta
-}
-
-// TODO
-type CoreStructuredMeta struct {
-	CommonMeta
+// CoreProperties represents the static properties in the declaration of a
+// Core kind that are representable with basic Go types. This
+// excludes Thema schemas.
+//
+// When a .cue Core declaration is loaded through the standard [LoadCoreKind],
+// func, it is fully validated and populated according to all rules specified
+// in CUE for Core kinds.
+type CoreProperties struct {
+	CommonProperties
 	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
 }
 
-func (m CoreStructuredMeta) _private() {}
-func (m CoreStructuredMeta) Common() CommonMeta {
-	return m.CommonMeta
+func (m CoreProperties) _private() {}
+func (m CoreProperties) Common() CommonProperties {
+	return m.CommonProperties
 }
 
-// TODO
-type CustomStructuredMeta struct {
-	CommonMeta
+// CustomProperties represents the static properties in the declaration of a
+// Custom kind that are representable with basic Go types. This
+// excludes Thema schemas.
+type CustomProperties struct {
+	CommonProperties
 	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
 }
 
-func (m CustomStructuredMeta) _private() {}
-func (m CustomStructuredMeta) Common() CommonMeta {
-	return m.CommonMeta
+func (m CustomProperties) _private() {}
+func (m CustomProperties) Common() CommonProperties {
+	return m.CommonProperties
 }
 
-// TODO
-type ComposableMeta struct {
-	CommonMeta
+// ComposableProperties represents the static properties in the declaration of a
+// Composable kind that are representable with basic Go types. This
+// excludes Thema schemas.
+type ComposableProperties struct {
+	CommonProperties
 	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
 }
 
-func (m ComposableMeta) _private() {}
-func (m ComposableMeta) Common() CommonMeta {
-	return m.CommonMeta
+func (m ComposableProperties) _private() {}
+func (m ComposableProperties) Common() CommonProperties {
+	return m.CommonProperties
 }
 
-// SomeKindMeta is an interface type to abstract over the different kind
-// metadata struct types: [RawMeta], [CoreStructuredMeta],
-// [CustomStructuredMeta].
+// SomeKindProperties is an interface type to abstract over the different kind
+// property struct types: [CoreProperties], [CustomProperties],
+// [ComposableProperties].
 //
 // It is the traditional interface counterpart to the generic type constraint
-// KindMetas.
-type SomeKindMeta interface {
+// KindProperties.
+type SomeKindProperties interface {
 	_private()
-	Common() CommonMeta
+	Common() CommonProperties
 }
 
-// KindMetas is a type parameter that comprises the base possible set of
+// KindProperties is a type parameter that comprises the base possible set of
 // kind metadata configurations.
-type KindMetas interface {
-	RawMeta | CoreStructuredMeta | CustomStructuredMeta | ComposableMeta
+type KindProperties interface {
+	CoreProperties | CustomProperties | ComposableProperties
 }

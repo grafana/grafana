@@ -53,6 +53,8 @@ N1c5v9v/4h6qeA==
 -----END PGP PUBLIC KEY BLOCK-----
 `
 
+var runningWindows = runtime.GOOS == "windows"
+
 // PluginManifest holds details for the file manifest
 type PluginManifest struct {
 	Plugin  string            `json:"plugin"`
@@ -128,21 +130,7 @@ func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin)
 	}
 
 	byteValue, err := io.ReadAll(f)
-	if err != nil {
-		mlog.Debug("Could not read MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
-		return plugins.Signature{
-			Status: plugins.SignatureInvalid,
-		}, nil
-	}
-
-	if err = f.Close(); err != nil {
-		mlog.Debug("Could not close MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
-		return plugins.Signature{
-			Status: plugins.SignatureInvalid,
-		}, nil
-	}
-
-	if len(byteValue) < 10 {
+	if err != nil || len(byteValue) < 10 {
 		mlog.Debug("MANIFEST.TXT is invalid", "id", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureUnsigned,

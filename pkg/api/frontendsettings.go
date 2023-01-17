@@ -148,6 +148,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
 			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
 			"LDAPSkipOrgRoleSync":        hs.Cfg.LDAPSkipOrgRoleSync,
+			"GrafanaComSkipOrgRoleSync":  hs.Cfg.GrafanaComSkipOrgRoleSync,
+			"AzureADSkipOrgRoleSync":     hs.Cfg.AzureADSkipOrgRoleSync,
 			"DisableSyncLock":            hs.Cfg.DisableSyncLock,
 		},
 		"buildInfo": map[string]interface{}{
@@ -198,9 +200,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"unifiedAlerting": map[string]interface{}{
 			"minInterval": hs.Cfg.UnifiedAlerting.MinInterval.String(),
 		},
-		"oauth":       hs.getEnabledOAuthProviders(),
-		"samlEnabled": hs.samlEnabled(),
-		"samlName":    hs.samlName(),
+		"oauth":                   hs.getEnabledOAuthProviders(),
+		"samlEnabled":             hs.samlEnabled(),
+		"samlName":                hs.samlName(),
+		"tokenExpirationDayLimit": hs.Cfg.SATokenExpirationDayLimit,
 	}
 
 	if hs.ThumbService != nil {

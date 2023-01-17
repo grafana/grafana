@@ -27,11 +27,14 @@ export const defaultPanelOptions: PanelOptions = {
   footer: {
     show: false,
     reducer: [],
+    countRows: false,
   },
 };
 
 export const defaultPanelFieldConfig: TableFieldOptions = {
-  displayMode: TableCellDisplayMode.Auto,
   align: 'auto',
+  cellOptions: {
+    type: TableCellDisplayMode.Auto,
+  },
   inspect: false,
 };

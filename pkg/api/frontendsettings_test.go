@@ -58,7 +58,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 		grafanaUpdateChecker: &updatechecker.GrafanaService{},
 		AccessControl:        accesscontrolmock.New().WithDisabled(),
 		PluginSettings:       pluginSettings.ProvideService(sqlStore, secretsService),
-		SocialService:        social.ProvideService(cfg),
+		SocialService:        social.ProvideService(cfg, features),
 	}
 
 	m := web.New()

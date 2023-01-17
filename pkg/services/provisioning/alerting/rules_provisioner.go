@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -98,9 +98,9 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 
 func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 	ctx context.Context, folderName string, orgID int64) (string, error) {
-	cmd := &models.GetDashboardQuery{
-		Slug:  models.SlugifyTitle(folderName),
-		OrgId: orgID,
+	cmd := &dashboards.GetDashboardQuery{
+		Slug:  slugify.Slugify(folderName),
+		OrgID: orgID,
 	}
 	err := prov.dashboardService.GetDashboard(ctx, cmd)
 	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
@@ -110,22 +110,22 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 	// dashboard folder not found. create one.
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
 		dash := &dashboards.SaveDashboardDTO{}
-		dash.Dashboard = models.NewDashboardFolder(folderName)
+		dash.Dashboard = dashboards.NewDashboardFolder(folderName)
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
-		dash.OrgId = orgID
-		dash.Dashboard.SetUid(util.GenerateShortUID())
+		dash.OrgID = orgID
+		dash.Dashboard.SetUID(util.GenerateShortUID())
 		dbDash, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, dash)
 		if err != nil {
 			return "", err
 		}
 
-		return dbDash.Uid, nil
+		return dbDash.UID, nil
 	}
 
 	if !cmd.Result.IsFolder {
 		return "", fmt.Errorf("got invalid response. expected folder, found dashboard")
 	}
 
-	return cmd.Result.Uid, nil
+	return cmd.Result.UID, nil
 }

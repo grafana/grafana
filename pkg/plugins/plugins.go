@@ -1,16 +1,18 @@
 package plugins
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
+	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
+
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/org"
 )
+
+var ErrFileNotExist = fmt.Errorf("file does not exist")
 
 type Plugin struct {
 	JSONData
@@ -52,6 +56,8 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
+	logger log.Logger
+
 	fs FS
 
 	class Class
@@ -62,9 +68,10 @@ type PluginDTO struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature     SignatureStatus
-	SignatureType SignatureType
-	SignatureOrg  string
+	Signature      SignatureStatus
+	SignatureType  SignatureType
+	SignatureOrg   string
+	SignatureError *SignatureError
 
 	// SystemJS fields
 	Module  string
@@ -108,17 +115,6 @@ func (p PluginDTO) IsSecretsManager() bool {
 	return p.JSONData.Type == SecretsManager
 }
 
-func (p PluginDTO) Markdown(name string) ([]byte, error) {
-	for _, f := range p.fs.Files() {
-		if filepath.Ext(f) == "md" {
-			if strings.EqualFold(fmt.Sprintf("%s.md", name), f) {
-				return p.readFile(name)
-			}
-		}
-	}
-	return make([]byte, 0), ErrFileNotExist
-}
-
 func (p PluginDTO) readFile(name string) ([]byte, error) {
 	m, err := p.fs.Open(name)
 	if err != nil {
@@ -136,27 +132,19 @@ func (p PluginDTO) readFile(name string) ([]byte, error) {
 	return b, nil
 }
 
-func (p PluginDTO) File(name string) (io.ReadSeeker, time.Time, error) {
-	f, err := p.fs.Open(name)
+func (p PluginDTO) File(name string) (fs.File, error) {
+	cleanPath, err := util.CleanRelativePath(name)
 	if err != nil {
-		return nil, time.Time{}, err
+		// CleanRelativePath should clean and make the path relative so this is not expected to fail
+		return nil, err
 	}
 
-	fi, err := f.Stat()
+	f, err := p.fs.Open(cleanPath)
 	if err != nil {
-		return nil, time.Time{}, err
+		return nil, err
 	}
 
-	b, err := io.ReadAll(f)
-	if err != nil {
-		return nil, time.Time{}, err
-	}
-
-	if err = f.Close(); err != nil {
-		return nil, time.Time{}, err
-	}
-
-	return bytes.NewReader(b), fi.ModTime(), nil
+	return f, nil
 }
 
 // JSONData represents the plugin's plugin.json
@@ -404,6 +392,7 @@ type PluginClient interface {
 
 func (p *Plugin) ToDTO() PluginDTO {
 	return PluginDTO{
+		logger:            p.Logger(),
 		fs:                p.FS,
 		class:             p.Class,
 		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
@@ -414,6 +403,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 		Signature:         p.Signature,
 		SignatureType:     p.SignatureType,
 		SignatureOrg:      p.SignatureOrg,
+		SignatureError:    p.SignatureError,
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
 	}
@@ -461,6 +451,15 @@ func (p *Plugin) IsBundledPlugin() bool {
 
 func (p *Plugin) IsExternalPlugin() bool {
 	return p.Class == External
+}
+
+func (p *Plugin) Manifest() []byte {
+	d, err := os.ReadFile(filepath.Join(p.FS.Base(), "MANIFEST.txt"))
+	if err != nil {
+		return []byte{}
+	}
+
+	return d
 }
 
 type Class string

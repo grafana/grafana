@@ -34,6 +34,13 @@ export const ResultItem = React.forwardRef(
     const theme = useTheme2();
     const styles = getResultItemStyles(theme, active);
 
+    let name = action.name;
+
+    // TODO: does this needs adjusting for i18n?
+    if (action.children && !action.command?.perform && !name.endsWith('...')) {
+      name += '...';
+    }
+
     return (
       <div ref={ref} className={styles.row}>
         <div className={styles.actionContainer}>
@@ -47,20 +54,11 @@ export const ResultItem = React.forwardRef(
                     <span className={styles.breadcrumbAncestor}>&rsaquo;</span>
                   </React.Fragment>
                 ))}
-              <span>{action.name}</span>
+              <span>{name}</span>
             </div>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
         </div>
-        {action.shortcut?.length ? (
-          <div aria-hidden className={styles.shortcutContainer}>
-            {action.shortcut.map((sc) => (
-              <kbd key={sc} className={styles.shortcut}>
-                {sc}
-              </kbd>
-            ))}
-          </div>
-        ) : null}
       </div>
     );
   }
@@ -94,9 +92,9 @@ const getResultItemStyles = (theme: GrafanaTheme2, isActive: boolean) => {
     }),
     actionContainer: css({
       display: 'flex',
-      gap: theme.spacing(2),
-      alignitems: 'center',
-      fontsize: theme.typography.fontSize,
+      gap: theme.spacing(1),
+      alignItems: 'center',
+      fontSize: theme.typography.fontSize,
     }),
     textContainer: css({
       display: 'flex',
@@ -106,7 +104,7 @@ const getResultItemStyles = (theme: GrafanaTheme2, isActive: boolean) => {
       padding: theme.spacing(0, 1),
       background: shortcutBackgroundColor,
       borderRadius: theme.shape.borderRadius(),
-      fontsize: theme.typography.fontSize,
+      fontSize: theme.typography.fontSize,
     }),
     breadcrumbAncestor: css({
       opacity: 0.5,

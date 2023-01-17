@@ -8,10 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gosimple/slug"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -146,7 +145,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, res []*pl
 		}
 
 		if plugin.Parent != nil && plugin.Parent.IsApp() {
-			configureAppChildOfPlugin(plugin.Parent, plugin)
+			configureAppChildPlugin(plugin.Parent, plugin)
 		}
 
 		verifiedPlugins = append(verifiedPlugins, plugin)
@@ -267,7 +266,7 @@ func setDefaultNavURL(p *plugins.Plugin) {
 	// slugify pages
 	for _, include := range p.Includes {
 		if include.Slug == "" {
-			include.Slug = slug.Make(include.Name)
+			include.Slug = slugify.Slugify(include.Name)
 		}
 
 		if !include.DefaultNav {
@@ -289,7 +288,7 @@ func setDefaultNavURL(p *plugins.Plugin) {
 	}
 }
 
-func configureAppChildOfPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
+func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	if !parent.IsApp() {
 		return
 	}

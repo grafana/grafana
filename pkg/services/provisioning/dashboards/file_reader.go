@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -243,26 +244,26 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 
 	// keeps track of which UIDs and titles we have already provisioned
 	dash := jsonFile.dashboard
-	provisioningMetadata.uid = dash.Dashboard.Uid
-	provisioningMetadata.identity = dashboardIdentity{title: dash.Dashboard.Title, folderID: dash.Dashboard.FolderId}
+	provisioningMetadata.uid = dash.Dashboard.UID
+	provisioningMetadata.identity = dashboardIdentity{title: dash.Dashboard.Title, folderID: dash.Dashboard.FolderID}
 
 	if upToDate {
 		return provisioningMetadata, nil
 	}
 
-	if dash.Dashboard.Id != 0 {
+	if dash.Dashboard.ID != 0 {
 		dash.Dashboard.Data.Set("id", nil)
-		dash.Dashboard.Id = 0
+		dash.Dashboard.ID = 0
 	}
 
 	if alreadyProvisioned {
-		dash.Dashboard.SetId(provisionedData.DashboardId)
+		dash.Dashboard.SetID(provisionedData.DashboardId)
 	}
 
 	if !fr.isDatabaseAccessRestricted() {
-		fr.log.Debug("saving new dashboard", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderId)
-		dp := &models.DashboardProvisioning{
-			ExternalId: path,
+		fr.log.Debug("saving new dashboard", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderID)
+		dp := &dashboards.DashboardProvisioning{
+			ExternalID: path,
 			Name:       fr.Cfg.Name,
 			Updated:    resolvedFileInfo.ModTime().Unix(),
 			CheckSum:   jsonFile.checkSum,
@@ -273,7 +274,7 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 		}
 	} else {
 		fr.log.Warn("Not saving new dashboard due to restricted database access", "provisioner", fr.Cfg.Name,
-			"file", path, "folderId", dash.Dashboard.FolderId)
+			"file", path, "folderId", dash.Dashboard.FolderID)
 	}
 
 	return provisioningMetadata, nil
@@ -299,7 +300,7 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 		return 0, ErrFolderNameMissing
 	}
 
-	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(folderName), OrgId: cfg.OrgID}
+	cmd := &dashboards.GetDashboardQuery{Slug: slugify.Slugify(folderName), OrgID: cfg.OrgID}
 	err := fr.dashboardStore.GetDashboard(ctx, cmd)
 
 	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
@@ -309,28 +310,28 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 	// dashboard folder not found. create one.
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
 		dash := &dashboards.SaveDashboardDTO{}
-		dash.Dashboard = models.NewDashboardFolder(folderName)
+		dash.Dashboard = dashboards.NewDashboardFolder(folderName)
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
-		dash.OrgId = cfg.OrgID
+		dash.OrgID = cfg.OrgID
 		// set dashboard folderUid if given
 		if cfg.FolderUID == accesscontrol.GeneralFolderUID {
 			return 0, dashboards.ErrFolderInvalidUID
 		}
-		dash.Dashboard.SetUid(cfg.FolderUID)
+		dash.Dashboard.SetUID(cfg.FolderUID)
 		dbDash, err := service.SaveFolderForProvisionedDashboards(ctx, dash)
 		if err != nil {
 			return 0, err
 		}
 
-		return dbDash.Id, nil
+		return dbDash.ID, nil
 	}
 
 	if !cmd.Result.IsFolder {
 		return 0, fmt.Errorf("got invalid response. expected folder, found dashboard")
 	}
 
-	return cmd.Result.Id, nil
+	return cmd.Result.ID, nil
 }
 
 func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {

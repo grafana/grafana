@@ -42,35 +42,35 @@ describe('Rename By Regex Transformer', () => {
         const data = received[0];
         const frame = data[0];
         expect(frame.fields).toMatchInlineSnapshot(`
-          Array [
-            Object {
-              "config": Object {
+          [
+            {
+              "config": {
                 "name": "Time",
               },
               "name": "Time",
-              "state": Object {
+              "state": {
                 "displayName": "Time",
                 "multipleFrames": false,
               },
               "type": "time",
-              "values": Array [
+              "values": [
                 3000,
                 4000,
                 5000,
                 6000,
               ],
             },
-            Object {
-              "config": Object {
+            {
+              "config": {
                 "displayName": "web-01",
               },
               "name": "Value",
-              "state": Object {
+              "state": {
                 "displayName": "web-01",
                 "multipleFrames": false,
               },
               "type": "number",
-              "values": Array [
+              "values": [
                 10000.3,
                 10000.4,
                 10000.5,
@@ -94,36 +94,36 @@ describe('Rename By Regex Transformer', () => {
         const data = received[0];
         const frame = data[0];
         expect(frame.fields).toMatchInlineSnapshot(`
-          Array [
-            Object {
-              "config": Object {
+          [
+            {
+              "config": {
                 "displayName": "TimE",
                 "name": "Time",
               },
               "name": "Time",
-              "state": Object {
+              "state": {
                 "displayName": "TimE",
                 "multipleFrames": false,
               },
               "type": "time",
-              "values": Array [
+              "values": [
                 3000,
                 4000,
                 5000,
                 6000,
               ],
             },
-            Object {
-              "config": Object {
+            {
+              "config": {
                 "displayName": "wEb-01.ExamplE.com",
               },
               "name": "Value",
-              "state": Object {
+              "state": {
                 "displayName": "wEb-01.ExamplE.com",
                 "multipleFrames": false,
               },
               "type": "number",
-              "values": Array [
+              "values": [
                 10000.3,
                 10000.4,
                 10000.5,
@@ -147,35 +147,35 @@ describe('Rename By Regex Transformer', () => {
         const data = received[0];
         const frame = data[0];
         expect(frame.fields).toMatchInlineSnapshot(`
-          Array [
-            Object {
-              "config": Object {
+          [
+            {
+              "config": {
                 "name": "Time",
               },
               "name": "Time",
-              "state": Object {
+              "state": {
                 "displayName": "Time",
                 "multipleFrames": false,
               },
               "type": "time",
-              "values": Array [
+              "values": [
                 3000,
                 4000,
                 5000,
                 6000,
               ],
             },
-            Object {
-              "config": Object {
+            {
+              "config": {
                 "displayName": "web-01.example.com",
               },
               "name": "Value",
-              "state": Object {
+              "state": {
                 "displayName": "web-01.example.com",
                 "multipleFrames": false,
               },
               "type": "number",
-              "values": Array [
+              "values": [
                 10000.3,
                 10000.4,
                 10000.5,
@@ -199,35 +199,35 @@ describe('Rename By Regex Transformer', () => {
         const data = received[0];
         const frame = data[0];
         expect(frame.fields).toMatchInlineSnapshot(`
-          Array [
-            Object {
-              "config": Object {
+          [
+            {
+              "config": {
                 "name": "Time",
               },
               "name": "Time",
-              "state": Object {
+              "state": {
                 "displayName": "Time",
                 "multipleFrames": false,
               },
               "type": "time",
-              "values": Array [
+              "values": [
                 3000,
                 4000,
                 5000,
                 6000,
               ],
             },
-            Object {
-              "config": Object {
+            {
+              "config": {
                 "displayName": "web-01.example.com",
               },
               "name": "Value",
-              "state": Object {
+              "state": {
                 "displayName": "web-01.example.com",
                 "multipleFrames": false,
               },
               "type": "number",
-              "values": Array [
+              "values": [
                 10000.3,
                 10000.4,
                 10000.5,

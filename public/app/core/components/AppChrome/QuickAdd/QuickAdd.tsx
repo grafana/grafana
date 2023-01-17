@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Menu, Dropdown, Button, Icon, useStyles2, useTheme2, ToolbarButton } from '@grafana/ui';
+import { Menu, Dropdown, useStyles2, useTheme2, ToolbarButton } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { useSelector } from 'app/types';
 
@@ -41,16 +41,13 @@ export const QuickAdd = ({}: Props) => {
   return createActions.length > 0 ? (
     <>
       <Dropdown overlay={MenuActions} placement="bottom-end">
-        {isSmallScreen ? (
-          <ToolbarButton iconOnly icon="plus-circle" aria-label="New" />
-        ) : (
-          <Button variant="primary" size="sm" icon="plus">
-            <div className={styles.buttonContent}>
-              <span className={styles.buttonText}>New</span>
-              <Icon name="angle-down" />
-            </div>
-          </Button>
-        )}
+        {(isOpen) =>
+          isSmallScreen ? (
+            <ToolbarButton iconOnly icon="plus-circle" aria-label="New" />
+          ) : (
+            <ToolbarButton iconOnly icon="plus" isOpen={isOpen} aria-label="New" />
+          )
+        }
       </Dropdown>
       <NavToolbarSeparator className={styles.separator} />
     </>
@@ -68,8 +65,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   separator: css({
-    marginLeft: theme.spacing(1),
-    [theme.breakpoints.down('md')]: {
+    [theme.breakpoints.down('sm')]: {
       display: 'none',
     },
   }),

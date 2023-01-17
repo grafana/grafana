@@ -160,13 +160,38 @@ func TestCalculate(t *testing.T) {
 					},
 				},
 				FS: plugins.NewLocalFS(map[string]struct{}{
-					filepath.Join(basePath,"MANIFEST.txt"): {},
-					filepath.Join(basePath,"plugin.json"): {},
+					filepath.Join(basePath, "MANIFEST.txt"): {},
+					filepath.Join(basePath, "plugin.json"):  {},
 				}, basePath),
 			})
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedSignature, sig)
 		}
+	})
+
+	t.Run("Unsigned Chromium file should not invalidate signature for Renderer plugin running on Windows", func(t *testing.T) {
+		backup := runningWindows
+		t.Cleanup(func() {
+			runningWindows = backup
+		})
+
+		runningWindows = true
+		sig, err := Calculate(log.NewNopLogger(), &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "test-renderer",
+				Type: plugins.Renderer,
+				Info: plugins.Info{
+					Version: "1.0.0",
+				},
+			},
+			PluginDir: "../testdata/renderer-added-file/plugin",
+		})
+		require.NoError(t, err)
+		require.Equal(t, plugins.Signature{
+			Status:     plugins.SignatureValid,
+			Type:       plugins.GrafanaSignature,
+			SigningOrg: "Grafana Labs",
+		}, sig)
 	})
 }
 

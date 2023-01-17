@@ -12,11 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	loginservice "github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/navtree"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -25,14 +20,19 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	loginservice "github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func fakeSetIndexViewData(t *testing.T) {
@@ -323,7 +323,8 @@ func TestLoginPostRedirect(t *testing.T) {
 		Cfg:              setting.NewCfg(),
 		HooksService:     &hooks.HooksService{},
 		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
+		Features:         featuremgmt.WithFeatures(),
 	}
 	hs.Cfg.CookieSecure = true
 
@@ -564,7 +565,7 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 		Cfg:              sc.cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
 		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		log:              log.New("hello"),
 		SocialService:    &mockSocialService{},
 	}
@@ -602,7 +603,8 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		log:              log.New("test"),
 		Cfg:              setting.NewCfg(),
 		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
+		Features:         featuremgmt.WithFeatures(),
 		HooksService:     hookService,
 	}
 

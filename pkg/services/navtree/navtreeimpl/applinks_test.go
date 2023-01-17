@@ -25,6 +25,7 @@ func TestAddAppLinks(t *testing.T) {
 	reqCtx := &models.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	permissions := []ac.Permission{
 		{Action: plugins.ActionAppAccess, Scope: "*"},
+		{Action: plugins.ActionInstall, Scope: "*"},
 	}
 
 	testApp1 := plugins.PluginDTO{
@@ -148,6 +149,30 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	// This can be done by using `[navigation.app_sections]` in the INI config
+	t.Run("Should move apps that have root nav id configured to the root", func(t *testing.T) {
+		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
+		service.navigationAppConfig = map[string]NavigationAppConfig{
+			"test-app1": {SectionID: navtree.NavIDRoot},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		// Check if the plugin gets moved to the root
+		require.Len(t, treeRoot.Children, 2)
+		require.Equal(t, "plugin-page-test-app1", treeRoot.Children[0].Id)
+
+		// Check if it is not under the "Apps" section anymore
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.NotNil(t, appsNode)
+		require.Len(t, appsNode.Children, 2)
+		require.Equal(t, "plugin-page-test-app2", appsNode.Children[0].Id)
+		require.Equal(t, "plugin-page-test-app3", appsNode.Children[1].Id)
+	})
+
+	// This can be done by using `[navigation.app_sections]` in the INI config
 	t.Run("Should move apps that have specific nav id configured to correct section", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagTopnav)
 		service.navigationAppConfig = map[string]NavigationAppConfig{
@@ -266,18 +291,20 @@ func TestAddAppLinks(t *testing.T) {
 		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
 		connectionsNode := treeRoot.FindById("connections")
 		require.Equal(t, "Connections", connectionsNode.Text)
-		require.Equal(t, "Connect data", connectionsNode.Children[1].Text)
-		require.Equal(t, "connections-connect-data", connectionsNode.Children[1].Id) // Original "Connect data" page
-		require.Equal(t, "", connectionsNode.Children[1].PluginID)
+
+		connectDataNode := connectionsNode.Children[0]
+		require.Equal(t, "Connect data", connectDataNode.Text)
+		require.Equal(t, "connections-connect-data", connectDataNode.Id) // Original "Connect data" page
+		require.Equal(t, "", connectDataNode.PluginID)
 
 		err := service.addAppLinks(&treeRoot, reqCtx)
 
 		// Check if the standalone plugin page appears under the section where we registered it
 		require.NoError(t, err)
 		require.Equal(t, "Connections", connectionsNode.Text)
-		require.Equal(t, "Connect data", connectionsNode.Children[1].Text)
-		require.Equal(t, "standalone-plugin-page-/connections/connect-data", connectionsNode.Children[1].Id) // Overridden "Connect data" page
-		require.Equal(t, "test-app3", connectionsNode.Children[1].PluginID)
+		require.Equal(t, "Connect data", connectDataNode.Text)
+		require.Equal(t, "standalone-plugin-page-/connections/connect-data", connectDataNode.Id) // Overridden "Connect data" page
+		require.Equal(t, "test-app3", connectDataNode.PluginID)
 
 		// Check if the standalone plugin page does not appear under the app section anymore
 		// (Also checking if the Default Page got removed)

@@ -1,10 +1,9 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/service-accounts/
-  - /docs/grafana/latest/administration/service-accounts/about-service-accounts/
-  - /docs/grafana/latest/administration/service-accounts/add-service-account-token/
-  - /docs/grafana/latest/administration/service-accounts/create-service-account/
-  - /docs/grafana/latest/administration/service-accounts/enable-service-accounts/
+  - about-service-accounts/
+  - add-service-account-token/
+  - create-service-account/
+  - enable-service-accounts/
 description: This page contains information about service accounts in Grafana
 keywords:
   - API keys
@@ -88,6 +87,10 @@ You can create a service account token using the Grafana UI or via the API. For 
 ### Before you begin
 
 - Ensure you have permission to create and edit service accounts. By default, the organization administrator role is required to create and edit service accounts. For more information about user permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/#" >}}).
+
+### Service account token expiration dates
+
+By default, service account tokens don't have an expiration date, meaning they won't expire at all. However, if `token_expiration_day_limit` is set to a value greater than 0, Grafana restricts the lifetime limit of new tokens to the configured value in days.
 
 ### To add a token to a service account
 

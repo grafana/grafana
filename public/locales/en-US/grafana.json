@@ -1,5 +1,28 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": "Copied"
+    }
+  },
+  "command-palette": {
+    "action": {
+      "change-theme": "Change theme...",
+      "dark-theme": "Dark",
+      "light-theme": "Light",
+      "search": "Search"
+    },
+    "search-box": {
+      "placeholder": "Search Grafana"
+    },
+    "section": {
+      "actions": "Actions",
+      "dashboard-search-results": "Dashboards",
+      "pages": "Pages",
+      "preferences": "Preferences",
+      "recent-dashboards": "Recent dashboards"
+    }
+  },
   "common": {
     "locale": {
       "default": "Default"
@@ -75,6 +98,15 @@
       "unmark-favorite": "Unmark as favorite"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "Please contact your administrator to configure data sources.",
+    "explanation": "To visualize your data, you'll need to connect it first.",
+    "new-dashboard": "New dashboard",
+    "preferred": "Connect your preferred data source:",
+    "sampleData": "Or set up a new dashboard with sample data",
+    "viewAll": "View all",
+    "welcome": "Welcome to Grafana dashboards!"
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },
@@ -116,6 +148,9 @@
     "alerting-groups": {
       "subtitle": "See grouped alerts from an Alertmanager instance",
       "title": "Groups"
+    },
+    "alerting-home": {
+      "title": "Home"
     },
     "alerting-legacy": {
       "title": "Alerting (legacy)"
@@ -183,8 +218,9 @@
       "title": "Organizations"
     },
     "global-users": {
-      "subtitle": "Manage and create users across the whole Grafana server",
-      "title": "Users"
+      "subtitle": "Manage users in Grafana",
+      "title": "Users",
+      "titleBeforeTopnav": "Users"
     },
     "help": {
       "title": "Help"
@@ -193,6 +229,7 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Keyboard shortcuts",
     "help/support": "Support",
+    "help/support-bundle": "Support Bundles",
     "home": {
       "title": "Home"
     },
@@ -219,6 +256,9 @@
       "subtitle": "Monitoring and infrastructure apps",
       "title": "Monitoring"
     },
+    "new": {
+      "title": "New"
+    },
     "new-dashboard": {
       "title": "New dashboard"
     },
@@ -227,7 +267,8 @@
     },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
-      "title": "Preferences"
+      "title": "Default preferences",
+      "titleBeforeTopnav": "Preferences"
     },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
@@ -282,6 +323,10 @@
       "subtitle": "Manage file storage",
       "title": "Storage"
     },
+    "support-bundles": {
+      "subtitle": "Download support bundles",
+      "title": "Support bundles"
+    },
     "teams": {
       "subtitle": "Groups of users that have common dashboard and permission needs",
       "title": "Teams"
@@ -302,15 +347,28 @@
   "news": {
     "title": "Latest from the blog"
   },
+  "notifications": {
+    "starred-dashboard": "Dashboard starred",
+    "unstarred-dashboard": "Dashboard unstarred"
+  },
   "panel": {
     "header-menu": {
+      "copy": "Copy",
+      "create-library-panel": "Create library panel",
+      "duplicate": "Duplicate",
+      "edit": "Edit",
+      "explore": "Explore",
+      "get-help": "Get help",
       "hide-legend": "Hide legend",
       "inspect": "Inspect",
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
+      "query": "Query",
+      "remove": "Remove",
       "share": "Share",
       "show-legend": "Show legend",
+      "unlink-library-panel": "Unlink library panel",
       "view": "View"
     }
   },
@@ -329,6 +387,14 @@
     },
     "select-button": {
       "auto-refresh": "Set auto refresh interval"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "Import",
+      "new": "New",
+      "new-dashboard": "New Dashboard",
+      "new-folder": "New Folder"
     }
   },
   "share-modal": {
@@ -401,6 +467,9 @@
       "dark": "Dark",
       "field-name": "Theme",
       "light": "Light"
+    },
+    "view-json": {
+      "copy-button": "Copy to Clipboard"
     }
   },
   "shared-dashboard": {
@@ -487,7 +556,7 @@
       "name-label": "Name",
       "username-label": "Username"
     },
-    "title": "Edit profile"
+    "title": "Profile"
   },
   "user-session": {
     "browser-column": "Browser & OS",

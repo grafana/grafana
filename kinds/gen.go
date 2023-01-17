@@ -21,8 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/kindsys"
 )
 
-const sep = string(filepath.Separator)
-
 func main() {
 	if len(os.Args) > 1 {
 		fmt.Fprintf(os.Stderr, "plugin thema code generator does not currently accept any arguments\n, got %q", os.Args)
@@ -30,24 +28,19 @@ func main() {
 	}
 
 	// Core kinds composite code generator. Produces all generated code in
-	// grafana/grafana that derives from raw and structured core kinds.
-	coreKindsGen := codejen.JennyListWithNamer[*codegen.DeclForGen](func(decl *codegen.DeclForGen) string {
-		return decl.Meta.Common().MachineName
+	// grafana/grafana that derives from core kinds.
+	coreKindsGen := codejen.JennyListWithNamer(func(decl *codegen.DeclForGen) string {
+		return decl.Properties.Common().MachineName
 	})
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		codegen.GoTypesJenny(kindsys.GoCoreKindParentPath, nil),
-		codegen.CoreStructuredKindJenny(kindsys.GoCoreKindParentPath, nil),
-		codegen.RawKindJenny(kindsys.GoCoreKindParentPath, nil),
+		codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
+		codegen.CoreKindJenny(kindsys.GoCoreKindParentPath, nil),
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
-		codegen.TSTypesJenny(kindsys.TSCoreKindParentPath, &codegen.TSTypesGeneratorConfig{
-			GenDirName: func(decl *codegen.DeclForGen) string {
-				// FIXME this hardcodes always generating to experimental dir. OK for now, but need generator fanout
-				return filepath.Join(decl.Meta.Common().MachineName, "x")
-			},
-		}),
+		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
+		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
 
 	coreKindsGen.AddPostprocessors(codegen.SlashHeaderMapper("kinds/gen.go"))
@@ -62,49 +55,29 @@ func main() {
 	rt := cuectx.GrafanaThemaRuntime()
 	var all []*codegen.DeclForGen
 
-	// structured kinddirs first
-	f := os.DirFS(filepath.Join(groot, kindsys.CoreStructuredDeclParentPath))
-	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading structured fs root directory")
+	f := os.DirFS(filepath.Join(groot, kindsys.CoreDeclParentPath))
+	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
 	for _, ent := range kinddirs {
 		if !ent.IsDir() {
 			continue
 		}
-		rel := filepath.Join(kindsys.CoreStructuredDeclParentPath, ent.Name())
-		decl, err := kindsys.LoadCoreKind[kindsys.CoreStructuredMeta](rel, rt.Context(), nil)
+		rel := filepath.Join(kindsys.CoreDeclParentPath, ent.Name())
+		decl, err := kindsys.LoadCoreKind(rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
 		}
-		if decl.Meta.MachineName != ent.Name() {
-			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))
+		if decl.Properties.MachineName != ent.Name() {
+			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Properties.Name, ent.Name()))
 		}
 
 		all = append(all, elsedie(codegen.ForGen(rt, decl.Some()))(rel))
 	}
 
-	// now raw kinddirs
-	f = os.DirFS(filepath.Join(groot, kindsys.RawDeclParentPath))
-	kinddirs = elsedie(fs.ReadDir(f, "."))("error reading raw fs root directory")
-	for _, ent := range kinddirs {
-		if !ent.IsDir() {
-			continue
-		}
-		rel := filepath.Join(kindsys.RawDeclParentPath, ent.Name())
-		decl, err := kindsys.LoadCoreKind[kindsys.RawMeta](rel, rt.Context(), nil)
-		if err != nil {
-			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
-		}
-		if decl.Meta.MachineName != ent.Name() {
-			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Meta.Name, ent.Name()))
-		}
-		dfg, _ := codegen.ForGen(nil, decl.Some())
-		all = append(all, dfg)
-	}
-
 	sort.Slice(all, func(i, j int) bool {
-		return nameFor(all[i].Meta) < nameFor(all[j].Meta)
+		return nameFor(all[i].Properties) < nameFor(all[j].Properties)
 	})
 
-	jfs, err := coreKindsGen.GenerateFS(all)
+	jfs, err := coreKindsGen.GenerateFS(all...)
 	if err != nil {
 		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}
@@ -118,18 +91,16 @@ func main() {
 	}
 }
 
-func nameFor(m kindsys.SomeKindMeta) string {
+func nameFor(m kindsys.SomeKindProperties) string {
 	switch x := m.(type) {
-	case kindsys.RawMeta:
+	case kindsys.CoreProperties:
 		return x.Name
-	case kindsys.CoreStructuredMeta:
+	case kindsys.CustomProperties:
 		return x.Name
-	case kindsys.CustomStructuredMeta:
-		return x.Name
-	case kindsys.ComposableMeta:
+	case kindsys.ComposableProperties:
 		return x.Name
 	default:
-		// unreachable so long as all the possibilities in KindMetas have switch branches
+		// unreachable so long as all the possibilities in KindProperties have switch branches
 		panic("unreachable")
 	}
 }

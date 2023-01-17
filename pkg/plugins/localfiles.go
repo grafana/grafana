@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -10,8 +9,6 @@ import (
 )
 
 var _ fs.FS = (*LocalFS)(nil)
-
-var ErrFileNotExist = fmt.Errorf("file does not exist")
 
 type LocalFS struct {
 	m        map[string]*LocalFile

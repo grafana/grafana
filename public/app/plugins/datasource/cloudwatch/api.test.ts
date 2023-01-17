@@ -4,10 +4,10 @@ describe('api', () => {
   describe('describeLogGroup', () => {
     it('replaces region correctly in the query', async () => {
       const { api, resourceRequestMock } = setupMockedAPI();
-      await api.describeLogGroups({ region: 'default' });
+      await api.getLogGroups({ region: 'default' });
       expect(resourceRequestMock.mock.calls[0][1].region).toBe('us-west-1');
 
-      await api.describeLogGroups({ region: 'eu-east' });
+      await api.getLogGroups({ region: 'eu-east' });
       expect(resourceRequestMock.mock.calls[1][1].region).toBe('eu-east');
     });
 
@@ -49,7 +49,7 @@ describe('api', () => {
         },
       ];
 
-      const logGroups = await api.describeLogGroups({ region: 'default' });
+      const logGroups = await api.getLogGroups({ region: 'default' });
 
       expect(logGroups).toEqual(expectedLogGroups);
     });
@@ -75,12 +75,16 @@ describe('api', () => {
     it('when getAllMetrics is called', async () => {
       const getMock = jest.fn().mockResolvedValue([
         {
-          namespace: 'AWS/EC2',
-          name: 'CPUUtilization',
+          value: {
+            namespace: 'AWS/EC2',
+            name: 'CPUUtilization',
+          },
         },
         {
-          namespace: 'AWS/Redshift',
-          name: 'CPUPercentage',
+          value: {
+            namespace: 'AWS/Redshift',
+            name: 'CPUPercentage',
+          },
         },
       ]);
       const { api } = setupMockedAPI({ getMock });
@@ -94,12 +98,16 @@ describe('api', () => {
     it('when getMetrics', async () => {
       const getMock = jest.fn().mockResolvedValue([
         {
-          namespace: 'AWS/EC2',
-          name: 'CPUUtilization',
+          value: {
+            namespace: 'AWS/EC2',
+            name: 'CPUUtilization',
+          },
         },
         {
-          namespace: 'AWS/EC2',
-          name: 'CPUPercentage',
+          value: {
+            namespace: 'AWS/EC2',
+            name: 'CPUPercentage',
+          },
         },
       ]);
       const { api } = setupMockedAPI({ getMock });

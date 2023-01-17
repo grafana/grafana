@@ -55,7 +55,7 @@ func (fs *FS) Add(ctx context.Context, pluginID string, pluginArchive *zip.ReadC
 
 	fs.log.Successf("Downloaded and extracted %s v%s zip successfully to %s", res.ID, res.Info.Version, pluginDir)
 
-	var deps []*Dependency
+	deps := make([]*Dependency, 0, len(res.Dependencies.Plugins))
 	for _, plugin := range res.Dependencies.Plugins {
 		deps = append(deps, &Dependency{
 			ID:      plugin.ID,

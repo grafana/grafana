@@ -115,8 +115,8 @@ func TestIntegrationPluginManager(t *testing.T) {
 
 	ctx := context.Background()
 	verifyCorePluginCatalogue(t, ctx, ps)
-	verifyBundledPlugins(t, ctx, ps)
-	verifyPluginStaticRoutes(t, ctx, ps)
+	verifyBundledPlugins(t, ctx, ps, reg)
+	verifyPluginStaticRoutes(t, ctx, ps, reg)
 	verifyBackendProcesses(t, reg.Plugins(ctx))
 	verifyPluginQuery(t, ctx, client.ProvideService(reg, pCfg))
 }
@@ -163,7 +163,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"gettingstarted": {},
 		"graph":          {},
 		"heatmap":        {},
-		"heatmap-old":    {},
 		"histogram":      {},
 		"icon":           {},
 		"live":           {},
@@ -245,7 +244,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 	require.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(ps.Plugins(ctx)))
 }
 
-func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) {
+func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service, reg registry.Service) {
 	t.Helper()
 
 	dsPlugins := make(map[string]struct{})
@@ -258,6 +257,9 @@ func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) 
 	require.NotEqual(t, plugins.PluginDTO{}, inputPlugin)
 	require.NotNil(t, dsPlugins["input"])
 
+	intInputPlugin, exists := reg.Plugin(ctx, "input")
+	require.True(t, exists)
+
 	pluginRoutes := make(map[string]*plugins.StaticRoute)
 	for _, r := range ps.Routes() {
 		pluginRoutes[r.PluginID] = r
@@ -269,19 +271,19 @@ func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) 
 	}
 }
 
-func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, ps *store.Service) {
+func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, rr plugins.StaticRouteResolver, reg registry.Service) {
 	routes := make(map[string]*plugins.StaticRoute)
-	for _, route := range ps.Routes() {
+	for _, route := range rr.Routes() {
 		routes[route.PluginID] = route
 	}
 
 	require.Len(t, routes, 2)
 
-	inputPlugin, _ := ps.Plugin(ctx, "input")
+	inputPlugin, _ := reg.Plugin(ctx, "input")
 	require.NotNil(t, routes["input"])
 	require.Equal(t, routes["input"].Directory, inputPlugin.Base())
 
-	testAppPlugin, _ := ps.Plugin(ctx, "test-app")
+	testAppPlugin, _ := reg.Plugin(ctx, "test-app")
 	require.Contains(t, routes, "test-app")
 	require.Equal(t, routes["test-app"].Directory, testAppPlugin.Base())
 }

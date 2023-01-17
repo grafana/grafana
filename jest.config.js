@@ -7,7 +7,7 @@ module.exports = {
   verbose: false,
   testEnvironment: 'jsdom',
   transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': require.resolve('ts-jest'),
+    '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest'), { isolatedModules: true }],
   },
   transformIgnorePatterns: [
     'node_modules/(?!(ol)/)', // <- exclude the open layers library
@@ -22,7 +22,6 @@ module.exports = {
   setupFilesAfterEnv: ['./public/test/setupTests.ts'],
   snapshotSerializers: ['enzyme-to-json/serializer'],
   globals: {
-    'ts-jest': { isolatedModules: true },
     __webpack_public_path__: '', // empty string
   },
   moduleNameMapper: {
@@ -30,4 +29,6 @@ module.exports = {
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
   },
+  // Log the test results with dynamic Loki tags. Drone CI only
+  reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],
 };

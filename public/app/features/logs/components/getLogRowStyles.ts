@@ -124,6 +124,7 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       white-space: pre-wrap;
       word-break: break-all;
       width: 100%;
+      text-align: left;
     `,
     //Log details specific CSS
     logDetailsContainer: css`
@@ -146,8 +147,9 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       label: logs-row-details__icon;
       position: relative;
       color: ${theme.v1.palette.gray3};
-      padding-top: ${theme.spacing(0.75)};
-      padding-left: ${theme.spacing(0.75)};
+      padding-top: 1px;
+      padding-bottom: 1px;
+      padding-right: ${theme.spacing(0.75)};
     `,
     logDetailsLabel: css`
       label: logs-row-details__label;

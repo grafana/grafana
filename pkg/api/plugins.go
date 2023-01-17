@@ -1,14 +1,18 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -24,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -266,7 +271,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 
 	// fallback try alternative name
 	if len(content) == 0 {
-		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "help")
+		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "readme")
 		if err != nil {
 			if errors.Is(err, plugins.ErrFileNotExist) {
 				return response.Error(http.StatusNotFound, plugins.ErrFileNotExist.Error(), nil)
@@ -308,22 +313,31 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	}
 
 	// prepend slash for cleaning relative paths
-	requestedFile := filepath.Clean(filepath.Join("/", web.Params(c.Req)["*"]))
-	rel, err := filepath.Rel("/", requestedFile)
+	requestedFile, err := util.CleanRelativePath(web.Params(c.Req)["*"])
 	if err != nil {
 		// slash is prepended above therefore this is not expected to fail
-		c.JsonApiErr(500, "Failed to get the relative path", err)
+		c.JsonApiErr(500, "Failed to clean relative file path", err)
 		return
 	}
 
-	f, mod, err := plugin.File(rel)
+	f, err := plugin.File(requestedFile)
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
 			c.JsonApiErr(404, "Plugin file not found", nil)
 			return
 		}
+		c.JsonApiErr(500, "Could not open plugin file", err)
+		return
+	}
+	defer func() {
+		if err = f.Close(); err != nil {
+			hs.log.Error("Failed to close plugin file", "err", err)
+		}
+	}()
 
-		c.JsonApiErr(500, "Failed to get plugin file", err)
+	fi, err := f.Stat()
+	if err != nil {
+		c.JsonApiErr(500, "Plugin file exists but could not open", err)
 		return
 	}
 
@@ -333,7 +347,16 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
-	http.ServeContent(c.Resp, c.Req, rel, mod, f)
+	if rs, ok := f.(io.ReadSeeker); ok {
+		http.ServeContent(c.Resp, c.Req, requestedFile, fi.ModTime(), rs)
+	} else {
+		b, err := io.ReadAll(f)
+		if err != nil {
+			c.JsonApiErr(500, "Plugin file exists but could not read", err)
+			return
+		}
+		http.ServeContent(c.Resp, c.Req, requestedFile, fi.ModTime(), bytes.NewReader(b))
+	}
 }
 
 // CheckHealth returns the health of a plugin.
@@ -469,5 +492,26 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 		return nil, plugins.NotFoundError{PluginID: pluginId}
 	}
 
-	return plugin.Markdown(name)
+	md, err := plugin.File(mdFilepath(strings.ToUpper(name)))
+	if err != nil {
+		md, err = plugin.File(mdFilepath(strings.ToUpper(name)))
+		if err != nil {
+			return make([]byte, 0), nil
+		}
+	}
+	defer func() {
+		if err = md.Close(); err != nil {
+			hs.log.Error("Failed to close plugin markdown file", "err", err)
+		}
+	}()
+
+	d, err := io.ReadAll(md)
+	if err != nil {
+		return make([]byte, 0), nil
+	}
+	return d, nil
+}
+
+func mdFilepath(mdFilename string) string {
+	return filepath.Clean(filepath.Join("/", fmt.Sprintf("%s.md", mdFilename)))
 }

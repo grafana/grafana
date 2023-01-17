@@ -18,23 +18,21 @@ import (
 )
 
 type LokiAPI struct {
-	client  *http.Client
-	url     string
-	log     log.Logger
-	headers map[string]string
+	client *http.Client
+	url    string
+	log    log.Logger
 }
 
-func newLokiAPI(client *http.Client, url string, log log.Logger, headers map[string]string) *LokiAPI {
-	return &LokiAPI{client: client, url: url, log: log, headers: headers}
+type RawLokiResponse struct {
+	Body     []byte
+	Encoding string
 }
 
-func addHeaders(req *http.Request, headers map[string]string) {
-	for name, value := range headers {
-		req.Header.Set(name, value)
-	}
+func newLokiAPI(client *http.Client, url string, log log.Logger) *LokiAPI {
+	return &LokiAPI{client: client, url: url, log: log}
 }
 
-func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, headers map[string]string) (*http.Request, error) {
+func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
 
@@ -87,8 +85,6 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, hea
 		return nil, err
 	}
 
-	addHeaders(req, headers)
-
 	if query.VolumeQuery {
 		req.Header.Set("X-Query-Tags", "Source=logvolhist")
 	}
@@ -140,7 +136,7 @@ func makeLokiError(body io.ReadCloser) error {
 }
 
 func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames, error) {
-	req, err := makeDataRequest(ctx, api.url, query, api.headers)
+	req, err := makeDataRequest(ctx, api.url, query)
 	if err != nil {
 		return nil, err
 	}
@@ -163,14 +159,6 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
 	res := converter.ReadPrometheusStyleResult(iter, converter.Options{MatrixWideSeries: false, VectorWideSeries: false})
 
-	if res == nil {
-		// it's hard to say if this is an error-case or not.
-		// we know the http-response was a success-response
-		// (otherwise we wouldn't be here in the code),
-		// so we will go with a success, with no data.
-		return data.Frames{}, nil
-	}
-
 	if res.Error != nil {
 		return nil, res.Error
 	}
@@ -178,7 +166,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames
 	return res.Frames, nil
 }
 
-func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string, headers map[string]string) (*http.Request, error) {
+func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string) (*http.Request, error) {
 	lokiUrl, err := url.Parse(lokiDsUrl)
 	if err != nil {
 		return nil, err
@@ -199,20 +187,18 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string, 
 		return nil, err
 	}
 
-	addHeaders(req, headers)
-
 	return req, nil
 }
 
-func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) ([]byte, error) {
-	req, err := makeRawRequest(ctx, api.url, resourcePath, api.headers)
+func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiResponse, error) {
+	req, err := makeRawRequest(ctx, api.url, resourcePath)
 	if err != nil {
-		return nil, err
+		return RawLokiResponse{}, err
 	}
 
 	resp, err := api.client.Do(req)
 	if err != nil {
-		return nil, err
+		return RawLokiResponse{}, err
 	}
 
 	defer func() {
@@ -222,8 +208,18 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) ([]byte, 
 	}()
 
 	if resp.StatusCode/100 != 2 {
-		return nil, makeLokiError(resp.Body)
+		return RawLokiResponse{}, makeLokiError(resp.Body)
 	}
 
-	return io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return RawLokiResponse{}, err
+	}
+
+	encodedBytes := RawLokiResponse{
+		Body:     body,
+		Encoding: resp.Header.Get("Content-Encoding"),
+	}
+
+	return encodedBytes, nil
 }

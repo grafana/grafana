@@ -1,14 +1,11 @@
 package models
 
 import (
-	"encoding/base64"
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/gosimple/slug"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -55,15 +52,6 @@ func (d *Dashboard) SetUid(uid string) {
 func (d *Dashboard) SetVersion(version int) {
 	d.Version = version
 	d.Data.Set("version", version)
-}
-
-// GetDashboardIdForSavePermissionCheck return the dashboard id to be used for checking permission of dashboard
-func (d *Dashboard) GetDashboardIdForSavePermissionCheck() int64 {
-	if d.Id == 0 {
-		return d.FolderId
-	}
-
-	return d.Id
 }
 
 // NewDashboard creates a new dashboard
@@ -147,22 +135,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 // UpdateSlug updates the slug
 func (d *Dashboard) UpdateSlug() {
 	title := d.Data.Get("title").MustString()
-	d.Slug = SlugifyTitle(title)
-}
-
-func SlugifyTitle(title string) string {
-	s := slug.Make(strings.ToLower(title))
-	if s == "" {
-		// If the dashboard name is only characters outside of the
-		// sluggable characters, the slug creation will return an
-		// empty string which will mess up URLs. This failsafe picks
-		// that up and creates the slug as a base64 identifier instead.
-		s = base64.RawURLEncoding.EncodeToString([]byte(title))
-		if slug.MaxLength != 0 && len(s) > slug.MaxLength {
-			s = s[:slug.MaxLength]
-		}
-	}
-	return s
+	d.Slug = slugify.Slugify(title)
 }
 
 // GetUrl return the html url for a folder if it's folder, otherwise for a dashboard
@@ -197,10 +170,6 @@ func GetFullDashboardUrl(uid string, slug string) string {
 // GetFolderUrl returns the HTML url for a folder.
 func GetFolderUrl(folderUid string, slug string) string {
 	return fmt.Sprintf("%s/dashboards/f/%s/%s", setting.AppSubUrl, folderUid, slug)
-}
-
-type ValidateDashboardBeforeSaveResult struct {
-	IsParentFolderChanged bool
 }
 
 //
@@ -286,18 +255,6 @@ type GetDashboardsByPluginIdQuery struct {
 	OrgId    int64
 	PluginId string
 	Result   []*Dashboard
-}
-
-type GetDashboardSlugByIdQuery struct {
-	Id     int64
-	Result string
-}
-
-type GetDashboardsBySlugQuery struct {
-	OrgId int64
-	Slug  string
-
-	Result []*Dashboard
 }
 
 type DashboardRef struct {

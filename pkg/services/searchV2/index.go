@@ -54,7 +54,7 @@ type dashboard struct {
 	updated  time.Time
 
 	// Use generic structure
-	summary *models.ObjectSummary
+	summary *models.EntitySummary
 }
 
 // buildSignal is sent when search index is accessed in organization for which
@@ -776,13 +776,12 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 		return err
 	}
 
-	var actualPanelIDs []string
-
 	if location != "" {
 		location += "/"
 	}
 	location += dash.uid
 	panelDocs := getDashboardPanelDocs(dash, location)
+	actualPanelIDs := make([]string, 0, len(panelDocs))
 	for _, panelDoc := range panelDocs {
 		actualPanelIDs = append(actualPanelIDs, string(panelDoc.ID().Term()))
 		batch.Update(panelDoc.ID(), panelDoc)
@@ -913,7 +912,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 			slug:     "",
 			created:  time.Now(),
 			updated:  time.Now(),
-			summary: &models.ObjectSummary{
+			summary: &models.EntitySummary{
 				//ID:    0,
 				Name: "General",
 			},

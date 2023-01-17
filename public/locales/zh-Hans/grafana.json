@@ -1,5 +1,28 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": ""
+    }
+  },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
+    },
+    "search-box": {
+      "placeholder": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "默认"
@@ -75,6 +98,15 @@
       "unmark-favorite": "取消标记为收藏"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "",
+    "explanation": "",
+    "new-dashboard": "",
+    "preferred": "",
+    "sampleData": "",
+    "viewAll": "",
+    "welcome": ""
+  },
   "folder-picker": {
     "loading": "正在加载文件夹..."
   },
@@ -116,6 +148,9 @@
     "alerting-groups": {
       "subtitle": "查看来自 Alertmanager（警报管理器）实例的分组警报",
       "title": "组"
+    },
+    "alerting-home": {
+      "title": ""
     },
     "alerting-legacy": {
       "title": "警报（遗留）"
@@ -183,8 +218,9 @@
       "title": "组织"
     },
     "global-users": {
-      "subtitle": "在整个 Grafana 服务器上管理和创建用户",
-      "title": "用户"
+      "subtitle": "",
+      "title": "用户",
+      "titleBeforeTopnav": "用户"
     },
     "help": {
       "title": "帮助"
@@ -193,6 +229,7 @@
     "help/documentation": "文档",
     "help/keyboard-shortcuts": "快捷键",
     "help/support": "支持",
+    "help/support-bundle": "",
     "home": {
       "title": "首页"
     },
@@ -219,6 +256,9 @@
       "subtitle": "监控和基础设施应用",
       "title": "正在监控"
     },
+    "new": {
+      "title": ""
+    },
     "new-dashboard": {
       "title": "新建仪表板"
     },
@@ -227,7 +267,8 @@
     },
     "org-settings": {
       "subtitle": "管理整个组织的首选项",
-      "title": "首选项"
+      "title": "",
+      "titleBeforeTopnav": "首选项"
     },
     "playlists": {
       "subtitle": "以序列显示的仪表板组",
@@ -282,6 +323,10 @@
       "subtitle": "管理文件存储",
       "title": "存储"
     },
+    "support-bundles": {
+      "subtitle": "",
+      "title": ""
+    },
     "teams": {
       "subtitle": "具有共同仪表板和权限需求的用户组",
       "title": "团队"
@@ -302,21 +347,34 @@
   "news": {
     "title": "最新博客"
   },
+  "notifications": {
+    "starred-dashboard": "",
+    "unstarred-dashboard": ""
+  },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "",
       "inspect": "检查",
       "inspect-data": "数据",
       "inspect-json": "面板 JSON",
       "more": "更多...",
+      "query": "",
+      "remove": "",
       "share": "分享",
       "show-legend": "",
+      "unlink-library-panel": "",
       "view": "查看"
     }
   },
   "refresh-picker": {
     "aria-label": {
-      "choose-interval": "",
+      "choose-interval": "自动刷新已关闭。选择刷新时间间隔",
       "duration-selected": ""
     },
     "live-option": {
@@ -324,11 +382,19 @@
       "label": ""
     },
     "off-option": {
-      "aria-label": "",
-      "label": ""
+      "aria-label": "关闭自动刷新",
+      "label": "关"
     },
     "select-button": {
       "auto-refresh": ""
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
     }
   },
   "share-modal": {
@@ -401,6 +467,9 @@
       "dark": "深色",
       "field-name": "主题",
       "light": "浅色"
+    },
+    "view-json": {
+      "copy-button": ""
     }
   },
   "shared-dashboard": {
@@ -431,7 +500,7 @@
     },
     "calendar": {
       "apply-button": "",
-      "cancel-button": "",
+      "cancel-button": "取消",
       "select-time": ""
     },
     "content": {
@@ -487,7 +556,7 @@
       "name-label": "姓名",
       "username-label": "用户名"
     },
-    "title": "编辑简介"
+    "title": "用户资料"
   },
   "user-session": {
     "browser-column": "浏览器和操作系统",

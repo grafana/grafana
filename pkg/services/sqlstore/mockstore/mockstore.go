@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/stats"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -17,48 +19,22 @@ type OrgListResponse []struct {
 	Response error
 }
 type SQLStoreMock struct {
-	LastGetAlertsQuery      *models.GetAlertsQuery
-	LastLoginAttemptCommand *models.CreateLoginAttemptCommand
+	LastGetAlertsQuery *models.GetAlertsQuery
 
 	ExpectedUser                   *user.User
-	ExpectedTeamsByUser            []*models.TeamDTO
+	ExpectedTeamsByUser            []*team.TeamDTO
 	ExpectedAlert                  *models.Alert
-	ExpectedSystemStats            *models.SystemStats
-	ExpectedDataSourceStats        []*models.DataSourceStats
-	ExpectedDataSourcesAccessStats []*models.DataSourceAccessStats
-	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
+	ExpectedSystemStats            *stats.SystemStats
+	ExpectedDataSourceStats        []*stats.DataSourceStats
+	ExpectedDataSourcesAccessStats []*stats.DataSourceAccessStats
+	ExpectedNotifierUsageStats     []*stats.NotifierUsageStats
 	ExpectedSignedInUser           *user.SignedInUser
-	ExpectedLoginAttempts          int64
 
 	ExpectedError error
 }
 
 func NewSQLStoreMock() *SQLStoreMock {
 	return &SQLStoreMock{}
-}
-
-func (m *SQLStoreMock) GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
-	query.Result = m.ExpectedNotifierUsageStats
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
-	query.Result = m.ExpectedDataSourceStats
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
-	query.Result = m.ExpectedDataSourcesAccessStats
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error {
-	query.Result = m.ExpectedSystemStats
-	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetDialect() migrator.Dialect {
@@ -73,20 +49,15 @@ func (m *SQLStoreMock) CreateUser(ctx context.Context, cmd user.CreateUserComman
 	return nil, m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error {
+func (m *SQLStoreMock) GetUserProfile(ctx context.Context, query *user.GetUserProfileQuery) error {
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
-	query.Result = m.ExpectedSignedInUser
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) CreateTeam(name string, email string, orgID int64) (models.Team, error) {
-	return models.Team{
+func (m *SQLStoreMock) CreateTeam(name string, email string, orgID int64) (team.Team, error) {
+	return team.Team{
 		Name:  name,
 		Email: email,
-		OrgId: orgID,
+		OrgID: orgID,
 	}, nil
 }
 
@@ -122,17 +93,8 @@ func (m *SQLStoreMock) Quote(value string) string {
 	return ""
 }
 
-func (m *SQLStoreMock) GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetSqlxSession() *session.SessionDB {
 	return nil
-}
-
-func (m *SQLStoreMock) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
-	m.LastLoginAttemptCommand = cmd
-	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error {
@@ -144,16 +106,7 @@ func (m *SQLStoreMock) GetAlertNotificationUidWithId(ctx context.Context, query 
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
-	query.Result = m.ExpectedLoginAttempts
 	return m.ExpectedError
 }
 

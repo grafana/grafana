@@ -50,7 +50,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 
 	// When dashboard UID present in the request, we ignore dashboard ID
 	if query.DashboardUid != "" {
-		dq := models.GetDashboardQuery{Uid: query.DashboardUid, OrgId: c.OrgID}
+		dq := dashboards.GetDashboardQuery{UID: query.DashboardUid, OrgID: c.OrgID}
 		err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
 		if err != nil {
 			if hs.Features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
@@ -59,7 +59,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 				return response.Error(http.StatusBadRequest, "Invalid dashboard UID in annotation request", err)
 			}
 		} else {
-			query.DashboardId = dq.Result.Id
+			query.DashboardId = dq.Result.ID
 		}
 	}
 
@@ -79,11 +79,11 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 			if val, ok := dashboardCache[item.DashboardId]; ok {
 				item.DashboardUID = val
 			} else {
-				query := models.GetDashboardQuery{Id: item.DashboardId, OrgId: c.OrgID}
+				query := dashboards.GetDashboardQuery{ID: item.DashboardId, OrgID: c.OrgID}
 				err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 				if err == nil && query.Result != nil {
-					item.DashboardUID = &query.Result.Uid
-					dashboardCache[item.DashboardId] = &query.Result.Uid
+					item.DashboardUID = &query.Result.UID
+					dashboardCache[item.DashboardId] = &query.Result.UID
 				}
 			}
 		}
@@ -122,10 +122,10 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 
 	// overwrite dashboardId when dashboardUID is not empty
 	if cmd.DashboardUID != "" {
-		query := models.GetDashboardQuery{OrgId: c.OrgID, Uid: cmd.DashboardUID}
+		query := dashboards.GetDashboardQuery{OrgID: c.OrgID, UID: cmd.DashboardUID}
 		err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
-			cmd.DashboardId = query.Result.Id
+			cmd.DashboardId = query.Result.ID
 		}
 	}
 
@@ -278,6 +278,11 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 		EpochEnd: cmd.TimeEnd,
 		Text:     cmd.Text,
 		Tags:     cmd.Tags,
+		Data:     annotation.Data,
+	}
+
+	if cmd.Data != nil {
+		item.Data = cmd.Data
 	}
 
 	if err := hs.annotationsRepo.Update(c.Req.Context(), &item); err != nil {
@@ -328,6 +333,7 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 		EpochEnd: annotation.TimeEnd,
 		Text:     annotation.Text,
 		Tags:     annotation.Tags,
+		Data:     annotation.Data,
 	}
 
 	if cmd.Tags != nil {
@@ -344,6 +350,10 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 
 	if cmd.TimeEnd > 0 && cmd.TimeEnd != existing.EpochEnd {
 		existing.EpochEnd = cmd.TimeEnd
+	}
+
+	if cmd.Data != nil {
+		existing.Data = cmd.Data
 	}
 
 	if err := hs.annotationsRepo.Update(c.Req.Context(), &existing); err != nil {
@@ -369,10 +379,10 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 	}
 
 	if cmd.DashboardUID != "" {
-		query := models.GetDashboardQuery{OrgId: c.OrgID, Uid: cmd.DashboardUID}
+		query := dashboards.GetDashboardQuery{OrgID: c.OrgID, UID: cmd.DashboardUID}
 		err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
-			cmd.DashboardId = query.Result.Id
+			cmd.DashboardId = query.Result.ID
 		}
 	}
 
@@ -504,7 +514,11 @@ func (hs *HTTPServer) canSaveAnnotation(c *models.ReqContext, annotation *annota
 }
 
 func canEditDashboard(c *models.ReqContext, dashboardID int64) (bool, error) {
-	guard := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+	guard, err := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return false, err
+	}
+
 	if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
 		return false, err
 	}
@@ -606,6 +620,7 @@ func (hs *HTTPServer) canCreateAnnotation(c *models.ReqContext, dashboardId int6
 				return canSave, err
 			}
 		}
+
 		return canEditDashboard(c, dashboardId)
 	} else { // organization annotations
 		if !hs.AccessControl.IsDisabled() {

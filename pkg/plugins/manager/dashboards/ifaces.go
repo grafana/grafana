@@ -31,5 +31,5 @@ type GetPluginDashboardFileContentsArgs struct {
 
 // GetPluginDashboardFileContentsResult get plugin dashboard file content result model.
 type GetPluginDashboardFileContentsResult struct {
-	Content io.ReadSeeker
+	Content io.ReadCloser
 }

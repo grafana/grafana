@@ -30,10 +30,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -70,12 +72,12 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing DeleteLibraryElementsInFolder",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.Id)
+			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
 			err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
@@ -143,12 +145,12 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing GetLibraryPanelConnections",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.Id)
+			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
 			var expected = func(res LibraryElementConnectionsResponse) LibraryElementConnectionsResponse {
@@ -158,8 +160,8 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 							ID:            sc.initialResult.Result.ID,
 							Kind:          sc.initialResult.Result.Kind,
 							ElementID:     1,
-							ConnectionID:  dashInDB.Id,
-							ConnectionUID: dashInDB.Uid,
+							ConnectionID:  dashInDB.ID,
+							ConnectionUID: dashInDB.UID,
 							Created:       res.Result[0].Created,
 							CreatedBy: LibraryElementDTOMetaUser{
 								ID:        1,
@@ -267,12 +269,12 @@ type folderACLItem struct {
 	permission models.PermissionType
 }
 
-func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash *models.Dashboard, folderID int64) *models.Dashboard {
-	dash.FolderId = folderID
+func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash *dashboards.Dashboard, folderID int64) *dashboards.Dashboard {
+	dash.FolderID = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   "",
-		OrgId:     user.OrgID,
+		OrgID:     user.OrgID,
 		User:      &user,
 		Overwrite: false,
 	}
@@ -321,7 +323,7 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user user.S
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := appcontext.WithUser(context.Background(), &user)
 	folder, err := s.Create(ctx, &folder.CreateFolderCommand{
-		OrgID: user.OrgID, Title: title, UID: title,
+		OrgID: user.OrgID, Title: title, UID: title, SignedInUser: &user,
 	})
 	require.NoError(t, err)
 
@@ -456,8 +458,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Name:  "User In DB",
 			Login: userInDbName,
 		}
-
-		_, err = sqlStore.CreateUser(context.Background(), cmd)
+		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+		require.NoError(t, err)
+		usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, quotaService)
+		require.NoError(t, err)
+		_, err = usrSvc.Create(context.Background(), &cmd)
 		require.NoError(t, err)
 
 		sc := scenarioContext{

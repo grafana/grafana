@@ -1,14 +1,13 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/add-a-data-source/
-  - /docs/grafana/latest/datasources/datasource_permissions/
-  - /docs/grafana/latest/features/datasources/add-a-data-source/
-  - /docs/grafana/latest/enterprise/datasource_permissions/
-  - /docs/grafana/latest/permissions/datasource_permissions/
-  - /docs/grafana/latest/administration/data-source-management/
-  - /docs/grafana/latest/enterprise/query-caching/
-title: Data source management
+  - ../datasources/add-a-data-source/
+  - ../datasources/datasource_permissions/
+  - ../enterprise/datasource_permissions/
+  - ../enterprise/query-caching/
+  - ../features/datasources/add-a-data-source/
+  - ../permissions/datasource_permissions/
 description: Data source management information for Grafana administrators
+title: Data source management
 weight: 100
 ---
 
@@ -27,9 +26,6 @@ Before you can create your first dashboard, you need to add your data source.
 **To add a data source:**
 
 1. Select the cog icon on the side menu to show the configuration options.
-
-   {{< figure src="/static/img/docs/v75/sidemenu-datasource-7-5.png" max-width="150px" class="docs-image--no-shadow">}}
-
 1. Select **Data sources**.
 
    This opens the data sources page, which displays a list of previously configured data sources for the Grafana instance.
@@ -44,9 +40,7 @@ Before you can create your first dashboard, you need to add your data source.
 
 1. Move the cursor over the data source you want to add.
 
-   {{< figure src="/static/img/docs/v75/select-data-source-7-5.png" max-width="700px" class="docs-image--no-shadow">}}
-
-1. Select **Select**.
+1. Click **Select**.
 
    This opens the data source configuration page.
 
@@ -62,8 +56,6 @@ Each data source's configuration includes a permissions page where you can enabl
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
 ### Enable data source permissions
-
-{{< figure src="/static/img/docs/enterprise/datasource_permissions_enable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_enable.gif" >}}
 
 By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just
 queries that exist on dashboards they have access to.
@@ -82,8 +74,6 @@ When permissions are enabled for a data source in an organization, the user who 
 
 ### Allow users and teams to query a data source
 
-{{< figure src="/static/img/docs/enterprise/datasource_permissions_add_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_add.gif" >}}
-
 After you have enabled permissions for a data source you can assign query permissions to users and teams which will allow access to query the data source.
 
 **Assign query permission to users and teams:**
@@ -97,8 +87,6 @@ After you have enabled permissions for a data source you can assign query permis
 <div class="clearfix"></div>
 
 ### Disable data source permissions
-
-{{< figure src="/static/img/docs/enterprise/datasource_permissions_disable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_disable.gif" >}}
 
 If you have enabled permissions for a data source and want to return data source permissions to the default, then you can disable permissions with a click of a button.
 
@@ -138,7 +126,7 @@ You can make a panel retrieve fresh data more frequently by increasing the **Max
 
 ### Data sources that work with query caching
 
-Query caching works for all [Enterprise data sources](https://grafana.com/grafana/plugins/?type=datasource&enterprise=1) as well as the following [built-in data sources]({{< relref "../../datasources/" >}}):
+Query caching works for all [Enterprise data sources](/grafana/plugins/?type=datasource&enterprise=1) as well as the following [built-in data sources]({{< relref "../../datasources/" >}}):
 
 - CloudWatch Metrics
 - Google Cloud Monitoring
@@ -206,7 +194,7 @@ To view available data source plugins, go to the [plugin catalog](/grafana/plugi
 For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management/" >}}).
 
 You can further filter the plugin catalog's results for data sources provided by the Grafana community, Grafana Labs, and partners.
-If you use [Grafana Enterprise]{{< relref "../../enterprise/" >}}, you can also filter by Enterprise-supported plugins.
+If you use [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also filter by Enterprise-supported plugins.
 
 For more documentation on a specific data source plugin's features, including its query language and editor, refer to its plugin catalog page.
 

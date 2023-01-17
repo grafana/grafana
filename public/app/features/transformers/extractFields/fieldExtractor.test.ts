@@ -6,7 +6,7 @@ describe('Extract fields from text', () => {
     const out = extractor.parse('{"a":"148.1672","av":41923755,"c":148.25}');
 
     expect(out).toMatchInlineSnapshot(`
-      Object {
+      {
         "a": "148.1672",
         "av": 41923755,
         "c": 148.25,
@@ -18,7 +18,7 @@ describe('Extract fields from text', () => {
     const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
     const out = extractor.parse('a="1",   "b"=\'2\',c=3  x:y ;\r\nz="d and 4"');
     expect(out).toMatchInlineSnapshot(`
-      Object {
+      {
         "a": "1",
         "b": "2",
         "c": "3",
@@ -35,12 +35,12 @@ describe('Extract fields from text', () => {
     );
 
     expect(out).toMatchInlineSnapshot(`
-      Object {
+      {
         "a": "1",
         "b": "2",
         "c": "3",
         "x": "y",
-        "z": "dbl_quotes=\\"Double Quotes\\" sgl_quotes='Single Quotes'",
+        "z": "dbl_quotes="Double Quotes" sgl_quotes='Single Quotes'",
       }
     `);
   });
@@ -50,7 +50,7 @@ describe('Extract fields from text', () => {
     const out = extractor.parse(`a="1",   "b"=\'2\',c=3  x:y ;\r\nz="This is; testing& validating, 1=:2"`);
 
     expect(out).toMatchInlineSnapshot(`
-      Object {
+      {
         "a": "1",
         "b": "2",
         "c": "3",
@@ -65,7 +65,7 @@ describe('Extract fields from text', () => {
     const out = extractor.parse(`a=, "b"=\'2\',c=3  x: `);
 
     expect(out).toMatchInlineSnapshot(`
-      Object {
+      {
         "a": "",
         "b": "2",
         "c": "3",
@@ -78,7 +78,7 @@ describe('Extract fields from text', () => {
     const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
     const out = extractor.parse('a="1",   "b"=\'2\',c=3  x:y ;\r\nz="7"');
     expect(out).toMatchInlineSnapshot(`
-      Object {
+      {
         "a": "1",
         "b": "2",
         "c": "3",
@@ -92,7 +92,7 @@ describe('Extract fields from text', () => {
     const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
     const out = extractor.parse('a=b&c=d&x=123');
     expect(out).toMatchInlineSnapshot(`
-      Object {
+      {
         "a": "b",
         "c": "d",
         "x": "123",
@@ -104,7 +104,7 @@ describe('Extract fields from text', () => {
     const extractor = fieldExtractors.get(FieldExtractorID.KeyValues);
     const out = extractor.parse('{foo="bar", baz="42"}');
     expect(out).toMatchInlineSnapshot(`
-      Object {
+      {
         "baz": "42",
         "foo": "bar",
       }

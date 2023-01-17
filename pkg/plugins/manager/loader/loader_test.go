@@ -789,7 +789,6 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 					filepath.Join(filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"), "plugin.json"):  {},
 					filepath.Join(filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"), "MANIFEST.txt"): {},
 				}, filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin")),
-				//PluginDir:     filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"),
 				Class:         plugins.External,
 				Signature:     plugins.SignatureValid,
 				SignatureType: plugins.PrivateSignature,
@@ -1185,7 +1184,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 			BaseURL: "public/app/plugins/app/testdata-app",
 		}
 
-		configureAppChildOfPlugin(parent, child)
+		configureAppChildPlugin(parent, child)
 
 		require.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
 		require.Equal(t, "testdata-app", child.IncludedInAppID)

@@ -211,24 +211,25 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		OrgID:                      dn.orgID,
 		DataSourceInstanceSettings: dsInstanceSettings,
 		PluginID:                   dn.datasource.Type,
+		User:                       dn.request.User,
 	}
 
-	q := []backend.DataQuery{
-		{
-			RefID:         dn.refID,
-			MaxDataPoints: dn.maxDP,
-			Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
-			JSON:          dn.query,
-			TimeRange:     dn.timeRange.AbsoluteTime(now),
-			QueryType:     dn.queryType,
-		},
-	}
-
-	resp, err := s.dataService.QueryData(ctx, &backend.QueryDataRequest{
+	req := &backend.QueryDataRequest{
 		PluginContext: pc,
-		Queries:       q,
-		Headers:       dn.request.Headers,
-	})
+		Queries: []backend.DataQuery{
+			{
+				RefID:         dn.refID,
+				MaxDataPoints: dn.maxDP,
+				Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
+				JSON:          dn.query,
+				TimeRange:     dn.timeRange.AbsoluteTime(now),
+				QueryType:     dn.queryType,
+			},
+		},
+		Headers: dn.request.Headers,
+	}
+
+	resp, err := s.dataService.QueryData(ctx, req)
 	if err != nil {
 		return mathexp.Results{}, err
 	}

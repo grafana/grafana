@@ -1,34 +1,36 @@
-import { getDefaultTimeRange } from '@grafana/data';
+import {
+  VizPanel,
+  NestedScene,
+  SceneTimePicker,
+  SceneFlexLayout,
+  SceneTimeRange,
+  EmbeddedScene,
+} from '@grafana/scenes';
 
-import { NestedScene } from '../components/NestedScene';
 import { Scene } from '../components/Scene';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { VizPanel } from '../components/VizPanel';
-import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
-import { SceneTimeRange } from '../core/SceneTimeRange';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getNestedScene(): Scene {
-  const scene = new Scene({
+export function getNestedScene(standalone: boolean): Scene | EmbeddedScene {
+  const state = {
     title: 'Nested Scene demo',
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'column',
       children: [
-        getInnerScene('Inner scene'),
         new VizPanel({
           key: '3',
           pluginId: 'timeseries',
           title: 'Panel 3',
         }),
+        getInnerScene('Inner scene'),
       ],
     }),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+    $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  });
+  };
 
-  return scene;
+  return standalone ? new Scene(state) : new EmbeddedScene(state);
 }
 
 export function getInnerScene(title: string) {
@@ -36,7 +38,7 @@ export function getInnerScene(title: string) {
     title: title,
     canRemove: true,
     canCollapse: true,
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'row',
       children: [
         new VizPanel({
@@ -46,7 +48,7 @@ export function getInnerScene(title: string) {
         }),
       ],
     }),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
+    $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });
