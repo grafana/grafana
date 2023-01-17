@@ -6,11 +6,12 @@ import (
 	"errors"
 	"strings"
 
+	"gopkg.in/square/go-jose.v2/jwt"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 const ServiceName = "AuthService"
@@ -101,4 +102,20 @@ func (s *AuthService) Verify(ctx context.Context, strToken string) (models.JWTCl
 	}
 
 	return claims, nil
+}
+
+// HasSubClaim checks if the provided JWT token contains a non-empty "sub" claim.
+// Returns true if it contains, otherwise returns false.
+func HasSubClaim(jwtToken string) bool {
+	parsed, err := jwt.ParseSigned(sanitizeJWT(jwtToken))
+	if err != nil {
+		return false
+	}
+
+	var claims jwt.Claims
+	if err := parsed.UnsafeClaimsWithoutVerification(&claims); err != nil {
+		return false
+	}
+
+	return claims.Subject != ""
 }

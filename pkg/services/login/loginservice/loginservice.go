@@ -62,10 +62,11 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 			return login.ErrSignupNotAllowed
 		}
 
+		// quota check (FIXME: (jguer) this should be done in the user service)
 		// we may insert in both user and org_user tables
 		// therefore we need to query check quota for both user and org services
 		for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
-			limitReached, errLimit := ls.QuotaService.QuotaReached(cmd.ReqContext, quota.TargetSrv(srv))
+			limitReached, errLimit := ls.QuotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
 			if errLimit != nil {
 				cmd.ReqContext.Logger.Warn("Error getting user quota.", "error", errLimit)
 				return login.ErrGettingUserQuota

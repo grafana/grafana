@@ -210,12 +210,13 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 	cfg := state.ManagerCfg{
-		Metrics:       ng.Metrics.GetStateMetrics(),
-		ExternalURL:   appUrl,
-		InstanceStore: store,
-		Images:        ng.imageService,
-		Clock:         clk,
-		Historian:     history,
+		Metrics:              ng.Metrics.GetStateMetrics(),
+		ExternalURL:          appUrl,
+		InstanceStore:        store,
+		Images:               ng.imageService,
+		Clock:                clk,
+		Historian:            history,
+		DoNotSaveNormalState: ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState),
 	}
 	stateManager := state.NewManager(cfg)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)

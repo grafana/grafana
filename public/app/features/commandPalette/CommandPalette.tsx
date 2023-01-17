@@ -8,7 +8,6 @@ import {
   KBarPositioner,
   KBarResults,
   KBarSearch,
-  useMatches,
   VisualState,
   useRegisterActions,
   useKBar,
@@ -25,6 +24,7 @@ import { ResultItem } from './ResultItem';
 import { useDashboardResults } from './actions/dashboardActions';
 import useActions from './actions/useActions';
 import { CommandPaletteAction } from './types';
+import { useMatches } from './useMatches';
 
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
@@ -56,7 +56,10 @@ export const CommandPalette = () => {
         <KBarAnimator className={styles.animator}>
           <FocusScope contain autoFocus restoreFocus>
             <div {...overlayProps} {...dialogProps}>
-              <KBarSearch className={styles.search} />
+              <KBarSearch
+                defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search Grafana')}
+                className={styles.search}
+              />
               <RenderResults dashboardResults={dashboardResults} />
             </div>
           </FocusScope>

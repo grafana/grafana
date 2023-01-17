@@ -59,15 +59,6 @@ export const ResultItem = React.forwardRef(
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
         </div>
-        {action.shortcut?.length ? (
-          <div aria-hidden className={styles.shortcutContainer}>
-            {action.shortcut.map((sc) => (
-              <kbd key={sc} className={styles.shortcut}>
-                {sc}
-              </kbd>
-            ))}
-          </div>
-        ) : null}
       </div>
     );
   }

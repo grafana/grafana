@@ -12,6 +12,9 @@
       "light-theme": "",
       "search": ""
     },
+    "search-box": {
+      "placeholder": ""
+    },
     "section": {
       "actions": "",
       "dashboard-search-results": "",
@@ -253,6 +256,9 @@
       "subtitle": "Aplicaciones de supervisión e infraestructura",
       "title": "Seguimiento"
     },
+    "new": {
+      "title": ""
+    },
     "new-dashboard": {
       "title": "Nuevo panel de control"
     },
@@ -347,13 +353,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "Ocultar leyenda",
       "inspect": "Inspeccionar",
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
+      "query": "",
+      "remove": "",
       "share": "Compartir",
       "show-legend": "Mostrar leyenda",
+      "unlink-library-panel": "",
       "view": "Vista"
     }
   },
@@ -372,6 +387,14 @@
     },
     "select-button": {
       "auto-refresh": "Establecer intervalo de actualización automática"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
     }
   },
   "share-modal": {

@@ -116,7 +116,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When creating folder should return access denied error", func(t *testing.T) {
-				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
+				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
 				_, err := service.Create(context.Background(), &folder.CreateFolderCommand{
 					OrgID:        orgID,
 					Title:        f.Title,
@@ -128,11 +128,11 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			title := "Folder-TEST"
 			t.Run("When updating folder should return access denied error", func(t *testing.T) {
-				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					folder := args.Get(1).(*models.GetDashboardQuery)
-					folder.Result = models.NewDashboard("dashboard-test")
+				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					folder := args.Get(1).(*dashboards.GetDashboardQuery)
+					folder.Result = dashboards.NewDashboard("dashboard-test")
 					folder.Result.IsFolder = true
-				}).Return(&models.Dashboard{}, nil)
+				}).Return(&dashboards.Dashboard{}, nil)
 				_, err := service.Update(context.Background(), &folder.UpdateFolderCommand{
 					UID:          folderUID,
 					OrgID:        orgID,
@@ -169,13 +169,13 @@ func TestIntegrationFolderService(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
 			t.Run("When creating folder should not return access denied error", func(t *testing.T) {
-				dash := models.NewDashboardFolder("Test-Folder")
-				dash.Id = rand.Int63()
-				f := folder.FromDashboard(dash)
+				dash := dashboards.NewDashboardFolder("Test-Folder")
+				dash.ID = rand.Int63()
+				f := dashboards.FromDashboard(dash)
 
-				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
-				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dash, nil).Once()
-				dashStore.On("GetFolderByID", mock.Anything, orgID, dash.Id).Return(f, nil)
+				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
+				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dash, nil).Once()
+				dashStore.On("GetFolderByID", mock.Anything, orgID, dash.ID).Return(f, nil)
 
 				actualFolder, err := service.Create(context.Background(), &folder.CreateFolderCommand{
 					OrgID:        orgID,
@@ -188,8 +188,8 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When creating folder should return error if uid is general", func(t *testing.T) {
-				dash := models.NewDashboardFolder("Test-Folder")
-				dash.Id = rand.Int63()
+				dash := dashboards.NewDashboardFolder("Test-Folder")
+				dash.ID = rand.Int63()
 
 				_, err := service.Create(context.Background(), &folder.CreateFolderCommand{
 					OrgID:        orgID,
@@ -201,18 +201,18 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When updating folder should not return access denied error", func(t *testing.T) {
-				dashboardFolder := models.NewDashboardFolder("Folder")
-				dashboardFolder.Id = rand.Int63()
-				dashboardFolder.Uid = util.GenerateShortUID()
-				f := folder.FromDashboard(dashboardFolder)
+				dashboardFolder := dashboards.NewDashboardFolder("Folder")
+				dashboardFolder.ID = rand.Int63()
+				dashboardFolder.UID = util.GenerateShortUID()
+				f := dashboards.FromDashboard(dashboardFolder)
 
-				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
-				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dashboardFolder, nil)
-				dashStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.Id).Return(f, nil)
+				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
+				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dashboardFolder, nil)
+				dashStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.ID).Return(f, nil)
 
 				title := "TEST-Folder"
 				req := &folder.UpdateFolderCommand{
-					UID:          dashboardFolder.Uid,
+					UID:          dashboardFolder.UID,
 					OrgID:        orgID,
 					NewTitle:     &title,
 					SignedInUser: usr,
@@ -324,9 +324,9 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 	dashboardsvc := dashboards.FakeDashboardService{}
 	dashboardsvc.On("BuildSaveDashboardCommand",
 		mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
-		mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&models.SaveDashboardCommand{}, nil)
+		mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&dashboards.SaveDashboardCommand{}, nil)
 	dashStore := dashboards.FakeDashboardStore{}
-	dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
+	dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
 	dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
@@ -368,8 +368,8 @@ func TestNestedFolderService(t *testing.T) {
 			// dashboard store & service commands that should be called.
 			dashboardsvc.On("BuildSaveDashboardCommand",
 				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
-				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&models.SaveDashboardCommand{}, nil)
-			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
+				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&dashboards.SaveDashboardCommand{}, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
 			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 
 			_, err := foldersvc.Create(context.Background(), &folder.CreateFolderCommand{
@@ -427,8 +427,8 @@ func TestNestedFolderService(t *testing.T) {
 			// dashboard store & service commands that should be called.
 			dashboardsvc.On("BuildSaveDashboardCommand",
 				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
-				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&models.SaveDashboardCommand{}, nil)
-			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
+				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&dashboards.SaveDashboardCommand{}, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
 			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 			_, err := foldersvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
@@ -447,8 +447,8 @@ func TestNestedFolderService(t *testing.T) {
 			foldersvc.dashboardStore = dashStore
 			dashboardsvc.On("BuildSaveDashboardCommand",
 				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
-				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&models.SaveDashboardCommand{}, nil)
-			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{Uid: "newUID"}, nil)
+				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&dashboards.SaveDashboardCommand{}, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{UID: "newUID"}, nil)
 			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 			f, err := foldersvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
@@ -463,16 +463,16 @@ func TestNestedFolderService(t *testing.T) {
 
 		t.Run("create failed because of circular reference", func(t *testing.T) {
 			// dashboard store & service commands that should be called.
-			dashboardFolder := models.NewDashboardFolder("myFolder")
-			dashboardFolder.Id = rand.Int63()
-			dashboardFolder.Uid = "myFolder"
-			f := folder.FromDashboard(dashboardFolder)
+			dashboardFolder := dashboards.NewDashboardFolder("myFolder")
+			dashboardFolder.ID = rand.Int63()
+			dashboardFolder.UID = "myFolder"
+			f := dashboards.FromDashboard(dashboardFolder)
 
 			dashStore = &dashboards.FakeDashboardStore{}
 			foldersvc.dashboardStore = dashStore
-			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*models.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
-			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(dashboardFolder, nil)
-			dashStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.Id).Return(f, nil)
+			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dashboardFolder, nil)
+			dashStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.ID).Return(f, nil)
 			var actualCmd *models.DeleteDashboardCommand
 			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
@@ -509,8 +509,8 @@ func TestNestedFolderService(t *testing.T) {
 			// dashboard store & service commands that should be called.
 			dashboardsvc.On("BuildSaveDashboardCommand",
 				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
-				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&models.SaveDashboardCommand{}, nil)
-			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
+				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&dashboards.SaveDashboardCommand{}, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
 			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 			var actualCmd *models.DeleteDashboardCommand
@@ -670,8 +670,8 @@ func TestNestedFolderService(t *testing.T) {
 			// dashboard store & service commands that should be called.
 			dashboardsvc.On("BuildSaveDashboardCommand",
 				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
-				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&models.SaveDashboardCommand{}, nil)
-			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("models.SaveDashboardCommand")).Return(&models.Dashboard{}, nil)
+				mock.AnythingOfType("bool"), mock.AnythingOfType("bool")).Return(&dashboards.SaveDashboardCommand{}, nil)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
 			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 			var actualCmd *models.DeleteDashboardCommand
