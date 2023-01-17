@@ -14,11 +14,10 @@ import (
 
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/codejen"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/thema/encoding/jsonschema"
 	"github.com/olekukonko/tablewriter"
 	"github.com/xeipuuv/gojsonpointer"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func DocsJenny(docsPath string) OneToOne {

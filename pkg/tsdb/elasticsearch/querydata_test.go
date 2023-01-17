@@ -11,7 +11,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
