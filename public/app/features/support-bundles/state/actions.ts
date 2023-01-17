@@ -1,9 +1,18 @@
 import { throttle } from 'lodash';
 
-import { getBackendSrv } from '@grafana/runtime';
-import { SupportBundle, ThunkResult } from 'app/types';
+import { getBackendSrv, locationService } from '@grafana/runtime';
+import { SupportBundle, SupportBundleCollector, SupportBundleCreateRequest, ThunkResult } from 'app/types';
 
-import { fetchBegin, fetchEnd, supportBundlesLoaded } from './reducers';
+import {
+  collectorsFetchBegin,
+  collectorsFetchEnd,
+  fetchBegin,
+  fetchEnd,
+  setCreateBundleError,
+  setLoadBundleError,
+  supportBundleCollectorsLoaded,
+  supportBundlesLoaded,
+} from './reducers';
 
 export function loadBundles(): ThunkResult<void> {
   return async (dispatch) => {
@@ -32,5 +41,30 @@ export function removeBundle(uid: string): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().delete(`/api/support-bundles/${uid}`);
     dispatch(loadBundles());
+  };
+}
+
+export function loadSupportBundleCollectors(): ThunkResult<void> {
+  return async (dispatch) => {
+    try {
+      dispatch(collectorsFetchBegin());
+      const result = await getBackendSrv().get<SupportBundleCollector[]>('/api/support-bundles/collectors');
+      dispatch(supportBundleCollectorsLoaded(result));
+    } catch (err) {
+      dispatch(setLoadBundleError('Error loadind support bundles data collectors'));
+    } finally {
+      dispatch(collectorsFetchEnd());
+    }
+  };
+}
+
+export function createSupportBundle(data: SupportBundleCreateRequest): ThunkResult<void> {
+  return async (dispatch) => {
+    try {
+      await getBackendSrv().post('/api/support-bundles', data);
+      locationService.push('/admin/support-bundles');
+    } catch (err) {
+      dispatch(setCreateBundleError('Error creating support bundle'));
+    }
   };
 }
