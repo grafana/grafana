@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -37,7 +38,13 @@ func accessForbidden(c *models.ReqContext) {
 
 func notAuthorized(c *models.ReqContext) {
 	if c.IsApiRequest() {
-		c.JsonApiErr(401, "Unauthorized", nil)
+		// FIXME: add function to handle this on req context
+		grfErr := &errutil.Error{}
+		if errors.As(c.LookupTokenErr, grfErr) {
+			c.JsonApiErr(grfErr.Reason.Status().HTTPStatus(), grfErr.Public().Message, grfErr)
+			return
+		}
+		c.JsonApiErr(401, "Unauthorized", c.LookupTokenErr)
 		return
 	}
 
