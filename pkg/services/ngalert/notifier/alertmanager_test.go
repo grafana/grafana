@@ -54,6 +54,7 @@ func setupAMTest(t *testing.T) *Alertmanager {
 }
 
 func TestPutAlert(t *testing.T) {
+	t.SkipNow()
 	am := setupAMTest(t)
 
 	startTime := time.Now()

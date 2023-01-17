@@ -486,7 +486,7 @@ var NamespaceDimensionKeysMap = map[string][]string{
 	"AWS/PrivateLinkEndpoints":    {"Endpoint Type", "Service Name", "Subnet Id", "VPC Endpoint Id", "VPC Id"},
 	"AWS/PrivateLinkServices":     {"Az", "Load Balancer Arn", "Service Id", "VPC Endpoint Id"},
 	"AWS/Prometheus":              {"Reason", "RuleGroup", "Workspace"},
-	"AWS/RDS":                     {"DBClusterIdentifier", "DBInstanceIdentifier", "DatabaseClass", "DbClusterIdentifier", "EngineName", "ProxyName", "Role", "SourceRegion", "Target", "TargetGroup", "TargetRole"},
+	"AWS/RDS":                     {"DBClusterIdentifier", "DBInstanceIdentifier", "DatabaseClass", "DbClusterIdentifier", "EndpointName", "EngineName", "ProxyName", "Role", "SourceRegion", "Target", "TargetGroup", "TargetRole"},
 	"AWS/Redshift":                {"ClusterIdentifier", "NodeID", "service class", "stage", "latency", "wlmid"},
 	"AWS/Robomaker":               {"SimulationJobId"},
 	"AWS/Route53":                 {"HealthCheckId", "Region", "HostedZoneId"},
@@ -518,7 +518,7 @@ var NamespaceDimensionKeysMap = map[string][]string{
 	"AWS/Rekognition":             {},
 	"AWS/Cassandra":               {"Keyspace", "Operation", "TableName"},
 	"AWS/AmplifyHosting":          {"App"},
-	"CloudWatchSynthetics":        {"CanaryName"},
+	"CloudWatchSynthetics":        {"CanaryName", "StepName"},
 }
 
 var Regions = []string{

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -91,7 +92,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 			require.Equal(t, http.StatusOK, sc.resp.Code)
 
-			var resp []models.TeamMemberDTO
+			var resp []team.TeamMemberDTO
 			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 			require.NoError(t, err)
 			assert.Len(t, resp, 3)
@@ -113,7 +114,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 				require.Equal(t, http.StatusOK, sc.resp.Code)
 
-				var resp []models.TeamMemberDTO
+				var resp []team.TeamMemberDTO
 				err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 				require.NoError(t, err)
 				assert.Len(t, resp, 3)
@@ -132,9 +133,9 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		hs.Cfg = cfg
 		hs.teamService = teamtest.NewFakeService()
 		store := &database.TeamGuardianStoreMock{}
-		store.On("GetTeamMembers", mock.Anything, mock.Anything).Return([]*models.TeamMemberDTO{
-			{UserId: 2, Permission: models.PERMISSION_ADMIN},
-			{UserId: 3, Permission: models.PERMISSION_VIEW},
+		store.On("GetTeamMembers", mock.Anything, mock.Anything).Return([]*team.TeamMemberDTO{
+			{UserID: 2, Permission: models.PERMISSION_ADMIN},
+			{UserID: 3, Permission: models.PERMISSION_VIEW},
 		}, nil).Maybe()
 		hs.teamGuardian = manager.ProvideService(store)
 		hs.teamPermissionsService = &actest.FakePermissionsService{}
@@ -252,9 +253,9 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		hs.Cfg = cfg
 		hs.teamService = &teamtest.FakeService{ExpectedIsMember: true}
 		store := &database.TeamGuardianStoreMock{}
-		store.On("GetTeamMembers", mock.Anything, mock.Anything).Return([]*models.TeamMemberDTO{
-			{UserId: 2, Permission: models.PERMISSION_ADMIN},
-			{UserId: 3, Permission: models.PERMISSION_VIEW},
+		store.On("GetTeamMembers", mock.Anything, mock.Anything).Return([]*team.TeamMemberDTO{
+			{UserID: 2, Permission: models.PERMISSION_ADMIN},
+			{UserID: 3, Permission: models.PERMISSION_VIEW},
 		}, nil).Maybe()
 		hs.teamGuardian = manager.ProvideService(store)
 		hs.teamPermissionsService = &actest.FakePermissionsService{}
@@ -342,9 +343,9 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		hs.Cfg = cfg
 		hs.teamService = &teamtest.FakeService{ExpectedIsMember: true}
 		store := &database.TeamGuardianStoreMock{}
-		store.On("GetTeamMembers", mock.Anything, mock.Anything).Return([]*models.TeamMemberDTO{
-			{UserId: 2, Permission: models.PERMISSION_ADMIN},
-			{UserId: 3, Permission: models.PERMISSION_VIEW},
+		store.On("GetTeamMembers", mock.Anything, mock.Anything).Return([]*team.TeamMemberDTO{
+			{UserID: 2, Permission: models.PERMISSION_ADMIN},
+			{UserID: 3, Permission: models.PERMISSION_VIEW},
 		}, nil).Maybe()
 		hs.teamGuardian = manager.ProvideService(store)
 		hs.teamPermissionsService = &actest.FakePermissionsService{}

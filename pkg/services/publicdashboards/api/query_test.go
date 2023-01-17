@@ -17,9 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -46,7 +46,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 		Name                 string
 		AccessToken          string
 		ExpectedHttpResponse int
-		DashboardResult      *models.Dashboard
+		DashboardResult      *dashboards.Dashboard
 		Err                  error
 		FixedErrorResponse   string
 	}{
@@ -54,7 +54,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			Name:                 "It gets a public dashboard",
 			AccessToken:          validAccessToken,
 			ExpectedHttpResponse: http.StatusOK,
-			DashboardResult: &models.Dashboard{
+			DashboardResult: &dashboards.Dashboard{
 				Data: simplejson.NewFromAny(map[string]interface{}{
 					"Uid": DashboardUid,
 				}),
@@ -279,9 +279,9 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	})
 
 	// Create Dashboard
-	saveDashboardCmd := models.SaveDashboardCommand{
-		OrgId:    1,
-		FolderId: 1,
+	saveDashboardCmd := dashboards.SaveDashboardCommand{
+		OrgID:    1,
+		FolderID: 1,
 		IsFolder: false,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
@@ -311,8 +311,8 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 
 	// Create public dashboard
 	savePubDashboardCmd := &SavePublicDashboardDTO{
-		DashboardUid: dashboard.Uid,
-		OrgId:        dashboard.OrgId,
+		DashboardUid: dashboard.UID,
+		OrgId:        dashboard.OrgID,
 		PublicDashboard: &PublicDashboard{
 			IsEnabled: true,
 		},
