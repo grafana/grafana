@@ -19,7 +19,6 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
-import { CloudWatchAPI } from './api';
 import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
 import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
 import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
@@ -28,6 +27,7 @@ import { MetricMathCompletionItemProvider } from './metric-math/completion/Compl
 import { CloudWatchAnnotationQueryRunner } from './query-runner/CloudWatchAnnotationQueryRunner';
 import { CloudWatchLogsQueryRunner } from './query-runner/CloudWatchLogsQueryRunner';
 import { CloudWatchMetricsQueryRunner } from './query-runner/CloudWatchMetricsQueryRunner';
+import { ResourcesAPI } from './resources/ResourcesAPI';
 import {
   CloudWatchAnnotationQuery,
   CloudWatchJsonData,
@@ -52,7 +52,7 @@ export class CloudWatchDatasource
   private metricsQueryRunner: CloudWatchMetricsQueryRunner;
   private annotationQueryRunner: CloudWatchAnnotationQueryRunner;
   logsQueryRunner: CloudWatchLogsQueryRunner;
-  api: CloudWatchAPI;
+  resources: ResourcesAPI;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
@@ -61,14 +61,14 @@ export class CloudWatchDatasource
   ) {
     super(instanceSettings);
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
-    this.api = new CloudWatchAPI(instanceSettings, templateSrv);
+    this.resources = new ResourcesAPI(instanceSettings, templateSrv);
     this.languageProvider = new CloudWatchLanguageProvider(this);
-    this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this.api, this.templateSrv);
-    this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.api, this.templateSrv);
+    this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this.resources, this.templateSrv);
+    this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.resources, this.templateSrv);
     this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv);
     this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv, timeSrv);
     this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
-    this.variables = new CloudWatchVariableSupport(this.api);
+    this.variables = new CloudWatchVariableSupport(this.resources);
     this.annotations = CloudWatchAnnotationSupport;
   }
 
@@ -167,7 +167,7 @@ export class CloudWatchDatasource
 
   // public
   getVariables() {
-    return this.api.getVariables();
+    return this.resources.getVariables();
   }
 
   getActualRegion(region?: string) {
