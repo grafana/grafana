@@ -5,7 +5,7 @@ import { DataFrame, FieldType } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { UPlotConfigBuilder } from '@grafana/ui';
 
-import { pointWithin, Quadtree, Rect } from '../../barchart/quadtree';
+import Flatbush from '../../barchart/flatbush.esm';
 
 interface ExemplarsPlugin2Props {
   config: UPlotConfigBuilder;
@@ -91,8 +91,9 @@ export const ExemplarsPlugin2 = ({ config, exemplars, matchByField, seriesLabels
     hoverRect.style.width = `${ptSizeCss}px`;
     hoverRect.style.height = `${ptSizeCss}px`;
 
-    let qt: Quadtree;
-    let hRect: Rect | null;
+    let fb: Flatbush;
+    let built = false;
+    let hovIdx: number | null;
 
     let xScaleKey = 'x';
     let yScaleKey: string;
@@ -100,43 +101,69 @@ export const ExemplarsPlugin2 = ({ config, exemplars, matchByField, seriesLabels
     config.addHook('init', (u) => {
       yScaleKey = u.series[1].scale!;
       u.under.appendChild(hoverRect);
+
+      u.over.addEventListener('mouseenter', e => {
+        if (!built) {
+          fb.finish();
+          built = true;
+        }
+      });
     });
 
     config.addHook('drawClear', (u) => {
-      qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
-
-      qt.clear();
+      // qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
+      // qt.clear();
+      fb = new Flatbush(exemplars.length, 512, Int16Array as unknown as Float64ArrayConstructor);
     });
 
     config.addHook('setCursor', u => {
-      let hRectNew: Rect | null = null;
+      let hovIdxNew: number | null = null;
+
+      if (u.cursor.top! < 0) {
+        hoverRect.style.display = 'none';
+        return;
+      }
 
       let cx = u.cursor.left! * uPlot.pxRatio;
       let cy = u.cursor.top! * uPlot.pxRatio;
 
-      qt.get(cx, cy, 1, 1, (o) => {
-        if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-          hRectNew = o;
-        }
-      });
+      let flatIdxs = fb.search(cx, cy, cx + 1, cy + 1);
 
-      if (hRectNew != hRect) {
-        if (hRectNew) {
-          hoverRect.style.display = '';
-          hoverRect.style.translate = `${(hRectNew.x) / uPlot.pxRatio}px ${(hRectNew.y) / uPlot.pxRatio}px`;
-          // hoverRect.style.background = '';
-        } else {
-          hoverRect.style.display = 'none';
-        }
+      if (flatIdxs.length > 0) {
+        for (let j = 0; j < flatIdxs.length; j++) {
+            hovIdxNew = flatIdxs[j];
 
-        hRect = hRectNew;
+            if (hovIdxNew != hovIdx) {
+              let offs = fb!._indices!.indexOf(hovIdxNew) * 4;
+              let minX = fb!._boxes![offs++];
+              let minY = fb!._boxes![offs++];
+              // let maxX = fb._boxes[offs++];
+              // let maxY = fb._boxes[offs++];
+
+              if (hovIdx == null) {
+                hoverRect.style.display = '';
+              }
+
+              hoverRect.style.translate = `${minX / uPlot.pxRatio}px ${minY / uPlot.pxRatio}px`;
+            }
+
+            break;
+        }
+      } else if (hovIdx != null) {
+        hoverRect.style.display = 'none';
       }
+
+      hovIdx = hovIdxNew;
     });
 
     config.addHook('draw', (u) => {
       u.ctx.save();
 
       let ptSizeCan = ptSizeCss * uPlot.pxRatio;
+      let ptHalfCan = ptSizeCan/2;
+
+      let bboxLeft = u.bbox.left;
+      let bboxTop = u.bbox.top;
 
       exemplarIdxsByColor.forEach((idxs, color) => {
         u.ctx.fillStyle = color;
@@ -146,22 +173,23 @@ export const ExemplarsPlugin2 = ({ config, exemplars, matchByField, seriesLabels
           let cx = u.valToPos(xVals[idx], xScaleKey, true);
           let cy = u.valToPos(yVals[idx], yScaleKey, true);
 
-          cy = Math.max(cy, u.bbox.top);
+          // clamp out-of-range values
+          cy = Math.max(cy, bboxTop);
 
           drawMark(u.ctx, cx, cy, ptSizeCan);
 
-          qt.add({
-            x: cx - ptSizeCan/2 - u.bbox.left,
-            y: cy - ptSizeCan/2 - u.bbox.top,
-            w: ptSizeCan,
-            h: ptSizeCan,
-            sidx: 0,
-            didx: idx,
-          });
+          fb.add(
+            Math.round(cx - ptHalfCan - bboxLeft),
+            Math.round(cy - ptHalfCan - bboxTop),
+            Math.round(cx + ptHalfCan - bboxLeft),
+            Math.round(cy + ptHalfCan - bboxTop),
+          );
         }
       });
 
       u.ctx.restore();
+
+      built = false;
     });
   }, [config, exemplarIdxsByColor]);
 
