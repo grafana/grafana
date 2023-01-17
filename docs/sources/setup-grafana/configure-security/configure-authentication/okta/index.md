@@ -81,6 +81,12 @@ The `allowed_domains` option limits access to the users belonging to the specifi
 allowed_domains = mycompany.com mycompany.org
 ```
 
+To put values containing spaces in the list, use the following JSON syntax:
+
+```ini
+allowed_groups = ["Admins", "Software Engineers"]
+```
+
 ### Map roles
 
 Grafana can attempt to do role mapping through Okta OAuth. In order to achieve this, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.

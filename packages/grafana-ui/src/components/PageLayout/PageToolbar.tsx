@@ -58,6 +58,7 @@ export const PageToolbar: FC<Props> = React.memo(
       styles.toolbar,
       {
         ['page-toolbar--fullscreen']: isFullscreen,
+        [styles.noPageIcon]: !pageIcon,
       },
       className
     );
@@ -160,6 +161,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: ${theme.spacing(2)};
       justify-content: space-between;
       padding: ${theme.spacing(1.5, 2)};
+
+      ${theme.breakpoints.down('md')} {
+        padding-left: 53px;
+      }
+    `,
+    noPageIcon: css`
+      ${theme.breakpoints.down('md')} {
+        padding-left: ${theme.spacing(2)};
+      }
     `,
     leftWrapper: css`
       display: flex;

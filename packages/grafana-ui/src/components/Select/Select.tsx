@@ -4,7 +4,13 @@ import { SelectableValue } from '@grafana/data';
 
 import { SelectBase } from './SelectBase';
 import { SelectContainer, SelectContainerProps } from './SelectContainer';
-import { SelectCommonProps, MultiSelectCommonProps, SelectAsyncProps, VirtualizedSelectProps } from './types';
+import {
+  SelectCommonProps,
+  MultiSelectCommonProps,
+  SelectAsyncProps,
+  VirtualizedSelectProps,
+  VirtualizedSelectAsyncProps,
+} from './types';
 
 export function Select<T>(props: SelectCommonProps<T>) {
   return <SelectBase {...props} />;
@@ -25,6 +31,10 @@ export function AsyncSelect<T>(props: AsyncSelectProps<T>) {
 }
 
 export function VirtualizedSelect<T>(props: VirtualizedSelectProps<T>) {
+  return <SelectBase virtualized {...props} />;
+}
+
+export function AsyncVirtualizedSelect<T>(props: VirtualizedSelectAsyncProps<T>) {
   return <SelectBase virtualized {...props} />;
 }
 

@@ -9,59 +9,112 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func ProvideUserSync(userService user.Service, authInfoService login.AuthInfoService, quotaService quota.Service) *UserSync {
-	return &UserSync{userService, authInfoService, quotaService, log.New("user.sync")}
+var (
+	errSyncUserForbidden = errutil.NewBase(errutil.StatusForbidden,
+		"user.sync.forbidden", errutil.WithPublicMessage("User sync forbidden"))
+	errSyncUserInternal = errutil.NewBase(errutil.StatusInternal,
+		"user.sync.forbidden", errutil.WithPublicMessage("User sync failed"))
+	errUserProtection = errutil.NewBase(errutil.StatusForbidden,
+		"user.sync.protectedrole", errutil.WithPublicMessage("Unable to sync due to protected role"))
+)
+
+func ProvideUserSync(userService user.Service,
+	userProtectionService login.UserProtectionService,
+	authInfoService login.AuthInfoService, quotaService quota.Service) *UserSync {
+	return &UserSync{
+		userService:           userService,
+		authInfoService:       authInfoService,
+		userProtectionService: userProtectionService,
+		quotaService:          quotaService,
+		log:                   log.New("user.sync"),
+	}
 }
 
 type UserSync struct {
-	userService     user.Service
-	authInfoService login.AuthInfoService
-	quotaService    quota.Service
-	log             log.Logger
+	userService           user.Service
+	authInfoService       login.AuthInfoService
+	userProtectionService login.UserProtectionService
+	quotaService          quota.Service
+	log                   log.Logger
 }
 
 // SyncUser syncs a user with the database
 func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
 	if !id.ClientParams.SyncUser {
-		s.log.Debug("Not syncing user", "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return nil
 	}
 
 	// Does user exist in the database?
 	usr, errUserInDB := s.UserInDB(ctx, &id.AuthModule, &id.AuthID, id.ClientParams.LookUpParams)
 	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
-		return errUserInDB
+		s.log.Error("error retrieving user", "error", errUserInDB,
+			"auth_module", id.AuthModule, "auth_id", id.AuthID,
+			"lookup_params", id.ClientParams.LookUpParams,
+		)
+		return errSyncUserInternal.Errorf("unable to retrieve user")
 	}
 
 	if errors.Is(errUserInDB, user.ErrUserNotFound) {
 		if !id.ClientParams.AllowSignUp {
-			s.log.Warn("Not allowing login, user not found in internal user database and allow signup = false",
+			s.log.Warn("not allowing login, user not found in internal user database and allow signup = false",
 				"auth_module", id.AuthModule)
-			return login.ErrSignupNotAllowed
+			return errSyncUserForbidden.Errorf("%w", login.ErrSignupNotAllowed)
+		}
+
+		// quota check (FIXME: (jguer) this should be done in the user service)
+		// we may insert in both user and org_user tables
+		// therefore we need to query check quota for both user and org services
+		for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
+			limitReached, errLimit := s.quotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
+			if errLimit != nil {
+				s.log.Error("error getting user quota", "error", errLimit)
+				return errSyncUserInternal.Errorf("%w", login.ErrGettingUserQuota)
+			}
+			if limitReached {
+				return errSyncUserForbidden.Errorf("%w", login.ErrUsersQuotaReached)
+			}
 		}
 
 		// create user
 		var errCreate error
 		usr, errCreate = s.createUser(ctx, id)
 		if errCreate != nil {
-			return errCreate
+			s.log.Error("error creating user", "error", errCreate,
+				"auth_module", id.AuthModule, "auth_id", id.AuthID,
+				"id_login", id.Login, "id_email", id.Email,
+			)
+			return errSyncUserInternal.Errorf("unable to create user")
 		}
+	}
+
+	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthModule); errProtection != nil {
+		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
 	}
 
 	// update user
 	if errUpdate := s.updateUserAttributes(ctx, usr, id); errUpdate != nil {
-		return errUpdate
+		s.log.Error("error creating user", "error", errUpdate,
+			"auth_module", id.AuthModule, "auth_id", id.AuthID,
+			"login", usr.Login, "email", usr.Email,
+			"id_login", id.Login, "id_email", id.Email,
+		)
+		return errSyncUserInternal.Errorf("unable to update user")
 	}
 
 	syncUserToIdentity(usr, id)
 
 	// persist latest auth info token
 	if errAuthInfo := s.updateAuthInfo(ctx, id); errAuthInfo != nil {
-		return errAuthInfo
+		s.log.Error("error creating user", "error", errAuthInfo,
+			"auth_module", id.AuthModule, "auth_id", id.AuthID,
+		)
+		return errSyncUserInternal.Errorf("unable to update auth info")
 	}
 
 	return nil
