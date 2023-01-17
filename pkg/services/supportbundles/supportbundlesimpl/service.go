@@ -3,8 +3,6 @@ package supportbundlesimpl
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -149,12 +147,6 @@ func (s *Service) remove(ctx context.Context, uid string) error {
 	// TODO handle cases when bundles aren't complete yet
 	if bundle.State == supportbundles.StatePending {
 		return fmt.Errorf("could not remove a support bundle with uid %s as it is still being created", uid)
-	}
-
-	if bundle.FilePath != "" {
-		if err := os.RemoveAll(filepath.Dir(bundle.FilePath)); err != nil {
-			return fmt.Errorf("could not remove directory for support bundle %s: %w", uid, err)
-		}
 	}
 
 	// Remove the KV store entry
