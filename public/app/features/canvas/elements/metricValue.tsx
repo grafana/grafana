@@ -11,6 +11,7 @@ import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
+import { setDataLinks } from '../../../plugins/panel/canvas/utils';
 import { CanvasElementItem, CanvasElementProps, defaultBgColor, defaultTextColor } from '../element';
 import { ElementState } from '../runtime/element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
@@ -158,6 +159,8 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
     if (cfg.color) {
       data.color = ctx.getColor(cfg.color).value();
     }
+
+    setDataLinks(ctx, cfg, data);
 
     return data;
   },

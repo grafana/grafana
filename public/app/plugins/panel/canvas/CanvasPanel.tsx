@@ -71,6 +71,7 @@ export class CanvasPanel extends Component<Props, State> {
     this.scene.updateData(props.data);
     this.scene.inlineEditingCallback = this.openInlineEdit;
     this.scene.setBackgroundCallback = this.openSetBackground;
+    this.scene.tooltipCallback = this.tooltipCallback;
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt: PanelEditEnteredEvent) => {
@@ -223,6 +224,11 @@ export class CanvasPanel extends Component<Props, State> {
     this.setState({ contextMenuAnchorPoint: anchorPoint });
 
     isSetBackgroundOpen = true;
+  };
+
+  tooltipCallback = (anchorPoint: AnchorPoint, element: ElementState | undefined, isOpen = false) => {
+    this.scene.tooltip = { anchorPoint: anchorPoint, element: element, isOpen: isOpen };
+    this.forceUpdate();
   };
 
   closeInlineEdit = () => {
