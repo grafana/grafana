@@ -55,12 +55,28 @@ export const loadSupplementaryQueries = (): SupplementaryQueries => {
   let supplementaryQueries: SupplementaryQueries = {
     [SupplementaryQueryType.LogsVolume]: { enabled: true },
     // This is set to false temporarily, until we have UI to display logs sample and a way how to enable/disable it
-    [SupplementaryQueryType.LogsSample]: { enabled: true },
+    [SupplementaryQueryType.LogsSample]: { enabled: false },
   };
 
   for (const { type } of Object.values(supplementaryQueriesList)) {
+    if (type === SupplementaryQueryType.LogsVolume) {
+      // TODO: Remove this in 10.0
+      // For LogsVolume we need to migrate old key to new key. So check for old key:
+      // If we have old key: 1) use it 2) migrate to new key 3) delete old key
+      // If not, continue with new key
+      const oldLogsVolumeEnabledKey = 'grafana.explore.logs.enableVolumeHistogram';
+      const shouldBeEnabled = store.get(oldLogsVolumeEnabledKey);
+      if (shouldBeEnabled) {
+        supplementaryQueries[type] = { enabled: shouldBeEnabled === 'true' ? true : false };
+        storeSupplementaryQueryEnabled(shouldBeEnabled === 'true', SupplementaryQueryType.LogsVolume);
+        localStorage.removeItem(oldLogsVolumeEnabledKey);
+        continue;
+      }
+    }
+
     // Only if "false" value in local storage, we disable it
-    if (store.get(getSupplementaryQuerySettingKey(type)) === 'false') {
+    const shouldBeEnabled = store.get(getSupplementaryQuerySettingKey(type));
+    if (shouldBeEnabled === 'false') {
       supplementaryQueries[type] = { enabled: false };
     }
   }
