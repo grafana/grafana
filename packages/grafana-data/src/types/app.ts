@@ -13,10 +13,10 @@ export enum CoreApp {
   UnifiedAlerting = 'unified-alerting',
   Dashboard = 'dashboard',
   Explore = 'explore',
+  Correlations = 'correlations',
   Unknown = 'unknown',
   PanelEditor = 'panel-editor',
   PanelViewer = 'panel-viewer',
-  Correlations = 'correlations',
 }
 
 export interface AppRootProps<T extends KeyValue = KeyValue> {

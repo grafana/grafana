@@ -26,3 +26,16 @@ func (m MockClient) Test(ctx context.Context, r *authn.Request) bool {
 	}
 	return false
 }
+
+var _ authn.ProxyClient = new(MockProxyClient)
+
+type MockProxyClient struct {
+	AuthenticateProxyFunc func(ctx context.Context, r *authn.Request, username string, additional map[string]string) (*authn.Identity, error)
+}
+
+func (m MockProxyClient) AuthenticateProxy(ctx context.Context, r *authn.Request, username string, additional map[string]string) (*authn.Identity, error) {
+	if m.AuthenticateProxyFunc != nil {
+		return m.AuthenticateProxyFunc(ctx, r, username, additional)
+	}
+	return nil, nil
+}
