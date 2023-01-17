@@ -33,7 +33,7 @@ const (
 	logsType = "logs"
 )
 
-func parseResponse(responses []*es.SearchResponse, targets []*Query) (*backend.QueryDataResponse, error) {
+func parseResponse(responses []*es.SearchResponse, targets []*Query, timeField string) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
@@ -54,6 +54,56 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query) (*backend.Q
 
 		queryRes := backend.DataResponse{}
 
+		if isDocumentQuery(target) {
+			docs := make([]map[string]interface{}, 0)
+			for _, hit := range res.Hits.Hits {
+				var flattened map[string]interface{}
+				if hit["_source"] != nil {
+					flattened = flatten(hit["_source"].(map[string]interface{}))
+				}
+
+				doc := map[string]interface{}{
+					"_id":       hit["_id"],
+					"_type":     hit["_type"],
+					"_index":    hit["_index"],
+					"sort":      hit["sort"],
+					"highlight": hit["highlight"],
+					"_source":   flattened,
+				}
+
+				for k, v := range hit {
+					doc[k] = v
+				}
+
+				propNames := make([]string, len(doc))
+				for docKey := range doc {
+					for _, propNamesValue := range propNames {
+						if docKey == propNamesValue {
+							continue
+						} else {
+							propNames = append(propNames, docKey)
+						}
+					}
+				}
+				docs = append(docs, doc)
+
+				frames := data.Frames{}
+				frames = append(frames, data.NewFrame(null,
+					data.NewField(timeField, nil, []time.Time{}),
+				))
+
+				frames = append(frames, data.NewFrame(name,
+					data.NewField("time", nil, timeVector),
+					data.NewField("value", tags, values)))
+
+				// Now we have docs and propNames and we need to process them to
+				// create a data.Frame
+				// queryRes = parseDocumentResponse(res.Hits, target)
+				// result.Responses[target.RefID] = queryRes
+				continue
+			}
+		}
+
 		props := make(map[string]string)
 		err := processBuckets(res.Aggregations, target, &queryRes, props, 0)
 		if err != nil {
@@ -64,8 +114,15 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query) (*backend.Q
 
 		result.Responses[target.RefID] = queryRes
 	}
+
 	return &result, nil
 }
+
+// func parseDocumentResponse(hits *es.SearchHits, target *Query) backend.DataResponse {
+// 	queryRes := backend.DataResponse{}
+
+// 	return queryRes
+// }
 
 func processBuckets(aggs map[string]interface{}, target *Query,
 	queryResult *backend.DataResponse, props map[string]string, depth int) error {
@@ -722,4 +779,43 @@ func getErrorFromElasticResponse(response *es.SearchResponse) string {
 	}
 
 	return errorString
+}
+
+func flatten(target map[string]interface{}) map[string]interface{} {
+	maxDepth := 0
+	currentDepth := 0
+	delimiter := ""
+	output := make(map[string]interface{})
+
+	var step func(object map[string]interface{}, prev string)
+
+	step = func(object map[string]interface{}, prev string) {
+		for key, value := range object {
+			if prev == "" {
+				delimiter = ""
+			} else {
+				delimiter = "."
+			}
+			newKey := prev + delimiter + key
+
+			if maxDepth == 0 {
+				maxDepth = currentDepth + 1
+			}
+
+			v, ok := value.(map[string]interface{})
+			if ok {
+				if len(v) > 0 && currentDepth < maxDepth {
+					currentDepth++
+					step(v, newKey)
+
+				}
+			}
+
+			output[newKey] = value
+		}
+	}
+
+	step(target, "")
+
+	return output
 }

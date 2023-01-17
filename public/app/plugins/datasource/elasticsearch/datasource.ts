@@ -637,7 +637,7 @@ export class ElasticDatasource
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
     const shouldRunTroughBackend =
       request.app === CoreApp.Explore && config.featureToggles.elasticsearchBackendMigration;
-    if (shouldRunTroughBackend) {
+    if (false) {
       const start = new Date();
       return super.query(request).pipe(tap((response) => trackQuery(response, request, start)));
     }
