@@ -27,7 +27,8 @@ FreeFormExpression { word (colon word)* }
 @tokens {
   colon { ":" }
 
-  allowedInputChar { $[a-zA-Z0-9~!@#$%^&*()_+=;,.<>?|/{}-] | "[" | "]" | "\\" }
+  // Special characters (except colon, quotes and space), Latin characters, extended latin and emoji
+  allowedInputChar { $[!#$%&'()*+,-./] | $[\u{0030}-\u{0039}] | $[\u{003b}-\u{1eff}] | $[\u{2030}-\u{1faff}] }
   word { allowedInputChar+ }
 
   filterNoBracketChars { allowedInputChar | ":" }
