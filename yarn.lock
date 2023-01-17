@@ -17326,7 +17326,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3-color@npm:v3.1.0":
+"d3-color@npm:3.1.0":
   version: 3.1.0
   resolution: "d3-color@npm:3.1.0"
   checksum: 4931fbfda5d7c4b5cfa283a13c91a954f86e3b69d75ce588d06cde6c3628cebfc3af2069ccf225e982e8987c612aa7948b3932163ce15eb3c11cd7c003f3ee3b
