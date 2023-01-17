@@ -1,5 +1,5 @@
 // BETTERER RESULTS V2.
-//
+// 
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
@@ -7,9 +7,6 @@ exports[`no enzyme tests`] = {
   value: `{
     "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:2976628669": [
       [0, 26, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.tsx:3266788928": [
-      [14, 56, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.test.tsx:3450948735": [
       [15, 31, 13, "RegExp match", "2409514259"]
