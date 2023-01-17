@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -23,10 +24,10 @@ type SQLStoreMock struct {
 	ExpectedUser                   *user.User
 	ExpectedTeamsByUser            []*team.TeamDTO
 	ExpectedAlert                  *models.Alert
-	ExpectedSystemStats            *models.SystemStats
-	ExpectedDataSourceStats        []*models.DataSourceStats
-	ExpectedDataSourcesAccessStats []*models.DataSourceAccessStats
-	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
+	ExpectedSystemStats            *stats.SystemStats
+	ExpectedDataSourceStats        []*stats.DataSourceStats
+	ExpectedDataSourcesAccessStats []*stats.DataSourceAccessStats
+	ExpectedNotifierUsageStats     []*stats.NotifierUsageStats
 	ExpectedSignedInUser           *user.SignedInUser
 
 	ExpectedError error
@@ -34,30 +35,6 @@ type SQLStoreMock struct {
 
 func NewSQLStoreMock() *SQLStoreMock {
 	return &SQLStoreMock{}
-}
-
-func (m *SQLStoreMock) GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
-	query.Result = m.ExpectedNotifierUsageStats
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
-	query.Result = m.ExpectedDataSourceStats
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
-	query.Result = m.ExpectedDataSourcesAccessStats
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error {
-	query.Result = m.ExpectedSystemStats
-	return m.ExpectedError
 }
 
 func (m *SQLStoreMock) GetDialect() migrator.Dialect {
