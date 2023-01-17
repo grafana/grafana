@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/fs"
 	"path"
 	"runtime"
@@ -99,23 +98,6 @@ func (p PluginDTO) IsExternalPlugin() bool {
 
 func (p PluginDTO) IsSecretsManager() bool {
 	return p.JSONData.Type == SecretsManager
-}
-
-func (p PluginDTO) readFile(name string) ([]byte, error) {
-	m, err := p.fs.Open(name)
-	if err != nil {
-		return make([]byte, 0), ErrFileNotExist
-	}
-
-	b, err := io.ReadAll(m)
-	if err != nil {
-		return make([]byte, 0), err
-	}
-
-	if err = m.Close(); err != nil {
-		return make([]byte, 0), err
-	}
-	return b, nil
 }
 
 func (p PluginDTO) File(name string) (fs.File, error) {
