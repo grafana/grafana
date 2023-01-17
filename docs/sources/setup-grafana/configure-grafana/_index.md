@@ -898,9 +898,9 @@ The table below show the OAuth provider and their setting with the default value
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
 | --- | --- | --- | --- |
 | Google | false | false | user organization roles are set with defaultRole and will not be able to be changed |
-| Google | true | false | user organization roles are set with defaultRole for Google, for other providers the syncronization will be skipped and the org role will be able to be changed; along with other OAuth provider users org roles |
+| Google | true | false | user organization roles are set with defaultRole for Google, for other providers the synchronization will be skipped and the org role will be able to be changed; along with other OAuth provider users org roles |
 | Google | false | true | user organization roles are set with defaultRole and the org role will be able to be changed for Google synced users |
-| Google | true | true | user organization roles are set with defaultRole for Google, for other providers the syncronization will be skipped and the org role will be able to be changed; along with other OAuth provider users org roles |
+| Google | true | true | user organization roles are set with defaultRole for Google, for other providers the synchronization will be skipped and the org role will be able to be changed; along with other OAuth provider users org roles |
 
 ### api_key_max_seconds_to_live
 
