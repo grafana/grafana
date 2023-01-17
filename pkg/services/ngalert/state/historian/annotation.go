@@ -23,13 +23,19 @@ import (
 type AnnotationBackend struct {
 	annotations annotations.Repository
 	dashboards  *dashboardResolver
+	rules       RuleStore
 	log         log.Logger
 }
 
-func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboards.DashboardService) *AnnotationBackend {
+type RuleStore interface {
+	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
+}
+
+func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboards.DashboardService, rules RuleStore) *AnnotationBackend {
 	return &AnnotationBackend{
 		annotations: annotations,
 		dashboards:  newDashboardResolver(dashboards, defaultDashboardCacheExpiry),
+		rules:       rules,
 		log:         log.New("ngalert.state.historian"),
 	}
 }
@@ -46,17 +52,28 @@ func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule *ngmodel
 func (h *AnnotationBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
 	logger := h.log.FromContext(ctx)
 	if query.RuleUID == "" {
-		return nil, fmt.Errorf("annotation state history requires a rule to query")
+		return nil, fmt.Errorf("ruleUID is required to query annotations")
 	}
 
 	if query.Labels != nil {
 		logger.Warn("Annotation state history backend does not support label queries, ignoring that filter")
 	}
 
-	ruleID := ruleUIDToID(query.RuleUID)
+	rq := ngmodels.GetAlertRuleByUIDQuery{
+		UID:   query.RuleUID,
+		OrgID: query.OrgID,
+	}
+	err := h.rules.GetAlertRuleByUID(ctx, &rq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to look up the requested rule")
+	}
+	if rq.Result == nil {
+		return nil, fmt.Errorf("no such rule exists")
+	}
 
 	q := annotations.ItemQuery{
-		AlertId: ruleID,
+		AlertId: rq.Result.ID,
+		OrgId:   query.OrgID,
 		From:    query.From.Unix(),
 		To:      query.To.Unix(),
 	}
@@ -73,13 +90,14 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query models.Histor
 	// We are not guaranteed that a given annotation has parseable text, so we instead use the entire text as an opaque value.
 
 	lbls := data.Labels(map[string]string{
-		"from":   "state-history",
-		"ruleID": fmt.Sprint(ruleID),
+		"from":    "state-history",
+		"ruleUID": fmt.Sprint(query.RuleUID),
 	})
 
 	// TODO: In the future, we probably want to have one series per unique text string, instead. For simplicity, let's just make it a new column.
 	//
 	// TODO: This is a really naive mapping that will evolve in the next couple changes.
+	// TODO: It will converge over time with the other implementations.
 	//
 	// We represent state history as five vectors:
 	//   1. `time` - when the transition happened
