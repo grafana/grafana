@@ -282,6 +282,8 @@ type Cfg struct {
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
 
+	PluginsCDNURLTemplate string
+
 	// Panels
 	DisableSanitizeHtml bool
 

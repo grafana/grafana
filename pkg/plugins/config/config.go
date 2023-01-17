@@ -32,6 +32,8 @@ type Cfg struct {
 	BuildVersion string // TODO Remove
 
 	LogDatasourceRequests bool
+
+	PluginsCDNURLTemplate string
 }
 
 func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
@@ -66,6 +68,7 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 		AWSAssumeRoleEnabled:    aws.KeyValue("assume_role_enabled").MustBool(grafanaCfg.AWSAssumeRoleEnabled),
 		Azure:                   grafanaCfg.Azure,
 		LogDatasourceRequests:   grafanaCfg.IsFeatureToggleEnabled(featuremgmt.FlagDatasourceLogger),
+		PluginsCDNURLTemplate:   grafanaCfg.PluginsCDNURLTemplate,
 	}
 }
 

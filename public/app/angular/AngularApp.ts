@@ -43,13 +43,18 @@ export class AngularApp {
         $compileProvider: angular.ICompileProvider,
         $filterProvider: angular.IFilterProvider,
         $httpProvider: angular.IHttpProvider,
-        $provide: angular.auto.IProvideService
+        $provide: angular.auto.IProvideService,
+        $sceDelegateProvider: angular.ISCEDelegateProvider
       ) => {
         if (config.buildInfo.env !== 'development') {
           $compileProvider.debugInfoEnabled(false);
         }
 
         $httpProvider.useApplyAsync(true);
+
+        if (Boolean(config.pluginsCDNBaseURL)) {
+          $sceDelegateProvider.trustedResourceUrlList(['self', `${config.pluginsCDNBaseURL}/**`]);
+        }
 
         this.registerFunctions.controller = $controllerProvider.register;
         this.registerFunctions.directive = $compileProvider.directive;

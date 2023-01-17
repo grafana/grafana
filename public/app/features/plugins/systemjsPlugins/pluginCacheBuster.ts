@@ -1,4 +1,4 @@
-import { clearPluginSettingsCache } from './pluginSettings';
+import { clearPluginSettingsCache } from '../pluginSettings';
 
 const cache: Record<string, string> = {};
 const initializedAt: number = Date.now();

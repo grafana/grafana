@@ -5,7 +5,7 @@ import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types';
 
-import { invalidatePluginInCache } from '../../pluginCacheBuster';
+import { invalidatePluginInCache } from '../../systemjsPlugins/pluginCacheBuster';
 import {
   getRemotePlugins,
   getPluginErrors,
