@@ -14,10 +14,12 @@ import {
   supportBundlesLoaded,
 } from './reducers';
 
-export function loadBundles(): ThunkResult<void> {
+export function loadBundles(skipPageRefresh = false): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      dispatch(fetchBegin());
+      if (!skipPageRefresh) {
+        dispatch(fetchBegin());
+      }
       const result = await getBackendSrv().get<SupportBundle[]>('/api/support-bundles');
       dispatch(supportBundlesLoaded(result));
     } finally {
@@ -40,7 +42,7 @@ export function checkBundles(): ThunkResult<void> {
 export function removeBundle(uid: string): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().delete(`/api/support-bundles/${uid}`);
-    dispatch(loadBundles());
+    dispatch(loadBundles(true));
   };
 }
 
