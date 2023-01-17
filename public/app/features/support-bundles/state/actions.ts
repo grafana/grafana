@@ -51,7 +51,7 @@ export function loadSupportBundleCollectors(): ThunkResult<void> {
       const result = await getBackendSrv().get<SupportBundleCollector[]>('/api/support-bundles/collectors');
       dispatch(supportBundleCollectorsLoaded(result));
     } catch (err) {
-      dispatch(setLoadBundleError('Error loadind support bundles data collectors'));
+      dispatch(setLoadBundleError('Error loading support bundles data collectors'));
     } finally {
       dispatch(collectorsFetchEnd());
     }
