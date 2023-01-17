@@ -65,18 +65,23 @@ func ProvideService(
 	}
 
 	var passwordClients []authn.PasswordClient
-
 	if !s.cfg.DisableLogin {
 		passwordClients = append(passwordClients, clients.ProvideGrafana(userService))
 	}
-
 	if s.cfg.LDAPEnabled {
 		passwordClients = append(passwordClients, clients.ProvideLDAP(cfg))
 	}
 
-	// only configure basic auth client if it is enabled, and we have at least one password client enabled
-	if s.cfg.BasicAuthEnabled && len(passwordClients) > 0 {
-		s.clients[authn.ClientBasic] = clients.ProvideBasic(loginAttempts, passwordClients...)
+	// if we have password clients configure check if basic auth or form auth is enabled
+	if len(passwordClients) > 0 {
+		passwordClient := clients.ProvidePassword(loginAttempts, passwordClients...)
+		if s.cfg.BasicAuthEnabled {
+			s.clients[authn.ClientBasic] = clients.ProvideBasic(passwordClient)
+		}
+		// FIXME (kalleep): Remove the global variable and stick it into cfg
+		if !setting.DisableLoginForm {
+			s.clients[authn.ClientForm] = clients.ProvideForm(passwordClient)
+		}
 	}
 
 	if s.cfg.JWTAuthEnabled {
@@ -127,6 +132,8 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client could not authenticate request"}})
 		return nil, true, err
 	}
+
+	// FIXME (kalleep): Handle disabled identities
 
 	for _, hook := range s.postAuthHooks {
 		if err := hook(ctx, identity, r); err != nil {

@@ -28,6 +28,7 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 	})
 
 	if errors.Is(err, multildap.ErrCouldNotFindUser) {
+		// FIXME: disable user in grafana if not found
 		return nil, errIdentityNotFound.Errorf("no user found: %w", err)
 	}
 
@@ -35,7 +36,6 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 	r.SetMeta(authn.MetaKeyAuthModule, "ldap")
 
 	if errors.Is(err, multildap.ErrInvalidCredentials) {
-		// FIXME: disable user in grafana if not found
 		return nil, errInvalidPassword.Errorf("invalid password: %w", err)
 	}
 
