@@ -146,7 +146,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.
 		c.Query("receiver"),
 	)
 	if err != nil {
-		if errors.Is(err, notifier.ErrGetAlertGroupsBadPayload) {
+		if errors.Is(err, alerting.ErrGetAlertGroupsBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
@@ -170,10 +170,10 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Respo
 		c.Query("receiver"),
 	)
 	if err != nil {
-		if errors.Is(err, notifier.ErrGetAlertsBadPayload) {
+		if errors.Is(err, alerting.ErrGetAlertsBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
-		if errors.Is(err, notifier.ErrGetAlertsUnavailable) {
+		if errors.Is(err, alerting.ErrGetAlertsUnavailable) {
 			return ErrResp(http.StatusServiceUnavailable, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
@@ -288,7 +288,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *models.ReqContext, body api
 
 	result, err := am.TestReceivers(ctx, body)
 	if err != nil {
-		if errors.Is(err, notifier.ErrNoReceivers) {
+		if errors.Is(err, alerting.ErrNoReceivers) {
 			return response.Error(http.StatusBadRequest, "", err)
 		}
 		return response.Error(http.StatusInternalServerError, "", err)
@@ -362,7 +362,7 @@ func statusForTestReceivers(v []notifier.TestReceiverResult) int {
 			if next.Error != nil {
 				var (
 					invalidReceiverErr notifier.InvalidReceiverError
-					receiverTimeoutErr notifier.ReceiverTimeoutError
+					receiverTimeoutErr alerting.ReceiverTimeoutError
 				)
 				if errors.As(next.Error, &invalidReceiverErr) {
 					numBadRequests += 1

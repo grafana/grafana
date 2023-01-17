@@ -21,6 +21,7 @@ import { AccessControlAction } from 'app/types';
 import AmRoutes from './AmRoutes';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
+import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
 import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { defaultGroupBy } from './utils/amroutes';
 import { getAllDataSources } from './utils/config';
@@ -43,6 +44,7 @@ const mocks = {
   },
   contextSrv: jest.mocked(contextSrv),
 };
+const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
 
 const renderAmRoutes = (alertManagerSourceName?: string) => {
   const store = configureStore();
@@ -199,6 +201,7 @@ describe('AmRoutes', () => {
     mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
   });
 
   afterEach(() => {
