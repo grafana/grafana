@@ -22,11 +22,6 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
   topSpacing?: number;
-  // The role property of the alert component (e.g. 'log', 'status' or 'alert'.) Defaults to 'alert'.
-  // More info: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Live_Regions#roles_with_implicit_live_region_attributes
-  role?: AriaRole;
-  // Specifies the aria-label for the alert. Defaults to use the `title` in case it's not defined.
-  ariaLabel?: string;
 }
 
 export function getIconFromSeverity(severity: AlertVariant): IconName {
@@ -53,8 +48,6 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
       topSpacing,
       className,
       severity = 'error',
-      role = 'alert',
-      ariaLabel,
       ...restProps
     },
     ref
@@ -62,15 +55,23 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     const theme = useTheme2();
     const hasTitle = Boolean(title);
     const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
+    const rolesBySeverity: Record<AlertVariant, AriaRole> = {
+      error: 'alert',
+      warning: 'alert',
+      info: 'status',
+      success: 'status',
+    };
+    const role = restProps['role'] || rolesBySeverity[severity];
+    const ariaLabel = restProps['aria-label'] || title;
 
     return (
       <div
+        {...restProps}
         ref={ref}
         className={cx(styles.alert, className)}
         data-testid={selectors.components.Alert.alertV2(severity)}
         role={role}
-        aria-label={ariaLabel || title}
-        {...restProps}
+        aria-label={ariaLabel}
       >
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity)} />
