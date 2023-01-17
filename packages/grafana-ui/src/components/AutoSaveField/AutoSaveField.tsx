@@ -24,7 +24,7 @@ export interface Props extends FieldProps {
 
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 
-export const AutoSaveInput = React.forwardRef<FieldProps, Props>((props) => {
+export const AutoSaveField = React.forwardRef<FieldProps, Props>((props) => {
   const {
     invalid,
     loading,
@@ -104,4 +104,4 @@ export const AutoSaveInput = React.forwardRef<FieldProps, Props>((props) => {
   );
 });
 
-AutoSaveInput.displayName = 'AutoSaveInput';
+AutoSaveField.displayName = 'AutoSaveField';

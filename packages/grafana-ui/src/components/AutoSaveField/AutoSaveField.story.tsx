@@ -4,12 +4,12 @@ import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Input } from '../Input/Input';
 
-import { AutoSaveInput } from './AutoSaveInput';
-import mdx from './AutoSaveInput.mdx';
+import { AutoSaveField } from './AutoSaveField';
+import mdx from './AutoSaveField.mdx';
 
 const meta: Meta = {
-  title: 'AutoSaveInput',
-  component: AutoSaveInput,
+  title: 'AutoSaveField',
+  component: AutoSaveField,
   decorators: [withCenteredStory],
   parameters: {
     docs: {
@@ -46,22 +46,22 @@ const getError = () => {
   });
 };
 
-export const AutoSaveInputError: Story = (args) => (
-  <AutoSaveInput onFinishChange={getError} {...args}>
+export const AutoSaveFieldError: Story = (args) => (
+  <AutoSaveField onFinishChange={getError} {...args}>
     <Input />
-  </AutoSaveInput>
+  </AutoSaveField>
 );
-AutoSaveInputError.args = {
+AutoSaveFieldError.args = {
   label: 'With error',
   required: false,
 };
 
-export const AutoSaveInputSuccess: Story = (args) => (
-  <AutoSaveInput onFinishChange={getSuccess} {...args}>
+export const AutoSaveFieldSuccess: Story = (args) => (
+  <AutoSaveField onFinishChange={getSuccess} {...args}>
     <Input />
-  </AutoSaveInput>
+  </AutoSaveField>
 );
-AutoSaveInputSuccess.args = {
+AutoSaveFieldSuccess.args = {
   label: 'With success',
   required: true,
 };
