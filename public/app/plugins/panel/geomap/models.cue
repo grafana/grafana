@@ -80,6 +80,7 @@ Panel: thema.#Lineage & {
 						showMeasure?: bool
 					} @cuetsy(kind="interface")
 
+					// TODO this is a type from a 3rd party library
 					#Units: "degrees" | "imperial" | "nautical" | "metric" | "us" @cuetsy(kind="type")
 
 					#TooltipOptions: {
