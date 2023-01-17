@@ -158,6 +158,21 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(onApply).toBeCalledWith([]);
   });
 
+  it('should call onApply removing an element ignoring the case', async () => {
+    const onApply = jest.fn();
+    render(
+      <ResourcePicker {...defaultProps} resources={['/subscriptions/def-456/resourceGroups/DEV-3']} onApply={onApply} />
+    );
+    const subscriptionCheckbox = await screen.findAllByLabelText('A Great Resource Group');
+    expect(subscriptionCheckbox).toHaveLength(2);
+    expect(subscriptionCheckbox.at(0)).toBeChecked();
+    subscriptionCheckbox.at(0)?.click();
+    const applyButton = screen.getByRole('button', { name: 'Apply' });
+    applyButton.click();
+    expect(onApply).toBeCalledTimes(1);
+    expect(onApply).toBeCalledWith([]);
+  });
+
   it('should call onApply with a new subscription when a user clicks on the checkbox in the row', async () => {
     const onApply = jest.fn();
     render(<ResourcePicker {...defaultProps} onApply={onApply} resources={[]} />);

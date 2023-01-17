@@ -15,7 +15,7 @@ import NestedRow from './NestedRow';
 import Search from './Search';
 import getStyles from './styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
-import { findRows, parseMultipleResourceDetails, parseResourceDetails, resourcesToStrings } from './utils';
+import { findRows, parseMultipleResourceDetails, resourcesToStrings, matchURI, resourceToString } from './utils';
 
 interface ResourcePickerProps<T> {
   resourcePickerData: ResourcePickerData;
@@ -23,7 +23,7 @@ interface ResourcePickerProps<T> {
   selectableEntryTypes: ResourceRowType[];
   queryType: ResourcePickerQueryType;
 
-  onApply: (resources?: T[]) => void;
+  onApply: (resources: T[]) => void;
   onCancel: () => void;
 }
 
@@ -116,17 +116,7 @@ const ResourcePicker = ({
         setInternalSelected(newSelected);
       } else {
         const newInternalSelected = internalSelected?.filter((r) => {
-          if (typeof r === 'string') {
-            return r !== row.uri;
-          } else {
-            const parsed = parseResourceDetails(row.uri);
-            return (
-              r.subscription !== parsed.subscription &&
-              r.resourceGroup !== parsed.resourceGroup &&
-              r.resourceName !== parsed.resourceName &&
-              r.metricNamespace !== parsed.metricNamespace
-            );
-          }
+          return !matchURI(resourceToString(r), row.uri);
         });
         setInternalSelected(newInternalSelected);
       }

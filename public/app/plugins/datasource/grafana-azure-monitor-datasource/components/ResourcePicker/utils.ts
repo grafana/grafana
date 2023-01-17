@@ -92,7 +92,7 @@ function compareNamespaceAndName(
   return rowNamespace === resourceNamespace && rowName === resourceName;
 }
 
-function matchURI(rowURI: string, resourceURI: string) {
+export function matchURI(rowURI: string, resourceURI: string) {
   const targetParams = parseResourceDetails(resourceURI);
   const rowParams = parseResourceDetails(rowURI);
 
