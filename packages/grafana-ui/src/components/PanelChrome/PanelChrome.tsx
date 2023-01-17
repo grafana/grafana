@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { isEmpty } from 'lodash';
-import React, { CSSProperties, ReactNode, ReactElement } from 'react';
+import React, { CSSProperties, ReactElement, ReactNode } from 'react';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,11 +13,6 @@ import { Tooltip } from '../Tooltip';
 
 import { PanelDescription } from './PanelDescription';
 import { PanelStatus } from './PanelStatus';
-
-interface Status {
-  message?: string;
-  onClick?: (e: React.SyntheticEvent) => void;
-}
 
 /**
  * @internal
@@ -36,7 +30,14 @@ export interface PanelChromeProps {
   // dragClass?: string;
   hoverHeader?: boolean;
   loadingState?: LoadingState;
-  status?: Status;
+  /**
+   * Used to display status message (used for panel errors currently)
+   */
+  statusMessage?: string;
+  /**
+   * Handle opening error details view (like inspect / error tab)
+   */
+  statusMessageOnClick?: (e: React.SyntheticEvent) => void;
   /** @deprecated in favor of props
    * status for errors and loadingState for loading and streaming
    * which will serve the same purpose
@@ -65,8 +66,9 @@ export function PanelChrome({
   // dragClass,
   hoverHeader = false,
   loadingState,
-  status,
-  leftItems = [],
+  statusMessage,
+  statusMessageOnClick,
+  leftItems,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -82,7 +84,7 @@ export function PanelChrome({
       titleItems.length > 0 ||
       description !== '' ||
       loadingState === LoadingState.Streaming ||
-      leftItems.length > 0);
+      (leftItems?.length ?? 0) > 0);
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
@@ -97,29 +99,12 @@ export function PanelChrome({
   };
 
   const containerStyles: CSSProperties = { width, height };
-
-  const isUsingDeprecatedLeftItems = isEmpty(status) && !loadingState;
-  const showLoading = loadingState === LoadingState.Loading && !isUsingDeprecatedLeftItems;
-  const showStreaming = loadingState === LoadingState.Streaming && !isUsingDeprecatedLeftItems;
-
-  const renderStatus = () => {
-    const showError = loadingState === LoadingState.Error || status?.message;
-    if (!isUsingDeprecatedLeftItems && showError) {
-      return (
-        <div className={styles.errorContainer}>
-          <PanelStatus message={status?.message} onClick={status?.onClick} />
-        </div>
-      );
-    } else {
-      return null;
-    }
-  };
-
   const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
+
   return (
     <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
       <div className={styles.loadingBarContainer}>
-        {showLoading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
+        {loadingState === LoadingState.Loading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
       </div>
 
       <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
@@ -131,13 +116,13 @@ export function PanelChrome({
 
         <PanelDescription description={description} />
 
-        {titleItems && (
+        {titleItems.length > 0 && (
           <div className={styles.titleItems} data-testid="title-items-container">
             {titleItems.map((item) => item)}
           </div>
         )}
 
-        {showStreaming && (
+        {loadingState === LoadingState.Streaming && (
           <div className={styles.item} style={itemStyles}>
             <Tooltip content="Streaming">
               <Icon name="circle-mono" size="sm" className={styles.streaming} />
@@ -159,11 +144,16 @@ export function PanelChrome({
             </Dropdown>
           )}
 
-          {isUsingDeprecatedLeftItems && <div className={styles.items}>{itemsRenderer(leftItems, (item) => item)}</div>}
+          {leftItems && <div className={styles.items}>{itemsRenderer(leftItems, (item) => item)}</div>}
         </div>
 
-        {renderStatus()}
+        {statusMessage && (
+          <div className={styles.errorContainer}>
+            <PanelStatus message={statusMessage} onClick={statusMessageOnClick} />
+          </div>
+        )}
       </div>
+
       <div className={styles.content} style={contentStyle}>
         {children(innerWidth, innerHeight)}
       </div>
@@ -180,6 +170,7 @@ const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean) => {
   if (hasHeader) {
     return theme.spacing.gridSize * theme.components.panel.headerHeight;
   }
+
   return 0;
 };
 

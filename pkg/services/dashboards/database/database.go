@@ -974,6 +974,9 @@ func (d *DashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 		} else {
 			session = sess.In("uid", query.DashboardUIDs)
 		}
+		if query.OrgID > 0 {
+			session = sess.Where("org_id = ?", query.OrgID)
+		}
 
 		err := session.Find(&dashboards)
 		query.Result = dashboards

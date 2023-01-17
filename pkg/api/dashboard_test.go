@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -63,7 +64,7 @@ func TestGetHomeDashboard(t *testing.T) {
 	hs := &HTTPServer{
 		Cfg:                     cfg,
 		pluginStore:             &plugins.FakePluginStore{},
-		SQLStore:                mockstore.NewSQLStoreMock(),
+		SQLStore:                dbtest.NewFakeDB(),
 		preferenceService:       prefService,
 		dashboardVersionService: dashboardVersionService,
 		Kinds:                   corekind.NewBase(nil),
@@ -140,7 +141,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			q := args.Get(1).(*dashboards.GetDashboardQuery)
 			q.Result = fakeDash
 		}).Return(nil)
-		mockSQLStore := mockstore.NewSQLStoreMock()
+		mockSQLStore := dbtest.NewFakeDB()
 
 		hs := &HTTPServer{
 			Cfg:                     setting.NewCfg(),
@@ -259,7 +260,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}
 		}).Return(nil)
 
-		mockSQLStore := mockstore.NewSQLStoreMock()
+		mockSQLStore := dbtest.NewFakeDB()
 		cfg := setting.NewCfg()
 		sql := db.InitTestDB(t)
 
@@ -803,7 +804,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				}),
 			},
 		}
-		sqlmock := mockstore.SQLStoreMock{}
+		sqlmock := dbtest.NewFakeDB()
 		setUp := func() {
 			teamSvc := &teamtest.FakeService{}
 			dashSvc := dashboards.NewFakeDashboardService(t)
@@ -815,7 +816,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					ID:    q.ID,
 				}
 			}).Return(nil)
-			guardian.InitLegacyGuardian(&sqlmock, dashSvc, teamSvc)
+			guardian.InitLegacyGuardian(sqlmock, dashSvc, teamSvc)
 		}
 
 		cmd := dtos.CalculateDiffOptions{
@@ -837,7 +838,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 				callPostDashboard(sc)
 				assert.Equal(t, 403, sc.resp.Code)
-			}, &sqlmock, fakeDashboardVersionService)
+			}, sqlmock, fakeDashboardVersionService)
 		})
 
 		t.Run("when user does have permission", func(t *testing.T) {
@@ -847,7 +848,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				sc.dashboardVersionService = fakeDashboardVersionService
 				callPostDashboard(sc)
 				assert.Equal(t, 200, sc.resp.Code)
-			}, &sqlmock, fakeDashboardVersionService)
+			}, sqlmock, fakeDashboardVersionService)
 		})
 	})
 
