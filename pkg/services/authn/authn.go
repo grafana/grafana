@@ -24,6 +24,7 @@ const (
 	ClientJWT       = "auth.client.jwt"
 	ClientRender    = "auth.client.render"
 	ClientSession   = "auth.client.session"
+	ClientForm      = "auth.client.form"
 )
 
 const (

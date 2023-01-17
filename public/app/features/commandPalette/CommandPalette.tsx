@@ -56,7 +56,10 @@ export const CommandPalette = () => {
         <KBarAnimator className={styles.animator}>
           <FocusScope contain autoFocus restoreFocus>
             <div {...overlayProps} {...dialogProps}>
-              <KBarSearch className={styles.search} />
+              <KBarSearch
+                defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search Grafana')}
+                className={styles.search}
+              />
               <RenderResults dashboardResults={dashboardResults} />
             </div>
           </FocusScope>
