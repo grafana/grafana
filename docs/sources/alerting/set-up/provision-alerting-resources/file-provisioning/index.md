@@ -522,7 +522,7 @@ policies:
       - alertname = Watchdog
       - service_id_X = serviceX
       - severity =~ "warning|critical"
-    # <list> a list of objects of grafana-like matchers that an alert rule has to fulfill to match the node
+    # <list> a list of grafana-like matchers that an alert rule has to fulfill to match the node
     object_matchers:
       - ['alertname', '=', 'CPUUsage']
       - ['service_id-X', '=', 'serviceX']
