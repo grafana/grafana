@@ -71,8 +71,10 @@ func instrument(ctx context.Context, cfg InstrumentationMiddlewareConfig, plugin
 	}
 
 	elapsed := time.Since(start)
-	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, string(cfg.PluginTarget(ctx, pluginCtx.PluginID))).Observe(float64(elapsed / time.Millisecond))
-	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status).Inc()
+
+	target := string(cfg.PluginTarget(ctx, pluginCtx.PluginID))
+	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, target).Observe(float64(elapsed / time.Millisecond))
+	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, target).Inc()
 
 	if cfg.LogDatasourceRequests {
 		logParams := []interface{}{

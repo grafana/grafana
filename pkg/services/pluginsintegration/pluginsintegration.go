@@ -55,26 +55,27 @@ var WireExtensionSet = wire.NewSet(
 )
 
 func ProvideClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
-	pluginRegistry registry.Service,
+	pluginRegistry registry.Service, pluginStore plugins.Store,
 	oAuthTokenService oauthtoken.OAuthTokenService) (*client.Decorator, error) {
-	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService)
+	return NewClientDecorator(cfg, pCfg, pluginRegistry, pluginStore, oAuthTokenService)
 }
 
 func NewClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
-	pluginRegistry registry.Service,
+	pluginRegistry registry.Service, pluginStore plugins.Store,
 	oAuthTokenService oauthtoken.OAuthTokenService) (*client.Decorator, error) {
 	c := client.ProvideService(pluginRegistry, pCfg)
-	middlewares := CreateMiddlewares(cfg, pCfg, oAuthTokenService)
+	middlewares := CreateMiddlewares(cfg, pCfg, oAuthTokenService, pluginStore)
 
 	return client.NewDecorator(c, middlewares...)
 }
 
-func CreateMiddlewares(cfg *setting.Cfg, pCfg *config.Cfg, oAuthTokenService oauthtoken.OAuthTokenService) []plugins.ClientMiddleware {
+func CreateMiddlewares(cfg *setting.Cfg, pCfg *config.Cfg, oAuthTokenService oauthtoken.OAuthTokenService,
+	pluginStore plugins.Store) []plugins.ClientMiddleware {
 	skipCookiesNames := []string{cfg.LoginCookieName}
 	middlewares := []plugins.ClientMiddleware{
 		clientmiddleware.NewInstrumentationMiddleware(clientmiddleware.InstrumentationMiddlewareConfig{
 			LogDatasourceRequests: pCfg.LogDatasourceRequests,
-		}),
+		}, pluginStore),
 		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
