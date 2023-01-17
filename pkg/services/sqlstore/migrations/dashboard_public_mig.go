@@ -90,6 +90,6 @@ func addPublicDashboardMigration(mg *Migrator) {
 		Type:     DB_NVarchar,
 		Length:   64,
 		Nullable: false,
-		Default:  "public",
+		Default:  "'public'",
 	}))
 }
