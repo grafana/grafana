@@ -225,7 +225,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		return err
 	}
 
-	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?orgId=%d&panelId=%d", ref.Uid, ref.Slug, evalCtx.Rule.OrgID, evalCtx.Rule.PanelID)
+	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?orgId=%d&panelId=%d", ref.UID, ref.Slug, evalCtx.Rule.OrgID, evalCtx.Rule.PanelID)
 
 	n.log.Debug("Rendering alert panel image", "ruleId", evalCtx.Rule.ID, "urlPath", renderOpts.Path)
 	start := time.Now()

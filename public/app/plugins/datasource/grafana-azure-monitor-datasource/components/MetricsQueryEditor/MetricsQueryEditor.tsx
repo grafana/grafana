@@ -39,9 +39,10 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
   const metricNames = useMetricNames(query, datasource, onChange, setError);
   const resource: AzureMetricResource = {
     subscription: query.subscription,
-    resourceGroup: query.azureMonitor?.resourceGroup,
+    resourceGroup: query.azureMonitor?.resources?.[0]?.resourceGroup,
     metricNamespace: query.azureMonitor?.metricNamespace,
-    resourceName: query.azureMonitor?.resourceName,
+    resourceName: query.azureMonitor?.resources?.[0]?.resourceName,
+    region: query.azureMonitor?.region,
   };
   return (
     <span data-testid="azure-monitor-metrics-query-editor-with-experimental-ui">

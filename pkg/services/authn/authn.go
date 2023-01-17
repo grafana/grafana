@@ -24,6 +24,8 @@ const (
 	ClientJWT       = "auth.client.jwt"
 	ClientRender    = "auth.client.render"
 	ClientSession   = "auth.client.session"
+	ClientForm      = "auth.client.form"
+	ClientProxy     = "auth.client.proxy"
 )
 
 const (
@@ -69,6 +71,10 @@ type Client interface {
 
 type PasswordClient interface {
 	AuthenticatePassword(ctx context.Context, r *Request, username, password string) (*Identity, error)
+}
+
+type ProxyClient interface {
+	AuthenticateProxy(ctx context.Context, r *Request, username string, additional map[string]string) (*Identity, error)
 }
 
 type Request struct {

@@ -227,11 +227,11 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 
 			t.Run("Should be able to do anything", func(t *testing.T) {
 				dashSvc := dashboards.NewFakeDashboardService(t)
-				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					q := args.Get(1).(*models.GetDashboardQuery)
-					q.Result = &models.Dashboard{
-						Id:  q.Id,
-						Uid: q.Uid,
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*dashboards.GetDashboardQuery)
+					q.Result = &dashboards.Dashboard{
+						ID:  q.ID,
+						UID: q.UID,
 					}
 				}).Return(nil)
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, dashSvc, func(sc *scenarioContext) {
@@ -244,7 +244,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
-					dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery"))
+					dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery"))
 				})
 
 				putAnnotationScenario(t, "When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId", role, updateCmd, func(sc *scenarioContext) {
@@ -267,11 +267,11 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					})
 
 				dashSvc = dashboards.NewFakeDashboardService(t)
-				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					q := args.Get(1).(*models.GetDashboardQuery)
-					q.Result = &models.Dashboard{
-						Id:  1,
-						Uid: deleteWithDashboardUIDCmd.DashboardUID,
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*dashboards.GetDashboardQuery)
+					q.Result = &dashboards.Dashboard{
+						ID:  1,
+						UID: deleteWithDashboardUIDCmd.DashboardUID,
 					}
 				}).Return(nil)
 				deleteAnnotationsScenario(t, "When calling POST with dashboardUID on", "/api/annotations/mass-delete",
@@ -279,7 +279,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						setUpACL()
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
-						dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery"))
+						dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery"))
 					})
 			})
 		})
@@ -687,11 +687,11 @@ func setUpACL() {
 			{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 		}
 	}).Return(nil)
-	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardQuery)
-		q.Result = &models.Dashboard{
-			Id:  q.Id,
-			Uid: q.Uid,
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.GetDashboardQuery)
+		q.Result = &dashboards.Dashboard{
+			ID:  q.ID,
+			UID: q.UID,
 		}
 	}).Return(nil)
 
