@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/querylibrary"
@@ -211,6 +212,7 @@ type HTTPServer struct {
 	tagService             tag.Service
 	oauthTokenService      oauthtoken.OAuthTokenService
 	statsService           stats.Service
+	authnService           authn.Service
 }
 
 type ServerOptions struct {
@@ -253,7 +255,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	statsService stats.Service,
+	statsService stats.Service, authnService authn.Service,
 	k8saccess k8saccess.K8SAccess, // required so that the router is registered
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -360,6 +362,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		QueryLibraryService:          queryLibraryService,
 		oauthTokenService:            oauthTokenService,
 		statsService:                 statsService,
+		authnService:                 authnService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

@@ -253,7 +253,7 @@
     "@grafana/lezer-logql": "0.1.1",
     "@grafana/monaco-logql": "^0.0.6",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "0.0.4",
+    "@grafana/scenes": "latest",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@jaegertracing/jaeger-ui-components": "workspace:*",
@@ -261,7 +261,7 @@
     "@leeoniya/ufuzzy": "0.9.1",
     "@lezer/common": "1.0.1",
     "@lezer/highlight": "1.1.2",
-    "@lezer/lr": "1.2.3",
+    "@lezer/lr": "1.3.1",
     "@opentelemetry/api": "1.3.0",
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.8.0",
@@ -429,10 +429,5 @@
   "engines": {
     "node": ">= 16"
   },
-  "packageManager": "yarn@3.3.0",
-  "dependenciesMeta": {
-    "@grafana/scenes@0.0.3": {
-      "unplugged": true
-    }
-  }
+  "packageManager": "yarn@3.3.0"
 }

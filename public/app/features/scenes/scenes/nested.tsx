@@ -1,18 +1,11 @@
-import {
-  VizPanel,
-  NestedScene,
-  SceneTimePicker,
-  SceneFlexLayout,
-  SceneTimeRange,
-  EmbeddedScene,
-} from '@grafana/scenes';
+import { VizPanel, NestedScene, SceneTimePicker, SceneFlexLayout, SceneTimeRange } from '@grafana/scenes';
 
-import { Scene } from '../components/Scene';
+import { DashboardScene } from '../dashboard/DashboardScene';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getNestedScene(standalone: boolean): Scene | EmbeddedScene {
-  const state = {
+export function getNestedScene(): DashboardScene {
+  return new DashboardScene({
     title: 'Nested Scene demo',
     body: new SceneFlexLayout({
       direction: 'column',
@@ -28,9 +21,7 @@ export function getNestedScene(standalone: boolean): Scene | EmbeddedScene {
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+  });
 }
 
 export function getInnerScene(title: string) {
