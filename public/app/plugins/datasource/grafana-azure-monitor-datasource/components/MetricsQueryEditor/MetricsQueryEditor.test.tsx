@@ -125,10 +125,10 @@ describe('MetricsQueryEditor', () => {
         azureMonitor: expect.objectContaining({
           metricNamespace: 'microsoft.compute/virtualmachines',
           resources: [
-            {
+            expect.objectContaining({
               resourceGroup: 'dev-3',
               resourceName: 'web-server',
-            },
+            }),
           ],
         }),
       })
