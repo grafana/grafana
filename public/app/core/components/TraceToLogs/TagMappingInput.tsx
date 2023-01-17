@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, KeyValue } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { SegmentInput, useStyles2, InlineLabel, Icon } from '@grafana/ui';
 
 interface Props {
-  values: Array<KeyValue<string>>;
-  onChange: (values: Array<KeyValue<string>>) => void;
+  values: Array<{ key: string; value?: string }>;
+  onChange: (values: Array<{ key: string; value?: string }>) => void;
   id?: string;
 }
 
@@ -39,7 +39,7 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
             <SegmentInput
               id={`${id}-value-${idx}`}
               placeholder={'New name (optional)'}
-              value={value.value}
+              value={value.value || ''}
               onChange={(e) => {
                 onChange(
                   values.map((v, i) => {

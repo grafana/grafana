@@ -88,34 +88,6 @@ function generateInternalHref<T extends DataQuery = any>(
   );
 }
 
-// function interpolateObject<T extends object>(
-//   obj: T | undefined,
-//   scopedVars: ScopedVars,
-//   replaceVariables: InterpolateFunction
-// ): T {
-//   let stringifiedQuery = '';
-//   try {
-//     stringifiedQuery = JSON.stringify(obj || {});
-//   } catch (err) {
-//     // should not happen and not much to do about this, possibly something non stringifiable in the query
-//     console.error(err);
-//   }
-//
-//   // Replace any variables inside the query. This may not be the safest as it can also replace keys etc so may not
-//   // actually work with every datasource query right now.
-//   stringifiedQuery = replaceVariables(stringifiedQuery, scopedVars);
-//
-//   let replacedQuery = {} as T;
-//   try {
-//     replacedQuery = JSON.parse(stringifiedQuery);
-//   } catch (err) {
-//     // again should not happen and not much to do about this, probably some issue with how we replaced the variables.
-//     console.error(stringifiedQuery, err);
-//   }
-//
-//   return replacedQuery;
-// }
-
 function interpolateObject<T extends Object>(
   obj: T | undefined,
   scopedVars: ScopedVars,

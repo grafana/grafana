@@ -295,12 +295,12 @@ function getQueryForLoki(
     return undefined;
   }
 
-  let expr = `{$__tags}`;
+  let expr = '{${__tags}}';
   if (filterByTraceID && span.traceID) {
-    expr += ` |="$__span.traceId"`;
+    expr += ' |="${__span.traceId}"';
   }
   if (filterBySpanID && span.spanID) {
-    expr += ` |="$__span.id"`;
+    expr += ' |="${__span.id}"';
   }
 
   return {
@@ -336,13 +336,13 @@ function getQueryForElasticsearchOrOpensearch(
 
   let query = '';
   if (tags) {
-    query += `$__tags`;
+    query += '${__tags}';
   }
   if (filterByTraceID && span.traceID) {
-    query = `"$__span.traceId" AND ` + query;
+    query = '"${__span.traceId}" AND ' + query;
   }
   if (filterBySpanID && span.spanID) {
-    query = `"$__span.id" AND ` + query;
+    query = '"${__span.id}" AND ' + query;
   }
 
   return {
@@ -361,13 +361,13 @@ function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags:
 
   let query = '';
   if (tags) {
-    query += `$__tags`;
+    query += '${__tags}';
   }
   if (filterByTraceID && span.traceID) {
-    query += ` "$__span.traceId"`;
+    query += ' "${__span.traceId}"';
   }
   if (filterBySpanID && span.spanID) {
-    query += ` "$__span.id"`;
+    query += ' "${__span.id}"';
   }
 
   return {
@@ -481,6 +481,7 @@ function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
       text: 'Span',
       value: {
         id: span.spanID,
+        traceId: span.traceID,
         duration: span.duration,
         name: span.operationName,
         tags: tags,

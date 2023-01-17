@@ -6,7 +6,6 @@ import {
   DataSourceInstanceSettings,
   DataSourcePluginOptionsEditorProps,
   GrafanaTheme2,
-  KeyValue,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, useStyles2, InlineSwitch } from '@grafana/ui';
@@ -17,7 +16,7 @@ import { TagMappingInput } from './TagMappingInput';
 export interface TraceToLogsOptions {
   datasourceUid?: string;
   tags?: string[];
-  mappedTags?: Array<KeyValue<string>>;
+  mappedTags?: Array<{ key: string; value?: string }>;
   mapTagNamesEnabled?: boolean;
   spanStartTimeShift?: string;
   spanEndTimeShift?: string;
@@ -28,7 +27,7 @@ export interface TraceToLogsOptions {
 
 export interface TraceToLogsOptionsV2 {
   datasourceUid?: string;
-  tags?: Array<KeyValue<string>>;
+  tags?: Array<{ key: string; value?: string }>;
   spanStartTimeShift?: string;
   spanEndTimeShift?: string;
   filterByTraceID?: boolean;
