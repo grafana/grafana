@@ -49,7 +49,7 @@ func (s *Service) GetPluginSettings(ctx context.Context, args *pluginsettings.Ge
 		return nil, err
 	}
 
-	var result []*pluginsettings.InfoDTO
+	result := make([]*pluginsettings.InfoDTO, 0, len(ps))
 	for _, p := range ps {
 		result = append(result, &pluginsettings.InfoDTO{
 			OrgID:         p.OrgID,

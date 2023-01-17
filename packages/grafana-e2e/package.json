@@ -68,7 +68,7 @@
     "@mochajs/json-file-reporter": "^1.2.0",
     "babel-loader": "9.1.0",
     "blink-diff": "1.0.13",
-    "chrome-remote-interface": "0.31.3",
+    "chrome-remote-interface": "0.32.0",
     "commander": "8.3.0",
     "cypress": "9.5.1",
     "cypress-file-upload": "5.0.8",
@@ -81,7 +81,7 @@
     "tracelib": "1.0.1",
     "ts-loader": "8.4.0",
     "tslib": "2.4.1",
-    "typescript": "4.9.3",
+    "typescript": "4.8.4",
     "uuid": "9.0.0",
     "yaml": "^2.0.0"
   }

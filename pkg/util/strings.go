@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
@@ -31,6 +32,16 @@ func stringsFallback(vals ...string) string {
 func SplitString(str string) []string {
 	if len(str) == 0 {
 		return []string{}
+	}
+
+	// JSON list syntax support
+	if strings.Index(strings.TrimSpace(str), "[") == 0 {
+		var res []string
+		err := json.Unmarshal([]byte(str), &res)
+		if err != nil {
+			return []string{}
+		}
+		return res
 	}
 
 	return strings.Fields(strings.ReplaceAll(str, ",", " "))

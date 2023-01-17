@@ -31,12 +31,20 @@ func TestProvideService(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("When template_patterns fails to parse", func(t *testing.T) {
+	t.Run("When all template_patterns fail to parse", func(t *testing.T) {
+		cfg := createSmtpConfig()
+		cfg.Smtp.TemplatesPatterns = []string{"/usr/not-a-dir/**", "/usr/also-not-a-dir/**"}
+		_, _, err := createSutWithConfig(t, bus, cfg)
+
+		require.Error(t, err)
+	})
+
+	t.Run("When some template_patterns fail to parse", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.TemplatesPatterns = append(cfg.Smtp.TemplatesPatterns, "/usr/not-a-dir/**")
 		_, _, err := createSutWithConfig(t, bus, cfg)
 
-		require.Error(t, err)
+		require.NoError(t, err)
 	})
 }
 
@@ -206,9 +214,7 @@ func TestSendEmailAsync(t *testing.T) {
 		// verify code
 		query := models.ValidateResetPasswordCodeQuery{Code: code}
 		getUserByLogin := func(ctx context.Context, login string) (*user.User, error) {
-			query := models.GetUserByLoginQuery{LoginOrEmail: login}
-			query.Result = &testuser
-			return query.Result, nil
+			return &testuser, nil
 		}
 		err = sut.ValidateResetPasswordCode(context.Background(), &query, getUserByLogin)
 		require.NoError(t, err)

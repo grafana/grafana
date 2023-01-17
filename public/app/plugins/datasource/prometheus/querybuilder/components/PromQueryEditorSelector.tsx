@@ -4,7 +4,7 @@ import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, Button } from '@grafana/ui';
+import { Button, ConfirmModal } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
 import { PromQuery } from '../../types';
@@ -110,7 +110,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
         />
         <QueryHeaderSwitch label="Explain" value={explain} onChange={onShowExplainChange} />
         <FlexItem grow={1} />
-        {app !== CoreApp.Explore && (
+        {app !== CoreApp.Explore && app !== CoreApp.Correlations && (
           <Button
             variant={dataIsStale ? 'primary' : 'secondary'}
             size="sm"

@@ -86,6 +86,7 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
       letter-spacing: ${theme.typography.bodySmall.letterSpacing};
       text-align: left;
       padding: 0;
+      user-select: text;
     `,
   };
 };

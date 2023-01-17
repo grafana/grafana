@@ -38,7 +38,12 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
 });
 
 const props = {
-  extended: {},
+  extended: {
+    dataSources: [
+      { text: 'Prometheus', value: null }, // default datasource
+      { text: 'Loki', value: { type: 'loki-ds', uid: 'abc' } },
+    ],
+  },
   variable: adHocBuilder().withId('adhoc').withRootStateKey('key').withName('adhoc').build(),
   onPropChange: jest.fn(),
 
