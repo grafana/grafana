@@ -1,4 +1,4 @@
-package models
+package stats
 
 type SystemStats struct {
 	Dashboards                int64

@@ -3,12 +3,11 @@ import { Labels, LogLevel, LogsModel, LogRowModel, LogsSortOrder, MutableDataFra
 import {
   getLogLevel,
   calculateLogsLabelStats,
-  getParser,
-  LogsParsers,
   calculateStats,
   getLogLevelFromKey,
   sortLogsResult,
   checkLogsError,
+  logRowsToReadableJson,
 } from './utils';
 
 describe('getLoglevel()', () => {
@@ -106,27 +105,6 @@ describe('calculateLogsLabelStats()', () => {
   });
 });
 
-describe('LogsParsers', () => {
-  describe('logfmt', () => {
-    const parser = LogsParsers.logfmt;
-
-    test('should detect format', () => {
-      expect(parser.test('foo')).toBeFalsy();
-      expect(parser.test('foo=bar')).toBeTruthy();
-    });
-  });
-
-  describe('JSON', () => {
-    const parser = LogsParsers.JSON;
-
-    test('should detect format', () => {
-      expect(parser.test('foo')).toBeFalsy();
-      expect(parser.test('"foo"')).toBeFalsy();
-      expect(parser.test('{"foo":"bar"}')).toBeTruthy();
-    });
-  });
-});
-
 describe('calculateStats()', () => {
   test('should return no stats for empty array', () => {
     expect(calculateStats([])).toEqual([]);
@@ -146,25 +124,6 @@ describe('calculateStats()', () => {
         proportion: 1 / 3,
       },
     ]);
-  });
-});
-
-describe('getParser()', () => {
-  test('should return no parser on empty line', () => {
-    expect(getParser('')).toBeUndefined();
-  });
-
-  test('should return no parser on unknown line pattern', () => {
-    expect(getParser('To Be or not to be')).toBeUndefined();
-  });
-
-  test('should return logfmt parser on key value patterns', () => {
-    expect(getParser('foo=bar baz="41 + 1')).toEqual(LogsParsers.logfmt);
-  });
-
-  test('should return JSON parser on JSON log lines', () => {
-    // TODO implement other JSON value types than string
-    expect(getParser('{"foo": "bar", "baz": "41 + 1"}')).toEqual(LogsParsers.JSON);
   });
 });
 
@@ -245,5 +204,60 @@ describe('checkLogsError()', () => {
   } as LogRowModel;
   test('should return correct error if error is present', () => {
     expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
+  });
+});
+
+describe('logRowsToReadableJson', () => {
+  const testRow: LogRowModel = {
+    rowIndex: 1,
+    entryFieldIndex: 0,
+    dataFrame: new MutableDataFrame(),
+    entry: 'test entry',
+    hasAnsi: false,
+    hasUnescapedContent: false,
+    labels: {
+      foo: 'bar',
+    },
+    logLevel: LogLevel.info,
+    raw: '',
+    timeEpochMs: 10,
+    timeEpochNs: '123456789',
+    timeFromNow: '',
+    timeLocal: '',
+    timeUtc: '',
+    uid: '2',
+  };
+  const testDf = new MutableDataFrame();
+  testDf.addField({ name: 'foo2', values: ['bar2'] });
+  const testRow2: LogRowModel = {
+    rowIndex: 0,
+    entryFieldIndex: -1,
+    dataFrame: testDf,
+    entry: 'test entry',
+    hasAnsi: false,
+    hasUnescapedContent: false,
+    labels: {
+      foo: 'bar',
+    },
+    logLevel: LogLevel.info,
+    raw: '',
+    timeEpochMs: 10,
+    timeEpochNs: '123456789',
+    timeFromNow: '',
+    timeLocal: '',
+    timeUtc: '',
+    uid: '2',
+  };
+
+  it('should format a single row', () => {
+    const result = logRowsToReadableJson([testRow]);
+
+    expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar' } }]);
+  });
+
+  it('should format a df field row', () => {
+    const result = logRowsToReadableJson([testRow2]);
+
+    expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar', foo2: 'bar2' } }]);
   });
 });

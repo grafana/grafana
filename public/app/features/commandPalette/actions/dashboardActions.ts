@@ -36,7 +36,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
     return {
       id: `recent-dashboards/${url}`,
       name: `${name}`,
-      section: t('command-palette.section.recent-dashboards', 'Recently viewed dashboards'),
+      section: t('command-palette.section.recent-dashboards', 'Recent dashboards'),
       priority: RECENT_DASHBOARDS_PRORITY,
       perform: () => {
         locationService.push(locationUtil.stripBaseFromUrl(url));

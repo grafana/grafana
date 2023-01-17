@@ -2,11 +2,7 @@ import { countBy, chain } from 'lodash';
 
 import { LogLevel, LogRowModel, LogLabelStatsModel, LogsModel, LogsSortOrder } from '@grafana/data';
 
-// This matches:
-// first a label from start of the string or first white space, then any word chars until "="
-// second either an empty quotes, or anything that starts with quote and ends with unescaped quote,
-// or any non whitespace chars that do not start with quote
-const LOGFMT_REGEXP = /(?:^|\s)([\w\(\)\[\]\{\}]+)=(""|(?:".*?[^\\]"|[^"\s]\S*))/;
+import { getDataframeFields } from './components/logParser';
 
 /**
  * Returns the log level of a log line.
@@ -44,32 +40,6 @@ export function getLogLevelFromKey(key: string | number): LogLevel {
   return LogLevel.unknown;
 }
 
-interface LogsParser {
-  /**
-   * Function to verify if this is a valid parser for the given line.
-   * The parser accepts the line if it returns true.
-   */
-  test: (line: string) => boolean;
-}
-
-export const LogsParsers: { [name: string]: LogsParser } = {
-  JSON: {
-    test: (line) => {
-      let parsed;
-      try {
-        parsed = JSON.parse(line);
-      } catch (error) {}
-      // The JSON parser should only be used for log lines that are valid serialized JSON objects.
-      // If it would be used for a string, detected fields would include each letter as a separate field.
-      return typeof parsed === 'object';
-    },
-  },
-
-  logfmt: {
-    test: (line) => LOGFMT_REGEXP.test(line),
-  },
-};
-
 export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
   // Consider only rows that have the given label
   const rowsWithLabel = rows.filter((row) => row.labels[label] !== undefined);
@@ -93,21 +63,6 @@ const getSortedCounts = (countsByValue: { [value: string]: number }, rowCount: n
     .reverse()
     .value();
 };
-
-export function getParser(line: string): LogsParser | undefined {
-  let parser;
-  try {
-    if (LogsParsers.JSON.test(line)) {
-      parser = LogsParsers.JSON;
-    }
-  } catch (error) {}
-
-  if (!parser && LogsParsers.logfmt.test(line)) {
-    parser = LogsParsers.logfmt;
-  }
-
-  return parser;
-}
 
 export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
   // compare milliseconds
@@ -176,3 +131,21 @@ export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorM
 
 export const escapeUnescapedString = (string: string) =>
   string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
+
+export function logRowsToReadableJson(logs: LogRowModel[]) {
+  return logs.map((log) => {
+    const fields = getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
+      acc[field.key] = field.value;
+      return acc;
+    }, {});
+
+    return {
+      line: log.entry,
+      timestamp: log.timeEpochNs,
+      fields: {
+        ...fields,
+        ...log.labels,
+      },
+    };
+  });
+}

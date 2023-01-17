@@ -4922,6 +4922,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/e2e-selectors@npm:canary":
+  version: 9.4.0-96193pre
+  resolution: "@grafana/e2e-selectors@npm:9.4.0-96193pre"
+  dependencies:
+    "@grafana/tsconfig": ^1.2.0-rc1
+    tslib: 2.4.1
+    typescript: 4.8.4
+  checksum: 1ce663607c0c816ec02cad33d80c38731c4dfafdc7d1693baa989b8eff6588e3cc1d8a031c4f30f888bbd8aa8768cce7c5dd4cb2455306040f39dcac933ceae4
+  languageName: node
+  linkType: hard
+
 "@grafana/e2e@workspace:*, @grafana/e2e@workspace:packages/grafana-e2e":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e@workspace:packages/grafana-e2e"
@@ -5109,10 +5120,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:0.0.4":
-  version: 0.0.4
-  resolution: "@grafana/scenes@npm:0.0.4"
-  checksum: adbc69e4033bdd40a5c2fe13ee7af2b787c236e548c389b6820b057f76ae3727fc4f85d2205d6658e008f69f75bbf84c04453fedb29f9979a76517267f1f91ad
+"@grafana/scenes@npm:latest":
+  version: 0.0.8
+  resolution: "@grafana/scenes@npm:0.0.8"
+  dependencies:
+    "@grafana/e2e-selectors": canary
+    "@grafana/experimental": 1.0.1
+    react-grid-layout: 1.3.4
+    react-use: 17.4.0
+    react-virtualized-auto-sizer: 1.0.7
+    uuid: ^9.0.0
+  checksum: 4c76ca9850906b98fc9131b48ea6a664f84a0f8ac5f7d87543d73f8ca8214c33483fc4454447e46d67096826f7cb32f3db70461323e65aefc241c4169c88fd98
   languageName: node
   linkType: hard
 
@@ -6255,6 +6273,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@leeoniya/ufuzzy@npm:0.9.1":
+  version: 0.9.1
+  resolution: "@leeoniya/ufuzzy@npm:0.9.1"
+  checksum: 27750dff2e754ec3729937abce7c36b87917325e934cef7b1bb54a2310fd1e497dcb725397abee8c714f24a84da155120177a93da8f9706eefe32a8a1bb66945
+  languageName: node
+  linkType: hard
+
 "@leichtgewicht/ip-codec@npm:^2.0.1":
   version: 2.0.3
   resolution: "@leichtgewicht/ip-codec@npm:2.0.3"
@@ -7082,12 +7107,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/lr@npm:1.2.3":
-  version: 1.2.3
-  resolution: "@lezer/lr@npm:1.2.3"
+"@lezer/lr@npm:1.3.1":
+  version: 1.3.1
+  resolution: "@lezer/lr@npm:1.3.1"
   dependencies:
     "@lezer/common": ^1.0.0
-  checksum: 118db077d32f6eb9d6b219c766d7e5715c6c004d89d76ed0137ea2a364aeca67f21dc5924ea67a649b5de1d13bfbb85571923b38536e6995820eb0a5c8844594
+  checksum: 01b421b9724d43a00a97639344cd89c539e9740b7bedc8270882192e4205f68679e5b7c6837dde7756970a418bd4e710e4a778ab7c6713a2331bea3049232ca8
   languageName: node
   linkType: hard
 
@@ -19560,6 +19585,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-config-prettier@npm:8.6.0":
+  version: 8.6.0
+  resolution: "eslint-config-prettier@npm:8.6.0"
+  peerDependencies:
+    eslint: ">=7.0.0"
+  bin:
+    eslint-config-prettier: bin/cli.js
+  checksum: ff0d0dfc839a556355422293428637e8d35693de58dabf8638bf0b6529131a109d0b2ade77521aa6e54573bb842d7d9d322e465dd73dd61c7590fa3834c3fa81
+  languageName: node
+  linkType: hard
+
 "eslint-import-resolver-node@npm:^0.3.6":
   version: 0.3.6
   resolution: "eslint-import-resolver-node@npm:0.3.6"
@@ -21997,17 +22033,17 @@ __metadata:
     "@grafana/lezer-logql": 0.1.1
     "@grafana/monaco-logql": ^0.0.6
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": 0.0.4
+    "@grafana/scenes": latest
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 5.3.6
-    "@leeoniya/ufuzzy": 0.9.0
+    "@leeoniya/ufuzzy": 0.9.1
     "@lezer/common": 1.0.1
     "@lezer/highlight": 1.1.2
-    "@lezer/lr": 1.2.3
+    "@lezer/lr": 1.3.1
     "@opentelemetry/api": 1.3.0
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.8.0
@@ -22135,7 +22171,7 @@ __metadata:
     enzyme: 3.11.0
     enzyme-to-json: 3.6.2
     eslint: 8.31.0
-    eslint-config-prettier: 8.5.0
+    eslint-config-prettier: 8.6.0
     eslint-plugin-import: ^2.26.0
     eslint-plugin-jest: 27.1.3
     eslint-plugin-jsdoc: 39.6.2
@@ -22286,9 +22322,6 @@ __metadata:
     webpack-manifest-plugin: 5.0.0
     webpack-merge: 5.8.0
     whatwg-fetch: 3.6.2
-  dependenciesMeta:
-    "@grafana/scenes@0.0.3":
-      unplugged: true
   languageName: unknown
   linkType: soft
 
@@ -38399,7 +38432,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:9.0.0":
+"uuid@npm:9.0.0, uuid@npm:^9.0.0":
   version: 9.0.0
   resolution: "uuid@npm:9.0.0"
   bin:

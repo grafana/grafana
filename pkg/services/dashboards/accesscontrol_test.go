@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
@@ -157,16 +156,16 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 
 		orgID := rand.Int63()
 		folder := &folder.Folder{ID: 2, UID: "2"}
-		dashboard := &models.Dashboard{Id: 1, FolderId: folder.ID, Uid: "1"}
+		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}
 
 		store.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil).Once()
 		store.On("GetFolderByID", mock.Anything, orgID, folder.ID).Return(folder, nil).Once()
 
-		scope := ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.Id, 10))
+		scope := ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.ID, 10))
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgID, scope)
 		require.NoError(t, err)
 		require.Len(t, resolvedScopes, 2)
-		require.Equal(t, fmt.Sprintf("dashboards:uid:%s", dashboard.Uid), resolvedScopes[0])
+		require.Equal(t, fmt.Sprintf("dashboards:uid:%s", dashboard.UID), resolvedScopes[0])
 		require.Equal(t, fmt.Sprintf("folders:uid:%s", folder.UID), resolvedScopes[1])
 	})
 
@@ -180,7 +179,7 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 		store := &FakeDashboardStore{}
 		_, resolver := NewDashboardIDScopeResolver(store)
 
-		dashboard := &models.Dashboard{Id: 1, FolderId: 0, Uid: "1"}
+		dashboard := &Dashboard{ID: 1, FolderID: 0, UID: "1"}
 		store.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
 		resolved, err := resolver.Resolve(context.Background(), 1, ac.Scope("dashboards", "id", "1"))
 		require.NoError(t, err)
@@ -203,16 +202,16 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 
 		orgID := rand.Int63()
 		folder := &folder.Folder{ID: 2, UID: "2"}
-		dashboard := &models.Dashboard{Id: 1, FolderId: folder.ID, Uid: "1"}
+		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}
 
 		store.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil).Once()
 		store.On("GetFolderByID", mock.Anything, orgID, folder.ID).Return(folder, nil).Once()
 
-		scope := ac.Scope("dashboards", "uid", dashboard.Uid)
+		scope := ac.Scope("dashboards", "uid", dashboard.UID)
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgID, scope)
 		require.NoError(t, err)
 		require.Len(t, resolvedScopes, 2)
-		require.Equal(t, fmt.Sprintf("dashboards:uid:%s", dashboard.Uid), resolvedScopes[0])
+		require.Equal(t, fmt.Sprintf("dashboards:uid:%s", dashboard.UID), resolvedScopes[0])
 		require.Equal(t, fmt.Sprintf("folders:uid:%s", folder.UID), resolvedScopes[1])
 	})
 
@@ -226,7 +225,7 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 		store := &FakeDashboardStore{}
 		_, resolver := NewDashboardUIDScopeResolver(store)
 
-		dashboard := &models.Dashboard{Id: 1, FolderId: 0, Uid: "1"}
+		dashboard := &Dashboard{ID: 1, FolderID: 0, UID: "1"}
 		store.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
 		resolved, err := resolver.Resolve(context.Background(), 1, ac.Scope("dashboards", "uid", "1"))
 		require.NoError(t, err)

@@ -1,19 +1,11 @@
-import {
-  SceneTimePicker,
-  SceneFlexLayout,
-  VizPanel,
-  SceneDataTransformer,
-  SceneTimeRange,
-  EmbeddedScene,
-} from '@grafana/scenes';
+import { SceneTimePicker, SceneFlexLayout, VizPanel, SceneDataTransformer, SceneTimeRange } from '@grafana/scenes';
 
-import { Scene } from '../components/Scene';
-import { SceneEditManager } from '../editor/SceneEditManager';
+import { DashboardScene } from '../dashboard/DashboardScene';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getTransformationsDemo(standalone: boolean): Scene | EmbeddedScene {
-  const state = {
+export function getTransformationsDemo(): DashboardScene {
+  return new DashboardScene({
     title: 'Transformations demo',
     body: new SceneFlexLayout({
       direction: 'row',
@@ -63,11 +55,8 @@ export function getTransformationsDemo(standalone: boolean): Scene | EmbeddedSce
         }),
       ],
     }),
-    $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+  });
 }
