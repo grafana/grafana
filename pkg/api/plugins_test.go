@@ -19,7 +19,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -211,16 +210,14 @@ func Test_GetPluginAssets(t *testing.T) {
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p},
 		}
-		l := &logtest.Fake{}
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
-		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service, l,
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service,
 			func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				require.Equal(t, 200, sc.resp.Code)
 				assert.Equal(t, expectedBody, sc.resp.Body.String())
-				assert.Zero(t, l.WarnLogs.Calls)
 			})
 	})
 
@@ -248,7 +245,6 @@ func Test_GetPluginAssets(t *testing.T) {
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{},
 		}
-		l := &logtest.Fake{}
 
 		requestedFile := "nonExistent"
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
@@ -261,29 +257,6 @@ func Test_GetPluginAssets(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, 404, sc.resp.Code)
 				require.Equal(t, "Plugin not found", respJson["message"])
-				require.Zero(t, l.WarnLogs.Calls)
-			})
-	})
-
-	t.Run("Given a request for a core plugin's file", func(t *testing.T) {
-		service := &plugins.FakePluginStore{
-			PluginList: []plugins.PluginDTO{
-				{
-					JSONData: plugins.JSONData{ID: pluginID},
-					Class:    plugins.Core,
-				},
-			},
-		}
-		l := &logtest.Fake{}
-
-		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
-		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service,
-			func(sc *scenarioContext) {
-				callGetPluginAsset(sc)
-
-				require.Equal(t, 200, sc.resp.Code)
-				require.Equal(t, expectedBody, sc.resp.Body.String())
-				require.Zero(t, l.WarnLogs.Calls)
 			})
 	})
 }

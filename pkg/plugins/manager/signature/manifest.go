@@ -189,7 +189,7 @@ func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin)
 	// Track files missing from the manifest
 	var unsignedFiles []string
 	for _, f := range plugin.FS.Files() {
-		if runtime.GOOS == "windows" && f == "chrome-win/debug.log" {
+		if runningWindows && plugin.JSONData.Type == plugins.Renderer && f == "chrome-win/debug.log" {
 			continue
 		}
 

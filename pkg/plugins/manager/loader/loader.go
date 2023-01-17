@@ -63,24 +63,24 @@ func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoa
 }
 
 func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
-	res, err := l.pluginFinder.Find(paths...)
+	found, err := l.pluginFinder.Find(paths...)
 	if err != nil {
 		return nil, err
 	}
 
-	return l.loadPlugins(ctx, class, res)
+	return l.loadPlugins(ctx, class, found)
 }
 
-func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, res []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	var loadedPlugins []*plugins.Plugin
-	for _, r := range res {
-		if _, exists := l.pluginRegistry.Plugin(ctx, r.Primary.JSONData.ID); exists {
-			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", r.Primary.JSONData.ID)
+	for _, p := range found {
+		if _, exists := l.pluginRegistry.Plugin(ctx, p.Primary.JSONData.ID); exists {
+			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", p.Primary.JSONData.ID)
 			continue
 		}
-		plugin := createPluginBase(r.Primary.JSONData, class, r.Primary.FS)
+		plugin := createPluginBase(p.Primary.JSONData, class, p.Primary.FS)
 
-		sig, err := signature.Calculate(l.log, class, r.Primary)
+		sig, err := signature.Calculate(l.log, class, p.Primary)
 		if err != nil {
 			l.log.Warn("Could not calculate plugin signature state", "pluginID", plugin.ID, "err", err)
 			continue
@@ -91,9 +91,9 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, res []*pl
 
 		loadedPlugins = append(loadedPlugins, plugin)
 
-		for _, c := range r.Children {
+		for _, c := range p.Children {
 			if _, exists := l.pluginRegistry.Plugin(ctx, c.JSONData.ID); exists {
-				l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", r.Primary.JSONData.ID)
+				l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", p.Primary.JSONData.ID)
 				continue
 			}
 

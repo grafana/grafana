@@ -60,7 +60,7 @@ type PluginDTO struct {
 
 	fs FS
 
-	class Class
+	Class Class
 
 	// App fields
 	IncludedInAppID string
@@ -80,13 +80,6 @@ type PluginDTO struct {
 	supportsStreaming bool
 }
 
-func NewPluginDTO(jsonData JSONData, class Class) PluginDTO {
-	return PluginDTO{
-		class:    class,
-		JSONData: jsonData,
-	}
-}
-
 func (p PluginDTO) Immutable() bool {
 	return p.IsCorePlugin()
 }
@@ -104,11 +97,11 @@ func (p PluginDTO) IsApp() bool {
 }
 
 func (p PluginDTO) IsCorePlugin() bool {
-	return p.class == Core
+	return p.Class == Core
 }
 
 func (p PluginDTO) IsExternalPlugin() bool {
-	return p.class == External
+	return p.Class == External
 }
 
 func (p PluginDTO) IsSecretsManager() bool {
@@ -137,6 +130,10 @@ func (p PluginDTO) File(name string) (fs.File, error) {
 	if err != nil {
 		// CleanRelativePath should clean and make the path relative so this is not expected to fail
 		return nil, err
+	}
+
+	if p.fs == nil || len(p.fs.Files()) == 0 {
+		return nil, ErrFileNotExist
 	}
 
 	f, err := p.fs.Open(cleanPath)
@@ -394,8 +391,8 @@ func (p *Plugin) ToDTO() PluginDTO {
 	return PluginDTO{
 		logger:            p.Logger(),
 		fs:                p.FS,
-		class:             p.Class,
 		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
+		Class:             p.Class,
 		JSONData:          p.JSONData,
 		IncludedInAppID:   p.IncludedInAppID,
 		DefaultNavURL:     p.DefaultNavURL,

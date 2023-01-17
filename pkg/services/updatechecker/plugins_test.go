@@ -129,26 +129,38 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			},
 			pluginStore: plugins.FakePluginStore{
 				PluginList: []plugins.PluginDTO{
-					plugins.NewPluginDTO(plugins.JSONData{
-						ID:   "test-ds",
-						Info: plugins.Info{Version: "0.9.0"},
-						Type: plugins.DataSource,
-					}, plugins.External),
-					plugins.NewPluginDTO(plugins.JSONData{
-						ID:   "test-app",
-						Info: plugins.Info{Version: "0.5.0"},
-						Type: plugins.App,
-					}, plugins.External),
-					plugins.NewPluginDTO(plugins.JSONData{
-						ID:   "test-panel",
-						Info: plugins.Info{Version: "2.5.7"},
-						Type: plugins.Panel,
-					}, plugins.Bundled),
-					plugins.NewPluginDTO(plugins.JSONData{
-						ID:   "test-core-panel",
-						Info: plugins.Info{Version: "0.0.1"},
-						Type: plugins.Panel,
-					}, plugins.Core),
+					{
+						JSONData: plugins.JSONData{
+							ID:   "test-ds",
+							Info: plugins.Info{Version: "0.9.0"},
+							Type: plugins.DataSource,
+						},
+						Class: plugins.External,
+					},
+					{
+						JSONData: plugins.JSONData{
+							ID:   "test-app",
+							Info: plugins.Info{Version: "0.5.0"},
+							Type: plugins.App,
+						},
+						Class: plugins.External,
+					},
+					{
+						JSONData: plugins.JSONData{
+							ID:   "test-panel",
+							Info: plugins.Info{Version: "2.5.7"},
+							Type: plugins.Panel,
+						},
+						Class: plugins.Bundled,
+					},
+					{
+						JSONData: plugins.JSONData{
+							ID:   "test-core-panel",
+							Info: plugins.Info{Version: "0.0.1"},
+							Type: plugins.Panel,
+						},
+						Class: plugins.Core,
+					},
 				},
 			},
 			httpClient: &fakeHTTPClient{

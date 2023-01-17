@@ -138,7 +138,8 @@ func pluginInfoCollector(pluginStore plugins.Store, pluginSettings pluginsetting
 		Default:           true,
 		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
 			type pluginInfo struct {
-				data plugins.JSONData
+				data  plugins.JSONData
+				Class plugins.Class
 
 				// App fields
 				IncludedInAppID string
@@ -168,6 +169,7 @@ func pluginInfoCollector(pluginStore plugins.Store, pluginSettings pluginsetting
 
 				pInfo := pluginInfo{
 					data:            plugin.JSONData,
+					Class:           plugin.Class,
 					IncludedInAppID: plugin.IncludedInAppID,
 					DefaultNavURL:   plugin.DefaultNavURL,
 					Pinned:          plugin.Pinned,
