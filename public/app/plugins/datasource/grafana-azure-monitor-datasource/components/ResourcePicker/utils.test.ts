@@ -166,7 +166,7 @@ describe('AzureMonitor ResourcePicker utils', () => {
   describe('setResource', () => {
     it('updates a resource with a resource URI for Log Analytics', () => {
       expect(setResource(createMockQuery(), '/subscription/sub')).toMatchObject({
-        azureLogAnalytics: { resource: '/subscription/sub' },
+        azureLogAnalytics: { resources: ['/subscription/sub'] },
       });
     });
 
@@ -177,6 +177,7 @@ describe('AzureMonitor ResourcePicker utils', () => {
           resourceGroup: 'rg',
           metricNamespace: 'Microsoft.Storage/storageAccounts',
           resourceName: 'testacct',
+          region: 'westus',
         })
       ).toMatchObject({
         subscription: 'sub',
@@ -184,6 +185,7 @@ describe('AzureMonitor ResourcePicker utils', () => {
           aggregation: undefined,
           metricName: undefined,
           metricNamespace: 'microsoft.storage/storageaccounts',
+          region: 'westus',
           resources: [
             {
               resourceGroup: 'rg',

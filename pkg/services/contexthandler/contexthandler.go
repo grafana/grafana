@@ -350,11 +350,17 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
-	// update api_key last used date
-	if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(reqContext.Req.Context(), apikey.Id); err != nil {
-		reqContext.JsonApiErr(http.StatusInternalServerError, InvalidAPIKey, errKey)
-		return true
-	}
+	// non-blocking update api_key last used date
+	go func(id int64) {
+		defer func() {
+			if err := recover(); err != nil {
+				reqContext.Logger.Error("api key authentication panic", "err", err)
+			}
+		}()
+		if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
+			reqContext.Logger.Warn("failed to update last use date for api key", "id", id)
+		}
+	}(apikey.Id)
 
 	if apikey.ServiceAccountId == nil || *apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
 		// Use the old APIkey method.  This provides backwards compatibility.
@@ -708,6 +714,28 @@ func (h *ContextHandler) handleError(ctx *models.ReqContext, err error, statusCo
 }
 
 func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext, orgID int64) bool {
+	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientProxy, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
+		if !ok {
+			return false
+		}
+
+		if err != nil {
+			writeErr(reqContext, err)
+		}
+
+		ctx := WithAuthHTTPHeader(reqContext.Req.Context(), h.Cfg.AuthProxyHeaderName)
+		for _, header := range h.Cfg.AuthProxyHeaders {
+			if header != "" {
+				ctx = WithAuthHTTPHeader(ctx, header)
+			}
+		}
+
+		*reqContext.Req = *reqContext.Req.WithContext(ctx)
+		reqContext.IsSignedIn = true
+		reqContext.SignedInUser = identity.SignedInUser()
+		return true
+	}
 	username := reqContext.Req.Header.Get(h.Cfg.AuthProxyHeaderName)
 
 	logger := log.New("auth.proxy")
