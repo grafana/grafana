@@ -25,7 +25,6 @@ Panel: thema.#Lineage & {
 		{
 			schemas: [
 				{
-					TimelineMode:           "changes" | "samples"       @cuetsy(kind="enum")
 					TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")
 					PanelOptions: {
 						ui.OptionsWithLegend

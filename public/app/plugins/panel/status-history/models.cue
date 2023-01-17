@@ -31,8 +31,6 @@ Panel: thema.#Lineage & {
 						ui.OptionsWithTimezones
 						//Show values on the columns
 						showValue:  ui.VisibilityMode | *"auto"
-						//Controls the row height
-						rowHeight:  float & <= 1 | *0.9
 						//Controls the column width
 						colWidth?:  float & <= 1 | *0.9
 					} @cuetsy(kind="interface")

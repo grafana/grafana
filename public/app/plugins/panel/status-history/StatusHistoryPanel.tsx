@@ -14,8 +14,7 @@ import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { TimelineChart } from '../state-timeline/TimelineChart';
-import { TimelineMode } from '../state-timeline/models.gen';
-import { prepareTimelineFields, prepareTimelineLegendItems } from '../state-timeline/utils';
+import { prepareTimelineFields, prepareTimelineLegendItems, TimelineMode } from '../state-timeline/utils';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
@@ -193,7 +192,6 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
       height={height}
       legendItems={legendItems}
       {...options}
-      // hardcoded
       mode={TimelineMode.Samples}
     >
       {(config, alignedFrame) => {

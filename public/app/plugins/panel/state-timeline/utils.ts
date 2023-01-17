@@ -37,7 +37,7 @@ import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
-import { PanelFieldConfig, TimelineMode, TimelineValueAlignment } from './models.gen';
+import { PanelFieldConfig, TimelineValueAlignment } from './models.gen';
 import { getConfig, TimelineCoreOptions } from './timeline';
 
 /**
@@ -48,12 +48,17 @@ interface UPlotConfigOptions {
   theme: GrafanaTheme2;
   mode: TimelineMode;
   sync?: () => DashboardCursorSync;
-  rowHeight: number;
+  rowHeight?: number;
   colWidth?: number;
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   mergeValues?: boolean;
   getValueColor: (frameIdx: number, fieldIdx: number, value: any) => string;
+}
+
+export enum TimelineMode {
+  Changes = 'changes',
+  Samples = 'samples',
 }
 
 const defaultConfig: PanelFieldConfig = {
@@ -108,12 +113,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   };
 
   const opts: TimelineCoreOptions = {
-    // should expose in panel config
     mode: mode!,
     numSeries: frame.fields.length - 1,
     isDiscrete: (seriesIdx) => isDiscrete(frame.fields[seriesIdx]),
     mergeValues,
-    rowHeight: rowHeight!,
+    rowHeight: rowHeight,
     colWidth: colWidth,
     showValue: showValue!,
     alignValue,

@@ -21,8 +21,8 @@ import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { TimelineChart } from './TimelineChart';
-import { TimelineMode, PanelOptions } from './models.gen';
-import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
+import { PanelOptions } from './models.gen';
+import { prepareTimelineFields, prepareTimelineLegendItems, TimelineMode } from './utils';
 
 const TOOLTIP_OFFSET = 10;
 

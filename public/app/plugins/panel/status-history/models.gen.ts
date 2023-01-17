@@ -18,10 +18,6 @@ export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithToolti
    */
   colWidth?: number;
   /**
-   * Controls the row height
-   */
-  rowHeight: number;
-  /**
    * Show values on the columns
    */
   showValue: ui.VisibilityMode;
@@ -29,7 +25,6 @@ export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithToolti
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
   colWidth: 0.9,
-  rowHeight: 0.9,
   showValue: ui.VisibilityMode.Auto,
 };
 

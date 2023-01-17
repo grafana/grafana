@@ -7,7 +7,8 @@ import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
 
-import { PanelFieldConfig, TimelineMode, TimelineValueAlignment } from './models.gen';
+import { PanelFieldConfig, TimelineValueAlignment } from './models.gen';
+import { TimelineMode } from './utils';
 
 const { round, min, ceil } = Math;
 
@@ -39,7 +40,7 @@ export interface TimelineCoreOptions {
   mode: TimelineMode;
   alignValue?: TimelineValueAlignment;
   numSeries: number;
-  rowHeight: number;
+  rowHeight?: number;
   colWidth?: number;
   theme: GrafanaTheme2;
   showValue: VisibilityMode;

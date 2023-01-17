@@ -12,11 +12,6 @@ import * as ui from '@grafana/schema';
 
 export const PanelModelVersion = Object.freeze([0, 0]);
 
-export enum TimelineMode {
-  Changes = 'changes',
-  Samples = 'samples',
-}
-
 export type TimelineValueAlignment = ('center' | 'left' | 'right');
 
 export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
