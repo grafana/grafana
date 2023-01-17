@@ -101,7 +101,7 @@ func (s *store) List() ([]supportbundles.Bundle, error) {
 		return nil, err
 	}
 
-	res := make([]supportbundles.Bundle, 0, 0)
+	res := make([]supportbundles.Bundle, 0)
 	for _, items := range data {
 		for _, s := range items {
 			var b supportbundles.Bundle
