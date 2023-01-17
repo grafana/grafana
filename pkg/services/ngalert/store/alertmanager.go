@@ -76,7 +76,6 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			OrgID:                     cmd.OrgID,
 			CreatedAt:                 time.Now().Unix(),
 		}
-		cmd.ResultHash = config.ConfigurationHash
 
 		// TODO: If we are more structured around how we seed configurations in the future, this can be a pure update instead of upsert. This should improve perf and code clarity.
 		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
@@ -89,14 +88,24 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			return err
 		}
 
-		if _, err := sess.Table("alert_configuration_history").Insert(config); err != nil {
-			return err
-		}
-
 		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
 			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
+
 		if err := callback(); err != nil {
+			return err
+		}
+
+		historicConfig := models.HistoricAlertConfiguration{
+			AlertmanagerConfiguration: config.AlertmanagerConfiguration,
+			ConfigurationHash:         config.ConfigurationHash,
+			ConfigurationVersion:      config.ConfigurationVersion,
+			Default:                   config.Default,
+			OrgID:                     config.OrgID,
+			CreatedAt:                 config.CreatedAt,
+			AppliedAt:                 cmd.AppliedAt,
+		}
+		if _, err := sess.Table("alert_configuration_history").Insert(historicConfig); err != nil {
 			return err
 		}
 
@@ -145,6 +154,10 @@ func (st *DBstore) MarkConfigurationAsApplied(ctx context.Context, cmd *models.M
 			Where("org_id = ? AND configuration_hash = ?", cmd.OrgID, cmd.ConfigurationHash).
 			Cols("applied_at").
 			Update(&update)
+
+		if err != nil {
+			return err
+		}
 
 		if rowsAffected != 1 {
 			return fmt.Errorf("update statement affected %d rows", rowsAffected)

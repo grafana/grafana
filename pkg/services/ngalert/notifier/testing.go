@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -18,7 +19,7 @@ type fakeConfigStore struct {
 	configs map[int64]*models.AlertConfiguration
 
 	// appliedConfigs stores configs by orgID and config hash.
-	appliedConfigs map[int64]map[string]*models.AlertConfiguration
+	appliedConfigs map[int64]map[string]*models.HistoricAlertConfiguration
 }
 
 // Saves the image or returns an error.
@@ -39,7 +40,7 @@ func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfigurati
 
 	return &fakeConfigStore{
 		configs:        configs,
-		appliedConfigs: make(map[int64]map[string]*models.AlertConfiguration),
+		appliedConfigs: make(map[int64]map[string]*models.HistoricAlertConfiguration),
 	}
 }
 
@@ -75,9 +76,23 @@ func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Co
 	}
 	f.configs[cmd.OrgID] = &cfg
 
-	cmd.ResultHash = cfg.ConfigurationHash
 	if err := callback(); err != nil {
 		return err
+	}
+
+	if cmd.AppliedAt != 0 {
+		historicConfig := models.HistoricAlertConfiguration{
+			AlertmanagerConfiguration: cfg.AlertmanagerConfiguration,
+			ConfigurationHash:         cfg.ConfigurationHash,
+			OrgID:                     cfg.OrgID,
+			ConfigurationVersion:      cfg.ConfigurationVersion,
+			Default:                   cfg.Default,
+		}
+
+		if _, ok := f.appliedConfigs[cmd.OrgID]; !ok {
+			f.appliedConfigs[cmd.OrgID] = make(map[string]*models.HistoricAlertConfiguration)
+		}
+		f.appliedConfigs[cmd.OrgID][cfg.ConfigurationHash] = &historicConfig
 	}
 
 	return nil
@@ -101,9 +116,20 @@ func (f *fakeConfigStore) MarkConfigurationAsApplied(_ context.Context, cmd *mod
 	for _, config := range f.configs {
 		if config.ConfigurationHash == cmd.ConfigurationHash && config.OrgID == cmd.OrgID {
 			if _, ok := f.appliedConfigs[cmd.OrgID]; !ok {
-				f.appliedConfigs[cmd.OrgID] = make(map[string]*models.AlertConfiguration)
+				f.appliedConfigs[cmd.OrgID] = make(map[string]*models.HistoricAlertConfiguration)
 			}
-			f.appliedConfigs[cmd.OrgID][cmd.ConfigurationHash] = config
+
+			historicConfig := models.HistoricAlertConfiguration{
+				ID:                        config.ID,
+				AlertmanagerConfiguration: config.AlertmanagerConfiguration,
+				ConfigurationHash:         config.ConfigurationHash,
+				ConfigurationVersion:      config.ConfigurationVersion,
+				CreatedAt:                 config.CreatedAt,
+				Default:                   config.Default,
+				OrgID:                     config.OrgID,
+				AppliedAt:                 time.Now().UTC().Unix(),
+			}
+			f.appliedConfigs[cmd.OrgID][cmd.ConfigurationHash] = &historicConfig
 			return nil
 		}
 	}
