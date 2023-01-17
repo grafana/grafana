@@ -202,7 +202,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 // other nodes they must have already been executed and their results must
 // already by in vars.
 func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *Service) (mathexp.Results, error) {
-	logger := logger.FromContext(ctx).New("datasourceType", dn.datasource.Type)
+	logger := logger.FromContext(ctx).New("datasourceType", dn.datasource.Type, "datasourceRefId", dn.refID, "datasourceUid", dn.datasource.Uid, "datasourceVersion", dn.datasource.Version)
 	dsInstanceSettings, err := adapters.ModelToInstanceSettings(dn.datasource, s.decryptSecureJsonDataFn(ctx))
 	if err != nil {
 		return mathexp.Results{}, fmt.Errorf("%v: %w", "failed to convert datasource instance settings", err)
@@ -235,62 +235,73 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}
 
 	vals := make([]mathexp.Value, 0)
-	for refID, qr := range resp.Responses {
-		if qr.Error != nil {
-			return mathexp.Results{}, QueryError{RefID: refID, Err: qr.Error}
+	response, ok := resp.Responses[dn.refID]
+	if !ok {
+		if len(resp.Responses) > 0 {
+			keys := make([]string, 0, len(resp.Responses))
+			for refID := range resp.Responses {
+				keys = append(keys, refID)
+			}
+			logger.Warn("Can't find response by refID. Return nodata", "responseRefIds", keys)
+		}
+		return mathexp.Results{Values: mathexp.Values{mathexp.NoData{}.New()}}, nil
+	}
+
+	if response.Error != nil {
+		return mathexp.Results{}, QueryError{RefID: dn.refID, Err: response.Error}
+	}
+
+	dataSource := dn.datasource.Type
+	if isAllFrameVectors(dataSource, response.Frames) { // Prometheus Specific Handling
+		vals, err = framesToNumbers(response.Frames)
+		if err != nil {
+			return mathexp.Results{}, fmt.Errorf("failed to read frames as numbers: %w", err)
+		}
+		return mathexp.Results{Values: vals}, nil
+	}
+
+	if len(response.Frames) == 1 {
+		frame := response.Frames[0]
+		// Handle Untyped NoData
+		if len(frame.Fields) == 0 {
+			return mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frame}}}, nil
 		}
 
-		dataSource := dn.datasource.Type
-		if isAllFrameVectors(dataSource, qr.Frames) { // Prometheus Specific Handling
-			vals, err = framesToNumbers(qr.Frames)
-			if err != nil {
-				return mathexp.Results{}, fmt.Errorf("failed to read frames as numbers: %w", err)
-			}
-			return mathexp.Results{Values: vals}, nil
-		}
-
-		if len(qr.Frames) == 1 {
-			frame := qr.Frames[0]
-			// Handle Untyped NoData
-			if len(frame.Fields) == 0 {
-				return mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frame}}}, nil
-			}
-
-			// Handle Numeric Table
-			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
-				logger.Debug("expression datasource query (numberSet)", "query", refID)
-				numberSet, err := extractNumberSet(frame)
-				if err != nil {
-					return mathexp.Results{}, err
-				}
-				for _, n := range numberSet {
-					vals = append(vals, n)
-				}
-
-				return mathexp.Results{
-					Values: vals,
-				}, nil
-			}
-		}
-
-		for _, frame := range qr.Frames {
-			logger.Debug("expression datasource query (seriesSet)", "query", refID)
-			// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
-			// the WideToMany() function to error out, which results in unhealthy alerts.
-			// This check should be removed once inconsistencies in data source responses are solved.
-			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && dataSource == datasources.DS_INFLUXDB {
-				logger.Warn("ignoring InfluxDB data frame due to missing numeric fields", "frame", frame)
-				continue
-			}
-			series, err := WideToMany(frame)
+		// Handle Numeric Table
+		if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
+			logger.Debug("expression datasource query (numberSet)")
+			numberSet, err := extractNumberSet(frame)
 			if err != nil {
 				return mathexp.Results{}, err
 			}
-			for _, s := range series {
-				vals = append(vals, s)
+			for _, n := range numberSet {
+				vals = append(vals, n)
 			}
+
+			return mathexp.Results{
+				Values: vals,
+			}, nil
 		}
 	}
+
+	for _, frame := range response.Frames {
+		logger.Debug("expression datasource query (seriesSet)")
+		// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
+		// the WideToMany() function to error out, which results in unhealthy alerts.
+		// This check should be removed once inconsistencies in data source responses are solved.
+		if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && dataSource == datasources.DS_INFLUXDB {
+			logger.Warn("Ignoring InfluxDB data frame due to missing numeric fields")
+			continue
+		}
+		series, err := WideToMany(frame)
+		if err != nil {
+			return mathexp.Results{}, err
+		}
+		for _, s := range series {
+			vals = append(vals, s)
+		}
+	}
+
 	return mathexp.Results{
 		Values: vals,
 	}, nil
