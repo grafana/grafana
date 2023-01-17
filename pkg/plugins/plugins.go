@@ -6,13 +6,9 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"os"
 	"path"
-	"path/filepath"
 	"runtime"
 	"strings"
-
-	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var ErrFileNotExist = fmt.Errorf("file does not exist")
@@ -415,23 +412,23 @@ func (p *Plugin) StaticRoute() *StaticRoute {
 }
 
 func (p *Plugin) IsRenderer() bool {
-	return p.Type == "renderer"
+	return p.Type == Renderer
 }
 
 func (p *Plugin) IsSecretsManager() bool {
-	return p.Type == "secretsmanager"
+	return p.Type == SecretsManager
 }
 
 func (p *Plugin) IsDataSource() bool {
-	return p.Type == "datasource"
+	return p.Type == DataSource
 }
 
 func (p *Plugin) IsPanel() bool {
-	return p.Type == "panel"
+	return p.Type == Panel
 }
 
 func (p *Plugin) IsApp() bool {
-	return p.Type == "app"
+	return p.Type == App
 }
 
 func (p *Plugin) IsCorePlugin() bool {
@@ -444,15 +441,6 @@ func (p *Plugin) IsBundledPlugin() bool {
 
 func (p *Plugin) IsExternalPlugin() bool {
 	return p.Class == External
-}
-
-func (p *Plugin) Manifest() []byte {
-	d, err := os.ReadFile(filepath.Join(p.FS.Base(), "MANIFEST.txt"))
-	if err != nil {
-		return []byte{}
-	}
-
-	return d
 }
 
 type Class string
