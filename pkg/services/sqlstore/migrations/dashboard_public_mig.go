@@ -88,6 +88,7 @@ func addPublicDashboardMigration(mg *Migrator) {
 	mg.AddMigration("add share column", NewAddColumnMigration(dashboardPublicCfgV2, &Column{
 		Name:     "share",
 		Type:     DB_NVarchar,
+		Length:   64,
 		Nullable: false,
 		Default:  "public",
 	}))
