@@ -1,23 +1,33 @@
 import { css } from '@emotion/css';
-import { uniqueId, pick, take, groupBy, upperFirst, merge, reduce } from 'lodash';
+import { uniqueId, pick, groupBy, upperFirst, merge, reduce, sumBy } from 'lodash';
 import pluralize from 'pluralize';
-import React, { FC, Fragment, ReactNode } from 'react';
+import React, { FC, Fragment, ReactNode, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Badge, Button, getTagColorsFromName, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { RouteWithID, Receiver, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
+import {
+  RouteWithID,
+  Receiver,
+  ObjectMatcher,
+  Route,
+  AlertmanagerGroup,
+} from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { normalizeMatchers } from '../../utils/amroutes';
+import { findMatchingAlertGroups } from '../../utils/notification-policies';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
+
+import { Matchers } from './Matchers';
+import { useAlertGroupsModal } from './Modals';
 
 type TimingOptions = {
   group_wait?: string;
@@ -35,7 +45,7 @@ interface PolicyComponentProps {
   receivers: Receiver[];
   isDefault?: boolean;
   matchers?: ObjectMatcher[];
-  numberOfInstances?: number;
+  alertGroups?: AlertmanagerGroup[];
   contactPoint?: string;
   contactPointsState: ReceiversState;
   groupBy?: string[];
@@ -47,6 +57,7 @@ interface PolicyComponentProps {
   inheritedProperties?: InhertitableProperties;
 
   currentRoute: RouteWithID;
+  routeTree: RouteWithID;
   onEditPolicy: (route: RouteWithID, isDefault?: boolean) => void;
   onAddPolicy: (route: RouteWithID) => void;
   onDeletePolicy: (route: RouteWithID) => void;
@@ -57,7 +68,6 @@ const Policy: FC<PolicyComponentProps> = ({
   receivers,
   isDefault,
   matchers,
-  numberOfInstances = 0,
   contactPoint,
   contactPointsState,
   groupBy,
@@ -65,8 +75,10 @@ const Policy: FC<PolicyComponentProps> = ({
   timingOptions,
   readOnly = true,
   continueMatching = false,
+  alertGroups = [],
   alertManagerSourceName,
   currentRoute,
+  routeTree,
   inheritedProperties,
   onEditPolicy,
   onAddPolicy,
@@ -106,6 +118,16 @@ const Policy: FC<PolicyComponentProps> = ({
 
   const isEditable = canEditRoutes;
   const isDeletable = canDeleteRoutes && !isDefault;
+
+  const matchingAlertGroups = useMemo(
+    () => findMatchingAlertGroups(routeTree, currentRoute, alertGroups),
+    [alertGroups, currentRoute, routeTree]
+  );
+
+  // sum all alert instances for all groups we're handling
+  const numberOfAlertInstances = sumBy(matchingAlertGroups, (group) => group.alerts.length);
+
+  const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal(matchers ?? []);
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -211,9 +233,14 @@ const Policy: FC<PolicyComponentProps> = ({
           {/* Metadata row */}
           <div className={styles.metadataRow}>
             <Stack direction="row" alignItems="center" gap={1}>
-              <MetaText icon="layers-alt">
-                <Strong>{numberOfInstances}</Strong>
-                <span>{pluralize('instance', numberOfInstances)}</span>
+              <MetaText
+                icon="layers-alt"
+                onClick={() => {
+                  showAlertGroupsModal(matchingAlertGroups);
+                }}
+              >
+                <Strong>{numberOfAlertInstances}</Strong>
+                <span>{pluralize('instance', numberOfAlertInstances)}</span>
               </MetaText>
               {contactPoint && (
                 <MetaText icon="at">
@@ -329,6 +356,7 @@ const Policy: FC<PolicyComponentProps> = ({
           return (
             <Policy
               key={uniqueId()}
+              routeTree={routeTree}
               currentRoute={route}
               receivers={receivers}
               contactPoint={route.receiver}
@@ -349,6 +377,7 @@ const Policy: FC<PolicyComponentProps> = ({
               onEditPolicy={onEditPolicy}
               onDeletePolicy={onDeletePolicy}
               alertManagerSourceName={alertManagerSourceName}
+              alertGroups={alertGroups}
             />
           );
         })}
@@ -360,6 +389,7 @@ const Policy: FC<PolicyComponentProps> = ({
           isDefaultPolicy={isDefaultPolicy}
         />
       </div>
+      {alertInstancesModal}
     </Stack>
   );
 };
@@ -467,45 +497,6 @@ function createContactPointLink(contactPoint: string, alertManagerSourceName = '
     alertManagerSourceName
   )}`;
 }
-
-type MatchersProps = { matchers: ObjectMatcher[] };
-
-// renders the first N number of matchers
-const Matchers: FC<MatchersProps> = ({ matchers }) => {
-  const styles = useStyles2(getStyles);
-
-  const NUM_MATCHERS = 5;
-
-  const firstFew = take(matchers, NUM_MATCHERS);
-  const rest = matchers.length - NUM_MATCHERS;
-  const hasMoreMatchers = rest > 0;
-
-  return (
-    <Stack direction="row" gap={1} alignItems="center">
-      {firstFew.map((matcher) => (
-        <MatcherBadge key={uniqueId()} matcher={matcher} />
-      ))}
-      {/* TODO hover state to show all matchers we're not showing */}
-      {hasMoreMatchers && <div className={styles.metadata}>{`and ${rest} more`}</div>}
-    </Stack>
-  );
-};
-
-interface MatcherBadgeProps {
-  matcher: ObjectMatcher;
-}
-
-const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher: [label, operator, value] }) => {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <div className={styles.matcher(label).wrapper}>
-      <Stack direction="row" gap={0} alignItems="baseline">
-        {label} {operator} {value}
-      </Stack>
-    </div>
-  );
-};
 
 interface AddPolicyProps {
   onClick: () => void;

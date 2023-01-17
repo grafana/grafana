@@ -84,8 +84,8 @@ const AmRoutes = () => {
 
   const isProvisioned = Boolean(config?.route?.provenance);
 
-  // const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
-  // const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
+  const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
+  const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
 
   function handleSave(partialRoute: Partial<FormAmRoute>) {
     if (!rootRoute) {
@@ -192,6 +192,9 @@ const AmRoutes = () => {
     repeat_interval: rootRoute?.repeat_interval,
   };
 
+  const muteTimingsTabActive = activeTab === ActiveTab.MuteTimings;
+  const policyTreeTabActive = activeTab === ActiveTab.NotificationPolicies;
+
   return (
     <AlertingPageWrapper pageId="am-routes">
       <AlertManagerPicker
@@ -202,21 +205,21 @@ const AmRoutes = () => {
       <TabsBar>
         <Tab
           label={'Notification Policies'}
-          active={activeTab === ActiveTab.NotificationPolicies}
+          active={policyTreeTabActive}
           onChangeTab={() => {
             setActiveTab(ActiveTab.NotificationPolicies);
           }}
         />
         <Tab
           label={'Mute Timings'}
-          active={activeTab === ActiveTab.MuteTimings}
+          active={muteTimingsTabActive}
           counter={numberOfMuteTimings}
           onChangeTab={() => {
             setActiveTab(ActiveTab.MuteTimings);
           }}
         />
         <Spacer />
-        {haveData && activeTab === ActiveTab.MuteTimings && <Button type="button">Add mute timing</Button>}
+        {haveData && muteTimingsTabActive && <Button type="button">Add mute timing</Button>}
       </TabsBar>
       <TabContent className={styles.tabContent}>
         {isLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
@@ -227,7 +230,7 @@ const AmRoutes = () => {
         )}
         {haveData && (
           <>
-            {activeTab === ActiveTab.NotificationPolicies && (
+            {policyTreeTabActive && (
               <>
                 <GrafanaAlertmanagerDeliveryWarning
                   currentAlertmanager={alertManagerSourceName}
@@ -238,7 +241,9 @@ const AmRoutes = () => {
                   <Policy
                     isDefault
                     receivers={receivers}
+                    routeTree={rootRoute}
                     currentRoute={rootRoute}
+                    alertGroups={fetchAlertGroups.result}
                     contactPoint={rootRoute.receiver}
                     contactPointsState={contactPointsState.receivers}
                     groupBy={rootRoute.group_by}
@@ -259,9 +264,7 @@ const AmRoutes = () => {
                 {deleteModal}
               </>
             )}
-            {activeTab === ActiveTab.MuteTimings && (
-              <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} />
-            )}
+            {muteTimingsTabActive && <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} />}
           </>
         )}
       </TabContent>

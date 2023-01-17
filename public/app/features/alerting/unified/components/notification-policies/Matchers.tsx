@@ -1,0 +1,73 @@
+import { css } from '@emotion/css';
+import { take, uniqueId } from 'lodash';
+import React, { FC } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
+import { getTagColorsFromName, useStyles2 } from '@grafana/ui';
+import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+
+type MatchersProps = { matchers: ObjectMatcher[] };
+
+// renders the first N number of matchers
+const Matchers: FC<MatchersProps> = ({ matchers }) => {
+  const styles = useStyles2(getStyles);
+
+  const NUM_MATCHERS = 5;
+
+  const firstFew = take(matchers, NUM_MATCHERS);
+  const rest = matchers.length - NUM_MATCHERS;
+  const hasMoreMatchers = rest > 0;
+
+  return (
+    <Stack direction="row" gap={1} alignItems="center">
+      {firstFew.map((matcher) => (
+        <MatcherBadge key={uniqueId()} matcher={matcher} />
+      ))}
+      {/* TODO hover state to show all matchers we're not showing */}
+      {hasMoreMatchers && <div className={styles.metadata}>{`and ${rest} more`}</div>}
+    </Stack>
+  );
+};
+
+interface MatcherBadgeProps {
+  matcher: ObjectMatcher;
+}
+
+const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher: [label, operator, value] }) => {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.matcher(label).wrapper}>
+      <Stack direction="row" gap={0} alignItems="baseline">
+        {label} {operator} {value}
+      </Stack>
+    </div>
+  );
+};
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  matcher: (label: string) => {
+    const { color, borderColor } = getTagColorsFromName(label);
+
+    return {
+      wrapper: css`
+        color: #fff;
+        background: ${color};
+        padding: ${theme.spacing(0.33)} ${theme.spacing(0.66)};
+        font-size: ${theme.typography.bodySmall.fontSize};
+
+        border: solid 1px ${borderColor};
+        border-radius: ${theme.shape.borderRadius(2)};
+      `,
+    };
+  },
+  metadata: css`
+    color: ${theme.colors.text.secondary};
+
+    font-size: ${theme.typography.bodySmall.fontSize};
+    font-weight: ${theme.typography.bodySmall.fontWeight};
+  `,
+});
+
+export { Matchers };
