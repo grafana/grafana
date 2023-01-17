@@ -31,12 +31,20 @@ func TestProvideService(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("When template_patterns fails to parse", func(t *testing.T) {
+	t.Run("When all template_patterns fail to parse", func(t *testing.T) {
+		cfg := createSmtpConfig()
+		cfg.Smtp.TemplatesPatterns = []string{"/usr/not-a-dir/**", "/usr/also-not-a-dir/**"}
+		_, _, err := createSutWithConfig(t, bus, cfg)
+
+		require.Error(t, err)
+	})
+
+	t.Run("When some template_patterns fail to parse", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.TemplatesPatterns = append(cfg.Smtp.TemplatesPatterns, "/usr/not-a-dir/**")
 		_, _, err := createSutWithConfig(t, bus, cfg)
 
-		require.Error(t, err)
+		require.NoError(t, err)
 	})
 }
 
