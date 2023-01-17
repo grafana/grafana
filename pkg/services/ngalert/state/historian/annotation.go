@@ -7,11 +7,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
@@ -38,6 +40,10 @@ func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule *ngmodel
 	annotations := h.buildAnnotations(rule, states, logger)
 	panel := parsePanelKey(rule, logger)
 	go h.recordAnnotationsSync(ctx, panel, annotations, logger)
+}
+
+func (h *AnnotationBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
+	return data.NewFrame("states"), nil
 }
 
 func (h *AnnotationBackend) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
