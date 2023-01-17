@@ -426,6 +426,9 @@ type Cfg struct {
 	// AzureAD
 	AzureADSkipOrgRoleSync bool
 
+	// Google
+	GoogleSkipOrgRoleSync bool
+
 	// LDAP
 	LDAPEnabled         bool
 	LDAPSkipOrgRoleSync bool
@@ -1368,6 +1371,11 @@ func readAuthGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
+func readAuthGoogleSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.google")
+	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
 
@@ -1415,6 +1423,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
 	cfg.AzureAuthEnabled = AzureAuthEnabled
 	readAuthAzureADSettings(iniFile, cfg)
+
+	// Google Auth
+	readAuthGoogleSettings(iniFile, cfg)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
