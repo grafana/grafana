@@ -13,7 +13,6 @@ import {
   SceneTimeRange,
   SceneObject,
   SceneQueryRunner,
-  SceneSubMenu,
   SceneVariableSet,
   VariableValueSelectors,
   SceneVariable,
