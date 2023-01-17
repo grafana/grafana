@@ -5121,8 +5121,8 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:latest":
-  version: 0.0.5
-  resolution: "@grafana/scenes@npm:0.0.5"
+  version: 0.0.8
+  resolution: "@grafana/scenes@npm:0.0.8"
   dependencies:
     "@grafana/e2e-selectors": canary
     "@grafana/experimental": 1.0.1
@@ -5130,7 +5130,7 @@ __metadata:
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: 7388aaccb0788801f94734126d1abab71df3f81131eec41c967b0c462223a13fcfbc5a65ce7a45bf6761032d8efd1330cb85ac8e86136cba9e4dd244f41b1054
+  checksum: 4c76ca9850906b98fc9131b48ea6a664f84a0f8ac5f7d87543d73f8ca8214c33483fc4454447e46d67096826f7cb32f3db70461323e65aefc241c4169c88fd98
   languageName: node
   linkType: hard
 
