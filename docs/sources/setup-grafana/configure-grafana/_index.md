@@ -880,13 +880,27 @@ To prevent synchronization of organization roles for a specific OAuth integratio
 
 The setting `oauth_skip_org_role_update_sync` will be deprecated in favor of provider-specific settings.
 
-The following table shows the OAuth providers, the default value setting, and the skip org role sync setting.
+The table below show the OAuth provider and their setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
 | --- | --- | --- | --- |
 | AzureAD | false | false | will sync with AzureAD roles |
 | AzureAD | true | false | skip org role sync for OAuth providers including AzureAD users |
 | AzureAD | false | true | skip org role sync for AzureAD users |
 | AzureAD | true | true | skip org role sync for AzureAD users and all other OAuth providers |
+
+### [auth.google] skip_org_role_sync
+
+Opon first login from a user we set the organization roles from the setting `AutoAssignOrgRole`. If you want to manage organizational roles, you can set the `skip_org_role_sync` option to `true`. Please note that there is also a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
+
+The setting `oauth_skip_org_role_update_sync` will be deprecated in favor of provider-specific settings.
+
+The table below show the OAuth provider and their setting with the default value and the skip org role sync setting.
+| OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
+| --- | --- | --- | --- |
+| Google | false | false | user organization roles are set with defaultRole and will not be able to be changed |
+| Google | true | false | user organization roles are set with defaultRole for Google, for other providers the syncronization will be skipped and the org role will be able to be changed; along with other OAuth provider users org roles |
+| Google | false | true | user organization roles are set with defaultRole and the org role will be able to be changed for Google synced users |
+| Google | true | true | user organization roles are set with defaultRole for Google, for other providers the syncronization will be skipped and the org role will be able to be changed; along with other OAuth provider users org roles |
 
 ### api_key_max_seconds_to_live
 
