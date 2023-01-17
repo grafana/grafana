@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
-	"github.com/stretchr/testify/require"
 )
 
 const testPluginID = "test-plugin"
@@ -84,8 +85,8 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 
 		t.Run("Update plugin to different version", func(t *testing.T) {
 			const (
-				v2          = "2.0.0"
-				zipNameV2   = "test-panel-2.0.0.zip"
+				v2        = "2.0.0"
+				zipNameV2 = "test-panel-2.0.0.zip"
 			)
 			// mock a plugin to be returned automatically by the plugin loader
 			pluginV2 := createPlugin(t, pluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
