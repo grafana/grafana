@@ -258,7 +258,7 @@
       "machineName": "geomap_panel",
       "pluralMachineName": "geomap_panels",
       "lineageIsGroup": true,
-      "maturity": "planned",
+      "maturity": "merged",
       "currentVersion": [
         0,
         0
@@ -998,6 +998,7 @@
           "dashboard",
           "dashlist_panel",
           "gauge_panel",
+          "geomap_panel",
           "histogram_panel",
           "news_panel",
           "piechart_panel",
@@ -1006,7 +1007,7 @@
           "team",
           "text_panel"
         ],
-        "count": 13
+        "count": 14
       },
       "planned": {
         "name": "planned",
@@ -1026,7 +1027,6 @@
           "elasticsearch_query",
           "flamegraph_panel",
           "folder",
-          "geomap_panel",
           "gettingstarted_panel",
           "grafana_azure_monitor_datasource_dsoptions",
           "grafana_azure_monitor_datasource_query",
@@ -1073,7 +1073,7 @@
           "zipkin_dsoptions",
           "zipkin_query"
         ],
-        "count": 61
+        "count": 60
       },
       "stable": {
         "name": "stable",
