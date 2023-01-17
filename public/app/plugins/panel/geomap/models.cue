@@ -33,19 +33,20 @@ Panel: thema.#Lineage & {
 					} @cuetsy(kind="interface")
 
 					#MapViewConfig: {
-						id: string
-						lat?: int64
-						lon?: int64
-						zoom?: int64
+						id: string | *#MapCenterID.zero // TODO this doesn't work
+						lat?: int64 | *0
+						lon?: int64 | *0
+						zoom?: int64 | *1
 						minZoom?: int64
 						maxZoom?: int64
 						padding?: int64
-						allLayers?: bool
+						allLayers?: bool | *true
 						lastOnly?: bool
 						layer?: string
 						shared?: bool
 					} @cuetsy(kind="interface")
 
+					// TODO this is a copy of a type from @grafana/data
 					#MapLayerOptions: {
 						type: string
 						// configured unique display name
@@ -108,6 +109,8 @@ Panel: thema.#Lineage & {
 						id: string
   					options?: {...} // TODO should be a generic type
 					}
+
+					#MapCenterID: "zero"|"coords"|"fit" @cuetsy(kind="enum",members="Zero|Coordinates|Fit")
 				},
 			]
 		},

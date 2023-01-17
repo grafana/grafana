@@ -24,7 +24,7 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
 
 export interface MapViewConfig {
   allLayers?: boolean;
-  id: string;
+  id: MapCenterID;
   lastOnly?: boolean;
   lat?: number;
   layer?: string;
@@ -36,6 +36,16 @@ export interface MapViewConfig {
   zoom?: number;
 }
 
+export const defaultMapViewConfig: Partial<MapViewConfig> = {
+  allLayers: true,
+  lat: 0,
+  lon: 0,
+  zoom: 1,
+};
+
+/**
+ * TODO this is a copy of a type from @grafana/data
+ */
 export interface MapLayerOptions {
   /**
    * Custom options depending on the type
@@ -112,6 +122,9 @@ export interface ControlsOptions {
   showZoom?: boolean;
 }
 
+/**
+ * TODO this is a type from a 3rd party library
+ */
 export type Units = ('degrees' | 'imperial' | 'nautical' | 'metric' | 'us');
 
 export interface TooltipOptions {
@@ -128,4 +141,10 @@ export enum FrameGeometrySourceMode {
   Coords = 'coords',
   Geohash = 'geohash',
   Lookup = 'lookup',
+}
+
+export enum MapCenterID {
+  Coords = 'coords',
+  Fit = 'fit',
+  Zero = 'zero',
 }
