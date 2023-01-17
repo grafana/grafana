@@ -40,12 +40,21 @@ export interface DataLink<T extends DataQuery = any> {
   internal?: InternalDataLink<T>;
 }
 
+interface Transformation {
+  type: 'logfmt' | 'regex' | 'path' | 'none';
+  field: string;
+  variable?: string;
+  mappings?: object;
+  expression?: string;
+}
+
 /** @internal */
 export interface InternalDataLink<T extends DataQuery = any> {
   query: T;
   datasourceUid: string;
   datasourceName: string; // used as a title if `DataLink.title` is empty
   panelsState?: ExplorePanelsState;
+  transformations?: Transformation[];
 }
 
 export type LinkTarget = '_blank' | '_self' | undefined;

@@ -16,6 +16,7 @@ export const attachCorrelationsToDataFrames = (
   correlations: CorrelationData[],
   dataFrameRefIdToDataSourceUid: DataFrameRefIdToDataSourceUid
 ): DataFrame[] => {
+  console.log(correlations);
   dataFrames.forEach((dataFrame) => {
     const frameRefId = dataFrame.refId;
     if (!frameRefId) {
@@ -39,6 +40,7 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
             query: correlation.config?.target,
             datasourceUid: correlation.target.uid,
             datasourceName: correlation.target.name,
+            transformations: correlation.config?.transformations,
           },
           url: '',
           title: correlation.label || correlation.target.name,

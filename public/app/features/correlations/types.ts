@@ -5,10 +5,19 @@ export interface AddCorrelationResponse {
 export type GetCorrelationsResponse = Correlation[];
 
 type CorrelationConfigType = 'query';
+
+export interface Transformation {
+  type: 'logfmt' | 'regex' | 'path' | 'none';
+  field: string;
+  variable?: string;
+  mappings?: object;
+  expression?: string;
+}
+
 export interface CorrelationConfig {
   field: string;
   target: object;
-  source: object;
+  transformations: Transformation[];
   type: CorrelationConfigType;
 }
 
