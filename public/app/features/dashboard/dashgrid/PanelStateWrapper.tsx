@@ -592,9 +592,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     e.stopPropagation();
     locationService.partial({ inspect: this.props.panel.id, inspectTab: tab });
   };
-  onOpenErrorInspect(e: React.SyntheticEvent, tab: string) {
+
+  onOpenErrorInspect(e: React.SyntheticEvent) {
     e.stopPropagation();
-    locationService.partial({ inspect: this.props.panel.id, inspectTab: tab });
+    locationService.partial({ inspect: this.props.panel.id, inspectTab: InspectTab.Error });
   }
 
   render() {
@@ -648,10 +649,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           height={height}
           title={title}
           loadingState={data.state}
-          status={{
-            message: errorMessage,
-            onClick: (e: React.SyntheticEvent) => this.onOpenErrorInspect(e, InspectTab.Error),
-          }}
+          statusMessage={errorMessage}
+          statusMessageOnClick={this.onOpenErrorInspect}
           description={!!panel.description ? this.onShowPanelDescription : undefined}
           titleItems={titleItems}
           menu={menu}
