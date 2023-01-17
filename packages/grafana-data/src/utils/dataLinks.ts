@@ -124,7 +124,7 @@ function interpolateObject<T extends Object>(
   if (!obj) {
     return obj;
   }
-  const copy = structuredClone(obj);
+  const copy = JSON.parse(JSON.stringify(obj));
   return interpolateObjectRecursive(copy, scopedVars, replaceVariables);
 }
 
