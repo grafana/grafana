@@ -274,18 +274,11 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         };
       }
 
-      // remove the scopes from the word to get accurate autocompletes
-      // Ex: 'span.host.name' won't resolve to any autocomplete values, but removing 'span.' results in 'host.name' which can have autocomplete values
-      const noScopeWord = CompletionProvider.scopes.reduce(
-        (result, word) => result.replace(`${word}.`, ''),
-        nameMatched?.groups?.word || ''
-      );
-
       // We already have an operator and know that the set isn't complete so let's autocomplete the possible values for the tag name
       // { .http.method = |
       return {
         type: 'SPANSET_IN_VALUE',
-        tagName: noScopeWord,
+        tagName: nameFull,
         betweenQuotes: !!matched.groups?.open_quote,
       };
     }
