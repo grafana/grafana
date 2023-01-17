@@ -2,8 +2,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { selectors } from '../e2e/selectors';
+import { AzureClientSecretCredentials } from '../types';
 
 import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
+import { DefaultSubscription } from './DefaultSubscription';
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
@@ -55,15 +57,25 @@ describe('Render', () => {
   });
 
   it('should enable azure monitor load subscriptions button', async () => {
+    const credentials: AzureClientSecretCredentials = {
+      authType: 'clientsecret',
+      azureCloud: 'azuremonitor',
+      tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
+      clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
+      clientSecret: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
+    };
     setup((props) => ({
       ...props,
-      credentials: {
-        authType: 'clientsecret',
-        azureCloud: 'azuremonitor',
-        tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
-        clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
-        clientSecret: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
-      },
+      credentials,
+      children: (
+        <DefaultSubscription
+          credentials={credentials}
+          getSubscriptions={props.getSubscriptions}
+          onCredentialsChange={props.onCredentialsChange}
+          subscriptions={[]}
+          onSubscriptionsChange={jest.fn()}
+        />
+      ),
     }));
     await waitFor(() =>
       expect(screen.getByTestId(selectors.components.configEditor.loadSubscriptions.button)).not.toBeDisabled()
@@ -85,18 +97,19 @@ describe('Render', () => {
       setup((props) => ({
         ...props,
         disabled: true,
+        children: (
+          <DefaultSubscription
+            credentials={props.credentials}
+            getSubscriptions={props.getSubscriptions}
+            onCredentialsChange={props.onCredentialsChange}
+            subscriptions={[]}
+            onSubscriptionsChange={jest.fn()}
+          />
+        ),
       }));
       await waitFor(() =>
         expect(screen.getByTestId(selectors.components.configEditor.loadSubscriptions.button)).toBeDisabled()
       );
-    });
-
-    it('should render children components', () => {
-      setup((props) => ({
-        ...props,
-        children: <button>click me</button>,
-      }));
-      expect(screen.getByText('click me')).toBeInTheDocument();
     });
   });
 });
