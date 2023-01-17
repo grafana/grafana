@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
+
+const defaultClientTimeout = 30 * time.Second
 
 type httpLokiClient struct {
 	client http.Client
@@ -16,9 +19,11 @@ type httpLokiClient struct {
 
 func newLokiClient(u *url.URL, logger log.Logger) *httpLokiClient {
 	return &httpLokiClient{
-		client: http.Client{},
-		url:    u,
-		log:    logger.New("protocol", "http"),
+		client: http.Client{
+			Timeout: defaultClientTimeout,
+		},
+		url: u,
+		log: logger.New("protocol", "http"),
 	}
 }
 
