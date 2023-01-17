@@ -184,4 +184,16 @@ describe('AzureMonitor: migrateQuery', () => {
       );
     });
   });
+
+  it('should migrate a sigle resource for Logs', () => {
+    const q = {
+      ...modernMetricsQuery,
+      azureLogAnalytics: {
+        ...modernMetricsQuery.azureLogAnalytics,
+        resource: 'foo',
+      },
+    };
+    const result = migrateQuery(q);
+    expect(result.azureLogAnalytics?.resources).toEqual(['foo']);
+  });
 });
