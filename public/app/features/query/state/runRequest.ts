@@ -123,7 +123,6 @@ export function runRequest(
       series: [],
       request: request,
       timeRange: request.range,
-      error: undefined,
     },
     packets: {},
   };
@@ -237,7 +236,7 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
       ...lastResult,
       state: LoadingState.Loading,
       request: data.request,
-      // @Ida maybe?
+      // if the current result doesn't have an error, clear it
       error: data.error,
     };
   }
