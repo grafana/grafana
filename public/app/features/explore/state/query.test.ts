@@ -60,14 +60,6 @@ const datasources: DataSourceApi[] = [
   } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
 ];
 
-// TODO: Remove????
-// const datasource2: DataSourceApi = {
-//   name: 'testDs3',
-//   type: 'postgres',
-//   uid: 'ds3',
-//   query: jest.fn(),
-// } as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
-
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
   getTimeSrv: () => ({
@@ -328,26 +320,9 @@ describe('reducer', () => {
                   refId: 'C',
                 },
               ],
-              datasourceMissing: false,
-              graphResult: null,
-              logsResult: null,
-              absoluteRange: { from: 1, to: 2 },
-              scanning: false,
-              loading: false,
-              tableResult: null,
-              rawPrometheusResult: null,
-              queryKeys: [],
-              isLive: false,
-              isPaused: false,
-              queryResponse: null, // TODO: ExplorePanelData needs to be added
-              panelsState: null, // TODO: ExplorePanelsState needs to be added
             },
-            syncedTimes: false,
-            richHistoryStorageFull: false,
-            richHistoryLimitExceededWarningShown: false,
-            richHistoryMigrationFailed: false,
           },
-        });
+        } as unknown as Partial<StoreState>);
 
         dispatch = store.dispatch;
         getState = store.getState;
