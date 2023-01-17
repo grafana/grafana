@@ -201,8 +201,8 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *Service) (mathexp.Results, error) {
-	logger := logger.FromContext(ctx).New("datasourceType", dn.datasource.Type, "datasourceRefId", dn.refID, "datasourceUid", dn.datasource.Uid, "datasourceVersion", dn.datasource.Version)
+func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *Service) (r mathexp.Results, e error) {
+	logger := logger.FromContext(ctx).New("datasourceType", dn.datasource.Type, "queryRefId", dn.refID, "datasourceUid", dn.datasource.Uid, "datasourceVersion", dn.datasource.Version)
 	dsInstanceSettings, err := adapters.ModelToInstanceSettings(dn.datasource, s.decryptSecureJsonDataFn(ctx))
 	if err != nil {
 		return mathexp.Results{}, fmt.Errorf("%v: %w", "failed to convert datasource instance settings", err)
@@ -228,6 +228,14 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		},
 		Headers: dn.request.Headers,
 	}
+
+	responseType := "unknown"
+	defer func() {
+		if e != nil {
+			responseType = "error"
+		}
+		logger.Debug("Data source queried", "responseType", responseType)
+	}()
 
 	resp, err := s.dataService.QueryData(ctx, req)
 	if err != nil {
@@ -257,6 +265,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		if err != nil {
 			return mathexp.Results{}, fmt.Errorf("failed to read frames as numbers: %w", err)
 		}
+		responseType = "vector"
 		return mathexp.Results{Values: vals}, nil
 	}
 
@@ -269,7 +278,6 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 		// Handle Numeric Table
 		if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
-			logger.Debug("expression datasource query (numberSet)")
 			numberSet, err := extractNumberSet(frame)
 			if err != nil {
 				return mathexp.Results{}, err
@@ -277,7 +285,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 			for _, n := range numberSet {
 				vals = append(vals, n)
 			}
-
+			responseType = "number set"
 			return mathexp.Results{
 				Values: vals,
 			}, nil
@@ -285,7 +293,6 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}
 
 	for _, frame := range response.Frames {
-		logger.Debug("expression datasource query (seriesSet)")
 		// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
 		// the WideToMany() function to error out, which results in unhealthy alerts.
 		// This check should be removed once inconsistencies in data source responses are solved.
@@ -302,8 +309,9 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		}
 	}
 
+	responseType = "series set"
 	return mathexp.Results{
-		Values: vals,
+		Values: vals, // TODO vals can be empty. Should we replace with no-data?
 	}, nil
 }
 
