@@ -2,6 +2,7 @@ package historian
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -43,7 +44,79 @@ func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule *ngmodel
 }
 
 func (h *AnnotationBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
-	return data.NewFrame("states"), nil
+	logger := h.log.FromContext(ctx)
+	if query.RuleUID == "" {
+		return nil, fmt.Errorf("annotation state history requires a rule to query")
+	}
+
+	if query.Labels != nil {
+		logger.Warn("Annotation state history backend does not support label queries, ignoring that filter")
+	}
+
+	ruleID := ruleUIDToID(query.RuleUID)
+
+	q := annotations.ItemQuery{
+		AlertId: ruleID,
+		From:    query.From.Unix(),
+		To:      query.To.Unix(),
+	}
+	items, err := h.annotations.Find(ctx, &q)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query annotations for state history: %w", err)
+	}
+
+	frame := data.NewFrame("states")
+
+	// Annotations only support querying for a single rule's history.
+	// Since we are guaranteed to have a single rule, we can return it as a single series.
+	// Also, annotations don't store labels in a strongly defined format. They are formatted into the label's text.
+	// We are not guaranteed that a given annotation has parseable text, so we instead use the entire text as an opaque value.
+
+	lbls := data.Labels(map[string]string{
+		"from":   "state-history",
+		"ruleID": fmt.Sprint(ruleID),
+	})
+
+	// TODO: In the future, we probably want to have one series per unique text string, instead. For simplicity, let's just make it a new column.
+	//
+	// TODO: This is a really naive mapping that will evolve in the next couple changes.
+	//
+	// We represent state history as five vectors:
+	//   1. `time` - when the transition happened
+	//   2. `text` - a text string containing metadata about the rule
+	//   3. `prev` - the previous state and reason
+	//   4. `next` - the next state and reason
+	//   5. `data` - a JSON string, containing the annotation's contents. analogous to item.Data
+	times := make([]time.Time, 0, len(items))
+	texts := make([]string, 0, len(items))
+	prevStates := make([]string, 0, len(items))
+	nextStates := make([]string, 0, len(items))
+	values := make([]string, 0, len(items))
+	for _, item := range items {
+		data, err := json.Marshal(item.Data)
+		if err != nil {
+			logger.Error("Annotation service gave an annotation with unparseable data, skipping", "id", item.Id, "err", err)
+			continue
+		}
+		times = append(times, time.Unix(item.Time, 0))
+		texts = append(texts, item.Text)
+		prevStates = append(prevStates, item.PrevState)
+		nextStates = append(nextStates, item.NewState)
+		values = append(values, string(data))
+	}
+
+	frame.Fields = append(frame.Fields, data.NewField("time", lbls, times))
+	frame.Fields = append(frame.Fields, data.NewField("text", lbls, texts))
+	frame.Fields = append(frame.Fields, data.NewField("prev", lbls, prevStates))
+	frame.Fields = append(frame.Fields, data.NewField("next", lbls, nextStates))
+	frame.Fields = append(frame.Fields, data.NewField("data", lbls, values))
+
+	return frame, nil
+}
+
+func ruleUIDToID(uid string) int64 {
+	// TODO
+	return 0
 }
 
 func (h *AnnotationBackend) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
