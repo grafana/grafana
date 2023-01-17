@@ -14,17 +14,17 @@ import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { TimelineChart } from '../state-timeline/TimelineChart';
-import { TimelineMode } from '../state-timeline/types';
+import { TimelineMode } from '../state-timeline/models.gen';
 import { prepareTimelineFields, prepareTimelineLegendItems } from '../state-timeline/utils';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StatusHistoryTooltip } from './StatusHistoryTooltip';
-import { StatusPanelOptions } from './types';
+import { PanelOptions } from './models.gen';
 
 const TOOLTIP_OFFSET = 10;
 
-interface TimelinePanelProps extends PanelProps<StatusPanelOptions> {}
+interface TimelinePanelProps extends PanelProps<PanelOptions> {}
 
 /**
  * @alpha

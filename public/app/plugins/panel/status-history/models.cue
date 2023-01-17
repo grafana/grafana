@@ -20,7 +20,7 @@ import (
 )
 
 Panel: thema.#Lineage & {
-	name: "status-history"
+	name: "status_history"
 	seqs: [
 		{
 			schemas: [
@@ -29,15 +29,17 @@ Panel: thema.#Lineage & {
 						ui.OptionsWithLegend
 						ui.OptionsWithTooltip
 						ui.OptionsWithTimezones
-						showValue:  ui.VisibilityMode
-						rowHeight:  number
-						colWidth?:  number
-						alignValue: "center" | *"left" | "right"
+						//Show values on the columns
+						showValue:  ui.VisibilityMode | *"auto"
+						//Controls the row height
+						rowHeight:  float & <= 1 | *0.9
+						//Controls the column width
+						colWidth?:  float & <= 1 | *0.9
 					} @cuetsy(kind="interface")
 					PanelFieldConfig: {
 						ui.HideableFieldConfig
-						lineWidth?:   number | *1
-						fillOpacity?: number | *70
+						lineWidth?:   uint32 & <= 10 | *1
+						fillOpacity?: uint32 & <= 100 | *70
 					} @cuetsy(kind="interface")
 				},
 			]

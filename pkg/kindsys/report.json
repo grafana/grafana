@@ -732,6 +732,18 @@
         0
       ]
     },
+    "status_history_panel": {
+      "name": "Status-History-Panel",
+      "pluralName": "Status-History-Panels",
+      "machineName": "status_history_panel",
+      "pluralMachineName": "status_history_panels",
+      "lineageIsGroup": true,
+      "maturity": "merged",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
     "table_old_panel": {
       "name": "Table-Old-Panel",
       "pluralName": "Table-Old-Panels",
@@ -959,6 +971,7 @@
           "stackdriver_query",
           "stat_panel",
           "state_timeline_panel",
+          "status_history_panel",
           "table_old_panel",
           "tempo_dsoptions",
           "tempo_query",
@@ -971,7 +984,7 @@
           "zipkin_dsoptions",
           "zipkin_query"
         ],
-        "count": 64
+        "count": 65
       },
       "core": {
         "name": "core",
@@ -1017,10 +1030,11 @@
           "playlist",
           "stat_panel",
           "state_timeline_panel",
+          "status_history_panel",
           "team",
           "text_panel"
         ],
-        "count": 14
+        "count": 15
       },
       "planned": {
         "name": "planned",
