@@ -53,6 +53,7 @@ export function createSpanLinkFactory({
   if (!dataFrame || dataFrame.fields.length === 1 || !dataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
     // if the dataframe contains just a single blob of data (legacy format) or does not have any links configured,
     // let's try to use the old legacy path.
+    // TODO: This was mainly a backward compatibility thing but at this point can probably be removed.
     return legacyCreateSpanLinkFactory(
       splitOpenFn,
       traceToLogsOptions,
@@ -125,28 +126,25 @@ function legacyCreateSpanLinkFactory(
       ...scopedVarsFromSpan(span),
     };
     const links: SpanLinks = { traceLinks: [] };
-    // This is reusing existing code from derived fields which may not be ideal match so some data is a bit faked at
-    // the moment. Issue is that the trace itself isn't clearly mapped to dataFrame (right now it's just a json blob
-    // inside a single field) so the dataLinks as config of that dataFrame abstraction breaks down a bit and we do
-    // it manually here instead of leaving it for the data source to supply the config.
-
     let query: DataQuery | undefined;
     let tags = '';
-    // Get logs link
+
+    // TODO: This should eventually move into specific data sources and added to the data frame as we no longer use the
+    //  deprecated blob format and we can map the link easily in data frame.
     if (logsDataSourceSettings && traceToLogsOptions) {
       const customQuery = traceToLogsOptions.customQuery ? traceToLogsOptions.query : undefined;
       switch (logsDataSourceSettings?.type) {
         case 'loki':
-          tags = getTags(span, traceToLogsOptions.tags || defaultKeys).join(', ');
+          tags = getFormattedTags(span, traceToLogsOptions.tags || defaultKeys);
           query = getQueryForLoki(span, traceToLogsOptions, tags, customQuery);
           break;
         case 'grafana-splunk-datasource':
-          tags = getTags(span, traceToLogsOptions.tags || defaultKeys).join(' ');
+          tags = getFormattedTags(span, traceToLogsOptions.tags || defaultKeys, { joinBy: ' ' });
           query = getQueryForSplunk(span, traceToLogsOptions, tags, customQuery);
           break;
         case 'elasticsearch':
         case 'grafana-opensearch-datasource':
-          tags = getTags(span, traceToLogsOptions.tags || [], { labelValueSign: ':' }).join(' AND ');
+          tags = getFormattedTags(span, traceToLogsOptions.tags || [], { labelValueSign: ':', joinBy: ' AND ' });
           query = getQueryForElasticsearchOrOpensearch(span, traceToLogsOptions, tags, customQuery);
           break;
       }
@@ -378,10 +376,14 @@ function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags:
   };
 }
 
-function getTags(
+/**
+ * Creates a string representing all the tags already formatted for use in the query. The tags are filtered so that
+ * only intersection of tags that exist in a span and tags that you want are serialized into the string.
+ */
+function getFormattedTags(
   span: TraceSpan,
   tags: Array<KeyValue<string>>,
-  { labelValueSign = '=' }: { labelValueSign?: string } = {}
+  { labelValueSign = '=', joinBy = ', ' }: { labelValueSign?: string; joinBy?: string } = {}
 ) {
   // In order, try to use mapped tags -> tags -> default tags
   // Build tag portion of query
@@ -393,7 +395,8 @@ function getTags(
       }
       return undefined;
     })
-    .filter((v) => Boolean(v));
+    .filter((v) => Boolean(v))
+    .join(joinBy);
 }
 
 /**
