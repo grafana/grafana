@@ -524,9 +524,9 @@ policies:
       - severity =~ "warning|critical"
     # <list> a list of grafana-like matchers that an alert rule has to fulfill to match the node
     object_matchers:
-      - alertname = CPUUsage
-      - service_id-X = serviceX
-      - severity =~ "warning|critical"
+      - ['alertname', '=', 'CPUUsage']
+      - ['service_id-X', '=', 'serviceX']
+      - ['severity', '=~', 'warning|critical']
     # <list> Times when the route should be muted. These must match the name of a
     #        mute time interval.
     #        Additionally, the root node cannot have any mute times.
