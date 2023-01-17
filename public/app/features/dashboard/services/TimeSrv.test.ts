@@ -94,27 +94,23 @@ describe('timeSrv', () => {
           timeRangeUpdated: jest.fn(() => {}),
         };
 
+        locationService.push('/d/id?from=now-24h&to=now');
         config.isPublicDashboardView = true;
+        timeSrv = new TimeSrv(new ContextSrvStub() as any);
       });
 
       it("should ignore from and to if it's a public dashboard and time picker is hidden", () => {
-        locationService.push('/d/id?from=now-24h&to=now');
-
-        timeSrv = new TimeSrv(new ContextSrvStub() as any);
         timeSrv.init({ ..._dashboard, timepicker: { hidden: true } });
-
         const time = timeSrv.timeRange();
+
         expect(time.raw.from).toBe('now-6h');
         expect(time.raw.to).toBe('now');
       });
 
       it("should not ignore from and to if it's a public dashboard but time picker is not hidden", () => {
-        locationService.push('/d/id?from=now-24h&to=now');
-
-        timeSrv = new TimeSrv(new ContextSrvStub() as any);
         timeSrv.init({ ..._dashboard, timepicker: { hidden: false } });
-
         const time = timeSrv.timeRange();
+
         expect(time.raw.from).toBe('now-24h');
         expect(time.raw.to).toBe('now');
       });
