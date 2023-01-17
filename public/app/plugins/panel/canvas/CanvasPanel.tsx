@@ -12,7 +12,7 @@ import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { InlineEdit } from './InlineEdit';
 import { SetBackground } from './SetBackground';
 import { PanelOptions } from './models.gen';
-import { AnchorPoint } from './types';
+import { AnchorPoint, CanvasTooltipPayload } from './types';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -226,8 +226,8 @@ export class CanvasPanel extends Component<Props, State> {
     isSetBackgroundOpen = true;
   };
 
-  tooltipCallback = (anchorPoint: AnchorPoint, element: ElementState | undefined, isOpen = false) => {
-    this.scene.tooltip = { anchorPoint: anchorPoint, element: element, isOpen: isOpen };
+  tooltipCallback = (tooltip: CanvasTooltipPayload | undefined) => {
+    this.scene.tooltip = tooltip;
     this.forceUpdate();
   };
 

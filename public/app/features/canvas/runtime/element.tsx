@@ -459,21 +459,29 @@ export class ElementState implements LayerElement {
     const scene = this.getScene();
     if (scene?.tooltipCallback) {
       const rect = this.div?.getBoundingClientRect();
-      scene.tooltipCallback({ x: rect?.right ?? event.pageX, y: rect?.top ?? event.pageY }, this);
+      scene.tooltipCallback({
+        anchorPoint: { x: rect?.right ?? event.pageX, y: rect?.top ?? event.pageY },
+        element: this,
+        isOpen: false,
+      });
     }
   };
 
   handleMouseLeave = (event: React.MouseEvent) => {
     const scene = this.getScene();
     if (scene?.tooltipCallback && !scene?.tooltip?.isOpen) {
-      scene.tooltipCallback({ x: event.pageX, y: event.pageY }, undefined);
+      scene.tooltipCallback(undefined);
     }
   };
 
   onElementClick = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback && scene.tooltip) {
-      scene.tooltipCallback({ x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y }, this, true);
+    if (scene?.tooltipCallback && scene.tooltip?.anchorPoint) {
+      scene.tooltipCallback({
+        anchorPoint: { x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y },
+        element: this,
+        isOpen: true,
+      });
     }
   };
 

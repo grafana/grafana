@@ -27,7 +27,7 @@ export type AnchorPoint = {
 };
 
 export interface CanvasTooltipPayload {
-  anchorPoint: AnchorPoint;
+  anchorPoint: AnchorPoint | undefined;
   element: ElementState | undefined;
   isOpen?: boolean;
 }

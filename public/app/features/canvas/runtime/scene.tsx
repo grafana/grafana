@@ -75,8 +75,8 @@ export class Scene {
   inlineEditingCallback?: () => void;
   setBackgroundCallback?: (anchorPoint: AnchorPoint) => void;
 
-  tooltipCallback?: (anchorPoint: AnchorPoint, element: ElementState | undefined, isOpen?: boolean) => void;
-  tooltip: CanvasTooltipPayload | undefined;
+  tooltipCallback?: (tooltip: CanvasTooltipPayload | undefined) => void;
+  tooltip?: CanvasTooltipPayload;
 
   readonly editModeEnabled = new BehaviorSubject<boolean>(false);
   subscription: Subscription;

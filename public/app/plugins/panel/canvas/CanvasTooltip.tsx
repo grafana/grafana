@@ -17,7 +17,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
 
   const onClose = () => {
     if (scene?.tooltipCallback && scene.tooltip) {
-      scene.tooltipCallback({ x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y }, undefined, false);
+      scene.tooltipCallback(undefined);
     }
   };
 
@@ -54,7 +54,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
 
   return (
     <>
-      {scene.tooltip && scene.tooltip.element && (
+      {scene.tooltip?.element && scene.tooltip.anchorPoint && (
         <Portal>
           <VizTooltipContainer
             position={{ x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y }}
