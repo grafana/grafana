@@ -99,14 +99,12 @@ export function PanelChrome({
   };
 
   const containerStyles: CSSProperties = { width, height };
-  const showLoading = loadingState === LoadingState.Loading;
-  const showStreaming = loadingState === LoadingState.Streaming;
   const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
 
   return (
     <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
       <div className={styles.loadingBarContainer}>
-        {showLoading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
+        {loadingState === LoadingState.Loading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
       </div>
 
       <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
@@ -118,13 +116,13 @@ export function PanelChrome({
 
         <PanelDescription description={description} />
 
-        {titleItems && (
+        {titleItems.length > 0 && (
           <div className={styles.titleItems} data-testid="title-items-container">
             {titleItems.map((item) => item)}
           </div>
         )}
 
-        {showStreaming && (
+        {loadingState === LoadingState.Streaming && (
           <div className={styles.item} style={itemStyles}>
             <Tooltip content="Streaming">
               <Icon name="circle-mono" size="sm" className={styles.streaming} />
