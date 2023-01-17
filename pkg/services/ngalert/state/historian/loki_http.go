@@ -30,9 +30,17 @@ func (c *httpLokiClient) ping() error {
 	}
 
 	res, err := c.client.Do(req)
+	if res != nil {
+		defer func() {
+			if err := res.Body.Close(); err != nil {
+				c.log.Warn("Failed to close response body", "err", err)
+			}
+		}()
+	}
 	if err != nil {
 		return fmt.Errorf("error sending request: %w", err)
 	}
+	defer res.Body.Close()
 
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		return fmt.Errorf("request to the loki buildinfo endpoint returned a non-200 status code: %d", res.StatusCode)
