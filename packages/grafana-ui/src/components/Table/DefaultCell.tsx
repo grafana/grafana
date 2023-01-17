@@ -11,6 +11,7 @@ import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 import { CellActions } from './CellActions';
 import { TableStyles } from './styles';
 import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
+import { getCellOptions } from './utils';
 
 export const DefaultCell: FC<TableCellProps> = (props) => {
   const { field, cell, tableStyles, row, cellProps } = props;
@@ -51,24 +52,6 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
     </div>
   );
 };
-
-function getCellOptions(field: Field): TableCellOptions {
-  if (field.config.custom?.displayMode) {
-    if (field.config.custom?.displayMode === TableCellDisplayMode.ColorText) {
-      return { type: TableCellDisplayMode.ColorText };
-    }
-
-    if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
-      return { type: TableCellDisplayMode.ColorBackground, mode: TableCellBackgroundDisplayMode.Gradient };
-    }
-
-    if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
-      return { type: TableCellDisplayMode.ColorBackground, mode: TableCellBackgroundDisplayMode.Basic };
-    }
-  }
-
-  return (field.config.custom as TableFieldOptions).cellOptions;
-}
 
 function getCellStyle(
   tableStyles: TableStyles,
