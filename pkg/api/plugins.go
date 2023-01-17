@@ -14,14 +14,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -300,6 +299,42 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 	return response.CreateNormalResponse(headers, resp.PrometheusMetrics, http.StatusOK)
 }
 
+// getPluginAssets returns public plugin assets (images, JS, etc.)
+//
+// If the plugin has cdn = false in its config (default), it will always attempt to return the asset
+// from the local filesystem.
+//
+// If the plugin has cdn = true and hs.Cfg.PluginsCDNURLTemplate is empty, it will get the file
+// from the local filesystem. If hs.Cfg.PluginsCDNURLTemplate is not empty,
+// this handler returns a redirect to the plugin asset file on the specified CDN.
+//
+// /public/plugins/:pluginId/*
+func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
+	pluginID := web.Params(c.Req)[":pluginId"]
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
+	if !exists {
+		c.JsonApiErr(404, "Plugin not found", nil)
+		return
+	}
+
+	// prepend slash for cleaning relative paths
+	requestedFile, err := util.CleanRelativePath(web.Params(c.Req)["*"])
+	if err != nil {
+		// slash is prepended above therefore this is not expected to fail
+		c.JsonApiErr(500, "Failed to clean relative file path", err)
+		return
+	}
+
+	if hs.Cfg.PluginsCDNURLTemplate != "" && plugin.CDN {
+		// Send a redirect to the client
+		hs.redirectCDNPluginAsset(c, plugin, requestedFile)
+		return
+	}
+
+	// Send the actual file to the client from local filesystem
+	hs.serveLocalPluginAsset(c, plugin, requestedFile)
+}
+
 // serveLocalPluginAsset returns the content of a plugin asset file from the local filesystem to the http client.
 func (hs *HTTPServer) serveLocalPluginAsset(c *models.ReqContext, plugin plugins.PluginDTO, assetPath string) {
 	f, err := plugin.File(assetPath)
@@ -359,42 +394,6 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugin
 		"remoteURL", remoteURL,
 	)
 	http.Redirect(c.Resp, c.Req, remoteURL, http.StatusFound)
-}
-
-// getPluginAssets returns public plugin assets (images, JS, etc.)
-//
-// If the plugin has cdn = false in its config (default), it will always attempt to return the asset
-// from the local filesystem.
-//
-// If the plugin has cdn = true and hs.Cfg.PluginsCDNURLTemplate is empty, it will get the file
-// from the local filesystem. If hs.Cfg.PluginsCDNURLTemplate is not empty,
-// this handler returns a redirect to the plugin asset file on the specified CDN.
-//
-// /public/plugins/:pluginId/*
-func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
-	pluginID := web.Params(c.Req)[":pluginId"]
-	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
-	if !exists {
-		c.JsonApiErr(404, "Plugin not found", nil)
-		return
-	}
-
-	// prepend slash for cleaning relative paths
-	requestedFile, err := util.CleanRelativePath(web.Params(c.Req)["*"])
-	if err != nil {
-		// slash is prepended above therefore this is not expected to fail
-		c.JsonApiErr(500, "Failed to clean relative file path", err)
-		return
-	}
-
-	if hs.Cfg.PluginsCDNURLTemplate != "" && plugin.CDN {
-		// Send a redirect to the client
-		hs.redirectCDNPluginAsset(c, plugin, requestedFile)
-		return
-	}
-
-	// Send the actual file to the client from local filesystem
-	hs.serveLocalPluginAsset(c, plugin, requestedFile)
 }
 
 // CheckHealth returns the health of a plugin.
