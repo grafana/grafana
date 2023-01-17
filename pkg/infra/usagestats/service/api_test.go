@@ -9,10 +9,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -46,7 +46,7 @@ func TestApi_getUsageStats(t *testing.T) {
 			expectedStatus: 403,
 		},
 	}
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, setting.Cfg{}, sqlStore, false)
 	uss.registerAPIEndpoints()
 

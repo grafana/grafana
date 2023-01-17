@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
@@ -346,7 +347,7 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 		authInfoService := &logintest.AuthInfoServiceFake{}
 
 		hs := HTTPServer{
-			SQLStore:         mockstore.NewSQLStoreMock(),
+			SQLStore:         dbtest.NewFakeDB(),
 			AuthTokenService: fakeAuthTokenService,
 			authInfoService:  authInfoService,
 			userService:      usertest.NewUserServiceFake(),
@@ -375,7 +376,7 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 
 func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
 	hs := HTTPServer{
-		SQLStore:    mockstore.NewSQLStoreMock(),
+		SQLStore:    dbtest.NewFakeDB(),
 		userService: usertest.NewUserServiceFake(),
 	}
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {

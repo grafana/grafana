@@ -881,7 +881,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				Version:     1,
 				Data:        fakeDash.Data,
 			}}
-		mockSQLStore := mockstore.NewSQLStoreMock()
+		mockSQLStore := dbtest.NewFakeDB()
 		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
 			"/api/dashboards/id/:dashboardId/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
 				sc.dashboardVersionService = fakeDashboardVersionService
@@ -919,7 +919,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		cmd := dtos.RestoreDashboardVersionCommand{
 			Version: 1,
 		}
-		mockSQLStore := mockstore.NewSQLStoreMock()
+		mockSQLStore := dbtest.NewFakeDB()
 		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
 			"/api/dashboards/id/:dashboardId/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
 				callRestoreDashboardVersion(sc)
@@ -928,7 +928,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Given provisioned dashboard", func(t *testing.T) {
-		mockSQLStore := mockstore.NewSQLStoreMock()
+		mockSQLStore := dbtest.NewFakeDB()
 		dashboardStore := dashboards.NewFakeDashboardStore(t)
 		dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&models.DashboardProvisioning{ExternalId: "/dashboard1.json"}, nil).Once()
 

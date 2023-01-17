@@ -12,11 +12,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 )
 
 func TestAlertRuleExtraction(t *testing.T) {
@@ -39,7 +39,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	}
 
 	dsService := &fakeDatasourceService{ExpectedDatasource: defaultDs}
-	store := mockstore.NewSQLStoreMock()
+	store := dbtest.NewFakeDB()
 	extractor := ProvideDashAlertExtractorService(dsPermissions, dsService, store)
 
 	t.Run("Parsing alert rules from dashboard json", func(t *testing.T) {

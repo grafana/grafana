@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -157,7 +158,7 @@ func setupHealthAPITestEnvironment(t *testing.T, cbs ...func(*setting.Cfg)) (*we
 	hs := &HTTPServer{
 		CacheService: localcache.New(5*time.Minute, 10*time.Minute),
 		Cfg:          cfg,
-		SQLStore:     mockstore.NewSQLStoreMock(),
+		SQLStore:     dbtest.NewFakeDB(),
 	}
 
 	m.Get("/api/health", hs.apiHealthHandler)

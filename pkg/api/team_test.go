@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -108,7 +109,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("When creating team with API key", func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.Cfg.EditorsCanAdmin = true
-		hs.SQLStore = mockstore.NewSQLStoreMock()
+		hs.SQLStore = dbtest.NewFakeDB()
 		hs.teamService = &teamtest.FakeService{}
 		teamName := "team foo"
 

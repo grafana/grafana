@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fd "github.com/grafana/grafana/pkg/services/datasources/fakes"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 
@@ -37,7 +37,7 @@ func newTimeSeriesPointsFromArgs(values ...float64) legacydata.DataTimeSeriesPoi
 func TestQueryCondition(t *testing.T) {
 	setup := func() *queryConditionTestContext {
 		ctx := &queryConditionTestContext{}
-		store := mockstore.NewSQLStoreMock()
+		store := dbtest.NewFakeDB()
 
 		ctx.reducer = `{"type":"avg"}`
 		ctx.evaluator = `{"type":"gt","params":[100]}`
