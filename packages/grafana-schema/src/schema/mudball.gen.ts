@@ -489,7 +489,7 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
- * / Auto mode table cell options
+ * Auto mode table cell options
  */
 export interface TableAutoCellOptions {
   type: TableCellDisplayMode.Auto;

@@ -259,7 +259,7 @@ VizLegendOptions: {
 // for the bar gauge component of Grafana UI
 BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")
 
-/// Auto mode table cell options
+// Auto mode table cell options
 TableAutoCellOptions: {
 	type: TableCellDisplayMode & "auto"
 } @cuetsy(kind="interface")
@@ -282,7 +282,7 @@ TableImageCellOptions: {
 // Gauge cell options
 TableBarGaugeCellOptions: {
 	type: TableCellDisplayMode & "gauge"
-	mode?: BarGaugeDisplayMode	
+	mode?: BarGaugeDisplayMode
 } @cuetsy(kind="interface")
 
 // Colored background cell options
