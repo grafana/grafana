@@ -1,4 +1,4 @@
-import { cloneDeep, defaults } from 'lodash';
+import { cloneDeep, defaults, partition } from 'lodash';
 import LRU from 'lru-cache';
 import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
@@ -11,6 +11,7 @@ import {
   AnnotationQueryRequest,
   CoreApp,
   DataFrame,
+  DataFrameDTO,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -24,6 +25,7 @@ import {
   QueryFixAction,
   rangeUtil,
   ScopedVars,
+  TIME_SERIES_TIME_FIELD_NAME,
   TimeRange,
 } from '@grafana/data';
 import {
@@ -94,6 +96,7 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
+  prometheusDataFrameStorage: Record<string, Record<string, number[]>>;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -127,6 +130,7 @@ export class PrometheusDatasource
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
+    this.prometheusDataFrameStorage = {};
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.
@@ -437,17 +441,129 @@ export class PrometheusDatasource
     return processedTargets;
   }
 
+  streamTargets(target: PromQuery, request: DataQueryRequest<PromQuery>): PromQuery {
+    // const storageKey = request.f
+    const from = request.range.raw.from
+    const to = request.range.raw.to;
+    const expression = target.expr;
+    const interval = target.interval
+
+    console.log('from', from);
+    console.log('to', to);
+    console.log('interval', interval);
+    console.log('expression', expression);
+
+    console.log('the CURRENT CACHE', this.prometheusDataFrameStorage)
+    // request.targets[index].expr + request.targets[index].interval
+    const cacheKey: string = target.expr + target.interval;
+    console.log('THE CACHE KEY', cacheKey);
+    console.log('the CURRENT HIT?', this.prometheusDataFrameStorage[cacheKey])
+    const previousResultForThisQuery = this.prometheusDataFrameStorage[cacheKey];
+    if(previousResultForThisQuery){
+      const time = previousResultForThisQuery?.time;
+      const values = previousResultForThisQuery?.values;
+
+      console.log('cached time', time)
+      console.log('cached values', values)
+    }
+
+    //calculate new from/tos
+
+
+    return { ...target };
+  }
+
+  appendQueryResultToDataFrameStorage = (
+    request: DataQueryRequest<PromQuery>,
+    response: DataQueryResponse,
+    dataFrames: { data: DataFrame[] }
+  ) => {
+    const start = this.getPrometheusTime(request.range.from, false);
+    const end = this.getPrometheusTime(request.range.to, true);
+    const data: DataFrame[] | DataFrameDTO[] = response.data;
+    const timeSeriesResponses = data.filter((dataFrame) => dataFrame?.meta?.custom?.resultType === 'matrix');
+
+    console.log('QUERY RESPONSE');
+    console.log('start', start);
+    console.log('end', end);
+    console.log('response', response);
+    console.log('request', request);
+
+    if (!timeSeriesResponses) {
+      return;
+    }
+    // Iterate through all the different queries
+    timeSeriesResponses.forEach((query, index) => {
+
+      if(!request.targets[index]?.interval){
+        debugger;
+      }
+      // Get the querystring that was executed on the prometheus server, this string contains the step time as well so we can use this as our "key" in the prometheus data frame storage
+      const responseQueryExpressionAndStepString = request.targets[index]?.expr + request.targets[index]?.interval ?? '';
+
+      // For each query partition the time from the values
+      const partitionedDataFrames = partition(query.fields, (field) => field.name === TIME_SERIES_TIME_FIELD_NAME);
+      const thisQueryHasNeverBeenDoneBefore =
+        !this.prometheusDataFrameStorage || !(responseQueryExpressionAndStepString in this.prometheusDataFrameStorage);
+      const thisQueryHasBeenDoneBefore = !thisQueryHasNeverBeenDoneBefore;
+
+      //@todo types
+      const timeFrames = partitionedDataFrames[0][0].values?.buffer as number[];
+      //@todo, make this work for any number of value frames?
+      const valueFrames = partitionedDataFrames[1][0].values?.buffer as number[];
+
+      if (thisQueryHasNeverBeenDoneBefore) {
+        this.prometheusDataFrameStorage[responseQueryExpressionAndStepString] = {
+          time: timeFrames,
+          values: valueFrames,
+        };
+      } else if (thisQueryHasBeenDoneBefore) {
+        const existingTimeValues = this.prometheusDataFrameStorage[responseQueryExpressionAndStepString]
+          .time as number[];
+        const existingValues = this.prometheusDataFrameStorage[responseQueryExpressionAndStepString].values as number[];
+
+        const newDataIndexStartInOldData = existingTimeValues.indexOf(timeFrames[0]);
+
+        // Naive splice of new data onto old data
+        existingTimeValues.splice(
+          newDataIndexStartInOldData,
+          existingTimeValues.length - newDataIndexStartInOldData,
+          ...timeFrames
+        );
+        existingValues.splice(
+          newDataIndexStartInOldData,
+          existingValues.length - newDataIndexStartInOldData,
+          ...valueFrames
+        );
+
+        console.log('timeValuesAfterSplicedInNewValues', existingTimeValues);
+        console.log('ValuesAfterSplicedInNewValues', existingValues);
+
+        this.prometheusDataFrameStorage[responseQueryExpressionAndStepString] = {
+          time: existingTimeValues,
+          values: existingValues,
+        };
+      }
+    });
+  };
+
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
+      const streamedTargets = targets.flat().map((target) => this.streamTargets(target, request));
+      const requestWithUpdatedTargets =  { ...request, targets: streamedTargets }
 
-      return super
-        .query({ ...request, targets: targets.flat() })
-        .pipe(
-          map((response) =>
-            transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
-          )
-        );
+      return super.query(requestWithUpdatedTargets).pipe(
+        map((response) => {
+          const dataFrames = transformV2(response, request, {
+            exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
+          });
+
+          this.appendQueryResultToDataFrameStorage(requestWithUpdatedTargets, response, dataFrames);
+
+          return dataFrames;
+        })
+      );
       // Run queries trough browser/proxy
     } else {
       const start = this.getPrometheusTime(request.range.from, false);
@@ -471,6 +587,7 @@ export class PrometheusDatasource
   }
 
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
+    console.log('exploreQuery');
     let runningQueriesCount = queries.length;
 
     const subQueries = queries.map((query, index) => {
@@ -509,6 +626,7 @@ export class PrometheusDatasource
     requestId: string,
     scopedVars: ScopedVars
   ) {
+    console.log('panelsquery');
     const observables = queries.map((query, index) => {
       const target = activeTargets[index];
 
@@ -544,6 +662,7 @@ export class PrometheusDatasource
   }
 
   private runQuery<T>(query: PromQueryRequest, end: number, filter: OperatorFunction<any, T>): Observable<T> {
+    console.log('RUN QUERY');
     if (query.instant) {
       return this.performInstantQuery(query, end).pipe(filter);
     }
@@ -648,7 +767,9 @@ export class PrometheusDatasource
     return Math.max(interval * intervalFactor, minInterval, safeInterval);
   }
 
+  // Add cache?
   performTimeSeriesQuery(query: PromQueryRequest, start: number, end: number) {
+    console.log('performTimeSeriesQuery');
     if (start > end) {
       throw { message: 'Invalid time range' };
     }
@@ -660,6 +781,18 @@ export class PrometheusDatasource
       end,
       step: query.step,
     };
+    const queryBucketName = query.expr + query.step;
+    console.log('performTimeSeriesQuery');
+    console.log('query', query);
+    console.log('queryBucketName', queryBucketName);
+    //
+    // // Data frame has already been populated for this query/step
+    // if(this.prometheusDataFrameStorage && queryBucketName in this.prometheusDataFrameStorage){
+    //   const dataFrame = this.prometheusDataFrameStorage[queryBucketName]
+    // }else{
+    //   // Clear any saved dataframes
+    //   this.prometheusDataFrameStorage = undefined;
+    // }
 
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
@@ -668,15 +801,22 @@ export class PrometheusDatasource
     return this._request<PromDataSuccessResponse<PromMatrixData>>(url, data, {
       requestId: query.requestId,
       headers: query.headers,
-    }).pipe(
-      catchError((err: FetchError<PromDataErrorResponse<PromMatrixData>>) => {
-        if (err.cancelled) {
-          return of(err);
-        }
+    })
+      .pipe(
+        catchError((err: FetchError<PromDataErrorResponse<PromMatrixData>>) => {
+          if (err.cancelled) {
+            return of(err);
+          }
 
-        return throwError(this.handleErrors(err, query));
-      })
-    );
+          return throwError(this.handleErrors(err, query));
+        })
+      )
+      .pipe((observable) => {
+        observable.subscribe((dataframe) => {
+          dataframe.data.data.result;
+        });
+        return observable;
+      });
   }
 
   performInstantQuery(

@@ -177,6 +177,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('extract-fields', import '../dev-dashboards/transforms/extract-fields.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('extract-json-paths', import '../dev-dashboards/transforms/extract-json-paths.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
