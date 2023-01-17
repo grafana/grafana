@@ -1,7 +1,6 @@
 import { VariableRefresh } from '@grafana/data';
 import {
   SceneCanvasText,
-  SceneSubMenu,
   SceneTimePicker,
   SceneFlexLayout,
   SceneTimeRange,
@@ -64,8 +63,6 @@ export function getQueryVariableDemo(): DashboardScene {
     }),
     $timeRange: new SceneTimeRange(),
     actions: [new SceneTimePicker({})],
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    }),
+    controls: [new VariableValueSelectors({})],
   });
 }

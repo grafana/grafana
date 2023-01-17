@@ -1,7 +1,6 @@
 import {
   VizPanel,
   SceneCanvasText,
-  SceneSubMenu,
   SceneTimePicker,
   SceneFlexLayout,
   SceneTimeRange,
@@ -81,9 +80,7 @@ export function getVariablesDemo(): DashboardScene {
     }),
     $timeRange: new SceneTimeRange(),
     actions: [new SceneTimePicker({})],
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    }),
+    controls: [new VariableValueSelectors({})],
   });
 }
 
@@ -150,8 +147,6 @@ export function getVariablesDemoWithAll(): DashboardScene {
     }),
     $timeRange: new SceneTimeRange(),
     actions: [new SceneTimePicker({})],
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    }),
+    controls: [new VariableValueSelectors({})],
   });
 }
