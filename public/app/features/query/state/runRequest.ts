@@ -1,7 +1,7 @@
 // Libraries
 import { isString, map as isArray } from 'lodash';
 import { from, merge, Observable, of, timer } from 'rxjs';
-import { catchError, delay, map, mapTo, share, takeUntil, tap } from 'rxjs/operators';
+import { catchError, map, mapTo, share, takeUntil, tap } from 'rxjs/operators';
 
 // Utils & Services
 // Types
@@ -9,7 +9,6 @@ import {
   CoreApp,
   DataFrame,
   DataQueryError,
-  DataQueryKind,
   DataQueryRequest,
   DataQueryResponse,
   DataQueryResponseData,
@@ -25,6 +24,7 @@ import {
 import { toDataQueryError } from '@grafana/runtime';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { queryIsEmpty } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery } from 'app/features/expressions/types';
 
@@ -123,7 +123,7 @@ export function runRequest(
       series: [],
       request: request,
       timeRange: request.range,
-      error: {},
+      error: undefined,
     },
     packets: {},
   };
@@ -169,14 +169,7 @@ export function runRequest(
   // If 50ms without a response emit a loading state
   // mapTo will translate the timer event into state.panelData (which has state set to loading)
   // takeUntil will cancel the timer emit when first response packet is received on the dataObservable
-  return merge(
-    timer(2).pipe(
-      mapTo(state.panelData),
-      takeUntil(dataObservable),
-      tap((res) => console.log(res))
-    ),
-    dataObservable
-  );
+  return merge(timer(200).pipe(mapTo(state.panelData), takeUntil(dataObservable)), dataObservable);
 }
 
 export function callQueryMethod(
@@ -185,10 +178,9 @@ export function callQueryMethod(
   queryFunction?: typeof datasource.query
 ) {
   // If the datasource has defined a default query, make sure it's applied if the query is empty
-  request.targets = request.targets.map((t) => ({
-    ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor, request.dataQueryKind ?? DataQueryKind.STANDARD),
-    ...t,
-  }));
+  request.targets = request.targets.map((t) =>
+    queryIsEmpty(t) ? { ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor), ...t } : t
+  );
 
   // If its a public datasource, just return the result. Expressions will be handled on the backend.
   if (datasource.type === 'public-ds') {
@@ -203,7 +195,6 @@ export function callQueryMethod(
 
   // Otherwise it is a standard datasource request
   const returnVal = queryFunction ? queryFunction(request) : datasource.query(request);
-  // return from(returnVal).pipe(delay(5000));
   return from(returnVal);
 }
 
@@ -247,7 +238,7 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
       state: LoadingState.Loading,
       request: data.request,
       // @Ida maybe?
-      // error: Object.keys(data.error ?? {}).length > 0 ? data.error : undefined,
+      error: data.error,
     };
   }
 

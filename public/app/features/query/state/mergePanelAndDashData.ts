@@ -20,7 +20,7 @@ export function mergePanelAndDashData(
 
         const annotations = panelData.annotations.concat(new ArrayDataFrame(dashData.annotations));
         const alertState = dashData.alertState;
-        return of({ ...panelData, annotations, alertState, error: {} });
+        return of({ ...panelData, annotations, alertState });
       }
 
       return of(panelData);
