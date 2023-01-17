@@ -16,7 +16,12 @@ import {
   GrafanaTheme2,
   ArrayVector,
 } from '@grafana/data';
-import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellOptions } from '@grafana/schema';
+import {
+  BarGaugeDisplayMode,
+  TableAutoCellOptions,
+  TableCellBackgroundDisplayMode,
+  TableCellOptions,
+} from '@grafana/schema';
 
 import { BarGaugeCell } from './BarGaugeCell';
 import { DefaultCell } from './DefaultCell';
@@ -346,9 +351,15 @@ export function createFooterCalculationValues(rows: Row[]): any[number] {
   return values;
 }
 
+const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
+
 export function getCellOptions(field: Field): TableCellOptions {
   if (field.config.custom?.displayMode) {
     return migrateTableDisplayModeToCellOptions(field.config.custom?.displayMode);
+  }
+
+  if (!field.config.custom?.cellOptions) {
+    return defaultCellOptions;
   }
 
   return (field.config.custom as TableFieldOptions).cellOptions;
