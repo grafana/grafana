@@ -23,6 +23,7 @@ describe('linkSrv', () => {
   function initLinkSrv() {
     const _dashboard: any = {
       time: { from: 'now-6h', to: 'now' },
+      timepicker: { hidden: false },
       getTimezone: jest.fn(() => 'browser'),
       timeRangeUpdated: () => {},
     };
