@@ -24,7 +24,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
+import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import {
   FIXED_UNIT,
   SeriesVisibilityChangeMode,
@@ -37,10 +37,26 @@ import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
+import { PanelFieldConfig, TimelineMode, TimelineValueAlignment } from './models.gen';
 import { getConfig, TimelineCoreOptions } from './timeline';
-import { TimelineFieldConfig, TimelineOptions } from './types';
 
-const defaultConfig: TimelineFieldConfig = {
+/**
+ * @internal
+ */
+interface UPlotConfigOptions {
+  frame: DataFrame;
+  theme: GrafanaTheme2;
+  mode: TimelineMode;
+  sync?: () => DashboardCursorSync;
+  rowHeight: number;
+  colWidth?: number;
+  showValue: VisibilityMode;
+  alignValue?: TimelineValueAlignment;
+  mergeValues?: boolean;
+  getValueColor: (frameIdx: number, fieldIdx: number, value: any) => string;
+}
+
+const defaultConfig: PanelFieldConfig = {
   lineWidth: 0,
   fillOpacity: 80,
 };
@@ -52,7 +68,7 @@ export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityCh
   return SeriesVisibilityChangeMode.ToggleSelection;
 }
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = ({
   frame,
   theme,
   timeZones,
@@ -209,8 +225,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     }
 
     const field = frame.fields[i];
-    const config: FieldConfig<TimelineFieldConfig> = field.config;
-    const customConfig: TimelineFieldConfig = {
+    const config: FieldConfig<PanelFieldConfig> = field.config;
+    const customConfig: PanelFieldConfig = {
       ...defaultConfig,
       ...config.custom,
     };

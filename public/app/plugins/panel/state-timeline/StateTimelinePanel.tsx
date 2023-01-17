@@ -21,12 +21,12 @@ import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { TimelineChart } from './TimelineChart';
-import { TimelineMode, TimelineOptions } from './types';
+import { TimelineMode, PanelOptions } from './models.gen';
 import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
 
 const TOOLTIP_OFFSET = 10;
 
-interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
+interface TimelinePanelProps extends PanelProps<PanelOptions> {}
 
 /**
  * @alpha

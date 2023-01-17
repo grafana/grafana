@@ -7,7 +7,7 @@ import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
 
-import { TimelineFieldConfig, TimelineMode, TimelineValueAlignment } from './types';
+import { PanelFieldConfig, TimelineMode, TimelineValueAlignment } from './models.gen';
 
 const { round, min, ceil } = Math;
 
@@ -49,7 +49,7 @@ export interface TimelineCoreOptions {
   label: (seriesIdx: number) => string;
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: any) => string;
-  getFieldConfig: (seriesIdx: number) => TimelineFieldConfig;
+  getFieldConfig: (seriesIdx: number) => PanelFieldConfig;
   onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
   onLeave: () => void;
 }
@@ -567,7 +567,7 @@ export function getConfig(opts: TimelineCoreOptions) {
   };
 }
 
-function getFillColor(fieldConfig: TimelineFieldConfig, color: string) {
+function getFillColor(fieldConfig: PanelFieldConfig, color: string) {
   // if #rgba with pre-existing alpha. ignore fieldConfig.fillOpacity
   // e.g. thresholds with opacity
   if (color[0] === '#' && color.length === 9) {

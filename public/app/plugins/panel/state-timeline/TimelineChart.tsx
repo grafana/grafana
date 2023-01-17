@@ -13,15 +13,13 @@ import {
   VizLegendItem,
 } from '@grafana/ui';
 
-import { TimelineMode, TimelineOptions, TimelineValueAlignment } from './types';
+import { TimelineMode, TimelineValueAlignment } from './models.gen';
 import { preparePlotConfigBuilder } from './utils';
 
 /**
  * @alpha
  */
-export interface TimelineProps
-  extends TimelineOptions,
-    Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
+export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
   mode: TimelineMode;
   rowHeight: number;
   showValue: VisibilityMode;

@@ -20,7 +20,7 @@ import (
 )
 
 Panel: thema.#Lineage & {
-	name: "state-timeline"
+	name: "state_timeline"
 	seqs: [
 		{
 			schemas: [
@@ -28,21 +28,22 @@ Panel: thema.#Lineage & {
 					TimelineMode:           "changes" | "samples"       @cuetsy(kind="enum")
 					TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")
 					PanelOptions: {
-						// FIXME ts comments indicate this shouldn't be in the saved model, but currently is emitted
-						mode?: TimelineMode
 						ui.OptionsWithLegend
 						ui.OptionsWithTooltip
 						ui.OptionsWithTimezones
+						//Show timeline values on chart
 						showValue:    ui.VisibilityMode | *"auto"
-						rowHeight:    number | *0.9
-						colWidth?:    number
+						//Controls the row height
+						rowHeight:    float & <= 1 | *0.9
+						//Merge equal consecutive values 
 						mergeValues?: bool | *true
+						//Controls value alignment on the timelines
 						alignValue?:  TimelineValueAlignment | *"left"
 					} @cuetsy(kind="interface")
 					PanelFieldConfig: {
 						ui.HideableFieldConfig
-						lineWidth?:   number | *0
-						fillOpacity?: number | *70
+						lineWidth?:   uint32 & <= 10 | *0
+						fillOpacity?: uint32 & <= 100 | *70
 					} @cuetsy(kind="interface")
 				},
 			]

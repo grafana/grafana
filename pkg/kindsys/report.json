@@ -720,6 +720,18 @@
         0
       ]
     },
+    "state_timeline_panel": {
+      "name": "State-Timeline-Panel",
+      "pluralName": "State-Timeline-Panels",
+      "machineName": "state_timeline_panel",
+      "pluralMachineName": "state_timeline_panels",
+      "lineageIsGroup": true,
+      "maturity": "merged",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
     "table_old_panel": {
       "name": "Table-Old-Panel",
       "pluralName": "Table-Old-Panels",
@@ -946,6 +958,7 @@
           "stackdriver_dsoptions",
           "stackdriver_query",
           "stat_panel",
+          "state_timeline_panel",
           "table_old_panel",
           "tempo_dsoptions",
           "tempo_query",
@@ -958,7 +971,7 @@
           "zipkin_dsoptions",
           "zipkin_query"
         ],
-        "count": 63
+        "count": 64
       },
       "core": {
         "name": "core",
@@ -1003,10 +1016,11 @@
           "piechart_panel",
           "playlist",
           "stat_panel",
+          "state_timeline_panel",
           "team",
           "text_panel"
         ],
-        "count": 13
+        "count": 14
       },
       "planned": {
         "name": "planned",
