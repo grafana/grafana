@@ -11,6 +11,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -77,6 +78,7 @@ func newFlowTestQueries(allJsonBytes []byte) ([]backend.DataQuery, error) {
 		return nil, fmt.Errorf("error unmarshaling query-json: %w", err)
 	}
 
+	//nolint:prealloc // for test purposes
 	var queries []backend.DataQuery
 
 	for _, jsonBytes := range jsonBytesArray {
