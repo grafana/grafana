@@ -276,8 +276,10 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
+    let interpolatedTarget = target;
+
     if (scopedVars && scopedVars.__sceneObject) {
-      return sceneGraph.interpolate(
+      interpolatedTarget = sceneGraph.interpolate(
         scopedVars.__sceneObject.value,
         target,
         scopedVars,
@@ -285,13 +287,13 @@ export class TemplateSrv implements BaseTemplateSrv {
       );
     }
 
-    if (!target) {
-      return target ?? '';
+    if (!interpolatedTarget) {
+      return interpolatedTarget ?? '';
     }
 
     this.regex.lastIndex = 0;
 
-    return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
+    return interpolatedTarget.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;
       const variable = this.getVariableAtIndex(variableName);
       const fmt = fmt2 || fmt3 || format;

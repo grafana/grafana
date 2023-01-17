@@ -22,7 +22,10 @@ const interpolateMock = jest.fn();
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
   sceneGraph: {
-    interpolate: (...args: any[]) => interpolateMock(...args),
+    interpolate: (...args: any[]) => {
+      interpolateMock(...args);
+      return args[1];
+    },
   },
 }));
 
@@ -821,8 +824,11 @@ describe('templateSrv', () => {
   });
 
   describe('scenes compatibility', () => {
+    afterEach(() => {
+      interpolateMock.mockClear();
+    });
     beforeEach(() => {
-      _templateSrv = initTemplateSrv(key, []);
+      _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'coreVar', current: { value: 'oogle' } }]);
     });
     it('should use scene interpolator when scoped var provided', () => {
       const variable = new TestVariable({});
@@ -832,6 +838,17 @@ describe('templateSrv', () => {
       expect(interpolateMock).toHaveBeenCalledTimes(1);
       expect(interpolateMock.mock.calls[0][0]).toEqual(variable);
       expect(interpolateMock.mock.calls[0][1]).toEqual('test ${test}');
+    });
+
+    it('should use scene interpolator when scoped var provided and core interpolation for non-scene variables', () => {
+      const variable = new TestVariable({});
+
+      const result = _templateSrv.replace('test ${test} ${coreVar}', { __sceneObject: { value: variable } });
+
+      expect(interpolateMock).toHaveBeenCalledTimes(1);
+      expect(interpolateMock.mock.calls[0][0]).toEqual(variable);
+      expect(interpolateMock.mock.calls[0][1]).toEqual('test ${test} ${coreVar}');
+      expect(result).toEqual('test ${test} oogle');
     });
   });
 });
