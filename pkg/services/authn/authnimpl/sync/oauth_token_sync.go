@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -18,12 +17,11 @@ var (
 	errExpiredAccessToken = errutil.NewBase(errutil.StatusUnauthorized, "oauth.expired-token")
 )
 
-func ProvideOauthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService, features *featuremgmt.FeatureManager) *OauthTokenSync {
+func ProvideOauthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService) *OauthTokenSync {
 	return &OauthTokenSync{
 		log.New("oauth_token.sync"),
 		service,
 		sessionService,
-		features,
 	}
 }
 
@@ -31,15 +29,9 @@ type OauthTokenSync struct {
 	log            log.Logger
 	service        oauthtoken.OAuthTokenService
 	sessionService auth.UserTokenService
-	features       *featuremgmt.FeatureManager
 }
 
 func (s *OauthTokenSync) SyncOauthToken(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	// if the access token expiration check flag is not enable skip this hook
-	if !s.features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
-		return nil
-	}
-
 	namespace, id := identity.NamespacedID()
 	// only perform oauth token check if identity is a user
 	if namespace != authn.NamespaceUser {

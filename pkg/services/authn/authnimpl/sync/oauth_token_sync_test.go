@@ -6,21 +6,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestOauthTokenSync_SyncOauthToken(t *testing.T) {
 	type testCase struct {
 		desc     string
-		disabled bool
 		identity *authn.Identity
 
 		expectedHasEntryToken *models.UserAuth
@@ -36,10 +35,6 @@ func TestOauthTokenSync_SyncOauthToken(t *testing.T) {
 	}
 
 	tests := []testCase{
-		{
-			desc:     "should skip sync when feature toggle is disabled",
-			disabled: true,
-		},
 		{
 			desc:     "should skip sync when identity is not a user",
 			identity: &authn.Identity{ID: "service-account:1"},
@@ -122,16 +117,10 @@ func TestOauthTokenSync_SyncOauthToken(t *testing.T) {
 				},
 			}
 
-			features := featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck)
-			if tt.disabled {
-				features = featuremgmt.WithFeatures()
-			}
-
 			sync := &OauthTokenSync{
 				log:            log.NewNopLogger(),
 				service:        service,
 				sessionService: sessionService,
-				features:       features,
 			}
 
 			err := sync.SyncOauthToken(context.Background(), tt.identity, nil)
