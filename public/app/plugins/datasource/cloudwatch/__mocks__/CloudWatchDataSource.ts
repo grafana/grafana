@@ -85,7 +85,7 @@ export function setupMockedDataSource({
   datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
   datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
   datasource.api.getAccounts = jest.fn().mockResolvedValue([]);
-  datasource.api.describeLogGroups = jest.fn().mockResolvedValue([]);
+  datasource.api.getLogGroups = jest.fn().mockResolvedValue([]);
   const fetchMock = jest.fn().mockReturnValue(of({}));
   setBackendSrv({
     ...getBackendSrv(),
@@ -193,7 +193,7 @@ export const logGroupNamesVariable: CustomVariableModel = {
   id: 'groups',
   name: 'groups',
   current: {
-    value: ['templatedGroup-1', 'templatedGroup-2'],
+    value: ['templatedGroup-arn-1', 'templatedGroup-arn-2'],
     text: ['templatedGroup-1', 'templatedGroup-2'],
     selected: true,
   },

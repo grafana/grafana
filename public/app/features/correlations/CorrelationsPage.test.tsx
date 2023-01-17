@@ -304,7 +304,7 @@ describe('CorrelationsPage', () => {
       expect(screen.getByRole('button', { name: /add$/i })).toBeInTheDocument();
     });
 
-    it('correctly adds correlations', async () => {
+    it('correctly adds first correlation', async () => {
       const CTAButton = screen.getByRole('button', { name: /add correlation/i });
       expect(CTAButton).toBeInTheDocument();
 
@@ -440,7 +440,7 @@ describe('CorrelationsPage', () => {
       });
     });
 
-    it('correctly adds correlations', async () => {
+    it('correctly adds new correlation', async () => {
       const addNewButton = screen.getByRole('button', { name: /add new/i });
       expect(addNewButton).toBeInTheDocument();
       fireEvent.click(addNewButton);

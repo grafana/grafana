@@ -4,7 +4,7 @@ aliases:
   - ../metrics/
   - ../unified-alerting/fundamentals/alertmanager/
 title: Alertmanager
-weight: 460
+weight: 100
 ---
 
 # Alertmanager
@@ -22,6 +22,8 @@ Cloud Alertmanager runs in Grafana Cloud and it can receive alerts from Grafana,
 Grafana Alertmanager is an internal Alertmanager that is pre-configured and available for selection by default if you run Grafana on-premise or open-source.
 
 The Grafana Alertmanager can receive alerts from Grafana, but it cannot receive alerts from outside Grafana, for example, from Mimir or Loki.
+
+**Note that inhibition rules are not supported in the Grafana Alertmanager.**
 
 **External Alertmanager**
 

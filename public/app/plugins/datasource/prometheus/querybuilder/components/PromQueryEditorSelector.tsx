@@ -4,7 +4,7 @@ import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { EditorHeader, EditorRows, FlexItem, InlineSelect, Space } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, Button } from '@grafana/ui';
+import { Button, ConfirmModal } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
 import { PromQuery } from '../../types';
@@ -34,12 +34,18 @@ export const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2
 type Props = PromQueryEditorProps;
 
 export const PromQueryEditorSelector = React.memo<Props>((props) => {
-  const { onChange, onRunQuery, data, app } = props;
+  const {
+    onChange,
+    onRunQuery,
+    data,
+    app,
+    datasource: { defaultEditor },
+  } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
   const { flag: explain, setFlag: setExplain } = useFlag(promQueryEditorExplainKey);
 
-  const query = getQueryWithDefaults(props.query, app);
+  const query = getQueryWithDefaults(props.query, app, defaultEditor);
   // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
 
@@ -110,7 +116,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
         />
         <QueryHeaderSwitch label="Explain" value={explain} onChange={onShowExplainChange} />
         <FlexItem grow={1} />
-        {app !== CoreApp.Explore && (
+        {app !== CoreApp.Explore && app !== CoreApp.Correlations && (
           <Button
             variant={dataIsStale ? 'primary' : 'secondary'}
             size="sm"

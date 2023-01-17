@@ -10,5 +10,4 @@ const (
 
 var (
 	errIdentityNotFound = errutil.NewBase(errutil.StatusNotFound, "identity.not-found")
-	errInvalidPassword  = errutil.NewBase(errutil.StatusBadRequest, "identity.invalid-password", errutil.WithPublicMessage("Invalid password or username"))
 )
