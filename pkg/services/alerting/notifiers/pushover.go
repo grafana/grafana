@@ -280,7 +280,7 @@ func (pn *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        pushoverEndpoint,
 		HttpMethod: "POST",
 		HttpHeader: headers,
