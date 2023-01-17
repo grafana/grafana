@@ -54,6 +54,7 @@ const getStyles = (querySizeInBytes: number) => (theme: GrafanaTheme2) => {
       width: '100%',
       display: 'flex',
       justifyContent: 'space-between',
+      alignItems: 'baseline',
     }),
     switchLabel: css({
       color: theme.colors.text.secondary,
@@ -100,6 +101,7 @@ const getStyles = (querySizeInBytes: number) => (theme: GrafanaTheme2) => {
       margin: '0px',
       // we need to have a discussion here to decide on a byte threshold before we change the color
       color: querySizeInBytes > 0 ? '#FF5286' : '#6CCF8E',
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
   };
 };
