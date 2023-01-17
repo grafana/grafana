@@ -34,9 +34,3 @@ func (f *Form) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ident
 	}
 	return f.client.AuthenticatePassword(ctx, r, form.Username, form.Password)
 }
-
-func (f *Form) Test(ctx context.Context, r *authn.Request) bool {
-	// FIXME: How should we detect this??
-	// Maybe create client test interface and not all clients has to implement this??
-	return true
-}

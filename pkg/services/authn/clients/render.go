@@ -2,8 +2,10 @@ package clients
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -36,20 +38,25 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		return nil, ErrInvalidRenderKey.Errorf("found no render user for key: %s", key)
 	}
 
+	var identity *authn.Identity
 	if renderUsr.UserID <= 0 {
-		return &authn.Identity{
-			ID:           authn.NamespacedID(authn.NamespaceUser, 0),
-			OrgID:        renderUsr.OrgID,
-			OrgRoles:     map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
-			ClientParams: authn.ClientParams{},
-		}, nil
+		identity = &authn.Identity{
+			ID:       authn.NamespacedID(authn.NamespaceUser, 0),
+			OrgID:    renderUsr.OrgID,
+			OrgRoles: map[int64]org.RoleType{renderUsr.OrgID: org.RoleType(renderUsr.OrgRole)},
+		}
+	} else {
+		usr, err := c.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{UserID: renderUsr.UserID, OrgID: renderUsr.OrgID})
+		if err != nil {
+			return nil, err
+		}
+
+		identity = authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{})
 	}
 
-	usr, err := c.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{UserID: renderUsr.UserID, OrgID: renderUsr.OrgID})
-	if err != nil {
-		return nil, err
-	}
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{}), nil
+	identity.LastSeenAt = time.Now()
+	identity.AuthModule = login.RenderModule
+	return identity, nil
 }
 
 func (c *Render) Test(ctx context.Context, r *authn.Request) bool {

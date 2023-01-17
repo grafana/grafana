@@ -52,8 +52,8 @@ type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) er
 type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
 
 type Service interface {
-	// Authenticate authenticates a request using the specified client.
-	Authenticate(ctx context.Context, client string, r *Request) (*Identity, bool, error)
+	// Authenticate authenticates a request
+	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
 	RegisterPostAuthHook(hook PostAuthHookFn)
 	// Login authenticates a request and creates a session on successful authentication.
@@ -67,6 +67,11 @@ type Service interface {
 type Client interface {
 	// Authenticate performs the authentication for the request
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
+}
+
+// FIXME: better name / description
+type ContextAwareClient interface {
+	Client
 	// Test should return true if client can be used to authenticate request
 	Test(ctx context.Context, r *Request) bool
 }

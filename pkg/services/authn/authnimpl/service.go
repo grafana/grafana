@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"go.opentelemetry.io/otel/attribute"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -126,8 +124,9 @@ func ProvideService(
 }
 
 type Service struct {
-	log     log.Logger
-	cfg     *setting.Cfg
+	log log.Logger
+	cfg *setting.Cfg
+	// TODO: Fix priority
 	clients map[string]authn.Client
 
 	tracer         tracing.Tracer
@@ -139,34 +138,43 @@ type Service struct {
 	postLoginHooks []authn.PostLoginHookFn
 }
 
-func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Request) (*authn.Identity, bool, error) {
+func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.Authenticate")
+	defer span.End()
+
+	for name, c := range s.clients {
+		if t, ok := c.(authn.ContextAwareClient); ok {
+			if t.Test(ctx, r) {
+				identity, _, err := s.authenticate(ctx, name, r)
+				if err != nil {
+					return nil, err
+				}
+				return identity, nil
+			}
+		}
+	}
+
+	// FIXME: return error
+	return nil, nil
+}
+
+func (s *Service) authenticate(ctx context.Context, client string, r *authn.Request) (*authn.Identity, bool, error) {
 	c, ok := s.clients[client]
 	if !ok {
 		return nil, false, nil
 	}
 
-	if !c.Test(ctx, r) {
-		return nil, false, nil
-	}
-
-	ctx, span := s.tracer.Start(ctx, "authn.Authenticate")
-	defer span.End()
-	span.SetAttributes("authn.client", client, attribute.Key("authn.client").String(client))
-
 	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
 		s.log.FromContext(ctx).Warn("auth client could not authenticate request", "client", client, "error", err)
-		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client could not authenticate request"}})
 		return nil, true, err
 	}
-
-	// FIXME (kalleep): Handle disabled identities
 
 	for _, hook := range s.postAuthHooks {
 		if err := hook(ctx, identity, r); err != nil {
 			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "id", identity)
-			return nil, false, err
+			return nil, true, err
 		}
 	}
 
@@ -183,7 +191,7 @@ func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn) {
 
 func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (identity *authn.Identity, err error) {
 	var ok bool
-	identity, ok, err = s.Authenticate(ctx, client, r)
+	identity, ok, err = s.authenticate(ctx, client, r)
 	if !ok {
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
