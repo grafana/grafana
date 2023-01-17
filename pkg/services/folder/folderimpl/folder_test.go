@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashboardsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -38,7 +37,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{}, nil, nil)
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, &featuremgmt.FeatureManager{}, nil, nil)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
@@ -57,19 +56,16 @@ func TestIntegrationFolderService(t *testing.T) {
 		cfg.RBACEnabled = false
 		features := featuremgmt.WithFeatures()
 		folderPermissions := acmock.NewMockedPermissionsService()
-		dashboardPermissions := acmock.NewMockedPermissionsService()
-		dashboardService := dashboardsvc.ProvideDashboardService(cfg, dashStore, nil, features, folderPermissions, dashboardPermissions, acmock.New())
 
 		service := &Service{
-			cfg:              cfg,
-			log:              log.New("test-folder-service"),
-			dashboardService: dashboardService,
-			dashboardStore:   dashStore,
-			store:            store,
-			searchService:    nil,
-			features:         features,
-			permissions:      folderPermissions,
-			bus:              bus.ProvideBus(tracing.InitializeTracerForTest()),
+			cfg:            cfg,
+			log:            log.New("test-folder-service"),
+			dashboardStore: dashStore,
+			store:          store,
+			searchService:  nil,
+			features:       features,
+			permissions:    folderPermissions,
+			bus:            bus.ProvideBus(tracing.InitializeTracerForTest()),
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -331,12 +327,11 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	folderService := &Service{
-		cfg:              cfg,
-		store:            folderStore,
-		dashboardStore:   &dashStore,
-		dashboardService: &dashboardsvc,
-		features:         featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-		log:              log.New("test-folder-service"),
+		cfg:            cfg,
+		store:          folderStore,
+		dashboardStore: &dashStore,
+		features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		log:            log.New("test-folder-service"),
 	}
 	t.Run("create folder", func(t *testing.T) {
 		folderStore.ExpectedFolder = &folder.Folder{ParentUID: util.GenerateShortUID()}
@@ -356,12 +351,11 @@ func TestNestedFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
 		foldersvc := &Service{
-			cfg:              cfg,
-			log:              log.New("test-folder-service"),
-			dashboardService: &dashboardsvc,
-			dashboardStore:   &dashStore,
-			store:            store,
-			features:         featuremgmt.WithFeatures(),
+			cfg:            cfg,
+			log:            log.New("test-folder-service"),
+			dashboardStore: &dashStore,
+			store:          store,
+			features:       featuremgmt.WithFeatures(),
 		}
 
 		t.Run("When create folder, no create in folder table done", func(t *testing.T) {
@@ -412,12 +406,11 @@ func TestNestedFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
 		foldersvc := &Service{
-			cfg:              cfg,
-			log:              log.New("test-folder-service"),
-			dashboardService: dashboardsvc,
-			dashboardStore:   dashStore,
-			store:            store,
-			features:         featuremgmt.WithFeatures("nestedFolders"),
+			cfg:            cfg,
+			log:            log.New("test-folder-service"),
+			dashboardStore: dashStore,
+			store:          store,
+			features:       featuremgmt.WithFeatures("nestedFolders"),
 			accessControl: actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			},
