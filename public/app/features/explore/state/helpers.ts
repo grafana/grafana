@@ -1,6 +1,49 @@
-import { DefaultTimeZone, toUtc } from '@grafana/data';
+import { DateTime, DefaultTimeZone, toUtc } from '@grafana/data';
 
 import { ExploreId, SupplementaryQueryType } from '../../../types';
+
+export interface DefaultInitialStateInterface {
+  user: {
+    orgId: string;
+    timeZone: string;
+  };
+  explore: {
+    [ExploreId.left]: {
+      datasourceInstance?: {
+        query?: () => void;
+        getRef?: () => void;
+        getLogsVolumeDataProvider?: () => void;
+        meta?: {
+          id?: string;
+        };
+      };
+      initialized?: boolean;
+      containerWidth?: number;
+      eventBridge?: { emit?: {} };
+      queries?: [{ expr?: string }];
+      range?: {
+        from?: DateTime;
+        to?: DateTime;
+        raw?: {
+          from?: DateTime;
+          to?: DateTime;
+        };
+      };
+      history?: [];
+      refreshInterval?: {
+        label?: string;
+        value?: number;
+      };
+      cache?: [];
+      richHistory?: [];
+      supplementaryQueries?: {
+        [SupplementaryQueryType.LogsVolume]?: {
+          enabled?: boolean;
+        };
+      };
+    };
+  };
+}
 
 export const createDefaultInitialState = () => {
   const t = toUtc();
@@ -13,7 +56,7 @@ export const createDefaultInitialState = () => {
     },
   };
 
-  const defaultInitialState = {
+  const defaultInitialState: DefaultInitialStateInterface = {
     user: {
       orgId: '1',
       timeZone: DefaultTimeZone,

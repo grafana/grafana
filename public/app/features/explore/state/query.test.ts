@@ -77,9 +77,9 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
 }));
 
 // TODO: need to be used in line 98, occasionally change for my tests
-const featToggles = {
-  exploreMixedDatasource: false,
-};
+// const featToggles = {
+//   exploreMixedDatasource: false,
+// };
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -318,18 +318,34 @@ describe('reducer', () => {
         let dispatch: ThunkDispatch, getState: () => StoreState;
 
         const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
-          ...(defaultInitialState as any),
+          ...defaultInitialState,
           explore: {
             [exploreId]: {
               ...defaultInitialState.explore[exploreId],
-              // datasourceInstance: datasource2, TODO: remove???
               queries: [
                 {
                   datasource: { type: 'postgres', uid: 'ds1' },
                   refId: 'C',
                 },
               ],
+              datasourceMissing: false,
+              graphResult: null,
+              logsResult: null,
+              absoluteRange: { from: 1, to: 2 },
+              scanning: false,
+              loading: false,
+              tableResult: null,
+              rawPrometheusResult: null,
+              queryKeys: [],
+              isLive: false,
+              isPaused: false,
+              queryResponse: null, // TODO: ExplorePanelData needs to be added
+              panelsState: null, // TODO: ExplorePanelsState needs to be added
             },
+            syncedTimes: false,
+            richHistoryStorageFull: false,
+            richHistoryLimitExceededWarningShown: false,
+            richHistoryMigrationFailed: false,
           },
         });
 
@@ -341,7 +357,7 @@ describe('reducer', () => {
         await dispatch(addQueryRow(exploreId, 1));
 
         expect(getState().explore[exploreId].queries).toHaveLength(2);
-        expect(getState().explore[exploreId].queryKeys).toEqual(["ds1-0", "ds1-1"]);
+        expect(getState().explore[exploreId].queryKeys).toEqual(['ds1-0', 'ds1-1']);
       });
     });
   });
@@ -481,28 +497,6 @@ describe('reducer', () => {
 
       setupQueryResponse(getState());
     });
-
-    //     jest.mock('@grafana/runtime/src/config', () => ({
-    //   config: {
-    //     buildInfo: {
-    //       edition: 'Enterprise',
-    //       version: '9.0.0',
-    //       commit: 'abc123',
-    //       env: 'dev',
-    //       latestVersion: '',
-    //       hasUpdate: false,
-    //       hideVersion: false,
-    //     },
-    //     licenseInfo: {
-    //       enabledFeatures: { 'reports.email': true },
-    //     },
-    //     featureToggles: {
-    //       accesscontrol: true,
-    //     },
-    //     bootData: { navTree: [], user: {} },
-    //     rendererAvailable: true,
-    //   },
-    // }));
 
     it('should cancel any unfinished logs volume queries when a new query is run', async () => {
       await dispatch(runQueries(ExploreId.left));
