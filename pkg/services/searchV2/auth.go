@@ -76,7 +76,7 @@ func (a *simpleAuthService) GetDashboardReadFilter(user *user.SignedInUser) (Res
 		uids[rows[i].UID] = true
 	}
 
-	return func(_ entityKind, _, uid string) bool {
+	return func(_ entityKind, uid, _ string) bool {
 		return uids[uid]
 	}, err
 }

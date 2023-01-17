@@ -9,6 +9,7 @@ import (
 	"github.com/blugelabs/bluge/search/similarity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 type PermissionFilter struct {
@@ -74,7 +75,7 @@ func (q *PermissionFilter) canAccess(kind entityKind, id, location string) bool 
 	//
 	switch kind {
 	case entityKindFolder:
-		if id == "general" {
+		if id == folder.GeneralFolderUID {
 			q.logAccessDecision(true, kind, id, "generalFolder")
 			return true
 		}
