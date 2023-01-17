@@ -1,3 +1,4 @@
+import React, { ReactNode } from 'react';
 import {
   MapLayerRegistryItem,
   MapLayerOptions,
@@ -13,8 +14,10 @@ import {
 } from '@grafana/data';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
-import { Subscription, throttleTime } from 'rxjs';
+import { ReplaySubject, Subscription, throttleTime } from 'rxjs';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
+import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
+import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { defaultStyleConfig, StyleConfig } from '../../style/types';
 import { StyleEditor } from '../../editor/StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
@@ -36,6 +39,7 @@ import { getStyleDimension } from '../../utils/utils';
 export interface RouteConfig {
   style: StyleConfig;
   arrow?: 0 | 1 | -1;
+  showLegend?: boolean;
 }
 
 const defaultOptions: RouteConfig = {
@@ -45,6 +49,7 @@ const defaultOptions: RouteConfig = {
     lineWidth: 2,
   },
   arrow: 0,
+  showLegend: true,
 };
 
 export const ROUTE_LAYER_ID = 'route';
@@ -57,7 +62,7 @@ export const defaultRouteConfig: MapLayerOptions<RouteConfig> = {
   location: {
     mode: FrameGeometrySourceMode.Auto,
   },
-  tooltip: false,
+  tooltip: true,
 };
 
 /**
@@ -87,6 +92,12 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     const source = new FrameVectorSource(location);
     const vectorLayer = new VectorLayer({ source });
     const hasArrows = config.arrow == 1 || config.arrow == -1;
+
+    const legendProps = new ReplaySubject<MarkersLegendProps>(1);
+    let legend: ReactNode = null;
+    if (config.showLegend) {
+      legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
+    }
 
     if (!style.fields && !hasArrows) {
       // Set a global style
@@ -223,6 +234,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
     return {
       init: () => layer,
+      legend: legend,
       dispose: () => subscriptions.unsubscribe(),
       update: (data: PanelData) => {
         if (!data.series?.length) {
@@ -232,6 +244,16 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         for (const frame of data.series) {
           if (style.fields || hasArrows) {
             style.dims = getStyleDimension(frame, style, theme);
+          }
+
+          // Post updates to the legend component
+          if (legend) {
+            legendProps.next({
+              styleConfig: style,
+              size: style.dims?.size,
+              layerName: options.name,
+              layer: vectorLayer,
+            });
           }
 
           source.updateLineString(frame);
@@ -263,6 +285,12 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
               ],
             },
             defaultValue: defaultOptions.arrow,
+          })
+          .addBooleanSwitch({
+            path: 'config.showLegend',
+            name: 'Show legend',
+            description: 'Show map legend',
+            defaultValue: defaultOptions.showLegend,
           });
       },
     };
