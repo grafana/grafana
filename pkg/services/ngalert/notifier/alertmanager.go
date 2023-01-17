@@ -221,6 +221,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 			Default:                   true,
 			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 			OrgID:                     am.orgID,
+			AppliedAt:                 time.Now().UTC().Unix(),
 		}
 
 		cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
@@ -230,12 +231,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			if err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration)); err != nil {
-				return err
-			}
-
-			cmd.AppliedAt = time.Now().UTC().Unix()
-			return nil
+			return am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
 		})
 		if err != nil {
 			outerErr = nil
@@ -260,15 +256,11 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 			AlertmanagerConfiguration: string(rawConfig),
 			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 			OrgID:                     am.orgID,
+			AppliedAt:                 time.Now().UTC().Unix(),
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			if err := am.applyConfig(cfg, rawConfig); err != nil {
-				return err
-			}
-
-			cmd.AppliedAt = time.Now().UTC().Unix()
-			return nil
+			return am.applyConfig(cfg, rawConfig)
 		})
 		if err != nil {
 			outerErr = err
@@ -289,9 +281,15 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 
 	var outerErr error
 	am.Base.WithLock(func() {
-		if err = am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg, nil); err != nil {
-			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
-			return
+		// If the config is not marked as applied, we mark it in the DB.
+		if dbCfg.AppliedAt == 0 {
+			if err = am.applyAndMarkConfig(ctx, dbCfg.ID, dbCfg.ConfigurationHash, cfg, nil); err != nil {
+				outerErr = fmt.Errorf("unable to apply configuration: %w", err)
+				return
+			}
+		} else {
+			// If the config is already marked, we just apply it.
+			am.applyConfig(cfg, nil)
 		}
 	})
 
@@ -388,18 +386,16 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 }
 
 // applyAndMarkConfig applies a configuration and marks it as applied if no errors occur.
-func (am *Alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
+func (am *Alertmanager) applyAndMarkConfig(ctx context.Context, id int64, hash string, cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
 	if err := am.applyConfig(cfg, rawConfig); err != nil {
 		return err
 	}
 	markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
+		ConfigID:          id,
 		OrgID:             am.orgID,
 		ConfigurationHash: hash,
 	}
-	if err := am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd); err != nil {
-		return err
-	}
-	return nil
+	return am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
 }
 
 func (am *Alertmanager) WorkingDirPath() string {

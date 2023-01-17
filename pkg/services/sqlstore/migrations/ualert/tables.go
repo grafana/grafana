@@ -40,6 +40,10 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add applied_at column to alert_configuration_history", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_configuration_history"}, &migrator.Column{
 		Name: "applied_at", Type: migrator.DB_Int, Nullable: true,
 	}))
+
+	mg.AddMigration("add applied_at column to alert_configuration", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Column{
+		Name: "applied_at", Type: migrator.DB_Int, Nullable: true,
+	}))
 }
 
 // AddAlertDefinitionMigrations should not be modified.

@@ -81,9 +81,18 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 			"alert_configuration",
 			[]string{"org_id"},
-			[]string{"alertmanager_configuration", "configuration_version", "created_at", "default", "org_id", "configuration_hash"},
+			[]string{"alertmanager_configuration", "configuration_version", "created_at", "default", "org_id", "configuration_hash", "applied_at"},
 		)
-		params := append(make([]interface{}, 0), cmd.AlertmanagerConfiguration, cmd.ConfigurationVersion, config.CreatedAt, config.Default, config.OrgID, config.ConfigurationHash)
+		params := append(
+			make([]interface{}, 0),
+			cmd.AlertmanagerConfiguration,
+			cmd.ConfigurationVersion, config.CreatedAt,
+			config.Default,
+			config.OrgID,
+			config.ConfigurationHash,
+			config.AppliedAt,
+		)
+
 		if _, err := sess.SQL(upsertSQL, params...).Query(); err != nil {
 			return err
 		}
@@ -92,20 +101,11 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
 
-		if err := callback(); err != nil {
+		if _, err := sess.Table("alert_configuration_history").Insert(config); err != nil {
 			return err
 		}
 
-		historicConfig := models.HistoricAlertConfiguration{
-			AlertmanagerConfiguration: config.AlertmanagerConfiguration,
-			ConfigurationHash:         config.ConfigurationHash,
-			ConfigurationVersion:      config.ConfigurationVersion,
-			Default:                   config.Default,
-			OrgID:                     config.OrgID,
-			CreatedAt:                 config.CreatedAt,
-			AppliedAt:                 cmd.AppliedAt,
-		}
-		if _, err := sess.Table("alert_configuration_history").Insert(historicConfig); err != nil {
+		if err := callback(); err != nil {
 			return err
 		}
 
@@ -148,7 +148,19 @@ func (st *DBstore) MarkConfigurationAsApplied(ctx context.Context, cmd *models.M
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// Create a map representing the field to be updated and its new value.
 		update := map[string]interface{}{"applied_at": time.Now().UTC().Unix()}
-		rowsAffected, err := sess.Table("alert_configuration_history").
+
+		// Set `applied_at` in the configurations table.
+		rowsAffected, err := sess.Table("alert_configuration").Where("id = ?", cmd.ConfigID).Update(&update)
+		if err != nil {
+			return err
+		}
+
+		if rowsAffected != 1 {
+			return fmt.Errorf("update statement affected %d alert configuration records", rowsAffected)
+		}
+
+		// Update the same field in the config history table.
+		rowsAffected, err = sess.Table("alert_configuration_history").
 			Desc("id").
 			Limit(1).
 			Where("org_id = ? AND configuration_hash = ?", cmd.OrgID, cmd.ConfigurationHash).
@@ -160,9 +172,9 @@ func (st *DBstore) MarkConfigurationAsApplied(ctx context.Context, cmd *models.M
 		}
 
 		if rowsAffected != 1 {
-			return fmt.Errorf("update statement affected %d rows", rowsAffected)
+			return fmt.Errorf("update statement affected %d alert configuration history records", rowsAffected)
 		}
-		return err
+		return nil
 	})
 }
 

@@ -12,18 +12,6 @@ type AlertConfiguration struct {
 	CreatedAt                 int64 `xorm:"created"`
 	Default                   bool
 	OrgID                     int64 `xorm:"org_id"`
-}
-
-// HistoricAlertConfiguration represents a previously used alerting configuration.
-type HistoricAlertConfiguration struct {
-	ID int64 `xorm:"pk autoincr 'id'"`
-
-	AlertmanagerConfiguration string
-	ConfigurationHash         string
-	ConfigurationVersion      string
-	CreatedAt                 int64 `xorm:"created"`
-	Default                   bool
-	OrgID                     int64 `xorm:"org_id"`
 	AppliedAt                 int64 `xorm:"applied_at"`
 }
 
@@ -45,6 +33,7 @@ type SaveAlertmanagerConfigurationCmd struct {
 
 // MarkConfigurationAsAppliedCmd is the command for marking a previously saved configuration as successfully applied.
 type MarkConfigurationAsAppliedCmd struct {
+	ConfigID          int64
 	OrgID             int64
 	ConfigurationHash string
 }
