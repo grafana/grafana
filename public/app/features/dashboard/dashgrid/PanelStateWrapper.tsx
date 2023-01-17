@@ -593,10 +593,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     locationService.partial({ inspect: this.props.panel.id, inspectTab: tab });
   };
 
-  onOpenErrorInspect(e: React.SyntheticEvent) {
+  onOpenErrorInspect = (e: React.SyntheticEvent) => {
     e.stopPropagation();
     locationService.partial({ inspect: this.props.panel.id, inspectTab: InspectTab.Error });
-  }
+  };
 
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
