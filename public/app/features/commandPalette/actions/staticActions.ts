@@ -55,7 +55,6 @@ export default (navBarTree: NavModelItem[]): CommandPaletteAction[] => {
       keywords: 'navigate',
       perform: () => locationService.push('?search=open'),
       section: t('command-palette.section.pages', 'Pages'),
-      shortcut: ['s', 'o'],
       priority: DEFAULT_PRIORITY,
     },
     {
@@ -63,7 +62,6 @@ export default (navBarTree: NavModelItem[]): CommandPaletteAction[] => {
       name: t('command-palette.action.change-theme', 'Change theme...'),
       keywords: 'interface color dark light',
       section: t('command-palette.section.preferences', 'Preferences'),
-      shortcut: ['c', 't'],
       priority: PREFERENCES_PRIORITY,
     },
     {
