@@ -26,7 +26,7 @@ type Bundle struct {
 	Creator   string `json:"creator"`
 	CreatedAt int64  `json:"createdAt"`
 	ExpiresAt int64  `json:"expiresAt"`
-	TarBytes  []byte `json:"bytesTar,omitempty"`
+	TarBytes  []byte `json:"tarBytes,omitempty"`
 }
 
 type CollectorFunc func(context.Context) (*SupportItem, error)
