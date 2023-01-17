@@ -223,13 +223,13 @@ steps:
   image: grafana/build-container:1.6.6
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -json -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.6
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  - go test -json -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.6
@@ -718,7 +718,7 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
   - wire-install
@@ -735,7 +735,7 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
   - wire-install
@@ -1123,13 +1123,13 @@ steps:
   image: grafana/build-container:1.6.6
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -json -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.6
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  - go test -json -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.6
@@ -1708,7 +1708,7 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
   - wire-install
@@ -1725,7 +1725,7 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
   - wire-install
@@ -2350,13 +2350,13 @@ steps:
   image: grafana/build-container:1.6.6
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -json -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.6
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  - go test -json -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.6
@@ -2448,7 +2448,7 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
   - wire-install
@@ -2465,7 +2465,7 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
   - wire-install
@@ -3023,13 +3023,13 @@ steps:
   image: grafana/build-container:1.6.6
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -json -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.6
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  - go test -json -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.6
@@ -3154,7 +3154,7 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
   - wire-install
@@ -3171,7 +3171,7 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
   - wire-install
@@ -5014,13 +5014,13 @@ steps:
   image: grafana/build-container:1.6.6
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -json -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.6
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  - go test -json -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.6
@@ -5109,7 +5109,7 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
   - wire-install
@@ -5126,7 +5126,7 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
   - wire-install
@@ -5672,13 +5672,13 @@ steps:
   image: grafana/build-container:1.6.6
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -json -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.6
   name: test-backend
 - commands:
-  - go test -run Integration -covermode=atomic -timeout=5m ./pkg/...
+  - go test -json -run Integration -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:1.6.6
@@ -5799,7 +5799,7 @@ steps:
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
   - wire-install
@@ -5816,7 +5816,7 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic
     -timeout=5m {}'
   depends_on:
   - wire-install
@@ -6439,6 +6439,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 64942ed50326b912df092e639ce480eb1a0438947c7f3df4fbf126655e5e9c3e
+hmac: 2f3514e806ae804526ffcae26110f2c0773f4318b6bc9c5d02bc3d4d60a1fb1c
 
 ...

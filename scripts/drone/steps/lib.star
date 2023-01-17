@@ -227,7 +227,7 @@ def benchmark_ldap_step():
         },
         'commands': [
             'dockerize -wait tcp://ldap:389 -timeout 120s',
-            'go test -benchmem -run=^$ ./pkg/extensions/ldapsync -bench "^(Benchmark50Users)$"',
+            'go test -json -benchmem -run=^$ ./pkg/extensions/ldapsync -bench "^(Benchmark50Users)$"',
         ],
     }
 
@@ -489,7 +489,7 @@ def test_backend_step():
             'wire-install',
         ],
         'commands': [
-            'go test -short -covermode=atomic -timeout=5m ./pkg/...',
+            'go test -json -short -covermode=atomic -timeout=5m ./pkg/...',
         ],
     }
 
@@ -502,7 +502,7 @@ def test_backend_integration_step():
             'wire-install',
         ],
         'commands': [
-            'go test -run Integration -covermode=atomic -timeout=5m ./pkg/...',
+            'go test -json -run Integration -covermode=atomic -timeout=5m ./pkg/...',
         ],
     }
 
@@ -896,7 +896,7 @@ def postgres_integration_tests_step():
         + 'devenv/docker/blocks/postgres_tests/setup.sql',
         # Make sure that we don't use cached results for another database
         'go clean -testcache',
-        "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
+        "go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic -timeout=5m {}'",
     ]
     return {
         'name': 'postgres-integration-tests',
@@ -919,7 +919,7 @@ def mysql_integration_tests_step():
         'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
         # Make sure that we don't use cached results for another database
         'go clean -testcache',
-        "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
+        "go list './pkg/...' | xargs -I {} sh -c 'go test -json -run Integration -covermode=atomic -timeout=5m {}'",
     ]
     return {
         'name': 'mysql-integration-tests',
