@@ -51,7 +51,7 @@ func (m *seedAssignmentPrimaryKeyMigrator) SQL(dialect migrator.Dialect) string 
 	return CodeMigrationSQL
 }
 
-func (m *seedAssignmentPrimaryKeyMigrator) Exec(sess *xorm.Session, mig *migrator.Migrator) error {
+func (m *seedAssignmentPrimaryKeyMigrator) Exec(sess xorm.SessionInterface, mig *migrator.Migrator) error {
 	driver := mig.Dialect.DriverName()
 
 	if driver == migrator.MySQL {

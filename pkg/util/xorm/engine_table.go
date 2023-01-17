@@ -44,25 +44,25 @@ func (engine *Engine) TableName(bean interface{}, includeSchema ...bool) string 
 }
 
 func (engine *Engine) tbNameNoSchema(tablename interface{}) string {
-	switch tablename.(type) {
+	switch tablename := tablename.(type) {
 	case []string:
-		t := tablename.([]string)
+		t := tablename
 		if len(t) > 1 {
 			return fmt.Sprintf("%v AS %v", engine.Quote(t[0]), engine.Quote(t[1]))
 		} else if len(t) == 1 {
 			return engine.Quote(t[0])
 		}
 	case []interface{}:
-		t := tablename.([]interface{})
+		t := tablename
 		l := len(t)
 		var table string
 		if l > 0 {
 			f := t[0]
-			switch f.(type) {
+			switch f := f.(type) {
 			case string:
-				table = f.(string)
+				table = f
 			case TableName:
-				table = f.(TableName).TableName()
+				table = f.TableName()
 			default:
 				v := rValue(f)
 				t := v.Type()
@@ -80,11 +80,11 @@ func (engine *Engine) tbNameNoSchema(tablename interface{}) string {
 			return engine.Quote(table)
 		}
 	case TableName:
-		return tablename.(TableName).TableName()
+		return tablename.TableName()
 	case string:
-		return tablename.(string)
+		return tablename
 	case reflect.Value:
-		v := tablename.(reflect.Value)
+		v := tablename
 		return getTableName(engine.TableMapper, v)
 	default:
 		v := rValue(tablename)

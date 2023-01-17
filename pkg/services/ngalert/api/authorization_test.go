@@ -262,6 +262,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
+				//nolint
 				dsScopes := getDatasourceScopesForRules(
 					append(append(append(c.AffectedGroups[c.GroupKey],
 						mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {

@@ -238,7 +238,9 @@ func TestDashboardAnnotations(t *testing.T) {
 	})
 
 	st.Warm(ctx, dbstore)
+	//nolint:typecheck
 	bValue := float64(42)
+	//nolint:typecheck
 	cValue := float64(1)
 	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
 		Instance:    data.Labels{"instance_label": "testValue2"},

@@ -35,7 +35,7 @@ func (sp *managedPermissionMigrator) SQL(dialect migrator.Dialect) string {
 	return CodeMigrationSQL
 }
 
-func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (sp *managedPermissionMigrator) Exec(sess xorm.SessionInterface, mg *migrator.Migrator) error {
 	logger := log.New("managed permissions migrator")
 
 	type Permission struct {

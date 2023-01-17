@@ -39,8 +39,6 @@ func (session *Session) str2Time(col *core.Column, data string) (outTime time.Ti
 		if err == nil {
 			x = time.Unix(sd, 0)
 			//session.engine.logger.Debugf("time(0) key[%v]: %+v | sdata: [%v]\n", col.FieldName, x, sdata)
-		} else {
-			//session.engine.logger.Debugf("time(0) err key[%v]: %+v | sdata: [%v]\n", col.FieldName, x, sdata)
 		}
 	} else if len(sdata) > 19 && strings.Contains(sdata, "-") {
 		x, err = time.ParseInLocation(time.RFC3339Nano, sdata, parseLoc)

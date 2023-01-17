@@ -197,7 +197,7 @@ type TempRegionInfoDTO struct {
 	Epoch    int64
 }
 
-func (m *AddMakeRegionSingleRowMigration) Exec(sess *xorm.Session, mg *Migrator) error {
+func (m *AddMakeRegionSingleRowMigration) Exec(sess xorm.SessionInterface, mg *Migrator) error {
 	regions := make([]*TempRegionInfoDTO, 0)
 
 	err := sess.SQL("SELECT region_id, epoch FROM annotation WHERE region_id>0 AND region_id <> id").Find(&regions)

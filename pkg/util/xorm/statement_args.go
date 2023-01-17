@@ -33,6 +33,7 @@ func quoteNeeded(a interface{}) bool {
 	}
 
 	t := reflect.TypeOf(a)
+	//nolint:staticcheck
 	switch t.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return false

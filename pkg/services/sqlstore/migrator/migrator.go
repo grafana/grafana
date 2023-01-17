@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	gxorm "github.com/grafana/grafana/pkg/util/xorm"
 )
 
 var (
@@ -164,6 +163,7 @@ func (mg *Migrator) run() (err error) {
 						return err
 					}
 				}
+
 				return err
 			}
 			record.Success = true
@@ -192,7 +192,6 @@ func (mg *Migrator) exec(m Migration, sess xorm.SessionInterface) error {
 	condition := m.GetCondition()
 	if condition != nil {
 		sql, args := condition.SQL(mg.Dialect)
-
 		if sql != "" {
 			mg.Logger.Debug("Executing migration condition SQL", "id", m.Id(), "sql", sql, "args", args)
 			results, err := sess.SQL(sql, args...).Query()
@@ -209,11 +208,13 @@ func (mg *Migrator) exec(m Migration, sess xorm.SessionInterface) error {
 	}
 
 	var err error
+	var sql string
+	// here is the problem
 	if codeMigration, ok := m.(CodeMigration); ok {
 		mg.Logger.Debug("Executing code migration", "id", m.Id())
 		err = codeMigration.Exec(sess, mg)
 	} else {
-		sql := m.SQL(mg.Dialect)
+		sql = m.SQL(mg.Dialect)
 		mg.Logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
 		_, err = sess.Exec(sql)
 	}
@@ -228,12 +229,12 @@ func (mg *Migrator) exec(m Migration, sess xorm.SessionInterface) error {
 
 type dbTransactionFunc func(sess xorm.SessionInterface) error
 
-func (mg *Migrator) GetNewSession() gxorm.SessionInterface {
+func (mg *Migrator) GetNewSession() xorm.SessionInterface {
 	return mg.DBEngine.NewSession()
 }
 
 func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
-	sess := mg.GetNewSession()
+	sess := mg.DBEngine.NewSession()
 	defer sess.Close()
 
 	if err := sess.Begin(); err != nil {

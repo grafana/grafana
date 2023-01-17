@@ -337,12 +337,11 @@ func (db *sqlite3) GetColumns(tableName string) ([]string, map[string]*core.Colu
 	defer rows.Close()
 
 	var name string
-	for rows.Next() {
+	if rows.Next() {
 		err = rows.Scan(&name)
 		if err != nil {
 			return nil, nil, err
 		}
-		break
 	}
 
 	if name == "" {

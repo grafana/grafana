@@ -34,7 +34,7 @@ func (e externalAlertmanagerToDatasources) SQL(dialect migrator.Dialect) string 
 	return "migrate external alertmanagers to datasource"
 }
 
-func (e externalAlertmanagerToDatasources) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (e externalAlertmanagerToDatasources) Exec(sess xorm.SessionInterface, mg *migrator.Migrator) error {
 	var results []AdminConfiguration
 	err := sess.SQL("SELECT org_id, alertmanagers, created_at, updated_at FROM ngalert_configuration").Find(&results)
 	if err != nil {
@@ -107,7 +107,7 @@ func removeDuplicates(strs []string) []string {
 	return res
 }
 
-func generateNewDatasourceUid(sess *xorm.Session, orgId int64) (string, error) {
+func generateNewDatasourceUid(sess xorm.SessionInterface, orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
 

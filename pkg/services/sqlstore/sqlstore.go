@@ -562,9 +562,11 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		}
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>11111111111")
 			return nil, err
 		}
 		if _, err := sec.NewKey("type", dbType); err != nil {
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>22222222222")
 			return nil, err
 		}
 		switch dbType {
@@ -578,6 +580,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 			}
 		default:
 			if _, err := sec.NewKey("connection_string", sqlutil.SQLite3TestDB().ConnStr); err != nil {
+				fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>2223333333")
 				return nil, err
 			}
 		}
@@ -586,6 +589,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		// cannot just set it on testSQLStore as it overrides the config in Init
 		if _, present := os.LookupEnv("SKIP_MIGRATIONS"); present {
 			if _, err := sec.NewKey("skip_migrations", "true"); err != nil {
+				fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>222222444444")
 				return nil, err
 			}
 		}
@@ -593,6 +597,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		// need to get engine to clean db before we init
 		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
 		if err != nil {
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>222225555555")
 			return nil, err
 		}
 
@@ -603,18 +608,22 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		bus := bus.ProvideBus(tracer)
 		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), engine, migration, bus, tracer, opts...)
 		if err != nil {
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>222266666662")
 			return nil, err
 		}
 
 		if err := testSQLStore.Migrate(false); err != nil {
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>2222277777")
 			return nil, err
 		}
 
 		if err := testSQLStore.Dialect.TruncateDBTables(); err != nil {
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>222222888888")
 			return nil, err
 		}
 
 		if err := testSQLStore.Reset(); err != nil {
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>222229999999")
 			return nil, err
 		}
 
@@ -622,6 +631,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		// XXX: Why is this only relevant when not skipping migrations?
 		if !testSQLStore.dbCfg.SkipMigrations {
 			if err := testSQLStore.Sync(); err != nil {
+				fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>2222221111100000")
 				return nil, err
 			}
 		}

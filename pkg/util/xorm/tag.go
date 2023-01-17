@@ -251,10 +251,9 @@ func ExtendsTagHandler(ctx *tagContext) error {
 		for _, col := range parentTable.Columns() {
 			col.FieldName = fmt.Sprintf("%v.%v", ctx.col.FieldName, col.FieldName)
 
-			var tagPrefix = ctx.col.FieldName
 			if len(ctx.params) > 0 {
 				col.Nullable = isPtr
-				tagPrefix = ctx.params[0]
+				tagPrefix := ctx.params[0]
 				if col.IsPrimaryKey {
 					col.Name = ctx.col.FieldName
 					col.IsPrimaryKey = false

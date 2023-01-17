@@ -118,15 +118,15 @@ func (statement *Statement) Alias(alias string) *Statement {
 
 // SQL adds raw sql statement
 func (statement *Statement) SQL(query interface{}, args ...interface{}) *Statement {
-	switch query.(type) {
+	switch query := query.(type) {
 	case (*builder.Builder):
 		var err error
-		statement.RawSQL, statement.RawParams, err = query.(*builder.Builder).ToSQL()
+		statement.RawSQL, statement.RawParams, err = query.ToSQL()
 		if err != nil {
 			statement.lastError = err
 		}
 	case string:
-		statement.RawSQL = query.(string)
+		statement.RawSQL = query
 		statement.RawParams = args
 	default:
 		statement.lastError = ErrUnSupportedSQLType
@@ -142,19 +142,19 @@ func (statement *Statement) Where(query interface{}, args ...interface{}) *State
 
 // And add Where & and statement
 func (statement *Statement) And(query interface{}, args ...interface{}) *Statement {
-	switch query.(type) {
+	switch query := query.(type) {
 	case string:
-		cond := builder.Expr(query.(string), args...)
+		cond := builder.Expr(query, args...)
 		statement.cond = statement.cond.And(cond)
 	case map[string]interface{}:
-		queryMap := query.(map[string]interface{})
+		queryMap := query
 		newMap := make(map[string]interface{})
 		for k, v := range queryMap {
 			newMap[statement.Engine.Quote(k)] = v
 		}
 		statement.cond = statement.cond.And(builder.Eq(newMap))
 	case builder.Cond:
-		cond := query.(builder.Cond)
+		cond := query
 		statement.cond = statement.cond.And(cond)
 		for _, v := range args {
 			if vv, ok := v.(builder.Cond); ok {
@@ -170,15 +170,15 @@ func (statement *Statement) And(query interface{}, args ...interface{}) *Stateme
 
 // Or add Where & Or statement
 func (statement *Statement) Or(query interface{}, args ...interface{}) *Statement {
-	switch query.(type) {
+	switch query := query.(type) {
 	case string:
-		cond := builder.Expr(query.(string), args...)
+		cond := builder.Expr(query, args...)
 		statement.cond = statement.cond.Or(cond)
 	case map[string]interface{}:
-		cond := builder.Eq(query.(map[string]interface{}))
+		cond := builder.Eq(query)
 		statement.cond = statement.cond.Or(cond)
 	case builder.Cond:
-		cond := query.(builder.Cond)
+		cond := query
 		statement.cond = statement.cond.Or(cond)
 		for _, v := range args {
 			if vv, ok := v.(builder.Cond); ok {
@@ -396,7 +396,7 @@ func (statement *Statement) buildUpdates(bean interface{},
 				val, _ = nulType.Value()
 			} else {
 				if !col.SQLType.IsJson() {
-					engine.autoMapType(fieldValue)
+					_, _ = engine.autoMapType(fieldValue)
 					if table, ok := engine.Tables[fieldValue.Type()]; ok {
 						if len(table.PrimaryKeys) == 1 {
 							pkField := reflect.Indirect(fieldValue).FieldByName(table.PKColumns()[0].FieldName)

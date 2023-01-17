@@ -1383,10 +1383,6 @@ github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20230112102204-5545cdf0edc9 h1:rMfagCACaYtBvj6bbJq5zVuNR6ASeKUTUOgr/DM+QrU=
-github.com/grafana/alerting v0.0.0-20230112102204-5545cdf0edc9/go.mod h1:w5jcmHYPAfju/QcI69SwFs0+qMcm8jvW6fsqSc2tJtc=
-github.com/grafana/alerting v0.0.0-20230113002715-e287d43f4b57 h1:VyzefGsa17SXPzqCvnI8cczbPfuVNUMXiPJNVNy/PdA=
-github.com/grafana/alerting v0.0.0-20230113002715-e287d43f4b57/go.mod h1:w5jcmHYPAfju/QcI69SwFs0+qMcm8jvW6fsqSc2tJtc=
 github.com/grafana/alerting v0.0.0-20230113220341-b9b3de89bca2 h1:XkzN0dBir+oso3XjGOV2HLGSCjyyYHLL5AuUqI/LIXY=
 github.com/grafana/alerting v0.0.0-20230113220341-b9b3de89bca2/go.mod h1:w5jcmHYPAfju/QcI69SwFs0+qMcm8jvW6fsqSc2tJtc=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
@@ -1414,8 +1410,6 @@ github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc h1:1PY8n+rXuBNr3r1J
 github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc/go.mod h1:9Zh6dWPtB3MSzTRt8fIFH60Z351QQ+s7hCU3J/tTlA4=
 github.com/grafana/thema v0.0.0-20221222001256-d3a8fa941a6b h1:LBjw2NaMbTdx/etBbyZO0n0L2Lqj5PCDJAGwKk9TCII=
 github.com/grafana/thema v0.0.0-20221222001256-d3a8fa941a6b/go.mod h1:8wmENx19kzNI+5De7889AVRJ3T4OnOb5I1bSJLcj1t4=
-github.com/grafana/xorm v0.8.3-0.20230113083446-03d03aa2342e h1:02Ioup8bna4jFn69ex+Qw3Rtgdnx4J5325iZiVYzMYk=
-github.com/grafana/xorm v0.8.3-0.20230113083446-03d03aa2342e/go.mod h1:ZkJLEYLoVyg7amJK/5r779bHyzs2AU8f8VMiP6BM7uY=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
@@ -2594,8 +2588,6 @@ github.com/yvasiyarov/go-metrics v0.0.0-20140926110328-57bccd1ccd43/go.mod h1:aX
 github.com/yvasiyarov/gorelic v0.0.0-20141212073537-a9bba5b9ab50/go.mod h1:NUSPSUX/bi6SeDMUh6brw0nXpxHnc96TguQh0+r/ssA=
 github.com/yvasiyarov/newrelic_platform_go v0.0.0-20140908184405-b21fdbd4370f/go.mod h1:GlGEuHIJweS1mbCqG+7vt2nvWLzLLnRHbXz5JKd/Qbg=
 github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxtB1Q=
-github.com/ziutek/mymysql v1.5.4 h1:GB0qdRGsTwQSBVYuVShFBKaXSnSnYYC2d9knnE1LHFs=
-github.com/ziutek/mymysql v1.5.4/go.mod h1:LMSpPZ6DbqWFxNCHW77HeMg9I646SAhApZ/wKdgO/C0=
 gitlab.com/nyarla/go-crypt v0.0.0-20160106005555-d9a5dc2b789b/go.mod h1:T3BPAOm2cqquPa0MKWeNkmOM5RQsRhkrwMWonFMN7fE=
 go.elastic.co/apm v1.5.0/go.mod h1:OdB9sPtM6Vt7oz3VXt7+KR96i9li74qrxBGHTQygFvk=
 go.elastic.co/apm v1.11.0/go.mod h1:qoOSi09pnzJDh5fKnfY7bPmQgl8yl2tULdOu03xhui0=
@@ -2614,6 +2606,7 @@ go.etcd.io/etcd v0.0.0-20190709142735-eb7dd97135a5/go.mod h1:N0RPWo9FXJYZQI4BTkD
 go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738/go.mod h1:dnLIgRNXwCJa5e+c6mIZCrds/GIG4ncV9HhK5PX7jPg=
 go.etcd.io/etcd v0.5.0-alpha.5.0.20200520232829-54ba9589114f/go.mod h1:skWido08r9w6Lq/w70DO5XYIKMu4QFu1+4VsqLQuJy8=
 go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489/go.mod h1:yVHk9ub3CSBatqGNg7GRmsnfLWtoW60w4eDYfh7vHDg=
+go.etcd.io/etcd v3.3.25+incompatible h1:V1RzkZJj9LqsJRy+TUBgpWSbZXITLB819lstuTFoZOY=
 go.etcd.io/etcd v3.3.25+incompatible/go.mod h1:yaeTdrJi5lOmYerz05bd8+V7KubZs8YSFZfzsF9A6aI=
 go.etcd.io/etcd/api/v3 v3.5.0-alpha.0/go.mod h1:mPcW6aZJukV6Aa81LSKpBjQXTWlXB5r74ymPoSWa3Sw=
 go.etcd.io/etcd/api/v3 v3.5.0/go.mod h1:cbVKeC6lCfl7j/8jBhAK6aIYO9XOjdptoxU/nLQcPvs=
@@ -3651,6 +3644,5 @@ sigs.k8s.io/yaml v1.3.0/go.mod h1:GeOyir5tyXNByN85N/dRIT9es5UQNerPYEKK56eTBm8=
 sourcegraph.com/sourcegraph/appdash v0.0.0-20190731080439-ebfcffb1b5c0/go.mod h1:hI742Nqp5OhwiqlzhgfbWU4mW4yO10fP+LoT9WOswdU=
 xorm.io/builder v0.3.6 h1:ha28mQ2M+TFx96Hxo+iq6tQgnkC9IZkM6D8w9sKHHF8=
 xorm.io/builder v0.3.6/go.mod h1:LEFAPISnRzG+zxaxj2vPicRwz67BdhFreKg8yv8/TgU=
-xorm.io/core v0.7.2/go.mod h1:jJfd0UAEzZ4t87nbQYtVjmqpIODugN6PD2D9E+dJvdM=
 xorm.io/core v0.7.3 h1:W8ws1PlrnkS1CZU1YWaYLMQcQilwAmQXU0BJDJon+H0=
 xorm.io/core v0.7.3/go.mod h1:jJfd0UAEzZ4t87nbQYtVjmqpIODugN6PD2D9E+dJvdM=

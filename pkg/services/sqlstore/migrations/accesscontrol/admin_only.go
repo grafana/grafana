@@ -21,7 +21,7 @@ func (m *adminOnlyMigrator) SQL(dialect migrator.Dialect) string {
 	return CodeMigrationSQL
 }
 
-func (m *adminOnlyMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (m *adminOnlyMigrator) Exec(sess xorm.SessionInterface, mg *migrator.Migrator) error {
 	logger := log.New("admin-permissions-only-migrator")
 	type model struct {
 		UID      string `xorm:"uid"`

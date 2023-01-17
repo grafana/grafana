@@ -159,7 +159,7 @@ func (m *updateDashboardUIDPanelIDMigration) SQL(_ migrator.Dialect) string {
 	return "set dashboard_uid and panel_id migration"
 }
 
-func (m *updateDashboardUIDPanelIDMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (m *updateDashboardUIDPanelIDMigration) Exec(sess xorm.SessionInterface, mg *migrator.Migrator) error {
 	var results []struct {
 		ID          int64             `xorm:"id"`
 		Annotations map[string]string `xorm:"annotations"`
@@ -210,7 +210,7 @@ func (m *clearMigrationEntry) SQL(dialect migrator.Dialect) string {
 	return "clear migration entry code migration"
 }
 
-func (m *clearMigrationEntry) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (m *clearMigrationEntry) Exec(sess xorm.SessionInterface, mg *migrator.Migrator) error {
 	_, err := sess.SQL(`DELETE from migration_log where migration_id = ?`, m.migrationID).Query()
 	if err != nil {
 		return fmt.Errorf("failed to clear migration entry %v: %w", m.migrationID, err)
@@ -225,7 +225,7 @@ func (m *clearMigrationEntry) SkipMigrationLog() bool {
 type migration struct {
 	migrator.MigrationBase
 	// session and mg are attached for convenience.
-	sess *xorm.Session
+	sess xorm.SessionInterface
 	mg   *migrator.Migrator
 
 	seenUIDs uidSet
@@ -237,7 +237,7 @@ func (m *migration) SQL(dialect migrator.Dialect) string {
 }
 
 //nolint:gocyclo
-func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (m *migration) Exec(sess xorm.SessionInterface, mg *migrator.Migrator) error {
 	m.sess = sess
 	m.mg = mg
 
@@ -541,7 +541,7 @@ func (m *rmMigration) SQL(dialect migrator.Dialect) string {
 	return codeMigration
 }
 
-func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (m *rmMigration) Exec(sess xorm.SessionInterface, mg *migrator.Migrator) error {
 	_, err := sess.Exec("delete from alert_rule")
 	if err != nil {
 		return err

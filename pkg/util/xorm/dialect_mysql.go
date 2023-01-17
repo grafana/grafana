@@ -193,7 +193,6 @@ func (db *mysql) SetParams(params map[string]string) {
 			fallthrough
 		case "COMPRESSED":
 			db.rowFormat = t
-			break
 		default:
 			break
 		}
@@ -345,7 +344,7 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 		}
 		col.Name = strings.Trim(columnName, "` ")
 		col.Comment = comment
-		if "YES" == isNullable {
+		if isNullable == "YES" {
 			col.Nullable = true
 		}
 
@@ -403,14 +402,11 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 		if _, ok := core.SqlTypes[colType]; ok {
 			col.SQLType = core.SQLType{Name: colType, DefaultLength: len1, DefaultLength2: len2}
 		} else {
-			return nil, nil, fmt.Errorf("Unknown colType %v", colType)
+			return nil, nil, fmt.Errorf("unknown colType %v", colType)
 		}
 
 		if colKey == "PRI" {
 			col.IsPrimaryKey = true
-		}
-		if colKey == "UNI" {
-			// col.is
 		}
 
 		if extra == "auto_increment" {
@@ -484,7 +480,7 @@ func (db *mysql) GetIndexes(tableName string) (map[string]*core.Index, error) {
 			continue
 		}
 
-		if "YES" == nonUnique || nonUnique == "1" {
+		if nonUnique == "YES" || nonUnique == "1" {
 			indexType = core.IndexType
 		} else {
 			indexType = core.UniqueType

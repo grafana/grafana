@@ -629,6 +629,7 @@ func (session *Session) genInsertColumns(bean interface{}) ([]string, []interfac
 		}
 		fieldValue := *fieldValuePtr
 
+		//nolint:staticcheck
 		if col.IsAutoIncrement {
 			switch fieldValue.Type().Kind() {
 			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int, reflect.Int64:
