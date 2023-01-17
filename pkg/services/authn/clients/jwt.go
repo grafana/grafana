@@ -96,7 +96,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		if role.IsValid() {
 			var orgID int64
 			// FIXME (jguer): GetIDForNewUser already has the auto assign information
-			// just neeeds the org role. Find a meaningful way to pass this default
+			// just needs the org role. Find a meaningful way to pass this default
 			// role to it (that doesn't involve id.OrgRoles[0] = role)
 			if s.cfg.AutoAssignOrg && s.cfg.AutoAssignOrgId > 0 {
 				orgID = int64(s.cfg.AutoAssignOrgId)

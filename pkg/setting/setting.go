@@ -1110,7 +1110,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
 	}
 
-	// check old key  name
+	// check old key name
 	GrafanaComUrl = valueAsString(iniFile.Section("grafana_net"), "url", "")
 	if GrafanaComUrl == "" {
 		GrafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
