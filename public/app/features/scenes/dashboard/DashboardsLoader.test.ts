@@ -135,7 +135,7 @@ describe('DashboardLoader', () => {
       expect(scene.state.uid).toBe('test-uid');
       expect(scene.state?.$timeRange?.state.value.raw).toEqual(dash.time);
       expect(scene.state?.$variables?.state.variables).toHaveLength(1);
-      expect(scene.state.subMenu).toBeDefined();
+      expect(scene.state.controls).toBeDefined();
     });
   });
 
