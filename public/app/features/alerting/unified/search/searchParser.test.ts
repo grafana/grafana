@@ -5,42 +5,39 @@ import { applySearchFilterToQuery, getSearchFilterFromQuery } from './searchPars
 
 describe('Alert rules searchParser', () => {
   describe('getSearchFilterFromQuery', () => {
-    it.each(['ds:prometheus', 'datasource:prometheus'])('should parse data source filter from %s', (query) => {
+    it.each(['ds:prometheus'])('should parse data source filter from %s', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.dataSourceName).toBe('prometheus');
     });
 
-    it.each(['ns:integrations-node', 'namespace:integrations-node'])(
-      'should parse namespace filter from %s',
-      (query) => {
-        const filter = getSearchFilterFromQuery(query);
-        expect(filter.namespace).toBe('integrations-node');
-      }
-    );
+    it.each(['ns:integrations-node'])('should parse namespace filter from %s', (query) => {
+      const filter = getSearchFilterFromQuery(query);
+      expect(filter.namespace).toBe('integrations-node');
+    });
 
-    it.each(['l:team l:region=emea', 'label:team label:region=emea'])('should parse label filter from %s', (query) => {
+    it.each(['label:team label:region=emea'])('should parse label filter from %s', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.labels).toHaveLength(2);
       expect(filter.labels).toContain('team');
       expect(filter.labels).toContain('region=emea');
     });
 
-    it.each(['g:cpu-utilization', 'group:cpu-utilization'])('should parse group filter from %s', (query) => {
+    it.each(['group:cpu-utilization'])('should parse group filter from %s', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.groupName).toBe('cpu-utilization');
     });
 
-    it.each(['r:cpu-80%-alert', 'rule:cpu-80%-alert'])('should parse rule name filter from %s', (query) => {
+    it.each(['rule:cpu-80%-alert'])('should parse rule name filter from %s', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.ruleName).toBe('cpu-80%-alert');
     });
 
-    it.each(['s:firing', 'state:firing'])('should parse rule state filter from %s', (query) => {
+    it.each(['state:firing'])('should parse rule state filter from %s', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.ruleState).toBe(PromAlertingRuleState.Firing);
     });
 
-    it.each(['t:recording', 'type:recording'])('should parse rule type filter from %s', (query) => {
+    it.each(['type:recording'])('should parse rule type filter from %s', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.ruleType).toBe(PromRuleType.Recording);
     });
@@ -54,7 +51,7 @@ describe('Alert rules searchParser', () => {
     });
 
     it('should parse filter values with whitespaces when in quotes', () => {
-      const query = 'ds:"prom dev" ns:"node one" l:"team=frontend us" g:"cpu alerts" r:"cpu failure"';
+      const query = 'ds:"prom dev" ns:"node one" label:"team=frontend us" group:"cpu alerts" rule:"cpu failure"';
       const filter = getSearchFilterFromQuery(query);
 
       expect(filter.dataSourceName).toBe('prom dev');
@@ -66,7 +63,7 @@ describe('Alert rules searchParser', () => {
 
     it('should parse filter values with special characters', () => {
       const query =
-        'ds:prom::dev/linux>>; ns:"[{node}] (#20+)" l:_region=apac|emea\\nasa g:$20.00%$ r:"cpu!! & memory.,?"';
+        'ds:prom::dev/linux>>; ns:"[{node}] (#20+)" label:_region=apac|emea\\nasa group:$20.00%$ rule:"cpu!! & memory.,?"';
       const filter = getSearchFilterFromQuery(query);
 
       expect(filter.dataSourceName).toBe('prom::dev/linux>>;');
@@ -85,7 +82,7 @@ describe('Alert rules searchParser', () => {
     });
 
     it('should parse mixed free form words and filters', () => {
-      const query = 'ds:prometheus utilization l:team cpu';
+      const query = 'ds:prometheus utilization label:team cpu';
       const filter = getSearchFilterFromQuery(query);
 
       expect(filter.dataSourceName).toBe('prometheus');
@@ -95,7 +92,7 @@ describe('Alert rules searchParser', () => {
     });
 
     it('should parse labels containing matchers', () => {
-      const query = 'l:region!=US l:"team=~fe.*devs" l:cluster!~ba.+';
+      const query = 'label:region!=US label:"team=~fe.*devs" label:cluster!~ba.+';
       const filter = getSearchFilterFromQuery(query);
 
       expect(filter.labels).toContain('region!=US');
@@ -120,7 +117,7 @@ describe('Alert rules searchParser', () => {
       const query = applySearchFilterToQuery('', filter);
 
       expect(query).toBe(
-        'ds:"Mimir Dev" ns:/etc/prometheus g:cpu-usage r:"cpu > 80%" s:firing t:alerting l:team l:region=apac cpu eighty'
+        'ds:"Mimir Dev" ns:/etc/prometheus group:cpu-usage rule:"cpu > 80%" state:firing type:alerting label:team label:region=apac cpu eighty'
       );
     });
 
@@ -133,10 +130,12 @@ describe('Alert rules searchParser', () => {
         ruleName: 'cpu > 80%',
       });
 
-      const baseQuery = 'ds:prometheus ns:mimir-global g:memory r:"mem > 90% l:severity"';
+      const baseQuery = 'ds:prometheus ns:mimir-global group:memory rule:"mem > 90% label:severity"';
       const query = applySearchFilterToQuery(baseQuery, filter);
 
-      expect(query).toBe('ds:"Mimir Dev" ns:/etc/prometheus g:cpu-usage r:"cpu > 80%" l:team l:region=apac');
+      expect(query).toBe(
+        'ds:"Mimir Dev" ns:/etc/prometheus group:cpu-usage rule:"cpu > 80%" label:team label:region=apac'
+      );
     });
 
     it('should preserve the order of parameters when updating', () => {
@@ -148,10 +147,10 @@ describe('Alert rules searchParser', () => {
         ruleName: 'cpu > 80%',
       });
 
-      const baseQuery = 'l:region=apac r:"mem > 90%" g:memory ns:mimir-global ds:prometheus';
+      const baseQuery = 'label:region=apac rule:"mem > 90%" group:memory ns:mimir-global ds:prometheus';
       const query = applySearchFilterToQuery(baseQuery, filter);
 
-      expect(query).toBe('l:region=emea r:"cpu > 80%" g:cpu-usage ns:/etc/prometheus ds:"Mimir Dev"');
+      expect(query).toBe('label:region=emea rule:"cpu > 80%" group:cpu-usage ns:/etc/prometheus ds:"Mimir Dev"');
     });
   });
 });

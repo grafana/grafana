@@ -12,13 +12,13 @@ FilterExpression {
  TypeFilter
 }
 
-DataSourceFilter { filter<"ds" | "datasource"> }
-NameSpaceFilter { filter<"ns" | "namespace"> }
-LabelFilter { filter<"l" | "label"> }
-GroupFilter { filter<"g" | "group"> }
-RuleFilter { filter<"r" | "rule"> }
-StateFilter { filter<"s" | "state"> }
-TypeFilter { filter<"t" | "type"> }
+DataSourceFilter { filter<"ds"> }
+NameSpaceFilter { filter<"ns"> }
+LabelFilter { filter<"label"> }
+GroupFilter { filter<"group"> }
+RuleFilter { filter<"rule"> }
+StateFilter { filter<"state"> }
+TypeFilter { filter<"type"> }
 
 filter<type> { filterToken<type> FilterValue }
 

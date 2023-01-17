@@ -194,36 +194,30 @@ function SearchQueryHelp() {
 
   return (
     <div>
-      <div>
-        Search syntax allows to query alert rules by the parameters defined below.
-        <br />
-        Each filter has short and long version for convenience
-      </div>
+      <div>Search syntax allows to query alert rules by the parameters defined below.</div>
       <hr />
       <div className={styles.grid}>
         <div>Filter type</div>
-        <div>Short version</div>
-        <div>Long version</div>
-        <HelpRow title="Datasource" short="ds:mimir" long="datasource:mimir" />
-        <HelpRow title="Folder/Namespace" short="ns:global" long="namespace:global" />
-        <HelpRow title="Group" short="g:cpu-usage" long="group:cpu-usage" />
-        <HelpRow title="Rule" short='r:"cpu 80%"' long='rule:"cpu 80%"' />
-        <HelpRow title="Labels" short="l:team=A" long="label:team=A" />
-        <HelpRow title="State" short="s:firing" long="state:firing" />
-        <HelpRow title="Type" short="t:alerting" long="type:alerting" />
+        <div>Expression</div>
+        <HelpRow title="Datasource" expr="ds:mimir" />
+        <HelpRow title="Folder/Namespace" expr="ns:global" />
+        <HelpRow title="Group" expr="group:cpu-usage" />
+        <HelpRow title="Rule" expr='rule:"cpu 80%"' />
+        <HelpRow title="Labels" expr="label:team=A" />
+        <HelpRow title="State" expr="state:firing" />
+        <HelpRow title="Type" expr="type:alerting" />
       </div>
     </div>
   );
 }
 
-function HelpRow({ title, short, long }: { title: string; short: string; long: string }) {
+function HelpRow({ title, expr }: { title: string; expr: string }) {
   const styles = useStyles2(helpStyles);
 
   return (
     <>
       <div>{title}</div>
-      <code className={styles.code}>{short}</code>
-      <code className={styles.code}>{long}</code>
+      <code className={styles.code}>{expr}</code>
     </>
   );
 }
@@ -231,7 +225,7 @@ function HelpRow({ title, short, long }: { title: string; short: string; long: s
 const helpStyles = (theme: GrafanaTheme2) => ({
   grid: css`
     display: grid;
-    grid-template-columns: max-content auto max-content;
+    grid-template-columns: max-content auto;
     gap: ${theme.spacing(1)};
     align-items: center;
   `,

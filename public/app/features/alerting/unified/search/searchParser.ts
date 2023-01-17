@@ -21,11 +21,11 @@ export interface SearchFilterState {
 const filterTermToTypeMap: Record<number, string> = {
   [terms.DataSourceFilter]: 'ds',
   [terms.NameSpaceFilter]: 'ns',
-  [terms.LabelFilter]: 'l',
-  [terms.RuleFilter]: 'r',
-  [terms.StateFilter]: 's',
-  [terms.TypeFilter]: 't',
-  [terms.GroupFilter]: 'g',
+  [terms.LabelFilter]: 'label',
+  [terms.RuleFilter]: 'rule',
+  [terms.GroupFilter]: 'group',
+  [terms.StateFilter]: 'state',
+  [terms.TypeFilter]: 'type',
 };
 
 export function getSearchFilterFromQuery(query: string): SearchFilterState {
