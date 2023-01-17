@@ -565,11 +565,11 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 
   // Only say this is an error if the error links to the query
   let state = data.state;
-  // @Ida this is an error in the *previous* query, not the new one.
+  // This is an error in the *previous* query, not the new one.
   // (Both results are being merged in runRequest/preProcessPanelData() which results in a combination of data)
   const error = data.error && data.error.refId === refId ? data.error : undefined;
   // An alternative solution is in the comment below, but I feel like it's more dealing with the symptoms and not the cause?
-  // Unless of course the cause, that error here is persisted from the last query, is intended behaviour.
+  // Unless of course that the error here is persisted from the last query, is intended behaviour.
   // if (state !== LoadingState.Loading && error) {
   if (error) {
     state = LoadingState.Error;
