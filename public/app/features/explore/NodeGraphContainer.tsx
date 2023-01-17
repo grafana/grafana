@@ -59,7 +59,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
     toggleOpen();
     reportInteraction('grafana_traces_node_graph_panel_clicked', {
       datasourceType: datasourceType,
-      expanded: !open,
+      isExpanded: !open,
     });
   };
 

@@ -255,8 +255,8 @@ func transformInterface(i interface{}) (interface{}, interface{}, error) {
 }
 
 func transformSlice(i []interface{}) (interface{}, interface{}, error) {
-	var transformedSlice []interface{}
-	var rawSlice []interface{}
+	transformedSlice := make([]interface{}, 0, len(i))
+	rawSlice := make([]interface{}, 0, len(i))
 	for _, val := range i {
 		transformed, raw, err := transformInterface(val)
 		if err != nil {
