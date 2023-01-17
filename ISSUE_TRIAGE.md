@@ -19,53 +19,53 @@ If you don't have the knowledge or time to code, consider helping with triage. T
 
 <!-- https://textik.com/#610afa78553def29 -->
 
-```                                                               
-                         +-------------------+                                                                              
-                        |                   |                                                                              
+```
+                         +-------------------+
+                        |                   |
                         |  new issue/       |                                                                             +
-                        |  more info added  |                                                                              
-                        |                   |                                                                              
-                        +---------|---------+                                                                              
-                                  |                                                                                        
-                    +-------------|-----------+                                                                            
-                    |                         |                                                                            
-        NO   +-------  all info needed to     ------+  YES                                                                 
-             |      |  categorize the issue?  |     |                                                                      
-             |      |                         |     |                                                                      
-             |      +-------------------------+     |                                                                      
-      +------|-----------+             +------------|----------+                                                           
-      |                  |             |                       |                                                           
-      | label:           |             |  label: type/*        |                                                           
-      | needs more info  |             |  label: area/*        |                                                           
-      |                  |             |  label: datasource/*  |                                                           
-      +------------------+             |            |          |                                                           
-                                       +------------|----------+                                                           
-                                                    |                                                                      
-                                           +--------|-------+                                                              
-                                           |                |                                                              
-                             NO  +---------- is duplicate?  --------------------+ YES                                      
-                                 |         |                |                   |                                          
-                                 |         +----------------+                   |                                          
-                                 |                             +----------------|---------------+                          
-                          +------|-----+                       |                                |                          
-                          |            |                       |  add comment:                  |                          
-          NO  +------------ can repro? ------------+  YES      |                                |                          
-              |           |            |           |           |  /duplicate of #<issue number> |                          
-              |           +------------+           |           |                                |                          
-              |                                    |           +--------------------------------+                          
-+-------------|-------------+                      |                                                                       
-|                           |             +--------|---------+                                                             
-| label:                    |             |                  |                                                             
-| triage/needs-confirmation |  NO +-------- needs priority?  ------+ YES                                                   
-|                           |     |       |                  |     |                                                       
-+-------------|-------------+     |       +------------------+     |                                                       
-              |                   |                                |                                                       
-+-------------|------+    +-------|--------+            +----------|---------+                                             
-|                    |    |                |            |                    |                                             
-| Assign to project  ------     Done       -------------- label: priority/*  |                                             
-|                    |    |                |            |                    |                                             
-+--------------------+    +----------------+            +--------------------+                                             
-                                                                                                                           
+                        |  more info added  |
+                        |                   |
+                        +---------|---------+
+                                  |
+                    +-------------|-----------+
+                    |                         |
+        NO   +-------  all info needed to     ------+  YES
+             |      |  categorize the issue?  |     |
+             |      |                         |     |
+             |      +-------------------------+     |
+      +------|-----------+             +------------|----------+
+      |                  |             |                       |
+      | label:           |             |  label: type/*        |
+      | needs more info  |             |  label: area/*        |
+      |                  |             |  label: datasource/*  |
+      +------------------+             |            |          |
+                                       +------------|----------+
+                                                    |
+                                           +--------|-------+
+                                           |                |
+                             NO  +---------- is duplicate?  --------------------+ YES
+                                 |         |                |                   |
+                                 |         +----------------+                   |
+                                 |                             +----------------|---------------+
+                          +------|-----+                       |                                |
+                          |            |                       |  add comment:                  |
+          NO  +------------ can repro? ------------+  YES      |                                |
+              |           |            |           |           |  /duplicate of #<issue number> |
+              |           +------------+           |           |                                |
+              |                                    |           +--------------------------------+
++-------------|-------------+                      |
+|                           |             +--------|---------+
+| label:                    |             |                  |
+| triage/needs-confirmation |  NO +-------- needs priority?  ------+ YES
+|                           |     |       |                  |     |
++-------------|-------------+     |       +------------------+     |
+              |                   |                                |
++-------------|------+    +-------|--------+            +----------|---------+
+|                    |    |                |            |                    |
+| Assign to project  ------     Done       -------------- label: priority/*  |
+|                    |    |                |            |                    |
++--------------------+    +----------------+            +--------------------+
+
 ```
 
 ## 1. Find uncategorized issues
@@ -106,9 +106,9 @@ Should explain what happened, what was expected and how to reproduce it together
 #### Enhancement requests
 
 Enhancement requests (aka. feature requests) should be created as a [Github discussion](https://github.com/grafana/grafana/discussions). When submitting an enhancement request we ask that users focus on the problem they'd like to solve and why it’s a problem rather than focusing on the solution itself. To facilitate this we recommend using the following template:
- 
+
 - What would you like to be added?:
-- Why is this needed (describe your use case and goals)**?:
+- Why is this needed (describe your use case and goals)\*\*?:
 
 #### Accessibility issues
 
@@ -306,7 +306,7 @@ In many cases the issue author or community as a whole is more suitable to contr
 
 ## Investigation of issues
 
-When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [`triage/needs-confirmation`](https://github.com/grafana/grafana/labels/triage%2Fneeds-confirmation). Depending on the perceived severity and/or number of [upvotes](https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments), the investigation will either be delegated to another maintainer for further investigation or put on hold until someone else (maintainer or contributor) picks it up and eventually starts investigating it. 
+When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [`triage/needs-confirmation`](https://github.com/grafana/grafana/labels/triage%2Fneeds-confirmation). Depending on the perceived severity and/or number of [upvotes](https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments), the investigation will either be delegated to another maintainer for further investigation or put on hold until someone else (maintainer or contributor) picks it up and eventually starts investigating it.
 
 Investigating issues can be a very time consuming task, especially for the maintainers, given the huge number of combinations of plugins, data sources, platforms, databases, browsers, tools, hardware, integrations, versions and cloud services, etc that are being used with Grafana. There is a certain number of combinations that are more common than others, and these are in general easier for maintainers to investigate.
 
@@ -322,7 +322,8 @@ We have some automation that triggers on comments or labels being added to issue
 
 ## External PRs
 
-Part of issue triage should also be triaging of external PRs. Main goal should be to make sure PRs from external contributors have an owner/reviewer and are not forgotten. 
+Part of issue triage should also be triaging of external PRs. Main goal should be to make sure PRs from external contributors have an owner/reviewer and are not forgotten.
+
 1. Check new external PRs which do not have a reviewer. You can easily search for pull requests made by external contributors by using the label: `pr/external` in your [query search](https://github.com/grafana/grafana/pulls?q=is%3Aopen+is%3Apr+label%3Apr%2Fexternal) Note: external PRs are automatically labeled with `pr/external` upon creation.
 2. Check if there is a link to an existing issue. The link to a existing issue should be in the description section, underneath “Which issue(s) does this PR fix?:”.
 3. If not and you know which issue it is solving, add the link yourself, otherwise ask the author to link the issue or create one.
