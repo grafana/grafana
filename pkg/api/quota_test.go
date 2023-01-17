@@ -41,16 +41,16 @@ func TestAPIEndpoint_GetCurrentOrgQuotas_LegacyAccessControl(t *testing.T) {
 		hs.Cfg = cfg
 	})
 
-	t.Run("Viewer can view CurrentOrgQuotas", func(t *testing.T) {
-		req := webtest.RequestWithSignedInUser(server.NewGetRequest(getCurrentOrgQuotasURL), &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer})
+	t.Run("Unsigned user cannot view CurrentOrgQuotas", func(t *testing.T) {
+		req := server.NewGetRequest(getCurrentOrgQuotasURL)
 		res, err := server.Send(req)
 		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
+		assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("Unsigned user cannot view CurrentOrgQuotas", func(t *testing.T) {
-		req := server.NewGetRequest(getCurrentOrgQuotasURL)
+	t.Run("Viewer can view CurrentOrgQuotas", func(t *testing.T) {
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest(getCurrentOrgQuotasURL), &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer})
 		res, err := server.Send(req)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
