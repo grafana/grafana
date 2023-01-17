@@ -60,7 +60,7 @@ You can see a docker-compose example using a custom configuration file [here](ht
 
 You can restrict access to the rendering endpoint by specifying a secret token. The token should be configured in the Grafana configuration file and the renderer configuration file. This token is important when you run the plugin in remote rendering mode. 
 
-Renderer version v3.6.1 or later require a Grafana version with this feature. These include:
+Renderer versions v3.6.1 or later require a Grafana version with this feature. These include:
 - Grafana v9.1.2 or later
 - Grafana v9.0.8 or later patch releases
 - Grafana v8.5.11 or later patch releases
