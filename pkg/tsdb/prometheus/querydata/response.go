@@ -29,6 +29,11 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		MatrixWideSeries: s.enableWideSeries,
 		VectorWideSeries: s.enableWideSeries,
 	})
+
+	if r.Error != nil {
+		return r, r.Error
+	}
+
 	if r.Frames == nil {
 		return r, fmt.Errorf("received empty response from prometheus")
 	}

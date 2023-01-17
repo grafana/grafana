@@ -124,19 +124,13 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 	}
 
 	if q.InstantQuery {
-		res, err := s.instantQuery(traceCtx, client, q, headers)
-		if err != nil {
-			return nil, err
-		}
+		res, _ := s.instantQuery(traceCtx, client, q, headers)
 		response.Error = res.Error
 		response.Frames = res.Frames
 	}
 
 	if q.RangeQuery {
-		res, err := s.rangeQuery(traceCtx, client, q, headers)
-		if err != nil {
-			return nil, err
-		}
+		res, _ := s.rangeQuery(traceCtx, client, q, headers)
 		if res.Error != nil {
 			if response.Error == nil {
 				response.Error = res.Error
