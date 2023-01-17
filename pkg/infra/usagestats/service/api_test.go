@@ -50,11 +50,6 @@ func TestApi_getUsageStats(t *testing.T) {
 	uss := createService(t, setting.Cfg{}, sqlStore, false)
 	uss.registerAPIEndpoints()
 
-	sqlStore.ExpectedSystemStats = &stats.SystemStats{}
-	sqlStore.ExpectedDataSourceStats = []*stats.DataSourceStats{}
-	sqlStore.ExpectedDataSourcesAccessStats = []*stats.DataSourceAccessStats{}
-	sqlStore.ExpectedNotifierUsageStats = []*stats.NotifierUsageStats{}
-
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			uss.Cfg.ReportingEnabled = tt.enabled
