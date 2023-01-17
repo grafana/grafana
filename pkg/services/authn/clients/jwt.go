@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
+	authJWT "github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -143,19 +144,12 @@ func (s *JWT) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 
-	// The header is Authorization and the token does not look like a JWT,
-	// this is likely an API key. Pass it on.
-	if s.cfg.JWTAuthHeaderName == "Authorization" && !looksLikeJWT(jwtToken) {
+	// If the "sub" claim is missing or empty then pass the control to the next handler
+	if !authJWT.HasSubClaim(jwtToken) {
 		return false
 	}
 
 	return true
-}
-
-func looksLikeJWT(token string) bool {
-	// A JWT must have 3 parts separated by `.`.
-	parts := strings.Split(token, ".")
-	return len(parts) == 3
 }
 
 const roleGrafanaAdmin = "GrafanaAdmin"

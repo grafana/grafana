@@ -12,8 +12,6 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { Menu } from '../Menu/Menu';
 
-import { PanelChromeInfoState } from './PanelChrome';
-
 const meta: ComponentMeta<typeof PanelChrome> = {
   title: 'Visualizations/PanelChrome',
   component: PanelChrome,
@@ -95,34 +93,33 @@ export const Examples = () => {
     <DashboardStoryCanvas>
       <HorizontalGroup spacing="md" align="flex-start">
         <VerticalGroup spacing="md">
-          {renderPanel('Error status', {
+          {renderPanel('Has statusMessage', {
             title: 'Default title',
-            status: {
-              message: 'Error text',
-              onClick: action('ErrorIndicator: onClick fired'),
-            },
+            statusMessage: 'Error text',
+            statusMessageOnClick: action('ErrorIndicator: onClick fired'),
           })}
-          {renderPanel('No padding, error loadingState', {
+          {renderPanel('No padding, has statusMessage', {
             padding: 'none',
             title: 'Default title',
+            statusMessage: 'Error text',
+            statusMessageOnClick: action('ErrorIndicator: onClick fired'),
+          })}
+          {renderPanel('No title, loadingState is Error, no statusMessage', {
             loadingState: LoadingState.Error,
           })}
-          {renderPanel('No title, error loadingState', {
-            loadingState: LoadingState.Error,
-          })}
-          {renderPanel('Streaming loadingState', {
+          {renderPanel('loadingState is Streaming', {
             title: 'Default title',
             loadingState: LoadingState.Streaming,
           })}
 
-          {renderPanel('Loading loadingState', {
+          {renderPanel('loadingState is Loading', {
             title: 'Default title',
             loadingState: LoadingState.Loading,
           })}
         </VerticalGroup>
         <VerticalGroup spacing="md">
           {renderPanel('Default panel: no non-required props')}
-          {renderPanel('No padding, no title', {
+          {renderPanel('No padding', {
             padding: 'none',
           })}
           {renderPanel('Very long title', {
@@ -139,28 +136,27 @@ export const Examples = () => {
           {renderPanel('Error status, menu', {
             title: 'Default title',
             menu,
-            status: {
-              message: 'Error text',
-              onClick: action('ErrorIndicator: onClick fired'),
-            },
+            statusMessage: 'Error text',
+            statusMessageOnClick: action('ErrorIndicator: onClick fired'),
           })}
-          {renderPanel('No padding, error loadingState, menu', {
+          {renderPanel('No padding; has statusMessage, menu', {
             padding: 'none',
             title: 'Default title',
             menu,
-            loadingState: LoadingState.Error,
+            statusMessage: 'Error text',
+            statusMessageOnClick: action('ErrorIndicator: onClick fired'),
           })}
-          {renderPanel('No title, error loadingState, menu', {
+          {renderPanel('No title, loadingState is Error, no statusMessage, menu', {
             menu,
             loadingState: LoadingState.Error,
           })}
-          {renderPanel('Streaming loadingState, menu', {
+          {renderPanel('loadingState is Streaming, menu', {
             title: 'Default title',
             menu,
             loadingState: LoadingState.Streaming,
           })}
 
-          {renderPanel('Loading loadingState, menu', {
+          {renderPanel('loadingState is Loading, menu', {
             title: 'Default title',
             menu,
             loadingState: LoadingState.Loading,
@@ -235,29 +231,11 @@ const ErrorIcon = [
 
 const leftItems = { LoadingIcon, ErrorIcon, Default };
 
-const titleItems: PanelChromeInfoState[] = [
-  {
-    icon: 'info',
-    tooltip:
-      'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.',
-  },
-  {
-    icon: 'external-link-alt',
-    tooltip: 'wearegoingonanadventure.openanewtab.maybe',
-    onClick: () => {},
-  },
-  {
-    icon: 'clock-nine',
-    tooltip: 'Time range: 2021-09-01 00:00:00 to 2021-09-01 00:00:00',
-    onClick: () => {},
-  },
-  {
-    icon: 'heart',
-    tooltip: 'Health of the panel',
-  },
-];
+const description =
+  'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.';
 
 Basic.argTypes = {
+  description: { control: { type: 'text' } },
   leftItems: {
     options: Object.keys(leftItems),
     mapping: leftItems,
@@ -276,9 +254,8 @@ Basic.args = {
   width: 400,
   height: 200,
   title: 'Very long title that should get ellipsis when there is no more space',
-  titleItems,
+  description,
   menu,
-  loadingState: LoadingState.Loading,
 };
 
 export default meta;

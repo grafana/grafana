@@ -1,5 +1,3 @@
-import { toOption } from '@grafana/data';
-
 import { setupMockedAPI } from './__mocks__/API';
 import { dimensionVariable, labelsVariable, setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
 import { VariableQuery, VariableQueryType } from './types';
@@ -22,7 +20,9 @@ mock.datasource.api.getRegions = jest.fn().mockResolvedValue([{ label: 'a', valu
 mock.datasource.api.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', value: 'b' }]);
 mock.datasource.api.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
 mock.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([{ label: 'd', value: 'd' }]);
-mock.datasource.api.describeAllLogGroups = jest.fn().mockResolvedValue(['a', 'b'].map(toOption));
+mock.datasource.api.getLogGroups = jest
+  .fn()
+  .mockResolvedValue([{ value: { arn: 'a', name: 'a' } }, { value: { arn: 'b', name: 'b' } }]);
 mock.datasource.api.getAccounts = jest.fn().mockResolvedValue([]);
 const getDimensionValues = jest.fn().mockResolvedValue([{ label: 'e', value: 'e' }]);
 const getEbsVolumeIds = jest.fn().mockResolvedValue([{ label: 'f', value: 'f' }]);
