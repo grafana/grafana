@@ -8,24 +8,23 @@ import {
   KBarPositioner,
   KBarResults,
   KBarSearch,
-  useMatches,
   VisualState,
   useRegisterActions,
   useKBar,
+  ActionImpl,
 } from 'kbar';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { ResultItem } from './ResultItem';
+import { useDashboardResults } from './actions/dashboardActions';
 import useActions from './actions/useActions';
-
-/**
- * Wrap all the components from KBar here.
- * @constructor
- */
+import { CommandPaletteAction } from './types';
+import { useMatches } from './useMatches';
 
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
@@ -35,8 +34,9 @@ export const CommandPalette = () => {
     searchQuery: state.searchQuery,
   }));
 
-  const actions = useActions(searchQuery, showing);
+  const actions = useActions();
   useRegisterActions(actions, [actions]);
+  const dashboardResults = useDashboardResults(searchQuery, showing);
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
@@ -56,8 +56,11 @@ export const CommandPalette = () => {
         <KBarAnimator className={styles.animator}>
           <FocusScope contain autoFocus restoreFocus>
             <div {...overlayProps} {...dialogProps}>
-              <KBarSearch className={styles.search} />
-              <RenderResults />
+              <KBarSearch
+                defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search Grafana')}
+                className={styles.search}
+              />
+              <RenderResults dashboardResults={dashboardResults} />
             </div>
           </FocusScope>
         </KBarAnimator>
@@ -66,14 +69,29 @@ export const CommandPalette = () => {
   ) : null;
 };
 
-const RenderResults = () => {
+interface RenderResultsProps {
+  dashboardResults: CommandPaletteAction[];
+}
+
+const RenderResults = ({ dashboardResults }: RenderResultsProps) => {
   const { results, rootActionId } = useMatches();
   const styles = useStyles2(getSearchStyles);
+  const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
+  // because dashboard search results aren't registered as actions, we need to manually
+  // convert them to ActionImpls before passing them as items to KBarResults
+  const dashboardResultItems = useMemo(
+    () => dashboardResults.map((dashboard) => new ActionImpl(dashboard, { store: {} })),
+    [dashboardResults]
+  );
+  const items = useMemo(
+    () => (dashboardResultItems.length > 0 ? [...results, dashboardsSectionTitle, ...dashboardResultItems] : results),
+    [results, dashboardsSectionTitle, dashboardResultItems]
+  );
 
   return (
     <div className={styles.resultsContainer}>
       <KBarResults
-        items={results}
+        items={items}
         onRender={({ item, active }) =>
           typeof item === 'string' ? (
             <div className={styles.sectionHeader}>{item}</div>

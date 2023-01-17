@@ -14,6 +14,7 @@ import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteReceiverAction } from '../../state/actions';
 import { getAlertTableStyles } from '../../styles/table';
+import { SupportedPlugin } from '../../types/pluginBridges';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { isReceiverUsed } from '../../utils/alertmanager';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
@@ -26,7 +27,7 @@ import { ActionIcon } from '../rules/ActionIcon';
 import { ReceiversSection } from './ReceiversSection';
 import { GrafanaAppBadge } from './grafanaAppReceivers/GrafanaAppBadge';
 import { useGetReceiversWithGrafanaAppTypes } from './grafanaAppReceivers/grafanaApp';
-import { GrafanaAppReceiverEnum, ReceiverWithTypes } from './grafanaAppReceivers/types';
+import { ReceiverWithTypes } from './grafanaAppReceivers/types';
 
 interface UpdateActionProps extends ActionProps {
   onClickDeleteReceiver: (receiverName: string) => void;
@@ -131,7 +132,7 @@ interface ReceiverItem {
   name: string;
   types: string[];
   provisioned?: boolean;
-  grafanaAppReceiverType?: GrafanaAppReceiverEnum;
+  grafanaAppReceiverType?: SupportedPlugin;
 }
 
 interface NotifierStatus {

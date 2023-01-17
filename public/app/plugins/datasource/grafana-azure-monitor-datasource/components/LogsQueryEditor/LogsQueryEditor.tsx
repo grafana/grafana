@@ -53,7 +53,11 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
                 ResourceRowType.Resource,
                 ResourceRowType.Variable,
               ]}
-              resource={query.azureLogAnalytics?.resource ?? ''}
+              resource={
+                query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length
+                  ? query.azureLogAnalytics.resources[0]
+                  : ''
+              }
               queryType="logs"
             />
           </EditorFieldGroup>

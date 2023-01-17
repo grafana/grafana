@@ -247,7 +247,8 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         resourceGroupName: item.resourceGroup,
         type: ResourceRowType.Resource,
         typeLabel: resourceTypeDisplayNames[item.type] || item.type,
-        location: this.logLocationsMap.get(item.location)?.displayName || item.location,
+        locationDisplayName: this.logLocationsMap.get(item.location)?.displayName || item.location,
+        location: item.location,
       };
     });
   }
