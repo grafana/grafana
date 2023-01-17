@@ -68,7 +68,7 @@ export function PanelChrome({
   loadingState,
   statusMessage,
   statusMessageOnClick,
-  leftItems = [],
+  leftItems,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -84,7 +84,7 @@ export function PanelChrome({
       titleItems.length > 0 ||
       description !== '' ||
       loadingState === LoadingState.Streaming ||
-      leftItems.length > 0);
+      (leftItems?.length ?? 0) > 0);
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
