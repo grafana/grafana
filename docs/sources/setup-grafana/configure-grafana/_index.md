@@ -1823,7 +1823,7 @@ Options to configure a remote HTTP image rendering service, e.g. using https://g
 
 #### renderer_token
 
-> **Note**: Available in Grafana v9.1.2 and Image Renderer v3.6.1 or later versions.
+> **Note**: Available in Grafana v9.1.2 and Image Renderer v3.6.1 or later.
 
 An auth token will be sent to and verified by the renderer. The renderer will deny any request without an auth token matching the one configured on the renderer.
 
