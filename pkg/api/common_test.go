@@ -432,7 +432,7 @@ func setupHTTPServerWithCfgDb(
 		teamPermissionsService: teamPermissionService,
 		searchUsersService:     searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		DashboardService: dashboardservice.ProvideDashboardService(
-			cfg, dashboardsStore, nil, features,
+			cfg, dashboardsStore, dashboardsStore, nil, features,
 			folderPermissionsService, dashboardPermissionsService, ac,
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
