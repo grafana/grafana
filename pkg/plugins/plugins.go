@@ -80,10 +80,6 @@ type PluginDTO struct {
 	supportsStreaming bool
 }
 
-func (p PluginDTO) Immutable() bool {
-	return p.IsCorePlugin()
-}
-
 func (p PluginDTO) SupportsStreaming() bool {
 	return p.supportsStreaming
 }
