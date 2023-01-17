@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import React, { FC, ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { DisplayValue, Field, formattedValueToString } from '@grafana/data';
+import { DisplayValue, formattedValueToString } from '@grafana/data';
 import { TableCellBackgroundDisplayMode, TableCellOptions } from '@grafana/schema';
 
 import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
