@@ -132,5 +132,4 @@ func TestCallResource(t *testing.T) {
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, 500, resp.StatusCode)
 	})
-
 }
