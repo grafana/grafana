@@ -34,44 +34,52 @@ export const AutoSaveField = React.forwardRef<FieldProps, Props>((props) => {
     children,
     ...restProps
   } = props;
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [showSuccess, setShowSuccess] = React.useState(false);
-  const [showError, setShowError] = React.useState(invalid);
+
+  const [fieldState, setFieldState] = React.useState({
+    isLoading: false,
+    showSuccess: false,
+    showError: invalid,
+  });
+
   const inputRef = useRef<null | HTMLInputElement>(null);
 
   React.useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
-    const time = showError ? 0 : SHOW_SUCCESS_DURATION;
-    if (showSuccess) {
+    const time = fieldState.showError ? 0 : SHOW_SUCCESS_DURATION;
+    if (fieldState.showSuccess) {
       timeoutId = setTimeout(() => {
-        setShowSuccess(false);
+        setFieldState({ ...fieldState, showSuccess: false });
       }, time);
     }
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [showSuccess, showError]);
+  }, [fieldState]);
 
   const handleChange = useCallback(
     (nextValue) => {
       if (invalid) {
         return;
       }
-      console.log(onFinishChange);
-      setIsLoading(true);
+      setFieldState({ ...fieldState, isLoading: true });
       onFinishChange(nextValue)
         .then(() => {
-          setIsLoading(false);
-          setShowSuccess(true);
-          setShowError(false);
+          setFieldState({
+            isLoading: false,
+            showSuccess: true,
+            showError: false,
+          });
         })
         .catch(() => {
-          setIsLoading(false);
-          setShowError(true);
+          setFieldState({
+            ...fieldState,
+            isLoading: false,
+            showError: true,
+          });
         });
     },
-    [onFinishChange, invalid]
+    [invalid, fieldState, onFinishChange]
   );
 
   const lodashDebounce = useMemo(() => debounce(handleChange, 600, { leading: false }), [handleChange]);
@@ -84,9 +92,9 @@ export const AutoSaveField = React.forwardRef<FieldProps, Props>((props) => {
     <>
       <Field
         {...restProps}
-        loading={loading || isLoading}
-        invalid={invalid || showError}
-        error={error || (showError && saveErrorMessage)}
+        loading={loading || fieldState.isLoading}
+        invalid={invalid || fieldState.showError}
+        error={error || (fieldState.showError && saveErrorMessage)}
       >
         {React.cloneElement(children, {
           ref: inputRef,
@@ -95,7 +103,7 @@ export const AutoSaveField = React.forwardRef<FieldProps, Props>((props) => {
           },
         })}
       </Field>
-      {showSuccess && (
+      {fieldState.showSuccess && (
         <InlineToast suffixIcon={'check'} referenceElement={inputRef.current} placement={'right'}>
           Saved!
         </InlineToast>
