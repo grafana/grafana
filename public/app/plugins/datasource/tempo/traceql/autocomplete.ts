@@ -149,7 +149,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         }));
       case 'SPANSET_IN_VALUE':
         const tagName = this.overrideTagName(situation.tagName);
-        const tagsNoQuotesAroundValue: string[] = ['status'];
         const tagValues = await this.getTagValues(tagName);
         const items: Completion[] = [];
 
@@ -157,7 +156,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           if (situation.betweenQuotes) {
             return val.label!;
           }
-          return tagsNoQuotesAroundValue.includes(situation.tagName) ? val.label! : `"${val.label}"`;
+          return val.type === 'string' ? `"${val.label}"` : val.label!;
         };
 
         tagValues.forEach((val) => {
