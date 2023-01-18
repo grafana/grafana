@@ -23,6 +23,16 @@ You can enable more logging by changing log level in the Grafana configuration f
 
 For more information, refer to [Enable debug logging in Grafana CLI]({{< relref "../cli/#enable-debug-logging" >}}) and the [log section in Configuration]({{< relref "../setup-grafana/configure-grafana/#log" >}}).
 
+## Troubleshoot with Dashboards Panels
+
+If you have an issue with your Dashboard panel, then simply send us the debug information using the following steps.
+
+Open the dropdown menu by clicking on your panel title -> Hover mouse to **More** -> Then select **Get Help**
+
+Then it will open a new page and ask you to send the snapshot data. You can simply click the button **Dashobard** to Download it and then send it for debugging. Also if you have any sensitive data then you can use the **Randomize data** option which will hide the original data.
+
+
+
 ## Troubleshoot transformations
 
 Order of transformations matters. If the final data output from multiple transformations looks wrong, try changing the transformation order. Each transformation transforms data returned by the previous transformation, not the original raw data.
