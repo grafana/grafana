@@ -27,7 +27,7 @@ export interface PanelChromeProps {
   titleItems?: ReactNode[];
   menu?: ReactElement | (() => ReactElement);
   /** dragClass, hoverHeader not yet implemented */
-  // dragClass?: string;
+  dragClass?: string;
   hoverHeader?: boolean;
   loadingState?: LoadingState;
   /**
@@ -69,6 +69,7 @@ export function PanelChrome({
   statusMessage,
   statusMessageOnClick,
   leftItems,
+  dragClass,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -102,7 +103,7 @@ export function PanelChrome({
   const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
 
   return (
-    <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
+    <div className={cx(styles.container, dragClass)} style={containerStyles} aria-label={ariaLabel}>
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
       </div>
