@@ -6,7 +6,6 @@ import {
   getDisplayProcessor,
   SelectableValue,
   toDataFrame,
-  MutableDataFrame,
 } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
@@ -51,7 +50,7 @@ export class BlugeSearcher implements GrafanaSearcher {
     }
     // Nothing is starred
     return {
-      view: new DataFrameView(new MutableDataFrame()),
+      view: new DataFrameView({ length: 0, fields: [] }),
       totalRows: 0,
       loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
         return;
