@@ -1,4 +1,4 @@
-import { cloneDeep, defaults, partition } from 'lodash';
+import { cloneDeep, defaults } from 'lodash';
 import LRU from 'lru-cache';
 import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
@@ -26,6 +26,7 @@ import {
   rangeUtil,
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
+  TIME_SERIES_VALUE_FIELD_NAME,
   TimeRange,
 } from '@grafana/data';
 import {
@@ -96,7 +97,9 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
-  prometheusDataFrameStorage: Record<string, Record<string, number[]>>;
+
+  // Record with string index of "super" dataframe to which we keep appending new records
+  prometheusDataFrameStorage: Record<string, DataFrameDTO>;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -130,7 +133,7 @@ export class PrometheusDatasource
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
-    this.prometheusDataFrameStorage = {};
+    this.prometheusDataFrameStorage = {}
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.
@@ -459,9 +462,10 @@ export class PrometheusDatasource
     console.log('THE CACHE KEY', cacheKey);
     console.log('the CURRENT HIT?', this.prometheusDataFrameStorage[cacheKey])
     const previousResultForThisQuery = this.prometheusDataFrameStorage[cacheKey];
+
     if(previousResultForThisQuery){
-      const time = previousResultForThisQuery?.time;
-      const values = previousResultForThisQuery?.values;
+      const time = previousResultForThisQuery.fields.find(field => field.name === TIME_SERIES_TIME_FIELD_NAME);
+      const values = previousResultForThisQuery?.fields.find(field => field.name === TIME_SERIES_VALUE_FIELD_NAME)
 
       console.log('cached time', time)
       console.log('cached values', values)
@@ -471,6 +475,11 @@ export class PrometheusDatasource
 
 
     return { ...target };
+  }
+
+  createPrometheusStorageIndexFromRequestTarget = (target: PromQuery): string => {
+    return target?.expr + '__' + target?.interval;
+    // return target?.expr + target?.interval + Object.keys(labels).join() + Object.values(labels).join()
   }
 
   appendQueryResultToDataFrameStorage = (
@@ -493,35 +502,41 @@ export class PrometheusDatasource
       return;
     }
     // Iterate through all the different queries
-    timeSeriesResponses.forEach((query, index) => {
+    timeSeriesResponses.forEach((response, index) => {
 
-      if(!request.targets[index]?.interval){
-        debugger;
-      }
+      // For each query response get the time and the values
+      const timeField = response.fields.find(field => field.name === TIME_SERIES_TIME_FIELD_NAME);
+      const valueField = response.fields.find(field => field.name === TIME_SERIES_VALUE_FIELD_NAME);
+
       // Get the querystring that was executed on the prometheus server, this string contains the step time as well so we can use this as our "key" in the prometheus data frame storage
-      const responseQueryExpressionAndStepString = request.targets[index]?.expr + request.targets[index]?.interval ?? '';
+      const responseQueryExpressionAndStepString = this.createPrometheusStorageIndexFromRequestTarget(request.targets[index]);
 
-      // For each query partition the time from the values
-      const partitionedDataFrames = partition(query.fields, (field) => field.name === TIME_SERIES_TIME_FIELD_NAME);
       const thisQueryHasNeverBeenDoneBefore =
         !this.prometheusDataFrameStorage || !(responseQueryExpressionAndStepString in this.prometheusDataFrameStorage);
       const thisQueryHasBeenDoneBefore = !thisQueryHasNeverBeenDoneBefore;
 
       //@todo types
-      const timeFrames = partitionedDataFrames[0][0].values?.buffer as number[];
-      //@todo, make this work for any number of value frames?
-      const valueFrames = partitionedDataFrames[1][0].values?.buffer as number[];
+      const timeFrames = timeField?.values;
+      const valueFrames = valueField?.values;
 
       if (thisQueryHasNeverBeenDoneBefore) {
-        this.prometheusDataFrameStorage[responseQueryExpressionAndStepString] = {
-          time: timeFrames,
-          values: valueFrames,
-        };
-      } else if (thisQueryHasBeenDoneBefore) {
-        const existingTimeValues = this.prometheusDataFrameStorage[responseQueryExpressionAndStepString]
-          .time as number[];
-        const existingValues = this.prometheusDataFrameStorage[responseQueryExpressionAndStepString].values as number[];
+        // Store the response if it's new
+        this.prometheusDataFrameStorage[responseQueryExpressionAndStepString] = response;
+      }
+       else if (thisQueryHasBeenDoneBefore && responseQueryExpressionAndStepString in this.prometheusDataFrameStorage) {
 
+         // Check to see if the labels have changed
+        // @todo
+        // If the labels are the same as saved, append any new values, making sure that any additional data is taken from the newest response
+        // @todo
+        // @todo if the query is the last 10 minutes (or 2 hours)
+        const previousQueryValues = this.prometheusDataFrameStorage[responseQueryExpressionAndStepString]
+
+        const existingTimeValues = previousQueryValues.fields.find(field => field.name === TIME_SERIES_TIME_FIELD_NAME);
+        const existingValues = previousQueryValues.fields.find(field => field.name === TIME_SERIES_VALUE_FIELD_NAME);
+
+        // HERE <-- This is all messed up, need to get to actual dataframe values with new format of the saved values
+        debugger;
         const newDataIndexStartInOldData = existingTimeValues.indexOf(timeFrames[0]);
 
         // Naive splice of new data onto old data
