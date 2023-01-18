@@ -560,6 +560,7 @@ func (s *sqlEntityServer) writeSearchInfo(
 			child.isNested = true
 			child.folder = summary.folder
 			child.parent_grn = summary.parent_grn
+			parent_grn := child.getParentGRN()
 
 			_, err = tx.Exec(ctx, "INSERT INTO entity_nested ("+
 				"parent_grn, grn, "+
@@ -642,10 +643,22 @@ func doDelete(ctx context.Context, tx *session.SessionTx, grn *entity.GRN) (bool
 	}
 
 	// TODO: keep history? would need current version bump, and the "write" would have to get from history
-	_, _ = tx.Exec(ctx, "DELETE FROM entity_history WHERE grn=?", grn)
-	_, _ = tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", grn)
-	_, _ = tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", grn)
-	_, _ = tx.Exec(ctx, "DELETE FROM entity WHERE parent_grn=?", grn)
+	_, err = tx.Exec(ctx, "DELETE FROM entity_history WHERE grn=?", str)
+	if err != nil {
+		return false, err
+	}
+	_, err = tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=? OR parent_grn=?", str, str)
+	if err != nil {
+		return false, err
+	}
+	_, err = tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=? OR parent_grn=?", str, str)
+	if err != nil {
+		return false, err
+	}
+	_, err = tx.Exec(ctx, "DELETE FROM entity_nested WHERE parent_grn=?", str)
+	if err != nil {
+		return false, err
+	}
 
 	if grn.Kind == models.StandardKindFolder {
 		err = updateFolderTree(ctx, tx, grn.TenantId)
