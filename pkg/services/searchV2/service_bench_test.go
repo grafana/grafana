@@ -244,30 +244,28 @@ func benchSearchV2(b *testing.B, folderCount, dashboardsPerFolder int) {
 
 // Test with some dashboards and some folders
 func BenchmarkSearchV2_10_10(b *testing.B) {
+	b.SetParallelism(1)
 	benchSearchV2(b, 10, 10)
-} //
+} // ~0.0002 s/op
 func BenchmarkSearchV2_10_100(b *testing.B) {
 	benchSearchV2(b, 10, 100)
-} //
+} // ~0.002 s/op
 
 // Test with many dashboards and only one folder
 func BenchmarkSearchV2_1_1k(b *testing.B) {
 	benchSearchV2(b, 1, 1000)
-} // ~0.0045 s/op
+} // ~0.002 s/op
 func BenchmarkSearchV2_1_10k(b *testing.B) {
 	benchSearchV2(b, 1, 10000)
-} //
+} // ~0.019 s/op
 
 // Test with a large number of dashboards and folders
 func BenchmarkSearchV2_100_100(b *testing.B) {
 	benchSearchV2(b, 100, 100)
-} //
+} // ~0.02 s/op
 func BenchmarkSearchV2_100_1k(b *testing.B) {
 	benchSearchV2(b, 100, 1000)
-} // ~0.55 s/op
+} // ~0.22 s/op
 func BenchmarkSearchV2_1k_100(b *testing.B) {
 	benchSearchV2(b, 1000, 100)
-} // ~0.54 s/op
-func BenchmarkSearchV2_1k_1k(b *testing.B) {
-	benchSearchV2(b, 1000, 1000)
-} // ~3.10 s/op
+} // ~0.22 s/op
