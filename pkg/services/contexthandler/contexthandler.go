@@ -138,7 +138,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 					// Burn the cookie in case of invalid, expired or missing token
 					reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 				}
-				// set all errors on LookupTokenErr, so we can check it in auth middlewares
+				// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 				reqContext.LookupTokenErr = err
 			} else {
 				reqContext.IsSignedIn = true
@@ -146,9 +146,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				reqContext.SignedInUser = identity.SignedInUser()
 				reqContext.AllowAnonymous = identity.IsAnonymous
 				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
-
-				// Add authentication headers based on what method was used
-				reqContext.Req = reqContext.Req.WithContext(withAuthHTTPHeaderFromIdentity(ctx, h.Cfg, identity))
+				// FIXME (kallep): Add auth headers used to context
 			}
 		} else {
 			const headerName = "X-Grafana-Org-Id"
@@ -733,31 +731,6 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 	}
 
 	return true
-}
-
-func withAuthHTTPHeaderFromIdentity(ctx context.Context, cfg *setting.Cfg, identity *authn.Identity) context.Context {
-	if identity.AuthModule == login.JWTModule {
-		return WithAuthHTTPHeader(ctx, cfg.JWTAuthHeaderName)
-	}
-
-	if identity.AuthModule == login.AuthProxyAuthModule {
-		ctx = WithAuthHTTPHeader(ctx, cfg.AuthProxyHeaderName)
-		for _, h := range cfg.AuthProxyHeaders {
-			if h != "" {
-				ctx = WithAuthHTTPHeader(ctx, h)
-			}
-		}
-		return ctx
-	}
-
-	namespace, _ := identity.NamespacedID()
-	if namespace == authn.NamespaceServiceAccount || namespace == authn.NamespaceAPIKey {
-		return WithAuthHTTPHeader(ctx, "Authorization")
-	}
-
-	// FIXME: Handle basic auth
-
-	return ctx
 }
 
 type authHTTPHeaderListContextKey struct{}
