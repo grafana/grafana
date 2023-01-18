@@ -45,6 +45,10 @@ type Proxy struct {
 	acceptedIPs []*net.IPNet
 }
 
+func (c *Proxy) Name() string {
+	return authn.ClientProxy
+}
+
 func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	if !c.isAllowedIP(r) {
 		return nil, errNotAcceptedIP.Errorf("request ip is not in the configured accept list")

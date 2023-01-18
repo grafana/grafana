@@ -45,6 +45,10 @@ type JWT struct {
 	jwtService auth.JWTVerifierService
 }
 
+func (s *JWT) Name() string {
+	return authn.ClientJWT
+}
+
 func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	jwtToken := s.retrieveToken(r.HTTPRequest)
 

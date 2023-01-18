@@ -39,6 +39,10 @@ type APIKey struct {
 	apiKeyService apikey.Service
 }
 
+func (s *APIKey) Name() string {
+	return authn.ClientAPIKey
+}
+
 func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
 	if err != nil {

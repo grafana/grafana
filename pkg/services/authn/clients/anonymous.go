@@ -25,6 +25,10 @@ type Anonymous struct {
 	orgService org.Service
 }
 
+func (a *Anonymous) Name() string {
+	return authn.ClientAnonymous
+}
+
 func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.AnonymousOrgName})
 	if err != nil {

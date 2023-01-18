@@ -23,6 +23,10 @@ type Basic struct {
 	client authn.PasswordClient
 }
 
+func (c *Basic) Name() string {
+	return authn.ClientBasic
+}
+
 func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	username, password, err := util.DecodeBasicAuthHeader(getBasicAuthHeaderFromRequest(r))
 	if err != nil {

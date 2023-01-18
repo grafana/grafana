@@ -31,6 +31,10 @@ type Render struct {
 	renderService rendering.Service
 }
 
+func (c *Render) Name() string {
+	return authn.ClientRender
+}
+
 func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	key := getRenderKey(r)
 	renderUsr, ok := c.renderService.GetRenderUser(ctx, key)

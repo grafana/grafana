@@ -65,6 +65,8 @@ type Service interface {
 }
 
 type Client interface {
+	// Name returns the name of a client
+	Name() string
 	// Authenticate performs the authentication for the request
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 }

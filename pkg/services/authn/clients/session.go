@@ -36,6 +36,10 @@ type Session struct {
 	log              log.Logger
 }
 
+func (s *Session) Name() string {
+	return authn.ClientSession
+}
+
 func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	unescapedCookie, err := r.HTTPRequest.Cookie(s.loginCookieName)
 	if err != nil {
