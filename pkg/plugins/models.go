@@ -288,3 +288,13 @@ type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
 }
+
+type Extensions struct {
+	Links []ExtensionsLink `json:"links"`
+}
+
+type ExtensionsLink struct {
+	Id          string `json:"id"`
+	Description string `json:"description"`
+	Path        string `json:"path"`
+}

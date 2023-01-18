@@ -145,7 +145,8 @@ type JSONData struct {
 	SkipDataQuery bool `json:"skipDataQuery"`
 
 	// App settings
-	AutoEnabled bool `json:"autoEnabled"`
+	AutoEnabled bool        `json:"autoEnabled"`
+	Extensions  *Extensions `json:"extensions,omitempty"`
 
 	// Datasource settings
 	Annotations  bool            `json:"annotations"`
