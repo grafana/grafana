@@ -179,6 +179,10 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
   return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
 };
 
+/**
+ * Types of supplementary queries that can be run in Explore.
+ * @internal
+ */
 export enum SupplementaryQueryType {
   LogsVolume = 'LogsVolume',
   LogsSample = 'LogsSample',
@@ -188,6 +192,7 @@ export enum SupplementaryQueryType {
  * Data sources that support supplementary queries in Explore.
  * This will enable users to see additional data  when running original queries.
  * Supported supplementary queries are defined in SupplementaryQueryType enum.
+ * @internal
  */
 export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQuery> {
   getDataProvider(
@@ -211,19 +216,4 @@ export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
     withSupplementaryQueriesSupport.getDataProvider !== undefined &&
     withSupplementaryQueriesSupport.getSupportedSupplementaryQueryTypes().includes(type)
   );
-};
-
-/**
- * @deprecated Will be removed in a future version. Use `DataSourceWithSupplementaryQueriesSupport` instead.
- * Data sources that support log volume.
- * This will enable full-range log volume histogram in Explore.
- */
-export interface DataSourceWithLogsVolumeSupport<TQuery extends DataQuery> {
-  getLogsVolumeDataProvider(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> | undefined;
-}
-
-export const hasLogsVolumeSupport = <TQuery extends DataQuery>(
-  datasource: unknown
-): datasource is DataSourceWithLogsVolumeSupport<TQuery> => {
-  return (datasource as DataSourceWithLogsVolumeSupport<TQuery>).getLogsVolumeDataProvider !== undefined;
 };

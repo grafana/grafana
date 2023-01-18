@@ -12,7 +12,6 @@ import {
   DataSourceApi,
   hasSupplementaryQuerySupport,
   SupplementaryQueryType,
-  hasLogsVolumeSupport,
   hasQueryExportSupport,
   hasQueryImportSupport,
   HistoryItem,
@@ -415,30 +414,6 @@ async function handleHistory(
   await dispatch(loadRichHistory(ExploreId.right));
 }
 
-const handleSupplementaryQuery = (
-  dispatch: ThunkDispatch,
-  state: ExploreState,
-  exploreId: ExploreId,
-  type: SupplementaryQueryType,
-  dataProvider: Observable<DataQueryResponse> | undefined
-) => {
-  dispatch(
-    storeSupplementaryQueryDataProviderAction({
-      exploreId,
-      type,
-      dataProvider,
-    })
-  );
-
-  const { supplementaryQueries, absoluteRange, queries } = state[exploreId]!;
-  if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
-    dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
-    if (supplementaryQueries[type].enabled) {
-      dispatch(loadSupplementaryQueryData(exploreId, type));
-    }
-  }
-};
-
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
@@ -469,6 +444,7 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
+      supplementaryQueries,
     } = exploreItemState;
     let newQuerySub;
 
@@ -498,8 +474,7 @@ export const runQueries = (
               queries,
               correlations,
               datasourceInstance != null &&
-                (hasSupplementaryQuerySupport(datasourceInstance, SupplementaryQueryType.LogsVolume) ||
-                  hasLogsVolumeSupport(datasourceInstance))
+                hasSupplementaryQuerySupport(datasourceInstance, SupplementaryQueryType.LogsVolume)
             )
           )
         )
@@ -563,8 +538,7 @@ export const runQueries = (
               queries,
               correlations,
               datasourceInstance != null &&
-                (hasSupplementaryQuerySupport(datasourceInstance, SupplementaryQueryType.LogsVolume) ||
-                  hasLogsVolumeSupport(datasourceInstance))
+                hasSupplementaryQuerySupport(datasourceInstance, SupplementaryQueryType.LogsVolume)
             )
           )
         )
@@ -618,21 +592,25 @@ export const runQueries = (
         for (const type of supplementaryQueryTypes) {
           // We always prepare provider, even is supplementary query is disabled because when the user
           // enables the query, we need to load the data, so we need the provider
-          let dataProvider: Observable<DataQueryResponse> | undefined;
           if (hasSupplementaryQuerySupport(datasourceInstance, type)) {
-            dataProvider = datasourceInstance.getDataProvider(type, {
+            const dataProvider = datasourceInstance.getDataProvider(type, {
               ...transaction.request,
               requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
             });
-          } else if (hasLogsVolumeSupport(datasourceInstance) && type === SupplementaryQueryType.LogsVolume) {
-            dataProvider = datasourceInstance.getLogsVolumeDataProvider({
-              ...transaction.request,
-              requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
-            });
-          }
+            dispatch(
+              storeSupplementaryQueryDataProviderAction({
+                exploreId,
+                type,
+                dataProvider,
+              })
+            );
 
-          if (dataProvider) {
-            handleSupplementaryQuery(dispatch, getState().explore, exploreId, type, dataProvider);
+            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
+              dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
+              if (supplementaryQueries[type].enabled) {
+                dispatch(loadSupplementaryQueryData(exploreId, type));
+              }
+            }
           } else {
             // If data source instance doesn't support this supplementary query, we clean the data provider
             dispatch(

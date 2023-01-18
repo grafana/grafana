@@ -15,6 +15,7 @@ import {
   FieldType,
   LogRowModel,
   MutableDataFrame,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import {
   BackendSrv,
@@ -896,7 +897,7 @@ describe('LokiDatasource', () => {
         targets: [{ expr: '{label=value}', refId: 'A' }],
       });
 
-      expect(ds.getLogsVolumeDataProvider(options)).toBeDefined();
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
     });
 
     it('does not create provider for metrics query', () => {
@@ -904,7 +905,7 @@ describe('LokiDatasource', () => {
         targets: [{ expr: 'rate({label=value}[1m])', refId: 'A' }],
       });
 
-      expect(ds.getLogsVolumeDataProvider(options)).not.toBeDefined();
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
     });
 
     it('creates provider if at least one query is a logs query', () => {
@@ -915,7 +916,7 @@ describe('LokiDatasource', () => {
         ],
       });
 
-      expect(ds.getLogsVolumeDataProvider(options)).toBeDefined();
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
     });
 
     it('does not create provider if there is only an instant logs query', () => {
@@ -923,7 +924,7 @@ describe('LokiDatasource', () => {
         targets: [{ expr: '{label=value', refId: 'A', queryType: LokiQueryType.Instant }],
       });
 
-      expect(ds.getLogsVolumeDataProvider(options)).not.toBeDefined();
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
     });
   });
 
@@ -938,7 +939,7 @@ describe('LokiDatasource', () => {
         targets: [{ expr: 'rate({label=value}[5m])', refId: 'A' }],
       });
 
-      expect(ds.getLogsSampleDataProvider(options)).toBeDefined();
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
     });
 
     it('does not create provider for log query', () => {
@@ -946,7 +947,7 @@ describe('LokiDatasource', () => {
         targets: [{ expr: '{label=value}', refId: 'A' }],
       });
 
-      expect(ds.getLogsSampleDataProvider(options)).not.toBeDefined();
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
     });
 
     it('creates provider if at least one query is a metric query', () => {
@@ -957,7 +958,7 @@ describe('LokiDatasource', () => {
         ],
       });
 
-      expect(ds.getLogsSampleDataProvider(options)).toBeDefined();
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
     });
   });
 

@@ -23,8 +23,10 @@ export const createDefaultInitialState = () => {
         datasourceInstance: {
           query: jest.fn(),
           getRef: jest.fn(),
-          getLogsVolumeDataProvider: jest.fn(),
-          getLogsSampleDataProvider: jest.fn(),
+          getDataProvider: jest.fn(),
+          getSupportedSupplementaryQueryTypes: jest
+            .fn()
+            .mockImplementation(() => [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample]),
           meta: {
             id: 'something',
           },

@@ -1,3 +1,4 @@
+import { snakeCase } from 'lodash';
 import { EMPTY, interval, Observable, of } from 'rxjs';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { assertIsDefined } from 'test/helpers/asserts';
@@ -8,8 +9,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
-  // DataSourceWithLogsSampleSupport,
-  DataSourceWithLogsVolumeSupport,
+  DataSourceWithSupplementaryQueriesSupport,
   LoadingState,
   MutableDataFrame,
   RawTimeRange,
@@ -20,6 +20,7 @@ import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/type
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { supplementaryQueryTypes } from '../utils/supplementaryQueries';
 
 import { createDefaultInitialState } from './helpers';
 import { saveCorrelationsAction } from './main';
@@ -116,37 +117,24 @@ describe('runQueries', () => {
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
   });
 
-  it('should modify the request-id for log-volume queries', async () => {
+  it('should modify the request-id for all supplementary queries', () => {
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
-    await dispatch(saveCorrelationsAction([]));
-    await dispatch(runQueries(ExploreId.left));
+    dispatch(saveCorrelationsAction([]));
+    dispatch(runQueries(ExploreId.left));
 
     const state = getState().explore[ExploreId.left];
     expect(state.queryResponse.request?.requestId).toBe('explore_left');
-    const datasource = state.datasourceInstance as unknown as DataSourceWithLogsVolumeSupport<DataQuery>;
-    expect(datasource.getLogsVolumeDataProvider).toBeCalledWith(
-      expect.objectContaining({
-        requestId: 'explore_left_logs_volume',
-      })
-    );
+    const datasource = state.datasourceInstance as unknown as DataSourceWithSupplementaryQueriesSupport<DataQuery>;
+    for (const type of supplementaryQueryTypes) {
+      expect(datasource.getDataProvider).toHaveBeenCalledWith(
+        type,
+        expect.objectContaining({
+          requestId: `explore_left_${snakeCase(type)}`,
+        })
+      );
+    }
   });
-
-  // it('should modify the request-id for logsSample queries', async () => {
-  //   const { dispatch, getState } = setupTests();
-  //   setupQueryResponse(getState());
-  //   await dispatch(saveCorrelationsAction([]));
-  //   await dispatch(runQueries(ExploreId.left));
-
-  //   const state = getState().explore[ExploreId.left];
-  //   expect(state.queryResponse.request?.requestId).toBe('explore_left');
-  //   const datasource = state.datasourceInstance as unknown as DataSourceWithLogsSampleSupport<DataQuery>;
-  //   expect(datasource.getLogsSampleDataProvider).toBeCalledWith(
-  //     expect.objectContaining({
-  //       requestId: 'explore_left_log_sample',
-  //     })
-  //   );
-  // });
 
   it('should set state to done if query completes without emitting', async () => {
     const { dispatch, getState } = setupTests();
@@ -387,15 +375,15 @@ describe('reducer', () => {
     });
   });
 
-  describe('log volume', () => {
+  describe('supplementary queries', () => {
     let dispatch: ThunkDispatch,
       getState: () => StoreState,
       unsubscribes: Function[],
-      mockLogsVolumeDataProvider: () => Observable<DataQueryResponse>;
+      mockDataProvider: () => Observable<DataQueryResponse>;
 
     beforeEach(() => {
       unsubscribes = [];
-      mockLogsVolumeDataProvider = () => {
+      mockDataProvider = () => {
         return {
           subscribe: () => {
             const unsubscribe = jest.fn();
@@ -418,9 +406,13 @@ describe('reducer', () => {
               meta: {
                 id: 'something',
               },
-              getLogsVolumeDataProvider: () => {
-                return mockLogsVolumeDataProvider();
+              getDataProvider: () => {
+                return mockDataProvider();
               },
+              getSupportedSupplementaryQueryTypes: () => [
+                SupplementaryQueryType.LogsVolume,
+                SupplementaryQueryType.LogsSample,
+              ],
             },
           },
         },
@@ -432,109 +424,111 @@ describe('reducer', () => {
       setupQueryResponse(getState());
     });
 
-    it('should cancel any unfinished logs volume queries when a new query is run', async () => {
-      await dispatch(runQueries(ExploreId.left));
+    it('should cancel any unfinished supplementary queries when a new query is run', async () => {
+      dispatch(runQueries(ExploreId.left));
       // first query is run automatically
-      // loading in progress - one subscription created, not cleaned up yet
-      expect(unsubscribes).toHaveLength(1);
+      // loading in progress - subscriptions for both supplementary queries are created, not cleaned up yet
+      expect(unsubscribes).toHaveLength(2);
       expect(unsubscribes[0]).not.toBeCalled();
+      expect(unsubscribes[1]).not.toBeCalled();
 
       setupQueryResponse(getState());
-      await dispatch(runQueries(ExploreId.left));
-      // a new query is run while log volume query is not resolve yet...
+      dispatch(runQueries(ExploreId.left));
+      // a new query is run while supplementary queries are not resolve yet...
       expect(unsubscribes[0]).toBeCalled();
-      // first subscription is cleaned up, a new subscription is created automatically
+      expect(unsubscribes[1]).toBeCalled();
+      // first subscriptions are cleaned up, a new subscriptions are created automatically
+      expect(unsubscribes).toHaveLength(4);
+      expect(unsubscribes[2]).not.toBeCalled();
+      expect(unsubscribes[3]).not.toBeCalled();
+    });
+
+    it('should cancel all supported supplementary queries when the main query is canceled', () => {
+      dispatch(runQueries(ExploreId.left));
       expect(unsubscribes).toHaveLength(2);
-      expect(unsubscribes[1]).not.toBeCalled();
-    });
-
-    it('should cancel log volume query when the main query is canceled', async () => {
-      await dispatch(runQueries(ExploreId.left));
-      expect(unsubscribes).toHaveLength(1);
       expect(unsubscribes[0]).not.toBeCalled();
+      expect(unsubscribes[1]).not.toBeCalled();
 
-      await dispatch(cancelQueries(ExploreId.left));
-      expect(unsubscribes).toHaveLength(1);
+      dispatch(cancelQueries(ExploreId.left));
+      expect(unsubscribes).toHaveLength(2);
       expect(unsubscribes[0]).toBeCalled();
+      expect(unsubscribes[1]).toBeCalled();
 
-      expect(
-        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
-      ).toBeUndefined();
-      expect(
-        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
-      ).toBeUndefined();
+      for (const type of supplementaryQueryTypes) {
+        expect(getState().explore[ExploreId.left].supplementaryQueries[type].data).toBeUndefined();
+        expect(getState().explore[ExploreId.left].supplementaryQueries[type].dataProvider).toBeUndefined();
+      }
     });
 
-    it('should load logs volume after running the query', async () => {
-      await dispatch(runQueries(ExploreId.left));
-      expect(unsubscribes).toHaveLength(1);
+    it('should load supplementary queries after running the query', () => {
+      dispatch(runQueries(ExploreId.left));
+      expect(unsubscribes).toHaveLength(2);
     });
 
-    it('should clean any incomplete log volume data when main query is canceled', async () => {
-      mockLogsVolumeDataProvider = () => {
+    it('should clean any incomplete supplementary queries data when main query is canceled', () => {
+      mockDataProvider = () => {
         return of({ state: LoadingState.Loading, error: undefined, data: [] });
       };
-      await dispatch(runQueries(ExploreId.left));
+      dispatch(runQueries(ExploreId.left));
 
-      expect(
-        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
-      ).toBeDefined();
-      expect(
-        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data!.state
-      ).toBe(LoadingState.Loading);
-      expect(
-        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
-      ).toBeDefined();
+      for (const type of supplementaryQueryTypes) {
+        expect(getState().explore[ExploreId.left].supplementaryQueries[type].data).toBeDefined();
+        expect(getState().explore[ExploreId.left].supplementaryQueries[type].data!.state).toBe(LoadingState.Loading);
+        expect(getState().explore[ExploreId.left].supplementaryQueries[type].dataProvider).toBeDefined();
+      }
+      for (const type of supplementaryQueryTypes) {
+        expect(getState().explore[ExploreId.left].supplementaryQueries[type].data).toBeDefined();
+        expect(getState().explore[ExploreId.left].supplementaryQueries[type].data!.state).toBe(LoadingState.Loading);
+        expect(getState().explore[ExploreId.left].supplementaryQueries[type].dataProvider).toBeDefined();
+      }
 
-      await dispatch(cancelQueries(ExploreId.left));
-      expect(
-        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
-      ).toBeUndefined();
-      expect(
-        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
-      ).toBeUndefined();
+      dispatch(cancelQueries(ExploreId.left));
+      for (const type of supplementaryQueryTypes) {
+        expect(getState().explore[ExploreId.left].supplementaryQueries[type].data).toBeUndefined();
+        expect(getState().explore[ExploreId.left].supplementaryQueries[type].data).toBeUndefined();
+      }
     });
 
-    it('keeps complete log volume data when main query is canceled', async () => {
-      mockLogsVolumeDataProvider = () => {
+    it('keeps complete supplementary data when main query is canceled', async () => {
+      mockDataProvider = () => {
         return of(
           { state: LoadingState.Loading, error: undefined, data: [] },
           { state: LoadingState.Done, error: undefined, data: [{}] }
         );
       };
-      await dispatch(runQueries(ExploreId.left));
+      dispatch(runQueries(ExploreId.left));
 
-      expect(
-        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
-      ).toBeDefined();
-      expect(
-        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data!.state
-      ).toBe(LoadingState.Done);
-      expect(
-        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
-      ).toBeDefined();
+      for (const types of supplementaryQueryTypes) {
+        expect(getState().explore[ExploreId.left].supplementaryQueries[types].data).toBeDefined();
+        expect(getState().explore[ExploreId.left].supplementaryQueries[types].data!.state).toBe(LoadingState.Done);
+        expect(getState().explore[ExploreId.left].supplementaryQueries[types].dataProvider).toBeDefined();
+      }
 
-      await dispatch(cancelQueries(ExploreId.left));
-      expect(
-        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
-      ).toBeDefined();
-      expect(
-        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data!.state
-      ).toBe(LoadingState.Done);
-      expect(
-        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
-      ).toBeUndefined();
+      dispatch(cancelQueries(ExploreId.left));
+
+      for (const types of supplementaryQueryTypes) {
+        expect(getState().explore[ExploreId.left].supplementaryQueries[types].data).toBeDefined();
+        expect(getState().explore[ExploreId.left].supplementaryQueries[types].data!.state).toBe(LoadingState.Done);
+        expect(getState().explore[ExploreId.left].supplementaryQueries[types].dataProvider).toBeUndefined();
+      }
     });
 
-    it('do not load logsVolume data when disabled', async () => {
-      // turn logsvolume off
+    it('do not load disabled supplementary query data', () => {
+      mockDataProvider = () => {
+        return of({ state: LoadingState.Done, error: undefined, data: [{}] });
+      };
+      // turn logs volume off (but keep log sample on)
       dispatch(setSupplementaryQueryEnabled(ExploreId.left, false, SupplementaryQueryType.LogsVolume));
       expect(getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].enabled).toBe(
         false
       );
+      expect(getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].enabled).toBe(
+        true
+      );
 
-      // verify that if we run a query, it will not do logsvolume, but the Provider will still be set
-      await dispatch(runQueries(ExploreId.left));
+      // verify that if we run a query, it will: 1) not do logs volume, 2) do logs sample 3) provider will still be set for both
+      dispatch(runQueries(ExploreId.left));
+
       expect(
         getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].data
       ).toBeUndefined();
@@ -544,212 +538,51 @@ describe('reducer', () => {
       expect(
         getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
       ).toBeDefined();
+
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].data
+      ).toBeDefined();
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].dataSubscription
+      ).toBeDefined();
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].dataProvider
+      ).toBeDefined();
     });
 
-    it('load logsVolume data when it gets enabled', async () => {
-      // first it is disabled
+    it('load data of supplementary query that gets enabled', async () => {
+      // first we start with both supplementary queries disabled
       dispatch(setSupplementaryQueryEnabled(ExploreId.left, false, SupplementaryQueryType.LogsVolume));
+      dispatch(setSupplementaryQueryEnabled(ExploreId.left, false, SupplementaryQueryType.LogsSample));
 
-      // runQueries sets up the logsVolume query, but does not run it
-      await dispatch(runQueries(ExploreId.left));
+      // runQueries sets up providers, but does not run queries
+      dispatch(runQueries(ExploreId.left));
       expect(
         getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
       ).toBeDefined();
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].dataProvider
+      ).toBeDefined();
 
-      // we turn logsvolume on
-      await dispatch(setSupplementaryQueryEnabled(ExploreId.left, true, SupplementaryQueryType.LogsVolume));
+      // we turn 1 supplementary query (logs volume) on
+      dispatch(setSupplementaryQueryEnabled(ExploreId.left, true, SupplementaryQueryType.LogsVolume));
 
       // verify it was turned on
       expect(getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].enabled).toBe(
         true
       );
+      // verify that other stay off
+      expect(getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].enabled).toBe(
+        false
+      );
 
       expect(
         getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].dataSubscription
       ).toBeDefined();
+
+      expect(
+        getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].dataSubscription
+      ).toBeUndefined();
     });
   });
-
-  // describe('log sample', () => {
-  //   let dispatch: ThunkDispatch,
-  //     getState: () => StoreState,
-  //     unsubscribes: Function[],
-  //     mockLogsSampleDataProvider: () => Observable<DataQueryResponse>;
-
-  //   beforeEach(() => {
-  //     unsubscribes = [];
-  //     mockLogsSampleDataProvider = () => {
-  //       return {
-  //         subscribe: () => {
-  //           const unsubscribe = jest.fn();
-  //           unsubscribes.push(unsubscribe);
-  //           return {
-  //             unsubscribe,
-  //           };
-  //         },
-  //       } as unknown as Observable<DataQueryResponse>;
-  //     };
-
-  //     const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
-  //       ...defaultInitialState,
-  //       explore: {
-  //         [ExploreId.left]: {
-  //           ...defaultInitialState.explore[ExploreId.left],
-  //           datasourceInstance: {
-  //             query: jest.fn(),
-  //             getRef: jest.fn(),
-  //             meta: {
-  //               id: 'something',
-  //             },
-  //             getLogsSampleDataProvider: () => {
-  //               return mockLogsSampleDataProvider();
-  //             },
-  //           },
-  //         },
-  //       },
-  //     } as unknown as Partial<StoreState>);
-
-  //     dispatch = store.dispatch;
-  //     getState = store.getState;
-
-  //     setupQueryResponse(getState());
-  //   });
-
-  //   it('should cancel any unfinished logs sample queries when a new query is run', async () => {
-  //     await dispatch(runQueries(ExploreId.left));
-  //     // first query is run automatically
-  //     // loading in progress - one subscription created, not cleaned up yet
-  //     expect(unsubscribes).toHaveLength(1);
-  //     expect(unsubscribes[0]).not.toBeCalled();
-
-  //     setupQueryResponse(getState());
-  //     await dispatch(runQueries(ExploreId.left));
-  //     // a new query is run while log sample query is not resolve yet...
-  //     expect(unsubscribes[0]).toBeCalled();
-  //     // first subscription is cleaned up, a new subscription is created automatically
-  //     expect(unsubscribes).toHaveLength(2);
-  //     expect(unsubscribes[1]).not.toBeCalled();
-  //   });
-
-  //   it('should cancel log sample query when the main query is canceled', async () => {
-  //     await dispatch(runQueries(ExploreId.left));
-  //     expect(unsubscribes).toHaveLength(1);
-  //     expect(unsubscribes[0]).not.toBeCalled();
-
-  //     await dispatch(cancelQueries(ExploreId.left));
-  //     expect(unsubscribes).toHaveLength(1);
-  //     expect(unsubscribes[0]).toBeCalled();
-
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].data
-  //     ).toBeUndefined();
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].dataProvider
-  //     ).toBeUndefined();
-  //   });
-
-  //   it('should load logs sample after running the query', async () => {
-  //     await dispatch(runQueries(ExploreId.left));
-  //     expect(unsubscribes).toHaveLength(1);
-  //   });
-
-  //   it('should clean any incomplete log sample data when main query is canceled', async () => {
-  //     mockLogsSampleDataProvider = () => {
-  //       return of({ state: LoadingState.Loading, error: undefined, data: [] });
-  //     };
-  //     await dispatch(runQueries(ExploreId.left));
-
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].data
-  //     ).toBeDefined();
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].data!.state
-  //     ).toBe(LoadingState.Loading);
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].dataProvider
-  //     ).toBeDefined();
-
-  //     await dispatch(cancelQueries(ExploreId.left));
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].data
-  //     ).toBeUndefined();
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].data
-  //     ).toBeUndefined();
-  //   });
-
-  //   it('keeps complete log sample data when main query is canceled', async () => {
-  //     mockLogsSampleDataProvider = () => {
-  //       return of(
-  //         { state: LoadingState.Loading, error: undefined, data: [] },
-  //         { state: LoadingState.Done, error: undefined, data: [{}] }
-  //       );
-  //     };
-  //     await dispatch(runQueries(ExploreId.left));
-
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].data
-  //     ).toBeDefined();
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].data!.state
-  //     ).toBe(LoadingState.Done);
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].dataProvider
-  //     ).toBeDefined();
-
-  //     await dispatch(cancelQueries(ExploreId.left));
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].data
-  //     ).toBeDefined();
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].data!.state
-  //     ).toBe(LoadingState.Done);
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].dataProvider
-  //     ).toBeUndefined();
-  //   });
-
-  //   it('do not load logsSample data when disabled', async () => {
-  //     // turn logsSample off
-  //     dispatch(setSupplementaryQueryEnabled(ExploreId.left, false, SupplementaryQueryType.LogsSample));
-  //     expect(getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].enabled).toBe(
-  //       false
-  //     );
-
-  //     // verify that if we run a query, it will not do logsSample, but the Provider will still be set
-  //     await dispatch(runQueries(ExploreId.left));
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].data
-  //     ).toBeUndefined();
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].dataSubscription
-  //     ).toBeUndefined();
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].dataProvider
-  //     ).toBeDefined();
-  //   });
-
-  //   it('load logsSample data when it gets enabled', async () => {
-  //     // first it is disabled
-  //     dispatch(setSupplementaryQueryEnabled(ExploreId.left, false, SupplementaryQueryType.LogsSample));
-
-  //     // runQueries sets up the logsSample query, but does not run it
-  //     await dispatch(runQueries(ExploreId.left));
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].dataProvider
-  //     ).toBeDefined();
-
-  //     // we turn logsSample on
-  //     await dispatch(setSupplementaryQueryEnabled(ExploreId.left, true, SupplementaryQueryType.LogsSample));
-
-  //     // verify it was turned on
-  //     expect(getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].enabled).toBe(
-  //       true
-  //     );
-
-  //     expect(
-  //       getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsSample].dataSubscription
-  //     ).toBeDefined();
-  //   });
-  // });
 });
