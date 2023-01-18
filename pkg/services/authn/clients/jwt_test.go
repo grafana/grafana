@@ -116,7 +116,6 @@ func TestAuthenticateJWT(t *testing.T) {
 		Resp:        nil,
 	})
 	require.NoError(t, err)
-
 }
 
 func TestJWTTest(t *testing.T) {
