@@ -115,7 +115,7 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 			logger = gfErr.LogLevel.LogFunc(ctx.Logger)
 			publicErr := gfErr.Public()
 
-			// need to manually set these fields for us to be able to set traceID
+			// need to manually set these fields because we want to include the trace id
 			data["extra"] = publicErr.Extra
 			data["message"] = publicErr.Message
 			data["messageId"] = publicErr.MessageID
