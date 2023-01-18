@@ -10,6 +10,15 @@ import { AzureGraphResponse } from '../types';
 
 import ResourcePickerData from './resourcePickerData';
 
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getTemplateSrv: () => ({
+    replace: (val: string) => {
+      return val;
+    },
+  }),
+}));
+
 const createResourcePickerData = (responses: AzureGraphResponse[]) => {
   const instanceSettings = createMockInstanceSetttings();
   const mockDatasource = createMockDatasource();
@@ -410,6 +419,54 @@ describe('AzureMonitor resourcePickerData', () => {
       expect(locations.get('northeurope')?.name).toBe('northeurope');
       expect(locations.get('northeurope')?.displayName).toBe('North Europe');
       expect(locations.get('northeurope')?.supportsLogs).toBe(false);
+    });
+  });
+
+  describe('fetchInitialRows', () => {
+    it('returns a list of subscriptions', async () => {
+      const { resourcePickerData } = createResourcePickerData([createMockARGSubscriptionResponse()]);
+      const rows = await resourcePickerData.fetchInitialRows('logs');
+      expect(rows.length).toEqual(createMockARGSubscriptionResponse().data.length);
+    });
+
+    it('fetches resource groups and resources', async () => {
+      const { resourcePickerData } = createResourcePickerData([createMockARGSubscriptionResponse()]);
+      resourcePickerData.getResourceGroupsBySubscriptionId = jest
+        .fn()
+        .mockResolvedValue([{ id: 'rg1', uri: '/subscriptions/1/resourceGroups/rg1' }]);
+      resourcePickerData.getResourcesForResourceGroup = jest.fn().mockResolvedValue([
+        { id: 'vm1', uri: '/subscriptions/1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm1' },
+        { id: 'vm2', uri: '/subscriptions/1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm2' },
+      ]);
+      const rows = await resourcePickerData.fetchInitialRows('logs', [
+        {
+          subscription: '1',
+          resourceGroup: 'rg1',
+          resourceName: 'vm1',
+          metricNamespace: 'Microsoft.Compute/virtualMachines',
+        },
+        {
+          subscription: '1',
+          resourceGroup: 'rg1',
+          resourceName: 'vm2',
+          metricNamespace: 'Microsoft.Compute/virtualMachines',
+        },
+      ]);
+      expect(rows[0]).toMatchObject({
+        id: '1',
+        children: [
+          {
+            id: 'rg1',
+            children: [{ id: 'vm1' }, { id: 'vm2' }],
+          },
+        ],
+      });
+      // getResourceGroupsBySubscriptionId should only be called once because the subscription
+      // of both resources is the same
+      expect(resourcePickerData.getResourceGroupsBySubscriptionId).toBeCalledTimes(1);
+      // getResourcesForResourceGroup should only be called once because the resource group
+      // of both resources is the same
+      expect(resourcePickerData.getResourcesForResourceGroup).toBeCalledTimes(1);
     });
   });
 });

@@ -126,7 +126,7 @@
       "machineName": "dashboard",
       "pluralMachineName": "dashboards",
       "lineageIsGroup": false,
-      "maturity": "merged",
+      "maturity": "experimental",
       "currentVersion": [
         0,
         0
@@ -981,8 +981,10 @@
     "maturity": {
       "experimental": {
         "name": "experimental",
-        "items": [],
-        "count": 0
+        "items": [
+          "dashboard"
+        ],
+        "count": 1
       },
       "mature": {
         "name": "mature",
@@ -995,7 +997,6 @@
           "annolist_panel",
           "barchart_panel",
           "bargauge_panel",
-          "dashboard",
           "dashlist_panel",
           "gauge_panel",
           "geomap_panel",

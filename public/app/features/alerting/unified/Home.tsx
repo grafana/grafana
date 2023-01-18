@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
+import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Icon, LinkButton, useStyles2, useTheme2, Tooltip } from '@grafana/ui';
+import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 
@@ -17,37 +18,27 @@ export default function Home() {
       <div className={styles.grid}>
         <WelcomeHeader className={styles.ctaContainer} />
         <ContentBox className={styles.flowBlock}>
-          <img src={`public/img/alerting/at_a_glance_${theme.name.toLowerCase()}.svg`} alt="Alerting flow chart" />
-          <ul className={styles.howItWorks}>
-            <li>
-              Grafana alerting <strong>periodically queries your data sources and evaluates</strong> the alerting
-              condition you define
-            </li>
-            <li>
-              If the condition is breached, the alert rule fires and produces <strong>alert instances</strong>{' '}
-              <Tooltip content="If a query returns multiple time series an alert instance will be created for each of them">
-                <Icon name="info-circle" />
-              </Tooltip>
-            </li>
-            <li>
-              Firing instances are sent to <strong>the Alertmanager</strong>{' '}
-              <Tooltip content="Alertmanager receives alert instances, deduplicates and groups them and then sends a notification to a contact point according to the matching notification policy">
-                <Icon name="info-circle" />
-              </Tooltip>
-            </li>
-            <li>
-              Alertmanager routes firing alert instances to <strong>notification policies</strong> based on whether the
-              labels match
-            </li>
-            <li>
-              Notifications are sent out to <strong>the contact point</strong> defined in the matching notification
-              policy
-            </li>
-          </ul>
+          <div>
+            <h3>How it works</h3>
+            <ul className={styles.list}>
+              <li>
+                Grafana alerting periodically queries data sources and evaluates the condition defined in the alert rule
+              </li>
+              <li>If the condition is breached, an alert instance fires</li>
+              <li>Firing instances are routed to notification policies based on matching labels</li>
+              <li>Notifications are sent out to the contact points specified in the notification policy policy</li>
+            </ul>
+          </div>
+          <SVG
+            src={`public/img/alerting/at_a_glance_${theme.name.toLowerCase()}.svg`}
+            width={undefined}
+            height={undefined}
+          />
         </ContentBox>
-        <ContentBox title="Get started" className={styles.gettingStartedBlock}>
+        <ContentBox className={styles.gettingStartedBlock}>
+          <h3>Get started</h3>
           <Stack direction="column" alignItems="space-between">
-            <ul>
+            <ul className={styles.list}>
               <li>
                 <strong>Create an alert rule</strong> by adding queries and expressions from multiple data sources.
               </li>
@@ -66,7 +57,7 @@ export default function Home() {
               <ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Docs" />
               <ArrowLink
                 href="https://university.grafana.com//lms/index.php?r=coursepath/deeplink&id_path=42&hash=caa235c6321f80e03df017ae9ec6eed5c79da9ec"
-                title="Learn more in the Grafana University course"
+                title="Enroll in the Grafana University Alerting course"
               />
             </div>
           </Stack>
@@ -102,14 +93,19 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
     grid-column: 1 / span 5;
   `,
   flowBlock: css`
-    width: 100%;
     grid-column: 1 / span 5;
 
-    img {
-      display: block;
-      margin: 0 auto;
-      height: auto;
-      width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: ${theme.spacing(1)};
+
+    & > div {
+      flex: 2;
+      min-width: 350px;
+    }
+    & > svg {
+      flex: 3;
+      min-width: 500px;
     }
   `,
   videoBlock: css`
@@ -132,22 +128,11 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   gettingStartedBlock: css`
     grid-column: 1 / span 2;
     justify-content: space-between;
-
-    ul {
-      margin-left: ${theme.spacing(2)};
-    }
   `,
-  howItWorks: css`
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: ${theme.spacing(2)};
-    list-style: none inside none;
-    list-style-type: disclosure-closed;
-
-    > li {
-      flex: 1;
-      min-width: 150px;
+  list: css`
+    margin: ${theme.spacing(0, 2)};
+    & > li {
+      margin-bottom: ${theme.spacing(1)};
     }
   `,
 });
@@ -156,81 +141,73 @@ function WelcomeHeader({ className }: { className?: string }) {
   const styles = useStyles2(getWelcomeHeaderStyles);
 
   return (
-    <div className={cx(styles.container, className)}>
-      <header>
-        <h2>Welcome to Grafana Alerting</h2>
-        <div>Grafana Alerting helps you manage your alert rules.</div>
-      </header>
-      <div className={styles.ctaContainer}>
-        <WelcomeCTABox
-          title="Alert rules"
-          description="Manage your alert rules. Combine data from multiple data sources"
-          icon="list-ul"
-          href="/alerting/new"
-          hrefText="Create alert rules"
-        />
-        <WelcomeCTABox
-          title="Contact points"
-          description="Configure who and how receives notifications"
-          icon="comment-alt-share"
-          href="/alerting/notifications"
-          hrefText="Manage contact points"
-        />
-        <WelcomeCTABox
-          title="Notification policies"
-          description="Configure the flow of your alerts and route them to contact points"
-          icon="sitemap"
-          href="/alerting/routes"
-          hrefText="Manage notification policies"
-        />
-      </div>
-    </div>
+    <ContentBox className={cx(styles.ctaContainer, className)}>
+      <WelcomeCTABox
+        title="Alert rules"
+        description="Define the condition that must be me before an alert rule fires"
+        href="/alerting/list"
+        hrefText="Manage alert rules"
+      />
+      <div className={styles.separator} />
+      <WelcomeCTABox
+        title="Contact points"
+        description="Configure who receives notifications and how they are sent"
+        href="/alerting/notifications"
+        hrefText="Manage contact points"
+      />
+      <div className={styles.separator} />
+      <WelcomeCTABox
+        title="Notification policies"
+        description="Configure how firing alert instances are routed to contact points"
+        href="/alerting/routes"
+        hrefText="Manage notification policies"
+      />
+    </ContentBox>
   );
 }
 
 const getWelcomeHeaderStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    display: flex;
-    flex-direction: column;
-    padding: ${theme.spacing(4)};
-    background-image: url(public/img/alerting/welcome_cta_bg_${theme.name.toLowerCase()}.svg);
-    background-size: cover;
-    background-clip: padding-box;
-
-    outline: 1px solid hsla(6deg, 60%, 80%, 0.14);
-    outline-offset: -1px;
-    border-radius: 3px;
-  `,
   ctaContainer: css`
-    padding: ${theme.spacing(4)};
+    padding: ${theme.spacing(4, 2)};
     display: flex;
     gap: ${theme.spacing(4)};
     justify-content: space-between;
     flex-wrap: wrap;
+
+    ${theme.breakpoints.down('lg')} {
+      flex-direction: column;
+    }
+  `,
+
+  separator: css`
+    width: 1px;
+    background-color: ${theme.colors.border.medium};
+
+    ${theme.breakpoints.down('lg')} {
+      display: none;
+    }
   `,
 });
 
 interface WelcomeCTABoxProps {
   title: string;
   description: string;
-  icon: React.ComponentProps<typeof Icon>['name'];
   href: string;
   hrefText: string;
 }
 
-function WelcomeCTABox({ title, description, icon, href, hrefText }: WelcomeCTABoxProps) {
+function WelcomeCTABox({ title, description, href, hrefText }: WelcomeCTABoxProps) {
   const styles = useStyles2(getWelcomeCTAButtonStyles);
 
   return (
     <div className={styles.container}>
-      <div className={styles.icon}>
-        <Icon name={icon} size="xxl" />
-      </div>
       <h3 className={styles.title}>{title}</h3>
       <div className={styles.desc}>{description}</div>
-      <LinkButton href={href} className={styles.actionButton}>
-        {hrefText}
-      </LinkButton>
+      <div className={styles.actionRow}>
+        <a href={href} className={styles.link}>
+          {hrefText}
+        </a>
+      </div>
     </div>
   );
 }
@@ -246,6 +223,7 @@ const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
   `,
 
   title: css`
+    margin-bottom: 0;
     grid-column: 2 / span 3;
     grid-row: 1;
   `,
@@ -255,29 +233,21 @@ const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
     grid-row: 2;
   `,
 
-  actionButton: css`
+  actionRow: css`
     grid-column: 2 / span 3;
     grid-row: 3;
     max-width: 240px;
   `,
 
-  icon: css`
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    margin: auto;
-    color: #ff8833;
+  link: css`
+    color: ${theme.colors.text.link};
   `,
 });
 
-function ContentBox({ children, title, className }: React.PropsWithChildren<{ title?: string; className?: string }>) {
+function ContentBox({ children, className }: React.PropsWithChildren<{ className?: string }>) {
   const styles = useStyles2(getContentBoxStyles);
 
-  return (
-    <div className={cx(styles.box, className)}>
-      {title && <h3>{title}</h3>}
-      {children}
-    </div>
-  );
+  return <div className={cx(styles.box, className)}>{children}</div>;
 }
 
 const getContentBoxStyles = (theme: GrafanaTheme2) => ({
