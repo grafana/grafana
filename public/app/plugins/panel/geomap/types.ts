@@ -4,8 +4,8 @@ import { Units } from 'ol/control/ScaleLine';
 import BaseLayer from 'ol/layer/Base';
 import { Subject } from 'rxjs';
 
-import { MapLayerHandler } from '@grafana/data';
-import { HideableFieldConfig, MapLayerOptions } from '@grafana/schema';
+import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
+import { HideableFieldConfig } from '@grafana/schema';
 import { LayerElement } from 'app/core/components/Layers/types';
 
 import { StyleConfig } from './style/types';
