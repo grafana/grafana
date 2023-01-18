@@ -36,7 +36,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		*ctx.Req = *ctx.Req.WithContext(newCtx)
 
 		if err != nil {
-			writeErr(ctx, err)
+			ctx.WriteErr(err)
 			return true
 		}
 

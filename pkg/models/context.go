@@ -2,9 +2,7 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"reflect"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -91,24 +89,58 @@ func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
 }
 
 // WriteErr writes an error response based on errutil.Error.
-// If provided error is not a errutil.Error a 500 response is written.
+// If provided error is not errutil.Error a 500 response is written.
 func (ctx *ReqContext) WriteErr(err error) {
-	grafanaErr := &errutil.Error{}
-	if !errors.As(err, grafanaErr) {
-		ctx.JsonApiErr(http.StatusInternalServerError, "", fmt.Errorf("unexpected error type [%s]: %w", reflect.TypeOf(err), err))
-	}
-	ctx.JsonApiErr(grafanaErr.Reason.Status().HTTPStatus(), grafanaErr.Public().Message, err)
+	ctx.writeErrOrFallback(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), err)
 }
 
 // WriteErrOrFallback uses the information in an errutil.Error if available
 // and otherwise falls back to the status and message provided as arguments.
 func (ctx *ReqContext) WriteErrOrFallback(status int, message string, err error) {
-	grafanaErr := &errutil.Error{}
-	if errors.As(err, grafanaErr) {
-		ctx.WriteErr(err)
-		return
+	ctx.writeErrOrFallback(status, message, err)
+}
+
+func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error) {
+	data := make(map[string]interface{})
+	traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
+
+	if err != nil {
+		data["traceID"] = traceID
+
+		var logMessage string
+		logger := ctx.Logger.Warn
+
+		var gfErr *errutil.Error
+		if errors.As(err, gfErr) {
+			logger = gfErr.LogLevel.LogFunc(ctx.Logger)
+			publicErr := gfErr.Public()
+
+			// need to manually set these fields for us to be able to set traceID
+			data["extra"] = publicErr.Extra
+			data["message"] = publicErr.Message
+			data["messageId"] = publicErr.MessageID
+			data["statusCode"] = publicErr.StatusCode
+		} else {
+			if message != "" {
+				logMessage = message
+			} else {
+				logMessage = http.StatusText(status)
+				data["message"] = logMessage
+			}
+
+			if status == http.StatusInternalServerError {
+				logger = ctx.Logger.Error
+			}
+		}
+
+		logger(logMessage, "error", err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)
 	}
-	ctx.JsonApiErr(status, message, err)
+
+	if _, ok := data["message"]; !ok && message != "" {
+		data["message"] = message
+	}
+
+	ctx.JSON(status, data)
 }
 
 func (ctx *ReqContext) HasUserRole(role org.RoleType) bool {

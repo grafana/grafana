@@ -639,7 +639,7 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 		}
 
 		if err != nil {
-			writeErr(reqContext, err)
+			reqContext.WriteErr(err)
 			return true
 		}
 
@@ -723,7 +723,8 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 		}
 
 		if err != nil {
-			writeErr(reqContext, err)
+			reqContext.WriteErr(err)
+			return true
 		}
 
 		ctx := WithAuthHTTPHeader(reqContext.Req.Context(), h.Cfg.AuthProxyHeaderName)
