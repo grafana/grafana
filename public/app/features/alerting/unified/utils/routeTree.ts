@@ -27,10 +27,11 @@ export const mergePartialAmRouteWithRouteTree = (
     let updatedRoute: Route = currentRoute;
 
     if (currentRoute.id === partialFormRoute.id) {
+      const newRoute = formAmRouteToAmRoute(alertManagerSourceName, partialFormRoute, routeTree);
       updatedRoute = omit(
         {
           ...currentRoute,
-          ...formAmRouteToAmRoute(alertManagerSourceName, partialFormRoute, routeTree),
+          ...newRoute,
         },
         'id'
       );

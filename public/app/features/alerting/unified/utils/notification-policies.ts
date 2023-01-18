@@ -1,5 +1,7 @@
 import { AlertmanagerGroup, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
+import { normalizeMatchers } from './amroutes';
+
 export type Label = [string, string];
 type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
 
@@ -40,7 +42,8 @@ function findMatchingRoutes(root: Route, labels: Label[]): Route[] {
   let matches: Route[] = [];
 
   // If the current node is not a match, return nothing
-  if (!matchLabels(root.object_matchers ?? [], labels)) {
+  const normalizedMatchers = normalizeMatchers(root);
+  if (!matchLabels(normalizedMatchers, labels)) {
     return [];
   }
 
@@ -71,14 +74,18 @@ function findMatchingRoutes(root: Route, labels: Label[]): Route[] {
  * find all of the groups that have instances that match the route, thay way we can find all instances
  * (and their grouping) for the given route
  */
-function findMatchingAlertGroups(root: Route, route: Route, alertGroups: AlertmanagerGroup[]): AlertmanagerGroup[] {
+function findMatchingAlertGroups(
+  routeTree: Route,
+  route: Route,
+  alertGroups: AlertmanagerGroup[]
+): AlertmanagerGroup[] {
   const matchingGroups: AlertmanagerGroup[] = [];
 
   return alertGroups.reduce((acc, group) => {
     // find matching alerts in the current group
     const matchingAlerts = group.alerts.filter((alert) => {
       const labels = Object.entries(alert.labels);
-      return findMatchingRoutes(root, labels).some((matchingRoute) => matchingRoute === route);
+      return findMatchingRoutes(routeTree, labels).some((matchingRoute) => matchingRoute === route);
     });
 
     // if the groups has any alerts left after matching, add it to the results

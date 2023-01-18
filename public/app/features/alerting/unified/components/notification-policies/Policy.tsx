@@ -6,7 +6,17 @@ import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Badge, Button, getTagColorsFromName, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Badge,
+  Button,
+  ButtonGroup,
+  Dropdown,
+  getTagColorsFromName,
+  Icon,
+  Menu,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import {
   RouteWithID,
@@ -204,6 +214,31 @@ const Policy: FC<PolicyComponentProps> = ({
               )}
               {!readOnly && (
                 <Stack direction="row" gap={0.5}>
+                  {/* <ButtonGroup>
+                    <Button
+                      variant="secondary"
+                      icon="pen"
+                      size="sm"
+                      onClick={() => onEditPolicy(currentRoute, isDefault)}
+                      type="button"
+                    >
+                      Edit
+                    </Button>
+                    <Dropdown
+                      overlay={
+                        <Menu>
+                          <Menu.Item
+                            destructive
+                            icon="trash-alt"
+                            label="Delete"
+                            onClick={() => onDeletePolicy(currentRoute)}
+                          />
+                        </Menu>
+                      }
+                    >
+                      <Button variant="secondary" size="sm" icon="angle-down" type="button" />
+                    </Dropdown>
+                  </ButtonGroup> */}
                   {isEditable && (
                     <Button
                       variant="secondary"
@@ -382,13 +417,13 @@ const Policy: FC<PolicyComponentProps> = ({
           );
         })}
       </div>
-      <div className={styles.addPolicyWrapper(hasChildPolicies)}>
+      {/* <div className={styles.addPolicyWrapper(hasChildPolicies)}>
         <CreateOrAddPolicy
           onClick={() => onAddPolicy(currentRoute)}
           hasChildPolicies={hasChildPolicies}
           isDefaultPolicy={isDefaultPolicy}
         />
-      </div>
+      </div> */}
     </Stack>
   );
 };

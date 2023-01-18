@@ -1,4 +1,4 @@
-import { isUndefined, omitBy, uniqueId } from 'lodash';
+import { uniqueId } from 'lodash';
 import { Validate } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
@@ -260,7 +260,7 @@ export const formAmRouteToAmRoute = (
     amRoute.receiver = formAmRoute.receiver;
   }
 
-  return omitBy(amRoute, isUndefined);
+  return amRoute;
 };
 
 export const stringToSelectableValue = (str: string): SelectableValue<string> => ({
